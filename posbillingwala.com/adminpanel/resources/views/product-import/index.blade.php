@@ -18,7 +18,7 @@
                         <hr>
                         <p class="text-secondary">Upload a <strong>CSV</strong> or <strong>Excel (.xlsx / .xls)</strong> file with columns: <strong>Product, Category, Unit, Price, CGST, SGST</strong> (same format as the Android app template).</p>
                         <p class="mb-4">
-                            <a href="https://www.posbillingwala.com/androidApp/DemoExcel/CustomerProductList.xlsx" target="_blank" class="btn btn-outline-primary btn-sm">
+                            <a href="http://www.posbillingwala.in/androidApp/DemoExcel/CustomerProductList.xlsx" target="_blank" class="btn btn-outline-primary btn-sm">
                                 <i class='bx bx-download'></i> Download Excel Template
                             </a>
                         </p>

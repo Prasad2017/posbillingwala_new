@@ -1,7 +1,7 @@
 <div class="sidebar-wrapper" data-simplebar="true">
             <div class="sidebar-header">
                 <div class="d-flex align-items-center gap-2">
-                    <img src="{{url('assets/images/play-store-icon.png')}}" class="logo-icon" alt="POS Billingwala" style="width:36px;height:36px;border-radius:9px;">
+                    <img src="{{asset('assets/images/play-store-icon.png')}}" class="logo-icon" alt="POS Billingwala" style="width:36px;height:36px;border-radius:9px;">
                     <h4 class="logo-text mb-0">POS Billingwala</h4>
                 </div>
                 <div class="toggle-icon ms-auto"><i class='bx bx-arrow-to-left'></i>

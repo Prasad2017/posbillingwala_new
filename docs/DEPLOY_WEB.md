@@ -7,8 +7,8 @@ Production deployment for **posbillingwala.com** (marketing site) and **adminpan
 | Path on server | URL | Purpose |
 |----------------|-----|---------|
 | `posbillingwala.com/` (root) | `https://posbillingwala.com/` | Marketing website |
-| `posbillingwala.com/adminpanel/` | `https://posbillingwala.com/adminpanel/` | Web admin (Admin / Dealer / Customer login) |
-| `posbillingwala.com/PlayStore/` | Play Store privacy / assets | App listing support files |
+| `posbillingwala.com/adminpanel/` | App files (assets stay here) | Laravel web admin |
+| Login URL | `http://posbillingwala.com/login` | Clean domain-root login (rewrites into adminpanel) |
 
 The web admin shares the **same MySQL database** as the Android apps and `API/`. See [DEPLOY_DB.md](DEPLOY_DB.md) for database setup and migrations.
 
@@ -155,9 +155,9 @@ mysql -u USER -p DATABASE < API/migrations/server_upgrade_all.sql
 
 | Role | URL | Credentials |
 |------|-----|-------------|
-| **Admin** | `/adminpanel/login` | Email + password (`users.role_id = 1`) |
-| **Dealer** | `/adminpanel/dealer/login` | Aadhar number + password |
-| **Customer** | `/adminpanel/customer/login` | Contact number + secret key |
+| **Admin** | `/login` | Email + password (`users.role_id = 1`) |
+| **Dealer** | `/dealer/login` | Aadhar number + password |
+| **Customer** | `/customer/login` | Contact number + secret key |
 
 Customer portal secret key is currently hardcoded in `CustomerController` — change before public exposure if needed.
 

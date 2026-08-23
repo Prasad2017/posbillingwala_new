@@ -23,6 +23,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        //
+        if ($root = config('app.url')) {
+            \Illuminate\Support\Facades\URL::forceRootUrl(rtrim($root, '/'));
+        }
     }
 }
