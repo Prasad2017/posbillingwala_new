@@ -114,7 +114,7 @@
             android:gravity="center"
             android:padding="8dp"
             android:text="@string/new_user"
-            android:textColor="#9aa1a5"
+            android:textColor="@color/colorPrimary"
             android:textSize="14sp" />
 
         <androidx.appcompat.widget.AppCompatTextView

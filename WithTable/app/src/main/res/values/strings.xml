@@ -10,7 +10,7 @@
     <string name="label_month">MONTH</string>
     <string name="label_year">YEAR</string>
 
-    <string name="new_user">Don\'t have an account? <u><b><font fgcolor='#df0052'>Register free</font></b></u></string>
+    <string name="new_user">Don\'t have an account? <u><b><font fgcolor='#ff0000'>Sign Up</font></b></u></string>
     <string name="mpin_login">Login with <b><font fgcolor='#df0052'>PB-PIN</font></b></string>
     <string name="support_phone_display">+91 89831 49299</string>
     <string name="support_phone_dial">+918983149299</string>
@@ -52,7 +52,7 @@
     <string name="trial_signup_shop">Shop / restaurant name</string>
     <string name="trial_signup_address">Shop address</string>
     <string name="trial_signup_submit">Create Free Account</string>
-    <string name="trial_back_to_login">Already have an account? <u><b><font fgcolor='#df0052'>Login</font></b></u></string>
+    <string name="trial_back_to_login">Already have an account? <u><b><font fgcolor='#ff0000'>Login</font></b></u></string>
     <string name="trial_error_empty_fields">Please fill in all the details to continue.</string>
     <string name="trial_error_invalid_mobile">Please enter a valid 10-digit mobile number.</string>
     <string name="trial_loading">Creating your free account…</string>

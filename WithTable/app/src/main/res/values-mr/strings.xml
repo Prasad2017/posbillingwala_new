@@ -10,7 +10,7 @@
     <string name="label_month">महिना</string>
     <string name="label_year">वर्ष</string>
 
-    <string name="new_user">खाते नाही? <u><b><font fgcolor='#df0052'>मोफत नोंदणी करा</font></b></u></string>
+    <string name="new_user">खाते नाही? <u><b><font fgcolor='#ff0000'>साइन अप</font></b></u></string>
     <string name="mpin_login"><b><font fgcolor='#df0052'>PB-PIN</font></b> ने लॉगिन करा</string>
     <string name="support_phone_display">+91 89831 49299</string>
     <string name="support_phone_dial">+918983149299</string>
@@ -51,7 +51,7 @@
     <string name="trial_signup_shop">दुकान / रेस्टॉरंटचे नाव</string>
     <string name="trial_signup_address">दुकानाचा पत्ता</string>
     <string name="trial_signup_submit">मोफत खाते तयार करा</string>
-    <string name="trial_back_to_login">आधीच खाते आहे? <u><b><font fgcolor='#df0052'>लॉगिन करा</font></b></u></string>
+    <string name="trial_back_to_login">आधीच खाते आहे? <u><b><font fgcolor='#ff0000'>लॉगिन करा</font></b></u></string>
     <string name="trial_error_empty_fields">सुरू ठेवण्यासाठी सर्व माहिती भरा.</string>
     <string name="trial_error_invalid_mobile">कृपया योग्य १० अंकी मोबाइल नंबर टाका.</string>
     <string name="trial_loading">तुमचे मोफत खाते तयार होत आहे…</string>
