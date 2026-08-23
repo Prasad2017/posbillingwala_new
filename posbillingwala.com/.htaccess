@@ -7,12 +7,7 @@ RewriteEngine On
 </IfModule>
 # php -- END cPanel-generated handler, do not edit
 
-# Keep real adminpanel files (CSS/JS/images/storage) as-is
-RewriteRule ^adminpanel/(assets|storage|public|vendor)/ - [L]
-
-# Old adminpanel app URLs → clean root URLs
-RewriteRule ^adminpanel/?$ /login [L,R=301]
-RewriteRule ^adminpanel/(login|logout|register|home|password|dealer|customer|customers|categories|products|product-import|subcategories|portions|invoices|expenses|inventory)(/.*)?$ /$1$2 [L,R=301]
-
-# Serve Laravel admin from domain root (/login, /home, /customers/..., etc.)
-RewriteRule ^(login|logout|register|home|password|dealer|customer|customers|categories|products|product-import|subcategories|portions|invoices|expenses|inventory)(/.*)?$ adminpanel/index.php [L,QSA]
+# Clean login URL → Laravel admin (no rewrite loop)
+RewriteRule ^login/?$ /adminpanel/login [L,R=302]
+RewriteRule ^dealer/login/?$ /adminpanel/dealer/login [L,R=302]
+RewriteRule ^customer/login/?$ /adminpanel/customer/login [L,R=302]

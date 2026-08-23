@@ -38,8 +38,8 @@ Deploy the public site and Laravel admin to your domain:
 | URL | Purpose |
 |-----|---------|
 | `https://posbillingwala.com/` | Marketing website |
-| `http://posbillingwala.com/login` | Web admin login (Admin / Dealer / Customer links) |
-| `https://posbillingwala.com/adminpanel/` | Legacy admin URL (redirects to `/login`) |
+| `http://posbillingwala.com/login` | Redirects to web admin login |
+| `http://posbillingwala.com/adminpanel/login` | Web admin login (Admin / Dealer / Customer) |
 
 Web admin features match the Android Admin app: dealers, customers, licences, categories (food type), subcategories, product portions, and CSV/Excel product import.
 
