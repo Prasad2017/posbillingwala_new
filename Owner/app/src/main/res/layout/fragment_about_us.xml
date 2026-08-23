@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:ads="http://schemas.android.com/apk/res-auto"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".Fragment.AboutUs">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_alignParentTop="true">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <ImageView
+                android:id="@+id/backToSetting"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_alignParentStart="true"
+                android:layout_centerInParent="true"
+                android:layout_gravity="center"
+                android:layout_marginStart="15dp"
+                android:src="@drawable/back"
+                app:tint="@color/white" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:layout_gravity="center"
+                android:layout_marginStart="15dp"
+                android:layout_toEndOf="@+id/backToSetting"
+                android:fontFamily="@font/poppinsmedium"
+                android:gravity="center"
+                android:paddingStart="5dp"
+                android:paddingEnd="5dp"
+                android:text="About Us"
+                android:textColor="@color/white"
+                android:textSize="17sp" />
+
+        </RelativeLayout>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/appBarLayout">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="10dp">
+
+            <ImageView
+                android:id="@+id/imageView1"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:layout_gravity="center"
+                android:adjustViewBounds="true"
+                android:contentDescription="@string/app_name"
+                android:padding="16dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/app_logo" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:fontFamily="@font/poppinsmedium"
+                android:gravity="center_horizontal"
+                android:text="Thank You For Choosing Us!"
+                android:textAllCaps="true"
+                android:textColor="@color/black"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:fontFamily="@font/poppinsregular"
+                android:gravity="center|start"
+                android:justificationMode="inter_word"
+                android:padding="5dp"
+                android:text="    This Software is provided 'is-as',without any express or implied warranty.
+In no event will the  authors be held  liable for any  damages arising from the use of this software."
+                android:textColor="@color/light_black"
+                android:textSize="13sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="10dp"
+                android:autoLink="web|phone|email"
+                android:fontFamily="@font/poppinsregular"
+                android:gravity="center"
+                android:paddingStart="5dp"
+                android:paddingEnd="5dp"
+                android:text="www.posbillingwala.com\nEmail: info@posbillingwala.com\nContact: +91 89831 49299"
+                android:textColor="@color/black"
+                android:textSize="13sp" />
+
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="10dp"
+                android:fontFamily="@font/poppinsmedium"
+                android:gravity="center"
+                android:paddingStart="5dp"
+                android:paddingEnd="5dp"
+                android:text="@string/developed_by"
+                android:textColor="@color/colorPrimary"
+                android:textSize="13sp" />
+
+            <TextView
+                android:fontFamily="@font/poppinsregular"
+                android:gravity="center"
+                android:paddingStart="5dp"
+                android:paddingEnd="5dp"
+                android:text="Technical Support: +91 89831 49299"
+                android:textColor="@color/black" />
+
+            <com.google.android.gms.ads.AdView
+                android:id="@+id/ad_view"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:layout_marginBottom="10dp"
+                ads:adSize="SMART_BANNER"
+                ads:adUnitId="ca-app-pub-2325627373654257/6815283571" />
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+</RelativeLayout>

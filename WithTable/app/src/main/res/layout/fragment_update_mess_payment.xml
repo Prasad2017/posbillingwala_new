@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".Fragment.AddProduct">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_alignParentTop="true">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <ImageView
+                android:id="@+id/backToMess"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_alignParentStart="true"
+                android:layout_centerInParent="true"
+                android:layout_gravity="center"
+                android:layout_marginStart="15dp"
+                android:src="@drawable/back"
+                app:tint="@color/white" />
+
+        
+            <include layout="@layout/include_app_toolbar_logo" />
+</RelativeLayout>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/updatePayment"
+        android:layout_below="@id/appBarLayout">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="10dp">
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/memberNameLayout"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="5dp"
+                android:gravity="center"
+                android:textColorHint="@color/light_black"
+                app:boxCornerRadiusBottomEnd="5dp"
+                app:boxCornerRadiusBottomStart="5dp"
+                app:boxCornerRadiusTopEnd="5dp"
+                app:boxCornerRadiusTopStart="5dp"
+                app:boxStrokeColor="@color/light_black">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/memberName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:digits="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ "
+                    android:enabled="false"
+                    android:fontFamily="@font/poppinsregular"
+                    android:hint="Member Name"
+                    android:imeOptions="actionNext"
+                    android:inputType="textCapWords"
+                    android:paddingStart="15dp"
+                    android:paddingEnd="10dp"
+                    android:singleLine="true"
+                    android:textColor="@color/black"
+                    android:textColorHint="@color/light_black"
+                    android:textSize="15dp" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/memberMobileNumberLayout"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="5dp"
+                android:gravity="center"
+                android:textColorHint="@color/light_black"
+                app:boxCornerRadiusBottomEnd="5dp"
+                app:boxCornerRadiusBottomStart="5dp"
+                app:boxCornerRadiusTopEnd="5dp"
+                app:boxCornerRadiusTopStart="5dp"
+                app:boxStrokeColor="@color/light_black">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/memberMobileNumber"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:digits="0123456789"
+                    android:enabled="false"
+                    android:fontFamily="@font/poppinsregular"
+                    android:hint="Mobile Number"
+                    android:imeOptions="actionNext"
+                    android:inputType="numberDecimal"
+                    android:paddingStart="15dp"
+                    android:paddingEnd="10dp"
+                    android:singleLine="true"
+                    android:textColor="@color/black"
+                    android:textColorHint="@color/light_black"
+                    android:textSize="15dp" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center|start"
+                android:layout_marginStart="5dp"
+                android:layout_marginTop="15dp"
+                android:fontFamily="@font/poppinsregular"
+                android:gravity="center"
+                android:text="Mess Days*"
+                android:textColor="@color/textcolor" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:background="@drawable/button_rounded_border"
+                android:orientation="horizontal">
+
+                <com.jaredrummler.materialspinner.MaterialSpinner
+                    android:id="@+id/messDaySpinner"
+                    android:layout_width="match_parent"
+                    android:layout_height="45dp"
+                    android:layout_gravity="center"
+                    android:layout_margin="5dp"
+                    android:fontFamily="@font/poppinsregular"
+                    android:gravity="center|start"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp"
+                    android:textColor="@color/black"
+                    android:textSize="15dp"
+                    app:ms_hint="Select Days" />
+
+            </LinearLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/messAmountLayout"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="5dp"
+                android:gravity="center"
+                android:textColorHint="@color/light_black"
+                app:boxCornerRadiusBottomEnd="5dp"
+                app:boxCornerRadiusBottomStart="5dp"
+                app:boxCornerRadiusTopEnd="5dp"
+                app:boxCornerRadiusTopStart="5dp"
+                app:boxStrokeColor="@color/light_black">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/messAmount"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:digits="0123456789"
+                    android:enabled="false"
+                    android:fontFamily="@font/poppinsregular"
+                    android:hint="Total Amount"
+                    android:imeOptions="actionNext"
+                    android:inputType="numberDecimal"
+                    android:paddingStart="15dp"
+                    android:paddingEnd="10dp"
+                    android:singleLine="true"
+                    android:textColor="@color/black"
+                    android:textColorHint="@color/light_black"
+                    android:textSize="15dp" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/messPaidAmountLayout"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="5dp"
+                android:gravity="center"
+                android:textColorHint="@color/light_black"
+                app:boxCornerRadiusBottomEnd="5dp"
+                app:boxCornerRadiusBottomStart="5dp"
+                app:boxCornerRadiusTopEnd="5dp"
+                app:boxCornerRadiusTopStart="5dp"
+                app:boxStrokeColor="@color/light_black">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/messPaidAmount"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:digits="0123456789"
+                    android:enabled="false"
+                    android:fontFamily="@font/poppinsregular"
+                    android:hint="Paid Amount"
+                    android:imeOptions="actionNext"
+                    android:inputType="numberDecimal"
+                    android:paddingStart="15dp"
+                    android:paddingEnd="10dp"
+                    android:singleLine="true"
+                    android:textColor="@color/black"
+                    android:textColorHint="@color/light_black"
+                    android:textSize="15dp" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/messPendingAmountLayout"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="5dp"
+                android:gravity="center"
+                android:textColorHint="@color/light_black"
+                app:boxCornerRadiusBottomEnd="5dp"
+                app:boxCornerRadiusBottomStart="5dp"
+                app:boxCornerRadiusTopEnd="5dp"
+                app:boxCornerRadiusTopStart="5dp"
+                app:boxStrokeColor="@color/light_black">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/messPendingAmount"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:digits="0123456789"
+                    android:fontFamily="@font/poppinsregular"
+                    android:hint="Pending Amount (Paid Now)"
+                    android:imeOptions="actionDone"
+                    android:inputType="numberDecimal"
+                    android:paddingStart="15dp"
+                    android:paddingEnd="10dp"
+                    android:singleLine="true"
+                    android:textColor="@color/black"
+                    android:textColorHint="@color/light_black"
+                    android:textSize="15dp" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+    <TextView
+        android:id="@+id/updatePayment"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_alignParentBottom="true"
+        android:layout_gravity="center"
+        android:background="@color/colorPrimary"
+        android:fontFamily="@font/poppinsmedium"
+        android:gravity="center"
+        android:text="Update Payment"
+        android:textAllCaps="true"
+        android:textColor="@color/white"
+        android:textSize="17dp" />
+
+</RelativeLayout>

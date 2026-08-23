@@ -1,0 +1,267 @@
+package com.pos_billingwala.Fragment;
+
+import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.app.Dialog;
+import android.content.Context;
+import android.graphics.drawable.ColorDrawable;
+import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.util.Log;
+import android.view.KeyEvent;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.PopupWindow;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
+
+import com.google.android.material.textfield.TextInputEditText;
+import com.pos_billingwala.Activity.MainActivity;
+import com.pos_billingwala.Adapter.MessInvoiceAdapter;
+import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Model.CompanyResponse;
+import com.pos_billingwala.Model.MemberResponse;
+import com.pos_billingwala.R;
+import com.pos_billingwala.databinding.FragmentInvoiceMessBinding;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+
+@SuppressLint("StaticFieldLeak, ClickableViewAccessibility, NonConstantResourceId, NotifyDataSetChanged, SetTextI18n")
+public class InvoiceMess extends Fragment implements View.OnClickListener {
+
+    public static Activity activity;
+    View view;
+    POSBillingWalaDatabase posBillingWalaDatabase;
+    List<CompanyResponse> companyResponseList = new ArrayList<>();
+    List<MemberResponse> memberResponseList = new ArrayList<>();
+    List<MemberResponse> searchMemberResponseList = new ArrayList<>();
+    PopupWindow mypopupWindow;
+    MessInvoiceAdapter messInvoiceAdapter;
+    FragmentInvoiceMessBinding binding;
+
+
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        binding = FragmentInvoiceMessBinding.inflate(inflater, container, false);
+        view = binding.getRoot(); //Root xml or viewGroup will be a part of converted view over here
+
+        activity = getActivity();
+
+        posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
+
+        view.setFocusableInTouchMode(true);
+        view.requestFocus();
+        view.setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View v, int keyCode, KeyEvent event) {
+
+                if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
+                    Log.i("tag", "onKey Back listener is working!!!");
+                    ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
+                    ((MainActivity) activity).loadFragment(new Home(), false);
+                    return true;
+                }
+                return false;
+            }
+        });
+
+        binding.searchMessMember.setSelection(binding.searchMessMember.getText().toString().length());
+
+        binding.searchMessMember.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                searchMessMember(s.toString());
+            }
+        });
+
+        binding.homeCardView.setOnClickListener(this);
+        binding.menuIcon.setOnClickListener(this);
+
+        return view;
+
+    }
+
+    public void searchMessMember(String memberData) {
+
+        searchMemberResponseList.clear();
+        if (!memberData.isEmpty()) {
+            for (int i = 0; i < memberResponseList.size(); i++)
+                if ((memberResponseList.get(i).getMemberName() + memberResponseList.get(i).getMemberMobileNumber()).toLowerCase().contains(memberData.toLowerCase().trim())) {
+                    searchMemberResponseList.add(memberResponseList.get(i));
+                }
+        } else {
+            Toast.makeText(activity, "No search found. All data may be showing ", Toast.LENGTH_SHORT).show();
+            searchMemberResponseList = new ArrayList<>();
+            searchMemberResponseList.addAll(memberResponseList);
+        }
+
+        messInvoiceAdapter = new MessInvoiceAdapter(activity, searchMemberResponseList);
+        binding.recyclerView.setAdapter(messInvoiceAdapter);
+        messInvoiceAdapter.notifyDataSetChanged();
+        // messInvoiceAdapter.notifyItemInserted(searchMemberResponseList.size() - 1);
+
+    }
+
+    @Override
+    public void onClick(View view) {
+        int id = view.getId();
+        if (id == R.id.homeCardView) {
+            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
+            ((MainActivity) activity).loadFragment(new Home(), false);
+        } else if (id == R.id.menuIcon) {
+            setPopUpWindow();
+        }
+    }
+
+
+    public void setMemberListPassword(ImageView imageView) {
+
+        final Dialog dialog = new Dialog(activity);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE); // before
+        dialog.setContentView(R.layout.report_password_dialog);
+        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
+        dialog.setCancelable(false);
+
+        WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
+        lp.copyFrom(dialog.getWindow().getAttributes());
+        lp.width = WindowManager.LayoutParams.MATCH_PARENT;
+        lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
+
+        TextView continueToReport = dialog.findViewById(R.id.continueToReport);
+        TextView dismissReport = dialog.findViewById(R.id.dismissReport);
+        TextInputEditText reportPin = dialog.findViewById(R.id.reportPin);
+        TextView detailsTxt = dialog.findViewById(R.id.details);
+        detailsTxt.setText("Member List Password");
+
+        dismissReport.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.dismiss();
+            }
+        });
+
+        continueToReport.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                String pin;
+                if (MainActivity.reportPin != null) {
+                    pin = MainActivity.reportPin;
+                } else {
+                    pin = "9082";
+                }
+
+                if (reportPin.getText().toString().equalsIgnoreCase(pin)) {
+                    dialog.dismiss();
+                    ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
+                    ((MainActivity) activity).loadFragment(new MessMemberList(), true);
+                } else {
+                    reportPin.requestFocus();
+                    reportPin.setError("Enter correct pin");
+                }
+            }
+        });
+
+        dialog.show();
+        dialog.getWindow().setAttributes(lp);
+
+
+    }
+
+    public void setPopUpWindow() {
+
+        LayoutInflater inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        view = inflater.inflate(R.layout.add_member_dialog, null);
+        mypopupWindow = new PopupWindow(view, RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT, true);
+
+        LinearLayout addMemberLayout = view.findViewById(R.id.addMemberLayout);
+        TextView addMemberTxt = view.findViewById(R.id.addMember);
+
+        addMemberTxt.setText("Member List");
+
+        addMemberLayout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mypopupWindow.dismiss();
+                setMemberListPassword(binding.menuIcon);
+            }
+        });
+
+        mypopupWindow.showAsDropDown(binding.menuIcon, 0, -75);
+
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        ((MainActivity) activity).lockUnlockDrawer(1);
+        getCompanyDetails();
+    }
+
+    public void getCompanyDetails() {
+
+        companyResponseList.clear();
+        companyResponseList = posBillingWalaDatabase.getCompanyDetails();
+        if (!companyResponseList.isEmpty()) {
+            getMemberList();
+        } else {
+            Toast.makeText(activity, "Please fill shop details", Toast.LENGTH_SHORT).show();
+            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
+            ((MainActivity) activity).loadFragment(new CompanyDetailSetting(), true);
+        }
+
+    }
+
+
+    public void getMemberList() {
+
+        Date c = Calendar.getInstance().getTime();
+        System.out.println("Current time => " + c);
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM", Locale.getDefault());
+        String paymentDate = df.format(c);
+
+        memberResponseList.clear();
+        memberResponseList = posBillingWalaDatabase.getMemberPaymentList(paymentDate);
+        if (!memberResponseList.isEmpty()) {
+
+            messInvoiceAdapter = new MessInvoiceAdapter(activity, memberResponseList);
+            binding.recyclerView.setAdapter(messInvoiceAdapter);
+            messInvoiceAdapter.notifyDataSetChanged();
+            //  messInvoiceAdapter.notifyItemInserted(memberResponseList.size() - 1);
+
+            binding.messOrderLayout.setVisibility(View.VISIBLE);
+            binding.noDataFound.setVisibility(View.GONE);
+        } else {
+            binding.messOrderLayout.setVisibility(View.GONE);
+            binding.noDataFound.setVisibility(View.VISIBLE);
+        }
+
+    }
+
+}

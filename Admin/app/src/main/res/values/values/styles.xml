@@ -1,0 +1,58 @@
+<resources>
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/color_primary</item>
+        <item name="colorPrimaryDark">@color/color_primary</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:windowIsTranslucent">true</item>
+
+    </style>
+
+    <style name="CustomDropDownTilStyle" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColorHint">@color/light_black</item>
+        <item name="fontFamily">@font/poppinsregular</item>
+        <item name="android:textSize">15sp</item>
+        <item name="overlapAnchor">true</item>
+        <item name="hintTextColor">@color/colorAccent</item>
+        <item name="boxStrokeColor">@color/colorAccent</item>
+        <item name="colorControlNormal">@color/colorAccent</item>
+        <item name="colorControlActivated">@color/colorAccent</item>
+        <item name="colorControlHighlight">@color/colorAccent</item>
+        <item name="boxCornerRadiusBottomEnd">3dp</item>
+        <item name="boxCornerRadiusBottomStart">3dp</item>
+        <item name="boxCornerRadiusTopEnd">3dp</item>
+        <item name="boxCornerRadiusTopStart">3dp</item>
+    </style>
+
+    <style name="RatingBar" parent="Theme.AppCompat">
+        <item name="colorControlNormal">@color/light_black</item>
+        <item name="colorControlActivated">#DC9340</item>
+    </style>
+
+    <style name="spinnerItemStyle" parent="android:Widget.TextView.SpinnerItem">
+
+    </style>
+
+    <style name="spinnerDropDownItemStyle" parent="android:TextAppearance.Widget.TextView.SpinnerItem">
+
+    </style>
+
+    <style name="MyCardView" parent="@style/Widget.MaterialComponents.CardView">
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearanceOverlay.MaterialCardView</item>
+    </style>
+
+
+    <style name="ShapeAppearanceOverlay.MaterialCardView" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeTopRight">20dp</item>
+        <item name="cornerSizeTopLeft">20dp</item>
+        <item name="cornerSizeBottomRight">0dp</item>
+        <item name="cornerSizeBottomLeft">0dp</item>
+    </style>
+
+
+</resources>

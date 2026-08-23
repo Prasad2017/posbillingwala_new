@@ -1,0 +1,104 @@
+<resources>
+    <string name="app_name">Billingwala</string>
+    <string name="privacy_policy">By providing username &amp; password, I hereby agree and accept the <u><font fgcolor='#df0052'>Terms of service</font></u> and <u><font fgcolor='#df0052'>Privacy Policy</font></u> in use of the POS Billingwala app.</string>
+    <string name="sign_in_msg">Sign In to \nkeep do amazing Billing\nwith POS Billingwala</string>
+    <string name="mobile_number_msg">Enter your shop licence key. We\'ll verify your account, so we know you\'re real.</string>
+    <string name="mpin_msg">Enter your shop PB-PIN. We\'ll verify your account, so we know you\'re real.</string>
+
+    <string name="inr">\u20B9</string>
+
+    <string name="label_month">MONTH</string>
+    <string name="label_year">YEAR</string>
+
+    <string name="new_user">New here? <u><b><font fgcolor='#df0052'>Register free</font></b></u></string>
+    <string name="mpin_login">Login with <b><font fgcolor='#df0052'>PB-PIN</font></b></string>
+    <string name="support_phone_display">+91 89831 49299</string>
+    <string name="support_phone_dial">+919883149299</string>
+    <string name="forgot_licence_key_message">Forgot your licence key? Call support: %1$s</string>
+    <string name="trial_support_contact">Need licence or support help? Call %1$s</string>
+    <string name="new_user_support_team">Create your free account in a few steps. Enter your licence key on the login screen to start billing. Need help? Call +91 89831 49299.</string>
+    <string name="trial_signup_title">Register for Free</string>
+    <string name="trial_signup_hint">Enter your shop details below to use POS Billingwala free — quick setup, no payment needed.</string>
+    <string name="trial_signup_name">Your name</string>
+    <string name="trial_signup_contact">Mobile number</string>
+    <string name="trial_signup_shop">Shop / restaurant name</string>
+    <string name="trial_signup_address">Shop address</string>
+    <string name="trial_signup_submit">Create Free Account</string>
+    <string name="trial_back_to_login">Already registered? Back to Login</string>
+    <string name="trial_error_empty_fields">Please fill in all the details to continue.</string>
+    <string name="trial_error_invalid_mobile">Please enter a valid 10-digit mobile number.</string>
+    <string name="trial_loading">Creating your free account…</string>
+    <string name="trial_error_network">No internet connection. Please check your network and try again.</string>
+    <string name="trial_error_server">We could not complete your registration right now. Please try again in a moment.</string>
+    <string name="trial_error_default">Registration could not be completed. Please try again.</string>
+    <string name="trial_error_dialog_title">Something went wrong</string>
+    <string name="trial_success_title">Welcome to POS Billingwala!</string>
+    <string name="trial_success_message">Your free app licence key:\n\n%1$s\n\nSave this key — you will need it to log in.\n\nTap Continue to open the app and start billing.</string>
+    <string name="trial_success_button">Continue to Login</string>
+
+    <string name="in_app_snack_bar_message">Update almost finished!</string>
+    <string name="in_app_snack_bar_action_title">RESTART</string>
+    <string name="you_appear_to_be_offline">You appear to be offline</string>
+    <string name="you_can_t_use_gmail_until_you_re_connected_to_the_internet">You can\'t use Gmail until you\'re connected to the internet</string>
+    <string name="retry">Retry</string>
+    <string name="hi_pos_billingwala">Hi POS Billingwala</string>
+    <string name="fast_billing">Fast Billing</string>
+    <string name="dine_in">Dine In</string>
+    <string name="take_away">Take Away</string>
+    <string name="technical_support_91_8983149299_91_9130188584">Technical Support: +91 89831 49299</string>
+    <string name="www_webuslabs_com_nemail_info_posbillingwala_in_ncontact_91_8983149299_91_9130188584">www.posbillingwala.com\nEmail: info@posbillingwala.com\nContact: +91 89831 49299</string>
+    <string name="this_software_is_provided_is_as_without_any_express_or_implied_warranty_in_no_event_will_the_authors_be_held_liable_for_any_damages_arising_from_the_use_of_this_software">This Software is provided \'is-as\',without any express or implied warranty. In no event will the authors be held liable for any damages arising from the use of this software.</string>
+    <string name="thank_you_for_choosing_us">Thank You For Choosing Us!</string>
+    <string name="about_us">About Us</string>
+    <string name="category_list">Category List</string>
+    <string name="category_detail">CATEGORY DETAIL</string>
+    <string name="category_name">Category Name</string>
+    <string name="add_category">Add Category</string>
+    <string name="subcategory_list">Subcategory List</string>
+    <string name="subcategory_detail">SUBCATEGORY DETAIL</string>
+    <string name="subcategory_name">Subcategory Name</string>
+    <string name="add_subcategory">Add Subcategory</string>
+    <string name="no_subcategory_found">No Subcategory Found\nPlease add new subcategory</string>
+    <string name="manage_subcategories">Subcategories</string>
+    <string name="portion_list">Portion List</string>
+    <string name="portion_detail">PORTION DETAIL</string>
+    <string name="portion_name">Portion Name</string>
+    <string name="portion_price">Portion Price</string>
+    <string name="portion_sort_order">Sort Order</string>
+    <string name="add_portion">Add Portion</string>
+    <string name="manage_portions">Portions</string>
+    <string name="no_portion_found">No Portions Found\nAdd Half, Full, Kg, etc.</string>
+    <string name="developed_by_webus_labs_llp">Developed by Cana Tech Solutions Private Limited</string>
+    <string name="mess">Mess</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
+    <string name="time_set">Set time</string>
+    <string name="cancel">Cancel</string>
+    <string name="time">Time : </string>
+
+
+    <string name="connect_fail">Printer connection error</string>
+    <string name="connect_lost">Disconnected</string>
+    <string name="not_connected">Connection is not established</string>
+    <string name="title_paired_devices">Paired devices</string>
+    <string name="title_other_devices">Other devices</string>
+    <string name="button_scan">Scan devices</string>
+    <string name="none_paired">No device found</string>
+    <string name="scanning">Searching&#8230;</string>
+    <string name="select_device">Select device</string>
+    <string name="none_found">No device found</string>
+    <string name="connected">Connect to Printer</string>
+    <string name="bluetooth_not_available">Bluetooth not available</string>
+    <string name="turnon_bluetooth">Turn on Bluetooth</string>
+    <string name="pic_load_error">Error in loading picture</string>
+    <string name="print_succ">Print done successfully</string>
+    <string name="print_error">Error in printing</string>
+
+    <!--Select Photo-->
+    <string name="select_photo">Select Photo</string>
+    <string name="choose_from_gallery">Choose from Gallery</string>
+    <string name="camera">Camera</string>
+    <string name="dialog_cancel">Cancel</string>
+
+</resources>

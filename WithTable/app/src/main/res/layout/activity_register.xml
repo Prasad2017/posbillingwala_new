@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    tools:context=".Activity.Register">
+
+    <LinearLayout
+        android:id="@+id/registerLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingBottom="24dp">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/backToLogin"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="16dp"
+            android:fontFamily="@font/poppinsmedium"
+            android:padding="8dp"
+            android:text="@string/trial_back_to_login"
+            android:textColor="@color/colorPrimary"
+            android:textSize="14sp" />
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="120dp"
+            android:layout_gravity="center"
+            android:layout_marginTop="8dp"
+            android:adjustViewBounds="true"
+            android:contentDescription="@string/app_name"
+            android:paddingStart="24dp"
+            android:paddingEnd="24dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/app_logo" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="24dp"
+            android:fontFamily="@font/poppinsblack"
+            android:gravity="center"
+            android:paddingStart="15dp"
+            android:paddingEnd="15dp"
+            android:text="@string/trial_signup_title"
+            android:textColor="@color/black"
+            android:textSize="22sp" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginEnd="20dp"
+            android:fontFamily="@font/poppinsregular"
+            android:gravity="center"
+            android:paddingStart="15dp"
+            android:paddingEnd="15dp"
+            android:text="@string/trial_signup_hint"
+            android:textColor="#9aa1a5"
+            android:textSize="14sp" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="24dp"
+            android:layout_marginEnd="20dp">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/signupName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/poppinsregular"
+                android:hint="@string/trial_signup_name"
+                android:inputType="textPersonName"
+                android:maxLines="1" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginEnd="20dp">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/signupContact"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/poppinsregular"
+                android:hint="@string/trial_signup_contact"
+                android:inputType="phone"
+                android:maxLength="15"
+                android:maxLines="1" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginEnd="20dp">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/signupShopName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/poppinsregular"
+                android:hint="@string/trial_signup_shop"
+                android:inputType="textCapWords"
+                android:maxLines="1" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginEnd="20dp">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/signupAddress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/poppinsregular"
+                android:hint="@string/trial_signup_address"
+                android:inputType="textPostalAddress|textMultiLine"
+                android:maxLines="3" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/submitSignup"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_gravity="center"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="28dp"
+            android:layout_marginEnd="20dp"
+            android:background="@drawable/button_rounded_border"
+            android:backgroundTint="@color/colorPrimary"
+            android:fontFamily="@font/poppinsbold"
+            android:gravity="center"
+            android:text="@string/trial_signup_submit"
+            android:textColor="@color/white"
+            android:textSize="18sp" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/supportContact"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginEnd="20dp"
+            android:autoLink="phone"
+            android:fontFamily="@font/poppinsregular"
+            android:gravity="center"
+            android:padding="8dp"
+            android:textColor="@color/colorPrimary"
+            android:textSize="14sp" />
+
+    </LinearLayout>
+
+</androidx.core.widget.NestedScrollView>

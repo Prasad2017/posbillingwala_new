@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".Fragment.AddProduct">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_alignParentTop="true">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/homeCardView"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_alignParentStart="true"
+                android:layout_centerInParent="true"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="7dp"
+                android:layout_marginBottom="7dp"
+                app:cardCornerRadius="10dp">
+
+                <ImageView
+                    android:id="@+id/home"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/baseline_home_24" />
+
+            </androidx.cardview.widget.CardView>
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/posHeading"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:layout_gravity="center"
+                android:layout_toStartOf="@+id/menuIcon"
+                android:layout_toEndOf="@+id/homeCardView"
+                android:fontFamily="@font/poppinsmedium"
+                android:gravity="center"
+                android:paddingStart="5dp"
+                android:paddingEnd="5dp"
+                android:text="Mess"
+                android:textColor="@color/white"
+                android:textSize="17dp" />
+
+            <ImageView
+                android:id="@+id/menuIcon"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerInParent="true"
+                android:layout_marginEnd="10dp"
+                android:src="@drawable/ic_menu" />
+            <ImageView
+                android:id="@+id/appBrandLogo"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_centerVertical="true"
+                android:layout_marginEnd="8dp"
+                android:layout_toStartOf="@+id/menuIcon"
+                android:contentDescription="@string/app_name"
+                android:scaleType="fitCenter"
+                android:src="@drawable/app_logo" />
+
+        </RelativeLayout>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <LinearLayout
+        android:id="@+id/messOrderLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/appBarLayout"
+        android:layout_margin="5dp"
+        android:orientation="vertical">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/searchMessMember"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_gravity="center"
+            android:layout_margin="5dp"
+            android:background="@drawable/button_rounded_border"
+            android:fontFamily="@font/poppinsregular"
+            android:gravity="center|start"
+            android:hint="Search Mess Member"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:textColor="@color/black"
+            android:textSize="15dp" />
+
+        <com.pos_billingwala.Extra.AutoFitGridRecyclerView
+            android:id="@+id/recyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:columnWidth="200dp"
+            android:nestedScrollingEnabled="true"
+            android:padding="5dp" />
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/noDataFound"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:fontFamily="@font/poppinsmedium"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
+        android:text="No data Found"
+        android:textColor="@color/black"
+        android:textSize="20dp" />
+
+</RelativeLayout>

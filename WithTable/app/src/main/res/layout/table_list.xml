@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/tableNumberCardView"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="5dp"
+    app:cardBackgroundColor="@color/white"
+    app:cardCornerRadius="7dp"
+    app:cardUseCompatPadding="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_margin="5dp"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tableNumber"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="5dp"
+            android:fontFamily="@font/poppinsmedium"
+            android:gravity="center"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:textColor="@color/black"
+            android:textSize="14dp" />
+
+        <TextView
+            android:id="@+id/billAmount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:fontFamily="@font/poppinsmedium"
+            android:gravity="center"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:textSize="14dp" />
+
+        <TextView
+            android:id="@+id/addItems"
+            android:layout_width="100dp"
+            android:layout_height="25dp"
+            android:layout_gravity="center"
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="10dp"
+            android:fontFamily="@font/poppinsregular"
+            android:gravity="center"
+            android:text="Add Items"
+            android:textColor="@color/white"
+            android:textSize="12dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="5dp"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:id="@+id/billPrintLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center|start"
+                android:layout_marginStart="5dp"
+                android:layout_marginEnd="5dp"
+                android:layout_weight="1"
+                android:gravity="center|start"
+                android:orientation="horizontal"
+                android:visibility="visible">
+
+                <ImageView
+                    android:layout_width="17dp"
+                    android:layout_height="17dp"
+                    android:layout_gravity="center"
+                    android:layout_marginStart="5dp"
+                    android:src="@drawable/baseline_print_24"
+                    app:tint="@color/colorPrimary" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:gravity="center"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp"
+                    android:singleLine="true"
+                    android:text="Print Bill"
+                    android:textColor="@color/colorPrimary"
+                    android:textSize="12dp" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/billSettlementPrintLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center|start"
+                android:layout_marginStart="5dp"
+                android:layout_marginTop="5dp"
+                android:layout_marginEnd="5dp"
+                android:layout_marginBottom="5dp"
+                android:layout_weight="1"
+                android:gravity="center|start"
+                android:orientation="horizontal"
+                android:visibility="visible">
+
+                <ImageView
+                    android:layout_width="17dp"
+                    android:layout_height="17dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/baseline_print_24"
+                    app:tint="@color/red" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:gravity="center|start"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp"
+                    android:singleLine="true"
+                    android:text="Settlement"
+                    android:textColor="@color/red"
+                    android:textSize="12dp" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

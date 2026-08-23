@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/productCardView"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="5dp"
+    android:elevation="7dp"
+    app:cardBackgroundColor="#ecfffa"
+    app:cardCornerRadius="5dp">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:id="@+id/productQuantity"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_alignParentEnd="true"
+            android:layout_marginStart="5dp"
+            android:layout_marginTop="5dp"
+            android:layout_marginEnd="5dp"
+            android:layout_marginBottom="5dp"
+            android:background="@drawable/product_quantity_border"
+            android:fontFamily="@font/poppinsregular"
+            android:gravity="center"
+            android:textColor="@color/white"
+            android:textSize="10dp"
+            android:visibility="gone" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_margin="5dp"
+            android:layout_toStartOf="@+id/productQuantity"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/productName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="5dp"
+                android:fontFamily="@font/poppinsmedium"
+                android:gravity="center"
+                android:hint="Product Name"
+                android:maxLines="2"
+                android:paddingStart="5dp"
+                android:paddingEnd="5dp"
+                android:textColor="@color/black"
+                android:textSize="15dp" />
+
+            <TextView
+                android:id="@+id/productPriceUnit"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="3dp"
+                android:layout_marginBottom="5dp"
+                android:fontFamily="@font/poppinsregular"
+                android:gravity="center"
+                android:hint="Product Price"
+                android:paddingStart="5dp"
+                android:paddingEnd="5dp"
+                android:singleLine="true"
+                android:textColor="@color/black"
+                android:textSize="13dp" />
+
+        </LinearLayout>
+
+    </RelativeLayout>
+
+</androidx.cardview.widget.CardView>

@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="5dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="5dp">
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/invoiceNumber"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:layout_gravity="center"
+                android:layout_toStartOf="@+id/invoiceCardView"
+                android:fontFamily="@font/poppinsmedium"
+                android:gravity="center|start"
+                android:hint="Invoice Number"
+                android:paddingStart="15dp"
+                android:paddingEnd="15dp"
+                android:textColor="@color/colorPrimary"
+                android:textSize="14dp" />
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/invoiceCardView"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerInParent="true"
+                app:cardBackgroundColor="@color/darkBlue"
+                app:cardCornerRadius="5dp"
+                app:cardUseCompatPadding="true">
+
+                <ImageView
+                    android:id="@+id/invoice"
+                    android:layout_width="20dp"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center"
+                    android:padding="3dp"
+                    android:src="@drawable/baseline_print_24"
+                    app:tint="@color/white" />
+
+            </androidx.cardview.widget.CardView>
+
+        </RelativeLayout>
+
+        <TextView
+            android:id="@+id/invoiceType"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:fontFamily="@font/poppinslight"
+            android:gravity="center|start"
+            android:hint="Invoice Type"
+            android:paddingStart="15dp"
+            android:paddingEnd="15dp"
+            android:textColor="@color/black"
+            android:textSize="14dp" />
+
+        <TextView
+            android:id="@+id/invoiceDate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:fontFamily="@font/poppinslight"
+            android:gravity="center|start"
+            android:hint="Invoice Date"
+            android:paddingStart="15dp"
+            android:paddingEnd="15dp"
+            android:textColor="@color/black"
+            android:textSize="14dp" />
+
+        <TextView
+            android:id="@+id/subTotal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:fontFamily="@font/poppinslight"
+            android:gravity="center|start"
+            android:hint="Sub Total"
+            android:paddingStart="15dp"
+            android:paddingEnd="15dp"
+            android:textColor="@color/black"
+            android:textSize="14dp" />
+
+        <TextView
+            android:id="@+id/gst"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:fontFamily="@font/poppinslight"
+            android:gravity="center|start"
+            android:hint="CGST+SGST"
+            android:paddingStart="15dp"
+            android:paddingEnd="15dp"
+            android:textColor="@color/black"
+            android:textSize="14dp" />
+
+        <TextView
+            android:id="@+id/discount"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:fontFamily="@font/poppinslight"
+            android:gravity="center|start"
+            android:hint="Discount"
+            android:paddingStart="15dp"
+            android:paddingEnd="15dp"
+            android:textColor="@color/black"
+            android:textSize="14dp" />
+
+        <TextView
+            android:id="@+id/totalAmount"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:fontFamily="@font/poppinslight"
+            android:gravity="center|start"
+            android:hint="Total Amount"
+            android:paddingStart="15dp"
+            android:paddingEnd="15dp"
+            android:textColor="@color/black"
+            android:textSize="14dp" />
+
+        <TextView
+            android:id="@+id/payableMode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:fontFamily="@font/poppinslight"
+            android:gravity="center|start"
+            android:hint="Payment Mode"
+            android:paddingStart="15dp"
+            android:paddingEnd="15dp"
+            android:textColor="@color/black"
+            android:textSize="14dp" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="5dp"
+            android:background="@color/black" />
+
+    </LinearLayout>
+
+</RelativeLayout>

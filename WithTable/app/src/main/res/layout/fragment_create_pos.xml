@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".Fragment.CreatePos">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_alignParentTop="true">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/homeCardView"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_alignParentStart="true"
+                android:layout_centerInParent="true"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="7dp"
+                android:layout_marginBottom="7dp"
+                app:cardCornerRadius="10dp">
+
+                <ImageView
+                    android:id="@+id/home"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_gravity="center"
+                    android:padding="5dp"
+                    android:src="@drawable/back" />
+
+            </androidx.cardview.widget.CardView>
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/posHeading"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:layout_gravity="center"
+                android:layout_toStartOf="@+id/menuIcon"
+                android:layout_toEndOf="@+id/homeCardView"
+                android:fontFamily="@font/poppinsmedium"
+                android:gravity="center|start"
+                android:paddingStart="15dp"
+                android:paddingEnd="15dp"
+                android:text="Product Menu"
+                android:textColor="@color/white"
+                android:textSize="17dp" />
+
+            <ImageView
+                android:id="@+id/menuIcon"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerInParent="true"
+                android:layout_marginEnd="10dp"
+                android:src="@drawable/ic_menu" />
+            <ImageView
+                android:id="@+id/appBrandLogo"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_centerVertical="true"
+                android:layout_marginEnd="8dp"
+                android:layout_toStartOf="@+id/menuIcon"
+                android:contentDescription="@string/app_name"
+                android:scaleType="fitCenter"
+                android:src="@drawable/app_logo" />
+
+        </RelativeLayout>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@id/cartLayout"
+        android:layout_below="@+id/appBarLayout"
+        android:layout_marginTop="10dp"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:id="@+id/productSearchLayout"
+            android:layout_width="match_parent"
+            android:layout_height="45dp"
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginEnd="10dp"
+            android:background="@drawable/button_rounded_border"
+            android:orientation="horizontal">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/productSearch"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_gravity="center"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp"
+                android:layout_weight="1"
+                android:background="@null"
+                android:fontFamily="@font/poppinsregular"
+                android:hint="search product by name, product code"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:singleLine="true"
+                android:textColor="@color/black"
+                android:textSize="14dp" />
+
+            <ImageView
+                android:id="@+id/voiceSearchProduct"
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                android:layout_gravity="center"
+                android:layout_marginEnd="10dp"
+                android:src="@drawable/baseline_mic_24"
+                app:tint="@color/black" />
+
+        </LinearLayout>
+
+        <com.google.android.material.button.MaterialButtonToggleGroup
+            android:id="@+id/foodTypeToggle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="10dp"
+            android:gravity="center"
+            app:singleSelection="true"
+            app:selectionRequired="true">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/foodTypeFoodBtn"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Food"
+                android:textAllCaps="false" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/foodTypeBeverageBtn"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Beverage"
+                android:textAllCaps="false" />
+
+        </com.google.android.material.button.MaterialButtonToggleGroup>
+
+        <com.pos_billingwala.Extra.AutoFitGridRecyclerView
+            android:id="@+id/categoryRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:columnWidth="130dp"
+            android:nestedScrollingEnabled="true"
+            android:padding="5dp"
+            android:visibility="visible" />
+
+        <LinearLayout
+            android:id="@+id/productLinearLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/backToCategory"
+                android:layout_width="match_parent"
+                android:layout_height="30dp"
+                android:layout_gravity="center"
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="5dp"
+                android:drawableLeft="@drawable/arrowback"
+                android:drawablePadding="10dp"
+                android:fontFamily="@font/poppinsregular"
+                android:gravity="center|left"
+                android:text="Back"
+                android:textColor="@color/black"
+                android:textSize="17dp"
+                android:visibility="visible" />
+
+            <HorizontalScrollView
+                android:id="@+id/subcategoryScrollView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:scrollbars="none"
+                android:visibility="gone">
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/subcategoryChipGroup"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:singleSelection="true"
+                    app:selectionRequired="true" />
+
+            </HorizontalScrollView>
+
+            <com.pos_billingwala.Extra.AutoFitGridRecyclerView
+                android:id="@+id/productRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:columnWidth="150dp"
+                android:nestedScrollingEnabled="true"
+                android:padding="5dp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <RelativeLayout
+        android:id="@+id/cartLayout"
+        android:layout_width="match_parent"
+        android:layout_height="55dp"
+        android:layout_alignParentBottom="true"
+        android:background="@color/colorPrimary">
+
+        <TextView
+            android:id="@+id/totalItems"
+            android:layout_width="150dp"
+            android:layout_height="40dp"
+            android:layout_alignParentStart="true"
+            android:layout_centerInParent="true"
+            android:layout_marginStart="5dp"
+            android:layout_marginEnd="5dp"
+            android:background="@drawable/button_rounded_border"
+            android:backgroundTint="@color/white"
+            android:fontFamily="@font/poppinsregular"
+            android:gravity="center"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:text="Total Items: 0"
+            android:textColor="@color/black"
+            android:textSize="15dp" />
+
+        <TextView
+            android:id="@+id/totalAmount"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:layout_marginStart="5dp"
+            android:layout_marginEnd="5dp"
+            android:layout_toEndOf="@+id/totalItems"
+            android:fontFamily="@font/poppinsregular"
+            android:gravity="center"
+            android:paddingStart="15dp"
+            android:paddingEnd="10dp"
+            android:textColor="@color/white"
+            android:textSize="15dp" />
+
+    </RelativeLayout>
+
+</RelativeLayout>

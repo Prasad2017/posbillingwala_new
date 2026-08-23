@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="5dp"
+    app:cardCornerRadius="7dp"
+    app:cardElevation="7dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/productCategory"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="5dp"
+            android:fontFamily="@font/poppinslight"
+            android:gravity="center|start"
+            android:hint="Product Category"
+            android:paddingStart="15dp"
+            android:paddingEnd="15dp"
+            android:textColor="@color/black"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/productName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:fontFamily="@font/poppinslight"
+            android:gravity="center|start"
+            android:hint="Product Name"
+            android:paddingStart="15dp"
+            android:paddingEnd="15dp"
+            android:textColor="@color/black"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/productPrice"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:fontFamily="@font/poppinslight"
+            android:gravity="center|start"
+            android:hint="Product Price"
+            android:paddingStart="15dp"
+            android:paddingEnd="15dp"
+            android:textColor="@color/black"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/productUnit"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:fontFamily="@font/poppinslight"
+            android:gravity="center|start"
+            android:hint="Product Unit"
+            android:paddingStart="15dp"
+            android:paddingEnd="15dp"
+            android:textColor="@color/black"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/productCGST"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:fontFamily="@font/poppinslight"
+            android:gravity="center|start"
+            android:hint="Product CGST"
+            android:paddingStart="15dp"
+            android:paddingEnd="15dp"
+            android:textColor="@color/black"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/productSGST"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:fontFamily="@font/poppinslight"
+            android:gravity="center|start"
+            android:hint="Product SGST"
+            android:paddingStart="15dp"
+            android:paddingEnd="15dp"
+            android:textColor="@color/black"
+            android:textSize="14sp" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center|end"
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="5dp"
+            android:layout_marginEnd="10dp"
+            android:layout_marginBottom="10dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/deleteProduct"
+                android:layout_width="wrap_content"
+                android:layout_height="25dp"
+                android:layout_gravity="center"
+                android:layout_marginStart="5dp"
+                android:layout_marginEnd="5dp"
+                android:layout_weight="1"
+                android:background="@drawable/button_rounded_border"
+                android:backgroundTint="@color/red_900"
+                android:fontFamily="@font/poppinsregular"
+                android:gravity="center"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:text="Delete"
+                android:textColor="@color/white"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/managePortions"
+                android:layout_width="wrap_content"
+                android:layout_height="25dp"
+                android:layout_gravity="center"
+                android:layout_marginStart="5dp"
+                android:layout_marginEnd="5dp"
+                android:background="@drawable/button_rounded_border"
+                android:backgroundTint="@color/colorPrimary"
+                android:fontFamily="@font/poppinsregular"
+                android:gravity="center"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:text="Portions"
+                android:textColor="@color/white"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/updateProduct"
+                android:layout_width="wrap_content"
+                android:layout_height="25dp"
+                android:layout_gravity="center"
+                android:layout_marginStart="5dp"
+                android:layout_marginEnd="5dp"
+                android:layout_weight="1"
+                android:background="@drawable/button_rounded_border"
+                android:backgroundTint="@color/green_700"
+                android:fontFamily="@font/poppinsregular"
+                android:gravity="center"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:text="Update"
+                android:textColor="@color/white"
+                android:textSize="13sp" />
+
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

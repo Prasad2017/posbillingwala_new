@@ -1,0 +1,37 @@
+# P5-5: Never commit production dumps or local secrets
+
+# Full database dumps (schema reference lives in API/schema/)
+/*.sql
+!spllmgkn_posbill_complete.sql
+!API/migrations/*.sql
+!API/schema/schema_reference.sql
+!API/schema/posbill_install.sql
+
+# Local DB credentials (copy from db_local.example.php)
+API/db_local.php
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+*.iml
+
+# Android build outputs (per-module gitignores may also apply)
+**/build/
+**/.gradle/
+**/local.properties
+
+# Secrets / keys
+**/google-services.json
+**/GoogleService-Info.plist
+*.keystore
+*.jks
+API/license_signing_private.pem
+
+# Local release APK copies (build with assembleRelease)
+releases/*.apk

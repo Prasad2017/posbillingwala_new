@@ -1,0 +1,75 @@
+<resources>
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimary</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="windowNoTitle">true</item>
+        <item name="windowActionBar">false</item>
+
+    </style>
+
+    <style name="CustomDropDownTilStyle" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColorHint">@color/light_black</item>
+        <item name="fontFamily">@font/poppinsregular</item>
+        <item name="android:textSize">15sp</item>
+        <item name="overlapAnchor">true</item>
+        <item name="hintTextColor">@color/colorAccent</item>
+        <item name="boxStrokeColor">@color/colorAccent</item>
+        <item name="colorControlNormal">@color/colorAccent</item>
+        <item name="colorControlActivated">@color/colorAccent</item>
+        <item name="colorControlHighlight">@color/colorAccent</item>
+        <item name="boxCornerRadiusBottomEnd">5dp</item>
+        <item name="boxCornerRadiusBottomStart">5dp</item>
+        <item name="boxCornerRadiusTopEnd">5dp</item>
+        <item name="boxCornerRadiusTopStart">5dp</item>
+    </style>
+
+    <style name="RatingBar" parent="Theme.AppCompat">
+        <item name="colorControlNormal">@color/light_black</item>
+        <item name="colorControlActivated">#DC9340</item>
+    </style>
+
+    <style name="spinnerItemStyle" parent="android:Widget.TextView.SpinnerItem">
+
+    </style>
+
+    <style name="spinnerDropDownItemStyle" parent="android:TextAppearance.Widget.TextView.SpinnerItem">
+
+    </style>
+
+    <style name="MyCardView" parent="@style/Widget.MaterialComponents.CardView">
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearanceOverlay.MaterialCardView</item>
+    </style>
+
+
+    <style name="ShapeAppearanceOverlay.MaterialCardView" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeTopRight">20dp</item>
+        <item name="cornerSizeTopLeft">20dp</item>
+        <item name="cornerSizeBottomRight">0dp</item>
+        <item name="cornerSizeBottomLeft">0dp</item>
+    </style>
+
+
+    <style name="MonthPickerDialogStyle">
+        <!-- Customize month picker theme here. -->
+        <!-- <item name="monthBgColor">#FFFFFF</item>
+         <item name="monthBgSelectedColor">#FF4081</item>
+         <item name="monthFontColorSelected">#ffffff</item>
+         <item name="monthFontColorNormal">#000000</item>
+         <item name="monthFontColorDisabled">#33000000</item>
+
+         <item name="headerBgColor">#FF4081</item>
+         <item name="headerFontColorSelected">#ffffff</item>
+         <item name="headerFontColorNormal">#85ffffff</item>
+         <item name="headerTitleColor">#ffffff</item>-->
+    </style>
+
+
+</resources>

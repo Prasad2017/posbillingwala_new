@@ -1,0 +1,473 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:ads="http://schemas.android.com/apk/res-auto"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".Fragment.UserSetting">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <com.google.android.material.appbar.AppBarLayout
+            android:id="@+id/appBarLayout"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_alignParentTop="true">
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <ImageView
+                    android:id="@+id/backToHome"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_alignParentStart="true"
+                    android:layout_centerInParent="true"
+                    android:layout_gravity="center"
+                    android:layout_marginStart="15dp"
+                    android:src="@drawable/back"
+                    app:tint="@color/white" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerInParent="true"
+                    android:layout_gravity="center"
+                    android:layout_marginStart="15dp"
+                    android:layout_toEndOf="@+id/backToHome"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:gravity="center"
+                    android:paddingStart="5dp"
+                    android:paddingEnd="5dp"
+                    android:text="User Setting"
+                    android:textColor="@color/white"
+                    android:textSize="17sp" />
+
+            </RelativeLayout>
+
+        </com.google.android.material.appbar.AppBarLayout>
+
+        <androidx.core.widget.NestedScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_above="@+id/appVersion"
+            android:layout_below="@id/appBarLayout">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="10dp">
+
+                <LinearLayout
+                    android:id="@+id/profileLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginEnd="20dp"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/account_setting" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_weight="1"
+                        android:fontFamily="@font/poppinsregular"
+                        android:gravity="center|start"
+                        android:paddingStart="10dp"
+                        android:paddingEnd="10dp"
+                        android:text="Profile\n(माझ प्रोफाइल)"
+                        android:textColor="@color/black"
+                        android:textSize="15sp" />
+
+                    <ImageView
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/baseline_keyboard_arrow_right_24"
+                        app:tint="@color/light_black" />
+
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginEnd="20dp"
+                    android:background="@color/black" />
+
+                <LinearLayout
+                    android:id="@+id/reportPinLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginEnd="20dp"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/reset_password" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_weight="1"
+                        android:fontFamily="@font/poppinsregular"
+                        android:gravity="center|start"
+                        android:paddingStart="10dp"
+                        android:paddingEnd="10dp"
+                        android:text="Report Pin\n(बिल काडून टाकायची पिन)"
+                        android:textColor="@color/black"
+                        android:textSize="15sp" />
+
+                    <ImageView
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/baseline_keyboard_arrow_right_24"
+                        app:tint="@color/light_black" />
+
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginEnd="20dp"
+                    android:background="@color/black" />
+
+                <LinearLayout
+                    android:id="@+id/categoryLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginEnd="20dp"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/dashboards" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_weight="1"
+                        android:fontFamily="@font/poppinsregular"
+                        android:gravity="center|start"
+                        android:paddingStart="10dp"
+                        android:paddingEnd="10dp"
+                        android:text="Category\n(प्रॉडक्टचे प्रकार)"
+                        android:textColor="@color/black"
+                        android:textSize="15sp" />
+
+                    <ImageView
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/baseline_keyboard_arrow_right_24"
+                        app:tint="@color/light_black" />
+
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginEnd="20dp"
+                    android:background="@color/black" />
+
+                <LinearLayout
+                    android:id="@+id/productLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginEnd="20dp"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/product" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_weight="1"
+                        android:fontFamily="@font/poppinsregular"
+                        android:gravity="center|start"
+                        android:paddingStart="10dp"
+                        android:paddingEnd="10dp"
+                        android:text="Product\n(प्रॉडक्ट)"
+                        android:textColor="@color/black"
+                        android:textSize="15sp" />
+
+                    <ImageView
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/baseline_keyboard_arrow_right_24"
+                        app:tint="@color/light_black" />
+
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginEnd="20dp"
+                    android:background="@color/black" />
+
+                <LinearLayout
+                    android:id="@+id/productExportLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginEnd="20dp"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/product" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_weight="1"
+                        android:fontFamily="@font/poppinsregular"
+                        android:gravity="center|start"
+                        android:paddingStart="10dp"
+                        android:paddingEnd="10dp"
+                        android:text="Product Export\n(प्रॉडक्ट)"
+                        android:textColor="@color/black"
+                        android:textSize="15sp" />
+
+                    <ImageView
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/baseline_keyboard_arrow_right_24"
+                        app:tint="@color/light_black" />
+
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginEnd="20dp"
+                    android:background="@color/black" />
+
+                <LinearLayout
+                    android:id="@+id/invoiceDetailsLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginEnd="20dp"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/invoice" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_weight="1"
+                        android:fontFamily="@font/poppinsregular"
+                        android:gravity="center|start"
+                        android:paddingStart="10dp"
+                        android:paddingEnd="10dp"
+                        android:text="Invoice Details\n(बिलाची माहिती )"
+                        android:textColor="@color/black"
+                        android:textSize="15sp" />
+
+                    <ImageView
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/baseline_keyboard_arrow_right_24"
+                        app:tint="@color/light_black" />
+
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginEnd="20dp"
+                    android:background="@color/black" />
+
+                <LinearLayout
+                    android:id="@+id/aboutLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="15dp"
+                    android:layout_marginEnd="20dp"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/baseline_contact_phone_24"
+                        app:tint="@color/light_black" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_weight="1"
+                        android:fontFamily="@font/poppinsregular"
+                        android:gravity="center|start"
+                        android:paddingStart="10dp"
+                        android:paddingEnd="10dp"
+                        android:text="About Us\n(आमचं बद्दल थोडस)"
+                        android:textColor="@color/black"
+                        android:textSize="15sp" />
+
+                    <ImageView
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/baseline_keyboard_arrow_right_24"
+                        app:tint="@color/light_black" />
+
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginEnd="20dp"
+                    android:background="@color/black" />
+
+                <LinearLayout
+                    android:id="@+id/logoutLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="15dp"
+                    android:layout_marginEnd="20dp"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/baseline_exit_to_app_24"
+                        app:tint="@color/light_black" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_weight="1"
+                        android:fontFamily="@font/poppinsregular"
+                        android:gravity="center|start"
+                        android:paddingStart="10dp"
+                        android:paddingEnd="10dp"
+                        android:text="Logout\n(बाहेर पडणे)"
+                        android:textColor="@color/black"
+                        android:textSize="15sp" />
+
+                    <ImageView
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/baseline_keyboard_arrow_right_24"
+                        app:tint="@color/light_black" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </androidx.core.widget.NestedScrollView>
+
+        <ImageView
+            android:layout_width="120dp"
+            android:layout_height="60dp"
+            android:layout_gravity="center"
+            android:layout_marginTop="16dp"
+            android:adjustViewBounds="true"
+            android:contentDescription="@string/app_name"
+            android:scaleType="fitCenter"
+            android:src="@drawable/app_logo" />
+
+        <TextView
+            android:id="@+id/appVersion"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="30dp"
+            android:fontFamily="@font/poppinsregular"
+            android:gravity="center"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:textColor="@color/light_black"
+            android:textSize="13sp" />
+
+        <TextView
+            android:id="@+id/appDevelopedBy"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:autoLink="email"
+            android:fontFamily="@font/poppinsmedium"
+            android:gravity="center"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:text="@string/developed_by"
+            android:textColor="@color/colorPrimary"
+            android:textSize="13sp" />
+
+        <com.google.android.gms.ads.AdView
+            android:id="@+id/ad_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="20dp"
+            ads:adSize="SMART_BANNER"
+            ads:adUnitId="ca-app-pub-2325627373654257/2405063954" />
+
+    </LinearLayout>
+
+</androidx.core.widget.NestedScrollView>

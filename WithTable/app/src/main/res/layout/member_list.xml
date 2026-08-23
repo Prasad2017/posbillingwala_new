@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/tableNumberCardView"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="5dp"
+    app:cardBackgroundColor="@color/white"
+    app:cardCornerRadius="7dp"
+    app:cardUseCompatPadding="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_margin="5dp"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/memberName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="5dp"
+            android:fontFamily="@font/poppinslight"
+            android:gravity="center|start"
+            android:hint="name"
+            android:paddingStart="15dp"
+            android:paddingEnd="15dp"
+            android:textColor="@color/black"
+            android:textSize="14dp" />
+
+        <TextView
+            android:id="@+id/memberMobileNumber"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:autoLink="phone"
+            android:fontFamily="@font/poppinslight"
+            android:gravity="center|start"
+            android:hint="mobile number"
+            android:paddingStart="15dp"
+            android:paddingEnd="15dp"
+            android:textColor="@color/black"
+            android:textSize="14dp" />
+
+        <TextView
+            android:id="@+id/memberAddress"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:fontFamily="@font/poppinslight"
+            android:gravity="center|start"
+            android:hint="address"
+            android:paddingStart="15dp"
+            android:paddingEnd="15dp"
+            android:textColor="@color/black"
+            android:textSize="14dp" />
+
+        <TextView
+            android:id="@+id/memberMessAmount"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:fontFamily="@font/poppinslight"
+            android:gravity="center|start"
+            android:hint="mess amount"
+            android:paddingStart="15dp"
+            android:paddingEnd="15dp"
+            android:textColor="@color/black"
+            android:textSize="14dp" />
+
+        <TextView
+            android:id="@+id/memberPaidAmount"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:fontFamily="@font/poppinslight"
+            android:gravity="center|start"
+            android:hint="paid amount"
+            android:paddingStart="15dp"
+            android:paddingEnd="15dp"
+            android:textColor="@color/black"
+            android:textSize="14dp" />
+
+        <TextView
+            android:id="@+id/memberPendingAmount"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:fontFamily="@font/poppinslight"
+            android:gravity="center|start"
+            android:hint="pending amount"
+            android:paddingStart="15dp"
+            android:paddingEnd="15dp"
+            android:textColor="@color/black"
+            android:textSize="14dp" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center|end"
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="5dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/deleteMember"
+                android:layout_width="wrap_content"
+                android:layout_height="25dp"
+                android:layout_gravity="center"
+                android:layout_marginStart="5dp"
+                android:layout_marginEnd="5dp"
+                android:layout_weight="1"
+                android:background="@drawable/button_rounded_border"
+                android:backgroundTint="@color/red_900"
+                android:fontFamily="@font/poppinsregular"
+                android:gravity="center"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:text="Delete"
+                android:textColor="@color/white"
+                android:textSize="12dp"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/updateMember"
+                android:layout_width="wrap_content"
+                android:layout_height="25dp"
+                android:layout_gravity="center"
+                android:layout_marginStart="5dp"
+                android:layout_marginEnd="5dp"
+                android:layout_weight="1"
+                android:background="@drawable/button_rounded_border"
+                android:backgroundTint="@color/green_700"
+                android:fontFamily="@font/poppinsregular"
+                android:gravity="center"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:text="Update"
+                android:textColor="@color/white"
+                android:textSize="13dp" />
+
+            <TextView
+                android:id="@+id/paymentNew"
+                android:layout_width="wrap_content"
+                android:layout_height="25dp"
+                android:layout_gravity="center"
+                android:layout_marginStart="5dp"
+                android:layout_marginEnd="5dp"
+                android:layout_weight="1"
+                android:background="@drawable/button_rounded_border"
+                android:backgroundTint="@color/colorPrimary"
+                android:fontFamily="@font/poppinsregular"
+                android:gravity="center"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:text="New Payment"
+                android:textColor="@color/white"
+                android:textSize="13dp" />
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/paymentMember"
+            android:layout_width="wrap_content"
+            android:layout_height="25dp"
+            android:layout_gravity="center|end"
+            android:layout_marginStart="5dp"
+            android:layout_marginEnd="5dp"
+            android:layout_marginBottom="5dp"
+            android:layout_weight="1"
+            android:background="@drawable/button_rounded_border"
+            android:backgroundTint="@color/red"
+            android:fontFamily="@font/poppinsregular"
+            android:gravity="center"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:text="Pay Pending Payment"
+            android:textColor="@color/white"
+            android:textSize="13dp" />
+
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

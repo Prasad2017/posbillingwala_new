@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".Fragment.AddProduct">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_alignParentTop="true">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <ImageView
+                android:id="@+id/backToSetting"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_alignParentStart="true"
+                android:layout_centerInParent="true"
+                android:layout_gravity="center"
+                android:layout_marginStart="15dp"
+                android:src="@drawable/back"
+                app:tint="@color/white" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:layout_gravity="center"
+                android:layout_marginStart="15dp"
+                android:layout_toStartOf="@+id/addInventory"
+                android:layout_toEndOf="@+id/backToSetting"
+                android:fontFamily="@font/poppinsmedium"
+                android:gravity="center|start"
+                android:paddingStart="5dp"
+                android:paddingEnd="5dp"
+                android:text="Inventory"
+                android:textColor="@color/white"
+                android:textSize="17dp" />
+
+            <TextView
+                android:id="@+id/addInventory"
+                android:layout_width="wrap_content"
+                android:layout_height="35dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerInParent="true"
+                android:layout_marginEnd="15dp"
+                android:background="@drawable/button_rounded_border"
+                android:backgroundTint="@color/white"
+                android:fontFamily="@font/poppinsregular"
+                android:gravity="center"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:text="Add Inventory"
+                android:textColor="@color/black"
+                android:textSize="15dp" />
+            <ImageView
+                android:id="@+id/appBrandLogo"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_centerVertical="true"
+                android:layout_marginEnd="8dp"
+                android:layout_toStartOf="@+id/addInventory"
+                android:contentDescription="@string/app_name"
+                android:scaleType="fitCenter"
+                android:src="@drawable/app_logo" />
+
+        </RelativeLayout>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <LinearLayout
+        android:id="@+id/linearLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/appBarLayout"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="50dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:fontFamily="@font/poppinsmedium"
+                android:gravity="center"
+                android:padding="5dp"
+                android:text="Sr No."
+                android:textColor="@color/black"
+                android:textSize="14dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_weight="1"
+                android:fontFamily="@font/poppinsmedium"
+                android:gravity="center"
+                android:padding="5dp"
+                android:text="Product"
+                android:textColor="@color/black"
+                android:textSize="14dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_weight="1"
+                android:fontFamily="@font/poppinsmedium"
+                android:gravity="center"
+                android:padding="5dp"
+                android:text="Total Qty"
+                android:textColor="@color/black"
+                android:textSize="14dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_weight="1"
+                android:fontFamily="@font/poppinsmedium"
+                android:gravity="center"
+                android:padding="5dp"
+                android:text="After Sale Qty"
+                android:textColor="@color/black"
+                android:textSize="14dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_weight="1"
+                android:fontFamily="@font/poppinsmedium"
+                android:gravity="center"
+                android:padding="5dp"
+                android:text="Sale Qty"
+                android:textColor="@color/black"
+                android:textSize="14dp" />
+
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/black" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="5dp" />
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/noDataFound"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:fontFamily="@font/poppinsmedium"
+        android:gravity="center"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
+        android:text="No Inventory Found"
+        android:textColor="@color/black"
+        android:textSize="17dp" />
+
+</RelativeLayout>

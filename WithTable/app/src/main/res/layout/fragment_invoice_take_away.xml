@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".Fragment.AddProduct">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_alignParentTop="true">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/homeCardView"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_alignParentStart="true"
+                android:layout_centerInParent="true"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="7dp"
+                android:layout_marginBottom="7dp"
+                app:cardCornerRadius="10dp">
+
+                <ImageView
+                    android:id="@+id/home"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/baseline_home_24" />
+
+            </androidx.cardview.widget.CardView>
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/posHeading"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:layout_gravity="center"
+                android:layout_toStartOf="@+id/menuIcon"
+                android:layout_toEndOf="@+id/homeCardView"
+                android:fontFamily="@font/poppinsmedium"
+                android:gravity="center"
+                android:paddingStart="5dp"
+                android:paddingEnd="5dp"
+                android:text="Take Away"
+                android:textColor="@color/white"
+                android:textSize="17dp" />
+
+            <ImageView
+                android:id="@+id/menuIcon"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerInParent="true"
+                android:layout_marginEnd="10dp"
+                android:src="@drawable/ic_menu" />
+            <ImageView
+                android:id="@+id/appBrandLogo"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_centerVertical="true"
+                android:layout_marginEnd="8dp"
+                android:layout_toStartOf="@+id/menuIcon"
+                android:contentDescription="@string/app_name"
+                android:scaleType="fitCenter"
+                android:src="@drawable/app_logo" />
+
+        </RelativeLayout>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <LinearLayout
+        android:id="@+id/takeAwayOrderLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/appBarLayout"
+        android:layout_margin="5dp"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="55dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center|start"
+                android:fontFamily="@font/poppinsmedium"
+                android:gravity="center|start"
+                android:padding="5dp"
+                android:text="Sr No."
+                android:textColor="@color/black"
+                android:textSize="14dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_weight="1"
+                android:fontFamily="@font/poppinsmedium"
+                android:gravity="center"
+                android:padding="5dp"
+                android:text="Take Away No."
+                android:textColor="@color/black"
+                android:textSize="14dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_weight="1"
+                android:fontFamily="@font/poppinsmedium"
+                android:gravity="center"
+                android:padding="5dp"
+                android:text="Bill Amount"
+                android:textColor="@color/black"
+                android:textSize="14dp" />
+
+            <TextView
+                android:layout_width="50dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginStart="5dp"
+                android:layout_marginEnd="10dp"
+                android:fontFamily="@font/poppinsmedium"
+                android:gravity="center"
+                android:padding="5dp"
+                android:textColor="@color/black"
+                android:textSize="14dp" />
+
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/black" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="5dp" />
+
+    </LinearLayout>
+
+</RelativeLayout>

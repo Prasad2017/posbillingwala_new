@@ -1,0 +1,674 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    tools:context=".Fragment.AddProduct">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_alignParentTop="true">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <ImageView
+                android:id="@+id/backToSetting"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_alignParentStart="true"
+                android:layout_centerInParent="true"
+                android:layout_gravity="center"
+                android:layout_marginStart="15dp"
+                android:src="@drawable/back"
+                app:tint="@color/white" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:layout_gravity="center"
+                android:layout_marginStart="15dp"
+                android:layout_toEndOf="@+id/backToSetting"
+                android:fontFamily="@font/poppinsmedium"
+                android:gravity="center"
+                android:paddingStart="5dp"
+                android:paddingEnd="5dp"
+                android:text="Shop Details"
+                android:textColor="@color/white"
+                android:textSize="17dp" />
+
+            <include layout="@layout/include_app_toolbar_logo" />
+
+        </RelativeLayout>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/saveDetails"
+        android:layout_below="@id/appBarLayout">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="10dp">
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="140dp"
+                android:layout_gravity="center"
+                android:layout_marginStart="30dp"
+                android:layout_marginTop="30dp"
+                android:layout_marginEnd="30dp"
+                android:gravity="center">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="130dp"
+                    android:layout_centerInParent="true"
+                    android:background="@drawable/button_rounded_border">
+
+                    <ImageView
+                        android:id="@+id/profilePhoto"
+                        android:layout_width="match_parent"
+                        android:layout_height="150dp"
+                        android:layout_centerInParent="true"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginEnd="10dp"
+                        android:layout_marginBottom="10dp"
+                        android:src="@drawable/your_logo_here" />
+
+                </RelativeLayout>
+
+                <ImageView
+                    android:id="@+id/addProfile"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_alignParentBottom="true"
+                    android:src="@drawable/add_profile" />
+
+            </RelativeLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/shopNameLayout"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="30dp"
+                android:layout_marginBottom="5dp"
+                android:gravity="center"
+                android:textColorHint="@color/light_black"
+                app:boxCornerRadiusBottomEnd="5dp"
+                app:boxCornerRadiusBottomStart="5dp"
+                app:boxCornerRadiusTopEnd="5dp"
+                app:boxCornerRadiusTopStart="5dp"
+                app:boxStrokeColor="@color/light_black">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/shopName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:digits="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ "
+                    android:drawableTint="@color/light_black"
+                    android:fontFamily="@font/poppinsregular"
+                    android:hint="Shop Name"
+                    android:imeOptions="actionNext"
+                    android:inputType="textCapWords"
+                    android:paddingStart="15dp"
+                    android:paddingEnd="10dp"
+                    android:singleLine="true"
+                    android:textColor="@color/black"
+                    android:textColorHint="@color/light_black"
+                    android:textSize="15dp" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/cashierNameLayout"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="5dp"
+                android:gravity="center"
+                android:textColorHint="@color/light_black"
+                app:boxCornerRadiusBottomEnd="5dp"
+                app:boxCornerRadiusBottomStart="5dp"
+                app:boxCornerRadiusTopEnd="5dp"
+                app:boxCornerRadiusTopStart="5dp"
+                app:boxStrokeColor="@color/light_black">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/cashierName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:digits="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ "
+                    android:drawableTint="@color/light_black"
+                    android:fontFamily="@font/poppinsregular"
+                    android:hint="Cashier Name"
+                    android:imeOptions="actionNext"
+                    android:inputType="textCapWords"
+                    android:paddingStart="15dp"
+                    android:paddingEnd="10dp"
+                    android:singleLine="true"
+                    android:textColor="@color/black"
+                    android:textColorHint="@color/light_black"
+                    android:textSize="15dp" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/shopMobileLayout"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="5dp"
+                android:gravity="center"
+                android:textColorHint="@color/light_black"
+                app:boxCornerRadiusBottomEnd="5dp"
+                app:boxCornerRadiusBottomStart="5dp"
+                app:boxCornerRadiusTopEnd="5dp"
+                app:boxCornerRadiusTopStart="5dp"
+                app:boxStrokeColor="@color/light_black">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/shopMobile"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:digits="0123456789"
+                    android:drawableTint="@color/light_black"
+                    android:fontFamily="@font/poppinsregular"
+                    android:hint="Shop Mobile"
+                    android:imeOptions="actionNext"
+                    android:inputType="numberDecimal"
+                    android:maxLength="10"
+                    android:paddingStart="15dp"
+                    android:paddingEnd="10dp"
+                    android:singleLine="true"
+                    android:textColor="@color/black"
+                    android:textColorHint="@color/light_black"
+                    android:textSize="15dp" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/shopAddressLayout"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="5dp"
+                android:gravity="center"
+                android:textColorHint="@color/light_black"
+                app:boxCornerRadiusBottomEnd="5dp"
+                app:boxCornerRadiusBottomStart="5dp"
+                app:boxCornerRadiusTopEnd="5dp"
+                app:boxCornerRadiusTopStart="5dp"
+                app:boxStrokeColor="@color/light_black">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/shopAddress"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:digits="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ "
+                    android:drawableTint="@color/light_black"
+                    android:fontFamily="@font/poppinsregular"
+                    android:hint="Shop Address"
+                    android:imeOptions="actionNext"
+                    android:inputType="textMultiLine|textCapWords"
+                    android:paddingStart="15dp"
+                    android:paddingEnd="10dp"
+                    android:textColor="@color/black"
+                    android:textColorHint="@color/light_black"
+                    android:textSize="15dp" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center|start"
+                android:layout_marginStart="5dp"
+                android:layout_marginTop="10dp"
+                android:fontFamily="@font/poppinsregular"
+                android:gravity="center"
+                android:text="Invoice Currency"
+                android:textColor="@color/textcolor" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:background="@drawable/button_rounded_border"
+                android:orientation="horizontal">
+
+                <Spinner
+                    android:id="@+id/currencySpinner"
+                    android:layout_width="match_parent"
+                    android:layout_height="45dp"
+                    android:layout_gravity="center"
+                    android:layout_margin="5dp"
+                    android:autofillHints="Select Printer"
+                    android:fontFamily="@font/poppinsregular"
+                    android:gravity="center|start"
+                    android:paddingLeft="10dp"
+                    android:textColor="@color/black"
+                    android:textSize="15dp" />
+
+            </LinearLayout>
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/tableSwitch"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_gravity="center"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="5dp"
+                android:background="@drawable/button_rounded_border"
+                android:checked="true"
+                android:fontFamily="@font/poppinsregular"
+                android:gravity="center|left"
+                android:paddingStart="15dp"
+                android:paddingEnd="10dp"
+                android:switchMinWidth="45dp"
+                android:switchPadding="30dp"
+                android:text="Use Table"
+                android:textColor="@color/black"
+                android:textOff="Off"
+                android:textOn="On"
+                android:textSize="15dp" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/noOfTableLayout"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="5dp"
+                android:gravity="center"
+                android:textColorHint="@color/light_black"
+                app:boxCornerRadiusBottomEnd="5dp"
+                app:boxCornerRadiusBottomStart="5dp"
+                app:boxCornerRadiusTopEnd="5dp"
+                app:boxCornerRadiusTopStart="5dp"
+                app:boxStrokeColor="@color/light_black">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/noOfTable"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:drawableTint="@color/light_black"
+                    android:fontFamily="@font/poppinsregular"
+                    android:hint="No of Table"
+                    android:imeOptions="actionNext"
+                    android:inputType="numberDecimal"
+                    android:paddingStart="15dp"
+                    android:paddingEnd="10dp"
+                    android:singleLine="true"
+                    android:text="0"
+                    android:textColor="@color/black"
+                    android:textColorHint="@color/light_black"
+                    android:textSize="15dp" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/countryNameLayout"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="5dp"
+                android:gravity="center"
+                android:textColorHint="@color/light_black"
+                app:boxCornerRadiusBottomEnd="5dp"
+                app:boxCornerRadiusBottomStart="5dp"
+                app:boxCornerRadiusTopEnd="5dp"
+                app:boxCornerRadiusTopStart="5dp"
+                app:boxStrokeColor="@color/light_black">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/countryName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:digits="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ "
+                    android:drawableTint="@color/light_black"
+                    android:fontFamily="@font/poppinsregular"
+                    android:hint="Country Name"
+                    android:imeOptions="actionNext"
+                    android:inputType="textCapWords"
+                    android:paddingStart="15dp"
+                    android:paddingEnd="10dp"
+                    android:singleLine="true"
+                    android:textColor="@color/black"
+                    android:textColorHint="@color/light_black"
+                    android:textSize="15dp" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/stateNameLayout"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="5dp"
+                android:gravity="center"
+                android:textColorHint="@color/light_black"
+                app:boxCornerRadiusBottomEnd="5dp"
+                app:boxCornerRadiusBottomStart="5dp"
+                app:boxCornerRadiusTopEnd="5dp"
+                app:boxCornerRadiusTopStart="5dp"
+                app:boxStrokeColor="@color/light_black">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/stateName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:digits="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ "
+                    android:drawableTint="@color/light_black"
+                    android:fontFamily="@font/poppinsregular"
+                    android:hint="State Name"
+                    android:imeOptions="actionNext"
+                    android:inputType="textCapWords"
+                    android:paddingStart="15dp"
+                    android:paddingEnd="10dp"
+                    android:singleLine="true"
+                    android:textColor="@color/black"
+                    android:textColorHint="@color/light_black"
+                    android:textSize="15dp" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/gstSwitch"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_gravity="center"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="5dp"
+                android:background="@drawable/button_rounded_border"
+                android:checked="true"
+                android:fontFamily="@font/poppinsregular"
+                android:gravity="center|left"
+                android:paddingStart="15dp"
+                android:paddingEnd="10dp"
+                android:switchMinWidth="45dp"
+                android:switchPadding="30dp"
+                android:text="GST"
+                android:textColor="@color/black"
+                android:textOff="Off"
+                android:textOn="On"
+                android:textSize="15dp" />
+
+            <LinearLayout
+                android:id="@+id/shopGSTLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/gstNumberLayout"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="5dp"
+                    android:gravity="center"
+                    android:textColorHint="@color/light_black"
+                    android:visibility="visible"
+                    app:boxCornerRadiusBottomEnd="5dp"
+                    app:boxCornerRadiusBottomStart="5dp"
+                    app:boxCornerRadiusTopEnd="5dp"
+                    app:boxCornerRadiusTopStart="5dp"
+                    app:boxStrokeColor="@color/light_black">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/gstNumber"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:digits="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+                        android:drawableTint="@color/light_black"
+                        android:fontFamily="@font/poppinsregular"
+                        android:hint="GST Number"
+                        android:imeOptions="actionNext"
+                        android:inputType="textCapCharacters"
+                        android:paddingStart="15dp"
+                        android:paddingEnd="10dp"
+                        android:singleLine="true"
+                        android:textAllCaps="true"
+                        android:textColor="@color/black"
+                        android:textColorHint="@color/light_black"
+                        android:textSize="15dp" />
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="10dp"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/shopCGSTLayout"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_marginEnd="5dp"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:textColorHint="@color/light_black"
+                        app:boxCornerRadiusBottomEnd="5dp"
+                        app:boxCornerRadiusBottomStart="5dp"
+                        app:boxCornerRadiusTopEnd="5dp"
+                        app:boxCornerRadiusTopStart="5dp"
+                        app:boxStrokeColor="@color/light_black">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/shopCGST"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:drawableTint="@color/light_black"
+                            android:fontFamily="@font/poppinsregular"
+                            android:hint="Shop CGST"
+                            android:imeOptions="actionNext"
+                            android:inputType="numberDecimal"
+                            android:paddingStart="15dp"
+                            android:paddingEnd="10dp"
+                            android:singleLine="true"
+                            android:text="0"
+                            android:textColor="@color/black"
+                            android:textColorHint="@color/light_black"
+                            android:textSize="15dp" />
+
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/shopSGSTLayout"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_marginStart="5dp"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:textColorHint="@color/light_black"
+                        app:boxCornerRadiusBottomEnd="5dp"
+                        app:boxCornerRadiusBottomStart="5dp"
+                        app:boxCornerRadiusTopEnd="5dp"
+                        app:boxCornerRadiusTopStart="5dp"
+                        app:boxStrokeColor="@color/light_black">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/shopSGST"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:drawableTint="@color/light_black"
+                            android:enabled="false"
+                            android:fontFamily="@font/poppinsregular"
+                            android:hint="Shop SGST"
+                            android:imeOptions="actionDone"
+                            android:inputType="numberDecimal"
+                            android:paddingStart="15dp"
+                            android:paddingEnd="10dp"
+                            android:singleLine="true"
+                            android:text="0"
+                            android:textColor="@color/black"
+                            android:textColorHint="@color/light_black"
+                            android:textSize="15dp" />
+
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/panNumberLayout"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="5dp"
+                android:gravity="center"
+                android:textColorHint="@color/light_black"
+                app:boxCornerRadiusBottomEnd="5dp"
+                app:boxCornerRadiusBottomStart="5dp"
+                app:boxCornerRadiusTopEnd="5dp"
+                app:boxCornerRadiusTopStart="5dp"
+                app:boxStrokeColor="@color/light_black">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/panNumber"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:digits="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+                    android:drawableTint="@color/light_black"
+                    android:fontFamily="@font/poppinsregular"
+                    android:hint="PAN Number"
+                    android:imeOptions="actionNext"
+                    android:inputType="textCapCharacters"
+                    android:paddingStart="15dp"
+                    android:paddingEnd="10dp"
+                    android:singleLine="true"
+                    android:textAllCaps="true"
+                    android:textColor="@color/black"
+                    android:textColorHint="@color/light_black"
+                    android:textSize="15dp" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/shopFssaiLayout"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="5dp"
+                android:gravity="center"
+                android:textColorHint="@color/light_black"
+                app:boxCornerRadiusBottomEnd="5dp"
+                app:boxCornerRadiusBottomStart="5dp"
+                app:boxCornerRadiusTopEnd="5dp"
+                app:boxCornerRadiusTopStart="5dp"
+                app:boxStrokeColor="@color/light_black">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/shopFssai"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:drawableTint="@color/light_black"
+                    android:fontFamily="@font/poppinsregular"
+                    android:hint="shop FSSAI Number"
+                    android:imeOptions="actionNext"
+                    android:inputType="textCapCharacters"
+                    android:paddingStart="15dp"
+                    android:paddingEnd="10dp"
+                    android:singleLine="true"
+                    android:textAllCaps="true"
+                    android:textColor="@color/black"
+                    android:textColorHint="@color/light_black"
+                    android:textSize="15dp" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="140dp"
+                android:layout_gravity="center"
+                android:layout_marginStart="30dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="30dp"
+                android:layout_marginBottom="30dp"
+                android:gravity="center">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="130dp"
+                    android:layout_centerInParent="true"
+                    android:background="@drawable/button_rounded_border">
+
+                    <ImageView
+                        android:id="@+id/paymentQRPhoto"
+                        android:layout_width="match_parent"
+                        android:layout_height="150dp"
+                        android:layout_centerInParent="true"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginEnd="10dp"
+                        android:layout_marginBottom="10dp"
+                        android:src="@drawable/make_your_qr" />
+
+                </RelativeLayout>
+
+                <ImageView
+                    android:id="@+id/addPaymentQR"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_alignParentBottom="true"
+                    android:src="@drawable/add_profile" />
+
+            </RelativeLayout>
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+    <TextView
+        android:id="@+id/saveDetails"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_alignParentBottom="true"
+        android:layout_gravity="center"
+        android:background="@color/colorPrimary"
+        android:fontFamily="@font/poppinsmedium"
+        android:gravity="center"
+        android:text="Save Details"
+        android:textAllCaps="true"
+        android:textColor="@color/white"
+        android:textSize="17dp" />
+
+</RelativeLayout>

@@ -1,0 +1,23 @@
+<resources>
+    <string name="app_name">Dealer</string>
+    <string name="privacy_policy">By providing username &amp; password, I hereby agree and accept the <u><font fgcolor='#df0052'>Terms of service</font></u> and <u><font fgcolor='#df0052'>Privacy Policy</font></u> in use of the POS Billingwala app.</string>
+    <string name="sign_in_msg">Sign In to \nkeep do amazing Billing\nwith POS Billingwala</string>
+    <string name="mobile_number_msg">Enter your shop licence key. We\'ll verify your account, so we know you\'re real.</string>
+
+
+    <string name="inr">\u20B9</string>
+
+    <string name="label_month">MONTH</string>
+    <string name="label_year">YEAR</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="new_user">New User? <u><font fgcolor='#df0052'>Signup Here</font></u></string>
+    <string name="new_user_support_team">Do you want to test or use our POS offline/online application, enter you registered licence key in login page and access the application. If you are new user please contact our support team (+91 89831 49299) and get your licence key to access our POS application.</string>
+
+    <string name="in_app_snack_bar_message">Update almost finished!</string>
+    <string name="in_app_snack_bar_action_title">RESTART</string>
+    <string name="download_file"><b><font fgcolor='#5B37B7'>Download Demo Product Excel</font></b>\n<font fgcolor='#1092AA'>( Edit this download file and upload here )</font>\n<b>Note: Don\'t upload other format file</b></string>
+    <string name="category">Category</string>
+    <string name="product">Product</string>
+
+</resources>

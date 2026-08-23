@@ -1,0 +1,588 @@
+-- =============================================================================
+-- POS Billingwala — FINAL single-file server upgrade (Aug 2026)
+-- File: API/migrations/server_upgrade_all.sql
+--
+-- Includes ALL features for online sync across POS / Owner / Dealer / Admin:
+--   • Food types (Food / Beverage) on categories
+--   • Product subcategories + products.subcategoryId
+--   • Product portions (Half / Full / Kg prices)
+--   • Bill line snapshots (portion + price on invoice lines)
+--   • Beverage auto-mapping for drink-like category names
+--   • API auth tokens (admin / dealer / owner / pos_licence)
+--   • Production licensing (trialStartedAt, trialConsumed, deviceBoundAt)
+--   • Multi-branch scope (organization_id, branch_id, device_id + grants)
+--   • Sync indexes for catalog pull by customer (userId)
+-- =============================================================================
+-- HOW TO RUN (phpMyAdmin — easiest):
+--   1. Open phpMyAdmin → select your POS database
+--   2. Click "Import" (or "SQL" tab)
+--   3. Choose this file / paste all SQL below
+--   4. Click Go / Import
+--
+-- HOW TO RUN (command line):
+--   mysql -u YOUR_USER -p YOUR_DATABASE < server_upgrade_all.sql
+--
+-- =============================================================================
+-- EXISTING DATA — KEEP EVERYTHING (old shops keep working)
+-- =============================================================================
+-- This script NEVER deletes or drops:
+--   users, licenses, categories, products, invoice, invoice_final_product,
+--   companys, or any other existing shop data.
+--
+-- What happens to OLD rows:
+--   • categories  → stay; get foodTypeId = Food (drink-like names → Beverage)
+--   • products    → stay; subcategoryId stays NULL until shop adds one
+--   • products    → keep productPrice; portions are optional (0..N new rows)
+--   • old bills   → stay; new snapshot columns are NULL on past lines
+--   • login/sync  → still works; api_tokens is a new table only
+--
+-- Old app / new app:
+--   • Old APK without portions/subcategories keeps working on same DB
+--   • New APK can use Food/Beverage, subcategories, portions on same data
+--
+-- SAFE to run more than once (skips columns/tables already present).
+-- =============================================================================
+
+SET NAMES utf8mb4;
+
+-- Snapshot of current data (for your peace of mind — nothing is deleted)
+SELECT
+  (SELECT COUNT(*) FROM `categories`) AS categories_before,
+  (SELECT COUNT(*) FROM `products`) AS products_before,
+  (SELECT COUNT(*) FROM `invoice`) AS invoices_before,
+  (SELECT COUNT(*) FROM `invoice_final_product`) AS invoice_lines_before,
+  (SELECT COUNT(*) FROM `licenses`) AS licenses_before,
+  (SELECT COUNT(*) FROM `users`) AS users_before;
+
+
+-- =============================================================================
+-- STEP 1 of 9 — Food types table + seed Food / Beverage
+-- =============================================================================
+
+CREATE TABLE IF NOT EXISTS `food_types` (
+  `foodTypeId` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `foodTypeName` varchar(64) NOT NULL,
+  `foodTypeCode` varchar(32) NOT NULL,
+  `foodTypeSortOrder` int(11) NOT NULL DEFAULT 0,
+  `foodTypeStatus` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`foodTypeId`),
+  UNIQUE KEY `idx_food_type_code` (`foodTypeCode`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO `food_types` (`foodTypeName`, `foodTypeCode`, `foodTypeSortOrder`, `foodTypeStatus`, `created_at`)
+SELECT 'Food', 'food', 1, 1, NOW() FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM `food_types` WHERE `foodTypeCode` = 'food');
+
+INSERT INTO `food_types` (`foodTypeName`, `foodTypeCode`, `foodTypeSortOrder`, `foodTypeStatus`, `created_at`)
+SELECT 'Beverage', 'beverage', 2, 1, NOW() FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM `food_types` WHERE `foodTypeCode` = 'beverage');
+
+-- Add categories.foodTypeId (skip if already there)
+SET @sql = (
+  SELECT IF(
+    (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = 'categories'
+       AND COLUMN_NAME = 'foodTypeId') > 0,
+    'SELECT ''OK: categories.foodTypeId already exists'' AS msg',
+    'ALTER TABLE `categories` ADD COLUMN `foodTypeId` int(10) UNSIGNED DEFAULT NULL AFTER `categoryName`'
+  )
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- Default existing categories to Food
+UPDATE `categories` c
+INNER JOIN `food_types` ft ON ft.foodTypeCode = 'food'
+SET c.foodTypeId = ft.foodTypeId
+WHERE c.foodTypeId IS NULL;
+
+-- =============================================================================
+-- STEP 2 of 9 — Product subcategories
+-- =============================================================================
+
+CREATE TABLE IF NOT EXISTS `product_subcategories` (
+  `subcategoryId` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `userId` int(11) DEFAULT NULL,
+  `categoryId` int(10) UNSIGNED NOT NULL,
+  `subcategoryName` text CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NOT NULL,
+  `subcategoryNetworkStatus` text DEFAULT NULL,
+  `subcategoryStatus` text NOT NULL DEFAULT 'active',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`subcategoryId`),
+  KEY `idx_subcategory_category` (`categoryId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+SET @sql = (
+  SELECT IF(
+    (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = 'products'
+       AND COLUMN_NAME = 'subcategoryId') > 0,
+    'SELECT ''OK: products.subcategoryId already exists'' AS msg',
+    'ALTER TABLE `products` ADD COLUMN `subcategoryId` int(10) UNSIGNED DEFAULT NULL AFTER `categoryId`'
+  )
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- =============================================================================
+-- STEP 3 of 9 — Product portions (Half / Full / Kg prices)
+-- =============================================================================
+
+CREATE TABLE IF NOT EXISTS `product_portions` (
+  `portionId` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `userId` int(11) DEFAULT NULL,
+  `productId` int(10) UNSIGNED NOT NULL,
+  `portionName` varchar(64) NOT NULL,
+  `portionPrice` decimal(16,2) NOT NULL,
+  `portionSortOrder` int(11) NOT NULL DEFAULT 0,
+  `portionNetworkStatus` varchar(64) DEFAULT NULL,
+  `portionStatus` text NOT NULL DEFAULT 'active',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`portionId`),
+  UNIQUE KEY `idx_portion_network_status` (`portionNetworkStatus`),
+  KEY `idx_portion_product` (`productId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =============================================================================
+-- STEP 4 of 9 — Bill line snapshots (portion name/price on invoice lines)
+-- =============================================================================
+
+SET @sql = (
+  SELECT IF(
+    (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = 'invoice_final_product'
+       AND COLUMN_NAME = 'portionId') > 0,
+    'SELECT ''OK: invoice_final_product.portionId already exists'' AS msg',
+    'ALTER TABLE `invoice_final_product` ADD COLUMN `portionId` int(10) UNSIGNED DEFAULT NULL AFTER `productName`'
+  )
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = (
+  SELECT IF(
+    (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = 'invoice_final_product'
+       AND COLUMN_NAME = 'portionName') > 0,
+    'SELECT ''OK: invoice_final_product.portionName already exists'' AS msg',
+    'ALTER TABLE `invoice_final_product` ADD COLUMN `portionName` varchar(64) DEFAULT NULL AFTER `portionId`'
+  )
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = (
+  SELECT IF(
+    (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = 'invoice_final_product'
+       AND COLUMN_NAME = 'snapshotProductName') > 0,
+    'SELECT ''OK: invoice_final_product.snapshotProductName already exists'' AS msg',
+    'ALTER TABLE `invoice_final_product` ADD COLUMN `snapshotProductName` text DEFAULT NULL AFTER `portionName`'
+  )
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = (
+  SELECT IF(
+    (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = 'invoice_final_product'
+       AND COLUMN_NAME = 'snapshotLinePrice') > 0,
+    'SELECT ''OK: invoice_final_product.snapshotLinePrice already exists'' AS msg',
+    'ALTER TABLE `invoice_final_product` ADD COLUMN `snapshotLinePrice` decimal(16,2) DEFAULT NULL AFTER `snapshotProductName`'
+  )
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- =============================================================================
+-- STEP 5 of 9 — Map drink-like categories to Beverage food type
+-- =============================================================================
+
+UPDATE `categories` c
+INNER JOIN `food_types` ft_food ON ft_food.foodTypeCode = 'food'
+INNER JOIN `food_types` ft_bev ON ft_bev.foodTypeCode = 'beverage'
+SET c.foodTypeId = ft_bev.foodTypeId
+WHERE (c.foodTypeId IS NULL OR c.foodTypeId = ft_food.foodTypeId)
+  AND c.categoryStatus = 'active'
+  AND (
+    LOWER(c.categoryName) LIKE '%beverage%'
+    OR LOWER(c.categoryName) LIKE '%drink%'
+    OR LOWER(c.categoryName) LIKE '%juice%'
+    OR LOWER(c.categoryName) LIKE '%mocktail%'
+    OR LOWER(c.categoryName) LIKE '%cocktail%'
+    OR LOWER(c.categoryName) LIKE '%tea%'
+    OR LOWER(c.categoryName) LIKE '%coffee%'
+    OR LOWER(c.categoryName) LIKE '%shake%'
+    OR LOWER(c.categoryName) LIKE '%lassi%'
+    OR LOWER(c.categoryName) LIKE '%soda%'
+    OR LOWER(c.categoryName) LIKE '%soft%'
+    OR LOWER(c.categoryName) LIKE '%cold%'
+    OR LOWER(c.categoryName) LIKE '%water%'
+    OR LOWER(c.categoryName) LIKE '%milk%'
+  );
+
+-- =============================================================================
+-- STEP 6 of 9 — API auth tokens (all app roles)
+-- =============================================================================
+
+CREATE TABLE IF NOT EXISTS `api_tokens` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `token_hash` CHAR(64) NOT NULL,
+  `actor_type` ENUM('pos_licence','owner','dealer','admin') NOT NULL,
+  `actor_id` INT UNSIGNED NOT NULL,
+  `device_id` VARCHAR(255) NULL DEFAULT NULL,
+  `expires_at` DATETIME NOT NULL,
+  `last_used_at` DATETIME NULL DEFAULT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_token_hash` (`token_hash`),
+  KEY `idx_actor` (`actor_type`, `actor_id`),
+  KEY `idx_expires_at` (`expires_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- =============================================================================
+-- STEP 7 of 9 — Production licensing (signed offline payload, trial anti-restart)
+-- =============================================================================
+
+SET @sql = (
+  SELECT IF(
+    (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = 'licenses'
+       AND COLUMN_NAME = 'trialStartedAt') > 0,
+    'SELECT ''OK: licenses.trialStartedAt already exists'' AS msg',
+    'ALTER TABLE `licenses` ADD COLUMN `trialStartedAt` datetime DEFAULT NULL AFTER `expiryDate`'
+  )
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = (
+  SELECT IF(
+    (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = 'licenses'
+       AND COLUMN_NAME = 'trialConsumed') > 0,
+    'SELECT ''OK: licenses.trialConsumed already exists'' AS msg',
+    'ALTER TABLE `licenses` ADD COLUMN `trialConsumed` tinyint(1) NOT NULL DEFAULT 0 AFTER `trialStartedAt`'
+  )
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = (
+  SELECT IF(
+    (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = 'licenses'
+       AND COLUMN_NAME = 'deviceBoundAt') > 0,
+    'SELECT ''OK: licenses.deviceBoundAt already exists'' AS msg',
+    'ALTER TABLE `licenses` ADD COLUMN `deviceBoundAt` datetime DEFAULT NULL AFTER `trialConsumed`'
+  )
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- =============================================================================
+-- STEP 8 of 9 — Multi-branch / franchise scope (P7)
+-- =============================================================================
+
+CREATE TABLE IF NOT EXISTS `branch_access_grants` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `organization_id` INT NOT NULL,
+  `source_branch_id` INT UNSIGNED NOT NULL COMMENT 'licenses.id receiving access',
+  `target_branch_id` INT UNSIGNED NOT NULL COMMENT 'licenses.id whose data may be read',
+  `granted_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `granted_by` VARCHAR(50) NOT NULL DEFAULT 'dealer',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_branch_grant` (`source_branch_id`, `target_branch_id`),
+  KEY `idx_org` (`organization_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- invoice
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'invoice' AND COLUMN_NAME = 'organization_id') > 0,
+  'SELECT ''OK invoice.organization_id'' AS msg',
+  'ALTER TABLE `invoice` ADD COLUMN `organization_id` INT NULL DEFAULT NULL AFTER `licenseId`'
+)); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'invoice' AND COLUMN_NAME = 'branch_id') > 0,
+  'SELECT ''OK invoice.branch_id'' AS msg',
+  'ALTER TABLE `invoice` ADD COLUMN `branch_id` INT NULL DEFAULT NULL AFTER `organization_id`'
+)); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'invoice' AND COLUMN_NAME = 'device_id') > 0,
+  'SELECT ''OK invoice.device_id'' AS msg',
+  'ALTER TABLE `invoice` ADD COLUMN `device_id` VARCHAR(255) NULL DEFAULT NULL AFTER `branch_id`'
+)); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+
+-- invoice_final_product (branch scope columns — snapshot columns added in step 4)
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'invoice_final_product' AND COLUMN_NAME = 'organization_id') > 0,
+  'SELECT ''OK'' AS msg',
+  'ALTER TABLE `invoice_final_product` ADD COLUMN `organization_id` INT NULL DEFAULT NULL AFTER `invoiceProductId`'
+)); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'invoice_final_product' AND COLUMN_NAME = 'branch_id') > 0,
+  'SELECT ''OK'' AS msg',
+  'ALTER TABLE `invoice_final_product` ADD COLUMN `branch_id` INT NULL DEFAULT NULL AFTER `organization_id`'
+)); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'invoice_final_product' AND COLUMN_NAME = 'device_id') > 0,
+  'SELECT ''OK'' AS msg',
+  'ALTER TABLE `invoice_final_product` ADD COLUMN `device_id` VARCHAR(255) NULL DEFAULT NULL AFTER `branch_id`'
+)); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+
+-- inventory, expenses (userId column stores licence id in POS sync)
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'inventory' AND COLUMN_NAME = 'organization_id') > 0,
+  'SELECT ''OK'' AS msg',
+  'ALTER TABLE `inventory` ADD COLUMN `organization_id` INT NULL DEFAULT NULL AFTER `userId`'
+)); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'inventory' AND COLUMN_NAME = 'branch_id') > 0,
+  'SELECT ''OK'' AS msg',
+  'ALTER TABLE `inventory` ADD COLUMN `branch_id` INT NULL DEFAULT NULL AFTER `organization_id`'
+)); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'inventory' AND COLUMN_NAME = 'device_id') > 0,
+  'SELECT ''OK'' AS msg',
+  'ALTER TABLE `inventory` ADD COLUMN `device_id` VARCHAR(255) NULL DEFAULT NULL AFTER `branch_id`'
+)); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'expenses' AND COLUMN_NAME = 'organization_id') > 0,
+  'SELECT ''OK'' AS msg',
+  'ALTER TABLE `expenses` ADD COLUMN `organization_id` INT NULL DEFAULT NULL AFTER `userId`'
+)); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'expenses' AND COLUMN_NAME = 'branch_id') > 0,
+  'SELECT ''OK'' AS msg',
+  'ALTER TABLE `expenses` ADD COLUMN `branch_id` INT NULL DEFAULT NULL AFTER `organization_id`'
+)); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'expenses' AND COLUMN_NAME = 'device_id') > 0,
+  'SELECT ''OK'' AS msg',
+  'ALTER TABLE `expenses` ADD COLUMN `device_id` VARCHAR(255) NULL DEFAULT NULL AFTER `branch_id`'
+)); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+
+-- mess_*
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'mess_member' AND COLUMN_NAME = 'organization_id') > 0,
+  'SELECT ''OK'' AS msg',
+  'ALTER TABLE `mess_member` ADD COLUMN `organization_id` INT NULL DEFAULT NULL AFTER `userId`'
+)); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'mess_member' AND COLUMN_NAME = 'branch_id') > 0,
+  'SELECT ''OK'' AS msg',
+  'ALTER TABLE `mess_member` ADD COLUMN `branch_id` INT NULL DEFAULT NULL AFTER `organization_id`'
+)); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'mess_member' AND COLUMN_NAME = 'device_id') > 0,
+  'SELECT ''OK'' AS msg',
+  'ALTER TABLE `mess_member` ADD COLUMN `device_id` VARCHAR(255) NULL DEFAULT NULL AFTER `branch_id`'
+)); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'mess_member_payment' AND COLUMN_NAME = 'organization_id') > 0,
+  'SELECT ''OK'' AS msg',
+  'ALTER TABLE `mess_member_payment` ADD COLUMN `organization_id` INT NULL DEFAULT NULL AFTER `userId`'
+)); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'mess_member_payment' AND COLUMN_NAME = 'branch_id') > 0,
+  'SELECT ''OK'' AS msg',
+  'ALTER TABLE `mess_member_payment` ADD COLUMN `branch_id` INT NULL DEFAULT NULL AFTER `organization_id`'
+)); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'mess_member_payment' AND COLUMN_NAME = 'device_id') > 0,
+  'SELECT ''OK'' AS msg',
+  'ALTER TABLE `mess_member_payment` ADD COLUMN `device_id` VARCHAR(255) NULL DEFAULT NULL AFTER `branch_id`'
+)); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'mess_invoice' AND COLUMN_NAME = 'organization_id') > 0,
+  'SELECT ''OK'' AS msg',
+  'ALTER TABLE `mess_invoice` ADD COLUMN `organization_id` INT NULL DEFAULT NULL AFTER `userId`'
+)); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'mess_invoice' AND COLUMN_NAME = 'branch_id') > 0,
+  'SELECT ''OK'' AS msg',
+  'ALTER TABLE `mess_invoice` ADD COLUMN `branch_id` INT NULL DEFAULT NULL AFTER `organization_id`'
+)); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'mess_invoice' AND COLUMN_NAME = 'device_id') > 0,
+  'SELECT ''OK'' AS msg',
+  'ALTER TABLE `mess_invoice` ADD COLUMN `device_id` VARCHAR(255) NULL DEFAULT NULL AFTER `branch_id`'
+)); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+
+-- companys, company_printer_setting
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'companys' AND COLUMN_NAME = 'organization_id') > 0,
+  'SELECT ''OK'' AS msg',
+  'ALTER TABLE `companys` ADD COLUMN `organization_id` INT NULL DEFAULT NULL AFTER `licenseId`'
+)); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'companys' AND COLUMN_NAME = 'branch_id') > 0,
+  'SELECT ''OK'' AS msg',
+  'ALTER TABLE `companys` ADD COLUMN `branch_id` INT NULL DEFAULT NULL AFTER `organization_id`'
+)); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'companys' AND COLUMN_NAME = 'device_id') > 0,
+  'SELECT ''OK'' AS msg',
+  'ALTER TABLE `companys` ADD COLUMN `device_id` VARCHAR(255) NULL DEFAULT NULL AFTER `branch_id`'
+)); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'company_printer_setting' AND COLUMN_NAME = 'organization_id') > 0,
+  'SELECT ''OK'' AS msg',
+  'ALTER TABLE `company_printer_setting` ADD COLUMN `organization_id` INT NULL DEFAULT NULL AFTER `licenseId`'
+)); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'company_printer_setting' AND COLUMN_NAME = 'branch_id') > 0,
+  'SELECT ''OK'' AS msg',
+  'ALTER TABLE `company_printer_setting` ADD COLUMN `branch_id` INT NULL DEFAULT NULL AFTER `organization_id`'
+)); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'company_printer_setting' AND COLUMN_NAME = 'device_id') > 0,
+  'SELECT ''OK'' AS msg',
+  'ALTER TABLE `company_printer_setting` ADD COLUMN `device_id` VARCHAR(255) NULL DEFAULT NULL AFTER `branch_id`'
+)); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+
+-- Backfill from licenses (single-branch rows get org + branch + device automatically)
+UPDATE `invoice` i
+INNER JOIN `licenses` l ON l.`id` = i.`licenseId`
+SET i.`organization_id` = l.`userId`,
+    i.`branch_id` = l.`id`,
+    i.`device_id` = COALESCE(l.`android_device_id`, i.`device_id`)
+WHERE i.`organization_id` IS NULL OR i.`branch_id` IS NULL;
+
+UPDATE `invoice_final_product` fp
+INNER JOIN `invoice` i ON i.`invoiceNumber` = fp.`invoiceNumber`
+SET fp.`organization_id` = i.`organization_id`,
+    fp.`branch_id` = i.`branch_id`,
+    fp.`device_id` = i.`device_id`
+WHERE fp.`organization_id` IS NULL OR fp.`branch_id` IS NULL;
+
+UPDATE `inventory` inv
+INNER JOIN `licenses` l ON l.`id` = inv.`userId`
+SET inv.`organization_id` = l.`userId`,
+    inv.`branch_id` = l.`id`,
+    inv.`device_id` = COALESCE(l.`android_device_id`, inv.`device_id`)
+WHERE inv.`organization_id` IS NULL OR inv.`branch_id` IS NULL;
+
+UPDATE `expenses` e
+INNER JOIN `licenses` l ON l.`id` = e.`userId`
+SET e.`organization_id` = l.`userId`,
+    e.`branch_id` = l.`id`,
+    e.`device_id` = COALESCE(l.`android_device_id`, e.`device_id`)
+WHERE e.`organization_id` IS NULL OR e.`branch_id` IS NULL;
+
+UPDATE `mess_member` m
+INNER JOIN `licenses` l ON l.`id` = m.`userId`
+SET m.`organization_id` = l.`userId`,
+    m.`branch_id` = l.`id`,
+    m.`device_id` = COALESCE(l.`android_device_id`, m.`device_id`)
+WHERE m.`organization_id` IS NULL OR m.`branch_id` IS NULL;
+
+UPDATE `mess_member_payment` mp
+INNER JOIN `licenses` l ON l.`id` = mp.`userId`
+SET mp.`organization_id` = l.`userId`,
+    mp.`branch_id` = l.`id`,
+    mp.`device_id` = COALESCE(l.`android_device_id`, mp.`device_id`)
+WHERE mp.`organization_id` IS NULL OR mp.`branch_id` IS NULL;
+
+UPDATE `mess_invoice` mi
+INNER JOIN `licenses` l ON l.`id` = mi.`userId`
+SET mi.`organization_id` = l.`userId`,
+    mi.`branch_id` = l.`id`,
+    mi.`device_id` = COALESCE(l.`android_device_id`, mi.`device_id`)
+WHERE mi.`organization_id` IS NULL OR mi.`branch_id` IS NULL;
+
+UPDATE `companys` c
+INNER JOIN `licenses` l ON l.`id` = c.`licenseId`
+SET c.`organization_id` = l.`userId`,
+    c.`branch_id` = l.`id`,
+    c.`device_id` = COALESCE(l.`android_device_id`, c.`device_id`)
+WHERE c.`organization_id` IS NULL OR c.`branch_id` IS NULL;
+
+UPDATE `company_printer_setting` ps
+INNER JOIN `licenses` l ON l.`id` = ps.`licenseId`
+SET ps.`organization_id` = l.`userId`,
+    ps.`branch_id` = l.`id`,
+    ps.`device_id` = COALESCE(l.`android_device_id`, ps.`device_id`)
+WHERE ps.`organization_id` IS NULL OR ps.`branch_id` IS NULL;
+
+-- =============================================================================
+-- STEP 9 of 9 — Sync indexes (customer-wise catalog pull)
+-- =============================================================================
+
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'product_subcategories' AND INDEX_NAME = 'idx_subcategory_user') > 0,
+  'SELECT ''OK idx_subcategory_user'' AS msg',
+  'ALTER TABLE `product_subcategories` ADD KEY `idx_subcategory_user` (`userId`)'
+)); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'product_portions' AND INDEX_NAME = 'idx_portion_user') > 0,
+  'SELECT ''OK idx_portion_user'' AS msg',
+  'ALTER TABLE `product_portions` ADD KEY `idx_portion_user` (`userId`)'
+)); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'categories' AND INDEX_NAME = 'idx_category_user_food') > 0,
+  'SELECT ''OK idx_category_user_food'' AS msg',
+  'ALTER TABLE `categories` ADD KEY `idx_category_user_food` (`userId`, `foodTypeId`)'
+)); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'invoice' AND INDEX_NAME = 'idx_invoice_branch_date') > 0,
+  'SELECT ''OK idx_invoice_branch_date'' AS msg',
+  'ALTER TABLE `invoice` ADD KEY `idx_invoice_branch_date` (`branch_id`, `invoiceDate`)'
+)); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+
+-- =============================================================================
+-- DONE — verify upgrade + existing data still present
+-- =============================================================================
+
+SELECT 'Upgrade finished — existing shop data kept' AS status;
+
+-- Schema flags (each should be 1)
+SELECT
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES
+   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'food_types') AS food_types_ok,
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES
+   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'product_subcategories') AS subcategories_ok,
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES
+   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'product_portions') AS portions_ok,
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES
+   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'api_tokens') AS api_tokens_ok,
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES
+   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'branch_access_grants') AS branch_grants_ok,
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'categories' AND COLUMN_NAME = 'foodTypeId') AS categories_foodTypeId_ok,
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'products' AND COLUMN_NAME = 'subcategoryId') AS products_subcategoryId_ok,
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'invoice_final_product' AND COLUMN_NAME = 'portionId') AS invoice_portionId_ok,
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'invoice_final_product' AND COLUMN_NAME = 'snapshotLinePrice') AS invoice_snapshot_ok,
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'licenses' AND COLUMN_NAME = 'trialStartedAt') AS licenses_trial_ok,
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'invoice' AND COLUMN_NAME = 'branch_id') AS invoice_branch_ok;
+
+-- Business data still there (compare to first SELECT — counts must match)
+SELECT
+  (SELECT COUNT(*) FROM `categories`) AS categories_after,
+  (SELECT COUNT(*) FROM `products`) AS products_after,
+  (SELECT COUNT(*) FROM `invoice`) AS invoices_after,
+  (SELECT COUNT(*) FROM `invoice_final_product`) AS invoice_lines_after,
+  (SELECT COUNT(*) FROM `licenses`) AS licenses_after,
+  (SELECT COUNT(*) FROM `users`) AS users_after;
+-- before and after counts for categories/products/invoice/licenses/users must be EQUAL

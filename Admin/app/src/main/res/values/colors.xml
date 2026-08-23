@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#4862b7</color>
+    <color name="colorPrimaryDark">#ff0000</color>
+    <color name="colorAccent">#000</color>
+    <color name="white">#fff</color>
+    <color name="light_black">#4a4a4a</color>
+    <color name="color_white">#fff</color>
+    <color name="black">#000</color>
+    <color name="black_light">#EE424141</color>
+    <color name="gray">#EBEBEB</color>
+    <color name="grey">#EBEBEB</color>
+
+    <color name="placeholder_bg">#EBEBEB</color>
+    <color name="tab_unselected_dark">#7e7e7e</color>
+    <color name="meta_text_color_dark">#bdbdbd</color>
+    <color name="tab_unselected">#7cada7</color>
+    <color name="colorCardViewBackground">#E9EAED</color>
+
+    <color name="lightgray">#ededed</color>
+    <color name="deepPurple">#7c4dff</color>
+    <color name="yellow">#ffb300</color>
+    <color name="green">#00bfa5</color>
+    <color name="darkBlue">#23283a</color>
+    <color name="lightBlue">#2ebadc</color>
+    <color name="pink">#fe104d</color>
+
+    <color name="black_overlay">#66000000</color>
+    <color name="background">#fcfcfc</color>
+
+
+    <color name="colorBottomBarBackground">#FFFFFF</color>
+    <color name="colorWhite">#FFFFFF</color>
+
+    <color name="colorDivider">#E6E6E6</color>
+    <color name="colorItemDefaultBackground">#FFFFFF</color>
+    <color name="colorItemDefaultTint">#000000</color>
+    <color name="colorItemBackground">#DFD7F3</color>
+    <color name="colorItemTint">#5B37B7</color>
+    <color name="colorItem1Background">#F7D7EF</color>
+    <color name="colorItem1Tint">#B73892</color>
+    <color name="colorItem2Background">#FBEFD3</color>
+    <color name="colorItem2Tint">#EDA600</color>
+    <color name="colorItem3Background">#CFEBEF</color>
+    <color name="colorItem3Tint">#1092AA</color>
+
+
+    <color name="colorTitle">#313131</color>
+    <color name="redcolor">#E2F1BB9F</color>
+    <color name="grey_40">#999999</color>
+    <color name="grey_60">#666666</color>
+
+
+    <!--Material color list from https://material.io/guidelines/style/color.html-->
+
+    <color name="red_900">#B71C1C</color>
+    <color name="red">#B71C1C</color>
+
+    <color name="deep_purple_400">#7E57C2</color>
+
+    <color name="green_600">#5eaa46</color>
+    <color name="green_700">#388E3C</color>
+    <color name="green_800">#2E7D32</color>
+    <color name="green_900">#1B5E20</color>
+
+    <color name="yellow_800">#F9A825</color>
+
+    <color name="blue_grey_900">#263238</color>
+
+    <color name="blue_700">#1976D2</color>
+    <color name="green_100">#E4C1EDC1</color>
+
+    <color name="textcolor">#b12b2a</color>
+
+
+    <color name="fontWhiteEnable">#FFF</color>
+    <color name="fontWhiteDisable">#85FFFFFF</color>
+    <color name="fontBlackEnable">#000000</color>
+    <color name="fontBlackDisable">#50000000</color>
+
+
+    <color name="in_app_snack_bar_text_color">#37474F</color>
+
+</resources>

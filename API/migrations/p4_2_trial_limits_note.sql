@@ -1,0 +1,5 @@
+-- P4-2 documentation note (no schema change required)
+-- Trial rules live in API/licence_expiry.php:
+--   Demo/Trial licences: 7 days validity, max 50 invoices (server-enforced on insertInvoice.php)
+-- Bill count = COUNT(*) FROM invoice WHERE licenseId = licences.id
+-- APK must never hard-code these limits; it only stores values returned by login/check APIs.

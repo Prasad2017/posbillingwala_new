@@ -1,0 +1,533 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".Fragment.AddProduct">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_alignParentTop="true">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <ImageView
+                android:id="@+id/backToSetting"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_alignParentStart="true"
+                android:layout_centerInParent="true"
+                android:layout_gravity="center"
+                android:layout_marginStart="15dp"
+                android:src="@drawable/back"
+                app:tint="@color/white" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:layout_gravity="center"
+                android:layout_marginStart="15dp"
+                android:layout_toStartOf="@id/menuIcon"
+                android:layout_toEndOf="@+id/backToSetting"
+                android:fontFamily="@font/poppinsmedium"
+                android:gravity="center|start"
+                android:paddingStart="5dp"
+                android:paddingEnd="5dp"
+                android:text="Sale Reports"
+                android:textColor="@color/white"
+                android:textSize="17dp" />
+
+            <ImageView
+                android:id="@+id/menuIcon"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerInParent="true"
+                android:layout_marginEnd="10dp"
+                android:src="@drawable/ic_menu" />
+            <ImageView
+                android:id="@+id/appBrandLogo"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_centerVertical="true"
+                android:layout_marginEnd="8dp"
+                android:layout_toStartOf="@+id/menuIcon"
+                android:contentDescription="@string/app_name"
+                android:scaleType="fitCenter"
+                android:src="@drawable/app_logo" />
+
+        </RelativeLayout>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/appBarLayout">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="15dp"
+                android:fontFamily="@font/poppinsbold"
+                android:gravity="center"
+                android:paddingStart="15dp"
+                android:paddingEnd="15dp"
+                android:text="Billing Details"
+                android:textColor="@color/black"
+                android:textSize="15dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/totalSubAmountCardView"
+                    android:layout_width="match_parent"
+                    android:layout_height="150dp"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginEnd="10dp"
+                    android:layout_weight="1"
+                    app:cardBackgroundColor="#ecfffa"
+                    app:cardCornerRadius="15dp"
+                    app:cardUseCompatPadding="true">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="5dp"
+                        android:orientation="vertical"
+                        android:padding="5dp">
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/totalSubAmount"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_marginTop="10dp"
+                            android:fontFamily="@font/poppinsbold"
+                            android:gravity="center"
+                            android:paddingStart="15dp"
+                            android:paddingEnd="15dp"
+                            android:text="0"
+                            android:textColor="@color/black"
+                            android:textSize="17dp" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_marginTop="5dp"
+                            android:layout_marginBottom="10dp"
+                            android:fontFamily="@font/poppinsmedium"
+                            android:gravity="center"
+                            android:paddingStart="15dp"
+                            android:paddingEnd="15dp"
+                            android:text="Sub\nAmount"
+                            android:textColor="@color/black"
+                            android:textSize="13dp" />
+
+                    </LinearLayout>
+
+                </androidx.cardview.widget.CardView>
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_gravity="center"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:gravity="center"
+                    android:text="+"
+                    android:textColor="@color/black"
+                    android:textSize="20dp" />
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/totalGSTCardView"
+                    android:layout_width="match_parent"
+                    android:layout_height="150dp"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginEnd="10dp"
+                    android:layout_weight="1"
+                    app:cardBackgroundColor="#ecfffa"
+                    app:cardCornerRadius="15dp"
+                    app:cardUseCompatPadding="true">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="5dp"
+                        android:orientation="vertical"
+                        android:padding="5dp">
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/totalGST"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_marginTop="10dp"
+                            android:fontFamily="@font/poppinsbold"
+                            android:gravity="center"
+                            android:paddingStart="15dp"
+                            android:paddingEnd="15dp"
+                            android:text="0"
+                            android:textColor="@color/black"
+                            android:textSize="17dp" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_marginTop="5dp"
+                            android:layout_marginBottom="10dp"
+                            android:fontFamily="@font/poppinsmedium"
+                            android:gravity="center"
+                            android:paddingStart="15dp"
+                            android:paddingEnd="15dp"
+                            android:text="CSGT + SGST"
+                            android:textColor="@color/black"
+                            android:textSize="13dp" />
+
+                    </LinearLayout>
+
+                </androidx.cardview.widget.CardView>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_gravity="center"
+                    android:layout_marginStart="15dp"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:gravity="center"
+                    android:text="-"
+                    android:textColor="@color/black"
+                    android:textSize="20dp" />
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/totalDiscountCardView"
+                    android:layout_width="match_parent"
+                    android:layout_height="150dp"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginEnd="10dp"
+                    android:layout_weight="1"
+                    app:cardBackgroundColor="#ecfffa"
+                    app:cardCornerRadius="15dp"
+                    app:cardUseCompatPadding="true">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="5dp"
+                        android:orientation="vertical"
+                        android:padding="5dp">
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/totalDiscount"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_marginTop="10dp"
+                            android:fontFamily="@font/poppinsbold"
+                            android:gravity="center"
+                            android:paddingStart="15dp"
+                            android:paddingEnd="15dp"
+                            android:text="0"
+                            android:textColor="@color/black"
+                            android:textSize="17dp" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_marginTop="5dp"
+                            android:layout_marginBottom="10dp"
+                            android:fontFamily="@font/poppinsmedium"
+                            android:gravity="center"
+                            android:paddingStart="15dp"
+                            android:paddingEnd="15dp"
+                            android:text="Total\nDiscount"
+                            android:textColor="@color/black"
+                            android:textSize="13dp" />
+
+                    </LinearLayout>
+
+                </androidx.cardview.widget.CardView>
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_gravity="center"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:gravity="center"
+                    android:text="="
+                    android:textColor="@color/black"
+                    android:textSize="20dp" />
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/totalAmountCardView"
+                    android:layout_width="match_parent"
+                    android:layout_height="150dp"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginEnd="10dp"
+                    android:layout_weight="1"
+                    app:cardBackgroundColor="#ecfffa"
+                    app:cardCornerRadius="15dp"
+                    app:cardUseCompatPadding="true">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="5dp"
+                        android:orientation="vertical"
+                        android:padding="5dp">
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/totalAmount"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_marginTop="10dp"
+                            android:fontFamily="@font/poppinsbold"
+                            android:gravity="center"
+                            android:paddingStart="15dp"
+                            android:paddingEnd="15dp"
+                            android:text="0"
+                            android:textColor="@color/black"
+                            android:textSize="17dp" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_marginTop="5dp"
+                            android:layout_marginBottom="10dp"
+                            android:fontFamily="@font/poppinsmedium"
+                            android:gravity="center"
+                            android:paddingStart="15dp"
+                            android:paddingEnd="15dp"
+                            android:text="Total\nAmount"
+                            android:textColor="@color/black"
+                            android:textSize="13dp" />
+
+                    </LinearLayout>
+
+                </androidx.cardview.widget.CardView>
+
+            </LinearLayout>
+
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="20dp"
+                android:background="@color/light_black" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="wrap_content"
+                android:layout_height="24dp"
+                android:layout_gravity="center"
+                android:layout_marginTop="15dp"
+                android:fontFamily="@font/poppinsbold"
+                android:gravity="center"
+                android:paddingStart="15dp"
+                android:paddingEnd="15dp"
+                android:text="Billing Wise Details"
+                android:textColor="@color/black"
+                android:textSize="15dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/totalFastBillingAmountCardView"
+                    android:layout_width="match_parent"
+                    android:layout_height="150dp"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginEnd="10dp"
+                    android:layout_weight="1"
+                    app:cardBackgroundColor="#ecfffa"
+                    app:cardCornerRadius="15dp"
+                    app:cardUseCompatPadding="true">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="5dp"
+                        android:orientation="vertical"
+                        android:padding="5dp">
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/fastBillingAmount"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_marginTop="10dp"
+                            android:fontFamily="@font/poppinsbold"
+                            android:gravity="center"
+                            android:paddingStart="15dp"
+                            android:paddingEnd="15dp"
+                            android:text="0"
+                            android:textColor="@color/black"
+                            android:textSize="17dp" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_marginTop="5dp"
+                            android:layout_marginBottom="10dp"
+                            android:fontFamily="@font/poppinsmedium"
+                            android:gravity="center"
+                            android:paddingStart="15dp"
+                            android:paddingEnd="15dp"
+                            android:text="Fast Billing"
+                            android:textColor="@color/black"
+                            android:textSize="13dp" />
+
+                    </LinearLayout>
+
+                </androidx.cardview.widget.CardView>
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/totalTableAmountCardView"
+                    android:layout_width="match_parent"
+                    android:layout_height="150dp"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginEnd="10dp"
+                    android:layout_weight="1"
+                    app:cardBackgroundColor="#ecfffa"
+                    app:cardCornerRadius="15dp"
+                    app:cardUseCompatPadding="true">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="5dp"
+                        android:orientation="vertical"
+                        android:padding="5dp">
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/totalTableAmount"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_marginTop="10dp"
+                            android:fontFamily="@font/poppinsbold"
+                            android:gravity="center"
+                            android:paddingStart="15dp"
+                            android:paddingEnd="15dp"
+                            android:text="0"
+                            android:textColor="@color/black"
+                            android:textSize="17dp" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_marginTop="5dp"
+                            android:layout_marginBottom="10dp"
+                            android:fontFamily="@font/poppinsmedium"
+                            android:gravity="center"
+                            android:paddingStart="15dp"
+                            android:paddingEnd="15dp"
+                            android:text="Dine\nIn"
+                            android:textColor="@color/black"
+                            android:textSize="13dp" />
+
+                    </LinearLayout>
+
+                </androidx.cardview.widget.CardView>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/totalTakeAwayAmountCardView"
+                    android:layout_width="match_parent"
+                    android:layout_height="150dp"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginEnd="10dp"
+                    android:layout_marginBottom="40dp"
+                    android:layout_weight="1"
+                    app:cardBackgroundColor="#ecfffa"
+                    app:cardCornerRadius="15dp"
+                    app:cardUseCompatPadding="true">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="5dp"
+                        android:orientation="vertical"
+                        android:padding="5dp">
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/takeAwayAmount"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_marginTop="10dp"
+                            android:fontFamily="@font/poppinsbold"
+                            android:gravity="center"
+                            android:paddingStart="15dp"
+                            android:paddingEnd="15dp"
+                            android:text="0"
+                            android:textColor="@color/black"
+                            android:textSize="17dp" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_marginTop="5dp"
+                            android:layout_marginBottom="10dp"
+                            android:fontFamily="@font/poppinsmedium"
+                            android:gravity="center"
+                            android:paddingStart="15dp"
+                            android:paddingEnd="15dp"
+                            android:text="Take\nAway"
+                            android:textColor="@color/black"
+                            android:textSize="13dp" />
+
+                    </LinearLayout>
+
+                </androidx.cardview.widget.CardView>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+</RelativeLayout>

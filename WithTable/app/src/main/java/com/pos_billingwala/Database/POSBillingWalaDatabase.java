@@ -1,0 +1,3486 @@
+package com.pos_billingwala.Database;
+
+import android.annotation.SuppressLint;
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
+
+import com.pos_billingwala.Extra.BranchSession;
+import com.pos_billingwala.Model.CompanyResponse;
+import com.pos_billingwala.Model.ExpenseResponse;
+import com.pos_billingwala.Model.FoodTypeResponse;
+import com.pos_billingwala.Model.InventoryResponse;
+import com.pos_billingwala.Model.InvoiceProductResponse;
+import com.pos_billingwala.Model.InvoiceResponse;
+import com.pos_billingwala.Model.MemberResponse;
+import com.pos_billingwala.Model.MessInvoiceResponse;
+import com.pos_billingwala.Model.PrinterSettingResponse;
+import com.pos_billingwala.Model.ProductCartResponse;
+import com.pos_billingwala.Model.ProductCategoryResponse;
+import com.pos_billingwala.Model.ProductPortionResponse;
+import com.pos_billingwala.Model.ProductResponse;
+import com.pos_billingwala.Model.ProductSubcategoryResponse;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.Random;
+
+
+@SuppressLint("Range, Recycle")
+public class POSBillingWalaDatabase extends SQLiteOpenHelper {
+
+    // Database Name
+    public static final String DATABASE_NAME = "pos_billingwala_db";
+    public static final String PRODUCT_CATEGORY_TABLE = "product_category";
+    public static final String FOOD_TYPE_TABLE = "food_type";
+    public static final String PRODUCT_SUBCATEGORY_TABLE = "product_subcategory";
+    public static final String PRODUCT_PORTION_TABLE = "product_portion";
+    public static final String PRODUCT_TABLE = "product";
+    public static final String CART_PRODUCT_TABLE = "cart_product";
+    public static final String INVOICE_TABLE = "invoice";
+    public static final String INVOICE_PRODUCT_TABLE = "invoice_final_product";
+    public static final String PRINTER_SETTING_TABLE = "company_printer_setting";
+    public static final String COMPANY_TABLE = "company";
+    public static final String INVENTORY_TABLE = "inventory";
+    public static final String EXPENSES_TABLE = "expenses";
+    public static final String MEMBER_TABLE = "member";
+    public static final String MEMBER_PAYMENT_TABLE = "member_payment";
+    public static final String MESS_INVOICE_TABLE = "mess_invoice";
+    // Database Version
+    public static final int DATABASE_VERSION = 16;
+
+    /**********************************************  QUERY START PART  **********************************************/
+
+    public final String FOOD_TYPE_QUERY = "CREATE TABLE IF NOT EXISTS " + FOOD_TYPE_TABLE
+            + "(foodTypeId INTEGER PRIMARY KEY AUTOINCREMENT,"
+            + " foodTypeName VARCHAR NOT NULL,"
+            + " foodTypeCode VARCHAR NOT NULL,"
+            + " foodTypeSortOrder INTEGER DEFAULT 0,"
+            + " foodTypeStatus TINYINT DEFAULT 1)";
+
+    public final String PRODUCT_CATEGORY_QUERY = "CREATE TABLE IF NOT EXISTS " + PRODUCT_CATEGORY_TABLE
+            + "(categoryId INTEGER PRIMARY KEY AUTOINCREMENT,"
+            + " categoryName VARCHAR,"
+            + " foodTypeId INTEGER,"
+            + " categoryDeletedStatus VARCHAR,"
+            + " categoryNetworkStatus VARCHAR,"
+            + " categoryStatus TINYINT)";
+
+    public final String PRODUCT_SUBCATEGORY_QUERY = "CREATE TABLE IF NOT EXISTS " + PRODUCT_SUBCATEGORY_TABLE
+            + "(subcategoryId INTEGER PRIMARY KEY AUTOINCREMENT,"
+            + " categoryId INTEGER,"
+            + " subcategoryName VARCHAR,"
+            + " subcategoryDeletedStatus VARCHAR DEFAULT '0',"
+            + " subcategoryNetworkStatus VARCHAR,"
+            + " subcategoryStatus TINYINT DEFAULT 0)";
+
+    public final String PRODUCT_PORTION_QUERY = "CREATE TABLE IF NOT EXISTS " + PRODUCT_PORTION_TABLE
+            + "(portionId INTEGER PRIMARY KEY AUTOINCREMENT,"
+            + " productId INTEGER NOT NULL,"
+            + " portionName VARCHAR NOT NULL,"
+            + " portionPrice VARCHAR NOT NULL,"
+            + " portionSortOrder INTEGER DEFAULT 0,"
+            + " portionDeletedStatus VARCHAR DEFAULT '0',"
+            + " portionNetworkStatus VARCHAR,"
+            + " portionStatus TINYINT DEFAULT 1)";
+
+    public final String PRODUCT_QUERY = "CREATE TABLE IF NOT EXISTS " + PRODUCT_TABLE
+            + "(productId INTEGER PRIMARY KEY AUTOINCREMENT, userId VARCHAR, categoryId VARCHAR, categoryName VARCHAR,"
+            + " subcategoryId INTEGER,"
+            + " productCode VARCHAR, productName VARCHAR, productPrice VARCHAR, "
+            + "productUnit VARCHAR, productCGST VARCHAR, productSGST VARCHAR, productWithGSTPrice VARCHAR,"
+            + " productDeletedStatus VARCHAR, productNetworkStatus VARCHAR, productStatus TINYINT)";
+
+    public final String CART_PRODUCT_QUERY = "CREATE TABLE IF NOT EXISTS " + CART_PRODUCT_TABLE
+            + "(cartId INTEGER PRIMARY KEY AUTOINCREMENT, userId VARCHAR, productId VARCHAR, productName VARCHAR,"
+            + " productOldPrice VARCHAR, productNewPrice VARCHAR, productUnit VARCHAR, productCGST VARCHAR,"
+            + " productSGST VARCHAR, productQuantity VARCHAR, cartDiscount VARCHAR, cartDiscountType VARCHAR,"
+            + " noOfTable VARCHAR, cartOrderStatus VARCHAR, cartStatus TINYINT,"
+            + " portionId VARCHAR, portionName VARCHAR, snapshotProductName VARCHAR, snapshotLinePrice VARCHAR)";
+
+    public final String INVOICE_QUERY = "CREATE TABLE IF NOT EXISTS " + INVOICE_TABLE + "(invoiceId INTEGER PRIMARY KEY AUTOINCREMENT, userId VARCHAR, noOfTable VARCHAR, invoiceNumber VARCHAR, customerName VARCHAR, customerMobile VARCHAR, customerEmail VARCHAR, " + "customerAddress VARCHAR, invoiceDate VARCHAR, subTotal VARCHAR, totalGSTAmount, discount VARCHAR, discountType VARCHAR, totalAmount VARCHAR, paymentMode VARCHAR, invoiceOrderStatus VARCHAR, invoiceType VARCHAR, invoiceNetworkStatus VARCHAR, invoiceStatus TINYINT)";
+
+    public final String INVOICE_PRODUCT_QUERY = "CREATE TABLE IF NOT EXISTS " + INVOICE_PRODUCT_TABLE
+            + "(invoiceProductId INTEGER PRIMARY KEY AUTOINCREMENT, invoiceNumber VARCHAR, productName VARCHAR,"
+            + " productPrice VARCHAR, productUnit VARCHAR, productCGST VARCHAR, productSGST VARCHAR,"
+            + " productQuantity VARCHAR, productStatus VARCHAR, invoiceProductNetworkStatus VARCHAR,"
+            + " invoiceProductStatus TINYINT,"
+            + " portionId VARCHAR, portionName VARCHAR, snapshotProductName VARCHAR, snapshotLinePrice VARCHAR)";
+
+    public final String PRINTER_SETTING_QUERY = "CREATE TABLE IF NOT EXISTS " + PRINTER_SETTING_TABLE + "(settingId INTEGER PRIMARY KEY AUTOINCREMENT, printerName VARCHAR, invoicePrefix VARCHAR, invoiceTitle VARCHAR, invoiceTermsCondition VARCHAR, logoUse VARCHAR, paymentUse VARCHAR, customerUse VARCHAR, productQuantityUpdate VARCHAR, bluetoothAddress VARCHAR, bluetoothKOTAddress VARCHAR, KOTPrinterName VARCHAR, printerFeedLines VARCHAR, KotPrinterFeedLines VARCHAR, settingStatus TINYINT)";
+
+    public final String COMPANY_QUERY = "CREATE TABLE IF NOT EXISTS " + COMPANY_TABLE + "(companyId INTEGER PRIMARY KEY AUTOINCREMENT, companyName VARCHAR, cashierName VARCHAR, companyMobile VARCHAR, " + "companyAddress VARCHAR, currencyName VARCHAR, countryName VARCHAR, stateName VARCHAR, tableStatus VARCHAR, noOfTable VARCHAR,gstStatus VARCHAR, gstNumber VARCHAR, shopCGST VARCHAR, shopSGST VARCHAR, panNumber VARCHAR, companyFssis VARCHAR, companyLogo VARCHAR, paymentLogo VARCHAR, companyStatus TINYINT)";
+
+    public final String INVENTORY_QUERY = "CREATE TABLE IF NOT EXISTS " + INVENTORY_TABLE + "(inventoryId INTEGER PRIMARY KEY AUTOINCREMENT, productId VARCHAR, productInventoryQuantity VARCHAR, afterSaleInventoryQuantity VARCHAR, saleInventoryQuantity VARCHAR, inventoryDate VARCHAR, inventoryNetworkStatus VARCHAR, inventoryStatus TINYINT)";
+
+    public final String EXPENSES_QUERY = "CREATE TABLE IF NOT EXISTS " + EXPENSES_TABLE + "(expensesId INTEGER PRIMARY KEY AUTOINCREMENT, expensesName VARCHAR, expensesAmount VARCHAR, expensesDate VARCHAR, expensesNetworkStatus VARCHAR, expensesStatus TINYINT)";
+
+    public final String MEMBER_QUERY = "CREATE TABLE IF NOT EXISTS " + MEMBER_TABLE + "(memberId INTEGER PRIMARY KEY AUTOINCREMENT, memberName VARCHAR, memberAddress VARCHAR, memberMobileNumber VARCHAR, memberAlternetMobileNumber VARCHAR, memberNetworkStatus VARCHAR, memberStatus TINYINT)";
+    public final String MEMBER_PAYMENT_QUERY = "CREATE TABLE IF NOT EXISTS " + MEMBER_PAYMENT_TABLE + "(paymentId INTEGER PRIMARY KEY AUTOINCREMENT, memberId VARCHAR, memberName VARCHAR, paymentMessAmount VARCHAR, paymentPaidAmount VARCHAR, messTotalDays VARCHAR, paymentDate VARCHAR, paymentNetworkStatus VARCHAR, paymentStatus TINYINT)";
+    public final String MESS_INVOICE_QUERY = "CREATE TABLE IF NOT EXISTS " + MESS_INVOICE_TABLE + "(invoiceId INTEGER PRIMARY KEY AUTOINCREMENT, memberId VARCHAR, memberName VARCHAR, messType VARCHAR, messInvoiceDate VARCHAR, messInvoiceNetworkStatus VARCHAR, messInvoiceStatus TINYINT)";
+
+    /**********************************************  QUERY END PART  **********************************************/
+
+    /********************************************** Alter Query  **********************************************/
+    public final String ALTER_COMPANY_QUERY = "ALTER TABLE " + COMPANY_TABLE + " ADD COLUMN companyLogo VARCHAR";
+    public final String ALTER_COMPANY_QR_QUERY = "ALTER TABLE " + COMPANY_TABLE + " ADD COLUMN paymentLogo VARCHAR";
+    public final String ALTER_INVENTORY_QUERY = "ALTER TABLE " + INVENTORY_TABLE + " ADD COLUMN saleInventoryQuantity VARCHAR";
+    public final String ALTER_PRODUCT_QUERY = "ALTER TABLE " + PRODUCT_TABLE + " ADD COLUMN productCode VARCHAR";
+    public final String ALTER_CATEGORY_DELETED_QUERY = "ALTER TABLE " + PRODUCT_CATEGORY_TABLE + " ADD COLUMN categoryDeletedStatus VARCHAR";
+    public final String ALTER_PRODUCT_DELETED_QUERY = "ALTER TABLE " + PRODUCT_TABLE + " ADD COLUMN productDeletedStatus VARCHAR";
+    public final String ALTER_PRINTER_LOGO_SETTING_QUERY = "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN logoUse VARCHAR";
+    public final String ALTER_PRINTER_QR_SETTING_QUERY = "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN paymentUse VARCHAR";
+    public final String ALTER_CUSTOMER_SETTING_QUERY = "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN customerUse VARCHAR";
+    public final String ALTER_PRINTER_BLUETOOTH_SETTING_QUERY = "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN bluetoothAddress VARCHAR";
+    public final String ALTER_PRINTER_KOT_BLUETOOTH_SETTING_QUERY = "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN bluetoothKOTAddress VARCHAR";
+    public final String ALTER_PRINTER_KOT_BLUETOOTH_NAME_SETTING_QUERY = "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN KOTPrinterName VARCHAR";
+    public final String ALTER_PRINTER_PRODUCT_QUANTITY_SETTING_QUERY = "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN productQuantityUpdate VARCHAR";
+    public final String ALTER_PRINTER_FEED_LINES_SETTING_QUERY = "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN printerFeedLines VARCHAR";
+    public final String ALTER_KOT_PRINTER_FEED_LINES_SETTING_QUERY = "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN KotPrinterFeedLines VARCHAR";
+    public final String ALTER_CATEGORY_FOOD_TYPE_QUERY = "ALTER TABLE " + PRODUCT_CATEGORY_TABLE + " ADD COLUMN foodTypeId INTEGER";
+    public final String ALTER_PRODUCT_SUBCATEGORY_QUERY = "ALTER TABLE " + PRODUCT_TABLE + " ADD COLUMN subcategoryId INTEGER";
+    public final String ALTER_CART_PORTION_ID_QUERY = "ALTER TABLE " + CART_PRODUCT_TABLE + " ADD COLUMN portionId VARCHAR";
+    public final String ALTER_CART_PORTION_NAME_QUERY = "ALTER TABLE " + CART_PRODUCT_TABLE + " ADD COLUMN portionName VARCHAR";
+    public final String ALTER_CART_SNAPSHOT_PRODUCT_NAME_QUERY = "ALTER TABLE " + CART_PRODUCT_TABLE + " ADD COLUMN snapshotProductName VARCHAR";
+    public final String ALTER_CART_SNAPSHOT_LINE_PRICE_QUERY = "ALTER TABLE " + CART_PRODUCT_TABLE + " ADD COLUMN snapshotLinePrice VARCHAR";
+    public final String ALTER_INVOICE_LINE_PORTION_ID_QUERY = "ALTER TABLE " + INVOICE_PRODUCT_TABLE + " ADD COLUMN portionId VARCHAR";
+    public final String ALTER_INVOICE_LINE_PORTION_NAME_QUERY = "ALTER TABLE " + INVOICE_PRODUCT_TABLE + " ADD COLUMN portionName VARCHAR";
+    public final String ALTER_INVOICE_LINE_SNAPSHOT_PRODUCT_NAME_QUERY = "ALTER TABLE " + INVOICE_PRODUCT_TABLE + " ADD COLUMN snapshotProductName VARCHAR";
+    public final String ALTER_INVOICE_LINE_SNAPSHOT_LINE_PRICE_QUERY = "ALTER TABLE " + INVOICE_PRODUCT_TABLE + " ADD COLUMN snapshotLinePrice VARCHAR";
+    public final String ALTER_INVOICE_ORG_QUERY = "ALTER TABLE " + INVOICE_TABLE + " ADD COLUMN organizationId VARCHAR";
+    public final String ALTER_INVOICE_BRANCH_QUERY = "ALTER TABLE " + INVOICE_TABLE + " ADD COLUMN branchId VARCHAR";
+    public final String ALTER_INVOICE_DEVICE_QUERY = "ALTER TABLE " + INVOICE_TABLE + " ADD COLUMN deviceId VARCHAR";
+    public final String ALTER_INVOICE_PRODUCT_ORG_QUERY = "ALTER TABLE " + INVOICE_PRODUCT_TABLE + " ADD COLUMN organizationId VARCHAR";
+    public final String ALTER_INVOICE_PRODUCT_BRANCH_QUERY = "ALTER TABLE " + INVOICE_PRODUCT_TABLE + " ADD COLUMN branchId VARCHAR";
+    public final String ALTER_INVOICE_PRODUCT_DEVICE_QUERY = "ALTER TABLE " + INVOICE_PRODUCT_TABLE + " ADD COLUMN deviceId VARCHAR";
+    public final String ALTER_INVENTORY_ORG_QUERY = "ALTER TABLE " + INVENTORY_TABLE + " ADD COLUMN organizationId VARCHAR";
+    public final String ALTER_INVENTORY_BRANCH_QUERY = "ALTER TABLE " + INVENTORY_TABLE + " ADD COLUMN branchId VARCHAR";
+    public final String ALTER_INVENTORY_DEVICE_QUERY = "ALTER TABLE " + INVENTORY_TABLE + " ADD COLUMN deviceId VARCHAR";
+    public final String ALTER_EXPENSES_ORG_QUERY = "ALTER TABLE " + EXPENSES_TABLE + " ADD COLUMN organizationId VARCHAR";
+    public final String ALTER_EXPENSES_BRANCH_QUERY = "ALTER TABLE " + EXPENSES_TABLE + " ADD COLUMN branchId VARCHAR";
+    public final String ALTER_EXPENSES_DEVICE_QUERY = "ALTER TABLE " + EXPENSES_TABLE + " ADD COLUMN deviceId VARCHAR";
+
+    /********************************************** Alter Query  ***********************************************/
+
+
+    public POSBillingWalaDatabase(Context context) {
+        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+
+        db.execSQL(FOOD_TYPE_QUERY);
+        db.execSQL(PRODUCT_CATEGORY_QUERY);
+        db.execSQL(PRODUCT_SUBCATEGORY_QUERY);
+        db.execSQL(PRODUCT_PORTION_QUERY);
+        db.execSQL(PRODUCT_QUERY);
+        db.execSQL(CART_PRODUCT_QUERY);
+        db.execSQL(INVOICE_QUERY);
+        db.execSQL(INVOICE_PRODUCT_QUERY);
+        db.execSQL(PRINTER_SETTING_QUERY);
+        db.execSQL(COMPANY_QUERY);
+        db.execSQL(INVENTORY_QUERY);
+        db.execSQL(EXPENSES_QUERY);
+        db.execSQL(MEMBER_QUERY);
+        db.execSQL(MEMBER_PAYMENT_QUERY);
+        db.execSQL(MESS_INVOICE_QUERY);
+        ensureFoodTypeCatalog(db);
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        // Additive only — never DROP production tables
+        ensureAdditiveSchema(db);
+    }
+
+    @Override
+    public void onOpen(SQLiteDatabase db) {
+        super.onOpen(db);
+        if (!db.isReadOnly()) {
+            try {
+                ensureAdditiveSchema(db);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * Applies all known ADD COLUMN migrations and sync unique indexes.
+     * Safe to run repeatedly; never drops tables or deletes customer data
+     * except duplicate sync-key rows when creating unique indexes.
+     */
+    public void ensureAdditiveSchema(SQLiteDatabase db) {
+        addColumnIfNotExists(db, COMPANY_TABLE, "companyLogo", ALTER_COMPANY_QUERY);
+        addColumnIfNotExists(db, COMPANY_TABLE, "paymentLogo", ALTER_COMPANY_QR_QUERY);
+        addColumnIfNotExists(db, INVENTORY_TABLE, "saleInventoryQuantity", ALTER_INVENTORY_QUERY);
+        addColumnIfNotExists(db, PRODUCT_TABLE, "productCode", ALTER_PRODUCT_QUERY);
+        addColumnIfNotExists(db, PRODUCT_CATEGORY_TABLE, "categoryDeletedStatus", ALTER_CATEGORY_DELETED_QUERY);
+        addColumnIfNotExists(db, PRODUCT_TABLE, "productDeletedStatus", ALTER_PRODUCT_DELETED_QUERY);
+        addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "logoUse", ALTER_PRINTER_LOGO_SETTING_QUERY);
+        addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "paymentUse", ALTER_PRINTER_QR_SETTING_QUERY);
+        addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "customerUse", ALTER_CUSTOMER_SETTING_QUERY);
+        addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "bluetoothAddress", ALTER_PRINTER_BLUETOOTH_SETTING_QUERY);
+        addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "bluetoothKOTAddress", ALTER_PRINTER_KOT_BLUETOOTH_SETTING_QUERY);
+        addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "KOTPrinterName", ALTER_PRINTER_KOT_BLUETOOTH_NAME_SETTING_QUERY);
+        addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "productQuantityUpdate", ALTER_PRINTER_PRODUCT_QUANTITY_SETTING_QUERY);
+        addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "printerFeedLines", ALTER_PRINTER_FEED_LINES_SETTING_QUERY);
+        addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "KotPrinterFeedLines", ALTER_KOT_PRINTER_FEED_LINES_SETTING_QUERY);
+        // Phase 3 catalog foundation (additive only)
+        db.execSQL(FOOD_TYPE_QUERY);
+        db.execSQL(PRODUCT_SUBCATEGORY_QUERY);
+        db.execSQL(PRODUCT_PORTION_QUERY);
+        addColumnIfNotExists(db, PRODUCT_CATEGORY_TABLE, "foodTypeId", ALTER_CATEGORY_FOOD_TYPE_QUERY);
+        addColumnIfNotExists(db, PRODUCT_TABLE, "subcategoryId", ALTER_PRODUCT_SUBCATEGORY_QUERY);
+        addColumnIfNotExists(db, CART_PRODUCT_TABLE, "portionId", ALTER_CART_PORTION_ID_QUERY);
+        addColumnIfNotExists(db, CART_PRODUCT_TABLE, "portionName", ALTER_CART_PORTION_NAME_QUERY);
+        addColumnIfNotExists(db, CART_PRODUCT_TABLE, "snapshotProductName", ALTER_CART_SNAPSHOT_PRODUCT_NAME_QUERY);
+        addColumnIfNotExists(db, CART_PRODUCT_TABLE, "snapshotLinePrice", ALTER_CART_SNAPSHOT_LINE_PRICE_QUERY);
+        addColumnIfNotExists(db, INVOICE_PRODUCT_TABLE, "portionId", ALTER_INVOICE_LINE_PORTION_ID_QUERY);
+        addColumnIfNotExists(db, INVOICE_PRODUCT_TABLE, "portionName", ALTER_INVOICE_LINE_PORTION_NAME_QUERY);
+        addColumnIfNotExists(db, INVOICE_PRODUCT_TABLE, "snapshotProductName", ALTER_INVOICE_LINE_SNAPSHOT_PRODUCT_NAME_QUERY);
+        addColumnIfNotExists(db, INVOICE_PRODUCT_TABLE, "snapshotLinePrice", ALTER_INVOICE_LINE_SNAPSHOT_LINE_PRICE_QUERY);
+        addColumnIfNotExists(db, INVOICE_TABLE, "organizationId", ALTER_INVOICE_ORG_QUERY);
+        addColumnIfNotExists(db, INVOICE_TABLE, "branchId", ALTER_INVOICE_BRANCH_QUERY);
+        addColumnIfNotExists(db, INVOICE_TABLE, "deviceId", ALTER_INVOICE_DEVICE_QUERY);
+        addColumnIfNotExists(db, INVOICE_PRODUCT_TABLE, "organizationId", ALTER_INVOICE_PRODUCT_ORG_QUERY);
+        addColumnIfNotExists(db, INVOICE_PRODUCT_TABLE, "branchId", ALTER_INVOICE_PRODUCT_BRANCH_QUERY);
+        addColumnIfNotExists(db, INVOICE_PRODUCT_TABLE, "deviceId", ALTER_INVOICE_PRODUCT_DEVICE_QUERY);
+        addColumnIfNotExists(db, INVENTORY_TABLE, "organizationId", ALTER_INVENTORY_ORG_QUERY);
+        addColumnIfNotExists(db, INVENTORY_TABLE, "branchId", ALTER_INVENTORY_BRANCH_QUERY);
+        addColumnIfNotExists(db, INVENTORY_TABLE, "deviceId", ALTER_INVENTORY_DEVICE_QUERY);
+        addColumnIfNotExists(db, EXPENSES_TABLE, "organizationId", ALTER_EXPENSES_ORG_QUERY);
+        addColumnIfNotExists(db, EXPENSES_TABLE, "branchId", ALTER_EXPENSES_BRANCH_QUERY);
+        addColumnIfNotExists(db, EXPENSES_TABLE, "deviceId", ALTER_EXPENSES_DEVICE_QUERY);
+        ensureFoodTypeCatalog(db);
+        ensureUniqueSyncIndexes(db);
+    }
+
+    /**
+     * Production-safe: dedupe by sync key then create UNIQUE indexes (no DROP TABLE).
+     * Prevents local duplicate bills/lines when cloud pull or sync retries re-insert.
+     */
+    public void ensureUniqueSyncIndexes(SQLiteDatabase db) {
+        try {
+            dedupeByNetworkStatus(db, INVOICE_TABLE, "invoiceId", "invoiceNetworkStatus");
+            dedupeByNetworkStatus(db, INVOICE_PRODUCT_TABLE, "invoiceProductId", "invoiceProductNetworkStatus");
+            dedupeByNetworkStatus(db, PRODUCT_PORTION_TABLE, "portionId", "portionNetworkStatus");
+
+            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_invoice_network_status ON "
+                    + INVOICE_TABLE + "(invoiceNetworkStatus) "
+                    + "WHERE invoiceNetworkStatus IS NOT NULL AND invoiceNetworkStatus != ''");
+
+            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_invoice_product_network_status ON "
+                    + INVOICE_PRODUCT_TABLE + "(invoiceProductNetworkStatus) "
+                    + "WHERE invoiceProductNetworkStatus IS NOT NULL AND invoiceProductNetworkStatus != ''");
+
+            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_portion_network_status ON "
+                    + PRODUCT_PORTION_TABLE + "(portionNetworkStatus) "
+                    + "WHERE portionNetworkStatus IS NOT NULL AND portionNetworkStatus != ''");
+
+            // Billing search indexes (additive; LIKE with leading % still scans, but filters/sorts improve)
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_product_name ON " + PRODUCT_TABLE + "(productName)");
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_product_code ON " + PRODUCT_TABLE + "(productCode)");
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_product_deleted_status ON " + PRODUCT_TABLE + "(productDeletedStatus)");
+
+            // Report paging / date-order queries
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_invoice_date ON " + INVOICE_TABLE + "(invoiceDate)");
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_invoice_type ON " + INVOICE_TABLE + "(invoiceType)");
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_invoice_payment_mode ON " + INVOICE_TABLE + "(paymentMode)");
+
+            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_food_type_code ON " + FOOD_TYPE_TABLE + "(foodTypeCode)");
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_category_food_type ON " + PRODUCT_CATEGORY_TABLE + "(foodTypeId)");
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_subcategory_category ON " + PRODUCT_SUBCATEGORY_TABLE + "(categoryId)");
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_product_subcategory ON " + PRODUCT_TABLE + "(subcategoryId)");
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_portion_product ON " + PRODUCT_PORTION_TABLE + "(productId)");
+        } catch (Exception e) {
+            // Index may fail if unexpected duplicates remain; upsert helpers still protect inserts
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Seeds Food + Beverage types and maps legacy categories with no foodTypeId to Food.
+     * Idempotent — safe on every open/upgrade.
+     */
+    public void ensureFoodTypeCatalog(SQLiteDatabase db) {
+        try {
+            insertFoodTypeIfMissing(db, "Food", FoodTypeResponse.CODE_FOOD, 1);
+            insertFoodTypeIfMissing(db, "Beverage", FoodTypeResponse.CODE_BEVERAGE, 2);
+
+            long foodId = getFoodTypeIdByCode(db, FoodTypeResponse.CODE_FOOD);
+            if (foodId > 0) {
+                db.execSQL(
+                        "UPDATE " + PRODUCT_CATEGORY_TABLE
+                                + " SET foodTypeId = " + foodId
+                                + " WHERE foodTypeId IS NULL");
+            }
+            mapLikelyBeverageCategories(db);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Maps common beverage category names from legacy Food default to Beverage.
+     * Only touches rows still on the default Food type — never overwrites explicit Beverage assignments.
+     */
+    private void mapLikelyBeverageCategories(SQLiteDatabase db) {
+        long beverageId = getFoodTypeIdByCode(db, FoodTypeResponse.CODE_BEVERAGE);
+        long foodId = getFoodTypeIdByCode(db, FoodTypeResponse.CODE_FOOD);
+        if (beverageId <= 0 || foodId <= 0) {
+            return;
+        }
+        db.execSQL(
+                "UPDATE " + PRODUCT_CATEGORY_TABLE
+                        + " SET foodTypeId = " + beverageId
+                        + " WHERE foodTypeId = " + foodId
+                        + " AND categoryDeletedStatus = '0'"
+                        + " AND ("
+                        + " LOWER(categoryName) LIKE '%beverage%'"
+                        + " OR LOWER(categoryName) LIKE '%drink%'"
+                        + " OR LOWER(categoryName) LIKE '%juice%'"
+                        + " OR LOWER(categoryName) LIKE '%mocktail%'"
+                        + " OR LOWER(categoryName) LIKE '%cocktail%'"
+                        + " OR LOWER(categoryName) LIKE '%tea%'"
+                        + " OR LOWER(categoryName) LIKE '%coffee%'"
+                        + " OR LOWER(categoryName) LIKE '%shake%'"
+                        + " OR LOWER(categoryName) LIKE '%lassi%'"
+                        + " OR LOWER(categoryName) LIKE '%soda%'"
+                        + " OR LOWER(categoryName) LIKE '%soft%'"
+                        + " OR LOWER(categoryName) LIKE '%cold%'"
+                        + " OR LOWER(categoryName) LIKE '%water%'"
+                        + " OR LOWER(categoryName) LIKE '%milk%'"
+                        + ")");
+    }
+
+    public String getFoodTypeNameById(long foodTypeId) {
+        if (foodTypeId <= 0) {
+            return "";
+        }
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT foodTypeName FROM " + FOOD_TYPE_TABLE + " WHERE foodTypeId = ? LIMIT 1",
+                    new String[]{String.valueOf(foodTypeId)});
+            if (cursor.moveToFirst()) {
+                return cursor.getString(0);
+            }
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return "";
+    }
+
+    private void insertFoodTypeIfMissing(SQLiteDatabase db, String name, String code, int sortOrder) {
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT foodTypeId FROM " + FOOD_TYPE_TABLE + " WHERE foodTypeCode = ? LIMIT 1",
+                    new String[]{code});
+            if (cursor.moveToFirst()) {
+                return;
+            }
+            ContentValues values = new ContentValues();
+            values.put("foodTypeName", name);
+            values.put("foodTypeCode", code);
+            values.put("foodTypeSortOrder", sortOrder);
+            values.put("foodTypeStatus", 1);
+            db.insert(FOOD_TYPE_TABLE, null, values);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
+    public long getFoodTypeIdByCode(String code) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return getFoodTypeIdByCode(db, code);
+    }
+
+    private long getFoodTypeIdByCode(SQLiteDatabase db, String code) {
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT foodTypeId FROM " + FOOD_TYPE_TABLE + " WHERE foodTypeCode = ? LIMIT 1",
+                    new String[]{code});
+            if (cursor.moveToFirst()) {
+                return cursor.getLong(0);
+            }
+            return 0;
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
+    public long getDefaultFoodTypeId() {
+        long foodId = getFoodTypeIdByCode(FoodTypeResponse.CODE_FOOD);
+        if (foodId > 0) {
+            return foodId;
+        }
+        SQLiteDatabase db = this.getWritableDatabase();
+        ensureFoodTypeCatalog(db);
+        return getFoodTypeIdByCode(db, FoodTypeResponse.CODE_FOOD);
+    }
+
+    public String getFoodTypeCodeById(long foodTypeId) {
+        if (foodTypeId <= 0) {
+            return "";
+        }
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT foodTypeCode FROM " + FOOD_TYPE_TABLE + " WHERE foodTypeId = ? LIMIT 1",
+                    new String[]{String.valueOf(foodTypeId)});
+            if (cursor.moveToFirst()) {
+                return cursor.getString(0);
+            }
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return "";
+    }
+
+    public List<FoodTypeResponse> getFoodTypeList() {
+        List<FoodTypeResponse> list = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT * FROM " + FOOD_TYPE_TABLE
+                            + " WHERE foodTypeStatus = 1 ORDER BY foodTypeSortOrder ASC, foodTypeId ASC",
+                    null);
+            while (cursor.moveToNext()) {
+                FoodTypeResponse item = new FoodTypeResponse();
+                item.setFoodTypeId(cursor.getString(cursor.getColumnIndex("foodTypeId")));
+                item.setFoodTypeName(cursor.getString(cursor.getColumnIndex("foodTypeName")));
+                item.setFoodTypeCode(cursor.getString(cursor.getColumnIndex("foodTypeCode")));
+                item.setFoodTypeSortOrder(cursor.getString(cursor.getColumnIndex("foodTypeSortOrder")));
+                item.setFoodTypeStatus(cursor.getString(cursor.getColumnIndex("foodTypeStatus")));
+                list.add(item);
+            }
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return list;
+    }
+
+    public List<ProductCategoryResponse> getCategoryListByFoodType(String foodTypeId) {
+        List<ProductCategoryResponse> list = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            String sql;
+            String[] args;
+            if (foodTypeId == null || foodTypeId.trim().isEmpty()) {
+                sql = "SELECT * FROM " + PRODUCT_CATEGORY_TABLE
+                        + " WHERE categoryDeletedStatus = '0' GROUP BY categoryName";
+                args = null;
+            } else {
+                sql = "SELECT * FROM " + PRODUCT_CATEGORY_TABLE
+                        + " WHERE categoryDeletedStatus = '0' AND foodTypeId = ? GROUP BY categoryName";
+                args = new String[]{foodTypeId};
+            }
+            cursor = db.rawQuery(sql, args);
+            while (cursor.moveToNext()) {
+                ProductCategoryResponse productCategoryResponse = new ProductCategoryResponse();
+                productCategoryResponse.setCategoryId(cursor.getString(cursor.getColumnIndex("categoryId")));
+                productCategoryResponse.setCategoryName(cursor.getString(cursor.getColumnIndex("categoryName")));
+                productCategoryResponse.setCategoryDeletedStatus(cursor.getString(cursor.getColumnIndex("categoryDeletedStatus")));
+                productCategoryResponse.setCategoryNetworkStatus(cursor.getString(cursor.getColumnIndex("categoryNetworkStatus")));
+                productCategoryResponse.setFoodTypeId(cursor.getString(cursor.getColumnIndex("foodTypeId")));
+                list.add(productCategoryResponse);
+            }
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return list;
+    }
+
+    private void dedupeByNetworkStatus(SQLiteDatabase db, String table, String idColumn, String networkColumn) {
+        db.execSQL(
+                "DELETE FROM " + table + " WHERE " + idColumn + " IN ("
+                        + "SELECT t." + idColumn + " FROM " + table + " t "
+                        + "INNER JOIN ("
+                        + "  SELECT " + networkColumn + " AS netKey, MIN(" + idColumn + ") AS keepId "
+                        + "  FROM " + table + " "
+                        + "  WHERE " + networkColumn + " IS NOT NULL AND " + networkColumn + " != '' "
+                        + "  GROUP BY " + networkColumn + " HAVING COUNT(*) > 1"
+                        + ") d ON t." + networkColumn + " = d.netKey AND t." + idColumn + " != d.keepId"
+                        + ")"
+        );
+    }
+
+    public boolean invoiceNetworkStatusExists(String invoiceNetworkStatus) {
+        if (invoiceNetworkStatus == null || invoiceNetworkStatus.trim().isEmpty()) {
+            return false;
+        }
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT 1 FROM " + INVOICE_TABLE + " WHERE invoiceNetworkStatus = ? LIMIT 1",
+                    new String[]{invoiceNetworkStatus});
+            return cursor.moveToFirst();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
+    public boolean invoiceProductNetworkStatusExists(String invoiceProductNetworkStatus) {
+        if (invoiceProductNetworkStatus == null || invoiceProductNetworkStatus.trim().isEmpty()) {
+            return false;
+        }
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT 1 FROM " + INVOICE_PRODUCT_TABLE + " WHERE invoiceProductNetworkStatus = ? LIMIT 1",
+                    new String[]{invoiceProductNetworkStatus});
+            return cursor.moveToFirst();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
+    public void addColumnIfNotExists(String tableName, String columnName, String query) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        addColumnIfNotExists(db, tableName, columnName, query);
+    }
+
+    public void addColumnIfNotExists(SQLiteDatabase db, String tableName, String columnName, String query) {
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery("PRAGMA table_info(" + tableName + ")", null);
+            boolean columnExists = false;
+            while (cursor.moveToNext()) {
+                String existingColumnName = cursor.getString(cursor.getColumnIndexOrThrow("name"));
+                if (existingColumnName.equals(columnName)) {
+                    columnExists = true;
+                    break;
+                }
+            }
+            if (!columnExists) {
+                db.execSQL(query);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
+    public void upGradeDatabase() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        try {
+            ensureAdditiveSchema(db);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public boolean insertProductCategory(String categoryName, int categoryStatus, String categoryDeletedStatus, String categoryNetworkStatus) {
+        return insertProductCategory(categoryName, categoryStatus, categoryDeletedStatus, categoryNetworkStatus, 0);
+    }
+
+    public boolean insertProductCategory(String categoryName, int categoryStatus, String categoryDeletedStatus,
+                                         String categoryNetworkStatus, long foodTypeId) {
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+
+        if (foodTypeId <= 0) {
+            foodTypeId = getDefaultFoodTypeId();
+        }
+
+        contentValues.put("categoryName", categoryName);
+        contentValues.put("categoryStatus", categoryStatus);
+        contentValues.put("categoryDeletedStatus", categoryDeletedStatus);
+        contentValues.put("categoryNetworkStatus", categoryNetworkStatus);
+        contentValues.put("foodTypeId", foodTypeId);
+
+        db.insert(PRODUCT_CATEGORY_TABLE, null, contentValues);
+        db.close();
+
+        return true;
+
+    }
+
+    public boolean insertProductSubcategory(String categoryId, String subcategoryName,
+                                            String subcategoryDeletedStatus, String subcategoryNetworkStatus,
+                                            int subcategoryStatus) {
+        if (subcategoryNetworkStatusExists(subcategoryNetworkStatus)) {
+            return false;
+        }
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("categoryId", categoryId);
+        values.put("subcategoryName", subcategoryName);
+        values.put("subcategoryDeletedStatus",
+                subcategoryDeletedStatus != null ? subcategoryDeletedStatus : "0");
+        values.put("subcategoryNetworkStatus", subcategoryNetworkStatus);
+        values.put("subcategoryStatus", subcategoryStatus);
+        long rowId = db.insert(PRODUCT_SUBCATEGORY_TABLE, null, values);
+        db.close();
+        return rowId != -1;
+    }
+
+    public boolean subcategoryNetworkStatusExists(String subcategoryNetworkStatus) {
+        if (subcategoryNetworkStatus == null || subcategoryNetworkStatus.trim().isEmpty()) {
+            return false;
+        }
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT 1 FROM " + PRODUCT_SUBCATEGORY_TABLE + " WHERE subcategoryNetworkStatus = ? LIMIT 1",
+                    new String[]{subcategoryNetworkStatus});
+            return cursor.moveToFirst();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
+    public void upsertFoodTypeFromServer(String foodTypeName, String foodTypeCode, int sortOrder) {
+        if (foodTypeCode == null || foodTypeCode.trim().isEmpty()) {
+            return;
+        }
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT foodTypeId FROM " + FOOD_TYPE_TABLE + " WHERE foodTypeCode = ? LIMIT 1",
+                    new String[]{foodTypeCode});
+            ContentValues values = new ContentValues();
+            values.put("foodTypeName", foodTypeName);
+            values.put("foodTypeSortOrder", sortOrder);
+            values.put("foodTypeStatus", 1);
+            if (cursor.moveToFirst()) {
+                db.update(FOOD_TYPE_TABLE, values, "foodTypeCode=?", new String[]{foodTypeCode});
+            } else {
+                values.put("foodTypeCode", foodTypeCode);
+                db.insert(FOOD_TYPE_TABLE, null, values);
+            }
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
+    public void updateProductSubcategory(String subcategoryId, String subcategoryName, int subcategoryStatus) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("subcategoryName", subcategoryName);
+        values.put("subcategoryStatus", subcategoryStatus);
+        db.update(PRODUCT_SUBCATEGORY_TABLE, values, "subcategoryId=?", new String[]{subcategoryId});
+        db.close();
+    }
+
+    public void deleteProductSubcategory(String subcategoryId) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("subcategoryDeletedStatus", "1");
+        values.put("subcategoryStatus", 0);
+        db.update(PRODUCT_SUBCATEGORY_TABLE, values, "subcategoryId=?", new String[]{subcategoryId});
+        db.close();
+    }
+
+    public List<ProductSubcategoryResponse> getProductSubcategoryList(String categoryId) {
+        List<ProductSubcategoryResponse> list = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            if (categoryId == null || categoryId.trim().isEmpty()) {
+                cursor = db.rawQuery(
+                        "SELECT * FROM " + PRODUCT_SUBCATEGORY_TABLE
+                                + " WHERE subcategoryDeletedStatus = '0' ORDER BY subcategoryName ASC",
+                        null);
+            } else {
+                cursor = db.rawQuery(
+                        "SELECT * FROM " + PRODUCT_SUBCATEGORY_TABLE
+                                + " WHERE subcategoryDeletedStatus = '0' AND categoryId = ?"
+                                + " ORDER BY subcategoryName ASC",
+                        new String[]{categoryId});
+            }
+            while (cursor.moveToNext()) {
+                ProductSubcategoryResponse item = new ProductSubcategoryResponse();
+                item.setSubcategoryId(cursor.getString(cursor.getColumnIndex("subcategoryId")));
+                item.setCategoryId(cursor.getString(cursor.getColumnIndex("categoryId")));
+                item.setSubcategoryName(cursor.getString(cursor.getColumnIndex("subcategoryName")));
+                item.setSubcategoryDeletedStatus(cursor.getString(cursor.getColumnIndex("subcategoryDeletedStatus")));
+                item.setSubcategoryNetworkStatus(cursor.getString(cursor.getColumnIndex("subcategoryNetworkStatus")));
+                item.setSubcategoryStatus(cursor.getString(cursor.getColumnIndex("subcategoryStatus")));
+                list.add(item);
+            }
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return list;
+    }
+
+    public List<ProductSubcategoryResponse> getProductSubcategoryNameList(String categoryId, String subcategoryName) {
+        List<ProductSubcategoryResponse> list = new ArrayList<>();
+        if (categoryId == null || subcategoryName == null || subcategoryName.trim().isEmpty()) {
+            return list;
+        }
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT * FROM " + PRODUCT_SUBCATEGORY_TABLE
+                            + " WHERE categoryId = ? AND subcategoryName = ?"
+                            + " AND subcategoryDeletedStatus = '0'",
+                    new String[]{categoryId, subcategoryName.trim()});
+            while (cursor.moveToNext()) {
+                ProductSubcategoryResponse item = new ProductSubcategoryResponse();
+                item.setSubcategoryId(cursor.getString(cursor.getColumnIndex("subcategoryId")));
+                item.setCategoryId(cursor.getString(cursor.getColumnIndex("categoryId")));
+                item.setSubcategoryName(cursor.getString(cursor.getColumnIndex("subcategoryName")));
+                list.add(item);
+            }
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return list;
+    }
+
+    public boolean portionNetworkStatusExists(String portionNetworkStatus) {
+        if (portionNetworkStatus == null || portionNetworkStatus.trim().isEmpty()) {
+            return false;
+        }
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT 1 FROM " + PRODUCT_PORTION_TABLE + " WHERE portionNetworkStatus = ? LIMIT 1",
+                    new String[]{portionNetworkStatus});
+            return cursor.moveToFirst();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
+    private ProductPortionResponse mapProductPortion(Cursor cursor) {
+        ProductPortionResponse item = new ProductPortionResponse();
+        item.setPortionId(cursor.getString(cursor.getColumnIndex("portionId")));
+        item.setProductId(cursor.getString(cursor.getColumnIndex("productId")));
+        item.setPortionName(cursor.getString(cursor.getColumnIndex("portionName")));
+        item.setPortionPrice(cursor.getString(cursor.getColumnIndex("portionPrice")));
+        item.setPortionSortOrder(cursor.getString(cursor.getColumnIndex("portionSortOrder")));
+        item.setPortionDeletedStatus(cursor.getString(cursor.getColumnIndex("portionDeletedStatus")));
+        item.setPortionNetworkStatus(cursor.getString(cursor.getColumnIndex("portionNetworkStatus")));
+        item.setPortionStatus(cursor.getString(cursor.getColumnIndex("portionStatus")));
+        return item;
+    }
+
+    /**
+     * Inserts a portion when network key is new. Returns false if duplicate sync key.
+     */
+    public boolean insertProductPortion(String productId, String portionName, String portionPrice,
+                                        int portionSortOrder, String portionDeletedStatus,
+                                        String portionNetworkStatus, int portionStatus) {
+        if (portionNetworkStatusExists(portionNetworkStatus)) {
+            return false;
+        }
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("productId", productId);
+        values.put("portionName", portionName);
+        values.put("portionPrice", portionPrice);
+        values.put("portionSortOrder", portionSortOrder);
+        values.put("portionDeletedStatus", portionDeletedStatus != null ? portionDeletedStatus : "0");
+        values.put("portionNetworkStatus", portionNetworkStatus);
+        values.put("portionStatus", portionStatus);
+        long rowId = db.insertWithOnConflict(PRODUCT_PORTION_TABLE, null, values, SQLiteDatabase.CONFLICT_IGNORE);
+        db.close();
+        return rowId != -1;
+    }
+
+    public boolean insertProductPortion(ProductPortionResponse portion) {
+        if (portion == null) {
+            return false;
+        }
+        int sort = 0;
+        try {
+            if (portion.getPortionSortOrder() != null && !portion.getPortionSortOrder().isEmpty()) {
+                sort = Integer.parseInt(portion.getPortionSortOrder());
+            }
+        } catch (NumberFormatException ignored) {
+        }
+        int status = 1;
+        try {
+            if (portion.getPortionStatus() != null && !portion.getPortionStatus().isEmpty()) {
+                status = Integer.parseInt(portion.getPortionStatus());
+            }
+        } catch (NumberFormatException ignored) {
+        }
+        return insertProductPortion(
+                portion.getProductId(),
+                portion.getPortionName(),
+                portion.getPortionPrice(),
+                sort,
+                portion.getPortionDeletedStatus(),
+                portion.getPortionNetworkStatus(),
+                status);
+    }
+
+    public void updateProductPortion(String portionId, String portionName, String portionPrice, int portionSortOrder) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("portionName", portionName);
+        values.put("portionPrice", portionPrice);
+        values.put("portionSortOrder", portionSortOrder);
+        values.put("portionStatus", 0);
+        db.update(PRODUCT_PORTION_TABLE, values, "portionId=?", new String[]{portionId});
+        db.close();
+    }
+
+    public void deleteProductPortion(String portionId) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("portionDeletedStatus", "1");
+        values.put("portionStatus", 0);
+        db.update(PRODUCT_PORTION_TABLE, values, "portionId=?", new String[]{portionId});
+        db.close();
+    }
+
+    public int countActiveProductPortions(String productId) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT COUNT(*) FROM " + PRODUCT_PORTION_TABLE
+                            + " WHERE productId = ? AND portionDeletedStatus = '0'",
+                    new String[]{productId});
+            if (cursor.moveToFirst()) {
+                return cursor.getInt(0);
+            }
+            return 0;
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
+    public boolean hasProductPortions(String productId) {
+        return countActiveProductPortions(productId) > 0;
+    }
+
+    public List<ProductPortionResponse> getProductPortionList(String productId) {
+        List<ProductPortionResponse> list = new ArrayList<>();
+        if (productId == null || productId.trim().isEmpty()) {
+            return list;
+        }
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT * FROM " + PRODUCT_PORTION_TABLE
+                            + " WHERE productId = ? AND portionDeletedStatus = '0'"
+                            + " ORDER BY portionSortOrder ASC, portionId ASC",
+                    new String[]{productId});
+            while (cursor.moveToNext()) {
+                list.add(mapProductPortion(cursor));
+            }
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return list;
+    }
+
+    public List<ProductPortionResponse> getProductPortionNameList(String productId, String portionName) {
+        List<ProductPortionResponse> list = new ArrayList<>();
+        if (productId == null || portionName == null || portionName.trim().isEmpty()) {
+            return list;
+        }
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT * FROM " + PRODUCT_PORTION_TABLE
+                            + " WHERE productId = ? AND portionName = ?"
+                            + " AND portionDeletedStatus = '0'",
+                    new String[]{productId, portionName.trim()});
+            while (cursor.moveToNext()) {
+                list.add(mapProductPortion(cursor));
+            }
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return list;
+    }
+
+    public ProductPortionResponse getProductPortionById(String portionId) {
+        if (portionId == null || portionId.trim().isEmpty()) {
+            return null;
+        }
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT * FROM " + PRODUCT_PORTION_TABLE + " WHERE portionId = ? LIMIT 1",
+                    new String[]{portionId});
+            if (cursor.moveToFirst()) {
+                return mapProductPortion(cursor);
+            }
+            return null;
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
+    /**
+     * Billing helper: use base product price when no portions exist; otherwise first active portion price.
+     * Full portion-picker UX comes in P3-5.
+     */
+    public String getEffectiveProductPrice(String productId) {
+        List<ProductPortionResponse> portions = getProductPortionList(productId);
+        if (portions.isEmpty()) {
+            SQLiteDatabase db = this.getReadableDatabase();
+            Cursor cursor = null;
+            try {
+                cursor = db.rawQuery(
+                        "SELECT productPrice FROM " + PRODUCT_TABLE + " WHERE productId = ? LIMIT 1",
+                        new String[]{productId});
+                if (cursor.moveToFirst()) {
+                    return cursor.getString(0);
+                }
+            } finally {
+                if (cursor != null) {
+                    cursor.close();
+                }
+            }
+            return "0";
+        }
+        return portions.get(0).getPortionPrice();
+    }
+
+    public void addProduct(String userId, String categoryId, String categoryName, String productCode, String productName, String productPrice, String unitName, String productCGST, String productSGST, int productStatus, String productNetworkStatus, String productDeletedStatus) {
+        addProduct(userId, categoryId, categoryName, productCode, productName, productPrice, unitName, productCGST, productSGST, productStatus, productNetworkStatus, productDeletedStatus, null);
+    }
+
+    public void addProduct(String userId, String categoryId, String categoryName, String productCode, String productName, String productPrice, String unitName, String productCGST, String productSGST, int productStatus, String productNetworkStatus, String productDeletedStatus, String subcategoryId) {
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+
+        float productWithGSTPrice = 0f, productCGSTAmount = 0f, productSGSTAmount = 0f;
+        if (productCGST != null) {
+            productCGSTAmount = Float.parseFloat(!productCGST.isEmpty() ? productCGST : "0");
+        }
+
+        if (productSGST != null) {
+            productSGSTAmount = Float.parseFloat(!productSGST.isEmpty() ? productSGST : "0");
+        }
+
+        productWithGSTPrice = Float.parseFloat(productPrice) + ((Float.parseFloat(productPrice)) * ((productCGSTAmount + productSGSTAmount) / 100));
+
+        contentValues.put("categoryId", categoryId);
+        contentValues.put("categoryName", categoryName);
+        contentValues.put("productCode", productCode);
+        contentValues.put("productName", productName);
+        contentValues.put("productPrice", productPrice);
+        contentValues.put("productUnit", unitName);
+        contentValues.put("productCGST", productCGST);
+        contentValues.put("productSGST", productSGST);
+        contentValues.put("productWithGSTPrice", String.valueOf(productWithGSTPrice));
+        contentValues.put("productStatus", productStatus);
+        contentValues.put("productDeletedStatus", productDeletedStatus);
+        contentValues.put("productNetworkStatus", productNetworkStatus);
+        putOptionalColumn(contentValues, "subcategoryId", subcategoryId);
+
+        db.insert(PRODUCT_TABLE, null, contentValues);
+
+        db.close();
+
+    }
+
+    public boolean addToCart(String userId, ProductResponse productResponse, String productChangePrice, String productQuantity, String noOfTable, String cartDiscount, String cartOrderStatus) {
+        return addToCart(userId, productResponse, productChangePrice, productQuantity, noOfTable, cartDiscount, cartOrderStatus, null, null);
+    }
+
+    public boolean addToCart(String userId, ProductResponse productResponse, String productChangePrice, String productQuantity,
+                             String noOfTable, String cartDiscount, String cartOrderStatus,
+                             String portionId, String portionName) {
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+
+        contentValues.put("userId", userId);
+        contentValues.put("productId", productResponse.getProductId());
+        contentValues.put("productName", productResponse.getProductName());
+        contentValues.put("productOldPrice", productResponse.getProductPrice());
+        contentValues.put("productNewPrice", productChangePrice);
+        contentValues.put("productUnit", productResponse.getProductUnit());
+        contentValues.put("productCGST", productResponse.getProductCGST());
+        contentValues.put("productSGST", productResponse.getProductSGST());
+        contentValues.put("productQuantity", productQuantity);
+        contentValues.put("noOfTable", noOfTable);
+        contentValues.put("cartDiscount", cartDiscount);
+        contentValues.put("cartOrderStatus", cartOrderStatus);
+        contentValues.put("cartStatus", 0);
+        contentValues.put("snapshotProductName", productResponse.getProductName());
+        contentValues.put("snapshotLinePrice", productChangePrice);
+        putOptionalColumn(contentValues, "portionId", portionId);
+        putOptionalColumn(contentValues, "portionName", portionName);
+
+        db.insert(CART_PRODUCT_TABLE, null, contentValues);
+        db.close();
+
+        return true;
+
+    }
+
+    private void putOptionalColumn(ContentValues values, String column, String value) {
+        if (value != null && !value.trim().isEmpty()) {
+            values.put(column, value);
+        }
+    }
+
+    private void mapCartLineSnapshots(Cursor cursor, ProductCartResponse item) {
+        mapStringColumn(cursor, "portionId", item::setPortionId);
+        mapStringColumn(cursor, "portionName", item::setPortionName);
+        mapStringColumn(cursor, "snapshotProductName", item::setSnapshotProductName);
+        mapStringColumn(cursor, "snapshotLinePrice", item::setSnapshotLinePrice);
+    }
+
+    private void mapInvoiceLineSnapshots(Cursor cursor, InvoiceProductResponse item) {
+        mapStringColumn(cursor, "portionId", item::setPortionId);
+        mapStringColumn(cursor, "portionName", item::setPortionName);
+        mapStringColumn(cursor, "snapshotProductName", item::setSnapshotProductName);
+        mapStringColumn(cursor, "snapshotLinePrice", item::setSnapshotLinePrice);
+    }
+
+    private interface StringColumnConsumer {
+        void accept(String value);
+    }
+
+    private void mapStringColumn(Cursor cursor, String column, StringColumnConsumer consumer) {
+        int idx = cursor.getColumnIndex(column);
+        if (idx >= 0 && !cursor.isNull(idx)) {
+            consumer.accept(cursor.getString(idx));
+        }
+    }
+
+    public boolean addCompanyPrinterSetting(String printerName, String KOTPrinterName, String invoicePrefix, String invoiceTitle, String logoUse, String paymentUse, String customerUse, String productQuantityUpdate, String invoiceTermsCondition, String bluetoothAddress, String bluetoothKOTAddress, String printerFeedLines, String KotPrinterFeedLines, int settingStatus) {
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+
+        contentValues.put("printerName", printerName);
+        contentValues.put("KOTPrinterName", KOTPrinterName);
+        contentValues.put("invoicePrefix", invoicePrefix);
+        contentValues.put("invoiceTitle", invoiceTitle);
+        contentValues.put("logoUse", logoUse);
+        contentValues.put("paymentUse", paymentUse);
+        contentValues.put("customerUse", customerUse);
+        contentValues.put("productQuantityUpdate", productQuantityUpdate);
+        contentValues.put("invoiceTermsCondition", invoiceTermsCondition);
+        contentValues.put("bluetoothAddress", bluetoothAddress);
+        contentValues.put("bluetoothKOTAddress", bluetoothKOTAddress);
+        contentValues.put("printerFeedLines", printerFeedLines);
+        contentValues.put("KotPrinterFeedLines", KotPrinterFeedLines);
+        contentValues.put("settingStatus", settingStatus);
+
+        db.insert(PRINTER_SETTING_TABLE, null, contentValues);
+        db.close();
+
+        return true;
+    }
+
+    public void updateCartDiscount(String cartId, String cartDiscount, String cartDiscountType) {
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+
+        contentValues.put("cartDiscount", cartDiscount);
+        contentValues.put("cartDiscountType", cartDiscountType);
+
+        db.update(CART_PRODUCT_TABLE, contentValues, "cartId=?", new String[]{cartId});
+        db.close();
+
+    }
+
+    public void updateCompanyPrinterSetting(String settingId, String printerName, String KOTPrinterName, String invoicePrefix, String invoiceTitle, String logoUse, String paymentUse, String customerUse, String productQuantityUpdate, String invoiceTermsCondition, String bluetoothAddress, String bluetoothKOTAddress, String printerFeedLines, String KotPrinterFeedLines, int settingStatus) {
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+
+        contentValues.put("printerName", printerName);
+        contentValues.put("KOTPrinterName", KOTPrinterName);
+        contentValues.put("invoicePrefix", invoicePrefix);
+        contentValues.put("invoiceTitle", invoiceTitle);
+        contentValues.put("logoUse", logoUse);
+        contentValues.put("paymentUse", paymentUse);
+        contentValues.put("customerUse", customerUse);
+        contentValues.put("productQuantityUpdate", productQuantityUpdate);
+        contentValues.put("bluetoothAddress", bluetoothAddress);
+        contentValues.put("bluetoothKOTAddress", bluetoothKOTAddress);
+        contentValues.put("printerFeedLines", printerFeedLines);
+        contentValues.put("KotPrinterFeedLines", KotPrinterFeedLines);
+        contentValues.put("invoiceTermsCondition", invoiceTermsCondition);
+        contentValues.put("settingStatus", settingStatus);
+
+        db.update(PRINTER_SETTING_TABLE, contentValues, "settingId=?", new String[]{settingId});
+        db.close();
+
+    }
+
+    public boolean addCompanyDetails(String companyLogo, String companyName, String cashierName, String companyMobile, String companyAddress, String currencyName, String tableStatus, String noOfTable, String countryName,
+                                     String stateName, String gstStatus, String gstNumber, String shopCGST, String shopSGST, String panNumber, String companyFssis, int companyStatus, String paymentLogo) {
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+
+        contentValues.put("companyName", companyName);
+        contentValues.put("cashierName", cashierName);
+        contentValues.put("companyMobile", companyMobile);
+        contentValues.put("companyAddress", companyAddress);
+        contentValues.put("currencyName", currencyName);
+        contentValues.put("tableStatus", tableStatus);
+        contentValues.put("noOfTable", noOfTable);
+        contentValues.put("countryName", countryName);
+        contentValues.put("stateName", stateName);
+        contentValues.put("gstStatus", gstStatus);
+        contentValues.put("gstNumber", gstNumber);
+        contentValues.put("shopCGST", shopCGST);
+        contentValues.put("shopSGST", shopSGST);
+        contentValues.put("panNumber", panNumber);
+        contentValues.put("companyFssis", companyFssis);
+        contentValues.put("companyLogo", companyLogo);
+        contentValues.put("companyStatus", companyStatus);
+        contentValues.put("paymentLogo", paymentLogo);
+
+        db.insert(COMPANY_TABLE, null, contentValues);
+        db.close();
+
+        return true;
+
+    }
+
+    public List<InvoiceResponse> checkPaymentMode(String invoiceNumber) {
+
+        List<InvoiceResponse> invoiceResponseList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery("SELECT * FROM " + INVOICE_TABLE + " WHERE invoiceNumber='" + invoiceNumber + "' AND paymentMode=''", null);
+        InvoiceResponse invoiceResponse;
+        while (cursor.moveToNext()) {
+            invoiceResponse = new InvoiceResponse();
+            invoiceResponse.setInvoiceId(cursor.getString(cursor.getColumnIndex("invoiceId")));
+            invoiceResponse.setNoOfTable(cursor.getString(cursor.getColumnIndex("noOfTable")));
+            invoiceResponse.setInvoiceNumber(cursor.getString(cursor.getColumnIndex("invoiceNumber")));
+            invoiceResponse.setCustomerName(cursor.getString(cursor.getColumnIndex("customerName")));
+            invoiceResponse.setCustomerMobile(cursor.getString(cursor.getColumnIndex("customerMobile")));
+            invoiceResponse.setCustomerMobile(cursor.getString(cursor.getColumnIndex("customerEmail")));
+            invoiceResponse.setCustomerAddress(cursor.getString(cursor.getColumnIndex("customerAddress")));
+            invoiceResponse.setSubTotal(cursor.getString(cursor.getColumnIndex("subTotal")));
+            invoiceResponse.setTotalGSTAmount(cursor.getString(cursor.getColumnIndex("totalGSTAmount")));
+            invoiceResponse.setDiscount(cursor.getString(cursor.getColumnIndex("discount")));
+            invoiceResponse.setTotalAmount(cursor.getString(cursor.getColumnIndex("totalAmount")));
+            invoiceResponse.setPaymentMode(cursor.getString(cursor.getColumnIndex("paymentMode")));
+            invoiceResponse.setInvoiceDate(cursor.getString(cursor.getColumnIndex("invoiceDate")));
+            invoiceResponse.setInvoiceOrderStatus(cursor.getString(cursor.getColumnIndex("invoiceOrderStatus")));
+            invoiceResponse.setInvoiceNetworkStatus(cursor.getString(cursor.getColumnIndex("invoiceNetworkStatus")));
+            invoiceResponse.setInvoiceType(cursor.getString(cursor.getColumnIndex("invoiceType")));
+            invoiceResponse.setInvoiceStatus(cursor.getString(cursor.getColumnIndex("invoiceStatus")));
+            invoiceResponseList.add(invoiceResponse);
+        }
+        db.close();
+        return invoiceResponseList;
+
+    }
+
+    public List<InvoiceResponse> checkTablePaymentMode(String tableNumber) {
+
+        List<InvoiceResponse> invoiceResponseList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery("SELECT * FROM " + INVOICE_TABLE + " WHERE noOfTable='" + tableNumber + "' AND paymentMode=''", null);
+        InvoiceResponse invoiceResponse;
+        while (cursor.moveToNext()) {
+            invoiceResponse = new InvoiceResponse();
+            invoiceResponse.setInvoiceId(cursor.getString(cursor.getColumnIndex("invoiceId")));
+            invoiceResponse.setNoOfTable(cursor.getString(cursor.getColumnIndex("noOfTable")));
+            invoiceResponse.setInvoiceNumber(cursor.getString(cursor.getColumnIndex("invoiceNumber")));
+            invoiceResponse.setCustomerName(cursor.getString(cursor.getColumnIndex("customerName")));
+            invoiceResponse.setCustomerMobile(cursor.getString(cursor.getColumnIndex("customerMobile")));
+            invoiceResponse.setCustomerMobile(cursor.getString(cursor.getColumnIndex("customerEmail")));
+            invoiceResponse.setCustomerAddress(cursor.getString(cursor.getColumnIndex("customerAddress")));
+            invoiceResponse.setSubTotal(cursor.getString(cursor.getColumnIndex("subTotal")));
+            invoiceResponse.setTotalGSTAmount(cursor.getString(cursor.getColumnIndex("totalGSTAmount")));
+            invoiceResponse.setDiscount(cursor.getString(cursor.getColumnIndex("discount")));
+            invoiceResponse.setTotalAmount(cursor.getString(cursor.getColumnIndex("totalAmount")));
+            invoiceResponse.setPaymentMode(cursor.getString(cursor.getColumnIndex("paymentMode")));
+            invoiceResponse.setInvoiceDate(cursor.getString(cursor.getColumnIndex("invoiceDate")));
+            invoiceResponse.setInvoiceOrderStatus(cursor.getString(cursor.getColumnIndex("invoiceOrderStatus")));
+            invoiceResponse.setInvoiceNetworkStatus(cursor.getString(cursor.getColumnIndex("invoiceNetworkStatus")));
+            invoiceResponse.setInvoiceType(cursor.getString(cursor.getColumnIndex("invoiceType")));
+            invoiceResponse.setInvoiceStatus(cursor.getString(cursor.getColumnIndex("invoiceStatus")));
+            invoiceResponseList.add(invoiceResponse);
+        }
+        db.close();
+        return invoiceResponseList;
+
+    }
+
+    public void updateInvoicePaymentMode(String invoiceNumber, String paymentMode) {
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+
+        contentValues.put("paymentMode", paymentMode);
+
+        db.update(INVOICE_TABLE, contentValues, "invoiceNumber=?", new String[]{invoiceNumber});
+
+    }
+
+    public void updateInvoiceTablePaymentMode(String invoiceNumber, String tableNumber, String paymentMode) {
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+
+        contentValues.put("paymentMode", paymentMode);
+        contentValues.put("noOfTable", tableNumber);
+
+        db.update(INVOICE_TABLE, contentValues, "invoiceNumber=?", new String[]{invoiceNumber});
+
+    }
+
+    public boolean saveInvoice(List<ProductCartResponse> productCartResponseList, String noOfTable, String customerName, String customerMobile,
+                               String customerAddress, String invoiceNumber, float subtotal, float totalGSTAmount, float discount, String discountType, float totalAmount,
+                               String paymentMode, String invoiceDate, String invoiceType, String invoiceNetworkStatus, int invoiceStatus) {
+
+        // Idempotent local save: same sync key must not create a second bill
+        if (invoiceNetworkStatusExists(invoiceNetworkStatus)) {
+            return false;
+        }
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+
+        contentValues.put("noOfTable", noOfTable);
+        contentValues.put("invoiceNumber", invoiceNumber);
+        contentValues.put("customerName", customerName);
+        contentValues.put("customerMobile", customerMobile);
+        contentValues.put("customerAddress", customerAddress);
+        contentValues.put("subtotal", String.valueOf(subtotal));
+        contentValues.put("totalGSTAmount", String.valueOf(totalGSTAmount));
+        contentValues.put("discount", String.valueOf(discount));
+        contentValues.put("discountType", discountType);
+        contentValues.put("totalAmount", String.valueOf(totalAmount));
+        contentValues.put("paymentMode", paymentMode);
+        contentValues.put("invoiceDate", invoiceDate);
+        contentValues.put("invoiceOrderStatus", "completed");
+        contentValues.put("invoiceNetworkStatus", invoiceNetworkStatus);
+        contentValues.put("invoiceType", invoiceType);
+        contentValues.put("invoiceStatus", String.valueOf(invoiceStatus));
+        BranchSession.applyScope(contentValues);
+
+        long rowId = db.insertWithOnConflict(INVOICE_TABLE, null, contentValues, SQLiteDatabase.CONFLICT_IGNORE);
+        if (rowId == -1) {
+            db.close();
+            return false;
+        }
+        insertInvoiceProduct(productCartResponseList, invoiceNumber);
+        db.close();
+
+        return true;
+
+    }
+
+    public boolean insertInvoiceProduct(List<ProductCartResponse> productCartResponseList, String invoiceNumber) {
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+
+        for (ProductCartResponse productCartResponse : productCartResponseList) {
+
+            contentValues.clear();
+            String snapshotBaseName = productCartResponse.getSnapshotProductName();
+            if (snapshotBaseName == null || snapshotBaseName.trim().isEmpty()) {
+                snapshotBaseName = productCartResponse.getProductName();
+            }
+            String linePrice = productCartResponse.getResolvedLinePrice();
+
+            contentValues.put("invoiceNumber", invoiceNumber);
+            contentValues.put("productName", productCartResponse.getDisplayLineName());
+            contentValues.put("productPrice", linePrice);
+            contentValues.put("productUnit", productCartResponse.getProductUnit());
+            contentValues.put("productCGST", productCartResponse.getProductCGST());
+            contentValues.put("productSGST", productCartResponse.getProductSGST());
+            contentValues.put("productQuantity", productCartResponse.getProductQuantity());
+            contentValues.put("productStatus", "completed");
+            contentValues.put("invoiceProductNetworkStatus", getRandomString(10));
+            contentValues.put("invoiceProductStatus", 0);
+            contentValues.put("snapshotProductName", snapshotBaseName);
+            contentValues.put("snapshotLinePrice", linePrice);
+            putOptionalColumn(contentValues, "portionId", productCartResponse.getPortionId());
+            putOptionalColumn(contentValues, "portionName", productCartResponse.getPortionName());
+            BranchSession.applyScope(contentValues);
+
+            db.insert(INVOICE_PRODUCT_TABLE, null, contentValues);
+            updateCartStatus(productCartResponse.getCartId());
+            updateInventoryQuantity(productCartResponse.getProductId());
+
+        }
+
+        return true;
+
+    }
+
+    public void updateInventoryQuantity(String productId) {
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+
+        contentValues.put("inventoryNetworkStatus", getRandomString(10));
+        contentValues.put("inventoryStatus", 1);
+
+        db.update(INVENTORY_TABLE, contentValues, "productId=?", new String[]{productId});
+
+    }
+
+    public String getRandomString(final int sizeOfRandomString) {
+
+        String ALLOWED_CHARACTERS = "0123456789qwertyuiopasdfghjklzxcvbnm";
+
+        final Random random = new Random();
+        final StringBuilder sb = new StringBuilder(sizeOfRandomString);
+        for (int i = 0; i < sizeOfRandomString; ++i)
+            sb.append(ALLOWED_CHARACTERS.charAt(random.nextInt(ALLOWED_CHARACTERS.length())));
+        return sb.toString();
+    }
+
+    public void updateCartStatus(String cartId) {
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+
+        contentValues.put("cartOrderStatus", "completed");
+
+        db.update(CART_PRODUCT_TABLE, contentValues, "cartId=?", new String[]{cartId});
+        // db.close();
+    }
+
+    public void updateCompanyDetails(String companyLogo, String companyId, String companyName, String cashierName, String companyMobile, String companyAddress, String currencyName, String tableStatus, String noOfTable, String countryName,
+                                     String stateName, String gstStatus, String gstNumber, String shopCGST, String shopSGST, String panNumber, String companyFssis, int companyStatus, String paymentLogo) {
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+
+        contentValues.put("companyName", companyName);
+        contentValues.put("cashierName", cashierName);
+        contentValues.put("companyMobile", companyMobile);
+        contentValues.put("companyAddress", companyAddress);
+        contentValues.put("currencyName", currencyName);
+        contentValues.put("tableStatus", tableStatus);
+        contentValues.put("noOfTable", noOfTable);
+        contentValues.put("countryName", countryName);
+        contentValues.put("stateName", stateName);
+        contentValues.put("gstStatus", gstStatus);
+        contentValues.put("gstNumber", gstNumber);
+        contentValues.put("shopCGST", shopCGST.trim());
+        contentValues.put("shopSGST", shopSGST.trim());
+        contentValues.put("panNumber", panNumber);
+        contentValues.put("companyFssis", companyFssis);
+        contentValues.put("companyLogo", companyLogo);
+        contentValues.put("companyStatus", companyStatus);
+        contentValues.put("paymentLogo", paymentLogo);
+
+        db.update(COMPANY_TABLE, contentValues, "companyId=?", new String[]{companyId});
+        db.close();
+
+    }
+
+    public void updateCart(String cartId, String productQuantity, String productAmount) {
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+
+        contentValues.put("productQuantity", productQuantity);
+        contentValues.put("productOldPrice", productAmount);
+        contentValues.put("productNewPrice", productAmount);
+        contentValues.put("snapshotLinePrice", productAmount);
+
+        db.update(CART_PRODUCT_TABLE, contentValues, "cartId=?", new String[]{cartId});
+        db.close();
+
+    }
+
+    public void updateCategory(String categoryId, String categoryName, int categoryStatus) {
+        updateCategory(categoryId, categoryName, categoryStatus, -1);
+    }
+
+    public void updateCategory(String categoryId, String categoryName, int categoryStatus, long foodTypeId) {
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+
+        contentValues.put("categoryName", categoryName);
+        contentValues.put("categoryStatus", categoryStatus);
+        if (foodTypeId > 0) {
+            contentValues.put("foodTypeId", foodTypeId);
+        }
+
+        db.update(PRODUCT_CATEGORY_TABLE, contentValues, "categoryId=?", new String[]{categoryId});
+        db.close();
+
+    }
+
+    public void updateProduct(String userId, String productId, String categoryId, String categoryName, String productCode, String productName, String productPrice, String unitName, String productCGST, String productSGST, int productStatus) {
+        updateProduct(userId, productId, categoryId, categoryName, productCode, productName, productPrice, unitName, productCGST, productSGST, productStatus, null);
+    }
+
+    public void updateProduct(String userId, String productId, String categoryId, String categoryName, String productCode, String productName, String productPrice, String unitName, String productCGST, String productSGST, int productStatus, String subcategoryId) {
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+
+        float productWithGSTPrice = 0f, productCGSTAmount = 0f, productSGSTAmount = 0f;
+        if (productCGST != null) {
+            productCGSTAmount = Float.parseFloat(!productCGST.isEmpty() ? productCGST : "0");
+        }
+
+        if (productSGST != null) {
+            productSGSTAmount = Float.parseFloat(!productSGST.isEmpty() ? productSGST : "0");
+        }
+
+        productWithGSTPrice = Float.parseFloat(productPrice) + ((Float.parseFloat(productPrice)) * ((productCGSTAmount + productSGSTAmount) / 100));
+
+
+        contentValues.put("userId", userId);
+        contentValues.put("categoryId", categoryId);
+        contentValues.put("categoryName", categoryName);
+        contentValues.put("productCode", productCode);
+        contentValues.put("productName", productName);
+        contentValues.put("productPrice", productPrice);
+        contentValues.put("productUnit", unitName);
+        contentValues.put("productCGST", productCGST);
+        contentValues.put("productSGST", productSGST);
+        contentValues.put("productWithGSTPrice", String.valueOf(productWithGSTPrice));
+        contentValues.put("productStatus", productStatus);
+        putOptionalColumn(contentValues, "subcategoryId", subcategoryId);
+
+        db.update(PRODUCT_TABLE, contentValues, "productId=?", new String[]{productId});
+        db.close();
+
+    }
+
+    public List<ProductCategoryResponse> getProductCategoryList() {
+
+        List<ProductCategoryResponse> productCategoryResponseList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery("SELECT * FROM " + PRODUCT_CATEGORY_TABLE + " WHERE categoryDeletedStatus = '0' GROUP BY categoryName", null);
+        ProductCategoryResponse productCategoryResponse;
+        while (cursor.moveToNext()) {
+            productCategoryResponse = new ProductCategoryResponse();
+            productCategoryResponse.setCategoryId(cursor.getString(cursor.getColumnIndex("categoryId")));
+            productCategoryResponse.setCategoryName(cursor.getString(cursor.getColumnIndex("categoryName")));
+            productCategoryResponse.setCategoryNetworkStatus(cursor.getString(cursor.getColumnIndex("categoryNetworkStatus")));
+            productCategoryResponse.setCategoryDeletedStatus(cursor.getString(cursor.getColumnIndex("categoryDeletedStatus")));
+            int foodTypeCol = cursor.getColumnIndex("foodTypeId");
+            if (foodTypeCol >= 0 && !cursor.isNull(foodTypeCol)) {
+                productCategoryResponse.setFoodTypeId(cursor.getString(foodTypeCol));
+            }
+            productCategoryResponseList.add(productCategoryResponse);
+        }
+        db.close();
+        return productCategoryResponseList;
+    }
+
+    public List<ProductCategoryResponse> getProductCategoryNameList(String categoryName) {
+
+        List<ProductCategoryResponse> productCategoryResponseList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery("SELECT * FROM " + PRODUCT_CATEGORY_TABLE + " WHERE categoryName = '" + categoryName + "' GROUP BY categoryName", null);
+        ProductCategoryResponse productCategoryResponse;
+        while (cursor.moveToNext()) {
+            productCategoryResponse = new ProductCategoryResponse();
+            productCategoryResponse.setCategoryId(cursor.getString(cursor.getColumnIndex("categoryId")));
+            productCategoryResponse.setCategoryName(cursor.getString(cursor.getColumnIndex("categoryName")));
+            productCategoryResponse.setCategoryNetworkStatus(cursor.getString(cursor.getColumnIndex("categoryNetworkStatus")));
+            int foodTypeCol = cursor.getColumnIndex("foodTypeId");
+            if (foodTypeCol >= 0 && !cursor.isNull(foodTypeCol)) {
+                productCategoryResponse.setFoodTypeId(cursor.getString(foodTypeCol));
+            }
+            productCategoryResponseList.add(productCategoryResponse);
+        }
+        db.close();
+        return productCategoryResponseList;
+    }
+
+
+    public List<ProductResponse> getHomeProductList(String categoryName, String tableNumber, String cartOrderStatus) {
+        return getHomeProductList(categoryName, tableNumber, cartOrderStatus, null);
+    }
+
+    public List<ProductResponse> getHomeProductList(String categoryName, String tableNumber, String cartOrderStatus, String subcategoryId) {
+
+        List<ProductResponse> productResponseList = new ArrayList<>();
+        if (categoryName == null || categoryName.trim().isEmpty()) {
+            return productResponseList;
+        }
+
+        SQLiteDatabase db = this.getReadableDatabase();
+        String safeTable = tableNumber != null ? tableNumber : "";
+        String safeOrder = cartOrderStatus != null ? cartOrderStatus : "";
+
+        String sql = "SELECT product.* FROM " + PRODUCT_TABLE + " product "
+                + "LEFT JOIN " + PRODUCT_CATEGORY_TABLE + " ON " + PRODUCT_CATEGORY_TABLE + ".categoryName = product.categoryName "
+                + "WHERE product.categoryName = ? AND IFNULL(product.productDeletedStatus, '0') = '0'";
+
+        String[] args;
+        if (subcategoryId != null && !subcategoryId.trim().isEmpty()) {
+            sql += " AND product.subcategoryId = ?";
+            args = new String[]{categoryName, subcategoryId};
+        } else {
+            args = new String[]{categoryName};
+        }
+        sql += " GROUP BY product.productName";
+
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(sql, args);
+            while (cursor.moveToNext()) {
+                ProductResponse productResponse = mapHomeProductRow(cursor);
+
+                String productId = productResponse.getProductId();
+                Cursor cartCursor = null;
+                try {
+                    cartCursor = db.rawQuery(
+                            "SELECT SUM(CAST(productQuantity AS REAL)) AS totalQty FROM " + CART_PRODUCT_TABLE
+                                    + " WHERE productId = ? AND noOfTable = ? AND cartOrderStatus = ?",
+                            new String[]{productId, safeTable, safeOrder});
+                    if (cartCursor.moveToFirst()) {
+                        int qtyIdx = cartCursor.getColumnIndex("totalQty");
+                        if (qtyIdx >= 0 && !cartCursor.isNull(qtyIdx)) {
+                            double totalQty = cartCursor.getDouble(qtyIdx);
+                            if (totalQty > 0d) {
+                                productResponse.setProductCartQuantity(String.valueOf((int) totalQty));
+                            }
+                        }
+                    }
+                } finally {
+                    if (cartCursor != null) {
+                        cartCursor.close();
+                    }
+                }
+
+                productResponseList.add(productResponse);
+            }
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            db.close();
+        }
+        return productResponseList;
+
+    }
+
+    private ProductResponse mapHomeProductRow(Cursor cursor) {
+        ProductResponse productResponse = new ProductResponse();
+        productResponse.setProductId(cursor.getString(cursor.getColumnIndex("productId")));
+        productResponse.setCategoryId(cursor.getString(cursor.getColumnIndex("categoryId")));
+        productResponse.setCategoryName(cursor.getString(cursor.getColumnIndex("categoryName")));
+        productResponse.setProductName(cursor.getString(cursor.getColumnIndex("productName")));
+        productResponse.setProductCode(cursor.getString(cursor.getColumnIndex("productCode")));
+        productResponse.setProductPrice(cursor.getString(cursor.getColumnIndex("productPrice")));
+        productResponse.setProductUnit(cursor.getString(cursor.getColumnIndex("productUnit")));
+        productResponse.setProductCGST(cursor.getString(cursor.getColumnIndex("productCGST")));
+        productResponse.setProductSGST(cursor.getString(cursor.getColumnIndex("productSGST")));
+        productResponse.setProductStatus(cursor.getString(cursor.getColumnIndex("productStatus")));
+        int subcategoryCol = cursor.getColumnIndex("subcategoryId");
+        if (subcategoryCol >= 0 && !cursor.isNull(subcategoryCol)) {
+            productResponse.setSubcategoryId(cursor.getString(subcategoryCol));
+        }
+        return productResponse;
+    }
+
+    public List<ProductCartResponse> getCartProductDetails(String productId, String tableNumber, String cartOrderStatus) {
+        return getCartProductDetails(productId, null, tableNumber, cartOrderStatus);
+    }
+
+    public List<ProductCartResponse> getCartProductDetails(String productId, String portionId, String tableNumber, String cartOrderStatus) {
+
+        List<ProductCartResponse> productCartResponseList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor;
+        if (portionId != null && !portionId.trim().isEmpty()) {
+            cursor = db.rawQuery(
+                    "SELECT * FROM " + CART_PRODUCT_TABLE
+                            + " WHERE productId = ? AND portionId = ? AND noOfTable = ? AND cartOrderStatus = ?",
+                    new String[]{productId, portionId, tableNumber, cartOrderStatus});
+        } else {
+            cursor = db.rawQuery(
+                    "SELECT * FROM " + CART_PRODUCT_TABLE
+                            + " WHERE productId = ? AND (portionId IS NULL OR portionId = '')"
+                            + " AND noOfTable = ? AND cartOrderStatus = ?",
+                    new String[]{productId, tableNumber, cartOrderStatus});
+        }
+        ProductCartResponse productResponse;
+        while (cursor.moveToNext()) {
+            productResponse = new ProductCartResponse();
+            productResponse.setCartId(cursor.getString(cursor.getColumnIndex("cartId")));
+            productResponse.setProductId(cursor.getString(cursor.getColumnIndex("productId")));
+            productResponse.setProductName(cursor.getString(cursor.getColumnIndex("productName")));
+            productResponse.setProductOldPrice(cursor.getString(cursor.getColumnIndex("productOldPrice")));
+            productResponse.setProductNewPrice(cursor.getString(cursor.getColumnIndex("productNewPrice")));
+            productResponse.setProductUnit(cursor.getString(cursor.getColumnIndex("productUnit")));
+            productResponse.setProductQuantity(cursor.getString(cursor.getColumnIndex("productQuantity")));
+            productResponse.setProductCGST(cursor.getString(cursor.getColumnIndex("productCGST")));
+            productResponse.setProductSGST(cursor.getString(cursor.getColumnIndex("productSGST")));
+            productResponse.setNoOfTable(cursor.getString(cursor.getColumnIndex("noOfTable")));
+            productResponse.setCartDiscount(cursor.getString(cursor.getColumnIndex("cartDiscount")));
+            productResponse.setCartDiscountType(cursor.getString(cursor.getColumnIndex("cartDiscountType")));
+            productResponse.setCartOrderStatus(cursor.getString(cursor.getColumnIndex("cartOrderStatus")));
+            productResponse.setCartStatus(cursor.getString(cursor.getColumnIndex("cartStatus")));
+            mapCartLineSnapshots(cursor, productResponse);
+            productCartResponseList.add(productResponse);
+        }
+        cursor.close();
+        db.close();
+        return productCartResponseList;
+
+    }
+
+    public List<ProductCartResponse> getCartProductList(String tableNumber, String cartOrderStatus) {
+
+        List<ProductCartResponse> productCartResponseList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery("SELECT * FROM " + CART_PRODUCT_TABLE + " WHERE noOfTable = '" + tableNumber + "' AND cartOrderStatus = '" + cartOrderStatus + "'", null);
+        ProductCartResponse productResponse;
+        while (cursor.moveToNext()) {
+            productResponse = new ProductCartResponse();
+            productResponse.setCartId(cursor.getString(cursor.getColumnIndex("cartId")));
+            productResponse.setProductId(cursor.getString(cursor.getColumnIndex("productId")));
+            productResponse.setProductName(cursor.getString(cursor.getColumnIndex("productName")));
+            productResponse.setProductOldPrice(cursor.getString(cursor.getColumnIndex("productOldPrice")));
+            productResponse.setProductNewPrice(cursor.getString(cursor.getColumnIndex("productNewPrice")));
+            productResponse.setProductUnit(cursor.getString(cursor.getColumnIndex("productUnit")));
+            productResponse.setProductQuantity(cursor.getString(cursor.getColumnIndex("productQuantity")));
+            productResponse.setProductCGST(cursor.getString(cursor.getColumnIndex("productCGST")));
+            productResponse.setProductSGST(cursor.getString(cursor.getColumnIndex("productSGST")));
+            productResponse.setNoOfTable(cursor.getString(cursor.getColumnIndex("noOfTable")));
+            productResponse.setCartDiscount(cursor.getString(cursor.getColumnIndex("cartDiscount")));
+            productResponse.setCartDiscountType(cursor.getString(cursor.getColumnIndex("cartDiscountType")));
+            productResponse.setCartOrderStatus(cursor.getString(cursor.getColumnIndex("cartOrderStatus")));
+            productResponse.setCartStatus(cursor.getString(cursor.getColumnIndex("cartStatus")));
+            mapCartLineSnapshots(cursor, productResponse);
+            productCartResponseList.add(productResponse);
+        }
+        db.close();
+        return productCartResponseList;
+
+    }
+
+    public List<ProductResponse> getAllProductList(String tableNumber, String cartOrderStatus) {
+
+        List<ProductResponse> productResponseList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery("SELECT * FROM product LEFT JOIN product_category ON product_category.categoryName = product.categoryName WHERE product.categoryName !='' AND product.productDeletedStatus = '0' GROUP BY product.productName ORDER BY product.productId", null);
+        ProductResponse productResponse;
+        while (cursor.moveToNext()) {
+            productResponse = new ProductResponse();
+            String productId = cursor.getString(cursor.getColumnIndex("productId"));
+
+            Cursor cartCursor = db.rawQuery("SELECT * FROM cart_product LEFT JOIN product ON product.productId = cart_product.productId WHERE cart_product.productId = '" + productId + "' AND noOfTable = '" + tableNumber + "' AND cart_product.cartOrderStatus = '" + cartOrderStatus + "'", null);
+            while (cartCursor.moveToNext()) {
+                productResponse.setProductCartQuantity(cartCursor.getString(cartCursor.getColumnIndex("productQuantity")));
+            }
+            productResponse.setProductId(cursor.getString(cursor.getColumnIndex("productId")));
+            productResponse.setCategoryId(cursor.getString(cursor.getColumnIndex("categoryId")));
+            productResponse.setCategoryName(cursor.getString(cursor.getColumnIndex("categoryName")));
+            productResponse.setProductName(cursor.getString(cursor.getColumnIndex("productName")));
+            productResponse.setProductCode(cursor.getString(cursor.getColumnIndex("productCode")));
+            productResponse.setProductPrice(cursor.getString(cursor.getColumnIndex("productPrice")));
+            productResponse.setProductUnit(cursor.getString(cursor.getColumnIndex("productUnit")));
+            productResponse.setProductCGST(cursor.getString(cursor.getColumnIndex("productCGST")));
+            productResponse.setProductSGST(cursor.getString(cursor.getColumnIndex("productSGST")));
+            productResponse.setProductStatus(cursor.getString(cursor.getColumnIndex("productStatus")));
+            productResponseList.add(productResponse);
+        }
+        db.close();
+        return productResponseList;
+
+    }
+
+    /**
+     * Fast billing search: parameterized SQL, single cart JOIN, limited results.
+     * Matches name / code / category / price (same fields as previous in-memory search).
+     */
+    public List<ProductResponse> searchProducts(String query, String tableNumber, String cartOrderStatus) {
+        List<ProductResponse> productResponseList = new ArrayList<>();
+        if (query == null || query.trim().isEmpty()) {
+            return productResponseList;
+        }
+
+        String trimmed = query.trim();
+        String contains = "%" + escapeLike(trimmed) + "%";
+        String prefix = escapeLike(trimmed) + "%";
+        String safeTable = tableNumber != null ? tableNumber : "";
+        String safeOrder = cartOrderStatus != null ? cartOrderStatus : "";
+
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            String sql = "SELECT p.productId, p.categoryId, p.categoryName, p.productName, p.productCode, "
+                    + "p.productPrice, p.productUnit, p.productCGST, p.productSGST, p.productStatus, "
+                    + "c.productQuantity AS productCartQuantity "
+                    + "FROM " + PRODUCT_TABLE + " p "
+                    + "LEFT JOIN " + CART_PRODUCT_TABLE + " c "
+                    + "ON c.productId = CAST(p.productId AS TEXT) AND c.noOfTable = ? AND c.cartOrderStatus = ? "
+                    + "WHERE IFNULL(p.productDeletedStatus, '0') = '0' "
+                    + "AND IFNULL(p.categoryName, '') != '' "
+                    + "AND ("
+                    + "  IFNULL(p.productName, '') LIKE ? ESCAPE '\\' "
+                    + "  OR IFNULL(p.productCode, '') LIKE ? ESCAPE '\\' "
+                    + "  OR IFNULL(p.categoryName, '') LIKE ? ESCAPE '\\' "
+                    + "  OR IFNULL(p.productPrice, '') LIKE ? ESCAPE '\\' "
+                    + ") "
+                    + "GROUP BY p.productName "
+                    + "ORDER BY "
+                    + "  CASE "
+                    + "    WHEN IFNULL(p.productCode, '') LIKE ? ESCAPE '\\' THEN 0 "
+                    + "    WHEN IFNULL(p.productName, '') LIKE ? ESCAPE '\\' THEN 1 "
+                    + "    ELSE 2 "
+                    + "  END, "
+                    + "  p.productName "
+                    + "LIMIT 100";
+
+            cursor = db.rawQuery(sql, new String[]{
+                    safeTable, safeOrder,
+                    contains, contains, contains, contains,
+                    prefix, prefix
+            });
+
+            while (cursor.moveToNext()) {
+                ProductResponse productResponse = new ProductResponse();
+                productResponse.setProductId(cursor.getString(cursor.getColumnIndex("productId")));
+                productResponse.setCategoryId(cursor.getString(cursor.getColumnIndex("categoryId")));
+                productResponse.setCategoryName(cursor.getString(cursor.getColumnIndex("categoryName")));
+                productResponse.setProductName(cursor.getString(cursor.getColumnIndex("productName")));
+                productResponse.setProductCode(cursor.getString(cursor.getColumnIndex("productCode")));
+                productResponse.setProductPrice(cursor.getString(cursor.getColumnIndex("productPrice")));
+                productResponse.setProductUnit(cursor.getString(cursor.getColumnIndex("productUnit")));
+                productResponse.setProductCGST(cursor.getString(cursor.getColumnIndex("productCGST")));
+                productResponse.setProductSGST(cursor.getString(cursor.getColumnIndex("productSGST")));
+                productResponse.setProductStatus(cursor.getString(cursor.getColumnIndex("productStatus")));
+                int cartQtyIdx = cursor.getColumnIndex("productCartQuantity");
+                if (cartQtyIdx >= 0 && !cursor.isNull(cartQtyIdx)) {
+                    productResponse.setProductCartQuantity(cursor.getString(cartQtyIdx));
+                }
+                productResponseList.add(productResponse);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return productResponseList;
+    }
+
+    private static String escapeLike(String input) {
+        return input.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+    }
+
+    public List<ProductResponse> getAllDESCProductList() {
+
+        List<ProductResponse> productResponseList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery("SELECT * FROM product LEFT JOIN product_category ON product_category.categoryName = product.categoryName GROUP BY product.productName ORDER BY product.productId DESC LIMIT 1", null);
+        ProductResponse productResponse;
+        while (cursor.moveToNext()) {
+            productResponse = new ProductResponse();
+            productResponse.setProductId(cursor.getString(cursor.getColumnIndex("productId")));
+            productResponse.setCategoryId(cursor.getString(cursor.getColumnIndex("categoryId")));
+            productResponse.setCategoryName(cursor.getString(cursor.getColumnIndex("categoryName")));
+            productResponse.setProductCode(cursor.getString(cursor.getColumnIndex("productCode")));
+            productResponse.setProductName(cursor.getString(cursor.getColumnIndex("productName")));
+            productResponse.setProductPrice(cursor.getString(cursor.getColumnIndex("productPrice")));
+            productResponse.setProductUnit(cursor.getString(cursor.getColumnIndex("productUnit")));
+            productResponse.setProductCGST(cursor.getString(cursor.getColumnIndex("productCGST")));
+            productResponse.setProductSGST(cursor.getString(cursor.getColumnIndex("productSGST")));
+            productResponse.setProductStatus(cursor.getString(cursor.getColumnIndex("productStatus")));
+            productResponseList.add(productResponse);
+        }
+        db.close();
+        return productResponseList;
+
+    }
+
+    public List<ProductResponse> getProductDetail(String productId) {
+
+        List<ProductResponse> productResponseList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery("SELECT * FROM product LEFT JOIN product_category ON product_category.categoryName = product.categoryName WHERE product.productId= '" + productId + "'", null);
+        ProductResponse productResponse;
+        while (cursor.moveToNext()) {
+            productResponse = new ProductResponse();
+            productResponse.setProductId(cursor.getString(cursor.getColumnIndex("productId")));
+            productResponse.setCategoryId(cursor.getString(cursor.getColumnIndex("categoryId")));
+            productResponse.setCategoryName(cursor.getString(cursor.getColumnIndex("categoryName")));
+            productResponse.setProductCode(cursor.getString(cursor.getColumnIndex("productCode")));
+            productResponse.setProductName(cursor.getString(cursor.getColumnIndex("productName")));
+            productResponse.setProductPrice(cursor.getString(cursor.getColumnIndex("productPrice")));
+            productResponse.setProductUnit(cursor.getString(cursor.getColumnIndex("productUnit")));
+            productResponse.setProductCGST(cursor.getString(cursor.getColumnIndex("productCGST")));
+            productResponse.setProductSGST(cursor.getString(cursor.getColumnIndex("productSGST")));
+            productResponse.setProductStatus(cursor.getString(cursor.getColumnIndex("productStatus")));
+            int subcategoryCol = cursor.getColumnIndex("subcategoryId");
+            if (subcategoryCol >= 0 && !cursor.isNull(subcategoryCol)) {
+                productResponse.setSubcategoryId(cursor.getString(subcategoryCol));
+            }
+            productResponseList.add(productResponse);
+        }
+        db.close();
+        return productResponseList;
+
+    }
+
+    public List<CompanyResponse> getCompanyDetails() {
+
+        List<CompanyResponse> companyResponseList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery("SELECT * FROM " + COMPANY_TABLE, null);
+        CompanyResponse companyResponse;
+        while (cursor.moveToNext()) {
+            companyResponse = new CompanyResponse();
+            companyResponse.setCompanyId(cursor.getString(cursor.getColumnIndex("companyId")));
+            companyResponse.setCompanyName(cursor.getString(cursor.getColumnIndex("companyName")));
+            companyResponse.setCashierName(cursor.getString(cursor.getColumnIndex("cashierName")));
+            companyResponse.setCompanyMobile(cursor.getString(cursor.getColumnIndex("companyMobile")));
+            companyResponse.setCompanyAddress(cursor.getString(cursor.getColumnIndex("companyAddress")));
+            companyResponse.setCurrencyName(cursor.getString(cursor.getColumnIndex("currencyName")));
+            companyResponse.setTableStatus(cursor.getString(cursor.getColumnIndex("tableStatus")));
+            companyResponse.setNoOfTable(cursor.getString(cursor.getColumnIndex("noOfTable")));
+            companyResponse.setCountryName(cursor.getString(cursor.getColumnIndex("countryName")));
+            companyResponse.setStateName(cursor.getString(cursor.getColumnIndex("stateName")));
+            companyResponse.setGstStatus(cursor.getString(cursor.getColumnIndex("gstStatus")));
+            companyResponse.setGstNumber(cursor.getString(cursor.getColumnIndex("gstNumber")));
+            companyResponse.setShopCGST(cursor.getString(cursor.getColumnIndex("shopCGST")));
+            companyResponse.setShopSGST(cursor.getString(cursor.getColumnIndex("shopSGST")));
+            companyResponse.setPanNumber(cursor.getString(cursor.getColumnIndex("panNumber")));
+            companyResponse.setCompanyFssis(cursor.getString(cursor.getColumnIndex("companyFssis")));
+            companyResponse.setCompanyLogo(cursor.getString(cursor.getColumnIndex("companyLogo")));
+            companyResponse.setPaymentLogo(cursor.getString(cursor.getColumnIndex("paymentLogo")));
+            companyResponse.setCompanyStatus(cursor.getString(cursor.getColumnIndex("companyStatus")));
+            companyResponseList.add(companyResponse);
+        }
+        db.close();
+        return companyResponseList;
+
+    }
+
+    public List<PrinterSettingResponse> getPrinterSettingDetails() {
+
+        List<PrinterSettingResponse> printerSettingResponseList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery("SELECT * FROM " + PRINTER_SETTING_TABLE, null);
+        PrinterSettingResponse printerSettingResponse;
+        while (cursor.moveToNext()) {
+            printerSettingResponse = new PrinterSettingResponse();
+            printerSettingResponse.setSettingId(cursor.getString(cursor.getColumnIndex("settingId")));
+            printerSettingResponse.setPrinterName(cursor.getString(cursor.getColumnIndex("printerName")));
+            printerSettingResponse.setInvoicePrefix(cursor.getString(cursor.getColumnIndex("invoicePrefix")));
+            printerSettingResponse.setInvoiceTitle(cursor.getString(cursor.getColumnIndex("invoiceTitle")));
+            printerSettingResponse.setInvoiceTermsCondition(cursor.getString(cursor.getColumnIndex("invoiceTermsCondition")));
+            printerSettingResponse.setPrinterFeedLines(cursor.getString(cursor.getColumnIndex("printerFeedLines")));
+            printerSettingResponse.setKotPrinterFeedLines(cursor.getString(cursor.getColumnIndex("KotPrinterFeedLines")));
+            try {
+                printerSettingResponse.setKOTPrinterName(cursor.getString(cursor.getColumnIndex("KOTPrinterName")));
+                printerSettingResponse.setLogoUse(cursor.getString(cursor.getColumnIndex("logoUse")));
+                printerSettingResponse.setPaymentUse(cursor.getString(cursor.getColumnIndex("paymentUse")));
+                printerSettingResponse.setCustomerUse(cursor.getString(cursor.getColumnIndex("customerUse")));
+                printerSettingResponse.setProductQuantityUpdate(cursor.getString(cursor.getColumnIndex("productQuantityUpdate")));
+                printerSettingResponse.setBluetoothAddress(cursor.getString(cursor.getColumnIndex("bluetoothAddress")));
+                printerSettingResponse.setBluetoothKOTAddress(cursor.getString(cursor.getColumnIndex("bluetoothKOTAddress")));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            printerSettingResponse.setSettingStatus(cursor.getString(cursor.getColumnIndex("settingStatus")));
+            printerSettingResponseList.add(printerSettingResponse);
+        }
+        db.close();
+        return printerSettingResponseList;
+
+    }
+
+    public void deleteCategory(String categoryId) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put("categoryDeletedStatus", "1");
+        contentValues.put("categoryStatus", "0");
+        db.update(PRODUCT_CATEGORY_TABLE, contentValues, "categoryId = ?", new String[]{categoryId});
+        db.close();
+    }
+
+    public void deleteCartProduct(String cartId) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.delete(CART_PRODUCT_TABLE, "cartId = ?", new String[]{cartId});
+        db.close();
+    }
+
+    public void deleteProduct(String productId) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put("productDeletedStatus", "1");
+        contentValues.put("productStatus", "0");
+        db.update(PRODUCT_TABLE, contentValues, "productId = ?", new String[]{productId});
+        db.close();
+        /*db.delete(PRODUCT_TABLE, "productId = ?", new String[]{productId});
+        db.close();*/
+    }
+
+    /**
+     * Clears local business data for a cloud fetch without DROP TABLE.
+     * Schema is preserved (production-safe; no destructive migration).
+     */
+    public void resetTables(SQLiteDatabase db) {
+        db.beginTransaction();
+        try {
+            db.delete(PRODUCT_CATEGORY_TABLE, null, null);
+            db.delete(PRODUCT_SUBCATEGORY_TABLE, null, null);
+            db.delete(PRODUCT_PORTION_TABLE, null, null);
+            db.delete(PRODUCT_TABLE, null, null);
+            db.delete(CART_PRODUCT_TABLE, null, null);
+            db.delete(INVOICE_TABLE, null, null);
+            db.delete(INVOICE_PRODUCT_TABLE, null, null);
+            db.delete(COMPANY_TABLE, null, null);
+            db.delete(PRINTER_SETTING_TABLE, null, null);
+            db.delete(MEMBER_TABLE, null, null);
+            db.delete(MEMBER_PAYMENT_TABLE, null, null);
+            db.delete(MESS_INVOICE_TABLE, null, null);
+            db.delete(INVENTORY_TABLE, null, null);
+            db.delete(EXPENSES_TABLE, null, null);
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    /** Count invoices not yet confirmed synced to server (invoiceStatus = 0). */
+    public int countUnsyncedInvoices() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery("SELECT COUNT(*) FROM " + INVOICE_TABLE + " WHERE invoiceStatus = 0", null);
+            if (cursor.moveToFirst()) {
+                return cursor.getInt(0);
+            }
+            return 0;
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
+    public Cursor getUnSynchronizeCategory(int status) {
+
+        SQLiteDatabase db = this.getReadableDatabase();
+        String sql = "SELECT * FROM " + PRODUCT_CATEGORY_TABLE + " WHERE categoryStatus = '" + status + "' ";
+        Cursor cursor = db.rawQuery(sql, null);
+        return cursor;
+    }
+
+    public void updateSyncCategory(String categoryId, int categoryStatus) {
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put("categoryStatus", categoryStatus);
+        db.update(PRODUCT_CATEGORY_TABLE, contentValues, "categoryId=?", new String[]{categoryId});
+        db.close();
+
+    }
+
+    public Cursor getUnSynchronizeProduct(int status) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String sql = "SELECT * FROM " + PRODUCT_TABLE + " WHERE productStatus = '" + status + "' ";
+        Cursor cursor = db.rawQuery(sql, null);
+        return cursor;
+    }
+
+    public void updateSyncProduct(String productId, int productStatus) {
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put("productStatus", productStatus);
+        db.update(PRODUCT_TABLE, contentValues, "productId=?", new String[]{productId});
+        db.close();
+
+    }
+
+    public Cursor getUnSynchronizeSubcategory(int status) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String sql = "SELECT s.*, c.categoryNetworkStatus FROM " + PRODUCT_SUBCATEGORY_TABLE + " s "
+                + "LEFT JOIN " + PRODUCT_CATEGORY_TABLE + " c ON c.categoryId = s.categoryId "
+                + "WHERE s.subcategoryStatus = '" + status + "'";
+        return db.rawQuery(sql, null);
+    }
+
+    public void updateSyncSubcategory(String subcategoryId, int subcategoryStatus) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put("subcategoryStatus", subcategoryStatus);
+        db.update(PRODUCT_SUBCATEGORY_TABLE, contentValues, "subcategoryId=?", new String[]{subcategoryId});
+        db.close();
+    }
+
+    public Cursor getUnSynchronizePortion(int status) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String sql = "SELECT pp.*, p.productNetworkStatus FROM " + PRODUCT_PORTION_TABLE + " pp "
+                + "LEFT JOIN " + PRODUCT_TABLE + " p ON p.productId = pp.productId "
+                + "WHERE pp.portionStatus = '" + status + "'";
+        return db.rawQuery(sql, null);
+    }
+
+    public void updateSyncPortion(String portionId, int portionStatus) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put("portionStatus", portionStatus);
+        db.update(PRODUCT_PORTION_TABLE, contentValues, "portionId=?", new String[]{portionId});
+        db.close();
+    }
+
+    public Cursor getUnSynchronizePrinterSetting(int status) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String sql = "SELECT * FROM " + PRINTER_SETTING_TABLE + " WHERE settingStatus = '" + status + "' ";
+        Cursor cursor = db.rawQuery(sql, null);
+        return cursor;
+    }
+
+    public void updateSynchronizePrinterSetting(String settingId, int settingStatus) {
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put("settingStatus", settingStatus);
+        db.update(PRINTER_SETTING_TABLE, contentValues, "settingId=?", new String[]{settingId});
+        db.close();
+
+    }
+
+    public Cursor getUnSynchronizeCompanyDetails(int status) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String sql = "SELECT * FROM " + COMPANY_TABLE + " WHERE companyStatus = '" + status + "' ";
+        Cursor cursor = db.rawQuery(sql, null);
+        return cursor;
+    }
+
+    public void updateSynchronizeCompanyDetails(String companyId, int companyStatus) {
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put("companyStatus", companyStatus);
+        db.update(COMPANY_TABLE, contentValues, "companyId=?", new String[]{companyId});
+        db.close();
+
+    }
+
+    public Cursor getUnSynchronizeInvoice(int status) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String sql = "SELECT * FROM " + INVOICE_TABLE + " WHERE invoiceStatus = '" + status + "' ";
+        Cursor cursor = db.rawQuery(sql, null);
+        return cursor;
+    }
+
+    public void updateSyncInvoice(String invoiceId, int invoiceStatus) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put("invoiceStatus", invoiceStatus);
+        db.update(INVOICE_TABLE, contentValues, "invoiceId=?", new String[]{invoiceId});
+        db.close();
+    }
+
+    public Cursor getUnSynchronizeInvoiceProduct(int status) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String sql = "SELECT * FROM " + INVOICE_PRODUCT_TABLE + " WHERE invoiceProductStatus = '" + status + "' ";
+        Cursor cursor = db.rawQuery(sql, null);
+        return cursor;
+    }
+
+    public void updateSyncInvoiceProduct(String invoiceProductId, int invoiceProductStatus) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put("invoiceProductStatus", invoiceProductStatus);
+        db.update(INVOICE_PRODUCT_TABLE, contentValues, "invoiceProductId=?", new String[]{invoiceProductId});
+        db.close();
+    }
+
+    public boolean addInvoice(InvoiceResponse invoiceResponse) {
+
+        String networkStatus = invoiceResponse.getInvoiceNetworkStatus();
+        if (invoiceNetworkStatusExists(networkStatus)) {
+            // Already present from a prior pull/sync — do not insert a duplicate bill
+            return false;
+        }
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+
+        contentValues.put("noOfTable", invoiceResponse.getNoOfTable());
+        contentValues.put("invoiceNumber", invoiceResponse.getInvoiceNumber());
+        contentValues.put("customerName", invoiceResponse.getCustomerName());
+        contentValues.put("customerMobile", invoiceResponse.getCustomerMobile());
+        contentValues.put("customerAddress", invoiceResponse.getCustomerAddress());
+        contentValues.put("subtotal", invoiceResponse.getSubTotal());
+        contentValues.put("totalGSTAmount", invoiceResponse.getTotalGSTAmount());
+        contentValues.put("discount", invoiceResponse.getDiscount());
+        contentValues.put("discountType", invoiceResponse.getDiscountType());
+        contentValues.put("totalAmount", invoiceResponse.getTotalAmount());
+        contentValues.put("paymentMode", invoiceResponse.getPaymentMode());
+        contentValues.put("invoiceDate", invoiceResponse.getInvoiceDate());
+        contentValues.put("invoiceOrderStatus", "completed");
+        contentValues.put("invoiceNetworkStatus", networkStatus);
+        contentValues.put("invoiceType", invoiceResponse.getInvoiceType());
+        contentValues.put("invoiceStatus", invoiceResponse.getInvoiceStatus());
+        putOptionalColumn(contentValues, "organizationId", invoiceResponse.getOrganizationId());
+        putOptionalColumn(contentValues, "branchId", invoiceResponse.getBranchId());
+        putOptionalColumn(contentValues, "deviceId", invoiceResponse.getDeviceId());
+        if (!contentValues.containsKey("organizationId")) {
+            BranchSession.applyScope(contentValues);
+        }
+
+        long rowId = db.insertWithOnConflict(INVOICE_TABLE, null, contentValues, SQLiteDatabase.CONFLICT_IGNORE);
+        db.close();
+
+        return rowId != -1;
+
+    }
+
+    public boolean addInvoiceProduct(InvoiceProductResponse invoiceProductResponse) {
+
+        String networkStatus = invoiceProductResponse.getInvoiceProductNetworkStatus();
+        if (invoiceProductNetworkStatusExists(networkStatus)) {
+            return false;
+        }
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+
+        contentValues.put("invoiceNumber", invoiceProductResponse.getInvoiceNumber());
+        contentValues.put("productName", invoiceProductResponse.getProductName());
+        contentValues.put("productPrice", invoiceProductResponse.getProductPrice());
+        contentValues.put("productUnit", invoiceProductResponse.getProductUnit());
+        contentValues.put("productCGST", invoiceProductResponse.getProductCGST());
+        contentValues.put("productSGST", invoiceProductResponse.getProductSGST());
+        contentValues.put("productQuantity", invoiceProductResponse.getProductQuantity());
+        contentValues.put("productStatus", invoiceProductResponse.getProductStatus());
+        contentValues.put("invoiceProductNetworkStatus", networkStatus);
+        contentValues.put("invoiceProductStatus", invoiceProductResponse.getInvoiceProductStatus());
+        putOptionalColumn(contentValues, "portionId", invoiceProductResponse.getPortionId());
+        putOptionalColumn(contentValues, "portionName", invoiceProductResponse.getPortionName());
+        if (invoiceProductResponse.getSnapshotProductName() != null
+                && !invoiceProductResponse.getSnapshotProductName().trim().isEmpty()) {
+            contentValues.put("snapshotProductName", invoiceProductResponse.getSnapshotProductName());
+        }
+        if (invoiceProductResponse.getSnapshotLinePrice() != null
+                && !invoiceProductResponse.getSnapshotLinePrice().trim().isEmpty()) {
+            contentValues.put("snapshotLinePrice", invoiceProductResponse.getSnapshotLinePrice());
+        }
+
+        long rowId = db.insertWithOnConflict(INVOICE_PRODUCT_TABLE, null, contentValues, SQLiteDatabase.CONFLICT_IGNORE);
+
+        return rowId != -1;
+
+    }
+
+    public int getInvoicePaymentModeCount(String invoiceDate, String paymentMode) {
+
+        SQLiteDatabase db = this.getReadableDatabase();
+        int totalCount = 0;
+        String sql;
+        if (!invoiceDate.isEmpty()) {
+            sql = "SELECT COUNT(invoiceId) as totalCount FROM " + INVOICE_TABLE + " WHERE paymentMode = '" + paymentMode + "' AND invoiceDate LIKE '%" + invoiceDate + "%'";
+        } else {
+            sql = "SELECT COUNT(invoiceId) as totalCount FROM " + INVOICE_TABLE + " WHERE paymentMode = '" + paymentMode + "'";
+        }
+        Cursor cursor = db.rawQuery(sql, null);
+        while (cursor.moveToNext()) {
+            totalCount = Integer.parseInt(cursor.getString(cursor.getColumnIndex("totalCount")));
+        }
+        db.close();
+        return totalCount;
+    }
+
+    public int getInvoiceCount(String invoiceDate) {
+
+        SQLiteDatabase db = this.getReadableDatabase();
+        int totalCount = 0;
+        String sql;
+        if (!invoiceDate.isEmpty()) {
+            sql = "SELECT COUNT(invoiceId) as totalCount FROM " + INVOICE_TABLE + " WHERE invoiceDate LIKE '%" + invoiceDate + "%'";
+        } else {
+            sql = "SELECT COUNT(invoiceId) as totalCount FROM " + INVOICE_TABLE;
+        }
+        Cursor cursor = db.rawQuery(sql, null);
+        while (cursor.moveToNext()) {
+            totalCount = Integer.parseInt(cursor.getString(cursor.getColumnIndex("totalCount")));
+        }
+        db.close();
+        return totalCount;
+    }
+
+    /** Total saved invoices (used for trial soft gate). */
+    public int getTotalInvoiceCount() {
+        return getInvoiceCount("");
+    }
+
+    public float getInvoicePaymentModeTotal(String invoiceDate, String paymentMode) {
+
+        SQLiteDatabase db = this.getReadableDatabase();
+        float totalAmount = 0;
+        String sql;
+        if (!invoiceDate.isEmpty()) {
+            sql = "SELECT SUM(totalAmount) as totalAmount FROM " + INVOICE_TABLE + " WHERE paymentMode = '" + paymentMode + "' AND invoiceDate LIKE '%" + invoiceDate + "%'";
+        } else {
+            sql = "SELECT SUM(totalAmount) as totalAmount FROM " + INVOICE_TABLE + " WHERE paymentMode = '" + paymentMode + "'";
+        }
+        Cursor cursor = db.rawQuery(sql, null);
+        while (cursor.moveToNext()) {
+            totalAmount = Float.parseFloat(cursor.getString(cursor.getColumnIndex("totalAmount")));
+        }
+        db.close();
+        return totalAmount;
+    }
+
+    public float getInvoiceTotal(String invoiceDate) {
+
+        SQLiteDatabase db = this.getReadableDatabase();
+        float totalAmount = 0;
+        String sql;
+        if (!invoiceDate.isEmpty()) {
+            sql = "SELECT SUM(totalAmount) as totalAmount FROM " + INVOICE_TABLE + " WHERE invoiceDate LIKE '%" + invoiceDate + "%'";
+        } else {
+            sql = "SELECT SUM(totalAmount) as totalAmount FROM " + INVOICE_TABLE;
+        }
+        Cursor cursor = db.rawQuery(sql, null);
+        while (cursor.moveToNext()) {
+            totalAmount = Float.parseFloat(cursor.getString(cursor.getColumnIndex("totalAmount")));
+        }
+        db.close();
+        return totalAmount;
+    }
+
+    public List<InvoiceResponse> getInvoicePaymentModeList(String invoiceDate, int offset, String paymentMode) {
+
+        List<InvoiceResponse> invoiceResponseList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        String sql;
+        if (!invoiceDate.isEmpty()) {
+            sql = "SELECT * FROM " + INVOICE_TABLE + " WHERE paymentMode = '" + paymentMode + "' AND invoiceDate LIKE '%" + invoiceDate + "%' ORDER BY invoiceDate DESC LIMIT " + offset + ", 25";
+        } else {
+            sql = "SELECT * FROM " + INVOICE_TABLE + " WHERE paymentMode = '" + paymentMode + "' ORDER BY invoiceDate DESC LIMIT " + offset + ", 25";
+        }
+
+        Cursor cursor = db.rawQuery(sql, null);
+        InvoiceResponse invoiceResponse;
+        if (cursor != null && cursor.moveToFirst()) {
+            do {
+                invoiceResponse = new InvoiceResponse();
+                invoiceResponse.setInvoiceId(cursor.getString(cursor.getColumnIndex("invoiceId")));
+                invoiceResponse.setNoOfTable(cursor.getString(cursor.getColumnIndex("noOfTable")));
+                invoiceResponse.setInvoiceNumber(cursor.getString(cursor.getColumnIndex("invoiceNumber")));
+                invoiceResponse.setCustomerName(cursor.getString(cursor.getColumnIndex("customerName")));
+                invoiceResponse.setCustomerMobile(cursor.getString(cursor.getColumnIndex("customerMobile")));
+                invoiceResponse.setCustomerMobile(cursor.getString(cursor.getColumnIndex("customerEmail")));
+                invoiceResponse.setCustomerAddress(cursor.getString(cursor.getColumnIndex("customerAddress")));
+                invoiceResponse.setSubTotal(cursor.getString(cursor.getColumnIndex("subTotal")));
+                invoiceResponse.setTotalGSTAmount(cursor.getString(cursor.getColumnIndex("totalGSTAmount")));
+                invoiceResponse.setDiscount(cursor.getString(cursor.getColumnIndex("discount")));
+                invoiceResponse.setTotalAmount(cursor.getString(cursor.getColumnIndex("totalAmount")));
+                invoiceResponse.setPaymentMode(cursor.getString(cursor.getColumnIndex("paymentMode")));
+                invoiceResponse.setInvoiceDate(cursor.getString(cursor.getColumnIndex("invoiceDate")));
+                invoiceResponse.setInvoiceOrderStatus(cursor.getString(cursor.getColumnIndex("invoiceOrderStatus")));
+                invoiceResponse.setInvoiceNetworkStatus(cursor.getString(cursor.getColumnIndex("invoiceNetworkStatus")));
+                invoiceResponse.setInvoiceType(cursor.getString(cursor.getColumnIndex("invoiceType")));
+                invoiceResponse.setInvoiceStatus(cursor.getString(cursor.getColumnIndex("invoiceStatus")));
+                invoiceResponseList.add(invoiceResponse);
+            } while (cursor.moveToNext());
+            db.close();
+        }
+        return invoiceResponseList;
+
+    }
+
+    public List<InvoiceResponse> getInvoiceList(String invoiceDate, int offset) {
+
+        List<InvoiceResponse> invoiceResponseList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        String sql;
+        if (!invoiceDate.isEmpty()) {
+            sql = "SELECT * FROM " + INVOICE_TABLE + " WHERE invoiceDate LIKE '%" + invoiceDate + "%' ORDER BY invoiceDate DESC LIMIT " + offset + ", 25";
+        } else {
+            sql = "SELECT * FROM " + INVOICE_TABLE + " ORDER BY invoiceDate DESC LIMIT " + offset + ", 25";
+        }
+
+        Cursor cursor = db.rawQuery(sql, null);
+        InvoiceResponse invoiceResponse;
+        while (cursor.moveToNext()) {
+            invoiceResponse = new InvoiceResponse();
+            invoiceResponse.setInvoiceId(cursor.getString(cursor.getColumnIndex("invoiceId")));
+            invoiceResponse.setNoOfTable(cursor.getString(cursor.getColumnIndex("noOfTable")));
+            invoiceResponse.setInvoiceNumber(cursor.getString(cursor.getColumnIndex("invoiceNumber")));
+            invoiceResponse.setCustomerName(cursor.getString(cursor.getColumnIndex("customerName")));
+            invoiceResponse.setCustomerMobile(cursor.getString(cursor.getColumnIndex("customerMobile")));
+            invoiceResponse.setCustomerMobile(cursor.getString(cursor.getColumnIndex("customerEmail")));
+            invoiceResponse.setCustomerAddress(cursor.getString(cursor.getColumnIndex("customerAddress")));
+            invoiceResponse.setSubTotal(cursor.getString(cursor.getColumnIndex("subTotal")));
+            invoiceResponse.setTotalGSTAmount(cursor.getString(cursor.getColumnIndex("totalGSTAmount")));
+            invoiceResponse.setDiscount(cursor.getString(cursor.getColumnIndex("discount")));
+            invoiceResponse.setTotalAmount(cursor.getString(cursor.getColumnIndex("totalAmount")));
+            invoiceResponse.setPaymentMode(cursor.getString(cursor.getColumnIndex("paymentMode")));
+            invoiceResponse.setInvoiceDate(cursor.getString(cursor.getColumnIndex("invoiceDate")));
+            invoiceResponse.setInvoiceOrderStatus(cursor.getString(cursor.getColumnIndex("invoiceOrderStatus")));
+            invoiceResponse.setInvoiceNetworkStatus(cursor.getString(cursor.getColumnIndex("invoiceNetworkStatus")));
+            invoiceResponse.setInvoiceType(cursor.getString(cursor.getColumnIndex("invoiceType")));
+            invoiceResponse.setInvoiceStatus(cursor.getString(cursor.getColumnIndex("invoiceStatus")));
+            invoiceResponseList.add(invoiceResponse);
+        }
+        db.close();
+        return invoiceResponseList;
+
+    }
+
+    public List<InvoiceResponse> getDateReportList(String invoiceDate, int offset) {
+
+        List<InvoiceResponse> invoiceResponseList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        String sql;
+        if (invoiceDate != null) {
+            sql = "SELECT * FROM " + INVOICE_TABLE + " WHERE invoiceDate LIKE '%" + invoiceDate + "%' ORDER BY invoiceId DESC LIMIT " + offset + ", 25";
+        } else {
+            sql = "SELECT * FROM " + INVOICE_TABLE + " ORDER BY invoiceId DESC LIMIT " + offset + ", 25";
+        }
+
+        Cursor cursor = db.rawQuery(sql, null);
+        InvoiceResponse invoiceResponse;
+        while (cursor.moveToNext()) {
+            invoiceResponse = new InvoiceResponse();
+            invoiceResponse.setInvoiceId(cursor.getString(cursor.getColumnIndex("invoiceId")));
+            invoiceResponse.setNoOfTable(cursor.getString(cursor.getColumnIndex("noOfTable")));
+            invoiceResponse.setInvoiceNumber(cursor.getString(cursor.getColumnIndex("invoiceNumber")));
+            invoiceResponse.setCustomerName(cursor.getString(cursor.getColumnIndex("customerName")));
+            invoiceResponse.setCustomerMobile(cursor.getString(cursor.getColumnIndex("customerMobile")));
+            invoiceResponse.setCustomerMobile(cursor.getString(cursor.getColumnIndex("customerEmail")));
+            invoiceResponse.setCustomerAddress(cursor.getString(cursor.getColumnIndex("customerAddress")));
+            invoiceResponse.setSubTotal(cursor.getString(cursor.getColumnIndex("subTotal")));
+            invoiceResponse.setTotalGSTAmount(cursor.getString(cursor.getColumnIndex("totalGSTAmount")));
+            invoiceResponse.setDiscount(cursor.getString(cursor.getColumnIndex("discount")));
+            invoiceResponse.setTotalAmount(cursor.getString(cursor.getColumnIndex("totalAmount")));
+            invoiceResponse.setPaymentMode(cursor.getString(cursor.getColumnIndex("paymentMode")));
+            invoiceResponse.setInvoiceDate(cursor.getString(cursor.getColumnIndex("invoiceDate")));
+            invoiceResponse.setInvoiceOrderStatus(cursor.getString(cursor.getColumnIndex("invoiceOrderStatus")));
+            invoiceResponse.setInvoiceNetworkStatus(cursor.getString(cursor.getColumnIndex("invoiceNetworkStatus")));
+            invoiceResponse.setInvoiceType(cursor.getString(cursor.getColumnIndex("invoiceType")));
+            invoiceResponse.setInvoiceStatus(cursor.getString(cursor.getColumnIndex("invoiceStatus")));
+            invoiceResponseList.add(invoiceResponse);
+        }
+        db.close();
+        return invoiceResponseList;
+
+    }
+
+    public int getInvoiceTableCount(String invoiceDate, String table_wise) {
+
+        SQLiteDatabase db = this.getReadableDatabase();
+        int totalCount = 0;
+        String sql;
+        if (!invoiceDate.isEmpty()) {
+            sql = "SELECT COUNT(invoiceId) as totalCount FROM " + INVOICE_TABLE + " WHERE invoiceType = '" + table_wise + "' AND invoiceDate LIKE '%" + invoiceDate + "%'";
+        } else {
+            sql = "SELECT COUNT(invoiceId) as totalCount FROM " + INVOICE_TABLE + " WHERE invoiceType = '" + table_wise + "'";
+        }
+        Cursor cursor = db.rawQuery(sql, null);
+        while (cursor.moveToNext()) {
+            totalCount = Integer.parseInt(cursor.getString(cursor.getColumnIndex("totalCount")));
+        }
+        db.close();
+        return totalCount;
+    }
+
+    public float getInvoiceTableTotal(String invoiceDate, String table_wise) {
+
+        SQLiteDatabase db = this.getReadableDatabase();
+        float totalAmount = 0;
+        String sql;
+        if (!invoiceDate.isEmpty()) {
+            sql = "SELECT SUM(totalAmount) as totalAmount FROM " + INVOICE_TABLE + " WHERE invoiceType = '" + table_wise + "' AND invoiceDate LIKE '%" + invoiceDate + "%'";
+        } else {
+            sql = "SELECT SUM(totalAmount) as totalAmount FROM " + INVOICE_TABLE + " WHERE invoiceType = '" + table_wise + "'";
+        }
+        Cursor cursor = db.rawQuery(sql, null);
+        while (cursor.moveToNext()) {
+            totalAmount = Float.parseFloat(cursor.getString(cursor.getColumnIndex("totalAmount")));
+        }
+        db.close();
+        return totalAmount;
+    }
+
+    public List<InvoiceResponse> getInvoiceTableReportList(String invoiceDate, String table_wise, int offset) {
+
+        List<InvoiceResponse> invoiceResponseList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        String sql;
+        if (!invoiceDate.isEmpty()) {
+            sql = "SELECT SUM(totalAmount) as totalAmount, noOfTable, invoiceType FROM  " + INVOICE_TABLE + " WHERE invoiceType = '" + table_wise + "' AND invoiceDate LIKE '%" + invoiceDate + "%' GROUP BY noOfTable LIMIT " + offset + ", 25";
+        } else {
+            sql = "SELECT SUM(totalAmount) as totalAmount, noOfTable, invoiceType FROM  " + INVOICE_TABLE + " WHERE invoiceType = '" + table_wise + "' GROUP BY noOfTable LIMIT " + offset + ", 25";
+        }
+        Cursor cursor = db.rawQuery(sql, null);
+        InvoiceResponse invoiceResponse;
+        while (cursor.moveToNext()) {
+            invoiceResponse = new InvoiceResponse();
+            invoiceResponse.setNoOfTable(cursor.getString(cursor.getColumnIndex("noOfTable")));
+            invoiceResponse.setTotalAmount(cursor.getString(cursor.getColumnIndex("totalAmount")));
+            invoiceResponse.setInvoiceType(cursor.getString(cursor.getColumnIndex("invoiceType")));
+            invoiceResponseList.add(invoiceResponse);
+        }
+        db.close();
+        return invoiceResponseList;
+
+    }
+
+    public List<InvoiceResponse> getDateTableReport(String table_wise, String invoiceDate) {
+
+        List<InvoiceResponse> invoiceResponseList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery("SELECT SUM(totalAmount) as totalAmount, noOfTable, invoiceType FROM  " + INVOICE_TABLE + " WHERE invoiceType = '" + table_wise + "' AND invoiceDate LIKE '%" + invoiceDate + "%' GROUP BY noOfTable", null);
+        InvoiceResponse invoiceResponse;
+        while (cursor.moveToNext()) {
+            invoiceResponse = new InvoiceResponse();
+            invoiceResponse.setNoOfTable(cursor.getString(cursor.getColumnIndex("noOfTable")));
+            invoiceResponse.setTotalAmount(cursor.getString(cursor.getColumnIndex("totalAmount")));
+            invoiceResponse.setInvoiceType(cursor.getString(cursor.getColumnIndex("invoiceType")));
+            invoiceResponseList.add(invoiceResponse);
+        }
+        db.close();
+        return invoiceResponseList;
+
+    }
+
+    public List<InvoiceResponse> getInvoiceDetails(String invoiceId) {
+
+        List<InvoiceResponse> invoiceResponseList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery("SELECT * FROM " + INVOICE_TABLE + " WHERE invoiceId = '" + invoiceId + "'", null);
+        InvoiceResponse invoiceResponse;
+        while (cursor.moveToNext()) {
+            invoiceResponse = new InvoiceResponse();
+            invoiceResponse.setInvoiceId(cursor.getString(cursor.getColumnIndex("invoiceId")));
+            invoiceResponse.setNoOfTable(cursor.getString(cursor.getColumnIndex("noOfTable")));
+            invoiceResponse.setInvoiceNumber(cursor.getString(cursor.getColumnIndex("invoiceNumber")));
+            invoiceResponse.setCustomerName(cursor.getString(cursor.getColumnIndex("customerName")));
+            invoiceResponse.setCustomerMobile(cursor.getString(cursor.getColumnIndex("customerMobile")));
+            invoiceResponse.setCustomerMobile(cursor.getString(cursor.getColumnIndex("customerEmail")));
+            invoiceResponse.setCustomerAddress(cursor.getString(cursor.getColumnIndex("customerAddress")));
+            invoiceResponse.setSubTotal(cursor.getString(cursor.getColumnIndex("subTotal")));
+            invoiceResponse.setTotalGSTAmount(cursor.getString(cursor.getColumnIndex("totalGSTAmount")));
+            invoiceResponse.setDiscount(cursor.getString(cursor.getColumnIndex("discount")));
+            invoiceResponse.setDiscountType(cursor.getString(cursor.getColumnIndex("discountType")));
+            invoiceResponse.setTotalAmount(cursor.getString(cursor.getColumnIndex("totalAmount")));
+            invoiceResponse.setPaymentMode(cursor.getString(cursor.getColumnIndex("paymentMode")));
+            invoiceResponse.setInvoiceDate(cursor.getString(cursor.getColumnIndex("invoiceDate")));
+            invoiceResponse.setInvoiceOrderStatus(cursor.getString(cursor.getColumnIndex("invoiceOrderStatus")));
+            invoiceResponse.setInvoiceNetworkStatus(cursor.getString(cursor.getColumnIndex("invoiceNetworkStatus")));
+            invoiceResponse.setInvoiceType(cursor.getString(cursor.getColumnIndex("invoiceType")));
+            invoiceResponse.setInvoiceStatus(cursor.getString(cursor.getColumnIndex("invoiceStatus")));
+            invoiceResponseList.add(invoiceResponse);
+        }
+        db.close();
+        return invoiceResponseList;
+
+    }
+
+    public List<InvoiceProductResponse> getInvoiceProductList(String invoiceNumber) {
+
+        List<InvoiceProductResponse> productResponseList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery("SELECT * FROM " + INVOICE_PRODUCT_TABLE + " WHERE invoiceNumber ='" + invoiceNumber + "'", null);
+        InvoiceProductResponse invoiceProductResponse;
+        while (cursor.moveToNext()) {
+            invoiceProductResponse = new InvoiceProductResponse();
+            invoiceProductResponse.setInvoiceProductId(cursor.getString(cursor.getColumnIndex("invoiceProductId")));
+            invoiceProductResponse.setInvoiceNumber(cursor.getString(cursor.getColumnIndex("invoiceNumber")));
+            invoiceProductResponse.setProductName(cursor.getString(cursor.getColumnIndex("productName")));
+            invoiceProductResponse.setProductPrice(cursor.getString(cursor.getColumnIndex("productPrice")));
+            invoiceProductResponse.setProductUnit(cursor.getString(cursor.getColumnIndex("productUnit")));
+            invoiceProductResponse.setProductQuantity(cursor.getString(cursor.getColumnIndex("productQuantity")));
+            invoiceProductResponse.setProductCGST(cursor.getString(cursor.getColumnIndex("productCGST")));
+            invoiceProductResponse.setProductSGST(cursor.getString(cursor.getColumnIndex("productSGST")));
+            invoiceProductResponse.setProductStatus(cursor.getString(cursor.getColumnIndex("productStatus")));
+            invoiceProductResponse.setInvoiceProductStatus(cursor.getString(cursor.getColumnIndex("invoiceProductStatus")));
+            invoiceProductResponse.setInvoiceProductNetworkStatus(cursor.getString(cursor.getColumnIndex("invoiceProductNetworkStatus")));
+            mapInvoiceLineSnapshots(cursor, invoiceProductResponse);
+            productResponseList.add(invoiceProductResponse);
+        }
+        db.close();
+        return productResponseList;
+
+    }
+
+    public List<InvoiceProductResponse> getReportProductList(String orderBy) {
+
+        List<InvoiceProductResponse> productResponseList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery("SELECT productName, COUNT(productQuantity) as productQuantity FROM invoice_final_product GROUP BY productName ORDER BY productQuantity " + orderBy, null);
+        InvoiceProductResponse invoiceProductResponse;
+        while (cursor.moveToNext()) {
+            invoiceProductResponse = new InvoiceProductResponse();
+            invoiceProductResponse.setProductName(cursor.getString(cursor.getColumnIndex("productName")));
+            invoiceProductResponse.setProductQuantity(cursor.getString(cursor.getColumnIndex("productQuantity")));
+            productResponseList.add(invoiceProductResponse);
+        }
+
+        db.close();
+        return productResponseList;
+
+    }
+
+    public boolean addExpenses(String expenseName, String expenseAmount, String expensesDate,
+                               int expenseStatus, String expenseNetworkStatus) {
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+
+        contentValues.put("expensesName", expenseName);
+        contentValues.put("expensesAmount", expenseAmount);
+        contentValues.put("expensesDate", expensesDate);
+        contentValues.put("expensesStatus", String.valueOf(expenseStatus));
+        contentValues.put("expensesNetworkStatus", expenseNetworkStatus);
+        BranchSession.applyScope(contentValues);
+
+        db.insert(EXPENSES_TABLE, null, contentValues);
+
+        return true;
+
+    }
+
+    public List<ExpenseResponse> getExpenseList() {
+
+        List<ExpenseResponse> expenseResponseList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery("SELECT * FROM " + EXPENSES_TABLE, null);
+        ExpenseResponse expenseResponse;
+        while (cursor.moveToNext()) {
+            expenseResponse = new ExpenseResponse();
+            expenseResponse.setExpenseId(cursor.getString(cursor.getColumnIndex("expensesId")));
+            expenseResponse.setExpenseName(cursor.getString(cursor.getColumnIndex("expensesName")));
+            expenseResponse.setExpenseAmount(cursor.getString(cursor.getColumnIndex("expensesAmount")));
+            expenseResponse.setExpenseDate(cursor.getString(cursor.getColumnIndex("expensesDate")));
+            expenseResponse.setExpenseNetworkStatus(cursor.getString(cursor.getColumnIndex("expensesNetworkStatus")));
+            expenseResponse.setExpenseStatus(cursor.getString(cursor.getColumnIndex("expensesStatus")));
+            expenseResponseList.add(expenseResponse);
+        }
+
+        db.close();
+        return expenseResponseList;
+
+    }
+
+    public boolean addInventory(String productId, String productQuantity, String
+            afterSaleInventoryQuantity, String saleInventoryQuantity, String inventoryDate,
+                                int inventoryStatus, String inventoryNetworkStatus) {
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+
+        contentValues.put("productId", productId);
+        contentValues.put("productInventoryQuantity", productQuantity);
+        contentValues.put("afterSaleInventoryQuantity", afterSaleInventoryQuantity);
+        contentValues.put("saleInventoryQuantity", saleInventoryQuantity);
+        contentValues.put("inventoryDate", inventoryDate);
+        contentValues.put("inventoryStatus", String.valueOf(inventoryStatus));
+        contentValues.put("inventoryNetworkStatus", inventoryNetworkStatus);
+        BranchSession.applyScope(contentValues);
+
+        db.insert(INVENTORY_TABLE, null, contentValues);
+
+        return true;
+
+    }
+
+    public List<InventoryResponse> getInventoryList() {
+
+        List<InventoryResponse> inventoryResponseList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery("SELECT inventory.*, product.productName FROM inventory LEFT JOIN product ON inventory.productId = product.productId", null);
+        InventoryResponse inventoryResponse;
+        while (cursor.moveToNext()) {
+            inventoryResponse = new InventoryResponse();
+            inventoryResponse.setInventoryId(cursor.getString(cursor.getColumnIndex("inventoryId")));
+            inventoryResponse.setProductId(cursor.getString(cursor.getColumnIndex("productId")));
+            inventoryResponse.setProductName(cursor.getString(cursor.getColumnIndex("productName")));
+            inventoryResponse.setProductInventoryQuantity(cursor.getString(cursor.getColumnIndex("productInventoryQuantity")));
+            inventoryResponse.setAfterSaleInventoryQuantity(cursor.getString(cursor.getColumnIndex("afterSaleInventoryQuantity")));
+            inventoryResponse.setSaleInventoryQuantity(cursor.getString(cursor.getColumnIndex("saleInventoryQuantity")));
+            inventoryResponse.setInventoryDate(cursor.getString(cursor.getColumnIndex("inventoryDate")));
+            inventoryResponse.setInventoryNetworkStatus(cursor.getString(cursor.getColumnIndex("inventoryNetworkStatus")));
+            inventoryResponse.setInventoryStatus(cursor.getString(cursor.getColumnIndex("inventoryStatus")));
+            inventoryResponseList.add(inventoryResponse);
+        }
+
+        db.close();
+        return inventoryResponseList;
+
+    }
+
+    public List<InventoryResponse> getLowInventoryList() {
+
+        List<InventoryResponse> inventoryResponseList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery("SELECT inventory.*, product.productName FROM inventory LEFT JOIN product ON inventory.productId = product.productId WHERE inventory.afterSaleInventoryQuantity < 6 ORDER BY inventory.afterSaleInventoryQuantity DESC", null);
+        InventoryResponse inventoryResponse;
+        while (cursor.moveToNext()) {
+            inventoryResponse = new InventoryResponse();
+            inventoryResponse.setInventoryId(cursor.getString(cursor.getColumnIndex("inventoryId")));
+            inventoryResponse.setProductId(cursor.getString(cursor.getColumnIndex("productId")));
+            inventoryResponse.setProductName(cursor.getString(cursor.getColumnIndex("productName")));
+            inventoryResponse.setProductInventoryQuantity(cursor.getString(cursor.getColumnIndex("productInventoryQuantity")));
+            inventoryResponse.setAfterSaleInventoryQuantity(cursor.getString(cursor.getColumnIndex("afterSaleInventoryQuantity")));
+            inventoryResponse.setInventoryDate(cursor.getString(cursor.getColumnIndex("inventoryDate")));
+            inventoryResponse.setInventoryNetworkStatus(cursor.getString(cursor.getColumnIndex("inventoryNetworkStatus")));
+            inventoryResponse.setInventoryStatus(cursor.getString(cursor.getColumnIndex("inventoryStatus")));
+            inventoryResponseList.add(inventoryResponse);
+        }
+
+        db.close();
+        return inventoryResponseList;
+
+    }
+
+    public List<InventoryResponse> getInventoryDetails(String productId) {
+
+        List<InventoryResponse> inventoryResponseList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery("SELECT * FROM inventory LEFT JOIN product ON inventory.productId = product.productId WHERE inventory.productId = '" + productId + "' ORDER BY `inventoryId` DESC LIMIT 1", null);
+        InventoryResponse inventoryResponse;
+        while (cursor.moveToNext()) {
+            inventoryResponse = new InventoryResponse();
+            inventoryResponse.setInventoryId(cursor.getString(cursor.getColumnIndex("inventoryId")));
+            inventoryResponse.setProductId(cursor.getString(cursor.getColumnIndex("productId")));
+            inventoryResponse.setProductInventoryQuantity(cursor.getString(cursor.getColumnIndex("productInventoryQuantity")));
+            inventoryResponse.setAfterSaleInventoryQuantity(cursor.getString(cursor.getColumnIndex("afterSaleInventoryQuantity")));
+            inventoryResponse.setSaleInventoryQuantity(cursor.getString(cursor.getColumnIndex("saleInventoryQuantity")));
+            inventoryResponse.setInventoryDate(cursor.getString(cursor.getColumnIndex("inventoryDate")));
+            inventoryResponse.setInventoryNetworkStatus(cursor.getString(cursor.getColumnIndex("inventoryNetworkStatus")));
+            inventoryResponse.setInventoryStatus(cursor.getString(cursor.getColumnIndex("inventoryStatus")));
+            inventoryResponseList.add(inventoryResponse);
+        }
+
+        db.close();
+        return inventoryResponseList;
+
+    }
+
+    public void updateInventory(String productId, String productQuantity, String
+            afterSaleInventoryQuantity, String saleInventoryQuantity, int inventoryStatus) {
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+
+        contentValues.put("productInventoryQuantity", productQuantity);
+        contentValues.put("afterSaleInventoryQuantity", afterSaleInventoryQuantity);
+        contentValues.put("saleInventoryQuantity", saleInventoryQuantity);
+        contentValues.put("inventoryStatus", String.valueOf(inventoryStatus));
+
+        db.update(INVENTORY_TABLE, contentValues, "productId=?", new String[]{productId});
+        db.close();
+    }
+
+    public Cursor getUnSynchronizeInventory(int status) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String sql = "SELECT * FROM " + INVENTORY_TABLE + " WHERE inventoryStatus = '" + status + "' ";
+        Cursor cursor = db.rawQuery(sql, null);
+        return cursor;
+    }
+
+    public void updateSyncInventory(String inventoryId, int invoiceProductStatus) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put("inventoryStatus", invoiceProductStatus);
+        db.update(INVENTORY_TABLE, contentValues, "inventoryId=?", new String[]{inventoryId});
+        db.close();
+    }
+
+
+    public Cursor getUnSynchronizeExpenses(int status) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String sql = "SELECT * FROM " + EXPENSES_TABLE + " WHERE expensesStatus = '" + status + "' ";
+        Cursor cursor = db.rawQuery(sql, null);
+        return cursor;
+    }
+
+    public void updateSyncExpenses(String expensesId, int invoiceProductStatus) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put("expensesStatus", invoiceProductStatus);
+        db.update(EXPENSES_TABLE, contentValues, "expensesId=?", new String[]{expensesId});
+        db.close();
+    }
+
+    public List<ProductCartResponse> getTakeWayCartList(String cartOrderStatus) {
+
+        List<ProductCartResponse> productCartResponseList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery("SELECT * FROM " + CART_PRODUCT_TABLE + " WHERE cartOrderStatus = '" + cartOrderStatus + "' GROUP BY noOfTable ORDER BY noOfTable ASC", null);
+        ProductCartResponse productResponse;
+        while (cursor.moveToNext()) {
+            productResponse = new ProductCartResponse();
+            productResponse.setCartId(cursor.getString(cursor.getColumnIndex("cartId")));
+            productResponse.setProductId(cursor.getString(cursor.getColumnIndex("productId")));
+            productResponse.setProductName(cursor.getString(cursor.getColumnIndex("productName")));
+            productResponse.setProductOldPrice(cursor.getString(cursor.getColumnIndex("productOldPrice")));
+            productResponse.setProductNewPrice(cursor.getString(cursor.getColumnIndex("productNewPrice")));
+            productResponse.setProductUnit(cursor.getString(cursor.getColumnIndex("productUnit")));
+            productResponse.setProductQuantity(cursor.getString(cursor.getColumnIndex("productQuantity")));
+            productResponse.setProductCGST(cursor.getString(cursor.getColumnIndex("productCGST")));
+            productResponse.setProductSGST(cursor.getString(cursor.getColumnIndex("productSGST")));
+            productResponse.setNoOfTable(cursor.getString(cursor.getColumnIndex("noOfTable")));
+            productResponse.setCartDiscount(cursor.getString(cursor.getColumnIndex("cartDiscount")));
+            productResponse.setCartDiscountType(cursor.getString(cursor.getColumnIndex("cartDiscountType")));
+            productResponse.setCartOrderStatus(cursor.getString(cursor.getColumnIndex("cartOrderStatus")));
+            productResponse.setCartStatus(cursor.getString(cursor.getColumnIndex("cartStatus")));
+            mapCartLineSnapshots(cursor, productResponse);
+            productCartResponseList.add(productResponse);
+        }
+        db.close();
+        return productCartResponseList;
+
+    }
+
+    public int getTableReportInvoiceCount(String invoiceDate, String noOfTable, String cartOrderStatus) {
+
+        SQLiteDatabase db = this.getReadableDatabase();
+        int totalCount = 0;
+        String sql;
+        if (!invoiceDate.isEmpty()) {
+            sql = "SELECT COUNT(invoiceId) as totalCount FROM " + INVOICE_TABLE + " WHERE noOfTable = '" + noOfTable + "' AND invoiceType = '" + cartOrderStatus + "' AND invoiceDate LIKE '%" + invoiceDate + "%'";
+        } else {
+            sql = "SELECT COUNT(invoiceId) as totalCount FROM " + INVOICE_TABLE + " WHERE noOfTable = '" + noOfTable + "' AND invoiceType = '" + cartOrderStatus + "'";
+        }
+        Cursor cursor = db.rawQuery(sql, null);
+        while (cursor.moveToNext()) {
+            totalCount = Integer.parseInt(cursor.getString(cursor.getColumnIndex("totalCount")));
+        }
+        db.close();
+        return totalCount;
+    }
+
+    public float getTableReportInvoiceTotal(String invoiceDate, String noOfTable, String cartOrderStatus) {
+
+        SQLiteDatabase db = this.getReadableDatabase();
+        float totalAmount = 0;
+        String sql;
+        if (!invoiceDate.isEmpty()) {
+            sql = "SELECT SUM(totalAmount) as totalAmount FROM " + INVOICE_TABLE + " WHERE noOfTable = '" + noOfTable + "' AND invoiceType = '" + cartOrderStatus + "' AND invoiceDate LIKE '%" + invoiceDate + "%'";
+        } else {
+            sql = "SELECT SUM(totalAmount) as totalAmount FROM " + INVOICE_TABLE + " WHERE noOfTable = '" + noOfTable + "' AND invoiceType = '" + cartOrderStatus + "'";
+        }
+        Cursor cursor = db.rawQuery(sql, null);
+        while (cursor.moveToNext()) {
+            totalAmount = Float.parseFloat(cursor.getString(cursor.getColumnIndex("totalAmount")));
+        }
+        db.close();
+        return totalAmount;
+    }
+
+    public List<InvoiceResponse> getTableReportList(String invoiceDate, String noOfTable, String cartOrderStatus, int offset) {
+
+        List<InvoiceResponse> invoiceResponseList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        String sql;
+        if (!invoiceDate.isEmpty()) {
+            sql = "SELECT * FROM " + INVOICE_TABLE + " WHERE noOfTable = '" + noOfTable + "' AND invoiceType = '" + cartOrderStatus + "' AND invoiceDate LIKE '%" + invoiceDate + "%' ORDER BY invoiceDate DESC LIMIT " + offset + ", 25";
+        } else {
+            sql = "SELECT * FROM " + INVOICE_TABLE + " WHERE noOfTable = '" + noOfTable + "' AND invoiceType = '" + cartOrderStatus + "' ORDER BY invoiceDate DESC LIMIT " + offset + ", 25";
+        }
+        Cursor cursor = db.rawQuery(sql, null);
+        InvoiceResponse invoiceResponse;
+        while (cursor.moveToNext()) {
+            invoiceResponse = new InvoiceResponse();
+            invoiceResponse.setInvoiceId(cursor.getString(cursor.getColumnIndex("invoiceId")));
+            invoiceResponse.setNoOfTable(cursor.getString(cursor.getColumnIndex("noOfTable")));
+            invoiceResponse.setInvoiceNumber(cursor.getString(cursor.getColumnIndex("invoiceNumber")));
+            invoiceResponse.setCustomerName(cursor.getString(cursor.getColumnIndex("customerName")));
+            invoiceResponse.setCustomerMobile(cursor.getString(cursor.getColumnIndex("customerMobile")));
+            invoiceResponse.setCustomerMobile(cursor.getString(cursor.getColumnIndex("customerEmail")));
+            invoiceResponse.setCustomerAddress(cursor.getString(cursor.getColumnIndex("customerAddress")));
+            invoiceResponse.setSubTotal(cursor.getString(cursor.getColumnIndex("subTotal")));
+            invoiceResponse.setTotalGSTAmount(cursor.getString(cursor.getColumnIndex("totalGSTAmount")));
+            invoiceResponse.setDiscount(cursor.getString(cursor.getColumnIndex("discount")));
+            invoiceResponse.setDiscountType(cursor.getString(cursor.getColumnIndex("discountType")));
+            invoiceResponse.setTotalAmount(cursor.getString(cursor.getColumnIndex("totalAmount")));
+            invoiceResponse.setPaymentMode(cursor.getString(cursor.getColumnIndex("paymentMode")));
+            invoiceResponse.setInvoiceDate(cursor.getString(cursor.getColumnIndex("invoiceDate")));
+            invoiceResponse.setInvoiceOrderStatus(cursor.getString(cursor.getColumnIndex("invoiceOrderStatus")));
+            invoiceResponse.setInvoiceNetworkStatus(cursor.getString(cursor.getColumnIndex("invoiceNetworkStatus")));
+            invoiceResponse.setInvoiceType(cursor.getString(cursor.getColumnIndex("invoiceType")));
+            invoiceResponse.setInvoiceStatus(cursor.getString(cursor.getColumnIndex("invoiceStatus")));
+            invoiceResponseList.add(invoiceResponse);
+        }
+        db.close();
+        return invoiceResponseList;
+    }
+
+    public List<InvoiceResponse> getDateTableReportList(String noOfTable, String
+            cartOrderStatus, String invoiceDate) {
+
+        List<InvoiceResponse> invoiceResponseList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery("SELECT * FROM " + INVOICE_TABLE + " WHERE noOfTable = '" + noOfTable + "' AND invoiceType = '" + cartOrderStatus + "' AND invoiceDate LIKE '%" + invoiceDate + "%' ORDER BY invoiceId DESC", null);
+        InvoiceResponse invoiceResponse;
+        while (cursor.moveToNext()) {
+            invoiceResponse = new InvoiceResponse();
+            invoiceResponse.setInvoiceId(cursor.getString(cursor.getColumnIndex("invoiceId")));
+            invoiceResponse.setNoOfTable(cursor.getString(cursor.getColumnIndex("noOfTable")));
+            invoiceResponse.setInvoiceNumber(cursor.getString(cursor.getColumnIndex("invoiceNumber")));
+            invoiceResponse.setCustomerName(cursor.getString(cursor.getColumnIndex("customerName")));
+            invoiceResponse.setCustomerMobile(cursor.getString(cursor.getColumnIndex("customerMobile")));
+            invoiceResponse.setCustomerMobile(cursor.getString(cursor.getColumnIndex("customerEmail")));
+            invoiceResponse.setCustomerAddress(cursor.getString(cursor.getColumnIndex("customerAddress")));
+            invoiceResponse.setSubTotal(cursor.getString(cursor.getColumnIndex("subTotal")));
+            invoiceResponse.setTotalGSTAmount(cursor.getString(cursor.getColumnIndex("totalGSTAmount")));
+            invoiceResponse.setDiscount(cursor.getString(cursor.getColumnIndex("discount")));
+            invoiceResponse.setDiscountType(cursor.getString(cursor.getColumnIndex("discountType")));
+            invoiceResponse.setTotalAmount(cursor.getString(cursor.getColumnIndex("totalAmount")));
+            invoiceResponse.setPaymentMode(cursor.getString(cursor.getColumnIndex("paymentMode")));
+            invoiceResponse.setInvoiceDate(cursor.getString(cursor.getColumnIndex("invoiceDate")));
+            invoiceResponse.setInvoiceOrderStatus(cursor.getString(cursor.getColumnIndex("invoiceOrderStatus")));
+            invoiceResponse.setInvoiceNetworkStatus(cursor.getString(cursor.getColumnIndex("invoiceNetworkStatus")));
+            invoiceResponse.setInvoiceType(cursor.getString(cursor.getColumnIndex("invoiceType")));
+            invoiceResponse.setInvoiceStatus(cursor.getString(cursor.getColumnIndex("invoiceStatus")));
+            invoiceResponseList.add(invoiceResponse);
+        }
+        db.close();
+        return invoiceResponseList;
+    }
+
+
+    public void clearInvoice() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.beginTransaction();
+        try {
+            db.delete(INVOICE_TABLE, null, null);
+            db.delete(INVOICE_PRODUCT_TABLE, null, null);
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+            db.close();
+        }
+    }
+
+
+    public List<InvoiceResponse> getLastInvoiceList(String cartOrderStatus) {
+
+        List<InvoiceResponse> invoiceResponseList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery("SELECT * FROM " + INVOICE_TABLE + " WHERE invoiceType = '" + cartOrderStatus + "' ORDER BY invoiceId DESC LIMIT 1", null);
+        InvoiceResponse invoiceResponse;
+        while (cursor.moveToNext()) {
+            invoiceResponse = new InvoiceResponse();
+            invoiceResponse.setInvoiceId(cursor.getString(cursor.getColumnIndex("invoiceId")));
+            invoiceResponse.setNoOfTable(cursor.getString(cursor.getColumnIndex("noOfTable")));
+            invoiceResponse.setInvoiceNumber(cursor.getString(cursor.getColumnIndex("invoiceNumber")));
+            invoiceResponse.setCustomerName(cursor.getString(cursor.getColumnIndex("customerName")));
+            invoiceResponse.setCustomerMobile(cursor.getString(cursor.getColumnIndex("customerMobile")));
+            invoiceResponse.setCustomerMobile(cursor.getString(cursor.getColumnIndex("customerEmail")));
+            invoiceResponse.setCustomerAddress(cursor.getString(cursor.getColumnIndex("customerAddress")));
+            invoiceResponse.setSubTotal(cursor.getString(cursor.getColumnIndex("subTotal")));
+            invoiceResponse.setTotalGSTAmount(cursor.getString(cursor.getColumnIndex("totalGSTAmount")));
+            invoiceResponse.setDiscount(cursor.getString(cursor.getColumnIndex("discount")));
+            invoiceResponse.setDiscountType(cursor.getString(cursor.getColumnIndex("discountType")));
+            invoiceResponse.setTotalAmount(cursor.getString(cursor.getColumnIndex("totalAmount")));
+            invoiceResponse.setPaymentMode(cursor.getString(cursor.getColumnIndex("paymentMode")));
+            invoiceResponse.setInvoiceDate(cursor.getString(cursor.getColumnIndex("invoiceDate")));
+            invoiceResponse.setInvoiceOrderStatus(cursor.getString(cursor.getColumnIndex("invoiceOrderStatus")));
+            invoiceResponse.setInvoiceNetworkStatus(cursor.getString(cursor.getColumnIndex("invoiceNetworkStatus")));
+            invoiceResponse.setInvoiceType(cursor.getString(cursor.getColumnIndex("invoiceType")));
+            invoiceResponse.setInvoiceStatus(cursor.getString(cursor.getColumnIndex("invoiceStatus")));
+            invoiceResponseList.add(invoiceResponse);
+        }
+        db.close();
+        return invoiceResponseList;
+    }
+
+    public List<InvoiceProductResponse> getReportDateWiseProductList(String invoiceDate, String
+            orderBy) {
+
+        List<InvoiceProductResponse> productResponseList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        String sql = "SELECT invoice_final_product.productName, SUM(invoice_final_product.productQuantity) AS productQuantity FROM invoice_final_product LEFT JOIN invoice ON invoice.invoiceNumber = invoice_final_product.invoiceNumber WHERE invoice.invoiceDate LIKE '%" + invoiceDate + "%' GROUP BY invoice_final_product.productName ORDER BY invoice_final_product.productQuantity " + orderBy;
+        Cursor cursor = db.rawQuery(sql, null);
+        InvoiceProductResponse invoiceProductResponse;
+        while (cursor.moveToNext()) {
+            invoiceProductResponse = new InvoiceProductResponse();
+            invoiceProductResponse.setProductName(cursor.getString(cursor.getColumnIndex("productName")));
+            invoiceProductResponse.setProductQuantity(cursor.getString(cursor.getColumnIndex("productQuantity")));
+            productResponseList.add(invoiceProductResponse);
+        }
+
+        db.close();
+        return productResponseList;
+
+    }
+
+    public List<MemberResponse> getMemberList() {
+
+        List<MemberResponse> memberResponseList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery("SELECT * FROM member LEFT JOIN member_payment ON member_payment.memberId = member.memberId GROUP BY member_payment.memberId", null);
+        MemberResponse memberResponse;
+        while (cursor.moveToNext()) {
+            memberResponse = new MemberResponse();
+            memberResponse.setMemberId(cursor.getString(cursor.getColumnIndex("memberId")));
+            String memberId = cursor.getString(cursor.getColumnIndex("memberId"));
+            memberResponse.setMemberName(cursor.getString(cursor.getColumnIndex("memberName")));
+            memberResponse.setMemberMobileNumber(cursor.getString(cursor.getColumnIndex("memberMobileNumber")));
+            memberResponse.setMemberAlternetMobileNumber(cursor.getString(cursor.getColumnIndex("memberAlternetMobileNumber")));
+            memberResponse.setMemberAddress(cursor.getString(cursor.getColumnIndex("memberAddress")));
+            memberResponse.setMessTotalDays(cursor.getString(cursor.getColumnIndex("messTotalDays")));
+            memberResponse.setPaymentMessAmount(cursor.getString(cursor.getColumnIndex("paymentMessAmount")));
+            memberResponse.setPaymentDate(cursor.getString(cursor.getColumnIndex("paymentDate")));
+            Cursor cursor1 = db.rawQuery("SELECT SUM(paymentPaidAmount) as paymentPaidAmount FROM member_payment WHERE memberId='" + memberId + "'", null);
+            while (cursor1.moveToNext()) {
+                memberResponse.setPaymentPaidAmount(cursor1.getString(cursor1.getColumnIndex("paymentPaidAmount")));
+            }
+            memberResponseList.add(memberResponse);
+        }
+
+        db.close();
+        return memberResponseList;
+
+    }
+
+    public List<MemberResponse> getMemberPaymentList(String paymentDate) {
+
+        List<MemberResponse> memberResponseList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery("SELECT * FROM member LEFT JOIN member_payment ON member_payment.memberId = member.memberId WHERE member_payment.paymentDate LIKE '%" + paymentDate + "%' GROUP BY member_payment.memberId", null);
+        MemberResponse memberResponse;
+        while (cursor.moveToNext()) {
+            memberResponse = new MemberResponse();
+            memberResponse.setMemberId(cursor.getString(cursor.getColumnIndex("memberId")));
+            String memberId = cursor.getString(cursor.getColumnIndex("memberId"));
+            memberResponse.setMemberName(cursor.getString(cursor.getColumnIndex("memberName")));
+            memberResponse.setMemberMobileNumber(cursor.getString(cursor.getColumnIndex("memberMobileNumber")));
+            memberResponse.setMemberAlternetMobileNumber(cursor.getString(cursor.getColumnIndex("memberAlternetMobileNumber")));
+            memberResponse.setMemberAddress(cursor.getString(cursor.getColumnIndex("memberAddress")));
+            memberResponse.setMessTotalDays(cursor.getString(cursor.getColumnIndex("messTotalDays")));
+            memberResponse.setPaymentMessAmount(cursor.getString(cursor.getColumnIndex("paymentMessAmount")));
+            memberResponse.setPaymentDate(cursor.getString(cursor.getColumnIndex("paymentDate")));
+            Cursor cursor1 = db.rawQuery("SELECT SUM(paymentPaidAmount) as paymentPaidAmount FROM member_payment WHERE memberId='" + memberId + "'", null);
+            while (cursor1.moveToNext()) {
+                memberResponse.setPaymentPaidAmount(cursor1.getString(cursor1.getColumnIndex("paymentPaidAmount")));
+            }
+            memberResponseList.add(memberResponse);
+        }
+
+        db.close();
+        return memberResponseList;
+
+    }
+
+    public void insertMessMember(String ownerId, String memberName, String
+            memberMobileNumber, String memberAlternetMobileNumber, String memberAddress,
+                                 String paymentMessAmount, String paymentPaidAmount, String messDays,
+                                 int memberStatus, String memberNetworkStatus) {
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+
+        contentValues.put("memberName", memberName);
+        contentValues.put("memberMobileNumber", memberMobileNumber);
+        contentValues.put("memberAlternetMobileNumber", memberAlternetMobileNumber);
+        contentValues.put("memberAddress", memberAddress);
+        contentValues.put("memberStatus", memberStatus);
+        contentValues.put("memberNetworkStatus", memberNetworkStatus);
+
+        db.insert(MEMBER_TABLE, null, contentValues);
+        db.close();
+
+        getLastInsertedMemberDetails(memberName, paymentMessAmount, paymentPaidAmount, messDays, memberStatus, memberNetworkStatus);
+
+    }
+
+    public void getLastInsertedMemberDetails(String memberName, String
+            paymentMessAmount, String paymentPaidAmount, String messDays, int memberStatus, String
+                                                     memberNetworkStatus) {
+
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery("SELECT * FROM member ORDER BY `memberId` DESC LIMIT 1", null);
+
+        while (cursor.moveToNext()) {
+            String memberId = cursor.getString(cursor.getColumnIndex("memberId"));
+            insertMessMemberPayment(memberId, memberName, paymentMessAmount, paymentPaidAmount, messDays, memberStatus, memberNetworkStatus);
+        }
+
+        db.close();
+
+    }
+
+    public void updateMessMember(String memberId, String memberName, String
+            memberMobileNumber, String memberAlternetMobileNumber, String memberAddress,
+                                 int memberStatus) {
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+
+        contentValues.put("memberName", memberName);
+        contentValues.put("memberMobileNumber", memberMobileNumber);
+        contentValues.put("memberAlternetMobileNumber", memberAlternetMobileNumber);
+        contentValues.put("memberAddress", memberAddress);
+        contentValues.put("memberStatus", memberStatus);
+
+        db.update(MEMBER_TABLE, contentValues, "memberId=?", new String[]{memberId});
+        db.close();
+
+    }
+
+    public void insertMessMemberPayment(String memberId, String memberName, String
+            paymentMessAmount, String paymentPaidAmount, String messDays, int paymentStatus, String
+                                                paymentNetworkStatus) {
+
+        Date c = Calendar.getInstance().getTime();
+        System.out.println("Current time => " + c);
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+        String paymentDate = df.format(c);
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+
+        contentValues.put("memberId", memberId);
+        contentValues.put("memberName", memberName);
+        contentValues.put("paymentMessAmount", paymentMessAmount);
+        contentValues.put("paymentPaidAmount", paymentPaidAmount);
+        contentValues.put("messTotalDays", messDays);
+        contentValues.put("paymentDate", paymentDate);
+        contentValues.put("paymentStatus", paymentStatus);
+        contentValues.put("paymentNetworkStatus", paymentNetworkStatus);
+
+        db.insert(MEMBER_PAYMENT_TABLE, null, contentValues);
+        db.close();
+
+    }
+
+    public boolean saveMessInvoice(String memberId, String memberName, String messType, String
+            messInvoiceDate, String messInvoiceNetworkStatus, int messInvoiceStatus) {
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+
+        contentValues.put("memberId", memberId);
+        contentValues.put("memberName", memberName);
+        contentValues.put("messType", messType);
+        contentValues.put("messInvoiceDate", messInvoiceDate);
+        contentValues.put("messInvoiceNetworkStatus", messInvoiceNetworkStatus);
+        contentValues.put("messInvoiceStatus", String.valueOf(messInvoiceStatus));
+
+        db.insert(MESS_INVOICE_TABLE, null, contentValues);
+        db.close();
+
+        return true;
+
+    }
+
+    public List<MessInvoiceResponse> gerMessInvoiceUserWiseList(String
+                                                                        memberMobileNumber, String paymentDate) {
+
+        List<MessInvoiceResponse> messInvoiceResponseList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery("SELECT * FROM mess_invoice WHERE memberName='" + memberMobileNumber + "' AND messInvoiceDate LIKE '%" + paymentDate + "%'", null);
+        MessInvoiceResponse messInvoiceResponse;
+        while (cursor.moveToNext()) {
+            messInvoiceResponse = new MessInvoiceResponse();
+            messInvoiceResponse.setInvoiceId(cursor.getString(cursor.getColumnIndex("invoiceId")));
+            messInvoiceResponse.setMemberId(cursor.getString(cursor.getColumnIndex("memberId")));
+            messInvoiceResponse.setMemberName(cursor.getString(cursor.getColumnIndex("memberName")));
+            messInvoiceResponse.setMessType(cursor.getString(cursor.getColumnIndex("messType")));
+            messInvoiceResponse.setMessInvoiceDate(cursor.getString(cursor.getColumnIndex("messInvoiceDate")));
+            messInvoiceResponse.setMessInvoiceNetworkStatus(cursor.getString(cursor.getColumnIndex("messInvoiceNetworkStatus")));
+            messInvoiceResponse.setMessInvoiceStatus(cursor.getString(cursor.getColumnIndex("messInvoiceStatus")));
+
+            messInvoiceResponseList.add(messInvoiceResponse);
+        }
+
+        db.close();
+        return messInvoiceResponseList;
+
+    }
+
+    public void addMessMember(MemberResponse memberResponse) {
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+
+        contentValues.put("memberId", memberResponse.getMemberId());
+        contentValues.put("memberName", memberResponse.getMemberName());
+        contentValues.put("memberMobileNumber", memberResponse.getMemberMobileNumber());
+        contentValues.put("memberAlternetMobileNumber", memberResponse.getMemberAlternetMobileNumber());
+        contentValues.put("memberAddress", memberResponse.getMemberAddress());
+        contentValues.put("memberStatus", memberResponse.getMemberStatus());
+        contentValues.put("memberNetworkStatus", memberResponse.getMemberNetworkStatus());
+
+        db.insert(MEMBER_TABLE, null, contentValues);
+        db.close();
+
+    }
+
+    public void addMessMemberPayment(MemberResponse memberResponse) {
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+
+        contentValues.put("memberId", memberResponse.getMemberId());
+        contentValues.put("memberName", memberResponse.getMemberName());
+        contentValues.put("paymentMessAmount", memberResponse.getPaymentMessAmount());
+        contentValues.put("paymentPaidAmount", memberResponse.getPaymentPaidAmount());
+        contentValues.put("messTotalDays", memberResponse.getMessTotalDays());
+        contentValues.put("paymentDate", memberResponse.getPaymentDate());
+        contentValues.put("paymentStatus", memberResponse.getPaymentStatus());
+        contentValues.put("paymentNetworkStatus", memberResponse.getPaymentNetworkStatus());
+
+        db.insert(MEMBER_PAYMENT_TABLE, null, contentValues);
+        db.close();
+
+    }
+
+    public void addMessInvoice(MessInvoiceResponse messInvoiceResponse) {
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+
+        contentValues.put("memberId", messInvoiceResponse.getMemberId());
+        contentValues.put("memberName", messInvoiceResponse.getMemberName());
+        contentValues.put("messType", messInvoiceResponse.getMessType());
+        contentValues.put("messInvoiceDate", messInvoiceResponse.getMessInvoiceDate());
+        contentValues.put("messInvoiceNetworkStatus", messInvoiceResponse.getMessInvoiceNetworkStatus());
+        contentValues.put("messInvoiceStatus", messInvoiceResponse.getMessInvoiceStatus());
+
+        db.insert(MESS_INVOICE_TABLE, null, contentValues);
+        db.close();
+
+    }
+
+    public void updateSyncMessMember(String memberId, int memberStatus) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put("memberStatus", memberStatus);
+        db.update(MEMBER_TABLE, contentValues, "memberId=?", new String[]{memberId});
+        db.close();
+    }
+
+    public void updateSyncMessMemberPayment(String paymentId, int paymentStatus) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put("paymentStatus", paymentStatus);
+        db.update(MEMBER_PAYMENT_TABLE, contentValues, "paymentId=?", new String[]{paymentId});
+        db.close();
+    }
+
+    public void updateSyncMessInvoice(String invoiceId, int messInvoiceStatus) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put("messInvoiceStatus", messInvoiceStatus);
+        db.update(MESS_INVOICE_TABLE, contentValues, "invoiceId=?", new String[]{invoiceId});
+        db.close();
+    }
+
+    public Cursor getUnSynchronizeMessMember(int status) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String sql = "SELECT * FROM " + MEMBER_TABLE + " WHERE memberStatus = '" + status + "' ";
+        Cursor cursor = db.rawQuery(sql, null);
+        return cursor;
+    }
+
+    public Cursor getUnSynchronizeMessMemberPayment(int status) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String sql = "SELECT * FROM " + MEMBER_PAYMENT_TABLE + " WHERE paymentStatus = '" + status + "' ";
+        Cursor cursor = db.rawQuery(sql, null);
+        return cursor;
+    }
+
+    public Cursor getUnSynchronizeMessInvoice(int status) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String sql = "SELECT * FROM " + MESS_INVOICE_TABLE + " WHERE messInvoiceStatus = '" + status + "' ";
+        Cursor cursor = db.rawQuery(sql, null);
+        return cursor;
+    }
+
+    public List<MessInvoiceResponse> getInvoiceMessInvoiceReportList() {
+
+        List<MessInvoiceResponse> messInvoiceResponseList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery("SELECT * FROM mess_invoice", null);
+        MessInvoiceResponse messInvoiceResponse;
+        while (cursor.moveToNext()) {
+            messInvoiceResponse = new MessInvoiceResponse();
+            messInvoiceResponse.setInvoiceId(cursor.getString(cursor.getColumnIndex("invoiceId")));
+            messInvoiceResponse.setMemberId(cursor.getString(cursor.getColumnIndex("memberId")));
+            messInvoiceResponse.setMemberName(cursor.getString(cursor.getColumnIndex("memberName")));
+            messInvoiceResponse.setMessType(cursor.getString(cursor.getColumnIndex("messType")));
+            messInvoiceResponse.setMessInvoiceDate(cursor.getString(cursor.getColumnIndex("messInvoiceDate")));
+            messInvoiceResponse.setMessInvoiceNetworkStatus(cursor.getString(cursor.getColumnIndex("messInvoiceNetworkStatus")));
+            messInvoiceResponse.setMessInvoiceStatus(cursor.getString(cursor.getColumnIndex("messInvoiceStatus")));
+
+            messInvoiceResponseList.add(messInvoiceResponse);
+        }
+
+        db.close();
+        return messInvoiceResponseList;
+
+    }
+
+    public List<MessInvoiceResponse> getInvoiceMessInvoiceDateWiseReportList(String invoiceDate) {
+
+        List<MessInvoiceResponse> messInvoiceResponseList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery("SELECT * FROM mess_invoice WHERE messInvoiceDate LIKE '%" + invoiceDate + "%'", null);
+        MessInvoiceResponse messInvoiceResponse;
+        while (cursor.moveToNext()) {
+            messInvoiceResponse = new MessInvoiceResponse();
+            messInvoiceResponse.setInvoiceId(cursor.getString(cursor.getColumnIndex("invoiceId")));
+            messInvoiceResponse.setMemberId(cursor.getString(cursor.getColumnIndex("memberId")));
+            messInvoiceResponse.setMemberName(cursor.getString(cursor.getColumnIndex("memberName")));
+            messInvoiceResponse.setMessType(cursor.getString(cursor.getColumnIndex("messType")));
+            messInvoiceResponse.setMessInvoiceDate(cursor.getString(cursor.getColumnIndex("messInvoiceDate")));
+            messInvoiceResponse.setMessInvoiceNetworkStatus(cursor.getString(cursor.getColumnIndex("messInvoiceNetworkStatus")));
+            messInvoiceResponse.setMessInvoiceStatus(cursor.getString(cursor.getColumnIndex("messInvoiceStatus")));
+
+            messInvoiceResponseList.add(messInvoiceResponse);
+        }
+
+        db.close();
+        return messInvoiceResponseList;
+
+    }
+
+
+    public List<MemberResponse> getMemberDetails(String memberId) {
+
+        List<MemberResponse> memberResponseList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery("SELECT * FROM member WHERE memberId = '" + memberId + "'", null);
+        MemberResponse memberResponse;
+        while (cursor.moveToNext()) {
+            memberResponse = new MemberResponse();
+            memberResponse.setMemberId(cursor.getString(cursor.getColumnIndex("memberId")));
+            memberResponse.setMemberName(cursor.getString(cursor.getColumnIndex("memberName")));
+            memberResponse.setMemberMobileNumber(cursor.getString(cursor.getColumnIndex("memberMobileNumber")));
+            memberResponse.setMemberAlternetMobileNumber(cursor.getString(cursor.getColumnIndex("memberAlternetMobileNumber")));
+            memberResponse.setMemberAddress(cursor.getString(cursor.getColumnIndex("memberAddress")));
+            memberResponseList.add(memberResponse);
+        }
+
+        db.close();
+        return memberResponseList;
+
+    }
+
+    public List<MemberResponse> getInvoiceMemberList() {
+
+        List<MemberResponse> memberResponseList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery("SELECT * FROM member", null);
+        MemberResponse memberResponse;
+        while (cursor.moveToNext()) {
+            memberResponse = new MemberResponse();
+            memberResponse.setMemberId(cursor.getString(cursor.getColumnIndex("memberId")));
+            memberResponse.setMemberName(cursor.getString(cursor.getColumnIndex("memberName")));
+            memberResponse.setMemberMobileNumber(cursor.getString(cursor.getColumnIndex("memberMobileNumber")));
+            memberResponse.setMemberAlternetMobileNumber(cursor.getString(cursor.getColumnIndex("memberAlternetMobileNumber")));
+            memberResponse.setMemberAddress(cursor.getString(cursor.getColumnIndex("memberAddress")));
+            memberResponseList.add(memberResponse);
+        }
+
+        db.close();
+        return memberResponseList;
+
+    }
+
+
+    public List<MemberResponse> getMemberPaymentDetails(String memberId, String paymentDate) {
+
+        List<MemberResponse> memberResponseList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery("SELECT * FROM member LEFT JOIN member_payment ON member_payment.memberId = member.memberId WHERE member_payment.memberId = '" + memberId + "' AND member_payment.paymentDate LIKE '%" + paymentDate + "%' GROUP BY member_payment.memberId", null);
+        MemberResponse memberResponse;
+        while (cursor.moveToNext()) {
+            memberResponse = new MemberResponse();
+            memberResponse.setMemberId(cursor.getString(cursor.getColumnIndex("memberId")));
+            memberResponse.setMemberName(cursor.getString(cursor.getColumnIndex("memberName")));
+            memberResponse.setMemberMobileNumber(cursor.getString(cursor.getColumnIndex("memberMobileNumber")));
+            memberResponse.setMemberAlternetMobileNumber(cursor.getString(cursor.getColumnIndex("memberAlternetMobileNumber")));
+            memberResponse.setMemberAddress(cursor.getString(cursor.getColumnIndex("memberAddress")));
+            memberResponse.setMessTotalDays(cursor.getString(cursor.getColumnIndex("messTotalDays")));
+            memberResponse.setPaymentMessAmount(cursor.getString(cursor.getColumnIndex("paymentMessAmount")));
+            memberResponse.setPaymentDate(cursor.getString(cursor.getColumnIndex("paymentDate")));
+            Cursor cursor1 = db.rawQuery("SELECT SUM(paymentPaidAmount) as paymentPaidAmount FROM member_payment WHERE memberId='" + memberId + "'", null);
+            while (cursor1.moveToNext()) {
+                memberResponse.setPaymentPaidAmount(cursor1.getString(cursor1.getColumnIndex("paymentPaidAmount")));
+            }
+            memberResponseList.add(memberResponse);
+        }
+
+        db.close();
+        return memberResponseList;
+
+    }
+
+
+    public void updateMessPendingPayment(String memberId, String memberName, String
+            messDays, String messAmount, String paidAmount, int paymentStatus, String
+                                                 paymentNetworkStatus) {
+
+        Date c = Calendar.getInstance().getTime();
+        System.out.println("Current time => " + c);
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM", Locale.getDefault());
+        String paymentDate = df.format(c);
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+
+        contentValues.put("memberId", memberId);
+        contentValues.put("memberName", memberName);
+        contentValues.put("paymentMessAmount", messAmount);
+        contentValues.put("paymentPaidAmount", paidAmount);
+        contentValues.put("messTotalDays", messDays);
+        contentValues.put("paymentDate", paymentDate);
+        contentValues.put("paymentStatus", paymentStatus);
+        contentValues.put("paymentNetworkStatus", paymentNetworkStatus);
+
+        db.insert(MEMBER_PAYMENT_TABLE, null, contentValues);
+        db.close();
+
+
+    }
+
+    public List<MemberResponse> getInvoiceMemberPaymentReportList(String memberId) {
+
+        List<MemberResponse> memberResponseList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery("SELECT * FROM member_payment WHERE memberId = '" + memberId + "'", null);
+        MemberResponse memberResponse;
+        while (cursor.moveToNext()) {
+            memberResponse = new MemberResponse();
+            memberResponse.setMemberId(cursor.getString(cursor.getColumnIndex("memberId")));
+            memberResponse.setMemberName(cursor.getString(cursor.getColumnIndex("memberName")));
+            memberResponse.setMessTotalDays(cursor.getString(cursor.getColumnIndex("messTotalDays")));
+            memberResponse.setPaymentMessAmount(cursor.getString(cursor.getColumnIndex("paymentMessAmount")));
+            memberResponse.setPaymentDate(cursor.getString(cursor.getColumnIndex("paymentDate")));
+            memberResponse.setPaymentPaidAmount(cursor.getString(cursor.getColumnIndex("paymentPaidAmount")));
+
+            memberResponseList.add(memberResponse);
+        }
+
+        db.close();
+        return memberResponseList;
+
+    }
+
+    public List<ExpenseResponse> getDateWiseExpenseList(String expenseDate) {
+
+        List<ExpenseResponse> expenseResponseList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery("SELECT * FROM " + EXPENSES_TABLE + " WHERE expensesDate LIKE '%" + expenseDate + "%'", null);
+        ExpenseResponse expenseResponse;
+        while (cursor.moveToNext()) {
+            expenseResponse = new ExpenseResponse();
+            expenseResponse.setExpenseId(cursor.getString(cursor.getColumnIndex("expensesId")));
+            expenseResponse.setExpenseName(cursor.getString(cursor.getColumnIndex("expensesName")));
+            expenseResponse.setExpenseAmount(cursor.getString(cursor.getColumnIndex("expensesAmount")));
+            expenseResponse.setExpenseDate(cursor.getString(cursor.getColumnIndex("expensesDate")));
+            expenseResponse.setExpenseNetworkStatus(cursor.getString(cursor.getColumnIndex("expensesNetworkStatus")));
+            expenseResponse.setExpenseStatus(cursor.getString(cursor.getColumnIndex("expensesStatus")));
+            expenseResponseList.add(expenseResponse);
+        }
+
+        db.close();
+        return expenseResponseList;
+
+    }
+
+    public void deleteMember(MemberResponse memberResponse) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.delete(MEMBER_TABLE, "memberId = ?", new String[]{memberResponse.getMemberId()});
+        db.close();
+    }
+
+
+}

@@ -1,0 +1,443 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    tools:context=".Fragment.AddProduct">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_alignParentTop="true">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <ImageView
+                android:id="@+id/backToSetting"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_alignParentStart="true"
+                android:layout_centerInParent="true"
+                android:layout_gravity="center"
+                android:layout_marginStart="15dp"
+                android:src="@drawable/back"
+                app:tint="@color/white" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:layout_gravity="center"
+                android:layout_marginStart="15dp"
+                android:layout_toEndOf="@+id/backToSetting"
+                android:fontFamily="@font/poppinsmedium"
+                android:gravity="center"
+                android:paddingStart="5dp"
+                android:paddingEnd="5dp"
+                android:text="Printer Details"
+                android:textColor="@color/white"
+                android:textSize="17dp" />
+
+        
+            <include layout="@layout/include_app_toolbar_logo" />
+</RelativeLayout>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/saveSetting"
+        android:layout_below="@id/appBarLayout">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="10dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center|start"
+                android:layout_marginStart="5dp"
+                android:layout_marginTop="15dp"
+                android:fontFamily="@font/poppinsregular"
+                android:gravity="center"
+                android:text="Invoice Printer Name"
+                android:textColor="@color/textcolor" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:background="@drawable/button_rounded_border"
+                android:orientation="horizontal">
+
+                <Spinner
+                    android:id="@+id/printerSpinner"
+                    android:layout_width="match_parent"
+                    android:layout_height="45dp"
+                    android:layout_gravity="center"
+                    android:layout_margin="5dp"
+                    android:layout_weight="1"
+                    android:autofillHints="Select Printer"
+                    android:fontFamily="@font/poppinsregular"
+                    android:gravity="center|start"
+                    android:paddingLeft="10dp"
+                    android:textColor="@color/black"
+                    android:textSize="15dp" />
+
+                <TextView
+                    android:id="@+id/connectPrinter"
+                    android:layout_width="100dp"
+                    android:layout_height="50dp"
+                    android:layout_gravity="center"
+                    android:background="@drawable/button_rounded_border"
+                    android:backgroundTint="@color/colorPrimary"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:gravity="center"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp"
+                    android:text="Connect"
+                    android:textColor="@color/white"
+                    android:textSize="15sp" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/KOTPrinterLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="15dp"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center|start"
+                    android:layout_marginStart="5dp"
+                    android:fontFamily="@font/poppinsregular"
+                    android:gravity="center"
+                    android:text="KOT Print Printer Name"
+                    android:textColor="@color/textcolor" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:background="@drawable/button_rounded_border"
+                    android:orientation="horizontal">
+
+                    <Spinner
+                        android:id="@+id/KOTPrinterSpinner"
+                        android:layout_width="match_parent"
+                        android:layout_height="45dp"
+                        android:layout_gravity="center"
+                        android:layout_margin="5dp"
+                        android:layout_weight="1"
+                        android:autofillHints="Select Printer"
+                        android:fontFamily="@font/poppinsregular"
+                        android:gravity="center|start"
+                        android:paddingLeft="10dp"
+                        android:textColor="@color/black"
+                        android:textSize="15dp" />
+
+                    <TextView
+                        android:id="@+id/connectKOTPrinter"
+                        android:layout_width="100dp"
+                        android:layout_height="50dp"
+                        android:layout_gravity="center"
+                        android:background="@drawable/button_rounded_border"
+                        android:backgroundTint="@color/colorPrimary"
+                        android:fontFamily="@font/poppinsmedium"
+                        android:gravity="center"
+                        android:paddingStart="10dp"
+                        android:paddingEnd="10dp"
+                        android:text="Connect"
+                        android:textColor="@color/white"
+                        android:textSize="15sp" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/invoicePrefixLayout"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="5dp"
+                android:gravity="center"
+                android:textColorHint="@color/light_black"
+                app:boxCornerRadiusBottomEnd="5dp"
+                app:boxCornerRadiusBottomStart="5dp"
+                app:boxCornerRadiusTopEnd="5dp"
+                app:boxCornerRadiusTopStart="5dp"
+                app:boxStrokeColor="@color/light_black">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/invoicePrefix"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:digits="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ./-"
+                    android:drawableTint="@color/light_black"
+                    android:fontFamily="@font/poppinsregular"
+                    android:hint="Sales Invoice Prefix"
+                    android:imeOptions="actionNext"
+                    android:inputType="textCapCharacters"
+                    android:paddingStart="15dp"
+                    android:paddingEnd="10dp"
+                    android:singleLine="true"
+                    android:textAllCaps="true"
+                    android:textColor="@color/black"
+                    android:textColorHint="@color/light_black"
+                    android:textSize="15dp" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/printerFeedLinesLayout"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="5dp"
+                android:gravity="center"
+                android:textColorHint="@color/light_black"
+                app:boxCornerRadiusBottomEnd="5dp"
+                app:boxCornerRadiusBottomStart="5dp"
+                app:boxCornerRadiusTopEnd="5dp"
+                app:boxCornerRadiusTopStart="5dp"
+                app:boxStrokeColor="@color/light_black">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/printerFeedLines"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:digits="0123456789"
+                    android:drawableTint="@color/light_black"
+                    android:fontFamily="@font/poppinsregular"
+                    android:hint="Print Feed Lines"
+                    android:imeOptions="actionNext"
+                    android:inputType="numberDecimal"
+                    android:paddingStart="15dp"
+                    android:paddingEnd="10dp"
+                    android:singleLine="true"
+                    android:textAllCaps="true"
+                    android:textColor="@color/black"
+                    android:textColorHint="@color/light_black"
+                    android:textSize="15dp" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/KotPrinterFeedLinesLayout"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="5dp"
+                android:gravity="center"
+                android:textColorHint="@color/light_black"
+                app:boxCornerRadiusBottomEnd="5dp"
+                app:boxCornerRadiusBottomStart="5dp"
+                app:boxCornerRadiusTopEnd="5dp"
+                app:boxCornerRadiusTopStart="5dp"
+                app:boxStrokeColor="@color/light_black">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/KotPrinterFeedLines"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:digits="0123456789"
+                    android:drawableTint="@color/light_black"
+                    android:fontFamily="@font/poppinsregular"
+                    android:hint="KOT Print Feed Lines"
+                    android:imeOptions="actionNext"
+                    android:inputType="numberDecimal"
+                    android:paddingStart="15dp"
+                    android:paddingEnd="10dp"
+                    android:singleLine="true"
+                    android:textAllCaps="true"
+                    android:textColor="@color/black"
+                    android:textColorHint="@color/light_black"
+                    android:textSize="15dp" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/logoSwitch"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_gravity="center"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="5dp"
+                android:checked="false"
+                android:fontFamily="@font/poppinsregular"
+                android:gravity="center|start"
+                android:paddingStart="15dp"
+                android:paddingEnd="10dp"
+                android:switchMinWidth="45dp"
+                android:switchPadding="30dp"
+                android:text="Use Logo on Bill"
+                android:textColor="@color/black"
+                android:textOff="Off"
+                android:textOn="On"
+                android:textSize="15dp" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/paymentSwitch"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_gravity="center"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="5dp"
+                android:checked="false"
+                android:fontFamily="@font/poppinsregular"
+                android:gravity="center|start"
+                android:paddingStart="15dp"
+                android:paddingEnd="10dp"
+                android:switchMinWidth="45dp"
+                android:switchPadding="30dp"
+                android:text="Use Payment QR on Bill"
+                android:textColor="@color/black"
+                android:textOff="Off"
+                android:textOn="On"
+                android:textSize="15dp" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/customerSwitch"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_gravity="center"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="5dp"
+                android:checked="false"
+                android:fontFamily="@font/poppinsregular"
+                android:gravity="center|start"
+                android:paddingStart="15dp"
+                android:paddingEnd="10dp"
+                android:switchMinWidth="45dp"
+                android:switchPadding="30dp"
+                android:text="Use Customer Details on Bill"
+                android:textColor="@color/black"
+                android:textOff="Off"
+                android:textOn="On"
+                android:textSize="15dp" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/productQuantityUpdate"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_gravity="center"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="5dp"
+                android:checked="false"
+                android:fontFamily="@font/poppinsregular"
+                android:gravity="center|start"
+                android:paddingStart="15dp"
+                android:paddingEnd="10dp"
+                android:switchMinWidth="45dp"
+                android:switchPadding="30dp"
+                android:text="Product Quantity Update"
+                android:textColor="@color/black"
+                android:textOff="Off"
+                android:textOn="On"
+                android:textSize="15dp" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/invoiceTitleLayout"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="5dp"
+                android:gravity="center"
+                android:textColorHint="@color/light_black"
+                android:visibility="gone"
+                app:boxCornerRadiusBottomEnd="5dp"
+                app:boxCornerRadiusBottomStart="5dp"
+                app:boxCornerRadiusTopEnd="5dp"
+                app:boxCornerRadiusTopStart="5dp"
+                app:boxStrokeColor="@color/light_black">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/invoiceTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:drawableTint="@color/light_black"
+                    android:fontFamily="@font/poppinsregular"
+                    android:hint="Sales Invoice Title"
+                    android:imeOptions="actionNext"
+                    android:inputType="textCapWords"
+                    android:paddingStart="15dp"
+                    android:paddingEnd="10dp"
+                    android:singleLine="true"
+                    android:textColor="@color/black"
+                    android:textColorHint="@color/light_black"
+                    android:textSize="15dp" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/invoiceTermsConditionLayout"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="5dp"
+                android:gravity="center"
+                android:textColorHint="@color/light_black"
+                app:boxCornerRadiusBottomEnd="5dp"
+                app:boxCornerRadiusBottomStart="5dp"
+                app:boxCornerRadiusTopEnd="5dp"
+                app:boxCornerRadiusTopStart="5dp"
+                app:boxStrokeColor="@color/light_black">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/invoiceTermsCondition"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:digits="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ. "
+                    android:fontFamily="@font/poppinsregular"
+                    android:hint="Invoice Terms &amp; Conditions"
+                    android:inputType="textCapWords|textMultiLine"
+                    android:paddingStart="15dp"
+                    android:paddingEnd="10dp"
+                    android:textColor="@color/black"
+                    android:textColorHint="@color/light_black"
+                    android:textSize="15dp" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+    <TextView
+        android:id="@+id/saveSetting"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_alignParentBottom="true"
+        android:layout_gravity="center"
+        android:background="@color/colorPrimary"
+        android:fontFamily="@font/poppinsmedium"
+        android:gravity="center"
+        android:text="Save Setting"
+        android:textAllCaps="true"
+        android:textColor="@color/white"
+        android:textSize="17dp" />
+
+</RelativeLayout>

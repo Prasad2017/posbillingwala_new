@@ -1,0 +1,83 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+
+    compileSdk 35
+    namespace "com.posbillingwala.owner"
+
+    defaultConfig {
+        applicationId "com.posbillingwala.owner"
+        minSdk 21
+        targetSdk 35
+        versionCode 7
+        versionName "1.0.6"
+        multiDexEnabled true
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        // P5-4: same public host family as POS / Dealer / Admin
+        buildConfigField "String", "API_BASE_URL", "\"https://www.posbillingwala.com/androidApp/Owner/\""
+    }
+
+    buildFeatures {
+        viewBinding = true
+        buildConfig = true
+    }
+
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+}
+
+dependencies {
+
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
+    implementation 'com.google.android.material:material:1.12.0'
+    implementation 'androidx.multidex:multidex:2.0.1'
+    //ImageView Dynamic
+    implementation 'com.squareup.picasso:picasso:2.71828'
+    //Retrofit
+    implementation 'com.squareup.retrofit2:retrofit:2.11.0'
+    implementation 'com.squareup.okhttp3:okhttp:5.0.0-alpha.14'
+    implementation 'com.squareup.retrofit2:converter-gson:2.11.0'
+    implementation 'com.google.code.gson:gson:2.11.0'
+    implementation 'com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.14'
+    //Permission
+    implementation 'com.karumi:dexter:6.2.3'
+    implementation 'com.airbnb.android:lottie:6.4.1'
+    //Spinner
+    implementation 'com.jaredrummler:material-spinner:1.3.1'
+    //Sweetalert Dialog
+    implementation 'com.github.f0ris.sweetalert:library:1.6.2'
+    //Month, Year Dialog
+    implementation 'com.github.dewinjm:monthyear-picker:1.0.2'
+    //Circular Imageview
+    implementation 'de.hdodenhof:circleimageview:3.1.0'
+    //Firebase SDK
+    implementation platform('com.google.firebase:firebase-bom:33.1.2')
+    implementation 'com.google.firebase:firebase-analytics'
+    //Google ads SDK
+    implementation 'com.google.android.gms:play-services-ads:23.2.0'
+    //To update google play store app
+    implementation 'com.google.android.play:asset-delivery:2.2.2'
+    implementation 'com.google.android.play:app-update:2.1.0'
+    implementation 'com.google.android.gms:play-services-tasks:18.2.0'
+    implementation 'androidx.work:work-runtime:2.9.0'  //don't update this
+
+}

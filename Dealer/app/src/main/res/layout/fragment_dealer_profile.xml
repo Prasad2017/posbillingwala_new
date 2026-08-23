@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".Fragment.CustomerRegistration">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="10dp">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:layout_gravity="center"
+            android:adjustViewBounds="true"
+            android:contentDescription="@string/app_name"
+            android:padding="12dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/app_logo" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="15dp"
+            android:layout_marginEnd="10dp"
+            android:layout_marginBottom="5dp"
+            android:gravity="center"
+            android:textColorHint="@color/light_black"
+            app:boxCornerRadiusBottomEnd="5dp"
+            app:boxCornerRadiusBottomStart="5dp"
+            app:boxCornerRadiusTopEnd="5dp"
+            app:boxCornerRadiusTopStart="5dp"
+            app:boxStrokeColor="@color/light_black">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/dealerName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:drawableTint="@color/light_black"
+                android:fontFamily="@font/poppinsregular"
+                android:hint="Dealer Name"
+                android:imeOptions="actionNext"
+                android:inputType="textCapWords|text"
+                android:paddingStart="15dp"
+                android:paddingEnd="10dp"
+                android:singleLine="true"
+                android:textColor="@color/black"
+                android:textColorHint="@color/light_black"
+                android:textSize="15sp" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginEnd="10dp"
+            android:layout_marginBottom="5dp"
+            android:gravity="center"
+            android:textColorHint="@color/light_black"
+            app:boxCornerRadiusBottomEnd="5dp"
+            app:boxCornerRadiusBottomStart="5dp"
+            app:boxCornerRadiusTopEnd="5dp"
+            app:boxCornerRadiusTopStart="5dp"
+            app:boxStrokeColor="@color/light_black">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/dealerNumber"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:digits="0123456789"
+                android:drawableTint="@color/light_black"
+                android:fontFamily="@font/poppinsregular"
+                android:hint="Mobile Number"
+                android:imeOptions="actionNext"
+                android:inputType="numberDecimal"
+                android:maxLength="10"
+                android:paddingStart="15dp"
+                android:paddingEnd="10dp"
+                android:singleLine="true"
+                android:textColor="@color/black"
+                android:textColorHint="@color/light_black"
+                android:textSize="15sp" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginEnd="10dp"
+            android:layout_marginBottom="5dp"
+            android:gravity="center"
+            android:textColorHint="@color/light_black"
+            app:boxCornerRadiusBottomEnd="5dp"
+            app:boxCornerRadiusBottomStart="5dp"
+            app:boxCornerRadiusTopEnd="5dp"
+            app:boxCornerRadiusTopStart="5dp"
+            app:boxStrokeColor="@color/light_black">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/dealerEmail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:digits="0123456789"
+                android:drawableTint="@color/light_black"
+                android:fontFamily="@font/poppinsregular"
+                android:hint="Email Id"
+                android:imeOptions="actionNext"
+                android:inputType="textEmailAddress"
+                android:paddingStart="15dp"
+                android:paddingEnd="10dp"
+                android:singleLine="true"
+                android:textColor="@color/black"
+                android:textColorHint="@color/light_black"
+                android:textSize="15sp" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginEnd="10dp"
+            android:layout_marginBottom="5dp"
+            android:gravity="center"
+            android:textColorHint="@color/light_black"
+            app:boxCornerRadiusBottomEnd="5dp"
+            app:boxCornerRadiusBottomStart="5dp"
+            app:boxCornerRadiusTopEnd="5dp"
+            app:boxCornerRadiusTopStart="5dp"
+            app:boxStrokeColor="@color/light_black">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/dealerAddress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:drawableTint="@color/light_black"
+                android:fontFamily="@font/poppinsregular"
+                android:hint="Dealer Address"
+                android:imeOptions="actionNext"
+                android:inputType="textCapWords|textMultiLine"
+                android:paddingStart="15dp"
+                android:paddingEnd="10dp"
+                android:singleLine="true"
+                android:textColor="@color/black"
+                android:textColorHint="@color/light_black"
+                android:textSize="15sp" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginEnd="10dp"
+            android:layout_marginBottom="5dp"
+            android:gravity="center"
+            android:textColorHint="@color/light_black"
+            app:boxCornerRadiusBottomEnd="5dp"
+            app:boxCornerRadiusBottomStart="5dp"
+            app:boxCornerRadiusTopEnd="5dp"
+            app:boxCornerRadiusTopStart="5dp"
+            app:boxStrokeColor="@color/light_black">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/aadhaarNumber"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:digits="0123456789"
+                android:fontFamily="@font/poppinsregular"
+                android:hint="Aadhaar Number"
+                android:imeOptions="actionNext"
+                android:inputType="numberDecimal"
+                android:maxLength="12"
+                android:paddingStart="15dp"
+                android:paddingEnd="10dp"
+                android:singleLine="true"
+                android:textColor="@color/black"
+                android:textColorHint="@color/light_black"
+                android:textSize="15sp" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <TextView
+            android:id="@+id/update"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_gravity="center"
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="40dp"
+            android:layout_marginEnd="10dp"
+            android:layout_marginBottom="30dp"
+            android:background="@drawable/button_rounded_border"
+            android:backgroundTint="@color/colorPrimary"
+            android:fontFamily="@font/poppinsbold"
+            android:gravity="center"
+            android:padding="5dp"
+            android:text="Update"
+            android:textColor="@color/white"
+            android:textSize="20sp" />
+
+    </LinearLayout>
+
+</androidx.core.widget.NestedScrollView>

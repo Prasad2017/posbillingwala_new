@@ -1,0 +1,427 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".Fragment.InvoiceProductDetails">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_alignParentTop="true">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <ImageView
+                android:id="@+id/backToInvoice"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_alignParentStart="true"
+                android:layout_centerInParent="true"
+                android:layout_gravity="center"
+                android:layout_marginStart="15dp"
+                android:src="@drawable/back"
+                app:tint="@color/white" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/heading"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:layout_gravity="center"
+                android:layout_marginStart="15dp"
+                android:layout_toStartOf="@id/shareIcon"
+                android:layout_toEndOf="@+id/backToInvoice"
+                android:fontFamily="@font/poppinsmedium"
+                android:gravity="center|start"
+                android:paddingStart="5dp"
+                android:paddingEnd="5dp"
+                android:text="Invoice Details"
+                android:textColor="@color/white"
+                android:textSize="17sp" />
+
+            <ImageView
+                android:id="@+id/shareIcon"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerInParent="true"
+                android:layout_marginEnd="10dp"
+                android:src="@drawable/baseline_share_24"
+                app:tint="@color/white" />
+
+        </RelativeLayout>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/twoNestedScrollView"
+        android:layout_width="48mm"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/appBarLayout"
+        android:layout_centerInParent="true"
+        android:layout_marginTop="50dp">
+
+        <LinearLayout
+            android:id="@+id/twoLinearLayout"
+            android:layout_width="48mm"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="5dp">
+
+            <TextView
+                android:id="@+id/twoShopName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginStart="5dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="5dp"
+                android:fontFamily="@font/poppinsbold"
+                android:gravity="center"
+                android:paddingStart="5dp"
+                android:paddingEnd="5dp"
+                android:text=""
+                android:textColor="@color/black"
+                android:textSize="20sp" />
+
+            <TextView
+                android:id="@+id/twoShopDetails"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginStart="5dp"
+                android:layout_marginTop="5dp"
+                android:layout_marginEnd="5dp"
+                android:fontFamily="@font/poppinsregular"
+                android:gravity="center"
+                android:paddingStart="5dp"
+                android:paddingEnd="5dp"
+                android:text=""
+                android:textColor="@color/black"
+                android:textSize="15sp" />
+
+            <TextView
+                android:id="@+id/twoInvoiceDetails"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginStart="5dp"
+                android:layout_marginTop="5dp"
+                android:layout_marginEnd="5dp"
+                android:fontFamily="@font/poppinsregular"
+                android:gravity="center|start"
+                android:paddingStart="5dp"
+                android:paddingEnd="5dp"
+                android:text=""
+                android:textColor="@color/black"
+                android:textSize="15sp" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginStart="5dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="5dp"
+                android:background="@color/black" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="5dp"
+                android:layout_marginTop="5dp"
+                android:layout_marginEnd="5dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_weight="1"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:gravity="center|start"
+                    android:paddingStart="5dp"
+                    android:paddingEnd="5dp"
+                    android:text="Item"
+                    android:textColor="@color/black"
+                    android:textSize="15sp" />
+
+                <TextView
+                    android:layout_width="60dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:gravity="center"
+                    android:text="Qty"
+                    android:textColor="@color/black"
+                    android:textSize="15sp" />
+
+                <TextView
+                    android:layout_width="70dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:gravity="center"
+                    android:text="Rate"
+                    android:textColor="@color/black"
+                    android:textSize="15sp" />
+
+                <TextView
+                    android:layout_width="70dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:gravity="center"
+                    android:text="Amount"
+                    android:textColor="@color/black"
+                    android:textSize="15sp" />
+
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginStart="5dp"
+                android:layout_marginTop="5dp"
+                android:layout_marginEnd="5dp"
+                android:background="@color/black" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/twoRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="true"
+                android:padding="5dp" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginStart="5dp"
+                android:layout_marginTop="5dp"
+                android:layout_marginEnd="5dp"
+                android:background="@color/black" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="5dp"
+                    android:orientation="horizontal"
+                    android:paddingStart="5dp"
+                    android:paddingEnd="5dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_weight="1"
+                        android:fontFamily="@font/poppinsmedium"
+                        android:gravity="center|start"
+                        android:paddingStart="5dp"
+                        android:paddingEnd="5dp"
+                        android:text="Sub Total"
+                        android:textColor="@color/black"
+                        android:textSize="15sp" />
+
+
+                    <TextView
+                        android:id="@+id/twoSubTotal"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_weight="1"
+                        android:fontFamily="@font/poppinsmedium"
+                        android:gravity="center|end"
+                        android:paddingStart="5dp"
+                        android:paddingEnd="5dp"
+                        android:textColor="@color/black"
+                        android:textSize="15sp" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/twoShopCGSTLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingStart="5dp"
+                    android:paddingEnd="5dp">
+
+                    <TextView
+                        android:id="@+id/twoShopCGST"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_weight="1"
+                        android:fontFamily="@font/poppinsmedium"
+                        android:gravity="center|start"
+                        android:paddingStart="5dp"
+                        android:paddingEnd="5dp"
+                        android:text="CGST@"
+                        android:textColor="@color/black"
+                        android:textSize="15sp" />
+
+                    <TextView
+                        android:id="@+id/twoCGST"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_weight="1"
+                        android:fontFamily="@font/poppinsmedium"
+                        android:gravity="center|end"
+                        android:paddingStart="5dp"
+                        android:paddingEnd="5dp"
+                        android:textColor="@color/black"
+                        android:textSize="15sp" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/twoShopSGSTLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingStart="5dp"
+                    android:paddingEnd="5dp">
+
+                    <TextView
+                        android:id="@+id/twoShopSGST"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_weight="1"
+                        android:fontFamily="@font/poppinsmedium"
+                        android:gravity="center|start"
+                        android:paddingStart="5dp"
+                        android:paddingEnd="5dp"
+                        android:text="SGST@"
+                        android:textColor="@color/black"
+                        android:textSize="15sp" />
+
+
+                    <TextView
+                        android:id="@+id/twoSGST"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_weight="1"
+                        android:fontFamily="@font/poppinsmedium"
+                        android:gravity="center|end"
+                        android:paddingStart="5dp"
+                        android:paddingEnd="5dp"
+                        android:textColor="@color/black"
+                        android:textSize="15sp" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingStart="5dp"
+                    android:paddingEnd="5dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_weight="1"
+                        android:fontFamily="@font/poppinsmedium"
+                        android:gravity="center|start"
+                        android:paddingStart="5dp"
+                        android:paddingEnd="5dp"
+                        android:text="Discount"
+                        android:textColor="@color/black"
+                        android:textSize="15sp" />
+
+
+                    <TextView
+                        android:id="@+id/twoDiscount"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_gravity="center"
+                        android:layout_weight="1"
+                        android:fontFamily="@font/poppinsmedium"
+                        android:gravity="center|end"
+                        android:paddingStart="5dp"
+                        android:paddingEnd="5dp"
+                        android:textColor="@color/black"
+                        android:textSize="15sp" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingStart="5dp"
+                    android:paddingEnd="5dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_weight="1"
+                        android:fontFamily="@font/poppinsmedium"
+                        android:gravity="center|start"
+                        android:paddingStart="5dp"
+                        android:paddingEnd="5dp"
+                        android:text="Total Amount"
+                        android:textColor="@color/black"
+                        android:textSize="15sp" />
+
+
+                    <TextView
+                        android:id="@+id/twoTotalAmount"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_weight="1"
+                        android:fontFamily="@font/poppinsmedium"
+                        android:gravity="center|end"
+                        android:paddingStart="5dp"
+                        android:paddingEnd="5dp"
+                        android:textColor="@color/black"
+                        android:textSize="15sp" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginStart="5dp"
+                android:layout_marginTop="5dp"
+                android:layout_marginEnd="5dp"
+                android:background="@color/black" />
+
+            <TextView
+                android:id="@+id/twoInvoiceTermsCondition"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginStart="5dp"
+                android:layout_marginTop="5dp"
+                android:layout_marginEnd="5dp"
+                android:fontFamily="@font/poppinsregular"
+                android:gravity="center"
+                android:text="Thank Visit Again\n"
+                android:textColor="@color/black"
+                android:textSize="15sp" />
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+</RelativeLayout>

@@ -1,0 +1,172 @@
+package com.pos_billingwala.Fragment;
+
+import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.content.Context;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.KeyEvent;
+import android.view.LayoutInflater;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.ArrayAdapter;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
+
+import com.jaredrummler.materialspinner.MaterialSpinner;
+import com.pos_billingwala.Activity.MainActivity;
+import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.R;
+import com.pos_billingwala.databinding.FragmentAddMessMemberBinding;
+
+import java.util.Random;
+
+@SuppressLint("ClickableViewAccessibility, NonConstantResourceId, StaticFieldLeak, NotifyDataSetChanged")
+public class AddMessMember extends Fragment implements View.OnClickListener {
+
+    public static Activity activity;
+    View view;
+    POSBillingWalaDatabase posBillingWalaDatabase;
+    String[] messDaysList;
+    String messDays;
+    FragmentAddMessMemberBinding binding;
+
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        binding = FragmentAddMessMemberBinding.inflate(inflater, container, false);
+        view = binding.getRoot(); //Root xml or viewGroup will be a part of converted view over here
+
+        activity = getActivity();
+
+        posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
+
+        view.setFocusableInTouchMode(true);
+        view.requestFocus();
+        view.setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View v, int keyCode, KeyEvent event) {
+
+                if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
+                    Log.i("tag", "onKey Back listener is working!!!");
+                    ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
+                    ((MainActivity) activity).loadFragment(new MessMemberList(), true);
+                    return true;
+                }
+                return false;
+            }
+        });
+
+        messDaysList = activity.getResources().getStringArray(R.array.mess_days);
+        try {
+            final ArrayAdapter adapter = new ArrayAdapter(activity, android.R.layout.simple_spinner_item, messDaysList);
+            adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
+            binding.messDaySpinner.setAdapter(adapter);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        binding.messDaySpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(MaterialSpinner view, int position, long id, Object item) {
+                try {
+                    messDays = messDaysList[position];
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        binding.messDaySpinner.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                InputMethodManager imm = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(activity.getCurrentFocus().getWindowToken(), 0);
+                return false;
+            }
+        });
+
+        binding.backToMess.setOnClickListener(this);
+        binding.addMember.setOnClickListener(this);
+
+        return view;
+
+    }
+
+    @Override
+    public void onClick(View view) {
+        int id = view.getId();
+        if (id == R.id.backToMess) {
+            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
+            ((MainActivity) activity).loadFragment(new MessMemberList(), true);
+        } else if (id == R.id.addMember) {
+            if (messDays != null) {
+                if (!binding.memberName.getText().toString().isEmpty()) {
+                    if (binding.memberMobileNumber.getText().toString().length() == 10) {
+                        if (binding.memberAlternetMobileNumber.getText().toString().length() == 10) {
+                            if (!binding.memberAddress.getText().toString().isEmpty()) {
+                                if (!binding.messAmount.getText().toString().isEmpty()) {
+                                    if (!binding.messPaidAmount.getText().toString().isEmpty()) {
+                                        if (Float.parseFloat(binding.messAmount.getText().toString()) >= Float.parseFloat(binding.messPaidAmount.getText().toString())) {
+                                            addMessMember();
+                                        } else {
+                                            Toast.makeText(activity, "Please enter member paid amount smalled than mess amount", Toast.LENGTH_SHORT).show();
+                                        }
+                                    } else {
+                                        Toast.makeText(activity, "Please enter member paid amount", Toast.LENGTH_SHORT).show();
+                                    }
+                                } else {
+                                    Toast.makeText(activity, "Please enter mess amount", Toast.LENGTH_SHORT).show();
+                                }
+                            } else {
+                                Toast.makeText(activity, "Please enter member address", Toast.LENGTH_SHORT).show();
+                            }
+                        } else {
+                            Toast.makeText(activity, "Please enter member mobile number", Toast.LENGTH_SHORT).show();
+                        }
+                    } else {
+                        Toast.makeText(activity, "Please enter member name", Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    Toast.makeText(activity, "Please select mess days", Toast.LENGTH_SHORT).show();
+                }
+
+            }
+        }
+    }
+
+    public void addMessMember() {
+
+        posBillingWalaDatabase.insertMessMember(MainActivity.ownerId, binding.memberName.getText().toString(), binding.memberMobileNumber.getText().toString(), binding.memberAlternetMobileNumber.getText().toString(),
+                binding.memberAddress.getText().toString(), binding.messAmount.getText().toString(), binding.messPaidAmount.getText().toString(), messDays, 0, getRandomString(10));
+
+        Toast.makeText(activity, "Member added successfully", Toast.LENGTH_SHORT).show();
+
+        ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
+        ((MainActivity) activity).loadFragment(new MessMemberList(), true);
+
+    }
+
+    public String getRandomString(final int sizeOfRandomString) {
+
+        String ALLOWED_CHARACTERS = "0123456789qwertyuiopasdfghjklzxcvbnm";
+
+        final Random random = new Random();
+        final StringBuilder sb = new StringBuilder(sizeOfRandomString);
+        for (int i = 0; i < sizeOfRandomString; ++i)
+            sb.append(ALLOWED_CHARACTERS.charAt(random.nextInt(ALLOWED_CHARACTERS.length())));
+        return sb.toString();
+    }
+
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        ((MainActivity) activity).lockUnlockDrawer(1);
+
+    }
+
+}

@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".Activity.Login">
+
+    <LinearLayout
+        android:id="@+id/loginLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="160dp"
+            android:layout_gravity="center"
+            android:layout_marginTop="24dp"
+            android:adjustViewBounds="true"
+            android:contentDescription="@string/app_name"
+            android:paddingStart="24dp"
+            android:paddingEnd="24dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/app_logo" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:fontFamily="@font/poppinsmedium"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:text="POS BillingWala Team"
+            android:textColor="@color/black"
+            android:textSize="20sp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="35dp"
+            android:fontFamily="@font/poppinsbold"
+            android:text="Welcome back! Glad to\nsee you, Again!"
+            android:textColor="@color/black"
+            android:textSize="25sp" />
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/userName"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="32dp"
+            android:layout_marginEnd="16dp"
+            android:background="@drawable/button_rounded_border"
+            android:backgroundTint="@color/gray"
+            android:digits="0123456789"
+            android:fontFamily="@font/poppinsregular"
+            android:hint="Enter Your Aadhaar Card Number"
+            android:imeOptions="actionNext"
+            android:inputType="numberDecimal"
+            android:maxLength="12"
+            android:paddingStart="18dp"
+            android:paddingEnd="18dp"
+            android:singleLine="true"
+            android:textColor="@color/black"
+            android:textSize="15sp" />
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="16sp"
+            android:layout_marginEnd="16dp"
+            android:background="@drawable/button_rounded_border"
+            android:backgroundTint="@color/gray">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/password"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginStart="2dp"
+                android:layout_marginTop="5dp"
+                android:layout_marginEnd="5dp"
+                android:layout_marginBottom="5dp"
+                android:layout_toStartOf="@+id/iv_passShow"
+                android:background="@null"
+                android:digits="0123456789"
+                android:fontFamily="@font/poppinsregular"
+                android:hint="Enter Your Mobile Number"
+                android:imeOptions="actionDone"
+                android:inputType="textPassword"
+                android:maxLength="10"
+                android:paddingStart="18dp"
+                android:paddingEnd="18dp"
+                android:singleLine="true"
+                android:textColor="@color/black"
+                android:textSize="15sp" />
+
+            <ImageView
+                android:id="@+id/iv_passShow"
+                android:layout_width="25dp"
+                android:layout_height="25dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:layout_marginEnd="16dp"
+                android:padding="4dp"
+                android:src="@drawable/ic_look"
+                app:tint="@color/black" />
+
+        </RelativeLayout>
+
+        <TextView
+            android:id="@+id/loginCheck"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_gravity="center"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="30dp"
+            android:layout_marginEnd="20dp"
+            android:background="@drawable/button_rounded_border"
+            android:backgroundTint="@color/colorPrimary"
+            android:fontFamily="@font/poppinsbold"
+            android:gravity="center"
+            android:padding="5dp"
+            android:text="Login"
+            android:textColor="@color/white"
+            android:textSize="20sp" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/newUser"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center|end"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginEnd="20dp"
+            android:fontFamily="@font/poppinsregular"
+            android:gravity="center"
+            android:paddingStart="15dp"
+            android:paddingEnd="15dp"
+            android:text="@string/new_user"
+            android:textColor="@color/colorPrimary"
+            android:textSize="15sp" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/privacyPolicy"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="25dp"
+            android:layout_marginEnd="20dp"
+            android:layout_marginBottom="30dp"
+            android:fontFamily="@font/poppinslight"
+            android:gravity="center"
+            android:padding="15dp"
+            android:textColor="#9aa1a5"
+            android:textSize="13sp" />
+
+    </LinearLayout>
+
+</androidx.core.widget.NestedScrollView>

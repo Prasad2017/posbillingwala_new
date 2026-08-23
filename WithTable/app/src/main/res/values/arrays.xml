@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <array name="product_unit">
+        <item>GRAM</item>
+        <item>KG</item>
+        <item>MiliLiter</item>
+        <item>Liter</item>
+        <item>CM</item>
+        <item>Meter</item>
+        <item>Inch</item>
+        <item>Feet</item>
+        <item>Pic</item>
+        <item>Plate</item>
+        <item>Cup</item>
+    </array>
+
+    <array name="mess_days">
+        <item>One Time</item>
+        <item>Two Time</item>
+    </array>
+
+    <array name="discount_type">
+        <item>Percentage</item>
+        <item>Amount</item>
+    </array>
+
+    <array name="printer_list">
+        <item>2-Inch</item>
+        <item>3-Inch</item>
+    </array>
+
+    <array name="currency_list">
+        <item>Dollar: \u0024</item>
+        <item>Cent: \u00A2</item>
+        <item>Pound: \u00A3</item>
+        <item>Yen: \u00A5</item>
+        <item>French Franc: \u20A3</item>
+        <item>Rupee: \u20B9</item>
+        <item>Euro: \u20AC</item>
+        <item>Dinar: د.ك</item>
+    </array>
+
+    <!--Dollar Symbol - $
+    Euro Symbol - €
+    Pound Sterling Symbol – £
+    Yen Symbol – ¥
+    Franc Symbol – ₣
+    Rupee Symbol – ₹
+    Dinar Symbol – د.ك-->
+
+</resources>

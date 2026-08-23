@@ -1,0 +1,77 @@
+package com.pos_billingwala.Model;
+
+import com.google.gson.annotations.Expose;
+import com.google.gson.annotations.SerializedName;
+
+/**
+ * Optional level under Category. Products may have null subcategoryId and still work.
+ */
+public class ProductSubcategoryResponse {
+
+    @SerializedName("subcategoryId")
+    @Expose
+    private String subcategoryId;
+    @SerializedName("categoryId")
+    @Expose
+    private String categoryId;
+    @SerializedName("subcategoryName")
+    @Expose
+    private String subcategoryName;
+    @SerializedName("subcategoryDeletedStatus")
+    @Expose
+    private String subcategoryDeletedStatus;
+    @SerializedName("subcategoryNetworkStatus")
+    @Expose
+    private String subcategoryNetworkStatus;
+    @SerializedName("subcategoryStatus")
+    @Expose
+    private String subcategoryStatus;
+
+    public String getSubcategoryId() {
+        return subcategoryId;
+    }
+
+    public void setSubcategoryId(String subcategoryId) {
+        this.subcategoryId = subcategoryId;
+    }
+
+    public String getCategoryId() {
+        return categoryId;
+    }
+
+    public void setCategoryId(String categoryId) {
+        this.categoryId = categoryId;
+    }
+
+    public String getSubcategoryName() {
+        return subcategoryName;
+    }
+
+    public void setSubcategoryName(String subcategoryName) {
+        this.subcategoryName = subcategoryName;
+    }
+
+    public String getSubcategoryDeletedStatus() {
+        return subcategoryDeletedStatus;
+    }
+
+    public void setSubcategoryDeletedStatus(String subcategoryDeletedStatus) {
+        this.subcategoryDeletedStatus = subcategoryDeletedStatus;
+    }
+
+    public String getSubcategoryNetworkStatus() {
+        return subcategoryNetworkStatus;
+    }
+
+    public void setSubcategoryNetworkStatus(String subcategoryNetworkStatus) {
+        this.subcategoryNetworkStatus = subcategoryNetworkStatus;
+    }
+
+    public String getSubcategoryStatus() {
+        return subcategoryStatus;
+    }
+
+    public void setSubcategoryStatus(String subcategoryStatus) {
+        this.subcategoryStatus = subcategoryStatus;
+    }
+}

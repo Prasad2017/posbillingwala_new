@@ -1,0 +1,650 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.swiperefreshlayout.widget.SwipeRefreshLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:ads="http://schemas.android.com/apk/res-auto"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/swipeRefreshLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".Fragment.Home">
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:id="@+id/linearLayout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="20dp"
+                android:layout_marginEnd="5dp"
+                android:orientation="horizontal"
+                android:padding="5dp">
+
+                <de.hdodenhof.circleimageview.CircleImageView
+                    android:id="@+id/userPhoto"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_alignParentStart="true"
+                    android:layout_marginStart="15dp"
+                    android:src="@drawable/app_logo"
+                    app:civ_border_color="#FF000000"
+                    app:civ_border_width="1dp" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/shopName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerInParent="true"
+                    android:layout_gravity="center"
+                    android:layout_marginStart="10dp"
+                    android:layout_toStartOf="@+id/userSettingIcon"
+                    android:layout_toEndOf="@+id/userPhoto"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:gravity="center|start"
+                    android:paddingStart="15dp"
+                    android:paddingEnd="15dp"
+                    android:text="@string/hi_pos_billingwala"
+                    android:textColor="@color/black"
+                    android:textSize="17dp" />
+
+                <ImageView
+                    android:id="@+id/userSettingIcon"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_marginEnd="5dp"
+                    android:src="@drawable/settings" />
+
+            </RelativeLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/totalSalesCardView"
+                    android:layout_width="match_parent"
+                    android:layout_height="150dp"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginTop="40dp"
+                    android:layout_marginEnd="10dp"
+                    android:layout_weight="1"
+                    app:cardBackgroundColor="#ecfffa"
+                    app:cardCornerRadius="15dp"
+                    app:cardUseCompatPadding="true">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="5dp"
+                        android:orientation="vertical"
+                        android:padding="5dp">
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_marginTop="10dp"
+                            android:gravity="center"
+                            android:orientation="horizontal">
+
+                            <androidx.appcompat.widget.AppCompatTextView
+                                android:id="@+id/totalSale"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center"
+                                android:fontFamily="@font/poppinsbold"
+                                android:gravity="center"
+                                android:inputType="textPassword"
+                                android:paddingStart="15dp"
+                                android:paddingEnd="15dp"
+                                android:text="0"
+                                android:textColor="@color/black"
+                                android:textSize="17dp" />
+
+                            <ImageView
+                                android:id="@+id/hideShowTotalSale"
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_show" />
+
+                        </LinearLayout>
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_marginTop="5dp"
+                            android:layout_marginBottom="10dp"
+                            android:fontFamily="@font/poppinsmedium"
+                            android:gravity="center"
+                            android:paddingStart="15dp"
+                            android:paddingEnd="15dp"
+                            android:text="Total\nSales"
+                            android:textColor="@color/black"
+                            android:textSize="13dp" />
+
+                    </LinearLayout>
+
+                </androidx.cardview.widget.CardView>
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/todaySalesCardView"
+                    android:layout_width="match_parent"
+                    android:layout_height="150dp"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginTop="40dp"
+                    android:layout_marginEnd="10dp"
+                    android:layout_weight="1"
+                    app:cardBackgroundColor="#ecfffa"
+                    app:cardCornerRadius="15dp"
+                    app:cardUseCompatPadding="true">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="5dp"
+                        android:orientation="vertical"
+                        android:padding="5dp">
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_marginTop="10dp"
+                            android:gravity="center"
+                            android:orientation="horizontal">
+
+                            <androidx.appcompat.widget.AppCompatTextView
+                                android:id="@+id/todaySaleAmount"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center"
+                                android:fontFamily="@font/poppinsbold"
+                                android:gravity="center"
+                                android:inputType="textPassword"
+                                android:paddingStart="15dp"
+                                android:paddingEnd="15dp"
+                                android:text="0"
+                                android:textColor="@color/black"
+                                android:textSize="17dp" />
+
+                            <ImageView
+                                android:id="@+id/hideShowTodaySale"
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_show" />
+
+                        </LinearLayout>
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_marginTop="5dp"
+                            android:layout_marginBottom="10dp"
+                            android:fontFamily="@font/poppinsmedium"
+                            android:gravity="center"
+                            android:paddingStart="15dp"
+                            android:paddingEnd="15dp"
+                            android:text="Today's\nSales"
+                            android:textColor="@color/black"
+                            android:textSize="13dp" />
+
+                    </LinearLayout>
+
+                </androidx.cardview.widget.CardView>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="15dp"
+                android:orientation="horizontal">
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/categoryCardView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginEnd="10dp"
+                    android:layout_weight="1"
+                    app:cardBackgroundColor="#ecfffa"
+                    app:cardCornerRadius="15dp"
+                    app:cardUseCompatPadding="true">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="5dp"
+                        android:orientation="vertical"
+                        android:padding="5dp">
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/totalCategory"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_marginTop="10dp"
+                            android:fontFamily="@font/poppinsbold"
+                            android:gravity="center"
+                            android:paddingStart="15dp"
+                            android:paddingEnd="15dp"
+                            android:text="0"
+                            android:textColor="@color/black"
+                            android:textSize="17dp" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_marginTop="5dp"
+                            android:layout_marginBottom="10dp"
+                            android:fontFamily="@font/poppinsmedium"
+                            android:gravity="center"
+                            android:paddingStart="15dp"
+                            android:paddingEnd="15dp"
+                            android:text="Total\nCategory"
+                            android:textColor="@color/black"
+                            android:textSize="13dp" />
+
+                    </LinearLayout>
+
+                </androidx.cardview.widget.CardView>
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/productCardView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginEnd="10dp"
+                    android:layout_weight="1"
+                    app:cardBackgroundColor="#ecfffa"
+                    app:cardCornerRadius="15dp"
+                    app:cardUseCompatPadding="true">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="5dp"
+                        android:orientation="vertical"
+                        android:padding="5dp">
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/totalProduct"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_marginTop="10dp"
+                            android:fontFamily="@font/poppinsbold"
+                            android:gravity="center"
+                            android:paddingStart="15dp"
+                            android:paddingEnd="15dp"
+                            android:text="0"
+                            android:textColor="@color/black"
+                            android:textSize="17dp" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_marginTop="5dp"
+                            android:layout_marginBottom="10dp"
+                            android:fontFamily="@font/poppinsmedium"
+                            android:gravity="center"
+                            android:paddingStart="15dp"
+                            android:paddingEnd="15dp"
+                            android:text="Total\nProducts"
+                            android:textColor="@color/black"
+                            android:textSize="13dp" />
+
+                    </LinearLayout>
+
+                </androidx.cardview.widget.CardView>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="10dp"
+                android:orientation="horizontal"
+                android:padding="5dp">
+
+                <LinearLayout
+                    android:id="@+id/fetchDataLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginStart="5dp"
+                    android:layout_marginEnd="5dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/button_rounded_border"
+                    android:backgroundTint="@color/colorPrimary"
+                    android:gravity="center"
+                    android:orientation="horizontal"
+                    android:visibility="gone">
+
+                    <ImageView
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:layout_gravity="center"
+                        android:layout_marginStart="10dp"
+                        android:src="@drawable/baseline_cloud_download_24"
+                        app:tint="@color/white" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_weight="1"
+                        android:fontFamily="@font/poppinsregular"
+                        android:gravity="center"
+                        android:paddingStart="5dp"
+                        android:paddingEnd="5dp"
+                        android:text="Fetch Data\n(सर्वर से लेना )"
+                        android:textColor="@color/white"
+                        android:textSize="15dp" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/synchronizeLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginStart="5dp"
+                    android:layout_marginEnd="5dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/button_rounded_border"
+                    android:backgroundTint="@color/colorPrimary"
+                    android:gravity="center"
+                    android:orientation="horizontal"
+                    android:padding="5dp">
+
+                    <ImageView
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:layout_gravity="center"
+                        android:layout_marginStart="10dp"
+                        android:src="@drawable/baseline_cloud_upload_24"
+                        app:tint="@color/white" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_weight="1"
+                        android:fontFamily="@font/poppinsregular"
+                        android:gravity="center"
+                        android:paddingStart="5dp"
+                        android:paddingEnd="5dp"
+                        android:text="Synchronize\n(सर्वर को भेजना)"
+                        android:textColor="@color/white"
+                        android:textSize="15dp" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="15dp"
+                android:layout_marginEnd="10dp"
+                app:cardBackgroundColor="#ecfffa"
+                app:cardCornerRadius="15dp"
+                app:cardUseCompatPadding="true">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="5dp"
+                    android:orientation="vertical"
+                    android:padding="5dp">
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_marginTop="10dp"
+                        android:fontFamily="@font/poppinsbold"
+                        android:gravity="center"
+                        android:paddingStart="15dp"
+                        android:paddingEnd="15dp"
+                        android:text="POS"
+                        android:textColor="@color/black"
+                        android:textSize="25dp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="5dp"
+                        android:layout_marginBottom="10dp"
+                        android:orientation="horizontal">
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/fastBilling"
+                            android:layout_width="match_parent"
+                            android:layout_height="50dp"
+                            android:layout_gravity="center"
+                            android:layout_marginStart="5dp"
+                            android:layout_marginEnd="5dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/button_rounded_border"
+                            android:backgroundTint="@color/colorPrimary"
+                            android:fontFamily="@font/poppinsmedium"
+                            android:gravity="center"
+                            android:paddingStart="20dp"
+                            android:paddingEnd="20dp"
+                            android:text="@string/fast_billing"
+                            android:textColor="@color/white"
+                            android:textSize="15dp" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/tableBilling"
+                            android:layout_width="match_parent"
+                            android:layout_height="50dp"
+                            android:layout_gravity="center"
+                            android:layout_marginStart="5dp"
+                            android:layout_marginEnd="5dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/button_rounded_border"
+                            android:backgroundTint="@color/colorPrimary"
+                            android:fontFamily="@font/poppinsmedium"
+                            android:gravity="center"
+                            android:paddingStart="20dp"
+                            android:paddingEnd="20dp"
+                            android:text="@string/dine_in"
+                            android:textColor="@color/white"
+                            android:textSize="15dp" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="5dp"
+                        android:layout_marginBottom="10dp"
+                        android:orientation="horizontal">
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/takeAwayBilling"
+                            android:layout_width="match_parent"
+                            android:layout_height="50dp"
+                            android:layout_gravity="center"
+                            android:layout_marginStart="5dp"
+                            android:layout_marginEnd="5dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/button_rounded_border"
+                            android:backgroundTint="@color/colorPrimary"
+                            android:fontFamily="@font/poppinsmedium"
+                            android:gravity="center"
+                            android:paddingStart="20dp"
+                            android:paddingEnd="20dp"
+                            android:text="@string/take_away"
+                            android:textColor="@color/white"
+                            android:textSize="15dp" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/messBilling"
+                            android:layout_width="match_parent"
+                            android:layout_height="50dp"
+                            android:layout_gravity="center"
+                            android:layout_marginStart="5dp"
+                            android:layout_marginEnd="5dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/button_rounded_border"
+                            android:backgroundTint="@color/colorPrimary"
+                            android:fontFamily="@font/poppinsmedium"
+                            android:gravity="center"
+                            android:paddingStart="20dp"
+                            android:paddingEnd="20dp"
+                            android:text="@string/mess"
+                            android:textColor="@color/white"
+                            android:textSize="15dp" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </androidx.cardview.widget.CardView>
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/inventoryCardView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="15dp"
+                android:layout_marginEnd="10dp"
+                android:visibility="gone"
+                app:cardBackgroundColor="#ecfffa"
+                app:cardCornerRadius="15dp"
+                app:cardUseCompatPadding="true">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginTop="10dp"
+                    android:orientation="vertical">
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:layout_width="150dp"
+                        android:layout_height="40dp"
+                        android:layout_gravity="center"
+                        android:layout_marginTop="5dp"
+                        android:layout_marginBottom="10dp"
+                        android:fontFamily="@font/poppinsbold"
+                        android:gravity="center"
+                        android:paddingStart="20dp"
+                        android:paddingEnd="20dp"
+                        android:text="Low Inventory"
+                        android:textColor="@color/black"
+                        android:textSize="15dp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/srNo"
+                            android:layout_width="50dp"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:fontFamily="@font/poppinsmedium"
+                            android:gravity="center"
+                            android:padding="5dp"
+                            android:text="Sr No."
+                            android:textColor="@color/black"
+                            android:textSize="14dp" />
+
+                        <TextView
+                            android:id="@+id/productName"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_weight="1"
+                            android:fontFamily="@font/poppinsmedium"
+                            android:gravity="center"
+                            android:padding="5dp"
+                            android:text="Product"
+                            android:textColor="@color/black"
+                            android:textSize="14dp" />
+
+                        <TextView
+                            android:id="@+id/inventoryQty"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_weight="1"
+                            android:fontFamily="@font/poppinsmedium"
+                            android:gravity="center"
+                            android:padding="5dp"
+                            android:text="Inventory\nQty"
+                            android:textColor="@color/black"
+                            android:textSize="14dp" />
+
+                        <TextView
+                            android:id="@+id/afterSaleInventoryQty"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_weight="1"
+                            android:fontFamily="@font/poppinsmedium"
+                            android:gravity="center"
+                            android:padding="5dp"
+                            android:text="Sale Inventory Qty"
+                            android:textColor="@color/black"
+                            android:textSize="14dp" />
+
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/black" />
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/recyclerView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="5dp"
+                        android:layout_marginBottom="15dp"
+                        android:nestedScrollingEnabled="true"
+                        android:padding="5dp" />
+
+                </LinearLayout>
+
+            </androidx.cardview.widget.CardView>
+
+            <com.google.android.gms.ads.AdView
+                android:id="@+id/ad_view"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="30dp"
+                android:layout_marginBottom="10dp"
+                ads:adSize="SMART_BANNER"
+                ads:adUnitId="ca-app-pub-2325627373654257/6815283571" />
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+</androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

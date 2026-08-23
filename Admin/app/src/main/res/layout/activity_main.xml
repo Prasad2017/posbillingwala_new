@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/drawer_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/transparent">
+
+        <FrameLayout
+            android:id="@+id/frameLayout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_above="@+id/bottomNavigationLayout"
+            android:layout_below="@+id/toolbar_container"
+            android:background="@color/white" />
+
+        <com.google.android.material.appbar.AppBarLayout
+            android:id="@+id/toolbar_container"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@android:color/transparent"
+            android:orientation="vertical">
+
+            <include
+                layout="@layout/app_bar_main_page"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+        </com.google.android.material.appbar.AppBarLayout>
+
+        <LinearLayout
+            android:id="@+id/bottomNavigationLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:background="@drawable/bottom_background"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:id="@+id/homeLinearLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_margin="5dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="2dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="5dp"
+                    android:fontFamily="@font/poppinsregular"
+                    android:gravity="center"
+                    android:singleLine="true"
+                    android:text="Dashboard"
+                    android:textColor="@color/black"
+                    android:textSize="10sp" />
+
+                <ImageView
+                    android:layout_width="25dp"
+                    android:layout_height="25dp"
+                    android:layout_gravity="center"
+                    android:layout_marginBottom="5dp"
+                    android:gravity="center"
+                    android:src="@drawable/dashboards" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/dealerLinearLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_margin="5dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="2dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="5dp"
+                    android:fontFamily="@font/poppinsregular"
+                    android:gravity="center"
+                    android:singleLine="true"
+                    android:text="Dealer"
+                    android:textColor="@color/black"
+                    android:textSize="10sp" />
+
+                <ImageView
+                    android:layout_width="25dp"
+                    android:layout_height="25dp"
+                    android:layout_gravity="center"
+                    android:layout_marginBottom="5dp"
+                    android:gravity="center"
+                    android:src="@drawable/partner" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/customerLinearLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_margin="5dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="2dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="5dp"
+                    android:fontFamily="@font/poppinsregular"
+                    android:gravity="center"
+                    android:singleLine="true"
+                    android:text="Customer"
+                    android:textColor="@color/black"
+                    android:textSize="10sp" />
+
+                <ImageView
+                    android:layout_width="25dp"
+                    android:layout_height="25dp"
+                    android:layout_gravity="center"
+                    android:layout_marginBottom="5dp"
+                    android:gravity="center"
+                    android:src="@drawable/customer" />
+
+            </LinearLayout>
+
+
+            <LinearLayout
+                android:id="@+id/customerProductLinearLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_margin="5dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="2dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="5dp"
+                    android:fontFamily="@font/poppinsregular"
+                    android:gravity="center"
+                    android:singleLine="true"
+                    android:text="Product Import"
+                    android:textColor="@color/black"
+                    android:textSize="10sp" />
+
+                <ImageView
+                    android:layout_width="25dp"
+                    android:layout_height="25dp"
+                    android:layout_gravity="center"
+                    android:layout_marginBottom="5dp"
+                    android:gravity="center"
+                    android:src="@drawable/product" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </RelativeLayout>
+
+</androidx.drawerlayout.widget.DrawerLayout>
