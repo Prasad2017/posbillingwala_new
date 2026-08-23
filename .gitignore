@@ -15,6 +15,19 @@ API/db_local.php
 .env.*
 !.env.example
 
+# Web admin — never commit deps or local env
+posbillingwala.com/adminpanel/.env
+posbillingwala.com/adminpanel/.env.*
+posbillingwala.com/adminpanel/vendor/
+posbillingwala.com/adminpanel/node_modules/
+posbillingwala.com/adminpanel/storage/logs/
+posbillingwala.com/adminpanel/storage/framework/cache/
+posbillingwala.com/adminpanel/storage/framework/sessions/
+posbillingwala.com/adminpanel/storage/framework/views/
+
+# Local deploy archives
+posbillingwala.com.zip
+
 # OS / IDE
 .DS_Store
 Thumbs.db
