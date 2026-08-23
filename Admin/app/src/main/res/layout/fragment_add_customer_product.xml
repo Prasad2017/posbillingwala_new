@@ -51,6 +51,10 @@
 
             </com.google.android.material.textfield.TextInputLayout>
 
+            <include
+                android:id="@+id/productPortionSectionInclude"
+                layout="@layout/include_product_portion_section" />
+
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/productNameLayout"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"

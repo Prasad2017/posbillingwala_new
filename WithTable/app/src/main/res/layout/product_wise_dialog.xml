@@ -35,7 +35,7 @@
                 android:gravity="center|start"
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"
-                android:text="Top Sale out Product"
+                android:text="@string/ui_top_sale_out_product"
                 android:textColor="@color/white"
                 android:textSize="15dp" />
 
@@ -64,7 +64,7 @@
                 android:gravity="center|start"
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"
-                android:text="Less Sale out Product"
+                android:text="@string/ui_less_sale_out_product"
                 android:textColor="@color/white"
                 android:textSize="15dp" />
 
@@ -94,7 +94,7 @@
                 android:gravity="center|start"
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"
-                android:text="Day wise Top Sale out Product"
+                android:text="@string/ui_day_wise_top_sale_out_product"
                 android:textColor="@color/white"
                 android:textSize="15dp" />
 
@@ -124,7 +124,7 @@
                 android:gravity="center|start"
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"
-                android:text="Day wise Less Sale out Product"
+                android:text="@string/ui_day_wise_less_sale_out_product"
                 android:textColor="@color/white"
                 android:textSize="15dp" />
 
@@ -154,7 +154,7 @@
                 android:gravity="center|start"
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"
-                android:text="Month Wise Top Sale out Product"
+                android:text="@string/ui_month_wise_top_sale_out_product"
                 android:textColor="@color/white"
                 android:textSize="15dp" />
 
@@ -184,7 +184,7 @@
                 android:gravity="center|start"
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"
-                android:text="Month Wise Less Sale out Product"
+                android:text="@string/ui_month_wise_less_sale_out_product"
                 android:textColor="@color/white"
                 android:textSize="15dp" />
 
@@ -214,7 +214,7 @@
                 android:gravity="center|start"
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"
-                android:text="Year Wise Top Sale out Product"
+                android:text="@string/ui_year_wise_top_sale_out_product"
                 android:textColor="@color/white"
                 android:textSize="15dp" />
 
@@ -245,7 +245,7 @@
                 android:gravity="center|start"
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"
-                android:text="Year Wise Less Sale out Product"
+                android:text="@string/ui_year_wise_less_sale_out_product"
                 android:textColor="@color/white"
                 android:textSize="15dp" />
 

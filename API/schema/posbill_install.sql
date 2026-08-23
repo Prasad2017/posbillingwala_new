@@ -3,8 +3,9 @@
 -- File: API/schema/posbill_install.sql
 --
 -- Use this for a NEW empty database (no customer / licence / invoice data).
--- Includes all features: food types, subcategories, portions, bill snapshots,
--- API tokens, production licensing columns, multi-branch scope.
+-- Includes all features: food types, subcategories, portion master, portions,
+-- bill snapshots, API tokens, production licensing, multi-branch scope,
+-- mess QR tokens.
 --
 -- HOW TO RUN (phpMyAdmin):
 --   1. Create empty database (e.g. spllmgkn_posbill)
@@ -85,10 +86,25 @@ CREATE TABLE `products` (
   PRIMARY KEY (`productId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE `portion_master` (
+  `portionMasterId` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `userId` int(11) DEFAULT NULL,
+  `portionName` varchar(64) NOT NULL,
+  `portionMasterNetworkStatus` varchar(64) DEFAULT NULL,
+  `portionMasterStatus` text NOT NULL DEFAULT 'active',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`portionMasterId`),
+  UNIQUE KEY `idx_portion_master_network` (`portionMasterNetworkStatus`),
+  KEY `idx_portion_master_user` (`userId`),
+  KEY `idx_portion_master_user_name` (`userId`, `portionName`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE `product_portions` (
   `portionId` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
   `userId` int(11) DEFAULT NULL,
   `productId` int(10) UNSIGNED NOT NULL,
+  `portionMasterId` int(10) UNSIGNED DEFAULT NULL,
   `portionName` varchar(64) NOT NULL,
   `portionPrice` decimal(16,2) NOT NULL,
   `portionSortOrder` int(11) NOT NULL DEFAULT 0,
@@ -98,8 +114,10 @@ CREATE TABLE `product_portions` (
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`portionId`),
   UNIQUE KEY `idx_portion_network_status` (`portionNetworkStatus`),
+  UNIQUE KEY `uniq_product_portion_master` (`productId`, `portionMasterId`),
   KEY `idx_portion_product` (`productId`),
-  KEY `idx_portion_user` (`userId`)
+  KEY `idx_portion_user` (`userId`),
+  KEY `idx_product_portion_master` (`portionMasterId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `units` (
@@ -380,6 +398,32 @@ CREATE TABLE `mess_invoice` (
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`invoiceId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+
+CREATE TABLE `mess_token` (
+  `tokenId` int(11) NOT NULL AUTO_INCREMENT,
+  `userId` int(11) NOT NULL,
+  `organization_id` int(11) DEFAULT NULL,
+  `branch_id` int(11) DEFAULT NULL,
+  `device_id` varchar(255) DEFAULT NULL,
+  `tokenCode` varchar(64) NOT NULL,
+  `memberId` varchar(64) DEFAULT NULL,
+  `memberName` text NOT NULL,
+  `memberMobile` varchar(32) DEFAULT NULL,
+  `memberType` varchar(16) NOT NULL DEFAULT 'walk_in',
+  `messType` varchar(32) NOT NULL,
+  `tokenAmount` varchar(32) DEFAULT '0',
+  `tokenDate` datetime NOT NULL,
+  `verifiedDate` datetime DEFAULT NULL,
+  `tokenNetworkStatus` varchar(64) NOT NULL,
+  `tokenStatus` varchar(16) NOT NULL DEFAULT 'active',
+  `verifyNetworkStatus` varchar(64) DEFAULT NULL,
+  `syncStatus` varchar(8) NOT NULL DEFAULT '1',
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`tokenId`),
+  UNIQUE KEY `uq_mess_token_code` (`tokenCode`),
+  UNIQUE KEY `uq_mess_token_network` (`tokenNetworkStatus`),
+  KEY `idx_mess_token_user_date` (`userId`, `tokenDate`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------------
 -- Laravel / framework helpers

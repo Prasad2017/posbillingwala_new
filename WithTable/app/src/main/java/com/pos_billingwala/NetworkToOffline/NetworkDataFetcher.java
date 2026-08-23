@@ -21,6 +21,7 @@ import com.pos_billingwala.NetworkToOffline.WorkerClass.InvoiceWorker;
 import com.pos_billingwala.NetworkToOffline.WorkerClass.MessInvoiceWorker;
 import com.pos_billingwala.NetworkToOffline.WorkerClass.MessMemberPaymentWorker;
 import com.pos_billingwala.NetworkToOffline.WorkerClass.MessMemberWorker;
+import com.pos_billingwala.NetworkToOffline.WorkerClass.PortionMasterWorker;
 import com.pos_billingwala.NetworkToOffline.WorkerClass.PortionWorker;
 import com.pos_billingwala.NetworkToOffline.WorkerClass.ProductWorker;
 import com.pos_billingwala.NetworkToOffline.WorkerClass.SubcategoryWorker;
@@ -57,6 +58,10 @@ public class NetworkDataFetcher {
                 .build()).build();
 
         OneTimeWorkRequest productRequest = new OneTimeWorkRequest.Builder(ProductWorker.class).setConstraints(new Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .build()).build();
+
+        OneTimeWorkRequest portionMasterRequest = new OneTimeWorkRequest.Builder(PortionMasterWorker.class).setConstraints(new Constraints.Builder()
                 .setRequiredNetworkType(NetworkType.CONNECTED)
                 .build()).build();
 
@@ -118,6 +123,7 @@ public class NetworkDataFetcher {
                 .then(categoryRequest)
                 .then(subcategoryRequest)
                 .then(productRequest)
+                .then(portionMasterRequest)
                 .then(portionRequest)
                 .then(workRequests)
                 .enqueue();

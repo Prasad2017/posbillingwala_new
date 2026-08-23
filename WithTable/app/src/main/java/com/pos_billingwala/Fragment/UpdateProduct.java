@@ -20,6 +20,7 @@ import androidx.fragment.app.Fragment;
 
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.ProductPortionSectionHelper;
 import com.pos_billingwala.Model.ProductCategoryResponse;
 import com.pos_billingwala.Model.ProductResponse;
 import com.pos_billingwala.Model.ProductSubcategoryResponse;
@@ -42,6 +43,7 @@ public class UpdateProduct extends Fragment implements View.OnClickListener {
     List<ProductResponse> productResponseList = new ArrayList<>();
     POSBillingWalaDatabase posBillingWalaDatabase;
     FragmentUpdateProductBinding binding;
+    ProductPortionSectionHelper portionSectionHelper;
 
 
     @Override
@@ -54,6 +56,13 @@ public class UpdateProduct extends Fragment implements View.OnClickListener {
 
         posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
 
+        Bundle bundle = getArguments();
+        productId = bundle.getString("productId");
+
+        portionSectionHelper = new ProductPortionSectionHelper(
+                activity, posBillingWalaDatabase, binding.productPortionSectionInclude.getRoot());
+        portionSectionHelper.setOnPortionMasterLinkClick(this::openPortionMaster);
+        portionSectionHelper.loadExistingForProduct(productId);
 
         view.setFocusableInTouchMode(true);
         view.requestFocus();
@@ -70,9 +79,6 @@ public class UpdateProduct extends Fragment implements View.OnClickListener {
                 return false;
             }
         });
-
-        Bundle bundle = getArguments();
-        productId = bundle.getString("productId");
 
         binding.productName.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
 
@@ -149,30 +155,49 @@ public class UpdateProduct extends Fragment implements View.OnClickListener {
         } else if (id == R.id.updateProduct) {
             if (categoryId != null) {
                 if (!binding.productName.getText().toString().isEmpty()) {
-                    if (!binding.productPrice.getText().toString().isEmpty()) {
+                    String price = binding.productPrice.getText().toString().trim();
+                    boolean hasPortions = portionSectionHelper != null && portionSectionHelper.hasPortions();
+                    if (!price.isEmpty() || hasPortions) {
                         if (unitName != null) {
                             updateProduct();
                         } else {
-                            Toast.makeText(activity, "Please select product unit", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(activity, getString(R.string.toast_please_select_product_unit), Toast.LENGTH_SHORT).show();
                         }
                     } else {
-                        Toast.makeText(activity, "Please enter product price", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(activity, getString(R.string.toast_please_enter_product_price_or_add_portio), Toast.LENGTH_SHORT).show();
                     }
                 } else {
-                    Toast.makeText(activity, "Please enter product name", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(activity, getString(R.string.toast_please_enter_product_name), Toast.LENGTH_SHORT).show();
                 }
             } else {
-                Toast.makeText(activity, "Please select product category", Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity, getString(R.string.toast_please_select_product_category), Toast.LENGTH_SHORT).show();
             }
         }
     }
 
+    private void openPortionMaster() {
+        AddPortionMaster addPortionMaster = new AddPortionMaster();
+        Bundle bundle = new Bundle();
+        bundle.putString("returnTo", "updateProduct");
+        bundle.putString("productId", productId);
+        addPortionMaster.setArguments(bundle);
+        ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
+        ((MainActivity) activity).loadFragment(addPortionMaster, true);
+    }
+
     public void updateProduct() {
 
-        posBillingWalaDatabase.updateProduct(MainActivity.userId, productId, categoryId, categoryName, binding.productCode.getText().toString(), binding.productName.getText().toString(), binding.productPrice.getText().toString(),
+        String productPrice = binding.productPrice.getText().toString().trim();
+        if (productPrice.isEmpty() && portionSectionHelper.hasPortions()) {
+            productPrice = "0";
+        }
+
+        posBillingWalaDatabase.updateProduct(MainActivity.userId, productId, categoryId, categoryName, binding.productCode.getText().toString(), binding.productName.getText().toString(), productPrice,
                 unitName, binding.productCGST.getText().toString(), binding.productSGST.getText().toString(), 0, subcategoryId);
 
-        Toast.makeText(activity, "Product updated successfully", Toast.LENGTH_SHORT).show();
+        portionSectionHelper.savePortionsForProduct(productId);
+
+        Toast.makeText(activity, getString(R.string.toast_product_updated_successfully), Toast.LENGTH_SHORT).show();
         ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
         ((MainActivity) activity).loadFragment(new ProductMaster(), true);
 
@@ -195,6 +220,9 @@ public class UpdateProduct extends Fragment implements View.OnClickListener {
         ((MainActivity) activity).lockUnlockDrawer(1);
         getProductDetails();
         getProductCategoryList();
+        if (portionSectionHelper != null) {
+            portionSectionHelper.refresh();
+        }
     }
 
     public void getProductDetails() {

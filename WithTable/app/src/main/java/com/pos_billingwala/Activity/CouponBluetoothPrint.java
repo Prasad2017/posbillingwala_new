@@ -57,7 +57,7 @@ import java.util.Random;
 
 
 @SuppressLint({"Range", "SetTextI18n, NewApi, StaticFieldLeak"})
-public class CouponBluetoothPrint extends AppCompatActivity implements View.OnClickListener {
+public class CouponBluetoothPrint extends BaseActivity implements View.OnClickListener {
 
     public static TextView shopName, shopDetails, invoiceDetails, invoiceMemberName, couponCount;
     public static ImageView companyLogo;
@@ -203,7 +203,7 @@ public class CouponBluetoothPrint extends AppCompatActivity implements View.OnCl
             if (!printerSettingResponseList.isEmpty()) {
 
                 progressDialog = new ProgressDialog(activity);
-                progressDialog.setMessage("Printing in progress");
+                progressDialog.setMessage(getString(R.string.toast_printing_in_progress));
 
                 if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("2-Inch")) {
                     print2InchBill();
@@ -212,7 +212,7 @@ public class CouponBluetoothPrint extends AppCompatActivity implements View.OnCl
                 }
 
             } else {
-                Toast.makeText(activity, "Please select printer from setting", Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity, getString(R.string.toast_please_select_printer_from_setting), Toast.LENGTH_SHORT).show();
             }
         }
     }

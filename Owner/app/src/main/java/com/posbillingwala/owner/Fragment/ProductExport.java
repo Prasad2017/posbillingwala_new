@@ -130,7 +130,7 @@ public class ProductExport extends Fragment {
     }
 
     public void downloadFile() {
-        Uri uri = Uri.parse("https://www.posbillingwala.com/androidApp/DemoExcel/CustomerProductList.xlsx");
+        Uri uri = Uri.parse("http://www.posbillingwala.com/androidApp/DemoExcel/CustomerProductList.xlsx");
         DownloadManager.Request request = new DownloadManager.Request(uri);
         request.allowScanningByMediaScanner();
         request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOCUMENTS, "/POS Billingwala/CustomerProductList.xlsx");

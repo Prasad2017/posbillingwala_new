@@ -126,19 +126,19 @@ public class AddMemberPayment extends Fragment implements View.OnClickListener {
                                 if (Float.parseFloat(binding.messAmount.getText().toString()) >= Float.parseFloat(binding.messPaidAmount.getText().toString())) {
                                     addMessPayment();
                                 } else {
-                                    Toast.makeText(activity, "Please enter member paid amount smalled than mess amount", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(activity, getString(R.string.toast_please_enter_member_paid_amount_smalled_), Toast.LENGTH_SHORT).show();
                                 }
                             } else {
-                                Toast.makeText(activity, "Please enter member paid amount", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(activity, getString(R.string.toast_please_enter_member_paid_amount), Toast.LENGTH_SHORT).show();
                             }
                         } else {
-                            Toast.makeText(activity, "Please enter member mobile number", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(activity, getString(R.string.toast_please_enter_member_mobile_number), Toast.LENGTH_SHORT).show();
                         }
                     } else {
-                        Toast.makeText(activity, "Please enter member name", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(activity, getString(R.string.toast_please_enter_member_name), Toast.LENGTH_SHORT).show();
                     }
                 } else {
-                    Toast.makeText(activity, "Please select mess days", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(activity, getString(R.string.toast_please_select_mess_days), Toast.LENGTH_SHORT).show();
                 }
             }
         }
@@ -149,13 +149,13 @@ public class AddMemberPayment extends Fragment implements View.OnClickListener {
         if (!memberResponseList.isEmpty()) {
             posBillingWalaDatabase.updateMessPendingPayment(memberId, binding.memberMobileNumber.getText().toString(), messDays, binding.messAmount.getText().toString(),
                     binding.messPaidAmount.getText().toString(), 0, getRandomString(10));
-            Toast.makeText(activity, "Payment paid successfully", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, getString(R.string.toast_payment_paid_successfully), Toast.LENGTH_SHORT).show();
 
             ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
             ((MainActivity) activity).loadFragment(new MessMemberList(), true);
 
         } else {
-            Toast.makeText(activity, "Payment already done for this month", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, getString(R.string.toast_payment_already_done_for_this_month), Toast.LENGTH_SHORT).show();
         }
 
     }

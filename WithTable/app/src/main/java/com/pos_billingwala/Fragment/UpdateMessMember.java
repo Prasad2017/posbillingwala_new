@@ -87,13 +87,13 @@ public class UpdateMessMember extends Fragment implements View.OnClickListener {
                         if (!binding.memberAddress.getText().toString().isEmpty()) {
                             updateMessMember();
                         } else {
-                            Toast.makeText(activity, "Please enter member address", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(activity, getString(R.string.toast_please_enter_member_address), Toast.LENGTH_SHORT).show();
                         }
                     } else {
-                        Toast.makeText(activity, "Please enter member mobile number", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(activity, getString(R.string.toast_please_enter_member_mobile_number), Toast.LENGTH_SHORT).show();
                     }
                 } else {
-                    Toast.makeText(activity, "Please enter member name", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(activity, getString(R.string.toast_please_enter_member_name), Toast.LENGTH_SHORT).show();
                 }
 
             }
@@ -105,7 +105,7 @@ public class UpdateMessMember extends Fragment implements View.OnClickListener {
         posBillingWalaDatabase.updateMessMember(memberId, binding.memberName.getText().toString(), binding.memberMobileNumber.getText().toString(), binding.memberAlternetMobileNumber.getText().toString(),
                 binding.memberAddress.getText().toString(), 0);
 
-        Toast.makeText(activity, "Member details updated successfully", Toast.LENGTH_SHORT).show();
+        Toast.makeText(activity, getString(R.string.toast_member_details_updated_successfully), Toast.LENGTH_SHORT).show();
 
         ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
         ((MainActivity) activity).loadFragment(new InvoiceMess(), true);

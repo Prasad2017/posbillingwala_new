@@ -134,6 +134,10 @@ public class AddCustomerProductCategory extends Fragment {
             }
         });
 
+        binding.managePortionMaster.setOnClickListener(v -> {
+            ((MainActivity) activity).loadFragment(new AddCustomerPortionMaster(), true);
+        });
+
         return view;
     }
 

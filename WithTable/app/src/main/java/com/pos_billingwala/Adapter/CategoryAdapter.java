@@ -127,7 +127,7 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.MyView
                         categoryNameTxt.getText().toString(),
                         0,
                         foodTypeId);
-                Toast.makeText(context, "Category Updated", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, context.getString(R.string.toast_category_updated), Toast.LENGTH_SHORT).show();
                 AddCategory.getHomeProductCategoryList();
             }
         });
@@ -151,14 +151,14 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.MyView
     public void deleteCategory(String categoryId) {
 
         new MaterialAlertDialogBuilder(context)
-                .setTitle("Are you Sure?")
-                .setMessage("Do you want to delete this category?")
+                .setTitle(context.getString(R.string.toast_are_you_sure))
+                .setMessage(context.getString(R.string.toast_do_you_want_to_delete_this_category))
                 .setPositiveButton("YES", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         dialogInterface.dismiss();
                         posBillingWalaDatabase.deleteCategory(categoryId);
-                        Toast.makeText(context, "Category deleted", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(context, context.getString(R.string.toast_category_deleted), Toast.LENGTH_SHORT).show();
                         AddCategory.getHomeProductCategoryList();
                     }
                 })

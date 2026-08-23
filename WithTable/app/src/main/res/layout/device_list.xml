@@ -25,7 +25,7 @@
         android:layout_height="wrap_content"
         android:fontFamily="@font/poppinsregular"
         android:paddingLeft="5dp"
-        android:text="Paired devices"
+        android:text="@string/title_paired_devices"
         android:textColor="@color/black"
         android:visibility="gone" />
 
@@ -49,7 +49,7 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:paddingLeft="5dp"
-        android:text="Other available devices"
+        android:text="@string/ui_other_available_devices"
         android:textColor="@color/black"
         android:visibility="gone" />
 
@@ -66,6 +66,6 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:fontFamily="@font/poppinsregular"
-        android:text="Scan" />
+        android:text="@string/ui_scan" />
 
 </LinearLayout>

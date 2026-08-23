@@ -2,6 +2,7 @@ package com.pos_billingwala;
 
 import android.app.Application;
 
+import com.pos_billingwala.Extra.AppLanguage;
 import com.pos_billingwala.Extra.Observability;
 
 /**
@@ -13,6 +14,7 @@ public class PosBillingWalaApp extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+        AppLanguage.applyStored(this);
         Observability.init(this);
     }
 }

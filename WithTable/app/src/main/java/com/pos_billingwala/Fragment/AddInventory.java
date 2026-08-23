@@ -93,10 +93,10 @@ public class AddInventory extends Fragment implements View.OnClickListener {
                 if (!binding.inventoryQty.toString().isEmpty()) {
                     addInventory();
                 } else {
-                    Toast.makeText(activity, "Please add inventory qty", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(activity, getString(R.string.toast_please_add_inventory_qty), Toast.LENGTH_SHORT).show();
                 }
             } else {
-                Toast.makeText(activity, "Please select product", Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity, getString(R.string.toast_please_select_product), Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -117,11 +117,11 @@ public class AddInventory extends Fragment implements View.OnClickListener {
             int totalQty = newInventoryQty + afterSaleInventoryQuantity;
 
             posBillingWalaDatabase.addInventory(productId, "" + totalQty, "0", "0", inventoryDate, 0, getRandomString(10));
-            Toast.makeText(activity, "Update inventory successfully", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, getString(R.string.toast_update_inventory_successfully), Toast.LENGTH_SHORT).show();
         } else {
             posBillingWalaDatabase.addInventory(productId, binding.inventoryQty.getText().toString(), binding.inventoryQty.getText().toString(), "0", inventoryDate, 0, getRandomString(10));
 
-            Toast.makeText(activity, "Add inventory successfully", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, getString(R.string.toast_add_inventory_successfully), Toast.LENGTH_SHORT).show();
         }
 
         ((MainActivity) activity).removeCurrentFragmentAndMoveBack();

@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Billingwala</string>
+    <string name="privacy_policy">यूज़रनेम और पासवर्ड देकर, मैं POS Billingwala ऐप के उपयोग के <u><font fgcolor='#df0052'>नियम और शर्तें</font></u> तथा <u><font fgcolor='#df0052'>गोपनीयता नीति</font></u> स्वीकार करता/करती हूँ।</string>
+    <string name="sign_in_msg">POS Billingwala में साइन इन करें</string>
+    <string name="mobile_number_msg">अपनी दुकान की लाइसेंस कुंजी दर्ज करें और बिलिंग शुरू करें।</string>
+    <string name="mpin_msg">अपना दुकान PB-PIN दर्ज करें। हम आपका खाता सत्यापित करेंगे।</string>
+
+    <string name="inr">\u20B9</string>
+    <string name="label_month">महीना</string>
+    <string name="label_year">वर्ष</string>
+
+    <string name="new_user">खाता नहीं है? <u><b><font fgcolor='#df0052'>मुफ़्त रजिस्टर करें</font></b></u></string>
+    <string name="mpin_login"><b><font fgcolor='#df0052'>PB-PIN</font></b> से लॉगिन करें</string>
+    <string name="support_phone_display">+91 89831 49299</string>
+    <string name="support_phone_dial">+918983149299</string>
+
+    <string name="enter_licence_key_hint">लाइसेंस कुंजी दर्ज करें</string>
+    <string name="enter_valid_licence_key">कृपया सही लाइसेंस कुंजी दर्ज करें</string>
+    <string name="welcome_pos_billingwala">POS Billingwala में आपका स्वागत है</string>
+    <string name="loading">लोड हो रहा है</string>
+    <string name="oops_title">ओह…</string>
+    <string name="something_went_wrong">कुछ गलत हुआ। कृपया फिर से कोशिश करें।</string>
+    <string name="forgot_licence_key_message">लाइसेंस कुंजी भूल गए? सहायता कॉल करें: %1$s</string>
+
+    <string name="licence_expired_title">आपका लाइसेंस समाप्त हो गया है</string>
+    <string name="licence_expired_message">POS Billingwala उपयोग करने के लिए धन्यवाद।\n\nआपकी दुकान का लाइसेंस समाप्त हो गया है, इसलिए नवीनीकरण तक ऐप का उपयोग नहीं कर सकते।\n\nमदद चाहिए? कॉल करें %1$s</string>
+    <string name="licence_expired_call">सहायता कॉल करें</string>
+    <string name="licence_expired_ok">ठीक है</string>
+
+    <string name="licence_msg_not_activated">लाइसेंस सक्रिय करने के लिए एक बार इंटरनेट से जुड़ें।</string>
+    <string name="licence_msg_invalid_signature">हम आपका लाइसेंस सत्यापित नहीं कर सके। कृपया ऑनलाइन लॉगिन करें।</string>
+    <string name="licence_msg_device_mismatch">यह लाइसेंस किसी अन्य डिवाइस से जुड़ा है। स्थानांतरण के लिए सहायता से संपर्क करें।</string>
+    <string name="licence_msg_device_already_registered">यह लाइसेंस पहले से किसी अन्य डिवाइस पर पंजीकृत है। क्या आप इसे इस फ़ोन पर उपयोग करना चाहते हैं?</string>
+    <string name="licence_msg_key_mismatch">यह लाइसेंस कुंजी आपके खाते से मेल नहीं खाती। कृपया जाँच कर फिर कोशिश करें।</string>
+    <string name="licence_msg_clock_wrong">आपके डिवाइस की तारीख/समय गलत लग रही है। सही तारीख सेट करें, फिर ऑनलाइन जुड़ें।</string>
+    <string name="licence_msg_expired">आपका लाइसेंस समाप्त हो गया है। ऐप जारी रखने के लिए नवीनीकरण करें।</string>
+    <string name="licence_msg_offline_grace">आप लंबे समय से ऑफ़लाइन हैं। लाइसेंस रिफ़्रेश करने के लिए थोड़ी देर इंटरनेट से जुड़ें।</string>
+    <string name="licence_msg_trial_used">आपका मुफ़्त ट्रायल पहले ही उपयोग हो चुका है। जारी रखने के लिए अपग्रेड करें।</string>
+    <string name="licence_msg_trial_limit">आप मुफ़्त ट्रायल बिल सीमा (%1$d) तक पहुँच गए हैं। बिलिंग जारी रखने के लिए अपग्रेड करें।</string>
+    <string name="licence_msg_trial_limit_generic">आप मुफ़्त ट्रायल बिल सीमा तक पहुँच गए हैं। बिलिंग जारी रखने के लिए अपग्रेड करें।</string>
+    <string name="licence_msg_login_blocked">इस लाइसेंस से साइन इन नहीं हो सका। कुंजी जाँचें या सहायता कॉल करें: %1$s</string>
+    <string name="licence_msg_disabled">यह खाता अक्षम है। सहायता से संपर्क करें: %1$s</string>
+
+    <string name="trial_support_contact">लाइसेंस या सहायता चाहिए? कॉल करें %1$s</string>
+    <string name="new_user_support_team">कुछ चरणों में मुफ़्त खाता बनाएँ। बिलिंग शुरू करने के लिए लॉगिन पर लाइसेंस कुंजी दर्ज करें। मदद? कॉल करें %1$s।</string>
+    <string name="trial_signup_title">मुफ़्त रजिस्टर करें</string>
+    <string name="trial_signup_hint">नीचे दुकान का विवरण भरें और POS Billingwala मुफ़्त उपयोग करें — जल्दी सेटअप, भुगतान नहीं।</string>
+    <string name="trial_signup_name">आपका नाम</string>
+    <string name="trial_signup_contact">मोबाइल नंबर</string>
+    <string name="trial_signup_shop">दुकान / रेस्टोरेंट का नाम</string>
+    <string name="trial_signup_address">दुकान का पता</string>
+    <string name="trial_signup_submit">मुफ़्त खाता बनाएँ</string>
+    <string name="trial_back_to_login">पहले से खाता है? <u><b><font fgcolor='#df0052'>लॉगिन करें</font></b></u></string>
+    <string name="trial_error_empty_fields">जारी रखने के लिए सभी विवरण भरें।</string>
+    <string name="trial_error_invalid_mobile">कृपया सही 10 अंकों का मोबाइल नंबर दर्ज करें।</string>
+    <string name="trial_loading">आपका मुफ़्त खाता बन रहा है…</string>
+    <string name="trial_error_network">इंटरनेट नहीं है। नेटवर्क जाँच कर फिर कोशिश करें।</string>
+    <string name="trial_error_server">अभी रजिस्ट्रेशन पूरा नहीं हो सका। थोड़ी देर बाद फिर कोशिश करें।</string>
+    <string name="trial_error_default">रजिस्ट्रेशन पूरा नहीं हो सका। कृपया फिर कोशिश करें।</string>
+    <string name="trial_error_dialog_title">कुछ गलत हुआ</string>
+    <string name="trial_success_title">POS Billingwala में आपका स्वागत है!</string>
+    <string name="trial_success_message">आपकी मुफ़्त ऐप लाइसेंस कुंजी:\n\n%1$s\n\nइसे सुरक्षित रखें — लॉगिन के लिए ज़रूरी है।\n\nजारी रखें पर टैप कर ऐप खोलें और बिलिंग शुरू करें।</string>
+    <string name="trial_success_button">लॉगिन पर जारी रखें</string>
+
+    <string name="in_app_snack_bar_message">अपडेट लगभग पूरा!</string>
+    <string name="in_app_snack_bar_action_title">रीस्टार्ट</string>
+    <string name="you_appear_to_be_offline">आप ऑफ़लाइन लग रहे हैं</string>
+    <string name="you_can_t_use_gmail_until_you_re_connected_to_the_internet">इंटरनेट कनेक्ट होने तक आप ऐप का उपयोग नहीं कर सकते</string>
+    <string name="retry">फिर कोशिश करें</string>
+    <string name="hi_pos_billingwala">नमस्ते POS Billingwala</string>
+    <string name="fast_billing">फास्ट बिलिंग</string>
+    <string name="dine_in">डाइन इन</string>
+    <string name="take_away">टेक अवे</string>
+    <string name="technical_support_91_8983149299_91_9130188584">तकनीकी सहायता: %1$s</string>
+    <string name="www_webuslabs_com_nemail_info_posbillingwala_in_ncontact_91_8983149299_91_9130188584">www.posbillingwala.com\nईमेल: info@posbillingwala.com\nसंपर्क: %1$s</string>
+    <string name="this_software_is_provided_is_as_without_any_express_or_implied_warranty_in_no_event_will_the_authors_be_held_liable_for_any_damages_arising_from_the_use_of_this_software">यह सॉफ़्टवेयर \'जैसा है\' प्रदान किया गया है, बिना किसी व्यक्त या निहित वारंटी के। इसके उपयोग से होने वाले किसी भी नुकसान के लिए लेखक उत्तरदायी नहीं होंगे।</string>
+    <string name="thank_you_for_choosing_us">हमें चुनने के लिए धन्यवाद!</string>
+    <string name="about_us">हमारे बारे में</string>
+    <string name="about_app_title">POS Billingwala</string>
+    <string name="about_contact_title">संपर्क करें</string>
+    <string name="about_label_website">वेबसाइट</string>
+    <string name="about_label_email">ईमेल</string>
+    <string name="about_label_phone">फ़ोन</string>
+    <string name="about_website">www.posbillingwala.com</string>
+    <string name="about_email">info@posbillingwala.com</string>
+    <string name="category_list">श्रेणी सूची</string>
+    <string name="category_detail">श्रेणी विवरण</string>
+    <string name="category_name">श्रेणी का नाम</string>
+    <string name="category_name_hint">उदा. वेज, नॉन वेज, पेय</string>
+    <string name="add_category">श्रेणी जोड़ें</string>
+    <string name="subcategory_list">उपश्रेणी सूची</string>
+    <string name="subcategory_detail">उपश्रेणी विवरण</string>
+    <string name="subcategory_name">उपश्रेणी का नाम</string>
+    <string name="subcategory_name_hint">उदा. स्टार्टर, मेन कोर्स</string>
+    <string name="add_subcategory">उपश्रेणी जोड़ें</string>
+    <string name="no_subcategory_found">कोई उपश्रेणी नहीं मिली\nकृपया नई उपश्रेणी जोड़ें</string>
+    <string name="manage_subcategories">उपश्रेणियाँ</string>
+    <string name="portion_list">पोर्शन सूची</string>
+    <string name="portion_detail">पोर्शन विवरण</string>
+    <string name="portion_name">पोर्शन का नाम</string>
+    <string name="portion_price">पोर्शन कीमत</string>
+    <string name="portion_sort_order">क्रम</string>
+    <string name="add_portion">पोर्शन जोड़ें</string>
+    <string name="manage_portions">पोर्शन</string>
+    <string name="no_portion_found">कोई पोर्शन नहीं\nहाफ़, फुल, किग्रा आदि जोड़ें</string>
+    <string name="portion_master">पोर्शन मास्टर</string>
+    <string name="portion_master_list">पोर्शन मास्टर सूची</string>
+    <string name="portion_master_detail">पोर्शन मास्टर विवरण</string>
+    <string name="no_portion_master_found">कोई पोर्शन मास्टर नहीं\nहाफ़, फुल आदि जोड़ें</string>
+    <string name="select_portion_master">पोर्शन चुनें</string>
+    <string name="manage_portion_master">पोर्शन मास्टर प्रबंधित करें</string>
+    <string name="product_portion_price_hint">इस उत्पाद + पोर्शन की बिक्री कीमत</string>
+    <string name="manage_product_portions">पोर्शन प्रबंधित करें</string>
+    <string name="product_portions_optional">पोर्शन (वैकल्पिक)</string>
+    <string name="product_portion_list_title">उत्पाद पोर्शन</string>
+    <string name="add_portion_to_product">उत्पाद में पोर्शन जोड़ें</string>
+    <string name="no_portion_master_for_product">अभी कोई पोर्शन मास्टर नहीं। हाफ़, फुल आदि जोड़ने के लिए पोर्शन मास्टर पर टैप करें।</string>
+    <string name="product_price_required_no_portion">पोर्शन न होने पर उत्पाद कीमत उपयोग होती है।</string>
+    <string name="product_price_optional_with_portions">पोर्शन जोड़े गए — बिलिंग पोर्शन कीमत से। मूल उत्पाद कीमत वैकल्पिक।</string>
+    <string name="developed_by_webus_labs_llp">विकसित: Cana Tech Solutions Private Limited</string>
+    <string name="mess">मेस</string>
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
+    <string name="time_set">समय सेट करें</string>
+    <string name="cancel">रद्द करें</string>
+    <string name="time">समय : </string>
+
+    <string name="connect_fail">प्रिंटर कनेक्शन त्रुटि</string>
+    <string name="connect_lost">डिस्कनेक्ट</string>
+    <string name="not_connected">कनेक्शन स्थापित नहीं</string>
+    <string name="title_paired_devices">पेयर किए गए डिवाइस</string>
+    <string name="title_other_devices">अन्य डिवाइस</string>
+    <string name="button_scan">डिवाइस स्कैन करें</string>
+    <string name="none_paired">कोई डिवाइस नहीं मिला</string>
+    <string name="scanning">खोज रहा है&#8230;</string>
+    <string name="select_device">डिवाइस चुनें</string>
+    <string name="none_found">कोई डिवाइस नहीं मिला</string>
+    <string name="connected">प्रिंटर से कनेक्ट करें</string>
+    <string name="bluetooth_not_available">ब्लूटूथ उपलब्ध नहीं</string>
+    <string name="turnon_bluetooth">ब्लूटूथ चालू करें</string>
+    <string name="pic_load_error">चित्र लोड करने में त्रुटि</string>
+    <string name="print_succ">प्रिंट सफल</string>
+    <string name="print_error">प्रिंट में त्रुटि</string>
+
+    <string name="select_photo">फ़ोटो चुनें</string>
+    <string name="choose_from_gallery">गैलरी से चुनें</string>
+    <string name="camera">कैमरा</string>
+    <string name="dialog_cancel">रद्द करें</string>
+
+    <string name="user_setting_title">उपयोगकर्ता सेटिंग</string>
+    <string name="language_settings">ऐप भाषा</string>
+    <string name="language_settings_subtitle">अंग्रेज़ी, हिंदी या मराठी चुनें</string>
+    <string name="language_english">English</string>
+    <string name="language_hindi">हिन्दी (Hindi)</string>
+    <string name="language_marathi">मराठी (Marathi)</string>
+    <string name="language_changed">भाषा अपडेट हो गई</string>
+    <string name="language_current">वर्तमान: %1$s</string>
+
+    <string name="good_morning">सुप्रभात</string>
+    <string name="good_afternoon">नमस्कार</string>
+    <string name="good_evening">शुभ संध्या</string>
+    <string name="good_night">शुभ रात्रि</string>
+
+    <string name="setting_invoice_details">बिल विवरण</string>
+    <string name="setting_reports">रिपोर्ट</string>
+    <string name="setting_shop_details">दुकान विवरण</string>
+    <string name="setting_printer_details">प्रिंटर विवरण</string>
+    <string name="setting_inventory">इन्वेंटरी प्रबंधन</string>
+    <string name="setting_expense">खर्च प्रबंधन</string>
+    <string name="setting_about">हमारे बारे में</string>
+    <string name="setting_fetch_data">क्लाउड से डेटा लें</string>
+    <string name="setting_sync_previous_day">पिछले दिन के बिल सिंक करें</string>
+    <string name="setting_update_app">ऐप अपडेट करें</string>
+    <string name="setting_synchronize">ऑफ़लाइन डेटा क्लाउड से सिंक करें</string>
+    <string name="setting_change_pin">ऐप लॉगिन PB-PIN बदलें</string>
+    <string name="setting_rate_us">हमें रेट करें</string>
+    <string name="setting_share_app">ऐप शेयर करें</string>
+    <string name="setting_logout">लॉग आउट</string>
+
+    <string name="home_total_sales">कुल\nबिक्री</string>
+    <string name="home_today_sales">आज की\nबिक्री</string>
+    <string name="home_total_category">कुल\nश्रेणी</string>
+    <string name="home_total_subcategory">कुल\nउपश्रेणी</string>
+    <string name="home_total_products">कुल\nउत्पाद</string>
+    <string name="home_fetch_data">डेटा लें</string>
+    <string name="home_synchronize">सिंक करें</string>
+    <string name="home_low_inventory">कम स्टॉक</string>
+</resources>

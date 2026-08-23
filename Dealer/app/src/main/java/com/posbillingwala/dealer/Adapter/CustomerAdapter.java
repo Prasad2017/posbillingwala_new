@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.posbillingwala.dealer.Activity.MainActivity;
 import com.posbillingwala.dealer.Fragment.AddCustomerProduct;
 import com.posbillingwala.dealer.Fragment.AddCustomerProductCategory;
+import com.posbillingwala.dealer.Fragment.AddCustomerSubcategory;
 import com.posbillingwala.dealer.Fragment.AllCustomerProductList;
 import com.posbillingwala.dealer.Fragment.CustomerDetails;
 import com.posbillingwala.dealer.Fragment.NewLicenceRegistration;
@@ -58,6 +59,7 @@ public class CustomerAdapter extends RecyclerView.Adapter<CustomerAdapter.MyView
         if (customerResponse.getRoleId().equalsIgnoreCase("2")) {
             customerType = "<b>User Type: </b> Dealer";
             holder.binding.category.setVisibility(View.GONE);
+            holder.binding.subcategory.setVisibility(View.GONE);
             holder.binding.product.setVisibility(View.GONE);
             holder.binding.addProduct.setVisibility(View.GONE);
             if (customerResponse.getLicenseResponseList().isEmpty()) {
@@ -68,6 +70,7 @@ public class CustomerAdapter extends RecyclerView.Adapter<CustomerAdapter.MyView
         } else {
             customerType = "<b>User Type: </b> Customer";
             holder.binding.category.setVisibility(View.VISIBLE);
+            holder.binding.subcategory.setVisibility(View.VISIBLE);
             holder.binding.product.setVisibility(View.VISIBLE);
             holder.binding.addProduct.setVisibility(View.VISIBLE);
         }
@@ -90,6 +93,15 @@ public class CustomerAdapter extends RecyclerView.Adapter<CustomerAdapter.MyView
             addCustomerProductCategory.setArguments(bundle);
             ((MainActivity) context).removeCurrentFragmentAndMoveBack();
             ((MainActivity) context).loadFragment(addCustomerProductCategory, true);
+        });
+
+        holder.binding.subcategory.setOnClickListener(v -> {
+            AddCustomerSubcategory addCustomerSubcategory = new AddCustomerSubcategory();
+            Bundle bundle = new Bundle();
+            bundle.putString("customerId", customerResponse.getId());
+            addCustomerSubcategory.setArguments(bundle);
+            ((MainActivity) context).removeCurrentFragmentAndMoveBack();
+            ((MainActivity) context).loadFragment(addCustomerSubcategory, true);
         });
 
         holder.binding.product.setOnClickListener(v -> {

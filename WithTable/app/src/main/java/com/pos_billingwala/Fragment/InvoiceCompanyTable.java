@@ -63,7 +63,7 @@ public class InvoiceCompanyTable extends Fragment implements View.OnClickListene
             }
 
         } else {
-            Toast.makeText(activity, "Please fill shop details", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, activity.getString(R.string.toast_please_fill_shop_details), Toast.LENGTH_SHORT).show();
             ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
             ((MainActivity) activity).loadFragment(new CompanyDetailSetting(), true);
         }

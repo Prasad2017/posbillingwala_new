@@ -170,8 +170,18 @@ public class AddCustomerProductCategory extends Fragment {
 
     }
 
-    @OnClick({R.id.addCategory})
+    @OnClick({R.id.addCategory, R.id.managePortionMaster})
     public void onClick(View view) {
+        if (view.getId() == R.id.managePortionMaster) {
+            AddCustomerPortionMaster fragment = new AddCustomerPortionMaster();
+            Bundle bundle = new Bundle();
+            bundle.putString("customerId", customerId);
+            bundle.putString("returnTo", "category");
+            fragment.setArguments(bundle);
+            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
+            ((MainActivity) activity).loadFragment(fragment, true);
+            return;
+        }
         if (view.getId() == R.id.addCategory) {
             if (textInputEditText.getText().toString().length() > 0) {
                 if (foodTypeId != null) {

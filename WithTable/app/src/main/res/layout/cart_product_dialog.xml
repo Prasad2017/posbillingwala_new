@@ -27,7 +27,7 @@
             android:gravity="center"
             android:paddingStart="10dp"
             android:paddingEnd="10dp"
-            android:text="Product Name"
+            android:text="@string/ui_product_name"
             android:textColor="@color/textcolor"
             android:textSize="17dp" />
 
@@ -54,7 +54,7 @@
                 android:layout_height="wrap_content"
                 android:drawableTint="@color/light_black"
                 android:fontFamily="@font/poppinsregular"
-                android:hint="Product Price*"
+                android:hint="@string/ui_product_price"
                 android:imeOptions="actionNext"
                 android:inputType="numberDecimal"
                 android:paddingStart="15dp"
@@ -92,7 +92,7 @@
                 android:layout_height="wrap_content"
                 android:drawableTint="@color/light_black"
                 android:fontFamily="@font/poppinsregular"
-                android:hint="Product Quantity*"
+                android:hint="@string/ui_product_quantity"
                 android:imeOptions="actionNext"
                 android:inputType="numberDecimal"
                 android:paddingStart="15dp"
@@ -116,7 +116,7 @@
             android:background="@color/colorPrimary"
             android:fontFamily="@font/poppinsmedium"
             android:gravity="center"
-            android:text="Add To Cart"
+            android:text="@string/ui_add_to_cart"
             android:textAllCaps="true"
             android:textColor="@color/white"
             android:textSize="15dp" />

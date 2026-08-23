@@ -1,5 +1,7 @@
 package com.pos_billingwala.NetworkToOffline;
 
+import com.pos_billingwala.R;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.Cursor;
@@ -63,7 +65,7 @@ public class UserSynchronizeData {
                 Log.e("UserSynchronizeData", "upload failed", e);
             } finally {
                 new Handler(Looper.getMainLooper()).post(() -> {
-                    Toast.makeText(context, "Offline Data uploaded to server", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, context.getString(R.string.toast_offline_data_uploaded_to_server), Toast.LENGTH_SHORT).show();
                     dismissDialogSafely();
                 });
             }
@@ -120,6 +122,15 @@ public class UserSynchronizeData {
                         columnOrEmpty(cursor, "subcategoryId"));
             } while (cursor.moveToNext());
         }
+        cursor = posBillingWalaDatabase.getUnSynchronizePortionMaster(NAME_NOT_SYNCED_WITH_SERVER);
+        if (cursor.moveToFirst()) {
+            do {
+                savePortionMaster(cursor.getString(cursor.getColumnIndex("portionMasterId")),
+                        cursor.getString(cursor.getColumnIndex("portionName")),
+                        cursor.getString(cursor.getColumnIndex("portionMasterDeletedStatus")),
+                        cursor.getString(cursor.getColumnIndex("portionMasterNetworkStatus")));
+            } while (cursor.moveToNext());
+        }
         cursor = posBillingWalaDatabase.getUnSynchronizePortion(NAME_NOT_SYNCED_WITH_SERVER);
         if (cursor.moveToFirst()) {
             do {
@@ -130,7 +141,9 @@ public class UserSynchronizeData {
                         cursor.getString(cursor.getColumnIndex("portionPrice")),
                         columnOrEmpty(cursor, "portionSortOrder"),
                         cursor.getString(cursor.getColumnIndex("portionDeletedStatus")),
-                        cursor.getString(cursor.getColumnIndex("portionNetworkStatus")));
+                        cursor.getString(cursor.getColumnIndex("portionNetworkStatus")),
+                        columnOrEmpty(cursor, "portionMasterId"),
+                        columnOrEmpty(cursor, "portionMasterNetworkStatus"));
             } while (cursor.moveToNext());
         }
         //getting all the unSynced Company Printer Setting
@@ -527,9 +540,34 @@ public class UserSynchronizeData {
         });
     }
 
-    public void savePortion(String portionId, String productId, String productNetworkStatus, String portionName, String portionPrice, String portionSortOrder, String portionDeletedStatus, String portionNetworkStatus) {
+    public void savePortionMaster(String portionMasterId, String portionName, String portionMasterDeletedStatus,
+                                  String portionMasterNetworkStatus) {
 
-        Call<AllApiResponse> call = Api.getClient(context).savePortion(MainActivity.ownerId, productId, productNetworkStatus, portionName, portionPrice, portionSortOrder, portionDeletedStatus, portionNetworkStatus);
+        Call<AllApiResponse> call = Api.getClient(context).savePortionMaster(
+                MainActivity.ownerId, portionName, portionMasterDeletedStatus, portionMasterNetworkStatus);
+        call.enqueue(new Callback<AllApiResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<AllApiResponse> call, @NonNull Response<AllApiResponse> response) {
+                if (response.isSuccessful() && response.body() != null
+                    && "1".equalsIgnoreCase(response.body().getStatus())) {
+                    posBillingWalaDatabase.updateSyncPortionMaster(portionMasterId, NAME_SYNCED_WITH_SERVER);
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<AllApiResponse> call, @NonNull Throwable t) {
+                Log.e("serverError", t.getMessage());
+            }
+        });
+    }
+
+    public void savePortion(String portionId, String productId, String productNetworkStatus, String portionName,
+                            String portionPrice, String portionSortOrder, String portionDeletedStatus,
+                            String portionNetworkStatus, String portionMasterId, String portionMasterNetworkStatus) {
+
+        Call<AllApiResponse> call = Api.getClient(context).savePortion(
+                MainActivity.ownerId, productId, productNetworkStatus, portionName, portionPrice, portionSortOrder,
+                portionDeletedStatus, portionNetworkStatus, portionMasterId, portionMasterNetworkStatus);
         call.enqueue(new Callback<AllApiResponse>() {
             @Override
             public void onResponse(@NonNull Call<AllApiResponse> call, @NonNull Response<AllApiResponse> response) {

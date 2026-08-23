@@ -49,7 +49,7 @@
                 android:gravity="center|start"
                 android:paddingStart="15dp"
                 android:paddingEnd="15dp"
-                android:text="Product Menu"
+                android:text="@string/ui_product_menu"
                 android:textColor="@color/white"
                 android:textSize="17dp" />
 
@@ -104,7 +104,7 @@
                 android:layout_weight="1"
                 android:background="@null"
                 android:fontFamily="@font/poppinsregular"
-                android:hint="search product by name, product code"
+                android:hint="@string/ui_search_product_by_name_product_code"
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"
                 android:singleLine="true"
@@ -139,7 +139,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Food"
+                android:text="@string/ui_food"
                 android:textAllCaps="false" />
 
             <com.google.android.material.button.MaterialButton
@@ -148,7 +148,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Beverage"
+                android:text="@string/ui_beverage"
                 android:textAllCaps="false" />
 
         </com.google.android.material.button.MaterialButtonToggleGroup>
@@ -181,7 +181,7 @@
                 android:drawablePadding="10dp"
                 android:fontFamily="@font/poppinsregular"
                 android:gravity="center|left"
-                android:text="Back"
+                android:text="@string/ui_back"
                 android:textColor="@color/black"
                 android:textSize="17dp"
                 android:visibility="visible" />
@@ -237,7 +237,7 @@
             android:gravity="center"
             android:paddingStart="10dp"
             android:paddingEnd="10dp"
-            android:text="Total Items: 0"
+            android:text="@string/ui_total_items_0"
             android:textColor="@color/black"
             android:textSize="15dp" />
 

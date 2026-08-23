@@ -37,7 +37,7 @@
 							<div class="col-4">
 								<label for="inputEmailAd" class="form-label">Select Category</label>
 								<div class="input-group"> <span class="input-group-text bg-transparent"><i class='bx bx-category' ></i></span>
-									<select class="form-control form-select @error('category_id') is-invalid @enderror" name="category_id">
+									<select class="form-control form-select @error('category_id') is-invalid @enderror" name="category_id" id="category_id" onchange="getSubcategories()">
 										<option value="">select</option>
 										@foreach($categories as $category)
 										<option value="{{$category->categoryId}}" @if(old('category_id',$data->categoryId) == $category->categoryId) selected @endif>{{$category->categoryName}}</option>
@@ -48,6 +48,18 @@
 										<strong>{{ $message }}</strong>
 									</span>
 									@enderror
+								</div>
+							</div>
+							<div class="col-4">
+								<label class="form-label">Subcategory (optional)</label>
+								<div class="input-group">
+									<span class="input-group-text bg-transparent"><i class='bx bx-list-ul'></i></span>
+									<select class="form-control form-select" name="subcategory_id" id="subcategory_id">
+										<option value="">select</option>
+										@foreach($subcategories as $sub)
+										<option value="{{$sub->subcategoryId}}" @if(old('subcategory_id',$data->subcategoryId) == $sub->subcategoryId) selected @endif>{{$sub->subcategoryName}}</option>
+										@endforeach
+									</select>
 								</div>
 							</div>
 							<div class="col-4">
@@ -114,6 +126,7 @@
 							
 							<div class="col-12">
 								<button type="submit" class="btn btn-primary px-5">Update Details</button>
+								<a href="{{ url('portions/all/'.$data->userId.'/'.$data->productId) }}" class="btn btn-outline-primary">Manage Portions</a>
 							</div>
 						</form>
 					</div>
@@ -125,4 +138,18 @@
 	</div>
 </div>
 
+<script>
+function getSubcategories() {
+	var userId = "{{ $data->userId }}";
+	var categoryId = $("#category_id").val();
+	if (userId && categoryId) {
+		$.ajax({
+			url: "{{ url('products/get-subcategories') }}",
+			type: "GET",
+			data: { user_id: userId, category_id: categoryId },
+			success: function(data) { $("#subcategory_id").html(data); }
+		});
+	}
+}
+</script>
 @endsection

@@ -39,7 +39,7 @@
                 android:gravity="center|start"
                 android:paddingStart="5dp"
                 android:paddingEnd="5dp"
-                android:text="Product Wise Report"
+                android:text="@string/ui_product_wise_report"
                 android:textColor="@color/white"
                 android:textSize="17dp" />
 
@@ -127,7 +127,7 @@
                     android:fontFamily="@font/poppinsmedium"
                     android:gravity="center"
                     android:padding="5dp"
-                    android:text="Sr no"
+                    android:text="@string/ui_sr_no_3"
                     android:textColor="@color/black"
                     android:textSize="15dp" />
 
@@ -140,7 +140,7 @@
                     android:fontFamily="@font/poppinsmedium"
                     android:gravity="center"
                     android:padding="5dp"
-                    android:text="Product Name"
+                    android:text="@string/ui_product_name"
                     android:textColor="@color/black"
                     android:textSize="15dp" />
 
@@ -152,7 +152,7 @@
                     android:fontFamily="@font/poppinsmedium"
                     android:gravity="center"
                     android:padding="5dp"
-                    android:text="Sale Qty"
+                    android:text="@string/ui_sale_qty"
                     android:textColor="@color/black"
                     android:textSize="15dp" />
 
@@ -183,7 +183,7 @@
         android:layout_gravity="center"
         android:fontFamily="@font/poppinsmedium"
         android:gravity="center"
-        android:text="No Product list Found\nPlease add product into invoice list"
+        android:text="@string/ui_no_product_list_found_please_add_product"
         android:textColor="@color/black"
         android:textSize="20dp"
         android:visibility="visible" />

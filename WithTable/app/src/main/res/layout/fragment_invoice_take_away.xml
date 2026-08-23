@@ -48,7 +48,7 @@
                 android:gravity="center"
                 android:paddingStart="5dp"
                 android:paddingEnd="5dp"
-                android:text="Take Away"
+                android:text="@string/take_away"
                 android:textColor="@color/white"
                 android:textSize="17dp" />
 
@@ -96,7 +96,7 @@
                 android:fontFamily="@font/poppinsmedium"
                 android:gravity="center|start"
                 android:padding="5dp"
-                android:text="Sr No."
+                android:text="@string/ui_sr_no_2"
                 android:textColor="@color/black"
                 android:textSize="14dp" />
 
@@ -108,7 +108,7 @@
                 android:fontFamily="@font/poppinsmedium"
                 android:gravity="center"
                 android:padding="5dp"
-                android:text="Take Away No."
+                android:text="@string/ui_take_away_no"
                 android:textColor="@color/black"
                 android:textSize="14dp" />
 
@@ -120,7 +120,7 @@
                 android:fontFamily="@font/poppinsmedium"
                 android:gravity="center"
                 android:padding="5dp"
-                android:text="Bill Amount"
+                android:text="@string/ui_bill_amount"
                 android:textColor="@color/black"
                 android:textSize="14dp" />
 

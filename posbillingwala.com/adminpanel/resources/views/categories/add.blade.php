@@ -37,7 +37,7 @@
 							<div class="col-6">
 								<label for="inputEmailAddress4" class="form-label">Category Name</label>
 								<div class="input-group"> <span class="input-group-text bg-transparent"><i class='bx bxs-message' ></i></span>
-									<input type="text" class="form-control @error('category_name') is-invalid @enderror border-start-0" id="inputEmailAddress4" placeholder="Category Name" name="category_name" value="{{old('category_name')}}" />
+									<input type="text" class="form-control @error('category_name') is-invalid @enderror border-start-0" id="inputEmailAddress4" placeholder="e.g. Veg, Non Veg, Beverage" name="category_name" value="{{old('category_name')}}" />
 									@error('category_name')
 									<span class="invalid-feedback" role="alert">
 										<strong>{{ $message }}</strong>

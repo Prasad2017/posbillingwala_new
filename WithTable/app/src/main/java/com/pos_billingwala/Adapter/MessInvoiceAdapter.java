@@ -21,7 +21,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.textfield.TextInputEditText;
 import com.pos_billingwala.Activity.CouponBluetoothPrint;
 import com.pos_billingwala.Activity.MainActivity;
+import com.pos_billingwala.Activity.MessTokenBluetoothPrint;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.MessTokenQrHelper;
 import com.pos_billingwala.Model.MemberResponse;
 import com.pos_billingwala.Model.MessInvoiceResponse;
 import com.pos_billingwala.R;
@@ -33,6 +35,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Random;
 
 
 @SuppressLint("NonConstantResourceId, SetTextI18n")
@@ -114,14 +117,21 @@ public class MessInvoiceAdapter extends RecyclerView.Adapter<MessInvoiceAdapter.
             @Override
             public void onClick(View v) {
 
-                setBillPrintPassword(memberResponse);
+                setBillPrintPassword(memberResponse, false);
 
+            }
+        });
+
+        holder.binding.qrTokenLayout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                setBillPrintPassword(memberResponse, true);
             }
         });
 
     }
 
-    public void setBillPrintPassword(MemberResponse memberResponse) {
+    public void setBillPrintPassword(MemberResponse memberResponse, boolean issueQrToken) {
 
         final Dialog dialog = new Dialog(context);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE); // before
@@ -138,7 +148,7 @@ public class MessInvoiceAdapter extends RecyclerView.Adapter<MessInvoiceAdapter.
         TextView dismissReport = dialog.findViewById(R.id.dismissReport);
         TextInputEditText reportPin = dialog.findViewById(R.id.reportPin);
         TextView detailsTxt = dialog.findViewById(R.id.details);
-        detailsTxt.setText("Bill Print Password");
+        detailsTxt.setText(issueQrToken ? "QR Token Password" : "Bill Print Password");
 
         dismissReport.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -169,18 +179,22 @@ public class MessInvoiceAdapter extends RecyclerView.Adapter<MessInvoiceAdapter.
 
                     if (messDays > messInvoiceResponseList.size()) {
 
-                        Intent intent = new Intent(context, CouponBluetoothPrint.class);
-                        intent.putExtra("invoiceRunningStatus", "printBill");
-                        intent.putExtra("cartOrderStatus", "mess");
-                        intent.putExtra("memberId", memberResponse.getMemberId());
-                        intent.putExtra("memberName", memberResponse.getMemberName());
-                        intent.putExtra("memberMobileNumber", memberResponse.getMemberMobileNumber());
-                        intent.putExtra("messDays", "" + messDays);
-                        intent.putExtra("messInvoiceResponseList", "" + messInvoiceResponseList.size());
-                        context.startActivity(intent);
+                        if (issueQrToken) {
+                            openMemberQrToken(memberResponse, messInvoiceResponseList.size());
+                        } else {
+                            Intent intent = new Intent(context, CouponBluetoothPrint.class);
+                            intent.putExtra("invoiceRunningStatus", "printBill");
+                            intent.putExtra("cartOrderStatus", "mess");
+                            intent.putExtra("memberId", memberResponse.getMemberId());
+                            intent.putExtra("memberName", memberResponse.getMemberName());
+                            intent.putExtra("memberMobileNumber", memberResponse.getMemberMobileNumber());
+                            intent.putExtra("messDays", "" + messDays);
+                            intent.putExtra("messInvoiceResponseList", "" + messInvoiceResponseList.size());
+                            context.startActivity(intent);
+                        }
 
                     } else {
-                        Toast.makeText(context, "Already coupon created", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(context, context.getString(R.string.toast_already_coupon_created), Toast.LENGTH_SHORT).show();
                     }
 
                 } else {
@@ -193,6 +207,40 @@ public class MessInvoiceAdapter extends RecyclerView.Adapter<MessInvoiceAdapter.
         dialog.show();
         dialog.getWindow().setAttributes(lp);
 
+    }
+
+    private void openMemberQrToken(MemberResponse memberResponse, int existingCouponCount) {
+        String tokenCode = MessTokenQrHelper.generateTokenCode();
+        String messType = MessTokenQrHelper.resolveMessType();
+        if (existingCouponCount == 1) {
+            messType = "Dinner";
+        }
+        String networkStatus = getRandomString(10);
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+        String tokenDate = df.format(Calendar.getInstance().getTime());
+
+        Intent intent = new Intent(context, MessTokenBluetoothPrint.class);
+        intent.putExtra("tokenCode", tokenCode);
+        intent.putExtra("memberId", memberResponse.getMemberId());
+        intent.putExtra("memberName", memberResponse.getMemberName());
+        intent.putExtra("memberMobile", memberResponse.getMemberMobileNumber());
+        intent.putExtra("memberType", MessTokenQrHelper.MEMBER_TYPE_MEMBER);
+        intent.putExtra("messType", messType);
+        intent.putExtra("tokenAmount", "0");
+        intent.putExtra("tokenDate", tokenDate);
+        intent.putExtra("tokenNetworkStatus", networkStatus);
+        intent.putExtra("messInvoiceResponseList", "" + existingCouponCount);
+        context.startActivity(intent);
+    }
+
+    private String getRandomString(final int sizeOfRandomString) {
+        String allowed = "0123456789qwertyuiopasdfghjklzxcvbnm";
+        Random random = new Random();
+        StringBuilder sb = new StringBuilder(sizeOfRandomString);
+        for (int i = 0; i < sizeOfRandomString; i++) {
+            sb.append(allowed.charAt(random.nextInt(allowed.length())));
+        }
+        return sb.toString();
     }
 
     @Override

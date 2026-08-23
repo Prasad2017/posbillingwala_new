@@ -37,7 +37,7 @@
                 android:gravity="center|start"
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"
-                android:text="Cash Mode wise"
+                android:text="@string/ui_cash_mode_wise"
                 android:textColor="@color/white"
                 android:textSize="15dp" />
 
@@ -68,7 +68,7 @@
                 android:gravity="center|start"
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"
-                android:text="UPI Mode wise"
+                android:text="@string/ui_upi_mode_wise"
                 android:textColor="@color/white"
                 android:textSize="15dp" />
 
@@ -98,7 +98,7 @@
                 android:gravity="center|start"
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"
-                android:text="Bank Mode wise"
+                android:text="@string/ui_bank_mode_wise"
                 android:textColor="@color/white"
                 android:textSize="15dp" />
 
@@ -128,7 +128,7 @@
                 android:gravity="center|start"
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"
-                android:text="Day wise"
+                android:text="@string/ui_day_wise"
                 android:textColor="@color/white"
                 android:textSize="15dp" />
 
@@ -158,7 +158,7 @@
                 android:gravity="center|start"
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"
-                android:text="Month Wise"
+                android:text="@string/ui_month_wise"
                 android:textColor="@color/white"
                 android:textSize="15dp" />
 
@@ -186,7 +186,7 @@
                 android:gravity="center|start"
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"
-                android:text="Year Wise"
+                android:text="@string/ui_year_wise"
                 android:textColor="@color/white"
                 android:textSize="15dp" />
 

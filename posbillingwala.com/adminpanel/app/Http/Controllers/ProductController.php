@@ -148,10 +148,18 @@ class ProductController extends Controller
 		$categories = Category::where('categoryStatus','active')->get();
 		$units = Unit::where('is_active',1)->orderBy('name','ASC')->get();
     	$users = User::where('is_active',1)->where('role_id',3)->get();
+		$subcategories = [];
+		if ($data && $data->categoryId) {
+			$subcategories = ProductSubcategory::where('userId', $data->userId)
+				->where('categoryId', $data->categoryId)
+				->where('subcategoryStatus', 'active')
+				->orderBy('subcategoryName')
+				->get();
+		}
 
 		if($data)
 		{
-			return view('products.edit',compact('data','categories','units','users'));
+			return view('products.edit',compact('data','categories','units','users','subcategories'));
 		}
 		return redirect()->back()->with('error','Product details not found');
 	}

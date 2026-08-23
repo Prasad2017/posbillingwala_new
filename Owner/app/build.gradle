@@ -16,7 +16,7 @@ android {
         multiDexEnabled true
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         // P5-4: same public host family as POS / Dealer / Admin
-        buildConfigField "String", "API_BASE_URL", "\"https://www.posbillingwala.com/androidApp/Owner/\""
+        buildConfigField "String", "API_BASE_URL", "\"http://www.posbillingwala.com/androidApp/Owner/\""
     }
 
     buildFeatures {

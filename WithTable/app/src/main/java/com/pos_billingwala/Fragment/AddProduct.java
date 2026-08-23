@@ -22,6 +22,7 @@ import androidx.fragment.app.Fragment;
 import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.ProductPortionSectionHelper;
 import com.pos_billingwala.Model.ProductCategoryResponse;
 import com.pos_billingwala.Model.ProductResponse;
 import com.pos_billingwala.Model.ProductSubcategoryResponse;
@@ -44,6 +45,7 @@ public class AddProduct extends Fragment implements View.OnClickListener {
     List<ProductCategoryResponse> productCategoryResponseList = new ArrayList<>();
     POSBillingWalaDatabase posBillingWalaDatabase;
     FragmentAddProductBinding binding;
+    ProductPortionSectionHelper portionSectionHelper;
 
 
     @Override
@@ -57,6 +59,9 @@ public class AddProduct extends Fragment implements View.OnClickListener {
 
         posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
 
+        portionSectionHelper = new ProductPortionSectionHelper(
+                activity, posBillingWalaDatabase, binding.productPortionSectionInclude.getRoot());
+        portionSectionHelper.setOnPortionMasterLinkClick(this::openPortionMaster);
 
         view.setFocusableInTouchMode(true);
         view.requestFocus();
@@ -157,34 +162,61 @@ public class AddProduct extends Fragment implements View.OnClickListener {
         } else if (id == R.id.addProduct) {
             if (categoryId != null) {
                 if (!binding.productName.getText().toString().isEmpty()) {
-                    if (!binding.productPrice.getText().toString().isEmpty()) {
+                    String price = binding.productPrice.getText().toString().trim();
+                    boolean hasPortions = portionSectionHelper != null && portionSectionHelper.hasPortions();
+                    if (!price.isEmpty() || hasPortions) {
                         if (unitName != null) {
                             addProduct();
                         } else {
-                            Toast.makeText(activity, "Please select product unit", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(activity, getString(R.string.toast_please_select_product_unit), Toast.LENGTH_SHORT).show();
                         }
                     } else {
-                        Toast.makeText(activity, "Please enter product price", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(activity, getString(R.string.toast_please_enter_product_price_or_add_portio), Toast.LENGTH_SHORT).show();
                     }
                 } else {
-                    Toast.makeText(activity, "Please enter product name", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(activity, getString(R.string.toast_please_enter_product_name), Toast.LENGTH_SHORT).show();
                 }
             } else {
-                Toast.makeText(activity, "Please select product category", Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity, getString(R.string.toast_please_select_product_category), Toast.LENGTH_SHORT).show();
             }
         }
     }
 
     public void addProduct() {
 
-        posBillingWalaDatabase.addProduct(MainActivity.ownerId, categoryId, categoryName, binding.productCode.getText().toString(), binding.productName.getText().toString(), binding.productPrice.getText().toString(),
-                unitName, binding.productCGST.getText().toString(), binding.productSGST.getText().toString(), 0, getRandomString(10), "0", subcategoryId);
+        String networkStatus = getRandomString(10);
+        String productPrice = binding.productPrice.getText().toString().trim();
+        if (productPrice.isEmpty() && portionSectionHelper.hasPortions()) {
+            productPrice = "0";
+        }
+        long rowId = posBillingWalaDatabase.addProductAndReturnId(
+                MainActivity.ownerId, categoryId, categoryName,
+                binding.productCode.getText().toString(),
+                binding.productName.getText().toString(),
+                productPrice,
+                unitName, binding.productCGST.getText().toString(),
+                binding.productSGST.getText().toString(), 0, networkStatus, "0", subcategoryId);
 
-        Toast.makeText(activity, "Product added successfully", Toast.LENGTH_SHORT).show();
+        String newProductId = rowId > 0 ? String.valueOf(rowId) : null;
+        if (newProductId == null) {
+            newProductId = posBillingWalaDatabase.getProductIdByNetworkStatus(networkStatus);
+        }
+        if (newProductId != null && portionSectionHelper.hasPortions()) {
+            portionSectionHelper.savePortionsForProduct(newProductId);
+        }
 
+        Toast.makeText(activity, getString(R.string.toast_product_added_successfully), Toast.LENGTH_SHORT).show();
         ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
         ((MainActivity) activity).loadFragment(new ProductMaster(), true);
+    }
 
+    private void openPortionMaster() {
+        AddPortionMaster addPortionMaster = new AddPortionMaster();
+        Bundle bundle = new Bundle();
+        bundle.putString("returnTo", "addProduct");
+        addPortionMaster.setArguments(bundle);
+        ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
+        ((MainActivity) activity).loadFragment(addPortionMaster, true);
     }
 
     private void loadSubcategorySpinner(String selectedCategoryId, String preselectSubcategoryId) {
@@ -241,6 +273,9 @@ public class AddProduct extends Fragment implements View.OnClickListener {
         ((MainActivity) activity).lockUnlockDrawer(1);
         getProductCategoryList();
         getProductList();
+        if (portionSectionHelper != null) {
+            portionSectionHelper.refresh();
+        }
     }
 
     public void getProductCategoryList() {

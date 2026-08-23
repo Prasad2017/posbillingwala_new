@@ -89,7 +89,7 @@ public class AddSubcategory extends Fragment implements View.OnClickListener {
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
                     Log.i("tag", "onKey Back listener is working!!!");
                     ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                    ((MainActivity) activity).loadFragment(new AddCategory(), false);
+                    ((MainActivity) activity).loadFragment(new Home(), false);
                     return true;
                 }
                 return false;
@@ -104,7 +104,7 @@ public class AddSubcategory extends Fragment implements View.OnClickListener {
         subcategoryListCardView = view.findViewById(R.id.subcategoryListCardView);
         noDataFound = view.findViewById(R.id.noDataFound);
 
-        binding.backToCategory.setOnClickListener(this);
+        binding.backToHome.setOnClickListener(this);
         binding.addSubcategory.setOnClickListener(this);
 
         setupCategorySpinner();
@@ -113,14 +113,14 @@ public class AddSubcategory extends Fragment implements View.OnClickListener {
     @Override
     public void onClick(View view) {
         int id = view.getId();
-        if (id == R.id.backToCategory) {
+        if (id == R.id.backToHome) {
             ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-            ((MainActivity) activity).loadFragment(new AddCategory(), false);
+            ((MainActivity) activity).loadFragment(new Home(), false);
         } else if (id == R.id.addSubcategory) {
             if (categoryId == null || categoryId.isEmpty()) {
-                Toast.makeText(activity, "Please select a category", Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity, getString(R.string.toast_please_select_a_category), Toast.LENGTH_SHORT).show();
             } else if (binding.subcategoryName.getText().toString().trim().isEmpty()) {
-                Toast.makeText(activity, "Please add subcategory name", Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity, getString(R.string.toast_please_add_subcategory_name), Toast.LENGTH_SHORT).show();
             } else {
                 addProductSubcategory();
             }
@@ -131,7 +131,7 @@ public class AddSubcategory extends Fragment implements View.OnClickListener {
         String name = binding.subcategoryName.getText().toString().trim();
         List<ProductSubcategoryResponse> existing = posBillingWalaDatabase.getProductSubcategoryNameList(categoryId, name);
         if (!existing.isEmpty()) {
-            Toast.makeText(activity, "Subcategory already exists in this category", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, getString(R.string.toast_subcategory_already_exists_in_this_categ), Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -142,7 +142,7 @@ public class AddSubcategory extends Fragment implements View.OnClickListener {
                 getRandomString(10),
                 0);
 
-        Toast.makeText(activity, "Subcategory added successfully", Toast.LENGTH_SHORT).show();
+        Toast.makeText(activity, getString(R.string.toast_subcategory_added_successfully), Toast.LENGTH_SHORT).show();
         binding.subcategoryName.setText("");
         getSubcategoryList();
     }
@@ -150,7 +150,7 @@ public class AddSubcategory extends Fragment implements View.OnClickListener {
     private void setupCategorySpinner() {
         productCategoryResponseList = posBillingWalaDatabase.getProductCategoryList();
         if (productCategoryResponseList.isEmpty()) {
-            Toast.makeText(activity, "Please add a category first", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, getString(R.string.toast_please_add_a_category_first), Toast.LENGTH_SHORT).show();
             binding.addSubcategory.setEnabled(false);
             return;
         }

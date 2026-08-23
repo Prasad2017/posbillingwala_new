@@ -39,7 +39,7 @@
                 android:gravity="center|start"
                 android:paddingStart="5dp"
                 android:paddingEnd="5dp"
-                android:text="Invoice Reports"
+                android:text="@string/ui_invoice_reports"
                 android:textColor="@color/white"
                 android:textSize="17dp" />
 
@@ -70,7 +70,7 @@
                 android:fontFamily="@font/poppinsmedium"
                 android:gravity="center"
                 android:padding="5dp"
-                android:text="Sr No."
+                android:text="@string/ui_sr_no_2"
                 android:textColor="@color/black"
                 android:textSize="14dp" />
 
@@ -82,7 +82,7 @@
                 android:fontFamily="@font/poppinsmedium"
                 android:gravity="center"
                 android:padding="5dp"
-                android:text="Date"
+                android:text="@string/ui_date"
                 android:textColor="@color/black"
                 android:textSize="14dp" />
 
@@ -94,7 +94,7 @@
                 android:fontFamily="@font/poppinsmedium"
                 android:gravity="center"
                 android:padding="5dp"
-                android:text="Type"
+                android:text="@string/ui_type"
                 android:textColor="@color/black"
                 android:textSize="14dp" />
 
@@ -106,7 +106,7 @@
                 android:fontFamily="@font/poppinsmedium"
                 android:gravity="center"
                 android:padding="5dp"
-                android:text="Mess Amount"
+                android:text="@string/ui_mess_amount"
                 android:textColor="@color/black"
                 android:textSize="14dp" />
 
@@ -118,7 +118,7 @@
                 android:fontFamily="@font/poppinsmedium"
                 android:gravity="center"
                 android:padding="5dp"
-                android:text="Paid Amount"
+                android:text="@string/ui_paid_amount"
                 android:textColor="@color/black"
                 android:textSize="14dp" />
 
@@ -155,7 +155,7 @@
                 android:fontFamily="@font/poppinsmedium"
                 android:gravity="center"
                 android:padding="5dp"
-                android:text="Pending Amount"
+                android:text="@string/ui_pending_amount"
                 android:textColor="@color/black"
                 android:textSize="15dp" />
 
@@ -189,7 +189,7 @@
         android:fontFamily="@font/poppinsmedium"
         android:paddingStart="10dp"
         android:paddingEnd="10dp"
-        android:text="No data Found"
+        android:text="@string/ui_no_data_found"
         android:textColor="@color/black"
         android:textSize="20dp" />
 

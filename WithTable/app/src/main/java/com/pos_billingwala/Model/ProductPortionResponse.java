@@ -36,6 +36,12 @@ public class ProductPortionResponse {
     @SerializedName("portionStatus")
     @Expose
     private String portionStatus;
+    @SerializedName("portionMasterId")
+    @Expose
+    private String portionMasterId;
+    @SerializedName("portionMasterNetworkStatus")
+    @Expose
+    private String portionMasterNetworkStatus;
 
     public String getPortionId() {
         return portionId;
@@ -107,5 +113,21 @@ public class ProductPortionResponse {
 
     public void setProductNetworkStatus(String productNetworkStatus) {
         this.productNetworkStatus = productNetworkStatus;
+    }
+
+    public String getPortionMasterId() {
+        return portionMasterId;
+    }
+
+    public void setPortionMasterId(String portionMasterId) {
+        this.portionMasterId = portionMasterId;
+    }
+
+    public String getPortionMasterNetworkStatus() {
+        return portionMasterNetworkStatus;
+    }
+
+    public void setPortionMasterNetworkStatus(String portionMasterNetworkStatus) {
+        this.portionMasterNetworkStatus = portionMasterNetworkStatus;
     }
 }

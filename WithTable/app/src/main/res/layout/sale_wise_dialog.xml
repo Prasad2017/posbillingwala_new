@@ -36,7 +36,7 @@
                 android:gravity="center|start"
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"
-                android:text="Day wise"
+                android:text="@string/ui_day_wise"
                 android:textColor="@color/white"
                 android:textSize="15dp" />
 
@@ -66,7 +66,7 @@
                 android:gravity="center|start"
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"
-                android:text="Month Wise"
+                android:text="@string/ui_month_wise"
                 android:textColor="@color/white"
                 android:textSize="15dp" />
 
@@ -94,7 +94,7 @@
                 android:gravity="center|start"
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"
-                android:text="Year Wise"
+                android:text="@string/ui_year_wise"
                 android:textColor="@color/white"
                 android:textSize="15dp" />
 

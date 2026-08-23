@@ -103,14 +103,14 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.MyViewHo
     public void deleteProductDialog(String productId) {
 
         new MaterialAlertDialogBuilder(context)
-                .setTitle("Are you Sure?")
-                .setMessage("Do you want to delete this product?")
+                .setTitle(context.getString(R.string.toast_are_you_sure))
+                .setMessage(context.getString(R.string.toast_do_you_want_to_delete_this_product))
                 .setPositiveButton("YES", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         dialogInterface.dismiss();
                         posBillingWalaDatabase.deleteProduct(productId);
-                        Toast.makeText(context, "Product delete successfully", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(context, context.getString(R.string.toast_product_delete_successfully), Toast.LENGTH_SHORT).show();
                         ProductMaster.getProductList();
                     }
                 })

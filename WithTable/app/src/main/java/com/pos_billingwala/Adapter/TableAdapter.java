@@ -88,7 +88,7 @@ public class TableAdapter extends RecyclerView.Adapter<TableAdapter.MyViewHolder
                     createPos.setArguments(bundle);
                     ((MainActivity) context).loadFragment(createPos, true);
                 } else {
-                    Toast.makeText(context, "Please settle previous bill", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, context.getString(R.string.toast_please_settle_previous_bill), Toast.LENGTH_SHORT).show();
                 }
 
             }
@@ -106,7 +106,7 @@ public class TableAdapter extends RecyclerView.Adapter<TableAdapter.MyViewHolder
                     intent.putExtra("cartOrderStatus", "table_wise");
                     context.startActivity(intent);
                 } else {
-                    Toast.makeText(context, "Please settle previous bill", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, context.getString(R.string.toast_please_settle_previous_bill), Toast.LENGTH_SHORT).show();
                 }
 
             }
@@ -169,7 +169,7 @@ public class TableAdapter extends RecyclerView.Adapter<TableAdapter.MyViewHolder
                     posBillingWalaDatabase.updateInvoiceTablePaymentMode(invoiceNumber, tableNumber, paymentMode);
                     InvoiceCompanyTable.getCompanyDetails();
                 } else {
-                    Toast.makeText(context, "Please select payment mode", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, context.getString(R.string.toast_please_select_payment_mode), Toast.LENGTH_SHORT).show();
                 }
             }
         });

@@ -32,7 +32,7 @@
             android:layout_weight="1"
             android:fontFamily="@font/poppinslight"
             android:gravity="center"
-            android:hint="Category Name"
+            android:hint="@string/category_name"
             android:paddingStart="5dp"
             android:paddingEnd="5dp"
             android:textColor="@color/black"

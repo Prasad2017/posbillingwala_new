@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.posbillingwala.admin.Activity.MainActivity;
 import com.posbillingwala.admin.Fragment.AddCustomerProduct;
 import com.posbillingwala.admin.Fragment.AddCustomerProductCategory;
+import com.posbillingwala.admin.Fragment.AddCustomerSubcategory;
 import com.posbillingwala.admin.Fragment.AllCustomerProductList;
 import com.posbillingwala.admin.Fragment.CustomerDetails;
 import com.posbillingwala.admin.Fragment.NewLicenceRegistration;
@@ -61,77 +62,65 @@ public class CustomerAdapter extends RecyclerView.Adapter<CustomerAdapter.MyView
         String shopName = "<b>Shop Name: </b>" + customerResponse.getShopName();
         holder.textViews.get(3).setText(Html.fromHtml(shopName));
 
-        holder.textViews.get(6).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                CustomerDetails customerDetails = new CustomerDetails();
-                Bundle bundle = new Bundle();
-                bundle.putString("customerId", "" + customerResponse.getId());
-                customerDetails.setArguments(bundle);
-                ((MainActivity) context).removeCurrentFragmentAndMoveBack();
-                ((MainActivity) context).loadFragment(customerDetails, true);
-
-            }
+        // Category
+        holder.textViews.get(4).setOnClickListener(v -> {
+            AddCustomerProductCategory addCustomerProductCategory = new AddCustomerProductCategory();
+            Bundle bundle = new Bundle();
+            bundle.putString("customerId", "" + customerResponse.getId());
+            addCustomerProductCategory.setArguments(bundle);
+            ((MainActivity) context).removeCurrentFragmentAndMoveBack();
+            ((MainActivity) context).loadFragment(addCustomerProductCategory, true);
         });
 
-        holder.textViews.get(4).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                AddCustomerProductCategory addCustomerProductCategory = new AddCustomerProductCategory();
-                Bundle bundle = new Bundle();
-                bundle.putString("customerId", "" + customerResponse.getId());
-                addCustomerProductCategory.setArguments(bundle);
-                ((MainActivity) context).removeCurrentFragmentAndMoveBack();
-                ((MainActivity) context).loadFragment(addCustomerProductCategory, true);
-
-            }
+        // Subcategory (separate page)
+        holder.textViews.get(5).setOnClickListener(v -> {
+            AddCustomerSubcategory addCustomerSubcategory = new AddCustomerSubcategory();
+            Bundle bundle = new Bundle();
+            bundle.putString("customerId", "" + customerResponse.getId());
+            addCustomerSubcategory.setArguments(bundle);
+            ((MainActivity) context).removeCurrentFragmentAndMoveBack();
+            ((MainActivity) context).loadFragment(addCustomerSubcategory, true);
         });
 
-        holder.textViews.get(5).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                AllCustomerProductList allCustomerProductList = new AllCustomerProductList();
-                Bundle bundle = new Bundle();
-                bundle.putString("customerId", "" + customerResponse.getId());
-                allCustomerProductList.setArguments(bundle);
-                ((MainActivity) context).removeCurrentFragmentAndMoveBack();
-                ((MainActivity) context).loadFragment(allCustomerProductList, true);
-
-            }
+        // Product list
+        holder.textViews.get(6).setOnClickListener(v -> {
+            AllCustomerProductList allCustomerProductList = new AllCustomerProductList();
+            Bundle bundle = new Bundle();
+            bundle.putString("customerId", "" + customerResponse.getId());
+            allCustomerProductList.setArguments(bundle);
+            ((MainActivity) context).removeCurrentFragmentAndMoveBack();
+            ((MainActivity) context).loadFragment(allCustomerProductList, true);
         });
 
-        holder.textViews.get(7).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                AddCustomerProduct addCustomerProduct = new AddCustomerProduct();
-                Bundle bundle = new Bundle();
-                bundle.putString("customerId", "" + customerResponse.getId());
-                addCustomerProduct.setArguments(bundle);
-                ((MainActivity) context).removeCurrentFragmentAndMoveBack();
-                ((MainActivity) context).loadFragment(addCustomerProduct, true);
-
-            }
+        // Edit customer
+        holder.textViews.get(7).setOnClickListener(v -> {
+            CustomerDetails customerDetails = new CustomerDetails();
+            Bundle bundle = new Bundle();
+            bundle.putString("customerId", "" + customerResponse.getId());
+            customerDetails.setArguments(bundle);
+            ((MainActivity) context).removeCurrentFragmentAndMoveBack();
+            ((MainActivity) context).loadFragment(customerDetails, true);
         });
 
-        holder.textViews.get(8).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                NewLicenceRegistration newLicenceRegistration = new NewLicenceRegistration();
-                Bundle bundle = new Bundle();
-                bundle.putString("customerId", "" + customerResponse.getId());
-                newLicenceRegistration.setArguments(bundle);
-                ((MainActivity) context).removeCurrentFragmentAndMoveBack();
-                ((MainActivity) context).loadFragment(newLicenceRegistration, true);
-
-            }
+        // Add product
+        holder.textViews.get(8).setOnClickListener(v -> {
+            AddCustomerProduct addCustomerProduct = new AddCustomerProduct();
+            Bundle bundle = new Bundle();
+            bundle.putString("customerId", "" + customerResponse.getId());
+            addCustomerProduct.setArguments(bundle);
+            ((MainActivity) context).removeCurrentFragmentAndMoveBack();
+            ((MainActivity) context).loadFragment(addCustomerProduct, true);
         });
 
-
+        // New licence
+        holder.textViews.get(9).setOnClickListener(v -> {
+            NewLicenceRegistration newLicenceRegistration = new NewLicenceRegistration();
+            Bundle bundle = new Bundle();
+            bundle.putString("customerId", "" + customerResponse.getId());
+            newLicenceRegistration.setArguments(bundle);
+            ((MainActivity) context).removeCurrentFragmentAndMoveBack();
+            ((MainActivity) context).loadFragment(newLicenceRegistration, true);
+        });
     }
 
     @Override
@@ -142,7 +131,7 @@ public class CustomerAdapter extends RecyclerView.Adapter<CustomerAdapter.MyView
     public class MyViewHolder extends RecyclerView.ViewHolder {
 
         @BindViews({R.id.customerName, R.id.customerNumber, R.id.customerAddress, R.id.customerShopName,
-                R.id.category, R.id.product, R.id.editCustomer, R.id.addProduct, R.id.newLicenceRegistration})
+                R.id.category, R.id.subcategory, R.id.product, R.id.editCustomer, R.id.addProduct, R.id.newLicenceRegistration})
         List<TextView> textViews;
         @BindView(R.id.cardView)
         CardView cardView;

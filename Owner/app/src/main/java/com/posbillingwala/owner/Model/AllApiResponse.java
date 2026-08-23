@@ -43,15 +43,27 @@ public class AllApiResponse {
     @SerializedName("categoryResponse")
     @Expose
     public List<ProductCategoryResponse> productCategoryResponseList;
+    @SerializedName("subcategoryResponse")
+    @Expose
+    public List<ProductSubcategoryResponse> subcategoryResponseList;
     @SerializedName("productResponse")
     @Expose
     public List<ProductResponse> productResponseList;
+    @SerializedName("portionResponse")
+    @Expose
+    public List<ProductPortionResponse> portionResponseList;
+    @SerializedName("portionMasterResponse")
+    @Expose
+    public List<PortionMasterResponse> portionMasterResponseList;
     @SerializedName("licensesResponse")
     @Expose
     public List<LicenseResponse> licenseResponseList;
     @SerializedName("branches")
     @Expose
     public List<BranchComparisonResponse> branchComparisonList;
+    @SerializedName("productId")
+    @Expose
+    public String productId;
 
 
 
@@ -143,6 +155,14 @@ public class AllApiResponse {
         this.productCategoryResponseList = productCategoryResponseList;
     }
 
+    public List<ProductSubcategoryResponse> getSubcategoryResponseList() {
+        return subcategoryResponseList;
+    }
+
+    public void setSubcategoryResponseList(List<ProductSubcategoryResponse> subcategoryResponseList) {
+        this.subcategoryResponseList = subcategoryResponseList;
+    }
+
     public List<ProductResponse> getProductResponseList() {
         return productResponseList;
     }
@@ -161,5 +181,29 @@ public class AllApiResponse {
 
     public List<BranchComparisonResponse> getBranchComparisonList() {
         return branchComparisonList;
+    }
+
+    public List<ProductPortionResponse> getPortionResponseList() {
+        return portionResponseList;
+    }
+
+    public void setPortionResponseList(List<ProductPortionResponse> portionResponseList) {
+        this.portionResponseList = portionResponseList;
+    }
+
+    public List<PortionMasterResponse> getPortionMasterResponseList() {
+        return portionMasterResponseList;
+    }
+
+    public void setPortionMasterResponseList(List<PortionMasterResponse> portionMasterResponseList) {
+        this.portionMasterResponseList = portionMasterResponseList;
+    }
+
+    public String getProductId() {
+        return productId;
+    }
+
+    public void setProductId(String productId) {
+        this.productId = productId;
     }
 }

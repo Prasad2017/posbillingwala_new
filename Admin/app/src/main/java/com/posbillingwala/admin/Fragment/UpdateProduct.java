@@ -24,6 +24,7 @@ import androidx.fragment.app.Fragment;
 import com.google.android.material.textfield.TextInputEditText;
 import com.posbillingwala.admin.Activity.MainActivity;
 import com.posbillingwala.admin.Extra.DetectConnection;
+import com.posbillingwala.admin.Extra.ProductPortionSectionHelper;
 import com.posbillingwala.admin.Model.AllApiResponse;
 import com.posbillingwala.admin.Model.ProductCategoryResponse;
 import com.posbillingwala.admin.Model.ProductResponse;
@@ -33,7 +34,6 @@ import com.posbillingwala.admin.Retrofit.Api;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 import butterknife.BindView;
 import butterknife.BindViews;
@@ -61,18 +61,18 @@ public class UpdateProduct extends Fragment {
     String preselectSubcategoryId;
     List<ProductCategoryResponse> productCategoryResponseList = new ArrayList<>();
     List<ProductResponse> productResponseList = new ArrayList<>();
+    ProductPortionSectionHelper portionSectionHelper;
+    boolean portionsLoaded;
 
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         view = inflater.inflate(R.layout.fragment_update_product, container, false);
         ButterKnife.bind(this, view);
 
         activity = getActivity();
 
-        // Fragment locked in landscape screen orientation
         activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR);
 
         Bundle bundle = getArguments();
@@ -83,6 +83,11 @@ public class UpdateProduct extends Fragment {
 
         MainActivity.title.setText("Update Product");
 
+        View portionSection = view.findViewById(R.id.productPortionSectionInclude);
+        portionSectionHelper = new ProductPortionSectionHelper(activity, portionSection);
+        portionSectionHelper.setCustomerId(customerId);
+        portionSectionHelper.setOnPortionMasterLinkClick(this::openPortionMaster);
+
         textInputEditTexts.get(0).setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
 
         MainActivity.back.setOnClickListener(new View.OnClickListener() {
@@ -90,9 +95,9 @@ public class UpdateProduct extends Fragment {
             public void onClick(View v) {
                 ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
                 AllCustomerProductList allCustomerProductList = new AllCustomerProductList();
-                Bundle bundle = new Bundle();
-                bundle.putString("customerId", customerId);
-                allCustomerProductList.setArguments(bundle);
+                Bundle backBundle = new Bundle();
+                backBundle.putString("customerId", customerId);
+                allCustomerProductList.setArguments(backBundle);
                 ((MainActivity) activity).loadFragment(allCustomerProductList, true);
             }
         });
@@ -105,12 +110,7 @@ public class UpdateProduct extends Fragment {
 
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
                     Log.i("tag", "onKey Back listener is working!!!");
-                    ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                    AllCustomerProductList allCustomerProductList = new AllCustomerProductList();
-                    Bundle bundle = new Bundle();
-                    bundle.putString("customerId", customerId);
-                    allCustomerProductList.setArguments(bundle);
-                    ((MainActivity) activity).loadFragment(allCustomerProductList, true);
+                    MainActivity.back.performClick();
                     return true;
                 }
                 return false;
@@ -179,19 +179,32 @@ public class UpdateProduct extends Fragment {
 
     }
 
+    private void openPortionMaster() {
+        AddCustomerPortionMaster fragment = new AddCustomerPortionMaster();
+        Bundle bundle = new Bundle();
+        bundle.putString("customerId", customerId);
+        bundle.putString("returnTo", "updateProduct");
+        bundle.putString("productId", productId);
+        fragment.setArguments(bundle);
+        ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
+        ((MainActivity) activity).loadFragment(fragment, true);
+    }
+
     @OnClick({R.id.updateProduct})
     public void onClick(View view) {
         if (view.getId() == R.id.updateProduct) {
             if (categoryId != null) {
                 if (textInputEditTexts.get(0).getText().toString().length() > 0) {
-                    if (textInputEditTexts.get(1).getText().toString().length() > 0) {
+                    String price = textInputEditTexts.get(1).getText().toString().trim();
+                    boolean hasPortions = portionSectionHelper != null && portionSectionHelper.hasPortions();
+                    if (price.length() > 0 || hasPortions) {
                         if (unitName != null) {
                             updateProduct();
                         } else {
                             Toast.makeText(activity, "Please select product unit", Toast.LENGTH_SHORT).show();
                         }
                     } else {
-                        Toast.makeText(activity, "Please enter product price", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(activity, "Please enter product price or add portions", Toast.LENGTH_SHORT).show();
                     }
                 } else {
                     Toast.makeText(activity, "Please enter product name", Toast.LENGTH_SHORT).show();
@@ -210,7 +223,13 @@ public class UpdateProduct extends Fragment {
         pDialog.setCancelable(false);
         pDialog.show();
 
-        Call<AllApiResponse> call = Api.getClient().updateProduct(productId, categoryId, categoryName, textInputEditTexts.get(0).getText().toString(), textInputEditTexts.get(1).getText().toString(),
+        String price = textInputEditTexts.get(1).getText().toString().trim();
+        if (price.isEmpty() && portionSectionHelper.hasPortions()) {
+            price = "0";
+        }
+
+        Call<AllApiResponse> call = Api.getClient().updateProduct(productId, categoryId, categoryName,
+                textInputEditTexts.get(0).getText().toString(), price,
                 unitName, textInputEditTexts.get(2).getText().toString(), textInputEditTexts.get(3).getText().toString(),
                 subcategoryId != null ? subcategoryId : "");
         call.enqueue(new Callback<AllApiResponse>() {
@@ -218,18 +237,24 @@ public class UpdateProduct extends Fragment {
             public void onResponse(Call<AllApiResponse> call, Response<AllApiResponse> response) {
                 if (response.isSuccessful()) {
                     if (response.body().getStatus().equalsIgnoreCase("1")) {
-                        Toast.makeText(activity, "" + response.body().getMessage(), Toast.LENGTH_SHORT).show();
-                        ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                        AllCustomerProductList allCustomerProductList = new AllCustomerProductList();
-                        Bundle bundle = new Bundle();
-                        bundle.putString("customerId", customerId);
-                        allCustomerProductList.setArguments(bundle);
-                        ((MainActivity) activity).loadFragment(allCustomerProductList, true);
+                        if (portionSectionHelper.hasPortions()) {
+                            portionSectionHelper.savePortionsForProduct(productId, allOk -> {
+                                pDialog.dismiss();
+                                Toast.makeText(activity, allOk ? "Product & portions updated" : "Product updated; some portions failed", Toast.LENGTH_SHORT).show();
+                                navigateToProductList();
+                            });
+                        } else {
+                            pDialog.dismiss();
+                            Toast.makeText(activity, "" + response.body().getMessage(), Toast.LENGTH_SHORT).show();
+                            navigateToProductList();
+                        }
                     } else {
+                        pDialog.dismiss();
                         Toast.makeText(activity, "" + response.body().getMessage(), Toast.LENGTH_SHORT).show();
                     }
+                } else {
+                    pDialog.dismiss();
                 }
-                pDialog.dismiss();
             }
 
             @Override
@@ -249,15 +274,13 @@ public class UpdateProduct extends Fragment {
 
     }
 
-    private String getRandomString(final int sizeOfRandomString) {
-
-        String ALLOWED_CHARACTERS = "0123456789qwertyuiopasdfghjklzxcvbnm";
-
-        final Random random = new Random();
-        final StringBuilder sb = new StringBuilder(sizeOfRandomString);
-        for (int i = 0; i < sizeOfRandomString; ++i)
-            sb.append(ALLOWED_CHARACTERS.charAt(random.nextInt(ALLOWED_CHARACTERS.length())));
-        return sb.toString();
+    private void navigateToProductList() {
+        ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
+        AllCustomerProductList allCustomerProductList = new AllCustomerProductList();
+        Bundle bundle = new Bundle();
+        bundle.putString("customerId", customerId);
+        allCustomerProductList.setArguments(bundle);
+        ((MainActivity) activity).loadFragment(allCustomerProductList, true);
     }
 
     public void onStart() {
@@ -267,6 +290,9 @@ public class UpdateProduct extends Fragment {
         ((MainActivity) activity).lockUnlockDrawer(1);
         MainActivity.drawerLayout.closeDrawers();
         if (DetectConnection.checkInternetConnection(activity)) {
+            if (portionSectionHelper != null) {
+                portionSectionHelper.refresh();
+            }
             getProductDetails();
         } else {
             DetectConnection.noInternetConnection(activity);
@@ -313,6 +339,10 @@ public class UpdateProduct extends Fragment {
                         }
 
                         getProductCategoryList();
+                        if (!portionsLoaded && portionSectionHelper != null) {
+                            portionsLoaded = true;
+                            portionSectionHelper.loadExistingPortions(productId);
+                        }
 
                     }
                 }

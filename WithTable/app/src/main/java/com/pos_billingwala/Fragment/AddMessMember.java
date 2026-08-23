@@ -113,25 +113,25 @@ public class AddMessMember extends Fragment implements View.OnClickListener {
                                         if (Float.parseFloat(binding.messAmount.getText().toString()) >= Float.parseFloat(binding.messPaidAmount.getText().toString())) {
                                             addMessMember();
                                         } else {
-                                            Toast.makeText(activity, "Please enter member paid amount smalled than mess amount", Toast.LENGTH_SHORT).show();
+                                            Toast.makeText(activity, getString(R.string.toast_please_enter_member_paid_amount_smalled_), Toast.LENGTH_SHORT).show();
                                         }
                                     } else {
-                                        Toast.makeText(activity, "Please enter member paid amount", Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(activity, getString(R.string.toast_please_enter_member_paid_amount), Toast.LENGTH_SHORT).show();
                                     }
                                 } else {
-                                    Toast.makeText(activity, "Please enter mess amount", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(activity, getString(R.string.toast_please_enter_mess_amount), Toast.LENGTH_SHORT).show();
                                 }
                             } else {
-                                Toast.makeText(activity, "Please enter member address", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(activity, getString(R.string.toast_please_enter_member_address), Toast.LENGTH_SHORT).show();
                             }
                         } else {
-                            Toast.makeText(activity, "Please enter member mobile number", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(activity, getString(R.string.toast_please_enter_member_mobile_number), Toast.LENGTH_SHORT).show();
                         }
                     } else {
-                        Toast.makeText(activity, "Please enter member name", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(activity, getString(R.string.toast_please_enter_member_name), Toast.LENGTH_SHORT).show();
                     }
                 } else {
-                    Toast.makeText(activity, "Please select mess days", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(activity, getString(R.string.toast_please_select_mess_days), Toast.LENGTH_SHORT).show();
                 }
 
             }
@@ -143,7 +143,7 @@ public class AddMessMember extends Fragment implements View.OnClickListener {
         posBillingWalaDatabase.insertMessMember(MainActivity.ownerId, binding.memberName.getText().toString(), binding.memberMobileNumber.getText().toString(), binding.memberAlternetMobileNumber.getText().toString(),
                 binding.memberAddress.getText().toString(), binding.messAmount.getText().toString(), binding.messPaidAmount.getText().toString(), messDays, 0, getRandomString(10));
 
-        Toast.makeText(activity, "Member added successfully", Toast.LENGTH_SHORT).show();
+        Toast.makeText(activity, getString(R.string.toast_member_added_successfully), Toast.LENGTH_SHORT).show();
 
         ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
         ((MainActivity) activity).loadFragment(new MessMemberList(), true);

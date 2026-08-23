@@ -39,7 +39,7 @@
                 android:gravity="center"
                 android:paddingStart="5dp"
                 android:paddingEnd="5dp"
-                android:text="Member List"
+                android:text="@string/ui_member_list"
                 android:textColor="@color/white"
                 android:textSize="17dp" />
 
@@ -83,7 +83,7 @@
             android:background="@drawable/button_rounded_border"
             android:fontFamily="@font/poppinsregular"
             android:gravity="center|start"
-            android:hint="Search Mess Member"
+            android:hint="@string/ui_search_mess_member"
             android:paddingStart="10dp"
             android:paddingEnd="10dp"
             android:textColor="@color/black"
@@ -105,7 +105,7 @@
         android:fontFamily="@font/poppinsmedium"
         android:paddingStart="10dp"
         android:paddingEnd="10dp"
-        android:text="No data Found"
+        android:text="@string/ui_no_data_found"
         android:textColor="@color/black"
         android:textSize="20dp" />
 

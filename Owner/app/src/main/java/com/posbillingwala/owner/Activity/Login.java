@@ -86,7 +86,7 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
         ClickableSpan clickableSpan1 = new ClickableSpan() {
             @Override
             public void onClick(View widget) {
-                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://www.posbillingwala.com/PlayStore/privacy_policy.html"));
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.posbillingwala.com/PlayStore/privacy_policy.html"));
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 try {
                     startActivity(intent);
@@ -105,7 +105,7 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
         ClickableSpan clickableSpan2 = new ClickableSpan() {
             @Override
             public void onClick(View widget) {
-                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://www.posbillingwala.com/PlayStore/privacy_policy.html"));
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.posbillingwala.com/PlayStore/privacy_policy.html"));
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 try {
                     startActivity(intent);
@@ -219,12 +219,16 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
         lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
 
         TextView contactUser = dialog.findViewById(R.id.contactUser);
+        TextView supportMessage = dialog.findViewById(R.id.supportMessage);
+        if (supportMessage != null) {
+            supportMessage.setText(getString(R.string.new_user_support_team, getString(R.string.support_phone_display)));
+        }
         contactUser.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 dialog.dismiss();
                 Intent intent = new Intent(Intent.ACTION_DIAL);
-                intent.setData(Uri.parse("tel:+919883149299"));
+                intent.setData(Uri.parse("tel:" + getString(R.string.support_phone_dial)));
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(intent);
             }

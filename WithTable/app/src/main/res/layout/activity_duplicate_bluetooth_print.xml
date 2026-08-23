@@ -12,7 +12,8 @@
         android:id="@+id/textView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="14dp" />
+        android:textSize="14dp"
+        tools:text="14dp" />
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
@@ -33,7 +34,7 @@
                 android:gravity="center"
                 android:paddingStart="5dp"
                 android:paddingEnd="5dp"
-                android:text="Invoice Preview"
+                android:text="@string/ui_invoice_preview"
                 android:textColor="@color/white"
                 android:textSize="17dp" />
 
@@ -134,7 +135,7 @@
                 android:gravity="center"
                 android:paddingStart="5dp"
                 android:paddingEnd="5dp"
-                android:text="***** Duplicate Copy *****"
+                android:text="@string/ui__duplicate_copy_"
                 android:textColor="@color/black"
                 android:textSize="13dp" />
 
@@ -159,7 +160,7 @@
                     android:gravity="center|start"
                     android:paddingStart="5dp"
                     android:paddingEnd="5dp"
-                    android:text="ITEM"
+                    android:text="@string/ui_item"
                     android:textColor="@color/black"
                     android:textSize="15dp" />
 
@@ -169,7 +170,7 @@
                     android:layout_gravity="center"
                     android:fontFamily="@font/poppinsbold"
                     android:gravity="center"
-                    android:text="QTY"
+                    android:text="@string/ui_qty"
                     android:textColor="@color/black"
                     android:textSize="15dp"
                     android:visibility="gone" />
@@ -180,7 +181,7 @@
                     android:layout_gravity="center"
                     android:fontFamily="@font/poppinsbold"
                     android:gravity="center"
-                    android:text="RATE"
+                    android:text="@string/ui_rate"
                     android:textColor="@color/black"
                     android:textSize="15dp" />
 
@@ -190,7 +191,7 @@
                     android:layout_gravity="center"
                     android:fontFamily="@font/poppinsbold"
                     android:gravity="center"
-                    android:text="AMOUNT"
+                    android:text="@string/ui_amount"
                     android:textColor="@color/black"
                     android:textSize="15dp" />
 
@@ -234,7 +235,7 @@
                         android:layout_weight="1"
                         android:fontFamily="@font/poppinsbold"
                         android:gravity="center|start"
-                        android:text="SUB TOTAL"
+                        android:text="@string/ui_sub_total"
                         android:textColor="@color/black"
                         android:textSize="15dp" />
 
@@ -268,7 +269,7 @@
                         android:layout_weight="1"
                         android:fontFamily="@font/poppinsbold"
                         android:gravity="center|start"
-                        android:text="CGST@"
+                        android:text="@string/ui_cgst"
                         android:textColor="@color/black"
                         android:textSize="15dp" />
 
@@ -301,7 +302,7 @@
                         android:layout_weight="1"
                         android:fontFamily="@font/poppinsbold"
                         android:gravity="center|start"
-                        android:text="SGST@"
+                        android:text="@string/ui_sgst"
                         android:textColor="@color/black"
                         android:textSize="15dp" />
 
@@ -334,7 +335,7 @@
                         android:layout_weight="1"
                         android:fontFamily="@font/poppinsbold"
                         android:gravity="center|start"
-                        android:text="DISCOUNT"
+                        android:text="@string/ui_discount"
                         android:textColor="@color/black"
                         android:textSize="15dp" />
 
@@ -366,7 +367,7 @@
                         android:layout_weight="1"
                         android:fontFamily="@font/poppinsbold"
                         android:gravity="center|start"
-                        android:text="TOTAL AMOUNT"
+                        android:text="@string/ui_total_amount"
                         android:textColor="@color/black"
                         android:textSize="15dp" />
 
@@ -488,7 +489,7 @@
                 android:gravity="center"
                 android:paddingStart="5dp"
                 android:paddingEnd="5dp"
-                android:text="***** Duplicate Copy *****"
+                android:text="@string/ui__duplicate_copy_"
                 android:textColor="@color/black"
                 android:textSize="14dp" />
 
@@ -515,7 +516,7 @@
                     android:gravity="center|start"
                     android:paddingStart="5dp"
                     android:paddingEnd="5dp"
-                    android:text="ITEM"
+                    android:text="@string/ui_item"
                     android:textColor="@color/black"
                     android:textSize="15dp" />
 
@@ -525,7 +526,7 @@
                     android:layout_gravity="center"
                     android:fontFamily="@font/poppinsbold"
                     android:gravity="center"
-                    android:text="QTY"
+                    android:text="@string/ui_qty"
                     android:textColor="@color/black"
                     android:textSize="15dp"
                     android:visibility="gone" />
@@ -536,7 +537,7 @@
                     android:layout_gravity="center"
                     android:fontFamily="@font/poppinsbold"
                     android:gravity="center"
-                    android:text="RATE"
+                    android:text="@string/ui_rate"
                     android:textColor="@color/black"
                     android:textSize="15dp" />
 
@@ -546,7 +547,7 @@
                     android:layout_gravity="center"
                     android:fontFamily="@font/poppinsbold"
                     android:gravity="center"
-                    android:text="AMOUNT"
+                    android:text="@string/ui_amount"
                     android:textColor="@color/black"
                     android:textSize="15dp" />
 
@@ -592,7 +593,7 @@
                         android:layout_weight="1"
                         android:fontFamily="@font/poppinsbold"
                         android:gravity="center|start"
-                        android:text="SUB TOTAL"
+                        android:text="@string/ui_sub_total"
                         android:textColor="@color/black"
                         android:textSize="15dp" />
 
@@ -626,7 +627,7 @@
                         android:layout_weight="1"
                         android:fontFamily="@font/poppinsbold"
                         android:gravity="center|start"
-                        android:text="CGST@"
+                        android:text="@string/ui_cgst"
                         android:textColor="@color/black"
                         android:textSize="15dp" />
 
@@ -659,7 +660,7 @@
                         android:layout_weight="1"
                         android:fontFamily="@font/poppinsbold"
                         android:gravity="center|start"
-                        android:text="SGST@"
+                        android:text="@string/ui_sgst"
                         android:textColor="@color/black"
                         android:textSize="15dp" />
 
@@ -692,7 +693,7 @@
                         android:layout_weight="1"
                         android:fontFamily="@font/poppinsbold"
                         android:gravity="center|start"
-                        android:text="DISCOUNT"
+                        android:text="@string/ui_discount"
                         android:textColor="@color/black"
                         android:textSize="15dp" />
 
@@ -724,7 +725,7 @@
                         android:layout_weight="1"
                         android:fontFamily="@font/poppinsbold"
                         android:gravity="center|start"
-                        android:text="TOTAL AMOUNT"
+                        android:text="@string/ui_total_amount"
                         android:textColor="@color/black"
                         android:textSize="15dp" />
 
@@ -816,7 +817,7 @@
                             android:paddingStart="5dp"
                             android:paddingEnd="5dp"
                             android:singleLine="true"
-                            android:text="Product Name"
+                            android:text="@string/ui_product_name"
                             android:textColor="@color/black"
                             android:textSize="15dp" />
 
@@ -829,7 +830,7 @@
                             android:paddingStart="5dp"
                             android:paddingEnd="5dp"
                             android:singleLine="true"
-                            android:text="Quantity"
+                            android:text="@string/ui_quantity"
                             android:textColor="@color/black"
                             android:textSize="15dp" />
 
@@ -843,7 +844,7 @@
                             android:paddingStart="5dp"
                             android:paddingEnd="5dp"
                             android:singleLine="true"
-                            android:text="Unit Price"
+                            android:text="@string/ui_unit_price"
                             android:textColor="@color/black"
                             android:textSize="15dp" />
 
@@ -877,7 +878,7 @@
                         android:layout_marginTop="5dp"
                         android:fontFamily="@font/poppinsregular"
                         android:gravity="center"
-                        android:text="***** Payment Details *****"
+                        android:text="@string/ui__payment_details_"
                         android:textColor="@color/black"
                         android:textSize="15dp" />
 
@@ -896,7 +897,7 @@
                             android:layout_weight="1"
                             android:fontFamily="@font/poppinsregular"
                             android:gravity="center"
-                            android:text="Sub Total"
+                            android:text="@string/ui_sub_total"
                             android:textColor="@color/black"
                             android:textSize="15dp" />
 
@@ -908,7 +909,7 @@
                             android:layout_weight="1"
                             android:fontFamily="@font/poppinsregular"
                             android:gravity="center"
-                            android:text="Discount"
+                            android:text="@string/ui_discount"
                             android:textColor="@color/black"
                             android:textSize="15dp" />
 
@@ -920,7 +921,7 @@
                             android:layout_weight="1"
                             android:fontFamily="@font/poppinsregular"
                             android:gravity="center"
-                            android:text="Total Amount"
+                            android:text="@string/ui_total_amount"
                             android:textColor="@color/black"
                             android:textSize="15dp" />
 
@@ -939,7 +940,7 @@
                             android:layout_marginTop="10dp"
                             android:fontFamily="@font/poppinsregular"
                             android:gravity="center"
-                            android:text="***** Payment Mode *****"
+                            android:text="@string/ui__payment_mode_"
                             android:textColor="@color/black"
                             android:textSize="15dp" />
 
@@ -966,7 +967,7 @@
                                 android:gravity="center|start"
                                 android:paddingStart="10dp"
                                 android:paddingEnd="10dp"
-                                android:text="Cash"
+                                android:text="@string/ui_cash"
                                 android:textColor="@color/black"
                                 android:textSize="15dp" />
 
@@ -982,7 +983,7 @@
                                 android:gravity="center|start"
                                 android:paddingStart="10dp"
                                 android:paddingEnd="10dp"
-                                android:text="UPI"
+                                android:text="@string/ui_upi"
                                 android:textColor="@color/black"
                                 android:textSize="15dp" />
 
@@ -998,7 +999,7 @@
                                 android:gravity="center|start"
                                 android:paddingStart="10dp"
                                 android:paddingEnd="10dp"
-                                android:text="Bank"
+                                android:text="@string/ui_bank"
                                 android:textColor="@color/black"
                                 android:textSize="15dp" />
 
@@ -1091,7 +1092,7 @@
         android:layout_gravity="center"
         android:fontFamily="@font/poppinsmedium"
         android:gravity="center"
-        android:text="No Product list Found\nPlease add product into invoice list"
+        android:text="@string/ui_no_product_list_found_please_add_product"
         android:textColor="@color/black"
         android:textSize="20dp"
         android:visibility="visible" />

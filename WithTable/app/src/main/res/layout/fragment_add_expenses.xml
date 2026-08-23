@@ -38,7 +38,7 @@
                 android:gravity="center"
                 android:paddingStart="5dp"
                 android:paddingEnd="5dp"
-                android:text="Add Expense"
+                android:text="@string/ui_add_expense"
                 android:textColor="@color/white"
                 android:textSize="17dp" />
 
@@ -82,7 +82,7 @@
                     android:layout_height="wrap_content"
                     android:drawableTint="@color/light_black"
                     android:fontFamily="@font/poppinsregular"
-                    android:hint="Expenses Name"
+                    android:hint="@string/ui_expenses_name"
                     android:imeOptions="actionNext"
                     android:inputType="textCapWords"
                     android:paddingStart="15dp"
@@ -116,7 +116,7 @@
                     android:layout_height="wrap_content"
                     android:drawableTint="@color/light_black"
                     android:fontFamily="@font/poppinsregular"
-                    android:hint="Expenses Amount"
+                    android:hint="@string/ui_expenses_amount"
                     android:imeOptions="actionNext"
                     android:inputType="numberDecimal"
                     android:paddingStart="15dp"
@@ -141,7 +141,7 @@
         android:background="@color/colorPrimary"
         android:fontFamily="@font/poppinsmedium"
         android:gravity="center"
-        android:text="Add Expense"
+        android:text="@string/ui_add_expense"
         android:textAllCaps="true"
         android:textColor="@color/white"
         android:textSize="17dp" />

@@ -122,8 +122,8 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.MyViewHolder> 
             @Override
             public void onClick(View v) {
                 new MaterialAlertDialogBuilder(context)
-                        .setTitle("Delete Product")
-                        .setMessage("Do you want to delete from bill?")
+                        .setTitle(context.getString(R.string.toast_delete_product))
+                        .setMessage(context.getString(R.string.toast_do_you_want_to_delete_from_bill))
                         .setPositiveButton("YES", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialogInterface, int i) {
@@ -261,14 +261,14 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.MyViewHolder> 
 
     public void updateCart(String cartId, String productQuantity, String productAmount) {
         posBillingWalaDatabase.updateCart(cartId, productQuantity, productAmount);
-        Toast.makeText(context, "Product Updated into cart", Toast.LENGTH_SHORT).show();
+        Toast.makeText(context, context.getString(R.string.toast_product_updated_into_cart), Toast.LENGTH_SHORT).show();
         notifyDataSetChanged();
         BluetoothPrint.getCartProductList();
     }
 
     public void deleteCartProduct(String cartId) {
         posBillingWalaDatabase.deleteCartProduct(cartId);
-        Toast.makeText(context, "Product deleted from cart", Toast.LENGTH_SHORT).show();
+        Toast.makeText(context, context.getString(R.string.toast_product_deleted_from_cart), Toast.LENGTH_SHORT).show();
         notifyDataSetChanged();
         BluetoothPrint.getCartProductList();
     }

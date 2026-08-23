@@ -61,7 +61,7 @@ import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ProductListBluetoothPrint extends AppCompatActivity implements View.OnClickListener {
+public class ProductListBluetoothPrint extends BaseActivity implements View.OnClickListener {
 
 
     public static RecyclerView twoRecyclerView;
@@ -243,14 +243,14 @@ public class ProductListBluetoothPrint extends AppCompatActivity implements View
         if (id == R.id.printProductCardView) {
             if (!printerSettingResponseList.isEmpty()) {
                 progressDialog = new ProgressDialog(activity);
-                progressDialog.setMessage("Printing in progress");
+                progressDialog.setMessage(getString(R.string.toast_printing_in_progress));
                 if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("2-Inch")) {
                     print2InchBill(false);
                 } else if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("3-Inch")) {
                     print3InchBill(false);
                 }
             } else {
-                Toast.makeText(activity, "Please select printer from setting", Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity, getString(R.string.toast_please_select_printer_from_setting), Toast.LENGTH_SHORT).show();
             }
         } else if (id == R.id.shareProductCardView) {
             createPdf();

@@ -13,7 +13,7 @@ android {
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         // P5-4: same public host family as POS / Owner / Dealer
-        buildConfigField "String", "API_BASE_URL", "\"https://www.posbillingwala.com/androidApp/Admin/\""
+        buildConfigField "String", "API_BASE_URL", "\"http://www.posbillingwala.com/androidApp/Admin/\""
     }
 
     buildFeatures {

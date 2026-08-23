@@ -102,6 +102,15 @@ public class OfflineToNetworkReceiver extends BroadcastReceiver {
                         columnOrEmpty(cursor, "subcategoryId"));
             } while (cursor.moveToNext());
         }
+        cursor = posBillingWalaDatabase.getUnSynchronizePortionMaster(NAME_NOT_SYNCED_WITH_SERVER);
+        if (cursor.moveToFirst()) {
+            do {
+                savePortionMaster(cursor.getString(cursor.getColumnIndex("portionMasterId")),
+                        cursor.getString(cursor.getColumnIndex("portionName")),
+                        cursor.getString(cursor.getColumnIndex("portionMasterDeletedStatus")),
+                        cursor.getString(cursor.getColumnIndex("portionMasterNetworkStatus")));
+            } while (cursor.moveToNext());
+        }
         cursor = posBillingWalaDatabase.getUnSynchronizePortion(NAME_NOT_SYNCED_WITH_SERVER);
         if (cursor.moveToFirst()) {
             do {
@@ -112,7 +121,9 @@ public class OfflineToNetworkReceiver extends BroadcastReceiver {
                         cursor.getString(cursor.getColumnIndex("portionPrice")),
                         columnOrEmpty(cursor, "portionSortOrder"),
                         cursor.getString(cursor.getColumnIndex("portionDeletedStatus")),
-                        cursor.getString(cursor.getColumnIndex("portionNetworkStatus")));
+                        cursor.getString(cursor.getColumnIndex("portionNetworkStatus")),
+                        columnOrEmpty(cursor, "portionMasterId"),
+                        columnOrEmpty(cursor, "portionMasterNetworkStatus"));
             } while (cursor.moveToNext());
         }
         //getting all the unSynced Company Printer Setting
@@ -242,6 +253,31 @@ public class OfflineToNetworkReceiver extends BroadcastReceiver {
                         cursor.getString(cursor.getColumnIndex("messInvoiceStatus")));
             } while (cursor.moveToNext());
         }
+        //getting all the unSynced Mess QR Tokens
+        cursor = posBillingWalaDatabase.getUnSynchronizeMessToken(NAME_NOT_SYNCED_WITH_SERVER);
+        if (cursor.moveToFirst()) {
+            do {
+                saveMessToken(cursor.getString(cursor.getColumnIndex("tokenId")),
+                        cursor.getString(cursor.getColumnIndex("tokenCode")),
+                        cursor.getString(cursor.getColumnIndex("memberId")),
+                        cursor.getString(cursor.getColumnIndex("memberName")),
+                        cursor.getString(cursor.getColumnIndex("memberMobile")),
+                        cursor.getString(cursor.getColumnIndex("memberType")),
+                        cursor.getString(cursor.getColumnIndex("messType")),
+                        cursor.getString(cursor.getColumnIndex("tokenAmount")),
+                        cursor.getString(cursor.getColumnIndex("tokenDate")),
+                        cursor.getString(cursor.getColumnIndex("tokenNetworkStatus")));
+            } while (cursor.moveToNext());
+        }
+        cursor = posBillingWalaDatabase.getUnSynchronizeMessTokenVerify(NAME_NOT_SYNCED_WITH_SERVER);
+        if (cursor.moveToFirst()) {
+            do {
+                verifyMessToken(cursor.getString(cursor.getColumnIndex("tokenId")),
+                        cursor.getString(cursor.getColumnIndex("tokenCode")),
+                        cursor.getString(cursor.getColumnIndex("verifiedDate")),
+                        cursor.getString(cursor.getColumnIndex("verifyNetworkStatus")));
+            } while (cursor.moveToNext());
+        }
         //getting all the unSynced Inventory
         cursor = posBillingWalaDatabase.getUnSynchronizeInventory(NAME_NOT_SYNCED_WITH_SERVER);
         if (cursor.moveToFirst()) {
@@ -289,6 +325,47 @@ public class OfflineToNetworkReceiver extends BroadcastReceiver {
             }
         });
 
+    }
+
+    public void saveMessToken(String tokenId, String tokenCode, String memberId, String memberName, String memberMobile,
+                              String memberType, String messType, String tokenAmount, String tokenDate,
+                              String tokenNetworkStatus) {
+        Call<AllApiResponse> call = Api.getClient(context).saveMessToken(
+                MainActivity.userId, tokenCode, memberId, memberName, memberMobile, memberType,
+                messType, tokenAmount, tokenDate, tokenNetworkStatus);
+        call.enqueue(new Callback<AllApiResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<AllApiResponse> call, @NonNull Response<AllApiResponse> response) {
+                if (response.isSuccessful() && response.body() != null
+                        && "1".equalsIgnoreCase(response.body().getStatus())) {
+                    posBillingWalaDatabase.updateSyncMessToken(tokenId);
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<AllApiResponse> call, @NonNull Throwable t) {
+                Log.e("serverError", t.getMessage());
+            }
+        });
+    }
+
+    public void verifyMessToken(String tokenId, String tokenCode, String verifiedDate, String verifyNetworkStatus) {
+        Call<AllApiResponse> call = Api.getClient(context).verifyMessToken(
+                MainActivity.userId, tokenCode, verifiedDate, verifyNetworkStatus);
+        call.enqueue(new Callback<AllApiResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<AllApiResponse> call, @NonNull Response<AllApiResponse> response) {
+                if (response.isSuccessful() && response.body() != null
+                        && "1".equalsIgnoreCase(response.body().getStatus())) {
+                    posBillingWalaDatabase.updateSyncMessTokenVerify(tokenId);
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<AllApiResponse> call, @NonNull Throwable t) {
+                Log.e("serverError", t.getMessage());
+            }
+        });
     }
 
     public void saveMessMemberPayment(String paymentId, String memberId, String memberName, String paymentMessAmount, String paymentPaidAmount, String messTotalDays, String paymentDate, String paymentNetworkStatus, String paymentStatus) {
@@ -512,9 +589,34 @@ public class OfflineToNetworkReceiver extends BroadcastReceiver {
         });
     }
 
-    public void savePortion(String portionId, String productId, String productNetworkStatus, String portionName, String portionPrice, String portionSortOrder, String portionDeletedStatus, String portionNetworkStatus) {
+    public void savePortionMaster(String portionMasterId, String portionName, String portionMasterDeletedStatus,
+                                  String portionMasterNetworkStatus) {
 
-        Call<AllApiResponse> call = Api.getClient(context).savePortion(MainActivity.ownerId, productId, productNetworkStatus, portionName, portionPrice, portionSortOrder, portionDeletedStatus, portionNetworkStatus);
+        Call<AllApiResponse> call = Api.getClient(context).savePortionMaster(
+                MainActivity.ownerId, portionName, portionMasterDeletedStatus, portionMasterNetworkStatus);
+        call.enqueue(new Callback<AllApiResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<AllApiResponse> call, @NonNull Response<AllApiResponse> response) {
+                if (response.isSuccessful() && response.body() != null
+                    && "1".equalsIgnoreCase(response.body().getStatus())) {
+                    posBillingWalaDatabase.updateSyncPortionMaster(portionMasterId, NAME_SYNCED_WITH_SERVER);
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<AllApiResponse> call, @NonNull Throwable t) {
+                Log.e("serverError", t.getMessage());
+            }
+        });
+    }
+
+    public void savePortion(String portionId, String productId, String productNetworkStatus, String portionName,
+                            String portionPrice, String portionSortOrder, String portionDeletedStatus,
+                            String portionNetworkStatus, String portionMasterId, String portionMasterNetworkStatus) {
+
+        Call<AllApiResponse> call = Api.getClient(context).savePortion(
+                MainActivity.ownerId, productId, productNetworkStatus, portionName, portionPrice, portionSortOrder,
+                portionDeletedStatus, portionNetworkStatus, portionMasterId, portionMasterNetworkStatus);
         call.enqueue(new Callback<AllApiResponse>() {
             @Override
             public void onResponse(@NonNull Call<AllApiResponse> call, @NonNull Response<AllApiResponse> response) {

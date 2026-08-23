@@ -41,6 +41,12 @@ public class ProductResponse {
     @SerializedName("productInventoryQuantity")
     @Expose
     public String productInventoryQuantity;
+    @SerializedName("subcategoryId")
+    @Expose
+    private String subcategoryId;
+    @SerializedName("subcategoryName")
+    @Expose
+    private String subcategoryName;
 
 
     public String getProductId() {
@@ -137,5 +143,21 @@ public class ProductResponse {
 
     public void setProductCode(String productCode) {
         this.productCode = productCode;
+    }
+
+    public String getSubcategoryId() {
+        return subcategoryId;
+    }
+
+    public void setSubcategoryId(String subcategoryId) {
+        this.subcategoryId = subcategoryId;
+    }
+
+    public String getSubcategoryName() {
+        return subcategoryName;
+    }
+
+    public void setSubcategoryName(String subcategoryName) {
+        this.subcategoryName = subcategoryName;
     }
 }

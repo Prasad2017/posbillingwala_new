@@ -12,7 +12,8 @@
         android:id="@+id/textView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="14dp" />
+        android:textSize="14dp"
+        tools:text="14dp" />
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
@@ -32,7 +33,7 @@
                 android:gravity="center"
                 android:paddingStart="5dp"
                 android:paddingEnd="5dp"
-                android:text="Product Preview"
+                android:text="@string/ui_product_preview"
                 android:textColor="@color/white"
                 android:textSize="17dp" />
 
@@ -71,7 +72,7 @@
                     android:paddingStart="5dp"
                     android:paddingEnd="5dp"
                     android:singleLine="true"
-                    android:text="Code"
+                    android:text="@string/ui_code"
                     android:textAllCaps="true"
                     android:textColor="@color/black"
                     android:textSize="15dp" />
@@ -86,7 +87,7 @@
                     android:paddingStart="5dp"
                     android:paddingEnd="5dp"
                     android:singleLine="true"
-                    android:text="Product name"
+                    android:text="@string/ui_product_name"
                     android:textAllCaps="true"
                     android:textColor="@color/black"
                     android:textSize="15dp" />
@@ -100,7 +101,7 @@
                     android:paddingStart="5dp"
                     android:paddingEnd="5dp"
                     android:singleLine="true"
-                    android:text="Price"
+                    android:text="@string/ui_price"
                     android:textAllCaps="true"
                     android:textColor="@color/black"
                     android:textSize="15dp" />
@@ -152,7 +153,7 @@
                     android:paddingStart="5dp"
                     android:paddingEnd="5dp"
                     android:singleLine="true"
-                    android:text="Code"
+                    android:text="@string/ui_code"
                     android:textAllCaps="true"
                     android:textColor="@color/black"
                     android:textSize="15dp" />
@@ -167,7 +168,7 @@
                     android:paddingStart="5dp"
                     android:paddingEnd="5dp"
                     android:singleLine="true"
-                    android:text="Product name"
+                    android:text="@string/ui_product_name"
                     android:textAllCaps="true"
                     android:textColor="@color/black"
                     android:textSize="15dp" />
@@ -181,7 +182,7 @@
                     android:paddingStart="5dp"
                     android:paddingEnd="5dp"
                     android:singleLine="true"
-                    android:text="Price"
+                    android:text="@string/ui_price"
                     android:textAllCaps="true"
                     android:textColor="@color/black"
                     android:textSize="15dp" />
@@ -244,7 +245,7 @@
                             android:paddingStart="5dp"
                             android:paddingEnd="5dp"
                             android:singleLine="true"
-                            android:text="Code"
+                            android:text="@string/ui_code"
                             android:textColor="@color/black"
                             android:textSize="15dp" />
 
@@ -258,7 +259,7 @@
                             android:paddingStart="5dp"
                             android:paddingEnd="5dp"
                             android:singleLine="true"
-                            android:text="Product name"
+                            android:text="@string/ui_product_name"
                             android:textColor="@color/black"
                             android:textSize="15dp" />
 
@@ -271,7 +272,7 @@
                             android:paddingStart="5dp"
                             android:paddingEnd="5dp"
                             android:singleLine="true"
-                            android:text="Price"
+                            android:text="@string/ui_price"
                             android:textColor="@color/black"
                             android:textSize="15dp" />
 
@@ -353,7 +354,7 @@
         android:layout_gravity="center"
         android:fontFamily="@font/poppinsmedium"
         android:gravity="center"
-        android:text="No Product list Found\nPlease add product into list"
+        android:text="@string/ui_no_product_list_found_please_add_product_2"
         android:textColor="@color/black"
         android:textSize="20dp"
         android:visibility="visible" />

@@ -12,6 +12,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.text.Html;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.TextPaint;
@@ -37,9 +38,10 @@ import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.initialization.InitializationStatus;
 import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
-import com.google.android.material.snackbar.Snackbar;
+import com.pos_billingwala.Extra.AppLanguage;
 import com.pos_billingwala.Extra.AuthTokens;
 import com.pos_billingwala.Extra.Common;
+import com.pos_billingwala.Extra.LicenceExpiredUi;
 import com.pos_billingwala.Extra.LicenseSession;
 import com.pos_billingwala.Model.LoginResponse;
 import com.pos_billingwala.R;
@@ -60,7 +62,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 @SuppressLint("NonConstantResourceId, HardwareIds")
-public class Login extends AppCompatActivity implements View.OnClickListener {
+public class Login extends BaseActivity implements View.OnClickListener {
 
     //AdView
     public AdView adView;
@@ -94,6 +96,7 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
     public void setScreenSizeSmall() {
         Configuration configuration = getResources().getConfiguration();
         configuration.fontScale = (float) 1; //0.85 small size, 1 normal size, 1,15 big etc
+        AppLanguage.preserveLocaleOnConfig(this, configuration);
         DisplayMetrics metrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(metrics);
         metrics.scaledDensity = configuration.fontScale * metrics.density;
@@ -116,6 +119,11 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
             Intent intent = new Intent(Login.this, MainActivity.class);
             startActivity(intent);
             finish();
+            return;
+        }
+
+        if (getIntent().getBooleanExtra(LicenceExpiredUi.EXTRA_SHOW_LICENCE_EXPIRED, false)) {
+            binding.getRoot().post(() -> LicenceExpiredUi.show(Login.this));
         }
 
         binding.licenceKey.setSelection(binding.licenceKey.getText().toString().length());
@@ -130,7 +138,7 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
         ClickableSpan clickableSpan1 = new ClickableSpan() {
             public void onClick(@NonNull View widget) {
 
-                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://www.posbillingwala.com/PlayStore/privacy_policy.html"));
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.posbillingwala.com/PlayStore/privacy_policy.html"));
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 try {
                     startActivity(intent);
@@ -154,7 +162,7 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
             @Override
             public void onClick(@NonNull View widget) {
 
-                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://www.posbillingwala.com/PlayStore/privacy_policy.html"));
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.posbillingwala.com/PlayStore/privacy_policy.html"));
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 try {
                     startActivity(intent);
@@ -179,6 +187,8 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
 
         binding.privacyPolicy.setText(spannableString);
         binding.privacyPolicy.setMovementMethod(LinkMovementMethod.getInstance());
+
+        binding.newUser.setText(Html.fromHtml(getString(R.string.new_user), Html.FROM_HTML_MODE_LEGACY));
 
         binding.loginCheck.setOnClickListener(this);
         binding.forgotLicenceKey.setOnClickListener(this);
@@ -251,19 +261,12 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
             if (!binding.licenceKey.getText().toString().trim().isEmpty()) {
                 loginCheck();
             } else {
-                Toast.makeText(Login.this, "Enter valid licence key", Toast.LENGTH_SHORT).show();
+                Toast.makeText(Login.this, R.string.enter_valid_licence_key, Toast.LENGTH_SHORT).show();
             }
         } else if (id == R.id.forgotLicenceKey) {
-            Snackbar snackbar = Snackbar.make(
-                    binding.loginLayout,
-                    getString(R.string.forgot_licence_key_message, getString(R.string.support_phone_display)),
-                    Snackbar.LENGTH_LONG);
-            snackbar.setAction("Call", v -> {
-                Intent intent = new Intent(Intent.ACTION_DIAL);
-                intent.setData(Uri.parse("tel:" + getString(R.string.support_phone_dial)));
-                startActivity(intent);
-            });
-            snackbar.show();
+            LicenceExpiredUi.showInfoDialog(
+                    Login.this,
+                    getString(R.string.forgot_licence_key_message, getString(R.string.support_phone_display)));
         } else if (id == R.id.newUser) {
             signUp();
         }
@@ -277,7 +280,7 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
 
         pDialog = new SweetAlertDialog(Login.this, SweetAlertDialog.PROGRESS_TYPE);
         pDialog.getProgressHelper().setBarColor(Color.parseColor("#2D7FED"));
-        pDialog.setTitleText("Loading");
+        pDialog.setTitleText(getString(R.string.loading));
         pDialog.setCancelable(false);
         pDialog.show();
 
@@ -290,8 +293,7 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
                         checkLicenceExpire(response.body().getLicenceId());
                     } else if (response.body().getStatus().equalsIgnoreCase("0")) {
                         pDialog.dismiss();
-                        Snackbar snackbar = Snackbar.make(binding.loginLayout, response.body().getMessage(), Snackbar.LENGTH_LONG);
-                        snackbar.show();
+                        LicenceExpiredUi.showForServerMessage(Login.this, response.body().getMessage());
                     } else if (response.body().getStatus().equalsIgnoreCase("3")) {
                         pDialog.dismiss();
                         final Dialog dialog = new Dialog(Login.this);
@@ -303,7 +305,7 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
                         TextView txtYes = dialog.findViewById(R.id.yes);
                         TextView txtNo = dialog.findViewById(R.id.no);
 
-                        message.setText(response.body().getMessage());
+                        message.setText(getString(R.string.licence_msg_device_already_registered));
 
                         txtYes.setOnClickListener(new View.OnClickListener() {
                             @Override
@@ -333,8 +335,8 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
             public void onFailure(@NonNull Call<LoginResponse> call, @NonNull Throwable t) {
                 pDialog.dismiss();
                 SweetAlertDialog sweetAlertDialog = new SweetAlertDialog(Login.this, SweetAlertDialog.ERROR_TYPE);
-                sweetAlertDialog.setTitleText("Oops...");
-                sweetAlertDialog.setContentText("Something went wrong!");
+                sweetAlertDialog.setTitleText(getString(R.string.oops_title));
+                sweetAlertDialog.setContentText(getString(R.string.something_went_wrong));
                 sweetAlertDialog.setCancelClickListener(new SweetAlertDialog.OnSweetClickListener() {
                     @Override
                     public void onClick(SweetAlertDialog sweetAlertDialog) {
@@ -350,7 +352,7 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
 
         pDialog = new SweetAlertDialog(Login.this, SweetAlertDialog.PROGRESS_TYPE);
         pDialog.getProgressHelper().setBarColor(Color.parseColor("#2D7FED"));
-        pDialog.setTitleText("Loading");
+        pDialog.setTitleText(getString(R.string.loading));
         pDialog.setCancelable(false);
         pDialog.show();
 
@@ -364,8 +366,7 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
                         loginCheck();
                     } else {
                         pDialog.dismiss();
-                        Snackbar snackbar = Snackbar.make(binding.loginLayout, response.body().getMessage(), Snackbar.LENGTH_LONG);
-                        snackbar.show();
+                        LicenceExpiredUi.showForServerMessage(Login.this, response.body().getMessage());
                     }
                 }
             }
@@ -374,8 +375,8 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
             public void onFailure(@NonNull Call<LoginResponse> call, @NonNull Throwable t) {
                 pDialog.dismiss();
                 SweetAlertDialog sweetAlertDialog = new SweetAlertDialog(Login.this, SweetAlertDialog.ERROR_TYPE);
-                sweetAlertDialog.setTitleText("Oops...");
-                sweetAlertDialog.setContentText("Something went wrong!");
+                sweetAlertDialog.setTitleText(getString(R.string.oops_title));
+                sweetAlertDialog.setContentText(getString(R.string.something_went_wrong));
                 sweetAlertDialog.setCancelClickListener(new SweetAlertDialog.OnSweetClickListener() {
                     @Override
                     public void onClick(SweetAlertDialog sweetAlertDialog) {
@@ -419,7 +420,7 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
                             // Valid through end of expiry day (aligned with server P4-1)
                             if (numberOfDays >= 0) {
 
-                                Toast.makeText(Login.this, "Welcome to POS Billingwala", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(Login.this, R.string.welcome_pos_billingwala, Toast.LENGTH_SHORT).show();
 
                                 Common.saveUserData(Login.this, "firstLogin", "firstLogin");
 
@@ -447,16 +448,7 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
                                 finishAffinity();
 
                             } else {
-                                Snackbar snackbar = Snackbar.make(
-                                        binding.loginLayout,
-                                        "Licence Key is expired. Call support: " + getString(R.string.support_phone_display),
-                                        Snackbar.LENGTH_LONG);
-                                snackbar.setAction("Call", v -> {
-                                    Intent intent = new Intent(Intent.ACTION_DIAL);
-                                    intent.setData(Uri.parse("tel:" + getString(R.string.support_phone_dial)));
-                                    startActivity(intent);
-                                });
-                                snackbar.show();
+                                LicenceExpiredUi.show(Login.this);
                             }
 
                         } catch (ParseException e) {
@@ -464,8 +456,7 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
                         }
                     } else {
                         pDialog.dismiss();
-                        Snackbar snackbar = Snackbar.make(binding.loginLayout, response.body().getMessage(), Snackbar.LENGTH_LONG);
-                        snackbar.show();
+                        LicenceExpiredUi.showForServerMessage(Login.this, response.body().getMessage());
                     }
                 }
             }

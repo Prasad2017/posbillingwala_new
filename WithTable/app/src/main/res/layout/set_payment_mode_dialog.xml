@@ -23,7 +23,7 @@
             android:gravity="center"
             android:paddingStart="10dp"
             android:paddingEnd="10dp"
-            android:text="Payment Mode"
+            android:text="@string/ui_payment_mode"
             android:textColor="@color/textcolor"
             android:textSize="20sp" />
 
@@ -38,7 +38,7 @@
             android:gravity="center|start"
             android:paddingStart="10dp"
             android:paddingEnd="10dp"
-            android:text="Total Amount"
+            android:text="@string/ui_total_amount"
             android:textColor="@color/black"
             android:textSize="20sp" />
 
@@ -74,7 +74,7 @@
                     android:gravity="center|start"
                     android:paddingStart="10dp"
                     android:paddingEnd="10dp"
-                    android:text="Cash"
+                    android:text="@string/ui_cash"
                     android:textColor="@color/black"
                     android:textSize="15dp" />
 
@@ -90,7 +90,7 @@
                     android:gravity="center|start"
                     android:paddingStart="10dp"
                     android:paddingEnd="10dp"
-                    android:text="UPI"
+                    android:text="@string/ui_upi"
                     android:textColor="@color/black"
                     android:textSize="15dp" />
 
@@ -106,7 +106,7 @@
                     android:gravity="center|start"
                     android:paddingStart="10dp"
                     android:paddingEnd="10dp"
-                    android:text="Bank"
+                    android:text="@string/ui_bank"
                     android:textColor="@color/black"
                     android:textSize="15dp" />
 
@@ -129,7 +129,7 @@
                 android:background="@color/red"
                 android:fontFamily="@font/poppinsregular"
                 android:gravity="center"
-                android:text="Dismiss"
+                android:text="@string/ui_dismiss"
                 android:textColor="@color/white"
                 android:textSize="14dp" />
 
@@ -142,7 +142,7 @@
                 android:background="@color/colorPrimary"
                 android:fontFamily="@font/poppinsregular"
                 android:gravity="center"
-                android:text="Continue"
+                android:text="@string/ui_continue"
                 android:textColor="@color/white"
                 android:textSize="14dp" />
 

@@ -37,7 +37,7 @@
             android:paddingStart="10dp"
             android:paddingEnd="10dp"
             android:singleLine="true"
-            android:text="We found already device register with this user."
+            android:text="@string/ui_we_found_already_device_register_with_th"
             android:textColor="@color/black"
             android:textSize="15dp" />
 
@@ -50,7 +50,7 @@
             android:gravity="center"
             android:paddingStart="10dp"
             android:paddingEnd="10dp"
-            android:text="Do you want replace old device with new device."
+            android:text="@string/ui_do_you_want_replace_old_device_with_new_"
             android:textColor="@color/black"
             android:textSize="15dp" />
 
@@ -75,7 +75,7 @@
                 android:backgroundTint="@color/red"
                 android:fontFamily="@font/poppinsmedium"
                 android:gravity="center"
-                android:text="No"
+                android:text="@string/ui_no"
                 android:textColor="@color/white"
                 android:textSize="15dp" />
 
@@ -90,7 +90,7 @@
                 android:background="@drawable/updateborder"
                 android:fontFamily="@font/poppinsmedium"
                 android:gravity="center"
-                android:text="Yes"
+                android:text="@string/ui_yes"
                 android:textColor="@color/white"
                 android:textSize="15dp" />
 

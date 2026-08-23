@@ -2,8 +2,8 @@ package com.posbillingwala.dealer.Adapter;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
@@ -11,9 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.posbillingwala.dealer.Activity.MainActivity;
 import com.posbillingwala.dealer.Fragment.AddCustomerProductCategory;
-import com.posbillingwala.dealer.Fragment.AddCustomerSubcategory;
 import com.posbillingwala.dealer.Model.AllApiResponse;
 import com.posbillingwala.dealer.Model.ProductCategoryResponse;
 import com.posbillingwala.dealer.Retrofit.Api;
@@ -55,15 +53,7 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.MyView
         }
         holder.binding.categoryName.setText(label);
 
-        holder.binding.categorySubcategories.setOnClickListener(v -> {
-            AddCustomerSubcategory fragment = new AddCustomerSubcategory();
-            Bundle bundle = new Bundle();
-            bundle.putString("customerId", AddCustomerProductCategory.customerId);
-            bundle.putString("categoryId", productCategoryResponse.getCategoryId());
-            bundle.putString("categoryName", productCategoryResponse.getCategoryName());
-            fragment.setArguments(bundle);
-            ((MainActivity) context).loadFragment(fragment, true);
-        });
+        holder.binding.categorySubcategories.setVisibility(View.GONE);
 
         holder.binding.categoryEdit.setOnClickListener(v -> updateCategoryDialog(productCategoryResponse.getCategoryId(), productCategoryResponse.getCategoryName()));
         holder.binding.categoryRemove.setOnClickListener(v -> deleteCategoryDialog(productCategoryResponse.getCategoryId()));

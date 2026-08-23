@@ -15,6 +15,7 @@ import com.pos_billingwala.Activity.Login;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Extra.AuthTokens;
 import com.pos_billingwala.Extra.Common;
+import com.pos_billingwala.Extra.LicenceExpiredUi;
 import com.pos_billingwala.Extra.LicenseSession;
 import com.pos_billingwala.Fragment.Home;
 import com.pos_billingwala.Model.LoginResponse;
@@ -112,6 +113,7 @@ public class LicenceKeyReceiver extends BroadcastReceiver {
 
                                 Intent intent = new Intent(context, Login.class);
                                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                                intent.putExtra(LicenceExpiredUi.EXTRA_SHOW_LICENCE_EXPIRED, true);
                                 context.startActivity(intent);
                                 ((MainActivity) context).finish();
 
@@ -130,6 +132,9 @@ public class LicenceKeyReceiver extends BroadcastReceiver {
 
                         Intent intent = new Intent(context, Login.class);
                         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                        if (LicenceExpiredUi.isExpiredMessage(response.body().getMessage())) {
+                            intent.putExtra(LicenceExpiredUi.EXTRA_SHOW_LICENCE_EXPIRED, true);
+                        }
                         context.startActivity(intent);
                         ((MainActivity) context).finish();
 

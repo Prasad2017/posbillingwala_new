@@ -50,6 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             if (mysqli_query($con, $sql)) {
                 $response['status'] = '1';
                 $response['message'] = 'update successful!';
+                $response['productId'] = (string) $productId;
             } else {
                 $response['status'] = '0';
                 $response['message'] = 'update failed!';
@@ -66,6 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             if (mysqli_query($con, $sql)) {
                 $response['status'] = '1';
                 $response['message'] = 'insert successful!';
+                $response['productId'] = (string) mysqli_insert_id($con);
             } else {
                 $response['status'] = '0';
                 $response['message'] = 'insert failed!';

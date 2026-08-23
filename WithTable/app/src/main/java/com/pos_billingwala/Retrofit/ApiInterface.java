@@ -60,6 +60,9 @@ public interface ApiInterface {
     @GET("getPortionList.php")
     Call<AllApiResponse> getPortionList(@Query("userId") String userId);
 
+    @GET("getPortionMasterList.php")
+    Call<AllApiResponse> getPortionMasterList(@Query("userId") String userId);
+
     @GET("getCategoryList.php")
     Call<AllApiResponse> getCategoryList(@Query("userId") String userId);
 
@@ -125,6 +128,13 @@ public interface ApiInterface {
                                      @Field("subcategoryId") String subcategoryId);
 
     @FormUrlEncoded
+    @POST("insertPortionMaster.php")
+    Call<AllApiResponse> savePortionMaster(@Field("userId") String userId,
+                                           @Field("portionName") String portionName,
+                                           @Field("portionMasterDeletedStatus") String portionMasterDeletedStatus,
+                                           @Field("portionMasterNetworkStatus") String portionMasterNetworkStatus);
+
+    @FormUrlEncoded
     @POST("insertPortion.php")
     Call<AllApiResponse> savePortion(@Field("userId") String userId,
                                      @Field("productId") String productId,
@@ -133,7 +143,9 @@ public interface ApiInterface {
                                      @Field("portionPrice") String portionPrice,
                                      @Field("portionSortOrder") String portionSortOrder,
                                      @Field("portionDeletedStatus") String portionDeletedStatus,
-                                     @Field("portionNetworkStatus") String portionNetworkStatus);
+                                     @Field("portionNetworkStatus") String portionNetworkStatus,
+                                     @Field("portionMasterId") String portionMasterId,
+                                     @Field("portionMasterNetworkStatus") String portionMasterNetworkStatus);
 
     @FormUrlEncoded
     @POST("insertCompanyPrinterSetting.php")
@@ -268,6 +280,29 @@ public interface ApiInterface {
                                          @Field("messInvoiceDate") String messInvoiceDate,
                                          @Field("messInvoiceNetworkStatus") String messInvoiceNetworkStatus,
                                          @Field("messInvoiceStatus") String messInvoiceStatus);
+
+    @GET("getMessTokenList.php")
+    Call<AllApiResponse> getMessTokenList(@Query("userId") String userId);
+
+    @FormUrlEncoded
+    @POST("insertMessToken.php")
+    Call<AllApiResponse> saveMessToken(@Field("userId") String userId,
+                                         @Field("tokenCode") String tokenCode,
+                                         @Field("memberId") String memberId,
+                                         @Field("memberName") String memberName,
+                                         @Field("memberMobile") String memberMobile,
+                                         @Field("memberType") String memberType,
+                                         @Field("messType") String messType,
+                                         @Field("tokenAmount") String tokenAmount,
+                                         @Field("tokenDate") String tokenDate,
+                                         @Field("tokenNetworkStatus") String tokenNetworkStatus);
+
+    @FormUrlEncoded
+    @POST("verifyMessToken.php")
+    Call<AllApiResponse> verifyMessToken(@Field("userId") String userId,
+                                         @Field("tokenCode") String tokenCode,
+                                         @Field("verifiedDate") String verifiedDate,
+                                         @Field("verifyNetworkStatus") String verifyNetworkStatus);
 
 
 }

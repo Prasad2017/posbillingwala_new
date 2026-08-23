@@ -24,7 +24,7 @@
             android:gravity="center"
             android:paddingStart="10dp"
             android:paddingEnd="10dp"
-            android:text="Product Detail"
+            android:text="@string/ui_product_detail"
             android:textColor="@color/textcolor" />
 
         <com.google.android.material.textfield.TextInputLayout
@@ -51,7 +51,7 @@
                 android:digits="0123456789."
                 android:drawableTint="@color/light_black"
                 android:fontFamily="@font/poppinsregular"
-                android:hint="Amount"
+                android:hint="@string/ui_amount"
                 android:imeOptions="actionDone"
                 android:inputType="numberDecimal"
                 android:paddingStart="15dp"
@@ -89,7 +89,7 @@
                 android:digits="0123456789."
                 android:drawableTint="@color/light_black"
                 android:fontFamily="@font/poppinsregular"
-                android:hint="Quantity"
+                android:hint="@string/ui_quantity"
                 android:imeOptions="actionDone"
                 android:inputType="numberDecimal"
                 android:paddingStart="15dp"
@@ -118,7 +118,7 @@
                 android:background="@color/red"
                 android:fontFamily="@font/poppinsregular"
                 android:gravity="center"
-                android:text="Dismiss"
+                android:text="@string/ui_dismiss"
                 android:textColor="@color/white"
                 android:textSize="14dp" />
 
@@ -131,7 +131,7 @@
                 android:background="@color/colorPrimary"
                 android:fontFamily="@font/poppinsregular"
                 android:gravity="center"
-                android:text="Update"
+                android:text="@string/ui_update"
                 android:textColor="@color/white"
                 android:textSize="14dp" />
 

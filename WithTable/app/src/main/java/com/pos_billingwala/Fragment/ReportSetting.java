@@ -120,7 +120,7 @@ public class ReportSetting extends Fragment implements View.OnClickListener {
                 return;
             }
             posBillingWalaDatabase.clearInvoice();
-            Toast.makeText(activity, "invoice cleared", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, getString(R.string.toast_invoice_cleared), Toast.LENGTH_SHORT).show();
         }
     }
 

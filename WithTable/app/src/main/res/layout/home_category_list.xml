@@ -24,7 +24,7 @@
             android:fontFamily="@font/poppinsregular"
             android:gravity="center"
             android:padding="10dp"
-            android:text="Category Name"
+            android:text="@string/category_name"
             android:textColor="@color/white"
             android:textSize="15dp" />
 

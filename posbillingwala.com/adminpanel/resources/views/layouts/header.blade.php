@@ -70,7 +70,7 @@
                             </li>
                             <li><a class="dropdown-item" href="https://play.google.com/store/apps/details?id=com.pos_billingwala" target="_blank" rel="noopener noreferrer"><i class='bx bxl-play-store'></i><span>Google Play</span></a>
                             </li>
-                            <li><a class="dropdown-item" href="http://www.posbillingwala.in/" target="_blank" rel="noopener noreferrer"><i class='bx bx-globe'></i><span>Website</span></a>
+                            <li><a class="dropdown-item" href="http://www.posbillingwala.com/" target="_blank" rel="noopener noreferrer"><i class='bx bx-globe'></i><span>Website</span></a>
                             </li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="dropdown-item" href="javascript:;"><i class='bx bx-log-out-circle'></i><span>Logout</span></a>

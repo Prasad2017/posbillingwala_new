@@ -42,7 +42,7 @@
                     android:id="@+id/shopName"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_centerInParent="true"
+                    android:layout_alignTop="@+id/userPhoto"
                     android:layout_gravity="center"
                     android:layout_marginStart="10dp"
                     android:layout_toStartOf="@+id/userSettingIcon"
@@ -54,6 +54,23 @@
                     android:text="@string/hi_pos_billingwala"
                     android:textColor="@color/black"
                     android:textSize="17dp" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/homeDateTime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/shopName"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginTop="2dp"
+                    android:layout_toStartOf="@+id/userSettingIcon"
+                    android:layout_toEndOf="@+id/userPhoto"
+                    android:fontFamily="@font/poppinsregular"
+                    android:gravity="center|start"
+                    android:paddingStart="15dp"
+                    android:paddingEnd="15dp"
+                    android:textColor="@color/light_black"
+                    android:textSize="12dp"
+                    tools:text="Mon, 24 Aug 2026  01:15:00 PM" />
 
                 <ImageView
                     android:id="@+id/userSettingIcon"
@@ -130,7 +147,7 @@
                             android:gravity="center"
                             android:paddingStart="15dp"
                             android:paddingEnd="15dp"
-                            android:text="Total\nSales"
+                            android:text="@string/home_total_sales"
                             android:textColor="@color/black"
                             android:textSize="13dp" />
 
@@ -198,7 +215,7 @@
                             android:gravity="center"
                             android:paddingStart="15dp"
                             android:paddingEnd="15dp"
-                            android:text="Today's\nSales"
+                            android:text="@string/home_today_sales"
                             android:textColor="@color/black"
                             android:textSize="13dp" />
 
@@ -256,7 +273,57 @@
                             android:gravity="center"
                             android:paddingStart="15dp"
                             android:paddingEnd="15dp"
-                            android:text="Total\nCategory"
+                            android:text="@string/home_total_category"
+                            android:textColor="@color/black"
+                            android:textSize="13dp" />
+
+                    </LinearLayout>
+
+                </androidx.cardview.widget.CardView>
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/subcategoryCardView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginEnd="10dp"
+                    android:layout_weight="1"
+                    app:cardBackgroundColor="#ecfffa"
+                    app:cardCornerRadius="15dp"
+                    app:cardUseCompatPadding="true">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="5dp"
+                        android:orientation="vertical"
+                        android:padding="5dp">
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/totalSubcategory"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_marginTop="10dp"
+                            android:fontFamily="@font/poppinsbold"
+                            android:gravity="center"
+                            android:paddingStart="15dp"
+                            android:paddingEnd="15dp"
+                            android:text="0"
+                            android:textColor="@color/black"
+                            android:textSize="17dp" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_marginTop="5dp"
+                            android:layout_marginBottom="10dp"
+                            android:fontFamily="@font/poppinsmedium"
+                            android:gravity="center"
+                            android:paddingStart="15dp"
+                            android:paddingEnd="15dp"
+                            android:text="@string/home_total_subcategory"
                             android:textColor="@color/black"
                             android:textSize="13dp" />
 
@@ -306,7 +373,7 @@
                             android:gravity="center"
                             android:paddingStart="15dp"
                             android:paddingEnd="15dp"
-                            android:text="Total\nProducts"
+                            android:text="@string/home_total_products"
                             android:textColor="@color/black"
                             android:textSize="13dp" />
 
@@ -356,7 +423,7 @@
                         android:gravity="center"
                         android:paddingStart="5dp"
                         android:paddingEnd="5dp"
-                        android:text="Fetch Data\n(सर्वर से लेना )"
+                        android:text="@string/home_fetch_data"
                         android:textColor="@color/white"
                         android:textSize="15dp" />
 
@@ -393,7 +460,7 @@
                         android:gravity="center"
                         android:paddingStart="5dp"
                         android:paddingEnd="5dp"
-                        android:text="Synchronize\n(सर्वर को भेजना)"
+                        android:text="@string/home_synchronize"
                         android:textColor="@color/white"
                         android:textSize="15dp" />
 
@@ -553,7 +620,7 @@
                         android:gravity="center"
                         android:paddingStart="20dp"
                         android:paddingEnd="20dp"
-                        android:text="Low Inventory"
+                        android:text="@string/home_low_inventory"
                         android:textColor="@color/black"
                         android:textSize="15dp" />
 
@@ -571,7 +638,7 @@
                             android:fontFamily="@font/poppinsmedium"
                             android:gravity="center"
                             android:padding="5dp"
-                            android:text="Sr No."
+                            android:text="@string/ui_sr_no_2"
                             android:textColor="@color/black"
                             android:textSize="14dp" />
 
@@ -584,7 +651,7 @@
                             android:fontFamily="@font/poppinsmedium"
                             android:gravity="center"
                             android:padding="5dp"
-                            android:text="Product"
+                            android:text="@string/ui_product_2"
                             android:textColor="@color/black"
                             android:textSize="14dp" />
 
@@ -597,7 +664,7 @@
                             android:fontFamily="@font/poppinsmedium"
                             android:gravity="center"
                             android:padding="5dp"
-                            android:text="Inventory\nQty"
+                            android:text="@string/ui_inventory_qty"
                             android:textColor="@color/black"
                             android:textSize="14dp" />
 
@@ -610,7 +677,7 @@
                             android:fontFamily="@font/poppinsmedium"
                             android:gravity="center"
                             android:padding="5dp"
-                            android:text="Sale Inventory Qty"
+                            android:text="@string/ui_sale_inventory_qty"
                             android:textColor="@color/black"
                             android:textSize="14dp" />
 

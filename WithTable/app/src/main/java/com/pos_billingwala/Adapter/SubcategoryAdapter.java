@@ -80,18 +80,18 @@ public class SubcategoryAdapter extends RecyclerView.Adapter<SubcategoryAdapter.
         updateSubcategoryTxt.setOnClickListener(v -> {
             String newName = subcategoryNameTxt.getText().toString().trim();
             if (newName.isEmpty()) {
-                Toast.makeText(context, "Please enter subcategory name", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, context.getString(R.string.toast_please_enter_subcategory_name), Toast.LENGTH_SHORT).show();
                 return;
             }
             List<ProductSubcategoryResponse> existing = posBillingWalaDatabase.getProductSubcategoryNameList(
                     item.getCategoryId(), newName);
             if (!existing.isEmpty() && !existing.get(0).getSubcategoryId().equals(item.getSubcategoryId())) {
-                Toast.makeText(context, "Subcategory already exists in this category", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, context.getString(R.string.toast_subcategory_already_exists_in_this_categ), Toast.LENGTH_SHORT).show();
                 return;
             }
             dialog.dismiss();
             posBillingWalaDatabase.updateProductSubcategory(item.getSubcategoryId(), newName, 0);
-            Toast.makeText(context, "Subcategory Updated", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, context.getString(R.string.toast_subcategory_updated), Toast.LENGTH_SHORT).show();
             AddSubcategory.getSubcategoryList();
         });
 
@@ -101,14 +101,14 @@ public class SubcategoryAdapter extends RecyclerView.Adapter<SubcategoryAdapter.
 
     private void deleteSubcategory(String subcategoryId) {
         new MaterialAlertDialogBuilder(context)
-                .setTitle("Are you Sure?")
-                .setMessage("Do you want to delete this subcategory?")
+                .setTitle(context.getString(R.string.toast_are_you_sure))
+                .setMessage(context.getString(R.string.toast_do_you_want_to_delete_this_subcategory))
                 .setPositiveButton("YES", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         dialogInterface.dismiss();
                         posBillingWalaDatabase.deleteProductSubcategory(subcategoryId);
-                        Toast.makeText(context, "Subcategory deleted", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(context, context.getString(R.string.toast_subcategory_deleted), Toast.LENGTH_SHORT).show();
                         AddSubcategory.getSubcategoryList();
                     }
                 })

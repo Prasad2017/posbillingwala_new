@@ -1,37 +1,77 @@
 # POS Billingwala
 
-Offline-first point-of-sale system for restaurants and shops — Android apps plus a shared PHP/MySQL backend.
+Offline-first point-of-sale for restaurants and shops — four Android apps, a shared PHP/MySQL API, and a production website with Laravel web admin.
 
 ## What’s in this repo
 
 | Path | Role |
 |------|------|
-| `WithTable/` | Main POS app (billing, tables, takeaway, mess, reports, Bluetooth print) |
-| `Owner/` | Shop owner app — invoices, products, sales visibility |
-| `Dealer/` | Dealer app — customer & licence registration |
-| `Admin/` | Admin app — dealers & customers |
-| `posbillingwala.com/` | Production website + Laravel web admin |
-| `API/` | PHP REST API (POS root + Owner / Dealer / Admin folders) |
-| `docs/` | Audit, implementation plan, DB deploy, licence API notes |
+| `WithTable/` | Main POS app — billing, tables, takeaway, mess + QR tokens, reports, Bluetooth print, i18n |
+| `Owner/` | Shop owner app — invoices, sales, multi-branch view, full catalog CRUD |
+| `Dealer/` | Dealer app — customer & licence registration / renew, catalog setup |
+| `Admin/` | Admin app — dealers, customers, licences, catalog |
+| `posbillingwala.com/` | Marketing site + Laravel web admin (`adminpanel/`) |
+| `API/` | PHP REST API (POS root + `Owner/` / `Dealer/` / `Admin/`) |
+| `API/migrations/` | Additive SQL upgrades (safe to re-run) |
+| `API/schema/` | Install helper + schema-only reference |
+| `docs/` | Deploy, licence API, audit, implementation plan |
 | `spllmgkn_posbill_complete.sql` | Full database dump (schema + data) |
-| `releases/` | Local release APK copies (not committed) |
+| `releases/` | Local release APK copies (**gitignored**) |
+
+Each Android app is a **standalone Gradle project** — open its folder in Android Studio (no root multi-module wrapper).
+
+## Features (current)
+
+- **Offline-first billing** — bills save to SQLite first; sync via WorkManager + receivers when online
+- **Catalog** — Food type → Category → optional Subcategory → Product → Portions linked to **Portion Master** (Half, Full, Kg, etc.)
+- **Order modes** — dine-in tables, takeaway, mess membership + walk-in mess QR tokens (generate, print, scan/verify)
+- **Print** — Bluetooth (Woosim/SPP); print failures do not wipe saved bills
+- **Licensing** — server-authoritative expiry; 7-day / 50-bill trial; validity tiers (6m / 1y / 3y / 5y / lifetime); same-key renew
+- **Auth** — login/MPIN issues Bearer tokens (`api_tokens`); guarded write endpoints
+- **Multi-branch** — organization/branch scope; Owner store-wise comparison
+- **i18n (POS)** — English / Hindi / Marathi (Settings → language; per-app locale)
+- **Observability** — Firebase Crashlytics + Performance
+- **Web admin** — dealers, customers, licences, categories, subcategories, portion masters, products, CSV/Excel import
 
 ## Stack
 
-- **Android:** Java, Activities/Fragments, ViewBinding, SQLite, Retrofit, WorkManager
-- **Backend:** PHP REST endpoints
-- **Web:** Static marketing site + Laravel 9 admin panel (`posbillingwala.com/adminpanel`)
-- **Database:** MySQL (shared by all apps via `API/db_connection.php`)
+| Layer | Tech |
+|-------|------|
+| Android | Java 17, Activities/Fragments, ViewBinding, SQLite, Retrofit, WorkManager, Firebase |
+| API | PHP REST (`API/db_connection.php`, prepared helpers, auth tokens) |
+| Web | Static marketing site + Laravel 9 admin (`posbillingwala.com/adminpanel`) |
+| Database | MySQL — shared by all apps and web admin |
+
+## App versions
+
+| App | Module | Package | versionName / versionCode |
+|-----|--------|---------|---------------------------|
+| POS | `WithTable` | `com.pos_billingwala` | **2.0.51** / 67 |
+| Owner | `Owner` | `com.posbillingwala.owner` | **1.0.6** / 7 |
+| Dealer | `Dealer` | `com.posbillingwala.dealer` | **1.0.10** / 12 |
+| Admin | `Admin` | `com.posbillingwala.admin` | **1.0** / 1 |
+
+Default API host pattern: `http://www.posbillingwala.com/androidApp/` (+ `Owner/` / `Dealer/` / `Admin/`). Override via `BuildConfig.API_BASE_URL` in each app’s `build.gradle`. POS also uses `BuildConfig.MEDIA_BASE_URL` for product images.
+
+## Prerequisites
+
+| Tool | Use |
+|------|-----|
+| Android Studio (Ladybug+) | Build/run the four Android apps |
+| JDK 17 | Matches `compileSdk 37` / Java 17 in Gradle |
+| PHP 7.4+ with mysqli | Host `API/` on Apache/nginx |
+| MySQL 5.7+ / MariaDB | Shared database for all clients |
+| Composer | Laravel web admin (`adminpanel/`) |
+
+Copy `API/db_local.example.php` → `API/db_local.php` locally. Firebase config (`google-services.json`) is gitignored — add your own for Crashlytics/Performance builds.
 
 ## Quick start — website & web admin
 
-Deploy the public site and Laravel admin to your domain:
-
-1. Upload `posbillingwala.com/` to hosting document root.
+1. Upload `posbillingwala.com/` to the hosting document root.
 2. Configure `adminpanel/.env` (production DB, `APP_DEBUG=false`).
 3. Run `composer install --no-dev` inside `adminpanel/`.
 4. Run `php artisan key:generate`, then cache config/routes/views.
-5. Ensure DB has food type / subcategory / portion tables (see DB deploy below).
+5. Ensure DB has catalog + licence tables (see Database below).
 
 **Full checklist:** [docs/DEPLOY_WEB.md](docs/DEPLOY_WEB.md)
 
@@ -39,32 +79,33 @@ Deploy the public site and Laravel admin to your domain:
 |-----|---------|
 | `https://posbillingwala.com/` | Marketing website |
 | `http://posbillingwala.com/login` | Redirects to web admin login |
-| `http://posbillingwala.com/adminpanel/login` | Web admin login (Admin / Dealer / Customer) |
-
-Web admin features match the Android Admin app: dealers, customers, licences, categories (food type), subcategories, product portions, and CSV/Excel product import.
+| `http://posbillingwala.com/adminpanel/login` | Web admin (Admin / Dealer / Customer) |
 
 ## Quick start — database
 
 ### Fresh / full restore
 
-Import the complete dump:
-
 ```bash
 mysql -u USER -p DATABASE < spllmgkn_posbill_complete.sql
 ```
 
-Or use phpMyAdmin → Import → select `spllmgkn_posbill_complete.sql`.
+Or phpMyAdmin → Import → `spllmgkn_posbill_complete.sql`.
 
 ### Existing DB upgrade (keep data)
 
-Prefer the single upgrade script:
+Prefer the single upgrade script (food types, subcategories, portions, portion master, bill snapshots, API tokens, licensing, multi-branch, mess tokens):
 
 ```bash
 mysql -u USER -p DATABASE < API/migrations/server_upgrade_all.sql
 ```
 
-Schema-only reference (no production rows): `API/schema/schema_reference.sql`  
-Install helper: `API/schema/posbill_install.sql`
+| File | Use |
+|------|-----|
+| `API/migrations/server_upgrade_all.sql` | **Recommended** one-shot upgrade (safe to re-run) |
+| `API/schema/posbill_install.sql` | Fresh install helper |
+| `API/schema/schema_reference.sql` | Schema-only reference (no production rows) |
+
+Individual reference migrations (optional; all included in `server_upgrade_all.sql`): `p3_1`–`p3_7`, `p3_5_portion_master`, `p5_3_api_tokens`, `p6_production_licensing`, `p7_multi_branch_scope`, `p8_mess_token_qr`.
 
 Full steps: [docs/DEPLOY_DB.md](docs/DEPLOY_DB.md)
 
@@ -80,18 +121,48 @@ Full steps: [docs/DEPLOY_DB.md](docs/DEPLOY_DB.md)
 
 3. **Never commit** `API/db_local.php` or signing keys (`API/license_signing_private.pem`).
 
-4. Deploy the `API/` folder to your PHP host so app base URLs point at those endpoints.
+4. Deploy the `API/` folder so app base URLs resolve to these endpoints.
+
+### Key API areas
+
+| Area | Example endpoints |
+|------|-------------------|
+| POS auth & sync | `Login.php`, `LoginMpin.php`, `insertInvoice.php`, `getProductList.php` |
+| Catalog | `getFoodTypeList.php`, `getCategoryList.php`, `getSubcategoryList.php`, `getPortionMasterList.php`, `getPortionList.php` |
+| Licensing | `check_licence_expire.php`, `registerTrial.php`, `licence_expiry.php` |
+| Mess QR tokens | `insertMessToken.php`, `getMessTokenList.php`, `verifyMessToken.php` |
+| Owner / Dealer / Admin | `*/Login.php`, catalog CRUD under each subfolder; Bearer token via `auth_guard.php` |
 
 ## Android apps
 
-Open each module in Android Studio:
+Open each module folder in Android Studio, point Retrofit base URLs at your deployed API, then build/run or assemble release APKs.
 
-- `WithTable` — primary POS (`com.pos_billingwala`)
-- `Owner` — `com.posbillingwala.owner`
-- `Dealer` — `com.posbillingwala.dealer`
-- `Admin` — `com.posbillingwala.admin`
+```bash
+# From each app module directory (WithTable, Owner, Dealer, Admin)
+./gradlew assembleDebug
+./gradlew assembleRelease
+```
 
-Point Retrofit base URLs at your deployed API, then build/run or assemble release APKs.
+Unsigned release copies may live under `releases/` (gitignored). Expected naming:
+
+| File pattern | App |
+|--------------|-----|
+| `POS-Billingwala-{version}-v{code}-unsigned.apk` | WithTable (POS) |
+| `Owner-{version}-v{code}-unsigned.apk` | Owner |
+| `Dealer-{version}-v{code}-unsigned.apk` | Dealer |
+| `Admin-{version}-v{code}-unsigned.apk` | Admin |
+
+Sign with your upload keystore before store/rollout — keystores are not in this repo.
+
+**Smoke test after deploy**
+
+1. Login (licence + MPIN) → Bearer token issued  
+2. Sync catalog → food types, categories, subcategories, portion masters, portions  
+3. Add product with portion master + price → syncs to server  
+4. Bill with a portion product → print + invoice line snapshots  
+5. Mess walk-in token → QR print → scan/verify (member tokens only)  
+6. Switch POS language (EN / HI / MR) → UI strings update  
+7. Trial / expired licence blocked server-side  
 
 ## Docs
 
@@ -101,7 +172,7 @@ Point Retrofit base URLs at your deployed API, then build/run or assemble releas
 | [docs/DEPLOY_WEB.md](docs/DEPLOY_WEB.md) | Website + web admin production deploy |
 | [docs/LICENSE_API_REQUIREMENTS.md](docs/LICENSE_API_REQUIREMENTS.md) | Licensing / trial API behaviour |
 | [docs/CURSOR_CODEBASE_AUDIT.md](docs/CURSOR_CODEBASE_AUDIT.md) | Codebase audit |
-| [docs/CURSOR_IMPLEMENTATION_PLAN.md](docs/CURSOR_IMPLEMENTATION_PLAN.md) | Implementation plan |
+| [docs/CURSOR_IMPLEMENTATION_PLAN.md](docs/CURSOR_IMPLEMENTATION_PLAN.md) | Implementation plan (P0–P6 complete) |
 
 ## Security notes
 

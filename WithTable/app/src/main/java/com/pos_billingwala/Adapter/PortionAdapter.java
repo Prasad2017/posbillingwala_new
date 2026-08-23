@@ -81,30 +81,21 @@ public class PortionAdapter extends RecyclerView.Adapter<PortionAdapter.MyViewHo
         portionNameTxt.setText(item.getPortionName());
         portionPriceTxt.setText(item.getPortionPrice());
         portionSortOrderTxt.setText(item.getPortionSortOrder() != null ? item.getPortionSortOrder() : "0");
-        portionNameTxt.setSelection(portionNameTxt.getText().length());
+        portionNameTxt.setEnabled(false);
+        portionNameTxt.setFocusable(false);
 
         dismissPortionTxt.setOnClickListener(v -> dialog.dismiss());
 
         updatePortionTxt.setOnClickListener(v -> {
-            String name = portionNameTxt.getText().toString().trim();
             String price = portionPriceTxt.getText().toString().trim();
-            if (name.isEmpty()) {
-                Toast.makeText(context, "Please enter portion name", Toast.LENGTH_SHORT).show();
-                return;
-            }
             if (price.isEmpty()) {
-                Toast.makeText(context, "Please enter portion price", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            List<ProductPortionResponse> existing = posBillingWalaDatabase.getProductPortionNameList(productId, name);
-            if (!existing.isEmpty() && !existing.get(0).getPortionId().equals(item.getPortionId())) {
-                Toast.makeText(context, "Portion already exists for this product", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, context.getString(R.string.toast_please_enter_portion_price), Toast.LENGTH_SHORT).show();
                 return;
             }
             int sortOrder = parseSortOrder(portionSortOrderTxt.getText().toString(), item.getPortionSortOrder());
             dialog.dismiss();
-            posBillingWalaDatabase.updateProductPortion(item.getPortionId(), name, price, sortOrder);
-            Toast.makeText(context, "Portion Updated", Toast.LENGTH_SHORT).show();
+            posBillingWalaDatabase.updateProductPortionPriceAndSort(item.getPortionId(), price, sortOrder);
+            Toast.makeText(context, context.getString(R.string.toast_portion_updated), Toast.LENGTH_SHORT).show();
             ManageProductPortions.getPortionList();
         });
 
@@ -130,14 +121,14 @@ public class PortionAdapter extends RecyclerView.Adapter<PortionAdapter.MyViewHo
 
     private void deletePortion(String portionId) {
         new MaterialAlertDialogBuilder(context)
-                .setTitle("Are you Sure?")
-                .setMessage("Do you want to delete this portion?")
+                .setTitle(context.getString(R.string.toast_are_you_sure))
+                .setMessage(context.getString(R.string.toast_do_you_want_to_delete_this_portion))
                 .setPositiveButton("YES", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         dialogInterface.dismiss();
                         posBillingWalaDatabase.deleteProductPortion(portionId);
-                        Toast.makeText(context, "Portion deleted", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(context, context.getString(R.string.toast_portion_deleted), Toast.LENGTH_SHORT).show();
                         ManageProductPortions.getPortionList();
                     }
                 })

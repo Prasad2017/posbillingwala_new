@@ -41,6 +41,15 @@ public class AllApiResponse {
     @SerializedName("portionResponse")
     @Expose
     private List<ProductPortionResponse> portionResponseList;
+    @SerializedName("portionMasterResponse")
+    @Expose
+    private List<PortionMasterResponse> portionMasterResponseList;
+    @SerializedName("productId")
+    @Expose
+    private String productId;
+    @SerializedName("portionMasterId")
+    @Expose
+    private String portionMasterId;
 
 
     public String getStatus() {
@@ -129,5 +138,29 @@ public class AllApiResponse {
 
     public void setPortionResponseList(List<ProductPortionResponse> portionResponseList) {
         this.portionResponseList = portionResponseList;
+    }
+
+    public List<PortionMasterResponse> getPortionMasterResponseList() {
+        return portionMasterResponseList;
+    }
+
+    public void setPortionMasterResponseList(List<PortionMasterResponse> portionMasterResponseList) {
+        this.portionMasterResponseList = portionMasterResponseList;
+    }
+
+    public String getProductId() {
+        return productId;
+    }
+
+    public void setProductId(String productId) {
+        this.productId = productId;
+    }
+
+    public String getPortionMasterId() {
+        return portionMasterId;
+    }
+
+    public void setPortionMasterId(String portionMasterId) {
+        this.portionMasterId = portionMasterId;
     }
 }

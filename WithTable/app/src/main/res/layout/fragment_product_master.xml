@@ -38,7 +38,7 @@
                 android:gravity="center"
                 android:paddingStart="5dp"
                 android:paddingEnd="5dp"
-                android:text="Product List"
+                android:text="@string/ui_product_list"
                 android:textColor="@color/white"
                 android:textSize="17dp" />
 
@@ -55,7 +55,7 @@
                 android:gravity="center"
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"
-                android:text="Add Product"
+                android:text="@string/ui_add_product"
                 android:textColor="@color/black"
                 android:textSize="15dp" />
 
@@ -121,7 +121,7 @@
                 android:layout_weight="1"
                 android:background="@null"
                 android:fontFamily="@font/poppinsregular"
-                android:hint="search product by name, category or product code"
+                android:hint="@string/ui_search_product_by_name_category_or_produ"
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"
                 android:singleLine="true"
@@ -157,7 +157,7 @@
         android:gravity="center"
         android:paddingStart="10dp"
         android:paddingEnd="10dp"
-        android:text="No Product Found\nPlease add new product"
+        android:text="@string/ui_no_product_found_please_add_new_product"
         android:textColor="@color/black"
         android:textSize="17dp" />
 

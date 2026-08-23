@@ -8,12 +8,13 @@ import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.view.WindowManager;
 
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.annotation.NonNull;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import com.pos_billingwala.Extra.AppLanguage;
 import com.pos_billingwala.Extra.BranchSession;
 import com.pos_billingwala.Extra.Common;
 import com.pos_billingwala.Extra.Observability;
@@ -22,21 +23,22 @@ import com.pos_billingwala.Fragment.Home;
 import com.pos_billingwala.Fragment.InvoiceCompanyTable;
 import com.pos_billingwala.Fragment.InvoiceMess;
 import com.pos_billingwala.Fragment.InvoiceTakeAway;
+import com.pos_billingwala.Fragment.UserSetting;
 import com.pos_billingwala.R;
 
 import java.lang.reflect.Field;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends BaseActivity {
 
     public static DrawerLayout drawerLayout;
     public static String userId, ownerId, organizationId, branchId, branchLabel, deviceId, userName, shopName, shopImage, LicenceKey, LicenceKeyRegDate,
             LicenceKeyExpireDate, currencyName, invoiceRunningStatus = "", cartOrderStatus = "",
             fastBilling, takeAway, dineIn, mess, reportPin, totalSaleData, todaySaleData;
 
-
     public void setScreenSizeSmall() {
         Configuration configuration = getResources().getConfiguration();
         configuration.fontScale = (float) 1; //0.85 small size, 1 normal size, 1,15 big etc
+        AppLanguage.preserveLocaleOnConfig(this, configuration);
         DisplayMetrics metrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(metrics);
         metrics.scaledDensity = configuration.fontScale * metrics.density;
@@ -62,13 +64,14 @@ public class MainActivity extends AppCompatActivity {
         }
 
         initViews();
+        registerFragmentScreenTracking();
         userId = Common.getSavedUserData(this, "userId");
         ownerId = Common.getSavedUserData(this, "ownerId");
         BranchSession.loadFromPreferences(this);
         userName = Common.getSavedUserData(this, "userName");
         shopName = Common.getSavedUserData(this, "shopName");
         shopImage = Common.getSavedUserData(this, "shopImage");
-        fastBilling = Common.getSavedUserData(this, "fastBilling");
+        fastBilling = Common.getSavedUserData(this, "fastbilling");
         takeAway = Common.getSavedUserData(this, "takeAway");
         dineIn = Common.getSavedUserData(this, "dineIn");
         mess = Common.getSavedUserData(this, "mess");
@@ -87,7 +90,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
         try {
-
             Intent intent = getIntent();
             if (intent != null) {
                 invoiceRunningStatus = intent.getStringExtra("invoiceRunningStatus") != null ? intent.getStringExtra("invoiceRunningStatus") : "";
@@ -97,10 +99,13 @@ public class MainActivity extends AppCompatActivity {
                 cartOrderStatus = "";
             }
 
-            if (invoiceRunningStatus.equalsIgnoreCase("")) {
-                loadFragment(new Home(), false);
-            } else {
-                if (cartOrderStatus.equalsIgnoreCase("")) {
+            if (AppLanguage.consumeReopenUserSetting(this)) {
+                getSupportFragmentManager().popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+                loadFragment(new UserSetting(), false);
+            } else if (savedInstanceState == null) {
+                if (invoiceRunningStatus.equalsIgnoreCase("")) {
+                    loadFragment(new Home(), false);
+                } else if (cartOrderStatus == null || cartOrderStatus.equalsIgnoreCase("")) {
                     loadFragment(new CreatePos(), true);
                 } else if (cartOrderStatus.equalsIgnoreCase("table_wise")) {
                     loadFragment(new InvoiceCompanyTable(), true);
@@ -112,12 +117,19 @@ public class MainActivity extends AppCompatActivity {
                     loadFragment(new InvoiceMess(), true);
                 }
             }
-
         } catch (Exception e) {
             e.printStackTrace();
-            loadFragment(new Home(), false);
+            if (savedInstanceState == null) {
+                loadFragment(new Home(), false);
+            }
         }
+    }
 
+    /** Soft language change: reopen Settings after quiet recreate. */
+    public void reloadAfterLanguageChange() {
+        Common.saveUserData(this, AppLanguage.KEY_REOPEN_USER_SETTING, "0");
+        getSupportFragmentManager().popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+        loadFragment(new UserSetting(), false);
     }
 
     public void initViews() {
@@ -140,5 +152,18 @@ public class MainActivity extends AppCompatActivity {
             transaction.addToBackStack(null);
         }
         transaction.commit();
+    }
+
+    /** Track which POS screen (fragment) is visible for crash reports. */
+    private void registerFragmentScreenTracking() {
+        getSupportFragmentManager().registerFragmentLifecycleCallbacks(
+                new FragmentManager.FragmentLifecycleCallbacks() {
+                    @Override
+                    public void onFragmentResumed(@NonNull FragmentManager fm, @NonNull Fragment f) {
+                        Observability.setFragmentScreen(f.getClass().getSimpleName());
+                    }
+                },
+                true
+        );
     }
 }

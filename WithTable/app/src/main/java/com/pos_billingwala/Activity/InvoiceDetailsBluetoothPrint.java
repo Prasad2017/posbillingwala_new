@@ -71,7 +71,7 @@ import java.util.Locale;
 
 
 @SuppressLint("SetTextI18n, StaticFieldLeak")
-public class InvoiceDetailsBluetoothPrint extends AppCompatActivity implements View.OnClickListener {
+public class InvoiceDetailsBluetoothPrint extends BaseActivity implements View.OnClickListener {
 
 
     public static List<InvoiceProductResponse> invoiceProductResponseList = new ArrayList<>();
@@ -287,7 +287,7 @@ public class InvoiceDetailsBluetoothPrint extends AppCompatActivity implements V
             if (!printerSettingResponseList.isEmpty()) {
 
                 progressDialog = new ProgressDialog(activity);
-                progressDialog.setMessage("Printing in progress");
+                progressDialog.setMessage(getString(R.string.toast_printing_in_progress));
 
                 if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("2-Inch")) {
                     print2InchBill();
@@ -296,7 +296,7 @@ public class InvoiceDetailsBluetoothPrint extends AppCompatActivity implements V
                 }
 
             } else {
-                Toast.makeText(activity, "Please select printer from setting", Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity, getString(R.string.toast_please_select_printer_from_setting), Toast.LENGTH_SHORT).show();
             }
         } else if (id == R.id.shareInvoiceCardView) {
             createPdf();

@@ -138,7 +138,7 @@
                 android:background="@color/red"
                 android:fontFamily="@font/poppinsregular"
                 android:gravity="center"
-                android:text="Dismiss"
+                android:text="@string/ui_dismiss"
                 android:textColor="@color/white"
                 android:textSize="14dp" />
 
@@ -151,7 +151,7 @@
                 android:background="@color/colorPrimary"
                 android:fontFamily="@font/poppinsregular"
                 android:gravity="center"
-                android:text="Update"
+                android:text="@string/ui_update"
                 android:textColor="@color/white"
                 android:textSize="14dp" />
 

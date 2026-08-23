@@ -2,6 +2,7 @@ package com.posbillingwala.dealer.Fragment;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.text.InputType;
@@ -10,6 +11,9 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -23,6 +27,7 @@ import com.posbillingwala.dealer.Activity.MainActivity;
 import com.posbillingwala.dealer.Adapter.SubcategoryAdapter;
 import com.posbillingwala.dealer.Extra.DetectConnection;
 import com.posbillingwala.dealer.Model.AllApiResponse;
+import com.posbillingwala.dealer.Model.ProductCategoryResponse;
 import com.posbillingwala.dealer.Model.ProductSubcategoryResponse;
 import com.posbillingwala.dealer.R;
 import com.posbillingwala.dealer.Retrofit.Api;
@@ -42,12 +47,12 @@ public class AddCustomerSubcategory extends Fragment implements View.OnClickList
     public static Activity activity;
     public static String customerId;
     public static String categoryId;
-    public static String categoryName;
     public static RecyclerView subcategoryRecyclerview;
     public static CardView subcategoryListCardView;
     public static TextView noDataFound;
 
     FragmentAddCustomerSubcategoryBinding binding;
+    String[] categoryIdList, categoryNameList;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -59,11 +64,11 @@ public class AddCustomerSubcategory extends Fragment implements View.OnClickList
         Bundle bundle = getArguments();
         if (bundle != null) {
             customerId = bundle.getString("customerId");
-            categoryId = bundle.getString("categoryId");
-            categoryName = bundle.getString("categoryName");
+            if (bundle.containsKey("categoryId")) {
+                categoryId = bundle.getString("categoryId");
+            }
         }
 
-        binding.categoryInfo.setText("Category: " + categoryName);
         binding.subcategoryName.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
 
         subcategoryRecyclerview = binding.subcategoryRecyclerview;
@@ -72,11 +77,7 @@ public class AddCustomerSubcategory extends Fragment implements View.OnClickList
 
         MainActivity.back.setOnClickListener(v -> {
             ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-            AddCustomerProductCategory addCustomerProductCategory = new AddCustomerProductCategory();
-            Bundle backBundle = new Bundle();
-            backBundle.putString("customerId", customerId);
-            addCustomerProductCategory.setArguments(backBundle);
-            ((MainActivity) activity).loadFragment(addCustomerProductCategory, true);
+            ((MainActivity) activity).loadFragment(new AllCustomerList(), true);
         });
 
         binding.getRoot().setFocusableInTouchMode(true);
@@ -89,6 +90,24 @@ public class AddCustomerSubcategory extends Fragment implements View.OnClickList
             return false;
         });
 
+        binding.categorySpinner.setOnTouchListener((v, event) -> {
+            InputMethodManager imm = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (imm != null) {
+                imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+            }
+            return false;
+        });
+
+        binding.categorySpinner.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                if (categoryIdList != null && position >= 0 && position < categoryIdList.length) {
+                    categoryId = categoryIdList[position];
+                    getSubcategoryList();
+                }
+            }
+        });
+
         binding.addSubcategory.setOnClickListener(this);
 
         return binding.getRoot();
@@ -97,12 +116,63 @@ public class AddCustomerSubcategory extends Fragment implements View.OnClickList
     @Override
     public void onClick(View view) {
         if (view.getId() == R.id.addSubcategory) {
+            if (categoryId == null || categoryId.isEmpty()) {
+                Toast.makeText(activity, "Please select a category", Toast.LENGTH_SHORT).show();
+                return;
+            }
             if (binding.subcategoryName.getText().toString().trim().length() == 0) {
                 Toast.makeText(activity, "Please enter subcategory name", Toast.LENGTH_SHORT).show();
                 return;
             }
             addSubcategory();
         }
+    }
+
+    private void loadCategories() {
+        SweetAlertDialog pDialog = new SweetAlertDialog(activity, SweetAlertDialog.PROGRESS_TYPE);
+        pDialog.getProgressHelper().setBarColor(Color.parseColor("#2D7FED"));
+        pDialog.setTitleText("Loading");
+        pDialog.setCancelable(false);
+        pDialog.show();
+
+        Call<AllApiResponse> call = Api.getClient().getCategoryList(customerId);
+        call.enqueue(new Callback<AllApiResponse>() {
+            @Override
+            public void onResponse(Call<AllApiResponse> call, Response<AllApiResponse> response) {
+                pDialog.dismiss();
+                if (response.isSuccessful() && response.body() != null
+                        && response.body().getProductCategoryResponseList() != null
+                        && !response.body().getProductCategoryResponseList().isEmpty()) {
+                    List<ProductCategoryResponse> categories = response.body().getProductCategoryResponseList();
+                    categoryIdList = new String[categories.size()];
+                    categoryNameList = new String[categories.size()];
+                    int preselectIndex = 0;
+                    for (int i = 0; i < categories.size(); i++) {
+                        categoryIdList[i] = categories.get(i).getCategoryId();
+                        categoryNameList[i] = categories.get(i).getCategoryName();
+                        if (categoryId != null && categoryId.equals(categoryIdList[i])) {
+                            preselectIndex = i;
+                        }
+                    }
+                    ArrayAdapter<String> adapter = new ArrayAdapter<>(activity, R.layout.spinner_item_layout, categoryNameList);
+                    adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
+                    binding.categorySpinner.setAdapter(adapter);
+                    categoryId = categoryIdList[preselectIndex];
+                    binding.categorySpinner.setText(categoryNameList[preselectIndex], false);
+                    getSubcategoryList();
+                } else {
+                    Toast.makeText(activity, "Please add a category first", Toast.LENGTH_SHORT).show();
+                    subcategoryListCardView.setVisibility(View.GONE);
+                    noDataFound.setVisibility(View.VISIBLE);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<AllApiResponse> call, Throwable t) {
+                pDialog.dismiss();
+                Log.e("categoryLoadError", "" + t.getMessage());
+            }
+        });
     }
 
     private void addSubcategory() {
@@ -139,6 +209,9 @@ public class AddCustomerSubcategory extends Fragment implements View.OnClickList
     }
 
     public static void getSubcategoryList() {
+        if (activity == null || categoryId == null || categoryId.isEmpty()) {
+            return;
+        }
         SweetAlertDialog pDialog = new SweetAlertDialog(activity, SweetAlertDialog.PROGRESS_TYPE);
         pDialog.getProgressHelper().setBarColor(Color.parseColor("#2D7FED"));
         pDialog.setTitleText("Loading");
@@ -189,7 +262,7 @@ public class AddCustomerSubcategory extends Fragment implements View.OnClickList
         ((MainActivity) activity).lockUnlockDrawer(1);
         MainActivity.drawerLayout.closeDrawers();
         if (DetectConnection.checkInternetConnection(activity)) {
-            getSubcategoryList();
+            loadCategories();
         } else {
             DetectConnection.noInternetConnection(activity);
         }

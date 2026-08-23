@@ -108,6 +108,9 @@ public interface ApiInterface {
     Call<AllApiResponse> getPortionList(@Query("userId") String userId,
                                         @Query("productId") String productId);
 
+    @GET("getPortionMasterList.php")
+    Call<AllApiResponse> getPortionMasterList(@Query("userId") String userId);
+
     @FormUrlEncoded
     @POST("insertCustomerSubcategory.php")
     Call<AllApiResponse> saveSubcategory(@Field("userId") String userId,
@@ -116,13 +119,21 @@ public interface ApiInterface {
                                          @Field("subcategoryNetworkStatus") String subcategoryNetworkStatus);
 
     @FormUrlEncoded
+    @POST("insertCustomerPortionMaster.php")
+    Call<AllApiResponse> savePortionMaster(@Field("userId") String userId,
+                                           @Field("portionName") String portionName,
+                                           @Field("portionMasterNetworkStatus") String portionMasterNetworkStatus,
+                                           @Field("portionMasterDeletedStatus") String portionMasterDeletedStatus);
+
+    @FormUrlEncoded
     @POST("insertCustomerPortion.php")
     Call<AllApiResponse> savePortion(@Field("userId") String userId,
                                      @Field("productId") String productId,
                                      @Field("portionName") String portionName,
                                      @Field("portionPrice") String portionPrice,
                                      @Field("portionSortOrder") String portionSortOrder,
-                                     @Field("portionNetworkStatus") String portionNetworkStatus);
+                                     @Field("portionNetworkStatus") String portionNetworkStatus,
+                                     @Field("portionMasterId") String portionMasterId);
 
     @FormUrlEncoded
     @POST("deleteProduct.php")

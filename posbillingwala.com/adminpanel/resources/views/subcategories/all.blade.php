@@ -7,6 +7,7 @@
             <div class="breadcrumb-title pe-3">Subcategories</div>
             <div class="ps-3 text-secondary">{{ $customer->name }} / {{ $category->categoryName }}</div>
             <div class="ms-auto">
+                <a href="{{ url('subcategories/all') }}" class="btn btn-outline-secondary btn-sm">All Subcategories</a>
                 <a href="{{ url('categories/all') }}?customer_id={{ $customer->id }}" class="btn btn-outline-secondary btn-sm">Back to Categories</a>
             </div>
         </div>

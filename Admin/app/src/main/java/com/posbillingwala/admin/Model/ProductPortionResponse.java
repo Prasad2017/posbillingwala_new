@@ -11,6 +11,9 @@ public class ProductPortionResponse {
     @SerializedName("productId")
     @Expose
     private String productId;
+    @SerializedName("portionMasterId")
+    @Expose
+    private String portionMasterId;
     @SerializedName("portionName")
     @Expose
     private String portionName;
@@ -38,6 +41,14 @@ public class ProductPortionResponse {
 
     public void setProductId(String productId) {
         this.productId = productId;
+    }
+
+    public String getPortionMasterId() {
+        return portionMasterId;
+    }
+
+    public void setPortionMasterId(String portionMasterId) {
+        this.portionMasterId = portionMasterId;
     }
 
     public String getPortionName() {

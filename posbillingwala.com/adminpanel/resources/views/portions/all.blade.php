@@ -11,26 +11,42 @@
             </div>
         </div>
 
+        <div class="alert alert-info">
+            Portion Master stores <strong>name only</strong> (Half, Full, Small…).
+            The <strong>price</strong> belongs to this Product + Portion combination.
+            Adding the same portion again updates its price (no duplicates).
+        </div>
+
         <div class="row g-3">
             <div class="col-xl-4">
                 <div class="card">
                     <div class="card-body">
-                        <h5 class="mb-3">Add Portion</h5>
+                        <h5 class="mb-3">Add / Update Product Portion</h5>
                         <form method="POST" action="{{ url('portions/add/'.$customer->id.'/'.$product->productId) }}">
                             @csrf
                             <div class="mb-3">
-                                <label class="form-label">Portion Name</label>
-                                <input type="text" name="portion_name" class="form-control" placeholder="Half / Full" required>
+                                <label class="form-label">Portion Master</label>
+                                <select name="portion_master_id" class="form-select">
+                                    <option value="">— Select existing —</option>
+                                    @foreach($portionMasters as $master)
+                                        <option value="{{ $master->portionMasterId }}">{{ $master->portionName }}</option>
+                                    @endforeach
+                                </select>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Price</label>
+                                <label class="form-label">Or new Portion Name</label>
+                                <input type="text" name="portion_name" class="form-control" placeholder="Half / Full / Small">
+                                <div class="form-text">Creates Portion Master (name only) if it does not exist.</div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Price for this product</label>
                                 <input type="number" step="0.01" name="portion_price" class="form-control" required>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Sort Order</label>
                                 <input type="number" name="portion_sort_order" class="form-control" value="0">
                             </div>
-                            <button type="submit" class="btn btn-primary">Add</button>
+                            <button type="submit" class="btn btn-primary">Save Product Portion</button>
                         </form>
                     </div>
                 </div>

@@ -28,14 +28,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $android_device_id
         );
 
-        if ($check !== null && !empty($check['userActive']) && $check['userActive'] === '1') {
+        if ($check !== null && licence_is_user_active(isset($check['userActive']) ? $check['userActive'] : null)) {
             $check = licence_sync_trial_consumed_state($con, $check);
 
             if (!licence_trial_allows_login($con, $check)) {
                 $response['status'] = '0';
-                $response['message'] = licence_is_trial($check) && licence_is_trial_consumed($check)
-                    ? 'Trial already used. Please upgrade your licence.'
-                    : 'Registration required before trial. Contact your dealer.';
+                $response['message'] = licence_trial_login_block_message($check);
             } elseif (!licence_enforce_expiry($con, $check)) {
                 $response['status'] = '0';
                 $response['message'] = 'Licence expired or user disabled';

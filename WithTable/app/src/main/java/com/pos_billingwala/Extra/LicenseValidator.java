@@ -8,6 +8,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Model.LoginResponse;
+import com.pos_billingwala.R;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -82,60 +83,60 @@ public final class LicenseValidator {
         ValidationResult result = new ValidationResult();
 
         if (!hasStoredPayload(context)) {
-            result.message = "License not activated. Connect online once to refresh.";
+            result.message = context.getString(R.string.licence_msg_not_activated);
             return result;
         }
 
         SignedPayload payload = verifyAndParse(context);
         if (payload == null) {
-            result.message = "Invalid license signature.";
+            result.message = context.getString(R.string.licence_msg_invalid_signature);
             return result;
         }
 
         String deviceId = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
         if (deviceId == null || !deviceId.equals(payload.deviceId)) {
-            result.message = "License is bound to another device.";
+            result.message = context.getString(R.string.licence_msg_device_mismatch);
             return result;
         }
 
         String storedKey = Common.getSavedUserData(context, "LicenceKey");
         if (storedKey != null && !storedKey.isEmpty() && !storedKey.equals(payload.licenseKey)) {
-            result.message = "License key mismatch.";
+            result.message = context.getString(R.string.licence_msg_key_mismatch);
             return result;
         }
 
         long trustedNowMs = trustedNowMillis(context);
         if (detectClockRollback(context, trustedNowMs)) {
-            result.message = "Device date appears incorrect. Connect online to refresh license.";
+            result.message = context.getString(R.string.licence_msg_clock_wrong);
             return result;
         }
 
         if (!isExpiryValid(payload.expiryDate, trustedNowMs)) {
-            result.message = "License expired.";
+            result.message = context.getString(R.string.licence_msg_expired);
             return result;
         }
 
         long offlineGraceUntilMs = payload.offlineGraceUntil * 1000L;
         if (trustedNowMs > offlineGraceUntilMs) {
-            result.message = "Offline license grace expired. Connect online briefly to refresh.";
+            result.message = context.getString(R.string.licence_msg_offline_grace);
             return result;
         }
 
         if (payload.trialConsumed == 1 || (payload.isTrial == 1 && isTrialConsumedByRules(context, database, payload))) {
-            result.message = "Trial already used. Please upgrade your licence.";
+            result.message = context.getString(R.string.licence_msg_trial_used);
             result.trialBillBlocked = true;
             return result;
         }
 
         if (payload.isTrial == 1 && isTrialBillCapReached(context, database, payload)) {
-            result.message = blockedTrialMessage(payload);
+            result.message = blockedTrialMessage(context, payload);
             result.trialBillBlocked = true;
             return result;
         }
 
         result.valid = true;
         result.payload = payload;
-        result.message = "OK";
+        result.message = "";
         return result;
     }
 
@@ -162,11 +163,11 @@ public final class LicenseValidator {
         return Math.max(localCount, serverCount) >= payload.trialMaxBills;
     }
 
-    private static String blockedTrialMessage(SignedPayload payload) {
+    private static String blockedTrialMessage(Context context, SignedPayload payload) {
         if (payload.trialMaxBills > 0) {
-            return "Trial bill limit reached (max " + payload.trialMaxBills + "). Please upgrade your licence.";
+            return context.getString(R.string.licence_msg_trial_limit, payload.trialMaxBills);
         }
-        return "Trial bill limit reached. Please upgrade your licence.";
+        return context.getString(R.string.licence_msg_trial_limit_generic);
     }
 
     private static SignedPayload verifyAndParse(Context context) {

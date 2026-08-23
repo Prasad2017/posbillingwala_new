@@ -53,7 +53,7 @@
                 android:layout_marginTop="15dp"
                 android:fontFamily="@font/poppinsregular"
                 android:gravity="center"
-                android:text="Product Category*"
+                android:text="@string/ui_product_category"
                 android:textColor="@color/textcolor" />
 
             <LinearLayout
@@ -92,7 +92,7 @@
                     android:layout_marginTop="10dp"
                     android:fontFamily="@font/poppinsregular"
                     android:gravity="center"
-                    android:text="Subcategory (optional)"
+                    android:text="@string/ui_subcategory_optional"
                     android:textColor="@color/textcolor" />
 
                 <LinearLayout
@@ -117,6 +117,10 @@
 
             </LinearLayout>
 
+            <include
+                android:id="@+id/productPortionSectionInclude"
+                layout="@layout/include_product_portion_section" />
+
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/productCodeLayout"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
@@ -139,7 +143,7 @@
                     android:layout_height="wrap_content"
                     android:digits="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 "
                     android:fontFamily="@font/poppinsregular"
-                    android:hint="Product Code"
+                    android:hint="@string/ui_product_code"
                     android:imeOptions="actionNext"
                     android:inputType="textCapWords"
                     android:paddingStart="15dp"
@@ -173,7 +177,7 @@
                     android:layout_height="wrap_content"
                     android:digits="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ "
                     android:fontFamily="@font/poppinsregular"
-                    android:hint="Product Name"
+                    android:hint="@string/ui_product_name"
                     android:imeOptions="actionNext"
                     android:inputType="textCapWords"
                     android:paddingStart="15dp"
@@ -208,7 +212,7 @@
                     android:digits="0123456789."
                     android:drawableTint="@color/light_black"
                     android:fontFamily="@font/poppinsregular"
-                    android:hint="Product Price (without GST)"
+                    android:hint="@string/ui_product_price_without_gst"
                     android:imeOptions="actionDone"
                     android:inputType="numberDecimal"
                     android:paddingStart="15dp"
@@ -228,7 +232,7 @@
                 android:layout_marginTop="15dp"
                 android:fontFamily="@font/poppinsregular"
                 android:gravity="center"
-                android:text="Product Unit*"
+                android:text="@string/ui_product_unit"
                 android:textColor="@color/textcolor" />
 
             <LinearLayout
@@ -281,7 +285,7 @@
                         android:layout_height="wrap_content"
                         android:drawableTint="@color/light_black"
                         android:fontFamily="@font/poppinsregular"
-                        android:hint="Product CGST"
+                        android:hint="@string/ui_product_cgst"
                         android:imeOptions="actionDone"
                         android:inputType="numberDecimal"
                         android:paddingStart="15dp"
@@ -317,7 +321,7 @@
                         android:layout_height="wrap_content"
                         android:drawableTint="@color/light_black"
                         android:fontFamily="@font/poppinsregular"
-                        android:hint="Product SGST"
+                        android:hint="@string/ui_product_sgst"
                         android:imeOptions="actionDone"
                         android:inputType="numberDecimal"
                         android:paddingStart="15dp"
@@ -344,7 +348,7 @@
         android:background="@color/colorPrimary"
         android:fontFamily="@font/poppinsmedium"
         android:gravity="center"
-        android:text="Update Product"
+        android:text="@string/ui_update_product"
         android:textAllCaps="true"
         android:textColor="@color/white"
         android:textSize="17dp" />

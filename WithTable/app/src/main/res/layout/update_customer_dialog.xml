@@ -24,7 +24,7 @@
             android:gravity="center"
             android:paddingStart="10dp"
             android:paddingEnd="10dp"
-            android:text="CUSTOMER DETAIL"
+            android:text="@string/ui_customer_detail"
             android:textColor="@color/textcolor" />
 
         <com.google.android.material.textfield.TextInputLayout
@@ -51,7 +51,7 @@
                 android:layout_height="wrap_content"
                 android:drawableTint="@color/light_black"
                 android:fontFamily="@font/poppinsregular"
-                android:hint="Customer Name"
+                android:hint="@string/ui_customer_name"
                 android:imeOptions="actionNext"
                 android:inputType="text"
                 android:paddingStart="15dp"
@@ -87,7 +87,7 @@
                 android:layout_height="wrap_content"
                 android:drawableTint="@color/light_black"
                 android:fontFamily="@font/poppinsregular"
-                android:hint="Customer Mobile"
+                android:hint="@string/ui_customer_mobile"
                 android:imeOptions="actionNext"
                 android:inputType="numberDecimal"
                 android:maxLength="10"
@@ -125,7 +125,7 @@
                 android:layout_height="wrap_content"
                 android:drawableTint="@color/light_black"
                 android:fontFamily="@font/poppinsregular"
-                android:hint="Customer Email"
+                android:hint="@string/ui_customer_email"
                 android:imeOptions="actionNext"
                 android:inputType="textEmailAddress"
                 android:maxLength="10"
@@ -162,7 +162,7 @@
                 android:layout_height="wrap_content"
                 android:drawableTint="@color/light_black"
                 android:fontFamily="@font/poppinsregular"
-                android:hint="Customer Address"
+                android:hint="@string/ui_customer_address"
                 android:imeOptions="actionNext"
                 android:inputType="textMultiLine"
                 android:paddingStart="15dp"
@@ -189,7 +189,7 @@
                 android:background="@color/red"
                 android:fontFamily="@font/poppinsregular"
                 android:gravity="center"
-                android:text="Dismiss"
+                android:text="@string/ui_dismiss"
                 android:textColor="@color/white"
                 android:textSize="14dp" />
 
@@ -202,7 +202,7 @@
                 android:background="@color/colorPrimary"
                 android:fontFamily="@font/poppinsregular"
                 android:gravity="center"
-                android:text="Add Customer"
+                android:text="@string/ui_add_customer"
                 android:textColor="@color/white"
                 android:textSize="14dp" />
 

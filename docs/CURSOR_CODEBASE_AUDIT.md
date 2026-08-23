@@ -210,12 +210,12 @@ SplashScreen → Login / LoginMPin → MainActivity (hosts Fragments)
 
 | Client | Base URL |
 |--------|----------|
-| WithTable POS | `https://www.posbillingwala.in/androidApp/` |
-| Owner | `https://www.posbillingwala.in/androidApp/Owner/` |
-| Dealer | `https://www.posbillingwala.in/androidApp/Dealer/` |
-| Admin | `https://www.posbillingwala.in/androidApp/Admin/` |
+| WithTable POS | `https://www.posbillingwala.com/androidApp/` |
+| Owner | `https://www.posbillingwala.com/androidApp/Owner/` |
+| Dealer | `https://www.posbillingwala.com/androidApp/Dealer/` |
+| Admin | `https://www.posbillingwala.com/androidApp/Admin/` |
 
-All four share one MySQL via `API/db_connection.php`. Media: `https://www.posbillingwala.in/storage/app/`.
+All four share one MySQL via `API/db_connection.php`. Media: `https://www.posbillingwala.com/storage/app/`.
 URLs come from `BuildConfig.API_BASE_URL` (POS also `MEDIA_BASE_URL`).
 
 ### 4.2 POS endpoints (`API/`)

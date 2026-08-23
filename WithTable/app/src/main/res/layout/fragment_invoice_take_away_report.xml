@@ -38,7 +38,7 @@
                 android:gravity="center"
                 android:paddingStart="5dp"
                 android:paddingEnd="5dp"
-                android:text="Take Away Reports"
+                android:text="@string/ui_take_away_reports"
                 android:textColor="@color/white"
                 android:textSize="17dp" />
 
@@ -92,7 +92,7 @@
                     android:fontFamily="@font/poppinsmedium"
                     android:gravity="center"
                     android:padding="5dp"
-                    android:text="Sr No."
+                    android:text="@string/ui_sr_no_2"
                     android:textColor="@color/black"
                     android:textSize="14dp" />
 
@@ -104,7 +104,7 @@
                     android:fontFamily="@font/poppinsmedium"
                     android:gravity="center"
                     android:padding="5dp"
-                    android:text="Take Away Number"
+                    android:text="@string/ui_take_away_number"
                     android:textColor="@color/black"
                     android:textSize="14dp" />
 
@@ -116,7 +116,7 @@
                     android:fontFamily="@font/poppinsmedium"
                     android:gravity="center"
                     android:padding="5dp"
-                    android:text="Amount"
+                    android:text="@string/ui_amount"
                     android:textColor="@color/black"
                     android:textSize="14dp" />
 
@@ -153,7 +153,7 @@
                     android:fontFamily="@font/poppinsmedium"
                     android:gravity="center"
                     android:padding="5dp"
-                    android:text="Total Amount"
+                    android:text="@string/ui_total_amount"
                     android:textColor="@color/black"
                     android:textSize="15dp" />
 
@@ -189,7 +189,7 @@
         android:fontFamily="@font/poppinsmedium"
         android:paddingStart="10dp"
         android:paddingEnd="10dp"
-        android:text="No data Found"
+        android:text="@string/ui_no_data_found"
         android:textColor="@color/black"
         android:textSize="20dp" />
 

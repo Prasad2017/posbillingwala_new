@@ -145,9 +145,29 @@ if (!function_exists('licence_sync_trial_consumed_state')) {
     }
 }
 
+if (!function_exists('licence_is_user_active')) {
+    /**
+     * users.is_active is int(11). mysqli may return int 1 or string "1" — never use === '1'.
+     *
+     * @param mixed $value users.is_active or aliased userActive
+     * @return bool
+     */
+    function licence_is_user_active($value)
+    {
+        if ($value === null || $value === false || $value === '') {
+            return false;
+        }
+        if (is_bool($value)) {
+            return $value;
+        }
+        return (int) $value === 1;
+    }
+}
+
 if (!function_exists('licence_trial_allows_login')) {
     /**
      * Trial licences require prior dealer/admin registration and must not be consumed.
+     * Paid / Regular / grandfathered licences always allow login (expiry checked separately).
      *
      * @param mysqli $con
      * @param array  $licenseRow
@@ -160,12 +180,12 @@ if (!function_exists('licence_trial_allows_login')) {
         }
         // Registration required: license row must belong to an active customer user
         $userId = isset($licenseRow['userId']) ? $licenseRow['userId'] : null;
-        if ($userId === null || $userId === '') {
+        if ($userId === null || $userId === '' || (int) $userId <= 0) {
             return false;
         }
         $active = db_stmt_scalar_int(
             $con,
-            'SELECT COUNT(*) AS c FROM `users` WHERE `id`=? AND `is_active`=\'1\'',
+            'SELECT COUNT(*) AS c FROM `users` WHERE `id`=? AND `is_active`=1',
             's',
             (string) $userId
         );
@@ -174,6 +194,25 @@ if (!function_exists('licence_trial_allows_login')) {
         }
         $licenseRow = licence_sync_trial_consumed_state($con, $licenseRow);
         return !licence_is_trial_consumed($licenseRow);
+    }
+}
+
+if (!function_exists('licence_trial_login_block_message')) {
+    /**
+     * User-facing message when licence_trial_allows_login() fails.
+     *
+     * @param array $licenseRow
+     * @return string
+     */
+    function licence_trial_login_block_message(array $licenseRow)
+    {
+        if (licence_is_trial($licenseRow) && licence_is_trial_consumed($licenseRow)) {
+            return 'Trial already used. Please upgrade your licence.';
+        }
+        if (licence_is_trial($licenseRow)) {
+            return 'Registration required before trial. Contact your dealer.';
+        }
+        return 'Customer account inactive or missing. Contact your dealer.';
     }
 }
 
@@ -202,8 +241,11 @@ if (!function_exists('licence_on_device_bind')) {
             $response['message'] = 'Licence not found';
             return $response;
         }
-        if (empty($row['userActive']) || $row['userActive'] !== '1') {
-            $response['message'] = 'Registration required before trial. Contact your dealer.';
+        if (!licence_is_user_active(isset($row['userActive']) ? $row['userActive'] : null)) {
+            // Paid / existing licences must not see the trial registration message
+            $response['message'] = licence_is_trial($row)
+                ? 'Registration required before trial. Contact your dealer.'
+                : 'Customer account inactive. Contact your dealer.';
             return $response;
         }
 
@@ -276,6 +318,10 @@ if (!function_exists('licence_trial_max_bills')) {
 
 if (!function_exists('licence_is_trial')) {
     /**
+     * True only for real short free trials.
+     * Grandfathers old dealer "Demo" rows that were actually paid / long-validity licences
+     * so existing shops are not blocked by trial registration / 7-day / 50-bill gates.
+     *
      * @param array|null $licenseRow
      * @return bool
      */
@@ -285,7 +331,23 @@ if (!function_exists('licence_is_trial')) {
             return false;
         }
         $type = isset($licenseRow['licenseType']) ? trim($licenseRow['licenseType']) : '';
-        return strcasecmp($type, 'Demo') === 0 || strcasecmp($type, 'Trial') === 0;
+        if (strcasecmp($type, 'Demo') !== 0 && strcasecmp($type, 'Trial') !== 0) {
+            return false;
+        }
+        // Old paid / long Demo licences (common before P4 trial rules)
+        $validity = isset($licenseRow['licenseValidity']) ? (int) $licenseRow['licenseValidity'] : 0;
+        if ($validity > licence_trial_days()) {
+            return false;
+        }
+        $amount = isset($licenseRow['amount']) ? (int) $licenseRow['amount'] : 0;
+        if ($amount > 0) {
+            return false;
+        }
+        $payment = isset($licenseRow['paymentStatus']) ? trim((string) $licenseRow['paymentStatus']) : '';
+        if ($payment !== '' && strcasecmp($payment, 'free') !== 0) {
+            return false;
+        }
+        return true;
     }
 }
 
@@ -555,10 +617,17 @@ if (!function_exists('licence_same_key_upgrade')) {
         $licenseStatusEsc = mysqli_real_escape_string($con, (string) $licenseStatus);
         $paymentStatusEsc = mysqli_real_escape_string($con, (string) $paymentStatus);
 
+        // Clear trialConsumed when upgrading off trial so old Demo→Regular shops can log in
+        $clearTrial = '';
+        if (strcasecmp(trim((string) $licenseType), 'Demo') !== 0
+            && strcasecmp(trim((string) $licenseType), 'Trial') !== 0) {
+            $clearTrial = ', `trialConsumed`=0';
+        }
+
         // Explicit column list — never touch licenseKey / android_device_* / mpin
         $updated = db_stmt_execute(
             $con,
-            'UPDATE `licenses` SET `licenseValidity`=?, `licenseType`=?, `amount`=?, `expiryDate`=?, `licenseStatus`=?, `paymentStatus`=? WHERE `id`=?',
+            'UPDATE `licenses` SET `licenseValidity`=?, `licenseType`=?, `amount`=?, `expiryDate`=?, `licenseStatus`=?, `paymentStatus`=?' . $clearTrial . ' WHERE `id`=?',
             'sssssss',
             $licenseValidityEsc,
             $licenseTypeEsc,
@@ -802,7 +871,7 @@ if (!function_exists('licence_register_trial_customer')) {
         }
 
         if (licence_contact_has_trial($con, $contactDigits)) {
-            $response['message'] = 'This mobile number is already registered. Please log in with your licence key, or call +91-9130188584 for help.';
+            $response['message'] = 'This mobile number is already registered. Please log in with your licence key, or call +91 89831 49299 for help.';
             return $response;
         }
 

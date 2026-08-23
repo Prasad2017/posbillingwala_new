@@ -22,6 +22,7 @@ import androidx.fragment.app.Fragment;
 
 import com.posbillingwala.dealer.Activity.MainActivity;
 import com.posbillingwala.dealer.Extra.DetectConnection;
+import com.posbillingwala.dealer.Extra.ProductPortionSectionHelper;
 import com.posbillingwala.dealer.Model.AllApiResponse;
 import com.posbillingwala.dealer.Model.ProductCategoryResponse;
 import com.posbillingwala.dealer.Model.ProductSubcategoryResponse;
@@ -48,6 +49,7 @@ public class AddCustomerProduct extends Fragment implements View.OnClickListener
     String customerId, categoryId, categoryName, unitName, subcategoryId;
     List<ProductCategoryResponse> productCategoryResponseList = new ArrayList<>();
     FragmentAddCustomerProductBinding binding;
+    ProductPortionSectionHelper portionSectionHelper;
 
 
     @SuppressLint("ClickableViewAccessibility")
@@ -65,6 +67,10 @@ public class AddCustomerProduct extends Fragment implements View.OnClickListener
         if (bundle != null) {
             customerId = bundle.getString("customerId");
         }
+
+        portionSectionHelper = new ProductPortionSectionHelper(activity, binding.productPortionSectionInclude.getRoot());
+        portionSectionHelper.setCustomerId(customerId);
+        portionSectionHelper.setOnPortionMasterLinkClick(this::openPortionMaster);
 
         MainActivity.back.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -164,14 +170,16 @@ public class AddCustomerProduct extends Fragment implements View.OnClickListener
             if (categoryId != null) {
                 if (!binding.productCode.getText().toString().isEmpty()) {
                     if (!binding.productName.getText().toString().isEmpty()) {
-                        if (!binding.productPrice.getText().toString().isEmpty()) {
+                        String price = binding.productPrice.getText().toString().trim();
+                        boolean hasPortions = portionSectionHelper != null && portionSectionHelper.hasPortions();
+                        if (!price.isEmpty() || hasPortions) {
                             if (unitName != null) {
                                 addProduct();
                             } else {
                                 Toast.makeText(activity, "Please select product unit", Toast.LENGTH_SHORT).show();
                             }
                         } else {
-                            Toast.makeText(activity, "Please enter product price", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(activity, "Please enter product price or add portions", Toast.LENGTH_SHORT).show();
                         }
                     } else {
                         Toast.makeText(activity, "Please enter product name", Toast.LENGTH_SHORT).show();
@@ -185,6 +193,16 @@ public class AddCustomerProduct extends Fragment implements View.OnClickListener
         }
     }
 
+    private void openPortionMaster() {
+        AddCustomerPortionMaster fragment = new AddCustomerPortionMaster();
+        Bundle bundle = new Bundle();
+        bundle.putString("customerId", customerId);
+        bundle.putString("returnTo", "addProduct");
+        fragment.setArguments(bundle);
+        ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
+        ((MainActivity) activity).loadFragment(fragment, true);
+    }
+
     private void addProduct() {
 
         SweetAlertDialog pDialog = new SweetAlertDialog(activity, SweetAlertDialog.PROGRESS_TYPE);
@@ -193,21 +211,30 @@ public class AddCustomerProduct extends Fragment implements View.OnClickListener
         pDialog.setCancelable(false);
         pDialog.show();
 
-        Call<AllApiResponse> call = Api.getClient().saveProduct(customerId, categoryId, categoryName, binding.productCode.getText().toString(), binding.productName.getText().toString(), binding.productPrice.getText().toString(),
+        String productPrice = binding.productPrice.getText().toString().trim();
+        if (productPrice.isEmpty() && portionSectionHelper.hasPortions()) {
+            productPrice = "0";
+        }
+
+        Call<AllApiResponse> call = Api.getClient().saveProduct(customerId, categoryId, categoryName, binding.productCode.getText().toString(), binding.productName.getText().toString(), productPrice,
                 unitName, binding.productCGST.getText().toString(), binding.productSGST.getText().toString(), getRandomString(10),
                 subcategoryId != null ? subcategoryId : "");
         call.enqueue(new Callback<AllApiResponse>() {
             @Override
             public void onResponse(@NonNull Call<AllApiResponse> call, @NonNull Response<AllApiResponse> response) {
-                if (response.isSuccessful()) {
+                if (response.isSuccessful() && response.body() != null) {
                     if (response.body().getStatus().equalsIgnoreCase("1")) {
+                        String newProductId = response.body().getProductId();
+                        if (portionSectionHelper.hasPortions() && newProductId != null && !newProductId.trim().isEmpty()) {
+                            portionSectionHelper.savePortionsForProduct(newProductId, allOk -> {
+                                pDialog.dismiss();
+                                Toast.makeText(activity, response.body().getMessage(), Toast.LENGTH_SHORT).show();
+                                navigateToProductList();
+                            });
+                            return;
+                        }
                         Toast.makeText(activity, response.body().getMessage(), Toast.LENGTH_SHORT).show();
-                        ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                        AllCustomerProductList allCustomerProductList = new AllCustomerProductList();
-                        Bundle bundle = new Bundle();
-                        bundle.putString("customerId", customerId);
-                        allCustomerProductList.setArguments(bundle);
-                        ((MainActivity) activity).loadFragment(allCustomerProductList, true);
+                        navigateToProductList();
                     } else {
                         Toast.makeText(activity, response.body().getMessage(), Toast.LENGTH_SHORT).show();
                     }
@@ -222,6 +249,15 @@ public class AddCustomerProduct extends Fragment implements View.OnClickListener
             }
         });
 
+    }
+
+    private void navigateToProductList() {
+        ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
+        AllCustomerProductList allCustomerProductList = new AllCustomerProductList();
+        Bundle bundle = new Bundle();
+        bundle.putString("customerId", customerId);
+        allCustomerProductList.setArguments(bundle);
+        ((MainActivity) activity).loadFragment(allCustomerProductList, true);
     }
 
     private String getRandomString(final int sizeOfRandomString) {
@@ -244,6 +280,10 @@ public class AddCustomerProduct extends Fragment implements View.OnClickListener
         MainActivity.drawerLayout.closeDrawers();
         if (DetectConnection.checkInternetConnection(activity)) {
             getProductCategoryList();
+            if (portionSectionHelper != null) {
+                portionSectionHelper.setCustomerId(customerId);
+                portionSectionHelper.refresh();
+            }
         } else {
             DetectConnection.noInternetConnection(activity);
         }

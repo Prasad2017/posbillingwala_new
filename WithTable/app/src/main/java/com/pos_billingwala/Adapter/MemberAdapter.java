@@ -1,5 +1,7 @@
 package com.pos_billingwala.Adapter;
 
+import com.pos_billingwala.R;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Bundle;
@@ -123,7 +125,7 @@ public class MemberAdapter extends RecyclerView.Adapter<MemberAdapter.MyViewHold
 
     public void deleteMember(MemberResponse memberResponse) {
         posBillingWalaDatabase.deleteMember(memberResponse);
-        Toast.makeText(context, "Member Deleted Successfully", Toast.LENGTH_SHORT).show();
+        Toast.makeText(context, context.getString(R.string.toast_member_deleted_successfully), Toast.LENGTH_SHORT).show();
         MessMemberList.getAllMessMemberList();
     }
 

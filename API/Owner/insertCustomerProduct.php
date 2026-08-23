@@ -24,11 +24,25 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
   $productCGST = $_POST['productCGST'];
   $productSGST = $_POST['productSGST'];
   $productNetworkStatus = $_POST['productNetworkStatus'];
+  $subcategoryId = isset($_POST['subcategoryId']) ? $_POST['subcategoryId'] : '';
   
 	date_default_timezone_set('Asia/Kolkata');
     $date=date('Y-m-d');
+
+    $userIdEsc = mysqli_real_escape_string($con, $userId);
+    $productNetworkStatusEsc = mysqli_real_escape_string($con, $productNetworkStatus);
+    $categoryNameEsc = mysqli_real_escape_string($con, $categoryName);
+    $productCodeEsc = mysqli_real_escape_string($con, $productCode);
+    $productNameEsc = mysqli_real_escape_string($con, $productName);
+    $productPriceEsc = mysqli_real_escape_string($con, $productPrice);
+    $productUnitEsc = mysqli_real_escape_string($con, $productUnit);
+    $productCGSTEsc = mysqli_real_escape_string($con, $productCGST);
+    $productSGSTEsc = mysqli_real_escape_string($con, $productSGST);
+    $subSql = ($subcategoryId != '') ? ", `subcategoryId`='" . mysqli_real_escape_string($con, $subcategoryId) . "'" : ", `subcategoryId`=NULL";
+    $subCol = ($subcategoryId != '') ? ", `subcategoryId`" : "";
+    $subVal = ($subcategoryId != '') ? ", '" . mysqli_real_escape_string($con, $subcategoryId) . "'" : "";
     
-    $sql="SELECT * FROM `products` WHERE `userId`='$userId' AND `productNetworkStatus`='$productNetworkStatus'";
+    $sql="SELECT * FROM `products` WHERE `userId`='$userIdEsc' AND `productNetworkStatus`='$productNetworkStatusEsc'";
 		    $res = mysqli_query($con, $sql);
 			$check = mysqli_fetch_array($res);
 				if(isset($check))
@@ -36,7 +50,7 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 				    
 				    $productId = $check['productId'];
 				    
-				    $sql1="SELECT * FROM `categories` WHERE `userId`='$userId' AND `categoryName`='$categoryName'";
+				    $sql1="SELECT * FROM `categories` WHERE `userId`='$userIdEsc' AND `categoryName`='$categoryNameEsc'";
 		            $res1 = mysqli_query($con, $sql1);
 			        $check1 = mysqli_fetch_array($res1);
 				    if(isset($check1))
@@ -44,8 +58,8 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 				    
 				       $categoryId = $check1['categoryId'];
 				    
-				    $sql="UPDATE `products` SET `categoryId`='$categoryId', `productCode`='$productCode', `productName`='$productName', `productPrice`='$productPrice', `productUnit`='$productUnit', 
-				          `productCGST`='$productCGST', `productSGST`='$productSGST' WHERE `productId`='$productId'";
+				    $sql="UPDATE `products` SET `categoryId`='$categoryId', `productCode`='$productCodeEsc', `productName`='$productNameEsc', `productPrice`='$productPriceEsc', `productUnit`='$productUnitEsc', 
+				          `productCGST`='$productCGSTEsc', `productSGST`='$productSGSTEsc'$subSql WHERE `productId`='$productId'";
 				    
 				    }
 				    
@@ -55,6 +69,7 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 	
                        $response["status"] = '1';
                        $response["message"] = "update successful!";
+                       $response["productId"] = (string) $productId;
   
                    }
                    else{
@@ -68,7 +83,7 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 				} else {
 				    
 				    
-				    $sql1="SELECT * FROM `categories` WHERE `userId`='$userId' AND `categoryName`='$categoryName'";
+				    $sql1="SELECT * FROM `categories` WHERE `userId`='$userIdEsc' AND `categoryName`='$categoryNameEsc'";
 		            $res1 = mysqli_query($con, $sql1);
 			        $check1 = mysqli_fetch_array($res1);
 				    if(isset($check1))
@@ -76,13 +91,14 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 				    
 				       $categoryId = $check1['categoryId'];
 
-                 $sql="INSERT INTO `products`(`userId`, `categoryId`, `productCode`, `productName`, `productPrice`, `productUnit`, `productCGST`, `productSGST`, `productNetworkStatus`, `productStatus`) 
-                       VALUES ('$userId', '$categoryId', '$productCode', '$productName', '$productPrice', '$productUnit', '$productCGST', '$productSGST', '$productNetworkStatus', 'active')";
+                 $sql="INSERT INTO `products`(`userId`, `categoryId`, `productCode`, `productName`, `productPrice`, `productUnit`, `productCGST`, `productSGST`, `productNetworkStatus`, `productStatus`$subCol) 
+                       VALUES ('$userIdEsc', '$categoryId', '$productCodeEsc', '$productNameEsc', '$productPriceEsc', '$productUnitEsc', '$productCGSTEsc', '$productSGSTEsc', '$productNetworkStatusEsc', 'active'$subVal)";
 
                  if(mysqli_query($con,$sql)){
 	
                        $response["status"] = '1';
                        $response["message"] = "insert successful!";
+                       $response["productId"] = (string) mysqli_insert_id($con);
   
                    }
                    else{

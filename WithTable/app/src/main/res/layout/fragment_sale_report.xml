@@ -39,7 +39,7 @@
                 android:gravity="center|start"
                 android:paddingStart="5dp"
                 android:paddingEnd="5dp"
-                android:text="Sale Reports"
+                android:text="@string/ui_sale_reports"
                 android:textColor="@color/white"
                 android:textSize="17dp" />
 
@@ -85,7 +85,7 @@
                 android:gravity="center"
                 android:paddingStart="15dp"
                 android:paddingEnd="15dp"
-                android:text="Billing Details"
+                android:text="@string/ui_billing_details"
                 android:textColor="@color/black"
                 android:textSize="15dp" />
 
@@ -137,7 +137,7 @@
                             android:gravity="center"
                             android:paddingStart="15dp"
                             android:paddingEnd="15dp"
-                            android:text="Sub\nAmount"
+                            android:text="@string/ui_sub_amount"
                             android:textColor="@color/black"
                             android:textSize="13dp" />
 
@@ -198,7 +198,7 @@
                             android:gravity="center"
                             android:paddingStart="15dp"
                             android:paddingEnd="15dp"
-                            android:text="CSGT + SGST"
+                            android:text="@string/ui_csgt_sgst"
                             android:textColor="@color/black"
                             android:textSize="13dp" />
 
@@ -267,7 +267,7 @@
                             android:gravity="center"
                             android:paddingStart="15dp"
                             android:paddingEnd="15dp"
-                            android:text="Total\nDiscount"
+                            android:text="@string/ui_total_discount"
                             android:textColor="@color/black"
                             android:textSize="13dp" />
 
@@ -328,7 +328,7 @@
                             android:gravity="center"
                             android:paddingStart="15dp"
                             android:paddingEnd="15dp"
-                            android:text="Total\nAmount"
+                            android:text="@string/ui_total_amount"
                             android:textColor="@color/black"
                             android:textSize="13dp" />
 
@@ -354,7 +354,7 @@
                 android:gravity="center"
                 android:paddingStart="15dp"
                 android:paddingEnd="15dp"
-                android:text="Billing Wise Details"
+                android:text="@string/ui_billing_wise_details"
                 android:textColor="@color/black"
                 android:textSize="15dp" />
 
@@ -406,7 +406,7 @@
                             android:gravity="center"
                             android:paddingStart="15dp"
                             android:paddingEnd="15dp"
-                            android:text="Fast Billing"
+                            android:text="@string/fast_billing"
                             android:textColor="@color/black"
                             android:textSize="13dp" />
 
@@ -457,7 +457,7 @@
                             android:gravity="center"
                             android:paddingStart="15dp"
                             android:paddingEnd="15dp"
-                            android:text="Dine\nIn"
+                            android:text="@string/dine_in"
                             android:textColor="@color/black"
                             android:textSize="13dp" />
 
@@ -516,7 +516,7 @@
                             android:gravity="center"
                             android:paddingStart="15dp"
                             android:paddingEnd="15dp"
-                            android:text="Take\nAway"
+                            android:text="@string/take_away"
                             android:textColor="@color/black"
                             android:textSize="13dp" />
 

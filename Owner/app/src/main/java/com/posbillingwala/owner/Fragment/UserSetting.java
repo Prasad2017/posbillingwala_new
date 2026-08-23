@@ -87,6 +87,7 @@ public class UserSetting extends Fragment implements View.OnClickListener {
         binding.backToHome.setOnClickListener(this);
         binding.appDevelopedBy.setOnClickListener(this);
         binding.categoryLayout.setOnClickListener(this);
+        binding.subcategoryLayout.setOnClickListener(this);
         binding.productLayout.setOnClickListener(this);
         binding.productExportLayout.setOnClickListener(this);
         binding.invoiceDetailsLayout.setOnClickListener(this);
@@ -157,6 +158,9 @@ public class UserSetting extends Fragment implements View.OnClickListener {
         } else if (id == R.id.categoryLayout) {
             ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
             ((MainActivity) activity).loadFragment(new AddCustomerProductCategory(), true);
+        } else if (id == R.id.subcategoryLayout) {
+            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
+            ((MainActivity) activity).loadFragment(new AddCustomerSubcategory(), true);
         } else if (id == R.id.productLayout) {
             ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
             ((MainActivity) activity).loadFragment(new AllCustomerProductList(), true);

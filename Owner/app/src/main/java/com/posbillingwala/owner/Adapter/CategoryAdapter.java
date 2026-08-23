@@ -4,6 +4,7 @@ import android.app.Dialog;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -16,7 +17,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
+import com.posbillingwala.owner.Activity.MainActivity;
 import com.posbillingwala.owner.Fragment.AddCustomerProductCategory;
+import com.posbillingwala.owner.Fragment.AddCustomerSubcategory;
 import com.posbillingwala.owner.Model.AllApiResponse;
 import com.posbillingwala.owner.Model.ProductCategoryResponse;
 import com.posbillingwala.owner.R;
@@ -54,6 +57,15 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.MyView
 
         holder.binding.srNo.setText(String.valueOf(position + 1));
         holder.binding.categoryName.setText(productCategoryResponse.getCategoryName());
+
+        holder.binding.categorySubcategories.setOnClickListener(v -> {
+            AddCustomerSubcategory fragment = new AddCustomerSubcategory();
+            Bundle bundle = new Bundle();
+            bundle.putString("categoryId", productCategoryResponse.getCategoryId());
+            bundle.putString("categoryName", productCategoryResponse.getCategoryName());
+            fragment.setArguments(bundle);
+            ((MainActivity) context).loadFragment(fragment, true);
+        });
 
         holder.binding.categoryEdit.setOnClickListener(v -> updateCategoryDialog(productCategoryResponse.getCategoryId(), productCategoryResponse.getCategoryName()));
 

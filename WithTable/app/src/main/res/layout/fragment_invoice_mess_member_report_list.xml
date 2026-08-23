@@ -39,7 +39,7 @@
                 android:gravity="center|start"
                 android:paddingStart="5dp"
                 android:paddingEnd="5dp"
-                android:text="Invoice Reports"
+                android:text="@string/ui_invoice_reports"
                 android:textColor="@color/white"
                 android:textSize="17dp" />
 
@@ -70,7 +70,7 @@
                 android:fontFamily="@font/poppinsmedium"
                 android:gravity="center"
                 android:padding="5dp"
-                android:text="Sr No."
+                android:text="@string/ui_sr_no_2"
                 android:textColor="@color/black"
                 android:textSize="15dp" />
 
@@ -82,7 +82,7 @@
                 android:fontFamily="@font/poppinsmedium"
                 android:gravity="center|start"
                 android:padding="5dp"
-                android:text="Member Name"
+                android:text="@string/ui_member_name"
                 android:textColor="@color/black"
                 android:textSize="15dp" />
 
@@ -109,7 +109,7 @@
         android:fontFamily="@font/poppinsmedium"
         android:paddingStart="10dp"
         android:paddingEnd="10dp"
-        android:text="No data Found"
+        android:text="@string/ui_no_data_found"
         android:textColor="@color/black"
         android:textSize="20dp" />
 

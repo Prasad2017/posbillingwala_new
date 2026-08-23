@@ -164,12 +164,21 @@ public class AddCustomerProductCategory extends Fragment implements View.OnClick
         noDataFound = view.findViewById(R.id.noDataFound);
 
         binding.addCategory.setOnClickListener(this);
+        binding.managePortionMaster.setOnClickListener(this);
 
     }
 
     @Override
     public void onClick(View view) {
-        if (view.getId() == R.id.addCategory) {
+        if (view.getId() == R.id.managePortionMaster) {
+            AddCustomerPortionMaster fragment = new AddCustomerPortionMaster();
+            Bundle bundle = new Bundle();
+            bundle.putString("customerId", customerId);
+            bundle.putString("returnTo", "category");
+            fragment.setArguments(bundle);
+            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
+            ((MainActivity) activity).loadFragment(fragment, true);
+        } else if (view.getId() == R.id.addCategory) {
             if (!binding.categoryName.getText().toString().isEmpty()) {
                 if (foodTypeId != null) {
                     addProductCategory();

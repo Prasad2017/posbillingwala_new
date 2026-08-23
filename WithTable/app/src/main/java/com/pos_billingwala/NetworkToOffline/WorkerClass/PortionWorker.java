@@ -38,21 +38,14 @@ public class PortionWorker extends Worker {
                 List<ProductPortionResponse> list = response.body().getPortionResponseList();
                 if (list != null) {
                     for (ProductPortionResponse item : list) {
-                        int sort = 0;
-                        try {
-                            if (item.getPortionSortOrder() != null && !item.getPortionSortOrder().isEmpty()) {
-                                sort = Integer.parseInt(item.getPortionSortOrder());
-                            }
-                        } catch (NumberFormatException ignored) {
+                        if (item.getPortionMasterNetworkStatus() != null
+                                && !item.getPortionMasterNetworkStatus().trim().isEmpty()) {
+                            database.ensurePortionMasterFromServer(
+                                    item.getPortionName(),
+                                    "0",
+                                    item.getPortionMasterNetworkStatus());
                         }
-                        database.insertProductPortion(
-                                item.getProductId(),
-                                item.getPortionName(),
-                                item.getPortionPrice(),
-                                sort,
-                                item.getPortionDeletedStatus(),
-                                item.getPortionNetworkStatus(),
-                                1);
+                        database.insertProductPortion(item);
                     }
                 }
             }

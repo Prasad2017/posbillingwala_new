@@ -79,10 +79,10 @@ public class AddExpenses extends Fragment implements View.OnClickListener {
                 if (!binding.expensesAmount.getText().toString().isEmpty()) {
                     addExpenses();
                 } else {
-                    Toast.makeText(activity, "Please add expense amount", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(activity, getString(R.string.toast_please_add_expense_amount), Toast.LENGTH_SHORT).show();
                 }
             } else {
-                Toast.makeText(activity, "Please add expense name", Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity, getString(R.string.toast_please_add_expense_name), Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -95,7 +95,7 @@ public class AddExpenses extends Fragment implements View.OnClickListener {
         String expenseDate = df.format(c);
 
         posBillingWalaDatabase.addExpenses(binding.expensesName.getText().toString(), binding.expensesAmount.getText().toString(), expenseDate, 0, getRandomString(10));
-        Toast.makeText(activity, "Add expense successfully", Toast.LENGTH_SHORT).show();
+        Toast.makeText(activity, getString(R.string.toast_add_expense_successfully), Toast.LENGTH_SHORT).show();
 
         ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
         ((MainActivity) activity).loadFragment(new Expenses(), true);

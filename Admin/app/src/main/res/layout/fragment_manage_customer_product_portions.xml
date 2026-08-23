@@ -46,33 +46,60 @@
                     android:orientation="vertical"
                     android:paddingBottom="10dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:layout_marginTop="12dp"
-                        android:fontFamily="@font/poppinsbold"
-                        android:text="PORTION DETAIL"
-                        android:textColor="@color/textcolor" />
-
-                    <com.google.android.material.textfield.TextInputLayout
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    <RelativeLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="15dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginEnd="15dp">
+                        android:layout_marginTop="12dp"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="12dp">
 
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/portionName"
-                            android:layout_width="match_parent"
+                        <TextView
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:fontFamily="@font/poppinsregular"
-                            android:hint="Portion Name (Half, Full, etc.)"
-                            android:inputType="textCapWords"
-                            android:singleLine="true" />
+                            android:layout_centerVertical="true"
+                            android:fontFamily="@font/poppinsbold"
+                            android:text="PORTION DETAIL"
+                            android:textColor="@color/textcolor" />
 
-                    </com.google.android.material.textfield.TextInputLayout>
+                        <TextView
+                            android:id="@+id/managePortionMaster"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentEnd="true"
+                            android:layout_centerVertical="true"
+                            android:fontFamily="@font/poppinsmedium"
+                            android:text="Manage Portion Master"
+                            android:textColor="@color/colorPrimary"
+                            android:textSize="13sp" />
+
+                    </RelativeLayout>
+
+                    <LinearLayout
+                        android:id="@+id/portionMasterSection"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            style="@style/CustomDropDownTilStyle"
+                            android:layout_marginStart="15dp"
+                            android:layout_marginTop="10dp"
+                            android:layout_marginEnd="15dp"
+                            android:hint="Select Portion Master">
+
+                            <AutoCompleteTextView
+                                android:id="@+id/portionMasterSpinner"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:focusable="false"
+                                android:fontFamily="@font/poppinsregular"
+                                android:inputType="none"
+                                android:singleLine="true"
+                                android:textSize="15sp" />
+
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                    </LinearLayout>
 
                     <com.google.android.material.textfield.TextInputLayout
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"

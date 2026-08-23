@@ -64,7 +64,7 @@ import java.util.Locale;
 
 
 @SuppressLint("SetTextI18n, StaticFieldLeak, NonConstantResourceId")
-public class DuplicateBluetoothPrint extends AppCompatActivity implements View.OnClickListener {
+public class DuplicateBluetoothPrint extends BaseActivity implements View.OnClickListener {
 
     public static TextView twoShopName, twoShopDetails, twoInvoiceDetails, twoShopPrintStatus, twoSubTotal, twoShopCGST, twoCGST, twoShopSGST, twoSGST, twoDiscount, twoTotalAmount, twoInvoiceTermsCondition;
     public static ImageView twoCompanyLogo, twoQRLogo;
@@ -304,7 +304,7 @@ public class DuplicateBluetoothPrint extends AppCompatActivity implements View.O
             if (paymentMode != null) {
                 if (!printerSettingResponseList.isEmpty()) {
                     progressDialog = new ProgressDialog(activity);
-                    progressDialog.setMessage("Printing in progress");
+                    progressDialog.setMessage(getString(R.string.toast_printing_in_progress));
 
                     if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("2-Inch")) {
                         print2InchBill();
@@ -312,11 +312,11 @@ public class DuplicateBluetoothPrint extends AppCompatActivity implements View.O
                         print3InchBill();
                     }
                 } else {
-                    Toast.makeText(activity, "Please select printer from setting", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(activity, getString(R.string.toast_please_select_printer_from_setting), Toast.LENGTH_SHORT).show();
                 }
 
             } else {
-                Toast.makeText(activity, "Please select payment mode", Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity, getString(R.string.toast_please_select_payment_mode), Toast.LENGTH_SHORT).show();
             }
         }
     }

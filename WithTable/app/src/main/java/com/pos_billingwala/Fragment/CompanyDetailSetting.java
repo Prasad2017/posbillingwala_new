@@ -200,22 +200,22 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
                                 if (!binding.stateName.getText().toString().isEmpty()) {
                                     addCompanyDetails();
                                 } else {
-                                    Toast.makeText(activity, "Please fill state name", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(activity, getString(R.string.toast_please_fill_state_name), Toast.LENGTH_SHORT).show();
                                 }
                             } else {
-                                Toast.makeText(activity, "Please fill country name", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(activity, getString(R.string.toast_please_fill_country_name), Toast.LENGTH_SHORT).show();
                             }
                         } else {
-                            Toast.makeText(activity, "Please fill company address", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(activity, getString(R.string.toast_please_fill_company_address), Toast.LENGTH_SHORT).show();
                         }
                     } else {
-                        Toast.makeText(activity, "Please fill company mobile number", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(activity, getString(R.string.toast_please_fill_company_mobile_number), Toast.LENGTH_SHORT).show();
                     }
                 } else {
-                    Toast.makeText(activity, "Please fill cashier name", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(activity, getString(R.string.toast_please_fill_cashier_name), Toast.LENGTH_SHORT).show();
                 }
             } else {
-                Toast.makeText(activity, "Please fill company name", Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity, getString(R.string.toast_please_fill_company_name), Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -305,7 +305,7 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
                 File finalFile = new File(getRealPathFromURI(selectedImage));
             }
         } else {
-            Toast.makeText(activity, "Canceled by user", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, getString(R.string.toast_canceled_by_user), Toast.LENGTH_SHORT).show();
         }
 
     }
@@ -361,12 +361,12 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
             posBillingWalaDatabase.addCompanyDetails(companyLogo, binding.shopName.getText().toString(), binding.cashierName.getText().toString(), binding.shopMobile.getText().toString(),
                     binding.shopAddress.getText().toString(), currencyName, tableStatus, noOfTable, binding.countryName.getText().toString(), binding.stateName.getText().toString(), gstStatus, binding.gstNumber.getText().toString(),
                     binding.shopCGST.getText().toString(), binding.shopSGST.getText().toString(), binding.panNumber.getText().toString(), binding.shopFssai.getText().toString(), 0, paymentLogo);
-            Toast.makeText(activity, "Company Details saved", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, getString(R.string.toast_company_details_saved), Toast.LENGTH_SHORT).show();
         } else {
             posBillingWalaDatabase.updateCompanyDetails(companyLogo, companyId, binding.shopName.getText().toString(), binding.cashierName.getText().toString(), binding.shopMobile.getText().toString(),
                     binding.shopAddress.getText().toString(), currencyName, tableStatus, noOfTable, binding.countryName.getText().toString(), binding.stateName.getText().toString(), gstStatus, binding.gstNumber.getText().toString(),
                     binding.shopCGST.getText().toString(), binding.shopSGST.getText().toString(), binding.panNumber.getText().toString(), binding.shopFssai.getText().toString(), 0, paymentLogo);
-            Toast.makeText(activity, "Company Details updated", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, getString(R.string.toast_company_details_updated), Toast.LENGTH_SHORT).show();
         }
 
         getCompanyDetails();

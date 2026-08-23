@@ -39,7 +39,7 @@
                 android:gravity="center"
                 android:paddingStart="5dp"
                 android:paddingEnd="5dp"
-                android:text="Printer Details"
+                android:text="@string/setting_printer_details"
                 android:textColor="@color/white"
                 android:textSize="17dp" />
 
@@ -69,7 +69,7 @@
                 android:layout_marginTop="15dp"
                 android:fontFamily="@font/poppinsregular"
                 android:gravity="center"
-                android:text="Invoice Printer Name"
+                android:text="@string/ui_invoice_printer_name"
                 android:textColor="@color/textcolor" />
 
             <LinearLayout
@@ -103,7 +103,7 @@
                     android:gravity="center"
                     android:paddingStart="10dp"
                     android:paddingEnd="10dp"
-                    android:text="Connect"
+                    android:text="@string/ui_connect"
                     android:textColor="@color/white"
                     android:textSize="15sp" />
 
@@ -124,7 +124,7 @@
                     android:layout_marginStart="5dp"
                     android:fontFamily="@font/poppinsregular"
                     android:gravity="center"
-                    android:text="KOT Print Printer Name"
+                    android:text="@string/ui_kot_print_printer_name"
                     android:textColor="@color/textcolor" />
 
                 <LinearLayout
@@ -158,7 +158,7 @@
                         android:gravity="center"
                         android:paddingStart="10dp"
                         android:paddingEnd="10dp"
-                        android:text="Connect"
+                        android:text="@string/ui_connect"
                         android:textColor="@color/white"
                         android:textSize="15sp" />
 
@@ -189,7 +189,7 @@
                     android:digits="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ./-"
                     android:drawableTint="@color/light_black"
                     android:fontFamily="@font/poppinsregular"
-                    android:hint="Sales Invoice Prefix"
+                    android:hint="@string/ui_sales_invoice_prefix"
                     android:imeOptions="actionNext"
                     android:inputType="textCapCharacters"
                     android:paddingStart="15dp"
@@ -225,7 +225,7 @@
                     android:digits="0123456789"
                     android:drawableTint="@color/light_black"
                     android:fontFamily="@font/poppinsregular"
-                    android:hint="Print Feed Lines"
+                    android:hint="@string/ui_print_feed_lines"
                     android:imeOptions="actionNext"
                     android:inputType="numberDecimal"
                     android:paddingStart="15dp"
@@ -261,7 +261,7 @@
                     android:digits="0123456789"
                     android:drawableTint="@color/light_black"
                     android:fontFamily="@font/poppinsregular"
-                    android:hint="KOT Print Feed Lines"
+                    android:hint="@string/ui_kot_print_feed_lines"
                     android:imeOptions="actionNext"
                     android:inputType="numberDecimal"
                     android:paddingStart="15dp"
@@ -288,7 +288,7 @@
                 android:paddingEnd="10dp"
                 android:switchMinWidth="45dp"
                 android:switchPadding="30dp"
-                android:text="Use Logo on Bill"
+                android:text="@string/ui_use_logo_on_bill"
                 android:textColor="@color/black"
                 android:textOff="Off"
                 android:textOn="On"
@@ -308,7 +308,7 @@
                 android:paddingEnd="10dp"
                 android:switchMinWidth="45dp"
                 android:switchPadding="30dp"
-                android:text="Use Payment QR on Bill"
+                android:text="@string/ui_use_payment_qr_on_bill"
                 android:textColor="@color/black"
                 android:textOff="Off"
                 android:textOn="On"
@@ -328,7 +328,7 @@
                 android:paddingEnd="10dp"
                 android:switchMinWidth="45dp"
                 android:switchPadding="30dp"
-                android:text="Use Customer Details on Bill"
+                android:text="@string/ui_use_customer_details_on_bill"
                 android:textColor="@color/black"
                 android:textOff="Off"
                 android:textOn="On"
@@ -348,7 +348,7 @@
                 android:paddingEnd="10dp"
                 android:switchMinWidth="45dp"
                 android:switchPadding="30dp"
-                android:text="Product Quantity Update"
+                android:text="@string/ui_product_quantity_update"
                 android:textColor="@color/black"
                 android:textOff="Off"
                 android:textOn="On"
@@ -377,7 +377,7 @@
                     android:layout_height="wrap_content"
                     android:drawableTint="@color/light_black"
                     android:fontFamily="@font/poppinsregular"
-                    android:hint="Sales Invoice Title"
+                    android:hint="@string/ui_sales_invoice_title"
                     android:imeOptions="actionNext"
                     android:inputType="textCapWords"
                     android:paddingStart="15dp"
@@ -411,7 +411,7 @@
                     android:layout_height="wrap_content"
                     android:digits="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ. "
                     android:fontFamily="@font/poppinsregular"
-                    android:hint="Invoice Terms &amp; Conditions"
+                    android:hint="@string/ui_invoice_terms_amp_conditions"
                     android:inputType="textCapWords|textMultiLine"
                     android:paddingStart="15dp"
                     android:paddingEnd="10dp"
@@ -435,7 +435,7 @@
         android:background="@color/colorPrimary"
         android:fontFamily="@font/poppinsmedium"
         android:gravity="center"
-        android:text="Save Setting"
+        android:text="@string/ui_save_setting"
         android:textAllCaps="true"
         android:textColor="@color/white"
         android:textSize="17dp" />

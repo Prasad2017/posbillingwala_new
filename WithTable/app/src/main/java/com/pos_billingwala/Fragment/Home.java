@@ -13,14 +13,20 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.Settings;
+import android.text.TextUtils;
 import android.text.method.HideReturnsTransformationMethod;
 import android.text.method.PasswordTransformationMethod;
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -55,8 +61,10 @@ import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.BuildConfig;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.Common;
+import com.pos_billingwala.Extra.LicenceExpiredUi;
 import com.pos_billingwala.Extra.LicenseValidator;
 import com.pos_billingwala.Extra.DetectConnection;
+import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.PrinterSettingResponse;
 import com.pos_billingwala.NetworkToOffline.NetworkDataFetcher;
 import com.pos_billingwala.NetworkToOffline.Receiver.LicenceKeyReceiver;
@@ -110,6 +118,18 @@ public class Home extends Fragment implements View.OnClickListener {
     FragmentHomeBinding binding;
 
     BluetoothAdapter bluetoothAdapter;
+    private final Handler homeClockHandler = new Handler(Looper.getMainLooper());
+    private final SimpleDateFormat homeDateTimeFormat =
+            new SimpleDateFormat("EEE, dd MMM yyyy  hh:mm:ss a", Locale.getDefault());
+    private int lastGreetingHour = -1;
+    private String cachedDisplayShopName;
+    private final Runnable homeClockRunnable = new Runnable() {
+        @Override
+        public void run() {
+            updateHomeDateTime();
+            homeClockHandler.postDelayed(this, 1000);
+        }
+    };
 
     public static long getUnitBetweenDates(Date startDate, Date endDate, TimeUnit unit) {
         long timeDiff = endDate.getTime() - startDate.getTime();
@@ -161,6 +181,7 @@ public class Home extends Fragment implements View.OnClickListener {
             file1.delete();
         }
         Intent intent = new Intent(activity, Login.class);
+        intent.putExtra(LicenceExpiredUi.EXTRA_SHOW_LICENCE_EXPIRED, true);
         activity.startActivity(intent);
         activity.finish();
     }
@@ -213,7 +234,7 @@ public class Home extends Fragment implements View.OnClickListener {
 
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (bluetoothAdapter == null) {
-            Toast.makeText(activity, "Bluetooth is not supported on this device", Toast.LENGTH_LONG).show();
+            Toast.makeText(activity, getString(R.string.toast_bluetooth_is_not_supported_on_this_devic), Toast.LENGTH_LONG).show();
         }
 
         posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
@@ -221,15 +242,7 @@ public class Home extends Fragment implements View.OnClickListener {
         licenceKeyReceiver = new LicenceKeyReceiver();
         offlineToNetworkReceiver = new OfflineToNetworkReceiver();
 
-        binding.shopName.setText("Hi " + MainActivity.shopName);
-        try {
-            Picasso.get()
-                    .load(BuildConfig.MEDIA_BASE_URL + MainActivity.shopImage)
-                    .placeholder(R.drawable.app_logo)
-                    .into(binding.userPhoto);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        updateHomeHeader();
 
         binding.swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
@@ -291,7 +304,7 @@ public class Home extends Fragment implements View.OnClickListener {
                 enableBluetooth();
             } else {
                 // Permission denied, show a message or handle accordingly
-                Toast.makeText(activity, "Bluetooth permission denied", Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity, getString(R.string.toast_bluetooth_permission_denied), Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -312,6 +325,7 @@ public class Home extends Fragment implements View.OnClickListener {
         binding.messBilling.setOnClickListener(this);
         binding.productCardView.setOnClickListener(this);
         binding.categoryCardView.setOnClickListener(this);
+        binding.subcategoryCardView.setOnClickListener(this);
         binding.hideShowTotalSale.setOnClickListener(this);
         binding.hideShowTodaySale.setOnClickListener(this);
         binding.fetchDataLayout.setOnClickListener(this);
@@ -391,32 +405,35 @@ public class Home extends Fragment implements View.OnClickListener {
                 createPos.setArguments(bundle);
                 ((MainActivity) activity).loadFragment(createPos, true);
             } else {
-                Toast.makeText(activity, "you have not selected fast billing. Please contact your owner", Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity, getString(R.string.toast_you_have_not_selected_fast_billing_pleas), Toast.LENGTH_SHORT).show();
             }
         } else if (id == R.id.tableBilling) {
             if (MainActivity.dineIn.equalsIgnoreCase("1")) {
                 ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
                 ((MainActivity) activity).loadFragment(new InvoiceCompanyTable(), true);
             } else {
-                Toast.makeText(activity, "you have not selected dine-in. Please contact your owner", Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity, getString(R.string.toast_you_have_not_selected_dinein_please_cont), Toast.LENGTH_SHORT).show();
             }
         } else if (id == R.id.takeAwayBilling) {
             if (MainActivity.takeAway.equalsIgnoreCase("1")) {
                 ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
                 ((MainActivity) activity).loadFragment(new InvoiceTakeAway(), true);
             } else {
-                Toast.makeText(activity, "you have not selected take away. Please contact your owner", Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity, getString(R.string.toast_you_have_not_selected_take_away_please_c), Toast.LENGTH_SHORT).show();
             }
         } else if (id == R.id.messBilling) {
             if (MainActivity.mess.equalsIgnoreCase("1")) {
                 ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
                 ((MainActivity) activity).loadFragment(new InvoiceMess(), true);
             } else {
-                Toast.makeText(activity, "you have not selected take away. Please contact your owner", Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity, getString(R.string.toast_you_have_not_selected_take_away_please_c), Toast.LENGTH_SHORT).show();
             }
         } else if (id == R.id.categoryCardView) {
             ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
             ((MainActivity) activity).loadFragment(new AddCategory(), true);
+        } else if (id == R.id.subcategoryCardView) {
+            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
+            ((MainActivity) activity).loadFragment(new AddSubcategory(), true);
         } else if (id == R.id.productCardView) {
             ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
             ((MainActivity) activity).loadFragment(new ProductMaster(), true);
@@ -447,8 +464,8 @@ public class Home extends Fragment implements View.OnClickListener {
     public void confirmFetchData() {
 
         new MaterialAlertDialogBuilder(activity, R.style.ThemeDialog)
-                .setTitle("Do you want to confirm to fetch from cloud?")
-                .setMessage("Local data will be replaced with cloud data. Unsynced bills cannot be overwritten — sync them first.")
+                .setTitle(getString(R.string.toast_do_you_want_to_confirm_to_fetch_from_clo))
+                .setMessage(getString(R.string.toast_local_data_will_be_replaced_with_cloud_d))
                 .setCancelable(false)
                 .setPositiveButton("YES", new DialogInterface.OnClickListener() {
                     @Override
@@ -483,15 +500,15 @@ public class Home extends Fragment implements View.OnClickListener {
     public void confirmSynchronizeData() {
 
         new MaterialAlertDialogBuilder(activity, R.style.ThemeDialog)
-                .setTitle("Do you want to confirm to send on cloud?")
-                .setMessage("Your offline data will be send to the cloud.")
+                .setTitle(getString(R.string.toast_do_you_want_to_confirm_to_send_on_cloud))
+                .setMessage(getString(R.string.toast_your_offline_data_will_be_send_to_the_cl))
                 .setCancelable(false)
                 .setPositiveButton("YES", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         dialogInterface.dismiss();
                         if (DetectConnection.checkInternetConnection(activity)) {
-                            Toast.makeText(activity, "Offline Data uploading to server", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(activity, getString(R.string.toast_offline_data_uploading_to_server), Toast.LENGTH_SHORT).show();
                             UserSynchronizeData userSynchronizeData = new UserSynchronizeData(activity);
                         } else {
                             DetectConnection.noInternetConnection(activity);
@@ -605,6 +622,12 @@ public class Home extends Fragment implements View.OnClickListener {
         while (cursor.moveToNext()) {
             String totalCategory = cursor.getString(cursor.getColumnIndex("totalCategory"));
             binding.totalCategory.setText(totalCategory);
+        }
+        //Total Subcategory
+        cursor = database.rawQuery("SELECT COUNT(subcategoryId) as totalSubcategory FROM " + POSBillingWalaDatabase.PRODUCT_SUBCATEGORY_TABLE + " WHERE subcategoryDeletedStatus = '0'", null);
+        while (cursor.moveToNext()) {
+            String totalSubcategory = cursor.getString(cursor.getColumnIndex("totalSubcategory"));
+            binding.totalSubcategory.setText(totalSubcategory);
         }
         //Total Product
         cursor = database.rawQuery("SELECT COUNT(productId) as totalProduct FROM " + POSBillingWalaDatabase.PRODUCT_TABLE + " WHERE categoryName !='' AND productDeletedStatus='0'", null);
@@ -723,8 +746,8 @@ public class Home extends Fragment implements View.OnClickListener {
     public void showSettingsDialog() {
 
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(activity);
-        builder.setTitle("Need Permissions");
-        builder.setMessage("This app needs permission to use this feature. You can grant them in app settings.");
+        builder.setTitle(getString(R.string.toast_need_permissions));
+        builder.setMessage(getString(R.string.toast_this_app_needs_permission_to_use_this_fe));
         builder.setPositiveButton("GOTO SETTINGS", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
@@ -792,6 +815,7 @@ public class Home extends Fragment implements View.OnClickListener {
     @Override
     public void onPause() {
         super.onPause();
+        stopHomeClock();
         if (adView != null) {
             adView.pause();
         }
@@ -805,10 +829,123 @@ public class Home extends Fragment implements View.OnClickListener {
             adView.resume();
         }
         registerConnectivityReceivers();
+        updateHomeHeader();
+        startHomeClock();
+    }
+
+    private void updateHomeHeader() {
+        if (binding == null) {
+            return;
+        }
+        cachedDisplayShopName = null;
+        lastGreetingHour = -1;
+        binding.shopName.setText(getGreeting() + ", " + getDisplayShopName());
+        updateHomeDateTime();
+        loadHomeStoreImage();
+    }
+
+    private void startHomeClock() {
+        stopHomeClock();
+        homeClockHandler.post(homeClockRunnable);
+    }
+
+    private void stopHomeClock() {
+        homeClockHandler.removeCallbacks(homeClockRunnable);
+    }
+
+    private void updateHomeDateTime() {
+        if (binding == null || binding.homeDateTime == null) {
+            return;
+        }
+        Date now = new Date();
+        binding.homeDateTime.setText(homeDateTimeFormat.format(now));
+
+        int hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
+        if (hour != lastGreetingHour && binding.shopName != null) {
+            lastGreetingHour = hour;
+            binding.shopName.setText(getGreeting() + ", " + getDisplayShopName());
+        }
+    }
+
+    private String getGreeting() {
+        int hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
+        if (hour >= 5 && hour < 12) {
+            return getString(R.string.good_morning);
+        } else if (hour >= 12 && hour < 17) {
+            return getString(R.string.good_afternoon);
+        } else if (hour >= 17 && hour < 21) {
+            return getString(R.string.good_evening);
+        } else {
+            return getString(R.string.good_night);
+        }
+    }
+
+    private String getDisplayShopName() {
+        if (cachedDisplayShopName != null) {
+            return cachedDisplayShopName;
+        }
+        if (!TextUtils.isEmpty(MainActivity.shopName)) {
+            cachedDisplayShopName = MainActivity.shopName;
+            return cachedDisplayShopName;
+        }
+        try {
+            List<CompanyResponse> companyList = posBillingWalaDatabase.getCompanyDetails();
+            if (companyList != null && !companyList.isEmpty()
+                    && !TextUtils.isEmpty(companyList.get(0).getCompanyName())) {
+                cachedDisplayShopName = companyList.get(0).getCompanyName();
+                return cachedDisplayShopName;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        cachedDisplayShopName = "POS Billingwala";
+        return cachedDisplayShopName;
+    }
+
+    private void loadHomeStoreImage() {
+        binding.userPhoto.setImageResource(R.drawable.app_logo);
+
+        // Prefer store image added in Company Detail settings
+        try {
+            List<CompanyResponse> companyList = posBillingWalaDatabase.getCompanyDetails();
+            if (companyList != null && !companyList.isEmpty()) {
+                String companyLogo = companyList.get(0).getCompanyLogo();
+                if (!TextUtils.isEmpty(companyLogo)) {
+                    byte[] bytes = Base64.decode(companyLogo, Base64.DEFAULT);
+                    Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                    if (bitmap != null) {
+                        binding.userPhoto.setImageBitmap(bitmap);
+                        return;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // Fallback to admin shop image, then app logo
+        if (!TextUtils.isEmpty(MainActivity.shopImage)) {
+            try {
+                Picasso.get()
+                        .load(BuildConfig.MEDIA_BASE_URL + MainActivity.shopImage)
+                        .placeholder(R.drawable.app_logo)
+                        .error(R.drawable.app_logo)
+                        .into(binding.userPhoto);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @Override
+    public void onDestroyView() {
+        stopHomeClock();
+        super.onDestroyView();
     }
 
     @Override
     public void onDestroy() {
+        stopHomeClock();
         super.onDestroy();
         if (adView != null) {
             adView.destroy();

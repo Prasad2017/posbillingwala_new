@@ -129,7 +129,7 @@ public class ProductMaster extends Fragment implements View.OnClickListener {
                 try {
                     startActivityForResult(intent, 1);
                 } catch (ActivityNotFoundException a) {
-                    Toast.makeText(activity, "Oops! Your device doesn't support Speech to Text", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(activity, getString(R.string.toast_oops_your_device_doesnt_support_speech_t), Toast.LENGTH_SHORT).show();
                 }
             }
         });

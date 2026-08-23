@@ -196,7 +196,7 @@ public class InvoiceTableListReport extends Fragment implements View.OnClickList
 
             @Override
             public void onCompleted(String filePath) {
-                Toast.makeText(activity, "Sales Report Successfully Exported", Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity, getString(R.string.toast_sales_report_successfully_exported), Toast.LENGTH_SHORT).show();
                 // openGeneratedReport(directory_path + "/Sale/InvoiceSale.xls");
                 openGeneratedPDF();
             }

@@ -16,9 +16,11 @@ import com.pos_billingwala.Model.InvoiceProductResponse;
 import com.pos_billingwala.Model.InvoiceResponse;
 import com.pos_billingwala.Model.MemberResponse;
 import com.pos_billingwala.Model.MessInvoiceResponse;
+import com.pos_billingwala.Model.MessTokenResponse;
 import com.pos_billingwala.Model.PrinterSettingResponse;
 import com.pos_billingwala.Model.ProductCartResponse;
 import com.pos_billingwala.Model.ProductCategoryResponse;
+import com.pos_billingwala.Model.PortionMasterResponse;
 import com.pos_billingwala.Model.ProductPortionResponse;
 import com.pos_billingwala.Model.ProductResponse;
 import com.pos_billingwala.Model.ProductSubcategoryResponse;
@@ -40,6 +42,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
     public static final String PRODUCT_CATEGORY_TABLE = "product_category";
     public static final String FOOD_TYPE_TABLE = "food_type";
     public static final String PRODUCT_SUBCATEGORY_TABLE = "product_subcategory";
+    public static final String PORTION_MASTER_TABLE = "portion_master";
     public static final String PRODUCT_PORTION_TABLE = "product_portion";
     public static final String PRODUCT_TABLE = "product";
     public static final String CART_PRODUCT_TABLE = "cart_product";
@@ -52,8 +55,9 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
     public static final String MEMBER_TABLE = "member";
     public static final String MEMBER_PAYMENT_TABLE = "member_payment";
     public static final String MESS_INVOICE_TABLE = "mess_invoice";
+    public static final String MESS_TOKEN_TABLE = "mess_token";
     // Database Version
-    public static final int DATABASE_VERSION = 16;
+    public static final int DATABASE_VERSION = 18;
 
     /**********************************************  QUERY START PART  **********************************************/
 
@@ -80,9 +84,17 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             + " subcategoryNetworkStatus VARCHAR,"
             + " subcategoryStatus TINYINT DEFAULT 0)";
 
+    public final String PORTION_MASTER_QUERY = "CREATE TABLE IF NOT EXISTS " + PORTION_MASTER_TABLE
+            + "(portionMasterId INTEGER PRIMARY KEY AUTOINCREMENT,"
+            + " portionName VARCHAR NOT NULL,"
+            + " portionMasterDeletedStatus VARCHAR DEFAULT '0',"
+            + " portionMasterNetworkStatus VARCHAR,"
+            + " portionMasterStatus TINYINT DEFAULT 0)";
+
     public final String PRODUCT_PORTION_QUERY = "CREATE TABLE IF NOT EXISTS " + PRODUCT_PORTION_TABLE
             + "(portionId INTEGER PRIMARY KEY AUTOINCREMENT,"
             + " productId INTEGER NOT NULL,"
+            + " portionMasterId INTEGER,"
             + " portionName VARCHAR NOT NULL,"
             + " portionPrice VARCHAR NOT NULL,"
             + " portionSortOrder INTEGER DEFAULT 0,"
@@ -125,6 +137,12 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
     public final String MEMBER_PAYMENT_QUERY = "CREATE TABLE IF NOT EXISTS " + MEMBER_PAYMENT_TABLE + "(paymentId INTEGER PRIMARY KEY AUTOINCREMENT, memberId VARCHAR, memberName VARCHAR, paymentMessAmount VARCHAR, paymentPaidAmount VARCHAR, messTotalDays VARCHAR, paymentDate VARCHAR, paymentNetworkStatus VARCHAR, paymentStatus TINYINT)";
     public final String MESS_INVOICE_QUERY = "CREATE TABLE IF NOT EXISTS " + MESS_INVOICE_TABLE + "(invoiceId INTEGER PRIMARY KEY AUTOINCREMENT, memberId VARCHAR, memberName VARCHAR, messType VARCHAR, messInvoiceDate VARCHAR, messInvoiceNetworkStatus VARCHAR, messInvoiceStatus TINYINT)";
 
+    public final String MESS_TOKEN_QUERY = "CREATE TABLE IF NOT EXISTS " + MESS_TOKEN_TABLE
+            + "(tokenId INTEGER PRIMARY KEY AUTOINCREMENT, tokenCode VARCHAR NOT NULL UNIQUE, memberId VARCHAR, memberName VARCHAR,"
+            + " memberMobile VARCHAR, memberType VARCHAR, messType VARCHAR, tokenAmount VARCHAR, tokenDate VARCHAR,"
+            + " verifiedDate VARCHAR, tokenNetworkStatus VARCHAR, tokenState VARCHAR DEFAULT 'active',"
+            + " tokenStatus TINYINT DEFAULT 0, verifyNetworkStatus VARCHAR, verifyStatus TINYINT DEFAULT 0)";
+
     /**********************************************  QUERY END PART  **********************************************/
 
     /********************************************** Alter Query  **********************************************/
@@ -145,6 +163,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
     public final String ALTER_KOT_PRINTER_FEED_LINES_SETTING_QUERY = "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN KotPrinterFeedLines VARCHAR";
     public final String ALTER_CATEGORY_FOOD_TYPE_QUERY = "ALTER TABLE " + PRODUCT_CATEGORY_TABLE + " ADD COLUMN foodTypeId INTEGER";
     public final String ALTER_PRODUCT_SUBCATEGORY_QUERY = "ALTER TABLE " + PRODUCT_TABLE + " ADD COLUMN subcategoryId INTEGER";
+    public final String ALTER_PRODUCT_PORTION_MASTER_QUERY = "ALTER TABLE " + PRODUCT_PORTION_TABLE + " ADD COLUMN portionMasterId INTEGER";
     public final String ALTER_CART_PORTION_ID_QUERY = "ALTER TABLE " + CART_PRODUCT_TABLE + " ADD COLUMN portionId VARCHAR";
     public final String ALTER_CART_PORTION_NAME_QUERY = "ALTER TABLE " + CART_PRODUCT_TABLE + " ADD COLUMN portionName VARCHAR";
     public final String ALTER_CART_SNAPSHOT_PRODUCT_NAME_QUERY = "ALTER TABLE " + CART_PRODUCT_TABLE + " ADD COLUMN snapshotProductName VARCHAR";
@@ -179,6 +198,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         db.execSQL(FOOD_TYPE_QUERY);
         db.execSQL(PRODUCT_CATEGORY_QUERY);
         db.execSQL(PRODUCT_SUBCATEGORY_QUERY);
+        db.execSQL(PORTION_MASTER_QUERY);
         db.execSQL(PRODUCT_PORTION_QUERY);
         db.execSQL(PRODUCT_QUERY);
         db.execSQL(CART_PRODUCT_QUERY);
@@ -191,6 +211,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         db.execSQL(MEMBER_QUERY);
         db.execSQL(MEMBER_PAYMENT_QUERY);
         db.execSQL(MESS_INVOICE_QUERY);
+        db.execSQL(MESS_TOKEN_QUERY);
         ensureFoodTypeCatalog(db);
     }
 
@@ -236,9 +257,12 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         // Phase 3 catalog foundation (additive only)
         db.execSQL(FOOD_TYPE_QUERY);
         db.execSQL(PRODUCT_SUBCATEGORY_QUERY);
+        db.execSQL(PORTION_MASTER_QUERY);
         db.execSQL(PRODUCT_PORTION_QUERY);
         addColumnIfNotExists(db, PRODUCT_CATEGORY_TABLE, "foodTypeId", ALTER_CATEGORY_FOOD_TYPE_QUERY);
         addColumnIfNotExists(db, PRODUCT_TABLE, "subcategoryId", ALTER_PRODUCT_SUBCATEGORY_QUERY);
+        addColumnIfNotExists(db, PRODUCT_PORTION_TABLE, "portionMasterId", ALTER_PRODUCT_PORTION_MASTER_QUERY);
+        migrateProductPortionsToPortionMaster(db);
         addColumnIfNotExists(db, CART_PRODUCT_TABLE, "portionId", ALTER_CART_PORTION_ID_QUERY);
         addColumnIfNotExists(db, CART_PRODUCT_TABLE, "portionName", ALTER_CART_PORTION_NAME_QUERY);
         addColumnIfNotExists(db, CART_PRODUCT_TABLE, "snapshotProductName", ALTER_CART_SNAPSHOT_PRODUCT_NAME_QUERY);
@@ -260,6 +284,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         addColumnIfNotExists(db, EXPENSES_TABLE, "branchId", ALTER_EXPENSES_BRANCH_QUERY);
         addColumnIfNotExists(db, EXPENSES_TABLE, "deviceId", ALTER_EXPENSES_DEVICE_QUERY);
         ensureFoodTypeCatalog(db);
+        db.execSQL(MESS_TOKEN_QUERY);
         ensureUniqueSyncIndexes(db);
     }
 
@@ -272,6 +297,8 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             dedupeByNetworkStatus(db, INVOICE_TABLE, "invoiceId", "invoiceNetworkStatus");
             dedupeByNetworkStatus(db, INVOICE_PRODUCT_TABLE, "invoiceProductId", "invoiceProductNetworkStatus");
             dedupeByNetworkStatus(db, PRODUCT_PORTION_TABLE, "portionId", "portionNetworkStatus");
+            dedupeByNetworkStatus(db, PORTION_MASTER_TABLE, "portionMasterId", "portionMasterNetworkStatus");
+            dedupeProductPortionByMaster(db);
 
             db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_invoice_network_status ON "
                     + INVOICE_TABLE + "(invoiceNetworkStatus) "
@@ -284,6 +311,15 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_portion_network_status ON "
                     + PRODUCT_PORTION_TABLE + "(portionNetworkStatus) "
                     + "WHERE portionNetworkStatus IS NOT NULL AND portionNetworkStatus != ''");
+
+            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_portion_master_network_status ON "
+                    + PORTION_MASTER_TABLE + "(portionMasterNetworkStatus) "
+                    + "WHERE portionMasterNetworkStatus IS NOT NULL AND portionMasterNetworkStatus != ''");
+
+            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_product_portion_master ON "
+                    + PRODUCT_PORTION_TABLE + "(productId, portionMasterId) "
+                    + "WHERE portionMasterId IS NOT NULL AND portionMasterId > 0 "
+                    + "AND portionDeletedStatus = '0'");
 
             // Billing search indexes (additive; LIKE with leading % still scans, but filters/sorts improve)
             db.execSQL("CREATE INDEX IF NOT EXISTS idx_product_name ON " + PRODUCT_TABLE + "(productName)");
@@ -529,6 +565,135 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
                         + ") d ON t." + networkColumn + " = d.netKey AND t." + idColumn + " != d.keepId"
                         + ")"
         );
+    }
+
+    private void dedupeProductPortionByMaster(SQLiteDatabase db) {
+        try {
+            db.execSQL(
+                    "DELETE FROM " + PRODUCT_PORTION_TABLE + " WHERE portionId IN ("
+                            + "SELECT t.portionId FROM " + PRODUCT_PORTION_TABLE + " t "
+                            + "INNER JOIN ("
+                            + "  SELECT productId, portionMasterId, MIN(portionId) AS keepId "
+                            + "  FROM " + PRODUCT_PORTION_TABLE + " "
+                            + "  WHERE portionMasterId IS NOT NULL AND portionMasterId > 0 "
+                            + "  AND portionDeletedStatus = '0' "
+                            + "  GROUP BY productId, portionMasterId HAVING COUNT(*) > 1"
+                            + ") d ON t.productId = d.productId AND t.portionMasterId = d.portionMasterId "
+                            + "AND t.portionId != d.keepId"
+                            + ")"
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * One-time migration: create portion_master rows from distinct product_portion names and link them.
+     */
+    private void migrateProductPortionsToPortionMaster(SQLiteDatabase db) {
+        try {
+            Cursor names = null;
+            try {
+                names = db.rawQuery(
+                        "SELECT DISTINCT TRIM(portionName) AS pname FROM " + PRODUCT_PORTION_TABLE
+                                + " WHERE portionName IS NOT NULL AND TRIM(portionName) != ''",
+                        null);
+                while (names.moveToNext()) {
+                    String name = names.getString(0);
+                    if (name != null && !name.trim().isEmpty()) {
+                        ensureLocalPortionMasterId(db, name.trim(), null);
+                    }
+                }
+            } finally {
+                if (names != null) {
+                    names.close();
+                }
+            }
+
+            Cursor unlinked = null;
+            try {
+                unlinked = db.rawQuery(
+                        "SELECT portionId, portionName FROM " + PRODUCT_PORTION_TABLE
+                                + " WHERE portionMasterId IS NULL OR portionMasterId = 0",
+                        null);
+                while (unlinked.moveToNext()) {
+                    String portionId = unlinked.getString(unlinked.getColumnIndex("portionId"));
+                    String name = unlinked.getString(unlinked.getColumnIndex("portionName"));
+                    if (name == null || name.trim().isEmpty()) {
+                        continue;
+                    }
+                    long masterId = ensureLocalPortionMasterId(db, name.trim(), null);
+                    if (masterId > 0) {
+                        ContentValues values = new ContentValues();
+                        values.put("portionMasterId", masterId);
+                        db.update(PRODUCT_PORTION_TABLE, values, "portionId=?", new String[]{portionId});
+                    }
+                }
+            } finally {
+                if (unlinked != null) {
+                    unlinked.close();
+                }
+            }
+            dedupeProductPortionByMaster(db);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private long ensureLocalPortionMasterId(SQLiteDatabase db, String portionName, String networkStatus) {
+        if (portionName == null || portionName.trim().isEmpty()) {
+            return -1;
+        }
+        Cursor byName = null;
+        try {
+            byName = db.rawQuery(
+                    "SELECT portionMasterId FROM " + PORTION_MASTER_TABLE
+                            + " WHERE LOWER(TRIM(portionName)) = LOWER(?) AND portionMasterDeletedStatus = '0' LIMIT 1",
+                    new String[]{portionName.trim()});
+            if (byName.moveToFirst()) {
+                return byName.getLong(0);
+            }
+        } finally {
+            if (byName != null) {
+                byName.close();
+            }
+        }
+        if (networkStatus != null && !networkStatus.trim().isEmpty()) {
+            Cursor byNet = null;
+            try {
+                byNet = db.rawQuery(
+                        "SELECT portionMasterId FROM " + PORTION_MASTER_TABLE
+                                + " WHERE portionMasterNetworkStatus = ? LIMIT 1",
+                        new String[]{networkStatus});
+                if (byNet.moveToFirst()) {
+                    return byNet.getLong(0);
+                }
+            } finally {
+                if (byNet != null) {
+                    byNet.close();
+                }
+            }
+        }
+        ContentValues values = new ContentValues();
+        values.put("portionName", portionName.trim());
+        values.put("portionMasterDeletedStatus", "0");
+        if (networkStatus != null && !networkStatus.trim().isEmpty()) {
+            values.put("portionMasterNetworkStatus", networkStatus);
+        } else {
+            values.put("portionMasterNetworkStatus", generateLocalNetworkKey());
+        }
+        values.put("portionMasterStatus", 1);
+        return db.insert(PORTION_MASTER_TABLE, null, values);
+    }
+
+    private String generateLocalNetworkKey() {
+        String chars = "0123456789qwertyuiopasdfghjklzxcvbnm";
+        Random random = new Random();
+        StringBuilder sb = new StringBuilder(10);
+        for (int i = 0; i < 10; i++) {
+            sb.append(chars.charAt(random.nextInt(chars.length())));
+        }
+        return sb.toString();
     }
 
     public boolean invoiceNetworkStatusExists(String invoiceNetworkStatus) {
@@ -777,6 +942,182 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         return list;
     }
 
+    public boolean portionMasterNetworkStatusExists(String portionMasterNetworkStatus) {
+        if (portionMasterNetworkStatus == null || portionMasterNetworkStatus.trim().isEmpty()) {
+            return false;
+        }
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT 1 FROM " + PORTION_MASTER_TABLE + " WHERE portionMasterNetworkStatus = ? LIMIT 1",
+                    new String[]{portionMasterNetworkStatus});
+            return cursor.moveToFirst();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
+    private PortionMasterResponse mapPortionMaster(Cursor cursor) {
+        PortionMasterResponse item = new PortionMasterResponse();
+        item.setPortionMasterId(cursor.getString(cursor.getColumnIndex("portionMasterId")));
+        item.setPortionName(cursor.getString(cursor.getColumnIndex("portionName")));
+        item.setPortionMasterDeletedStatus(cursor.getString(cursor.getColumnIndex("portionMasterDeletedStatus")));
+        item.setPortionMasterNetworkStatus(cursor.getString(cursor.getColumnIndex("portionMasterNetworkStatus")));
+        item.setPortionMasterStatus(cursor.getString(cursor.getColumnIndex("portionMasterStatus")));
+        return item;
+    }
+
+    public boolean insertPortionMaster(String portionName, String portionMasterDeletedStatus,
+                                       String portionMasterNetworkStatus, int portionMasterStatus) {
+        if (portionMasterNetworkStatusExists(portionMasterNetworkStatus)) {
+            return false;
+        }
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("portionName", portionName);
+        values.put("portionMasterDeletedStatus",
+                portionMasterDeletedStatus != null ? portionMasterDeletedStatus : "0");
+        values.put("portionMasterNetworkStatus", portionMasterNetworkStatus);
+        values.put("portionMasterStatus", portionMasterStatus);
+        long rowId = db.insertWithOnConflict(PORTION_MASTER_TABLE, null, values, SQLiteDatabase.CONFLICT_IGNORE);
+        db.close();
+        return rowId != -1;
+    }
+
+    public void updatePortionMaster(String portionMasterId, String portionName, int portionMasterStatus) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("portionName", portionName);
+        values.put("portionMasterStatus", portionMasterStatus);
+        db.update(PORTION_MASTER_TABLE, values, "portionMasterId=?", new String[]{portionMasterId});
+        ContentValues linkValues = new ContentValues();
+        linkValues.put("portionName", portionName);
+        db.update(PRODUCT_PORTION_TABLE, linkValues, "portionMasterId=?", new String[]{portionMasterId});
+        db.close();
+    }
+
+    public void deletePortionMaster(String portionMasterId) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("portionMasterDeletedStatus", "1");
+        values.put("portionMasterStatus", 0);
+        db.update(PORTION_MASTER_TABLE, values, "portionMasterId=?", new String[]{portionMasterId});
+        db.close();
+    }
+
+    public List<PortionMasterResponse> getPortionMasterList() {
+        List<PortionMasterResponse> list = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT * FROM " + PORTION_MASTER_TABLE
+                            + " WHERE portionMasterDeletedStatus = '0' ORDER BY portionName ASC, portionMasterId ASC",
+                    null);
+            while (cursor.moveToNext()) {
+                list.add(mapPortionMaster(cursor));
+            }
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return list;
+    }
+
+    public PortionMasterResponse getPortionMasterById(String portionMasterId) {
+        if (portionMasterId == null || portionMasterId.trim().isEmpty()) {
+            return null;
+        }
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT * FROM " + PORTION_MASTER_TABLE + " WHERE portionMasterId = ? LIMIT 1",
+                    new String[]{portionMasterId});
+            if (cursor.moveToFirst()) {
+                return mapPortionMaster(cursor);
+            }
+            return null;
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
+    public List<PortionMasterResponse> getPortionMasterByName(String portionName) {
+        List<PortionMasterResponse> list = new ArrayList<>();
+        if (portionName == null || portionName.trim().isEmpty()) {
+            return list;
+        }
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT * FROM " + PORTION_MASTER_TABLE
+                            + " WHERE LOWER(TRIM(portionName)) = LOWER(?) AND portionMasterDeletedStatus = '0'",
+                    new String[]{portionName.trim()});
+            while (cursor.moveToNext()) {
+                list.add(mapPortionMaster(cursor));
+            }
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return list;
+    }
+
+    public int countUsageOnProducts(String portionMasterId) {
+        if (portionMasterId == null || portionMasterId.trim().isEmpty()) {
+            return 0;
+        }
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT COUNT(*) FROM " + PRODUCT_PORTION_TABLE
+                            + " WHERE portionMasterId = ? AND portionDeletedStatus = '0'",
+                    new String[]{portionMasterId});
+            if (cursor.moveToFirst()) {
+                return cursor.getInt(0);
+            }
+            return 0;
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
+    public void ensurePortionMasterFromServer(String portionName, String portionMasterDeletedStatus,
+                                            String portionMasterNetworkStatus) {
+        if (portionMasterNetworkStatus == null || portionMasterNetworkStatus.trim().isEmpty()) {
+            return;
+        }
+        if (portionMasterNetworkStatusExists(portionMasterNetworkStatus)) {
+            return;
+        }
+        String deleted = portionMasterDeletedStatus != null ? portionMasterDeletedStatus : "0";
+        insertPortionMaster(
+                portionName != null ? portionName : "",
+                deleted,
+                portionMasterNetworkStatus,
+                1);
+    }
+
+    public String resolveLocalPortionMasterId(String portionMasterId, String portionName,
+                                              String portionMasterNetworkStatus) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        long id = ensureLocalPortionMasterId(db, portionName, portionMasterNetworkStatus);
+        db.close();
+        return id > 0 ? String.valueOf(id) : portionMasterId;
+    }
+
     public boolean portionNetworkStatusExists(String portionNetworkStatus) {
         if (portionNetworkStatus == null || portionNetworkStatus.trim().isEmpty()) {
             return false;
@@ -805,30 +1146,69 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         item.setPortionDeletedStatus(cursor.getString(cursor.getColumnIndex("portionDeletedStatus")));
         item.setPortionNetworkStatus(cursor.getString(cursor.getColumnIndex("portionNetworkStatus")));
         item.setPortionStatus(cursor.getString(cursor.getColumnIndex("portionStatus")));
+        int masterCol = cursor.getColumnIndex("portionMasterId");
+        if (masterCol >= 0 && !cursor.isNull(masterCol)) {
+            item.setPortionMasterId(cursor.getString(masterCol));
+        }
         return item;
     }
 
     /**
-     * Inserts a portion when network key is new. Returns false if duplicate sync key.
+     * Inserts or updates a product portion. Upserts on (productId, portionMasterId) when master is set.
      */
-    public boolean insertProductPortion(String productId, String portionName, String portionPrice,
-                                        int portionSortOrder, String portionDeletedStatus,
+    public boolean insertProductPortion(String productId, String portionMasterId, String portionName,
+                                        String portionPrice, int portionSortOrder, String portionDeletedStatus,
                                         String portionNetworkStatus, int portionStatus) {
+        String deleted = portionDeletedStatus != null ? portionDeletedStatus : "0";
+        if (portionMasterId != null && !portionMasterId.trim().isEmpty()) {
+            ProductPortionResponse existing = getProductPortionByMasterId(productId, portionMasterId);
+            if (existing != null) {
+                SQLiteDatabase db = this.getWritableDatabase();
+                ContentValues values = new ContentValues();
+                values.put("portionName", portionName);
+                values.put("portionPrice", portionPrice);
+                values.put("portionSortOrder", portionSortOrder);
+                values.put("portionDeletedStatus", deleted);
+                if (portionNetworkStatus != null && !portionNetworkStatus.trim().isEmpty()) {
+                    values.put("portionNetworkStatus", portionNetworkStatus);
+                }
+                values.put("portionStatus", portionStatus);
+                db.update(PRODUCT_PORTION_TABLE, values, "portionId=?", new String[]{existing.getPortionId()});
+                db.close();
+                return true;
+            }
+        }
         if (portionNetworkStatusExists(portionNetworkStatus)) {
             return false;
         }
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put("productId", productId);
+        putOptionalColumn(values, "portionMasterId", portionMasterId);
         values.put("portionName", portionName);
         values.put("portionPrice", portionPrice);
         values.put("portionSortOrder", portionSortOrder);
-        values.put("portionDeletedStatus", portionDeletedStatus != null ? portionDeletedStatus : "0");
+        values.put("portionDeletedStatus", deleted);
         values.put("portionNetworkStatus", portionNetworkStatus);
         values.put("portionStatus", portionStatus);
         long rowId = db.insertWithOnConflict(PRODUCT_PORTION_TABLE, null, values, SQLiteDatabase.CONFLICT_IGNORE);
         db.close();
         return rowId != -1;
+    }
+
+    /**
+     * Legacy entry point without portion master — resolves master by name when possible.
+     */
+    public boolean insertProductPortion(String productId, String portionName, String portionPrice,
+                                        int portionSortOrder, String portionDeletedStatus,
+                                        String portionNetworkStatus, int portionStatus) {
+        String masterId = null;
+        List<PortionMasterResponse> masters = getPortionMasterByName(portionName);
+        if (!masters.isEmpty()) {
+            masterId = masters.get(0).getPortionMasterId();
+        }
+        return insertProductPortion(productId, masterId, portionName, portionPrice, portionSortOrder,
+                portionDeletedStatus, portionNetworkStatus, portionStatus);
     }
 
     public boolean insertProductPortion(ProductPortionResponse portion) {
@@ -849,8 +1229,17 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             }
         } catch (NumberFormatException ignored) {
         }
+        String masterId = portion.getPortionMasterId();
+        String masterName = portion.getPortionName();
+        if ((masterId == null || masterId.trim().isEmpty())
+                && portion.getPortionMasterNetworkStatus() != null
+                && !portion.getPortionMasterNetworkStatus().trim().isEmpty()) {
+            ensurePortionMasterFromServer(masterName, "0", portion.getPortionMasterNetworkStatus());
+            masterId = resolveLocalPortionMasterId(null, masterName, portion.getPortionMasterNetworkStatus());
+        }
         return insertProductPortion(
                 portion.getProductId(),
+                masterId,
                 portion.getPortionName(),
                 portion.getPortionPrice(),
                 sort,
@@ -863,6 +1252,16 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put("portionName", portionName);
+        values.put("portionPrice", portionPrice);
+        values.put("portionSortOrder", portionSortOrder);
+        values.put("portionStatus", 0);
+        db.update(PRODUCT_PORTION_TABLE, values, "portionId=?", new String[]{portionId});
+        db.close();
+    }
+
+    public void updateProductPortionPriceAndSort(String portionId, String portionPrice, int portionSortOrder) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
         values.put("portionPrice", portionPrice);
         values.put("portionSortOrder", portionSortOrder);
         values.put("portionStatus", 0);
@@ -950,6 +1349,29 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         return list;
     }
 
+    public ProductPortionResponse getProductPortionByMasterId(String productId, String portionMasterId) {
+        if (productId == null || productId.trim().isEmpty()
+                || portionMasterId == null || portionMasterId.trim().isEmpty()) {
+            return null;
+        }
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT * FROM " + PRODUCT_PORTION_TABLE
+                            + " WHERE productId = ? AND portionMasterId = ? AND portionDeletedStatus = '0' LIMIT 1",
+                    new String[]{productId, portionMasterId});
+            if (cursor.moveToFirst()) {
+                return mapProductPortion(cursor);
+            }
+            return null;
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
     public ProductPortionResponse getProductPortionById(String portionId) {
         if (portionId == null || portionId.trim().isEmpty()) {
             return null;
@@ -1035,6 +1457,63 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
 
         db.close();
 
+    }
+
+    public long addProductAndReturnId(String userId, String categoryId, String categoryName, String productCode,
+                                    String productName, String productPrice, String unitName, String productCGST,
+                                    String productSGST, int productStatus, String productNetworkStatus,
+                                    String productDeletedStatus, String subcategoryId) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+
+        float productWithGSTPrice = 0f, productCGSTAmount = 0f, productSGSTAmount = 0f;
+        if (productCGST != null) {
+            productCGSTAmount = Float.parseFloat(!productCGST.isEmpty() ? productCGST : "0");
+        }
+        if (productSGST != null) {
+            productSGSTAmount = Float.parseFloat(!productSGST.isEmpty() ? productSGST : "0");
+        }
+        productWithGSTPrice = Float.parseFloat(productPrice)
+                + ((Float.parseFloat(productPrice)) * ((productCGSTAmount + productSGSTAmount) / 100));
+
+        contentValues.put("categoryId", categoryId);
+        contentValues.put("categoryName", categoryName);
+        contentValues.put("productCode", productCode);
+        contentValues.put("productName", productName);
+        contentValues.put("productPrice", productPrice);
+        contentValues.put("productUnit", unitName);
+        contentValues.put("productCGST", productCGST);
+        contentValues.put("productSGST", productSGST);
+        contentValues.put("productWithGSTPrice", String.valueOf(productWithGSTPrice));
+        contentValues.put("productStatus", productStatus);
+        contentValues.put("productDeletedStatus", productDeletedStatus);
+        contentValues.put("productNetworkStatus", productNetworkStatus);
+        putOptionalColumn(contentValues, "subcategoryId", subcategoryId);
+
+        long rowId = db.insert(PRODUCT_TABLE, null, contentValues);
+        db.close();
+        return rowId;
+    }
+
+    public String getProductIdByNetworkStatus(String productNetworkStatus) {
+        if (productNetworkStatus == null || productNetworkStatus.trim().isEmpty()) {
+            return null;
+        }
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT productId FROM " + PRODUCT_TABLE + " WHERE productNetworkStatus = ? LIMIT 1",
+                    new String[]{productNetworkStatus});
+            if (cursor.moveToFirst()) {
+                return cursor.getString(0);
+            }
+            return null;
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
     }
 
     public boolean addToCart(String userId, ProductResponse productResponse, String productChangePrice, String productQuantity, String noOfTable, String cartDiscount, String cartOrderStatus) {
@@ -2081,10 +2560,27 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         db.close();
     }
 
+    public Cursor getUnSynchronizePortionMaster(int status) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.rawQuery(
+                "SELECT * FROM " + PORTION_MASTER_TABLE + " WHERE portionMasterStatus = '" + status + "'",
+                null);
+    }
+
+    public void updateSyncPortionMaster(String portionMasterId, int portionMasterStatus) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put("portionMasterStatus", portionMasterStatus);
+        db.update(PORTION_MASTER_TABLE, contentValues, "portionMasterId=?", new String[]{portionMasterId});
+        db.close();
+    }
+
     public Cursor getUnSynchronizePortion(int status) {
         SQLiteDatabase db = this.getReadableDatabase();
-        String sql = "SELECT pp.*, p.productNetworkStatus FROM " + PRODUCT_PORTION_TABLE + " pp "
+        String sql = "SELECT pp.*, p.productNetworkStatus, pm.portionMasterNetworkStatus FROM "
+                + PRODUCT_PORTION_TABLE + " pp "
                 + "LEFT JOIN " + PRODUCT_TABLE + " p ON p.productId = pp.productId "
+                + "LEFT JOIN " + PORTION_MASTER_TABLE + " pm ON pm.portionMasterId = pp.portionMasterId "
                 + "WHERE pp.portionStatus = '" + status + "'";
         return db.rawQuery(sql, null);
     }
@@ -3324,6 +3820,133 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         db.close();
         return messInvoiceResponseList;
 
+    }
+
+    public boolean saveMessToken(String tokenCode, String memberId, String memberName, String memberMobile,
+                                 String memberType, String messType, String tokenAmount, String tokenDate,
+                                 String tokenNetworkStatus, String tokenState, int tokenStatus, int verifyStatus) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put("tokenCode", tokenCode);
+        contentValues.put("memberId", memberId);
+        contentValues.put("memberName", memberName);
+        contentValues.put("memberMobile", memberMobile);
+        contentValues.put("memberType", memberType);
+        contentValues.put("messType", messType);
+        contentValues.put("tokenAmount", tokenAmount);
+        contentValues.put("tokenDate", tokenDate);
+        contentValues.put("tokenNetworkStatus", tokenNetworkStatus);
+        contentValues.put("tokenState", tokenState);
+        contentValues.put("tokenStatus", tokenStatus);
+        contentValues.put("verifyStatus", verifyStatus);
+        db.insert(MESS_TOKEN_TABLE, null, contentValues);
+        db.close();
+        return true;
+    }
+
+    public MessTokenResponse getMessTokenByCode(String tokenCode) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT * FROM " + MESS_TOKEN_TABLE + " WHERE tokenCode = ? LIMIT 1",
+                new String[]{tokenCode});
+        MessTokenResponse token = null;
+        if (cursor.moveToFirst()) {
+            token = cursorToMessToken(cursor);
+        }
+        cursor.close();
+        db.close();
+        return token;
+    }
+
+    public void markMessTokenVerified(String tokenId, String verifiedDate, String verifyNetworkStatus) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put("tokenState", "verified");
+        contentValues.put("verifiedDate", verifiedDate);
+        contentValues.put("verifyNetworkStatus", verifyNetworkStatus);
+        contentValues.put("verifyStatus", 0);
+        db.update(MESS_TOKEN_TABLE, contentValues, "tokenId=?", new String[]{tokenId});
+        db.close();
+    }
+
+    public void updateSyncMessToken(String tokenId) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put("tokenStatus", 1);
+        db.update(MESS_TOKEN_TABLE, contentValues, "tokenId=?", new String[]{tokenId});
+        db.close();
+    }
+
+    public void updateSyncMessTokenVerify(String tokenId) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put("verifyStatus", 1);
+        db.update(MESS_TOKEN_TABLE, contentValues, "tokenId=?", new String[]{tokenId});
+        db.close();
+    }
+
+    public Cursor getUnSynchronizeMessToken(int status) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.rawQuery("SELECT * FROM " + MESS_TOKEN_TABLE + " WHERE tokenStatus = ?",
+                new String[]{String.valueOf(status)});
+    }
+
+    public Cursor getUnSynchronizeMessTokenVerify(int status) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.rawQuery("SELECT * FROM " + MESS_TOKEN_TABLE
+                        + " WHERE tokenState = 'verified' AND verifyStatus = ?",
+                new String[]{String.valueOf(status)});
+    }
+
+    public void addMessToken(MessTokenResponse messTokenResponse) {
+        if (messTokenResponse == null || messTokenResponse.getTokenCode() == null) {
+            return;
+        }
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor existing = db.rawQuery("SELECT tokenId FROM " + MESS_TOKEN_TABLE + " WHERE tokenCode = ? LIMIT 1",
+                new String[]{messTokenResponse.getTokenCode()});
+        boolean hasRow = existing.moveToFirst();
+        existing.close();
+        if (hasRow) {
+            db.close();
+            return;
+        }
+        ContentValues contentValues = new ContentValues();
+        contentValues.put("tokenCode", messTokenResponse.getTokenCode());
+        contentValues.put("memberId", messTokenResponse.getMemberId());
+        contentValues.put("memberName", messTokenResponse.getMemberName());
+        contentValues.put("memberMobile", messTokenResponse.getMemberMobile());
+        contentValues.put("memberType", messTokenResponse.getMemberType());
+        contentValues.put("messType", messTokenResponse.getMessType());
+        contentValues.put("tokenAmount", messTokenResponse.getTokenAmount());
+        contentValues.put("tokenDate", messTokenResponse.getTokenDate());
+        contentValues.put("verifiedDate", messTokenResponse.getVerifiedDate());
+        contentValues.put("tokenNetworkStatus", messTokenResponse.getTokenNetworkStatus());
+        contentValues.put("tokenState", messTokenResponse.getTokenState());
+        contentValues.put("tokenStatus", 1);
+        contentValues.put("verifyNetworkStatus", messTokenResponse.getVerifyNetworkStatus());
+        contentValues.put("verifyStatus", messTokenResponse.getVerifiedDate() != null ? 1 : 0);
+        db.insert(MESS_TOKEN_TABLE, null, contentValues);
+        db.close();
+    }
+
+    private MessTokenResponse cursorToMessToken(Cursor cursor) {
+        MessTokenResponse token = new MessTokenResponse();
+        token.setTokenId(cursor.getString(cursor.getColumnIndex("tokenId")));
+        token.setTokenCode(cursor.getString(cursor.getColumnIndex("tokenCode")));
+        token.setMemberId(cursor.getString(cursor.getColumnIndex("memberId")));
+        token.setMemberName(cursor.getString(cursor.getColumnIndex("memberName")));
+        token.setMemberMobile(cursor.getString(cursor.getColumnIndex("memberMobile")));
+        token.setMemberType(cursor.getString(cursor.getColumnIndex("memberType")));
+        token.setMessType(cursor.getString(cursor.getColumnIndex("messType")));
+        token.setTokenAmount(cursor.getString(cursor.getColumnIndex("tokenAmount")));
+        token.setTokenDate(cursor.getString(cursor.getColumnIndex("tokenDate")));
+        token.setVerifiedDate(cursor.getString(cursor.getColumnIndex("verifiedDate")));
+        token.setTokenNetworkStatus(cursor.getString(cursor.getColumnIndex("tokenNetworkStatus")));
+        token.setTokenState(cursor.getString(cursor.getColumnIndex("tokenState")));
+        token.setTokenStatus(cursor.getString(cursor.getColumnIndex("tokenStatus")));
+        token.setVerifyNetworkStatus(cursor.getString(cursor.getColumnIndex("verifyNetworkStatus")));
+        token.setVerifyStatus(cursor.getString(cursor.getColumnIndex("verifyStatus")));
+        return token;
     }
 
 

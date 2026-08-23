@@ -211,7 +211,7 @@ Or configure `signingConfigs` in each app's `build.gradle` pointing to a local k
 | P5-1 | Done | Firebase Performance + `Observability.java`; traces on save/sync; Crashlytics non-fatal on print/save failures; user context in `MainActivity` |
 | P5-2 | Done | `API/db_prepared.php`; prepared statements on `licence_expiry.php`, `Login.php`, `LoginMpin.php`, `check_licence_expire.php`, `insertInvoice.php`, `updateAndroidKey.php` |
 | P5-3 | Done | `api_tokens` migration + `auth_tokens.php`; tokens on all login endpoints; token guards on `insertInvoice`, Owner profile/product/count, Dealer `insertNewLicence`, Admin `getCustomerList`; all 4 Android apps persist token + Bearer interceptor |
-| P5-4 | Done | Shared `API/db_connection.php`; Owner/Dealer/Admin configs include it; POS + media moved to `www.posbillingwala.in`; `BuildConfig.API_BASE_URL` / `MEDIA_BASE_URL` on all apps |
+| P5-4 | Done | Shared `API/db_connection.php`; Owner/Dealer/Admin configs include it; POS + media moved to `www.posbillingwala.com`; `BuildConfig.API_BASE_URL` / `MEDIA_BASE_URL` on all apps |
 | P5-5 | Done | Removed `spllmgkn_posbill.sql`; added `API/schema/schema_reference.sql`, root `.gitignore`, `db_local.example.php`; credentials via `db_local.php`/env; Admin login uses `password_verify`; `docs/DEPLOY_DB.md` rotation notes |
 
 ### Phase 6 completion log

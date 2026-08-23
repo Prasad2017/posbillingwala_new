@@ -10,6 +10,7 @@ use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\SubcategoryController;
 use App\Http\Controllers\PortionController;
+use App\Http\Controllers\PortionMasterController;
 use App\Http\Controllers\ProductImportController;
 
 /*
@@ -71,6 +72,9 @@ Route::group(['prefix' => 'products', 'middleware' => ['auth']], function(){
 });
 
 Route::group(['prefix' => 'subcategories', 'middleware' => ['auth']], function(){
+	Route::get('all',[SubcategoryController::class, 'getAllSubcategories']);
+	Route::get('add',[SubcategoryController::class, 'getAddRecordPage']);
+	Route::post('add',[SubcategoryController::class, 'addSubcategoryRecord']);
 	Route::get('all/{userId}/{categoryId}',[SubcategoryController::class, 'index']);
 	Route::post('add/{userId}/{categoryId}',[SubcategoryController::class, 'store']);
 	Route::get('delete/{id}',[SubcategoryController::class, 'deleteRecord']);
@@ -80,6 +84,13 @@ Route::group(['prefix' => 'portions', 'middleware' => ['auth']], function(){
 	Route::get('all/{userId}/{productId}',[PortionController::class, 'index']);
 	Route::post('add/{userId}/{productId}',[PortionController::class, 'store']);
 	Route::get('delete/{id}',[PortionController::class, 'deleteRecord']);
+});
+
+Route::group(['prefix' => 'portion-masters', 'middleware' => ['auth']], function(){
+	Route::get('all',[PortionMasterController::class, 'getAll']);
+	Route::get('add',[PortionMasterController::class, 'getAddPage']);
+	Route::post('add',[PortionMasterController::class, 'store']);
+	Route::get('toggle/{id}',[PortionMasterController::class, 'toggle']);
 });
 
 Route::group(['prefix' => 'product-import', 'middleware' => ['auth']], function(){

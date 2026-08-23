@@ -73,6 +73,7 @@ import com.pos_billingwala.BuildConfig;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.Observability;
 import com.pos_billingwala.Extra.SimpleDividerItemDecoration;
+import com.pos_billingwala.Extra.LicenceExpiredUi;
 import com.pos_billingwala.Extra.LicenseSession;
 import com.google.firebase.perf.metrics.Trace;
 import com.pos_billingwala.Fragment.CreatePos;
@@ -106,7 +107,7 @@ import java.util.concurrent.Executors;
 
 
 @SuppressLint({"Range", "SetTextI18n, NewApi, StaticFieldLeak"})
-public class BluetoothPrint extends AppCompatActivity implements View.OnClickListener {
+public class BluetoothPrint extends BaseActivity implements View.OnClickListener {
 
     public static TextView kotPrint, twoKOTShopName, twoKOTInvoiceDetails;
     public static ImageView twoKOTCompanyLogo;
@@ -786,7 +787,7 @@ public class BluetoothPrint extends AppCompatActivity implements View.OnClickLis
                             //Dialog Dismiss Part
                             dialog.dismiss();
                         } else {
-                            Toast.makeText(activity, "Please add discount percentage", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(activity, getString(R.string.toast_please_add_discount_percentage), Toast.LENGTH_SHORT).show();
                         }
                     }
                 });
@@ -841,7 +842,7 @@ public class BluetoothPrint extends AppCompatActivity implements View.OnClickLis
             if (!printerSettingResponseList.isEmpty()) {
 
                 progressDialog = new ProgressDialog(activity);
-                progressDialog.setMessage("Printing in progress");
+                progressDialog.setMessage(getString(R.string.toast_printing_in_progress));
 
                 if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("2-Inch")) {
                     printKOT2InchBill(false);
@@ -850,7 +851,7 @@ public class BluetoothPrint extends AppCompatActivity implements View.OnClickLis
                 }
 
             } else {
-                Toast.makeText(activity, "Please select printer from setting", Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity, getString(R.string.toast_please_select_printer_from_setting), Toast.LENGTH_SHORT).show();
             }
         } else if (id == R.id.printInvoiceCardView) {
             if (!printerSettingResponseList.isEmpty()) {
@@ -893,7 +894,7 @@ public class BluetoothPrint extends AppCompatActivity implements View.OnClickLis
                                     invoiceNumber = resolveInvoiceNumber();
 
                                     progressDialog = new ProgressDialog(activity);
-                                    progressDialog.setMessage("Printing in progress");
+                                    progressDialog.setMessage(getString(R.string.toast_printing_in_progress));
 
                                     if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("2-Inch")) {
                                         print2InchBill(customerName, customerMobile, customerAddress);
@@ -902,7 +903,7 @@ public class BluetoothPrint extends AppCompatActivity implements View.OnClickLis
                                     }
 
                                 } else {
-                                    Toast.makeText(activity, "Please fill customer name", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(activity, getString(R.string.toast_please_fill_customer_name), Toast.LENGTH_SHORT).show();
                                 }
                             }
                         });
@@ -926,7 +927,7 @@ public class BluetoothPrint extends AppCompatActivity implements View.OnClickLis
                     }
                 }
             } else {
-                Toast.makeText(activity, "Please select printer from setting", Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity, getString(R.string.toast_please_select_printer_from_setting), Toast.LENGTH_SHORT).show();
             }
         } else if (id == R.id.shareInvoiceCardView) {
 
@@ -972,13 +973,13 @@ public class BluetoothPrint extends AppCompatActivity implements View.OnClickLis
                                 saveInvoice(customerName, customerMobile, customerAddress, 1);
 
                             } else {
-                                Toast.makeText(activity, "Please fill customer address", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(activity, getString(R.string.toast_please_fill_customer_address), Toast.LENGTH_SHORT).show();
                             }
                         } else {
-                            Toast.makeText(activity, "Please fill customer mobile", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(activity, getString(R.string.toast_please_fill_customer_mobile), Toast.LENGTH_SHORT).show();
                         }
                     } else {
-                        Toast.makeText(activity, "Please fill customer name", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(activity, getString(R.string.toast_please_fill_customer_name), Toast.LENGTH_SHORT).show();
                     }
                 }
             });
@@ -1010,7 +1011,7 @@ public class BluetoothPrint extends AppCompatActivity implements View.OnClickLis
                 hideDialog();
             }
         } catch (Exception e) {
-            Toast.makeText(activity, "KOT print failed", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, getString(R.string.toast_kot_print_failed), Toast.LENGTH_SHORT).show();
             e.printStackTrace();
             hideDialog();
         }
@@ -1037,7 +1038,7 @@ public class BluetoothPrint extends AppCompatActivity implements View.OnClickLis
                 hideDialog();
             }
         } catch (Exception e) {
-            Toast.makeText(activity, "KOT print failed", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, getString(R.string.toast_kot_print_failed), Toast.LENGTH_SHORT).show();
             e.printStackTrace();
             hideDialog();
         }
@@ -1055,12 +1056,12 @@ public class BluetoothPrint extends AppCompatActivity implements View.OnClickLis
             if (bitmap != null) {
                 printImage(bitmap, 48, customerName, customerMobile, customerAddress);
             } else {
-                Toast.makeText(activity, "Print layout failed. Saving bill…", Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity, getString(R.string.toast_print_layout_failed_saving_bill), Toast.LENGTH_SHORT).show();
                 saveInvoice(customerName, customerMobile, customerAddress, 0);
                 hideDialog();
             }
         } catch (Exception e) {
-            Toast.makeText(activity, "Print failed. Saving bill…", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, getString(R.string.toast_print_failed_saving_bill), Toast.LENGTH_SHORT).show();
             e.printStackTrace();
             saveInvoice(customerName, customerMobile, customerAddress, 0);
             hideDialog();
@@ -1079,12 +1080,12 @@ public class BluetoothPrint extends AppCompatActivity implements View.OnClickLis
             if (bitmap != null) {
                 printImage(bitmap, 72, customerName, customerMobile, customerAddress);
             } else {
-                Toast.makeText(activity, "Print layout failed. Saving bill…", Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity, getString(R.string.toast_print_layout_failed_saving_bill), Toast.LENGTH_SHORT).show();
                 saveInvoice(customerName, customerMobile, customerAddress, 0);
                 hideDialog();
             }
         } catch (Exception e) {
-            Toast.makeText(activity, "Print failed. Saving bill…", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, getString(R.string.toast_print_failed_saving_bill), Toast.LENGTH_SHORT).show();
             e.printStackTrace();
             saveInvoice(customerName, customerMobile, customerAddress, 0);
             hideDialog();
@@ -1189,7 +1190,7 @@ public class BluetoothPrint extends AppCompatActivity implements View.OnClickLis
                     try {
                         saveInvoice(customerName, customerMobile, customerAddress, 0);
                     } catch (Exception e) {
-                        Toast.makeText(activity, "Failed to save invoice after print", Toast.LENGTH_LONG).show();
+                        Toast.makeText(activity, getString(R.string.toast_failed_to_save_invoice_after_print), Toast.LENGTH_LONG).show();
                         e.printStackTrace();
                     }
                     hideDialog();
@@ -1354,22 +1355,27 @@ public class BluetoothPrint extends AppCompatActivity implements View.OnClickLis
     public void saveInvoice(String customerName, String customerMobile, String customerAddress, int printStatus) {
 
         if (invoiceSaveInProgress) {
-            Toast.makeText(activity, "Saving invoice…", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, getString(R.string.toast_saving_invoice), Toast.LENGTH_SHORT).show();
             return;
         }
 
         if (productCartResponseList == null || productCartResponseList.isEmpty()) {
-            Toast.makeText(activity, "Cart is empty", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, getString(R.string.toast_cart_is_empty), Toast.LENGTH_SHORT).show();
             return;
         }
 
         if (companyResponseList == null || companyResponseList.isEmpty()) {
-            Toast.makeText(activity, "Company details missing", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, getString(R.string.toast_company_details_missing), Toast.LENGTH_SHORT).show();
             return;
         }
 
         if (!LicenseSession.isBillingAllowed(activity, posBillingWalaDatabase)) {
-            Toast.makeText(activity, LicenseSession.billingBlockedMessage(activity, posBillingWalaDatabase), Toast.LENGTH_LONG).show();
+            String blocked = LicenseSession.billingBlockedMessage(activity, posBillingWalaDatabase);
+            if (LicenceExpiredUi.isExpiredMessage(blocked)) {
+                LicenceExpiredUi.show(activity);
+            } else {
+                LicenceExpiredUi.showInfoDialog(activity, blocked);
+            }
             return;
         }
 
@@ -1394,7 +1400,7 @@ public class BluetoothPrint extends AppCompatActivity implements View.OnClickLis
             subTotalAmt = Float.parseFloat(subTotalTxt.getText().toString().replace("Sub Total\n" + inr, ""));
             discountAmtInput = Float.parseFloat(discountTxt.getText().toString().replace("Discount(%)\n", ""));
         } catch (Exception e) {
-            Toast.makeText(activity, "Invalid bill amounts", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, getString(R.string.toast_invalid_bill_amounts), Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -1513,8 +1519,7 @@ public class BluetoothPrint extends AppCompatActivity implements View.OnClickLis
                     return;
                 }
                 if (!saveOk) {
-                    Toast.makeText(activity,
-                            "Failed to save invoice. Please try again.",
+                    Toast.makeText(activity, getString(R.string.toast_failed_to_save_invoice_please_try_again),
                             Toast.LENGTH_LONG).show();
                     if (saveError != null) {
                         saveError.printStackTrace();
@@ -1527,7 +1532,7 @@ public class BluetoothPrint extends AppCompatActivity implements View.OnClickLis
                         automaticSavePDF(reservedCustomerName, reservedCustomerMobile, reservedCustomerAddress, reservedInvoiceNumber);
                         getCartProductList();
                     } else if (reservedPrintStatus == 0) {
-                        Toast.makeText(activity, "Invoice saved", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(activity, getString(R.string.toast_invoice_saved), Toast.LENGTH_SHORT).show();
                         getCartProductList();
                         onCallBack();
                     }
@@ -1538,7 +1543,7 @@ public class BluetoothPrint extends AppCompatActivity implements View.OnClickLis
                         automaticSavePDF(reservedCustomerName, reservedCustomerMobile, reservedCustomerAddress, reservedInvoiceNumber);
                         getCartProductList();
                     } else if (reservedPrintStatus == 0) {
-                        Toast.makeText(activity, "Invoice saved", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(activity, getString(R.string.toast_invoice_saved), Toast.LENGTH_SHORT).show();
                         getCartProductList();
                         onCallBack();
                     }
@@ -1808,7 +1813,7 @@ public class BluetoothPrint extends AppCompatActivity implements View.OnClickLis
                     automaticSavePDF(customerName, customerMobile, customerAddress, invoiceNumber);
                     getCartProductList();
                 } else if (printStatus == 0) {
-                    Toast.makeText(activity, "Invoice saved", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(activity, getString(R.string.toast_invoice_saved), Toast.LENGTH_SHORT).show();
                     getCartProductList();
                     onCallBack();
                 }
@@ -1825,13 +1830,13 @@ public class BluetoothPrint extends AppCompatActivity implements View.OnClickLis
                         automaticSavePDF(customerName, customerMobile, customerAddress, invoiceNumber);
                         getCartProductList();
                     } else if (printStatus == 0) {
-                        Toast.makeText(activity, "Invoice saved", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(activity, getString(R.string.toast_invoice_saved), Toast.LENGTH_SHORT).show();
                         getCartProductList();
                         onCallBack();
                     }
                     dialog.dismiss();
                 } else {
-                    Toast.makeText(BluetoothPrint.this, "Please select payment mode", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(BluetoothPrint.this, getString(R.string.toast_please_select_payment_mode), Toast.LENGTH_SHORT).show();
                 }
             }
         });

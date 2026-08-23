@@ -38,7 +38,7 @@
                 android:gravity="center"
                 android:paddingStart="5dp"
                 android:paddingEnd="5dp"
-                android:text="Add Inventory"
+                android:text="@string/ui_add_inventory"
                 android:textColor="@color/white"
                 android:textSize="17dp" />
 
@@ -68,7 +68,7 @@
                 android:layout_marginTop="15dp"
                 android:fontFamily="@font/poppinsregular"
                 android:gravity="center"
-                android:text="Product*"
+                android:text="@string/ui_product"
                 android:textColor="@color/textcolor" />
 
             <LinearLayout
@@ -114,7 +114,7 @@
                     android:layout_height="wrap_content"
                     android:drawableTint="@color/light_black"
                     android:fontFamily="@font/poppinsregular"
-                    android:hint="Inventory Qty"
+                    android:hint="@string/ui_inventory_qty"
                     android:imeOptions="actionNext"
                     android:inputType="numberDecimal"
                     android:paddingStart="15dp"
@@ -139,7 +139,7 @@
         android:background="@color/colorPrimary"
         android:fontFamily="@font/poppinsmedium"
         android:gravity="center"
-        android:text="Add Inventory"
+        android:text="@string/ui_add_inventory"
         android:textAllCaps="true"
         android:textColor="@color/white"
         android:textSize="17dp" />

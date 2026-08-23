@@ -23,13 +23,14 @@ import com.google.android.play.core.appupdate.AppUpdateInfo;
 import com.google.android.play.core.appupdate.AppUpdateManager;
 import com.google.android.play.core.appupdate.AppUpdateManagerFactory;
 import com.google.android.play.core.install.model.UpdateAvailability;
+import com.pos_billingwala.Extra.AppLanguage;
 import com.pos_billingwala.Extra.Common;
 import com.pos_billingwala.NetworkToOffline.OfflineNetworkData;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.ActivitySplashScreenBinding;
 
 @SuppressLint({"UseCompatLoadingForDrawables, NonConstantResourceId, CustomSplashScreen"})
-public class SplashScreen extends AppCompatActivity {
+public class SplashScreen extends BaseActivity {
 
     public static final int SPLASH_TIME_OUT = 2000;
     ActivitySplashScreenBinding binding;
@@ -38,6 +39,7 @@ public class SplashScreen extends AppCompatActivity {
     public void setScreenSizeSmall() {
         Configuration configuration = getResources().getConfiguration();
         configuration.fontScale = (float) 1; //0.85 small size, 1 normal size, 1,15 big etc
+        AppLanguage.preserveLocaleOnConfig(this, configuration);
         DisplayMetrics metrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(metrics);
         metrics.scaledDensity = configuration.fontScale * metrics.density;
@@ -75,13 +77,13 @@ public class SplashScreen extends AppCompatActivity {
                     String strMessage = "Please update our <b> POS " + getResources().getString(R.string.app_name) + "</b> app to new version to continue. Before update our app please upload your data on server. We ae not responsible for losing your data.";
                     new MaterialAlertDialogBuilder(SplashScreen.this, R.style.ThemeDialog)
                             .setIcon(getResources().getDrawable(R.mipmap.ic_launcher))
-                            .setTitle("New version available")
+                            .setTitle(getString(R.string.toast_new_version_available))
                             .setCancelable(false)
                             .setMessage(Html.fromHtml(strMessage))
                             .setPositiveButton("Update", new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialogInterface, int i) {
-                                    Toast.makeText(SplashScreen.this, "Data uploading on server", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(SplashScreen.this, getString(R.string.toast_data_uploading_on_server), Toast.LENGTH_SHORT).show();
                                     offlineNetworkData = new OfflineNetworkData(SplashScreen.this, "Update");
                                 }
                             }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {

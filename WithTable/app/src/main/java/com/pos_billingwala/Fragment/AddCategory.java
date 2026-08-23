@@ -110,7 +110,7 @@ public class AddCategory extends Fragment implements View.OnClickListener {
 
         binding.backToHome.setOnClickListener(this);
         binding.addCategory.setOnClickListener(this);
-        binding.manageSubcategories.setOnClickListener(this);
+        binding.managePortionMaster.setOnClickListener(this);
 
     }
 
@@ -124,11 +124,11 @@ public class AddCategory extends Fragment implements View.OnClickListener {
             if (!binding.categoryName.getText().toString().isEmpty()) {
                 addProductCategory();
             } else {
-                Toast.makeText(activity, "Please add category", Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity, getString(R.string.toast_please_add_category), Toast.LENGTH_SHORT).show();
             }
-        } else if (id == R.id.manageSubcategories) {
+        } else if (id == R.id.managePortionMaster) {
             ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-            ((MainActivity) activity).loadFragment(new AddSubcategory(), true);
+            ((MainActivity) activity).loadFragment(new AddPortionMaster(), true);
         }
     }
 
@@ -137,7 +137,7 @@ public class AddCategory extends Fragment implements View.OnClickListener {
         productCategoryNameResponseList.clear();
         productCategoryNameResponseList = posBillingWalaDatabase.getProductCategoryNameList(binding.categoryName.getText().toString());
         if (!productCategoryNameResponseList.isEmpty()) {
-            Toast.makeText(activity, "Product category already added", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, getString(R.string.toast_product_category_already_added), Toast.LENGTH_SHORT).show();
         } else {
 
             posBillingWalaDatabase.insertProductCategory(
@@ -147,7 +147,7 @@ public class AddCategory extends Fragment implements View.OnClickListener {
                     getRandomString(10),
                     resolveSelectedFoodTypeId());
 
-            Toast.makeText(activity, "Product category added successfully", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, getString(R.string.toast_product_category_added_successfully), Toast.LENGTH_SHORT).show();
             binding.categoryName.setText("");
         }
 

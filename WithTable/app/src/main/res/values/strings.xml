@@ -1,8 +1,8 @@
 <resources>
     <string name="app_name">Billingwala</string>
     <string name="privacy_policy">By providing username &amp; password, I hereby agree and accept the <u><font fgcolor='#df0052'>Terms of service</font></u> and <u><font fgcolor='#df0052'>Privacy Policy</font></u> in use of the POS Billingwala app.</string>
-    <string name="sign_in_msg">Sign In to \nkeep do amazing Billing\nwith POS Billingwala</string>
-    <string name="mobile_number_msg">Enter your shop licence key. We\'ll verify your account, so we know you\'re real.</string>
+    <string name="sign_in_msg">Sign in to POS Billingwala</string>
+    <string name="mobile_number_msg">Enter your shop licence key to verify your account and start billing.</string>
     <string name="mpin_msg">Enter your shop PB-PIN. We\'ll verify your account, so we know you\'re real.</string>
 
     <string name="inr">\u20B9</string>
@@ -10,13 +10,41 @@
     <string name="label_month">MONTH</string>
     <string name="label_year">YEAR</string>
 
-    <string name="new_user">New here? <u><b><font fgcolor='#df0052'>Register free</font></b></u></string>
+    <string name="new_user">Don\'t have an account? <u><b><font fgcolor='#df0052'>Register free</font></b></u></string>
     <string name="mpin_login">Login with <b><font fgcolor='#df0052'>PB-PIN</font></b></string>
     <string name="support_phone_display">+91 89831 49299</string>
-    <string name="support_phone_dial">+919883149299</string>
+    <string name="support_phone_dial">+918983149299</string>
+
+    <!-- Licence & auth — keep all user-facing copy here for future language packs (values-hi, etc.) -->
+    <string name="enter_licence_key_hint">Enter licence key</string>
+    <string name="enter_valid_licence_key">Please enter a valid licence key</string>
+    <string name="welcome_pos_billingwala">Welcome to POS Billingwala</string>
+    <string name="loading">Loading</string>
+    <string name="oops_title">Oops…</string>
+    <string name="something_went_wrong">Something went wrong. Please try again.</string>
     <string name="forgot_licence_key_message">Forgot your licence key? Call support: %1$s</string>
+
+    <string name="licence_expired_title">Your licence has ended</string>
+    <string name="licence_expired_message">Thanks for using POS Billingwala.\n\nYour shop licence has expired, so you cannot use the app until it is renewed.\n\nNeed help? Call %1$s</string>
+    <string name="licence_expired_call">Call Support</string>
+    <string name="licence_expired_ok">OK</string>
+
+    <string name="licence_msg_not_activated">Please connect to the internet once to activate your licence.</string>
+    <string name="licence_msg_invalid_signature">We could not verify your licence. Please log in again while online.</string>
+    <string name="licence_msg_device_mismatch">This licence is linked to another device. Please contact support to move it.</string>
+    <string name="licence_msg_device_already_registered">This licence is already registered on another device. Do you want to use it on this phone instead?</string>
+    <string name="licence_msg_key_mismatch">This licence key does not match your account. Please check and try again.</string>
+    <string name="licence_msg_clock_wrong">Your device date or time looks incorrect. Set the correct date, then connect online.</string>
+    <string name="licence_msg_expired">Your licence has expired. Please renew to continue using the app.</string>
+    <string name="licence_msg_offline_grace">You have been offline too long. Please connect briefly to refresh your licence.</string>
+    <string name="licence_msg_trial_used">Your free trial has already been used. Please upgrade to continue.</string>
+    <string name="licence_msg_trial_limit">You have reached the free trial bill limit (%1$d). Please upgrade to continue billing.</string>
+    <string name="licence_msg_trial_limit_generic">You have reached the free trial bill limit. Please upgrade to continue billing.</string>
+    <string name="licence_msg_login_blocked">We could not sign you in with this licence. Please check your key or contact support: %1$s</string>
+    <string name="licence_msg_disabled">This account is disabled. Please contact support: %1$s</string>
+
     <string name="trial_support_contact">Need licence or support help? Call %1$s</string>
-    <string name="new_user_support_team">Create your free account in a few steps. Enter your licence key on the login screen to start billing. Need help? Call +91 89831 49299.</string>
+    <string name="new_user_support_team">Create your free account in a few steps. Enter your licence key on the login screen to start billing. Need help? Call %1$s.</string>
     <string name="trial_signup_title">Register for Free</string>
     <string name="trial_signup_hint">Enter your shop details below to use POS Billingwala free — quick setup, no payment needed.</string>
     <string name="trial_signup_name">Your name</string>
@@ -24,7 +52,7 @@
     <string name="trial_signup_shop">Shop / restaurant name</string>
     <string name="trial_signup_address">Shop address</string>
     <string name="trial_signup_submit">Create Free Account</string>
-    <string name="trial_back_to_login">Already registered? Back to Login</string>
+    <string name="trial_back_to_login">Already have an account? <u><b><font fgcolor='#df0052'>Login</font></b></u></string>
     <string name="trial_error_empty_fields">Please fill in all the details to continue.</string>
     <string name="trial_error_invalid_mobile">Please enter a valid 10-digit mobile number.</string>
     <string name="trial_loading">Creating your free account…</string>
@@ -42,21 +70,34 @@
     <string name="you_can_t_use_gmail_until_you_re_connected_to_the_internet">You can\'t use Gmail until you\'re connected to the internet</string>
     <string name="retry">Retry</string>
     <string name="hi_pos_billingwala">Hi POS Billingwala</string>
+    <string name="good_morning">Good Morning</string>
+    <string name="good_afternoon">Good Afternoon</string>
+    <string name="good_evening">Good Evening</string>
+    <string name="good_night">Good Night</string>
     <string name="fast_billing">Fast Billing</string>
     <string name="dine_in">Dine In</string>
     <string name="take_away">Take Away</string>
-    <string name="technical_support_91_8983149299_91_9130188584">Technical Support: +91 89831 49299</string>
-    <string name="www_webuslabs_com_nemail_info_posbillingwala_in_ncontact_91_8983149299_91_9130188584">www.posbillingwala.com\nEmail: info@posbillingwala.com\nContact: +91 89831 49299</string>
+    <string name="technical_support_91_8983149299_91_9130188584">Technical Support: %1$s</string>
+    <string name="www_webuslabs_com_nemail_info_posbillingwala_in_ncontact_91_8983149299_91_9130188584">www.posbillingwala.com\nEmail: info@posbillingwala.com\nContact: %1$s</string>
     <string name="this_software_is_provided_is_as_without_any_express_or_implied_warranty_in_no_event_will_the_authors_be_held_liable_for_any_damages_arising_from_the_use_of_this_software">This Software is provided \'is-as\',without any express or implied warranty. In no event will the authors be held liable for any damages arising from the use of this software.</string>
     <string name="thank_you_for_choosing_us">Thank You For Choosing Us!</string>
     <string name="about_us">About Us</string>
+    <string name="about_app_title">POS Billingwala</string>
+    <string name="about_contact_title">Get in touch</string>
+    <string name="about_label_website">Website</string>
+    <string name="about_label_email">Email</string>
+    <string name="about_label_phone">Phone</string>
+    <string name="about_website">www.posbillingwala.com</string>
+    <string name="about_email">info@posbillingwala.com</string>
     <string name="category_list">Category List</string>
     <string name="category_detail">CATEGORY DETAIL</string>
     <string name="category_name">Category Name</string>
+    <string name="category_name_hint">e.g. Veg, Non Veg, Beverage</string>
     <string name="add_category">Add Category</string>
     <string name="subcategory_list">Subcategory List</string>
     <string name="subcategory_detail">SUBCATEGORY DETAIL</string>
     <string name="subcategory_name">Subcategory Name</string>
+    <string name="subcategory_name_hint">e.g. Starter, Main Course</string>
     <string name="add_subcategory">Add Subcategory</string>
     <string name="no_subcategory_found">No Subcategory Found\nPlease add new subcategory</string>
     <string name="manage_subcategories">Subcategories</string>
@@ -68,6 +109,20 @@
     <string name="add_portion">Add Portion</string>
     <string name="manage_portions">Portions</string>
     <string name="no_portion_found">No Portions Found\nAdd Half, Full, Kg, etc.</string>
+    <string name="portion_master">Portion Master</string>
+    <string name="portion_master_list">Portion Master List</string>
+    <string name="portion_master_detail">PORTION MASTER DETAIL</string>
+    <string name="no_portion_master_found">No Portion Master Found\nPlease add Half, Full, etc.</string>
+    <string name="select_portion_master">Select Portion</string>
+    <string name="manage_portion_master">Manage Portion Master</string>
+    <string name="product_portion_price_hint">Selling price for this product + portion</string>
+    <string name="manage_product_portions">Manage Portions</string>
+    <string name="product_portions_optional">Portions (optional)</string>
+    <string name="product_portion_list_title">Product Portions</string>
+    <string name="add_portion_to_product">Add Portion to Product</string>
+    <string name="no_portion_master_for_product">No portion masters yet. Tap Manage Portion Master to add Half, Full, etc.</string>
+    <string name="product_price_required_no_portion">Product price is used when no portions are added.</string>
+    <string name="product_price_optional_with_portions">Portions added — billing uses portion prices. Base product price is optional.</string>
     <string name="developed_by_webus_labs_llp">Developed by Cana Tech Solutions Private Limited</string>
     <string name="mess">Mess</string>
     <!-- TODO: Remove or change this placeholder text -->
@@ -100,5 +155,40 @@
     <string name="choose_from_gallery">Choose from Gallery</string>
     <string name="camera">Camera</string>
     <string name="dialog_cancel">Cancel</string>
+
+    <!-- App language (English / Hindi / Marathi) -->
+    <string name="user_setting_title">User Setting</string>
+    <string name="language_settings">App Language</string>
+    <string name="language_settings_subtitle">Choose English, Hindi or Marathi</string>
+    <string name="language_english">English</string>
+    <string name="language_hindi">हिन्दी (Hindi)</string>
+    <string name="language_marathi">मराठी (Marathi)</string>
+    <string name="language_changed">Language updated</string>
+    <string name="language_current">Current: %1$s</string>
+
+    <string name="setting_invoice_details">Invoice Details</string>
+    <string name="setting_reports">Reports</string>
+    <string name="setting_shop_details">Shop Details</string>
+    <string name="setting_printer_details">Printer Details</string>
+    <string name="setting_inventory">Inventory Management</string>
+    <string name="setting_expense">Expense Management</string>
+    <string name="setting_about">About Us</string>
+    <string name="setting_fetch_data">Fetch Data From Cloud</string>
+    <string name="setting_sync_previous_day">Sync Previous Day Bills</string>
+    <string name="setting_update_app">Update App</string>
+    <string name="setting_synchronize">Offline Data Synchronize with Cloud</string>
+    <string name="setting_change_pin">Change App Login PB-PIN</string>
+    <string name="setting_rate_us">Rate Us</string>
+    <string name="setting_share_app">Share App</string>
+    <string name="setting_logout">Logout</string>
+
+    <string name="home_total_sales">Total\nSales</string>
+    <string name="home_today_sales">Today\'s\nSales</string>
+    <string name="home_total_category">Total\nCategory</string>
+    <string name="home_total_subcategory">Total\nSubcategory</string>
+    <string name="home_total_products">Total\nProducts</string>
+    <string name="home_fetch_data">Fetch Data</string>
+    <string name="home_synchronize">Synchronize</string>
+    <string name="home_low_inventory">Low Inventory</string>
 
 </resources>

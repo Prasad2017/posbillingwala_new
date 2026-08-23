@@ -38,7 +38,7 @@
                 android:gravity="center"
                 android:paddingStart="5dp"
                 android:paddingEnd="5dp"
-                android:text="Report Setting"
+                android:text="@string/ui_report_setting"
                 android:textColor="@color/white"
                 android:textSize="17dp" />
 
@@ -83,7 +83,7 @@
                     android:gravity="center|start"
                     android:paddingStart="10dp"
                     android:paddingEnd="10dp"
-                    android:text="Invoice Report"
+                    android:text="@string/ui_invoice_report"
                     android:textColor="@color/black"
                     android:textSize="15dp" />
 
@@ -129,7 +129,7 @@
                     android:gravity="center|start"
                     android:paddingStart="10dp"
                     android:paddingEnd="10dp"
-                    android:text="Invoice Table Report"
+                    android:text="@string/ui_invoice_table_report"
                     android:textColor="@color/black"
                     android:textSize="15dp" />
 
@@ -175,7 +175,7 @@
                     android:gravity="center|start"
                     android:paddingStart="10dp"
                     android:paddingEnd="10dp"
-                    android:text="Invoice Take Away Report"
+                    android:text="@string/ui_invoice_take_away_report"
                     android:textColor="@color/black"
                     android:textSize="15dp" />
 
@@ -221,7 +221,7 @@
                     android:gravity="center|start"
                     android:paddingStart="10dp"
                     android:paddingEnd="10dp"
-                    android:text="Invoice Payment Mode Report"
+                    android:text="@string/ui_invoice_payment_mode_report"
                     android:textColor="@color/black"
                     android:textSize="15dp" />
 
@@ -267,7 +267,7 @@
                     android:gravity="center|start"
                     android:paddingStart="10dp"
                     android:paddingEnd="10dp"
-                    android:text="Invoice Member Report"
+                    android:text="@string/ui_invoice_member_report"
                     android:textColor="@color/black"
                     android:textSize="15dp" />
 
@@ -313,7 +313,7 @@
                     android:gravity="center|start"
                     android:paddingStart="10dp"
                     android:paddingEnd="10dp"
-                    android:text="Invoice Mess Report"
+                    android:text="@string/ui_invoice_mess_report"
                     android:textColor="@color/black"
                     android:textSize="15dp" />
 
@@ -359,7 +359,7 @@
                     android:gravity="center|start"
                     android:paddingStart="10dp"
                     android:paddingEnd="10dp"
-                    android:text="Product Wise Report"
+                    android:text="@string/ui_product_wise_report"
                     android:textColor="@color/black"
                     android:textSize="15dp" />
 
@@ -405,7 +405,7 @@
                     android:gravity="center|start"
                     android:paddingStart="10dp"
                     android:paddingEnd="10dp"
-                    android:text="Sale Wise Report"
+                    android:text="@string/ui_sale_wise_report"
                     android:textColor="@color/black"
                     android:textSize="15dp" />
 
@@ -451,7 +451,7 @@
                     android:gravity="center|start"
                     android:paddingStart="10dp"
                     android:paddingEnd="10dp"
-                    android:text="Expense Wise Report"
+                    android:text="@string/ui_expense_wise_report"
                     android:textColor="@color/black"
                     android:textSize="15dp" />
 
@@ -497,7 +497,7 @@
                     android:gravity="center|start"
                     android:paddingStart="10dp"
                     android:paddingEnd="10dp"
-                    android:text="Delete All Invoice\n(सर्व बिले हटवा)"
+                    android:text="@string/ui_delete_all_invoice_सर्व_बले_हटव"
                     android:textColor="@color/black"
                     android:textSize="15dp" />
 

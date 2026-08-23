@@ -78,7 +78,7 @@ public class WoosimPrnMng {
                             }
                             break;
                         case WoosimService.MESSAGE_PRINTER:
-                            Toast.makeText(contx, "MSR message", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(contx, contx.getString(R.string.toast_msr_message), Toast.LENGTH_SHORT).show();
                             break;
                         default:
                             Log.e(TAG, "Unknown message: " + msg.what);
@@ -122,7 +122,7 @@ public class WoosimPrnMng {
             }
             mWoosim = null;
             if (context != null) {
-                Toast.makeText(context, "Printer Disconnect", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, context.getString(R.string.toast_printer_disconnect), Toast.LENGTH_SHORT).show();
             }
         } catch (Exception e) {
             Log.e(TAG, "releaseAllocations failed", e);
@@ -132,7 +132,7 @@ public class WoosimPrnMng {
     public static boolean isBTopen(Context con, Activity activity) {
         BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (mBluetoothAdapter == null) {
-            Toast.makeText(con, "Bluetooth is not supported on this device", Toast.LENGTH_SHORT).show();
+            Toast.makeText(con, con.getString(R.string.toast_bluetooth_is_not_supported_on_this_devic), Toast.LENGTH_SHORT).show();
             return false;
         }
 

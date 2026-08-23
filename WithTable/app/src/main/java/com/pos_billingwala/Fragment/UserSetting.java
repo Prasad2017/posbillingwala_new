@@ -49,6 +49,7 @@ import com.pos_billingwala.Activity.CompanyPrinterSetting;
 import com.pos_billingwala.Activity.LoginMPin;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.AppLanguage;
 import com.pos_billingwala.Extra.AuthTokens;
 import com.pos_billingwala.Extra.Common;
 import com.pos_billingwala.Extra.DetectConnection;
@@ -149,7 +150,15 @@ public class UserSetting extends Fragment implements View.OnClickListener {
         binding.updateAppLayout.setOnClickListener(this);
         binding.shareAppLayout.setOnClickListener(this);
         binding.appPinLayout.setOnClickListener(this);
+        binding.languageLayout.setOnClickListener(this);
 
+        binding.selectedLanguage.setText(getString(
+                R.string.language_current,
+                AppLanguage.displayName(activity, AppLanguage.getSavedCode(activity))));
+        if ("1".equals(Common.getSavedUserData(activity, "languageToastPending"))) {
+            Common.saveUserData(activity, "languageToastPending", "0");
+            Toast.makeText(activity, R.string.language_changed, Toast.LENGTH_SHORT).show();
+        }
     }
 
     public void initAds() {
@@ -270,7 +279,30 @@ public class UserSetting extends Fragment implements View.OnClickListener {
             } else {
                 DetectConnection.noInternetConnection(activity);
             }
+        } else if (id == R.id.languageLayout) {
+            showLanguagePicker();
         }
+    }
+
+    private void showLanguagePicker() {
+        final String[] languages = new String[]{
+                getString(R.string.language_english),
+                getString(R.string.language_hindi),
+                getString(R.string.language_marathi)
+        };
+        int checked = AppLanguage.selectedIndex(activity);
+        new MaterialAlertDialogBuilder(activity, R.style.ThemeDialog)
+                .setTitle(R.string.language_settings)
+                .setSingleChoiceItems(languages, checked, (dialog, which) -> {
+                    dialog.dismiss();
+                    String code = AppLanguage.codeForIndex(which);
+                    if (!code.equals(AppLanguage.getSavedCode(activity))) {
+                        // AppCompat locales switch values-hi / values-mr; Settings reopens after
+                        AppLanguage.setLanguage(activity, code);
+                    }
+                })
+                .setNegativeButton(R.string.cancel, (dialog, which) -> dialog.dismiss())
+                .show();
     }
 
     public void changeAppMpin() {
@@ -379,7 +411,7 @@ public class UserSetting extends Fragment implements View.OnClickListener {
                     String strMessage = "Please update our <b> POS " + getResources().getString(R.string.app_name) + "</b> app to new version to continue. Before update our app please upload your data on server. We ae not responsible for losing your data.";
                     new MaterialAlertDialogBuilder(activity, R.style.ThemeDialog)
                             .setIcon(getResources().getDrawable(R.mipmap.ic_launcher))
-                            .setTitle("New version available")
+                            .setTitle(getString(R.string.toast_new_version_available))
                             .setCancelable(false)
                             .setMessage(Html.fromHtml(strMessage))
                             .setPositiveButton("Update", (dialog, whichButton) -> {
@@ -389,10 +421,10 @@ public class UserSetting extends Fragment implements View.OnClickListener {
                             }).setNegativeButton("Cancel", (dialog, whichButton) -> dialog.dismiss()).show();
                 }
             } else {
-                Toast.makeText(activity, "app update not available.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity, getString(R.string.toast_app_update_not_available), Toast.LENGTH_SHORT).show();
             }
         }).addOnFailureListener(e -> {
-            Toast.makeText(activity, "app failed to update", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, getString(R.string.toast_app_failed_to_update), Toast.LENGTH_SHORT).show();
         });
     }
 
@@ -462,8 +494,8 @@ public class UserSetting extends Fragment implements View.OnClickListener {
     public void logout() {
 
         new MaterialAlertDialogBuilder(activity, R.style.ThemeDialog)
-                .setTitle("Logout")
-                .setMessage("Do you want to logout from application?")
+                .setTitle(getString(R.string.setting_logout))
+                .setMessage(getString(R.string.toast_do_you_want_to_logout_from_application))
                 .setCancelable(false)
                 .setPositiveButton("YES", new DialogInterface.OnClickListener() {
                     @Override
@@ -549,8 +581,8 @@ public class UserSetting extends Fragment implements View.OnClickListener {
     public void confirmSyncPreviousDay() {
 
         new MaterialAlertDialogBuilder(activity, R.style.ThemeDialog)
-                .setTitle("Sync bills for one day")
-                .setMessage("Downloads missing bills for the selected date from cloud. Local data is not wiped — only new bills are added.")
+                .setTitle(getString(R.string.toast_sync_bills_for_one_day))
+                .setMessage(getString(R.string.toast_downloads_missing_bills_for_the_selected))
                 .setCancelable(true)
                 .setPositiveButton("Choose date", (dialog, which) -> {
                     dialog.dismiss();
@@ -567,7 +599,7 @@ public class UserSetting extends Fragment implements View.OnClickListener {
             String invoiceDate = String.format(Locale.US, "%04d-%02d-%02d", year, month + 1, dayOfMonth);
             runPreviousDaySync(invoiceDate);
         }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH));
-        picker.setTitle("Select date to pull from cloud");
+        picker.setTitle(getString(R.string.toast_select_date_to_pull_from_cloud));
         picker.show();
     }
 
@@ -604,8 +636,8 @@ public class UserSetting extends Fragment implements View.OnClickListener {
     public void confirmFetchData() {
 
         new MaterialAlertDialogBuilder(activity, R.style.ThemeDialog)
-                .setTitle("Do you want to confirm to fetch from cloud?")
-                .setMessage("Local data will be replaced with cloud data. Unsynced bills cannot be overwritten — sync them first.")
+                .setTitle(getString(R.string.toast_do_you_want_to_confirm_to_fetch_from_clo))
+                .setMessage(getString(R.string.toast_local_data_will_be_replaced_with_cloud_d))
                 .setCancelable(false)
                 .setPositiveButton("YES", new DialogInterface.OnClickListener() {
                     @Override
@@ -620,7 +652,7 @@ public class UserSetting extends Fragment implements View.OnClickListener {
                                 return;
                             }
 
-                            Toast.makeText(activity, "Data fetching started", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(activity, getString(R.string.toast_data_fetching_started), Toast.LENGTH_SHORT).show();
 
                             pDialog = new SweetAlertDialog(activity, SweetAlertDialog.PROGRESS_TYPE);
                             pDialog.getProgressHelper().setBarColor(Color.parseColor("#2D7FED"));
@@ -632,7 +664,7 @@ public class UserSetting extends Fragment implements View.OnClickListener {
                             posBillingWalaDatabase.resetTables(database);
                             NetworkDataFetcher.fetchAllData(activity);
 
-                            Toast.makeText(activity, "Data fetched successfully", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(activity, getString(R.string.toast_data_fetched_successfully), Toast.LENGTH_SHORT).show();
                             pDialog.dismiss();
                         } else {
                             DetectConnection.noInternetConnection(activity);
@@ -652,15 +684,15 @@ public class UserSetting extends Fragment implements View.OnClickListener {
     public void confirmSynchronizeData() {
 
         new MaterialAlertDialogBuilder(activity, R.style.ThemeDialog)
-                .setTitle("Do you want to confirm to send on cloud?")
-                .setMessage("Your offline data will be send to the cloud.")
+                .setTitle(getString(R.string.toast_do_you_want_to_confirm_to_send_on_cloud))
+                .setMessage(getString(R.string.toast_your_offline_data_will_be_send_to_the_cl))
                 .setCancelable(false)
                 .setPositiveButton("YES", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         dialogInterface.dismiss();
                         if (DetectConnection.checkInternetConnection(activity)) {
-                            Toast.makeText(activity, "Offline Data uploading to server", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(activity, getString(R.string.toast_offline_data_uploading_to_server), Toast.LENGTH_SHORT).show();
                             UserSynchronizeData userSynchronizeData = new UserSynchronizeData(activity);
                         } else {
                             DetectConnection.noInternetConnection(activity);

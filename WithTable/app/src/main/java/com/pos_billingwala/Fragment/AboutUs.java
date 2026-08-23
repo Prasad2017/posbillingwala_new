@@ -1,6 +1,8 @@
 package com.pos_billingwala.Fragment;
 
 import android.app.Activity;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -53,6 +55,16 @@ public class AboutUs extends Fragment implements View.OnClickListener {
                 return false;
             }
         });
+
+        try {
+            PackageInfo pInfo = activity.getPackageManager().getPackageInfo(activity.getPackageName(), 0);
+            binding.appVersion.setText("V " + pInfo.versionName);
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        String supportPhone = getString(R.string.support_phone_display);
+        binding.technicalSupport.setText(getString(R.string.technical_support_91_8983149299_91_9130188584, supportPhone));
 
         initAds();
 

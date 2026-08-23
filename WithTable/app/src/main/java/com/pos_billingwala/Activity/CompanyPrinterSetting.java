@@ -32,7 +32,7 @@ import java.util.List;
 
 
 @SuppressLint("NonConstantResourceId, StaticFieldLeak, SetTextI18n")
-public class CompanyPrinterSetting extends AppCompatActivity implements View.OnClickListener {
+public class CompanyPrinterSetting extends BaseActivity implements View.OnClickListener {
 
     public static Activity activity;
     View view;
@@ -183,10 +183,10 @@ public class CompanyPrinterSetting extends AppCompatActivity implements View.OnC
                 if (!binding.invoicePrefix.getText().toString().isEmpty()) {
                     addCompanyPrinterSetting();
                 } else {
-                    Toast.makeText(activity, "Please add invoice prefix", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(activity, getString(R.string.toast_please_add_invoice_prefix), Toast.LENGTH_SHORT).show();
                 }
             } else {
-                Toast.makeText(activity, "Please select printer", Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity, getString(R.string.toast_please_select_printer), Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -195,10 +195,10 @@ public class CompanyPrinterSetting extends AppCompatActivity implements View.OnC
 
         if (binding.saveSetting.getText().toString().equalsIgnoreCase("Save Setting")) {
             posBillingWalaDatabase.addCompanyPrinterSetting(printerName, KOTPrinterName, binding.invoicePrefix.getText().toString(), binding.invoiceTitle.getText().toString(), logoUse, paymentUse, customerUse, productQuantityUpdate, binding.invoiceTermsCondition.getText().toString(), bluetoothAddress, bluetoothKOTAddress, binding.printerFeedLines.getText().toString().isEmpty() ? "1" : binding.printerFeedLines.getText().toString(), binding.KotPrinterFeedLines.getText().toString().isEmpty() ? "1" : binding.KotPrinterFeedLines.getText().toString(), 0);
-            Toast.makeText(activity, "Company setting saved", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, getString(R.string.toast_company_setting_saved), Toast.LENGTH_SHORT).show();
         } else {
             posBillingWalaDatabase.updateCompanyPrinterSetting(settingId, printerName, KOTPrinterName, binding.invoicePrefix.getText().toString(), binding.invoiceTitle.getText().toString(), logoUse, paymentUse, customerUse, productQuantityUpdate, binding.invoiceTermsCondition.getText().toString(), bluetoothAddress, bluetoothKOTAddress, binding.printerFeedLines.getText().toString().isEmpty() ? "1" : binding.printerFeedLines.getText().toString(), binding.KotPrinterFeedLines.getText().toString().isEmpty() ? "1" : binding.KotPrinterFeedLines.getText().toString(), 0);
-            Toast.makeText(activity, "Company setting updated", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, getString(R.string.toast_company_setting_updated), Toast.LENGTH_SHORT).show();
         }
 
         getPrinterSettingDetails();

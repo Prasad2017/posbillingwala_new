@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.posbillingwala.owner.Activity.MainActivity;
 import com.posbillingwala.owner.Fragment.AllCustomerProductList;
+import com.posbillingwala.owner.Fragment.ManageCustomerProductPortions;
 import com.posbillingwala.owner.Fragment.UpdateProduct;
 import com.posbillingwala.owner.Model.AllApiResponse;
 import com.posbillingwala.owner.Model.ProductResponse;
@@ -55,7 +56,12 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.MyViewHo
         String productCategory = "<b>Product Category</b>: " + productResponse.getCategoryName();
         holder.binding.productCategory.setText(Html.fromHtml(productCategory));
         String productName = "<b>Product Name</b>: " + productResponse.getProductName();
-        holder.binding.productName.setText(Html.fromHtml(productName));
+        if (productResponse.getSubcategoryName() != null && productResponse.getSubcategoryName().length() > 0) {
+            String subcategoryLine = "<b>Subcategory</b>: " + productResponse.getSubcategoryName();
+            holder.binding.productName.setText(Html.fromHtml(productName + "<br>" + subcategoryLine));
+        } else {
+            holder.binding.productName.setText(Html.fromHtml(productName));
+        }
         String productPrice = "<b>Product Price(Without GST)</b>: " + MainActivity.currency + " " + productResponse.getProductPrice();
         holder.binding.productPrice.setText(Html.fromHtml(productPrice));
         String productUnit = "<b>Product Unit</b>: " + productResponse.getProductUnit();
@@ -80,6 +86,18 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.MyViewHo
                 bundle.putString("productId", productResponse.getProductId());
                 updateProduct.setArguments(bundle);
                 ((MainActivity) context).loadFragment(updateProduct, true);
+            }
+        });
+
+        holder.binding.managePortions.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ManageCustomerProductPortions fragment = new ManageCustomerProductPortions();
+                Bundle bundle = new Bundle();
+                bundle.putString("productId", productResponse.getProductId());
+                bundle.putString("productName", productResponse.getProductName());
+                fragment.setArguments(bundle);
+                ((MainActivity) context).loadFragment(fragment, true);
             }
         });
     }

@@ -23,7 +23,7 @@
             android:gravity="center"
             android:paddingStart="10dp"
             android:paddingEnd="10dp"
-            android:text="CATEGORY DETAIL"
+            android:text="@string/category_detail"
             android:textColor="@color/textcolor" />
 
         <com.google.android.material.textfield.TextInputLayout
@@ -50,7 +50,7 @@
                 android:layout_height="wrap_content"
                 android:digits="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ "
                 android:fontFamily="@font/poppinsregular"
-                android:hint="Category Name"
+                android:hint="@string/category_name"
                 android:imeOptions="actionNext"
                 android:inputType="text"
                 android:paddingStart="15dp"
@@ -77,14 +77,14 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:checked="true"
-                android:text="Food" />
+                android:text="@string/ui_food" />
 
             <RadioButton
                 android:id="@+id/foodTypeBeverage"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Beverage" />
+                android:text="@string/ui_beverage" />
 
         </RadioGroup>
 
@@ -103,7 +103,7 @@
                 android:background="@color/red"
                 android:fontFamily="@font/poppinsregular"
                 android:gravity="center"
-                android:text="Dismiss"
+                android:text="@string/ui_dismiss"
                 android:textColor="@color/white"
                 android:textSize="14dp" />
 
@@ -116,7 +116,7 @@
                 android:background="@color/colorPrimary"
                 android:fontFamily="@font/poppinsregular"
                 android:gravity="center"
-                android:text="Update"
+                android:text="@string/ui_update"
                 android:textColor="@color/white"
                 android:textSize="14dp" />
 

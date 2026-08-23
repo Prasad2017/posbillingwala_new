@@ -23,6 +23,12 @@ public class ProductPortionResponse {
     @SerializedName("portionNetworkStatus")
     @Expose
     private String portionNetworkStatus;
+    @SerializedName("portionMasterId")
+    @Expose
+    private String portionMasterId;
+    @SerializedName("portionDeletedStatus")
+    @Expose
+    private String portionDeletedStatus;
 
     public String getPortionId() {
         return portionId;
@@ -70,5 +76,21 @@ public class ProductPortionResponse {
 
     public void setPortionNetworkStatus(String portionNetworkStatus) {
         this.portionNetworkStatus = portionNetworkStatus;
+    }
+
+    public String getPortionMasterId() {
+        return portionMasterId;
+    }
+
+    public void setPortionMasterId(String portionMasterId) {
+        this.portionMasterId = portionMasterId;
+    }
+
+    public String getPortionDeletedStatus() {
+        return portionDeletedStatus;
+    }
+
+    public void setPortionDeletedStatus(String portionDeletedStatus) {
+        this.portionDeletedStatus = portionDeletedStatus;
     }
 }

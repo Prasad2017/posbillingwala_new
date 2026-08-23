@@ -111,10 +111,10 @@ public class UpdateMessPayment extends Fragment implements View.OnClickListener 
                 if (pendingAmount >= Float.parseFloat(binding.messPendingAmount.getText().toString())) {
                     updateMessPayment();
                 } else {
-                    Toast.makeText(activity, "Enter Pending amount", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(activity, getString(R.string.toast_enter_pending_amount), Toast.LENGTH_SHORT).show();
                 }
             } else {
-                Toast.makeText(activity, "Enter Pending amount", Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity, getString(R.string.toast_enter_pending_amount), Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -127,13 +127,13 @@ public class UpdateMessPayment extends Fragment implements View.OnClickListener 
 
             posBillingWalaDatabase.updateMessPendingPayment(memberId, binding.memberMobileNumber.getText().toString(), messDays, binding.messAmount.getText().toString(),
                     binding.messPendingAmount.getText().toString(), 0, getRandomString(10));
-            Toast.makeText(activity, "Payment paid successfully", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, getString(R.string.toast_payment_paid_successfully), Toast.LENGTH_SHORT).show();
 
             ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
             ((MainActivity) activity).loadFragment(new MessMemberList(), true);
 
         } else {
-            Toast.makeText(activity, "Payment already paid for this month.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, getString(R.string.toast_payment_already_paid_for_this_month), Toast.LENGTH_SHORT).show();
         }
 
     }

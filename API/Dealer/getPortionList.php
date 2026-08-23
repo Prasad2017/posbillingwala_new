@@ -29,6 +29,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
                 $getdata['portionId'] = $row['portionId'];
                 $getdata['productId'] = $row['productId'];
                 $getdata['productNetworkStatus'] = $row['productNetworkStatus'];
+                $getdata['portionMasterId'] = isset($row['portionMasterId']) && $row['portionMasterId'] !== null
+                    ? (string) $row['portionMasterId'] : '';
                 $getdata['portionName'] = $row['portionName'];
                 $getdata['portionPrice'] = $row['portionPrice'];
                 $getdata['portionSortOrder'] = $row['portionSortOrder'];

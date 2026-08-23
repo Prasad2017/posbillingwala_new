@@ -45,6 +45,7 @@ public class Api {
                     .readTimeout(30, TimeUnit.SECONDS)
                     .cache(cache)
                     .retryOnConnectionFailure(true)
+                    .addInterceptor(new ApiFailureInterceptor())
                     .addInterceptor(chain -> {
                         Request original = chain.request();
                         String token = Common.getSavedUserData(context, "authToken");

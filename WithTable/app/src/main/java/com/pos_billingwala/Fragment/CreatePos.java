@@ -190,7 +190,7 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
                 try {
                     startActivityForResult(intent, 1);
                 } catch (ActivityNotFoundException a) {
-                    Toast.makeText(activity, "Oops! Your device doesn't support Speech to Text", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(activity, getString(R.string.toast_oops_your_device_doesnt_support_speech_t), Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -348,7 +348,7 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
                 intent.putExtra("cartOrderStatus", cartOrderStatus);
                 startActivity(intent);
             } else {
-                Toast.makeText(activity, "Add product into cart", Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity, getString(R.string.toast_add_product_into_cart), Toast.LENGTH_SHORT).show();
             }
         } else if (id == R.id.menuIcon) {
             setPopUpWindow();
@@ -406,7 +406,7 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
             getCartCount();
 
         } else {
-            Toast.makeText(activity, "Please fill shop details", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, getString(R.string.toast_please_fill_shop_details), Toast.LENGTH_SHORT).show();
             ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
             ((MainActivity) activity).loadFragment(new CompanyDetailSetting(), true);
         }
@@ -647,7 +647,7 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
 
     public void updateCart(String cartId, String productQuantity, String productPrice) {
         posBillingWalaDatabase.updateCart(cartId, productQuantity, productPrice);
-        Toast.makeText(activity, "Product Updated into cart", Toast.LENGTH_SHORT).show();
+        Toast.makeText(activity, getString(R.string.toast_product_updated_into_cart), Toast.LENGTH_SHORT).show();
         getCartCount();
         if (!binding.productSearch.getText().toString().isEmpty()) {
             searchHomeProduct(binding.productSearch.getText().toString());
@@ -666,7 +666,7 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
         String portionId = portion != null ? portion.getPortionId() : null;
         String portionName = portion != null ? portion.getPortionName() : null;
         posBillingWalaDatabase.addToCart(MainActivity.userId, productResponse, productChangePrice, productQuantity, tableNumber, "0", cartOrderStatus, portionId, portionName);
-        Toast.makeText(activity, "Product Added into cart", Toast.LENGTH_SHORT).show();
+        Toast.makeText(activity, getString(R.string.toast_product_added_into_cart), Toast.LENGTH_SHORT).show();
         getCartCount();
         if (!binding.productSearch.getText().toString().isEmpty()) {
             searchHomeProduct(binding.productSearch.getText().toString());

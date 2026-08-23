@@ -246,7 +246,7 @@ public class InvoicePaymentModeWiseReport extends Fragment implements View.OnCli
 
             @Override
             public void onCompleted(String filePath) {
-                Toast.makeText(activity, "Sales Report Successfully Exported", Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity, getString(R.string.toast_sales_report_successfully_exported), Toast.LENGTH_SHORT).show();
                 openGeneratedPDF();
             }
 
@@ -268,7 +268,7 @@ public class InvoicePaymentModeWiseReport extends Fragment implements View.OnCli
             try {
                 startActivity(excelIntent);
             } catch (ActivityNotFoundException e) {
-                Toast.makeText(activity, "No Application available to view Excel", Toast.LENGTH_LONG).show();
+                Toast.makeText(activity, getString(R.string.toast_no_application_available_to_view_excel), Toast.LENGTH_LONG).show();
             }
         }
     }

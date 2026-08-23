@@ -2,12 +2,12 @@ package com.pos_billingwala.Fragment;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.text.InputType;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -17,10 +17,12 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.PortionAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.SimpleDividerItemDecoration;
+import com.pos_billingwala.Model.PortionMasterResponse;
 import com.pos_billingwala.Model.ProductPortionResponse;
 import com.pos_billingwala.Model.ProductResponse;
 import com.pos_billingwala.R;
@@ -45,6 +47,10 @@ public class ManageProductPortions extends Fragment implements View.OnClickListe
     FragmentManageProductPortionsBinding binding;
     String productId;
     ProductResponse productResponse;
+    List<PortionMasterResponse> portionMasterList = new ArrayList<>();
+    String[] portionMasterIdList;
+    String[] portionMasterNameList;
+    String selectedPortionMasterId;
 
     public static void getPortionList() {
         portionResponseList.clear();
@@ -81,23 +87,18 @@ public class ManageProductPortions extends Fragment implements View.OnClickListe
 
         initViews();
         loadProductInfo();
+        setupPortionMasterSpinner();
         suggestNextSortOrder();
-
-        binding.portionName.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
 
         view.setFocusableInTouchMode(true);
         view.requestFocus();
-        view.setOnKeyListener(new View.OnKeyListener() {
-            @Override
-            public boolean onKey(View v, int keyCode, KeyEvent event) {
-                if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
-                    Log.i("tag", "onKey Back listener is working!!!");
-                    ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                    ((MainActivity) activity).loadFragment(new ProductMaster(), false);
-                    return true;
-                }
-                return false;
+        view.setOnKeyListener((v, keyCode, event) -> {
+            if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
+                Log.i("tag", "onKey Back listener is working!!!");
+                navigateBack();
+                return true;
             }
+            return false;
         });
 
         return view;
@@ -110,6 +111,22 @@ public class ManageProductPortions extends Fragment implements View.OnClickListe
 
         binding.backToProductMaster.setOnClickListener(this);
         binding.addPortion.setOnClickListener(this);
+        binding.managePortionMaster.setOnClickListener(this);
+    }
+
+    private void navigateBack() {
+        ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
+        if (getArguments() != null && "updateProduct".equals(getArguments().getString("returnTo"))) {
+            UpdateProduct updateProduct = new UpdateProduct();
+            Bundle bundle = new Bundle();
+            bundle.putString("productId", productId);
+            updateProduct.setArguments(bundle);
+            ((MainActivity) activity).loadFragment(updateProduct, false);
+        } else if (getArguments() != null && "addProduct".equals(getArguments().getString("returnTo"))) {
+            ((MainActivity) activity).loadFragment(new ProductMaster(), true);
+        } else {
+            ((MainActivity) activity).loadFragment(new ProductMaster(), false);
+        }
     }
 
     private void loadProductInfo() {
@@ -126,8 +143,46 @@ public class ManageProductPortions extends Fragment implements View.OnClickListe
         }
         productResponse = details.get(0);
         String category = productResponse.getCategoryName() != null ? productResponse.getCategoryName() : "-";
-        binding.productInfo.setText(productResponse.getProductName() + " (" + category + ")\n"
-                + "Base price: " + MainActivity.currencyName + " " + productResponse.getProductPrice());
+        String header = productResponse.getProductName() + " (" + category + ")\n";
+        if (posBillingWalaDatabase.hasProductPortions(productId)) {
+            binding.productInfo.setText(header
+                    + "Selling prices are set per portion below (base product price is unused while portions exist)");
+        } else {
+            binding.productInfo.setText(header
+                    + "No portions — product price is used for billing. Optionally add portions.\n"
+                    + "Base price: " + MainActivity.currencyName + " " + productResponse.getProductPrice());
+        }
+    }
+
+    private void setupPortionMasterSpinner() {
+        portionMasterList = posBillingWalaDatabase.getPortionMasterList();
+        if (portionMasterList.isEmpty()) {
+            binding.portionMasterSection.setVisibility(View.GONE);
+            binding.addPortion.setEnabled(false);
+            Toast.makeText(activity, getString(R.string.toast_please_add_portion_masters_first), Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        binding.portionMasterSection.setVisibility(View.VISIBLE);
+        binding.addPortion.setEnabled(true);
+        portionMasterIdList = new String[portionMasterList.size()];
+        portionMasterNameList = new String[portionMasterList.size()];
+        for (int i = 0; i < portionMasterList.size(); i++) {
+            portionMasterIdList[i] = portionMasterList.get(i).getPortionMasterId();
+            portionMasterNameList[i] = portionMasterList.get(i).getPortionName();
+        }
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(activity, android.R.layout.simple_spinner_item, portionMasterNameList);
+        adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
+        binding.portionMasterSpinner.setAdapter(adapter);
+
+        selectedPortionMasterId = portionMasterIdList[0];
+        binding.portionMasterSpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
+            @Override
+            public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
+                selectedPortionMasterId = portionMasterIdList[position];
+            }
+        });
     }
 
     private void suggestNextSortOrder() {
@@ -139,51 +194,68 @@ public class ManageProductPortions extends Fragment implements View.OnClickListe
     public void onClick(View view) {
         int id = view.getId();
         if (id == R.id.backToProductMaster) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-            ((MainActivity) activity).loadFragment(new ProductMaster(), false);
+            navigateBack();
         } else if (id == R.id.addPortion) {
             addProductPortion();
+        } else if (id == R.id.managePortionMaster) {
+            openPortionMaster();
         }
+    }
+
+    private void openPortionMaster() {
+        AddPortionMaster addPortionMaster = new AddPortionMaster();
+        Bundle bundle = new Bundle();
+        bundle.putString("returnTo", "productPortions");
+        bundle.putString("productId", productId);
+        addPortionMaster.setArguments(bundle);
+        ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
+        ((MainActivity) activity).loadFragment(addPortionMaster, true);
     }
 
     private void addProductPortion() {
         if (productId == null || productId.isEmpty()) {
-            Toast.makeText(activity, "Invalid product", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, getString(R.string.toast_invalid_product), Toast.LENGTH_SHORT).show();
             return;
         }
-        String name = binding.portionName.getText().toString().trim();
+        if (selectedPortionMasterId == null || selectedPortionMasterId.isEmpty()) {
+            Toast.makeText(activity, getString(R.string.select_portion_master), Toast.LENGTH_SHORT).show();
+            return;
+        }
         String price = binding.portionPrice.getText().toString().trim();
-        if (name.isEmpty()) {
-            Toast.makeText(activity, "Please add portion name", Toast.LENGTH_SHORT).show();
-            return;
-        }
         if (price.isEmpty()) {
-            Toast.makeText(activity, "Please add portion price", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, getString(R.string.toast_please_add_portion_price), Toast.LENGTH_SHORT).show();
             return;
         }
 
-        List<ProductPortionResponse> existing = posBillingWalaDatabase.getProductPortionNameList(productId, name);
-        if (!existing.isEmpty()) {
-            Toast.makeText(activity, "Portion already exists for this product", Toast.LENGTH_SHORT).show();
+        PortionMasterResponse master = posBillingWalaDatabase.getPortionMasterById(selectedPortionMasterId);
+        if (master == null) {
+            Toast.makeText(activity, getString(R.string.toast_invalid_portion_master), Toast.LENGTH_SHORT).show();
             return;
         }
 
         int sortOrder = parseSortOrder(binding.portionSortOrder.getText().toString(),
                 posBillingWalaDatabase.countActiveProductPortions(productId) + 1);
 
+        ProductPortionResponse existing = posBillingWalaDatabase.getProductPortionByMasterId(
+                productId, selectedPortionMasterId);
+
         posBillingWalaDatabase.insertProductPortion(
                 productId,
-                name,
+                selectedPortionMasterId,
+                master.getPortionName(),
                 price,
                 sortOrder,
                 "0",
-                getRandomString(10),
+                existing != null && existing.getPortionNetworkStatus() != null
+                        ? existing.getPortionNetworkStatus() : getRandomString(10),
                 0);
 
-        Toast.makeText(activity, "Portion added successfully", Toast.LENGTH_SHORT).show();
-        binding.portionName.setText("");
+        Toast.makeText(activity,
+                existing != null ? "Portion price updated" : "Portion added successfully",
+                Toast.LENGTH_SHORT).show();
         binding.portionPrice.setText("");
         suggestNextSortOrder();
+        loadProductInfo();
         getPortionList();
     }
 
@@ -198,11 +270,11 @@ public class ManageProductPortions extends Fragment implements View.OnClickListe
     }
 
     public String getRandomString(final int sizeOfRandomString) {
-        String ALLOWED_CHARACTERS = "0123456789qwertyuiopasdfghjklzxcvbnm";
+        String allowed = "0123456789qwertyuiopasdfghjklzxcvbnm";
         final Random random = new Random();
         final StringBuilder sb = new StringBuilder(sizeOfRandomString);
         for (int i = 0; i < sizeOfRandomString; ++i) {
-            sb.append(ALLOWED_CHARACTERS.charAt(random.nextInt(ALLOWED_CHARACTERS.length())));
+            sb.append(allowed.charAt(random.nextInt(allowed.length())));
         }
         return sb.toString();
     }
@@ -211,6 +283,8 @@ public class ManageProductPortions extends Fragment implements View.OnClickListe
     public void onStart() {
         super.onStart();
         ((MainActivity) activity).lockUnlockDrawer(1);
+        setupPortionMasterSpinner();
+        loadProductInfo();
         getPortionList();
     }
 }

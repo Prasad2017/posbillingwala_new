@@ -108,7 +108,7 @@
                             android:layout_height="wrap_content"
                             android:drawableTint="@color/light_black"
                             android:fontFamily="@font/poppinsregular"
-                            android:hint="Category Name"
+                            android:hint="e.g. Veg, Non Veg, Beverage"
                             android:imeOptions="actionNext"
                             android:inputType="textCapWords"
                             android:paddingStart="15dp"
@@ -131,6 +131,21 @@
                         android:fontFamily="@font/poppinsmedium"
                         android:gravity="center"
                         android:text="Add Category"
+                        android:textAllCaps="true"
+                        android:textColor="@color/white"
+                        android:textSize="15sp" />
+
+                    <TextView
+                        android:id="@+id/managePortionMaster"
+                        android:layout_width="match_parent"
+                        android:layout_height="40dp"
+                        android:layout_gravity="center"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginBottom="10dp"
+                        android:background="@color/textcolor"
+                        android:fontFamily="@font/poppinsmedium"
+                        android:gravity="center"
+                        android:text="Manage Portion Master"
                         android:textAllCaps="true"
                         android:textColor="@color/white"
                         android:textSize="15sp" />

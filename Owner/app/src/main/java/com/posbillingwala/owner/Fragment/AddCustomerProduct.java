@@ -21,8 +21,10 @@ import androidx.fragment.app.Fragment;
 
 import com.posbillingwala.owner.Activity.MainActivity;
 import com.posbillingwala.owner.Extra.DetectConnection;
+import com.posbillingwala.owner.Extra.ProductPortionSectionHelper;
 import com.posbillingwala.owner.Model.AllApiResponse;
 import com.posbillingwala.owner.Model.ProductCategoryResponse;
+import com.posbillingwala.owner.Model.ProductSubcategoryResponse;
 import com.posbillingwala.owner.R;
 import com.posbillingwala.owner.Retrofit.Api;
 import com.posbillingwala.owner.databinding.FragmentAddCustomerProductBinding;
@@ -42,12 +44,13 @@ public class AddCustomerProduct extends Fragment {
     public static Activity activity;
     public FragmentAddCustomerProductBinding binding;
     public String[] categoryIdList, categoryNameList, unitNameList;
-    public String categoryId, categoryName, unitName;
+    public String[] subcategoryIdList, subcategoryNameList;
+    public String categoryId, categoryName, unitName, subcategoryId;
     public List<ProductCategoryResponse> productCategoryResponseList = new ArrayList<>();
+    private ProductPortionSectionHelper portionSectionHelper;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         binding = FragmentAddCustomerProductBinding.inflate(inflater, container, false);
         View view = binding.getRoot();
 
@@ -55,50 +58,55 @@ public class AddCustomerProduct extends Fragment {
 
         view.setFocusableInTouchMode(true);
         view.requestFocus();
-        view.setOnKeyListener(new View.OnKeyListener() {
-            @Override
-            public boolean onKey(View v, int keyCode, KeyEvent event) {
-                if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
-                    Log.i("tag", "onKey Back listener is working!!!");
-                    ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                    ((MainActivity) activity).loadFragment(new AllCustomerProductList(), true);
-                    return true;
-                }
-                return false;
+        view.setOnKeyListener((v, keyCode, event) -> {
+            if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
+                ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
+                ((MainActivity) activity).loadFragment(new AllCustomerProductList(), true);
+                return true;
             }
+            return false;
         });
 
         binding.productName.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
 
+        portionSectionHelper = new ProductPortionSectionHelper(activity, view);
+        portionSectionHelper.setOnPortionMasterLinkClick(() -> {
+            AddCustomerPortionMaster fragment = new AddCustomerPortionMaster();
+            Bundle args = new Bundle();
+            args.putString("returnTo", "product");
+            fragment.setArguments(args);
+            ((MainActivity) activity).loadFragment(fragment, true);
+        });
+
         ArrayAdapter<String> categoryAdapter = new ArrayAdapter<>(activity, R.layout.spinner_item_layout, new String[]{});
         binding.categorySpinner.setAdapter(categoryAdapter);
-        binding.categorySpinner.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                categoryId = categoryIdList[position];
-                categoryName = categoryNameList[position];
+        binding.categorySpinner.setOnItemClickListener((parent, v, position, id) -> {
+            categoryId = categoryIdList[position];
+            categoryName = categoryNameList[position];
+            loadSubcategoriesForCategory(categoryId);
+        });
+
+        binding.subcategorySpinner.setOnItemClickListener((parent, v, position, id) -> {
+            if (subcategoryIdList != null && position >= 0 && position < subcategoryIdList.length) {
+                subcategoryId = subcategoryIdList[position];
             }
         });
 
         unitNameList = activity.getResources().getStringArray(R.array.product_unit);
         ArrayAdapter<String> unitAdapter = new ArrayAdapter<>(activity, R.layout.spinner_item_layout, unitNameList);
         binding.unitSpinner.setAdapter(unitAdapter);
-        binding.unitSpinner.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                unitName = unitNameList[position];
-            }
-        });
+        binding.unitSpinner.setOnItemClickListener((parent, v, position, id) -> unitName = unitNameList[position]);
 
         binding.categorySpinner.setOnTouchListener((v, event) -> {
-            InputMethodManager imm = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
-            imm.hideSoftInputFromWindow(activity.getCurrentFocus().getWindowToken(), 0);
+            hideKeyboard();
             return false;
         });
-
-        binding.unitSpinner.setOnTouchListener((var v, var event) -> {
-            InputMethodManager imm = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
-            imm.hideSoftInputFromWindow(activity.getCurrentFocus().getWindowToken(), 0);
+        binding.unitSpinner.setOnTouchListener((v, event) -> {
+            hideKeyboard();
+            return false;
+        });
+        binding.subcategorySpinner.setOnTouchListener((v, event) -> {
+            hideKeyboard();
             return false;
         });
 
@@ -107,34 +115,38 @@ public class AddCustomerProduct extends Fragment {
             ((MainActivity) activity).loadFragment(new AllCustomerProductList(), true);
         });
 
-        binding.addProduct.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (categoryId != null) {
-                    if (!binding.productProduct.getText().toString().isEmpty()) {
-                        if (!binding.productName.getText().toString().isEmpty()) {
-                            if (!binding.productPrice.getText().toString().isEmpty()) {
-                                if (unitName != null) {
-                                    addProduct();
-                                } else {
-                                    Toast.makeText(activity, "Please select product unit", Toast.LENGTH_SHORT).show();
-                                }
+        binding.addProduct.setOnClickListener(v -> {
+            if (categoryId != null) {
+                if (!binding.productProduct.getText().toString().isEmpty()) {
+                    if (!binding.productName.getText().toString().isEmpty()) {
+                        if (!binding.productPrice.getText().toString().isEmpty()) {
+                            if (unitName != null) {
+                                addProduct();
                             } else {
-                                Toast.makeText(activity, "Please enter product price", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(activity, "Please select product unit", Toast.LENGTH_SHORT).show();
                             }
                         } else {
-                            Toast.makeText(activity, "Please enter product name", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(activity, "Please enter product price", Toast.LENGTH_SHORT).show();
                         }
                     } else {
-                        Toast.makeText(activity, "Please enter product code", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(activity, "Please enter product name", Toast.LENGTH_SHORT).show();
                     }
                 } else {
-                    Toast.makeText(activity, "Please select product category", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(activity, "Please enter product code", Toast.LENGTH_SHORT).show();
                 }
+            } else {
+                Toast.makeText(activity, "Please select product category", Toast.LENGTH_SHORT).show();
             }
         });
 
         return view;
+    }
+
+    private void hideKeyboard() {
+        InputMethodManager imm = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (imm != null && activity.getCurrentFocus() != null) {
+            imm.hideSoftInputFromWindow(activity.getCurrentFocus().getWindowToken(), 0);
+        }
     }
 
     public void addProduct() {
@@ -144,16 +156,34 @@ public class AddCustomerProduct extends Fragment {
         pDialog.setCancelable(false);
         pDialog.show();
 
-        Call<AllApiResponse> call = Api.getClient().saveProduct(MainActivity.userId, categoryId, categoryName, binding.productProduct.getText().toString(), binding.productName.getText().toString(), binding.productPrice.getText().toString(),
-                unitName, binding.productCGST.getText().toString(), binding.productSGST.getText().toString(), getRandomString(10));
+        Call<AllApiResponse> call = Api.getClient().saveProduct(
+                MainActivity.userId, categoryId, categoryName,
+                binding.productProduct.getText().toString(),
+                binding.productName.getText().toString(),
+                binding.productPrice.getText().toString(),
+                unitName,
+                binding.productCGST.getText().toString(),
+                binding.productSGST.getText().toString(),
+                getRandomString(10),
+                subcategoryId != null ? subcategoryId : "");
         call.enqueue(new Callback<AllApiResponse>() {
             @Override
             public void onResponse(@NonNull Call<AllApiResponse> call, @NonNull Response<AllApiResponse> response) {
-                if (response.isSuccessful()) {
+                if (response.isSuccessful() && response.body() != null) {
                     if (response.body().getStatus().equalsIgnoreCase("1")) {
-                        Toast.makeText(activity, response.body().getMessage(), Toast.LENGTH_SHORT).show();
-                        ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                        ((MainActivity) activity).loadFragment(new AllCustomerProductList(), true);
+                        String savedProductId = response.body().getProductId();
+                        Runnable finish = () -> {
+                            pDialog.dismiss();
+                            Toast.makeText(activity, response.body().getMessage(), Toast.LENGTH_SHORT).show();
+                            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
+                            ((MainActivity) activity).loadFragment(new AllCustomerProductList(), true);
+                        };
+                        if (savedProductId != null && !savedProductId.isEmpty() && portionSectionHelper.hasPortions()) {
+                            portionSectionHelper.savePortionsForProduct(savedProductId, finish);
+                        } else {
+                            finish.run();
+                        }
+                        return;
                     } else {
                         Toast.makeText(activity, response.body().getMessage(), Toast.LENGTH_SHORT).show();
                     }
@@ -181,9 +211,11 @@ public class AddCustomerProduct extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
-        Log.e("onStart", "called");
         if (DetectConnection.checkInternetConnection(activity)) {
             getProductCategoryList();
+            if (portionSectionHelper != null) {
+                portionSectionHelper.refresh();
+            }
         } else {
             DetectConnection.noInternetConnection(activity);
         }
@@ -199,17 +231,16 @@ public class AddCustomerProduct extends Fragment {
         Call<AllApiResponse> call = Api.getClient().getCategoryList(MainActivity.userId);
         call.enqueue(new Callback<AllApiResponse>() {
             @Override
-            public void onResponse(Call<AllApiResponse> call, Response<AllApiResponse> response) {
-                if (response.isSuccessful()) {
+            public void onResponse(@NonNull Call<AllApiResponse> call, @NonNull Response<AllApiResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
                     productCategoryResponseList = response.body().getProductCategoryResponseList();
-                    if (!productCategoryResponseList.isEmpty()) {
+                    if (productCategoryResponseList != null && !productCategoryResponseList.isEmpty()) {
                         categoryIdList = new String[productCategoryResponseList.size()];
                         categoryNameList = new String[productCategoryResponseList.size()];
                         for (int i = 0; i < productCategoryResponseList.size(); i++) {
                             categoryIdList[i] = productCategoryResponseList.get(i).getCategoryId();
                             categoryNameList[i] = productCategoryResponseList.get(i).getCategoryName();
                         }
-
                         ArrayAdapter<String> categoryAdapter = new ArrayAdapter<>(activity, R.layout.spinner_item_layout, categoryNameList);
                         binding.categorySpinner.setAdapter(categoryAdapter);
                     }
@@ -218,9 +249,44 @@ public class AddCustomerProduct extends Fragment {
             }
 
             @Override
-            public void onFailure(Call<AllApiResponse> call, Throwable t) {
+            public void onFailure(@NonNull Call<AllApiResponse> call, @NonNull Throwable t) {
                 Log.e("categoryError", t.getMessage());
                 pDialog.dismiss();
+            }
+        });
+    }
+
+    private void loadSubcategoriesForCategory(String selectedCategoryId) {
+        subcategoryId = null;
+        Call<AllApiResponse> call = Api.getClient().getSubcategoryList(MainActivity.userId, selectedCategoryId);
+        call.enqueue(new Callback<AllApiResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<AllApiResponse> call, @NonNull Response<AllApiResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    List<ProductSubcategoryResponse> subcategories = response.body().getSubcategoryResponseList();
+                    if (subcategories != null && !subcategories.isEmpty()) {
+                        subcategoryIdList = new String[subcategories.size() + 1];
+                        subcategoryNameList = new String[subcategories.size() + 1];
+                        subcategoryIdList[0] = "";
+                        subcategoryNameList[0] = "None";
+                        for (int i = 0; i < subcategories.size(); i++) {
+                            subcategoryIdList[i + 1] = subcategories.get(i).getSubcategoryId();
+                            subcategoryNameList[i + 1] = subcategories.get(i).getSubcategoryName();
+                        }
+                    } else {
+                        subcategoryIdList = new String[]{""};
+                        subcategoryNameList = new String[]{"None"};
+                    }
+                    ArrayAdapter<String> adapter = new ArrayAdapter<>(activity, R.layout.spinner_item_layout, subcategoryNameList);
+                    binding.subcategorySpinner.setAdapter(adapter);
+                    binding.subcategorySpinner.setText(subcategoryNameList[0], false);
+                    subcategoryId = subcategoryIdList[0];
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<AllApiResponse> call, @NonNull Throwable t) {
+                Log.e("subcategoryError", "" + t.getMessage());
             }
         });
     }

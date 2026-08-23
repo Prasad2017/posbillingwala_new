@@ -5,6 +5,7 @@ import android.content.res.Configuration;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.Html;
 import android.util.DisplayMetrics;
 import android.view.View;
 import android.view.WindowManager;
@@ -14,6 +15,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.snackbar.Snackbar;
+import com.pos_billingwala.Extra.AppLanguage;
 import com.pos_billingwala.Model.AllApiResponse;
 import com.pos_billingwala.R;
 import com.pos_billingwala.Retrofit.Api;
@@ -24,7 +26,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class Register extends AppCompatActivity implements View.OnClickListener {
+public class Register extends BaseActivity implements View.OnClickListener {
 
     public static final String EXTRA_LICENCE_KEY = "licenceKey";
     public static final String EXTRA_AUTO_LOGIN = "autoLogin";
@@ -34,6 +36,7 @@ public class Register extends AppCompatActivity implements View.OnClickListener 
     public void setScreenSizeSmall() {
         Configuration configuration = getResources().getConfiguration();
         configuration.fontScale = (float) 1;
+        AppLanguage.preserveLocaleOnConfig(this, configuration);
         DisplayMetrics metrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(metrics);
         metrics.scaledDensity = configuration.fontScale * metrics.density;
@@ -51,8 +54,10 @@ public class Register extends AppCompatActivity implements View.OnClickListener 
         setScreenSizeSmall();
 
         binding.backToLogin.setOnClickListener(this);
+        binding.alreadyLogin.setOnClickListener(this);
         binding.submitSignup.setOnClickListener(this);
 
+        binding.alreadyLogin.setText(Html.fromHtml(getString(R.string.trial_back_to_login), Html.FROM_HTML_MODE_LEGACY));
         binding.supportContact.setText(getString(R.string.trial_support_contact, getString(R.string.support_phone_display)));
         binding.supportContact.setOnClickListener(v -> {
             Intent intent = new Intent(Intent.ACTION_DIAL);
@@ -64,7 +69,7 @@ public class Register extends AppCompatActivity implements View.OnClickListener 
     @Override
     public void onClick(View view) {
         int id = view.getId();
-        if (id == R.id.backToLogin) {
+        if (id == R.id.backToLogin || id == R.id.alreadyLogin) {
             finish();
         } else if (id == R.id.submitSignup) {
             submitRegistration();

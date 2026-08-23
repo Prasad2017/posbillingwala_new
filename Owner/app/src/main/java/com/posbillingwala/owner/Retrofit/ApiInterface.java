@@ -32,11 +32,22 @@ public interface ApiInterface {
     @GET("getCustomerCategoryList.php")
     Call<AllApiResponse> getCategoryList(@Query("userId") String userId);
 
+    @GET("getSubcategoryList.php")
+    Call<AllApiResponse> getSubcategoryList(@Query("userId") String userId,
+                                            @Query("categoryId") String categoryId);
+
     @FormUrlEncoded
     @POST("insertCustomerCategory.php")
     Call<AllApiResponse> saveCategory(@Field("userId") String userId,
                                       @Field("categoryName") String categoryName,
                                       @Field("categoryNetworkStatus") String categoryNetworkStatus);
+
+    @FormUrlEncoded
+    @POST("insertCustomerSubcategory.php")
+    Call<AllApiResponse> saveSubcategory(@Field("userId") String userId,
+                                         @Field("categoryId") String categoryId,
+                                         @Field("subcategoryName") String subcategoryName,
+                                         @Field("subcategoryNetworkStatus") String subcategoryNetworkStatus);
 
     @FormUrlEncoded
     @POST("deleteCategory.php")
@@ -65,7 +76,8 @@ public interface ApiInterface {
                                        @Field("productUnit") String productUnit,
                                        @Field("productCGST") String productCGST,
                                        @Field("productSGST") String productSGST,
-                                       @Field("productCode") String productCode);
+                                       @Field("productCode") String productCode,
+                                       @Field("subcategoryId") String subcategoryId);
 
     @GET("getProductDetails.php")
     Call<AllApiResponse> getProductDetails(@Query("productId") String productId);
@@ -81,7 +93,32 @@ public interface ApiInterface {
                                      @Field("productUnit") String productUnit,
                                      @Field("productCGST") String productCGST,
                                      @Field("productSGST") String productSGST,
-                                     @Field("productNetworkStatus") String productNetworkStatus);
+                                     @Field("productNetworkStatus") String productNetworkStatus,
+                                     @Field("subcategoryId") String subcategoryId);
+
+    @GET("getPortionMasterList.php")
+    Call<AllApiResponse> getPortionMasterList(@Query("userId") String userId);
+
+    @FormUrlEncoded
+    @POST("insertCustomerPortionMaster.php")
+    Call<AllApiResponse> savePortionMaster(@Field("userId") String userId,
+                                           @Field("portionName") String portionName,
+                                           @Field("portionMasterDeletedStatus") String portionMasterDeletedStatus,
+                                           @Field("portionMasterNetworkStatus") String portionMasterNetworkStatus);
+
+    @GET("getPortionList.php")
+    Call<AllApiResponse> getPortionList(@Query("userId") String userId,
+                                        @Query("productId") String productId);
+
+    @FormUrlEncoded
+    @POST("insertCustomerPortion.php")
+    Call<AllApiResponse> savePortion(@Field("userId") String userId,
+                                     @Field("productId") String productId,
+                                     @Field("portionMasterId") String portionMasterId,
+                                     @Field("portionName") String portionName,
+                                     @Field("portionPrice") String portionPrice,
+                                     @Field("portionSortOrder") String portionSortOrder,
+                                     @Field("portionNetworkStatus") String portionNetworkStatus);
 
     @FormUrlEncoded
     @POST("insertExportAllProduct.php")

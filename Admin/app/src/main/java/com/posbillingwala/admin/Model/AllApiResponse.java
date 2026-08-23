@@ -29,6 +29,9 @@ public class AllApiResponse {
     @SerializedName("tokenExpiresAt")
     @Expose
     private String tokenExpiresAt;
+    @SerializedName("productId")
+    @Expose
+    private String productId;
     @SerializedName("customerResponse")
     @Expose
     private List<CustomerResponse> customerResponseList;
@@ -50,6 +53,9 @@ public class AllApiResponse {
     @SerializedName("portionResponse")
     @Expose
     private List<ProductPortionResponse> portionResponseList;
+    @SerializedName("portionMasterResponse")
+    @Expose
+    private List<PortionMasterResponse> portionMasterResponse;
 
 
     public String getStatus() {
@@ -108,6 +114,14 @@ public class AllApiResponse {
         this.tokenExpiresAt = tokenExpiresAt;
     }
 
+    public String getProductId() {
+        return productId;
+    }
+
+    public void setProductId(String productId) {
+        this.productId = productId;
+    }
+
     public List<CustomerResponse> getCustomerResponseList() {
         return customerResponseList;
     }
@@ -162,5 +176,13 @@ public class AllApiResponse {
 
     public void setPortionResponseList(List<ProductPortionResponse> portionResponseList) {
         this.portionResponseList = portionResponseList;
+    }
+
+    public List<PortionMasterResponse> getPortionMasterResponse() {
+        return portionMasterResponse;
+    }
+
+    public void setPortionMasterResponse(List<PortionMasterResponse> portionMasterResponse) {
+        this.portionMasterResponse = portionMasterResponse;
     }
 }

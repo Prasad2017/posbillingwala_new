@@ -14,25 +14,24 @@ import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Spinner;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
-import com.google.android.material.textfield.TextInputEditText;
 import com.posbillingwala.owner.Activity.MainActivity;
 import com.posbillingwala.owner.Extra.DetectConnection;
+import com.posbillingwala.owner.Extra.ProductPortionSectionHelper;
 import com.posbillingwala.owner.Model.AllApiResponse;
 import com.posbillingwala.owner.Model.ProductCategoryResponse;
 import com.posbillingwala.owner.Model.ProductResponse;
+import com.posbillingwala.owner.Model.ProductSubcategoryResponse;
 import com.posbillingwala.owner.R;
 import com.posbillingwala.owner.Retrofit.Api;
 import com.posbillingwala.owner.databinding.FragmentUpdateProductBinding;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 import cn.pedant.SweetAlert.SweetAlertDialog;
 import retrofit2.Call;
@@ -45,9 +44,13 @@ public class UpdateProduct extends Fragment {
     public static Activity activity;
     public FragmentUpdateProductBinding binding;
     public String[] categoryIdList, categoryNameList, unitNameList;
-    public String productId, categoryId, categoryName, unitName;
+    public String[] subcategoryIdList, subcategoryNameList;
+    public String productId, categoryId, categoryName, unitName, subcategoryId;
+    public String preselectSubcategoryId;
     public List<ProductCategoryResponse> productCategoryResponseList = new ArrayList<>();
     public List<ProductResponse> productResponseList = new ArrayList<>();
+    private ProductPortionSectionHelper portionSectionHelper;
+    private boolean categorySpinnerReady = false;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -63,11 +66,19 @@ public class UpdateProduct extends Fragment {
 
         binding.productName.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
 
+        portionSectionHelper = new ProductPortionSectionHelper(activity, view);
+        portionSectionHelper.setOnPortionMasterLinkClick(() -> {
+            AddCustomerPortionMaster fragment = new AddCustomerPortionMaster();
+            Bundle args = new Bundle();
+            args.putString("returnTo", "updateProduct");
+            fragment.setArguments(args);
+            ((MainActivity) activity).loadFragment(fragment, true);
+        });
+
         view.setFocusableInTouchMode(true);
         view.requestFocus();
         view.setOnKeyListener((v, keyCode, event) -> {
             if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
-                Log.i("tag", "onKey Back listener is working!!!");
                 ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
                 ((MainActivity) activity).loadFragment(new AllCustomerProductList(), true);
                 return true;
@@ -87,11 +98,26 @@ public class UpdateProduct extends Fragment {
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 categoryId = categoryIdList[position];
                 categoryName = categoryNameList[position];
+                if (categorySpinnerReady) {
+                    loadSubcategoriesForCategory(categoryId, null);
+                }
             }
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
-                // Do nothing
+            }
+        });
+
+        binding.subcategorySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if (subcategoryIdList != null && position >= 0 && position < subcategoryIdList.length) {
+                    subcategoryId = subcategoryIdList[position];
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
             }
         });
 
@@ -103,7 +129,6 @@ public class UpdateProduct extends Fragment {
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
-                // Do nothing
             }
         });
 
@@ -162,20 +187,30 @@ public class UpdateProduct extends Fragment {
                 unitName,
                 binding.productCGST.getText().toString(),
                 binding.productSGST.getText().toString(),
-                binding.productCode.getText().toString());
+                binding.productCode.getText().toString(),
+                subcategoryId != null ? subcategoryId : "");
         call.enqueue(new Callback<AllApiResponse>() {
             @Override
             public void onResponse(@NonNull Call<AllApiResponse> call, @NonNull Response<AllApiResponse> response) {
-                pDialog.dismiss();
-                if (response.isSuccessful()) {
+                if (response.isSuccessful() && response.body() != null) {
                     if ("1".equalsIgnoreCase(response.body().getStatus())) {
-                        Toast.makeText(activity, response.body().getMessage(), Toast.LENGTH_SHORT).show();
-                        ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                        ((MainActivity) activity).loadFragment(new AllCustomerProductList(), true);
+                        Runnable finish = () -> {
+                            pDialog.dismiss();
+                            Toast.makeText(activity, response.body().getMessage(), Toast.LENGTH_SHORT).show();
+                            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
+                            ((MainActivity) activity).loadFragment(new AllCustomerProductList(), true);
+                        };
+                        if (portionSectionHelper.hasPortions()) {
+                            portionSectionHelper.savePortionsForProduct(productId, finish);
+                        } else {
+                            finish.run();
+                        }
+                        return;
                     } else {
                         Toast.makeText(activity, response.body().getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 }
+                pDialog.dismiss();
             }
 
             @Override
@@ -192,7 +227,7 @@ public class UpdateProduct extends Fragment {
 
     public void hideKeyboard() {
         InputMethodManager imm = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
-        if (imm != null) {
+        if (imm != null && activity.getCurrentFocus() != null) {
             imm.hideSoftInputFromWindow(activity.getCurrentFocus().getWindowToken(), 0);
         }
     }
@@ -219,13 +254,15 @@ public class UpdateProduct extends Fragment {
             @Override
             public void onResponse(@NonNull Call<AllApiResponse> call, @NonNull Response<AllApiResponse> response) {
                 pDialog.dismiss();
-                if (response.isSuccessful()) {
+                if (response.isSuccessful() && response.body() != null) {
                     productResponseList = response.body().getProductResponseList();
-                    if (!productResponseList.isEmpty()) {
+                    if (productResponseList != null && !productResponseList.isEmpty()) {
                         ProductResponse productResponse = productResponseList.get(0);
 
                         categoryName = productResponse.getCategoryName();
+                        categoryId = productResponse.getCategoryId();
                         unitName = productResponse.getProductUnit();
+                        preselectSubcategoryId = productResponse.getSubcategoryId();
 
                         binding.productName.setText(productResponse.getProductName());
                         binding.productPrice.setText(productResponse.getProductPrice().replace(".00", ""));
@@ -246,6 +283,9 @@ public class UpdateProduct extends Fragment {
                         }
 
                         getProductCategoryList();
+                        if (portionSectionHelper != null) {
+                            portionSectionHelper.loadExistingForProduct(productId);
+                        }
                     }
                 }
             }
@@ -263,25 +303,26 @@ public class UpdateProduct extends Fragment {
         call.enqueue(new Callback<AllApiResponse>() {
             @Override
             public void onResponse(@NonNull Call<AllApiResponse> call, @NonNull Response<AllApiResponse> response) {
-                if (response.isSuccessful()) {
+                if (response.isSuccessful() && response.body() != null) {
                     productCategoryResponseList = response.body().getProductCategoryResponseList();
-                    if (!productCategoryResponseList.isEmpty()) {
+                    if (productCategoryResponseList != null && !productCategoryResponseList.isEmpty()) {
                         categoryIdList = new String[productCategoryResponseList.size()];
                         categoryNameList = new String[productCategoryResponseList.size()];
                         for (int i = 0; i < productCategoryResponseList.size(); i++) {
                             categoryIdList[i] = productCategoryResponseList.get(i).getCategoryId();
                             categoryNameList[i] = productCategoryResponseList.get(i).getCategoryName();
-
-                            try {
-                                ArrayAdapter<String> adapter = new ArrayAdapter<>(activity, android.R.layout.simple_spinner_item, categoryNameList);
-                                adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
-                                binding.categorySpinner.setAdapter(adapter);
-                                if (categoryName != null) {
-                                    binding.categorySpinner.setSelection(adapter.getPosition(categoryName));
-                                }
-                            } catch (Exception e) {
-                                e.printStackTrace();
+                        }
+                        try {
+                            ArrayAdapter<String> adapter = new ArrayAdapter<>(activity, android.R.layout.simple_spinner_item, categoryNameList);
+                            adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
+                            binding.categorySpinner.setAdapter(adapter);
+                            if (categoryName != null) {
+                                binding.categorySpinner.setSelection(adapter.getPosition(categoryName));
                             }
+                            loadSubcategoriesForCategory(categoryId, preselectSubcategoryId);
+                            categorySpinnerReady = true;
+                        } catch (Exception e) {
+                            e.printStackTrace();
                         }
                     }
                 }
@@ -290,6 +331,50 @@ public class UpdateProduct extends Fragment {
             @Override
             public void onFailure(@NonNull Call<AllApiResponse> call, @NonNull Throwable t) {
                 Log.e("tag", t.getMessage());
+            }
+        });
+    }
+
+    private void loadSubcategoriesForCategory(String selectedCategoryId, String preselectId) {
+        Call<AllApiResponse> call = Api.getClient().getSubcategoryList(MainActivity.userId, selectedCategoryId);
+        call.enqueue(new Callback<AllApiResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<AllApiResponse> call, @NonNull Response<AllApiResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    List<ProductSubcategoryResponse> subcategories = response.body().getSubcategoryResponseList();
+                    if (subcategories != null && !subcategories.isEmpty()) {
+                        subcategoryIdList = new String[subcategories.size() + 1];
+                        subcategoryNameList = new String[subcategories.size() + 1];
+                        subcategoryIdList[0] = "";
+                        subcategoryNameList[0] = "None";
+                        for (int i = 0; i < subcategories.size(); i++) {
+                            subcategoryIdList[i + 1] = subcategories.get(i).getSubcategoryId();
+                            subcategoryNameList[i + 1] = subcategories.get(i).getSubcategoryName();
+                        }
+                    } else {
+                        subcategoryIdList = new String[]{""};
+                        subcategoryNameList = new String[]{"None"};
+                    }
+                    ArrayAdapter<String> adapter = new ArrayAdapter<>(activity, android.R.layout.simple_spinner_item, subcategoryNameList);
+                    adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
+                    binding.subcategorySpinner.setAdapter(adapter);
+                    int selection = 0;
+                    if (preselectId != null && preselectId.length() > 0) {
+                        for (int i = 1; i < subcategoryIdList.length; i++) {
+                            if (preselectId.equals(subcategoryIdList[i])) {
+                                selection = i;
+                                break;
+                            }
+                        }
+                    }
+                    binding.subcategorySpinner.setSelection(selection);
+                    subcategoryId = subcategoryIdList[selection];
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<AllApiResponse> call, @NonNull Throwable t) {
+                Log.e("subcategoryError", "" + t.getMessage());
             }
         });
     }

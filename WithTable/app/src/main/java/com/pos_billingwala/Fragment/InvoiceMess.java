@@ -1,5 +1,6 @@
 package com.pos_billingwala.Fragment;
 
+import android.content.Intent;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Dialog;
@@ -116,7 +117,7 @@ public class InvoiceMess extends Fragment implements View.OnClickListener {
                     searchMemberResponseList.add(memberResponseList.get(i));
                 }
         } else {
-            Toast.makeText(activity, "No search found. All data may be showing ", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, getString(R.string.toast_no_search_found_all_data_may_be_showing), Toast.LENGTH_SHORT).show();
             searchMemberResponseList = new ArrayList<>();
             searchMemberResponseList.addAll(memberResponseList);
         }
@@ -197,19 +198,25 @@ public class InvoiceMess extends Fragment implements View.OnClickListener {
     public void setPopUpWindow() {
 
         LayoutInflater inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        view = inflater.inflate(R.layout.add_member_dialog, null);
+        view = inflater.inflate(R.layout.mess_menu_dialog, null);
         mypopupWindow = new PopupWindow(view, RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT, true);
 
-        LinearLayout addMemberLayout = view.findViewById(R.id.addMemberLayout);
-        TextView addMemberTxt = view.findViewById(R.id.addMember);
+        LinearLayout memberListLayout = view.findViewById(R.id.memberListLayout);
+        LinearLayout scanVerifyLayout = view.findViewById(R.id.scanVerifyLayout);
 
-        addMemberTxt.setText("Member List");
-
-        addMemberLayout.setOnClickListener(new View.OnClickListener() {
+        memberListLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 mypopupWindow.dismiss();
                 setMemberListPassword(binding.menuIcon);
+            }
+        });
+
+        scanVerifyLayout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mypopupWindow.dismiss();
+                activity.startActivity(new Intent(activity, com.pos_billingwala.Activity.MessTokenScanActivity.class));
             }
         });
 
@@ -231,7 +238,7 @@ public class InvoiceMess extends Fragment implements View.OnClickListener {
         if (!companyResponseList.isEmpty()) {
             getMemberList();
         } else {
-            Toast.makeText(activity, "Please fill shop details", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, getString(R.string.toast_please_fill_shop_details), Toast.LENGTH_SHORT).show();
             ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
             ((MainActivity) activity).loadFragment(new CompanyDetailSetting(), true);
         }

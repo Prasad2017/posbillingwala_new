@@ -4,12 +4,14 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.text.InputType;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -23,6 +25,7 @@ import com.posbillingwala.admin.Activity.MainActivity;
 import com.posbillingwala.admin.Adapter.PortionAdapter;
 import com.posbillingwala.admin.Extra.DetectConnection;
 import com.posbillingwala.admin.Model.AllApiResponse;
+import com.posbillingwala.admin.Model.PortionMasterResponse;
 import com.posbillingwala.admin.Model.ProductPortionResponse;
 import com.posbillingwala.admin.R;
 import com.posbillingwala.admin.Retrofit.Api;
@@ -50,16 +53,22 @@ public class ManageCustomerProductPortions extends Fragment {
     View view;
     @BindView(R.id.productInfo)
     TextView productInfo;
-    @BindView(R.id.portionName)
-    TextInputEditText portionNameEdit;
+    @BindView(R.id.portionMasterSpinner)
+    AutoCompleteTextView portionMasterSpinner;
     @BindView(R.id.portionPrice)
     TextInputEditText portionPriceEdit;
     @BindView(R.id.portionSortOrder)
     TextInputEditText portionSortOrderEdit;
+    @BindView(R.id.portionMasterSection)
+    View portionMasterSection;
 
     String customerId;
     String productId;
     String productName;
+    String[] portionMasterIdList;
+    String[] portionMasterNameList;
+    String selectedPortionMasterId;
+    String selectedPortionMasterName;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -77,10 +86,19 @@ public class ManageCustomerProductPortions extends Fragment {
         }
 
         productInfo.setText("Product: " + productName);
-        portionNameEdit.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
         portionRecyclerview = view.findViewById(R.id.portionRecyclerview);
         portionListCardView = view.findViewById(R.id.portionListCardView);
         noDataFound = view.findViewById(R.id.noDataFound);
+
+        portionMasterSpinner.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                if (portionMasterIdList != null && position >= 0 && position < portionMasterIdList.length) {
+                    selectedPortionMasterId = portionMasterIdList[position];
+                    selectedPortionMasterName = portionMasterNameList[position];
+                }
+            }
+        });
 
         MainActivity.back.setOnClickListener(v -> {
             ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
@@ -104,17 +122,33 @@ public class ManageCustomerProductPortions extends Fragment {
         return view;
     }
 
-    @OnClick(R.id.addPortion)
-    public void onAddPortion() {
-        if (portionNameEdit.getText().toString().trim().length() == 0) {
-            Toast.makeText(activity, "Please enter portion name", Toast.LENGTH_SHORT).show();
-            return;
+    @OnClick({R.id.addPortion, R.id.managePortionMaster})
+    public void onClick(View view) {
+        if (view.getId() == R.id.addPortion) {
+            if (selectedPortionMasterId == null || selectedPortionMasterId.isEmpty()) {
+                Toast.makeText(activity, "Please select a portion master", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (portionPriceEdit.getText().toString().trim().length() == 0) {
+                Toast.makeText(activity, "Please enter portion price", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            addPortion();
+        } else if (view.getId() == R.id.managePortionMaster) {
+            openPortionMaster();
         }
-        if (portionPriceEdit.getText().toString().trim().length() == 0) {
-            Toast.makeText(activity, "Please enter portion price", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        addPortion();
+    }
+
+    private void openPortionMaster() {
+        AddCustomerPortionMaster fragment = new AddCustomerPortionMaster();
+        Bundle bundle = new Bundle();
+        bundle.putString("customerId", customerId);
+        bundle.putString("returnTo", "productPortions");
+        bundle.putString("productId", productId);
+        bundle.putString("productName", productName);
+        fragment.setArguments(bundle);
+        ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
+        ((MainActivity) activity).loadFragment(fragment, true);
     }
 
     private void addPortion() {
@@ -132,16 +166,16 @@ public class ManageCustomerProductPortions extends Fragment {
         Call<AllApiResponse> call = Api.getClient().savePortion(
                 customerId,
                 productId,
-                portionNameEdit.getText().toString().trim(),
+                selectedPortionMasterName,
                 portionPriceEdit.getText().toString().trim(),
                 sortOrder,
-                getRandomString(10));
+                getRandomString(10),
+                selectedPortionMasterId);
         call.enqueue(new Callback<AllApiResponse>() {
             @Override
             public void onResponse(Call<AllApiResponse> call, Response<AllApiResponse> response) {
                 if (response.isSuccessful() && response.body() != null && "1".equalsIgnoreCase(response.body().getStatus())) {
                     Toast.makeText(activity, response.body().getMessage(), Toast.LENGTH_SHORT).show();
-                    portionNameEdit.setText("");
                     portionPriceEdit.setText("");
                     getPortionList();
                 } else if (response.body() != null) {
@@ -154,6 +188,43 @@ public class ManageCustomerProductPortions extends Fragment {
             public void onFailure(Call<AllApiResponse> call, Throwable t) {
                 pDialog.dismiss();
                 Log.e("portionError", "" + t.getMessage());
+            }
+        });
+    }
+
+    private void loadPortionMasters() {
+        Call<AllApiResponse> call = Api.getClient().getPortionMasterList(customerId);
+        call.enqueue(new Callback<AllApiResponse>() {
+            @Override
+            public void onResponse(Call<AllApiResponse> call, Response<AllApiResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    List<PortionMasterResponse> list = response.body().getPortionMasterResponse();
+                    if (list != null && !list.isEmpty()) {
+                        portionMasterSection.setVisibility(View.VISIBLE);
+                        portionMasterIdList = new String[list.size()];
+                        portionMasterNameList = new String[list.size()];
+                        for (int i = 0; i < list.size(); i++) {
+                            portionMasterIdList[i] = list.get(i).getPortionMasterId();
+                            portionMasterNameList[i] = list.get(i).getPortionName();
+                        }
+                        ArrayAdapter<String> adapter = new ArrayAdapter<>(activity, R.layout.spinner_item_layout, portionMasterNameList);
+                        adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
+                        portionMasterSpinner.setAdapter(adapter);
+                        portionMasterSpinner.setText(portionMasterNameList[0], false);
+                        selectedPortionMasterId = portionMasterIdList[0];
+                        selectedPortionMasterName = portionMasterNameList[0];
+                    } else {
+                        portionMasterSection.setVisibility(View.GONE);
+                        selectedPortionMasterId = null;
+                        selectedPortionMasterName = null;
+                        Toast.makeText(activity, "Please add portion masters first", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<AllApiResponse> call, Throwable t) {
+                Log.e("portionMasterError", "" + t.getMessage());
             }
         });
     }
@@ -207,6 +278,7 @@ public class ManageCustomerProductPortions extends Fragment {
         ((MainActivity) activity).lockUnlockDrawer(1);
         MainActivity.drawerLayout.closeDrawers();
         if (DetectConnection.checkInternetConnection(activity)) {
+            loadPortionMasters();
             getPortionList();
         } else {
             DetectConnection.noInternetConnection(activity);

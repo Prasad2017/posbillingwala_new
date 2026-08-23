@@ -12,7 +12,11 @@ $i=0;
         date_default_timezone_set("Asia/Calcutta");
         $date = date("Y-m-d");
         
-	$sth="SELECT * FROM `products` LEFT JOIN `categories` ON `categories`.`categoryId`=`products`.`categoryId` WHERE `products`.`userId`='$userId'";
+	$sth="SELECT p.*, c.categoryName, ps.subcategoryName
+              FROM `products` p
+              LEFT JOIN `categories` c ON c.categoryId = p.categoryId
+              LEFT JOIN `product_subcategories` ps ON ps.subcategoryId = p.subcategoryId
+              WHERE p.`userId`='$userId'";
 
     if ($result = mysqli_query($con, $sth))
     {
@@ -27,6 +31,8 @@ $i=0;
         $getdata["userId"]=$row['userId'];
         $getdata["categoryId"]=$row['categoryId'];
         $getdata["categoryName"]=$row['categoryName'];
+        $getdata["subcategoryId"]=isset($row['subcategoryId']) ? $row['subcategoryId'] : '';
+        $getdata["subcategoryName"]=isset($row['subcategoryName']) ? $row['subcategoryName'] : '';
         $getdata["productCode"]=$row['productCode'];
         $getdata["productName"]=$row['productName'];
         $getdata["productPrice"]=$row['productPrice'];

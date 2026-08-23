@@ -58,12 +58,18 @@ public class AllApiResponse {
     @SerializedName("portionResponse")
     @Expose
     public List<ProductPortionResponse> portionResponseList;
+    @SerializedName("portionMasterResponse")
+    @Expose
+    public List<PortionMasterResponse> portionMasterResponseList;
     @SerializedName("memberResponse")
     @Expose
     public List<MemberResponse> memberResponseList;
     @SerializedName("memberInvoiceResponse")
     @Expose
     public List<MessInvoiceResponse> messInvoiceResponseList;
+    @SerializedName("messTokenResponse")
+    @Expose
+    public List<MessTokenResponse> messTokenResponseList;
 
 
     public String getStatus() {
@@ -202,6 +208,14 @@ public class AllApiResponse {
         this.portionResponseList = portionResponseList;
     }
 
+    public List<PortionMasterResponse> getPortionMasterResponseList() {
+        return portionMasterResponseList;
+    }
+
+    public void setPortionMasterResponseList(List<PortionMasterResponse> portionMasterResponseList) {
+        this.portionMasterResponseList = portionMasterResponseList;
+    }
+
     public List<MemberResponse> getMemberResponseList() {
         return memberResponseList;
     }
@@ -216,5 +230,13 @@ public class AllApiResponse {
 
     public void setMessInvoiceResponseList(List<MessInvoiceResponse> messInvoiceResponseList) {
         this.messInvoiceResponseList = messInvoiceResponseList;
+    }
+
+    public List<MessTokenResponse> getMessTokenResponseList() {
+        return messTokenResponseList;
+    }
+
+    public void setMessTokenResponseList(List<MessTokenResponse> messTokenResponseList) {
+        this.messTokenResponseList = messTokenResponseList;
     }
 }

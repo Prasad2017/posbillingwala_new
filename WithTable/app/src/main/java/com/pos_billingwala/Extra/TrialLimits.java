@@ -4,6 +4,7 @@ import android.content.Context;
 
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Model.LoginResponse;
+import com.pos_billingwala.R;
 
 /**
  * P4-2: Trial bill limits come from the server login/check response only.
@@ -67,9 +68,14 @@ public final class TrialLimits {
     public static String blockedMessage(Context context) {
         String max = Common.getSavedUserData(context, "trialMaxBills");
         if (max == null || max.trim().isEmpty()) {
-            return "Trial bill limit reached. Please upgrade your licence.";
+            return context.getString(R.string.licence_msg_trial_limit_generic);
         }
-        return "Trial bill limit reached (max " + max.trim() + "). Please upgrade your licence.";
+        try {
+            int maxBills = Integer.parseInt(max.trim());
+            return context.getString(R.string.licence_msg_trial_limit, maxBills);
+        } catch (NumberFormatException e) {
+            return context.getString(R.string.licence_msg_trial_limit_generic);
+        }
     }
 
     private static String nullToEmpty(String value) {
