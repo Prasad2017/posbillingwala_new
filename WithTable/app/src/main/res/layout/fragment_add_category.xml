@@ -32,6 +32,8 @@
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
                 android:layout_gravity="center"
+                android:layout_marginStart="15dp"
+                android:layout_toEndOf="@+id/backToHome"
                 android:fontFamily="@font/poppinsmedium"
                 android:gravity="center"
                 android:paddingStart="5dp"
@@ -39,31 +41,7 @@
                 android:text="@string/category_list"
                 android:textColor="@color/white"
                 android:textSize="17dp" />
-
-            <androidx.appcompat.widget.AppCompatTextView
-                android:id="@+id/manageSubcategories"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentEnd="true"
-                android:layout_centerInParent="true"
-                android:layout_marginEnd="15dp"
-                android:fontFamily="@font/poppinsmedium"
-                android:gravity="center"
-                android:text="@string/manage_subcategories"
-                android:textColor="@color/white"
-                android:textSize="14dp" />
-            <ImageView
-                android:id="@+id/appBrandLogo"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
-                android:layout_centerVertical="true"
-                android:layout_marginEnd="8dp"
-                android:layout_toStartOf="@+id/manageSubcategories"
-                android:contentDescription="@string/app_name"
-                android:scaleType="fitCenter"
-                android:src="@drawable/app_logo" />
-
-        </RelativeLayout>
+</RelativeLayout>
 
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -90,34 +68,15 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
 
-                    <RelativeLayout
-                        android:layout_width="match_parent"
+                    <TextView
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_gravity="center"
                         android:layout_marginTop="15dp"
-                        android:paddingStart="10dp"
-                        android:paddingEnd="10dp">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_centerInParent="true"
-                            android:fontFamily="@font/poppinsbold"
-                            android:gravity="center"
-                            android:text="@string/category_detail"
-                            android:textColor="@color/textcolor" />
-
-                        <TextView
-                            android:id="@+id/managePortionMaster"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_alignParentEnd="true"
-                            android:layout_centerVertical="true"
-                            android:fontFamily="@font/poppinsmedium"
-                            android:text="@string/manage_portion_master"
-                            android:textColor="@color/colorPrimary"
-                            android:textSize="13dp" />
-
-                    </RelativeLayout>
+                        android:fontFamily="@font/poppinsbold"
+                        android:gravity="center"
+                        android:text="@string/category_detail"
+                        android:textColor="@color/textcolor" />
 
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/categoryNameLayout"
@@ -154,32 +113,6 @@
                             android:textSize="15dp" />
 
                     </com.google.android.material.textfield.TextInputLayout>
-
-                    <RadioGroup
-                        android:id="@+id/foodTypeGroup"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="15dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginEnd="15dp"
-                        android:orientation="horizontal">
-
-                        <RadioButton
-                            android:id="@+id/foodTypeFood"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:checked="true"
-                            android:text="@string/ui_food" />
-
-                        <RadioButton
-                            android:id="@+id/foodTypeBeverage"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="@string/ui_beverage" />
-
-                    </RadioGroup>
 
                     <TextView
                         android:id="@+id/addCategory"

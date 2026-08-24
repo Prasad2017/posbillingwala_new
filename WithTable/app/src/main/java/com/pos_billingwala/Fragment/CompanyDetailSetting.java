@@ -30,7 +30,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.CompoundButton;
 import android.widget.Toast;
@@ -39,6 +38,7 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.MultiplePermissionsReport;
 import com.karumi.dexter.PermissionToken;
@@ -136,15 +136,10 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
             }
         });
 
-        binding.currencySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        binding.currencySpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
             @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+            public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
                 currencyName = currencyList[position];
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-
             }
         });
 
@@ -504,7 +499,10 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
             adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
             binding.currencySpinner.setAdapter(adapter);
             if (currencyName != null) {
-                binding.currencySpinner.setSelection(adapter.getPosition(currencyName));
+                int currencyIndex = adapter.getPosition(currencyName);
+                if (currencyIndex >= 0) {
+                    binding.currencySpinner.setSelectedIndex(currencyIndex);
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();

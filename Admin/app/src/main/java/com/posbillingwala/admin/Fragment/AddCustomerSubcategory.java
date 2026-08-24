@@ -13,9 +13,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.AutoCompleteTextView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -25,6 +23,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.textfield.TextInputEditText;
+import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.posbillingwala.admin.Activity.MainActivity;
 import com.posbillingwala.admin.Adapter.SubcategoryAdapter;
 import com.posbillingwala.admin.Extra.DetectConnection;
@@ -59,7 +58,7 @@ public class AddCustomerSubcategory extends Fragment {
     @BindView(R.id.subcategoryName)
     TextInputEditText subcategoryNameEdit;
     @BindView(R.id.categorySpinner)
-    AutoCompleteTextView categorySpinner;
+    MaterialSpinner categorySpinner;
 
     String[] categoryIdList, categoryNameList;
 
@@ -108,9 +107,9 @@ public class AddCustomerSubcategory extends Fragment {
             return false;
         });
 
-        categorySpinner.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        categorySpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
                 if (categoryIdList != null && position >= 0 && position < categoryIdList.length) {
                     categoryId = categoryIdList[position];
                     getSubcategoryList();
@@ -160,12 +159,15 @@ public class AddCustomerSubcategory extends Fragment {
                             preselectIndex = i;
                         }
                     }
-                    ArrayAdapter<String> adapter = new ArrayAdapter<>(activity, R.layout.spinner_item_layout, categoryNameList);
+                    ArrayAdapter<String> adapter = new ArrayAdapter<>(activity, android.R.layout.simple_spinner_item, categoryNameList);
                     adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
                     categorySpinner.setAdapter(adapter);
                     categoryId = categoryIdList[preselectIndex];
-                    categorySpinner.setText(categoryNameList[preselectIndex], false);
-                    getSubcategoryList();
+                    if (preselectIndex >= 0) {
+                        categorySpinner.setSelectedIndex(preselectIndex);
+                    } else {
+                        getSubcategoryList();
+                    }
                 } else {
                     Toast.makeText(activity, "Please add a category first", Toast.LENGTH_SHORT).show();
                     subcategoryListCardView.setVisibility(View.GONE);

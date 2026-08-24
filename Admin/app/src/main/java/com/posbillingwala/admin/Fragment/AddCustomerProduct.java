@@ -13,14 +13,13 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.AutoCompleteTextView;
 import android.widget.Toast;
 
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.textfield.TextInputEditText;
+import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.posbillingwala.admin.Activity.MainActivity;
 import com.posbillingwala.admin.Extra.DetectConnection;
 import com.posbillingwala.admin.Extra.ProductPortionSectionHelper;
@@ -49,7 +48,7 @@ public class AddCustomerProduct extends Fragment {
     public static Activity activity;
     View view;
     @BindViews({R.id.categorySpinner, R.id.unitSpinner, R.id.subcategorySpinner})
-    List<AutoCompleteTextView> materialSpinners;
+    List<MaterialSpinner> materialSpinners;
     @BindViews({R.id.productName, R.id.productPrice, R.id.productCGST, R.id.productSGST})
     List<TextInputEditText> textInputEditTexts;
     String[] categoryIdList, categoryNameList, unitNameList;
@@ -106,18 +105,18 @@ public class AddCustomerProduct extends Fragment {
 
         textInputEditTexts.get(0).setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
 
-        materialSpinners.get(0).setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        materialSpinners.get(0).setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
                 categoryId = categoryIdList[position];
                 categoryName = categoryNameList[position];
                 loadSubcategoriesForCategory(categoryId);
             }
         });
 
-        materialSpinners.get(2).setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        materialSpinners.get(2).setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
                 if (subcategoryIdList != null && position >= 0 && position < subcategoryIdList.length) {
                     subcategoryId = subcategoryIdList[position];
                 }
@@ -126,16 +125,16 @@ public class AddCustomerProduct extends Fragment {
 
         unitNameList = activity.getResources().getStringArray(R.array.product_unit);
         try {
-            final ArrayAdapter adapter = new ArrayAdapter(activity, R.layout.spinner_item_layout, unitNameList);
+            final ArrayAdapter adapter = new ArrayAdapter(activity, android.R.layout.simple_spinner_item, unitNameList);
             adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
             materialSpinners.get(1).setAdapter(adapter);
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        materialSpinners.get(1).setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        materialSpinners.get(1).setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
                 unitName = unitNameList[position];
             }
         });
@@ -366,7 +365,7 @@ public class AddCustomerProduct extends Fragment {
                         }
 
                         try {
-                            final ArrayAdapter adapter = new ArrayAdapter(activity, R.layout.spinner_item_layout, categoryNameList);
+                            final ArrayAdapter adapter = new ArrayAdapter(activity, android.R.layout.simple_spinner_item, categoryNameList);
                             adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
                             materialSpinners.get(0).setAdapter(adapter);
                         } catch (Exception e) {
@@ -404,18 +403,18 @@ public class AddCustomerProduct extends Fragment {
                             subcategoryIdList[i + 1] = subcategories.get(i).getSubcategoryId();
                             subcategoryNameList[i + 1] = subcategories.get(i).getSubcategoryName();
                         }
-                        ArrayAdapter<String> adapter = new ArrayAdapter<>(activity, R.layout.spinner_item_layout, subcategoryNameList);
+                        ArrayAdapter<String> adapter = new ArrayAdapter<>(activity, android.R.layout.simple_spinner_item, subcategoryNameList);
                         adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
                         materialSpinners.get(2).setAdapter(adapter);
-                        materialSpinners.get(2).setText(subcategoryNameList[0], false);
+                        materialSpinners.get(2).setSelectedIndex(0);
                         subcategoryId = subcategoryIdList[0];
                     } else {
                         subcategoryIdList = new String[]{""};
                         subcategoryNameList = new String[]{"None"};
-                        ArrayAdapter<String> adapter = new ArrayAdapter<>(activity, R.layout.spinner_item_layout, subcategoryNameList);
+                        ArrayAdapter<String> adapter = new ArrayAdapter<>(activity, android.R.layout.simple_spinner_item, subcategoryNameList);
                         adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
                         materialSpinners.get(2).setAdapter(adapter);
-                        materialSpinners.get(2).setText(subcategoryNameList[0], false);
+                        materialSpinners.get(2).setSelectedIndex(0);
                         subcategoryId = "";
                     }
                 }

@@ -324,7 +324,6 @@ public class Home extends Fragment implements View.OnClickListener {
         binding.takeAwayBilling.setOnClickListener(this);
         binding.messBilling.setOnClickListener(this);
         binding.productCardView.setOnClickListener(this);
-        binding.categoryCardView.setOnClickListener(this);
         binding.subcategoryCardView.setOnClickListener(this);
         binding.hideShowTotalSale.setOnClickListener(this);
         binding.hideShowTodaySale.setOnClickListener(this);
@@ -428,9 +427,6 @@ public class Home extends Fragment implements View.OnClickListener {
             } else {
                 Toast.makeText(activity, getString(R.string.toast_you_have_not_selected_take_away_please_c), Toast.LENGTH_SHORT).show();
             }
-        } else if (id == R.id.categoryCardView) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-            ((MainActivity) activity).loadFragment(new AddCategory(), true);
         } else if (id == R.id.subcategoryCardView) {
             ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
             ((MainActivity) activity).loadFragment(new AddSubcategory(), true);
@@ -472,13 +468,6 @@ public class Home extends Fragment implements View.OnClickListener {
                     public void onClick(DialogInterface dialogInterface, int i) {
                         dialogInterface.dismiss();
                         if (DetectConnection.checkInternetConnection(activity)) {
-                            int unsynced = posBillingWalaDatabase.countUnsyncedInvoices();
-                            if (unsynced > 0) {
-                                Toast.makeText(activity,
-                                        unsynced + " unsynced bill(s) found. Send to cloud first, then fetch.",
-                                        Toast.LENGTH_LONG).show();
-                                return;
-                            }
                             SQLiteDatabase database = posBillingWalaDatabase.getWritableDatabase();
                             posBillingWalaDatabase.resetTables(database);
                             NetworkDataFetcher.fetchAllData(activity);
@@ -616,12 +605,6 @@ public class Home extends Fragment implements View.OnClickListener {
             } else {
                 MainActivity.currencyName = "\u20B9";
             }
-        }
-        //Total Category
-        cursor = database.rawQuery("SELECT COUNT(categoryId) as totalCategory FROM " + POSBillingWalaDatabase.PRODUCT_CATEGORY_TABLE + " WHERE categoryDeletedStatus = '0'", null);
-        while (cursor.moveToNext()) {
-            String totalCategory = cursor.getString(cursor.getColumnIndex("totalCategory"));
-            binding.totalCategory.setText(totalCategory);
         }
         //Total Subcategory
         cursor = database.rawQuery("SELECT COUNT(subcategoryId) as totalSubcategory FROM " + POSBillingWalaDatabase.PRODUCT_SUBCATEGORY_TABLE + " WHERE subcategoryDeletedStatus = '0'", null);

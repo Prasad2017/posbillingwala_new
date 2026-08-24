@@ -9,9 +9,7 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.AutoCompleteTextView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -21,6 +19,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.textfield.TextInputEditText;
+import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.posbillingwala.admin.Activity.MainActivity;
 import com.posbillingwala.admin.Adapter.PortionAdapter;
 import com.posbillingwala.admin.Extra.DetectConnection;
@@ -54,7 +53,7 @@ public class ManageCustomerProductPortions extends Fragment {
     @BindView(R.id.productInfo)
     TextView productInfo;
     @BindView(R.id.portionMasterSpinner)
-    AutoCompleteTextView portionMasterSpinner;
+    MaterialSpinner portionMasterSpinner;
     @BindView(R.id.portionPrice)
     TextInputEditText portionPriceEdit;
     @BindView(R.id.portionSortOrder)
@@ -90,9 +89,9 @@ public class ManageCustomerProductPortions extends Fragment {
         portionListCardView = view.findViewById(R.id.portionListCardView);
         noDataFound = view.findViewById(R.id.noDataFound);
 
-        portionMasterSpinner.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        portionMasterSpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
                 if (portionMasterIdList != null && position >= 0 && position < portionMasterIdList.length) {
                     selectedPortionMasterId = portionMasterIdList[position];
                     selectedPortionMasterName = portionMasterNameList[position];
@@ -207,10 +206,9 @@ public class ManageCustomerProductPortions extends Fragment {
                             portionMasterIdList[i] = list.get(i).getPortionMasterId();
                             portionMasterNameList[i] = list.get(i).getPortionName();
                         }
-                        ArrayAdapter<String> adapter = new ArrayAdapter<>(activity, R.layout.spinner_item_layout, portionMasterNameList);
+                        ArrayAdapter<String> adapter = new ArrayAdapter<>(activity, android.R.layout.simple_spinner_item, portionMasterNameList);
                         adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
                         portionMasterSpinner.setAdapter(adapter);
-                        portionMasterSpinner.setText(portionMasterNameList[0], false);
                         selectedPortionMasterId = portionMasterIdList[0];
                         selectedPortionMasterName = portionMasterNameList[0];
                     } else {

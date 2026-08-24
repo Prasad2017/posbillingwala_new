@@ -46,9 +46,6 @@
                     android:text="@string/user_setting_title"
                     android:textColor="@color/white"
                     android:textSize="17dp" />
-
-            
-            <include layout="@layout/include_app_toolbar_logo" />
 </RelativeLayout>
 
         </com.google.android.material.appbar.AppBarLayout>
@@ -158,6 +155,64 @@
                         android:paddingStart="10dp"
                         android:paddingEnd="10dp"
                         android:text="@string/setting_reports"
+                        android:textColor="@color/black"
+                        android:textSize="15dp" />
+
+                    <ImageView
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/baseline_keyboard_arrow_right_24"
+                        app:tint="@color/light_black" />
+
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginEnd="20dp"
+                    android:background="@color/black" />
+
+                <LinearLayout
+                    android:id="@+id/masterDataLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="15dp"
+                    android:layout_marginEnd="20dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="35dp"
+                        android:layout_height="35dp"
+                        android:layout_gravity="center"
+                        android:background="@drawable/circular_border"
+                        android:fontFamily="@font/poppinsbold"
+                        android:gravity="center"
+                        android:text="3"
+                        android:textColor="@color/white"
+                        android:textSize="17dp" />
+
+                    <ImageView
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:layout_gravity="center"
+                        android:layout_marginStart="10dp"
+                        android:src="@drawable/baseline_add_business_24"
+                        app:tint="@color/light_black" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_weight="1"
+                        android:fontFamily="@font/poppinsregular"
+                        android:gravity="center|start"
+                        android:paddingStart="10dp"
+                        android:paddingEnd="10dp"
+                        android:text="@string/setting_master_data"
                         android:textColor="@color/black"
                         android:textSize="15dp" />
 
@@ -507,64 +562,6 @@
                         android:paddingStart="10dp"
                         android:paddingEnd="10dp"
                         android:text="@string/setting_fetch_data"
-                        android:textColor="@color/black"
-                        android:textSize="15dp" />
-
-                    <ImageView
-                        android:layout_width="30dp"
-                        android:layout_height="30dp"
-                        android:layout_gravity="center"
-                        android:src="@drawable/baseline_keyboard_arrow_right_24"
-                        app:tint="@color/light_black" />
-
-                </LinearLayout>
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:layout_marginStart="20dp"
-                    android:layout_marginTop="10dp"
-                    android:layout_marginEnd="20dp"
-                    android:background="@color/black" />
-
-                <LinearLayout
-                    android:id="@+id/syncPreviousDayLayout"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="20dp"
-                    android:layout_marginTop="15dp"
-                    android:layout_marginEnd="20dp"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:layout_width="35dp"
-                        android:layout_height="35dp"
-                        android:layout_gravity="center"
-                        android:background="@drawable/circular_border"
-                        android:fontFamily="@font/poppinsbold"
-                        android:gravity="center"
-                        android:text="↺"
-                        android:textColor="@color/white"
-                        android:textSize="17dp" />
-
-                    <ImageView
-                        android:layout_width="30dp"
-                        android:layout_height="30dp"
-                        android:layout_gravity="center"
-                        android:layout_marginStart="10dp"
-                        android:src="@drawable/baseline_cloud_download_24"
-                        app:tint="@color/light_black" />
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:layout_weight="1"
-                        android:fontFamily="@font/poppinsregular"
-                        android:gravity="center|start"
-                        android:paddingStart="10dp"
-                        android:paddingEnd="10dp"
-                        android:text="@string/setting_sync_previous_day"
                         android:textColor="@color/black"
                         android:textSize="15dp" />
 

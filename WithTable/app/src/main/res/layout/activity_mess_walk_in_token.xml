@@ -23,9 +23,7 @@
                 android:text="@string/ui_walkin_mess_token"
                 android:textColor="@color/white"
                 android:textSize="17dp" />
-
-            <include layout="@layout/include_app_toolbar_logo" />
-        </RelativeLayout>
+</RelativeLayout>
     </com.google.android.material.appbar.AppBarLayout>
 
     <ScrollView

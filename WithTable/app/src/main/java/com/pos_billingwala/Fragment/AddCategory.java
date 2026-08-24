@@ -21,7 +21,6 @@ import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.CategoryAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.SimpleDividerItemDecoration;
-import com.pos_billingwala.Model.FoodTypeResponse;
 import com.pos_billingwala.Model.ProductCategoryResponse;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentAddCategoryBinding;
@@ -91,8 +90,7 @@ public class AddCategory extends Fragment implements View.OnClickListener {
 
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
                     Log.i("tag", "onKey Back listener is working!!!");
-                    ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                    ((MainActivity) activity).loadFragment(new Home(), false);
+                    navigateToCaller();
                     return true;
                 }
                 return false;
@@ -110,7 +108,6 @@ public class AddCategory extends Fragment implements View.OnClickListener {
 
         binding.backToHome.setOnClickListener(this);
         binding.addCategory.setOnClickListener(this);
-        binding.managePortionMaster.setOnClickListener(this);
 
     }
 
@@ -118,17 +115,22 @@ public class AddCategory extends Fragment implements View.OnClickListener {
     public void onClick(View view) {
         int id = view.getId();
         if (id == R.id.backToHome) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-            ((MainActivity) activity).loadFragment(new Home(), false);
+            navigateToCaller();
         } else if (id == R.id.addCategory) {
             if (!binding.categoryName.getText().toString().isEmpty()) {
                 addProductCategory();
             } else {
                 Toast.makeText(activity, getString(R.string.toast_please_add_category), Toast.LENGTH_SHORT).show();
             }
-        } else if (id == R.id.managePortionMaster) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-            ((MainActivity) activity).loadFragment(new AddPortionMaster(), true);
+        }
+    }
+
+    private void navigateToCaller() {
+        ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
+        if (getArguments() != null && MasterData.OPENED_FROM_MASTER.equals(getArguments().getString("openedFrom"))) {
+            ((MainActivity) activity).loadFragment(new MasterData(), true);
+        } else {
+            ((MainActivity) activity).loadFragment(new Home(), false);
         }
     }
 
@@ -145,7 +147,7 @@ public class AddCategory extends Fragment implements View.OnClickListener {
                     0,
                     "0",
                     getRandomString(10),
-                    resolveSelectedFoodTypeId());
+                    posBillingWalaDatabase.getDefaultFoodTypeId());
 
             Toast.makeText(activity, getString(R.string.toast_product_category_added_successfully), Toast.LENGTH_SHORT).show();
             binding.categoryName.setText("");
@@ -153,13 +155,6 @@ public class AddCategory extends Fragment implements View.OnClickListener {
 
         getHomeProductCategoryList();
 
-    }
-
-    private long resolveSelectedFoodTypeId() {
-        if (binding.foodTypeBeverage.isChecked()) {
-            return posBillingWalaDatabase.getFoodTypeIdByCode(FoodTypeResponse.CODE_BEVERAGE);
-        }
-        return posBillingWalaDatabase.getDefaultFoodTypeId();
     }
 
     public String getRandomString(final int sizeOfRandomString) {

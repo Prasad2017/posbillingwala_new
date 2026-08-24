@@ -110,6 +110,8 @@ public class AddPortionMaster extends Fragment implements View.OnClickListener {
             ((MainActivity) activity).loadFragment(manageProductPortions, false);
         } else if ("addProduct".equals(returnTo)) {
             ((MainActivity) activity).loadFragment(new AddProduct(), false);
+        } else if ("masterData".equals(returnTo)) {
+            ((MainActivity) activity).loadFragment(new MasterData(), true);
         } else if ("updateProduct".equals(returnTo)) {
             UpdateProduct updateProduct = new UpdateProduct();
             Bundle bundle = new Bundle();

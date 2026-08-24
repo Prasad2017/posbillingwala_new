@@ -94,8 +94,7 @@ public class ProductMaster extends Fragment implements View.OnClickListener {
 
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
                     Log.i("tag", "onKey Back listener is working!!!");
-                    ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                    ((MainActivity) activity).loadFragment(new Home(), false);
+                    navigateToCaller();
                     return true;
                 }
                 return false;
@@ -208,13 +207,21 @@ public class ProductMaster extends Fragment implements View.OnClickListener {
     public void onClick(View view) {
         int id = view.getId();
         if (id == R.id.backToHome) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-            ((MainActivity) activity).loadFragment(new Home(), false);
+            navigateToCaller();
         } else if (id == R.id.printProductCardView) {
             startActivity(new Intent(activity, ProductListBluetoothPrint.class));
         } else if (id == R.id.addProduct) {
             ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
             ((MainActivity) activity).loadFragment(new AddProduct(), true);
+        }
+    }
+
+    private void navigateToCaller() {
+        ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
+        if (getArguments() != null && MasterData.OPENED_FROM_MASTER.equals(getArguments().getString("openedFrom"))) {
+            ((MainActivity) activity).loadFragment(new MasterData(), true);
+        } else {
+            ((MainActivity) activity).loadFragment(new Home(), false);
         }
     }
 

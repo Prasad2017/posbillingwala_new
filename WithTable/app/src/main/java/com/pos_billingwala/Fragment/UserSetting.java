@@ -1,6 +1,5 @@
 package com.pos_billingwala.Fragment;
 
-import android.app.DatePickerDialog;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Dialog;
@@ -58,7 +57,6 @@ import com.pos_billingwala.Model.LoginResponse;
 import com.pos_billingwala.Model.PrinterSettingResponse;
 import com.pos_billingwala.NetworkToOffline.NetworkDataFetcher;
 import com.pos_billingwala.NetworkToOffline.OfflineNetworkData;
-import com.pos_billingwala.NetworkToOffline.PreviousDayInvoiceSync;
 import com.pos_billingwala.NetworkToOffline.UserSynchronizeData;
 import com.pos_billingwala.Print.KOTWoosimPrnMng;
 import com.pos_billingwala.Print.WoosimPrnMng;
@@ -68,9 +66,7 @@ import com.pos_billingwala.databinding.FragmentUserSettingBinding;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
-import java.util.Locale;
 
 import cn.pedant.SweetAlert.SweetAlertDialog;
 import retrofit2.Call;
@@ -136,6 +132,7 @@ public class UserSetting extends Fragment implements View.OnClickListener {
         binding.backToHome.setOnClickListener(this);
         binding.appDevelopedBy.setOnClickListener(this);
         binding.reportLayout.setOnClickListener(this);
+        binding.masterDataLayout.setOnClickListener(this);
         binding.invoiceDetailsLayout.setOnClickListener(this);
         binding.shopDetailLayout.setOnClickListener(this);
         binding.inventoryManagementLayout.setOnClickListener(this);
@@ -143,7 +140,6 @@ public class UserSetting extends Fragment implements View.OnClickListener {
         binding.printerDetailLayout.setOnClickListener(this);
         binding.aboutLayout.setOnClickListener(this);
         binding.fetchDataLayout.setOnClickListener(this);
-        binding.syncPreviousDayLayout.setOnClickListener(this);
         binding.synchronizeLayout.setOnClickListener(this);
         binding.logoutLayout.setOnClickListener(this);
         binding.rateUsLayout.setOnClickListener(this);
@@ -229,6 +225,9 @@ public class UserSetting extends Fragment implements View.OnClickListener {
             startActivity(browserIntent);
         } else if (id == R.id.reportLayout) {
             setReportPassword();
+        } else if (id == R.id.masterDataLayout) {
+            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
+            ((MainActivity) activity).loadFragment(new MasterData(), true);
         } else if (id == R.id.invoiceDetailsLayout) {
             ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
             ((MainActivity) activity).loadFragment(new OrderInvoice(), true);
@@ -248,8 +247,6 @@ public class UserSetting extends Fragment implements View.OnClickListener {
             ((MainActivity) activity).loadFragment(new AboutUs(), true);
         } else if (id == R.id.fetchDataLayout) {
             confirmFetchData();
-        } else if (id == R.id.syncPreviousDayLayout) {
-            confirmSyncPreviousDay();
         } else if (id == R.id.synchronizeLayout) {
             confirmSynchronizeData();
         } else if (id == R.id.logoutLayout) {
@@ -578,61 +575,6 @@ public class UserSetting extends Fragment implements View.OnClickListener {
     }
 
 
-    public void confirmSyncPreviousDay() {
-
-        new MaterialAlertDialogBuilder(activity, R.style.ThemeDialog)
-                .setTitle(getString(R.string.toast_sync_bills_for_one_day))
-                .setMessage(getString(R.string.toast_downloads_missing_bills_for_the_selected))
-                .setCancelable(true)
-                .setPositiveButton("Choose date", (dialog, which) -> {
-                    dialog.dismiss();
-                    showPreviousDayDatePicker();
-                })
-                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
-                .show();
-    }
-
-    private void showPreviousDayDatePicker() {
-        Calendar cal = Calendar.getInstance();
-        cal.add(Calendar.DAY_OF_MONTH, -1);
-        DatePickerDialog picker = new DatePickerDialog(activity, (view, year, month, dayOfMonth) -> {
-            String invoiceDate = String.format(Locale.US, "%04d-%02d-%02d", year, month + 1, dayOfMonth);
-            runPreviousDaySync(invoiceDate);
-        }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH));
-        picker.setTitle(getString(R.string.toast_select_date_to_pull_from_cloud));
-        picker.show();
-    }
-
-    private void runPreviousDaySync(String invoiceDate) {
-        if (!DetectConnection.checkInternetConnection(activity)) {
-            DetectConnection.noInternetConnection(activity);
-            return;
-        }
-
-        pDialog = new SweetAlertDialog(activity, SweetAlertDialog.PROGRESS_TYPE);
-        pDialog.getProgressHelper().setBarColor(Color.parseColor("#2D7FED"));
-        pDialog.setTitleText("Syncing " + invoiceDate);
-        pDialog.setCancelable(false);
-        pDialog.show();
-
-        PreviousDayInvoiceSync.sync(activity, invoiceDate, (invoicesAdded, linesAdded, errorMessage) -> {
-            if (pDialog != null && pDialog.isShowing()) {
-                pDialog.dismiss();
-            }
-            if (errorMessage != null) {
-                Toast.makeText(activity, errorMessage, Toast.LENGTH_LONG).show();
-                return;
-            }
-            if (invoicesAdded == 0 && linesAdded == 0) {
-                Toast.makeText(activity, "No new bills for " + invoiceDate, Toast.LENGTH_LONG).show();
-            } else {
-                Toast.makeText(activity,
-                        "Added " + invoicesAdded + " bill(s), " + linesAdded + " line(s) for " + invoiceDate,
-                        Toast.LENGTH_LONG).show();
-            }
-        });
-    }
-
     public void confirmFetchData() {
 
         new MaterialAlertDialogBuilder(activity, R.style.ThemeDialog)
@@ -644,14 +586,6 @@ public class UserSetting extends Fragment implements View.OnClickListener {
                     public void onClick(DialogInterface dialogInterface, int i) {
                         dialogInterface.dismiss();
                         if (DetectConnection.checkInternetConnection(activity)) {
-                            int unsynced = posBillingWalaDatabase.countUnsyncedInvoices();
-                            if (unsynced > 0) {
-                                Toast.makeText(activity,
-                                        unsynced + " unsynced bill(s) found. Send to cloud first, then fetch.",
-                                        Toast.LENGTH_LONG).show();
-                                return;
-                            }
-
                             Toast.makeText(activity, getString(R.string.toast_data_fetching_started), Toast.LENGTH_SHORT).show();
 
                             pDialog = new SweetAlertDialog(activity, SweetAlertDialog.PROGRESS_TYPE);

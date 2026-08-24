@@ -10,7 +10,6 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -20,6 +19,8 @@ import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.jaredrummler.materialspinner.MaterialSpinner;
 
 import com.posbillingwala.dealer.Activity.MainActivity;
 import com.posbillingwala.dealer.Adapter.CategoryAdapter;
@@ -119,9 +120,9 @@ public class AddCustomerProductCategory extends Fragment implements View.OnClick
 
         binding.categoryName.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
 
-        binding.foodTypeSpinner.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        binding.foodTypeSpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
                 if (foodTypeIdList != null && position >= 0 && position < foodTypeIdList.length) {
                     foodTypeId = foodTypeIdList[position];
                 }
@@ -266,10 +267,9 @@ public class AddCustomerProductCategory extends Fragment implements View.OnClick
                             foodTypeIdList[i] = foodTypes.get(i).getFoodTypeId();
                             foodTypeNameList[i] = foodTypes.get(i).getFoodTypeName();
                         }
-                        ArrayAdapter<String> adapter = new ArrayAdapter<>(activity, R.layout.spinner_item_layout, foodTypeNameList);
+                        ArrayAdapter<String> adapter = new ArrayAdapter<>(activity, android.R.layout.simple_spinner_item, foodTypeNameList);
                         adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
                         binding.foodTypeSpinner.setAdapter(adapter);
-                        binding.foodTypeSpinner.setText(foodTypeNameList[0], false);
                         foodTypeId = foodTypeIdList[0];
                     }
                 }

@@ -12,7 +12,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -22,6 +21,8 @@ import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.jaredrummler.materialspinner.MaterialSpinner;
 
 import com.posbillingwala.dealer.Activity.MainActivity;
 import com.posbillingwala.dealer.Adapter.SubcategoryAdapter;
@@ -98,9 +99,9 @@ public class AddCustomerSubcategory extends Fragment implements View.OnClickList
             return false;
         });
 
-        binding.categorySpinner.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        binding.categorySpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
                 if (categoryIdList != null && position >= 0 && position < categoryIdList.length) {
                     categoryId = categoryIdList[position];
                     getSubcategoryList();
@@ -154,12 +155,15 @@ public class AddCustomerSubcategory extends Fragment implements View.OnClickList
                             preselectIndex = i;
                         }
                     }
-                    ArrayAdapter<String> adapter = new ArrayAdapter<>(activity, R.layout.spinner_item_layout, categoryNameList);
+                    ArrayAdapter<String> adapter = new ArrayAdapter<>(activity, android.R.layout.simple_spinner_item, categoryNameList);
                     adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
                     binding.categorySpinner.setAdapter(adapter);
                     categoryId = categoryIdList[preselectIndex];
-                    binding.categorySpinner.setText(categoryNameList[preselectIndex], false);
-                    getSubcategoryList();
+                    if (preselectIndex >= 0) {
+                        binding.categorySpinner.setSelectedIndex(preselectIndex);
+                    } else {
+                        getSubcategoryList();
+                    }
                 } else {
                     Toast.makeText(activity, "Please add a category first", Toast.LENGTH_SHORT).show();
                     subcategoryListCardView.setVisibility(View.GONE);

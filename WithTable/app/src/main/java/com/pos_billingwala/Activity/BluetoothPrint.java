@@ -36,7 +36,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -44,7 +43,6 @@ import android.widget.PopupWindow;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.RelativeLayout;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -60,6 +58,7 @@ import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 
 import com.google.android.material.textfield.TextInputEditText;
+import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.MultiplePermissionsReport;
 import com.karumi.dexter.PermissionToken;
@@ -702,7 +701,7 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                 TextInputEditText discountPercentageTxt = dialog.findViewById(R.id.discountPercentage);
                 TextView addDiscountPercentageTxt = dialog.findViewById(R.id.addDiscountPercentage);
                 TextView dismissDiscountPercentageTxt = dialog.findViewById(R.id.dismissDiscountPercentage);
-                Spinner discountTypeSpinner = dialog.findViewById(R.id.discountTypeSpinner);
+                MaterialSpinner discountTypeSpinner = dialog.findViewById(R.id.discountTypeSpinner);
 
                 discountTypeList = getResources().getStringArray(R.array.discount_type);
                 try {
@@ -710,21 +709,19 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                     adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
                     discountTypeSpinner.setAdapter(adapter);
                     if (discountType != null) {
-                        discountTypeSpinner.setSelection(adapter.getPosition(discountType));
+                        int discountIndex = adapter.getPosition(discountType);
+                        if (discountIndex >= 0) {
+                            discountTypeSpinner.setSelectedIndex(discountIndex);
+                        }
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
 
-                discountTypeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                discountTypeSpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
                     @Override
-                    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                    public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
                         discountType = discountTypeList[position];
-                    }
-
-                    @Override
-                    public void onNothingSelected(AdapterView<?> parent) {
-
                     }
                 });
 

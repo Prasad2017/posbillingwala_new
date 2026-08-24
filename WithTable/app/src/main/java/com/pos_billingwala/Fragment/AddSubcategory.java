@@ -88,8 +88,7 @@ public class AddSubcategory extends Fragment implements View.OnClickListener {
             public boolean onKey(View v, int keyCode, KeyEvent event) {
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
                     Log.i("tag", "onKey Back listener is working!!!");
-                    ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                    ((MainActivity) activity).loadFragment(new Home(), false);
+                    navigateToCaller();
                     return true;
                 }
                 return false;
@@ -114,8 +113,7 @@ public class AddSubcategory extends Fragment implements View.OnClickListener {
     public void onClick(View view) {
         int id = view.getId();
         if (id == R.id.backToHome) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-            ((MainActivity) activity).loadFragment(new Home(), false);
+            navigateToCaller();
         } else if (id == R.id.addSubcategory) {
             if (categoryId == null || categoryId.isEmpty()) {
                 Toast.makeText(activity, getString(R.string.toast_please_select_a_category), Toast.LENGTH_SHORT).show();
@@ -124,6 +122,15 @@ public class AddSubcategory extends Fragment implements View.OnClickListener {
             } else {
                 addProductSubcategory();
             }
+        }
+    }
+
+    private void navigateToCaller() {
+        ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
+        if (getArguments() != null && MasterData.OPENED_FROM_MASTER.equals(getArguments().getString("openedFrom"))) {
+            ((MainActivity) activity).loadFragment(new MasterData(), true);
+        } else {
+            ((MainActivity) activity).loadFragment(new Home(), false);
         }
     }
 

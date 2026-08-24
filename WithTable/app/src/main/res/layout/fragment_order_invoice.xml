@@ -41,10 +41,6 @@
                 android:text="@string/ui_invoice"
                 android:textColor="@color/white"
                 android:textSize="17dp" />
-
-
-        
-            <include layout="@layout/include_app_toolbar_logo" />
 </RelativeLayout>
 
     </com.google.android.material.appbar.AppBarLayout>

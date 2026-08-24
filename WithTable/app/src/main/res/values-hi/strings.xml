@@ -164,13 +164,18 @@
 
     <string name="setting_invoice_details">बिल विवरण</string>
     <string name="setting_reports">रिपोर्ट</string>
+    <string name="setting_master_data">मास्टर डेटा</string>
+    <string name="master_data_title">मास्टर डेटा</string>
+    <string name="master_category">श्रेणी</string>
+    <string name="master_subcategory">उपश्रेणी</string>
+    <string name="master_portions">पोर्शन</string>
+    <string name="master_products">उत्पाद</string>
     <string name="setting_shop_details">दुकान विवरण</string>
     <string name="setting_printer_details">प्रिंटर विवरण</string>
     <string name="setting_inventory">इन्वेंटरी प्रबंधन</string>
     <string name="setting_expense">खर्च प्रबंधन</string>
     <string name="setting_about">हमारे बारे में</string>
     <string name="setting_fetch_data">क्लाउड से डेटा लें</string>
-    <string name="setting_sync_previous_day">पिछले दिन के बिल सिंक करें</string>
     <string name="setting_update_app">ऐप अपडेट करें</string>
     <string name="setting_synchronize">ऑफ़लाइन डेटा क्लाउड से सिंक करें</string>
     <string name="setting_change_pin">ऐप लॉगिन PB-PIN बदलें</string>

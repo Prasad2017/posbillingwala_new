@@ -212,7 +212,6 @@
     <string name="ui_sub_amount">उप\nराशि</string>
     <string name="ui_sub_total">उप योग</string>
     <string name="ui_subcategory_optional">उपश्रेणी (वैकल्पिक)</string>
-    <string name="ui_sync_previous_day_bills_मगल_दवसचे_बल">पिछले दिन के बिल सिंक करें</string>
     <string name="ui_synchronize_सर्वर_क_भेजन">सिंक करें\n(सर्वर को भेजें)</string>
     <string name="ui_table_detail">टेबल विवरण</string>
     <string name="ui_table_list">टेबल सूची</string>
@@ -282,7 +281,6 @@
     <string name="toast_do_you_want_to_delete_this_product">क्या आप इस उत्पाद को हटाना चाहते हैं?</string>
     <string name="toast_do_you_want_to_delete_this_subcategory">क्या आप इस उपश्रेणी को हटाना चाहते हैं?</string>
     <string name="toast_do_you_want_to_logout_from_application">क्या आप एप्लिकेशन से लॉग आउट करना चाहते हैं?</string>
-    <string name="toast_downloads_missing_bills_for_the_selected">चयनित तारीख के लिए क्लाउड से लापता बिल डाउनलोड करता है। स्थानीय डेटा मिटाया नहीं जाता — केवल नए बिल जोड़े जाते हैं।</string>
     <string name="toast_enter_pending_amount">लंबित राशि दर्ज करें</string>
     <string name="toast_failed_to_save_invoice_after_print">प्रिंट के बाद इनवॉइस सहेजने में विफल</string>
     <string name="toast_failed_to_save_invoice_please_try_again">इनवॉइस सहेजने में विफल। कृपया पुनः प्रयास करें।</string>
@@ -346,6 +344,7 @@
     <string name="toast_please_select_payment_mode">कृपया भुगतान मोड चुनें</string>
     <string name="toast_please_select_printer">कृपया प्रिंटर चुनें</string>
     <string name="toast_please_select_printer_from_setting">कृपया सेटिंग से प्रिंटर चुनें</string>
+    <string name="toast_please_select_portion">कृपया पोर्शन चुनें</string>
     <string name="toast_please_select_product">कृपया उत्पाद चुनें</string>
     <string name="toast_please_select_product_category">कृपया उत्पाद श्रेणी चुनें</string>
     <string name="toast_please_select_product_unit">कृपया उत्पाद इकाई चुनें</string>
@@ -371,12 +370,10 @@
     <string name="toast_sales_report_successfully_exported">बिक्री रिपोर्ट सफलतापूर्वक निर्यात की गई</string>
     <string name="toast_saving_invoice">इनवॉइस सहेजा जा रहा है…</string>
     <string name="toast_scan_cancelled">स्कैन रद्द किया गया</string>
-    <string name="toast_select_date_to_pull_from_cloud">क्लाउड से लाने के लिए तारीख चुनें</string>
     <string name="toast_subcategory_added_successfully">उपश्रेणी सफलतापूर्वक जोड़ी गई</string>
     <string name="toast_subcategory_already_exists_in_this_categ">इस श्रेणी में उपश्रेणी पहले से मौजूद है</string>
     <string name="toast_subcategory_deleted">उपश्रेणी हटाई गई</string>
     <string name="toast_subcategory_updated">उपश्रेणी अपडेट की गई</string>
-    <string name="toast_sync_bills_for_one_day">एक दिन के बिल सिंक करें</string>
     <string name="toast_this_app_needs_permission_to_use_this_fe">इस सुविधा के लिए अनुमति आवश्यक है। आप ऐप सेटिंग में अनुमति दे सकते हैं।</string>
     <string name="toast_update_inventory_successfully">इन्वेंटरी सफलतापूर्वक अपडेट की गई</string>
     <string name="toast_you_have_not_selected_dinein_please_cont">आपने डाइन-इन नहीं चुना है। कृपया अपने मालिक से संपर्क करें</string>

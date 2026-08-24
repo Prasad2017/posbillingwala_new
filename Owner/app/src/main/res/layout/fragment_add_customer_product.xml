@@ -58,39 +58,68 @@
             android:orientation="vertical"
             android:padding="10dp">
 
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/CustomDropDownTilStyle"
-                android:layout_marginTop="10dp"
-                android:hint="Product Category">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center|start"
+                android:layout_marginStart="5dp"
+                android:layout_marginTop="15dp"
+                android:fontFamily="@font/poppinsregular"
+                android:gravity="center"
+                android:text="Product Category*"
+                android:textColor="@color/textcolor" />
 
-                <AutoCompleteTextView
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:background="@drawable/button_rounded_border"
+                android:orientation="horizontal">
+
+                <com.jaredrummler.materialspinner.MaterialSpinner
                     android:id="@+id/categorySpinner"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:focusable="false"
+                    android:layout_height="45dp"
+                    android:layout_gravity="center"
+                    android:layout_margin="5dp"
                     android:fontFamily="@font/poppinsregular"
-                    android:inputType="none"
-                    android:singleLine="true"
-                    android:textSize="15sp" />
+                    android:gravity="center|start"
+                    android:paddingStart="10dp"
+                    android:textColor="@color/black"
+                    android:textSize="15sp"
+                    app:ms_hint="Select Product Category" />
 
-            </com.google.android.material.textfield.TextInputLayout>
+            </LinearLayout>
 
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/CustomDropDownTilStyle"
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center|start"
+                android:layout_marginStart="5dp"
                 android:layout_marginTop="10dp"
-                android:hint="Subcategory (optional)">
+                android:fontFamily="@font/poppinsregular"
+                android:text="Subcategory (optional)"
+                android:textColor="@color/textcolor" />
 
-                <AutoCompleteTextView
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:background="@drawable/button_rounded_border"
+                android:orientation="horizontal">
+
+                <com.jaredrummler.materialspinner.MaterialSpinner
                     android:id="@+id/subcategorySpinner"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:focusable="false"
+                    android:layout_height="45dp"
+                    android:layout_gravity="center"
+                    android:layout_margin="5dp"
                     android:fontFamily="@font/poppinsregular"
-                    android:inputType="none"
-                    android:singleLine="true"
-                    android:textSize="15sp" />
+                    android:gravity="center|start"
+                    android:paddingStart="10dp"
+                    android:textColor="@color/black"
+                    android:textSize="15sp"
+                    app:ms_hint="Select Subcategory" />
 
-            </com.google.android.material.textfield.TextInputLayout>
+            </LinearLayout>
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/productProductLayout"
@@ -196,22 +225,37 @@
 
             </com.google.android.material.textfield.TextInputLayout>
 
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/CustomDropDownTilStyle"
-                android:layout_marginTop="10dp"
-                android:hint="Product Unit">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center|start"
+                android:layout_marginStart="5dp"
+                android:layout_marginTop="15dp"
+                android:fontFamily="@font/poppinsregular"
+                android:gravity="center"
+                android:text="Product Unit*"
+                android:textColor="@color/textcolor" />
 
-                <AutoCompleteTextView
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:background="@drawable/button_rounded_border"
+                android:orientation="horizontal">
+
+                <com.jaredrummler.materialspinner.MaterialSpinner
                     android:id="@+id/unitSpinner"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:focusable="false"
+                    android:layout_height="45dp"
+                    android:layout_gravity="center"
+                    android:layout_margin="5dp"
                     android:fontFamily="@font/poppinsregular"
-                    android:inputType="none"
-                    android:singleLine="true"
-                    android:textSize="15sp" />
+                    android:gravity="center|start"
+                    android:paddingStart="10dp"
+                    android:textColor="@color/black"
+                    android:textSize="15sp"
+                    app:ms_hint="Select Product Unit" />
 
-            </com.google.android.material.textfield.TextInputLayout>
+            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"

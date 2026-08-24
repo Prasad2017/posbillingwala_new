@@ -10,8 +10,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.RadioButton;
-import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -22,7 +20,6 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Fragment.AddCategory;
-import com.pos_billingwala.Model.FoodTypeResponse;
 import com.pos_billingwala.Model.ProductCategoryResponse;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.CategoryListBinding;
@@ -54,12 +51,7 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.MyView
         posBillingWalaDatabase = new POSBillingWalaDatabase(context);
 
         holder.binding.srNo.setText("" + (position + 1));
-        String typeLabel = resolveFoodTypeLabel(productCategoryResponse.getFoodTypeId());
-        if (!typeLabel.isEmpty()) {
-            holder.binding.categoryName.setText(productCategoryResponse.getCategoryName() + " (" + typeLabel + ")");
-        } else {
-            holder.binding.categoryName.setText(productCategoryResponse.getCategoryName());
-        }
+        holder.binding.categoryName.setText(productCategoryResponse.getCategoryName());
 
         holder.binding.categoryEdit.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -91,22 +83,11 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.MyView
         lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
 
         TextInputEditText categoryNameTxt = dialog.findViewById(R.id.categoryName);
-        RadioGroup foodTypeGroup = dialog.findViewById(R.id.foodTypeGroup);
-        RadioButton foodTypeFood = dialog.findViewById(R.id.foodTypeFood);
-        RadioButton foodTypeBeverage = dialog.findViewById(R.id.foodTypeBeverage);
         TextView updateCategoryTxt = dialog.findViewById(R.id.updateCategory);
         TextView dismissCategoryTxt = dialog.findViewById(R.id.dismissCategory);
 
         categoryNameTxt.setText(productCategoryResponse.getCategoryName());
         categoryNameTxt.setSelection(categoryNameTxt.getText().toString().length());
-
-        long beverageId = posBillingWalaDatabase.getFoodTypeIdByCode(FoodTypeResponse.CODE_BEVERAGE);
-        if (productCategoryResponse.getFoodTypeId() != null
-                && String.valueOf(beverageId).equals(productCategoryResponse.getFoodTypeId())) {
-            foodTypeBeverage.setChecked(true);
-        } else {
-            foodTypeFood.setChecked(true);
-        }
 
         dismissCategoryTxt.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -119,9 +100,14 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.MyView
             @Override
             public void onClick(View v) {
                 dialog.dismiss();
-                long foodTypeId = foodTypeBeverage.isChecked()
-                        ? posBillingWalaDatabase.getFoodTypeIdByCode(FoodTypeResponse.CODE_BEVERAGE)
-                        : posBillingWalaDatabase.getDefaultFoodTypeId();
+                long foodTypeId = 0;
+                try {
+                    if (productCategoryResponse.getFoodTypeId() != null
+                            && !productCategoryResponse.getFoodTypeId().trim().isEmpty()) {
+                        foodTypeId = Long.parseLong(productCategoryResponse.getFoodTypeId());
+                    }
+                } catch (NumberFormatException ignored) {
+                }
                 posBillingWalaDatabase.updateCategory(
                         productCategoryResponse.getCategoryId(),
                         categoryNameTxt.getText().toString(),
@@ -135,17 +121,6 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.MyView
         dialog.show();
         dialog.getWindow().setAttributes(lp);
 
-    }
-
-    private String resolveFoodTypeLabel(String foodTypeId) {
-        if (foodTypeId == null || foodTypeId.trim().isEmpty()) {
-            return "";
-        }
-        try {
-            return posBillingWalaDatabase.getFoodTypeNameById(Long.parseLong(foodTypeId));
-        } catch (NumberFormatException e) {
-            return "";
-        }
     }
 
     public void deleteCategory(String categoryId) {

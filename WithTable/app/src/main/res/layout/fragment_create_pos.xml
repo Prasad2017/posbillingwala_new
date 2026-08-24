@@ -61,18 +61,7 @@
                 android:layout_centerInParent="true"
                 android:layout_marginEnd="10dp"
                 android:src="@drawable/ic_menu" />
-            <ImageView
-                android:id="@+id/appBrandLogo"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
-                android:layout_centerVertical="true"
-                android:layout_marginEnd="8dp"
-                android:layout_toStartOf="@+id/menuIcon"
-                android:contentDescription="@string/app_name"
-                android:scaleType="fitCenter"
-                android:src="@drawable/app_logo" />
-
-        </RelativeLayout>
+</RelativeLayout>
 
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -122,45 +111,17 @@
 
         </LinearLayout>
 
-        <com.google.android.material.button.MaterialButtonToggleGroup
-            android:id="@+id/foodTypeToggle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="10dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginEnd="10dp"
-            android:gravity="center"
-            app:singleSelection="true"
-            app:selectionRequired="true">
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/foodTypeFoodBtn"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/ui_food"
-                android:textAllCaps="false" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/foodTypeBeverageBtn"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/ui_beverage"
-                android:textAllCaps="false" />
-
-        </com.google.android.material.button.MaterialButtonToggleGroup>
-
-        <com.pos_billingwala.Extra.AutoFitGridRecyclerView
+        <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/categoryRecyclerView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="5dp"
-            android:columnWidth="130dp"
-            android:nestedScrollingEnabled="true"
-            android:padding="5dp"
+            android:clipToPadding="false"
+            android:nestedScrollingEnabled="false"
+            android:orientation="horizontal"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:scrollbars="none"
             android:visibility="visible" />
 
         <LinearLayout
@@ -184,7 +145,7 @@
                 android:text="@string/ui_back"
                 android:textColor="@color/black"
                 android:textSize="17dp"
-                android:visibility="visible" />
+                android:visibility="gone" />
 
             <HorizontalScrollView
                 android:id="@+id/subcategoryScrollView"

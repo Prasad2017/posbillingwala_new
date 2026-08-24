@@ -13,7 +13,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.CompoundButton;
 import android.widget.TextView;
@@ -21,6 +20,8 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+
+import com.jaredrummler.materialspinner.MaterialSpinner;
 
 import com.posbillingwala.dealer.Activity.MainActivity;
 import com.posbillingwala.dealer.Extra.DetectConnection;
@@ -95,27 +96,23 @@ public class NewLicenceRegistration extends Fragment implements View.OnClickList
 
         try {
             licenseValidityList = getResources().getStringArray(R.array.license_validity);
-            final ArrayAdapter adapter = new ArrayAdapter(activity, R.layout.spinner_item_layout, licenseValidityList);
+            final ArrayAdapter adapter = new ArrayAdapter(activity, android.R.layout.simple_spinner_item, licenseValidityList);
             adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
             binding.licenseValidity.setAdapter(adapter);
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        binding.licenseValidity.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        binding.licenseValidity.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                licenceValidity = LicenceValidityTiers.toDayCount(binding.licenseValidity.getText().toString());
+            public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
+                licenceValidity = LicenceValidityTiers.toDayCount(item);
                 if (LicenceValidityTiers.isRegularTier(licenceValidity)) {
-
                     licenceType = "Regular";
                     binding.amount.setText("");
-
                 } else {
-
                     licenceType = "Demo";
                     binding.amount.setText("0");
-
                 }
             }
         });

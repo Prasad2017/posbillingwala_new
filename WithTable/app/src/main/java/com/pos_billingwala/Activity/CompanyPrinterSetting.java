@@ -10,7 +10,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.CompoundButton;
 import android.widget.Toast;
@@ -18,6 +17,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
+import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.PrinterSettingResponse;
@@ -86,28 +86,18 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
         binding.printerFeedLines.setSelection(binding.printerFeedLines.getText().toString().length());
         binding.KotPrinterFeedLines.setSelection(binding.KotPrinterFeedLines.getText().toString().length());
 
-        binding.printerSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        binding.printerSpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
             @SuppressLint("MissingPermission")
             @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+            public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
                 printerName = printerList[position];
             }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-
-            }
         });
-        binding.KOTPrinterSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        binding.KOTPrinterSpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
             @SuppressLint("MissingPermission")
             @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+            public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
                 KOTPrinterName = printerList[position];
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-
             }
         });
 
@@ -293,10 +283,16 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
             binding.printerSpinner.setAdapter(adapter);
             binding.KOTPrinterSpinner.setAdapter(adapter);
             if (printerName != null) {
-                binding.printerSpinner.setSelection(adapter.getPosition(printerName));
+                int printerIndex = adapter.getPosition(printerName);
+                if (printerIndex >= 0) {
+                    binding.printerSpinner.setSelectedIndex(printerIndex);
+                }
             }
             if (KOTPrinterName != null) {
-                binding.KOTPrinterSpinner.setSelection(adapter.getPosition(KOTPrinterName));
+                int kotIndex = adapter.getPosition(KOTPrinterName);
+                if (kotIndex >= 0) {
+                    binding.KOTPrinterSpinner.setSelectedIndex(kotIndex);
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();

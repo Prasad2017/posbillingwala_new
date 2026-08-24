@@ -168,13 +168,18 @@
 
     <string name="setting_invoice_details">Invoice Details</string>
     <string name="setting_reports">Reports</string>
+    <string name="setting_master_data">Master Data</string>
+    <string name="master_data_title">Master Data</string>
+    <string name="master_category">Category</string>
+    <string name="master_subcategory">Subcategory</string>
+    <string name="master_portions">Portions</string>
+    <string name="master_products">Products</string>
     <string name="setting_shop_details">Shop Details</string>
     <string name="setting_printer_details">Printer Details</string>
     <string name="setting_inventory">Inventory Management</string>
     <string name="setting_expense">Expense Management</string>
     <string name="setting_about">About Us</string>
     <string name="setting_fetch_data">Fetch Data From Cloud</string>
-    <string name="setting_sync_previous_day">Sync Previous Day Bills</string>
     <string name="setting_update_app">Update App</string>
     <string name="setting_synchronize">Offline Data Synchronize with Cloud</string>
     <string name="setting_change_pin">Change App Login PB-PIN</string>

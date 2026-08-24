@@ -29,9 +29,6 @@
                 android:text="@string/ui_coupon_preview"
                 android:textColor="@color/white"
                 android:textSize="17dp" />
-
-        
-            <include layout="@layout/include_app_toolbar_logo" />
 </RelativeLayout>
 
     </com.google.android.material.appbar.AppBarLayout>

@@ -13,9 +13,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.AutoCompleteTextView;
 import android.widget.DatePicker;
 import android.widget.ImageView;
 import android.widget.RadioGroup;
@@ -24,6 +22,8 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.jaredrummler.materialspinner.MaterialSpinner;
 
 import com.posbillingwala.dealer.Activity.MainActivity;
 import com.posbillingwala.dealer.Extra.LicenceValidityTiers;
@@ -144,13 +144,19 @@ public class LicenseAdapter extends RecyclerView.Adapter<LicenseAdapter.MyViewHo
         lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
 
         ImageView closeDialog = dialog.findViewById(R.id.closeDialog);
-        AutoCompleteTextView autoCompleteTextView = dialog.findViewById(R.id.licenseValidity);
+        MaterialSpinner licenseValiditySpinner = dialog.findViewById(R.id.licenseValidity);
         TextView txtSubmit = dialog.findViewById(R.id.submit);
 
         try {
             licenseValidityList = context.getResources().getStringArray(R.array.license_validity);
-            ArrayAdapter<String> adapter = new ArrayAdapter<>(context, android.R.layout.simple_dropdown_item_1line, licenseValidityList);
-            autoCompleteTextView.setAdapter(adapter);
+            ArrayAdapter<String> adapter = new ArrayAdapter<>(context, android.R.layout.simple_spinner_item, licenseValidityList);
+            adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
+            licenseValiditySpinner.setAdapter(adapter);
+            String currentLabel = LicenceValidityTiers.displayLabel(licenseValidity);
+            int index = adapter.getPosition(currentLabel);
+            if (index >= 0) {
+                licenseValiditySpinner.setSelectedIndex(index);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -162,10 +168,10 @@ public class LicenseAdapter extends RecyclerView.Adapter<LicenseAdapter.MyViewHo
             }
         });
 
-        autoCompleteTextView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        licenseValiditySpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                licenseValidity = LicenceValidityTiers.toDayCount(autoCompleteTextView.getText().toString());
+            public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
+                licenseValidity = LicenceValidityTiers.toDayCount(item);
                 if (LicenceValidityTiers.isRegularTier(licenseValidity)) {
                     licenseType = "Regular";
                     holder.binding.licenseType.setText("Regular");
@@ -180,8 +186,7 @@ public class LicenseAdapter extends RecyclerView.Adapter<LicenseAdapter.MyViewHo
 
             @Override
             public void onClick(View v) {
-                if (!autoCompleteTextView.getText().toString().isEmpty()) {
-                    licenseValidity = LicenceValidityTiers.toDayCount(autoCompleteTextView.getText().toString());
+                if (licenseValidity != null && !licenseValidity.isEmpty()) {
                     if (LicenceValidityTiers.isRegularTier(licenseValidity)) {
                         licenseType = "Regular";
                         holder.binding.licenseType.setText("Regular");

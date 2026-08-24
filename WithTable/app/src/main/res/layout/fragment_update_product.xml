@@ -26,9 +26,6 @@
                 android:layout_marginStart="15dp"
                 android:src="@drawable/back"
                 app:tint="@color/white" />
-
-        
-            <include layout="@layout/include_app_toolbar_logo" />
 </RelativeLayout>
 
     </com.google.android.material.appbar.AppBarLayout>
@@ -62,7 +59,7 @@
                 android:background="@drawable/button_rounded_border"
                 android:orientation="horizontal">
 
-                <Spinner
+                <com.jaredrummler.materialspinner.MaterialSpinner
                     android:id="@+id/categorySpinner"
                     android:layout_width="match_parent"
                     android:layout_height="45dp"
@@ -70,7 +67,7 @@
                     android:layout_margin="5dp"
                     android:fontFamily="@font/poppinsregular"
                     android:gravity="center|start"
-                    android:paddingLeft="10dp"
+                    android:paddingStart="10dp"
                     android:textColor="@color/black"
                     android:textSize="15dp"
                     app:ms_hint="Select Product Category" />
@@ -101,7 +98,7 @@
                     android:background="@drawable/button_rounded_border"
                     android:orientation="horizontal">
 
-                    <Spinner
+                    <com.jaredrummler.materialspinner.MaterialSpinner
                         android:id="@+id/subcategorySpinner"
                         android:layout_width="match_parent"
                         android:layout_height="45dp"
@@ -109,9 +106,10 @@
                         android:layout_margin="5dp"
                         android:fontFamily="@font/poppinsregular"
                         android:gravity="center|start"
-                        android:paddingLeft="10dp"
+                        android:paddingStart="10dp"
                         android:textColor="@color/black"
-                        android:textSize="15dp" />
+                        android:textSize="15dp"
+                        app:ms_hint="Select Subcategory" />
 
                 </LinearLayout>
 
@@ -189,40 +187,48 @@
 
             </com.google.android.material.textfield.TextInputLayout>
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/productPriceLayout"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            <LinearLayout
+                android:id="@+id/productPriceSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_marginTop="15dp"
-                android:layout_marginBottom="5dp"
-                android:gravity="center"
-                android:textColorHint="@color/light_black"
-                app:boxCornerRadiusBottomEnd="5dp"
-                app:boxCornerRadiusBottomStart="5dp"
-                app:boxCornerRadiusTopEnd="5dp"
-                app:boxCornerRadiusTopStart="5dp"
-                app:boxStrokeColor="@color/light_black">
+                android:orientation="vertical">
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/productPrice"
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/productPriceLayout"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:digits="0123456789."
-                    android:drawableTint="@color/light_black"
-                    android:fontFamily="@font/poppinsregular"
-                    android:hint="@string/ui_product_price_without_gst"
-                    android:imeOptions="actionDone"
-                    android:inputType="numberDecimal"
-                    android:paddingStart="15dp"
-                    android:paddingEnd="10dp"
-                    android:singleLine="true"
-                    android:textColor="@color/black"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="15dp"
+                    android:layout_marginBottom="5dp"
+                    android:gravity="center"
                     android:textColorHint="@color/light_black"
-                    android:textSize="15dp" />
+                    app:boxCornerRadiusBottomEnd="5dp"
+                    app:boxCornerRadiusBottomStart="5dp"
+                    app:boxCornerRadiusTopEnd="5dp"
+                    app:boxCornerRadiusTopStart="5dp"
+                    app:boxStrokeColor="@color/light_black">
 
-            </com.google.android.material.textfield.TextInputLayout>
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/productPrice"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:digits="0123456789."
+                        android:drawableTint="@color/light_black"
+                        android:fontFamily="@font/poppinsregular"
+                        android:hint="@string/ui_product_price_without_gst"
+                        android:imeOptions="actionDone"
+                        android:inputType="numberDecimal"
+                        android:paddingStart="15dp"
+                        android:paddingEnd="10dp"
+                        android:singleLine="true"
+                        android:textColor="@color/black"
+                        android:textColorHint="@color/light_black"
+                        android:textSize="15dp" />
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+            </LinearLayout>
 
             <TextView
                 android:layout_width="wrap_content"
@@ -241,7 +247,7 @@
                 android:background="@drawable/button_rounded_border"
                 android:orientation="horizontal">
 
-                <Spinner
+                <com.jaredrummler.materialspinner.MaterialSpinner
                     android:id="@+id/unitSpinner"
                     android:layout_width="match_parent"
                     android:layout_height="45dp"
@@ -249,7 +255,7 @@
                     android:layout_margin="5dp"
                     android:fontFamily="@font/poppinsregular"
                     android:gravity="center|start"
-                    android:paddingLeft="10dp"
+                    android:paddingStart="10dp"
                     android:textColor="@color/black"
                     android:textSize="15dp"
                     app:ms_hint="Select Product Unit" />
@@ -257,6 +263,7 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/productGstSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">

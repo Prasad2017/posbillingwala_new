@@ -14,14 +14,13 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Spinner;
 import android.widget.Toast;
 
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.textfield.TextInputEditText;
+import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.posbillingwala.admin.Activity.MainActivity;
 import com.posbillingwala.admin.Extra.DetectConnection;
 import com.posbillingwala.admin.Extra.ProductPortionSectionHelper;
@@ -50,9 +49,9 @@ public class UpdateProduct extends Fragment {
     public static Activity activity;
     View view;
     @BindViews({R.id.categorySpinner, R.id.unitSpinner})
-    List<Spinner> spinners;
+    List<MaterialSpinner> spinners;
     @BindView(R.id.subcategorySpinner)
-    Spinner subcategorySpinner;
+    MaterialSpinner subcategorySpinner;
     @BindViews({R.id.productName, R.id.productPrice, R.id.productCGST, R.id.productSGST})
     List<TextInputEditText> textInputEditTexts;
     String[] categoryIdList, categoryNameList, unitNameList;
@@ -117,43 +116,28 @@ public class UpdateProduct extends Fragment {
             }
         });
 
-        spinners.get(0).setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        spinners.get(0).setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
             @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+            public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
                 categoryId = categoryIdList[position];
                 categoryName = categoryNameList[position];
                 loadSubcategoriesForCategory(categoryId, null);
             }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-
-            }
         });
 
-        subcategorySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        subcategorySpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
             @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+            public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
                 if (subcategoryIdList != null && position >= 0 && position < subcategoryIdList.length) {
                     subcategoryId = subcategoryIdList[position];
                 }
             }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-
-            }
         });
 
-        spinners.get(1).setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        spinners.get(1).setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
             @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+            public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
                 unitName = unitNameList[position];
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-
             }
         });
 
@@ -332,7 +316,10 @@ public class UpdateProduct extends Fragment {
                             adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
                             spinners.get(1).setAdapter(adapter);
                             if (unitName != null) {
-                                spinners.get(1).setSelection(adapter.getPosition("" + unitName));
+                                int unitIndex = adapter.getPosition("" + unitName);
+                                if (unitIndex >= 0) {
+                                    spinners.get(1).setSelectedIndex(unitIndex);
+                                }
                             }
                         } catch (Exception e) {
                             e.printStackTrace();
@@ -379,7 +366,10 @@ public class UpdateProduct extends Fragment {
                                 adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
                                 spinners.get(0).setAdapter(adapter);
                                 if (categoryName != null) {
-                                    spinners.get(0).setSelection(adapter.getPosition("" + categoryName));
+                                    int categoryIndex = adapter.getPosition("" + categoryName);
+                                    if (categoryIndex >= 0) {
+                                        spinners.get(0).setSelectedIndex(categoryIndex);
+                                    }
                                 }
                                 loadSubcategoriesForCategory(categoryId, preselectSubcategoryId);
                             } catch (Exception e) {
@@ -433,7 +423,7 @@ public class UpdateProduct extends Fragment {
                             }
                         }
                     }
-                    subcategorySpinner.setSelection(selection);
+                    subcategorySpinner.setSelectedIndex(selection);
                     subcategoryId = subcategoryIdList[selection];
                 }
             }

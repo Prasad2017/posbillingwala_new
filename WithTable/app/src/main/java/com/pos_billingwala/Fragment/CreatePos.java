@@ -23,6 +23,8 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -30,11 +32,11 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LifecycleOwner;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 
 import com.google.android.material.chip.Chip;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.pos_billingwala.Activity.BluetoothPrint;
 import com.pos_billingwala.Activity.DuplicateBluetoothPrint;
@@ -44,7 +46,6 @@ import com.pos_billingwala.Adapter.HomeProductAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Interface.ClickListerInterface;
 import com.pos_billingwala.Model.CompanyResponse;
-import com.pos_billingwala.Model.FoodTypeResponse;
 import com.pos_billingwala.Model.PrinterSettingResponse;
 import com.pos_billingwala.Model.ProductCartResponse;
 import com.pos_billingwala.Model.ProductCategoryResponse;
@@ -70,7 +71,6 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
     public static String categoryName;
     public static String selectedCategoryId;
     public static String selectedSubcategoryId;
-    public static String selectedFoodTypeId;
     public static List<CompanyResponse> companyResponseList = new ArrayList<>();
     public static List<ProductCategoryResponse> productCategoryResponseList = new ArrayList<>();
     public static List<ProductResponse> productResponseList = new ArrayList<>();
@@ -201,34 +201,8 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
         binding.cartLayout.setOnClickListener(this);
         binding.menuIcon.setOnClickListener(this);
 
-        setupFoodTypeFilter();
-
         return view;
 
-    }
-
-    private void setupFoodTypeFilter() {
-        if (selectedFoodTypeId == null || selectedFoodTypeId.isEmpty()) {
-            selectedFoodTypeId = String.valueOf(posBillingWalaDatabase.getDefaultFoodTypeId());
-        }
-        binding.foodTypeToggle.check(R.id.foodTypeFoodBtn);
-        long beverageId = posBillingWalaDatabase.getFoodTypeIdByCode(FoodTypeResponse.CODE_BEVERAGE);
-        if (String.valueOf(beverageId).equals(selectedFoodTypeId)) {
-            binding.foodTypeToggle.check(R.id.foodTypeBeverageBtn);
-        }
-        binding.foodTypeToggle.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
-            if (!isChecked) {
-                return;
-            }
-            if (checkedId == R.id.foodTypeBeverageBtn) {
-                selectedFoodTypeId = String.valueOf(posBillingWalaDatabase.getFoodTypeIdByCode(FoodTypeResponse.CODE_BEVERAGE));
-            } else {
-                selectedFoodTypeId = String.valueOf(posBillingWalaDatabase.getDefaultFoodTypeId());
-            }
-            binding.productSearch.setText("");
-            clearSubcategoryFilter();
-            getHomeProductCategoryList();
-        });
     }
 
     private void setupSubcategoryFilter(String categoryId) {
@@ -494,10 +468,15 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
                         if (!productCategoryResponseList.isEmpty()) {
 
                             homeCategoryAdapter = new HomeCategoryAdapter(activity, CreatePos.productCategoryResponseList, CreatePos.this);
+                            homeCategoryAdapter.setSelectedCategoryId(selectedCategoryId);
+                            binding.categoryRecyclerView.setLayoutManager(
+                                    new LinearLayoutManager(activity, LinearLayoutManager.HORIZONTAL, false));
                             binding.categoryRecyclerView.setAdapter(CreatePos.homeCategoryAdapter);
 
                             binding.categoryRecyclerView.setVisibility(View.VISIBLE);
-                            binding.productLinearLayout.setVisibility(View.GONE);
+                            if (selectedCategoryId == null) {
+                                binding.productLinearLayout.setVisibility(View.GONE);
+                            }
 
                         }
                     }
@@ -514,6 +493,9 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
         selectedCategoryId = categoryId;
         selectedSubcategoryId = null;
         categoryName = resolveCategoryName(categoryId);
+        if (homeCategoryAdapter != null) {
+            homeCategoryAdapter.setSelectedCategoryId(categoryId);
+        }
         setupSubcategoryFilter(categoryId);
         getHomeProductList();
     }
@@ -591,18 +573,110 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
                 handleProductSelection(productResponse, null);
                 return;
             }
-            CharSequence[] labels = new CharSequence[portions.size()];
-            for (int i = 0; i < portions.size(); i++) {
-                ProductPortionResponse portion = portions.get(i);
-                labels[i] = portion.getPortionName() + " — " + MainActivity.currencyName + " " + portion.getPortionPrice();
-            }
-            new MaterialAlertDialogBuilder(activity)
-                    .setTitle(productResponse.getProductName())
-                    .setItems(labels, (dialog, which) -> handleProductSelection(productResponse, portions.get(which)))
-                    .setNegativeButton(android.R.string.cancel, null)
-                    .show();
+            showPortionDialog(productResponse, portions);
         } else {
             handleProductSelection(productResponse, null);
+        }
+    }
+
+    private void showPortionDialog(ProductResponse productResponse, List<ProductPortionResponse> portions) {
+        final Dialog dialog = new Dialog(activity);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setContentView(R.layout.dialog_select_portion);
+        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
+        dialog.setCancelable(false);
+
+        WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
+        lp.copyFrom(dialog.getWindow().getAttributes());
+        lp.width = WindowManager.LayoutParams.MATCH_PARENT;
+        lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
+
+        TextView productName = dialog.findViewById(R.id.productName);
+        RadioGroup portionRadioGroup = dialog.findViewById(R.id.portionRadioGroup);
+        TextView quantityMinus = dialog.findViewById(R.id.quantityMinus);
+        TextView productQuantity = dialog.findViewById(R.id.productQuantity);
+        TextView quantityPlus = dialog.findViewById(R.id.quantityPlus);
+        TextView dismissPortion = dialog.findViewById(R.id.dismissPortion);
+        TextView addPortionToCart = dialog.findViewById(R.id.addPortionToCart);
+
+        productName.setText(productResponse.getProductName());
+        final int[] quantity = {1};
+        productQuantity.setText(String.valueOf(quantity[0]));
+
+        for (int i = 0; i < portions.size(); i++) {
+            ProductPortionResponse portion = portions.get(i);
+            RadioButton radioButton = new RadioButton(activity);
+            radioButton.setId(View.generateViewId());
+            radioButton.setTag(i);
+            radioButton.setText(portion.getPortionName() + "  —  "
+                    + MainActivity.currencyName + " " + portion.getPortionPrice());
+            radioButton.setTextColor(activity.getResources().getColor(R.color.black));
+            radioButton.setTextSize(15);
+            radioButton.setPadding(24, 20, 24, 20);
+            radioButton.setTypeface(activity.getResources().getFont(R.font.poppinsregular));
+            portionRadioGroup.addView(radioButton, new RadioGroup.LayoutParams(
+                    RadioGroup.LayoutParams.MATCH_PARENT,
+                    RadioGroup.LayoutParams.WRAP_CONTENT));
+            if (i == 0) {
+                radioButton.setChecked(true);
+            }
+        }
+
+        quantityMinus.setOnClickListener(v -> {
+            if (quantity[0] > 1) {
+                quantity[0]--;
+                productQuantity.setText(String.valueOf(quantity[0]));
+            }
+        });
+        quantityPlus.setOnClickListener(v -> {
+            quantity[0]++;
+            productQuantity.setText(String.valueOf(quantity[0]));
+        });
+
+        dismissPortion.setOnClickListener(v -> dialog.dismiss());
+        addPortionToCart.setOnClickListener(v -> {
+            int checkedId = portionRadioGroup.getCheckedRadioButtonId();
+            if (checkedId == -1) {
+                Toast.makeText(activity, getString(R.string.toast_please_select_portion), Toast.LENGTH_SHORT).show();
+                return;
+            }
+            RadioButton selected = dialog.findViewById(checkedId);
+            if (selected == null || !(selected.getTag() instanceof Integer)) {
+                Toast.makeText(activity, getString(R.string.toast_please_select_portion), Toast.LENGTH_SHORT).show();
+                return;
+            }
+            int index = (Integer) selected.getTag();
+            if (index < 0 || index >= portions.size()) {
+                Toast.makeText(activity, getString(R.string.toast_please_select_portion), Toast.LENGTH_SHORT).show();
+                return;
+            }
+            addSelectedPortionToCart(productResponse, portions.get(index), quantity[0]);
+            dialog.dismiss();
+        });
+
+        dialog.show();
+        dialog.getWindow().setAttributes(lp);
+    }
+
+    private void addSelectedPortionToCart(ProductResponse productResponse, ProductPortionResponse portion, int quantity) {
+        String portionId = portion != null ? portion.getPortionId() : null;
+        productCartResponseList = posBillingWalaDatabase.getCartProductDetails(
+                productResponse.getProductId(), portionId, tableNumber, cartOrderStatus);
+        String linePrice = resolveLinePrice(productResponse, portion);
+        if (!productCartResponseList.isEmpty()) {
+            int currentQty = parseCartQuantity(productCartResponseList.get(0).getProductQuantity());
+            updateCart(productCartResponseList.get(0).getCartId(),
+                    String.valueOf(currentQty + quantity), linePrice);
+        } else {
+            addToCart(productResponse, linePrice, String.valueOf(quantity), portion);
+        }
+    }
+
+    private int parseCartQuantity(String value) {
+        try {
+            return Math.max(0, (int) Float.parseFloat(value));
+        } catch (Exception e) {
+            return 0;
         }
     }
 
@@ -682,7 +756,7 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
                     if (workInfo != null && workInfo.getState().isFinished()) {
                         homeProductAdapter = new HomeProductAdapter(activity, productResponseList, CreatePos.this);
                         binding.productRecyclerView.setAdapter(homeProductAdapter);
-                        binding.categoryRecyclerView.setVisibility(View.GONE);
+                        binding.categoryRecyclerView.setVisibility(View.VISIBLE);
                         binding.productLinearLayout.setVisibility(View.VISIBLE);
                     }
                 });

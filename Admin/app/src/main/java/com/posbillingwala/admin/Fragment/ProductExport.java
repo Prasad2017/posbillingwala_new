@@ -22,16 +22,15 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.widget.AppCompatAutoCompleteTextView;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.MultiplePermissionsReport;
 import com.karumi.dexter.PermissionToken;
@@ -79,7 +78,7 @@ public class ProductExport extends Fragment {
     TextView textView;
     Uri uri;
     @BindView(R.id.customerSpinner)
-    AppCompatAutoCompleteTextView appCompatAutoCompleteTextView;
+    MaterialSpinner customerSpinner;
     @BindView(R.id.customerProgressBar)
     ProgressBar customerProgressBar;
     List<CustomerResponse> customerResponseList = new ArrayList<>();
@@ -121,9 +120,9 @@ public class ProductExport extends Fragment {
         });
 
 
-        appCompatAutoCompleteTextView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        customerSpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
                 customerId = customerIdList[position];
                 customerName = customerNameList[position];
                 Log.e("customerId", "" + customerName);
@@ -333,9 +332,9 @@ public class ProductExport extends Fragment {
                         }
 
                         try {
-                            final ArrayAdapter adapter = new ArrayAdapter(activity, R.layout.spinner_item_layout, customerNameList);
+                            final ArrayAdapter adapter = new ArrayAdapter(activity, android.R.layout.simple_spinner_item, customerNameList);
                             adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
-                            appCompatAutoCompleteTextView.setAdapter(adapter);
+                            customerSpinner.setAdapter(adapter);
                         } catch (Exception e) {
                             e.printStackTrace();
                         }

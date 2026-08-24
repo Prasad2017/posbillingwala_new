@@ -60,8 +60,9 @@ public class AddProduct extends Fragment implements View.OnClickListener {
         posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
 
         portionSectionHelper = new ProductPortionSectionHelper(
-                activity, posBillingWalaDatabase, binding.productPortionSectionInclude.getRoot());
+                activity, posBillingWalaDatabase, view);
         portionSectionHelper.setOnPortionMasterLinkClick(this::openPortionMaster);
+        portionSectionHelper.setOnPortionsChanged(this::syncProductCostVisibility);
 
         view.setFocusableInTouchMode(true);
         view.requestFocus();
@@ -276,6 +277,20 @@ public class AddProduct extends Fragment implements View.OnClickListener {
         if (portionSectionHelper != null) {
             portionSectionHelper.refresh();
         }
+        syncProductCostVisibility();
+    }
+
+    private void syncProductCostVisibility() {
+        if (binding == null) {
+            return;
+        }
+        boolean hideCost = portionSectionHelper != null && portionSectionHelper.shouldHideProductCost();
+        int visibility = hideCost ? View.GONE : View.VISIBLE;
+        binding.productPrice.clearFocus();
+        binding.productPriceSection.setVisibility(visibility);
+        binding.productPriceLayout.setVisibility(visibility);
+        binding.productPrice.setVisibility(visibility);
+        binding.productGstSection.setVisibility(visibility);
     }
 
     public void getProductCategoryList() {

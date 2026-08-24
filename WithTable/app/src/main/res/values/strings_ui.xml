@@ -214,7 +214,6 @@
     <string name="ui_sub_amount">Sub\nAmount</string>
     <string name="ui_sub_total">SUB TOTAL</string>
     <string name="ui_subcategory_optional">Subcategory (optional)</string>
-    <string name="ui_sync_previous_day_bills_मगल_दवसचे_बल">Sync Previous Day Bills (मागील दिवसाचे बिल)</string>
     <string name="ui_synchronize_सर्वर_क_भेजन">Synchronize\n(सर्वर को भेजना)</string>
     <string name="ui_table_detail">TABLE DETAIL</string>
     <string name="ui_table_list">Table List</string>
@@ -285,7 +284,6 @@
     <string name="toast_do_you_want_to_delete_this_product">Do you want to delete this product?</string>
     <string name="toast_do_you_want_to_delete_this_subcategory">Do you want to delete this subcategory?</string>
     <string name="toast_do_you_want_to_logout_from_application">Do you want to logout from application?</string>
-    <string name="toast_downloads_missing_bills_for_the_selected">Downloads missing bills for the selected date from cloud. Local data is not wiped — only new bills are added.</string>
     <string name="toast_enter_pending_amount">Enter Pending amount</string>
     <string name="toast_failed_to_save_invoice_after_print">Failed to save invoice after print</string>
     <string name="toast_failed_to_save_invoice_please_try_again">Failed to save invoice. Please try again.</string>
@@ -349,6 +347,7 @@
     <string name="toast_please_select_payment_mode">Please select payment mode</string>
     <string name="toast_please_select_printer">Please select printer</string>
     <string name="toast_please_select_printer_from_setting">Please select printer from setting</string>
+    <string name="toast_please_select_portion">Please select portion</string>
     <string name="toast_please_select_product">Please select product</string>
     <string name="toast_please_select_product_category">Please select product category</string>
     <string name="toast_please_select_product_unit">Please select product unit</string>
@@ -374,12 +373,10 @@
     <string name="toast_sales_report_successfully_exported">Sales Report Successfully Exported</string>
     <string name="toast_saving_invoice">Saving invoice…</string>
     <string name="toast_scan_cancelled">Scan cancelled</string>
-    <string name="toast_select_date_to_pull_from_cloud">Select date to pull from cloud</string>
     <string name="toast_subcategory_added_successfully">Subcategory added successfully</string>
     <string name="toast_subcategory_already_exists_in_this_categ">Subcategory already exists in this category</string>
     <string name="toast_subcategory_deleted">Subcategory deleted</string>
     <string name="toast_subcategory_updated">Subcategory Updated</string>
-    <string name="toast_sync_bills_for_one_day">Sync bills for one day</string>
     <string name="toast_this_app_needs_permission_to_use_this_fe">This app needs permission to use this feature. You can grant them in app settings.</string>
     <string name="toast_update_inventory_successfully">Update inventory successfully</string>
     <string name="toast_you_have_not_selected_dinein_please_cont">you have not selected dine-in. Please contact your owner</string>

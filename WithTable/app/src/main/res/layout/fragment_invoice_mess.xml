@@ -60,18 +60,7 @@
                 android:layout_centerInParent="true"
                 android:layout_marginEnd="10dp"
                 android:src="@drawable/ic_menu" />
-            <ImageView
-                android:id="@+id/appBrandLogo"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
-                android:layout_centerVertical="true"
-                android:layout_marginEnd="8dp"
-                android:layout_toStartOf="@+id/menuIcon"
-                android:contentDescription="@string/app_name"
-                android:scaleType="fitCenter"
-                android:src="@drawable/app_logo" />
-
-        </RelativeLayout>
+</RelativeLayout>
 
     </com.google.android.material.appbar.AppBarLayout>
 

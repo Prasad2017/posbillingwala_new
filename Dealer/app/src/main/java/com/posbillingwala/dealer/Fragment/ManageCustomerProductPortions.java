@@ -9,7 +9,6 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -19,6 +18,8 @@ import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.jaredrummler.materialspinner.MaterialSpinner;
 
 import com.posbillingwala.dealer.Activity.MainActivity;
 import com.posbillingwala.dealer.Adapter.PortionAdapter;
@@ -99,9 +100,9 @@ public class ManageCustomerProductPortions extends Fragment implements View.OnCl
             return false;
         });
 
-        binding.portionMasterSpinner.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        binding.portionMasterSpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
                 if (portionMasterIdList != null && position >= 0 && position < portionMasterIdList.length) {
                     selectedPortionMasterId = portionMasterIdList[position];
                     selectedPortionMasterName = portionMasterNameList[position];
@@ -201,7 +202,6 @@ public class ManageCustomerProductPortions extends Fragment implements View.OnCl
                         selectedPortionMasterName = null;
                         binding.noPortionMasterHint.setVisibility(View.VISIBLE);
                         binding.addPortion.setEnabled(false);
-                        binding.portionMasterSpinner.setText("", false);
                         return;
                     }
 
@@ -213,10 +213,9 @@ public class ManageCustomerProductPortions extends Fragment implements View.OnCl
                         portionMasterIdList[i] = portionMasterList.get(i).getPortionMasterId();
                         portionMasterNameList[i] = portionMasterList.get(i).getPortionName();
                     }
-                    ArrayAdapter<String> adapter = new ArrayAdapter<>(activity, R.layout.spinner_item_layout, portionMasterNameList);
+                    ArrayAdapter<String> adapter = new ArrayAdapter<>(activity, android.R.layout.simple_spinner_item, portionMasterNameList);
                     adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
                     binding.portionMasterSpinner.setAdapter(adapter);
-                    binding.portionMasterSpinner.setText(portionMasterNameList[0], false);
                     selectedPortionMasterId = portionMasterIdList[0];
                     selectedPortionMasterName = portionMasterNameList[0];
                 }

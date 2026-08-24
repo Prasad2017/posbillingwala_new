@@ -48,7 +48,9 @@ public class ProductPortionSectionHelper {
     private String[] portionMasterIdList;
     private String[] portionMasterNameList;
     private String selectedPortionMasterId;
+    private boolean portionMasterPicked;
     private Runnable onPortionMasterLinkClick;
+    private Runnable onPortionsChanged;
 
     public ProductPortionSectionHelper(Activity activity, POSBillingWalaDatabase database, View root) {
         this.activity = activity;
@@ -80,6 +82,10 @@ public class ProductPortionSectionHelper {
         this.onPortionMasterLinkClick = onPortionMasterLinkClick;
     }
 
+    public void setOnPortionsChanged(Runnable onPortionsChanged) {
+        this.onPortionsChanged = onPortionsChanged;
+    }
+
     public void refresh() {
         setupPortionMasterSpinner();
         refreshDraftList();
@@ -101,15 +107,53 @@ public class ProductPortionSectionHelper {
         return !drafts.isEmpty();
     }
 
+    public boolean shouldHideProductCost() {
+        return hasPortions() || portionMasterPicked;
+    }
+
     public List<ProductPortionDraft> getDrafts() {
         return drafts;
     }
 
     public void updatePriceHint() {
-        if (hasPortions()) {
-            portionSectionHint.setText(R.string.product_price_optional_with_portions);
-        } else {
-            portionSectionHint.setText(R.string.product_price_required_no_portion);
+        if (portionSectionHint != null) {
+            if (hasPortions()) {
+                portionSectionHint.setText(R.string.product_price_optional_with_portions);
+            } else {
+                portionSectionHint.setText(R.string.product_price_required_no_portion);
+            }
+        }
+        notifyPortionsChanged();
+    }
+
+    private void notifyPortionsChanged() {
+        applyProductCostVisibility();
+        if (onPortionsChanged != null) {
+            onPortionsChanged.run();
+        }
+    }
+
+    private void applyProductCostVisibility() {
+        if (root == null) {
+            return;
+        }
+        int visibility = shouldHideProductCost() ? View.GONE : View.VISIBLE;
+        setViewVisibility(R.id.productPriceSection, visibility);
+        setViewVisibility(R.id.productPriceLayout, visibility);
+        View productPrice = root.findViewById(R.id.productPrice);
+        if (productPrice != null) {
+            productPrice.clearFocus();
+            productPrice.setVisibility(visibility);
+        }
+        setViewVisibility(R.id.productGstSection, visibility);
+        setViewVisibility(R.id.productCGSTLayout, visibility);
+        setViewVisibility(R.id.productSGSTLayout, visibility);
+    }
+
+    private void setViewVisibility(int viewId, int visibility) {
+        View target = root.findViewById(viewId);
+        if (target != null) {
+            target.setVisibility(visibility);
         }
     }
 
@@ -119,6 +163,8 @@ public class ProductPortionSectionHelper {
             portionMasterPickerSection.setVisibility(View.GONE);
             noPortionMasterHint.setVisibility(View.VISIBLE);
             selectedPortionMasterId = null;
+            portionMasterPicked = false;
+            notifyPortionsChanged();
             return;
         }
 
@@ -140,6 +186,8 @@ public class ProductPortionSectionHelper {
             @Override
             public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
                 selectedPortionMasterId = portionMasterIdList[position];
+                portionMasterPicked = true;
+                notifyPortionsChanged();
             }
         });
     }
@@ -193,6 +241,9 @@ public class ProductPortionSectionHelper {
             for (int i = 0; i < drafts.size(); i++) {
                 drafts.get(i).setSortOrder(i + 1);
             }
+            if (drafts.isEmpty()) {
+                portionMasterPicked = false;
+            }
             refreshDraftList();
             updatePriceHint();
         }
@@ -201,6 +252,7 @@ public class ProductPortionSectionHelper {
     private void refreshDraftList() {
         adapter.notifyDataSetChanged();
         inlinePortionListCard.setVisibility(drafts.isEmpty() ? View.GONE : View.VISIBLE);
+        notifyPortionsChanged();
     }
 
     /**

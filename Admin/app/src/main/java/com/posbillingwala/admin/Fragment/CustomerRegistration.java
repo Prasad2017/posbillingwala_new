@@ -13,9 +13,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.AutoCompleteTextView;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.TextView;
@@ -24,6 +22,7 @@ import android.widget.Toast;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.textfield.TextInputEditText;
+import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.posbillingwala.admin.Activity.MainActivity;
 import com.posbillingwala.admin.Extra.DetectConnection;
 import com.posbillingwala.admin.Extra.LicenceValidityTiers;
@@ -53,7 +52,7 @@ public class CustomerRegistration extends Fragment {
     @BindViews({R.id.fastBilling, R.id.dineIn, R.id.takeAway})
     List<CheckBox> checkBoxes;
     @BindViews({R.id.licenseValidity})
-    List<AutoCompleteTextView> autoCompleteTextViews;
+    List<MaterialSpinner> autoCompleteTextViews;
     String[] licenseValidityList;
     String fastBilling = "0", dineIn = "0", takeAway = "0", customerId, licenceValidity, licenceType;
 
@@ -94,27 +93,23 @@ public class CustomerRegistration extends Fragment {
 
         try {
             licenseValidityList = getResources().getStringArray(R.array.license_validity);
-            final ArrayAdapter adapter = new ArrayAdapter(activity, R.layout.spinner_item_layout, licenseValidityList);
+            final ArrayAdapter adapter = new ArrayAdapter(activity, android.R.layout.simple_spinner_item, licenseValidityList);
             adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
             autoCompleteTextViews.get(0).setAdapter(adapter);
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        autoCompleteTextViews.get(0).setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        autoCompleteTextViews.get(0).setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                licenceValidity = LicenceValidityTiers.toDayCount(autoCompleteTextViews.get(0).getText().toString());
+            public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
+                licenceValidity = LicenceValidityTiers.toDayCount(item);
                 if (LicenceValidityTiers.isRegularTier(licenceValidity)) {
-
                     licenceType = "Regular";
                     textInputEditTexts.get(4).setText("");
-
                 } else {
-
                     licenceType = "Demo";
                     textInputEditTexts.get(4).setText("0");
-
                 }
             }
         });

@@ -3,9 +3,7 @@ package com.posbillingwala.owner.Extra;
 import android.app.Activity;
 import android.util.Log;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.AutoCompleteTextView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -14,6 +12,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.textfield.TextInputEditText;
+import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.posbillingwala.owner.Activity.MainActivity;
 import com.posbillingwala.owner.Adapter.ProductPortionDraftAdapter;
 import com.posbillingwala.owner.Model.AllApiResponse;
@@ -41,7 +40,7 @@ public class ProductPortionSectionHelper {
     private final TextView managePortionMasterLink;
     private final View portionMasterPickerSection;
     private final TextView noPortionMasterHint;
-    private final AutoCompleteTextView portionMasterSpinner;
+    private final MaterialSpinner portionMasterSpinner;
     private final TextInputEditText inlinePortionPrice;
     private final TextView addInlinePortion;
     private final View inlinePortionListCard;
@@ -166,13 +165,13 @@ public class ProductPortionSectionHelper {
         }
 
         ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(
-                activity, R.layout.spinner_item_layout, portionMasterNameList);
+                activity, android.R.layout.simple_spinner_item, portionMasterNameList);
+        spinnerAdapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
         portionMasterSpinner.setAdapter(spinnerAdapter);
         selectedPortionMasterId = portionMasterIdList[0];
-        portionMasterSpinner.setText(portionMasterNameList[0], false);
-        portionMasterSpinner.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        portionMasterSpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
                 selectedPortionMasterId = portionMasterIdList[position];
             }
         });

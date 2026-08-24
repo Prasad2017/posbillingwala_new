@@ -25,12 +25,7 @@ public class ProductCategoryWorker extends Worker {
     public Result doWork() {
         try {
             CreatePos.productCategoryResponseList.clear();
-            String foodTypeId = CreatePos.selectedFoodTypeId;
-            if (foodTypeId == null || foodTypeId.trim().isEmpty()) {
-                foodTypeId = String.valueOf(posBillingWalaDatabase.getDefaultFoodTypeId());
-                CreatePos.selectedFoodTypeId = foodTypeId;
-            }
-            CreatePos.productCategoryResponseList = posBillingWalaDatabase.getCategoryListByFoodType(foodTypeId);
+            CreatePos.productCategoryResponseList = posBillingWalaDatabase.getProductCategoryList();
             return Result.success();
         } catch (Exception e) {
             e.printStackTrace();

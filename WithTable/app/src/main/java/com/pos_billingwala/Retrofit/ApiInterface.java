@@ -78,16 +78,8 @@ public interface ApiInterface {
     @GET("getInvoiceList.php")
     Call<AllApiResponse> getInvoiceList(@Query("userId") String userId);
 
-    @GET("getInvoiceList.php")
-    Call<AllApiResponse> getInvoiceListByDate(@Query("userId") String userId,
-                                              @Query("invoiceDate") String invoiceDate);
-
     @GET("getInvoiceProductList.php")
     Call<AllApiResponse> getInvoiceProductList(@Query("userId") String userId);
-
-    @GET("getInvoiceProductList.php")
-    Call<AllApiResponse> getInvoiceProductListByDate(@Query("userId") String userId,
-                                                     @Query("invoiceDate") String invoiceDate);
 
     @GET("getInventoryList.php")
     Call<AllApiResponse> getInventoryList(@Query("userId") String userId);

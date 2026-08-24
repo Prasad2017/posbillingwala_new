@@ -26,9 +26,6 @@
                 android:layout_marginStart="15dp"
                 android:src="@drawable/back"
                 app:tint="@color/white" />
-
-        
-            <include layout="@layout/include_app_toolbar_logo" />
 </RelativeLayout>
 
     </com.google.android.material.appbar.AppBarLayout>
