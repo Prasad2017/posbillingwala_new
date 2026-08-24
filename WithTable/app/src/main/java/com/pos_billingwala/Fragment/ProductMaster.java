@@ -28,6 +28,8 @@ import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Activity.ProductListBluetoothPrint;
 import com.pos_billingwala.Adapter.ProductAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.AppExecutors;
+import com.pos_billingwala.Extra.ListLoader;
 import com.pos_billingwala.Model.ProductResponse;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentProductMasterBinding;
@@ -53,25 +55,48 @@ public class ProductMaster extends Fragment implements View.OnClickListener {
     FragmentProductMasterBinding binding;
 
     public static void getProductList() {
-
-        productResponseList.clear();
-        productResponseList = posBillingWalaDatabase.getAllProductList("", "");
-        if (!productResponseList.isEmpty()) {
-
-            productAdapter = new ProductAdapter(activity, productResponseList);
-            productRecyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
-            productRecyclerView.setAdapter(productAdapter);
-
-            linearLayout.setVisibility(View.VISIBLE);
-            printProductCardView.setVisibility(View.VISIBLE);
-            noDataFound.setVisibility(View.GONE);
-
-        } else {
-            linearLayout.setVisibility(View.GONE);
-            printProductCardView.setVisibility(View.GONE);
-            noDataFound.setVisibility(View.VISIBLE);
+        if (activity == null || posBillingWalaDatabase == null) {
+            return;
         }
-
+        final cn.pedant.SweetAlert.SweetAlertDialog loader = ListLoader.show(activity);
+        AppExecutors.get().db().execute(() -> {
+            List<ProductResponse> list = posBillingWalaDatabase.getAllProductList("", "");
+            AppExecutors.get().main(() -> {
+                try {
+                    if (activity == null || productRecyclerView == null) {
+                        return;
+                    }
+                    productResponseList.clear();
+                    productResponseList = list != null ? list : new ArrayList<>();
+                    if (!productResponseList.isEmpty()) {
+                        productAdapter = new ProductAdapter(activity, productResponseList);
+                        productRecyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
+                        productRecyclerView.setAdapter(productAdapter);
+                        if (linearLayout != null) {
+                            linearLayout.setVisibility(View.VISIBLE);
+                        }
+                        if (printProductCardView != null) {
+                            printProductCardView.setVisibility(View.VISIBLE);
+                        }
+                        if (noDataFound != null) {
+                            noDataFound.setVisibility(View.GONE);
+                        }
+                    } else {
+                        if (linearLayout != null) {
+                            linearLayout.setVisibility(View.GONE);
+                        }
+                        if (printProductCardView != null) {
+                            printProductCardView.setVisibility(View.GONE);
+                        }
+                        if (noDataFound != null) {
+                            noDataFound.setVisibility(View.VISIBLE);
+                        }
+                    }
+                } finally {
+                    ListLoader.dismiss(loader);
+                }
+            });
+        });
     }
 
     @Override
@@ -211,17 +236,15 @@ public class ProductMaster extends Fragment implements View.OnClickListener {
         } else if (id == R.id.printProductCardView) {
             startActivity(new Intent(activity, ProductListBluetoothPrint.class));
         } else if (id == R.id.addProduct) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
             ((MainActivity) activity).loadFragment(new AddProduct(), true);
         }
     }
 
     private void navigateToCaller() {
-        ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
         if (getArguments() != null && MasterData.OPENED_FROM_MASTER.equals(getArguments().getString("openedFrom"))) {
-            ((MainActivity) activity).loadFragment(new MasterData(), true);
+            ((MainActivity) activity).goBackTo(new MasterData(), true);
         } else {
-            ((MainActivity) activity).loadFragment(new Home(), false);
+            ((MainActivity) activity).navigateToHome();
         }
     }
 

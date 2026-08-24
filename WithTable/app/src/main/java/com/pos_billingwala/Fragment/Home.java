@@ -60,6 +60,8 @@ import com.pos_billingwala.Activity.Login;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.BuildConfig;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.AppExecutors;
+import com.pos_billingwala.Extra.ShopHeaderBuilder;
 import com.pos_billingwala.Extra.Common;
 import com.pos_billingwala.Extra.LicenceExpiredUi;
 import com.pos_billingwala.Extra.LicenseValidator;
@@ -94,6 +96,8 @@ public class Home extends Fragment implements View.OnClickListener {
     public static Activity activity;
     public static TextView fastBilling, tableBilling, takeAwayBilling, messBilling;
     public static CardView totalSalesCardView, todaySalesCardView;
+    /** When true, next onStart skips heavy DB/Bluetooth (used when Home is only a back-stack seed). */
+    public static boolean deferHeavyWorkForNextStart = false;
     public final ActivityResultLauncher<Intent> storageActivityResultLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             result -> {
@@ -123,6 +127,9 @@ public class Home extends Fragment implements View.OnClickListener {
             new SimpleDateFormat("EEE, dd MMM yyyy  hh:mm:ss a", Locale.getDefault());
     private int lastGreetingHour = -1;
     private String cachedDisplayShopName;
+    private Bitmap cachedStoreLogo;
+    private String cachedStoreLogoRaw;
+    private List<CompanyResponse> cachedCompanyDetails;
     private final Runnable homeClockRunnable = new Runnable() {
         @Override
         public void run() {
@@ -130,6 +137,7 @@ public class Home extends Fragment implements View.OnClickListener {
             homeClockHandler.postDelayed(this, 1000);
         }
     };
+    private final Runnable deferredPrinterConnectRunnable = this::getPrinterSettingDetails;
 
     public static long getUnitBetweenDates(Date startDate, Date endDate, TimeUnit unit) {
         long timeDiff = endDate.getTime() - startDate.getTime();
@@ -324,6 +332,7 @@ public class Home extends Fragment implements View.OnClickListener {
         binding.takeAwayBilling.setOnClickListener(this);
         binding.messBilling.setOnClickListener(this);
         binding.productCardView.setOnClickListener(this);
+        binding.comboCardView.setOnClickListener(this);
         binding.subcategoryCardView.setOnClickListener(this);
         binding.hideShowTotalSale.setOnClickListener(this);
         binding.hideShowTodaySale.setOnClickListener(this);
@@ -392,11 +401,9 @@ public class Home extends Fragment implements View.OnClickListener {
     public void onClick(View view) {
         int id = view.getId();
         if (id == R.id.userSettingIcon) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
             ((MainActivity) activity).loadFragment(new UserSetting(), true);
         } else if (id == R.id.fastBilling) {
             if (MainActivity.fastBilling.equalsIgnoreCase("1")) {
-                ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
                 CreatePos createPos = new CreatePos();
                 Bundle bundle = new Bundle();
                 bundle.putString("tableNumber", "FS" + getRandomString(3));
@@ -408,31 +415,28 @@ public class Home extends Fragment implements View.OnClickListener {
             }
         } else if (id == R.id.tableBilling) {
             if (MainActivity.dineIn.equalsIgnoreCase("1")) {
-                ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
                 ((MainActivity) activity).loadFragment(new InvoiceCompanyTable(), true);
             } else {
                 Toast.makeText(activity, getString(R.string.toast_you_have_not_selected_dinein_please_cont), Toast.LENGTH_SHORT).show();
             }
         } else if (id == R.id.takeAwayBilling) {
             if (MainActivity.takeAway.equalsIgnoreCase("1")) {
-                ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
                 ((MainActivity) activity).loadFragment(new InvoiceTakeAway(), true);
             } else {
                 Toast.makeText(activity, getString(R.string.toast_you_have_not_selected_take_away_please_c), Toast.LENGTH_SHORT).show();
             }
         } else if (id == R.id.messBilling) {
             if (MainActivity.mess.equalsIgnoreCase("1")) {
-                ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
                 ((MainActivity) activity).loadFragment(new InvoiceMess(), true);
             } else {
                 Toast.makeText(activity, getString(R.string.toast_you_have_not_selected_take_away_please_c), Toast.LENGTH_SHORT).show();
             }
         } else if (id == R.id.subcategoryCardView) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
             ((MainActivity) activity).loadFragment(new AddSubcategory(), true);
         } else if (id == R.id.productCardView) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
             ((MainActivity) activity).loadFragment(new ProductMaster(), true);
+        } else if (id == R.id.comboCardView) {
+            ((MainActivity) activity).loadFragment(new ComboMaster(), true);
         } else if (id == R.id.hideShowTotalSale) {
             if (binding.totalSale.getTransformationMethod().equals(PasswordTransformationMethod.getInstance())) {
                 binding.hideShowTotalSale.setImageResource(R.drawable.ic_hide);
@@ -468,9 +472,7 @@ public class Home extends Fragment implements View.OnClickListener {
                     public void onClick(DialogInterface dialogInterface, int i) {
                         dialogInterface.dismiss();
                         if (DetectConnection.checkInternetConnection(activity)) {
-                            SQLiteDatabase database = posBillingWalaDatabase.getWritableDatabase();
-                            posBillingWalaDatabase.resetTables(database);
-                            NetworkDataFetcher.fetchAllData(activity);
+                            NetworkDataFetcher.resetAndFetchAllData(activity, posBillingWalaDatabase);
                         } else {
                             DetectConnection.noInternetConnection(activity);
                         }
@@ -530,6 +532,10 @@ public class Home extends Fragment implements View.OnClickListener {
     public void onStart() {
         super.onStart();
         ((MainActivity) activity).lockUnlockDrawer(0);
+        if (deferHeavyWorkForNextStart) {
+            deferHeavyWorkForNextStart = false;
+            return;
+        }
         if (!MainActivity.userId.equalsIgnoreCase("")) {
             totalLicenceDays();
         }
@@ -539,14 +545,21 @@ public class Home extends Fragment implements View.OnClickListener {
             requestPermission();
         }
         getTotalCount();
-        getPrinterSettingDetails();
         getLowInventoryList();
+        // Defer Bluetooth so first paint / dashboard bind stay smooth
+        AppExecutors.get().removeMainCallbacks(deferredPrinterConnectRunnable);
+        AppExecutors.get().postMainDelayed(deferredPrinterConnectRunnable, 600);
     }
 
     public void getPrinterSettingDetails() {
-        printerSettingResponseList = posBillingWalaDatabase.getPrinterSettingDetails();
-        if (!printerSettingResponseList.isEmpty()) {
-            String bluetoothAddress = printerSettingResponseList.get(0).getBluetoothAddress() != null ? printerSettingResponseList.get(0).getBluetoothAddress() : "";
+        AppExecutors.get().runDbThenMain(this, () -> {
+            printerSettingResponseList = posBillingWalaDatabase.getPrinterSettingDetails();
+        }, () -> {
+            if (printerSettingResponseList == null || printerSettingResponseList.isEmpty()) {
+                return;
+            }
+            String bluetoothAddress = printerSettingResponseList.get(0).getBluetoothAddress() != null
+                    ? printerSettingResponseList.get(0).getBluetoothAddress() : "";
             if (!bluetoothAddress.equalsIgnoreCase("")) {
                 try {
                     if (enableBluetooth()) {
@@ -556,7 +569,8 @@ public class Home extends Fragment implements View.OnClickListener {
                     e.printStackTrace();
                 }
             }
-            String bluetoothKOTAddress = printerSettingResponseList.get(0).getBluetoothKOTAddress() != null ? printerSettingResponseList.get(0).getBluetoothKOTAddress() : "";
+            String bluetoothKOTAddress = printerSettingResponseList.get(0).getBluetoothKOTAddress() != null
+                    ? printerSettingResponseList.get(0).getBluetoothKOTAddress() : "";
             if (!bluetoothKOTAddress.equalsIgnoreCase("")) {
                 try {
                     if (enableBluetooth()) {
@@ -566,7 +580,7 @@ public class Home extends Fragment implements View.OnClickListener {
                     e.printStackTrace();
                 }
             }
-        }
+        });
     }
 
     public void createFolder() {
@@ -580,92 +594,124 @@ public class Home extends Fragment implements View.OnClickListener {
 
     @SuppressLint("Recycle")
     public void getTotalCount() {
+        if (activity == null || posBillingWalaDatabase == null) {
+            return;
+        }
+        AppExecutors.get().db().execute(() -> {
+            Date c = Calendar.getInstance().getTime();
+            SimpleDateFormat todayDF = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+            String todayDate = todayDF.format(c);
 
-        Date c = Calendar.getInstance().getTime();
-        System.out.println("Current time => " + c);
-        SimpleDateFormat todayDF = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-        String todayDate = todayDF.format(c);
+            String currencyName = MainActivity.currencyName;
+            String totalSubcategory = "0";
+            String totalProduct = "0";
+            String totalCombo = "0";
+            String totalSaleText = MainActivity.currencyName + " 0.00";
+            String todaySaleText = MainActivity.currencyName + " 0.00";
 
-        SQLiteDatabase database = posBillingWalaDatabase.getWritableDatabase();
-        Cursor cursor;
-        //Invoice Currency
-        cursor = database.rawQuery("SELECT currencyName FROM " + POSBillingWalaDatabase.COMPANY_TABLE, null);
-        while (cursor.moveToNext()) {
-            String currencyName = cursor.getString(cursor.getColumnIndex("currencyName"));
-            if (currencyName != null) {
-                String[] separated = currencyName.trim().split(":");
-                try {
-                    currencyName = separated[1];
-                    MainActivity.currencyName = currencyName;
-                    Common.saveUserData(activity, "currencyName", currencyName);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    MainActivity.currencyName = "\u20B9";
+            SQLiteDatabase database = null;
+            Cursor cursor = null;
+            try {
+                database = posBillingWalaDatabase.getReadableDatabase();
+                cursor = database.rawQuery("SELECT currencyName FROM " + POSBillingWalaDatabase.COMPANY_TABLE, null);
+                while (cursor.moveToNext()) {
+                    String name = cursor.getString(cursor.getColumnIndex("currencyName"));
+                    if (name != null) {
+                        String[] separated = name.trim().split(":");
+                        try {
+                            currencyName = separated[1];
+                        } catch (Exception e) {
+                            currencyName = "\u20B9";
+                        }
+                    } else {
+                        currencyName = "\u20B9";
+                    }
                 }
-            } else {
-                MainActivity.currencyName = "\u20B9";
-            }
-        }
-        //Total Subcategory
-        cursor = database.rawQuery("SELECT COUNT(subcategoryId) as totalSubcategory FROM " + POSBillingWalaDatabase.PRODUCT_SUBCATEGORY_TABLE + " WHERE subcategoryDeletedStatus = '0'", null);
-        while (cursor.moveToNext()) {
-            String totalSubcategory = cursor.getString(cursor.getColumnIndex("totalSubcategory"));
-            binding.totalSubcategory.setText(totalSubcategory);
-        }
-        //Total Product
-        cursor = database.rawQuery("SELECT COUNT(productId) as totalProduct FROM " + POSBillingWalaDatabase.PRODUCT_TABLE + " WHERE categoryName !='' AND productDeletedStatus='0'", null);
-        while (cursor.moveToNext()) {
-            String totalProduct = cursor.getString(cursor.getColumnIndex("totalProduct"));
-            binding.totalProduct.setText(totalProduct);
-        }
-        //Total Sale
-        cursor = database.rawQuery("SELECT SUM(totalAmount) as totalAmount FROM " + POSBillingWalaDatabase.INVOICE_TABLE, null);
-        while (cursor.moveToNext()) {
-            float totalAmt;
-            if ((cursor.getString(cursor.getColumnIndex("totalAmount")) != null)) {
-                totalAmt = Float.parseFloat(cursor.getString(cursor.getColumnIndex("totalAmount")));
-            } else {
-                totalAmt = 0f;
-            }
+                cursor.close();
 
-            String totalAmount = "";
-            if (totalAmt >= 1000) {
-                totalAmount = String.format(Locale.US, "%.2f", (totalAmt / 1000)) + "K";
-            } else if (totalAmt >= 100000) {
-                totalAmount = String.format(Locale.US, "%.2f", (totalAmt / 100000)) + "Lac";
-            } else if (totalAmt >= 10000000) {
-                totalAmount = String.format(Locale.US, "%.2f", (totalAmt / 10000000)) + "Cr";
-            } else {
-                totalAmount = String.format(Locale.US, "%.2f", totalAmt);
-            }
+                cursor = database.rawQuery("SELECT COUNT(subcategoryId) as totalSubcategory FROM " + POSBillingWalaDatabase.PRODUCT_SUBCATEGORY_TABLE + " WHERE subcategoryDeletedStatus = '0'", null);
+                if (cursor.moveToNext()) {
+                    totalSubcategory = cursor.getString(cursor.getColumnIndex("totalSubcategory"));
+                }
+                cursor.close();
 
-            binding.totalSale.setText(MainActivity.currencyName + " " + totalAmount);
-        }
-        //Today Sale
-        cursor = database.rawQuery("SELECT SUM(totalAmount) as totalAmount FROM " + POSBillingWalaDatabase.INVOICE_TABLE + " WHERE invoiceDate LIKE '%" + todayDate + "%'", null);
-        while (cursor.moveToNext()) {
-            float totalAmt;
-            if ((cursor.getString(cursor.getColumnIndex("totalAmount")) != null)) {
-                totalAmt = Float.parseFloat(cursor.getString(cursor.getColumnIndex("totalAmount")));
-            } else {
-                totalAmt = 0f;
+                cursor = database.rawQuery("SELECT COUNT(productId) as totalProduct FROM " + POSBillingWalaDatabase.PRODUCT_TABLE + " WHERE categoryName !='' AND productDeletedStatus='0'", null);
+                if (cursor.moveToNext()) {
+                    totalProduct = cursor.getString(cursor.getColumnIndex("totalProduct"));
+                }
+                cursor.close();
+
+                cursor = database.rawQuery("SELECT COUNT(comboId) as totalCombo FROM " + POSBillingWalaDatabase.COMBO_TABLE + " WHERE IFNULL(comboDeletedStatus,'0')='0'", null);
+                if (cursor.moveToNext()) {
+                    totalCombo = cursor.getString(cursor.getColumnIndex("totalCombo"));
+                }
+                cursor.close();
+
+                cursor = database.rawQuery("SELECT SUM(totalAmount) as totalAmount FROM " + POSBillingWalaDatabase.INVOICE_TABLE, null);
+                if (cursor.moveToNext()) {
+                    totalSaleText = currencyName + " " + formatCompactAmount(cursor.getString(cursor.getColumnIndex("totalAmount")));
+                }
+                cursor.close();
+
+                cursor = database.rawQuery("SELECT SUM(totalAmount) as totalAmount FROM " + POSBillingWalaDatabase.INVOICE_TABLE + " WHERE invoiceDate LIKE ?", new String[]{"%" + todayDate + "%"});
+                if (cursor.moveToNext()) {
+                    todaySaleText = currencyName + " " + formatCompactAmount(cursor.getString(cursor.getColumnIndex("totalAmount")));
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                if (cursor != null) {
+                    try {
+                        cursor.close();
+                    } catch (Exception ignored) {
+                    }
+                }
+                if (database != null) {
+                    try {
+                        database.close();
+                    } catch (Exception ignored) {
+                    }
+                }
             }
 
-            String totalAmount = "";
-            if (totalAmt >= 1000) {
-                totalAmount = String.format(Locale.US, "%.2f", (totalAmt / 1000)) + "K";
-            } else if (totalAmt >= 100000) {
-                totalAmount = String.format(Locale.US, "%.2f", (totalAmt / 100000)) + "Lac";
-            } else if (totalAmt >= 10000000) {
-                totalAmount = String.format(Locale.US, "%.2f", (totalAmt / 10000000)) + "Cr";
-            } else {
-                totalAmount = String.format(Locale.US, "%.2f", totalAmt);
+            final String finalCurrency = currencyName;
+            final String finalSubcategory = totalSubcategory != null ? totalSubcategory : "0";
+            final String finalProduct = totalProduct != null ? totalProduct : "0";
+            final String finalCombo = totalCombo != null ? totalCombo : "0";
+            final String finalTotalSale = totalSaleText;
+            final String finalTodaySale = todaySaleText;
+
+            AppExecutors.get().main(() -> {
+                if (!isAdded() || binding == null) {
+                    return;
+                }
+                MainActivity.currencyName = finalCurrency;
+                Common.saveUserData(activity, "currencyName", finalCurrency);
+                binding.totalSubcategory.setText(finalSubcategory);
+                binding.totalProduct.setText(finalProduct);
+                binding.totalCombo.setText(finalCombo);
+                binding.totalSale.setText(finalTotalSale);
+                binding.todaySaleAmount.setText(finalTodaySale);
+            });
+        });
+    }
+
+    private String formatCompactAmount(String amountRaw) {
+        float totalAmt = 0f;
+        try {
+            if (amountRaw != null) {
+                totalAmt = Float.parseFloat(amountRaw);
             }
-
-            binding.todaySaleAmount.setText(MainActivity.currencyName + " " + totalAmount);
+        } catch (Exception ignored) {
         }
-
-        database.close();
+        if (totalAmt >= 10000000) {
+            return String.format(Locale.US, "%.2f", (totalAmt / 10000000)) + "Cr";
+        } else if (totalAmt >= 100000) {
+            return String.format(Locale.US, "%.2f", (totalAmt / 100000)) + "Lac";
+        } else if (totalAmt >= 1000) {
+            return String.format(Locale.US, "%.2f", (totalAmt / 1000)) + "K";
+        }
+        return String.format(Locale.US, "%.2f", totalAmt);
     }
 
     public void requestNewPermission() {
@@ -799,6 +845,7 @@ public class Home extends Fragment implements View.OnClickListener {
     public void onPause() {
         super.onPause();
         stopHomeClock();
+        AppExecutors.get().removeMainCallbacks(deferredPrinterConnectRunnable);
         if (adView != null) {
             adView.pause();
         }
@@ -820,7 +867,6 @@ public class Home extends Fragment implements View.OnClickListener {
         if (binding == null) {
             return;
         }
-        cachedDisplayShopName = null;
         lastGreetingHour = -1;
         binding.shopName.setText(getGreeting() + ", " + getDisplayShopName());
         updateHomeDateTime();
@@ -871,64 +917,111 @@ public class Home extends Fragment implements View.OnClickListener {
             cachedDisplayShopName = MainActivity.shopName;
             return cachedDisplayShopName;
         }
-        try {
-            List<CompanyResponse> companyList = posBillingWalaDatabase.getCompanyDetails();
-            if (companyList != null && !companyList.isEmpty()
-                    && !TextUtils.isEmpty(companyList.get(0).getCompanyName())) {
-                cachedDisplayShopName = companyList.get(0).getCompanyName();
-                return cachedDisplayShopName;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        cachedDisplayShopName = "POS Billingwala";
-        return cachedDisplayShopName;
-    }
-
-    private void loadHomeStoreImage() {
-        binding.userPhoto.setImageResource(R.drawable.app_logo);
-
-        // Prefer store image added in Company Detail settings
-        try {
-            List<CompanyResponse> companyList = posBillingWalaDatabase.getCompanyDetails();
-            if (companyList != null && !companyList.isEmpty()) {
-                String companyLogo = companyList.get(0).getCompanyLogo();
-                if (!TextUtils.isEmpty(companyLogo)) {
-                    byte[] bytes = Base64.decode(companyLogo, Base64.DEFAULT);
-                    Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-                    if (bitmap != null) {
-                        binding.userPhoto.setImageBitmap(bitmap);
-                        return;
+        // Resolve shop name off the main thread; show placeholder until ready
+        AppExecutors.get().db().execute(() -> {
+            String resolved = "POS Billingwala";
+            try {
+                List<CompanyResponse> companyList = getCachedCompanyDetails();
+                if (companyList != null && !companyList.isEmpty()) {
+                    String name = ShopHeaderBuilder.resolveShopName1(companyList.get(0));
+                    if (!TextUtils.isEmpty(name)) {
+                        resolved = name;
                     }
                 }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        // Fallback to admin shop image, then app logo
-        if (!TextUtils.isEmpty(MainActivity.shopImage)) {
-            try {
-                Picasso.get()
-                        .load(BuildConfig.MEDIA_BASE_URL + MainActivity.shopImage)
-                        .placeholder(R.drawable.app_logo)
-                        .error(R.drawable.app_logo)
-                        .into(binding.userPhoto);
             } catch (Exception e) {
                 e.printStackTrace();
             }
+            final String shop = resolved;
+            AppExecutors.get().main(() -> {
+                if (!isAdded() || binding == null) {
+                    return;
+                }
+                cachedDisplayShopName = shop;
+                binding.shopName.setText(getGreeting() + ", " + shop);
+            });
+        });
+        return "POS Billingwala";
+    }
+
+    private synchronized List<CompanyResponse> getCachedCompanyDetails() {
+        if (cachedCompanyDetails != null) {
+            return cachedCompanyDetails;
         }
+        // Prefer DB thread; if called from main, still safe but may hitch once
+        cachedCompanyDetails = posBillingWalaDatabase.getCompanyDetails();
+        return cachedCompanyDetails;
+    }
+
+    private void loadHomeStoreImage() {
+        if (binding == null) {
+            return;
+        }
+        if (cachedStoreLogo != null && !cachedStoreLogo.isRecycled()) {
+            binding.userPhoto.setImageBitmap(cachedStoreLogo);
+            return;
+        }
+
+        binding.userPhoto.setImageResource(R.drawable.app_logo);
+
+        AppExecutors.get().db().execute(() -> {
+            Bitmap decoded = null;
+            String logoRaw = null;
+            try {
+                List<CompanyResponse> companyList = getCachedCompanyDetails();
+                if (companyList != null && !companyList.isEmpty()) {
+                    logoRaw = companyList.get(0).getCompanyLogo();
+                    if (!TextUtils.isEmpty(logoRaw)) {
+                        if (logoRaw.equals(cachedStoreLogoRaw) && cachedStoreLogo != null && !cachedStoreLogo.isRecycled()) {
+                            decoded = cachedStoreLogo;
+                        } else {
+                            byte[] bytes = Base64.decode(logoRaw, Base64.DEFAULT);
+                            decoded = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            final Bitmap logoBitmap = decoded;
+            final String raw = logoRaw;
+            AppExecutors.get().main(() -> {
+                if (!isAdded() || binding == null) {
+                    return;
+                }
+                if (logoBitmap != null) {
+                    cachedStoreLogo = logoBitmap;
+                    cachedStoreLogoRaw = raw;
+                    binding.userPhoto.setImageBitmap(logoBitmap);
+                    return;
+                }
+                if (!TextUtils.isEmpty(MainActivity.shopImage)) {
+                    try {
+                        Picasso.get()
+                                .load(BuildConfig.MEDIA_BASE_URL + MainActivity.shopImage)
+                                .placeholder(R.drawable.app_logo)
+                                .error(R.drawable.app_logo)
+                                .into(binding.userPhoto);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+        });
     }
 
     @Override
     public void onDestroyView() {
         stopHomeClock();
+        AppExecutors.get().removeMainCallbacks(deferredPrinterConnectRunnable);
+        cachedCompanyDetails = null;
         super.onDestroyView();
     }
 
     @Override
     public void onDestroy() {
         stopHomeClock();
+        AppExecutors.get().removeMainCallbacks(deferredPrinterConnectRunnable);
         super.onDestroy();
         if (adView != null) {
             adView.destroy();

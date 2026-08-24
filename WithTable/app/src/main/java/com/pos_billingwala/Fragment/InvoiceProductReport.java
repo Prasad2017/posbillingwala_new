@@ -42,6 +42,8 @@ import com.pos_billingwala.Adapter.ReportProductAdapter;
 import com.pos_billingwala.BuildConfig;
 import com.pos_billingwala.CalenderView.MonthPickerDialog;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.CartItemType;
+import com.pos_billingwala.Extra.ListLoader;
 import com.pos_billingwala.Extra.SimpleDividerItemDecoration;
 import com.pos_billingwala.Model.InvoiceProductResponse;
 import com.pos_billingwala.R;
@@ -57,9 +59,12 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+import cn.pedant.SweetAlert.SweetAlertDialog;
+
 @SuppressLint("SetTextI18n")
 public class InvoiceProductReport extends Fragment implements View.OnClickListener {
 
+    public static final String ARG_INVOICE_ITEM_TYPE = "invoiceItemType";
     public static Activity activity;
     public static NestedScrollView nestedScrollView;
     public static FragmentInvoiceProductReportBinding binding;
@@ -71,6 +76,7 @@ public class InvoiceProductReport extends Fragment implements View.OnClickListen
     Calendar calender;
     DatePickerDialog datePickerDialog;
     String invoiceDate = "";
+    String invoiceItemTypeFilter = null;
     int PERMISSION_ALL = 1;
 
     public static boolean hasPermissions(Context context, String... permissions) {
@@ -109,6 +115,10 @@ public class InvoiceProductReport extends Fragment implements View.OnClickListen
 
         posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
 
+        if (getArguments() != null) {
+            invoiceItemTypeFilter = getArguments().getString(ARG_INVOICE_ITEM_TYPE);
+        }
+
         view.setFocusableInTouchMode(true);
         view.requestFocus();
         view.setOnKeyListener(new View.OnKeyListener() {
@@ -117,8 +127,7 @@ public class InvoiceProductReport extends Fragment implements View.OnClickListen
 
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
                     Log.i("tag", "onKey Back listener is working!!!");
-                    ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                    ((MainActivity) activity).loadFragment(new ReportSetting(), true);
+                    ((MainActivity) activity).goBackTo(new ReportSetting(), true);
                     return true;
                 }
                 return false;
@@ -150,6 +159,9 @@ public class InvoiceProductReport extends Fragment implements View.OnClickListen
         binding.menuIcon.setOnClickListener(this);
         binding.backToSetting.setOnClickListener(this);
         binding.shareInvoice.setOnClickListener(this);
+        if (CartItemType.isCombo(invoiceItemTypeFilter) && binding.reportTitle != null) {
+            binding.reportTitle.setText(R.string.ui_combo_wise_report);
+        }
     }
 
     @Override
@@ -158,8 +170,7 @@ public class InvoiceProductReport extends Fragment implements View.OnClickListen
         if (id == R.id.menuIcon) {
             setPopUpWindow();
         } else if (id == R.id.backToSetting) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-            ((MainActivity) activity).loadFragment(new ReportSetting(), true);
+            ((MainActivity) activity).goBackTo(new ReportSetting(), true);
         } else if (id == R.id.shareInvoice) {
             if (!invoiceProductResponseList.isEmpty()) {
                 createPdf();
@@ -418,27 +429,35 @@ public class InvoiceProductReport extends Fragment implements View.OnClickListen
 
 
     public void getReportDateWiseProductList(String invoiceDate, String orderBy) {
+        SweetAlertDialog loader = ListLoader.show(activity);
+        try {
+            if (CartItemType.isCombo(invoiceItemTypeFilter)) {
+                binding.invoiceDate.setText(getString(R.string.ui_combo_wise_report) + " [ " + invoiceDate + "]");
+            } else {
+                binding.invoiceDate.setText("Product Sale [ " + invoiceDate + "]");
+            }
 
-        binding.invoiceDate.setText("Product Sale [ " + invoiceDate + "]");
+            invoiceProductResponseList.clear();
+            invoiceProductResponseList = posBillingWalaDatabase.getReportDateWiseProductList(
+                    invoiceDate, orderBy, invoiceItemTypeFilter);
+            if (!invoiceProductResponseList.isEmpty()) {
+                adapter = new ReportProductAdapter(activity, invoiceProductResponseList);
+                binding.recyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
+                binding.recyclerView.addItemDecoration(new SimpleDividerItemDecoration(activity));
+                binding.recyclerView.setAdapter(adapter);
+                adapter.notifyDataSetChanged();
+                //   adapter.notifyItemInserted(invoiceProductResponseList.size() - 1);
 
-        invoiceProductResponseList.clear();
-        invoiceProductResponseList = posBillingWalaDatabase.getReportDateWiseProductList(invoiceDate, orderBy);
-        if (!invoiceProductResponseList.isEmpty()) {
-            adapter = new ReportProductAdapter(activity, invoiceProductResponseList);
-            binding.recyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
-            binding.recyclerView.addItemDecoration(new SimpleDividerItemDecoration(activity));
-            binding.recyclerView.setAdapter(adapter);
-            adapter.notifyDataSetChanged();
-            //   adapter.notifyItemInserted(invoiceProductResponseList.size() - 1);
+                binding.noDataFound.setVisibility(View.GONE);
+                binding.nestedScrollView.setVisibility(View.VISIBLE);
 
-            binding.noDataFound.setVisibility(View.GONE);
-            binding.nestedScrollView.setVisibility(View.VISIBLE);
-
-        } else {
-            binding.noDataFound.setVisibility(View.VISIBLE);
-            binding.nestedScrollView.setVisibility(View.GONE);
+            } else {
+                binding.noDataFound.setVisibility(View.VISIBLE);
+                binding.nestedScrollView.setVisibility(View.GONE);
+            }
+        } finally {
+            ListLoader.dismiss(loader);
         }
-
     }
 
 }

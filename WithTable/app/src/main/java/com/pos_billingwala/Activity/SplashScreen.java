@@ -32,7 +32,7 @@ import com.pos_billingwala.databinding.ActivitySplashScreenBinding;
 @SuppressLint({"UseCompatLoadingForDrawables, NonConstantResourceId, CustomSplashScreen"})
 public class SplashScreen extends BaseActivity {
 
-    public static final int SPLASH_TIME_OUT = 2000;
+    public static final int SPLASH_TIME_OUT = 800;
     ActivitySplashScreenBinding binding;
     OfflineNetworkData offlineNetworkData;
 

@@ -64,8 +64,7 @@ public class SaleReport extends Fragment implements View.OnClickListener {
 
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
                     Log.i("tag", "onKey Back listener is working!!!");
-                    ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                    ((MainActivity) activity).loadFragment(new ReportSetting(), true);
+                    ((MainActivity) activity).goBackTo(new ReportSetting(), true);
                     return true;
                 }
                 return false;
@@ -82,8 +81,7 @@ public class SaleReport extends Fragment implements View.OnClickListener {
     public void onClick(View view) {
         int id = view.getId();
         if (id == R.id.backToSetting) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-            ((MainActivity) activity).loadFragment(new ReportSetting(), true);
+            ((MainActivity) activity).goBackTo(new ReportSetting(), true);
         } else if (id == R.id.menuIcon) {
             setPopUpWindow();
         }

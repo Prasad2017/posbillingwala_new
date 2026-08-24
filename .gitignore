@@ -40,11 +40,14 @@ Thumbs.db
 **/local.properties
 
 # Secrets / keys
-**/google-services.json
 **/GoogleService-Info.plist
 *.keystore
 *.jks
+!PosBillingwala.jks
 API/license_signing_private.pem
+# google-services.json is tracked for Firebase builds (Dealer/Owner/WithTable)
 
-# Local release APK copies (build with assembleRelease)
-releases/*.apk
+# Local release APK/AAB copies (build with ./build-release.sh)
+releases/**/*.apk
+releases/**/*.aab
+releases/**/*.idsig

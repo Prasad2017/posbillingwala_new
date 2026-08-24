@@ -117,15 +117,12 @@ public class Home extends Fragment implements View.OnClickListener {
 
     @Override
     public void onClick(View view) {
-        switch (view.getId()) {
-            case R.id.customerRegistration:
-                ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                ((MainActivity) activity).loadFragment(new CustomerRegistration(), true);
-                break;
-            case R.id.onBoardCustomerList:
-                ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                ((MainActivity) activity).loadFragment(new AllCustomerList(), true);
-                break;
+        if (view.getId() == R.id.customerRegistration) {
+            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
+            ((MainActivity) activity).loadFragment(new CustomerRegistration(), true);
+        } else if (view.getId() == R.id.onBoardCustomerList) {
+            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
+            ((MainActivity) activity).loadFragment(new AllCustomerList(), true);
         }
     }
 

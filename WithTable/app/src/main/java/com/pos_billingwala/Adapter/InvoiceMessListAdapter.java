@@ -47,7 +47,6 @@ public class InvoiceMessListAdapter extends RecyclerView.Adapter<InvoiceMessList
         holder.binding.linearLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ((MainActivity) context).removeCurrentFragmentAndMoveBack();
                 InvoiceMessMemberPaymentReport invoiceMessMemberPaymentReport = new InvoiceMessMemberPaymentReport();
                 Bundle bundle = new Bundle();
                 bundle.putString("memberId", memberResponse.getMemberId());

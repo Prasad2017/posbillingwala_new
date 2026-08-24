@@ -170,6 +170,7 @@
     <string name="master_subcategory">उपश्रेणी</string>
     <string name="master_portions">पोर्शन</string>
     <string name="master_products">उत्पादने</string>
+    <string name="master_combos">कॉम्बो</string>
     <string name="setting_shop_details">दुकान तपशील</string>
     <string name="setting_printer_details">प्रिंटर तपशील</string>
     <string name="setting_inventory">वस्तूसूची व्यवस्थापन</string>
@@ -188,7 +189,10 @@
     <string name="home_total_category">एकूण\nश्रेणी</string>
     <string name="home_total_subcategory">एकूण\nउपश्रेणी</string>
     <string name="home_total_products">एकूण\nउत्पादने</string>
+    <string name="home_total_combos">एकूण\nकॉम्बो</string>
     <string name="home_fetch_data">डेटा घ्या</string>
     <string name="home_synchronize">सिंक करा</string>
     <string name="home_low_inventory">कमी स्टॉक</string>
+
+    <string name="press_back_again_to_exit">बाहेर पडण्यासाठी पुन्हा बॅक दाबा</string>
 </resources>

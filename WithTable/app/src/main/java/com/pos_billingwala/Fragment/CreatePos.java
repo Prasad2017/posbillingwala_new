@@ -31,10 +31,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.LifecycleOwner;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.work.OneTimeWorkRequest;
-import androidx.work.WorkManager;
 
 import com.google.android.material.chip.Chip;
 import com.google.android.material.textfield.TextInputEditText;
@@ -42,8 +39,12 @@ import com.pos_billingwala.Activity.BluetoothPrint;
 import com.pos_billingwala.Activity.DuplicateBluetoothPrint;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.HomeCategoryAdapter;
+import com.pos_billingwala.Adapter.HomeComboAdapter;
 import com.pos_billingwala.Adapter.HomeProductAdapter;
+import com.pos_billingwala.Model.ComboResponse;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.AppExecutors;
+import com.pos_billingwala.Extra.ListLoader;
 import com.pos_billingwala.Interface.ClickListerInterface;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.PrinterSettingResponse;
@@ -53,9 +54,6 @@ import com.pos_billingwala.Model.ProductPortionResponse;
 import com.pos_billingwala.Model.ProductResponse;
 import com.pos_billingwala.Model.ProductSubcategoryResponse;
 import com.pos_billingwala.R;
-import com.pos_billingwala.WorkerClass.HomeAllProductsWorker;
-import com.pos_billingwala.WorkerClass.HomeProductsWorker;
-import com.pos_billingwala.WorkerClass.ProductCategoryWorker;
 import com.pos_billingwala.databinding.FragmentCreatePosBinding;
 
 import java.util.ArrayList;
@@ -65,6 +63,8 @@ import java.util.Locale;
 
 @SuppressLint({"Range", "SetTextI18n, NonConstantResourceId"})
 public class CreatePos extends Fragment implements ClickListerInterface, View.OnClickListener {
+
+    public static final String CATEGORY_ALL_ID = "ALL";
 
     public static String tableNumber, cartOrderStatus;
     public static Activity activity;
@@ -80,12 +80,17 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
     public static List<PrinterSettingResponse> printerSettingResponseList = new ArrayList<>();
     public static HomeCategoryAdapter homeCategoryAdapter;
     public static HomeProductAdapter homeProductAdapter;
+    public static HomeComboAdapter homeComboAdapter;
     public static FragmentCreatePosBinding binding;
     View view;
     POSBillingWalaDatabase posBillingWalaDatabase;
     PopupWindow mypopupWindow;
     private final Handler productSearchHandler = new Handler(Looper.getMainLooper());
     private Runnable pendingProductSearch;
+    private boolean showingCombos = false;
+    private List<ComboResponse> comboResponseList = new ArrayList<>();
+    private int searchRequestId = 0;
+    private int catalogRequestId = 0;
 
     /* When Mic activity close */
     @Override
@@ -134,16 +139,7 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
 
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
                     Log.i("tag", "onKey Back listener is working!!!");
-                    if (cartOrderStatus.equalsIgnoreCase("table_wise")) {
-                        ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                        ((MainActivity) activity).loadFragment(new InvoiceCompanyTable(), true);
-                    } else if (cartOrderStatus.equalsIgnoreCase("take_away")) {
-                        ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                        ((MainActivity) activity).loadFragment(new InvoiceTakeAway(), true);
-                    } else {
-                        ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                        ((MainActivity) activity).loadFragment(new Home(), false);
-                    }
+                    navigateFromPos();
                     return true;
                 }
                 return false;
@@ -169,14 +165,12 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
                 }
                 final String query = s != null ? s.toString() : "";
                 if (query.isEmpty()) {
-                    binding.categoryRecyclerView.setVisibility(View.VISIBLE);
-                    binding.productLinearLayout.setVisibility(View.GONE);
-                    clearSubcategoryFilter();
+                    selectAllCategory();
                     return;
                 }
                 // Debounce to avoid a DB hit on every keystroke
                 pendingProductSearch = () -> searchHomeProduct(query);
-                productSearchHandler.postDelayed(pendingProductSearch, 180);
+                productSearchHandler.postDelayed(pendingProductSearch, 250);
             }
         });
 
@@ -200,6 +194,13 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
         binding.backToCategory.setOnClickListener(this);
         binding.cartLayout.setOnClickListener(this);
         binding.menuIcon.setOnClickListener(this);
+        binding.productsTab.setOnClickListener(this);
+        binding.combosTab.setOnClickListener(this);
+
+        binding.productRecyclerView.setHasFixedSize(true);
+        binding.productRecyclerView.setItemViewCacheSize(24);
+        binding.categoryRecyclerView.setHasFixedSize(true);
+        binding.categoryRecyclerView.setItemViewCacheSize(12);
 
         return view;
 
@@ -208,59 +209,97 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
     private void setupSubcategoryFilter(String categoryId) {
         binding.subcategoryChipGroup.removeAllViews();
         binding.subcategoryChipGroup.setOnCheckedStateChangeListener(null);
+        binding.subcategoryScrollView.setVisibility(View.GONE);
 
-        List<ProductSubcategoryResponse> subcategories = posBillingWalaDatabase.getProductSubcategoryList(categoryId);
-        if (subcategories == null || subcategories.isEmpty()) {
-            binding.subcategoryScrollView.setVisibility(View.GONE);
+        if (categoryId == null || CATEGORY_ALL_ID.equals(categoryId)) {
             selectedSubcategoryId = null;
             return;
         }
 
-        binding.subcategoryScrollView.setVisibility(View.VISIBLE);
+        final String catId = categoryId;
+        AppExecutors.get().db().execute(() -> {
+            List<ProductSubcategoryResponse> subcategories =
+                    posBillingWalaDatabase.getProductSubcategoryList(catId);
+            AppExecutors.get().main(() -> {
+                if (!isAdded() || binding == null) {
+                    return;
+                }
+                binding.subcategoryChipGroup.removeAllViews();
+                binding.subcategoryChipGroup.setOnCheckedStateChangeListener(null);
+                if (subcategories == null || subcategories.isEmpty()) {
+                    binding.subcategoryScrollView.setVisibility(View.GONE);
+                    selectedSubcategoryId = null;
+                    return;
+                }
 
-        Chip allChip = new Chip(activity);
-        allChip.setText("All");
-        allChip.setCheckable(true);
-        allChip.setChecked(true);
-        allChip.setTag("");
-        binding.subcategoryChipGroup.addView(allChip);
+                binding.subcategoryScrollView.setVisibility(View.VISIBLE);
 
-        for (ProductSubcategoryResponse subcategory : subcategories) {
-            Chip chip = new Chip(activity);
-            chip.setText(subcategory.getSubcategoryName());
-            chip.setCheckable(true);
-            chip.setTag(subcategory.getSubcategoryId());
-            binding.subcategoryChipGroup.addView(chip);
-        }
+                Chip allChip = new Chip(activity);
+                allChip.setText("All");
+                allChip.setCheckable(true);
+                allChip.setChecked(true);
+                allChip.setTag("");
+                binding.subcategoryChipGroup.addView(allChip);
 
-        binding.subcategoryChipGroup.setOnCheckedStateChangeListener((group, checkedIds) -> {
-            if (checkedIds.isEmpty()) {
-                return;
-            }
-            Chip selectedChip = group.findViewById(checkedIds.get(0));
-            if (selectedChip == null) {
-                return;
-            }
-            Object tag = selectedChip.getTag();
-            if (tag == null || String.valueOf(tag).isEmpty()) {
-                selectedSubcategoryId = null;
-            } else {
-                selectedSubcategoryId = String.valueOf(tag);
-            }
-            getHomeProductList();
+                for (ProductSubcategoryResponse subcategory : subcategories) {
+                    Chip chip = new Chip(activity);
+                    chip.setText(subcategory.getSubcategoryName());
+                    chip.setCheckable(true);
+                    chip.setTag(subcategory.getSubcategoryId());
+                    binding.subcategoryChipGroup.addView(chip);
+                }
+
+                binding.subcategoryChipGroup.setOnCheckedStateChangeListener((group, checkedIds) -> {
+                    if (checkedIds.isEmpty()) {
+                        return;
+                    }
+                    Chip selectedChip = group.findViewById(checkedIds.get(0));
+                    if (selectedChip == null) {
+                        return;
+                    }
+                    Object tag = selectedChip.getTag();
+                    if (tag == null || String.valueOf(tag).isEmpty()) {
+                        selectedSubcategoryId = null;
+                    } else {
+                        selectedSubcategoryId = String.valueOf(tag);
+                    }
+                    getHomeProductList();
+                });
+            });
         });
     }
 
     private void clearSubcategoryFilter() {
-        selectedCategoryId = null;
         selectedSubcategoryId = null;
-        binding.subcategoryChipGroup.removeAllViews();
-        binding.subcategoryChipGroup.setOnCheckedStateChangeListener(null);
-        binding.subcategoryScrollView.setVisibility(View.GONE);
+        if (binding != null) {
+            binding.subcategoryChipGroup.removeAllViews();
+            binding.subcategoryChipGroup.setOnCheckedStateChangeListener(null);
+            binding.subcategoryScrollView.setVisibility(View.GONE);
+        }
+    }
+
+    private void selectAllCategory() {
+        selectedCategoryId = CATEGORY_ALL_ID;
+        categoryName = null;
+        clearSubcategoryFilter();
+        if (homeCategoryAdapter != null) {
+            homeCategoryAdapter.setSelectedCategoryId(CATEGORY_ALL_ID);
+        }
+        if (binding != null) {
+            binding.categoryRecyclerView.setVisibility(View.VISIBLE);
+        }
+        getHomeProductList();
+    }
+
+    private boolean isAllCategory(String categoryId) {
+        return categoryId == null || CATEGORY_ALL_ID.equals(categoryId);
     }
 
     private String resolveCategoryName(String categoryId) {
-        if (categoryId == null || productCategoryResponseList == null) {
+        if (isAllCategory(categoryId)) {
+            return null;
+        }
+        if (productCategoryResponseList == null) {
             return categoryName;
         }
         for (ProductCategoryResponse category : productCategoryResponseList) {
@@ -274,46 +313,74 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
     public void searchHomeProduct(String productName) {
 
         if (productName == null || productName.trim().isEmpty()) {
-            binding.categoryRecyclerView.setVisibility(View.VISIBLE);
-            binding.productLinearLayout.setVisibility(View.GONE);
+            if (showingCombos) {
+                showComboCatalog();
+            } else {
+                selectAllCategory();
+            }
             return;
         }
 
-        searchHomeProductResponseList.clear();
-        List<ProductResponse> results = posBillingWalaDatabase.searchProducts(
-                productName.trim(), tableNumber, cartOrderStatus);
-        searchHomeProductResponseList.addAll(results);
-        // Keep legacy list in sync for any callers that still read it
-        homeProductResponseList.clear();
-        homeProductResponseList.addAll(results);
+        final String query = productName.trim();
+        final int requestId = ++searchRequestId;
+        final boolean combos = showingCombos;
+        final String table = tableNumber;
+        final String orderStatus = cartOrderStatus;
 
-        homeProductAdapter = new HomeProductAdapter(activity, searchHomeProductResponseList, CreatePos.this);
-        binding.productRecyclerView.setAdapter(homeProductAdapter);
+        AppExecutors.get().db().execute(() -> {
+            if (combos) {
+                List<ComboResponse> results = posBillingWalaDatabase.searchCombos(query, table, orderStatus);
+                AppExecutors.get().main(() -> {
+                    if (!isAdded() || binding == null || requestId != searchRequestId || !showingCombos) {
+                        return;
+                    }
+                    comboResponseList = results;
+                    bindComboAdapter(comboResponseList);
+                    binding.categoryRecyclerView.setVisibility(View.GONE);
+                    binding.productLinearLayout.setVisibility(View.VISIBLE);
+                });
+                return;
+            }
 
-        binding.categoryRecyclerView.setVisibility(View.GONE);
-        binding.productLinearLayout.setVisibility(View.VISIBLE);
+            List<ProductResponse> results = posBillingWalaDatabase.searchProducts(query, table, orderStatus);
+            AppExecutors.get().main(() -> {
+                if (!isAdded() || binding == null || requestId != searchRequestId || showingCombos) {
+                    return;
+                }
+                searchHomeProductResponseList.clear();
+                searchHomeProductResponseList.addAll(results);
+                homeProductResponseList.clear();
+                homeProductResponseList.addAll(results);
+                bindProductAdapter(searchHomeProductResponseList);
+                binding.categoryRecyclerView.setVisibility(View.GONE);
+                binding.productLinearLayout.setVisibility(View.VISIBLE);
+            });
+        });
+    }
+
+    private void bindProductAdapter(List<ProductResponse> products) {
+        if (homeProductAdapter == null || binding.productRecyclerView.getAdapter() != homeProductAdapter) {
+            homeProductAdapter = new HomeProductAdapter(activity, products, CreatePos.this);
+            binding.productRecyclerView.setAdapter(homeProductAdapter);
+        } else {
+            homeProductAdapter.submitList(products);
+        }
+    }
+
+    private void bindComboAdapter(List<ComboResponse> combos) {
+        homeComboAdapter = new HomeComboAdapter(activity, combos, this::comboClicked);
+        binding.productRecyclerView.setAdapter(homeComboAdapter);
     }
 
     @Override
     public void onClick(View view) {
         int id = view.getId();
         if (id == R.id.homeCardView) {
-            if (cartOrderStatus.equalsIgnoreCase("table_wise")) {
-                ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                ((MainActivity) activity).loadFragment(new InvoiceCompanyTable(), true);
-            } else if (cartOrderStatus.equalsIgnoreCase("take_away")) {
-                ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                ((MainActivity) activity).loadFragment(new InvoiceTakeAway(), true);
-            } else {
-                ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                ((MainActivity) activity).loadFragment(new Home(), false);
-            }
+            navigateFromPos();
         } else if (id == R.id.backToCategory) {
             binding.productSearch.setText("");
             binding.productSearch.clearFocus();
-            clearSubcategoryFilter();
-            binding.categoryRecyclerView.setVisibility(View.VISIBLE);
-            binding.productLinearLayout.setVisibility(View.GONE);
+            selectAllCategory();
         } else if (id == R.id.cartLayout) {
             if (!productCartResponseList.isEmpty()) {
                 Intent intent = new Intent(activity, BluetoothPrint.class);
@@ -326,6 +393,10 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
             }
         } else if (id == R.id.menuIcon) {
             setPopUpWindow();
+        } else if (id == R.id.productsTab) {
+            showProductCatalog();
+        } else if (id == R.id.combosTab) {
+            showComboCatalog();
         }
     }
 
@@ -367,129 +438,151 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
     }
 
     public void getPrinterDetails() {
-        printerSettingResponseList = posBillingWalaDatabase.getPrinterSettingDetails();
+        AppExecutors.get().runDbThenMain(this, () -> {
+            printerSettingResponseList = posBillingWalaDatabase.getPrinterSettingDetails();
+        }, () -> {
+            // cached for print flow; no UI bind required here
+        });
     }
 
     public void getCompanyDetails() {
-
-        companyResponseList = posBillingWalaDatabase.getCompanyDetails();
-        if (!companyResponseList.isEmpty()) {
-
-            getHomeProductCategoryList();
-            getHomeAllProductList();
-            getCartCount();
-
-        } else {
-            Toast.makeText(activity, getString(R.string.toast_please_fill_shop_details), Toast.LENGTH_SHORT).show();
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-            ((MainActivity) activity).loadFragment(new CompanyDetailSetting(), true);
-        }
-
+        AppExecutors.get().runDbThenMain(this, () -> {
+            companyResponseList = posBillingWalaDatabase.getCompanyDetails();
+        }, () -> {
+            if (companyResponseList != null && !companyResponseList.isEmpty()) {
+                getHomeProductCategoryList();
+                getCartCount();
+            } else {
+                Toast.makeText(activity, getString(R.string.toast_please_fill_shop_details), Toast.LENGTH_SHORT).show();
+                ((MainActivity) activity).loadFragment(new CompanyDetailSetting(), true);
+            }
+        });
     }
 
 
     public void getCartCount() {
+        final String table = tableNumber;
+        final String orderStatus = cartOrderStatus;
+        AppExecutors.get().runDbThenMain(this, () -> {
+            productCartResponseList = posBillingWalaDatabase.getCartProductList(table, orderStatus);
+        }, this::bindCartCountUi);
+    }
 
-        productCartResponseList.clear();
-        productCartResponseList = posBillingWalaDatabase.getCartProductList(tableNumber, cartOrderStatus);
+    private void bindCartCountUi() {
+        if (binding == null) {
+            return;
+        }
         String discountType = "";
         float totalPerProductAmount = 0f, discountAmount = 0f, totalCGST = 0f, totalSGST = 0f, totalPerProductGST = 0f, totalGST = 0f;
-        if (!productCartResponseList.isEmpty()) {
+        if (productCartResponseList == null || productCartResponseList.isEmpty()) {
+            // Match original: no cart rows means leave totals as-is unless we just cleared them on UI
+            return;
+        }
 
-            for (int i = 0; i < productCartResponseList.size(); i++) {
+        for (int i = 0; i < productCartResponseList.size(); i++) {
 
-                float productPrice = Float.parseFloat(productCartResponseList.get(i).getProductOldPrice());
-                float productQuantity = Float.parseFloat(productCartResponseList.get(i).getProductQuantity());
-                if (!CreatePos.companyResponseList.isEmpty()) {
-                    if (CreatePos.companyResponseList.get(0).getGstStatus() != null) {
-                        if (CreatePos.companyResponseList.get(0).getGstStatus().equalsIgnoreCase("On")) {
-                            if (!productCartResponseList.get(i).getProductCGST().equalsIgnoreCase("")) {
-                                totalCGST += Float.parseFloat(productCartResponseList.get(i).getProductCGST());
-                            }
-                            if (!productCartResponseList.get(i).getProductSGST().equalsIgnoreCase("")) {
-                                totalSGST += Float.parseFloat(productCartResponseList.get(i).getProductSGST());
-                            }
-                            discountAmount = Float.parseFloat(productCartResponseList.get(i).getCartDiscount());
-                            discountType = productCartResponseList.get(0).getCartDiscountType();
-                            totalPerProductGST = (productPrice * ((totalCGST + totalSGST) / 100));
-                            totalGST += (productPrice * ((totalCGST + totalSGST) / 100)) * productQuantity;
-
-                            totalPerProductAmount = totalPerProductAmount + ((productPrice + totalPerProductGST) * productQuantity);
-                        } else {
-                            totalPerProductAmount = totalPerProductAmount + (productPrice * productQuantity);
+            float productPrice = Float.parseFloat(productCartResponseList.get(i).getProductOldPrice());
+            float productQuantity = Float.parseFloat(productCartResponseList.get(i).getProductQuantity());
+            if (!CreatePos.companyResponseList.isEmpty()) {
+                if (CreatePos.companyResponseList.get(0).getGstStatus() != null) {
+                    if (CreatePos.companyResponseList.get(0).getGstStatus().equalsIgnoreCase("On")) {
+                        if (!productCartResponseList.get(i).getProductCGST().equalsIgnoreCase("")) {
+                            totalCGST += Float.parseFloat(productCartResponseList.get(i).getProductCGST());
                         }
+                        if (!productCartResponseList.get(i).getProductSGST().equalsIgnoreCase("")) {
+                            totalSGST += Float.parseFloat(productCartResponseList.get(i).getProductSGST());
+                        }
+                        discountAmount = Float.parseFloat(productCartResponseList.get(i).getCartDiscount());
+                        discountType = productCartResponseList.get(0).getCartDiscountType();
+                        totalPerProductGST = (productPrice * ((totalCGST + totalSGST) / 100));
+                        totalGST += (productPrice * ((totalCGST + totalSGST) / 100)) * productQuantity;
+
+                        totalPerProductAmount = totalPerProductAmount + ((productPrice + totalPerProductGST) * productQuantity);
                     } else {
                         totalPerProductAmount = totalPerProductAmount + (productPrice * productQuantity);
                     }
                 } else {
                     totalPerProductAmount = totalPerProductAmount + (productPrice * productQuantity);
                 }
-            }
-
-            float subTotalAmt = totalPerProductAmount - totalGST;
-            binding.totalItems.setText("Total Items: " + productCartResponseList.size());
-            if (discountType != null) {
-                if (discountType.equalsIgnoreCase("Amount")) {
-                    discountAmount = discountAmount;
-                } else {
-                    discountAmount = subTotalAmt / (100 / discountAmount);
-                }
             } else {
-                discountAmount = subTotalAmt / (100 / discountAmount);
+                totalPerProductAmount = totalPerProductAmount + (productPrice * productQuantity);
             }
-
-            float shopCGST = 0f, shopSGST = 0f;
-            if (companyResponseList.get(0).getShopCGST() != null) {
-                shopCGST = subTotalAmt * (Float.parseFloat(companyResponseList.get(0).getShopCGST().trim()) / 100);
-            }
-
-            if (companyResponseList.get(0).getShopSGST() != null) {
-                if (!companyResponseList.get(0).getShopSGST().trim().equalsIgnoreCase("")) {
-                    shopSGST = subTotalAmt * (Float.parseFloat(companyResponseList.get(0).getShopSGST().trim()) / 100);
-                }
-            }
-            float totalShopGST = shopCGST + shopSGST;
-
-            float totalAmount = totalPerProductAmount - discountAmount + totalShopGST;
-            totalAmount = (float) Math.ceil(totalAmount);
-            String totalPayableAmount = "Payable Amount<br/><b>" + MainActivity.currencyName + " " + String.format(Locale.US, "%.2f", totalAmount) + "</b>";
-            binding.totalAmount.setText(Html.fromHtml(totalPayableAmount));
-
         }
 
+        float subTotalAmt = totalPerProductAmount - totalGST;
+        binding.totalItems.setText("Total Items: " + productCartResponseList.size());
+        if (discountType != null) {
+            if (discountType.equalsIgnoreCase("Amount")) {
+                discountAmount = discountAmount;
+            } else if (discountAmount != 0f) {
+                discountAmount = subTotalAmt / (100 / discountAmount);
+            }
+        } else if (discountAmount != 0f) {
+            discountAmount = subTotalAmt / (100 / discountAmount);
+        }
+
+        float shopCGST = 0f, shopSGST = 0f;
+        if (!companyResponseList.isEmpty() && companyResponseList.get(0).getShopCGST() != null) {
+            shopCGST = subTotalAmt * (Float.parseFloat(companyResponseList.get(0).getShopCGST().trim()) / 100);
+        }
+
+        if (!companyResponseList.isEmpty() && companyResponseList.get(0).getShopSGST() != null) {
+            if (!companyResponseList.get(0).getShopSGST().trim().equalsIgnoreCase("")) {
+                shopSGST = subTotalAmt * (Float.parseFloat(companyResponseList.get(0).getShopSGST().trim()) / 100);
+            }
+        }
+        float totalShopGST = shopCGST + shopSGST;
+
+        float totalAmount = totalPerProductAmount - discountAmount + totalShopGST;
+        totalAmount = (float) Math.ceil(totalAmount);
+        String totalPayableAmount = "Payable Amount<br/><b>" + MainActivity.currencyName + " " + String.format(Locale.US, "%.2f", totalAmount) + "</b>";
+        binding.totalAmount.setText(Html.fromHtml(totalPayableAmount));
     }
 
     public void getHomeProductCategoryList() {
-
-        OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(ProductCategoryWorker.class).build();
-        WorkManager.getInstance(activity).getWorkInfoByIdLiveData(workRequest.getId())
-                .observe((LifecycleOwner) activity, workInfo -> {
-                    if (workInfo != null && workInfo.getState().isFinished()) {
-                        if (!productCategoryResponseList.isEmpty()) {
-
-                            homeCategoryAdapter = new HomeCategoryAdapter(activity, CreatePos.productCategoryResponseList, CreatePos.this);
-                            homeCategoryAdapter.setSelectedCategoryId(selectedCategoryId);
-                            binding.categoryRecyclerView.setLayoutManager(
-                                    new LinearLayoutManager(activity, LinearLayoutManager.HORIZONTAL, false));
-                            binding.categoryRecyclerView.setAdapter(CreatePos.homeCategoryAdapter);
-
-                            binding.categoryRecyclerView.setVisibility(View.VISIBLE);
-                            if (selectedCategoryId == null) {
-                                binding.productLinearLayout.setVisibility(View.GONE);
-                            }
-
-                        }
-                    }
-                });
-
-        // Enqueue the work request
-        WorkManager.getInstance(activity).enqueue(workRequest);
-
-
+        final int requestId = ++catalogRequestId;
+        showCatalogLoader();
+        AppExecutors.get().runDbThenMain(this, () -> {
+            productCategoryResponseList = posBillingWalaDatabase.getProductCategoryList();
+        }, () -> {
+            hideCatalogLoader();
+            if (requestId != catalogRequestId || binding == null) {
+                return;
+            }
+            List<ProductCategoryResponse> displayCategories = new ArrayList<>();
+            ProductCategoryResponse allCategory = new ProductCategoryResponse();
+            allCategory.setCategoryId(CATEGORY_ALL_ID);
+            allCategory.setCategoryName(getString(R.string.ui_all));
+            displayCategories.add(allCategory);
+            if (productCategoryResponseList != null) {
+                displayCategories.addAll(productCategoryResponseList);
+            }
+            if (selectedCategoryId == null) {
+                selectedCategoryId = CATEGORY_ALL_ID;
+                categoryName = null;
+            }
+            homeCategoryAdapter = new HomeCategoryAdapter(activity, displayCategories, CreatePos.this);
+            homeCategoryAdapter.setSelectedCategoryId(selectedCategoryId);
+            binding.categoryRecyclerView.setLayoutManager(
+                    new LinearLayoutManager(activity, LinearLayoutManager.HORIZONTAL, false));
+            binding.categoryRecyclerView.setAdapter(CreatePos.homeCategoryAdapter);
+            binding.categoryRecyclerView.setVisibility(View.VISIBLE);
+            if (isAllCategory(selectedCategoryId)) {
+                clearSubcategoryFilter();
+                getHomeProductList();
+            } else if (categoryName != null && !categoryName.isEmpty()) {
+                setupSubcategoryFilter(selectedCategoryId);
+                getHomeProductList();
+            }
+        });
     }
 
     @Override
     public void categoryClicked(String categoryId) {
+        if (isAllCategory(categoryId)) {
+            selectAllCategory();
+            return;
+        }
         selectedCategoryId = categoryId;
         selectedSubcategoryId = null;
         categoryName = resolveCategoryName(categoryId);
@@ -567,16 +660,23 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
 
     @Override
     public void productClicked(ProductResponse productResponse) {
-        if (posBillingWalaDatabase.hasProductPortions(productResponse.getProductId())) {
-            List<ProductPortionResponse> portions = posBillingWalaDatabase.getProductPortionList(productResponse.getProductId());
-            if (portions.isEmpty()) {
-                handleProductSelection(productResponse, null);
-                return;
-            }
-            showPortionDialog(productResponse, portions);
-        } else {
-            handleProductSelection(productResponse, null);
-        }
+        final String productId = productResponse.getProductId();
+        AppExecutors.get().db().execute(() -> {
+            boolean hasPortions = posBillingWalaDatabase.hasProductPortions(productId);
+            List<ProductPortionResponse> portions = hasPortions
+                    ? posBillingWalaDatabase.getProductPortionList(productId)
+                    : null;
+            AppExecutors.get().main(() -> {
+                if (!isAdded()) {
+                    return;
+                }
+                if (hasPortions && portions != null && !portions.isEmpty()) {
+                    showPortionDialog(productResponse, portions);
+                } else {
+                    handleProductSelection(productResponse, null);
+                }
+            });
+        });
     }
 
     private void showPortionDialog(ProductResponse productResponse, List<ProductPortionResponse> portions) {
@@ -659,17 +759,34 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
     }
 
     private void addSelectedPortionToCart(ProductResponse productResponse, ProductPortionResponse portion, int quantity) {
-        String portionId = portion != null ? portion.getPortionId() : null;
-        productCartResponseList = posBillingWalaDatabase.getCartProductDetails(
-                productResponse.getProductId(), portionId, tableNumber, cartOrderStatus);
-        String linePrice = resolveLinePrice(productResponse, portion);
-        if (!productCartResponseList.isEmpty()) {
-            int currentQty = parseCartQuantity(productCartResponseList.get(0).getProductQuantity());
-            updateCart(productCartResponseList.get(0).getCartId(),
-                    String.valueOf(currentQty + quantity), linePrice);
-        } else {
-            addToCart(productResponse, linePrice, String.valueOf(quantity), portion);
-        }
+        final String portionId = portion != null ? portion.getPortionId() : null;
+        final String linePrice = resolveLinePrice(productResponse, portion);
+        final String table = tableNumber;
+        final String orderStatus = cartOrderStatus;
+        final boolean[] updatedExisting = {false};
+        AppExecutors.get().runDbThenMain(this, () -> {
+            List<ProductCartResponse> existing = posBillingWalaDatabase.getCartProductDetails(
+                    productResponse.getProductId(), portionId, table, orderStatus);
+            productCartResponseList = existing;
+            if (existing != null && !existing.isEmpty()) {
+                updatedExisting[0] = true;
+                int currentQty = parseCartQuantity(existing.get(0).getProductQuantity());
+                posBillingWalaDatabase.updateCart(existing.get(0).getCartId(),
+                        String.valueOf(currentQty + quantity), linePrice);
+            } else {
+                String portionName = portion != null ? portion.getPortionName() : null;
+                posBillingWalaDatabase.addToCart(MainActivity.userId, productResponse, linePrice,
+                        String.valueOf(quantity), table, "0", orderStatus, portionId, portionName);
+            }
+        }, () -> {
+            if (updatedExisting[0]) {
+                Toast.makeText(activity, getString(R.string.toast_product_updated_into_cart), Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(activity, getString(R.string.toast_product_added_into_cart), Toast.LENGTH_SHORT).show();
+            }
+            getCartCount();
+            refreshCatalogAfterCart();
+        });
     }
 
     private int parseCartQuantity(String value) {
@@ -681,29 +798,38 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
     }
 
     private void handleProductSelection(ProductResponse productResponse, ProductPortionResponse portion) {
-        String portionId = portion != null ? portion.getPortionId() : null;
-        productCartResponseList = posBillingWalaDatabase.getCartProductDetails(
-                productResponse.getProductId(), portionId, tableNumber, cartOrderStatus);
-        if (!printerSettingResponseList.isEmpty()) {
-            if (printerSettingResponseList.get(0).getProductQuantityUpdate() != null &&
-                    printerSettingResponseList.get(0).getProductQuantityUpdate().equalsIgnoreCase("on")) {
-                setUpdateQuantity(productResponse, portion);
-            } else {
-                updateCartDetails(productResponse, portion);
+        final String portionId = portion != null ? portion.getPortionId() : null;
+        final String table = tableNumber;
+        final String orderStatus = cartOrderStatus;
+        AppExecutors.get().runDbThenMain(this, () -> {
+            productCartResponseList = posBillingWalaDatabase.getCartProductDetails(
+                    productResponse.getProductId(), portionId, table, orderStatus);
+        }, () -> {
+            boolean openedQuantityDialog = false;
+            if (!printerSettingResponseList.isEmpty()) {
+                if (printerSettingResponseList.get(0).getProductQuantityUpdate() != null &&
+                        printerSettingResponseList.get(0).getProductQuantityUpdate().equalsIgnoreCase("on")) {
+                    setUpdateQuantity(productResponse, portion);
+                    openedQuantityDialog = true;
+                }
             }
-        } else {
-            updateCartDetails(productResponse, portion);
-        }
-        if (!binding.productSearch.getText().toString().isEmpty()) {
-            getHomeAllProductList();
-        } else {
-            getHomeProductList();
-        }
+            if (!openedQuantityDialog) {
+                // updateCart / addToCart already refresh cart + catalog (same as before)
+                updateCartDetails(productResponse, portion);
+            } else if (binding != null) {
+                // Same as original: refresh list while quantity dialog is open
+                if (!binding.productSearch.getText().toString().isEmpty()) {
+                    searchHomeProduct(binding.productSearch.getText().toString());
+                } else {
+                    refreshCatalogAfterCart();
+                }
+            }
+        });
     }
 
     public void updateCartDetails(ProductResponse productResponse, ProductPortionResponse portion) {
         String linePrice = resolveLinePrice(productResponse, portion);
-        if (!productCartResponseList.isEmpty()) {
+        if (productCartResponseList != null && !productCartResponseList.isEmpty()) {
             int quantity = Integer.parseInt(productCartResponseList.get(0).getProductQuantity());
             int totalQuantity = quantity + 1;
             updateCart(productCartResponseList.get(0).getCartId(), String.valueOf(totalQuantity), linePrice);
@@ -720,14 +846,13 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
     }
 
     public void updateCart(String cartId, String productQuantity, String productPrice) {
-        posBillingWalaDatabase.updateCart(cartId, productQuantity, productPrice);
-        Toast.makeText(activity, getString(R.string.toast_product_updated_into_cart), Toast.LENGTH_SHORT).show();
-        getCartCount();
-        if (!binding.productSearch.getText().toString().isEmpty()) {
-            searchHomeProduct(binding.productSearch.getText().toString());
-        } else {
-            getHomeProductList();
-        }
+        AppExecutors.get().runDbThenMain(this, () -> {
+            posBillingWalaDatabase.updateCart(cartId, productQuantity, productPrice);
+        }, () -> {
+            Toast.makeText(activity, getString(R.string.toast_product_updated_into_cart), Toast.LENGTH_SHORT).show();
+            getCartCount();
+            refreshCatalogAfterCart();
+        });
     }
 
     public void addToCart(ProductResponse productResponse, String productChangePrice, String productQuantity) {
@@ -737,11 +862,37 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
     public void addToCart(ProductResponse productResponse, String productChangePrice, String
             productQuantity, ProductPortionResponse portion) {
 
-        String portionId = portion != null ? portion.getPortionId() : null;
-        String portionName = portion != null ? portion.getPortionName() : null;
-        posBillingWalaDatabase.addToCart(MainActivity.userId, productResponse, productChangePrice, productQuantity, tableNumber, "0", cartOrderStatus, portionId, portionName);
-        Toast.makeText(activity, getString(R.string.toast_product_added_into_cart), Toast.LENGTH_SHORT).show();
-        getCartCount();
+        final String portionId = portion != null ? portion.getPortionId() : null;
+        final String portionName = portion != null ? portion.getPortionName() : null;
+        final String table = tableNumber;
+        final String orderStatus = cartOrderStatus;
+        AppExecutors.get().runDbThenMain(this, () -> {
+            posBillingWalaDatabase.addToCart(MainActivity.userId, productResponse, productChangePrice,
+                    productQuantity, table, "0", orderStatus, portionId, portionName);
+        }, () -> {
+            Toast.makeText(activity, getString(R.string.toast_product_added_into_cart), Toast.LENGTH_SHORT).show();
+            getCartCount();
+            refreshCatalogAfterCart();
+        });
+    }
+
+    private void refreshCatalogAfterCart() {
+        if (!binding.productSearch.getText().toString().isEmpty()) {
+            searchHomeProduct(binding.productSearch.getText().toString());
+        } else if (showingCombos) {
+            showComboCatalog();
+        } else {
+            getHomeProductList();
+        }
+    }
+
+    private void showProductCatalog() {
+        showingCombos = false;
+        binding.productsTab.setBackgroundResource(R.drawable.fill_button_rounded_border);
+        binding.productsTab.setTextColor(activity.getResources().getColor(R.color.white));
+        binding.combosTab.setBackgroundResource(R.drawable.button_rounded_border);
+        binding.combosTab.setTextColor(activity.getResources().getColor(R.color.black));
+        binding.categoryRecyclerView.setVisibility(View.VISIBLE);
         if (!binding.productSearch.getText().toString().isEmpty()) {
             searchHomeProduct(binding.productSearch.getText().toString());
         } else {
@@ -749,38 +900,104 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
         }
     }
 
+    private void showComboCatalog() {
+        showingCombos = true;
+        binding.combosTab.setBackgroundResource(R.drawable.fill_button_rounded_border);
+        binding.combosTab.setTextColor(activity.getResources().getColor(R.color.white));
+        binding.productsTab.setBackgroundResource(R.drawable.button_rounded_border);
+        binding.productsTab.setTextColor(activity.getResources().getColor(R.color.black));
+        binding.categoryRecyclerView.setVisibility(View.GONE);
+        binding.subcategoryScrollView.setVisibility(View.GONE);
+        final String table = tableNumber;
+        final String orderStatus = cartOrderStatus;
+        final int requestId = ++catalogRequestId;
+        showCatalogLoader();
+        AppExecutors.get().runDbThenMain(this, () -> {
+            comboResponseList = posBillingWalaDatabase.getPosComboList(table, orderStatus);
+        }, () -> {
+            hideCatalogLoader();
+            if (requestId != catalogRequestId || binding == null || !showingCombos) {
+                return;
+            }
+            bindComboAdapter(comboResponseList);
+            binding.productLinearLayout.setVisibility(View.VISIBLE);
+        });
+    }
+
+    public void comboClicked(ComboResponse combo) {
+        if (combo == null) {
+            return;
+        }
+        final String table = tableNumber;
+        final String orderStatus = cartOrderStatus;
+        AppExecutors.get().db().execute(() -> {
+            List<ProductCartResponse> existing = posBillingWalaDatabase.getCartComboDetails(
+                    combo.getComboId(), table, orderStatus);
+            final boolean hasExisting = existing != null && !existing.isEmpty();
+            final String existingCartId = hasExisting ? existing.get(0).getCartId() : null;
+            final int currentQty = hasExisting ? parseCartQuantity(existing.get(0).getProductQuantity()) : 0;
+            if (hasExisting) {
+                posBillingWalaDatabase.updateCart(existingCartId,
+                        String.valueOf(currentQty + 1), combo.getComboPrice());
+            } else {
+                posBillingWalaDatabase.addComboToCart(MainActivity.userId, combo, "1",
+                        table, "0", orderStatus);
+            }
+            AppExecutors.get().main(() -> {
+                if (!isAdded()) {
+                    return;
+                }
+                if (hasExisting) {
+                    Toast.makeText(activity, getString(R.string.toast_product_updated_into_cart), Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(activity, getString(R.string.toast_product_added_into_cart), Toast.LENGTH_SHORT).show();
+                }
+                getCartCount();
+                refreshCatalogAfterCart();
+            });
+        });
+    }
+
     public void getHomeProductList() {
-        OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(HomeProductsWorker.class).build();
-        WorkManager.getInstance(activity).getWorkInfoByIdLiveData(workRequest.getId())
-                .observe((LifecycleOwner) activity, workInfo -> {
-                    if (workInfo != null && workInfo.getState().isFinished()) {
-                        homeProductAdapter = new HomeProductAdapter(activity, productResponseList, CreatePos.this);
-                        binding.productRecyclerView.setAdapter(homeProductAdapter);
-                        binding.categoryRecyclerView.setVisibility(View.VISIBLE);
-                        binding.productLinearLayout.setVisibility(View.VISIBLE);
-                    }
-                });
+        if (showingCombos) {
+            showComboCatalog();
+            return;
+        }
+        final String catName = categoryName;
+        final String table = tableNumber;
+        final String orderStatus = cartOrderStatus;
+        final String subId = selectedSubcategoryId;
+        final int requestId = ++catalogRequestId;
+        showCatalogLoader();
+        AppExecutors.get().runDbThenMain(this, () -> {
+            productResponseList = posBillingWalaDatabase.getHomeProductList(catName, table, orderStatus, subId);
+        }, () -> {
+            hideCatalogLoader();
+            if (requestId != catalogRequestId || binding == null || showingCombos) {
+                return;
+            }
+            bindProductAdapter(productResponseList);
+            binding.categoryRecyclerView.setVisibility(View.VISIBLE);
+            binding.productLinearLayout.setVisibility(View.VISIBLE);
+        });
+    }
 
-        // Enqueue the work request
-        WorkManager.getInstance(activity).enqueue(workRequest);
+    private void showCatalogLoader() {
+        if (binding != null) {
+            ListLoader.setVisible(binding.catalogProgressBar, true);
+        }
+    }
 
+    private void hideCatalogLoader() {
+        if (binding != null) {
+            ListLoader.setVisible(binding.catalogProgressBar, false);
+        }
     }
 
     public void getHomeAllProductList() {
-
-        OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(HomeAllProductsWorker.class).build();
-        WorkManager.getInstance(activity).getWorkInfoByIdLiveData(workRequest.getId())
-                .observe((LifecycleOwner) activity, workInfo -> {
-                    if (workInfo != null && workInfo.getState().isFinished()) {
-                        if (!binding.productSearch.getText().toString().isEmpty()) {
-                            searchHomeProduct(binding.productSearch.getText().toString());
-                        }
-                    }
-                });
-
-        // Enqueue the work request
-        WorkManager.getInstance(activity).enqueue(workRequest);
-
+        if (binding != null && !binding.productSearch.getText().toString().isEmpty()) {
+            searchHomeProduct(binding.productSearch.getText().toString());
+        }
     }
 
     @Override
@@ -788,7 +1005,21 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
         if (pendingProductSearch != null) {
             productSearchHandler.removeCallbacks(pendingProductSearch);
         }
+        searchRequestId++;
+        catalogRequestId++;
+        hideCatalogLoader();
         super.onDestroyView();
+    }
+
+    private void navigateFromPos() {
+        // Same destinations as before (table / take-away / home)
+        if (cartOrderStatus != null && cartOrderStatus.equalsIgnoreCase("table_wise")) {
+            ((MainActivity) activity).goBackTo(new InvoiceCompanyTable(), true);
+        } else if (cartOrderStatus != null && cartOrderStatus.equalsIgnoreCase("take_away")) {
+            ((MainActivity) activity).goBackTo(new InvoiceTakeAway(), true);
+        } else {
+            ((MainActivity) activity).navigateToHome();
+        }
     }
 
 }

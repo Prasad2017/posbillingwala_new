@@ -54,8 +54,20 @@ public class StoreAdapter extends RecyclerView.Adapter<StoreAdapter.MyViewHolder
         String status = licenseResponse.getLicenseStatus() != null ? licenseResponse.getLicenseStatus() : "";
         String expiry = licenseResponse.getExpiryDate() != null ? licenseResponse.getExpiryDate() : "";
 
-        String storeDetails = "<b>" + branchLabel + "</b><br/>" +
-                "<b>Address:</b> " + licenseResponse.getCompanyAddress() + "<br/>" +
+        String shopTitle = licenseResponse.getShopName1();
+        if (shopTitle == null || shopTitle.trim().isEmpty()) {
+            shopTitle = branchLabel;
+        }
+        String phoneLine = "";
+        if (licenseResponse.getPhoneNo1() != null && !licenseResponse.getPhoneNo1().trim().isEmpty()) {
+            phoneLine = "<br/><b>Phone:</b> " + licenseResponse.getPhoneNo1().trim();
+            if (licenseResponse.getPhoneNo2() != null && !licenseResponse.getPhoneNo2().trim().isEmpty()) {
+                phoneLine += ", " + licenseResponse.getPhoneNo2().trim();
+            }
+        }
+        String storeDetails = "<b>" + shopTitle + "</b><br/>" +
+                "<b>Branch:</b> " + branchLabel + "<br/>" +
+                "<b>Address:</b> " + licenseResponse.getCompanyAddress() + phoneLine + "<br/>" +
                 "<b>Key:</b> " + licenseResponse.getLicenseKey() + "<br/>" +
                 "<b>Device:</b> " + deviceName + "<br/>" +
                 "<b>Status:</b> " + status + " · Exp: " + expiry;

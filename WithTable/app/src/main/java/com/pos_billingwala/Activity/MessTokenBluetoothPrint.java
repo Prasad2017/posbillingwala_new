@@ -33,6 +33,7 @@ import com.karumi.dexter.PermissionToken;
 import com.karumi.dexter.listener.PermissionRequest;
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.ShopHeaderBuilder;
 import com.pos_billingwala.Extra.MessTokenQrHelper;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.PrinterSettingResponse;
@@ -220,10 +221,8 @@ public class MessTokenBluetoothPrint extends BaseActivity implements View.OnClic
             return;
         }
         CompanyResponse company = companyResponseList.get(0);
-        twoShopName.setText(company.getCompanyName());
-
-        String shopDetail = company.getCompanyAddress() + "\nPH:" + company.getCompanyMobile();
-        twoShopDetails.setText(shopDetail);
+        twoShopName.setText(ShopHeaderBuilder.resolveShopName1(company));
+        twoShopDetails.setText(ShopHeaderBuilder.buildShopDetailsBlock(company, true, true, false, false));
 
         if (company.getCompanyLogo() != null) {
             byte[] bytes = Base64.decode(company.getCompanyLogo(), Base64.DEFAULT);

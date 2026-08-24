@@ -34,6 +34,7 @@ $i=0;
         $getdata["paymentUse"]=$row['paymentUse'];
         $getdata["customerUse"]=$row['customerUse'];
         $getdata["productQuantityUpdate"]=$row['productQuantityUpdate'];
+        $getdata["duplicateBillUse"]=isset($row['duplicateBillUse']) && $row['duplicateBillUse']!=null && $row['duplicateBillUse']!=='' ? $row['duplicateBillUse'] : "off";
         $getdata["bluetoothAddress"]=$row['bluetoothAddress']!=null?$row['bluetoothAddress']:"";
         $getdata["bluetoothKOTAddress"]=$row['bluetoothKOTAddress']!=null?$row['bluetoothKOTAddress']:"";
         $getdata["printerFeedLines"]=$row['printerFeedLines']!=null?$row['printerFeedLines']:"";

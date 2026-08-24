@@ -26,6 +26,27 @@ public class CompanyResponse {
     @SerializedName("companyAddress")
     @Expose
     public String companyAddress;
+    @SerializedName("shopName1")
+    @Expose
+    public String shopName1;
+    @SerializedName("shopName2")
+    @Expose
+    public String shopName2;
+    @SerializedName("addressLine1")
+    @Expose
+    public String addressLine1;
+    @SerializedName("addressLine2")
+    @Expose
+    public String addressLine2;
+    @SerializedName("addressLine3")
+    @Expose
+    public String addressLine3;
+    @SerializedName("phoneNo1")
+    @Expose
+    public String phoneNo1;
+    @SerializedName("phoneNo2")
+    @Expose
+    public String phoneNo2;
     @SerializedName("currencyName")
     @Expose
     public String currencyName;
@@ -102,6 +123,62 @@ public class CompanyResponse {
 
     public void setCompanyAddress(String companyAddress) {
         this.companyAddress = companyAddress;
+    }
+
+    public String getShopName1() {
+        return shopName1;
+    }
+
+    public void setShopName1(String shopName1) {
+        this.shopName1 = shopName1;
+    }
+
+    public String getShopName2() {
+        return shopName2;
+    }
+
+    public void setShopName2(String shopName2) {
+        this.shopName2 = shopName2;
+    }
+
+    public String getAddressLine1() {
+        return addressLine1;
+    }
+
+    public void setAddressLine1(String addressLine1) {
+        this.addressLine1 = addressLine1;
+    }
+
+    public String getAddressLine2() {
+        return addressLine2;
+    }
+
+    public void setAddressLine2(String addressLine2) {
+        this.addressLine2 = addressLine2;
+    }
+
+    public String getAddressLine3() {
+        return addressLine3;
+    }
+
+    public void setAddressLine3(String addressLine3) {
+        this.addressLine3 = addressLine3;
+    }
+
+    public String getPhoneNo1() {
+        return phoneNo1;
+    }
+
+    public void setPhoneNo1(String phoneNo1) {
+        this.phoneNo1 = phoneNo1;
+    }
+
+    public String getPhoneNo2() {
+        return phoneNo2;
+    }
+
+    public void setPhoneNo2(String phoneNo2) {
+        this.phoneNo2 = phoneNo2;
     }
 
     public String getCountryName() {

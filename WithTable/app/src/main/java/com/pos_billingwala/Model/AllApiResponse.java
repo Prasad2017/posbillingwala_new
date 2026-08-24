@@ -61,6 +61,15 @@ public class AllApiResponse {
     @SerializedName("portionMasterResponse")
     @Expose
     public List<PortionMasterResponse> portionMasterResponseList;
+    @SerializedName("comboResponse")
+    @Expose
+    public List<ComboResponse> comboResponseList;
+    @SerializedName("comboItemResponse")
+    @Expose
+    public List<ComboItemResponse> comboItemResponseList;
+    @SerializedName("invoiceComboItemResponse")
+    @Expose
+    public List<ComboItemResponse> invoiceComboItemResponseList;
     @SerializedName("memberResponse")
     @Expose
     public List<MemberResponse> memberResponseList;
@@ -214,6 +223,30 @@ public class AllApiResponse {
 
     public void setPortionMasterResponseList(List<PortionMasterResponse> portionMasterResponseList) {
         this.portionMasterResponseList = portionMasterResponseList;
+    }
+
+    public List<ComboResponse> getComboResponseList() {
+        return comboResponseList;
+    }
+
+    public void setComboResponseList(List<ComboResponse> comboResponseList) {
+        this.comboResponseList = comboResponseList;
+    }
+
+    public List<ComboItemResponse> getComboItemResponseList() {
+        return comboItemResponseList;
+    }
+
+    public void setComboItemResponseList(List<ComboItemResponse> comboItemResponseList) {
+        this.comboItemResponseList = comboItemResponseList;
+    }
+
+    public List<ComboItemResponse> getInvoiceComboItemResponseList() {
+        return invoiceComboItemResponseList;
+    }
+
+    public void setInvoiceComboItemResponseList(List<ComboItemResponse> invoiceComboItemResponseList) {
+        this.invoiceComboItemResponseList = invoiceComboItemResponseList;
     }
 
     public List<MemberResponse> getMemberResponseList() {

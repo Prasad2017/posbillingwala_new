@@ -59,6 +59,15 @@ public class ProductCartResponse {
     @SerializedName("snapshotLinePrice")
     @Expose
     public String snapshotLinePrice;
+    @SerializedName("cartItemType")
+    @Expose
+    public String cartItemType;
+    @SerializedName("comboId")
+    @Expose
+    public String comboId;
+    @SerializedName("snapshotComboComponents")
+    @Expose
+    public String snapshotComboComponents;
 
 
     public String getCartId() {
@@ -110,7 +119,7 @@ public class ProductCartResponse {
     }
 
     public String getProductCGST() {
-        return productCGST;
+        return productCGST != null ? productCGST : "";
     }
 
     public void setProductCGST(String productCGST) {
@@ -118,7 +127,7 @@ public class ProductCartResponse {
     }
 
     public String getProductSGST() {
-        return productSGST;
+        return productSGST != null ? productSGST : "";
     }
 
     public void setProductSGST(String productSGST) {
@@ -205,9 +214,35 @@ public class ProductCartResponse {
         this.snapshotLinePrice = snapshotLinePrice;
     }
 
+    public String getCartItemType() {
+        return cartItemType;
+    }
+
+    public void setCartItemType(String cartItemType) {
+        this.cartItemType = cartItemType;
+    }
+
+    public String getComboId() {
+        return comboId;
+    }
+
+    public void setComboId(String comboId) {
+        this.comboId = comboId;
+    }
+
+    public String getSnapshotComboComponents() {
+        return snapshotComboComponents;
+    }
+
+    public void setSnapshotComboComponents(String snapshotComboComponents) {
+        this.snapshotComboComponents = snapshotComboComponents;
+    }
+
     /** Frozen line label for print / reports (includes portion when set). */
     public String getDisplayLineName() {
-        return BillLineSnapshot.displayName(productName, snapshotProductName, portionName);
+        boolean combo = cartItemType != null && "COMBO".equalsIgnoreCase(cartItemType.trim());
+        return BillLineSnapshot.displayName(productName, snapshotProductName, combo ? null : portionName,
+                snapshotComboComponents);
     }
 
     /** Frozen unit price charged on this line. */

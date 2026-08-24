@@ -8,7 +8,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
@@ -105,8 +104,7 @@ public class UserSetting extends Fragment implements View.OnClickListener {
             public boolean onKey(View v, int keyCode, KeyEvent event) {
 
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
-                    ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                    ((MainActivity) activity).loadFragment(new Home(), false);
+                    ((MainActivity) activity).navigateToHome();
                     return true;
                 }
                 return false;
@@ -151,10 +149,6 @@ public class UserSetting extends Fragment implements View.OnClickListener {
         binding.selectedLanguage.setText(getString(
                 R.string.language_current,
                 AppLanguage.displayName(activity, AppLanguage.getSavedCode(activity))));
-        if ("1".equals(Common.getSavedUserData(activity, "languageToastPending"))) {
-            Common.saveUserData(activity, "languageToastPending", "0");
-            Toast.makeText(activity, R.string.language_changed, Toast.LENGTH_SHORT).show();
-        }
     }
 
     public void initAds() {
@@ -217,8 +211,7 @@ public class UserSetting extends Fragment implements View.OnClickListener {
     public void onClick(View view) {
         int id = view.getId();
         if (id == R.id.backToHome) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-            ((MainActivity) activity).loadFragment(new Home(), false);
+            ((MainActivity) activity).navigateToHome();
         } else if (id == R.id.appDevelopedBy) {
             Intent browserIntent = new Intent(Intent.ACTION_VIEW);
             browserIntent.setData(Uri.parse("https://thecanatech.com/"));
@@ -226,24 +219,18 @@ public class UserSetting extends Fragment implements View.OnClickListener {
         } else if (id == R.id.reportLayout) {
             setReportPassword();
         } else if (id == R.id.masterDataLayout) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
             ((MainActivity) activity).loadFragment(new MasterData(), true);
         } else if (id == R.id.invoiceDetailsLayout) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
             ((MainActivity) activity).loadFragment(new OrderInvoice(), true);
         } else if (id == R.id.shopDetailLayout) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
             ((MainActivity) activity).loadFragment(new CompanyDetailSetting(), true);
         } else if (id == R.id.printerDetailLayout) {
             startActivity(new Intent(activity, CompanyPrinterSetting.class));
         } else if (id == R.id.inventoryManagementLayout) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
             ((MainActivity) activity).loadFragment(new Inventory(), true);
         } else if (id == R.id.expenseManagementLayout) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
             ((MainActivity) activity).loadFragment(new Expenses(), true);
         } else if (id == R.id.aboutLayout) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
             ((MainActivity) activity).loadFragment(new AboutUs(), true);
         } else if (id == R.id.fetchDataLayout) {
             confirmFetchData();
@@ -294,7 +281,7 @@ public class UserSetting extends Fragment implements View.OnClickListener {
                     dialog.dismiss();
                     String code = AppLanguage.codeForIndex(which);
                     if (!code.equals(AppLanguage.getSavedCode(activity))) {
-                        // AppCompat locales switch values-hi / values-mr; Settings reopens after
+                        // Applies in-place (no Activity recreate / app flash)
                         AppLanguage.setLanguage(activity, code);
                     }
                 })
@@ -472,7 +459,6 @@ public class UserSetting extends Fragment implements View.OnClickListener {
 
                 if (reportPin.getText().toString().equalsIgnoreCase(pin)) {
                     dialog.dismiss();
-                    ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
                     ((MainActivity) activity).loadFragment(new ReportSetting(), true);
                 } else {
                     reportPin.requestFocus();
@@ -587,19 +573,7 @@ public class UserSetting extends Fragment implements View.OnClickListener {
                         dialogInterface.dismiss();
                         if (DetectConnection.checkInternetConnection(activity)) {
                             Toast.makeText(activity, getString(R.string.toast_data_fetching_started), Toast.LENGTH_SHORT).show();
-
-                            pDialog = new SweetAlertDialog(activity, SweetAlertDialog.PROGRESS_TYPE);
-                            pDialog.getProgressHelper().setBarColor(Color.parseColor("#2D7FED"));
-                            pDialog.setTitleText("Loading");
-                            pDialog.setCancelable(false);
-                            pDialog.show();
-
-                            SQLiteDatabase database = posBillingWalaDatabase.getWritableDatabase();
-                            posBillingWalaDatabase.resetTables(database);
-                            NetworkDataFetcher.fetchAllData(activity);
-
-                            Toast.makeText(activity, getString(R.string.toast_data_fetched_successfully), Toast.LENGTH_SHORT).show();
-                            pDialog.dismiss();
+                            NetworkDataFetcher.resetAndFetchAllData(activity, posBillingWalaDatabase);
                         } else {
                             DetectConnection.noInternetConnection(activity);
                         }

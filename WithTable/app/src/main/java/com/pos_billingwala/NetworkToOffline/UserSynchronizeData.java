@@ -62,9 +62,22 @@ public class UserSynchronizeData {
             new Handler(Looper.getMainLooper()).post(() -> {
                 if (uploaded) {
                     Toast.makeText(context, context.getString(R.string.toast_offline_data_uploaded_to_server), Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(context, context.getString(R.string.something_went_wrong), Toast.LENGTH_SHORT).show();
                 }
                 dismissDialogSafely();
             });
+        });
+    }
+
+    private void setProgressTitle(String title) {
+        new Handler(Looper.getMainLooper()).post(() -> {
+            try {
+                if (pDialog != null && pDialog.isShowing()) {
+                    pDialog.setTitleText(title);
+                }
+            } catch (Exception ignored) {
+            }
         });
     }
 
@@ -78,6 +91,7 @@ public class UserSynchronizeData {
     }
 
     private void uploadPendingData() {
+        setProgressTitle("Uploading categories...");
         cursor = posBillingWalaDatabase.getUnSynchronizeCategory(NAME_NOT_SYNCED_WITH_SERVER);
         if (cursor.moveToFirst()) {
             do {
@@ -101,6 +115,7 @@ public class UserSynchronizeData {
             } while (cursor.moveToNext());
         }
         closeCursor();
+        setProgressTitle("Uploading products...");
         cursor = posBillingWalaDatabase.getUnSynchronizeProduct(NAME_NOT_SYNCED_WITH_SERVER);
         if (cursor.moveToFirst()) {
             do {
@@ -145,6 +160,40 @@ public class UserSynchronizeData {
             } while (cursor.moveToNext());
         }
         closeCursor();
+        cursor = posBillingWalaDatabase.getUnSynchronizeCombo(NAME_NOT_SYNCED_WITH_SERVER);
+        if (cursor.moveToFirst()) {
+            do {
+                saveCombo(cursor.getString(cursor.getColumnIndex("comboId")),
+                        cursor.getString(cursor.getColumnIndex("comboName")),
+                        columnOrEmpty(cursor, "comboCode"),
+                        cursor.getString(cursor.getColumnIndex("comboPrice")),
+                        columnOrEmpty(cursor, "comboCGST"),
+                        columnOrEmpty(cursor, "comboSGST"),
+                        columnOrEmpty(cursor, "comboWithGSTPrice"),
+                        columnOrEmpty(cursor, "comboActiveStatus"),
+                        columnOrEmpty(cursor, "comboDeletedStatus"),
+                        columnOrEmpty(cursor, "comboNetworkStatus"),
+                        columnOrEmpty(cursor, "comboSortOrder"));
+            } while (cursor.moveToNext());
+        }
+        closeCursor();
+        cursor = posBillingWalaDatabase.getUnSynchronizeComboItem(NAME_NOT_SYNCED_WITH_SERVER);
+        if (cursor.moveToFirst()) {
+            do {
+                saveComboItem(cursor.getString(cursor.getColumnIndex("comboItemId")),
+                        columnOrEmpty(cursor, "comboId"),
+                        columnOrEmpty(cursor, "comboNetworkStatus"),
+                        columnOrEmpty(cursor, "productId"),
+                        columnOrEmpty(cursor, "productNetworkStatus"),
+                        columnOrEmpty(cursor, "portionId"),
+                        columnOrEmpty(cursor, "portionNetworkStatus"),
+                        columnOrEmpty(cursor, "comboItemQuantity"),
+                        columnOrEmpty(cursor, "comboItemSortOrder"),
+                        columnOrEmpty(cursor, "comboItemDeletedStatus"),
+                        columnOrEmpty(cursor, "comboItemNetworkStatus"));
+            } while (cursor.moveToNext());
+        }
+        closeCursor();
         cursor = posBillingWalaDatabase.getUnSynchronizePrinterSetting(NAME_NOT_SYNCED_WITH_SERVER);
         if (cursor.moveToFirst()) {
             do {
@@ -158,6 +207,7 @@ public class UserSynchronizeData {
                         cursor.getString(cursor.getColumnIndex("paymentUse")),
                         cursor.getString(cursor.getColumnIndex("customerUse")),
                         cursor.getString(cursor.getColumnIndex("productQuantityUpdate")),
+                        columnOrEmpty(cursor, "duplicateBillUse").isEmpty() ? "off" : columnOrEmpty(cursor, "duplicateBillUse"),
                         cursor.getString(cursor.getColumnIndex("bluetoothAddress")),
                         cursor.getString(cursor.getColumnIndex("bluetoothKOTAddress")),
                         cursor.getString(cursor.getColumnIndex("printerFeedLines")),
@@ -174,6 +224,13 @@ public class UserSynchronizeData {
                         cursor.getString(cursor.getColumnIndex("cashierName")),
                         cursor.getString(cursor.getColumnIndex("companyMobile")),
                         cursor.getString(cursor.getColumnIndex("companyAddress")),
+                        columnOrEmpty(cursor, "shopName1"),
+                        columnOrEmpty(cursor, "shopName2"),
+                        columnOrEmpty(cursor, "addressLine1"),
+                        columnOrEmpty(cursor, "addressLine2"),
+                        columnOrEmpty(cursor, "addressLine3"),
+                        columnOrEmpty(cursor, "phoneNo1"),
+                        columnOrEmpty(cursor, "phoneNo2"),
                         cursor.getString(cursor.getColumnIndex("currencyName")),
                         cursor.getString(cursor.getColumnIndex("tableStatus")),
                         cursor.getString(cursor.getColumnIndex("noOfTable")),
@@ -187,6 +244,7 @@ public class UserSynchronizeData {
             } while (cursor.moveToNext());
         }
         closeCursor();
+        setProgressTitle("Uploading invoices...");
         cursor = posBillingWalaDatabase.getUnSynchronizeInvoice(NAME_NOT_SYNCED_WITH_SERVER);
         if (cursor.moveToFirst()) {
             do {
@@ -210,6 +268,7 @@ public class UserSynchronizeData {
             } while (cursor.moveToNext());
         }
         closeCursor();
+        setProgressTitle("Uploading invoice items...");
         cursor = posBillingWalaDatabase.getUnSynchronizeInvoiceProduct(NAME_NOT_SYNCED_WITH_SERVER);
         if (cursor.moveToFirst()) {
             do {
@@ -226,7 +285,29 @@ public class UserSynchronizeData {
                         columnOrEmpty(cursor, "portionId"),
                         columnOrEmpty(cursor, "portionName"),
                         columnOrEmpty(cursor, "snapshotProductName"),
-                        columnOrEmpty(cursor, "snapshotLinePrice"));
+                        columnOrEmpty(cursor, "snapshotLinePrice"),
+                        columnOrEmpty(cursor, "invoiceItemType"),
+                        posBillingWalaDatabase.resolveComboNetworkStatus(columnOrEmpty(cursor, "comboId")),
+                        columnOrEmpty(cursor, "snapshotComboComponents"));
+            } while (cursor.moveToNext());
+        }
+        closeCursor();
+        cursor = posBillingWalaDatabase.getUnSynchronizeInvoiceComboItem(NAME_NOT_SYNCED_WITH_SERVER);
+        if (cursor.moveToFirst()) {
+            do {
+                saveInvoiceComboItem(cursor.getString(cursor.getColumnIndex("invoiceComboItemId")),
+                        columnOrEmpty(cursor, "invoiceNumber"),
+                        columnOrEmpty(cursor, "invoiceProductNetworkStatus"),
+                        columnOrEmpty(cursor, "comboNetworkStatus"),
+                        columnOrEmpty(cursor, "productId"),
+                        columnOrEmpty(cursor, "productNetworkStatus"),
+                        columnOrEmpty(cursor, "productNameSnapshot"),
+                        columnOrEmpty(cursor, "portionId"),
+                        columnOrEmpty(cursor, "portionNetworkStatus"),
+                        columnOrEmpty(cursor, "portionNameSnapshot"),
+                        columnOrEmpty(cursor, "quantity"),
+                        columnOrEmpty(cursor, "sortOrder"),
+                        columnOrEmpty(cursor, "invoiceComboItemNetworkStatus"));
             } while (cursor.moveToNext());
         }
         closeCursor();
@@ -285,6 +366,7 @@ public class UserSynchronizeData {
             } while (cursor.moveToNext());
         }
         closeCursor();
+        setProgressTitle("Uploading expenses...");
         cursor = posBillingWalaDatabase.getUnSynchronizeExpenses(NAME_NOT_SYNCED_WITH_SERVER);
         if (cursor.moveToFirst()) {
             do {
@@ -329,8 +411,8 @@ public class UserSynchronizeData {
         }
     }
 
-    public void saveInvoiceProduct(String invoiceProductId, String invoiceNumber, String productName, String productPrice, String productUnit, String productCGST, String productSGST, String productQuantity, String productStatus, String invoiceProductNetworkStatus, String portionId, String portionName, String snapshotProductName, String snapshotLinePrice) {
-        if (executeCall(Api.getClient(context).saveInvoiceProduct(invoiceNumber, productName, productPrice, productUnit, productCGST, productSGST, productQuantity, productStatus, invoiceProductNetworkStatus, portionId, portionName, snapshotProductName, snapshotLinePrice))) {
+    public void saveInvoiceProduct(String invoiceProductId, String invoiceNumber, String productName, String productPrice, String productUnit, String productCGST, String productSGST, String productQuantity, String productStatus, String invoiceProductNetworkStatus, String portionId, String portionName, String snapshotProductName, String snapshotLinePrice, String invoiceItemType, String comboNetworkStatus, String snapshotComboComponents) {
+        if (executeCall(Api.getClient(context).saveInvoiceProduct(invoiceNumber, productName, productPrice, productUnit, productCGST, productSGST, productQuantity, productStatus, invoiceProductNetworkStatus, portionId, portionName, snapshotProductName, snapshotLinePrice, invoiceItemType, comboNetworkStatus, snapshotComboComponents))) {
             posBillingWalaDatabase.updateSyncInvoiceProduct(invoiceProductId, NAME_SYNCED_WITH_SERVER);
         }
     }
@@ -343,16 +425,31 @@ public class UserSynchronizeData {
         }
     }
 
-    public void saveCompanyDetails(String companyId, String companyLogo, String companyName, String cashierName, String companyMobile, String companyAddress, String currencyName, String tableStatus, String noOfTable,
+    public void saveCompanyDetails(String companyId, String companyLogo, String companyName, String cashierName, String companyMobile, String companyAddress,
+                                   String shopName1, String shopName2, String addressLine1, String addressLine2, String addressLine3, String phoneNo1, String phoneNo2,
+                                   String currencyName, String tableStatus, String noOfTable,
                                    String countryName, String stateName, String gstStatus, String gstNumber, String panNumber, String paymentLogo, String companyFssis) {
-        if (executeCall(Api.getClient(context).saveCompanyDetails(MainActivity.userId, companyLogo, companyName, cashierName, companyMobile, companyAddress, currencyName, tableStatus, noOfTable, countryName, stateName,
+        if (shopName1 == null || shopName1.trim().isEmpty()) {
+            shopName1 = companyName;
+        }
+        if (phoneNo1 == null || phoneNo1.trim().isEmpty()) {
+            phoneNo1 = companyMobile;
+        }
+        if ((addressLine1 == null || addressLine1.trim().isEmpty())
+                && (addressLine2 == null || addressLine2.trim().isEmpty())
+                && (addressLine3 == null || addressLine3.trim().isEmpty())) {
+            addressLine1 = companyAddress;
+        }
+        if (executeCall(Api.getClient(context).saveCompanyDetails(MainActivity.userId, companyLogo, companyName, cashierName, companyMobile, companyAddress,
+                shopName1, shopName2, addressLine1, addressLine2, addressLine3, phoneNo1, phoneNo2,
+                currencyName, tableStatus, noOfTable, countryName, stateName,
                 gstStatus, gstNumber, panNumber, paymentLogo, companyFssis))) {
             posBillingWalaDatabase.updateSynchronizeCompanyDetails(companyId, NAME_SYNCED_WITH_SERVER);
         }
     }
 
-    public void savePrinterSetting(String settingId, String printerName, String KOTPrinterName, String invoicePrefix, String invoiceTitle, String invoiceTermsCondition, String logoUse, String paymentUse, String customerUse, String productQuantityUpdate, String bluetoothAddress, String bluetoothKOTAddress, String printerFeedLines, String KotPrinterFeedLines) {
-        if (executeCall(Api.getClient(context).savePrinterSetting(MainActivity.userId, printerName, KOTPrinterName, invoicePrefix, invoiceTitle, invoiceTermsCondition, logoUse, paymentUse, customerUse, productQuantityUpdate, bluetoothAddress, bluetoothKOTAddress, printerFeedLines, KotPrinterFeedLines))) {
+    public void savePrinterSetting(String settingId, String printerName, String KOTPrinterName, String invoicePrefix, String invoiceTitle, String invoiceTermsCondition, String logoUse, String paymentUse, String customerUse, String productQuantityUpdate, String duplicateBillUse, String bluetoothAddress, String bluetoothKOTAddress, String printerFeedLines, String KotPrinterFeedLines) {
+        if (executeCall(Api.getClient(context).savePrinterSetting(MainActivity.userId, printerName, KOTPrinterName, invoicePrefix, invoiceTitle, invoiceTermsCondition, logoUse, paymentUse, customerUse, productQuantityUpdate, duplicateBillUse, bluetoothAddress, bluetoothKOTAddress, printerFeedLines, KotPrinterFeedLines))) {
             posBillingWalaDatabase.updateSynchronizePrinterSetting(settingId, NAME_SYNCED_WITH_SERVER);
         }
     }
@@ -390,6 +487,41 @@ public class UserSynchronizeData {
                 MainActivity.ownerId, productId, productNetworkStatus, portionName, portionPrice, portionSortOrder,
                 portionDeletedStatus, portionNetworkStatus, portionMasterId, portionMasterNetworkStatus))) {
             posBillingWalaDatabase.updateSyncPortion(portionId, NAME_SYNCED_WITH_SERVER);
+        }
+    }
+
+    public void saveCombo(String comboId, String comboName, String comboCode, String comboPrice, String comboCGST,
+                          String comboSGST, String comboWithGSTPrice, String comboActiveStatus,
+                          String comboDeletedStatus, String comboNetworkStatus, String comboSortOrder) {
+        if (executeCall(Api.getClient(context).saveCombo(
+                MainActivity.ownerId, comboName, comboCode, comboPrice, comboCGST, comboSGST, comboWithGSTPrice,
+                comboActiveStatus, comboDeletedStatus, comboNetworkStatus, comboSortOrder))) {
+            posBillingWalaDatabase.updateSyncCombo(comboId, NAME_SYNCED_WITH_SERVER);
+        }
+    }
+
+    public void saveComboItem(String comboItemId, String comboId, String comboNetworkStatus, String productId,
+                              String productNetworkStatus, String portionId, String portionNetworkStatus,
+                              String comboItemQuantity, String comboItemSortOrder, String comboItemDeletedStatus,
+                              String comboItemNetworkStatus) {
+        if (executeCall(Api.getClient(context).saveComboItem(
+                MainActivity.ownerId, comboId, comboNetworkStatus, productId, productNetworkStatus, portionId,
+                portionNetworkStatus, comboItemQuantity, comboItemSortOrder, comboItemDeletedStatus,
+                comboItemNetworkStatus))) {
+            posBillingWalaDatabase.updateSyncComboItem(comboItemId, NAME_SYNCED_WITH_SERVER);
+        }
+    }
+
+    public void saveInvoiceComboItem(String invoiceComboItemId, String invoiceNumber,
+                                     String invoiceProductNetworkStatus, String comboNetworkStatus, String productId,
+                                     String productNetworkStatus, String productName, String portionId,
+                                     String portionNetworkStatus, String portionName, String quantity, String sortOrder,
+                                     String invoiceComboItemNetworkStatus) {
+        if (executeCall(Api.getClient(context).saveInvoiceComboItem(
+                invoiceNumber, invoiceProductNetworkStatus, comboNetworkStatus, productId, productNetworkStatus,
+                productName, portionId, portionNetworkStatus, portionName, quantity, sortOrder,
+                invoiceComboItemNetworkStatus))) {
+            posBillingWalaDatabase.updateSyncInvoiceComboItem(invoiceComboItemId, NAME_SYNCED_WITH_SERVER);
         }
     }
 

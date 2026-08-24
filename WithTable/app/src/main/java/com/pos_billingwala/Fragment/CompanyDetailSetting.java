@@ -89,21 +89,23 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
 
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
                     Log.i("tag", "onKey Back listener is working!!!");
-                    ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                    ((MainActivity) activity).loadFragment(new UserSetting(), true);
+                    ((MainActivity) activity).goBackTo(new UserSetting(), true);
                     return true;
                 }
                 return false;
             }
         });
 
-        binding.shopName.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
+        binding.shopName1.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
+        binding.shopName2.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
+        binding.addressLine1.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
+        binding.addressLine2.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
+        binding.addressLine3.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
         binding.cashierName.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
-        binding.shopAddress.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
         binding.countryName.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
         binding.stateName.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
 
-        binding.shopName.setText(MainActivity.shopName);
+        binding.shopName1.setText(MainActivity.shopName);
         binding.cashierName.setText(MainActivity.userName);
 
 
@@ -184,24 +186,19 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
             imageName = "paymentQR";
             selectImage();
         } else if (id == R.id.backToSetting) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-            ((MainActivity) activity).loadFragment(new UserSetting(), true);
+            ((MainActivity) activity).goBackTo(new UserSetting(), true);
         } else if (id == R.id.saveDetails) {
-            if (!binding.shopName.getText().toString().isEmpty()) {
-                if (!binding.cashierName.getText().toString().isEmpty()) {
-                    if (!binding.shopMobile.getText().toString().isEmpty()) {
-                        if (!binding.shopAddress.getText().toString().isEmpty()) {
-                            if (!binding.countryName.getText().toString().isEmpty()) {
-                                if (!binding.stateName.getText().toString().isEmpty()) {
-                                    addCompanyDetails();
-                                } else {
-                                    Toast.makeText(activity, getString(R.string.toast_please_fill_state_name), Toast.LENGTH_SHORT).show();
-                                }
+            if (!binding.shopName1.getText().toString().trim().isEmpty()) {
+                if (!binding.cashierName.getText().toString().trim().isEmpty()) {
+                    if (!binding.phoneNo1.getText().toString().trim().isEmpty()) {
+                        if (!binding.countryName.getText().toString().trim().isEmpty()) {
+                            if (!binding.stateName.getText().toString().trim().isEmpty()) {
+                                addCompanyDetails();
                             } else {
-                                Toast.makeText(activity, getString(R.string.toast_please_fill_country_name), Toast.LENGTH_SHORT).show();
+                                Toast.makeText(activity, getString(R.string.toast_please_fill_state_name), Toast.LENGTH_SHORT).show();
                             }
                         } else {
-                            Toast.makeText(activity, getString(R.string.toast_please_fill_company_address), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(activity, getString(R.string.toast_please_fill_country_name), Toast.LENGTH_SHORT).show();
                         }
                     } else {
                         Toast.makeText(activity, getString(R.string.toast_please_fill_company_mobile_number), Toast.LENGTH_SHORT).show();
@@ -353,13 +350,29 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
         }
 
         if (binding.saveDetails.getText().toString().equalsIgnoreCase("Save Details")) {
-            posBillingWalaDatabase.addCompanyDetails(companyLogo, binding.shopName.getText().toString(), binding.cashierName.getText().toString(), binding.shopMobile.getText().toString(),
-                    binding.shopAddress.getText().toString(), currencyName, tableStatus, noOfTable, binding.countryName.getText().toString(), binding.stateName.getText().toString(), gstStatus, binding.gstNumber.getText().toString(),
+            posBillingWalaDatabase.addCompanyDetails(companyLogo,
+                    binding.shopName1.getText().toString().trim(),
+                    binding.shopName2.getText().toString().trim(),
+                    binding.cashierName.getText().toString().trim(),
+                    binding.phoneNo1.getText().toString().trim(),
+                    binding.phoneNo2.getText().toString().trim(),
+                    binding.addressLine1.getText().toString().trim(),
+                    binding.addressLine2.getText().toString().trim(),
+                    binding.addressLine3.getText().toString().trim(),
+                    currencyName, tableStatus, noOfTable, binding.countryName.getText().toString().trim(), binding.stateName.getText().toString().trim(), gstStatus, binding.gstNumber.getText().toString(),
                     binding.shopCGST.getText().toString(), binding.shopSGST.getText().toString(), binding.panNumber.getText().toString(), binding.shopFssai.getText().toString(), 0, paymentLogo);
             Toast.makeText(activity, getString(R.string.toast_company_details_saved), Toast.LENGTH_SHORT).show();
         } else {
-            posBillingWalaDatabase.updateCompanyDetails(companyLogo, companyId, binding.shopName.getText().toString(), binding.cashierName.getText().toString(), binding.shopMobile.getText().toString(),
-                    binding.shopAddress.getText().toString(), currencyName, tableStatus, noOfTable, binding.countryName.getText().toString(), binding.stateName.getText().toString(), gstStatus, binding.gstNumber.getText().toString(),
+            posBillingWalaDatabase.updateCompanyDetails(companyLogo, companyId,
+                    binding.shopName1.getText().toString().trim(),
+                    binding.shopName2.getText().toString().trim(),
+                    binding.cashierName.getText().toString().trim(),
+                    binding.phoneNo1.getText().toString().trim(),
+                    binding.phoneNo2.getText().toString().trim(),
+                    binding.addressLine1.getText().toString().trim(),
+                    binding.addressLine2.getText().toString().trim(),
+                    binding.addressLine3.getText().toString().trim(),
+                    currencyName, tableStatus, noOfTable, binding.countryName.getText().toString().trim(), binding.stateName.getText().toString().trim(), gstStatus, binding.gstNumber.getText().toString(),
                     binding.shopCGST.getText().toString(), binding.shopSGST.getText().toString(), binding.panNumber.getText().toString(), binding.shopFssai.getText().toString(), 0, paymentLogo);
             Toast.makeText(activity, getString(R.string.toast_company_details_updated), Toast.LENGTH_SHORT).show();
         }
@@ -442,10 +455,33 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
             CompanyResponse companyResponse = companyResponseList.get(0);
 
             companyId = companyResponse.getCompanyId();
-            binding.shopName.setText(companyResponse.getCompanyName());
+            String shopName1 = companyResponse.getShopName1();
+            if (shopName1 == null || shopName1.trim().isEmpty()) {
+                shopName1 = companyResponse.getCompanyName();
+            }
+            binding.shopName1.setText(shopName1 != null ? shopName1 : "");
+            binding.shopName2.setText(companyResponse.getShopName2() != null ? companyResponse.getShopName2() : "");
             binding.cashierName.setText(companyResponse.getCashierName());
-            binding.shopMobile.setText(companyResponse.getCompanyMobile());
-            binding.shopAddress.setText(companyResponse.getCompanyAddress());
+
+            String phone1 = companyResponse.getPhoneNo1();
+            if (phone1 == null || phone1.trim().isEmpty()) {
+                phone1 = companyResponse.getCompanyMobile();
+            }
+            binding.phoneNo1.setText(phone1 != null ? phone1 : "");
+            binding.phoneNo2.setText(companyResponse.getPhoneNo2() != null ? companyResponse.getPhoneNo2() : "");
+
+            String address1 = companyResponse.getAddressLine1();
+            String address2 = companyResponse.getAddressLine2();
+            String address3 = companyResponse.getAddressLine3();
+            boolean hasStructuredAddress = (address1 != null && !address1.trim().isEmpty())
+                    || (address2 != null && !address2.trim().isEmpty())
+                    || (address3 != null && !address3.trim().isEmpty());
+            if (!hasStructuredAddress && companyResponse.getCompanyAddress() != null) {
+                address1 = companyResponse.getCompanyAddress();
+            }
+            binding.addressLine1.setText(address1 != null ? address1 : "");
+            binding.addressLine2.setText(address2 != null ? address2 : "");
+            binding.addressLine3.setText(address3 != null ? address3 : "");
             binding.countryName.setText(companyResponse.getCountryName());
             binding.stateName.setText(companyResponse.getStateName());
             gstStatus = companyResponse.getGstStatus();

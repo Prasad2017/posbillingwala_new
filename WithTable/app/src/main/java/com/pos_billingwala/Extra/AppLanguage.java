@@ -6,22 +6,30 @@ import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.os.Build;
 import android.os.LocaleList;
+import android.util.DisplayMetrics;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.os.LocaleListCompat;
 
+import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.R;
 
 import java.util.Locale;
 
 /**
  * App language: English / Hindi / Marathi.
- * Uses AppCompat per-app locales (required so resources actually switch).
+ * <p>
+ * Driven by SharedPreferences + {@link #wrap(Context)}. Live calls to
+ * {@code AppCompatDelegate.setApplicationLocales} recreate the Activity and look
+ * like a crash, so language changes apply in-place instead.
  */
 public final class AppLanguage {
 
     public static final String KEY_APP_LANGUAGE = "appLanguage";
+
+    /** @deprecated Kept for clearing any leftover flag from older builds. */
     public static final String KEY_REOPEN_USER_SETTING = "reopenUserSetting";
 
     public static final String EN = "en";
@@ -55,7 +63,7 @@ public final class AppLanguage {
         return Locale.ENGLISH;
     }
 
-    /** Wrap activity context — backup so inflate uses the right strings.xml. */
+    /** Wrap activity context so inflate uses the right strings.xml. */
     @NonNull
     public static Context wrap(@NonNull Context context) {
         String code = getSavedCode(context);
@@ -82,16 +90,24 @@ public final class AppLanguage {
         applyLocaleToConfig(configuration, localeFor(getSavedCode(context)));
     }
 
-    /** Cold start — sync AppCompat locales with saved preference. */
+    /**
+     * Cold start — set JVM default from prefs and clear any prior AppCompat per-app
+     * locales (from older builds) so {@link #wrap} alone controls language.
+     * Safe only from Application.onCreate (no Activity on screen yet).
+     */
     public static void applyStored(@NonNull Context context) {
-        String code = getSavedCode(context);
-        Locale.setDefault(localeFor(code));
-        AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(code));
+        Locale.setDefault(localeFor(getSavedCode(context)));
+        try {
+            if (!AppCompatDelegate.getApplicationLocales().isEmpty()) {
+                AppCompatDelegate.setApplicationLocales(LocaleListCompat.getEmptyLocaleList());
+            }
+        } catch (Exception ignored) {
+            // Ignore — wrap() still applies the saved language.
+        }
     }
 
     /**
-     * Save language and apply via AppCompat so @string / values-hi / values-mr load correctly.
-     * MainActivity reopens User Setting via KEY_REOPEN_USER_SETTING.
+     * Save language and apply in-place without closing/recreating the Activity.
      */
     public static void setLanguage(@NonNull Activity activity, @NonNull String languageCode) {
         String code = languageCode.trim().toLowerCase(Locale.ROOT);
@@ -102,12 +118,29 @@ public final class AppLanguage {
             return;
         }
         Common.saveUserData(activity, KEY_APP_LANGUAGE, code);
-        Common.saveUserData(activity, KEY_REOPEN_USER_SETTING, "1");
-        Common.saveUserData(activity, "languageToastPending", "1");
+        // Clear legacy recreate flag if present from older builds
+        Common.saveUserData(activity, KEY_REOPEN_USER_SETTING, "0");
+        Common.saveUserData(activity, "languageToastPending", "0");
 
-        Locale.setDefault(localeFor(code));
-        // This is what actually switches resources to values-hi / values-mr
-        AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(code));
+        Locale locale = localeFor(code);
+        Locale.setDefault(locale);
+        applyLocaleToResources(activity, locale);
+        applyLocaleToResources(activity.getApplicationContext(), locale);
+
+        if (activity instanceof MainActivity) {
+            ((MainActivity) activity).reloadAfterLanguageChange();
+        }
+        Toast.makeText(activity, R.string.language_changed, Toast.LENGTH_SHORT).show();
+    }
+
+    /** Update Resources so reinflated layouts pick values-hi / values-mr immediately. */
+    @SuppressWarnings("deprecation")
+    private static void applyLocaleToResources(@NonNull Context context, @NonNull Locale locale) {
+        Resources resources = context.getResources();
+        Configuration config = new Configuration(resources.getConfiguration());
+        applyLocaleToConfig(config, locale);
+        DisplayMetrics metrics = resources.getDisplayMetrics();
+        resources.updateConfiguration(config, metrics);
     }
 
     public static boolean consumeReopenUserSetting(@NonNull Context context) {

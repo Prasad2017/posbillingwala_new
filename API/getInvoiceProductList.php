@@ -51,6 +51,15 @@ $i=0;
         if (!empty($row['snapshotLinePrice'])) {
             $getdata["snapshotLinePrice"] = $row['snapshotLinePrice'];
         }
+        if (!empty($row['invoiceItemType'])) {
+            $getdata["invoiceItemType"] = $row['invoiceItemType'];
+        }
+        if (!empty($row['comboNetworkStatus'])) {
+            $getdata["comboNetworkStatus"] = $row['comboNetworkStatus'];
+        }
+        if (!empty($row['snapshotComboComponents'])) {
+            $getdata["snapshotComboComponents"] = $row['snapshotComboComponents'];
+        }
       
        
         header('Content-type: application/json; charset=utf-8');

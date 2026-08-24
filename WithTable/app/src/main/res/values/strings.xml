@@ -174,6 +174,7 @@
     <string name="master_subcategory">Subcategory</string>
     <string name="master_portions">Portions</string>
     <string name="master_products">Products</string>
+    <string name="master_combos">Combos</string>
     <string name="setting_shop_details">Shop Details</string>
     <string name="setting_printer_details">Printer Details</string>
     <string name="setting_inventory">Inventory Management</string>
@@ -192,8 +193,11 @@
     <string name="home_total_category">Total\nCategory</string>
     <string name="home_total_subcategory">Total\nSubcategory</string>
     <string name="home_total_products">Total\nProducts</string>
+    <string name="home_total_combos">Total\nCombos</string>
     <string name="home_fetch_data">Fetch Data</string>
     <string name="home_synchronize">Synchronize</string>
     <string name="home_low_inventory">Low Inventory</string>
+
+    <string name="press_back_again_to_exit">Press back again to exit</string>
 
 </resources>

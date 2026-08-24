@@ -10,12 +10,20 @@ public final class BillLineSnapshot {
     }
 
     public static String displayName(String productName, String snapshotProductName, String portionName) {
+        return displayName(productName, snapshotProductName, portionName, null);
+    }
+
+    public static String displayName(String productName, String snapshotProductName, String portionName,
+                                     String comboComponents) {
         String base = hasText(snapshotProductName) ? snapshotProductName : productName;
         if (!hasText(base)) {
             base = "";
         }
         if (hasText(portionName)) {
-            return base + " (" + portionName.trim() + ")";
+            base = base + " (" + portionName.trim() + ")";
+        }
+        if (hasText(comboComponents)) {
+            return base + "\n" + comboComponents.trim();
         }
         return base;
     }

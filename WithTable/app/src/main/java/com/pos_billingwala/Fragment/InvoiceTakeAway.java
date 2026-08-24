@@ -24,6 +24,8 @@ import com.pos_billingwala.Activity.DuplicateBluetoothPrint;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.InvoiceTakAwayAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.AppExecutors;
+import com.pos_billingwala.Extra.ListLoader;
 import com.pos_billingwala.Extra.SimpleDividerItemDecoration;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.ProductCartResponse;
@@ -65,8 +67,7 @@ public class InvoiceTakeAway extends Fragment implements View.OnClickListener {
 
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
                     Log.i("tag", "onKey Back listener is working!!!");
-                    ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                    ((MainActivity) activity).loadFragment(new Home(), false);
+                    ((MainActivity) activity).navigateToHome();
                     return true;
                 }
                 return false;
@@ -84,8 +85,7 @@ public class InvoiceTakeAway extends Fragment implements View.OnClickListener {
     public void onClick(View view) {
         int id = view.getId();
         if (id == R.id.homeCardView) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-            ((MainActivity) activity).loadFragment(new Home(), false);
+            ((MainActivity) activity).navigateToHome();
         } else if (id == R.id.menuIcon) {
             setPopUpWindow();
         }
@@ -110,7 +110,6 @@ public class InvoiceTakeAway extends Fragment implements View.OnClickListener {
 
                 mypopupWindow.dismiss();
 
-                ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
                 CreatePos createPos = new CreatePos();
                 Bundle bundle = new Bundle();
                 bundle.putString("tableNumber", "TA" + getRandomString(3));
@@ -148,17 +147,18 @@ public class InvoiceTakeAway extends Fragment implements View.OnClickListener {
     }
 
     public void getCompanyDetails() {
-
-        companyResponseList.clear();
-        companyResponseList = posBillingWalaDatabase.getCompanyDetails();
-        if (!companyResponseList.isEmpty()) {
-            getTakeWayCartList();
-        } else {
-            Toast.makeText(activity, getString(R.string.toast_please_fill_shop_details), Toast.LENGTH_SHORT).show();
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-            ((MainActivity) activity).loadFragment(new CompanyDetailSetting(), true);
-        }
-
+        final cn.pedant.SweetAlert.SweetAlertDialog loader = ListLoader.show(activity);
+        AppExecutors.get().runDbThenMain(this, () -> {
+            companyResponseList = posBillingWalaDatabase.getCompanyDetails();
+        }, () -> {
+            if (companyResponseList != null && !companyResponseList.isEmpty()) {
+                getTakeWayCartList(loader);
+            } else {
+                ListLoader.dismiss(loader);
+                Toast.makeText(activity, getString(R.string.toast_please_fill_shop_details), Toast.LENGTH_SHORT).show();
+                ((MainActivity) activity).loadFragment(new CompanyDetailSetting(), true);
+            }
+        });
     }
 
     public String getRandomString(final int sizeOfRandomString) {
@@ -173,23 +173,33 @@ public class InvoiceTakeAway extends Fragment implements View.OnClickListener {
     }
 
     public void getTakeWayCartList() {
+        getTakeWayCartList(null);
+    }
 
-        productTakeAwayResponseList.clear();
-        productTakeAwayResponseList = posBillingWalaDatabase.getTakeWayCartList("take_away");
-        if (!productTakeAwayResponseList.isEmpty()) {
-
-            invoiceTakAwayAdapter = new InvoiceTakAwayAdapter(activity, productTakeAwayResponseList);
-            binding.recyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
-            binding.recyclerView.setAdapter(invoiceTakAwayAdapter);
-            binding.recyclerView.addItemDecoration(new SimpleDividerItemDecoration(activity));
-            invoiceTakAwayAdapter.notifyDataSetChanged();
-
-            binding.takeAwayOrderLayout.setVisibility(View.VISIBLE);
-
-        } else {
-            binding.takeAwayOrderLayout.setVisibility(View.GONE);
-        }
-
+    private void getTakeWayCartList(cn.pedant.SweetAlert.SweetAlertDialog loader) {
+        final cn.pedant.SweetAlert.SweetAlertDialog activeLoader =
+                loader != null ? loader : ListLoader.show(activity);
+        AppExecutors.get().runDbThenMain(this, () -> {
+            productTakeAwayResponseList = posBillingWalaDatabase.getTakeWayCartList("take_away");
+        }, () -> {
+            try {
+                if (binding == null) {
+                    return;
+                }
+                if (productTakeAwayResponseList != null && !productTakeAwayResponseList.isEmpty()) {
+                    invoiceTakAwayAdapter = new InvoiceTakAwayAdapter(activity, productTakeAwayResponseList);
+                    binding.recyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
+                    binding.recyclerView.setAdapter(invoiceTakAwayAdapter);
+                    binding.recyclerView.addItemDecoration(new SimpleDividerItemDecoration(activity));
+                    invoiceTakAwayAdapter.notifyDataSetChanged();
+                    binding.takeAwayOrderLayout.setVisibility(View.VISIBLE);
+                } else {
+                    binding.takeAwayOrderLayout.setVisibility(View.GONE);
+                }
+            } finally {
+                ListLoader.dismiss(activeLoader);
+            }
+        });
     }
 
 

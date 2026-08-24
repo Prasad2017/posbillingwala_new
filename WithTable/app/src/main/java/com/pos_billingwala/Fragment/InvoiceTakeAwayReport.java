@@ -28,6 +28,7 @@ import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.InvoiceTakeAwayReportAdapter;
 import com.pos_billingwala.CalenderView.MonthPickerDialog;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.ListLoader;
 import com.pos_billingwala.Extra.SimpleDividerItemDecoration;
 import com.pos_billingwala.Model.InvoiceResponse;
 import com.pos_billingwala.R;
@@ -37,6 +38,8 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
+
+import cn.pedant.SweetAlert.SweetAlertDialog;
 
 @SuppressLint("SetTextI18n")
 public class InvoiceTakeAwayReport extends Fragment implements View.OnClickListener {
@@ -73,8 +76,7 @@ public class InvoiceTakeAwayReport extends Fragment implements View.OnClickListe
 
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
                     Log.i("tag", "onKey Back listener is working!!!");
-                    ((MainActivity) getActivity()).removeCurrentFragmentAndMoveBack();
-                    ((MainActivity) getActivity()).loadFragment(new ReportSetting(), true);
+                    ((MainActivity) getActivity()).goBackTo(new ReportSetting(), true);
                     return true;
                 }
                 return false;
@@ -101,8 +103,7 @@ public class InvoiceTakeAwayReport extends Fragment implements View.OnClickListe
     @Override
     public void onClick(View view) {
         if (view.getId() == R.id.backToSetting) {
-            ((MainActivity) getActivity()).removeCurrentFragmentAndMoveBack();
-            ((MainActivity) getActivity()).loadFragment(new ReportSetting(), true);
+            ((MainActivity) getActivity()).goBackTo(new ReportSetting(), true);
         } else if (view.getId() == R.id.menuIcon) {
             setPopUpWindow();
         }
@@ -260,9 +261,15 @@ public class InvoiceTakeAwayReport extends Fragment implements View.OnClickListe
         private final String dateFilter;
         private int count;
         private float totalAmount;
+        private SweetAlertDialog loader;
 
         LoadInitialTableReport(String dateFilter) {
             this.dateFilter = dateFilter == null ? "" : dateFilter;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            loader = ListLoader.show(activity);
         }
 
         @Override
@@ -277,13 +284,17 @@ public class InvoiceTakeAwayReport extends Fragment implements View.OnClickListe
 
         @Override
         protected void onPostExecute(List<InvoiceResponse> page) {
-            if (!isAdded()) {
+            try {
+                if (!isAdded()) {
+                    isLoading = false;
+                    return;
+                }
+                totalPages = count;
+                bindTakeAwayPage(page, totalAmount);
                 isLoading = false;
-                return;
+            } finally {
+                ListLoader.dismiss(loader);
             }
-            totalPages = count;
-            bindTakeAwayPage(page, totalAmount);
-            isLoading = false;
         }
     }
 

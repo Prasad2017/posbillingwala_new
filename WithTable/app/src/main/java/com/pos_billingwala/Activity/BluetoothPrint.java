@@ -70,6 +70,7 @@ import com.pos_billingwala.Adapter.TwoKOTPrintAdapter;
 import com.pos_billingwala.Adapter.TwoPrintAdapter;
 import com.pos_billingwala.BuildConfig;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.ShopHeaderBuilder;
 import com.pos_billingwala.Extra.Observability;
 import com.pos_billingwala.Extra.SimpleDividerItemDecoration;
 import com.pos_billingwala.Extra.LicenceExpiredUi;
@@ -79,6 +80,8 @@ import com.pos_billingwala.Fragment.CreatePos;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.InventoryResponse;
 import com.pos_billingwala.Model.PrinterSettingResponse;
+import com.pos_billingwala.Extra.CartItemType;
+import com.pos_billingwala.Model.ComboItemResponse;
 import com.pos_billingwala.Model.ProductCartResponse;
 import com.pos_billingwala.Print.BluetoothPrintService;
 import com.pos_billingwala.Print.DeviceListActivity;
@@ -1348,6 +1351,54 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
 
     }
 
+    private void deductComboInventory(ProductCartResponse comboLine, String inventoryDate) {
+        if (comboLine == null) {
+            return;
+        }
+        int comboQty;
+        try {
+            comboQty = (int) Float.parseFloat(comboLine.getProductQuantity());
+        } catch (Exception e) {
+            comboQty = 1;
+        }
+        List<ComboItemResponse> components = posBillingWalaDatabase.getCartComboItems(comboLine.getCartId());
+        if (components == null) {
+            return;
+        }
+        for (ComboItemResponse component : components) {
+            if (component.getProductId() == null || component.getProductId().trim().isEmpty()) {
+                continue;
+            }
+            int componentQty;
+            try {
+                componentQty = (int) Float.parseFloat(component.getComboItemQuantity());
+            } catch (Exception e) {
+                componentQty = 1;
+            }
+            int saleQty = Math.max(1, comboQty) * Math.max(1, componentQty);
+            List<InventoryResponse> inventoryList = posBillingWalaDatabase.getInventoryDetails(component.getProductId());
+            if (inventoryList == null || inventoryList.isEmpty()) {
+                continue;
+            }
+            for (InventoryResponse inventoryResponse : inventoryList) {
+                try {
+                    int oldInventoryQty = Integer.parseInt(inventoryResponse.getProductInventoryQuantity());
+                    int afterSaleInventoryQuantity = Integer.parseInt(inventoryResponse.getAfterSaleInventoryQuantity());
+                    int totalQty = afterSaleInventoryQuantity - saleQty;
+                    posBillingWalaDatabase.addInventory(
+                            component.getProductId(),
+                            String.valueOf(oldInventoryQty),
+                            String.valueOf(totalQty),
+                            String.valueOf(saleQty),
+                            inventoryDate,
+                            0,
+                            getRandomString(10));
+                } catch (Exception ignored) {
+                }
+            }
+        }
+    }
+
     @SuppressLint("Range")
     public void saveInvoice(String customerName, String customerMobile, String customerAddress, int printStatus) {
 
@@ -1456,6 +1507,10 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                 String inventoryDate = todayDF.format(c);
 
                 for (ProductCartResponse productCartResponse : cartSnapshot) {
+                    if (CartItemType.isCombo(productCartResponse.getCartItemType())) {
+                        deductComboInventory(productCartResponse, inventoryDate);
+                        continue;
+                    }
                     List<InventoryResponse> inventoryList =
                             posBillingWalaDatabase.getInventoryDetails(productCartResponse.getProductId());
                     if (inventoryList != null && !inventoryList.isEmpty()) {
@@ -1582,26 +1637,13 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
 
         if (!companyResponseList.isEmpty()) {
 
-            twoShopName.setText(companyResponseList.get(0).getCompanyName());
-            threeShopName.setText(companyResponseList.get(0).getCompanyName());
-            twoKOTShopName.setText(companyResponseList.get(0).getCompanyName());
-            threeKOTShopName.setText(companyResponseList.get(0).getCompanyName());
+            String primaryShopName = ShopHeaderBuilder.resolveShopName1(companyResponseList.get(0));
+            twoShopName.setText(primaryShopName);
+            threeShopName.setText(primaryShopName);
+            twoKOTShopName.setText(primaryShopName);
+            threeKOTShopName.setText(primaryShopName);
 
-            String shopDetails = "";
-            if (companyResponseList.get(0).getGstStatus() != null) {
-                if (companyResponseList.get(0).getGstStatus().equalsIgnoreCase("on")) {
-                    shopDetails = companyResponseList.get(0).getCompanyAddress() + "\nPH:" + companyResponseList.get(0).getCompanyMobile() + "\n" + "GSTIN: " + companyResponseList.get(0).getGstNumber();
-
-                } else if (companyResponseList.get(0).getGstStatus().equalsIgnoreCase("off")) {
-                    shopDetails = companyResponseList.get(0).getCompanyAddress() + "\nPH:" + companyResponseList.get(0).getCompanyMobile();
-                }
-            } else {
-                shopDetails = companyResponseList.get(0).getCompanyAddress() + "\nPH:" + companyResponseList.get(0).getCompanyMobile();
-            }
-
-            if (null != companyResponseList.get(0).getCompanyFssis() && (!companyResponseList.get(0).getCompanyFssis().isEmpty())) {
-                shopDetails = shopDetails + "\nFSSAI No: " + companyResponseList.get(0).getCompanyFssis();
-            }
+            String shopDetails = ShopHeaderBuilder.buildShopDetailsBlock(companyResponseList.get(0));
 
             twoShopDetails.setText(shopDetails);
             threeShopDetails.setText(shopDetails);

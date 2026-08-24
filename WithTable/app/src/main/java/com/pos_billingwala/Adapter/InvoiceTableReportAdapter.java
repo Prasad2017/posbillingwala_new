@@ -49,7 +49,6 @@ public class InvoiceTableReportAdapter extends RecyclerView.Adapter<InvoiceTable
         holder.binding.linearLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ((MainActivity) context).removeCurrentFragmentAndMoveBack();
                 InvoiceTableListReport invoiceTableListReport = new InvoiceTableListReport();
                 Bundle bundle = new Bundle();
                 bundle.putString("noOfTable", invoiceResponse.getNoOfTable());

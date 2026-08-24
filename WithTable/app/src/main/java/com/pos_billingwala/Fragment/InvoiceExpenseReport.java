@@ -25,6 +25,7 @@ import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.ExpenseAdapter;
 import com.pos_billingwala.CalenderView.MonthPickerDialog;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.ListLoader;
 import com.pos_billingwala.Extra.SimpleDividerItemDecoration;
 import com.pos_billingwala.Model.ExpenseResponse;
 import com.pos_billingwala.R;
@@ -34,6 +35,8 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
+
+import cn.pedant.SweetAlert.SweetAlertDialog;
 
 @SuppressLint("SetTextI18n")
 public class InvoiceExpenseReport extends Fragment implements View.OnClickListener {
@@ -70,8 +73,7 @@ public class InvoiceExpenseReport extends Fragment implements View.OnClickListen
 
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
                     Log.i("tag", "onKey Back listener is working!!!");
-                    ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                    ((MainActivity) activity).loadFragment(new ReportSetting(), true);
+                    ((MainActivity) activity).goBackTo(new ReportSetting(), true);
                     return true;
                 }
                 return false;
@@ -88,8 +90,7 @@ public class InvoiceExpenseReport extends Fragment implements View.OnClickListen
     public void onClick(View view) {
         int id = view.getId();
         if (id == R.id.backToSetting) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-            ((MainActivity) activity).loadFragment(new ReportSetting(), true);
+            ((MainActivity) activity).goBackTo(new ReportSetting(), true);
         } else if (id == R.id.menuIcon) {
             setPopUpWindow();
         }
@@ -192,32 +193,35 @@ public class InvoiceExpenseReport extends Fragment implements View.OnClickListen
     }
 
     public void getDateReportList(String expenseDate) {
+        SweetAlertDialog loader = ListLoader.show(activity);
+        try {
+            expenseResponseList.clear();
+            expenseResponseList = posBillingWalaDatabase.getDateWiseExpenseList(expenseDate);
+            if (!expenseResponseList.isEmpty()) {
 
-        expenseResponseList.clear();
-        expenseResponseList = posBillingWalaDatabase.getDateWiseExpenseList(expenseDate);
-        if (!expenseResponseList.isEmpty()) {
+                adapter = new ExpenseAdapter(activity, expenseResponseList);
+                binding.recyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
+                binding.recyclerView.addItemDecoration(new SimpleDividerItemDecoration(activity));
+                binding.recyclerView.setAdapter(adapter);
+                adapter.notifyDataSetChanged();
+                // adapter.notifyItemInserted(expenseResponseList.size() - 1);
 
-            adapter = new ExpenseAdapter(activity, expenseResponseList);
-            binding.recyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
-            binding.recyclerView.addItemDecoration(new SimpleDividerItemDecoration(activity));
-            binding.recyclerView.setAdapter(adapter);
-            adapter.notifyDataSetChanged();
-            // adapter.notifyItemInserted(expenseResponseList.size() - 1);
+                float totalExpenseAmount = 0f;
+                for (ExpenseResponse expenseResponse : expenseResponseList) {
+                    totalExpenseAmount += Float.parseFloat(expenseResponse.getExpenseAmount());
+                }
+                binding.totalAmount.setText(activity.getString(R.string.inr) + " " + String.format(Locale.US, "%.2f", totalExpenseAmount));
 
-            float totalExpenseAmount = 0f;
-            for (ExpenseResponse expenseResponse : expenseResponseList) {
-                totalExpenseAmount += Float.parseFloat(expenseResponse.getExpenseAmount());
+                binding.noDataFound.setVisibility(View.GONE);
+                binding.nestedScrollView.setVisibility(View.VISIBLE);
+
+            } else {
+                binding.noDataFound.setVisibility(View.VISIBLE);
+                binding.nestedScrollView.setVisibility(View.GONE);
             }
-            binding.totalAmount.setText(activity.getString(R.string.inr) + " " + String.format(Locale.US, "%.2f", totalExpenseAmount));
-
-            binding.noDataFound.setVisibility(View.GONE);
-            binding.nestedScrollView.setVisibility(View.VISIBLE);
-
-        } else {
-            binding.noDataFound.setVisibility(View.VISIBLE);
-            binding.nestedScrollView.setVisibility(View.GONE);
+        } finally {
+            ListLoader.dismiss(loader);
         }
-
     }
 
     @Override
@@ -229,31 +233,34 @@ public class InvoiceExpenseReport extends Fragment implements View.OnClickListen
 
 
     public void getExpenseList() {
+        SweetAlertDialog loader = ListLoader.show(activity);
+        try {
+            expenseResponseList.clear();
+            expenseResponseList = posBillingWalaDatabase.getExpenseList();
+            if (!expenseResponseList.isEmpty()) {
+                adapter = new ExpenseAdapter(activity, expenseResponseList);
+                binding.recyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
+                binding.recyclerView.addItemDecoration(new SimpleDividerItemDecoration(activity));
+                binding.recyclerView.setAdapter(adapter);
+                adapter.notifyDataSetChanged();
+                //  adapter.notifyItemInserted(expenseResponseList.size() - 1);
 
-        expenseResponseList.clear();
-        expenseResponseList = posBillingWalaDatabase.getExpenseList();
-        if (!expenseResponseList.isEmpty()) {
-            adapter = new ExpenseAdapter(activity, expenseResponseList);
-            binding.recyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
-            binding.recyclerView.addItemDecoration(new SimpleDividerItemDecoration(activity));
-            binding.recyclerView.setAdapter(adapter);
-            adapter.notifyDataSetChanged();
-            //  adapter.notifyItemInserted(expenseResponseList.size() - 1);
+                float totalExpenseAmount = 0f;
+                for (ExpenseResponse expenseResponse : expenseResponseList) {
+                    totalExpenseAmount += Float.parseFloat(expenseResponse.getExpenseAmount());
+                }
+                binding.totalAmount.setText(activity.getString(R.string.inr) + " " + String.format(Locale.US, "%.2f", totalExpenseAmount));
 
-            float totalExpenseAmount = 0f;
-            for (ExpenseResponse expenseResponse : expenseResponseList) {
-                totalExpenseAmount += Float.parseFloat(expenseResponse.getExpenseAmount());
+                binding.noDataFound.setVisibility(View.GONE);
+                binding.nestedScrollView.setVisibility(View.VISIBLE);
+
+            } else {
+                binding.noDataFound.setVisibility(View.VISIBLE);
+                binding.nestedScrollView.setVisibility(View.GONE);
             }
-            binding.totalAmount.setText(activity.getString(R.string.inr) + " " + String.format(Locale.US, "%.2f", totalExpenseAmount));
-
-            binding.noDataFound.setVisibility(View.GONE);
-            binding.nestedScrollView.setVisibility(View.VISIBLE);
-
-        } else {
-            binding.noDataFound.setVisibility(View.VISIBLE);
-            binding.nestedScrollView.setVisibility(View.GONE);
+        } finally {
+            ListLoader.dismiss(loader);
         }
-
     }
 
 }

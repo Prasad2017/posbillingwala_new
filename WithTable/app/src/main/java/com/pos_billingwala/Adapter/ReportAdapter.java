@@ -80,7 +80,7 @@ public class ReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
 
     public void showLoadingView(LoadingViewHolder viewHolder, int position) {
         //ProgressBar would be displayed
-        viewHolder.progressBar.setVisibility(View.GONE);
+        viewHolder.progressBar.setVisibility(View.VISIBLE);
     }
 
     public static class LoadingViewHolder extends RecyclerView.ViewHolder {

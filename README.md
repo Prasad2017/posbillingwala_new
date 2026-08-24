@@ -6,7 +6,7 @@ Offline-first point-of-sale for restaurants and shops — four Android apps, a s
 
 | Path | Role |
 |------|------|
-| `WithTable/` | Main POS app — billing, tables, takeaway, mess + QR tokens, reports, Bluetooth print, i18n |
+| `WithTable/` | Main POS app — billing, tables, takeaway, mess + QR tokens, combos, reports, Bluetooth print, i18n |
 | `Owner/` | Shop owner app — invoices, sales, multi-branch view, full catalog CRUD |
 | `Dealer/` | Dealer app — customer & licence registration / renew, catalog setup |
 | `Admin/` | Admin app — dealers, customers, licences, catalog |
@@ -14,8 +14,8 @@ Offline-first point-of-sale for restaurants and shops — four Android apps, a s
 | `API/` | PHP REST API (POS root + `Owner/` / `Dealer/` / `Admin/`) |
 | `API/migrations/` | Additive SQL upgrades (safe to re-run) |
 | `API/schema/` | Install helper + schema-only reference |
-| `docs/` | Deploy, licence API, audit, implementation plan |
-| `spllmgkn_posbill_complete.sql` | Full database dump (schema + data) |
+| `docs/` | Deploy, licence / combo / store-details API notes, audit, implementation plan |
+| `rgusomuk_posbilling.sql` | Full database dump (schema + data) |
 | `releases/` | Local release APK copies (**gitignored**) |
 
 Each Android app is a **standalone Gradle project** — open its folder in Android Studio (no root multi-module wrapper).
@@ -24,6 +24,8 @@ Each Android app is a **standalone Gradle project** — open its folder in Andro
 
 - **Offline-first billing** — bills save to SQLite first; sync via WorkManager + receivers when online
 - **Catalog** — Food type → Category → optional Subcategory → Product → Portions linked to **Portion Master** (Half, Full, Kg, etc.)
+- **Combo items** — separate combo master (not a product); fixed component list + manual sell price; bill on POS with invoice component snapshots
+- **Store details** — structured shop name / address / phone lines for receipts (legacy company fields kept for sync compatibility)
 - **Order modes** — dine-in tables, takeaway, mess membership + walk-in mess QR tokens (generate, print, scan/verify)
 - **Print** — Bluetooth (Woosim/SPP); print failures do not wipe saved bills
 - **Licensing** — server-authoritative expiry; 7-day / 50-bill trial; validity tiers (6m / 1y / 3y / 5y / lifetime); same-key renew
@@ -86,14 +88,14 @@ Copy `API/db_local.example.php` → `API/db_local.php` locally. Firebase config 
 ### Fresh / full restore
 
 ```bash
-mysql -u USER -p DATABASE < spllmgkn_posbill_complete.sql
+mysql -u USER -p DATABASE < rgusomuk_posbilling.sql
 ```
 
-Or phpMyAdmin → Import → `spllmgkn_posbill_complete.sql`.
+Or phpMyAdmin → Import → `rgusomuk_posbilling.sql`.
 
 ### Existing DB upgrade (keep data)
 
-Prefer the single upgrade script (food types, subcategories, portions, portion master, bill snapshots, API tokens, licensing, multi-branch, mess tokens):
+Prefer the single upgrade script (food types, subcategories, portions, portion master, bill snapshots, API tokens, licensing, multi-branch, mess tokens, **combos**, **structured store details**):
 
 ```bash
 mysql -u USER -p DATABASE < API/migrations/server_upgrade_all.sql
@@ -105,7 +107,7 @@ mysql -u USER -p DATABASE < API/migrations/server_upgrade_all.sql
 | `API/schema/posbill_install.sql` | Fresh install helper |
 | `API/schema/schema_reference.sql` | Schema-only reference (no production rows) |
 
-Individual reference migrations (optional; all included in `server_upgrade_all.sql`): `p3_1`–`p3_7`, `p3_5_portion_master`, `p5_3_api_tokens`, `p6_production_licensing`, `p7_multi_branch_scope`, `p8_mess_token_qr`.
+Individual reference migrations (optional; all included in `server_upgrade_all.sql`): `p3_1`–`p3_7`, `p3_5_portion_master`, `p5_3_api_tokens`, `p6_production_licensing`, `p7_multi_branch_scope`, `p8_mess_token_qr`, `p9_combo_items`, `p10_store_details_structured`.
 
 Full steps: [docs/DEPLOY_DB.md](docs/DEPLOY_DB.md)
 
@@ -123,12 +125,16 @@ Full steps: [docs/DEPLOY_DB.md](docs/DEPLOY_DB.md)
 
 4. Deploy the `API/` folder so app base URLs resolve to these endpoints.
 
+5. Run `server_upgrade_all.sql` (or at least `p9_combo_items.sql` + `p10_store_details_structured.sql`) **before** POS clients sync combos or structured store fields.
+
 ### Key API areas
 
 | Area | Example endpoints |
 |------|-------------------|
 | POS auth & sync | `Login.php`, `LoginMpin.php`, `insertInvoice.php`, `getProductList.php` |
 | Catalog | `getFoodTypeList.php`, `getCategoryList.php`, `getSubcategoryList.php`, `getPortionMasterList.php`, `getPortionList.php` |
+| Combos | `insertCombo.php`, `insertComboItem.php`, `getComboList.php`, `getComboItemList.php`, `insertInvoiceComboItem.php` |
+| Store / company | `insertCompanyDetail.php`, `getCompanyList.php`, `insertCompanyPrinterSetting.php` |
 | Licensing | `check_licence_expire.php`, `registerTrial.php`, `licence_expiry.php` |
 | Mess QR tokens | `insertMessToken.php`, `getMessTokenList.php`, `verifyMessToken.php` |
 | Owner / Dealer / Admin | `*/Login.php`, catalog CRUD under each subfolder; Bearer token via `auth_guard.php` |
@@ -152,17 +158,19 @@ Unsigned release copies may live under `releases/` (gitignored). Expected naming
 | `Dealer-{version}-v{code}-unsigned.apk` | Dealer |
 | `Admin-{version}-v{code}-unsigned.apk` | Admin |
 
-Sign with your upload keystore before store/rollout — keystores are not in this repo.
+Sign with your upload keystore before store/rollout — do not commit keystores or passwords.
 
 **Smoke test after deploy**
 
 1. Login (licence + MPIN) → Bearer token issued  
 2. Sync catalog → food types, categories, subcategories, portion masters, portions  
 3. Add product with portion master + price → syncs to server  
-4. Bill with a portion product → print + invoice line snapshots  
-5. Mess walk-in token → QR print → scan/verify (member tokens only)  
-6. Switch POS language (EN / HI / MR) → UI strings update  
-7. Trial / expired licence blocked server-side  
+4. Master Data → Combo → create combo with components + sell price → appear on Home → bill + print  
+5. Store Details → shop name / address / phone lines → print header uses structured fields  
+6. Bill with a portion product → print + invoice line snapshots  
+7. Mess walk-in token → QR print → scan/verify (member tokens only)  
+8. Switch POS language (EN / HI / MR) → UI strings update  
+9. Trial / expired licence blocked server-side  
 
 ## Docs
 
@@ -171,8 +179,10 @@ Sign with your upload keystore before store/rollout — keystores are not in thi
 | [docs/DEPLOY_DB.md](docs/DEPLOY_DB.md) | DB credentials, migrations, upgrade notes |
 | [docs/DEPLOY_WEB.md](docs/DEPLOY_WEB.md) | Website + web admin production deploy |
 | [docs/LICENSE_API_REQUIREMENTS.md](docs/LICENSE_API_REQUIREMENTS.md) | Licensing / trial API behaviour |
+| [docs/COMBO_API_REQUIREMENTS.md](docs/COMBO_API_REQUIREMENTS.md) | Combo master contract (POS done; Owner/Admin/Dealer TBD) |
+| [docs/STORE_DETAILS_API_CHANGES.md](docs/STORE_DETAILS_API_CHANGES.md) | Structured shop / address / phone fields |
 | [docs/CURSOR_CODEBASE_AUDIT.md](docs/CURSOR_CODEBASE_AUDIT.md) | Codebase audit |
-| [docs/CURSOR_IMPLEMENTATION_PLAN.md](docs/CURSOR_IMPLEMENTATION_PLAN.md) | Implementation plan (P0–P6 complete) |
+| [docs/CURSOR_IMPLEMENTATION_PLAN.md](docs/CURSOR_IMPLEMENTATION_PLAN.md) | Implementation plan (P0–P6 complete; later P9/P10 in migrations) |
 
 ## Security notes
 

@@ -83,7 +83,18 @@ public class LicenseAdapter extends RecyclerView.Adapter<LicenseAdapter.MyViewHo
         if (branchLabel == null || branchLabel.isEmpty()) {
             branchLabel = "owner".equalsIgnoreCase(licenseResponse.getUserType()) ? "Main Store" : "Franchise Branch";
         }
-        String shopAddress = "<b>" + branchLabel + "</b><br/><b>Shop Address: </b>" + licenseResponse.getCompanyAddress();
+        String shopTitle = licenseResponse.getShopName1();
+        if (shopTitle == null || shopTitle.trim().isEmpty()) {
+            shopTitle = branchLabel;
+        }
+        String shopAddress = "<b>" + shopTitle + "</b><br/><b>Branch:</b> " + branchLabel
+                + "<br/><b>Shop Address: </b>" + licenseResponse.getCompanyAddress();
+        if (licenseResponse.getPhoneNo1() != null && !licenseResponse.getPhoneNo1().trim().isEmpty()) {
+            shopAddress += "<br/><b>Phone:</b> " + licenseResponse.getPhoneNo1().trim();
+            if (licenseResponse.getPhoneNo2() != null && !licenseResponse.getPhoneNo2().trim().isEmpty()) {
+                shopAddress += ", " + licenseResponse.getPhoneNo2().trim();
+            }
+        }
         holder.textViews.get(6).setText(Html.fromHtml(shopAddress));
         holder.textViews.get(7).setText(licenseType);
 

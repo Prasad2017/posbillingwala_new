@@ -88,7 +88,6 @@ public class MemberAdapter extends RecyclerView.Adapter<MemberAdapter.MyViewHold
         holder.binding.updateMember.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ((MainActivity) context).removeCurrentFragmentAndMoveBack();
                 UpdateMessMember updateMessMember = new UpdateMessMember();
                 Bundle bundle = new Bundle();
                 bundle.putString("memberId", memberResponse.getMemberId());
@@ -100,7 +99,6 @@ public class MemberAdapter extends RecyclerView.Adapter<MemberAdapter.MyViewHold
         holder.binding.paymentMember.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ((MainActivity) context).removeCurrentFragmentAndMoveBack();
                 UpdateMessPayment updateMessPayment = new UpdateMessPayment();
                 Bundle bundle = new Bundle();
                 bundle.putString("memberId", memberResponse.getMemberId());
@@ -112,7 +110,6 @@ public class MemberAdapter extends RecyclerView.Adapter<MemberAdapter.MyViewHold
         holder.binding.paymentNew.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ((MainActivity) context).removeCurrentFragmentAndMoveBack();
                 AddMemberPayment addMemberPayment = new AddMemberPayment();
                 Bundle bundle = new Bundle();
                 bundle.putString("memberId", memberResponse.getMemberId());

@@ -45,8 +45,7 @@ public class ReportSetting extends Fragment implements View.OnClickListener {
 
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
                     Log.i("tag", "onKey Back listener is working!!!");
-                    ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                    ((MainActivity) activity).loadFragment(new UserSetting(), true);
+                    ((MainActivity) activity).goBackTo(new UserSetting(), true);
                     return true;
                 }
                 return false;
@@ -67,6 +66,7 @@ public class ReportSetting extends Fragment implements View.OnClickListener {
         binding.invoicePaymentWiseReportLayout.setOnClickListener(this);
         binding.invoiceMessWiseReportLayout.setOnClickListener(this);
         binding.productWiseReportLayout.setOnClickListener(this);
+        binding.comboWiseReportLayout.setOnClickListener(this);
         binding.saleWiseReportLayout.setOnClickListener(this);
         binding.clearInvoiceLayout.setOnClickListener(this);
         binding.invoiceMemberPaymentWiseReportLayout.setOnClickListener(this);
@@ -77,34 +77,30 @@ public class ReportSetting extends Fragment implements View.OnClickListener {
     public void onClick(View view) {
         int id = view.getId();
         if (id == R.id.backToSetting) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-            ((MainActivity) activity).loadFragment(new UserSetting(), true);
+            ((MainActivity) activity).goBackTo(new UserSetting(), true);
         } else if (id == R.id.invoiceWiseReportLayout) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
             ((MainActivity) activity).loadFragment(new InvoiceReport(), true);
         } else if (id == R.id.invoiceTableWiseReportLayout) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
             ((MainActivity) activity).loadFragment(new InvoiceTableReport(), true);
         } else if (id == R.id.invoiceTakeAwayWiseReportLayout) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
             ((MainActivity) activity).loadFragment(new InvoiceTakeAwayReport(), true);
         } else if (id == R.id.invoiceMessWiseReportLayout) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
             ((MainActivity) activity).loadFragment(new InvoiceMessReport(), true);
         } else if (id == R.id.invoicePaymentWiseReportLayout) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
             ((MainActivity) activity).loadFragment(new InvoicePaymentModeWiseReport(), true);
         } else if (id == R.id.invoiceMemberPaymentWiseReportLayout) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
             ((MainActivity) activity).loadFragment(new InvoiceMessMemberReportList(), true);
         } else if (id == R.id.productWiseReportLayout) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
             ((MainActivity) activity).loadFragment(new InvoiceProductReport(), true);
+        } else if (id == R.id.comboWiseReportLayout) {
+            InvoiceProductReport comboReport = new InvoiceProductReport();
+            Bundle comboArgs = new Bundle();
+            comboArgs.putString(InvoiceProductReport.ARG_INVOICE_ITEM_TYPE, "COMBO");
+            comboReport.setArguments(comboArgs);
+            ((MainActivity) activity).loadFragment(comboReport, true);
         } else if (id == R.id.saleWiseReportLayout) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
             ((MainActivity) activity).loadFragment(new SaleReport(), true);
         } else if (id == R.id.expenseWiseReportLayout) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
             ((MainActivity) activity).loadFragment(new InvoiceExpenseReport(), true);
         } else if (id == R.id.clearInvoiceLayout) {
             int unsynced = posBillingWalaDatabase.countUnsyncedInvoices();

@@ -5,6 +5,9 @@ $response = array();
 if($_SERVER['REQUEST_METHOD']=='POST'){
     
      mysqli_query($con, 'set names utf8');
+
+  // Ensure column exists on older servers (additive, safe to re-run)
+  @mysqli_query($con, "ALTER TABLE `company_printer_setting` ADD COLUMN `duplicateBillUse` VARCHAR(10) NULL DEFAULT 'off'");
      
   $userId = $_POST['userId'];
   $printerName = $_POST['printerName'];
@@ -16,6 +19,7 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
   $paymentUse = $_POST['paymentUse'];
   $customerUse = $_POST['customerUse'];
   $productQuantityUpdate = $_POST['productQuantityUpdate'];
+  $duplicateBillUse = isset($_POST['duplicateBillUse']) && $_POST['duplicateBillUse'] !== '' ? $_POST['duplicateBillUse'] : 'off';
   $bluetoothAddress = $_POST['bluetoothAddress'];
   $bluetoothKOTAddress = $_POST['bluetoothKOTAddress'];
   $printerFeedLines = $_POST['printerFeedLines'];
@@ -33,7 +37,7 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 				    
 				    $settingId = $check['settingId'];
 				    $sql="UPDATE `company_printer_setting` SET `printerName`='$printerName', `KOTPrinterName`='$KOTPrinterName', `invoicePrefix`='$invoicePrefix', `invoiceTitle`='$invoiceTitle', 
-				    `invoiceTermsCondition`='$invoiceTermsCondition', `logoUse`='$logoUse', `paymentUse`='$paymentUse', `customerUse`='$customerUse', `productQuantityUpdate`='$productQuantityUpdate', 
+				    `invoiceTermsCondition`='$invoiceTermsCondition', `logoUse`='$logoUse', `paymentUse`='$paymentUse', `customerUse`='$customerUse', `productQuantityUpdate`='$productQuantityUpdate', `duplicateBillUse`='$duplicateBillUse', 
 				    `bluetoothAddress`='$bluetoothAddress', `bluetoothKOTAddress`='$bluetoothKOTAddress', `printerFeedLines`='$printerFeedLines', `KotPrinterFeedLines`='$KotPrinterFeedLines' WHERE `settingId`='$settingId'";
 
                  if(mysqli_query($con, $sql)){
@@ -52,8 +56,8 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 				    
 				} else {
 
-                 $sql="INSERT INTO `company_printer_setting`(`licenseId`, `KOTPrinterName`, `printerName`, `invoicePrefix`, `invoiceTitle`, `invoiceTermsCondition`, `logoUse`, `paymentUse`, `customerUse`, `productQuantityUpdate`, `bluetoothAddress`, `bluetoothKOTAddress`, `printerFeedLines`, `KotPrinterFeedLines`, `settingStatus`) 
-                       VALUES ('$userId', '$printerName', '$KOTPrinterName', '$invoicePrefix', '$invoiceTitle', '$invoiceTermsCondition', '$logoUse', '$paymentUse', '$customerUse', '$productQuantityUpdate', '$bluetoothAddress', '$bluetoothKOTAddress', '$printerFeedLines', '$KotPrinterFeedLines', 'active')";
+                 $sql="INSERT INTO `company_printer_setting`(`licenseId`, `KOTPrinterName`, `printerName`, `invoicePrefix`, `invoiceTitle`, `invoiceTermsCondition`, `logoUse`, `paymentUse`, `customerUse`, `productQuantityUpdate`, `duplicateBillUse`, `bluetoothAddress`, `bluetoothKOTAddress`, `printerFeedLines`, `KotPrinterFeedLines`, `settingStatus`) 
+                       VALUES ('$userId', '$printerName', '$KOTPrinterName', '$invoicePrefix', '$invoiceTitle', '$invoiceTermsCondition', '$logoUse', '$paymentUse', '$customerUse', '$productQuantityUpdate', '$duplicateBillUse', '$bluetoothAddress', '$bluetoothKOTAddress', '$printerFeedLines', '$KotPrinterFeedLines', 'active')";
 
                  if(mysqli_query($con,$sql)){
 	

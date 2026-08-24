@@ -63,7 +63,6 @@ public class InvoiceTakAwayAdapter extends RecyclerView.Adapter<InvoiceTakAwayAd
         holder.binding.goToItems.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ((MainActivity) context).removeCurrentFragmentAndMoveBack();
                 CreatePos createPos = new CreatePos();
                 Bundle bundle = new Bundle();
                 bundle.putString("tableNumber", productCartResponse.getNoOfTable());

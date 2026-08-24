@@ -138,7 +138,7 @@ public class InvoiceAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
     public void showLoadingView(LoadingViewHolder viewHolder, int position) {
         //ProgressBar would be displayed
-        viewHolder.binding.progressBar.setVisibility(View.GONE);
+        viewHolder.binding.progressBar.setVisibility(View.VISIBLE);
     }
 
     public static class LoadingViewHolder extends RecyclerView.ViewHolder {

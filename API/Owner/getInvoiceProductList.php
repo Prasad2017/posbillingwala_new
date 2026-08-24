@@ -1,5 +1,6 @@
 <?php	
 include_once('config.php');
+require_once __DIR__ . '/../company_store_fields.php';
 $i=0;
    
     $response["invoiceProductResponse"] = array();
@@ -62,6 +63,17 @@ $i=0;
         $getdata["cashierName"]=$row['cashierName'];
         $getdata["companyMobile"]=$row['companyMobile'];
         $getdata["companyAddress"]=$row['companyAddress'];
+        $store = company_structured_fields($row);
+        $getdata["shopName1"]=$store['shopName1'];
+        $getdata["shopName2"]=$store['shopName2'];
+        $getdata["addressLine1"]=$store['addressLine1'];
+        $getdata["addressLine2"]=$store['addressLine2'];
+        $getdata["addressLine3"]=$store['addressLine3'];
+        $getdata["phoneNo1"]=$store['phoneNo1'];
+        $getdata["phoneNo2"]=$store['phoneNo2'];
+        $getdata["companyName"]=$store['companyName'];
+        $getdata["companyAddress"]=$store['companyAddress'];
+        $getdata["companyMobile"]=$store['companyMobile'];
         $getdata["countryName"]=$row['countryName'];
         $getdata["tableStatus"]=$row['tableStatus'];
         

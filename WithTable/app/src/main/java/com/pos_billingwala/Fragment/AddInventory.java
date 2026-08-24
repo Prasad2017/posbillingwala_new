@@ -61,8 +61,7 @@ public class AddInventory extends Fragment implements View.OnClickListener {
 
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
                     Log.i("tag", "onKey Back listener is working!!!");
-                    ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                    ((MainActivity) activity).loadFragment(new Inventory(), true);
+                    ((MainActivity) activity).goBackTo(new Inventory(), true);
                     return true;
                 }
                 return false;
@@ -86,8 +85,7 @@ public class AddInventory extends Fragment implements View.OnClickListener {
     public void onClick(View view) {
         int id = view.getId();
         if (id == R.id.backToInventory) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-            ((MainActivity) activity).loadFragment(new Inventory(), true);
+            ((MainActivity) activity).goBackTo(new Inventory(), true);
         } else if (id == R.id.addInventory) {
             if (productId != null) {
                 if (!binding.inventoryQty.toString().isEmpty()) {
@@ -124,8 +122,7 @@ public class AddInventory extends Fragment implements View.OnClickListener {
             Toast.makeText(activity, getString(R.string.toast_add_inventory_successfully), Toast.LENGTH_SHORT).show();
         }
 
-        ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-        ((MainActivity) activity).loadFragment(new Inventory(), true);
+        ((MainActivity) activity).goBackTo(new Inventory(), true);
 
     }
 

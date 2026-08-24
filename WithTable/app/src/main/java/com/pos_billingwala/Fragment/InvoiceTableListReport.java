@@ -43,11 +43,14 @@ import com.pos_billingwala.Adapter.ReportAdapter;
 import com.pos_billingwala.BuildConfig;
 import com.pos_billingwala.CalenderView.MonthPickerDialog;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.ListLoader;
 import com.pos_billingwala.Extra.SimpleDividerItemDecoration;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.InvoiceResponse;
 import com.pos_billingwala.R;
 import com.pos_billingwala.Utils.ReportToExcel;
+
+import cn.pedant.SweetAlert.SweetAlertDialog;
 import com.pos_billingwala.databinding.FragmentInvoiceTableListReportBinding;
 
 import java.io.File;
@@ -104,12 +107,10 @@ public class InvoiceTableListReport extends Fragment implements View.OnClickList
 
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
                     Log.i("tag", "onKey Back listener is working!!!");
-                    if (invoiceType.equalsIgnoreCase("table_wise")) {
-                        ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                        ((MainActivity) activity).loadFragment(new InvoiceTableReport(), true);
+                    if (invoiceType != null && invoiceType.equalsIgnoreCase("table_wise")) {
+                        ((MainActivity) activity).goBackTo(new InvoiceTableReport(), true);
                     } else {
-                        ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                        ((MainActivity) activity).loadFragment(new InvoiceTakeAwayReport(), true);
+                        ((MainActivity) activity).goBackTo(new InvoiceTakeAwayReport(), true);
                     }
                     return true;
                 }
@@ -139,12 +140,10 @@ public class InvoiceTableListReport extends Fragment implements View.OnClickList
     public void onClick(View view) {
         int id = view.getId();
         if (id == R.id.backToSetting) {
-            if (invoiceType.equalsIgnoreCase("table_wise")) {
-                ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                ((MainActivity) activity).loadFragment(new InvoiceTableReport(), true);
+            if (invoiceType != null && invoiceType.equalsIgnoreCase("table_wise")) {
+                ((MainActivity) activity).goBackTo(new InvoiceTableReport(), true);
             } else {
-                ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                ((MainActivity) activity).loadFragment(new InvoiceTakeAwayReport(), true);
+                ((MainActivity) activity).goBackTo(new InvoiceTakeAwayReport(), true);
             }
         } else if (id == R.id.menuIcon) {
             setPopUpWindow();
@@ -467,9 +466,15 @@ public class InvoiceTableListReport extends Fragment implements View.OnClickList
         private final String dateFilter;
         private int count;
         private float totalAmount;
+        private SweetAlertDialog loader;
 
         LoadInitialTableList(String dateFilter) {
             this.dateFilter = dateFilter == null ? "" : dateFilter;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            loader = ListLoader.show(activity);
         }
 
         @Override
@@ -484,13 +489,17 @@ public class InvoiceTableListReport extends Fragment implements View.OnClickList
 
         @Override
         protected void onPostExecute(List<InvoiceResponse> page) {
-            if (!isAdded()) {
+            try {
+                if (!isAdded()) {
+                    isLoading = false;
+                    return;
+                }
+                totalPages = count;
+                bindTableListPage(page, totalAmount);
                 isLoading = false;
-                return;
+            } finally {
+                ListLoader.dismiss(loader);
             }
-            totalPages = count;
-            bindTableListPage(page, totalAmount);
-            isLoading = false;
         }
     }
 

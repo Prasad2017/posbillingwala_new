@@ -32,6 +32,9 @@ public class PrinterSettingResponse {
     @SerializedName("productQuantityUpdate")
     @Expose
     public String productQuantityUpdate;
+    @SerializedName("duplicateBillUse")
+    @Expose
+    public String duplicateBillUse;
     @SerializedName("settingStatus")
     @Expose
     public String settingStatus;
@@ -122,6 +125,14 @@ public class PrinterSettingResponse {
 
     public void setProductQuantityUpdate(String productQuantityUpdate) {
         this.productQuantityUpdate = productQuantityUpdate;
+    }
+
+    public String getDuplicateBillUse() {
+        return duplicateBillUse;
+    }
+
+    public void setDuplicateBillUse(String duplicateBillUse) {
+        this.duplicateBillUse = duplicateBillUse;
     }
 
     public String getBluetoothAddress() {

@@ -48,6 +48,7 @@ import com.pos_billingwala.Adapter.ThreeInvoicePrintAdapter;
 import com.pos_billingwala.Adapter.TwoInvoicePrintAdapter;
 import com.pos_billingwala.BuildConfig;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.ShopHeaderBuilder;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.InvoiceProductResponse;
 import com.pos_billingwala.Model.InvoiceResponse;
@@ -87,9 +88,9 @@ public class InvoiceDetailsBluetoothPrint extends BaseActivity implements View.O
     public static RecyclerView invoiceRecyclerView;
     public static NestedScrollView invoiceNestedScrollView;
 
-    public static TextView twoShopName, twoShopDetails, twoInvoiceDetails, twoSubTotal, twoShopCGST, twoCGST, twoShopSGST, twoSGST, twoDiscount, twoTotalAmount, twoInvoiceTermsCondition;
+    public static TextView twoShopName, twoShopDetails, twoInvoiceDetails, twoShopPrintStatus, twoSubTotal, twoShopCGST, twoCGST, twoShopSGST, twoSGST, twoDiscount, twoTotalAmount, twoInvoiceTermsCondition;
     public static ImageView twoCompanyLogo, twoQRLogo;
-    public static TextView threeShopName, threeShopDetails, threeInvoiceDetails, threeSubTotal, threeShopCGST, threeCGST, threeShopSGST, threeSGST, threeDiscount, threeTotalAmount, threeInvoiceTermsCondition;
+    public static TextView threeShopName, threeShopDetails, threeInvoiceDetails, threeShopPrintStatus, threeSubTotal, threeShopCGST, threeCGST, threeShopSGST, threeSGST, threeDiscount, threeTotalAmount, threeInvoiceTermsCondition;
     public static ImageView threeCompanyLogo, threeQRLogo;
     public static LinearLayout twoShopCGSTLayout, twoShopSGSTLayout, twoDiscountLayout;
     public static RecyclerView twoRecyclerView;
@@ -155,22 +156,10 @@ public class InvoiceDetailsBluetoothPrint extends BaseActivity implements View.O
     }
 
     public static String getShopDetails() {
-        String shopDetails = "";
-        if (companyResponseList.get(0).getGstStatus() != null) {
-            if (companyResponseList.get(0).getGstStatus().equalsIgnoreCase("on")) {
-                shopDetails = companyResponseList.get(0).getCompanyAddress() + "\n" + "GSTIN: " + companyResponseList.get(0).getGstNumber();
-
-            } else if (companyResponseList.get(0).getGstStatus().equalsIgnoreCase("off")) {
-                shopDetails = companyResponseList.get(0).getCompanyAddress();
-            }
-        } else {
-            shopDetails = companyResponseList.get(0).getCompanyAddress();
+        if (companyResponseList == null || companyResponseList.isEmpty()) {
+            return "";
         }
-
-        if (null != companyResponseList.get(0).getCompanyFssis() && (!companyResponseList.get(0).getCompanyFssis().isEmpty()) && !(companyResponseList.get(0).getCompanyFssis().isEmpty())) {
-            shopDetails = shopDetails + "FSSAI No: " + companyResponseList.get(0).getCompanyFssis();
-        }
-        return String.valueOf(Html.fromHtml(shopDetails));
+        return ShopHeaderBuilder.buildShopDetailsBlock(companyResponseList.get(0));
     }
 
     public void setScreenSizeSmall() {
@@ -235,6 +224,7 @@ public class InvoiceDetailsBluetoothPrint extends BaseActivity implements View.O
         twoShopName = findViewById(R.id.twoShopName);
         twoShopDetails = findViewById(R.id.twoShopDetails);
         twoInvoiceDetails = findViewById(R.id.twoInvoiceDetails);
+        twoShopPrintStatus = findViewById(R.id.twoShopPrintStatus);
         twoSubTotal = findViewById(R.id.twoSubTotal);
         twoShopCGST = findViewById(R.id.twoShopCGST);
         twoCGST = findViewById(R.id.twoCGST);
@@ -256,6 +246,7 @@ public class InvoiceDetailsBluetoothPrint extends BaseActivity implements View.O
         threeShopName = findViewById(R.id.threeShopName);
         threeShopDetails = findViewById(R.id.threeShopDetails);
         threeInvoiceDetails = findViewById(R.id.threeInvoiceDetails);
+        threeShopPrintStatus = findViewById(R.id.threeShopPrintStatus);
         threeSubTotal = findViewById(R.id.threeSubTotal);
         threeShopCGST = findViewById(R.id.threeShopCGST);
         threeCGST = findViewById(R.id.threeCGST);
@@ -553,9 +544,10 @@ public class InvoiceDetailsBluetoothPrint extends BaseActivity implements View.O
         companyResponseList = posBillingWalaDatabase.getCompanyDetails();
         if (!companyResponseList.isEmpty()) {
 
-            invoiceShopName.setText(companyResponseList.get(0).getCompanyName());
-            twoShopName.setText(companyResponseList.get(0).getCompanyName());
-            threeShopName.setText(companyResponseList.get(0).getCompanyName());
+            String primaryShopName = ShopHeaderBuilder.resolveShopName1(companyResponseList.get(0));
+            invoiceShopName.setText(primaryShopName);
+            twoShopName.setText(primaryShopName);
+            threeShopName.setText(primaryShopName);
 
             String shopDetails = getShopDetails();
 
@@ -637,15 +629,18 @@ public class InvoiceDetailsBluetoothPrint extends BaseActivity implements View.O
                 twoQRLogo.setVisibility(View.GONE);
                 threeQRLogo.setVisibility(View.GONE);
             }
+
+            applyDuplicateBillCopyLabel();
         } else {
             twoCompanyLogo.setVisibility(View.GONE);
             threeCompanyLogo.setVisibility(View.GONE);
             invoiceCompanyLogo.setVisibility(View.GONE);
             twoQRLogo.setVisibility(View.GONE);
             threeQRLogo.setVisibility(View.GONE);
+            applyDuplicateBillCopyLabel();
         }
 
-        if (printerSettingResponseList.get(0).getInvoiceTermsCondition() != null) {
+        if (!printerSettingResponseList.isEmpty() && printerSettingResponseList.get(0).getInvoiceTermsCondition() != null) {
             twoInvoiceTermsCondition.setText(printerSettingResponseList.get(0).getInvoiceTermsCondition());
             threeInvoiceTermsCondition.setText(printerSettingResponseList.get(0).getInvoiceTermsCondition());
         } else {
@@ -654,6 +649,33 @@ public class InvoiceDetailsBluetoothPrint extends BaseActivity implements View.O
         }
 
 
+    }
+
+    /**
+     * Duplicate Bill label applies only on Invoice List reprint ({@link InvoiceDetailsBluetoothPrint}).
+     * Other print screens (POS billing, KOT, etc.) ignore this setting.
+     */
+    private void applyDuplicateBillCopyLabel() {
+        boolean duplicateOn = !printerSettingResponseList.isEmpty()
+                && printerSettingResponseList.get(0).getDuplicateBillUse() != null
+                && printerSettingResponseList.get(0).getDuplicateBillUse().equalsIgnoreCase("on");
+
+        if (twoShopPrintStatus != null) {
+            if (duplicateOn) {
+                twoShopPrintStatus.setText(getString(R.string.ui__duplicate_copy_));
+                twoShopPrintStatus.setVisibility(View.VISIBLE);
+            } else {
+                twoShopPrintStatus.setVisibility(View.GONE);
+            }
+        }
+        if (threeShopPrintStatus != null) {
+            if (duplicateOn) {
+                threeShopPrintStatus.setText(getString(R.string.ui__duplicate_copy_));
+                threeShopPrintStatus.setVisibility(View.VISIBLE);
+            } else {
+                threeShopPrintStatus.setVisibility(View.GONE);
+            }
+        }
     }
 
 

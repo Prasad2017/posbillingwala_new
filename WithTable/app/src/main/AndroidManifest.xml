@@ -91,6 +91,10 @@
             android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|fontScale|density"
             android:exported="false" />
         <activity
+            android:name=".Activity.TestInvoiceBluetoothPrint"
+            android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|fontScale|density"
+            android:exported="false" />
+        <activity
             android:name=".Activity.CouponBluetoothPrint"
             android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|fontScale|density"
             android:exported="false" />

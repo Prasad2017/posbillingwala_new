@@ -1,6 +1,7 @@
 <?php	
 include_once('config.php');
 include_once(__DIR__ . '/../licence_expiry.php');
+require_once __DIR__ . '/../company_store_fields.php';
 require_once __DIR__ . '/auth_guard.php';
 $i=0;
    
@@ -46,7 +47,8 @@ $i=0;
 	{
        
         $licenses_id=$user_licenses['id'];
-        $companyAddress=$user_licenses['companyAddress'];
+        $store = company_structured_fields($user_licenses);
+        $companyAddress = company_display_address_oneline($user_licenses);
         $licenseKey=$user_licenses['licenseKey'];
         $licenseValidity=$user_licenses['licenseValidity'];
         $licenseType=$user_licenses['licenseType'];
@@ -61,7 +63,11 @@ $i=0;
         $branch = licence_branch_fields($user_licenses);
         
         
-        $json[] = array("licenses_id"=>$licenses_id, "companyAddress"=>$companyAddress, "licenseKey"=>$licenseKey, "licenseValidity"=>$licenseValidity, "licenseType"=>$licenseType, "licenseStatus"=>$licenseStatus,
+        $json[] = array("licenses_id"=>$licenses_id, "companyAddress"=>$companyAddress,
+                         "shopName1"=>$store['shopName1'], "shopName2"=>$store['shopName2'],
+                         "addressLine1"=>$store['addressLine1'], "addressLine2"=>$store['addressLine2'], "addressLine3"=>$store['addressLine3'],
+                         "phoneNo1"=>$store['phoneNo1'], "phoneNo2"=>$store['phoneNo2'],
+                         "licenseKey"=>$licenseKey, "licenseValidity"=>$licenseValidity, "licenseType"=>$licenseType, "licenseStatus"=>$licenseStatus,
                          "registrationDate"=>$registrationDate, "expiryDate"=>$expiryDate, "paymentStatus"=>$paymentStatus, "amount"=>$amount, "fastBilling"=>$fastBilling, "takeAway"=>$takeAway, "dineIn"=>$dineIn,
                          "userType"=>$branch['userType'], "userName"=>$branch['userName'], "branchLabel"=>$branch['branchLabel']);
         

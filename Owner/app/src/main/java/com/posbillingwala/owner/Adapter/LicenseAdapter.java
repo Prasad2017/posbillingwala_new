@@ -57,6 +57,16 @@ public class LicenseAdapter extends RecyclerView.Adapter<LicenseAdapter.MyViewHo
         LicenseResponse licenseResponse = licenseResponseList.get(position);
 
         String shopAddress = "<b><font color='#ff0000'>Shop Address:</font></b> " + licenseResponse.getCompanyAddress();
+        if (licenseResponse.getShopName1() != null && !licenseResponse.getShopName1().trim().isEmpty()) {
+            shopAddress = "<b><font color='#ff0000'>Shop:</font></b> " + licenseResponse.getShopName1().trim()
+                    + "<br/>" + shopAddress;
+        }
+        if (licenseResponse.getPhoneNo1() != null && !licenseResponse.getPhoneNo1().trim().isEmpty()) {
+            shopAddress += "<br/><b>Phone:</b> " + licenseResponse.getPhoneNo1().trim();
+            if (licenseResponse.getPhoneNo2() != null && !licenseResponse.getPhoneNo2().trim().isEmpty()) {
+                shopAddress += ", " + licenseResponse.getPhoneNo2().trim();
+            }
+        }
         holder.binding.shopAddress.setText(Html.fromHtml(shopAddress));
         holder.binding.licenseKey.setText(licenseResponse.getLicenseKey());
         holder.binding.licenseKey.setTextIsSelectable(true);

@@ -36,6 +36,7 @@ import com.karumi.dexter.PermissionToken;
 import com.karumi.dexter.listener.PermissionRequest;
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.ShopHeaderBuilder;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.MessInvoiceResponse;
 import com.pos_billingwala.Model.PrinterSettingResponse;
@@ -408,21 +409,12 @@ public class CouponBluetoothPrint extends BaseActivity implements View.OnClickLi
 
         if (!companyResponseList.isEmpty()) {
 
-            shopName.setText(companyResponseList.get(0).getCompanyName());
-            twoShopName.setText(companyResponseList.get(0).getCompanyName());
-            threeShopName.setText(companyResponseList.get(0).getCompanyName());
+            String primaryShopName = ShopHeaderBuilder.resolveShopName1(companyResponseList.get(0));
+            shopName.setText(primaryShopName);
+            twoShopName.setText(primaryShopName);
+            threeShopName.setText(primaryShopName);
 
-            String shopDetail = "";
-            if (companyResponseList.get(0).getGstStatus() != null) {
-                if (companyResponseList.get(0).getGstStatus().equalsIgnoreCase("on")) {
-                    shopDetail = companyResponseList.get(0).getCompanyAddress() + "\nPH:" + companyResponseList.get(0).getCompanyMobile() + "GSTIN: " + companyResponseList.get(0).getGstNumber();
-
-                } else if (companyResponseList.get(0).getGstStatus().equalsIgnoreCase("off")) {
-                    shopDetail = companyResponseList.get(0).getCompanyAddress() + "\nPH:" + companyResponseList.get(0).getCompanyMobile();
-                }
-            } else {
-                shopDetail = companyResponseList.get(0).getCompanyAddress() + "\nPH:" + companyResponseList.get(0).getCompanyMobile();
-            }
+            String shopDetail = ShopHeaderBuilder.buildShopDetailsBlock(companyResponseList.get(0));
 
             shopDetails.setText(shopDetail);
             twoShopDetails.setText(shopDetail);

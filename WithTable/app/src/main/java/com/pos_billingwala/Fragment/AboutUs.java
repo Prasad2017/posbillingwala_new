@@ -48,8 +48,7 @@ public class AboutUs extends Fragment implements View.OnClickListener {
 
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
                     Log.i("tag", "onKey Back listener is working!!!");
-                    ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                    ((MainActivity) activity).loadFragment(new UserSetting(), true);
+                    ((MainActivity) activity).goBackTo(new UserSetting(), true);
                     return true;
                 }
                 return false;
@@ -93,8 +92,7 @@ public class AboutUs extends Fragment implements View.OnClickListener {
     @Override
     public void onClick(View view) {
         if (view.getId() == R.id.backToSetting) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-            ((MainActivity) activity).loadFragment(new UserSetting(), true);
+            ((MainActivity) activity).goBackTo(new UserSetting(), true);
         }
     }
 

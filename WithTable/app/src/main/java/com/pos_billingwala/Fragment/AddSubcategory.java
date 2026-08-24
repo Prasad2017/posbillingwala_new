@@ -22,6 +22,7 @@ import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.SubcategoryAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.ListLoader;
 import com.pos_billingwala.Extra.SimpleDividerItemDecoration;
 import com.pos_billingwala.Model.ProductCategoryResponse;
 import com.pos_billingwala.Model.ProductSubcategoryResponse;
@@ -31,6 +32,8 @@ import com.pos_billingwala.databinding.FragmentAddSubcategoryBinding;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+
+import cn.pedant.SweetAlert.SweetAlertDialog;
 
 public class AddSubcategory extends Fragment implements View.OnClickListener {
 
@@ -50,21 +53,26 @@ public class AddSubcategory extends Fragment implements View.OnClickListener {
     public static String selectedCategoryId;
 
     public static void getSubcategoryList() {
-        subcategoryResponseList.clear();
-        if (selectedCategoryId != null) {
-            subcategoryResponseList = posBillingWalaDatabase.getProductSubcategoryList(selectedCategoryId);
-        }
-        if (!subcategoryResponseList.isEmpty()) {
-            subcategoryAdapter = new SubcategoryAdapter(activity, subcategoryResponseList);
-            subcategoryRecyclerview.setLayoutManager(new GridLayoutManager(activity, 1));
-            subcategoryRecyclerview.setAdapter(subcategoryAdapter);
-            subcategoryRecyclerview.addItemDecoration(new SimpleDividerItemDecoration(activity));
+        SweetAlertDialog loader = ListLoader.show(activity);
+        try {
+            subcategoryResponseList.clear();
+            if (selectedCategoryId != null) {
+                subcategoryResponseList = posBillingWalaDatabase.getProductSubcategoryList(selectedCategoryId);
+            }
+            if (!subcategoryResponseList.isEmpty()) {
+                subcategoryAdapter = new SubcategoryAdapter(activity, subcategoryResponseList);
+                subcategoryRecyclerview.setLayoutManager(new GridLayoutManager(activity, 1));
+                subcategoryRecyclerview.setAdapter(subcategoryAdapter);
+                subcategoryRecyclerview.addItemDecoration(new SimpleDividerItemDecoration(activity));
 
-            subcategoryListCardView.setVisibility(View.VISIBLE);
-            noDataFound.setVisibility(View.GONE);
-        } else {
-            subcategoryListCardView.setVisibility(View.GONE);
-            noDataFound.setVisibility(View.VISIBLE);
+                subcategoryListCardView.setVisibility(View.VISIBLE);
+                noDataFound.setVisibility(View.GONE);
+            } else {
+                subcategoryListCardView.setVisibility(View.GONE);
+                noDataFound.setVisibility(View.VISIBLE);
+            }
+        } finally {
+            ListLoader.dismiss(loader);
         }
     }
 
@@ -126,11 +134,10 @@ public class AddSubcategory extends Fragment implements View.OnClickListener {
     }
 
     private void navigateToCaller() {
-        ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
         if (getArguments() != null && MasterData.OPENED_FROM_MASTER.equals(getArguments().getString("openedFrom"))) {
-            ((MainActivity) activity).loadFragment(new MasterData(), true);
+            ((MainActivity) activity).goBackTo(new MasterData(), true);
         } else {
-            ((MainActivity) activity).loadFragment(new Home(), false);
+            ((MainActivity) activity).navigateToHome();
         }
     }
 

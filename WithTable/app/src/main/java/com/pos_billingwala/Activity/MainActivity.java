@@ -7,7 +7,9 @@ import android.database.CursorWindow;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.view.WindowManager;
+import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
@@ -34,6 +36,9 @@ public class MainActivity extends BaseActivity {
     public static String userId, ownerId, organizationId, branchId, branchLabel, deviceId, userName, shopName, shopImage, LicenceKey, LicenceKeyRegDate,
             LicenceKeyExpireDate, currencyName, invoiceRunningStatus = "", cartOrderStatus = "",
             fastBilling, takeAway, dineIn, mess, reportPin, totalSaleData, todaySaleData;
+
+    private static final long DOUBLE_BACK_EXIT_INTERVAL_MS = 2000L;
+    private long lastBackPressAtHomeMs = 0L;
 
     public void setScreenSizeSmall() {
         Configuration configuration = getResources().getConfiguration();
@@ -65,6 +70,7 @@ public class MainActivity extends BaseActivity {
 
         initViews();
         registerFragmentScreenTracking();
+        setupBackPressHandler();
         userId = Common.getSavedUserData(this, "userId");
         ownerId = Common.getSavedUserData(this, "ownerId");
         BranchSession.loadFromPreferences(this);
@@ -106,15 +112,15 @@ public class MainActivity extends BaseActivity {
                 if (invoiceRunningStatus.equalsIgnoreCase("")) {
                     loadFragment(new Home(), false);
                 } else if (cartOrderStatus == null || cartOrderStatus.equalsIgnoreCase("")) {
-                    loadFragment(new CreatePos(), true);
+                    openAboveHome(new CreatePos());
                 } else if (cartOrderStatus.equalsIgnoreCase("table_wise")) {
-                    loadFragment(new InvoiceCompanyTable(), true);
+                    openAboveHome(new InvoiceCompanyTable());
                 } else if (cartOrderStatus.equalsIgnoreCase("take_away")) {
-                    loadFragment(new InvoiceTakeAway(), true);
+                    openAboveHome(new InvoiceTakeAway());
                 } else if (cartOrderStatus.equalsIgnoreCase("fast_billing")) {
-                    loadFragment(new CreatePos(), true);
+                    openAboveHome(new CreatePos());
                 } else if (cartOrderStatus.equalsIgnoreCase("mess")) {
-                    loadFragment(new InvoiceMess(), true);
+                    openAboveHome(new InvoiceMess());
                 }
             }
         } catch (Exception e) {
@@ -125,7 +131,7 @@ public class MainActivity extends BaseActivity {
         }
     }
 
-    /** Soft language change: reopen Settings after quiet recreate. */
+    /** Soft language change: reinflate Settings with the new locale (no Activity recreate). */
     public void reloadAfterLanguageChange() {
         Common.saveUserData(this, AppLanguage.KEY_REOPEN_USER_SETTING, "0");
         getSupportFragmentManager().popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
@@ -142,16 +148,115 @@ public class MainActivity extends BaseActivity {
 
     public void removeCurrentFragmentAndMoveBack() {
         FragmentManager fragmentManager = getSupportFragmentManager();
-        fragmentManager.popBackStack();
+        if (fragmentManager.getBackStackEntryCount() > 0) {
+            fragmentManager.popBackStack();
+        }
+    }
+
+    /**
+     * Prefer this for system/hardware back and toolbar back.
+     * Pops the back stack when possible; otherwise returns to Home
+     * (or requires double-back to exit when already on Home).
+     */
+    public void navigateBack() {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        if (fragmentManager.getBackStackEntryCount() > 0) {
+            fragmentManager.popBackStack();
+            return;
+        }
+        if (isHomeVisible()) {
+            handleHomeBackPress();
+        } else {
+            navigateToHome();
+        }
+    }
+
+    /** Clears history and shows Home without flicker from intermediate pops. */
+    public void navigateToHome() {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        if (fragmentManager.getBackStackEntryCount() > 0) {
+            fragmentManager.popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+        }
+        if (!isHomeVisible()) {
+            loadFragment(new Home(), false);
+        }
+        lastBackPressAtHomeMs = 0L;
+    }
+
+    /**
+     * Opens a screen with Home underneath so one back returns to Home.
+     * Same navigation flow as before; Home heavy work is deferred until it is actually visible.
+     */
+    public void openAboveHome(Fragment fragment) {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        if (fragmentManager.getBackStackEntryCount() > 0) {
+            fragmentManager.popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+        }
+        Fragment current = fragmentManager.findFragmentById(R.id.frameLayout);
+        if (!(current instanceof Home)) {
+            Home.deferHeavyWorkForNextStart = true;
+            FragmentTransaction homeTransaction = fragmentManager.beginTransaction();
+            homeTransaction.replace(R.id.frameLayout, new Home());
+            homeTransaction.commitNowAllowingStateLoss();
+        }
+        loadFragment(fragment, true);
+    }
+
+    /** Replace current screen without a prior pop (avoids flash of previous fragment). */
+    public void goBackTo(Fragment fragment, boolean addToBackStack) {
+        loadFragment(fragment, addToBackStack);
     }
 
     public void loadFragment(Fragment fragment, Boolean bool) {
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        transaction.setReorderingAllowed(true);
+        if (bool) {
+            // Forward navigation only — keep pops snappy
+            transaction.setCustomAnimations(
+                    android.R.anim.fade_in,
+                    android.R.anim.fade_out,
+                    0,
+                    0
+            );
+        }
         transaction.replace(R.id.frameLayout, fragment);
         if (bool) {
             transaction.addToBackStack(null);
         }
-        transaction.commit();
+        transaction.commitAllowingStateLoss();
+    }
+
+    private boolean isHomeVisible() {
+        Fragment current = getSupportFragmentManager().findFragmentById(R.id.frameLayout);
+        return current instanceof Home;
+    }
+
+    private void setupBackPressHandler() {
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (isHomeVisible()) {
+                    handleHomeBackPress();
+                    return;
+                }
+                FragmentManager fragmentManager = getSupportFragmentManager();
+                if (fragmentManager.getBackStackEntryCount() > 0) {
+                    fragmentManager.popBackStack();
+                } else {
+                    navigateToHome();
+                }
+            }
+        });
+    }
+
+    private void handleHomeBackPress() {
+        long now = System.currentTimeMillis();
+        if (now - lastBackPressAtHomeMs < DOUBLE_BACK_EXIT_INTERVAL_MS) {
+            finish();
+            return;
+        }
+        lastBackPressAtHomeMs = now;
+        Toast.makeText(this, R.string.press_back_again_to_exit, Toast.LENGTH_SHORT).show();
     }
 
     /** Track which POS screen (fragment) is visible for crash reports. */

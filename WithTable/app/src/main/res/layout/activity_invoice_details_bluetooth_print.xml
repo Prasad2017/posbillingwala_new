@@ -153,6 +153,20 @@
                 android:textColor="@color/black"
                 android:textSize="16dp" />
 
+            <TextView
+                android:id="@+id/twoShopPrintStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:fontFamily="@font/poppinsmedium"
+                android:gravity="center"
+                android:paddingStart="5dp"
+                android:paddingEnd="5dp"
+                android:text="@string/ui__original_copy_"
+                android:textColor="@color/black"
+                android:textSize="14dp"
+                android:visibility="gone" />
+
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
@@ -496,6 +510,20 @@
                 android:paddingEnd="5dp"
                 android:textColor="@color/black"
                 android:textSize="16dp" />
+
+            <TextView
+                android:id="@+id/threeShopPrintStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:fontFamily="@font/poppinsmedium"
+                android:gravity="center"
+                android:paddingStart="5dp"
+                android:paddingEnd="5dp"
+                android:text="@string/ui__original_copy_"
+                android:textColor="@color/black"
+                android:textSize="14dp"
+                android:visibility="gone" />
 
             <View
                 android:layout_width="match_parent"

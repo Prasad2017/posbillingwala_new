@@ -8,6 +8,11 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 import com.pos_billingwala.Extra.BranchSession;
+import com.pos_billingwala.Extra.CartItemType;
+import com.pos_billingwala.Extra.ComboValidator;
+import com.pos_billingwala.Model.ComboItemDraft;
+import com.pos_billingwala.Model.ComboItemResponse;
+import com.pos_billingwala.Model.ComboResponse;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.ExpenseResponse;
 import com.pos_billingwala.Model.FoodTypeResponse;
@@ -56,8 +61,12 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
     public static final String MEMBER_PAYMENT_TABLE = "member_payment";
     public static final String MESS_INVOICE_TABLE = "mess_invoice";
     public static final String MESS_TOKEN_TABLE = "mess_token";
+    public static final String COMBO_TABLE = "combo";
+    public static final String COMBO_ITEM_TABLE = "combo_item";
+    public static final String CART_COMBO_ITEM_TABLE = "cart_combo_item";
+    public static final String INVOICE_COMBO_ITEM_TABLE = "invoice_combo_item";
     // Database Version
-    public static final int DATABASE_VERSION = 18;
+    public static final int DATABASE_VERSION = 21;
 
     /**********************************************  QUERY START PART  **********************************************/
 
@@ -125,9 +134,9 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             + " invoiceProductStatus TINYINT,"
             + " portionId VARCHAR, portionName VARCHAR, snapshotProductName VARCHAR, snapshotLinePrice VARCHAR)";
 
-    public final String PRINTER_SETTING_QUERY = "CREATE TABLE IF NOT EXISTS " + PRINTER_SETTING_TABLE + "(settingId INTEGER PRIMARY KEY AUTOINCREMENT, printerName VARCHAR, invoicePrefix VARCHAR, invoiceTitle VARCHAR, invoiceTermsCondition VARCHAR, logoUse VARCHAR, paymentUse VARCHAR, customerUse VARCHAR, productQuantityUpdate VARCHAR, bluetoothAddress VARCHAR, bluetoothKOTAddress VARCHAR, KOTPrinterName VARCHAR, printerFeedLines VARCHAR, KotPrinterFeedLines VARCHAR, settingStatus TINYINT)";
+    public final String PRINTER_SETTING_QUERY = "CREATE TABLE IF NOT EXISTS " + PRINTER_SETTING_TABLE + "(settingId INTEGER PRIMARY KEY AUTOINCREMENT, printerName VARCHAR, invoicePrefix VARCHAR, invoiceTitle VARCHAR, invoiceTermsCondition VARCHAR, logoUse VARCHAR, paymentUse VARCHAR, customerUse VARCHAR, productQuantityUpdate VARCHAR, duplicateBillUse VARCHAR, bluetoothAddress VARCHAR, bluetoothKOTAddress VARCHAR, KOTPrinterName VARCHAR, printerFeedLines VARCHAR, KotPrinterFeedLines VARCHAR, settingStatus TINYINT)";
 
-    public final String COMPANY_QUERY = "CREATE TABLE IF NOT EXISTS " + COMPANY_TABLE + "(companyId INTEGER PRIMARY KEY AUTOINCREMENT, companyName VARCHAR, cashierName VARCHAR, companyMobile VARCHAR, " + "companyAddress VARCHAR, currencyName VARCHAR, countryName VARCHAR, stateName VARCHAR, tableStatus VARCHAR, noOfTable VARCHAR,gstStatus VARCHAR, gstNumber VARCHAR, shopCGST VARCHAR, shopSGST VARCHAR, panNumber VARCHAR, companyFssis VARCHAR, companyLogo VARCHAR, paymentLogo VARCHAR, companyStatus TINYINT)";
+    public final String COMPANY_QUERY = "CREATE TABLE IF NOT EXISTS " + COMPANY_TABLE + "(companyId INTEGER PRIMARY KEY AUTOINCREMENT, companyName VARCHAR, cashierName VARCHAR, companyMobile VARCHAR, " + "companyAddress VARCHAR, shopName1 VARCHAR, shopName2 VARCHAR, addressLine1 VARCHAR, addressLine2 VARCHAR, addressLine3 VARCHAR, phoneNo1 VARCHAR, phoneNo2 VARCHAR, currencyName VARCHAR, countryName VARCHAR, stateName VARCHAR, tableStatus VARCHAR, noOfTable VARCHAR,gstStatus VARCHAR, gstNumber VARCHAR, shopCGST VARCHAR, shopSGST VARCHAR, panNumber VARCHAR, companyFssis VARCHAR, companyLogo VARCHAR, paymentLogo VARCHAR, companyStatus TINYINT)";
 
     public final String INVENTORY_QUERY = "CREATE TABLE IF NOT EXISTS " + INVENTORY_TABLE + "(inventoryId INTEGER PRIMARY KEY AUTOINCREMENT, productId VARCHAR, productInventoryQuantity VARCHAR, afterSaleInventoryQuantity VARCHAR, saleInventoryQuantity VARCHAR, inventoryDate VARCHAR, inventoryNetworkStatus VARCHAR, inventoryStatus TINYINT)";
 
@@ -143,11 +152,69 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             + " verifiedDate VARCHAR, tokenNetworkStatus VARCHAR, tokenState VARCHAR DEFAULT 'active',"
             + " tokenStatus TINYINT DEFAULT 0, verifyNetworkStatus VARCHAR, verifyStatus TINYINT DEFAULT 0)";
 
+    public final String COMBO_QUERY = "CREATE TABLE IF NOT EXISTS " + COMBO_TABLE
+            + "(comboId INTEGER PRIMARY KEY AUTOINCREMENT,"
+            + " comboName VARCHAR NOT NULL,"
+            + " comboCode VARCHAR,"
+            + " comboPrice VARCHAR NOT NULL,"
+            + " comboCGST VARCHAR,"
+            + " comboSGST VARCHAR,"
+            + " comboWithGSTPrice VARCHAR,"
+            + " comboActiveStatus VARCHAR DEFAULT '1',"
+            + " comboDeletedStatus VARCHAR DEFAULT '0',"
+            + " comboNetworkStatus VARCHAR,"
+            + " comboStatus TINYINT DEFAULT 0,"
+            + " comboSortOrder INTEGER DEFAULT 0)";
+
+    public final String COMBO_ITEM_QUERY = "CREATE TABLE IF NOT EXISTS " + COMBO_ITEM_TABLE
+            + "(comboItemId INTEGER PRIMARY KEY AUTOINCREMENT,"
+            + " comboId INTEGER NOT NULL,"
+            + " productId INTEGER NOT NULL,"
+            + " portionId INTEGER,"
+            + " comboItemQuantity VARCHAR NOT NULL DEFAULT '1',"
+            + " comboItemSortOrder INTEGER DEFAULT 0,"
+            + " comboItemDeletedStatus VARCHAR DEFAULT '0',"
+            + " comboItemNetworkStatus VARCHAR,"
+            + " comboItemStatus TINYINT DEFAULT 0)";
+
+    public final String CART_COMBO_ITEM_QUERY = "CREATE TABLE IF NOT EXISTS " + CART_COMBO_ITEM_TABLE
+            + "(cartComboItemId INTEGER PRIMARY KEY AUTOINCREMENT,"
+            + " cartId INTEGER NOT NULL,"
+            + " comboId INTEGER,"
+            + " productId VARCHAR,"
+            + " productNameSnapshot VARCHAR,"
+            + " portionId VARCHAR,"
+            + " portionNameSnapshot VARCHAR,"
+            + " quantity VARCHAR NOT NULL DEFAULT '1',"
+            + " sortOrder INTEGER DEFAULT 0)";
+
+    public final String INVOICE_COMBO_ITEM_QUERY = "CREATE TABLE IF NOT EXISTS " + INVOICE_COMBO_ITEM_TABLE
+            + "(invoiceComboItemId INTEGER PRIMARY KEY AUTOINCREMENT,"
+            + " invoiceNumber VARCHAR,"
+            + " invoiceProductNetworkStatus VARCHAR,"
+            + " comboId VARCHAR,"
+            + " comboNetworkStatus VARCHAR,"
+            + " productId VARCHAR,"
+            + " productNameSnapshot VARCHAR,"
+            + " portionId VARCHAR,"
+            + " portionNameSnapshot VARCHAR,"
+            + " quantity VARCHAR NOT NULL DEFAULT '1',"
+            + " sortOrder INTEGER DEFAULT 0,"
+            + " invoiceComboItemNetworkStatus VARCHAR,"
+            + " invoiceComboItemStatus TINYINT DEFAULT 0)";
+
     /**********************************************  QUERY END PART  **********************************************/
 
     /********************************************** Alter Query  **********************************************/
     public final String ALTER_COMPANY_QUERY = "ALTER TABLE " + COMPANY_TABLE + " ADD COLUMN companyLogo VARCHAR";
     public final String ALTER_COMPANY_QR_QUERY = "ALTER TABLE " + COMPANY_TABLE + " ADD COLUMN paymentLogo VARCHAR";
+    public final String ALTER_COMPANY_SHOP_NAME_1_QUERY = "ALTER TABLE " + COMPANY_TABLE + " ADD COLUMN shopName1 VARCHAR";
+    public final String ALTER_COMPANY_SHOP_NAME_2_QUERY = "ALTER TABLE " + COMPANY_TABLE + " ADD COLUMN shopName2 VARCHAR";
+    public final String ALTER_COMPANY_ADDRESS_LINE_1_QUERY = "ALTER TABLE " + COMPANY_TABLE + " ADD COLUMN addressLine1 VARCHAR";
+    public final String ALTER_COMPANY_ADDRESS_LINE_2_QUERY = "ALTER TABLE " + COMPANY_TABLE + " ADD COLUMN addressLine2 VARCHAR";
+    public final String ALTER_COMPANY_ADDRESS_LINE_3_QUERY = "ALTER TABLE " + COMPANY_TABLE + " ADD COLUMN addressLine3 VARCHAR";
+    public final String ALTER_COMPANY_PHONE_NO_1_QUERY = "ALTER TABLE " + COMPANY_TABLE + " ADD COLUMN phoneNo1 VARCHAR";
+    public final String ALTER_COMPANY_PHONE_NO_2_QUERY = "ALTER TABLE " + COMPANY_TABLE + " ADD COLUMN phoneNo2 VARCHAR";
     public final String ALTER_INVENTORY_QUERY = "ALTER TABLE " + INVENTORY_TABLE + " ADD COLUMN saleInventoryQuantity VARCHAR";
     public final String ALTER_PRODUCT_QUERY = "ALTER TABLE " + PRODUCT_TABLE + " ADD COLUMN productCode VARCHAR";
     public final String ALTER_CATEGORY_DELETED_QUERY = "ALTER TABLE " + PRODUCT_CATEGORY_TABLE + " ADD COLUMN categoryDeletedStatus VARCHAR";
@@ -161,6 +228,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
     public final String ALTER_PRINTER_PRODUCT_QUANTITY_SETTING_QUERY = "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN productQuantityUpdate VARCHAR";
     public final String ALTER_PRINTER_FEED_LINES_SETTING_QUERY = "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN printerFeedLines VARCHAR";
     public final String ALTER_KOT_PRINTER_FEED_LINES_SETTING_QUERY = "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN KotPrinterFeedLines VARCHAR";
+    public final String ALTER_PRINTER_DUPLICATE_BILL_SETTING_QUERY = "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN duplicateBillUse VARCHAR";
     public final String ALTER_CATEGORY_FOOD_TYPE_QUERY = "ALTER TABLE " + PRODUCT_CATEGORY_TABLE + " ADD COLUMN foodTypeId INTEGER";
     public final String ALTER_PRODUCT_SUBCATEGORY_QUERY = "ALTER TABLE " + PRODUCT_TABLE + " ADD COLUMN subcategoryId INTEGER";
     public final String ALTER_PRODUCT_PORTION_MASTER_QUERY = "ALTER TABLE " + PRODUCT_PORTION_TABLE + " ADD COLUMN portionMasterId INTEGER";
@@ -184,6 +252,12 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
     public final String ALTER_EXPENSES_ORG_QUERY = "ALTER TABLE " + EXPENSES_TABLE + " ADD COLUMN organizationId VARCHAR";
     public final String ALTER_EXPENSES_BRANCH_QUERY = "ALTER TABLE " + EXPENSES_TABLE + " ADD COLUMN branchId VARCHAR";
     public final String ALTER_EXPENSES_DEVICE_QUERY = "ALTER TABLE " + EXPENSES_TABLE + " ADD COLUMN deviceId VARCHAR";
+    public final String ALTER_CART_ITEM_TYPE_QUERY = "ALTER TABLE " + CART_PRODUCT_TABLE + " ADD COLUMN cartItemType VARCHAR DEFAULT 'PRODUCT'";
+    public final String ALTER_CART_COMBO_ID_QUERY = "ALTER TABLE " + CART_PRODUCT_TABLE + " ADD COLUMN comboId VARCHAR";
+    public final String ALTER_CART_SNAPSHOT_COMBO_COMPONENTS_QUERY = "ALTER TABLE " + CART_PRODUCT_TABLE + " ADD COLUMN snapshotComboComponents VARCHAR";
+    public final String ALTER_INVOICE_ITEM_TYPE_QUERY = "ALTER TABLE " + INVOICE_PRODUCT_TABLE + " ADD COLUMN invoiceItemType VARCHAR DEFAULT 'PRODUCT'";
+    public final String ALTER_INVOICE_COMBO_ID_QUERY = "ALTER TABLE " + INVOICE_PRODUCT_TABLE + " ADD COLUMN comboId VARCHAR";
+    public final String ALTER_INVOICE_SNAPSHOT_COMBO_COMPONENTS_QUERY = "ALTER TABLE " + INVOICE_PRODUCT_TABLE + " ADD COLUMN snapshotComboComponents VARCHAR";
 
     /********************************************** Alter Query  ***********************************************/
 
@@ -212,6 +286,10 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         db.execSQL(MEMBER_PAYMENT_QUERY);
         db.execSQL(MESS_INVOICE_QUERY);
         db.execSQL(MESS_TOKEN_QUERY);
+        db.execSQL(COMBO_QUERY);
+        db.execSQL(COMBO_ITEM_QUERY);
+        db.execSQL(CART_COMBO_ITEM_QUERY);
+        db.execSQL(INVOICE_COMBO_ITEM_QUERY);
         ensureFoodTypeCatalog(db);
     }
 
@@ -241,6 +319,14 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
     public void ensureAdditiveSchema(SQLiteDatabase db) {
         addColumnIfNotExists(db, COMPANY_TABLE, "companyLogo", ALTER_COMPANY_QUERY);
         addColumnIfNotExists(db, COMPANY_TABLE, "paymentLogo", ALTER_COMPANY_QR_QUERY);
+        addColumnIfNotExists(db, COMPANY_TABLE, "shopName1", ALTER_COMPANY_SHOP_NAME_1_QUERY);
+        addColumnIfNotExists(db, COMPANY_TABLE, "shopName2", ALTER_COMPANY_SHOP_NAME_2_QUERY);
+        addColumnIfNotExists(db, COMPANY_TABLE, "addressLine1", ALTER_COMPANY_ADDRESS_LINE_1_QUERY);
+        addColumnIfNotExists(db, COMPANY_TABLE, "addressLine2", ALTER_COMPANY_ADDRESS_LINE_2_QUERY);
+        addColumnIfNotExists(db, COMPANY_TABLE, "addressLine3", ALTER_COMPANY_ADDRESS_LINE_3_QUERY);
+        addColumnIfNotExists(db, COMPANY_TABLE, "phoneNo1", ALTER_COMPANY_PHONE_NO_1_QUERY);
+        addColumnIfNotExists(db, COMPANY_TABLE, "phoneNo2", ALTER_COMPANY_PHONE_NO_2_QUERY);
+        migrateCompanyStructuredFields(db);
         addColumnIfNotExists(db, INVENTORY_TABLE, "saleInventoryQuantity", ALTER_INVENTORY_QUERY);
         addColumnIfNotExists(db, PRODUCT_TABLE, "productCode", ALTER_PRODUCT_QUERY);
         addColumnIfNotExists(db, PRODUCT_CATEGORY_TABLE, "categoryDeletedStatus", ALTER_CATEGORY_DELETED_QUERY);
@@ -254,6 +340,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "productQuantityUpdate", ALTER_PRINTER_PRODUCT_QUANTITY_SETTING_QUERY);
         addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "printerFeedLines", ALTER_PRINTER_FEED_LINES_SETTING_QUERY);
         addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "KotPrinterFeedLines", ALTER_KOT_PRINTER_FEED_LINES_SETTING_QUERY);
+        addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "duplicateBillUse", ALTER_PRINTER_DUPLICATE_BILL_SETTING_QUERY);
         // Phase 3 catalog foundation (additive only)
         db.execSQL(FOOD_TYPE_QUERY);
         db.execSQL(PRODUCT_SUBCATEGORY_QUERY);
@@ -285,6 +372,16 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         addColumnIfNotExists(db, EXPENSES_TABLE, "deviceId", ALTER_EXPENSES_DEVICE_QUERY);
         ensureFoodTypeCatalog(db);
         db.execSQL(MESS_TOKEN_QUERY);
+        db.execSQL(COMBO_QUERY);
+        db.execSQL(COMBO_ITEM_QUERY);
+        db.execSQL(CART_COMBO_ITEM_QUERY);
+        db.execSQL(INVOICE_COMBO_ITEM_QUERY);
+        addColumnIfNotExists(db, CART_PRODUCT_TABLE, "cartItemType", ALTER_CART_ITEM_TYPE_QUERY);
+        addColumnIfNotExists(db, CART_PRODUCT_TABLE, "comboId", ALTER_CART_COMBO_ID_QUERY);
+        addColumnIfNotExists(db, CART_PRODUCT_TABLE, "snapshotComboComponents", ALTER_CART_SNAPSHOT_COMBO_COMPONENTS_QUERY);
+        addColumnIfNotExists(db, INVOICE_PRODUCT_TABLE, "invoiceItemType", ALTER_INVOICE_ITEM_TYPE_QUERY);
+        addColumnIfNotExists(db, INVOICE_PRODUCT_TABLE, "comboId", ALTER_INVOICE_COMBO_ID_QUERY);
+        addColumnIfNotExists(db, INVOICE_PRODUCT_TABLE, "snapshotComboComponents", ALTER_INVOICE_SNAPSHOT_COMBO_COMPONENTS_QUERY);
         ensureUniqueSyncIndexes(db);
     }
 
@@ -336,6 +433,32 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             db.execSQL("CREATE INDEX IF NOT EXISTS idx_subcategory_category ON " + PRODUCT_SUBCATEGORY_TABLE + "(categoryId)");
             db.execSQL("CREATE INDEX IF NOT EXISTS idx_product_subcategory ON " + PRODUCT_TABLE + "(subcategoryId)");
             db.execSQL("CREATE INDEX IF NOT EXISTS idx_portion_product ON " + PRODUCT_PORTION_TABLE + "(productId)");
+
+            dedupeByNetworkStatus(db, COMBO_TABLE, "comboId", "comboNetworkStatus");
+            dedupeByNetworkStatus(db, COMBO_ITEM_TABLE, "comboItemId", "comboItemNetworkStatus");
+            dedupeByNetworkStatus(db, INVOICE_COMBO_ITEM_TABLE, "invoiceComboItemId", "invoiceComboItemNetworkStatus");
+
+            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_combo_network_status ON "
+                    + COMBO_TABLE + "(comboNetworkStatus) "
+                    + "WHERE comboNetworkStatus IS NOT NULL AND comboNetworkStatus != ''");
+            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_combo_item_network_status ON "
+                    + COMBO_ITEM_TABLE + "(comboItemNetworkStatus) "
+                    + "WHERE comboItemNetworkStatus IS NOT NULL AND comboItemNetworkStatus != ''");
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_combo_item_combo ON " + COMBO_ITEM_TABLE + "(comboId)");
+            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_combo_item_product_portion ON "
+                    + COMBO_ITEM_TABLE + "(comboId, productId, IFNULL(portionId, '')) "
+                    + "WHERE comboItemDeletedStatus = '0'");
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_combo_deleted_status ON " + COMBO_TABLE + "(comboDeletedStatus)");
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_combo_code ON " + COMBO_TABLE + "(comboCode)");
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_combo_name ON " + COMBO_TABLE + "(comboName)");
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_cart_combo_item_cart ON " + CART_COMBO_ITEM_TABLE + "(cartId)");
+            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_invoice_combo_item_network_status ON "
+                    + INVOICE_COMBO_ITEM_TABLE + "(invoiceComboItemNetworkStatus) "
+                    + "WHERE invoiceComboItemNetworkStatus IS NOT NULL AND invoiceComboItemNetworkStatus != ''");
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_invoice_combo_item_invoice ON "
+                    + INVOICE_COMBO_ITEM_TABLE + "(invoiceNumber)");
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_invoice_combo_item_parent ON "
+                    + INVOICE_COMBO_ITEM_TABLE + "(invoiceProductNetworkStatus)");
         } catch (Exception e) {
             // Index may fail if unexpected duplicates remain; upsert helpers still protect inserts
             e.printStackTrace();
@@ -729,6 +852,31 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             if (cursor != null) {
                 cursor.close();
             }
+        }
+    }
+
+    /**
+     * One-time safe copy of legacy store fields into structured columns.
+     * Never overwrites non-empty structured values. Never drops legacy columns.
+     */
+    public void migrateCompanyStructuredFields(SQLiteDatabase db) {
+        try {
+            db.execSQL("UPDATE " + COMPANY_TABLE
+                    + " SET shopName1 = companyName"
+                    + " WHERE (shopName1 IS NULL OR TRIM(shopName1) = '')"
+                    + " AND companyName IS NOT NULL AND TRIM(companyName) != ''");
+            db.execSQL("UPDATE " + COMPANY_TABLE
+                    + " SET addressLine1 = companyAddress"
+                    + " WHERE (addressLine1 IS NULL OR TRIM(addressLine1) = '')"
+                    + " AND (addressLine2 IS NULL OR TRIM(addressLine2) = '')"
+                    + " AND (addressLine3 IS NULL OR TRIM(addressLine3) = '')"
+                    + " AND companyAddress IS NOT NULL AND TRIM(companyAddress) != ''");
+            db.execSQL("UPDATE " + COMPANY_TABLE
+                    + " SET phoneNo1 = companyMobile"
+                    + " WHERE (phoneNo1 IS NULL OR TRIM(phoneNo1) = '')"
+                    + " AND companyMobile IS NOT NULL AND TRIM(companyMobile) != ''");
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -1544,6 +1692,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         contentValues.put("snapshotLinePrice", productChangePrice);
         putOptionalColumn(contentValues, "portionId", portionId);
         putOptionalColumn(contentValues, "portionName", portionName);
+        contentValues.put("cartItemType", CartItemType.PRODUCT);
 
         db.insert(CART_PRODUCT_TABLE, null, contentValues);
         db.close();
@@ -1563,6 +1712,9 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         mapStringColumn(cursor, "portionName", item::setPortionName);
         mapStringColumn(cursor, "snapshotProductName", item::setSnapshotProductName);
         mapStringColumn(cursor, "snapshotLinePrice", item::setSnapshotLinePrice);
+        mapStringColumn(cursor, "cartItemType", item::setCartItemType);
+        mapStringColumn(cursor, "comboId", item::setComboId);
+        mapStringColumn(cursor, "snapshotComboComponents", item::setSnapshotComboComponents);
     }
 
     private void mapInvoiceLineSnapshots(Cursor cursor, InvoiceProductResponse item) {
@@ -1570,6 +1722,9 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         mapStringColumn(cursor, "portionName", item::setPortionName);
         mapStringColumn(cursor, "snapshotProductName", item::setSnapshotProductName);
         mapStringColumn(cursor, "snapshotLinePrice", item::setSnapshotLinePrice);
+        mapStringColumn(cursor, "invoiceItemType", item::setInvoiceItemType);
+        mapStringColumn(cursor, "comboId", item::setComboId);
+        mapStringColumn(cursor, "snapshotComboComponents", item::setSnapshotComboComponents);
     }
 
     private interface StringColumnConsumer {
@@ -1583,7 +1738,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         }
     }
 
-    public boolean addCompanyPrinterSetting(String printerName, String KOTPrinterName, String invoicePrefix, String invoiceTitle, String logoUse, String paymentUse, String customerUse, String productQuantityUpdate, String invoiceTermsCondition, String bluetoothAddress, String bluetoothKOTAddress, String printerFeedLines, String KotPrinterFeedLines, int settingStatus) {
+    public boolean addCompanyPrinterSetting(String printerName, String KOTPrinterName, String invoicePrefix, String invoiceTitle, String logoUse, String paymentUse, String customerUse, String productQuantityUpdate, String duplicateBillUse, String invoiceTermsCondition, String bluetoothAddress, String bluetoothKOTAddress, String printerFeedLines, String KotPrinterFeedLines, int settingStatus) {
 
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
@@ -1596,6 +1751,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         contentValues.put("paymentUse", paymentUse);
         contentValues.put("customerUse", customerUse);
         contentValues.put("productQuantityUpdate", productQuantityUpdate);
+        contentValues.put("duplicateBillUse", duplicateBillUse != null ? duplicateBillUse : "off");
         contentValues.put("invoiceTermsCondition", invoiceTermsCondition);
         contentValues.put("bluetoothAddress", bluetoothAddress);
         contentValues.put("bluetoothKOTAddress", bluetoothKOTAddress);
@@ -1622,7 +1778,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
 
     }
 
-    public void updateCompanyPrinterSetting(String settingId, String printerName, String KOTPrinterName, String invoicePrefix, String invoiceTitle, String logoUse, String paymentUse, String customerUse, String productQuantityUpdate, String invoiceTermsCondition, String bluetoothAddress, String bluetoothKOTAddress, String printerFeedLines, String KotPrinterFeedLines, int settingStatus) {
+    public void updateCompanyPrinterSetting(String settingId, String printerName, String KOTPrinterName, String invoicePrefix, String invoiceTitle, String logoUse, String paymentUse, String customerUse, String productQuantityUpdate, String duplicateBillUse, String invoiceTermsCondition, String bluetoothAddress, String bluetoothKOTAddress, String printerFeedLines, String KotPrinterFeedLines, int settingStatus) {
 
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
@@ -1635,6 +1791,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         contentValues.put("paymentUse", paymentUse);
         contentValues.put("customerUse", customerUse);
         contentValues.put("productQuantityUpdate", productQuantityUpdate);
+        contentValues.put("duplicateBillUse", duplicateBillUse != null ? duplicateBillUse : "off");
         contentValues.put("bluetoothAddress", bluetoothAddress);
         contentValues.put("bluetoothKOTAddress", bluetoothKOTAddress);
         contentValues.put("printerFeedLines", printerFeedLines);
@@ -1649,14 +1806,46 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
 
     public boolean addCompanyDetails(String companyLogo, String companyName, String cashierName, String companyMobile, String companyAddress, String currencyName, String tableStatus, String noOfTable, String countryName,
                                      String stateName, String gstStatus, String gstNumber, String shopCGST, String shopSGST, String panNumber, String companyFssis, int companyStatus, String paymentLogo) {
+        // Legacy callers: map single address/mobile/name into structured primary fields
+        return addCompanyDetails(companyLogo, companyName, "", cashierName, companyMobile, "", companyAddress, "", "", currencyName, tableStatus, noOfTable, countryName,
+                stateName, gstStatus, gstNumber, shopCGST, shopSGST, panNumber, companyFssis, companyStatus, paymentLogo);
+    }
+
+    public boolean addCompanyDetails(String companyLogo, String shopName1, String shopName2, String cashierName, String phoneNo1, String phoneNo2,
+                                     String addressLine1, String addressLine2, String addressLine3, String currencyName, String tableStatus, String noOfTable, String countryName,
+                                     String stateName, String gstStatus, String gstNumber, String shopCGST, String shopSGST, String panNumber, String companyFssis, int companyStatus, String paymentLogo) {
 
         SQLiteDatabase db = this.getWritableDatabase();
-        ContentValues contentValues = new ContentValues();
+        ContentValues contentValues = putCompanyContentValues(companyLogo, shopName1, shopName2, cashierName, phoneNo1, phoneNo2,
+                addressLine1, addressLine2, addressLine3, currencyName, tableStatus, noOfTable, countryName,
+                stateName, gstStatus, gstNumber, shopCGST, shopSGST, panNumber, companyFssis, companyStatus, paymentLogo);
+        db.insert(COMPANY_TABLE, null, contentValues);
+        db.close();
+        return true;
+    }
 
-        contentValues.put("companyName", companyName);
+    private ContentValues putCompanyContentValues(String companyLogo, String shopName1, String shopName2, String cashierName, String phoneNo1, String phoneNo2,
+                                                  String addressLine1, String addressLine2, String addressLine3, String currencyName, String tableStatus, String noOfTable, String countryName,
+                                                  String stateName, String gstStatus, String gstNumber, String shopCGST, String shopSGST, String panNumber, String companyFssis, int companyStatus, String paymentLogo) {
+        ContentValues contentValues = new ContentValues();
+        String resolvedShopName1 = shopName1 != null ? shopName1.trim() : "";
+        String resolvedPhone1 = phoneNo1 != null ? phoneNo1.trim() : "";
+        String resolvedAddress1 = addressLine1 != null ? addressLine1.trim() : "";
+        String resolvedAddress2 = addressLine2 != null ? addressLine2.trim() : "";
+        String resolvedAddress3 = addressLine3 != null ? addressLine3.trim() : "";
+        String legacyAddress = joinAddressLines(resolvedAddress1, resolvedAddress2, resolvedAddress3);
+
+        contentValues.put("companyName", resolvedShopName1);
+        contentValues.put("shopName1", resolvedShopName1);
+        contentValues.put("shopName2", shopName2 != null ? shopName2.trim() : "");
         contentValues.put("cashierName", cashierName);
-        contentValues.put("companyMobile", companyMobile);
-        contentValues.put("companyAddress", companyAddress);
+        contentValues.put("companyMobile", resolvedPhone1);
+        contentValues.put("phoneNo1", resolvedPhone1);
+        contentValues.put("phoneNo2", phoneNo2 != null ? phoneNo2.trim() : "");
+        contentValues.put("companyAddress", legacyAddress);
+        contentValues.put("addressLine1", resolvedAddress1);
+        contentValues.put("addressLine2", resolvedAddress2);
+        contentValues.put("addressLine3", resolvedAddress3);
         contentValues.put("currencyName", currencyName);
         contentValues.put("tableStatus", tableStatus);
         contentValues.put("noOfTable", noOfTable);
@@ -1671,12 +1860,29 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         contentValues.put("companyLogo", companyLogo);
         contentValues.put("companyStatus", companyStatus);
         contentValues.put("paymentLogo", paymentLogo);
+        return contentValues;
+    }
 
-        db.insert(COMPANY_TABLE, null, contentValues);
-        db.close();
+    private static String joinAddressLines(String line1, String line2, String line3) {
+        StringBuilder composed = new StringBuilder();
+        appendAddressPart(composed, line1);
+        appendAddressPart(composed, line2);
+        appendAddressPart(composed, line3);
+        return composed.toString();
+    }
 
-        return true;
-
+    private static void appendAddressPart(StringBuilder builder, String part) {
+        if (part == null) {
+            return;
+        }
+        String trimmed = part.trim();
+        if (trimmed.isEmpty()) {
+            return;
+        }
+        if (builder.length() > 0) {
+            builder.append('\n');
+        }
+        builder.append(trimmed);
     }
 
     public List<InvoiceResponse> checkPaymentMode(String invoiceNumber) {
@@ -1838,11 +2044,20 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             contentValues.put("snapshotLinePrice", linePrice);
             putOptionalColumn(contentValues, "portionId", productCartResponse.getPortionId());
             putOptionalColumn(contentValues, "portionName", productCartResponse.getPortionName());
+            String itemType = CartItemType.normalize(productCartResponse.getCartItemType());
+            contentValues.put("invoiceItemType", itemType);
+            putOptionalColumn(contentValues, "comboId", productCartResponse.getComboId());
+            putOptionalColumn(contentValues, "snapshotComboComponents", productCartResponse.getSnapshotComboComponents());
             BranchSession.applyScope(contentValues);
 
             db.insert(INVOICE_PRODUCT_TABLE, null, contentValues);
+            String lineNetworkStatus = contentValues.getAsString("invoiceProductNetworkStatus");
+            if (CartItemType.isCombo(itemType)) {
+                copyCartComboItemsToInvoice(db, productCartResponse.getCartId(), invoiceNumber, lineNetworkStatus);
+            } else {
+                updateInventoryQuantity(productCartResponse.getProductId());
+            }
             updateCartStatus(productCartResponse.getCartId());
-            updateInventoryQuantity(productCartResponse.getProductId());
 
         }
 
@@ -1886,32 +2101,20 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
 
     public void updateCompanyDetails(String companyLogo, String companyId, String companyName, String cashierName, String companyMobile, String companyAddress, String currencyName, String tableStatus, String noOfTable, String countryName,
                                      String stateName, String gstStatus, String gstNumber, String shopCGST, String shopSGST, String panNumber, String companyFssis, int companyStatus, String paymentLogo) {
+        updateCompanyDetails(companyLogo, companyId, companyName, "", cashierName, companyMobile, "", companyAddress, "", "", currencyName, tableStatus, noOfTable, countryName,
+                stateName, gstStatus, gstNumber, shopCGST, shopSGST, panNumber, companyFssis, companyStatus, paymentLogo);
+    }
+
+    public void updateCompanyDetails(String companyLogo, String companyId, String shopName1, String shopName2, String cashierName, String phoneNo1, String phoneNo2,
+                                     String addressLine1, String addressLine2, String addressLine3, String currencyName, String tableStatus, String noOfTable, String countryName,
+                                     String stateName, String gstStatus, String gstNumber, String shopCGST, String shopSGST, String panNumber, String companyFssis, int companyStatus, String paymentLogo) {
 
         SQLiteDatabase db = this.getWritableDatabase();
-        ContentValues contentValues = new ContentValues();
-
-        contentValues.put("companyName", companyName);
-        contentValues.put("cashierName", cashierName);
-        contentValues.put("companyMobile", companyMobile);
-        contentValues.put("companyAddress", companyAddress);
-        contentValues.put("currencyName", currencyName);
-        contentValues.put("tableStatus", tableStatus);
-        contentValues.put("noOfTable", noOfTable);
-        contentValues.put("countryName", countryName);
-        contentValues.put("stateName", stateName);
-        contentValues.put("gstStatus", gstStatus);
-        contentValues.put("gstNumber", gstNumber);
-        contentValues.put("shopCGST", shopCGST.trim());
-        contentValues.put("shopSGST", shopSGST.trim());
-        contentValues.put("panNumber", panNumber);
-        contentValues.put("companyFssis", companyFssis);
-        contentValues.put("companyLogo", companyLogo);
-        contentValues.put("companyStatus", companyStatus);
-        contentValues.put("paymentLogo", paymentLogo);
-
+        ContentValues contentValues = putCompanyContentValues(companyLogo, shopName1, shopName2, cashierName, phoneNo1, phoneNo2,
+                addressLine1, addressLine2, addressLine3, currencyName, tableStatus, noOfTable, countryName,
+                stateName, gstStatus, gstNumber, shopCGST != null ? shopCGST.trim() : "", shopSGST != null ? shopSGST.trim() : "", panNumber, companyFssis, companyStatus, paymentLogo);
         db.update(COMPANY_TABLE, contentValues, "companyId=?", new String[]{companyId});
         db.close();
-
     }
 
     public void updateCart(String cartId, String productQuantity, String productAmount) {
@@ -2041,26 +2244,27 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
     public List<ProductResponse> getHomeProductList(String categoryName, String tableNumber, String cartOrderStatus, String subcategoryId) {
 
         List<ProductResponse> productResponseList = new ArrayList<>();
-        if (categoryName == null || categoryName.trim().isEmpty()) {
-            return productResponseList;
-        }
 
         SQLiteDatabase db = this.getReadableDatabase();
         String safeTable = tableNumber != null ? tableNumber : "";
         String safeOrder = cartOrderStatus != null ? cartOrderStatus : "";
+        boolean allCategories = categoryName == null || categoryName.trim().isEmpty();
 
         String sql = "SELECT product.* FROM " + PRODUCT_TABLE + " product "
                 + "LEFT JOIN " + PRODUCT_CATEGORY_TABLE + " ON " + PRODUCT_CATEGORY_TABLE + ".categoryName = product.categoryName "
-                + "WHERE product.categoryName = ? AND IFNULL(product.productDeletedStatus, '0') = '0'";
+                + "WHERE IFNULL(product.productDeletedStatus, '0') = '0'";
 
-        String[] args;
+        List<String> argList = new ArrayList<>();
+        if (!allCategories) {
+            sql += " AND product.categoryName = ?";
+            argList.add(categoryName);
+        }
         if (subcategoryId != null && !subcategoryId.trim().isEmpty()) {
             sql += " AND product.subcategoryId = ?";
-            args = new String[]{categoryName, subcategoryId};
-        } else {
-            args = new String[]{categoryName};
+            argList.add(subcategoryId);
         }
         sql += " GROUP BY product.productName";
+        String[] args = argList.toArray(new String[0]);
 
         Cursor cursor = null;
         try {
@@ -2383,6 +2587,34 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             companyResponse.setCashierName(cursor.getString(cursor.getColumnIndex("cashierName")));
             companyResponse.setCompanyMobile(cursor.getString(cursor.getColumnIndex("companyMobile")));
             companyResponse.setCompanyAddress(cursor.getString(cursor.getColumnIndex("companyAddress")));
+            int shopName1Idx = cursor.getColumnIndex("shopName1");
+            if (shopName1Idx >= 0) {
+                companyResponse.setShopName1(cursor.getString(shopName1Idx));
+            }
+            int shopName2Idx = cursor.getColumnIndex("shopName2");
+            if (shopName2Idx >= 0) {
+                companyResponse.setShopName2(cursor.getString(shopName2Idx));
+            }
+            int addressLine1Idx = cursor.getColumnIndex("addressLine1");
+            if (addressLine1Idx >= 0) {
+                companyResponse.setAddressLine1(cursor.getString(addressLine1Idx));
+            }
+            int addressLine2Idx = cursor.getColumnIndex("addressLine2");
+            if (addressLine2Idx >= 0) {
+                companyResponse.setAddressLine2(cursor.getString(addressLine2Idx));
+            }
+            int addressLine3Idx = cursor.getColumnIndex("addressLine3");
+            if (addressLine3Idx >= 0) {
+                companyResponse.setAddressLine3(cursor.getString(addressLine3Idx));
+            }
+            int phoneNo1Idx = cursor.getColumnIndex("phoneNo1");
+            if (phoneNo1Idx >= 0) {
+                companyResponse.setPhoneNo1(cursor.getString(phoneNo1Idx));
+            }
+            int phoneNo2Idx = cursor.getColumnIndex("phoneNo2");
+            if (phoneNo2Idx >= 0) {
+                companyResponse.setPhoneNo2(cursor.getString(phoneNo2Idx));
+            }
             companyResponse.setCurrencyName(cursor.getString(cursor.getColumnIndex("currencyName")));
             companyResponse.setTableStatus(cursor.getString(cursor.getColumnIndex("tableStatus")));
             companyResponse.setNoOfTable(cursor.getString(cursor.getColumnIndex("noOfTable")));
@@ -2426,6 +2658,12 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
                 printerSettingResponse.setPaymentUse(cursor.getString(cursor.getColumnIndex("paymentUse")));
                 printerSettingResponse.setCustomerUse(cursor.getString(cursor.getColumnIndex("customerUse")));
                 printerSettingResponse.setProductQuantityUpdate(cursor.getString(cursor.getColumnIndex("productQuantityUpdate")));
+                int duplicateBillIdx = cursor.getColumnIndex("duplicateBillUse");
+                if (duplicateBillIdx >= 0) {
+                    printerSettingResponse.setDuplicateBillUse(cursor.getString(duplicateBillIdx));
+                } else {
+                    printerSettingResponse.setDuplicateBillUse("off");
+                }
                 printerSettingResponse.setBluetoothAddress(cursor.getString(cursor.getColumnIndex("bluetoothAddress")));
                 printerSettingResponse.setBluetoothKOTAddress(cursor.getString(cursor.getColumnIndex("bluetoothKOTAddress")));
             } catch (Exception e) {
@@ -2450,6 +2688,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
 
     public void deleteCartProduct(String cartId) {
         SQLiteDatabase db = this.getWritableDatabase();
+        db.delete(CART_COMBO_ITEM_TABLE, "cartId = ?", new String[]{cartId});
         db.delete(CART_PRODUCT_TABLE, "cartId = ?", new String[]{cartId});
         db.close();
     }
@@ -2476,7 +2715,11 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             db.delete(PRODUCT_SUBCATEGORY_TABLE, null, null);
             db.delete(PRODUCT_PORTION_TABLE, null, null);
             db.delete(PRODUCT_TABLE, null, null);
+            db.delete(COMBO_ITEM_TABLE, null, null);
+            db.delete(COMBO_TABLE, null, null);
+            db.delete(CART_COMBO_ITEM_TABLE, null, null);
             db.delete(CART_PRODUCT_TABLE, null, null);
+            db.delete(INVOICE_COMBO_ITEM_TABLE, null, null);
             db.delete(INVOICE_TABLE, null, null);
             db.delete(INVOICE_PRODUCT_TABLE, null, null);
             db.delete(COMPANY_TABLE, null, null);
@@ -2712,14 +2955,19 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         contentValues.put("productName", invoiceProductResponse.getProductName());
         contentValues.put("productPrice", invoiceProductResponse.getProductPrice());
         contentValues.put("productUnit", invoiceProductResponse.getProductUnit());
-        contentValues.put("productCGST", invoiceProductResponse.getProductCGST());
-        contentValues.put("productSGST", invoiceProductResponse.getProductSGST());
+        contentValues.put("productCGST",
+                invoiceProductResponse.getProductCGST() != null ? invoiceProductResponse.getProductCGST() : "");
+        contentValues.put("productSGST",
+                invoiceProductResponse.getProductSGST() != null ? invoiceProductResponse.getProductSGST() : "");
         contentValues.put("productQuantity", invoiceProductResponse.getProductQuantity());
         contentValues.put("productStatus", invoiceProductResponse.getProductStatus());
         contentValues.put("invoiceProductNetworkStatus", networkStatus);
         contentValues.put("invoiceProductStatus", invoiceProductResponse.getInvoiceProductStatus());
         putOptionalColumn(contentValues, "portionId", invoiceProductResponse.getPortionId());
         putOptionalColumn(contentValues, "portionName", invoiceProductResponse.getPortionName());
+        contentValues.put("invoiceItemType", CartItemType.normalize(invoiceProductResponse.getInvoiceItemType()));
+        putOptionalColumn(contentValues, "comboId", invoiceProductResponse.getComboId());
+        putOptionalColumn(contentValues, "snapshotComboComponents", invoiceProductResponse.getSnapshotComboComponents());
         if (invoiceProductResponse.getSnapshotProductName() != null
                 && !invoiceProductResponse.getSnapshotProductName().trim().isEmpty()) {
             contentValues.put("snapshotProductName", invoiceProductResponse.getSnapshotProductName());
@@ -3466,10 +3714,20 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
 
     public List<InvoiceProductResponse> getReportDateWiseProductList(String invoiceDate, String
             orderBy) {
+        return getReportDateWiseProductList(invoiceDate, orderBy, null);
+    }
+
+    public List<InvoiceProductResponse> getReportDateWiseProductList(String invoiceDate, String
+            orderBy, String invoiceItemType) {
 
         List<InvoiceProductResponse> productResponseList = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
-        String sql = "SELECT invoice_final_product.productName, SUM(invoice_final_product.productQuantity) AS productQuantity FROM invoice_final_product LEFT JOIN invoice ON invoice.invoiceNumber = invoice_final_product.invoiceNumber WHERE invoice.invoiceDate LIKE '%" + invoiceDate + "%' GROUP BY invoice_final_product.productName ORDER BY invoice_final_product.productQuantity " + orderBy;
+        String typeFilter = "";
+        if (invoiceItemType != null && !invoiceItemType.trim().isEmpty()) {
+            typeFilter = " AND IFNULL(invoice_final_product.invoiceItemType, 'PRODUCT') = '"
+                    + invoiceItemType.replace("'", "") + "' ";
+        }
+        String sql = "SELECT invoice_final_product.productName, SUM(invoice_final_product.productQuantity) AS productQuantity FROM invoice_final_product LEFT JOIN invoice ON invoice.invoiceNumber = invoice_final_product.invoiceNumber WHERE invoice.invoiceDate LIKE '%" + invoiceDate + "%'" + typeFilter + " GROUP BY invoice_final_product.productName ORDER BY invoice_final_product.productQuantity " + orderBy;
         Cursor cursor = db.rawQuery(sql, null);
         InvoiceProductResponse invoiceProductResponse;
         while (cursor.moveToNext()) {
@@ -4105,5 +4363,902 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         db.close();
     }
 
+    /********************************************** Combo CRUD  **********************************************/
+
+    public long insertCombo(ComboResponse combo) {
+        if (combo == null) {
+            return -1;
+        }
+        String networkStatus = combo.getComboNetworkStatus();
+        if (networkStatus != null && !networkStatus.trim().isEmpty()) {
+            String existingId = getComboIdByNetworkStatus(networkStatus);
+            if (existingId != null) {
+                updateComboFromResponse(existingId, combo);
+                try {
+                    return Long.parseLong(existingId);
+                } catch (NumberFormatException e) {
+                    return -1;
+                }
+            }
+        }
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = comboContentValues(combo);
+        long id = db.insert(COMBO_TABLE, null, values);
+        db.close();
+        return id;
+    }
+
+    public void updateComboFromResponse(String comboId, ComboResponse combo) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = comboContentValues(combo);
+        db.update(COMBO_TABLE, values, "comboId=?", new String[]{comboId});
+        db.close();
+    }
+
+    private ContentValues comboContentValues(ComboResponse combo) {
+        ContentValues values = new ContentValues();
+        String price = combo.getComboPrice() != null ? combo.getComboPrice() : "0";
+        String cgst = combo.getComboCGST() != null ? combo.getComboCGST() : "";
+        String sgst = combo.getComboSGST() != null ? combo.getComboSGST() : "";
+        float cgstAmt = 0f;
+        float sgstAmt = 0f;
+        try {
+            cgstAmt = Float.parseFloat(cgst.isEmpty() ? "0" : cgst);
+        } catch (NumberFormatException ignored) {
+        }
+        try {
+            sgstAmt = Float.parseFloat(sgst.isEmpty() ? "0" : sgst);
+        } catch (NumberFormatException ignored) {
+        }
+        float withGst = 0f;
+        try {
+            withGst = Float.parseFloat(price) + (Float.parseFloat(price) * ((cgstAmt + sgstAmt) / 100f));
+        } catch (NumberFormatException ignored) {
+        }
+        values.put("comboName", combo.getComboName());
+        values.put("comboCode", combo.getComboCode());
+        values.put("comboPrice", price);
+        values.put("comboCGST", cgst);
+        values.put("comboSGST", sgst);
+        values.put("comboWithGSTPrice", String.valueOf(withGst));
+        values.put("comboActiveStatus", combo.getComboActiveStatus() != null ? combo.getComboActiveStatus() : "1");
+        values.put("comboDeletedStatus", combo.getComboDeletedStatus() != null ? combo.getComboDeletedStatus() : "0");
+        putOptionalColumn(values, "comboNetworkStatus", combo.getComboNetworkStatus());
+        if (combo.getComboStatus() != null && !combo.getComboStatus().trim().isEmpty()) {
+            values.put("comboStatus", combo.getComboStatus());
+        }
+        int sort = 0;
+        try {
+            if (combo.getComboSortOrder() != null && !combo.getComboSortOrder().trim().isEmpty()) {
+                sort = Integer.parseInt(combo.getComboSortOrder().trim());
+            }
+        } catch (NumberFormatException ignored) {
+        }
+        values.put("comboSortOrder", sort);
+        return values;
+    }
+
+    public void updateCombo(String comboId, String comboName, String comboCode, String comboPrice,
+                            String comboCGST, String comboSGST, String comboActiveStatus, int comboStatus) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ComboResponse combo = new ComboResponse();
+        combo.setComboName(comboName);
+        combo.setComboCode(comboCode);
+        combo.setComboPrice(comboPrice);
+        combo.setComboCGST(comboCGST);
+        combo.setComboSGST(comboSGST);
+        combo.setComboActiveStatus(comboActiveStatus);
+        combo.setComboStatus(String.valueOf(comboStatus));
+        ComboResponse existing = getComboDetail(comboId);
+        if (existing != null) {
+            combo.setComboDeletedStatus(existing.getComboDeletedStatus());
+            combo.setComboNetworkStatus(existing.getComboNetworkStatus());
+            combo.setComboSortOrder(existing.getComboSortOrder());
+        }
+        db.update(COMBO_TABLE, comboContentValues(combo), "comboId=?", new String[]{comboId});
+        db.close();
+    }
+
+    public void setComboActiveStatus(String comboId, boolean active) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("comboActiveStatus", active ? "1" : "0");
+        values.put("comboStatus", 0);
+        db.update(COMBO_TABLE, values, "comboId=?", new String[]{comboId});
+        db.close();
+    }
+
+    public void deleteCombo(String comboId) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("comboDeletedStatus", "1");
+        values.put("comboActiveStatus", "0");
+        values.put("comboStatus", 0);
+        db.update(COMBO_TABLE, values, "comboId=?", new String[]{comboId});
+        db.close();
+    }
+
+    public String getComboIdByNetworkStatus(String comboNetworkStatus) {
+        if (comboNetworkStatus == null || comboNetworkStatus.trim().isEmpty()) {
+            return null;
+        }
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT comboId FROM " + COMBO_TABLE + " WHERE comboNetworkStatus = ? LIMIT 1",
+                new String[]{comboNetworkStatus});
+        String id = null;
+        if (cursor.moveToFirst()) {
+            id = cursor.getString(0);
+        }
+        cursor.close();
+        return id;
+    }
+
+    public ComboResponse getComboDetail(String comboId) {
+        if (comboId == null || comboId.trim().isEmpty()) {
+            return null;
+        }
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT * FROM " + COMBO_TABLE + " WHERE comboId = ?", new String[]{comboId});
+        ComboResponse combo = null;
+        if (cursor.moveToFirst()) {
+            combo = mapCombo(cursor);
+        }
+        cursor.close();
+        return combo;
+    }
+
+    public List<ComboResponse> getComboList(boolean activeOnly, boolean includeDeleted) {
+        List<ComboResponse> list = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        StringBuilder sql = new StringBuilder("SELECT * FROM " + COMBO_TABLE + " WHERE 1=1");
+        if (!includeDeleted) {
+            sql.append(" AND IFNULL(comboDeletedStatus, '0') = '0'");
+        }
+        if (activeOnly) {
+            sql.append(" AND IFNULL(comboActiveStatus, '1') = '1'");
+        }
+        sql.append(" ORDER BY comboSortOrder ASC, comboId ASC");
+        Cursor cursor = db.rawQuery(sql.toString(), null);
+        while (cursor.moveToNext()) {
+            list.add(mapCombo(cursor));
+        }
+        cursor.close();
+        return list;
+    }
+
+    public List<ComboResponse> getPosComboList(String tableNumber, String cartOrderStatus) {
+        List<ComboResponse> list = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        String safeTable = tableNumber != null ? tableNumber : "";
+        String safeOrder = cartOrderStatus != null ? cartOrderStatus : "";
+        Cursor cursor = db.rawQuery(
+                "SELECT c.*, cart.productQuantity AS comboCartQuantity FROM " + COMBO_TABLE + " c "
+                        + "LEFT JOIN " + CART_PRODUCT_TABLE + " cart "
+                        + "ON cart.comboId = CAST(c.comboId AS TEXT) AND cart.cartItemType = 'COMBO' "
+                        + "AND cart.noOfTable = ? AND cart.cartOrderStatus = ? "
+                        + "WHERE IFNULL(c.comboDeletedStatus, '0') = '0' "
+                        + "AND IFNULL(c.comboActiveStatus, '1') = '1' "
+                        + "ORDER BY c.comboSortOrder ASC, c.comboId ASC",
+                new String[]{safeTable, safeOrder});
+        while (cursor.moveToNext()) {
+            ComboResponse combo = mapCombo(cursor);
+            int qtyIdx = cursor.getColumnIndex("comboCartQuantity");
+            if (qtyIdx >= 0 && !cursor.isNull(qtyIdx)) {
+                combo.setComboCartQuantity(cursor.getString(qtyIdx));
+            }
+            list.add(combo);
+        }
+        cursor.close();
+        return list;
+    }
+
+    public List<ComboResponse> searchCombos(String query, String tableNumber, String cartOrderStatus) {
+        List<ComboResponse> list = new ArrayList<>();
+        if (query == null || query.trim().isEmpty()) {
+            return list;
+        }
+        String trimmed = query.trim();
+        String contains = "%" + escapeLike(trimmed) + "%";
+        String prefix = escapeLike(trimmed) + "%";
+        String safeTable = tableNumber != null ? tableNumber : "";
+        String safeOrder = cartOrderStatus != null ? cartOrderStatus : "";
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery(
+                "SELECT c.*, cart.productQuantity AS comboCartQuantity FROM " + COMBO_TABLE + " c "
+                        + "LEFT JOIN " + CART_PRODUCT_TABLE + " cart "
+                        + "ON cart.comboId = CAST(c.comboId AS TEXT) AND cart.cartItemType = 'COMBO' "
+                        + "AND cart.noOfTable = ? AND cart.cartOrderStatus = ? "
+                        + "WHERE IFNULL(c.comboDeletedStatus, '0') = '0' "
+                        + "AND IFNULL(c.comboActiveStatus, '1') = '1' "
+                        + "AND (IFNULL(c.comboName, '') LIKE ? ESCAPE '\\' OR IFNULL(c.comboCode, '') LIKE ? ESCAPE '\\') "
+                        + "ORDER BY CASE WHEN IFNULL(c.comboCode, '') LIKE ? ESCAPE '\\' THEN 0 "
+                        + "WHEN IFNULL(c.comboName, '') LIKE ? ESCAPE '\\' THEN 1 ELSE 2 END, c.comboName "
+                        + "LIMIT 100",
+                new String[]{safeTable, safeOrder, contains, contains, prefix, prefix});
+        while (cursor.moveToNext()) {
+            ComboResponse combo = mapCombo(cursor);
+            int qtyIdx = cursor.getColumnIndex("comboCartQuantity");
+            if (qtyIdx >= 0 && !cursor.isNull(qtyIdx)) {
+                combo.setComboCartQuantity(cursor.getString(qtyIdx));
+            }
+            list.add(combo);
+        }
+        cursor.close();
+        return list;
+    }
+
+    public ComboResponse getLatestCombo() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT * FROM " + COMBO_TABLE + " ORDER BY comboId DESC LIMIT 1", null);
+        ComboResponse combo = null;
+        if (cursor.moveToFirst()) {
+            combo = mapCombo(cursor);
+        }
+        cursor.close();
+        return combo;
+    }
+
+    private ComboResponse mapCombo(Cursor cursor) {
+        ComboResponse combo = new ComboResponse();
+        combo.setComboId(cursor.getString(cursor.getColumnIndex("comboId")));
+        combo.setComboName(cursor.getString(cursor.getColumnIndex("comboName")));
+        combo.setComboCode(cursor.getString(cursor.getColumnIndex("comboCode")));
+        combo.setComboPrice(cursor.getString(cursor.getColumnIndex("comboPrice")));
+        combo.setComboCGST(cursor.getString(cursor.getColumnIndex("comboCGST")));
+        combo.setComboSGST(cursor.getString(cursor.getColumnIndex("comboSGST")));
+        combo.setComboWithGSTPrice(cursor.getString(cursor.getColumnIndex("comboWithGSTPrice")));
+        combo.setComboActiveStatus(cursor.getString(cursor.getColumnIndex("comboActiveStatus")));
+        combo.setComboDeletedStatus(cursor.getString(cursor.getColumnIndex("comboDeletedStatus")));
+        combo.setComboNetworkStatus(cursor.getString(cursor.getColumnIndex("comboNetworkStatus")));
+        combo.setComboStatus(cursor.getString(cursor.getColumnIndex("comboStatus")));
+        combo.setComboSortOrder(cursor.getString(cursor.getColumnIndex("comboSortOrder")));
+        return combo;
+    }
+
+    public List<ComboItemResponse> getComboItemList(String comboId) {
+        List<ComboItemResponse> list = new ArrayList<>();
+        if (comboId == null) {
+            return list;
+        }
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery(
+                "SELECT ci.*, p.productName, pp.portionName FROM " + COMBO_ITEM_TABLE + " ci "
+                        + "LEFT JOIN " + PRODUCT_TABLE + " p ON p.productId = ci.productId "
+                        + "LEFT JOIN " + PRODUCT_PORTION_TABLE + " pp ON pp.portionId = ci.portionId "
+                        + "WHERE ci.comboId = ? AND IFNULL(ci.comboItemDeletedStatus, '0') = '0' "
+                        + "ORDER BY ci.comboItemSortOrder ASC, ci.comboItemId ASC",
+                new String[]{comboId});
+        while (cursor.moveToNext()) {
+            list.add(mapComboItem(cursor));
+        }
+        cursor.close();
+        return list;
+    }
+
+    private ComboItemResponse mapComboItem(Cursor cursor) {
+        ComboItemResponse item = new ComboItemResponse();
+        mapStringColumn(cursor, "comboItemId", item::setComboItemId);
+        mapStringColumn(cursor, "comboId", item::setComboId);
+        mapStringColumn(cursor, "productId", item::setProductId);
+        mapStringColumn(cursor, "portionId", item::setPortionId);
+        mapStringColumn(cursor, "comboItemQuantity", item::setComboItemQuantity);
+        mapStringColumn(cursor, "comboItemSortOrder", item::setComboItemSortOrder);
+        mapStringColumn(cursor, "comboItemDeletedStatus", item::setComboItemDeletedStatus);
+        mapStringColumn(cursor, "comboItemNetworkStatus", item::setComboItemNetworkStatus);
+        mapStringColumn(cursor, "comboItemStatus", item::setComboItemStatus);
+        mapStringColumn(cursor, "productName", item::setProductName);
+        mapStringColumn(cursor, "portionName", item::setPortionName);
+        mapStringColumn(cursor, "comboNetworkStatus", item::setComboNetworkStatus);
+        mapStringColumn(cursor, "productNetworkStatus", item::setProductNetworkStatus);
+        mapStringColumn(cursor, "portionNetworkStatus", item::setPortionNetworkStatus);
+        return item;
+    }
+
+    public boolean saveComboItems(String comboId, List<ComboItemDraft> drafts) {
+        if (comboId == null) {
+            return false;
+        }
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.beginTransaction();
+        try {
+            Cursor existing = db.rawQuery(
+                    "SELECT comboItemId FROM " + COMBO_ITEM_TABLE
+                            + " WHERE comboId = ? AND IFNULL(comboItemDeletedStatus, '0') = '0'",
+                    new String[]{comboId});
+            java.util.HashSet<String> keepIds = new java.util.HashSet<>();
+            if (drafts != null) {
+                for (int i = 0; i < drafts.size(); i++) {
+                    ComboItemDraft draft = drafts.get(i);
+                    if (draft == null) {
+                        continue;
+                    }
+                    ContentValues values = new ContentValues();
+                    values.put("comboId", comboId);
+                    values.put("productId", draft.getProductId());
+                    if (draft.getPortionId() != null && !draft.getPortionId().trim().isEmpty()) {
+                        values.put("portionId", draft.getPortionId());
+                    } else {
+                        values.putNull("portionId");
+                    }
+                    values.put("comboItemQuantity", draft.getQuantity() != null ? draft.getQuantity() : "1");
+                    values.put("comboItemSortOrder", i);
+                    values.put("comboItemDeletedStatus", "0");
+                    values.put("comboItemStatus", 0);
+                    if (draft.getComboItemNetworkStatus() == null || draft.getComboItemNetworkStatus().trim().isEmpty()) {
+                        values.put("comboItemNetworkStatus", getRandomString(10));
+                    } else {
+                        values.put("comboItemNetworkStatus", draft.getComboItemNetworkStatus());
+                    }
+                    if (draft.getComboItemId() != null && !draft.getComboItemId().trim().isEmpty()) {
+                        db.update(COMBO_ITEM_TABLE, values, "comboItemId=?", new String[]{draft.getComboItemId()});
+                        keepIds.add(draft.getComboItemId());
+                    } else {
+                        long newId = db.insert(COMBO_ITEM_TABLE, null, values);
+                        if (newId > 0) {
+                            keepIds.add(String.valueOf(newId));
+                        }
+                    }
+                }
+            }
+            while (existing.moveToNext()) {
+                String id = existing.getString(0);
+                if (!keepIds.contains(id)) {
+                    ContentValues soft = new ContentValues();
+                    soft.put("comboItemDeletedStatus", "1");
+                    soft.put("comboItemStatus", 0);
+                    db.update(COMBO_ITEM_TABLE, soft, "comboItemId=?", new String[]{id});
+                }
+            }
+            existing.close();
+            ContentValues comboDirty = new ContentValues();
+            comboDirty.put("comboStatus", 0);
+            db.update(COMBO_TABLE, comboDirty, "comboId=?", new String[]{comboId});
+            db.setTransactionSuccessful();
+            return true;
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    public void upsertComboItemFromServer(ComboItemResponse item) {
+        if (item == null) {
+            return;
+        }
+        String comboId = item.getComboId();
+        if ((comboId == null || comboId.trim().isEmpty()) && item.getComboNetworkStatus() != null) {
+            comboId = getComboIdByNetworkStatus(item.getComboNetworkStatus());
+        }
+        String productId = item.getProductId();
+        if ((productId == null || productId.trim().isEmpty()) && item.getProductNetworkStatus() != null) {
+            productId = getProductIdByNetworkStatus(item.getProductNetworkStatus());
+        }
+        String portionId = item.getPortionId();
+        if ((portionId == null || portionId.trim().isEmpty()) && item.getPortionNetworkStatus() != null
+                && !item.getPortionNetworkStatus().trim().isEmpty()) {
+            portionId = getPortionIdByNetworkStatus(item.getPortionNetworkStatus());
+        }
+        if (comboId == null || productId == null) {
+            return;
+        }
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("comboId", comboId);
+        values.put("productId", productId);
+        if (portionId != null && !portionId.trim().isEmpty()) {
+            values.put("portionId", portionId);
+        } else {
+            values.putNull("portionId");
+        }
+        values.put("comboItemQuantity", item.getComboItemQuantity() != null ? item.getComboItemQuantity() : "1");
+        int sort = 0;
+        try {
+            if (item.getComboItemSortOrder() != null && !item.getComboItemSortOrder().trim().isEmpty()) {
+                sort = Integer.parseInt(item.getComboItemSortOrder().trim());
+            }
+        } catch (NumberFormatException ignored) {
+        }
+        values.put("comboItemSortOrder", sort);
+        values.put("comboItemDeletedStatus", item.getComboItemDeletedStatus() != null ? item.getComboItemDeletedStatus() : "0");
+        values.put("comboItemNetworkStatus", item.getComboItemNetworkStatus());
+        values.put("comboItemStatus", 1);
+        if (item.getComboItemNetworkStatus() != null && !item.getComboItemNetworkStatus().trim().isEmpty()) {
+            Cursor existing = db.rawQuery("SELECT comboItemId FROM " + COMBO_ITEM_TABLE + " WHERE comboItemNetworkStatus = ? LIMIT 1",
+                    new String[]{item.getComboItemNetworkStatus()});
+            if (existing.moveToFirst()) {
+                db.update(COMBO_ITEM_TABLE, values, "comboItemId=?", new String[]{existing.getString(0)});
+                existing.close();
+                return;
+            }
+            existing.close();
+        }
+        db.insert(COMBO_ITEM_TABLE, null, values);
+    }
+
+    public String getPortionIdByNetworkStatus(String portionNetworkStatus) {
+        if (portionNetworkStatus == null || portionNetworkStatus.trim().isEmpty()) {
+            return null;
+        }
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT portionId FROM " + PRODUCT_PORTION_TABLE + " WHERE portionNetworkStatus = ? LIMIT 1",
+                new String[]{portionNetworkStatus});
+        String id = null;
+        if (cursor.moveToFirst()) {
+            id = cursor.getString(0);
+        }
+        cursor.close();
+        return id;
+    }
+
+    public boolean isProductActive(String productId) {
+        if (productId == null) {
+            return false;
+        }
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery(
+                "SELECT productDeletedStatus FROM " + PRODUCT_TABLE + " WHERE productId = ? LIMIT 1",
+                new String[]{productId});
+        boolean active = false;
+        if (cursor.moveToFirst()) {
+            String deleted = cursor.getString(0);
+            active = deleted == null || "0".equals(deleted);
+        }
+        cursor.close();
+        return active;
+    }
+
+    public boolean portionBelongsToProduct(String productId, String portionId) {
+        if (productId == null || portionId == null || portionId.trim().isEmpty()) {
+            return false;
+        }
+        ProductPortionResponse portion = getProductPortionById(portionId);
+        return portion != null && productId.equals(portion.getProductId());
+    }
+
+    public List<ProductCartResponse> getCartComboDetails(String comboId, String tableNumber, String cartOrderStatus) {
+        List<ProductCartResponse> list = new ArrayList<>();
+        if (comboId == null) {
+            return list;
+        }
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery(
+                "SELECT * FROM " + CART_PRODUCT_TABLE
+                        + " WHERE comboId = ? AND cartItemType = 'COMBO' AND noOfTable = ? AND cartOrderStatus = ?",
+                new String[]{comboId, tableNumber, cartOrderStatus});
+        while (cursor.moveToNext()) {
+            ProductCartResponse item = new ProductCartResponse();
+            item.setCartId(cursor.getString(cursor.getColumnIndex("cartId")));
+            item.setProductId(cursor.getString(cursor.getColumnIndex("productId")));
+            item.setProductName(cursor.getString(cursor.getColumnIndex("productName")));
+            item.setProductOldPrice(cursor.getString(cursor.getColumnIndex("productOldPrice")));
+            item.setProductNewPrice(cursor.getString(cursor.getColumnIndex("productNewPrice")));
+            item.setProductUnit(cursor.getString(cursor.getColumnIndex("productUnit")));
+            item.setProductQuantity(cursor.getString(cursor.getColumnIndex("productQuantity")));
+            item.setProductCGST(cursor.getString(cursor.getColumnIndex("productCGST")));
+            item.setProductSGST(cursor.getString(cursor.getColumnIndex("productSGST")));
+            item.setNoOfTable(cursor.getString(cursor.getColumnIndex("noOfTable")));
+            item.setCartDiscount(cursor.getString(cursor.getColumnIndex("cartDiscount")));
+            item.setCartDiscountType(cursor.getString(cursor.getColumnIndex("cartDiscountType")));
+            item.setCartOrderStatus(cursor.getString(cursor.getColumnIndex("cartOrderStatus")));
+            item.setCartStatus(cursor.getString(cursor.getColumnIndex("cartStatus")));
+            mapCartLineSnapshots(cursor, item);
+            list.add(item);
+        }
+        cursor.close();
+        return list;
+    }
+
+    public long addComboToCart(String userId, ComboResponse combo, String quantity,
+                               String noOfTable, String cartDiscount, String cartOrderStatus) {
+        if (combo == null) {
+            return -1;
+        }
+        List<ComboItemResponse> components = getComboItemList(combo.getComboId());
+        java.util.ArrayList<String> snapshotLines = new java.util.ArrayList<>();
+        for (ComboItemResponse component : components) {
+            snapshotLines.add(component.getSnapshotLine());
+        }
+        String snapshot = ComboValidator.buildComponentSnapshot(snapshotLines);
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("userId", userId);
+        values.put("productId", "");
+        values.put("productName", combo.getComboName());
+        values.put("productOldPrice", combo.getComboPrice());
+        values.put("productNewPrice", combo.getComboPrice());
+        values.put("productUnit", "Combo");
+        values.put("productCGST", combo.getComboCGST() != null ? combo.getComboCGST() : "");
+        values.put("productSGST", combo.getComboSGST() != null ? combo.getComboSGST() : "");
+        values.put("productQuantity", quantity);
+        values.put("noOfTable", noOfTable);
+        values.put("cartDiscount", cartDiscount);
+        values.put("cartOrderStatus", cartOrderStatus);
+        values.put("cartStatus", 0);
+        values.put("snapshotProductName", combo.getComboName());
+        values.put("snapshotLinePrice", combo.getComboPrice());
+        values.put("cartItemType", CartItemType.COMBO);
+        values.put("comboId", combo.getComboId());
+        values.put("snapshotComboComponents", snapshot);
+        long cartId = db.insert(CART_PRODUCT_TABLE, null, values);
+        if (cartId > 0) {
+            int sort = 0;
+            for (ComboItemResponse component : components) {
+                ContentValues child = new ContentValues();
+                child.put("cartId", cartId);
+                child.put("comboId", combo.getComboId());
+                child.put("productId", component.getProductId());
+                child.put("productNameSnapshot", component.getProductName());
+                putOptionalColumn(child, "portionId", component.getPortionId());
+                putOptionalColumn(child, "portionNameSnapshot", component.getPortionName());
+                child.put("quantity", component.getComboItemQuantity() != null ? component.getComboItemQuantity() : "1");
+                child.put("sortOrder", sort++);
+                db.insert(CART_COMBO_ITEM_TABLE, null, child);
+            }
+        }
+        db.close();
+        return cartId;
+    }
+
+    public List<ComboItemResponse> getCartComboItems(String cartId) {
+        List<ComboItemResponse> list = new ArrayList<>();
+        if (cartId == null) {
+            return list;
+        }
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery(
+                "SELECT * FROM " + CART_COMBO_ITEM_TABLE + " WHERE cartId = ? ORDER BY sortOrder ASC, cartComboItemId ASC",
+                new String[]{cartId});
+        while (cursor.moveToNext()) {
+            ComboItemResponse item = new ComboItemResponse();
+            mapStringColumn(cursor, "cartId", item::setCartId);
+            mapStringColumn(cursor, "comboId", item::setComboId);
+            mapStringColumn(cursor, "productId", item::setProductId);
+            mapStringColumn(cursor, "productNameSnapshot", item::setProductName);
+            mapStringColumn(cursor, "portionId", item::setPortionId);
+            mapStringColumn(cursor, "portionNameSnapshot", item::setPortionName);
+            mapStringColumn(cursor, "quantity", item::setComboItemQuantity);
+            mapStringColumn(cursor, "sortOrder", item::setComboItemSortOrder);
+            list.add(item);
+        }
+        cursor.close();
+        return list;
+    }
+
+    private void copyCartComboItemsToInvoice(SQLiteDatabase db, String cartId, String invoiceNumber,
+                                             String invoiceProductNetworkStatus) {
+        Cursor cursor = db.rawQuery(
+                "SELECT * FROM " + CART_COMBO_ITEM_TABLE + " WHERE cartId = ? ORDER BY sortOrder ASC",
+                new String[]{cartId != null ? cartId : ""});
+        while (cursor.moveToNext()) {
+            ContentValues values = new ContentValues();
+            values.put("invoiceNumber", invoiceNumber);
+            values.put("invoiceProductNetworkStatus", invoiceProductNetworkStatus);
+            int comboIdx = cursor.getColumnIndex("comboId");
+            String comboId = (comboIdx >= 0 && !cursor.isNull(comboIdx)) ? cursor.getString(comboIdx) : null;
+            putOptionalColumn(values, "comboId", comboId);
+            if (comboId != null) {
+                Cursor comboCursor = db.rawQuery(
+                        "SELECT comboNetworkStatus FROM " + COMBO_TABLE + " WHERE comboId = ? LIMIT 1",
+                        new String[]{comboId});
+                if (comboCursor.moveToFirst()) {
+                    putOptionalColumn(values, "comboNetworkStatus", comboCursor.getString(0));
+                }
+                comboCursor.close();
+            }
+            mapStringColumn(cursor, "productId", v -> values.put("productId", v));
+            mapStringColumn(cursor, "productNameSnapshot", v -> values.put("productNameSnapshot", v));
+            mapStringColumn(cursor, "portionId", v -> values.put("portionId", v));
+            mapStringColumn(cursor, "portionNameSnapshot", v -> values.put("portionNameSnapshot", v));
+            mapStringColumn(cursor, "quantity", v -> values.put("quantity", v));
+            mapStringColumn(cursor, "sortOrder", v -> values.put("sortOrder", v));
+            values.put("invoiceComboItemNetworkStatus", getRandomString(10));
+            values.put("invoiceComboItemStatus", 0);
+            db.insert(INVOICE_COMBO_ITEM_TABLE, null, values);
+        }
+        cursor.close();
+    }
+
+    public Cursor getUnSynchronizeCombo(int status) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.rawQuery("SELECT * FROM " + COMBO_TABLE + " WHERE comboStatus = '" + status + "'", null);
+    }
+
+    public void updateSyncCombo(String comboId, int comboStatus) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("comboStatus", comboStatus);
+        db.update(COMBO_TABLE, values, "comboId=?", new String[]{comboId});
+        db.close();
+    }
+
+    public Cursor getUnSynchronizeComboItem(int status) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.rawQuery(
+                "SELECT ci.*, c.comboNetworkStatus, p.productNetworkStatus, pp.portionNetworkStatus FROM "
+                        + COMBO_ITEM_TABLE + " ci "
+                        + "LEFT JOIN " + COMBO_TABLE + " c ON c.comboId = ci.comboId "
+                        + "LEFT JOIN " + PRODUCT_TABLE + " p ON p.productId = ci.productId "
+                        + "LEFT JOIN " + PRODUCT_PORTION_TABLE + " pp ON pp.portionId = ci.portionId "
+                        + "WHERE ci.comboItemStatus = '" + status + "'",
+                null);
+    }
+
+    public void updateSyncComboItem(String comboItemId, int comboItemStatus) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("comboItemStatus", comboItemStatus);
+        db.update(COMBO_ITEM_TABLE, values, "comboItemId=?", new String[]{comboItemId});
+        db.close();
+    }
+
+    public Cursor getUnSynchronizeInvoiceComboItem(int status) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.rawQuery(
+                "SELECT ici.*, p.productNetworkStatus, pp.portionNetworkStatus FROM "
+                        + INVOICE_COMBO_ITEM_TABLE + " ici "
+                        + "LEFT JOIN " + PRODUCT_TABLE + " p ON CAST(p.productId AS TEXT) = CAST(ici.productId AS TEXT) "
+                        + "LEFT JOIN " + PRODUCT_PORTION_TABLE + " pp ON CAST(pp.portionId AS TEXT) = CAST(ici.portionId AS TEXT) "
+                        + "WHERE ici.invoiceComboItemStatus = '" + status + "'",
+                null);
+    }
+
+    public void updateSyncInvoiceComboItem(String invoiceComboItemId, int status) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("invoiceComboItemStatus", status);
+        db.update(INVOICE_COMBO_ITEM_TABLE, values, "invoiceComboItemId=?", new String[]{invoiceComboItemId});
+        db.close();
+    }
+
+    public String resolveComboNetworkStatus(String comboId) {
+        ComboResponse combo = getComboDetail(comboId);
+        if (combo == null || combo.getComboNetworkStatus() == null) {
+            return "";
+        }
+        return combo.getComboNetworkStatus();
+    }
+
+    public boolean addInvoiceComboItem(ComboItemResponse item) {
+        if (item == null || item.getInvoiceComboItemNetworkStatus() == null
+                || item.getInvoiceComboItemNetworkStatus().trim().isEmpty()) {
+            return false;
+        }
+        String comboId = item.getComboId();
+        if ((comboId == null || comboId.trim().isEmpty()) && item.getComboNetworkStatus() != null) {
+            comboId = getComboIdByNetworkStatus(item.getComboNetworkStatus());
+        }
+        String productId = item.getProductId();
+        if ((productId == null || productId.trim().isEmpty()) && item.getProductNetworkStatus() != null) {
+            productId = getProductIdByNetworkStatus(item.getProductNetworkStatus());
+        }
+        String portionId = item.getPortionId();
+        if ((portionId == null || portionId.trim().isEmpty()) && item.getPortionNetworkStatus() != null
+                && !item.getPortionNetworkStatus().trim().isEmpty()) {
+            portionId = getPortionIdByNetworkStatus(item.getPortionNetworkStatus());
+        }
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor existing = db.rawQuery(
+                "SELECT invoiceComboItemId FROM " + INVOICE_COMBO_ITEM_TABLE
+                        + " WHERE invoiceComboItemNetworkStatus = ? LIMIT 1",
+                new String[]{item.getInvoiceComboItemNetworkStatus()});
+        if (existing.moveToFirst()) {
+            existing.close();
+            return false;
+        }
+        existing.close();
+        ContentValues values = new ContentValues();
+        values.put("invoiceNumber", item.getInvoiceNumber());
+        values.put("invoiceProductNetworkStatus", item.getInvoiceProductNetworkStatus());
+        putOptionalColumn(values, "comboId", comboId);
+        putOptionalColumn(values, "comboNetworkStatus", item.getComboNetworkStatus());
+        putOptionalColumn(values, "productId", productId);
+        putOptionalColumn(values, "productNameSnapshot", item.getProductName());
+        putOptionalColumn(values, "portionId", portionId);
+        putOptionalColumn(values, "portionNameSnapshot", item.getPortionName());
+        values.put("quantity", item.getComboItemQuantity() != null ? item.getComboItemQuantity() : "1");
+        values.put("invoiceComboItemNetworkStatus", item.getInvoiceComboItemNetworkStatus());
+        values.put("invoiceComboItemStatus", item.getInvoiceComboItemStatus() != null ? item.getInvoiceComboItemStatus() : "1");
+        long id = db.insertWithOnConflict(INVOICE_COMBO_ITEM_TABLE, null, values, SQLiteDatabase.CONFLICT_IGNORE);
+        return id != -1;
+    }
+
+    public String buildComboComponentSnapshot(String comboId) {
+        List<ComboItemResponse> items = getComboItemList(comboId);
+        java.util.ArrayList<String> lines = new java.util.ArrayList<>();
+        for (ComboItemResponse item : items) {
+            lines.add(item.getSnapshotLine());
+        }
+        return ComboValidator.buildComponentSnapshot(lines);
+    }
+
+    /**
+     * Fast cloud-fetch insert for large product lists (one transaction, no per-row open/close).
+     */
+    public void addProductsBatchFromCloud(String ownerId, List<ProductResponse> products) {
+        if (products == null || products.isEmpty()) {
+            return;
+        }
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.beginTransaction();
+        try {
+            for (ProductResponse product : products) {
+                if (product == null) {
+                    continue;
+                }
+                ContentValues contentValues = new ContentValues();
+                float productCGSTAmount = 0f, productSGSTAmount = 0f;
+                try {
+                    if (product.getProductCGST() != null && !product.getProductCGST().isEmpty()) {
+                        productCGSTAmount = Float.parseFloat(product.getProductCGST());
+                    }
+                    if (product.getProductSGST() != null && !product.getProductSGST().isEmpty()) {
+                        productSGSTAmount = Float.parseFloat(product.getProductSGST());
+                    }
+                } catch (Exception ignored) {
+                }
+                float price = 0f;
+                try {
+                    price = Float.parseFloat(product.getProductPrice() != null ? product.getProductPrice() : "0");
+                } catch (Exception ignored) {
+                }
+                float productWithGSTPrice = price + (price * ((productCGSTAmount + productSGSTAmount) / 100));
+
+                contentValues.put("categoryId", product.getCategoryId());
+                contentValues.put("categoryName", product.getCategoryName());
+                contentValues.put("productCode", product.getProductCode());
+                contentValues.put("productName", product.getProductName());
+                contentValues.put("productPrice", product.getProductPrice());
+                contentValues.put("productUnit", product.getProductUnit());
+                contentValues.put("productCGST", product.getProductCGST());
+                contentValues.put("productSGST", product.getProductSGST());
+                contentValues.put("productWithGSTPrice", String.valueOf(productWithGSTPrice));
+                contentValues.put("productStatus", 1);
+                contentValues.put("productDeletedStatus", product.getProductDeletedStatus());
+                contentValues.put("productNetworkStatus", product.getProductNetworkStatus());
+                putOptionalColumn(contentValues, "subcategoryId", product.getSubcategoryId());
+                db.insert(PRODUCT_TABLE, null, contentValues);
+            }
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    /**
+     * Fast cloud-fetch insert for large invoice lists.
+     * Uses CONFLICT_IGNORE instead of per-row existence SELECTs.
+     */
+    public void addInvoicesBatchFromCloud(List<InvoiceResponse> invoices) {
+        if (invoices == null || invoices.isEmpty()) {
+            return;
+        }
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.beginTransaction();
+        try {
+            for (InvoiceResponse invoiceResponse : invoices) {
+                if (invoiceResponse == null) {
+                    continue;
+                }
+                String networkStatus = invoiceResponse.getInvoiceNetworkStatus();
+                ContentValues contentValues = new ContentValues();
+                contentValues.put("noOfTable", invoiceResponse.getNoOfTable());
+                contentValues.put("invoiceNumber", invoiceResponse.getInvoiceNumber());
+                contentValues.put("customerName", invoiceResponse.getCustomerName());
+                contentValues.put("customerMobile", invoiceResponse.getCustomerMobile());
+                contentValues.put("customerAddress", invoiceResponse.getCustomerAddress());
+                contentValues.put("subtotal", invoiceResponse.getSubTotal());
+                contentValues.put("totalGSTAmount", invoiceResponse.getTotalGSTAmount());
+                contentValues.put("discount", invoiceResponse.getDiscount());
+                contentValues.put("discountType", invoiceResponse.getDiscountType());
+                contentValues.put("totalAmount", invoiceResponse.getTotalAmount());
+                contentValues.put("paymentMode", invoiceResponse.getPaymentMode());
+                contentValues.put("invoiceDate", invoiceResponse.getInvoiceDate());
+                contentValues.put("invoiceOrderStatus", "completed");
+                contentValues.put("invoiceNetworkStatus", networkStatus);
+                contentValues.put("invoiceType", invoiceResponse.getInvoiceType());
+                contentValues.put("invoiceStatus", invoiceResponse.getInvoiceStatus());
+                putOptionalColumn(contentValues, "organizationId", invoiceResponse.getOrganizationId());
+                putOptionalColumn(contentValues, "branchId", invoiceResponse.getBranchId());
+                putOptionalColumn(contentValues, "deviceId", invoiceResponse.getDeviceId());
+                if (!contentValues.containsKey("organizationId")) {
+                    BranchSession.applyScope(contentValues);
+                }
+                db.insertWithOnConflict(INVOICE_TABLE, null, contentValues, SQLiteDatabase.CONFLICT_IGNORE);
+            }
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    /**
+     * Fast cloud-fetch insert for large invoice-line lists.
+     */
+    public void addInvoiceProductsBatchFromCloud(List<InvoiceProductResponse> lines) {
+        if (lines == null || lines.isEmpty()) {
+            return;
+        }
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.beginTransaction();
+        try {
+            for (InvoiceProductResponse invoiceProductResponse : lines) {
+                if (invoiceProductResponse == null) {
+                    continue;
+                }
+                String networkStatus = invoiceProductResponse.getInvoiceProductNetworkStatus();
+                ContentValues contentValues = new ContentValues();
+                contentValues.put("invoiceNumber", invoiceProductResponse.getInvoiceNumber());
+                contentValues.put("productName", invoiceProductResponse.getProductName());
+                contentValues.put("productPrice", invoiceProductResponse.getProductPrice());
+                contentValues.put("productUnit", invoiceProductResponse.getProductUnit());
+                contentValues.put("productCGST",
+                        invoiceProductResponse.getProductCGST() != null ? invoiceProductResponse.getProductCGST() : "");
+                contentValues.put("productSGST",
+                        invoiceProductResponse.getProductSGST() != null ? invoiceProductResponse.getProductSGST() : "");
+                contentValues.put("productQuantity", invoiceProductResponse.getProductQuantity());
+                contentValues.put("productStatus", invoiceProductResponse.getProductStatus());
+                contentValues.put("invoiceProductNetworkStatus", networkStatus);
+                contentValues.put("invoiceProductStatus", invoiceProductResponse.getInvoiceProductStatus());
+                putOptionalColumn(contentValues, "portionId", invoiceProductResponse.getPortionId());
+                putOptionalColumn(contentValues, "portionName", invoiceProductResponse.getPortionName());
+                contentValues.put("invoiceItemType", CartItemType.normalize(invoiceProductResponse.getInvoiceItemType()));
+                putOptionalColumn(contentValues, "comboId", invoiceProductResponse.getComboId());
+                putOptionalColumn(contentValues, "snapshotComboComponents", invoiceProductResponse.getSnapshotComboComponents());
+                if (invoiceProductResponse.getSnapshotProductName() != null
+                        && !invoiceProductResponse.getSnapshotProductName().trim().isEmpty()) {
+                    contentValues.put("snapshotProductName", invoiceProductResponse.getSnapshotProductName());
+                }
+                if (invoiceProductResponse.getSnapshotLinePrice() != null
+                        && !invoiceProductResponse.getSnapshotLinePrice().trim().isEmpty()) {
+                    contentValues.put("snapshotLinePrice", invoiceProductResponse.getSnapshotLinePrice());
+                }
+                db.insertWithOnConflict(INVOICE_PRODUCT_TABLE, null, contentValues, SQLiteDatabase.CONFLICT_IGNORE);
+            }
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    /**
+     * Batch upsert combo components during cloud fetch (one transaction).
+     */
+    public void upsertComboItemsBatchFromCloud(List<ComboItemResponse> items) {
+        if (items == null || items.isEmpty()) {
+            return;
+        }
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.beginTransaction();
+        try {
+            for (ComboItemResponse item : items) {
+                upsertComboItemFromServer(item);
+            }
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    /**
+     * Batch insert invoice combo lines during cloud fetch (one transaction).
+     */
+    public void addInvoiceComboItemsBatchFromCloud(List<ComboItemResponse> items) {
+        if (items == null || items.isEmpty()) {
+            return;
+        }
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.beginTransaction();
+        try {
+            for (ComboItemResponse item : items) {
+                if (item == null) {
+                    continue;
+                }
+                item.setInvoiceComboItemStatus("1");
+                addInvoiceComboItem(item);
+            }
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
 
 }

@@ -63,6 +63,15 @@ public interface ApiInterface {
     @GET("getPortionMasterList.php")
     Call<AllApiResponse> getPortionMasterList(@Query("userId") String userId);
 
+    @GET("getComboList.php")
+    Call<AllApiResponse> getComboList(@Query("userId") String userId);
+
+    @GET("getComboItemList.php")
+    Call<AllApiResponse> getComboItemList(@Query("userId") String userId);
+
+    @GET("getInvoiceComboItemList.php")
+    Call<AllApiResponse> getInvoiceComboItemList(@Query("userId") String userId);
+
     @GET("getCategoryList.php")
     Call<AllApiResponse> getCategoryList(@Query("userId") String userId);
 
@@ -151,6 +160,7 @@ public interface ApiInterface {
                                             @Field("paymentUse") String paymentUse,
                                             @Field("customerUse") String customerUse,
                                             @Field("productQuantityUpdate") String productQuantityUpdate,
+                                            @Field("duplicateBillUse") String duplicateBillUse,
                                             @Field("bluetoothAddress") String bluetoothAddress,
                                             @Field("bluetoothKOTAddress") String bluetoothKOTAddress,
                                             @Field("printerFeedLines") String printerFeedLines,
@@ -164,6 +174,13 @@ public interface ApiInterface {
                                             @Field("cashierName") String cashierName,
                                             @Field("companyMobile") String companyMobile,
                                             @Field("companyAddress") String companyAddress,
+                                            @Field("shopName1") String shopName1,
+                                            @Field("shopName2") String shopName2,
+                                            @Field("addressLine1") String addressLine1,
+                                            @Field("addressLine2") String addressLine2,
+                                            @Field("addressLine3") String addressLine3,
+                                            @Field("phoneNo1") String phoneNo1,
+                                            @Field("phoneNo2") String phoneNo2,
                                             @Field("currencyName") String currencyName,
                                             @Field("tableStatus") String tableStatus,
                                             @Field("noOfTable") String noOfTable,
@@ -209,7 +226,53 @@ public interface ApiInterface {
                                             @Field("portionId") String portionId,
                                             @Field("portionName") String portionName,
                                             @Field("snapshotProductName") String snapshotProductName,
-                                            @Field("snapshotLinePrice") String snapshotLinePrice);
+                                            @Field("snapshotLinePrice") String snapshotLinePrice,
+                                            @Field("invoiceItemType") String invoiceItemType,
+                                            @Field("comboNetworkStatus") String comboNetworkStatus,
+                                            @Field("snapshotComboComponents") String snapshotComboComponents);
+
+    @FormUrlEncoded
+    @POST("insertCombo.php")
+    Call<AllApiResponse> saveCombo(@Field("userId") String userId,
+                                   @Field("comboName") String comboName,
+                                   @Field("comboCode") String comboCode,
+                                   @Field("comboPrice") String comboPrice,
+                                   @Field("comboCGST") String comboCGST,
+                                   @Field("comboSGST") String comboSGST,
+                                   @Field("comboWithGSTPrice") String comboWithGSTPrice,
+                                   @Field("comboActiveStatus") String comboActiveStatus,
+                                   @Field("comboDeletedStatus") String comboDeletedStatus,
+                                   @Field("comboNetworkStatus") String comboNetworkStatus,
+                                   @Field("comboSortOrder") String comboSortOrder);
+
+    @FormUrlEncoded
+    @POST("insertComboItem.php")
+    Call<AllApiResponse> saveComboItem(@Field("userId") String userId,
+                                       @Field("comboId") String comboId,
+                                       @Field("comboNetworkStatus") String comboNetworkStatus,
+                                       @Field("productId") String productId,
+                                       @Field("productNetworkStatus") String productNetworkStatus,
+                                       @Field("portionId") String portionId,
+                                       @Field("portionNetworkStatus") String portionNetworkStatus,
+                                       @Field("comboItemQuantity") String comboItemQuantity,
+                                       @Field("comboItemSortOrder") String comboItemSortOrder,
+                                       @Field("comboItemDeletedStatus") String comboItemDeletedStatus,
+                                       @Field("comboItemNetworkStatus") String comboItemNetworkStatus);
+
+    @FormUrlEncoded
+    @POST("insertInvoiceComboItem.php")
+    Call<AllApiResponse> saveInvoiceComboItem(@Field("invoiceNumber") String invoiceNumber,
+                                              @Field("invoiceProductNetworkStatus") String invoiceProductNetworkStatus,
+                                              @Field("comboNetworkStatus") String comboNetworkStatus,
+                                              @Field("productId") String productId,
+                                              @Field("productNetworkStatus") String productNetworkStatus,
+                                              @Field("productName") String productName,
+                                              @Field("portionId") String portionId,
+                                              @Field("portionNetworkStatus") String portionNetworkStatus,
+                                              @Field("portionName") String portionName,
+                                              @Field("quantity") String quantity,
+                                              @Field("sortOrder") String sortOrder,
+                                              @Field("invoiceComboItemNetworkStatus") String invoiceComboItemNetworkStatus);
 
     @FormUrlEncoded
     @POST("insertInventory.php")

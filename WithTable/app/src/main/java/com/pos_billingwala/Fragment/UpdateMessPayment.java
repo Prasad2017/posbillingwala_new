@@ -62,8 +62,7 @@ public class UpdateMessPayment extends Fragment implements View.OnClickListener 
 
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
                     Log.i("tag", "onKey Back listener is working!!!");
-                    ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                    ((MainActivity) activity).loadFragment(new MessMemberList(), true);
+                    ((MainActivity) activity).goBackTo(new MessMemberList(), true);
                     return true;
                 }
                 return false;
@@ -104,8 +103,7 @@ public class UpdateMessPayment extends Fragment implements View.OnClickListener 
     public void onClick(View view) {
         int id = view.getId();
         if (id == R.id.backToMess) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-            ((MainActivity) activity).loadFragment(new MessMemberList(), true);
+            ((MainActivity) activity).goBackTo(new MessMemberList(), true);
         } else if (id == R.id.updatePayment) {
             if (!binding.messPendingAmount.getText().toString().isEmpty()) {
                 if (pendingAmount >= Float.parseFloat(binding.messPendingAmount.getText().toString())) {
@@ -129,8 +127,7 @@ public class UpdateMessPayment extends Fragment implements View.OnClickListener 
                     binding.messPendingAmount.getText().toString(), 0, getRandomString(10));
             Toast.makeText(activity, getString(R.string.toast_payment_paid_successfully), Toast.LENGTH_SHORT).show();
 
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-            ((MainActivity) activity).loadFragment(new MessMemberList(), true);
+            ((MainActivity) activity).goBackTo(new MessMemberList(), true);
 
         } else {
             Toast.makeText(activity, getString(R.string.toast_payment_already_paid_for_this_month), Toast.LENGTH_SHORT).show();

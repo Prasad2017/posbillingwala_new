@@ -1,6 +1,7 @@
 <?php
 include_once('config.php');
 include_once(__DIR__ . '/../licence_expiry.php');
+require_once __DIR__ . '/../company_store_fields.php';
 
 /**
  * P4-5: Owner store-wise list — all branches (owner + franchise) for a shop user.
@@ -14,7 +15,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
     $userIdEsc = mysqli_real_escape_string($con, (string) $userId);
     $today = licence_today();
 
-    $sql = "SELECT `licenses`.*, `companys`.`companyAddress`, `companys`.`currencyName`
+    $sql = "SELECT `licenses`.*, `companys`.`companyName`, `companys`.`companyAddress`, `companys`.`companyMobile`,
+                   `companys`.`shopName1`, `companys`.`shopName2`,
+                   `companys`.`addressLine1`, `companys`.`addressLine2`, `companys`.`addressLine3`,
+                   `companys`.`phoneNo1`, `companys`.`phoneNo2`, `companys`.`currencyName`
             FROM `licenses`
             LEFT JOIN `companys` ON `companys`.`licenseId` = `licenses`.`id`
             WHERE `licenses`.`userId`='$userIdEsc'
@@ -30,9 +34,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
                 ? $row['android_device_name']
                 : 'Not bound';
 
-            $companyAddress = ($row['companyAddress'] !== null && $row['companyAddress'] !== '')
-                ? $row['companyAddress']
-                : '-';
+            $store = company_structured_fields($row);
+            $companyAddress = company_display_address_oneline($row);
 
             $response['licensesResponse'][] = array(
                 'licenses_id' => $row['id'],
@@ -40,6 +43,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
                 'branchId' => (string) $row['id'],
                 'deviceId' => isset($row['android_device_id']) ? $row['android_device_id'] : '',
                 'companyAddress' => $companyAddress,
+                'shopName1' => $store['shopName1'],
+                'shopName2' => $store['shopName2'],
+                'addressLine1' => $store['addressLine1'],
+                'addressLine2' => $store['addressLine2'],
+                'addressLine3' => $store['addressLine3'],
+                'phoneNo1' => $store['phoneNo1'],
+                'phoneNo2' => $store['phoneNo2'],
                 'licenseKey' => $row['licenseKey'],
                 'androidDeviceName' => $deviceName,
                 'androidDeviceId' => isset($row['android_device_id']) ? $row['android_device_id'] : '',

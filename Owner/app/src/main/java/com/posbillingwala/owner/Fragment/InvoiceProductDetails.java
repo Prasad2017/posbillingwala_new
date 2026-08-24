@@ -45,6 +45,7 @@ import com.posbillingwala.owner.Activity.MainActivity;
 import com.posbillingwala.owner.Adapter.InvoiceProductAdapter;
 import com.posbillingwala.owner.BuildConfig;
 import com.posbillingwala.owner.Extra.DetectConnection;
+import com.posbillingwala.owner.Extra.ShopHeaderBuilder;
 import com.posbillingwala.owner.Model.AllApiResponse;
 import com.posbillingwala.owner.Model.InvoiceProductResponse;
 import com.posbillingwala.owner.R;
@@ -326,7 +327,6 @@ public class InvoiceProductDetails extends Fragment implements View.OnClickListe
                         inr = invoiceProductResponseList.get(0).getCurrencyName();
 
                         twoRecyclerView.setLayoutManager(new LinearLayoutManager(activity));
-                        twoRecyclerView.setHasFixedSize(true);
                         adapter = new InvoiceProductAdapter(activity, invoiceProductResponseList);
                         twoRecyclerView.setAdapter(adapter);
 
@@ -339,25 +339,8 @@ public class InvoiceProductDetails extends Fragment implements View.OnClickListe
 
                         twoInvoiceDetails.setText(Html.fromHtml(BillDetails));
 
-                        twoShopName.setText(invoiceProductResponseList.get(0).getCompanyName());
-
-                        String shopDetails = "";
-                        if (invoiceProductResponseList.get(0).getGstStatus() != null) {
-                            if (invoiceProductResponseList.get(0).getGstStatus().equalsIgnoreCase("on")) {
-                                shopDetails = invoiceProductResponseList.get(0).getCompanyAddress() + "\n" + "GSTIN: " + invoiceProductResponseList.get(0).getGstNumber();
-
-                            } else if (invoiceProductResponseList.get(0).getGstStatus().equalsIgnoreCase("off")) {
-                                shopDetails = invoiceProductResponseList.get(0).getCompanyAddress();
-                            }
-                        } else {
-                            shopDetails = invoiceProductResponseList.get(0).getCompanyAddress();
-                        }
-
-                        if (null != invoiceProductResponseList.get(0).getCompanyFssis() && (invoiceProductResponseList.get(0).getCompanyFssis().length() > 0) && !(invoiceProductResponseList.get(0).getCompanyFssis().isEmpty())) {
-                            shopDetails = shopDetails + "FSSAI No: " + invoiceProductResponseList.get(0).getCompanyFssis();
-                        }
-
-                        twoShopDetails.setText(shopDetails);
+                        twoShopName.setText(ShopHeaderBuilder.resolveShopName1(invoiceProductResponseList.get(0)));
+                        twoShopDetails.setText(ShopHeaderBuilder.buildShopDetailsBlock(invoiceProductResponseList.get(0)));
 
                         twoShopCGST.setText("CGST @" + invoiceProductResponseList.get(0).getShopCGST() + "%");
                         twoShopSGST.setText("SGST @" + invoiceProductResponseList.get(0).getShopSGST() + "%");

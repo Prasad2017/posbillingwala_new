@@ -51,14 +51,7 @@
 												</a>
 											</div>
 											<div class="col company-details">
-												<h2 class="name">
-													<a target="_blank" href="javascript:;">
-														{{$data->companyName??''}}
-
-													</a>
-												</h2>
-												<div>{{$data->companyAddress??''}}</div>
-												<div>{{$data->companyMobile??''}}</div>
+												@include('invoices.partials.store_header')
 											</div>
 										</div>
 									</header>

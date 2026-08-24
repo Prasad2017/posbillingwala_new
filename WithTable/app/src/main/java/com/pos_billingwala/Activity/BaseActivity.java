@@ -9,7 +9,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.pos_billingwala.Extra.AppLanguage;
 
 /**
- * Applies the saved app language to every screen without restarting from Splash.
+ * Applies the saved app language to every screen via context wrap (no process restart).
  */
 public abstract class BaseActivity extends AppCompatActivity {
 

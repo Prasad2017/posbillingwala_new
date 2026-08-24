@@ -45,6 +45,7 @@ import com.karumi.dexter.listener.multi.MultiplePermissionsListener;
 import com.pos_billingwala.Adapter.DuplicateInvoiceAdapter;
 import com.pos_billingwala.Adapter.DuplicateTwoPrintAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.ShopHeaderBuilder;
 import com.pos_billingwala.Extra.SimpleDividerItemDecoration;
 import com.pos_billingwala.Fragment.CreatePos;
 import com.pos_billingwala.Model.CompanyResponse;
@@ -133,22 +134,10 @@ public class DuplicateBluetoothPrint extends BaseActivity implements View.OnClic
 
     @NonNull
     public static String getShopDetails() {
-        String shopDetails = "";
-        if (companyResponseList.get(0).getGstStatus() != null) {
-            if (companyResponseList.get(0).getGstStatus().equalsIgnoreCase("on")) {
-                shopDetails = companyResponseList.get(0).getCompanyAddress() + "\nPH:" + companyResponseList.get(0).getCompanyMobile() + "\n" + "GSTIN: " + companyResponseList.get(0).getGstNumber();
-
-            } else if (companyResponseList.get(0).getGstStatus().equalsIgnoreCase("off")) {
-                shopDetails = companyResponseList.get(0).getCompanyAddress() + "\nPH:" + companyResponseList.get(0).getCompanyMobile();
-            }
-        } else {
-            shopDetails = companyResponseList.get(0).getCompanyAddress() + "\nPH:" + companyResponseList.get(0).getCompanyMobile();
+        if (companyResponseList == null || companyResponseList.isEmpty()) {
+            return "";
         }
-
-        if (null != companyResponseList.get(0).getCompanyFssis() && (!companyResponseList.get(0).getCompanyFssis().isEmpty()) && !(companyResponseList.get(0).getCompanyFssis().isEmpty())) {
-            shopDetails = shopDetails + "FSSAI No: " + companyResponseList.get(0).getCompanyFssis();
-        }
-        return String.valueOf(Html.fromHtml(shopDetails));
+        return ShopHeaderBuilder.buildShopDetailsBlock(companyResponseList.get(0));
     }
 
     public void setScreenSizeSmall() {
@@ -665,11 +654,13 @@ public class DuplicateBluetoothPrint extends BaseActivity implements View.OnClic
 
         if (!companyResponseList.isEmpty()) {
 
-            twoShopName.setText(companyResponseList.get(0).getCompanyName());
+            twoShopName.setText(ShopHeaderBuilder.resolveShopName1(companyResponseList.get(0)));
+            threeShopName.setText(ShopHeaderBuilder.resolveShopName1(companyResponseList.get(0)));
 
             String shopDetails = getShopDetails();
 
-            twoShopDetails.setText(Html.fromHtml(shopDetails));
+            twoShopDetails.setText(shopDetails);
+            threeShopDetails.setText(shopDetails);
 
             if (companyResponseList.get(0).getCompanyLogo() != null) {
                 String companyLogo = companyResponseList.get(0).getCompanyLogo();

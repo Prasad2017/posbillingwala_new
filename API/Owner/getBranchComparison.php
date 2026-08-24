@@ -3,6 +3,7 @@ include_once('config.php');
 include_once(__DIR__ . '/../licence_expiry.php');
 include_once(__DIR__ . '/../branch_scope.php');
 require_once __DIR__ . '/../auth_tokens.php';
+require_once __DIR__ . '/../company_store_fields.php';
 
 /**
  * Owner branch comparison — all branches in org with sales metrics side-by-side.
@@ -30,7 +31,7 @@ $response['organizationId'] = (string) $userId;
 $today = licence_today();
 $userIdEsc = mysqli_real_escape_string($con, (string) $userId);
 
-$sql = "SELECT `licenses`.*, `companys`.`companyName`, `companys`.`currencyName`
+$sql = "SELECT `licenses`.*, `companys`.`companyName`, `companys`.`shopName1`, `companys`.`currencyName`
         FROM `licenses`
         LEFT JOIN `companys` ON `companys`.`licenseId` = `licenses`.`id`
         WHERE `licenses`.`userId`='$userIdEsc'
@@ -68,13 +69,15 @@ if ($result && mysqli_num_rows($result) > 0) {
 
         $deviceBound = isset($row['android_device_id']) && trim((string) $row['android_device_id']) !== '';
 
+        $store = company_structured_fields($row);
         $branches[] = array(
             'branchId' => (string) $licenseId,
             'organizationId' => (string) $userId,
             'branchLabel' => $branch['branchLabel'],
             'userType' => $branch['userType'],
             'userName' => $branch['userName'],
-            'companyName' => isset($row['companyName']) ? $row['companyName'] : '',
+            'companyName' => $store['companyName'],
+            'shopName1' => $store['shopName1'],
             'totalSale' => $sales['totalSale'],
             'todaySale' => $sales['todaySale'],
             'billCount' => (string) $billCountInt,

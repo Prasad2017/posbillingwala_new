@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.InventoryAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.ListLoader;
 import com.pos_billingwala.Extra.SimpleDividerItemDecoration;
 import com.pos_billingwala.Model.InventoryResponse;
 import com.pos_billingwala.R;
@@ -23,6 +24,8 @@ import com.pos_billingwala.databinding.FragmentInventoryBinding;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import cn.pedant.SweetAlert.SweetAlertDialog;
 
 
 @SuppressLint("StaticFieldLeak")
@@ -55,8 +58,7 @@ public class Inventory extends Fragment implements View.OnClickListener {
 
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
                     Log.i("tag", "onKey Back listener is working!!!");
-                    ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                    ((MainActivity) activity).loadFragment(new UserSetting(), true);
+                    ((MainActivity) activity).goBackTo(new UserSetting(), true);
                     return true;
                 }
                 return false;
@@ -73,11 +75,9 @@ public class Inventory extends Fragment implements View.OnClickListener {
     public void onClick(View view) {
         int id = view.getId();
         if (id == R.id.backToSetting) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-            ((MainActivity) activity).loadFragment(new UserSetting(), true);
+            ((MainActivity) activity).goBackTo(new UserSetting(), true);
         } else if (id == R.id.addInventory) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-            ((MainActivity) activity).loadFragment(new AddInventory(), true);
+                        ((MainActivity) activity).loadFragment(new AddInventory(), true);
         }
     }
 
@@ -89,25 +89,28 @@ public class Inventory extends Fragment implements View.OnClickListener {
     }
 
     public void getInventoryList() {
+        SweetAlertDialog loader = ListLoader.show(activity);
+        try {
+            inventoryResponseList.clear();
+            inventoryResponseList = posBillingWalaDatabase.getInventoryList();
+            if (!inventoryResponseList.isEmpty()) {
 
-        inventoryResponseList.clear();
-        inventoryResponseList = posBillingWalaDatabase.getInventoryList();
-        if (!inventoryResponseList.isEmpty()) {
+                adapter = new InventoryAdapter(activity, inventoryResponseList);
+                binding.recyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
+                binding.recyclerView.addItemDecoration(new SimpleDividerItemDecoration(activity));
+                binding.recyclerView.setAdapter(adapter);
+                adapter.notifyDataSetChanged();
+                //  adapter.notifyItemInserted(inventoryResponseList.size() - 1);
 
-            adapter = new InventoryAdapter(activity, inventoryResponseList);
-            binding.recyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
-            binding.recyclerView.addItemDecoration(new SimpleDividerItemDecoration(activity));
-            binding.recyclerView.setAdapter(adapter);
-            adapter.notifyDataSetChanged();
-            //  adapter.notifyItemInserted(inventoryResponseList.size() - 1);
+                binding.noDataFound.setVisibility(View.GONE);
+                binding.linearLayout.setVisibility(View.VISIBLE);
 
-            binding.noDataFound.setVisibility(View.GONE);
-            binding.linearLayout.setVisibility(View.VISIBLE);
-
-        } else {
-            binding.noDataFound.setVisibility(View.VISIBLE);
-            binding.addInventory.setVisibility(View.GONE);
+            } else {
+                binding.noDataFound.setVisibility(View.VISIBLE);
+                binding.addInventory.setVisibility(View.GONE);
+            }
+        } finally {
+            ListLoader.dismiss(loader);
         }
-
     }
 }

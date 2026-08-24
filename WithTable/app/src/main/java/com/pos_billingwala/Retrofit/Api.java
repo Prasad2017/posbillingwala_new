@@ -40,9 +40,10 @@ public class Api {
             Cache cache = new Cache(cacheDirectory, 10 * 1024 * 1024); // 10 MB cache
 
             OkHttpClient.Builder httpClientBuilder = new OkHttpClient.Builder()
-                    .connectTimeout(30, TimeUnit.SECONDS)
-                    .writeTimeout(30, TimeUnit.SECONDS)
-                    .readTimeout(30, TimeUnit.SECONDS)
+                    .connectTimeout(60, TimeUnit.SECONDS)
+                    .writeTimeout(120, TimeUnit.SECONDS)
+                    .readTimeout(120, TimeUnit.SECONDS)
+                    .callTimeout(180, TimeUnit.SECONDS)
                     .cache(cache)
                     .retryOnConnectionFailure(true)
                     .addInterceptor(new ApiFailureInterceptor())

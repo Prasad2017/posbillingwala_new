@@ -16,7 +16,7 @@
             android:layout_weight="1"
             android:fontFamily="@font/poppinsmedium"
             android:gravity="center|start"
-            android:maxLines="2"
+            android:maxLines="6"
             android:textColor="@color/black"
             android:textSize="15dp" />
 

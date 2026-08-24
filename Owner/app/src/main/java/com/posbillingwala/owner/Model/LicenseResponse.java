@@ -11,6 +11,18 @@ public class LicenseResponse {
     @SerializedName("companyAddress")
     @Expose
     public String companyAddress;
+    @SerializedName("shopName1")
+    @Expose
+    public String shopName1;
+    @SerializedName("shopName2")
+    @Expose
+    public String shopName2;
+    @SerializedName("phoneNo1")
+    @Expose
+    public String phoneNo1;
+    @SerializedName("phoneNo2")
+    @Expose
+    public String phoneNo2;
     @SerializedName("licenseKey")
     @Expose
     public String licenseKey;
@@ -91,6 +103,38 @@ public class LicenseResponse {
 
     public void setCompanyAddress(String companyAddress) {
         this.companyAddress = companyAddress;
+    }
+
+    public String getShopName1() {
+        return shopName1;
+    }
+
+    public void setShopName1(String shopName1) {
+        this.shopName1 = shopName1;
+    }
+
+    public String getShopName2() {
+        return shopName2;
+    }
+
+    public void setShopName2(String shopName2) {
+        this.shopName2 = shopName2;
+    }
+
+    public String getPhoneNo1() {
+        return phoneNo1;
+    }
+
+    public void setPhoneNo1(String phoneNo1) {
+        this.phoneNo1 = phoneNo1;
+    }
+
+    public String getPhoneNo2() {
+        return phoneNo2;
+    }
+
+    public void setPhoneNo2(String phoneNo2) {
+        this.phoneNo2 = phoneNo2;
     }
 
     public String getLicenseKey() {

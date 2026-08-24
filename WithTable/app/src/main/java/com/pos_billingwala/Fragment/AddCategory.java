@@ -20,6 +20,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.CategoryAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.ListLoader;
 import com.pos_billingwala.Extra.SimpleDividerItemDecoration;
 import com.pos_billingwala.Model.ProductCategoryResponse;
 import com.pos_billingwala.R;
@@ -28,6 +29,8 @@ import com.pos_billingwala.databinding.FragmentAddCategoryBinding;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+
+import cn.pedant.SweetAlert.SweetAlertDialog;
 
 
 public class AddCategory extends Fragment implements View.OnClickListener {
@@ -46,24 +49,27 @@ public class AddCategory extends Fragment implements View.OnClickListener {
 
 
     public static void getHomeProductCategoryList() {
+        SweetAlertDialog loader = ListLoader.show(activity);
+        try {
+            productCategoryResponseList.clear();
+            productCategoryResponseList = posBillingWalaDatabase.getProductCategoryList();
+            if (!productCategoryResponseList.isEmpty()) {
 
-        productCategoryResponseList.clear();
-        productCategoryResponseList = posBillingWalaDatabase.getProductCategoryList();
-        if (!productCategoryResponseList.isEmpty()) {
+                categoryAdapter = new CategoryAdapter(activity, productCategoryResponseList);
+                categoryRecyclerview.setLayoutManager(new GridLayoutManager(activity, 1));
+                categoryRecyclerview.setAdapter(categoryAdapter);
+                categoryRecyclerview.addItemDecoration(new SimpleDividerItemDecoration(activity));
 
-            categoryAdapter = new CategoryAdapter(activity, productCategoryResponseList);
-            categoryRecyclerview.setLayoutManager(new GridLayoutManager(activity, 1));
-            categoryRecyclerview.setAdapter(categoryAdapter);
-            categoryRecyclerview.addItemDecoration(new SimpleDividerItemDecoration(activity));
+                categoryListCardView.setVisibility(View.VISIBLE);
+                noDataFound.setVisibility(View.GONE);
 
-            categoryListCardView.setVisibility(View.VISIBLE);
-            noDataFound.setVisibility(View.GONE);
-
-        } else {
-            categoryListCardView.setVisibility(View.GONE);
-            noDataFound.setVisibility(View.VISIBLE);
+            } else {
+                categoryListCardView.setVisibility(View.GONE);
+                noDataFound.setVisibility(View.VISIBLE);
+            }
+        } finally {
+            ListLoader.dismiss(loader);
         }
-
     }
 
     @Override
@@ -126,11 +132,10 @@ public class AddCategory extends Fragment implements View.OnClickListener {
     }
 
     private void navigateToCaller() {
-        ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
         if (getArguments() != null && MasterData.OPENED_FROM_MASTER.equals(getArguments().getString("openedFrom"))) {
-            ((MainActivity) activity).loadFragment(new MasterData(), true);
+            ((MainActivity) activity).goBackTo(new MasterData(), true);
         } else {
-            ((MainActivity) activity).loadFragment(new Home(), false);
+            ((MainActivity) activity).navigateToHome();
         }
     }
 

@@ -80,7 +80,6 @@ public class TableAdapter extends RecyclerView.Adapter<TableAdapter.MyViewHolder
                 invoiceResponseList.clear();
                 invoiceResponseList = posBillingWalaDatabase.checkTablePaymentMode(String.valueOf(tableNumber));
                 if (invoiceResponseList.isEmpty()) {
-                    ((MainActivity) context).removeCurrentFragmentAndMoveBack();
                     CreatePos createPos = new CreatePos();
                     Bundle bundle = new Bundle();
                     bundle.putString("tableNumber", String.valueOf(tableNumber));

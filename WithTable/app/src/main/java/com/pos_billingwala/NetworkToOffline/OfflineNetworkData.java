@@ -155,6 +155,38 @@ public class OfflineNetworkData {
                         columnOrEmpty(cursor, "portionMasterNetworkStatus"));
             } while (cursor.moveToNext());
         }
+        cursor = posBillingWalaDatabase.getUnSynchronizeCombo(NAME_NOT_SYNCED_WITH_SERVER);
+        if (cursor.moveToFirst()) {
+            do {
+                saveCombo(cursor.getString(cursor.getColumnIndex("comboId")),
+                        cursor.getString(cursor.getColumnIndex("comboName")),
+                        columnOrEmpty(cursor, "comboCode"),
+                        cursor.getString(cursor.getColumnIndex("comboPrice")),
+                        columnOrEmpty(cursor, "comboCGST"),
+                        columnOrEmpty(cursor, "comboSGST"),
+                        columnOrEmpty(cursor, "comboWithGSTPrice"),
+                        columnOrEmpty(cursor, "comboActiveStatus"),
+                        columnOrEmpty(cursor, "comboDeletedStatus"),
+                        columnOrEmpty(cursor, "comboNetworkStatus"),
+                        columnOrEmpty(cursor, "comboSortOrder"));
+            } while (cursor.moveToNext());
+        }
+        cursor = posBillingWalaDatabase.getUnSynchronizeComboItem(NAME_NOT_SYNCED_WITH_SERVER);
+        if (cursor.moveToFirst()) {
+            do {
+                saveComboItem(cursor.getString(cursor.getColumnIndex("comboItemId")),
+                        columnOrEmpty(cursor, "comboId"),
+                        columnOrEmpty(cursor, "comboNetworkStatus"),
+                        columnOrEmpty(cursor, "productId"),
+                        columnOrEmpty(cursor, "productNetworkStatus"),
+                        columnOrEmpty(cursor, "portionId"),
+                        columnOrEmpty(cursor, "portionNetworkStatus"),
+                        columnOrEmpty(cursor, "comboItemQuantity"),
+                        columnOrEmpty(cursor, "comboItemSortOrder"),
+                        columnOrEmpty(cursor, "comboItemDeletedStatus"),
+                        columnOrEmpty(cursor, "comboItemNetworkStatus"));
+            } while (cursor.moveToNext());
+        }
         //getting all the unSynced Company Printer Setting
         cursor = posBillingWalaDatabase.getUnSynchronizePrinterSetting(NAME_NOT_SYNCED_WITH_SERVER);
         if (cursor.moveToFirst()) {
@@ -169,6 +201,7 @@ public class OfflineNetworkData {
                         cursor.getString(cursor.getColumnIndex("paymentUse")),
                         cursor.getString(cursor.getColumnIndex("customerUse")),
                         cursor.getString(cursor.getColumnIndex("productQuantityUpdate")),
+                        columnOrEmpty(cursor, "duplicateBillUse").isEmpty() ? "off" : columnOrEmpty(cursor, "duplicateBillUse"),
                         cursor.getString(cursor.getColumnIndex("bluetoothAddress")),
                         cursor.getString(cursor.getColumnIndex("bluetoothKOTAddress")),
                         cursor.getString(cursor.getColumnIndex("printerFeedLines")),
@@ -185,6 +218,13 @@ public class OfflineNetworkData {
                         cursor.getString(cursor.getColumnIndex("cashierName")),
                         cursor.getString(cursor.getColumnIndex("companyMobile")),
                         cursor.getString(cursor.getColumnIndex("companyAddress")),
+                        columnOrEmpty(cursor, "shopName1"),
+                        columnOrEmpty(cursor, "shopName2"),
+                        columnOrEmpty(cursor, "addressLine1"),
+                        columnOrEmpty(cursor, "addressLine2"),
+                        columnOrEmpty(cursor, "addressLine3"),
+                        columnOrEmpty(cursor, "phoneNo1"),
+                        columnOrEmpty(cursor, "phoneNo2"),
                         cursor.getString(cursor.getColumnIndex("currencyName")),
                         cursor.getString(cursor.getColumnIndex("tableStatus")),
                         cursor.getString(cursor.getColumnIndex("noOfTable")),
@@ -237,7 +277,28 @@ public class OfflineNetworkData {
                         columnOrEmpty(cursor, "portionId"),
                         columnOrEmpty(cursor, "portionName"),
                         columnOrEmpty(cursor, "snapshotProductName"),
-                        columnOrEmpty(cursor, "snapshotLinePrice"));
+                        columnOrEmpty(cursor, "snapshotLinePrice"),
+                        columnOrEmpty(cursor, "invoiceItemType"),
+                        posBillingWalaDatabase.resolveComboNetworkStatus(columnOrEmpty(cursor, "comboId")),
+                        columnOrEmpty(cursor, "snapshotComboComponents"));
+            } while (cursor.moveToNext());
+        }
+        cursor = posBillingWalaDatabase.getUnSynchronizeInvoiceComboItem(NAME_NOT_SYNCED_WITH_SERVER);
+        if (cursor.moveToFirst()) {
+            do {
+                saveInvoiceComboItem(cursor.getString(cursor.getColumnIndex("invoiceComboItemId")),
+                        columnOrEmpty(cursor, "invoiceNumber"),
+                        columnOrEmpty(cursor, "invoiceProductNetworkStatus"),
+                        columnOrEmpty(cursor, "comboNetworkStatus"),
+                        columnOrEmpty(cursor, "productId"),
+                        columnOrEmpty(cursor, "productNetworkStatus"),
+                        columnOrEmpty(cursor, "productNameSnapshot"),
+                        columnOrEmpty(cursor, "portionId"),
+                        columnOrEmpty(cursor, "portionNetworkStatus"),
+                        columnOrEmpty(cursor, "portionNameSnapshot"),
+                        columnOrEmpty(cursor, "quantity"),
+                        columnOrEmpty(cursor, "sortOrder"),
+                        columnOrEmpty(cursor, "invoiceComboItemNetworkStatus"));
             } while (cursor.moveToNext());
         }
         //getting all the unSynced Mess Member
@@ -326,261 +387,127 @@ public class OfflineNetworkData {
     public void saveMessInvoice(String invoiceId, String memberId, String memberName, String messType, String messInvoiceDate, String messInvoiceNetworkStatus, String messInvoiceStatus) {
 
         Call<AllApiResponse> call = Api.getClient(activity).saveMessInvoice(MainActivity.userId, memberName, messType, messInvoiceDate, messInvoiceNetworkStatus, messInvoiceStatus);
-        call.enqueue(new Callback<AllApiResponse>() {
-            @Override
-            public void onResponse(@NonNull Call<AllApiResponse> call, @NonNull Response<AllApiResponse> response) {
-                if (response.isSuccessful() && response.body() != null
-                    && "1".equalsIgnoreCase(response.body().getStatus())) {
-                    posBillingWalaDatabase.updateSyncMessInvoice(invoiceId, NAME_SYNCED_WITH_SERVER);
-                }
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<AllApiResponse> call, @NonNull Throwable t) {
-                Log.e("serverError", t.getMessage());
-            }
-        });
-
-    }
+        if (executeCall(call)) {
+            posBillingWalaDatabase.updateSyncMessInvoice(invoiceId, NAME_SYNCED_WITH_SERVER);
+        }
+}
 
     public void saveMessMemberPayment(String paymentId, String memberId, String memberName, String paymentMessAmount, String paymentPaidAmount, String messTotalDays, String paymentDate, String paymentNetworkStatus, String paymentStatus) {
 
         Call<AllApiResponse> call = Api.getClient(activity).saveMessMemberPayment(MainActivity.userId, memberId, memberName, paymentMessAmount, paymentPaidAmount, messTotalDays, paymentDate, paymentNetworkStatus, paymentStatus);
-        call.enqueue(new Callback<AllApiResponse>() {
-            @Override
-            public void onResponse(@NonNull Call<AllApiResponse> call, @NonNull Response<AllApiResponse> response) {
-                if (response.isSuccessful() && response.body() != null
-                    && "1".equalsIgnoreCase(response.body().getStatus())) {
-                    posBillingWalaDatabase.updateSyncMessMemberPayment(paymentId, NAME_SYNCED_WITH_SERVER);
-                }
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<AllApiResponse> call, @NonNull Throwable t) {
-                Log.e("serverError", t.getMessage());
-            }
-        });
-
-    }
+        if (executeCall(call)) {
+            posBillingWalaDatabase.updateSyncMessMemberPayment(paymentId, NAME_SYNCED_WITH_SERVER);
+        }
+}
 
     public void saveMessMember(String memberId, String memberName, String memberMobileNumber, String memberAlternetMobileNumber, String memberAddress, String memberNetworkStatus, String memberStatus) {
 
         Call<AllApiResponse> call = Api.getClient(activity).saveMessMember(MainActivity.userId, memberName, memberMobileNumber, memberAlternetMobileNumber, memberAddress, memberNetworkStatus, memberStatus);
-        call.enqueue(new Callback<AllApiResponse>() {
-            @Override
-            public void onResponse(@NonNull Call<AllApiResponse> call, @NonNull Response<AllApiResponse> response) {
-                if (response.isSuccessful() && response.body() != null
-                    && "1".equalsIgnoreCase(response.body().getStatus())) {
-                    posBillingWalaDatabase.updateSyncMessMember(memberId, NAME_SYNCED_WITH_SERVER);
-                }
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<AllApiResponse> call, @NonNull Throwable t) {
-                Log.e("serverError", t.getMessage());
-            }
-        });
-
-    }
+        if (executeCall(call)) {
+            posBillingWalaDatabase.updateSyncMessMember(memberId, NAME_SYNCED_WITH_SERVER);
+        }
+}
 
     public void saveExpenses(String expensesId, String expensesName, String expensesAmount, String expensesDate, String expensesNetworkStatus, String expensesStatus) {
 
         Call<AllApiResponse> call = Api.getClient(activity).saveExpenses(MainActivity.userId, expensesName, expensesAmount, expensesDate, expensesNetworkStatus);
-        call.enqueue(new Callback<AllApiResponse>() {
-            @Override
-            public void onResponse(@NonNull Call<AllApiResponse> call, @NonNull Response<AllApiResponse> response) {
-                if (response.isSuccessful() && response.body() != null
-                    && "1".equalsIgnoreCase(response.body().getStatus())) {
-                    posBillingWalaDatabase.updateSyncExpenses(expensesId, NAME_SYNCED_WITH_SERVER);
-                }
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<AllApiResponse> call, @NonNull Throwable t) {
-                Log.e("serverError", t.getMessage());
-            }
-        });
-
-    }
+        if (executeCall(call)) {
+            posBillingWalaDatabase.updateSyncExpenses(expensesId, NAME_SYNCED_WITH_SERVER);
+        }
+}
 
     public void saveInventory(String inventoryId, String productId, String productInventoryQuantity, String afterSaleInventoryQuantity, String saleInventoryQuantity, String inventoryDate, String inventoryNetworkStatus, String inventoryStatus) {
 
         Call<AllApiResponse> call = Api.getClient(activity).saveInventory(MainActivity.userId, productId, productInventoryQuantity, afterSaleInventoryQuantity, saleInventoryQuantity, inventoryDate, inventoryNetworkStatus);
-        call.enqueue(new Callback<AllApiResponse>() {
-            @Override
-            public void onResponse(@NonNull Call<AllApiResponse> call, @NonNull Response<AllApiResponse> response) {
-                if (response.isSuccessful() && response.body() != null
-                    && "1".equalsIgnoreCase(response.body().getStatus())) {
-                    posBillingWalaDatabase.updateSyncInventory(inventoryId, NAME_SYNCED_WITH_SERVER);
-                }
-            }
+        if (executeCall(call)) {
+            posBillingWalaDatabase.updateSyncInventory(inventoryId, NAME_SYNCED_WITH_SERVER);
+        }
+}
 
-            @Override
-            public void onFailure(@NonNull Call<AllApiResponse> call, @NonNull Throwable t) {
-                Log.e("serverError", t.getMessage());
-            }
-        });
+    public void saveInvoiceProduct(String invoiceProductId, String invoiceNumber, String productName, String productPrice, String productUnit, String productCGST, String productSGST, String productQuantity, String productStatus, String invoiceProductNetworkStatus, String portionId, String portionName, String snapshotProductName, String snapshotLinePrice, String invoiceItemType, String comboNetworkStatus, String snapshotComboComponents) {
 
-    }
-
-    public void saveInvoiceProduct(String invoiceProductId, String invoiceNumber, String productName, String productPrice, String productUnit, String productCGST, String productSGST, String productQuantity, String productStatus, String invoiceProductNetworkStatus, String portionId, String portionName, String snapshotProductName, String snapshotLinePrice) {
-
-        Call<AllApiResponse> call = Api.getClient(activity).saveInvoiceProduct(invoiceNumber, productName, productPrice, productUnit, productCGST, productSGST, productQuantity, productStatus, invoiceProductNetworkStatus, portionId, portionName, snapshotProductName, snapshotLinePrice);
-        call.enqueue(new Callback<AllApiResponse>() {
-            @Override
-            public void onResponse(@NonNull Call<AllApiResponse> call, @NonNull Response<AllApiResponse> response) {
-                if (response.isSuccessful() && response.body() != null
-                    && "1".equalsIgnoreCase(response.body().getStatus())) {
-                    posBillingWalaDatabase.updateSyncInvoiceProduct(invoiceProductId, NAME_SYNCED_WITH_SERVER);
-                }
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<AllApiResponse> call, @NonNull Throwable t) {
-                Log.e("serverError", t.getMessage());
-            }
-        });
-
-    }
+        Call<AllApiResponse> call = Api.getClient(activity).saveInvoiceProduct(invoiceNumber, productName, productPrice, productUnit, productCGST, productSGST, productQuantity, productStatus, invoiceProductNetworkStatus, portionId, portionName, snapshotProductName, snapshotLinePrice, invoiceItemType, comboNetworkStatus, snapshotComboComponents);
+        if (executeCall(call)) {
+            posBillingWalaDatabase.updateSyncInvoiceProduct(invoiceProductId, NAME_SYNCED_WITH_SERVER);
+        }
+}
 
     public void saveInvoice(String invoiceId, String noOfTable, String invoiceNumber, String customerName, String customerMobile, String customerEmail, String customerAddress, String subTotal, String totalGSTAmount,
                             String discount, String discountType, String totalAmount, String paymentMode, String invoiceDate, String invoiceType, String invoiceOrderStatus, String invoiceNetworkStatus) {
 
         Call<AllApiResponse> call = Api.getClient(activity).saveInvoice(MainActivity.userId, noOfTable, invoiceNumber, customerName, customerMobile, customerEmail, customerAddress, subTotal,
                 totalGSTAmount, discount, discountType, totalAmount, paymentMode, invoiceDate, invoiceType, invoiceOrderStatus, invoiceNetworkStatus);
-        call.enqueue(new Callback<AllApiResponse>() {
-            @Override
-            public void onResponse(@NonNull Call<AllApiResponse> call, @NonNull Response<AllApiResponse> response) {
-                if (response.isSuccessful() && response.body() != null
-                    && "1".equalsIgnoreCase(response.body().getStatus())) {
-                    posBillingWalaDatabase.updateSyncInvoice(invoiceId, NAME_SYNCED_WITH_SERVER);
-                }
-            }
+        if (executeCall(call)) {
+            posBillingWalaDatabase.updateSyncInvoice(invoiceId, NAME_SYNCED_WITH_SERVER);
+        }
+}
 
-            @Override
-            public void onFailure(@NonNull Call<AllApiResponse> call, @NonNull Throwable t) {
-                Log.e("serverError", t.getMessage());
-            }
-        });
-    }
-
-    public void saveCompanyDetails(String companyId, String companyLogo, String companyName, String cashierName, String companyMobile, String companyAddress, String currencyName, String tableStatus, String noOfTable,
+    public void saveCompanyDetails(String companyId, String companyLogo, String companyName, String cashierName, String companyMobile, String companyAddress,
+                                   String shopName1, String shopName2, String addressLine1, String addressLine2, String addressLine3, String phoneNo1, String phoneNo2,
+                                   String currencyName, String tableStatus, String noOfTable,
                                    String countryName, String stateName, String gstStatus, String gstNumber, String panNumber, String paymentLogo, String companyFssis) {
 
-        Call<AllApiResponse> call = Api.getClient(activity).saveCompanyDetails(MainActivity.userId, companyLogo, companyName, cashierName, companyMobile, companyAddress, currencyName, tableStatus, noOfTable, countryName, stateName,
+        if (shopName1 == null || shopName1.trim().isEmpty()) {
+            shopName1 = companyName;
+        }
+        if (phoneNo1 == null || phoneNo1.trim().isEmpty()) {
+            phoneNo1 = companyMobile;
+        }
+        if ((addressLine1 == null || addressLine1.trim().isEmpty())
+                && (addressLine2 == null || addressLine2.trim().isEmpty())
+                && (addressLine3 == null || addressLine3.trim().isEmpty())) {
+            addressLine1 = companyAddress;
+        }
+
+        Call<AllApiResponse> call = Api.getClient(activity).saveCompanyDetails(MainActivity.userId, companyLogo, companyName, cashierName, companyMobile, companyAddress,
+                shopName1, shopName2, addressLine1, addressLine2, addressLine3, phoneNo1, phoneNo2,
+                currencyName, tableStatus, noOfTable, countryName, stateName,
                 gstStatus, gstNumber, panNumber, paymentLogo, companyFssis);
-        call.enqueue(new Callback<AllApiResponse>() {
-            @Override
-            public void onResponse(@NonNull Call<AllApiResponse> call, @NonNull Response<AllApiResponse> response) {
-                if (response.isSuccessful() && response.body() != null
-                    && "1".equalsIgnoreCase(response.body().getStatus())) {
-                    posBillingWalaDatabase.updateSynchronizeCompanyDetails(companyId, NAME_SYNCED_WITH_SERVER);
-                }
-            }
+        if (executeCall(call)) {
+            posBillingWalaDatabase.updateSynchronizeCompanyDetails(companyId, NAME_SYNCED_WITH_SERVER);
+        }
+}
 
-            @Override
-            public void onFailure(@NonNull Call<AllApiResponse> call, @NonNull Throwable t) {
-                Log.e("serverError", t.getMessage());
-            }
-        });
-    }
-
-    public void savePrinterSetting(String settingId, String printerName, String KOTPrinterName, String invoicePrefix, String invoiceTitle, String invoiceTermsCondition, String logoUse, String paymentUse, String customerUse, String productQuantityUpdate, String bluetoothAddress, String bluetoothKOTAddress, String printerFeedLines, String KotPrinterFeedLines) {
-        Call<AllApiResponse> call = Api.getClient(activity).savePrinterSetting(MainActivity.userId, printerName, KOTPrinterName, invoicePrefix, invoiceTitle, invoiceTermsCondition, logoUse, paymentUse, customerUse, productQuantityUpdate, bluetoothAddress, bluetoothKOTAddress, printerFeedLines, KotPrinterFeedLines);
-        call.enqueue(new Callback<AllApiResponse>() {
-            @Override
-            public void onResponse(@NonNull Call<AllApiResponse> call, @NonNull Response<AllApiResponse> response) {
-                if (response.isSuccessful() && response.body() != null
-                    && "1".equalsIgnoreCase(response.body().getStatus())) {
-                    posBillingWalaDatabase.updateSynchronizePrinterSetting(settingId, NAME_SYNCED_WITH_SERVER);
-                }
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<AllApiResponse> call, @NonNull Throwable t) {
-                Log.e("serverError", t.getMessage());
-            }
-        });
-    }
+    public void savePrinterSetting(String settingId, String printerName, String KOTPrinterName, String invoicePrefix, String invoiceTitle, String invoiceTermsCondition, String logoUse, String paymentUse, String customerUse, String productQuantityUpdate, String duplicateBillUse, String bluetoothAddress, String bluetoothKOTAddress, String printerFeedLines, String KotPrinterFeedLines) {
+        Call<AllApiResponse> call = Api.getClient(activity).savePrinterSetting(MainActivity.userId, printerName, KOTPrinterName, invoicePrefix, invoiceTitle, invoiceTermsCondition, logoUse, paymentUse, customerUse, productQuantityUpdate, duplicateBillUse, bluetoothAddress, bluetoothKOTAddress, printerFeedLines, KotPrinterFeedLines);
+        if (executeCall(call)) {
+            posBillingWalaDatabase.updateSynchronizePrinterSetting(settingId, NAME_SYNCED_WITH_SERVER);
+        }
+}
 
     public void saveProduct(String productId, String categoryId, String categoryName, String productCode, String productName, String productPrice, String productUnit, String productCGST, String productSGST, String productNetworkStatus, String productDeletedStatus, String subcategoryId) {
 
         Call<AllApiResponse> call = Api.getClient(activity).saveProduct(MainActivity.ownerId, categoryId, categoryName, productCode, productName, productPrice, productUnit, productCGST, productSGST, productNetworkStatus, productDeletedStatus, subcategoryId);
-        call.enqueue(new Callback<AllApiResponse>() {
-            @Override
-            public void onResponse(@NonNull Call<AllApiResponse> call, @NonNull Response<AllApiResponse> response) {
-                if (response.isSuccessful() && response.body() != null
-                    && "1".equalsIgnoreCase(response.body().getStatus())) {
-                    posBillingWalaDatabase.updateSyncProduct(productId, NAME_SYNCED_WITH_SERVER);
-                }
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<AllApiResponse> call, @NonNull Throwable t) {
-                Log.e("serverError", t.getMessage());
-            }
-        });
-
-    }
+        if (executeCall(call)) {
+            posBillingWalaDatabase.updateSyncProduct(productId, NAME_SYNCED_WITH_SERVER);
+        }
+}
 
     public void saveCategory(String categoryId, String categoryName, String categoryDeletedStatus, String categoryNetworkStatus, String foodTypeCode) {
 
         Call<AllApiResponse> call = Api.getClient(activity).saveCategory(MainActivity.ownerId, categoryName, categoryDeletedStatus, categoryNetworkStatus, foodTypeCode);
-        call.enqueue(new Callback<AllApiResponse>() {
-            @Override
-            public void onResponse(@NonNull Call<AllApiResponse> call, @NonNull Response<AllApiResponse> response) {
-                if (response.isSuccessful() && response.body() != null
-                    && "1".equalsIgnoreCase(response.body().getStatus())) {
-                    posBillingWalaDatabase.updateSyncCategory(categoryId, NAME_SYNCED_WITH_SERVER);
-                }
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<AllApiResponse> call, @NonNull Throwable t) {
-                Log.e("serverError", t.getMessage());
-            }
-        });
-    }
+        if (executeCall(call)) {
+            posBillingWalaDatabase.updateSyncCategory(categoryId, NAME_SYNCED_WITH_SERVER);
+        }
+}
 
     public void saveSubcategory(String subcategoryId, String categoryId, String categoryNetworkStatus, String subcategoryName, String subcategoryDeletedStatus, String subcategoryNetworkStatus) {
 
         Call<AllApiResponse> call = Api.getClient(activity).saveSubcategory(MainActivity.ownerId, categoryId, categoryNetworkStatus, subcategoryName, subcategoryDeletedStatus, subcategoryNetworkStatus);
-        call.enqueue(new Callback<AllApiResponse>() {
-            @Override
-            public void onResponse(@NonNull Call<AllApiResponse> call, @NonNull Response<AllApiResponse> response) {
-                if (response.isSuccessful() && response.body() != null
-                    && "1".equalsIgnoreCase(response.body().getStatus())) {
-                    posBillingWalaDatabase.updateSyncSubcategory(subcategoryId, NAME_SYNCED_WITH_SERVER);
-                }
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<AllApiResponse> call, @NonNull Throwable t) {
-                Log.e("serverError", t.getMessage());
-            }
-        });
-    }
+        if (executeCall(call)) {
+            posBillingWalaDatabase.updateSyncSubcategory(subcategoryId, NAME_SYNCED_WITH_SERVER);
+        }
+}
 
     public void savePortionMaster(String portionMasterId, String portionName, String portionMasterDeletedStatus,
                                   String portionMasterNetworkStatus) {
 
         Call<AllApiResponse> call = Api.getClient(activity).savePortionMaster(
                 MainActivity.ownerId, portionName, portionMasterDeletedStatus, portionMasterNetworkStatus);
-        call.enqueue(new Callback<AllApiResponse>() {
-            @Override
-            public void onResponse(@NonNull Call<AllApiResponse> call, @NonNull Response<AllApiResponse> response) {
-                if (response.isSuccessful() && response.body() != null
-                    && "1".equalsIgnoreCase(response.body().getStatus())) {
-                    posBillingWalaDatabase.updateSyncPortionMaster(portionMasterId, NAME_SYNCED_WITH_SERVER);
-                }
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<AllApiResponse> call, @NonNull Throwable t) {
-                Log.e("serverError", t.getMessage());
-            }
-        });
-    }
+        if (executeCall(call)) {
+            posBillingWalaDatabase.updateSyncPortionMaster(portionMasterId, NAME_SYNCED_WITH_SERVER);
+        }
+}
 
     public void savePortion(String portionId, String productId, String productNetworkStatus, String portionName,
                             String portionPrice, String portionSortOrder, String portionDeletedStatus,
@@ -589,21 +516,48 @@ public class OfflineNetworkData {
         Call<AllApiResponse> call = Api.getClient(activity).savePortion(
                 MainActivity.ownerId, productId, productNetworkStatus, portionName, portionPrice, portionSortOrder,
                 portionDeletedStatus, portionNetworkStatus, portionMasterId, portionMasterNetworkStatus);
-        call.enqueue(new Callback<AllApiResponse>() {
-            @Override
-            public void onResponse(@NonNull Call<AllApiResponse> call, @NonNull Response<AllApiResponse> response) {
-                if (response.isSuccessful() && response.body() != null
-                    && "1".equalsIgnoreCase(response.body().getStatus())) {
-                    posBillingWalaDatabase.updateSyncPortion(portionId, NAME_SYNCED_WITH_SERVER);
-                }
-            }
+        if (executeCall(call)) {
+            posBillingWalaDatabase.updateSyncPortion(portionId, NAME_SYNCED_WITH_SERVER);
+        }
+}
 
-            @Override
-            public void onFailure(@NonNull Call<AllApiResponse> call, @NonNull Throwable t) {
-                Log.e("serverError", t.getMessage());
-            }
-        });
-    }
+    public void saveCombo(String comboId, String comboName, String comboCode, String comboPrice, String comboCGST,
+                          String comboSGST, String comboWithGSTPrice, String comboActiveStatus,
+                          String comboDeletedStatus, String comboNetworkStatus, String comboSortOrder) {
+        Call<AllApiResponse> call = Api.getClient(activity).saveCombo(
+                MainActivity.ownerId, comboName, comboCode, comboPrice, comboCGST, comboSGST, comboWithGSTPrice,
+                comboActiveStatus, comboDeletedStatus, comboNetworkStatus, comboSortOrder);
+        if (executeCall(call)) {
+            posBillingWalaDatabase.updateSyncCombo(comboId, NAME_SYNCED_WITH_SERVER);
+        }
+}
+
+    public void saveComboItem(String comboItemId, String comboId, String comboNetworkStatus, String productId,
+                              String productNetworkStatus, String portionId, String portionNetworkStatus,
+                              String comboItemQuantity, String comboItemSortOrder, String comboItemDeletedStatus,
+                              String comboItemNetworkStatus) {
+        Call<AllApiResponse> call = Api.getClient(activity).saveComboItem(
+                MainActivity.ownerId, comboId, comboNetworkStatus, productId, productNetworkStatus, portionId,
+                portionNetworkStatus, comboItemQuantity, comboItemSortOrder, comboItemDeletedStatus,
+                comboItemNetworkStatus);
+        if (executeCall(call)) {
+            posBillingWalaDatabase.updateSyncComboItem(comboItemId, NAME_SYNCED_WITH_SERVER);
+        }
+}
+
+    public void saveInvoiceComboItem(String invoiceComboItemId, String invoiceNumber,
+                                     String invoiceProductNetworkStatus, String comboNetworkStatus, String productId,
+                                     String productNetworkStatus, String productName, String portionId,
+                                     String portionNetworkStatus, String portionName, String quantity, String sortOrder,
+                                     String invoiceComboItemNetworkStatus) {
+        Call<AllApiResponse> call = Api.getClient(activity).saveInvoiceComboItem(
+                invoiceNumber, invoiceProductNetworkStatus, comboNetworkStatus, productId, productNetworkStatus,
+                productName, portionId, portionNetworkStatus, portionName, quantity, sortOrder,
+                invoiceComboItemNetworkStatus);
+        if (executeCall(call)) {
+            posBillingWalaDatabase.updateSyncInvoiceComboItem(invoiceComboItemId, NAME_SYNCED_WITH_SERVER);
+        }
+}
 
     private String resolveFoodTypeCode(android.database.Cursor cursor) {
         String foodTypeId = columnOrEmpty(cursor, "foodTypeId");
@@ -626,5 +580,17 @@ public class OfflineNetworkData {
         return value != null ? value : "";
     }
 
+
+
+    private boolean executeCall(Call<AllApiResponse> call) {
+        try {
+            Response<AllApiResponse> response = call.execute();
+            return response.isSuccessful() && response.body() != null
+                    && "1".equalsIgnoreCase(response.body().getStatus());
+        } catch (Exception e) {
+            Log.e("SyncHttp", "serverError", e);
+            return false;
+        }
+    }
 
 }

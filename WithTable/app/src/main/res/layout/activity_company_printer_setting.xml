@@ -29,11 +29,10 @@
                 app:tint="@color/white" />
 
             <androidx.appcompat.widget.AppCompatTextView
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
-                android:layout_gravity="center"
-                android:layout_marginStart="15dp"
+                android:layout_toStartOf="@+id/invoicePreview"
                 android:layout_toEndOf="@+id/backToSetting"
                 android:fontFamily="@font/poppinsmedium"
                 android:gravity="center"
@@ -42,7 +41,24 @@
                 android:text="@string/setting_printer_details"
                 android:textColor="@color/white"
                 android:textSize="17dp" />
-</RelativeLayout>
+
+            <TextView
+                android:id="@+id/invoicePreview"
+                android:layout_width="wrap_content"
+                android:layout_height="35dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerInParent="true"
+                android:layout_marginEnd="10dp"
+                android:background="@drawable/button_rounded_border"
+                android:backgroundTint="@color/white"
+                android:fontFamily="@font/poppinsregular"
+                android:gravity="center"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:text="@string/ui_invoice_preview"
+                android:textColor="@color/black"
+                android:textSize="13dp" />
+        </RelativeLayout>
 
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -351,6 +367,37 @@
                 android:textOn="On"
                 android:textSize="15dp" />
 
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/duplicateBillSwitch"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_gravity="center"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="5dp"
+                android:checked="false"
+                android:fontFamily="@font/poppinsregular"
+                android:gravity="center|start"
+                android:paddingStart="15dp"
+                android:paddingEnd="10dp"
+                android:switchMinWidth="45dp"
+                android:switchPadding="30dp"
+                android:text="@string/ui_duplicate_bill_copy"
+                android:textColor="@color/black"
+                android:textOff="Off"
+                android:textOn="On"
+                android:textSize="15dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="15dp"
+                android:layout_marginEnd="10dp"
+                android:layout_marginBottom="5dp"
+                android:fontFamily="@font/poppinsregular"
+                android:text="@string/ui_duplicate_bill_copy_hint"
+                android:textColor="@color/textcolor"
+                android:textSize="12dp" />
+
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/invoiceTitleLayout"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
@@ -417,7 +464,6 @@
                     android:textSize="15dp" />
 
             </com.google.android.material.textfield.TextInputLayout>
-
 
         </LinearLayout>
 

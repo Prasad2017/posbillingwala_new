@@ -55,6 +55,7 @@ public class MasterData extends Fragment implements View.OnClickListener {
         binding.subcategoryLayout.setOnClickListener(this);
         binding.portionLayout.setOnClickListener(this);
         binding.productLayout.setOnClickListener(this);
+        binding.comboLayout.setOnClickListener(this);
     }
 
     @Override
@@ -65,31 +66,30 @@ public class MasterData extends Fragment implements View.OnClickListener {
         } else if (id == R.id.categoryLayout) {
             AddCategory addCategory = new AddCategory();
             addCategory.setArguments(openedFromMaster());
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
             ((MainActivity) activity).loadFragment(addCategory, true);
         } else if (id == R.id.subcategoryLayout) {
             AddSubcategory addSubcategory = new AddSubcategory();
             addSubcategory.setArguments(openedFromMaster());
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
             ((MainActivity) activity).loadFragment(addSubcategory, true);
         } else if (id == R.id.portionLayout) {
             AddPortionMaster addPortionMaster = new AddPortionMaster();
             Bundle bundle = openedFromMaster();
             bundle.putString("returnTo", "masterData");
             addPortionMaster.setArguments(bundle);
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
             ((MainActivity) activity).loadFragment(addPortionMaster, true);
         } else if (id == R.id.productLayout) {
             ProductMaster productMaster = new ProductMaster();
             productMaster.setArguments(openedFromMaster());
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
             ((MainActivity) activity).loadFragment(productMaster, true);
+        } else if (id == R.id.comboLayout) {
+            ComboMaster comboMaster = new ComboMaster();
+            comboMaster.setArguments(openedFromMaster());
+            ((MainActivity) activity).loadFragment(comboMaster, true);
         }
     }
 
     private void goToSettings() {
-        ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-        ((MainActivity) activity).loadFragment(new UserSetting(), true);
+        ((MainActivity) activity).goBackTo(new UserSetting(), true);
     }
 
     static Bundle openedFromMaster() {

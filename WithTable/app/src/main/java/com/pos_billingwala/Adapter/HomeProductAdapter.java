@@ -29,6 +29,11 @@ public class HomeProductAdapter extends RecyclerView.Adapter<HomeProductAdapter.
         this.clickListerInterface = clickListerInterface;
     }
 
+    public void submitList(List<ProductResponse> products) {
+        this.productResponseList = products;
+        notifyDataSetChanged();
+    }
+
     @NonNull
     @Override
     public MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {

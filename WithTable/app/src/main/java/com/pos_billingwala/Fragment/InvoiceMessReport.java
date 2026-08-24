@@ -24,6 +24,7 @@ import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.InvoiceMessReportAdapter;
 import com.pos_billingwala.CalenderView.MonthPickerDialog;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.ListLoader;
 import com.pos_billingwala.Extra.SimpleDividerItemDecoration;
 import com.pos_billingwala.Model.MessInvoiceResponse;
 import com.pos_billingwala.R;
@@ -32,6 +33,8 @@ import com.pos_billingwala.databinding.FragmentInvoiceMessReportBinding;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+
+import cn.pedant.SweetAlert.SweetAlertDialog;
 
 
 public class InvoiceMessReport extends Fragment implements View.OnClickListener {
@@ -65,8 +68,7 @@ public class InvoiceMessReport extends Fragment implements View.OnClickListener 
 
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
                     Log.i("tag", "onKey Back listener is working!!!");
-                    ((MainActivity) getActivity()).removeCurrentFragmentAndMoveBack();
-                    ((MainActivity) getActivity()).loadFragment(new ReportSetting(), true);
+                    ((MainActivity) getActivity()).goBackTo(new ReportSetting(), true);
                     return true;
                 }
                 return false;
@@ -83,8 +85,7 @@ public class InvoiceMessReport extends Fragment implements View.OnClickListener 
     public void onClick(View view) {
         int id = view.getId();
         if (id == R.id.backToSetting) {
-            ((MainActivity) getActivity()).removeCurrentFragmentAndMoveBack();
-            ((MainActivity) getActivity()).loadFragment(new ReportSetting(), true);
+            ((MainActivity) getActivity()).goBackTo(new ReportSetting(), true);
         } else if (id == R.id.menuIcon) {
             setPopUpWindow();
         }
@@ -187,26 +188,29 @@ public class InvoiceMessReport extends Fragment implements View.OnClickListener 
     }
 
     public void getDateReportList(String invoiceDate) {
+        SweetAlertDialog loader = ListLoader.show(activity);
+        try {
+            messInvoiceResponseList.clear();
+            messInvoiceResponseList = posBillingWalaDatabase.getInvoiceMessInvoiceDateWiseReportList(invoiceDate);
+            if (!messInvoiceResponseList.isEmpty()) {
 
-        messInvoiceResponseList.clear();
-        messInvoiceResponseList = posBillingWalaDatabase.getInvoiceMessInvoiceDateWiseReportList(invoiceDate);
-        if (!messInvoiceResponseList.isEmpty()) {
+                InvoiceMessReportAdapter adapter = new InvoiceMessReportAdapter(activity, messInvoiceResponseList);
+                binding.recyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
+                binding.recyclerView.addItemDecoration(new SimpleDividerItemDecoration(activity));
+                binding.recyclerView.setAdapter(adapter);
+                adapter.notifyDataSetChanged();
+                // adapter.notifyItemInserted(messInvoiceResponseList.size() - 1);
 
-            InvoiceMessReportAdapter adapter = new InvoiceMessReportAdapter(activity, messInvoiceResponseList);
-            binding.recyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
-            binding.recyclerView.addItemDecoration(new SimpleDividerItemDecoration(activity));
-            binding.recyclerView.setAdapter(adapter);
-            adapter.notifyDataSetChanged();
-            // adapter.notifyItemInserted(messInvoiceResponseList.size() - 1);
+                binding.linearLayout.setVisibility(View.VISIBLE);
+                binding.noDataFound.setVisibility(View.GONE);
 
-            binding.linearLayout.setVisibility(View.VISIBLE);
-            binding.noDataFound.setVisibility(View.GONE);
-
-        } else {
-            binding.linearLayout.setVisibility(View.GONE);
-            binding.noDataFound.setVisibility(View.VISIBLE);
+            } else {
+                binding.linearLayout.setVisibility(View.GONE);
+                binding.noDataFound.setVisibility(View.VISIBLE);
+            }
+        } finally {
+            ListLoader.dismiss(loader);
         }
-
     }
 
 
@@ -219,25 +223,28 @@ public class InvoiceMessReport extends Fragment implements View.OnClickListener 
     }
 
     public void getInvoiceMessInvoiceReportList() {
+        SweetAlertDialog loader = ListLoader.show(activity);
+        try {
+            messInvoiceResponseList.clear();
+            messInvoiceResponseList = posBillingWalaDatabase.getInvoiceMessInvoiceReportList();
+            if (!messInvoiceResponseList.isEmpty()) {
 
-        messInvoiceResponseList.clear();
-        messInvoiceResponseList = posBillingWalaDatabase.getInvoiceMessInvoiceReportList();
-        if (!messInvoiceResponseList.isEmpty()) {
+                InvoiceMessReportAdapter adapter = new InvoiceMessReportAdapter(activity, messInvoiceResponseList);
+                binding.recyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
+                binding.recyclerView.addItemDecoration(new SimpleDividerItemDecoration(activity));
+                binding.recyclerView.setAdapter(adapter);
+                adapter.notifyDataSetChanged();
+                //  adapter.notifyItemInserted(messInvoiceResponseList.size() - 1);
 
-            InvoiceMessReportAdapter adapter = new InvoiceMessReportAdapter(activity, messInvoiceResponseList);
-            binding.recyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
-            binding.recyclerView.addItemDecoration(new SimpleDividerItemDecoration(activity));
-            binding.recyclerView.setAdapter(adapter);
-            adapter.notifyDataSetChanged();
-            //  adapter.notifyItemInserted(messInvoiceResponseList.size() - 1);
+                binding.linearLayout.setVisibility(View.VISIBLE);
+                binding.noDataFound.setVisibility(View.GONE);
 
-            binding.linearLayout.setVisibility(View.VISIBLE);
-            binding.noDataFound.setVisibility(View.GONE);
-
-        } else {
-            binding.linearLayout.setVisibility(View.GONE);
-            binding.noDataFound.setVisibility(View.VISIBLE);
+            } else {
+                binding.linearLayout.setVisibility(View.GONE);
+                binding.noDataFound.setVisibility(View.VISIBLE);
+            }
+        } finally {
+            ListLoader.dismiss(loader);
         }
-
     }
 }

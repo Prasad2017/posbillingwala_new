@@ -65,8 +65,6 @@ public class AllCustomerProductList extends Fragment implements View.OnClickList
                         productRecyclerView.setAdapter(productAdapter);
                         productAdapter.notifyDataSetChanged();
                         productAdapter.notifyItemInserted(productResponseList.size() - 1);
-                        productRecyclerView.setHasFixedSize(true);
-
                         productRecyclerView.setVisibility(View.VISIBLE);
                         noDataFound.setVisibility(View.GONE);
 

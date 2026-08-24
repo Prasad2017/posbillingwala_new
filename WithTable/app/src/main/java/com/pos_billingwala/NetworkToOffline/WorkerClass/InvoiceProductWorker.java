@@ -41,13 +41,7 @@ public class InvoiceProductWorker extends Worker {
             if (response.isSuccessful() && response.body() != null) {
                 List<InvoiceProductResponse> invoiceProductResponseList = response.body().getInvoiceProductResponseList();
                 if (invoiceProductResponseList != null && !invoiceProductResponseList.isEmpty()) {
-                    for (InvoiceProductResponse invoiceProductResponse : invoiceProductResponseList) {
-                        try {
-                            posBillingWalaDatabase.addInvoiceProduct(invoiceProductResponse);
-                        } catch (Exception e) {
-                            Log.e("InvoiceProductWorker", "insert failed", e);
-                        }
-                    }
+                    posBillingWalaDatabase.addInvoiceProductsBatchFromCloud(invoiceProductResponseList);
                 }
                 return Result.success();
             }

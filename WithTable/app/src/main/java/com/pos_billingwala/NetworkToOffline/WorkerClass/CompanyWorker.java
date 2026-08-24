@@ -44,7 +44,19 @@ public class CompanyWorker extends Worker {
                 List<CompanyResponse> companyResponseList = response.body().getCompanyResponseList();
                 if (!companyResponseList.isEmpty()) {
                     for (CompanyResponse companyResponse : companyResponseList) {
-                        database.addCompanyDetails(companyResponse.getCompanyLogo(), companyResponse.getCompanyName(), companyResponse.getCashierName(), companyResponse.getCompanyMobile(), companyResponse.getCompanyAddress(), companyResponse.getCurrencyName(),
+                        database.addCompanyDetails(companyResponse.getCompanyLogo(),
+                                companyResponse.getShopName1() != null && !companyResponse.getShopName1().trim().isEmpty()
+                                        ? companyResponse.getShopName1() : companyResponse.getCompanyName(),
+                                companyResponse.getShopName2(),
+                                companyResponse.getCashierName(),
+                                companyResponse.getPhoneNo1() != null && !companyResponse.getPhoneNo1().trim().isEmpty()
+                                        ? companyResponse.getPhoneNo1() : companyResponse.getCompanyMobile(),
+                                companyResponse.getPhoneNo2(),
+                                companyResponse.getAddressLine1() != null && !companyResponse.getAddressLine1().trim().isEmpty()
+                                        ? companyResponse.getAddressLine1() : companyResponse.getCompanyAddress(),
+                                companyResponse.getAddressLine2(),
+                                companyResponse.getAddressLine3(),
+                                companyResponse.getCurrencyName(),
                                 companyResponse.getTableStatus(), companyResponse.getNoOfTable(), companyResponse.getCountryName(), companyResponse.getStateName(), companyResponse.getGstStatus(), companyResponse.getGstNumber(),
                                 companyResponse.getShopCGST(), companyResponse.getShopSGST(), companyResponse.getPanNumber(), companyResponse.getCompanyFssis(), 1, companyResponse.getPaymentLogo());
                     }

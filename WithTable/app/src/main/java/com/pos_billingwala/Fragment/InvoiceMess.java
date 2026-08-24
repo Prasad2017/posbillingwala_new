@@ -30,6 +30,7 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.MessInvoiceAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.ListLoader;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.MemberResponse;
 import com.pos_billingwala.R;
@@ -41,6 +42,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+
+import cn.pedant.SweetAlert.SweetAlertDialog;
 
 @SuppressLint("StaticFieldLeak, ClickableViewAccessibility, NonConstantResourceId, NotifyDataSetChanged, SetTextI18n")
 public class InvoiceMess extends Fragment implements View.OnClickListener {
@@ -74,8 +77,7 @@ public class InvoiceMess extends Fragment implements View.OnClickListener {
 
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
                     Log.i("tag", "onKey Back listener is working!!!");
-                    ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                    ((MainActivity) activity).loadFragment(new Home(), false);
+                    ((MainActivity) activity).navigateToHome();
                     return true;
                 }
                 return false;
@@ -133,8 +135,7 @@ public class InvoiceMess extends Fragment implements View.OnClickListener {
     public void onClick(View view) {
         int id = view.getId();
         if (id == R.id.homeCardView) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-            ((MainActivity) activity).loadFragment(new Home(), false);
+            ((MainActivity) activity).navigateToHome();
         } else if (id == R.id.menuIcon) {
             setPopUpWindow();
         }
@@ -180,7 +181,6 @@ public class InvoiceMess extends Fragment implements View.OnClickListener {
 
                 if (reportPin.getText().toString().equalsIgnoreCase(pin)) {
                     dialog.dismiss();
-                    ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
                     ((MainActivity) activity).loadFragment(new MessMemberList(), true);
                 } else {
                     reportPin.requestFocus();
@@ -239,36 +239,38 @@ public class InvoiceMess extends Fragment implements View.OnClickListener {
             getMemberList();
         } else {
             Toast.makeText(activity, getString(R.string.toast_please_fill_shop_details), Toast.LENGTH_SHORT).show();
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-            ((MainActivity) activity).loadFragment(new CompanyDetailSetting(), true);
+                        ((MainActivity) activity).loadFragment(new CompanyDetailSetting(), true);
         }
 
     }
 
 
     public void getMemberList() {
+        SweetAlertDialog loader = ListLoader.show(activity);
+        try {
+            Date c = Calendar.getInstance().getTime();
+            System.out.println("Current time => " + c);
+            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM", Locale.getDefault());
+            String paymentDate = df.format(c);
 
-        Date c = Calendar.getInstance().getTime();
-        System.out.println("Current time => " + c);
-        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM", Locale.getDefault());
-        String paymentDate = df.format(c);
+            memberResponseList.clear();
+            memberResponseList = posBillingWalaDatabase.getMemberPaymentList(paymentDate);
+            if (!memberResponseList.isEmpty()) {
 
-        memberResponseList.clear();
-        memberResponseList = posBillingWalaDatabase.getMemberPaymentList(paymentDate);
-        if (!memberResponseList.isEmpty()) {
+                messInvoiceAdapter = new MessInvoiceAdapter(activity, memberResponseList);
+                binding.recyclerView.setAdapter(messInvoiceAdapter);
+                messInvoiceAdapter.notifyDataSetChanged();
+                //  messInvoiceAdapter.notifyItemInserted(memberResponseList.size() - 1);
 
-            messInvoiceAdapter = new MessInvoiceAdapter(activity, memberResponseList);
-            binding.recyclerView.setAdapter(messInvoiceAdapter);
-            messInvoiceAdapter.notifyDataSetChanged();
-            //  messInvoiceAdapter.notifyItemInserted(memberResponseList.size() - 1);
-
-            binding.messOrderLayout.setVisibility(View.VISIBLE);
-            binding.noDataFound.setVisibility(View.GONE);
-        } else {
-            binding.messOrderLayout.setVisibility(View.GONE);
-            binding.noDataFound.setVisibility(View.VISIBLE);
+                binding.messOrderLayout.setVisibility(View.VISIBLE);
+                binding.noDataFound.setVisibility(View.GONE);
+            } else {
+                binding.messOrderLayout.setVisibility(View.GONE);
+                binding.noDataFound.setVisibility(View.VISIBLE);
+            }
+        } finally {
+            ListLoader.dismiss(loader);
         }
-
     }
 
 }

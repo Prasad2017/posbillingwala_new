@@ -50,6 +50,18 @@ public class InvoiceProductResponse {
     @SerializedName("snapshotLinePrice")
     @Expose
     public String snapshotLinePrice;
+    @SerializedName("invoiceItemType")
+    @Expose
+    public String invoiceItemType;
+    @SerializedName("comboId")
+    @Expose
+    public String comboId;
+    @SerializedName("comboNetworkStatus")
+    @Expose
+    public String comboNetworkStatus;
+    @SerializedName("snapshotComboComponents")
+    @Expose
+    public String snapshotComboComponents;
 
 
     public String getInvoiceProductId() {
@@ -93,7 +105,7 @@ public class InvoiceProductResponse {
     }
 
     public String getProductCGST() {
-        return productCGST;
+        return productCGST != null ? productCGST : "";
     }
 
     public void setProductCGST(String productCGST) {
@@ -101,7 +113,7 @@ public class InvoiceProductResponse {
     }
 
     public String getProductSGST() {
-        return productSGST;
+        return productSGST != null ? productSGST : "";
     }
 
     public void setProductSGST(String productSGST) {
@@ -172,8 +184,42 @@ public class InvoiceProductResponse {
         this.snapshotLinePrice = snapshotLinePrice;
     }
 
+    public String getInvoiceItemType() {
+        return invoiceItemType;
+    }
+
+    public void setInvoiceItemType(String invoiceItemType) {
+        this.invoiceItemType = invoiceItemType;
+    }
+
+    public String getComboId() {
+        return comboId;
+    }
+
+    public void setComboId(String comboId) {
+        this.comboId = comboId;
+    }
+
+    public String getComboNetworkStatus() {
+        return comboNetworkStatus;
+    }
+
+    public void setComboNetworkStatus(String comboNetworkStatus) {
+        this.comboNetworkStatus = comboNetworkStatus;
+    }
+
+    public String getSnapshotComboComponents() {
+        return snapshotComboComponents;
+    }
+
+    public void setSnapshotComboComponents(String snapshotComboComponents) {
+        this.snapshotComboComponents = snapshotComboComponents;
+    }
+
     public String getDisplayLineName() {
-        return BillLineSnapshot.displayName(productName, snapshotProductName, portionName);
+        boolean combo = invoiceItemType != null && "COMBO".equalsIgnoreCase(invoiceItemType.trim());
+        return BillLineSnapshot.displayName(productName, snapshotProductName, combo ? null : portionName,
+                snapshotComboComponents);
     }
 
     public String getResolvedLinePrice() {

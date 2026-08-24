@@ -25,12 +25,15 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.MemberAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.ListLoader;
 import com.pos_billingwala.Model.MemberResponse;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentMessMemberListBinding;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import cn.pedant.SweetAlert.SweetAlertDialog;
 
 
 @SuppressLint("StaticFieldLeak, ClickableViewAccessibility, NonConstantResourceId, NotifyDataSetChanged, SetTextI18n")
@@ -49,21 +52,25 @@ public class MessMemberList extends Fragment implements View.OnClickListener {
     FragmentMessMemberListBinding binding;
 
     public static void getAllMessMemberList() {
+        SweetAlertDialog loader = ListLoader.show(activity);
+        try {
+            memberResponseList = posBillingWalaDatabase.getMemberList();
+            if (!memberResponseList.isEmpty()) {
 
-        memberResponseList = posBillingWalaDatabase.getMemberList();
-        if (!memberResponseList.isEmpty()) {
+                MemberAdapter adapter = new MemberAdapter(activity, memberResponseList);
+                recyclerView.setLayoutManager(new LinearLayoutManager(activity));
+                recyclerView.setAdapter(adapter);
+                adapter.notifyDataSetChanged();
+                // adapter.notifyItemInserted(memberResponseList.size() - 1);
 
-            MemberAdapter adapter = new MemberAdapter(activity, memberResponseList);
-            recyclerView.setLayoutManager(new LinearLayoutManager(activity));
-            recyclerView.setAdapter(adapter);
-            adapter.notifyDataSetChanged();
-            // adapter.notifyItemInserted(memberResponseList.size() - 1);
-
-            noDataFound.setVisibility(View.GONE);
-            linearLayout.setVisibility(View.VISIBLE);
-        } else {
-            noDataFound.setVisibility(View.VISIBLE);
-            linearLayout.setVisibility(View.GONE);
+                noDataFound.setVisibility(View.GONE);
+                linearLayout.setVisibility(View.VISIBLE);
+            } else {
+                noDataFound.setVisibility(View.VISIBLE);
+                linearLayout.setVisibility(View.GONE);
+            }
+        } finally {
+            ListLoader.dismiss(loader);
         }
     }
 
@@ -86,8 +93,7 @@ public class MessMemberList extends Fragment implements View.OnClickListener {
 
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
                     Log.i("tag", "onKey Back listener is working!!!");
-                    ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                    ((MainActivity) activity).loadFragment(new InvoiceMess(), true);
+                    ((MainActivity) activity).goBackTo(new InvoiceMess(), true);
                     return true;
                 }
                 return false;
@@ -160,8 +166,7 @@ public class MessMemberList extends Fragment implements View.OnClickListener {
     public void onClick(View view) {
         int id = view.getId();
         if (id == R.id.backToSetting) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-            ((MainActivity) activity).loadFragment(new InvoiceMess(), true);
+            ((MainActivity) activity).goBackTo(new InvoiceMess(), true);
         } else if (id == R.id.menuIcon) {
             setPopUpWindow();
         }
@@ -183,8 +188,7 @@ public class MessMemberList extends Fragment implements View.OnClickListener {
             @Override
             public void onClick(View v) {
                 mypopupWindow.dismiss();
-                ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                ((MainActivity) activity).loadFragment(new AddMessMember(), true);
+                                ((MainActivity) activity).loadFragment(new AddMessMember(), true);
             }
         });
 

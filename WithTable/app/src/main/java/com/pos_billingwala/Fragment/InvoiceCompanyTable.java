@@ -23,6 +23,8 @@ import com.pos_billingwala.Activity.DuplicateBluetoothPrint;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.TableAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.AppExecutors;
+import com.pos_billingwala.Extra.ListLoader;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentInvoiceCompanyTableBinding;
@@ -43,31 +45,41 @@ public class InvoiceCompanyTable extends Fragment implements View.OnClickListene
     FragmentInvoiceCompanyTableBinding binding;
 
     public static void getCompanyDetails() {
-
-        companyResponseList.clear();
-        companyResponseList = posBillingWalaDatabase.getCompanyDetails();
-        if (!companyResponseList.isEmpty()) {
-
-            if (companyResponseList.get(0).getTableStatus() != null) {
-                if (companyResponseList.get(0).getTableStatus().equalsIgnoreCase("on")) {
-                    int noOfTable = Integer.parseInt(companyResponseList.get(0).getNoOfTable());
-                    if (noOfTable > 0) {
-
-                        tableAdapter = new TableAdapter(activity, noOfTable);
-                        // tableRecyclerView.setLayoutManager(new GridLayoutManager(activity, 3));
-                        tableRecyclerView.setAdapter(tableAdapter);
-                        tableAdapter.notifyDataSetChanged();
-
-                    }
-                }
-            }
-
-        } else {
-            Toast.makeText(activity, activity.getString(R.string.toast_please_fill_shop_details), Toast.LENGTH_SHORT).show();
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-            ((MainActivity) activity).loadFragment(new CompanyDetailSetting(), true);
+        if (activity == null || posBillingWalaDatabase == null) {
+            return;
         }
-
+        final cn.pedant.SweetAlert.SweetAlertDialog loader = ListLoader.show(activity);
+        AppExecutors.get().db().execute(() -> {
+            List<CompanyResponse> list = posBillingWalaDatabase.getCompanyDetails();
+            AppExecutors.get().main(() -> {
+                try {
+                    if (activity == null) {
+                        return;
+                    }
+                    companyResponseList.clear();
+                    if (list != null) {
+                        companyResponseList.addAll(list);
+                    }
+                    if (!companyResponseList.isEmpty()) {
+                        if (companyResponseList.get(0).getTableStatus() != null) {
+                            if (companyResponseList.get(0).getTableStatus().equalsIgnoreCase("on")) {
+                                int noOfTable = Integer.parseInt(companyResponseList.get(0).getNoOfTable());
+                                if (noOfTable > 0 && tableRecyclerView != null) {
+                                    tableAdapter = new TableAdapter(activity, noOfTable);
+                                    tableRecyclerView.setAdapter(tableAdapter);
+                                    tableAdapter.notifyDataSetChanged();
+                                }
+                            }
+                        }
+                    } else {
+                        Toast.makeText(activity, activity.getString(R.string.toast_please_fill_shop_details), Toast.LENGTH_SHORT).show();
+                        ((MainActivity) activity).loadFragment(new CompanyDetailSetting(), true);
+                    }
+                } finally {
+                    ListLoader.dismiss(loader);
+                }
+            });
+        });
     }
 
     @Override
@@ -90,8 +102,7 @@ public class InvoiceCompanyTable extends Fragment implements View.OnClickListene
 
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
                     Log.i("tag", "onKey Back listener is working!!!");
-                    ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                    ((MainActivity) activity).loadFragment(new Home(), false);
+                    ((MainActivity) activity).navigateToHome();
                     return true;
                 }
                 return false;
@@ -108,8 +119,7 @@ public class InvoiceCompanyTable extends Fragment implements View.OnClickListene
     public void onClick(View view) {
         int id = view.getId();
         if (id == R.id.homeCardView) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-            ((MainActivity) activity).loadFragment(new Home(), false);
+            ((MainActivity) activity).navigateToHome();
         } else if (id == R.id.menuIcon) {
             setPopUpWindow();
         }

@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.ExpenseAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.ListLoader;
 import com.pos_billingwala.Extra.SimpleDividerItemDecoration;
 import com.pos_billingwala.Model.ExpenseResponse;
 import com.pos_billingwala.R;
@@ -24,6 +25,8 @@ import com.pos_billingwala.databinding.FragmentExpensesBinding;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+
+import cn.pedant.SweetAlert.SweetAlertDialog;
 
 
 public class Expenses extends Fragment implements View.OnClickListener {
@@ -55,8 +58,7 @@ public class Expenses extends Fragment implements View.OnClickListener {
 
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
                     Log.i("tag", "onKey Back listener is working!!!");
-                    ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                    ((MainActivity) activity).loadFragment(new UserSetting(), true);
+                    ((MainActivity) activity).goBackTo(new UserSetting(), true);
                     return true;
                 }
                 return false;
@@ -73,10 +75,8 @@ public class Expenses extends Fragment implements View.OnClickListener {
     public void onClick(View view) {
         int id = view.getId();
         if (id == R.id.backToSetting) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-            ((MainActivity) activity).loadFragment(new UserSetting(), true);
+            ((MainActivity) activity).goBackTo(new UserSetting(), true);
         } else if (id == R.id.addExpense) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
             ((MainActivity) activity).loadFragment(new AddExpenses(), true);
         }
     }
@@ -90,30 +90,33 @@ public class Expenses extends Fragment implements View.OnClickListener {
 
     @SuppressLint("SetTextI18n")
     public void getExpenseList() {
+        SweetAlertDialog loader = ListLoader.show(activity);
+        try {
+            expenseResponseList.clear();
+            expenseResponseList = posBillingWalaDatabase.getExpenseList();
+            if (!expenseResponseList.isEmpty()) {
+                adapter = new ExpenseAdapter(activity, expenseResponseList);
+                binding.recyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
+                binding.recyclerView.addItemDecoration(new SimpleDividerItemDecoration(activity));
+                binding.recyclerView.setAdapter(adapter);
+                adapter.notifyDataSetChanged();
+                // adapter.notifyItemInserted(expenseResponseList.size() - 1);
 
-        expenseResponseList.clear();
-        expenseResponseList = posBillingWalaDatabase.getExpenseList();
-        if (!expenseResponseList.isEmpty()) {
-            adapter = new ExpenseAdapter(activity, expenseResponseList);
-            binding.recyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
-            binding.recyclerView.addItemDecoration(new SimpleDividerItemDecoration(activity));
-            binding.recyclerView.setAdapter(adapter);
-            adapter.notifyDataSetChanged();
-            // adapter.notifyItemInserted(expenseResponseList.size() - 1);
+                float totalExpenseAmount = 0f;
+                for (ExpenseResponse expenseResponse : expenseResponseList) {
+                    totalExpenseAmount += Float.parseFloat(expenseResponse.getExpenseAmount());
+                }
+                binding.totalAmount.setText(activity.getString(R.string.inr) + " " + String.format(Locale.US, "%.2f", totalExpenseAmount));
 
-            float totalExpenseAmount = 0f;
-            for (ExpenseResponse expenseResponse : expenseResponseList) {
-                totalExpenseAmount += Float.parseFloat(expenseResponse.getExpenseAmount());
+                binding.noDataFound.setVisibility(View.GONE);
+                binding.nestedScrollView.setVisibility(View.VISIBLE);
+
+            } else {
+                binding.noDataFound.setVisibility(View.VISIBLE);
+                binding.nestedScrollView.setVisibility(View.GONE);
             }
-            binding.totalAmount.setText(activity.getString(R.string.inr) + " " + String.format(Locale.US, "%.2f", totalExpenseAmount));
-
-            binding.noDataFound.setVisibility(View.GONE);
-            binding.nestedScrollView.setVisibility(View.VISIBLE);
-
-        } else {
-            binding.noDataFound.setVisibility(View.VISIBLE);
-            binding.nestedScrollView.setVisibility(View.GONE);
+        } finally {
+            ListLoader.dismiss(loader);
         }
-
     }
 }

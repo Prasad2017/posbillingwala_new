@@ -42,24 +42,8 @@ public class ProductWorker extends Worker {
 
             if (response.isSuccessful() && response.body() != null) {
                 List<ProductResponse> productList = response.body().getProductResponseList();
-                if (productList != null) {
-                    for (ProductResponse product : productList) {
-                        database.addProduct(
-                                MainActivity.ownerId,
-                                product.getCategoryId(),
-                                product.getCategoryName(),
-                                product.getProductCode(),
-                                product.getProductName(),
-                                product.getProductPrice(),
-                                product.getProductUnit(),
-                                product.getProductCGST(),
-                                product.getProductSGST(),
-                                1,
-                                product.getProductNetworkStatus(),
-                                product.getProductDeletedStatus(),
-                                product.getSubcategoryId()
-                        );
-                    }
+                if (productList != null && !productList.isEmpty()) {
+                    database.addProductsBatchFromCloud(MainActivity.ownerId, productList);
                 }
             }
             return Result.success();
@@ -69,4 +53,3 @@ public class ProductWorker extends Worker {
         }
     }
 }
-

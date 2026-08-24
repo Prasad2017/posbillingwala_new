@@ -54,8 +54,7 @@ public class UpdateMessMember extends Fragment implements View.OnClickListener {
 
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
                     Log.i("tag", "onKey Back listener is working!!!");
-                    ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                    ((MainActivity) activity).loadFragment(new MessMemberList(), true);
+                    ((MainActivity) activity).goBackTo(new MessMemberList(), true);
                     return true;
                 }
                 return false;
@@ -78,8 +77,7 @@ public class UpdateMessMember extends Fragment implements View.OnClickListener {
     public void onClick(View view) {
         int id = view.getId();
         if (id == R.id.backToMess) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-            ((MainActivity) activity).loadFragment(new MessMemberList(), true);
+            ((MainActivity) activity).goBackTo(new MessMemberList(), true);
         } else if (id == R.id.updateMember) {
             if (!binding.memberName.getText().toString().isEmpty()) {
                 if (binding.memberMobileNumber.getText().toString().length() == 10) {
@@ -107,8 +105,7 @@ public class UpdateMessMember extends Fragment implements View.OnClickListener {
 
         Toast.makeText(activity, getString(R.string.toast_member_details_updated_successfully), Toast.LENGTH_SHORT).show();
 
-        ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-        ((MainActivity) activity).loadFragment(new InvoiceMess(), true);
+        ((MainActivity) activity).goBackTo(new MessMemberList(), true);
 
     }
 

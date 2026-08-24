@@ -64,7 +64,42 @@ class HomeController extends Controller
                 $data = Company::join('licenses','companys.licenseId','licenses.id')
                 ->join('users','users.id','licenses.userId')
                 ->where('users.id',Auth::user()->id)
-                ->select('companys.companyName','companys.currencyName','companys.companyAddress','licenses.licenseKey','licenses.id as licenseId')->get();
+                ->select(
+                    'companys.companyName',
+                    'companys.shopName1',
+                    'companys.shopName2',
+                    'companys.currencyName',
+                    'companys.companyAddress',
+                    'companys.addressLine1',
+                    'companys.addressLine2',
+                    'companys.addressLine3',
+                    'companys.phoneNo1',
+                    'companys.phoneNo2',
+                    'companys.companyMobile',
+                    'licenses.licenseKey',
+                    'licenses.id as licenseId'
+                )->get();
+                foreach ($data as $row) {
+                    $name1 = trim((string) ($row->shopName1 ?? ''));
+                    if ($name1 === '') {
+                        $name1 = trim((string) ($row->companyName ?? ''));
+                    }
+                    $row->companyName = $name1;
+
+                    $addressParts = [];
+                    foreach (['addressLine1', 'addressLine2', 'addressLine3'] as $field) {
+                        $line = trim((string) ($row->{$field} ?? ''));
+                        if ($line !== '') {
+                            $addressParts[] = $line;
+                        }
+                    }
+                    if (count($addressParts) === 0) {
+                        $legacy = trim((string) ($row->companyAddress ?? ''));
+                        $row->companyAddress = $legacy !== '' ? $legacy : '-';
+                    } else {
+                        $row->companyAddress = implode(', ', $addressParts);
+                    }
+                }
                 if($request->total_sale==1)
                 {
                     foreach ($data as $key => $value) {

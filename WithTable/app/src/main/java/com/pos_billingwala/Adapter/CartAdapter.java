@@ -261,7 +261,6 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.MyViewHolder> 
 
     public void updateCart(String cartId, String productQuantity, String productAmount) {
         posBillingWalaDatabase.updateCart(cartId, productQuantity, productAmount);
-        Toast.makeText(context, context.getString(R.string.toast_product_updated_into_cart), Toast.LENGTH_SHORT).show();
         notifyDataSetChanged();
         BluetoothPrint.getCartProductList();
     }

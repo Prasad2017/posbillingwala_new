@@ -17,12 +17,15 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.InvoiceAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.ListLoader;
 import com.pos_billingwala.Model.InvoiceResponse;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentOrderInvoiceBinding;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import cn.pedant.SweetAlert.SweetAlertDialog;
 
 
 public class OrderInvoice extends Fragment implements View.OnClickListener {
@@ -55,8 +58,7 @@ public class OrderInvoice extends Fragment implements View.OnClickListener {
 
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
                     Log.i("tag", "onKey Back listener is working!!!");
-                    ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                    ((MainActivity) activity).loadFragment(new UserSetting(), true);
+                    ((MainActivity) activity).goBackTo(new UserSetting(), true);
                     return true;
                 }
                 return false;
@@ -82,8 +84,7 @@ public class OrderInvoice extends Fragment implements View.OnClickListener {
     @Override
     public void onClick(View view) {
         if (view.getId() == R.id.backToSetting) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-            ((MainActivity) activity).loadFragment(new UserSetting(), true);
+            ((MainActivity) activity).goBackTo(new UserSetting(), true);
         }
     }
 
@@ -116,6 +117,12 @@ public class OrderInvoice extends Fragment implements View.OnClickListener {
 
     private class LoadInitialInvoices extends AsyncTask<Void, Void, List<InvoiceResponse>> {
         private int count;
+        private SweetAlertDialog loader;
+
+        @Override
+        protected void onPreExecute() {
+            loader = ListLoader.show(activity);
+        }
 
         @Override
         protected List<InvoiceResponse> doInBackground(Void... voids) {
@@ -128,26 +135,30 @@ public class OrderInvoice extends Fragment implements View.OnClickListener {
 
         @Override
         protected void onPostExecute(List<InvoiceResponse> page) {
-            if (!isAdded()) {
+            try {
+                if (!isAdded()) {
+                    isLoading = false;
+                    return;
+                }
+                totalPages = count;
+                invoiceResponseList.clear();
+                if (page != null && !page.isEmpty()) {
+                    invoiceResponseList.addAll(page);
+                    adapter = new InvoiceAdapter(activity, invoiceResponseList);
+                    binding.recyclerView.setLayoutManager(new LinearLayoutManager(activity));
+                    binding.recyclerView.setAdapter(adapter);
+                    binding.nestedScrollView.setVisibility(View.VISIBLE);
+                    binding.noDataFound.setVisibility(View.GONE);
+                    pageNumber = page.size();
+                } else {
+                    binding.nestedScrollView.setVisibility(View.GONE);
+                    binding.noDataFound.setVisibility(View.VISIBLE);
+                    pageNumber = 0;
+                }
                 isLoading = false;
-                return;
+            } finally {
+                ListLoader.dismiss(loader);
             }
-            totalPages = count;
-            invoiceResponseList.clear();
-            if (page != null && !page.isEmpty()) {
-                invoiceResponseList.addAll(page);
-                adapter = new InvoiceAdapter(activity, invoiceResponseList);
-                binding.recyclerView.setLayoutManager(new LinearLayoutManager(activity));
-                binding.recyclerView.setAdapter(adapter);
-                binding.nestedScrollView.setVisibility(View.VISIBLE);
-                binding.noDataFound.setVisibility(View.GONE);
-                pageNumber = page.size();
-            } else {
-                binding.nestedScrollView.setVisibility(View.GONE);
-                binding.noDataFound.setVisibility(View.VISIBLE);
-                pageNumber = 0;
-            }
-            isLoading = false;
         }
     }
 
