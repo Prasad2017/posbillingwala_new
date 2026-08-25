@@ -4,8 +4,6 @@ import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.provider.Settings;
 import android.util.Log;
 
@@ -15,6 +13,7 @@ import com.pos_billingwala.Activity.Login;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Extra.AuthTokens;
 import com.pos_billingwala.Extra.Common;
+import com.pos_billingwala.Extra.DetectConnection;
 import com.pos_billingwala.Extra.LicenceExpiredUi;
 import com.pos_billingwala.Extra.LicenseSession;
 import com.pos_billingwala.Fragment.Home;
@@ -156,14 +155,8 @@ public class LicenceKeyReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         this.context = context;
 
-        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
-        //if there is a network
-        if (activeNetwork != null) {
-            //if connected to wifi or mobile data plan
-            if (activeNetwork.getType() == ConnectivityManager.TYPE_WIFI || activeNetwork.getType() == ConnectivityManager.TYPE_MOBILE) {
-                getLicenceKeyData(context);
-            }
+        if (DetectConnection.checkInternetConnection(context)) {
+            getLicenceKeyData(context);
         }
     }
 

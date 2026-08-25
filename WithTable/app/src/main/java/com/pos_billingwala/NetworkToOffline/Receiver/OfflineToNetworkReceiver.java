@@ -5,14 +5,13 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.DetectConnection;
 import com.pos_billingwala.Model.AllApiResponse;
 import com.pos_billingwala.NetworkToOffline.OfflineSyncExecutor;
 import com.pos_billingwala.Retrofit.Api;
@@ -36,13 +35,7 @@ public class OfflineToNetworkReceiver extends BroadcastReceiver {
         final PendingResult pendingResult = goAsync();
         final Context appContext = context.getApplicationContext();
 
-        ConnectivityManager cm = (ConnectivityManager) appContext.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetwork = cm != null ? cm.getActiveNetworkInfo() : null;
-        final boolean connected = activeNetwork != null
-                && (activeNetwork.getType() == ConnectivityManager.TYPE_WIFI
-                || activeNetwork.getType() == ConnectivityManager.TYPE_MOBILE);
-
-        if (!connected) {
+        if (!DetectConnection.checkInternetConnection(appContext)) {
             pendingResult.finish();
             return;
         }

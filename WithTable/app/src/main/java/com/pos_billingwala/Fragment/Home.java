@@ -997,11 +997,25 @@ public class Home extends Fragment implements View.OnClickListener {
                 }
                 if (!TextUtils.isEmpty(MainActivity.shopImage)) {
                     try {
+                        final String httpsUrl = BuildConfig.MEDIA_BASE_URL + MainActivity.shopImage;
+                        final String httpUrl = BuildConfig.MEDIA_BASE_URL_HTTP + MainActivity.shopImage;
                         Picasso.get()
-                                .load(BuildConfig.MEDIA_BASE_URL + MainActivity.shopImage)
+                                .load(httpsUrl)
                                 .placeholder(R.drawable.app_logo)
-                                .error(R.drawable.app_logo)
-                                .into(binding.userPhoto);
+                                .into(binding.userPhoto, new com.squareup.picasso.Callback() {
+                                    @Override
+                                    public void onSuccess() {
+                                    }
+
+                                    @Override
+                                    public void onError(Exception e) {
+                                        Picasso.get()
+                                                .load(httpUrl)
+                                                .placeholder(R.drawable.app_logo)
+                                                .error(R.drawable.app_logo)
+                                                .into(binding.userPhoto);
+                                    }
+                                });
                     } catch (Exception e) {
                         e.printStackTrace();
                     }

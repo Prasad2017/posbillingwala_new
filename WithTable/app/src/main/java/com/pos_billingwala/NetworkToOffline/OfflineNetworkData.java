@@ -8,8 +8,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Color;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
@@ -20,6 +18,7 @@ import androidx.annotation.NonNull;
 
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.DetectConnection;
 import com.pos_billingwala.Model.AllApiResponse;
 import com.pos_billingwala.Retrofit.Api;
 
@@ -53,12 +52,7 @@ public class OfflineNetworkData {
         pDialog.setCancelable(false);
         pDialog.show();
 
-        ConnectivityManager cm = (ConnectivityManager) activity.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetwork = cm != null ? cm.getActiveNetworkInfo() : null;
-
-        if (activeNetwork == null
-                || (activeNetwork.getType() != ConnectivityManager.TYPE_WIFI
-                && activeNetwork.getType() != ConnectivityManager.TYPE_MOBILE)) {
+        if (!DetectConnection.checkInternetConnection(activity)) {
             dismissDialogSafely();
             return;
         }

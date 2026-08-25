@@ -14,13 +14,16 @@ android {
         applicationId "com.pos_billingwala"
         minSdk 26
         targetSdk 37
-        versionCode 67
-        versionName "2.0.51"
+        versionCode 68
+        versionName "2.0.52"
         multiDexEnabled true
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         // P5-4: same public host as Owner/Dealer/Admin (must share MySQL with those apps)
-        buildConfigField "String", "API_BASE_URL", "\"http://www.posbillingwala.com/androidApp/\""
-        buildConfigField "String", "MEDIA_BASE_URL", "\"http://www.posbillingwala.com/storage/app/\""
+        // Prefer HTTPS; HttpHttpsFallbackInterceptor retries the other scheme on failure.
+        buildConfigField "String", "API_BASE_URL", "\"https://www.posbillingwala.com/androidApp/\""
+        buildConfigField "String", "API_BASE_URL_HTTP", "\"http://www.posbillingwala.com/androidApp/\""
+        buildConfigField "String", "MEDIA_BASE_URL", "\"https://www.posbillingwala.com/storage/app/\""
+        buildConfigField "String", "MEDIA_BASE_URL_HTTP", "\"http://www.posbillingwala.com/storage/app/\""
     }
 
     buildFeatures {

@@ -4,6 +4,7 @@ import android.app.Application;
 
 import com.pos_billingwala.Extra.AppLanguage;
 import com.pos_billingwala.Extra.Observability;
+import com.pos_billingwala.Retrofit.HttpHttpsSupport;
 
 /**
  * Application entry for production crash + ANR + performance monitoring.
@@ -16,5 +17,7 @@ public class PosBillingWalaApp extends Application {
         super.onCreate();
         AppLanguage.applyStored(this);
         Observability.init(this);
+        // Allow HTTPS image/API loads despite self-signed / mismatched server cert
+        HttpHttpsSupport.installPlatformHostnameVerifier();
     }
 }

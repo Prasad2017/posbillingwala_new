@@ -19,25 +19,22 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class Api {
 
+    /** Preferred base URL (HTTPS). Fallback interceptor can switch to HTTP. */
     public static String BASE_URL = BuildConfig.API_BASE_URL;
     private static Retrofit retrofit = null;
+    private static OkHttpClient sharedClient = null;
 
-    public static ApiInterface getClient(Context context) {
-
-        if (retrofit == null) {
+    public static OkHttpClient getOkHttpClient(Context context) {
+        if (sharedClient == null) {
+            final Context appContext = context.getApplicationContext();
 
             HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
-            // Never log request/response bodies in release (licence keys, bills, device ids)
             logging.setLevel(BuildConfig.DEBUG
                     ? HttpLoggingInterceptor.Level.BODY
                     : HttpLoggingInterceptor.Level.NONE);
 
-            Gson gson = new GsonBuilder()
-                    .setLenient()
-                    .create();
-
-            File cacheDirectory = new File(context.getCacheDir(), "http_cache");
-            Cache cache = new Cache(cacheDirectory, 10 * 1024 * 1024); // 10 MB cache
+            File cacheDirectory = new File(appContext.getCacheDir(), "http_cache");
+            Cache cache = new Cache(cacheDirectory, 10 * 1024 * 1024);
 
             OkHttpClient.Builder httpClientBuilder = new OkHttpClient.Builder()
                     .connectTimeout(60, TimeUnit.SECONDS)
@@ -45,11 +42,14 @@ public class Api {
                     .readTimeout(120, TimeUnit.SECONDS)
                     .callTimeout(180, TimeUnit.SECONDS)
                     .cache(cache)
-                    .retryOnConnectionFailure(true)
-                    .addInterceptor(new ApiFailureInterceptor())
+                    .retryOnConnectionFailure(true);
+
+            HttpHttpsSupport.applyTo(httpClientBuilder);
+
+            httpClientBuilder
                     .addInterceptor(chain -> {
                         Request original = chain.request();
-                        String token = Common.getSavedUserData(context, "authToken");
+                        String token = Common.getSavedUserData(appContext, "authToken");
                         if (token != null && !token.isEmpty()) {
                             Request authenticated = original.newBuilder()
                                     .header("Authorization", "Bearer " + token)
@@ -57,16 +57,31 @@ public class Api {
                             return chain.proceed(authenticated);
                         }
                         return chain.proceed(original);
-                    });
+                    })
+                    .addInterceptor(new ApiFailureInterceptor())
+                    // After failure logger so successful HTTP fallback is not treated as failure
+                    .addInterceptor(new HttpHttpsFallbackInterceptor());
 
             if (BuildConfig.DEBUG) {
                 httpClientBuilder.addInterceptor(logging);
             }
 
+            sharedClient = httpClientBuilder.build();
+        }
+        return sharedClient;
+    }
+
+    public static ApiInterface getClient(Context context) {
+
+        if (retrofit == null) {
+            Gson gson = new GsonBuilder()
+                    .setLenient()
+                    .create();
+
             retrofit = new Retrofit.Builder()
                     .baseUrl(BASE_URL)
                     .addConverterFactory(GsonConverterFactory.create(gson))
-                    .client(httpClientBuilder.build())
+                    .client(getOkHttpClient(context))
                     .build();
         }
 

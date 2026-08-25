@@ -10,6 +10,7 @@ import android.app.ProgressDialog;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -57,6 +58,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.karumi.dexter.Dexter;
@@ -70,6 +72,7 @@ import com.pos_billingwala.Adapter.TwoKOTPrintAdapter;
 import com.pos_billingwala.Adapter.TwoPrintAdapter;
 import com.pos_billingwala.BuildConfig;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.AppExecutors;
 import com.pos_billingwala.Extra.ShopHeaderBuilder;
 import com.pos_billingwala.Extra.Observability;
 import com.pos_billingwala.Extra.SimpleDividerItemDecoration;
@@ -617,6 +620,7 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
 
         binding.kotPrint.setOnClickListener(this);
         binding.menuIcon.setOnClickListener(this);
+        binding.clearCart.setOnClickListener(this);
         binding.printInvoiceCardView.setOnClickListener(this);
         binding.shareInvoiceCardView.setOnClickListener(this);
 
@@ -838,6 +842,8 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
         int id = view.getId();
         if (id == R.id.menuIcon) {
             setPopUpWindow();
+        } else if (id == R.id.clearCart) {
+            confirmClearCart();
         } else if (id == R.id.kotPrint) {
             if (!printerSettingResponseList.isEmpty()) {
 
@@ -1349,6 +1355,46 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
 
         mypopupWindow.showAsDropDown(binding.menuIcon, 0, -75);
 
+    }
+
+    private void confirmClearCart() {
+        if (productCartResponseList == null || productCartResponseList.isEmpty()) {
+            Toast.makeText(activity, getString(R.string.toast_cart_is_empty), Toast.LENGTH_SHORT).show();
+            return;
+        }
+        new MaterialAlertDialogBuilder(this, R.style.ThemeDialog)
+                .setTitle(getString(R.string.ui_clear_cart_confirm_title))
+                .setMessage(getString(R.string.ui_clear_cart_confirm_message))
+                .setCancelable(true)
+                .setPositiveButton("YES", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        dialogInterface.dismiss();
+                        clearCart();
+                    }
+                })
+                .setNegativeButton("NO", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        dialogInterface.dismiss();
+                    }
+                })
+                .show();
+    }
+
+    private void clearCart() {
+        final String table = tableNumber;
+        final String orderStatus = cartOrderStatus;
+        AppExecutors.get().db().execute(() -> {
+            posBillingWalaDatabase.clearCart(table, orderStatus);
+            AppExecutors.get().main(() -> {
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
+                Toast.makeText(activity, getString(R.string.toast_cart_cleared), Toast.LENGTH_SHORT).show();
+                finish();
+            });
+        });
     }
 
     private void deductComboInventory(ProductCartResponse comboLine, String inventoryDate) {

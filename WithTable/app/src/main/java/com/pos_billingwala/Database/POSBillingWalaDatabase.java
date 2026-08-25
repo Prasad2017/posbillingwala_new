@@ -2693,6 +2693,24 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         db.close();
     }
 
+    public void clearCart(String tableNumber, String cartOrderStatus) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.beginTransaction();
+        try {
+            db.execSQL(
+                    "DELETE FROM " + CART_COMBO_ITEM_TABLE
+                            + " WHERE cartId IN (SELECT cartId FROM " + CART_PRODUCT_TABLE
+                            + " WHERE noOfTable = ? AND cartOrderStatus = ?)",
+                    new String[]{tableNumber, cartOrderStatus});
+            db.delete(CART_PRODUCT_TABLE, "noOfTable = ? AND cartOrderStatus = ?",
+                    new String[]{tableNumber, cartOrderStatus});
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+            db.close();
+        }
+    }
+
     public void deleteProduct(String productId) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
