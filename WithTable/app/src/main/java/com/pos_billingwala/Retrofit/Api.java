@@ -8,9 +8,11 @@ import com.pos_billingwala.BuildConfig;
 import com.pos_billingwala.Extra.Common;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.Cache;
+import okhttp3.ConnectionSpec;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.logging.HttpLoggingInterceptor;
@@ -19,22 +21,26 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class Api {
 
-    /** Preferred base URL (HTTPS). Fallback interceptor can switch to HTTP. */
     public static String BASE_URL = BuildConfig.API_BASE_URL;
     private static Retrofit retrofit = null;
-    private static OkHttpClient sharedClient = null;
 
-    public static OkHttpClient getOkHttpClient(Context context) {
-        if (sharedClient == null) {
+    public static ApiInterface getClient(Context context) {
+
+        if (retrofit == null) {
             final Context appContext = context.getApplicationContext();
 
             HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
+            // Never log request/response bodies in release (licence keys, bills, device ids)
             logging.setLevel(BuildConfig.DEBUG
                     ? HttpLoggingInterceptor.Level.BODY
                     : HttpLoggingInterceptor.Level.NONE);
 
+            Gson gson = new GsonBuilder()
+                    .setLenient()
+                    .create();
+
             File cacheDirectory = new File(appContext.getCacheDir(), "http_cache");
-            Cache cache = new Cache(cacheDirectory, 10 * 1024 * 1024);
+            Cache cache = new Cache(cacheDirectory, 10 * 1024 * 1024); // 10 MB cache
 
             OkHttpClient.Builder httpClientBuilder = new OkHttpClient.Builder()
                     .connectTimeout(60, TimeUnit.SECONDS)
@@ -42,11 +48,9 @@ public class Api {
                     .readTimeout(120, TimeUnit.SECONDS)
                     .callTimeout(180, TimeUnit.SECONDS)
                     .cache(cache)
-                    .retryOnConnectionFailure(true);
-
-            HttpHttpsSupport.applyTo(httpClientBuilder);
-
-            httpClientBuilder
+                    .retryOnConnectionFailure(true)
+                    .connectionSpecs(Arrays.asList(ConnectionSpec.CLEARTEXT))
+                    .addInterceptor(new ApiFailureInterceptor())
                     .addInterceptor(chain -> {
                         Request original = chain.request();
                         String token = Common.getSavedUserData(appContext, "authToken");
@@ -57,31 +61,16 @@ public class Api {
                             return chain.proceed(authenticated);
                         }
                         return chain.proceed(original);
-                    })
-                    .addInterceptor(new ApiFailureInterceptor())
-                    // After failure logger so successful HTTP fallback is not treated as failure
-                    .addInterceptor(new HttpHttpsFallbackInterceptor());
+                    });
 
             if (BuildConfig.DEBUG) {
                 httpClientBuilder.addInterceptor(logging);
             }
 
-            sharedClient = httpClientBuilder.build();
-        }
-        return sharedClient;
-    }
-
-    public static ApiInterface getClient(Context context) {
-
-        if (retrofit == null) {
-            Gson gson = new GsonBuilder()
-                    .setLenient()
-                    .create();
-
             retrofit = new Retrofit.Builder()
                     .baseUrl(BASE_URL)
                     .addConverterFactory(GsonConverterFactory.create(gson))
-                    .client(getOkHttpClient(context))
+                    .client(httpClientBuilder.build())
                     .build();
         }
 
