@@ -2,10 +2,8 @@ package com.pos_billingwala.Activity;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.content.res.Configuration;
 import android.database.CursorWindow;
 import android.os.Bundle;
-import android.util.DisplayMetrics;
 import android.view.WindowManager;
 import android.widget.Toast;
 
@@ -39,18 +37,6 @@ public class MainActivity extends BaseActivity {
 
     private static final long DOUBLE_BACK_EXIT_INTERVAL_MS = 2000L;
     private long lastBackPressAtHomeMs = 0L;
-
-    public void setScreenSizeSmall() {
-        Configuration configuration = getResources().getConfiguration();
-        configuration.fontScale = (float) 1; //0.85 small size, 1 normal size, 1,15 big etc
-        AppLanguage.preserveLocaleOnConfig(this, configuration);
-        DisplayMetrics metrics = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(metrics);
-        metrics.scaledDensity = configuration.fontScale * metrics.density;
-        configuration.densityDpi = (int) getResources().getDisplayMetrics().xdpi;
-        getBaseContext().getResources().updateConfiguration(configuration, metrics);
-    }
-
     @SuppressLint("DiscouragedPrivateApi")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,8 +44,6 @@ public class MainActivity extends BaseActivity {
         setContentView(R.layout.activity_main);
 
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
-        setScreenSizeSmall();
-
         try {
             Field field = CursorWindow.class.getDeclaredField("sCursorWindowSize");
             field.setAccessible(true);
@@ -77,7 +61,7 @@ public class MainActivity extends BaseActivity {
         userName = Common.getSavedUserData(this, "userName");
         shopName = Common.getSavedUserData(this, "shopName");
         shopImage = Common.getSavedUserData(this, "shopImage");
-        fastBilling = Common.getSavedUserData(this, "fastbilling");
+        fastBilling = Common.getSavedUserData(this, "fastBilling");
         takeAway = Common.getSavedUserData(this, "takeAway");
         dineIn = Common.getSavedUserData(this, "dineIn");
         mess = Common.getSavedUserData(this, "mess");
@@ -132,6 +116,7 @@ public class MainActivity extends BaseActivity {
     }
 
     /** Soft language change: reinflate Settings with the new locale (no Activity recreate). */
+    @SuppressWarnings("deprecation")
     public void reloadAfterLanguageChange() {
         Common.saveUserData(this, AppLanguage.KEY_REOPEN_USER_SETTING, "0");
         getSupportFragmentManager().popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
@@ -161,6 +146,7 @@ public class MainActivity extends BaseActivity {
     public void navigateBack() {
         FragmentManager fragmentManager = getSupportFragmentManager();
         if (fragmentManager.getBackStackEntryCount() > 0) {
+            // Soft pop — avoids main-thread hitch from Immediate when returning to Home
             fragmentManager.popBackStack();
             return;
         }
@@ -202,9 +188,19 @@ public class MainActivity extends BaseActivity {
         loadFragment(fragment, true);
     }
 
-    /** Replace current screen without a prior pop (avoids flash of previous fragment). */
+    /**
+     * Navigate toward a parent screen.
+     * When {@code addToBackStack} is true (typical toolbar / hardware "back"), pop the existing
+     * entry instead of replace+push — avoids stack bloat, double-inflate lag, and wrong back order.
+     * When false, replace with the given fragment without growing the stack (edit/save flows).
+     */
     public void goBackTo(Fragment fragment, boolean addToBackStack) {
-        loadFragment(fragment, addToBackStack);
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        if (addToBackStack && fragmentManager.getBackStackEntryCount() > 0) {
+            fragmentManager.popBackStack();
+            return;
+        }
+        loadFragment(fragment, false);
     }
 
     public void loadFragment(Fragment fragment, Boolean bool) {

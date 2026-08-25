@@ -77,7 +77,7 @@ public class InvoiceMess extends Fragment implements View.OnClickListener {
 
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
                     Log.i("tag", "onKey Back listener is working!!!");
-                    ((MainActivity) activity).navigateToHome();
+                    ((MainActivity) activity).navigateBack();
                     return true;
                 }
                 return false;
@@ -135,7 +135,7 @@ public class InvoiceMess extends Fragment implements View.OnClickListener {
     public void onClick(View view) {
         int id = view.getId();
         if (id == R.id.homeCardView) {
-            ((MainActivity) activity).navigateToHome();
+            ((MainActivity) activity).navigateBack();
         } else if (id == R.id.menuIcon) {
             setPopUpWindow();
         }

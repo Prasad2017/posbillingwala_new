@@ -89,7 +89,7 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
 
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
                     Log.i("tag", "onKey Back listener is working!!!");
-                    ((MainActivity) activity).goBackTo(new UserSetting(), true);
+                    ((MainActivity) activity).navigateBack();
                     return true;
                 }
                 return false;
@@ -186,7 +186,7 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
             imageName = "paymentQR";
             selectImage();
         } else if (id == R.id.backToSetting) {
-            ((MainActivity) activity).goBackTo(new UserSetting(), true);
+            ((MainActivity) activity).navigateBack();
         } else if (id == R.id.saveDetails) {
             if (!binding.shopName1.getText().toString().trim().isEmpty()) {
                 if (!binding.cashierName.getText().toString().trim().isEmpty()) {

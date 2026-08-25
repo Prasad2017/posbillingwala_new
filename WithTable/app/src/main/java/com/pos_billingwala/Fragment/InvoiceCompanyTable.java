@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -17,13 +16,13 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.RecyclerView;
 
 import com.pos_billingwala.Activity.DuplicateBluetoothPrint;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.TableAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.AppExecutors;
+import com.pos_billingwala.Extra.AutoFitGridRecyclerView;
 import com.pos_billingwala.Extra.ListLoader;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.R;
@@ -38,7 +37,7 @@ public class InvoiceCompanyTable extends Fragment implements View.OnClickListene
     public static Activity activity;
     public static List<CompanyResponse> companyResponseList = new ArrayList<>();
     static POSBillingWalaDatabase posBillingWalaDatabase;
-    static RecyclerView tableRecyclerView;
+    static AutoFitGridRecyclerView tableRecyclerView;
     static TableAdapter tableAdapter;
     View view;
     PopupWindow mypopupWindow;
@@ -66,8 +65,10 @@ public class InvoiceCompanyTable extends Fragment implements View.OnClickListene
                                 int noOfTable = Integer.parseInt(companyResponseList.get(0).getNoOfTable());
                                 if (noOfTable > 0 && tableRecyclerView != null) {
                                     tableAdapter = new TableAdapter(activity, noOfTable);
+                                    // AutoFitGridRecyclerView owns the LayoutManager — do not set GridLayoutManager here
                                     tableRecyclerView.setAdapter(tableAdapter);
                                     tableAdapter.notifyDataSetChanged();
+                                    tableRecyclerView.requestLayout();
                                 }
                             }
                         }
@@ -92,7 +93,7 @@ public class InvoiceCompanyTable extends Fragment implements View.OnClickListene
 
         posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
 
-        tableRecyclerView = view.findViewById(R.id.tableRecyclerView);
+        tableRecyclerView = binding.tableRecyclerView;
 
         view.setFocusableInTouchMode(true);
         view.requestFocus();
@@ -102,7 +103,7 @@ public class InvoiceCompanyTable extends Fragment implements View.OnClickListene
 
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
                     Log.i("tag", "onKey Back listener is working!!!");
-                    ((MainActivity) activity).navigateToHome();
+                    ((MainActivity) activity).navigateBack();
                     return true;
                 }
                 return false;
@@ -119,7 +120,7 @@ public class InvoiceCompanyTable extends Fragment implements View.OnClickListene
     public void onClick(View view) {
         int id = view.getId();
         if (id == R.id.homeCardView) {
-            ((MainActivity) activity).navigateToHome();
+            ((MainActivity) activity).navigateBack();
         } else if (id == R.id.menuIcon) {
             setPopUpWindow();
         }
@@ -160,13 +161,6 @@ public class InvoiceCompanyTable extends Fragment implements View.OnClickListene
         ((MainActivity) activity).lockUnlockDrawer(1);
         getCompanyDetails();
 
-    }
-
-    public int CalculateNoOfColumns(Context context, float columnWidthDp) { // For example columnWidthdp=180
-        DisplayMetrics displayMetrics = context.getResources().getDisplayMetrics();
-        float screenWidthDp = displayMetrics.widthPixels / displayMetrics.density;
-        int noOfColumns = (int) (screenWidthDp / columnWidthDp + 0.5); // +0.5 for correct rounding to int.
-        return noOfColumns;
     }
 
 }

@@ -4,11 +4,9 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.Html;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
@@ -23,7 +21,6 @@ import com.google.android.play.core.appupdate.AppUpdateInfo;
 import com.google.android.play.core.appupdate.AppUpdateManager;
 import com.google.android.play.core.appupdate.AppUpdateManagerFactory;
 import com.google.android.play.core.install.model.UpdateAvailability;
-import com.pos_billingwala.Extra.AppLanguage;
 import com.pos_billingwala.Extra.Common;
 import com.pos_billingwala.NetworkToOffline.OfflineNetworkData;
 import com.pos_billingwala.R;
@@ -35,18 +32,6 @@ public class SplashScreen extends BaseActivity {
     public static final int SPLASH_TIME_OUT = 800;
     ActivitySplashScreenBinding binding;
     OfflineNetworkData offlineNetworkData;
-
-    public void setScreenSizeSmall() {
-        Configuration configuration = getResources().getConfiguration();
-        configuration.fontScale = (float) 1; //0.85 small size, 1 normal size, 1,15 big etc
-        AppLanguage.preserveLocaleOnConfig(this, configuration);
-        DisplayMetrics metrics = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(metrics);
-        metrics.scaledDensity = configuration.fontScale * metrics.density;
-        configuration.densityDpi = (int) getResources().getDisplayMetrics().xdpi;
-        getBaseContext().getResources().updateConfiguration(configuration, metrics);
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -55,8 +40,6 @@ public class SplashScreen extends BaseActivity {
         setContentView(view); //view is set by view binding
 
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
-        setScreenSizeSmall();
-
         checkAppUpdates();
 
     }

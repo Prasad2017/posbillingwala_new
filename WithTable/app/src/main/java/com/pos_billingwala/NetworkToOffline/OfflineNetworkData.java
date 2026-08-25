@@ -19,6 +19,7 @@ import androidx.annotation.NonNull;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.DetectConnection;
+import com.pos_billingwala.Extra.Observability;
 import com.pos_billingwala.Model.AllApiResponse;
 import com.pos_billingwala.Retrofit.Api;
 
@@ -61,7 +62,7 @@ public class OfflineNetworkData {
             try {
                 uploadPendingData();
             } catch (Exception e) {
-                Log.e("OfflineNetworkData", "upload failed", e);
+                Observability.logNonFatal(e, "offline_network_data_upload");
             } finally {
                 new Handler(Looper.getMainLooper()).post(() -> {
                     Toast.makeText(activity, activity.getString(R.string.toast_data_uploaded_to_server), Toast.LENGTH_SHORT).show();
@@ -579,10 +580,17 @@ public class OfflineNetworkData {
     private boolean executeCall(Call<AllApiResponse> call) {
         try {
             Response<AllApiResponse> response = call.execute();
-            return response.isSuccessful() && response.body() != null
+            boolean ok = response.isSuccessful() && response.body() != null
                     && "1".equalsIgnoreCase(response.body().getStatus());
+            if (!ok) {
+                String status = response.body() != null ? response.body().getStatus() : "null_body";
+                String msg = response.body() != null ? response.body().getMessage() : "";
+                Observability.log("offline_network_data sync failed | HTTP " + response.code()
+                        + " | status=" + status + " | msg=" + msg);
+            }
+            return ok;
         } catch (Exception e) {
-            Log.e("SyncHttp", "serverError", e);
+            Observability.logNonFatal(e, "offline_network_data_sync");
             return false;
         }
     }

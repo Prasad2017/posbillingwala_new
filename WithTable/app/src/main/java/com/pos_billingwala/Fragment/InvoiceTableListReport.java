@@ -107,11 +107,7 @@ public class InvoiceTableListReport extends Fragment implements View.OnClickList
 
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
                     Log.i("tag", "onKey Back listener is working!!!");
-                    if (invoiceType != null && invoiceType.equalsIgnoreCase("table_wise")) {
-                        ((MainActivity) activity).goBackTo(new InvoiceTableReport(), true);
-                    } else {
-                        ((MainActivity) activity).goBackTo(new InvoiceTakeAwayReport(), true);
-                    }
+                    ((MainActivity) activity).navigateBack();
                     return true;
                 }
                 return false;
@@ -140,11 +136,7 @@ public class InvoiceTableListReport extends Fragment implements View.OnClickList
     public void onClick(View view) {
         int id = view.getId();
         if (id == R.id.backToSetting) {
-            if (invoiceType != null && invoiceType.equalsIgnoreCase("table_wise")) {
-                ((MainActivity) activity).goBackTo(new InvoiceTableReport(), true);
-            } else {
-                ((MainActivity) activity).goBackTo(new InvoiceTakeAwayReport(), true);
-            }
+            ((MainActivity) activity).navigateBack();
         } else if (id == R.id.menuIcon) {
             setPopUpWindow();
         } else if (id == R.id.shareInvoice) {

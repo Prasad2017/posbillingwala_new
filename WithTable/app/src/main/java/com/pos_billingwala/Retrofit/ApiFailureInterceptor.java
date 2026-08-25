@@ -3,7 +3,12 @@ package com.pos_billingwala.Retrofit;
 import com.pos_billingwala.Extra.Observability;
 
 import java.io.IOException;
+import java.net.ConnectException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
+
+import javax.net.ssl.SSLException;
 
 import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
@@ -15,7 +20,8 @@ import okhttp3.ResponseBody;
 import okio.Buffer;
 
 /**
- * Logs every failed API call to Crashlytics with URL, request, response, and screen context.
+ * Logs every failed API call to Crashlytics + Logcat with URL, request, response,
+ * HTTP status / network reason, and screen context.
  */
 public final class ApiFailureInterceptor implements Interceptor {
 
@@ -28,17 +34,20 @@ public final class ApiFailureInterceptor implements Interceptor {
         String rawBody = readRequestBody(request);
         Request rebuilt = rebuildRequest(request, rawBody);
         String requestSnapshot = ApiLogSanitizer.sanitize(captureForLog(rawBody));
+        String apiName = apiNameFromUrl(request.url());
+        String safeUrl = sanitizeUrl(request.url());
 
         try {
             Response response = chain.proceed(rebuilt);
             if (!response.isSuccessful()) {
                 String responseSnapshot = snapshotResponseBody(response);
+                String reason = buildHttpFailureReason(response.code(), response.message(), responseSnapshot);
                 Observability.logApiFailure(
                         request.method(),
-                        sanitizeUrl(request.url()),
-                        apiNameFromUrl(request.url()),
+                        safeUrl,
+                        apiName,
                         response.code(),
-                        "HTTP " + response.code() + " " + response.message(),
+                        reason,
                         requestSnapshot,
                         responseSnapshot
                 );
@@ -47,15 +56,92 @@ public final class ApiFailureInterceptor implements Interceptor {
         } catch (IOException e) {
             Observability.logApiFailure(
                     request.method(),
-                    sanitizeUrl(request.url()),
-                    apiNameFromUrl(request.url()),
+                    safeUrl,
+                    apiName,
                     0,
-                    e.getClass().getSimpleName() + ": " + safeMessage(e.getMessage()),
+                    buildNetworkFailureReason(e),
                     requestSnapshot,
                     null
             );
             throw e;
         }
+    }
+
+    private static String buildHttpFailureReason(int code, String message, String responseBody) {
+        String statusHint;
+        if (code >= 500) {
+            statusHint = "Server error";
+        } else if (code == 401 || code == 403) {
+            statusHint = "Auth/permission denied";
+        } else if (code == 404) {
+            statusHint = "Endpoint not found";
+        } else if (code == 408 || code == 504) {
+            statusHint = "Gateway/request timeout";
+        } else if (code >= 400) {
+            statusHint = "Client/request error";
+        } else {
+            statusHint = "HTTP failure";
+        }
+        String serverMsg = extractServerMessage(responseBody);
+        StringBuilder sb = new StringBuilder();
+        sb.append(statusHint)
+                .append(" — HTTP ")
+                .append(code);
+        if (message != null && !message.trim().isEmpty()) {
+            sb.append(' ').append(message.trim());
+        }
+        if (serverMsg != null && !serverMsg.isEmpty()) {
+            sb.append(" | server_msg=").append(serverMsg);
+        }
+        return sb.toString();
+    }
+
+    private static String buildNetworkFailureReason(IOException e) {
+        if (e instanceof UnknownHostException) {
+            return "No internet / DNS failed — cannot resolve host: " + Observability.describeThrowable(e);
+        }
+        if (e instanceof SocketTimeoutException) {
+            return "Request timed out — " + Observability.describeThrowable(e);
+        }
+        if (e instanceof ConnectException) {
+            return "Connection refused — server unreachable: " + Observability.describeThrowable(e);
+        }
+        if (e instanceof SSLException) {
+            return "SSL/TLS handshake failed: " + Observability.describeThrowable(e);
+        }
+        return "Network I/O failed: " + Observability.describeThrowable(e);
+    }
+
+    /** Best-effort extract of message/error fields from JSON body for clearer logs. */
+    private static String extractServerMessage(String body) {
+        if (body == null || body.isEmpty()) {
+            return "";
+        }
+        String lower = body.toLowerCase();
+        String[] keys = {"\"message\"", "\"msg\"", "\"error\"", "\"error_message\"", "\"detail\""};
+        for (String key : keys) {
+            int idx = lower.indexOf(key);
+            if (idx < 0) {
+                continue;
+            }
+            int colon = body.indexOf(':', idx);
+            if (colon < 0) {
+                continue;
+            }
+            int startQuote = body.indexOf('"', colon + 1);
+            if (startQuote < 0) {
+                continue;
+            }
+            int endQuote = body.indexOf('"', startQuote + 1);
+            if (endQuote <= startQuote) {
+                continue;
+            }
+            String value = body.substring(startQuote + 1, endQuote).trim();
+            if (!value.isEmpty()) {
+                return value.length() > 200 ? value.substring(0, 200) + "…" : value;
+            }
+        }
+        return "";
     }
 
     private static String readRequestBody(Request request) {
@@ -125,9 +211,5 @@ public final class ApiFailureInterceptor implements Interceptor {
             return "";
         }
         return ApiLogSanitizer.sanitize(url.toString());
-    }
-
-    private static String safeMessage(String message) {
-        return message != null ? message.trim() : "no message";
     }
 }

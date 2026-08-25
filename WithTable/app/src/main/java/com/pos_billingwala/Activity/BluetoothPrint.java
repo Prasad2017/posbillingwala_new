@@ -14,7 +14,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-import android.content.res.Configuration;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
@@ -31,7 +30,6 @@ import android.os.StrictMode;
 import android.provider.MediaStore;
 import android.text.Html;
 import android.util.Base64;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -558,17 +556,6 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
         startActivity(Intent.createChooser(intentShareFile, "Share Invoice"));
 
     }
-
-    public void setScreenSizeSmall() {
-        Configuration configuration = getResources().getConfiguration();
-        configuration.fontScale = (float) 1; //0.85 small size, 1 normal size, 1, 15 big etc
-        DisplayMetrics metrics = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(metrics);
-        metrics.scaledDensity = configuration.fontScale * metrics.density;
-        configuration.densityDpi = (int) getResources().getDisplayMetrics().xdpi;
-        getBaseContext().getResources().updateConfiguration(configuration, metrics);
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -577,8 +564,6 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
         setContentView(view); //view is set by view binding
 
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
-        setScreenSizeSmall();
-
         activity = BluetoothPrint.this;
         posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
         // Fresh checkout session — do not reuse a previous bill's reserved number

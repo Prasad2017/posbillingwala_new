@@ -11,7 +11,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -22,7 +21,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.provider.MediaStore;
-import android.util.DisplayMetrics;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.RelativeLayout;
@@ -188,17 +186,6 @@ public class ProductListBluetoothPrint extends BaseActivity implements View.OnCl
         startActivity(Intent.createChooser(intentShareFile, "Share Invoice"));
 
     }
-
-    public void setScreenSizeSmall() {
-        Configuration configuration = getResources().getConfiguration();
-        configuration.fontScale = (float) 1; //0.85 small size, 1 normal size, 1, 15 big etc
-        DisplayMetrics metrics = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(metrics);
-        metrics.scaledDensity = configuration.fontScale * metrics.density;
-        configuration.densityDpi = (int) getResources().getDisplayMetrics().xdpi;
-        getBaseContext().getResources().updateConfiguration(configuration, metrics);
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -207,8 +194,6 @@ public class ProductListBluetoothPrint extends BaseActivity implements View.OnCl
         setContentView(view); //view is set by view binding
 
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
-        setScreenSizeSmall();
-
         activity = ProductListBluetoothPrint.this;
         posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
 

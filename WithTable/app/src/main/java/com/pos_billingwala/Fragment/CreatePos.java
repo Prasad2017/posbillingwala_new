@@ -1044,14 +1044,7 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
     }
 
     private void navigateFromPos() {
-        // Same destinations as before (table / take-away / home)
-        if (cartOrderStatus != null && cartOrderStatus.equalsIgnoreCase("table_wise")) {
-            ((MainActivity) activity).goBackTo(new InvoiceCompanyTable(), true);
-        } else if (cartOrderStatus != null && cartOrderStatus.equalsIgnoreCase("take_away")) {
-            ((MainActivity) activity).goBackTo(new InvoiceTakeAway(), true);
-        } else {
-            ((MainActivity) activity).navigateToHome();
-        }
+        ((MainActivity) activity).navigateBack();
     }
 
 }

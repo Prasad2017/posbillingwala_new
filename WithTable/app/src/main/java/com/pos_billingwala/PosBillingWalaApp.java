@@ -6,8 +6,9 @@ import com.pos_billingwala.Extra.AppLanguage;
 import com.pos_billingwala.Extra.Observability;
 
 /**
- * Application entry for production crash + ANR + performance monitoring.
- * Does not change billing, sync, or licence behavior.
+ * Application entry for production monitoring.
+ * Installs a global crash handler so ANY uncaught crash is logged clearly
+ * (UI, database, printing, sync, API, OOM, etc.) — not only API failures.
  */
 public class PosBillingWalaApp extends Application {
 

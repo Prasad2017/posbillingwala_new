@@ -6,7 +6,6 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -16,7 +15,6 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Base64;
-import android.util.DisplayMetrics;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
@@ -73,8 +71,6 @@ public class MessTokenBluetoothPrint extends BaseActivity implements View.OnClic
         setContentView(binding.getRoot());
 
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
-        setScreenSizeSmall();
-
         posBillingWalaDatabase = new POSBillingWalaDatabase(this);
         initViews();
         readIntentExtras();
@@ -248,17 +244,6 @@ public class MessTokenBluetoothPrint extends BaseActivity implements View.OnClic
             }
         }
     }
-
-    public void setScreenSizeSmall() {
-        Configuration configuration = getResources().getConfiguration();
-        configuration.fontScale = 1f;
-        DisplayMetrics metrics = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(metrics);
-        metrics.scaledDensity = configuration.fontScale * metrics.density;
-        configuration.densityDpi = (int) getResources().getDisplayMetrics().xdpi;
-        getBaseContext().getResources().updateConfiguration(configuration, metrics);
-    }
-
     public static boolean hasPermissions(Context context, String... permissions) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (context != null && permissions != null) {

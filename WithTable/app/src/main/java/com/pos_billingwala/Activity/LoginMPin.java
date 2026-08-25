@@ -6,7 +6,6 @@ import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
@@ -19,7 +18,6 @@ import android.text.TextPaint;
 import android.text.TextWatcher;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
@@ -38,11 +36,11 @@ import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.initialization.InitializationStatus;
 import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
-import com.pos_billingwala.Extra.AppLanguage;
 import com.pos_billingwala.Extra.AuthTokens;
 import com.pos_billingwala.Extra.Common;
 import com.pos_billingwala.Extra.LicenceExpiredUi;
 import com.pos_billingwala.Extra.LicenseSession;
+import com.pos_billingwala.Extra.Observability;
 import com.pos_billingwala.Model.LoginResponse;
 import com.pos_billingwala.R;
 import com.pos_billingwala.Retrofit.Api;
@@ -78,19 +76,6 @@ public class LoginMPin extends BaseActivity implements View.OnClickListener {
         long timeDiff = endDate.getTime() - startDate.getTime();
         return unit.convert(timeDiff, TimeUnit.MILLISECONDS);
     }
-
-    public void setScreenSizeSmall() {
-        Configuration configuration = getResources().getConfiguration();
-        configuration.fontScale = (float) 1; //0.85 small size, 1 normal size, 1,15 big etc
-        AppLanguage.preserveLocaleOnConfig(this, configuration);
-        DisplayMetrics metrics = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(metrics);
-        metrics.scaledDensity = configuration.fontScale * metrics.density;
-        configuration.densityDpi = (int) getResources().getDisplayMetrics().xdpi;
-        getBaseContext().getResources().updateConfiguration(configuration, metrics);
-    }
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -98,8 +83,6 @@ public class LoginMPin extends BaseActivity implements View.OnClickListener {
         View view = binding.getRoot(); //Root xml or viewGroup will be a part of converted view over here
         setContentView(view); //view is set by view binding
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
-
-        setScreenSizeSmall();
 
         File file = new File("data/data/" + getPackageName() + "/shared_prefs/" + Common.SHARED_PREF + ".xml");
         if (file.exists()) {
@@ -465,9 +448,10 @@ public class LoginMPin extends BaseActivity implements View.OnClickListener {
             @Override
             public void onFailure(@NonNull Call<LoginResponse> call, @NonNull Throwable t) {
                 pDialog.dismiss();
+                String detail = Observability.logCallbackFailure(t, "login_mpin");
                 SweetAlertDialog sweetAlertDialog = new SweetAlertDialog(LoginMPin.this, SweetAlertDialog.ERROR_TYPE);
                 sweetAlertDialog.setTitleText(getString(R.string.oops_title));
-                sweetAlertDialog.setContentText(getString(R.string.something_went_wrong));
+                sweetAlertDialog.setContentText(getString(R.string.something_went_wrong) + "\n" + detail);
                 sweetAlertDialog.setCancelClickListener(new SweetAlertDialog.OnSweetClickListener() {
                     @Override
                     public void onClick(SweetAlertDialog sweetAlertDialog) {
@@ -509,9 +493,10 @@ public class LoginMPin extends BaseActivity implements View.OnClickListener {
             @Override
             public void onFailure(@NonNull Call<LoginResponse> call, @NonNull Throwable t) {
                 pDialog.dismiss();
+                String detail = Observability.logCallbackFailure(t, "update_mpin");
                 SweetAlertDialog sweetAlertDialog = new SweetAlertDialog(LoginMPin.this, SweetAlertDialog.ERROR_TYPE);
                 sweetAlertDialog.setTitleText(getString(R.string.oops_title));
-                sweetAlertDialog.setContentText(getString(R.string.something_went_wrong));
+                sweetAlertDialog.setContentText(getString(R.string.something_went_wrong) + "\n" + detail);
                 sweetAlertDialog.setCancelClickListener(new SweetAlertDialog.OnSweetClickListener() {
                     @Override
                     public void onClick(SweetAlertDialog sweetAlertDialog) {
@@ -551,9 +536,10 @@ public class LoginMPin extends BaseActivity implements View.OnClickListener {
             @Override
             public void onFailure(@NonNull Call<LoginResponse> call, @NonNull Throwable t) {
                 pDialog.dismiss();
+                String detail = Observability.logCallbackFailure(t, "update_licence_key_mpin");
                 SweetAlertDialog sweetAlertDialog = new SweetAlertDialog(LoginMPin.this, SweetAlertDialog.ERROR_TYPE);
                 sweetAlertDialog.setTitleText(getString(R.string.oops_title));
-                sweetAlertDialog.setContentText(getString(R.string.something_went_wrong));
+                sweetAlertDialog.setContentText(getString(R.string.something_went_wrong) + "\n" + detail);
                 sweetAlertDialog.setCancelClickListener(new SweetAlertDialog.OnSweetClickListener() {
                     @Override
                     public void onClick(SweetAlertDialog sweetAlertDialog) {

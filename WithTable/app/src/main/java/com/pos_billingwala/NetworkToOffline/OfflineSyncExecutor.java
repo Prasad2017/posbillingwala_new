@@ -18,10 +18,32 @@ public final class OfflineSyncExecutor {
         return t;
     });
 
+    private static final Object LOCK = new Object();
+    private static volatile boolean uploadInFlight = false;
+    private static volatile long lastEnqueueAtMs = 0L;
+    private static final long MIN_ENQUEUE_INTERVAL_MS = 15_000L;
+
     private OfflineSyncExecutor() {
     }
 
+    /** True when an upload runnable is queued or running. */
+    public static boolean isUploadInFlight() {
+        return uploadInFlight;
+    }
+
+    /**
+     * Enqueue upload work. Skips if an upload is already in flight or was enqueued recently
+     * (connectivity flaps while Home is visible).
+     */
     public static void execute(Runnable work) {
+        long now = System.currentTimeMillis();
+        synchronized (LOCK) {
+            if (uploadInFlight || (now - lastEnqueueAtMs) < MIN_ENQUEUE_INTERVAL_MS) {
+                return;
+            }
+            uploadInFlight = true;
+            lastEnqueueAtMs = now;
+        }
         EXECUTOR.execute(() -> {
             Trace trace = Observability.startTrace(Observability.TRACE_OFFLINE_SYNC);
             try {
@@ -31,6 +53,7 @@ public final class OfflineSyncExecutor {
                 throw e;
             } finally {
                 Observability.stopTrace(trace);
+                uploadInFlight = false;
             }
         });
     }

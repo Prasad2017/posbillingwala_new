@@ -7,6 +7,8 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -118,6 +120,12 @@ public class Home extends Fragment implements View.OnClickListener {
     POSBillingWalaDatabase posBillingWalaDatabase;
     LicenceKeyReceiver licenceKeyReceiver;
     OfflineToNetworkReceiver offlineToNetworkReceiver;
+    private final BroadcastReceiver networkStatusReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            updateOnlineStatusUi();
+        }
+    };
     List<PrinterSettingResponse> printerSettingResponseList = new ArrayList<>();
     FragmentHomeBinding binding;
 
@@ -139,44 +147,59 @@ public class Home extends Fragment implements View.OnClickListener {
     };
     private final Runnable deferredPrinterConnectRunnable = this::getPrinterSettingDetails;
 
+    private static final long LICENCE_CHECK_INTERVAL_MS = 60_000L;
+    private static volatile long lastLicenceCheckAtMs = 0L;
+
     public static long getUnitBetweenDates(Date startDate, Date endDate, TimeUnit unit) {
         long timeDiff = endDate.getTime() - startDate.getTime();
         return unit.convert(timeDiff, TimeUnit.MILLISECONDS);
     }
 
+    /**
+     * Validates licence off the UI thread (RSA verify + optional DB). Throttled so returning
+     * to Home after every fragment pop does not hitch the main thread.
+     */
     public static void totalLicenceDays() {
-
-        if (activity != null && LicenseValidator.hasStoredPayload(activity)) {
-            POSBillingWalaDatabase db = new POSBillingWalaDatabase(activity);
-            LicenseValidator.ValidationResult result = LicenseValidator.validate(activity, db);
-            if (!result.valid) {
-                forceLogoutToLogin();
-            }
+        if (activity == null) {
             return;
         }
-
-        Date c = Calendar.getInstance().getTime();
-        System.out.println("Current time => " + c);
-        SimpleDateFormat todayDF = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-        String todayDate = todayDF.format(c);
-
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
-        Date startDate, endDate;
-        long numberOfDays;
-        try {
-            if (!MainActivity.LicenceKeyExpireDate.equalsIgnoreCase("")) {
-                startDate = dateFormat.parse(todayDate);
-                endDate = dateFormat.parse(MainActivity.LicenceKeyExpireDate);
-                numberOfDays = getUnitBetweenDates(startDate, endDate, TimeUnit.DAYS);
-
-                // Valid through end of expiry day (aligned with server P4-1)
-                if (numberOfDays < 0) {
-                    forceLogoutToLogin();
-                }
-            }
-        } catch (ParseException e) {
-            e.printStackTrace();
+        long now = System.currentTimeMillis();
+        if (now - lastLicenceCheckAtMs < LICENCE_CHECK_INTERVAL_MS) {
+            return;
         }
+        lastLicenceCheckAtMs = now;
+
+        final android.content.Context appContext = activity.getApplicationContext();
+        final String expireDate = MainActivity.LicenceKeyExpireDate != null
+                ? MainActivity.LicenceKeyExpireDate : "";
+
+        AppExecutors.get().io().execute(() -> {
+            boolean shouldLogout = false;
+            try {
+                if (LicenseValidator.hasStoredPayload(appContext)) {
+                    POSBillingWalaDatabase db = new POSBillingWalaDatabase(appContext);
+                    LicenseValidator.ValidationResult result = LicenseValidator.validate(appContext, db);
+                    shouldLogout = result == null || !result.valid;
+                } else if (!expireDate.equalsIgnoreCase("")) {
+                    Date c = Calendar.getInstance().getTime();
+                    SimpleDateFormat todayDF = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+                    String todayDate = todayDF.format(c);
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
+                    Date startDate = dateFormat.parse(todayDate);
+                    Date endDate = dateFormat.parse(expireDate);
+                    long numberOfDays = getUnitBetweenDates(startDate, endDate, TimeUnit.DAYS);
+                    // Valid through end of expiry day (aligned with server P4-1)
+                    shouldLogout = numberOfDays < 0;
+                }
+            } catch (ParseException e) {
+                e.printStackTrace();
+            } catch (Exception e) {
+                Log.e("Home", "totalLicenceDays", e);
+            }
+            if (shouldLogout) {
+                AppExecutors.get().main(Home::forceLogoutToLogin);
+            }
+        });
     }
 
     private static void forceLogoutToLogin() {
@@ -195,41 +218,26 @@ public class Home extends Fragment implements View.OnClickListener {
     }
 
     public static void setValidationUI() {
-        if (MainActivity.fastBilling.equalsIgnoreCase("1")) {
-            fastBilling.setVisibility(View.VISIBLE);
-        } else {
-            fastBilling.setVisibility(View.GONE);
+        // Views are static; skip if Home has not bound them yet (e.g. early licence callback).
+        if (fastBilling == null || tableBilling == null || takeAwayBilling == null || messBilling == null
+                || totalSalesCardView == null || todaySalesCardView == null) {
+            return;
         }
 
-        if (MainActivity.dineIn.equalsIgnoreCase("1")) {
-            tableBilling.setVisibility(View.VISIBLE);
-        } else {
-            tableBilling.setVisibility(View.GONE);
-        }
+        fastBilling.setVisibility(isFeatureEnabled(MainActivity.fastBilling) ? View.VISIBLE : View.GONE);
+        tableBilling.setVisibility(isFeatureEnabled(MainActivity.dineIn) ? View.VISIBLE : View.GONE);
+        takeAwayBilling.setVisibility(isFeatureEnabled(MainActivity.takeAway) ? View.VISIBLE : View.GONE);
+        messBilling.setVisibility(isFeatureEnabled(MainActivity.mess) ? View.VISIBLE : View.GONE);
+        totalSalesCardView.setVisibility(isFeatureEnabled(MainActivity.totalSaleData) ? View.VISIBLE : View.GONE);
+        todaySalesCardView.setVisibility(isFeatureEnabled(MainActivity.todaySaleData) ? View.VISIBLE : View.GONE);
+    }
 
-        if (MainActivity.takeAway.equalsIgnoreCase("1")) {
-            takeAwayBilling.setVisibility(View.VISIBLE);
-        } else {
-            takeAwayBilling.setVisibility(View.GONE);
+    /** Enabled when flag is "1", or when null/blank (missing data defaults to on). Only "0" hides. */
+    private static boolean isFeatureEnabled(String flag) {
+        if (flag == null || flag.trim().isEmpty()) {
+            return true;
         }
-
-        if (MainActivity.mess.equalsIgnoreCase("1")) {
-            messBilling.setVisibility(View.VISIBLE);
-        } else {
-            messBilling.setVisibility(View.GONE);
-        }
-
-        if (MainActivity.totalSaleData.equalsIgnoreCase("1")) {
-            totalSalesCardView.setVisibility(View.VISIBLE);
-        } else {
-            totalSalesCardView.setVisibility(View.GONE);
-        }
-
-        if (MainActivity.todaySaleData.equalsIgnoreCase("1")) {
-            todaySalesCardView.setVisibility(View.VISIBLE);
-        } else {
-            todaySalesCardView.setVisibility(View.GONE);
-        }
+        return !flag.equalsIgnoreCase("0");
     }
 
     @Override
@@ -256,7 +264,7 @@ public class Home extends Fragment implements View.OnClickListener {
             @Override
             public void onRefresh() {
                 if (DetectConnection.checkInternetConnection(activity)) {
-                    LicenceKeyReceiver.getLicenceKeyData(activity);
+                    LicenceKeyReceiver.getLicenceKeyData(activity, true);
                 }
                 binding.swipeRefreshLayout.setRefreshing(false);
             }
@@ -403,7 +411,7 @@ public class Home extends Fragment implements View.OnClickListener {
         if (id == R.id.userSettingIcon) {
             ((MainActivity) activity).loadFragment(new UserSetting(), true);
         } else if (id == R.id.fastBilling) {
-            if (MainActivity.fastBilling.equalsIgnoreCase("1")) {
+            if (isFeatureEnabled(MainActivity.fastBilling)) {
                 CreatePos createPos = new CreatePos();
                 Bundle bundle = new Bundle();
                 bundle.putString("tableNumber", "FS" + getRandomString(3));
@@ -414,19 +422,19 @@ public class Home extends Fragment implements View.OnClickListener {
                 Toast.makeText(activity, getString(R.string.toast_you_have_not_selected_fast_billing_pleas), Toast.LENGTH_SHORT).show();
             }
         } else if (id == R.id.tableBilling) {
-            if (MainActivity.dineIn.equalsIgnoreCase("1")) {
+            if (isFeatureEnabled(MainActivity.dineIn)) {
                 ((MainActivity) activity).loadFragment(new InvoiceCompanyTable(), true);
             } else {
                 Toast.makeText(activity, getString(R.string.toast_you_have_not_selected_dinein_please_cont), Toast.LENGTH_SHORT).show();
             }
         } else if (id == R.id.takeAwayBilling) {
-            if (MainActivity.takeAway.equalsIgnoreCase("1")) {
+            if (isFeatureEnabled(MainActivity.takeAway)) {
                 ((MainActivity) activity).loadFragment(new InvoiceTakeAway(), true);
             } else {
                 Toast.makeText(activity, getString(R.string.toast_you_have_not_selected_take_away_please_c), Toast.LENGTH_SHORT).show();
             }
         } else if (id == R.id.messBilling) {
-            if (MainActivity.mess.equalsIgnoreCase("1")) {
+            if (isFeatureEnabled(MainActivity.mess)) {
                 ((MainActivity) activity).loadFragment(new InvoiceMess(), true);
             } else {
                 Toast.makeText(activity, getString(R.string.toast_you_have_not_selected_take_away_please_c), Toast.LENGTH_SHORT).show();
@@ -558,28 +566,27 @@ public class Home extends Fragment implements View.OnClickListener {
             if (printerSettingResponseList == null || printerSettingResponseList.isEmpty()) {
                 return;
             }
-            String bluetoothAddress = printerSettingResponseList.get(0).getBluetoothAddress() != null
+            final String bluetoothAddress = printerSettingResponseList.get(0).getBluetoothAddress() != null
                     ? printerSettingResponseList.get(0).getBluetoothAddress() : "";
-            if (!bluetoothAddress.equalsIgnoreCase("")) {
+            final String bluetoothKOTAddress = printerSettingResponseList.get(0).getBluetoothKOTAddress() != null
+                    ? printerSettingResponseList.get(0).getBluetoothKOTAddress() : "";
+            // Bluetooth enable prompt stays on main; connect off main to avoid Home hitch
+            final boolean btOk = enableBluetooth();
+            if (!btOk) {
+                return;
+            }
+            AppExecutors.get().io().execute(() -> {
                 try {
-                    if (enableBluetooth()) {
+                    if (!bluetoothAddress.equalsIgnoreCase("")) {
                         new WoosimPrnMng(activity, bluetoothAddress, activity);
                     }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-            String bluetoothKOTAddress = printerSettingResponseList.get(0).getBluetoothKOTAddress() != null
-                    ? printerSettingResponseList.get(0).getBluetoothKOTAddress() : "";
-            if (!bluetoothKOTAddress.equalsIgnoreCase("")) {
-                try {
-                    if (enableBluetooth()) {
-                        new KOTWoosimPrnMng(activity, bluetoothAddress, activity);
+                    if (!bluetoothKOTAddress.equalsIgnoreCase("")) {
+                        new KOTWoosimPrnMng(activity, bluetoothKOTAddress, activity);
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    Log.e("Home", "getPrinterSettingDetails connect", e);
                 }
-            }
+            });
         });
     }
 
@@ -817,6 +824,7 @@ public class Home extends Fragment implements View.OnClickListener {
             if (offlineToNetworkReceiver != null) {
                 activity.registerReceiver(offlineToNetworkReceiver, filter);
             }
+            activity.registerReceiver(networkStatusReceiver, filter);
             connectivityReceiversRegistered = true;
         } catch (Exception e) {
             Log.e("Home", "registerConnectivityReceivers", e);
@@ -834,6 +842,7 @@ public class Home extends Fragment implements View.OnClickListener {
             if (offlineToNetworkReceiver != null) {
                 activity.unregisterReceiver(offlineToNetworkReceiver);
             }
+            activity.unregisterReceiver(networkStatusReceiver);
         } catch (Exception e) {
             Log.e("Home", "unregisterConnectivityReceivers", e);
         } finally {
@@ -870,7 +879,21 @@ public class Home extends Fragment implements View.OnClickListener {
         lastGreetingHour = -1;
         binding.shopName.setText(getGreeting() + ", " + getDisplayShopName());
         updateHomeDateTime();
+        updateOnlineStatusUi();
         loadHomeStoreImage();
+    }
+
+    private void updateOnlineStatusUi() {
+        if (binding == null || binding.networkStatusDot == null || activity == null) {
+            return;
+        }
+        boolean online = DetectConnection.checkInternetConnection(activity);
+        int color = ContextCompat.getColor(activity, online ? R.color.green_700 : R.color.red_900);
+        if (binding.networkStatusDot.getBackground() != null) {
+            binding.networkStatusDot.getBackground().mutate().setTint(color);
+        }
+        binding.networkStatusDot.setContentDescription(
+                getString(online ? R.string.status_online : R.string.status_offline));
     }
 
     private void startHomeClock() {

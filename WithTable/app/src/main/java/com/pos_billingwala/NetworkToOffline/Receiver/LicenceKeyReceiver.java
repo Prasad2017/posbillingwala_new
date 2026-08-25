@@ -16,6 +16,7 @@ import com.pos_billingwala.Extra.Common;
 import com.pos_billingwala.Extra.DetectConnection;
 import com.pos_billingwala.Extra.LicenceExpiredUi;
 import com.pos_billingwala.Extra.LicenseSession;
+import com.pos_billingwala.Extra.Observability;
 import com.pos_billingwala.Fragment.Home;
 import com.pos_billingwala.Model.LoginResponse;
 import com.pos_billingwala.Retrofit.Api;
@@ -37,6 +38,10 @@ public class LicenceKeyReceiver extends BroadcastReceiver {
     //context and database helper object
     public Context context;
 
+    private static final long MIN_LICENCE_CHECK_INTERVAL_MS = 30_000L;
+    private static volatile long lastLicenceNetworkCheckAtMs = 0L;
+    private static volatile boolean licenceCheckInFlight = false;
+
     public static long getUnitBetweenDates(Date startDate, Date endDate, TimeUnit unit) {
         long timeDiff = endDate.getTime() - startDate.getTime();
         return unit.convert(timeDiff, TimeUnit.MILLISECONDS);
@@ -44,6 +49,20 @@ public class LicenceKeyReceiver extends BroadcastReceiver {
 
     @SuppressLint("HardwareIds")
     public static void getLicenceKeyData(Context context) {
+        getLicenceKeyData(context, false);
+    }
+
+    @SuppressLint("HardwareIds")
+    public static void getLicenceKeyData(Context context, boolean force) {
+        long now = System.currentTimeMillis();
+        if (licenceCheckInFlight) {
+            return;
+        }
+        if (!force && (now - lastLicenceNetworkCheckAtMs) < MIN_LICENCE_CHECK_INTERVAL_MS) {
+            return;
+        }
+        licenceCheckInFlight = true;
+        lastLicenceNetworkCheckAtMs = now;
 
         String m_androidId = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
         String manufacturerModel = android.os.Build.MANUFACTURER + " " + android.os.Build.MODEL;
@@ -53,6 +72,7 @@ public class LicenceKeyReceiver extends BroadcastReceiver {
         call.enqueue(new Callback<LoginResponse>() {
             @Override
             public void onResponse(@NonNull Call<LoginResponse> call, @NonNull Response<LoginResponse> response) {
+                licenceCheckInFlight = false;
                 if (response.isSuccessful()) {
                     if (response.body().getStatus().equalsIgnoreCase("1")) {
 
@@ -143,7 +163,8 @@ public class LicenceKeyReceiver extends BroadcastReceiver {
 
             @Override
             public void onFailure(@NonNull Call<LoginResponse> call, @NonNull Throwable t) {
-                Log.e("serverError", t.getMessage());
+                licenceCheckInFlight = false;
+                Observability.logCallbackFailure(t, "licence_key_receiver_check");
             }
 
         });
