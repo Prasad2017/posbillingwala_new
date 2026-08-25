@@ -44,9 +44,11 @@ public class ImageSelectionWorker extends Worker {
     }
 
     private Uri selectImageFromGallery() {
-        Intent galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        // System picker intent — callers must use Activity Result; Worker cannot host UI.
+        Intent galleryIntent = new Intent(Intent.ACTION_GET_CONTENT);
         galleryIntent.setType("image/*");
-        galleryIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        galleryIntent.addCategory(Intent.CATEGORY_OPENABLE);
+        galleryIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION);
         getApplicationContext().startActivity(galleryIntent);
         return null; // Return the image URI after user selects image
     }

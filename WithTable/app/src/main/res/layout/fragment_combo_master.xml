@@ -91,11 +91,13 @@
                 android:textSize="14dp" />
         </LinearLayout>
 
-        <androidx.recyclerview.widget.RecyclerView
+        <com.pos_billingwala.Extra.AutoFitGridRecyclerView
             android:id="@+id/comboRecyclerView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
+            android:columnWidth="280dp"
+            android:nestedScrollingEnabled="true"
             android:padding="5dp" />
     </LinearLayout>
 

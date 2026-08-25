@@ -20,7 +20,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.textfield.TextInputEditText;
@@ -70,7 +69,6 @@ public class ProductMaster extends Fragment implements View.OnClickListener {
                     productResponseList = list != null ? list : new ArrayList<>();
                     if (!productResponseList.isEmpty()) {
                         productAdapter = new ProductAdapter(activity, productResponseList);
-                        productRecyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
                         productRecyclerView.setAdapter(productAdapter);
                         if (linearLayout != null) {
                             linearLayout.setVisibility(View.VISIBLE);
@@ -223,7 +221,6 @@ public class ProductMaster extends Fragment implements View.OnClickListener {
         }
 
         productAdapter = new ProductAdapter(activity, searchProductResponseList);
-        productRecyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
         productRecyclerView.setAdapter(productAdapter);
 
     }
@@ -241,11 +238,7 @@ public class ProductMaster extends Fragment implements View.OnClickListener {
     }
 
     private void navigateToCaller() {
-        if (getArguments() != null && MasterData.OPENED_FROM_MASTER.equals(getArguments().getString("openedFrom"))) {
-            ((MainActivity) activity).goBackTo(new MasterData(), true);
-        } else {
-            ((MainActivity) activity).navigateToHome();
-        }
+        ((MainActivity) activity).navigateBack();
     }
 
     @Override

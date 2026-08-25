@@ -89,7 +89,7 @@ public class MasterData extends Fragment implements View.OnClickListener {
     }
 
     private void goToSettings() {
-        ((MainActivity) activity).goBackTo(new UserSetting(), true);
+        ((MainActivity) activity).navigateBack();
     }
 
     static Bundle openedFromMaster() {

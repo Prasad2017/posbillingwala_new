@@ -107,7 +107,7 @@ public class InvoiceProductDetails extends Fragment implements View.OnClickListe
 
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
                     Log.i("tag", "onKey Back listener is working!!!");
-                    ((MainActivity) activity).goBackTo(new OrderInvoice(), true);
+                    ((MainActivity) activity).navigateBack();
                     return true;
                 }
                 return false;
@@ -124,7 +124,7 @@ public class InvoiceProductDetails extends Fragment implements View.OnClickListe
     public void onClick(View view) {
         int id = view.getId();
         if (id == R.id.backToInvoice) {
-            ((MainActivity) activity).goBackTo(new OrderInvoice(), true);
+            ((MainActivity) activity).navigateBack();
         } else if (id == R.id.shareIcon) {
             createPdf();
         }

@@ -8,8 +8,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Color;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
@@ -20,6 +18,8 @@ import androidx.annotation.NonNull;
 
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.DetectConnection;
+import com.pos_billingwala.Extra.Observability;
 import com.pos_billingwala.Model.AllApiResponse;
 import com.pos_billingwala.Retrofit.Api;
 
@@ -53,12 +53,7 @@ public class OfflineNetworkData {
         pDialog.setCancelable(false);
         pDialog.show();
 
-        ConnectivityManager cm = (ConnectivityManager) activity.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetwork = cm != null ? cm.getActiveNetworkInfo() : null;
-
-        if (activeNetwork == null
-                || (activeNetwork.getType() != ConnectivityManager.TYPE_WIFI
-                && activeNetwork.getType() != ConnectivityManager.TYPE_MOBILE)) {
+        if (!DetectConnection.checkInternetConnection(activity)) {
             dismissDialogSafely();
             return;
         }
@@ -67,7 +62,7 @@ public class OfflineNetworkData {
             try {
                 uploadPendingData();
             } catch (Exception e) {
-                Log.e("OfflineNetworkData", "upload failed", e);
+                Observability.logNonFatal(e, "offline_network_data_upload");
             } finally {
                 new Handler(Looper.getMainLooper()).post(() -> {
                     Toast.makeText(activity, activity.getString(R.string.toast_data_uploaded_to_server), Toast.LENGTH_SHORT).show();
@@ -585,10 +580,17 @@ public class OfflineNetworkData {
     private boolean executeCall(Call<AllApiResponse> call) {
         try {
             Response<AllApiResponse> response = call.execute();
-            return response.isSuccessful() && response.body() != null
+            boolean ok = response.isSuccessful() && response.body() != null
                     && "1".equalsIgnoreCase(response.body().getStatus());
+            if (!ok) {
+                String status = response.body() != null ? response.body().getStatus() : "null_body";
+                String msg = response.body() != null ? response.body().getMessage() : "";
+                Observability.log("offline_network_data sync failed | HTTP " + response.code()
+                        + " | status=" + status + " | msg=" + msg);
+            }
+            return ok;
         } catch (Exception e) {
-            Log.e("SyncHttp", "serverError", e);
+            Observability.logNonFatal(e, "offline_network_data_sync");
             return false;
         }
     }

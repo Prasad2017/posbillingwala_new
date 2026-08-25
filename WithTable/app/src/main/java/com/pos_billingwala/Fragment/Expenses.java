@@ -58,7 +58,7 @@ public class Expenses extends Fragment implements View.OnClickListener {
 
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
                     Log.i("tag", "onKey Back listener is working!!!");
-                    ((MainActivity) activity).goBackTo(new UserSetting(), true);
+                    ((MainActivity) activity).navigateBack();
                     return true;
                 }
                 return false;
@@ -75,7 +75,7 @@ public class Expenses extends Fragment implements View.OnClickListener {
     public void onClick(View view) {
         int id = view.getId();
         if (id == R.id.backToSetting) {
-            ((MainActivity) activity).goBackTo(new UserSetting(), true);
+            ((MainActivity) activity).navigateBack();
         } else if (id == R.id.addExpense) {
             ((MainActivity) activity).loadFragment(new AddExpenses(), true);
         }

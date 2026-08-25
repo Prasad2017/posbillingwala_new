@@ -76,7 +76,7 @@ public class InvoiceTakeAwayReport extends Fragment implements View.OnClickListe
 
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
                     Log.i("tag", "onKey Back listener is working!!!");
-                    ((MainActivity) getActivity()).goBackTo(new ReportSetting(), true);
+                    ((MainActivity) getActivity()).navigateBack();
                     return true;
                 }
                 return false;
@@ -103,7 +103,7 @@ public class InvoiceTakeAwayReport extends Fragment implements View.OnClickListe
     @Override
     public void onClick(View view) {
         if (view.getId() == R.id.backToSetting) {
-            ((MainActivity) getActivity()).goBackTo(new ReportSetting(), true);
+            ((MainActivity) getActivity()).navigateBack();
         } else if (view.getId() == R.id.menuIcon) {
             setPopUpWindow();
         }

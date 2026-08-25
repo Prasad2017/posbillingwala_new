@@ -28,25 +28,39 @@
                 android:orientation="horizontal"
                 android:padding="5dp">
 
-                <de.hdodenhof.circleimageview.CircleImageView
-                    android:id="@+id/userPhoto"
+                <FrameLayout
+                    android:id="@+id/userPhotoContainer"
                     android:layout_width="50dp"
                     android:layout_height="50dp"
                     android:layout_alignParentStart="true"
-                    android:layout_marginStart="15dp"
-                    android:src="@drawable/app_logo"
-                    app:civ_border_color="#FF000000"
-                    app:civ_border_width="1dp" />
+                    android:layout_marginStart="15dp">
+
+                    <de.hdodenhof.circleimageview.CircleImageView
+                        android:id="@+id/userPhoto"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:src="@drawable/app_logo"
+                        app:civ_border_color="#FF000000"
+                        app:civ_border_width="1dp" />
+
+                    <View
+                        android:id="@+id/networkStatusDot"
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:layout_gravity="top|end"
+                        android:background="@drawable/status_dot"
+                        android:contentDescription="@string/status_online" />
+                </FrameLayout>
 
                 <androidx.appcompat.widget.AppCompatTextView
                     android:id="@+id/shopName"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_alignTop="@+id/userPhoto"
+                    android:layout_alignTop="@+id/userPhotoContainer"
                     android:layout_gravity="center"
                     android:layout_marginStart="10dp"
                     android:layout_toStartOf="@+id/userSettingIcon"
-                    android:layout_toEndOf="@+id/userPhoto"
+                    android:layout_toEndOf="@+id/userPhotoContainer"
                     android:fontFamily="@font/poppinsmedium"
                     android:gravity="center|start"
                     android:paddingStart="15dp"
@@ -63,7 +77,7 @@
                     android:layout_marginStart="10dp"
                     android:layout_marginTop="2dp"
                     android:layout_toStartOf="@+id/userSettingIcon"
-                    android:layout_toEndOf="@+id/userPhoto"
+                    android:layout_toEndOf="@+id/userPhotoContainer"
                     android:fontFamily="@font/poppinsregular"
                     android:gravity="center|start"
                     android:paddingStart="15dp"

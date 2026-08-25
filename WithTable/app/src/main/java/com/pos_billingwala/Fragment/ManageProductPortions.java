@@ -130,7 +130,7 @@ public class ManageProductPortions extends Fragment implements View.OnClickListe
             updateProduct.setArguments(bundle);
             ((MainActivity) activity).goBackTo(updateProduct, false);
         } else if (getArguments() != null && "addProduct".equals(getArguments().getString("returnTo"))) {
-            ((MainActivity) activity).goBackTo(new ProductMaster(), true);
+            ((MainActivity) activity).navigateBack();
         } else {
             ((MainActivity) activity).goBackTo(new ProductMaster(), false);
         }

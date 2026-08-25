@@ -77,7 +77,7 @@ public class InvoiceTableReport extends Fragment implements View.OnClickListener
 
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
                     Log.i("tag", "onKey Back listener is working!!!");
-                    ((MainActivity) getActivity()).goBackTo(new ReportSetting(), true);
+                    ((MainActivity) getActivity()).navigateBack();
                     return true;
                 }
                 return false;
@@ -105,7 +105,7 @@ public class InvoiceTableReport extends Fragment implements View.OnClickListener
     public void onClick(View view) {
         int id = view.getId();
         if (id == R.id.backToSetting) {
-            ((MainActivity) getActivity()).goBackTo(new ReportSetting(), true);
+            ((MainActivity) getActivity()).navigateBack();
         } else if (id == R.id.menuIcon) {
             setPopUpWindow();
         }

@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
@@ -34,6 +35,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.google.android.material.chip.Chip;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.pos_billingwala.Activity.BluetoothPrint;
 import com.pos_billingwala.Activity.DuplicateBluetoothPrint;
@@ -193,6 +195,7 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
         binding.homeCardView.setOnClickListener(this);
         binding.backToCategory.setOnClickListener(this);
         binding.cartLayout.setOnClickListener(this);
+        binding.clearCart.setOnClickListener(this);
         binding.menuIcon.setOnClickListener(this);
         binding.productsTab.setOnClickListener(this);
         binding.combosTab.setOnClickListener(this);
@@ -391,6 +394,8 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
             } else {
                 Toast.makeText(activity, getString(R.string.toast_add_product_into_cart), Toast.LENGTH_SHORT).show();
             }
+        } else if (id == R.id.clearCart) {
+            confirmClearCart();
         } else if (id == R.id.menuIcon) {
             setPopUpWindow();
         } else if (id == R.id.productsTab) {
@@ -398,6 +403,44 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
         } else if (id == R.id.combosTab) {
             showComboCatalog();
         }
+    }
+
+    private void confirmClearCart() {
+        if (productCartResponseList == null || productCartResponseList.isEmpty()) {
+            Toast.makeText(activity, getString(R.string.toast_cart_is_empty), Toast.LENGTH_SHORT).show();
+            return;
+        }
+        new MaterialAlertDialogBuilder(activity, R.style.ThemeDialog)
+                .setTitle(getString(R.string.ui_clear_cart_confirm_title))
+                .setMessage(getString(R.string.ui_clear_cart_confirm_message))
+                .setCancelable(true)
+                .setPositiveButton("YES", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        dialogInterface.dismiss();
+                        clearCart();
+                    }
+                })
+                .setNegativeButton("NO", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        dialogInterface.dismiss();
+                    }
+                })
+                .show();
+    }
+
+    private void clearCart() {
+        final String table = tableNumber;
+        final String orderStatus = cartOrderStatus;
+        AppExecutors.get().runDbThenMain(this, () -> {
+            posBillingWalaDatabase.clearCart(table, orderStatus);
+            productCartResponseList = new ArrayList<>();
+        }, () -> {
+            bindCartCountUi();
+            refreshCatalogAfterCart();
+            Toast.makeText(activity, getString(R.string.toast_cart_cleared), Toast.LENGTH_SHORT).show();
+        });
     }
 
     public void setPopUpWindow() {
@@ -475,9 +518,12 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
         String discountType = "";
         float totalPerProductAmount = 0f, discountAmount = 0f, totalCGST = 0f, totalSGST = 0f, totalPerProductGST = 0f, totalGST = 0f;
         if (productCartResponseList == null || productCartResponseList.isEmpty()) {
-            // Match original: no cart rows means leave totals as-is unless we just cleared them on UI
+            binding.totalItems.setText(getString(R.string.ui_total_items_0));
+            binding.totalAmount.setText("");
+            binding.clearCart.setVisibility(View.GONE);
             return;
         }
+        binding.clearCart.setVisibility(View.VISIBLE);
 
         for (int i = 0; i < productCartResponseList.size(); i++) {
 
@@ -763,13 +809,11 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
         final String linePrice = resolveLinePrice(productResponse, portion);
         final String table = tableNumber;
         final String orderStatus = cartOrderStatus;
-        final boolean[] updatedExisting = {false};
         AppExecutors.get().runDbThenMain(this, () -> {
             List<ProductCartResponse> existing = posBillingWalaDatabase.getCartProductDetails(
                     productResponse.getProductId(), portionId, table, orderStatus);
             productCartResponseList = existing;
             if (existing != null && !existing.isEmpty()) {
-                updatedExisting[0] = true;
                 int currentQty = parseCartQuantity(existing.get(0).getProductQuantity());
                 posBillingWalaDatabase.updateCart(existing.get(0).getCartId(),
                         String.valueOf(currentQty + quantity), linePrice);
@@ -779,11 +823,6 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
                         String.valueOf(quantity), table, "0", orderStatus, portionId, portionName);
             }
         }, () -> {
-            if (updatedExisting[0]) {
-                Toast.makeText(activity, getString(R.string.toast_product_updated_into_cart), Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(activity, getString(R.string.toast_product_added_into_cart), Toast.LENGTH_SHORT).show();
-            }
             getCartCount();
             refreshCatalogAfterCart();
         });
@@ -849,7 +888,6 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
         AppExecutors.get().runDbThenMain(this, () -> {
             posBillingWalaDatabase.updateCart(cartId, productQuantity, productPrice);
         }, () -> {
-            Toast.makeText(activity, getString(R.string.toast_product_updated_into_cart), Toast.LENGTH_SHORT).show();
             getCartCount();
             refreshCatalogAfterCart();
         });
@@ -870,7 +908,6 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
             posBillingWalaDatabase.addToCart(MainActivity.userId, productResponse, productChangePrice,
                     productQuantity, table, "0", orderStatus, portionId, portionName);
         }, () -> {
-            Toast.makeText(activity, getString(R.string.toast_product_added_into_cart), Toast.LENGTH_SHORT).show();
             getCartCount();
             refreshCatalogAfterCart();
         });
@@ -947,11 +984,6 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
                 if (!isAdded()) {
                     return;
                 }
-                if (hasExisting) {
-                    Toast.makeText(activity, getString(R.string.toast_product_updated_into_cart), Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(activity, getString(R.string.toast_product_added_into_cart), Toast.LENGTH_SHORT).show();
-                }
                 getCartCount();
                 refreshCatalogAfterCart();
             });
@@ -1012,14 +1044,7 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
     }
 
     private void navigateFromPos() {
-        // Same destinations as before (table / take-away / home)
-        if (cartOrderStatus != null && cartOrderStatus.equalsIgnoreCase("table_wise")) {
-            ((MainActivity) activity).goBackTo(new InvoiceCompanyTable(), true);
-        } else if (cartOrderStatus != null && cartOrderStatus.equalsIgnoreCase("take_away")) {
-            ((MainActivity) activity).goBackTo(new InvoiceTakeAway(), true);
-        } else {
-            ((MainActivity) activity).navigateToHome();
-        }
+        ((MainActivity) activity).navigateBack();
     }
 
 }

@@ -12,7 +12,6 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.GridLayoutManager;
 
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.ComboAdapter;
@@ -49,7 +48,6 @@ public class ComboMaster extends Fragment implements View.OnClickListener {
                     comboResponseList = list != null ? list : new ArrayList<>();
                     if (!comboResponseList.isEmpty()) {
                         comboAdapter = new ComboAdapter(activity, comboResponseList);
-                        binding.comboRecyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
                         binding.comboRecyclerView.setAdapter(comboAdapter);
                         binding.linearLayout.setVisibility(View.VISIBLE);
                         binding.noDataFound.setVisibility(View.GONE);
@@ -118,7 +116,6 @@ public class ComboMaster extends Fragment implements View.OnClickListener {
             }
         }
         comboAdapter = new ComboAdapter(activity, filtered);
-        binding.comboRecyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
         binding.comboRecyclerView.setAdapter(comboAdapter);
         binding.noDataFound.setVisibility(filtered.isEmpty() ? View.VISIBLE : View.GONE);
         binding.comboRecyclerView.setVisibility(filtered.isEmpty() ? View.GONE : View.VISIBLE);
@@ -139,11 +136,7 @@ public class ComboMaster extends Fragment implements View.OnClickListener {
     }
 
     private void navigateToCaller() {
-        if (openedFromMaster) {
-            ((MainActivity) activity).goBackTo(new MasterData(), true);
-        } else {
-            ((MainActivity) activity).navigateToHome();
-        }
+        ((MainActivity) activity).navigateBack();
     }
 
     @Override

@@ -30,6 +30,7 @@ public final class AppLanguage {
     public static final String KEY_APP_LANGUAGE = "appLanguage";
 
     /** @deprecated Kept for clearing any leftover flag from older builds. */
+    @Deprecated
     public static final String KEY_REOPEN_USER_SETTING = "reopenUserSetting";
 
     public static final String EN = "en";
@@ -84,7 +85,7 @@ public final class AppLanguage {
     }
 
     /**
-     * Call from setScreenSizeSmall() so fontScale update does not wipe the app language.
+     * Call from BaseActivity.setScreenSizeSmall() so fontScale update does not wipe the app language.
      */
     public static void preserveLocaleOnConfig(@NonNull Context context, @NonNull Configuration configuration) {
         applyLocaleToConfig(configuration, localeFor(getSavedCode(context)));
@@ -109,6 +110,7 @@ public final class AppLanguage {
     /**
      * Save language and apply in-place without closing/recreating the Activity.
      */
+    @SuppressWarnings("deprecation")
     public static void setLanguage(@NonNull Activity activity, @NonNull String languageCode) {
         String code = languageCode.trim().toLowerCase(Locale.ROOT);
         if (!EN.equals(code) && !HI.equals(code) && !MR.equals(code)) {
@@ -143,6 +145,7 @@ public final class AppLanguage {
         resources.updateConfiguration(config, metrics);
     }
 
+    @SuppressWarnings("deprecation")
     public static boolean consumeReopenUserSetting(@NonNull Context context) {
         if ("1".equals(Common.getSavedUserData(context, KEY_REOPEN_USER_SETTING))) {
             Common.saveUserData(context, KEY_REOPEN_USER_SETTING, "0");

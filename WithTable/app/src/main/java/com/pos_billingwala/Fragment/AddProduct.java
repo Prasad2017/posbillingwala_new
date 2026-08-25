@@ -72,7 +72,7 @@ public class AddProduct extends Fragment implements View.OnClickListener {
 
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
                     Log.i("tag", "onKey Back listener is working!!!");
-                    ((MainActivity) activity).goBackTo(new ProductMaster(), true);
+                    ((MainActivity) activity).navigateBack();
                     return true;
                 }
                 return false;
@@ -157,7 +157,7 @@ public class AddProduct extends Fragment implements View.OnClickListener {
     public void onClick(View view) {
         int id = view.getId();
         if (id == R.id.backToProduct) {
-            ((MainActivity) activity).goBackTo(new ProductMaster(), true);
+            ((MainActivity) activity).navigateBack();
         } else if (id == R.id.addProduct) {
             if (categoryId != null) {
                 if (!binding.productName.getText().toString().isEmpty()) {
@@ -205,7 +205,7 @@ public class AddProduct extends Fragment implements View.OnClickListener {
         }
 
         Toast.makeText(activity, getString(R.string.toast_product_added_successfully), Toast.LENGTH_SHORT).show();
-        ((MainActivity) activity).goBackTo(new ProductMaster(), true);
+        ((MainActivity) activity).navigateBack();
     }
 
     private void openPortionMaster() {

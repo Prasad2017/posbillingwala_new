@@ -192,11 +192,7 @@ public class AddCombo extends Fragment implements View.OnClickListener {
     }
 
     private void goBack() {
-        ComboMaster comboMaster = new ComboMaster();
-        if (getArguments() != null && MasterData.OPENED_FROM_MASTER.equals(getArguments().getString("openedFrom"))) {
-            comboMaster.setArguments(getArguments());
-        }
-        ((MainActivity) activity).goBackTo(comboMaster, true);
+        ((MainActivity) activity).navigateBack();
     }
 
     @Override

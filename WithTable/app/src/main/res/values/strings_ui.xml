@@ -437,4 +437,8 @@
     <string name="ui_combos_tab">Combos</string>
     <string name="ui_combo_wise_report">Combo Wise Report</string>
     <string name="ui_no_combo_on_pos">No active combo found</string>
+    <string name="ui_clear_cart">Clear Cart</string>
+    <string name="ui_clear_cart_confirm_title">Clear cart?</string>
+    <string name="ui_clear_cart_confirm_message">All items will be removed from the cart.</string>
+    <string name="toast_cart_cleared">Cart cleared</string>
 </resources>

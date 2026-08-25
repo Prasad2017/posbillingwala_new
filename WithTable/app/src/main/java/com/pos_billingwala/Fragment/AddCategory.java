@@ -132,11 +132,7 @@ public class AddCategory extends Fragment implements View.OnClickListener {
     }
 
     private void navigateToCaller() {
-        if (getArguments() != null && MasterData.OPENED_FROM_MASTER.equals(getArguments().getString("openedFrom"))) {
-            ((MainActivity) activity).goBackTo(new MasterData(), true);
-        } else {
-            ((MainActivity) activity).navigateToHome();
-        }
+        ((MainActivity) activity).navigateBack();
     }
 
     public void addProductCategory() {

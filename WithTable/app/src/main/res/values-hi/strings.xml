@@ -66,6 +66,8 @@
     <string name="in_app_snack_bar_message">अपडेट लगभग पूरा!</string>
     <string name="in_app_snack_bar_action_title">रीस्टार्ट</string>
     <string name="you_appear_to_be_offline">आप ऑफ़लाइन लग रहे हैं</string>
+    <string name="status_online">ऑनलाइन</string>
+    <string name="status_offline">ऑफ़लाइन</string>
     <string name="you_can_t_use_gmail_until_you_re_connected_to_the_internet">इंटरनेट कनेक्ट होने तक आप ऐप का उपयोग नहीं कर सकते</string>
     <string name="retry">फिर कोशिश करें</string>
     <string name="hi_pos_billingwala">नमस्ते POS Billingwala</string>

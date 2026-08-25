@@ -104,7 +104,7 @@ public class UserSetting extends Fragment implements View.OnClickListener {
             public boolean onKey(View v, int keyCode, KeyEvent event) {
 
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
-                    ((MainActivity) activity).navigateToHome();
+                    ((MainActivity) activity).navigateBack();
                     return true;
                 }
                 return false;
@@ -211,7 +211,7 @@ public class UserSetting extends Fragment implements View.OnClickListener {
     public void onClick(View view) {
         int id = view.getId();
         if (id == R.id.backToHome) {
-            ((MainActivity) activity).navigateToHome();
+            ((MainActivity) activity).navigateBack();
         } else if (id == R.id.appDevelopedBy) {
             Intent browserIntent = new Intent(Intent.ACTION_VIEW);
             browserIntent.setData(Uri.parse("https://thecanatech.com/"));

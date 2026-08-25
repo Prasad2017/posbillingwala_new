@@ -434,4 +434,8 @@
     <string name="ui_combos_tab">कॉम्बो</string>
     <string name="ui_combo_wise_report">कॉम्बो रिपोर्ट</string>
     <string name="ui_no_combo_on_pos">कोई सक्रिय कॉम्बो नहीं</string>
+    <string name="ui_clear_cart">कार्ट साफ़ करें</string>
+    <string name="ui_clear_cart_confirm_title">कार्ट साफ़ करें?</string>
+    <string name="ui_clear_cart_confirm_message">कार्ट से सभी आइटम हटा दिए जाएंगे।</string>
+    <string name="toast_cart_cleared">कार्ट साफ़ किया गया</string>
 </resources>

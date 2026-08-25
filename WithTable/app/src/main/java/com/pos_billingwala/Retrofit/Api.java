@@ -9,9 +9,11 @@ import com.pos_billingwala.Extra.AuthTokenRefresh;
 import com.pos_billingwala.Extra.AuthTokens;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.Cache;
+import okhttp3.ConnectionSpec;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -27,6 +29,7 @@ public class Api {
     public static ApiInterface getClient(Context context) {
 
         if (retrofit == null) {
+            final Context appContext = context.getApplicationContext();
 
             HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
             // Never log request/response bodies in release (licence keys, bills, device ids)
@@ -38,10 +41,8 @@ public class Api {
                     .setLenient()
                     .create();
 
-            File cacheDirectory = new File(context.getCacheDir(), "http_cache");
+            File cacheDirectory = new File(appContext.getCacheDir(), "http_cache");
             Cache cache = new Cache(cacheDirectory, 10 * 1024 * 1024); // 10 MB cache
-
-            final Context appContext = context.getApplicationContext();
 
             OkHttpClient.Builder httpClientBuilder = new OkHttpClient.Builder()
                     .connectTimeout(60, TimeUnit.SECONDS)
@@ -50,6 +51,7 @@ public class Api {
                     .callTimeout(180, TimeUnit.SECONDS)
                     .cache(cache)
                     .retryOnConnectionFailure(true)
+                    .connectionSpecs(Arrays.asList(ConnectionSpec.CLEARTEXT))
                     .addInterceptor(new ApiFailureInterceptor())
                     .addInterceptor(chain -> {
                         Request original = chain.request();

@@ -118,7 +118,7 @@ public class AddPortionMaster extends Fragment implements View.OnClickListener {
         } else if ("addProduct".equals(returnTo)) {
             ((MainActivity) activity).goBackTo(new AddProduct(), false);
         } else if ("masterData".equals(returnTo)) {
-            ((MainActivity) activity).goBackTo(new MasterData(), true);
+            ((MainActivity) activity).navigateBack();
         } else if ("updateProduct".equals(returnTo)) {
             UpdateProduct updateProduct = new UpdateProduct();
             Bundle bundle = new Bundle();

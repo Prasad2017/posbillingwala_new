@@ -54,7 +54,7 @@ public class AddExpenses extends Fragment implements View.OnClickListener {
 
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
                     Log.i("tag", "onKey Back listener is working!!!");
-                    ((MainActivity) activity).goBackTo(new Expenses(), true);
+                    ((MainActivity) activity).navigateBack();
                     return true;
                 }
                 return false;
@@ -71,7 +71,7 @@ public class AddExpenses extends Fragment implements View.OnClickListener {
     public void onClick(View view) {
         int id = view.getId();
         if (id == R.id.backToExpenses) {
-            ((MainActivity) activity).goBackTo(new Expenses(), true);
+            ((MainActivity) activity).navigateBack();
         } else if (id == R.id.addExpenses) {
             if (!binding.expensesName.getText().toString().isEmpty()) {
                 if (!binding.expensesAmount.getText().toString().isEmpty()) {
@@ -95,7 +95,7 @@ public class AddExpenses extends Fragment implements View.OnClickListener {
         posBillingWalaDatabase.addExpenses(binding.expensesName.getText().toString(), binding.expensesAmount.getText().toString(), expenseDate, 0, getRandomString(10));
         Toast.makeText(activity, getString(R.string.toast_add_expense_successfully), Toast.LENGTH_SHORT).show();
 
-        ((MainActivity) activity).goBackTo(new Expenses(), true);
+        ((MainActivity) activity).navigateBack();
 
     }
 

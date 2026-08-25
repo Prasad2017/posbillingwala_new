@@ -7,17 +7,12 @@ import static android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.Dialog;
-import android.content.ContentValues;
 import android.content.Intent;
-import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.InputType;
@@ -28,13 +23,13 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
 import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.CompoundButton;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.bottomsheet.BottomSheetDialog;
@@ -53,7 +48,6 @@ import com.pos_billingwala.databinding.FragmentCompanyDetailSettingBinding;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -90,7 +84,7 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
 
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
                     Log.i("tag", "onKey Back listener is working!!!");
-                    ((MainActivity) activity).goBackTo(new UserSetting(), true);
+                    ((MainActivity) activity).navigateBack();
                     return true;
                 }
                 return false;
@@ -187,7 +181,7 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
             imageName = "paymentQR";
             selectImage();
         } else if (id == R.id.backToSetting) {
-            ((MainActivity) activity).goBackTo(new UserSetting(), true);
+            ((MainActivity) activity).navigateBack();
         } else if (id == R.id.saveDetails) {
             if (!binding.shopName1.getText().toString().trim().isEmpty()) {
                 if (!binding.cashierName.getText().toString().trim().isEmpty()) {
@@ -255,28 +249,36 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
 
     private void cameraIntent() {
         isClicked = true;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            ContentValues values = new ContentValues();
-            values.put(MediaStore.Images.Media.TITLE, "image");
-            values.put(MediaStore.Images.Media.DESCRIPTION, "From Camera");
-            imageUri = activity.getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
-        } else {
-            imageUri = Uri.fromFile(new File(Environment.getExternalStorageDirectory(), "image.jpg"));
+        try {
+            File photoFile = new File(activity.getCacheDir(), "company_capture_" + System.currentTimeMillis() + ".jpg");
+            imageUri = FileProvider.getUriForFile(
+                    activity,
+                    activity.getPackageName() + ".provider",
+                    photoFile);
+            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
+            intent.addFlags(FLAG_GRANT_READ_URI_PERMISSION | FLAG_GRANT_WRITE_URI_PERMISSION);
+            startActivityForResult(intent, 100);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(activity, getString(R.string.toast_canceled_by_user), Toast.LENGTH_SHORT).show();
         }
-
-        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        intent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
-        intent.addFlags(FLAG_GRANT_READ_URI_PERMISSION | FLAG_GRANT_WRITE_URI_PERMISSION);
-        startActivityForResult(intent, 100);
     }
 
-    @SuppressLint("IntentReset")
     public void galleryIntent() {
-        // choose from  external storage
+        // System photo picker / GET_CONTENT — no READ_MEDIA_IMAGES / storage permission
         isClicked = true;
-        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        intent.setType("image/*");
-        intent.addFlags(FLAG_GRANT_READ_URI_PERMISSION | FLAG_GRANT_WRITE_URI_PERMISSION);
+        Intent intent;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
+            intent.setType("image/*");
+        } else {
+            intent = new Intent(Intent.ACTION_GET_CONTENT);
+            intent.setType("image/*");
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            intent = Intent.createChooser(intent, getString(R.string.app_name));
+        }
+        intent.addFlags(FLAG_GRANT_READ_URI_PERMISSION);
         startActivityForResult(intent, 200);
     }
 
@@ -286,16 +288,9 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == RESULT_OK) {
             if (requestCode == 100) {
-                try {
-                    Bitmap photo = MediaStore.Images.Media.getBitmap(activity.getContentResolver(), imageUri);
-                    File finalFile = new File(getRealPathFromURI(imageUri));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            } else if (requestCode == 200) {
-                Uri selectedImage = data.getData();
-                // CALL THIS METHOD TO GET THE ACTUAL PATH
-                File finalFile = new File(getRealPathFromURI(selectedImage));
+                applyImageFromUri(imageUri);
+            } else if (requestCode == 200 && data != null && data.getData() != null) {
+                applyImageFromUri(data.getData());
             }
         } else {
             Toast.makeText(activity, getString(R.string.toast_canceled_by_user), Toast.LENGTH_SHORT).show();
@@ -303,42 +298,32 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
 
     }
 
-    public String getRealPathFromURI(Uri uri) {
-
-        if (activity.getContentResolver() != null) {
-            Cursor cursor = activity.getContentResolver().query(uri, null, null, null, null);
-            if (cursor != null) {
-                int idx = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-                cursor.moveToFirst();
-                imageType = cursor.getString(idx);
-                File imgFile = new File(imageType);
-
-                try {
-                    if (imgFile.exists()) {
-                        Bitmap myLogo = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
-                        // initialize byte stream
-                        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                        // compress Bitmap
-                        myLogo.compress(Bitmap.CompressFormat.PNG, 100, stream);
-                        // Initialize byte array
-                        byte[] bytes = stream.toByteArray();
-                        // get base64 encoded string
-                        if (imageName.equalsIgnoreCase("profile")) {
-                            companyLogo = Base64.encodeToString(bytes, Base64.DEFAULT);
-                            binding.profilePhoto.setImageBitmap(myLogo);
-                        } else {
-                            paymentLogo = Base64.encodeToString(bytes, Base64.DEFAULT);
-                            binding.paymentQRPhoto.setImageBitmap(myLogo);
-                        }
-                    }
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-            cursor.close();
+    /** Load selected/captured image via ContentResolver (works with photo-picker URIs). */
+    private void applyImageFromUri(Uri uri) {
+        if (uri == null || activity == null) {
+            return;
         }
-        return imageType;
+        try {
+            Bitmap bitmap = BitmapFactory.decodeStream(
+                    activity.getContentResolver().openInputStream(uri));
+            if (bitmap == null) {
+                return;
+            }
+            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+            byte[] bytes = stream.toByteArray();
+            String encoded = Base64.encodeToString(bytes, Base64.DEFAULT);
+            if (imageName.equalsIgnoreCase("profile")) {
+                companyLogo = encoded;
+                binding.profilePhoto.setImageBitmap(bitmap);
+            } else {
+                paymentLogo = encoded;
+                binding.paymentQRPhoto.setImageBitmap(bitmap);
+            }
+            imageType = uri.toString();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void addCompanyDetails() {
@@ -397,18 +382,16 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
     }
 
     public void requestNewPermission() {
-
+        // Camera only for capture; gallery uses system photo picker (no READ_MEDIA_*)
         Dexter.withContext(activity)
-                .withPermissions(android.Manifest.permission.ACCESS_COARSE_LOCATION,
-                        android.Manifest.permission.ACCESS_FINE_LOCATION,
-                        Manifest.permission.CAMERA,
-                        Manifest.permission.READ_MEDIA_IMAGES
+                .withPermissions(
+                        Manifest.permission.ACCESS_COARSE_LOCATION,
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.CAMERA
                 ).withListener(new MultiplePermissionsListener() {
                     @Override
                     public void onPermissionsChecked(MultiplePermissionsReport report) {
-                        if (report.areAllPermissionsGranted()) {
-
-                        } else if (report.isAnyPermissionPermanentlyDenied()) {
+                        if (report.isAnyPermissionPermanentlyDenied()) {
                             //  showSettingsDialog();
                         }
                     }
@@ -422,21 +405,16 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
     }
 
     public void requestPermission() {
-
+        // Pre-API 33: storage only if needed for legacy paths; gallery uses GET_CONTENT
         Dexter.withContext(activity)
                 .withPermissions(
                         Manifest.permission.CAMERA,
-                        Manifest.permission.READ_EXTERNAL_STORAGE,
-                        Manifest.permission.WRITE_EXTERNAL_STORAGE,
                         Manifest.permission.ACCESS_FINE_LOCATION
                 ).withListener(new MultiplePermissionsListener() {
                     @Override
                     public void onPermissionsChecked(MultiplePermissionsReport report) {
-                        if (report.areAllPermissionsGranted()) {
-
-                        } else if (report.isAnyPermissionPermanentlyDenied()) {
+                        if (report.isAnyPermissionPermanentlyDenied()) {
                             //  showSettingsDialog();
-                            requestPermission();
                         }
                     }
 

@@ -18,7 +18,6 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.textfield.TextInputEditText;
@@ -58,7 +57,6 @@ public class MessMemberList extends Fragment implements View.OnClickListener {
             if (!memberResponseList.isEmpty()) {
 
                 MemberAdapter adapter = new MemberAdapter(activity, memberResponseList);
-                recyclerView.setLayoutManager(new LinearLayoutManager(activity));
                 recyclerView.setAdapter(adapter);
                 adapter.notifyDataSetChanged();
                 // adapter.notifyItemInserted(memberResponseList.size() - 1);
@@ -93,7 +91,7 @@ public class MessMemberList extends Fragment implements View.OnClickListener {
 
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
                     Log.i("tag", "onKey Back listener is working!!!");
-                    ((MainActivity) activity).goBackTo(new InvoiceMess(), true);
+                    ((MainActivity) activity).navigateBack();
                     return true;
                 }
                 return false;
@@ -150,7 +148,6 @@ public class MessMemberList extends Fragment implements View.OnClickListener {
         if (!searchMemberResponseList.isEmpty()) {
 
             MemberAdapter adapter = new MemberAdapter(activity, searchMemberResponseList);
-            recyclerView.setLayoutManager(new LinearLayoutManager(activity));
             recyclerView.setAdapter(adapter);
             adapter.notifyDataSetChanged();
             //  adapter.notifyItemInserted(searchMemberResponseList.size() - 1);
@@ -166,7 +163,7 @@ public class MessMemberList extends Fragment implements View.OnClickListener {
     public void onClick(View view) {
         int id = view.getId();
         if (id == R.id.backToSetting) {
-            ((MainActivity) activity).goBackTo(new InvoiceMess(), true);
+            ((MainActivity) activity).navigateBack();
         } else if (id == R.id.menuIcon) {
             setPopUpWindow();
         }
