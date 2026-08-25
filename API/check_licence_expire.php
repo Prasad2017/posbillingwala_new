@@ -2,7 +2,7 @@
 include_once('config.php');
 include_once('licence_expiry.php');
 require_once __DIR__ . '/licence_payload.php';
-require_once __DIR__ . '/auth_tokens.php';
+require_once __DIR__ . '/pos_auth_guard.php';
 
 mysqli_query($con, 'set names utf8');
 header('Access-Control-Allow-Origin: *');
@@ -58,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $response['todaySaleData'] = $check['today_sale_data'];
                 $response = licence_append_trial_response($con, $response, $check);
                 $response = licence_append_signed_payload($con, $response, $check, $android_device_id);
-                auth_token_append_response($con, $response, 'pos_licence', $check['id'], $android_device_id);
+                auth_token_append_response($con, $response, 'pos_licence', $check['id'], $android_device_id, $check['expiryDate']);
             }
         } else {
             $response['status'] = '0';

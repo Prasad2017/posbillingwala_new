@@ -2,20 +2,15 @@ package com.posbillingwala.admin.Adapter;
 
 import android.content.Context;
 import android.view.LayoutInflater;
-import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.posbillingwala.admin.Model.ProductSubcategoryResponse;
-import com.posbillingwala.admin.R;
+import com.posbillingwala.admin.databinding.SubcategoryListBinding;
 
 import java.util.List;
-
-import butterknife.BindView;
-import butterknife.ButterKnife;
 
 public class SubcategoryAdapter extends RecyclerView.Adapter<SubcategoryAdapter.MyViewHolder> {
 
@@ -30,15 +25,15 @@ public class SubcategoryAdapter extends RecyclerView.Adapter<SubcategoryAdapter.
     @NonNull
     @Override
     public MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.subcategory_list, parent, false);
-        return new MyViewHolder(view);
+        SubcategoryListBinding binding = SubcategoryListBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false);
+        return new MyViewHolder(binding);
     }
 
     @Override
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
         ProductSubcategoryResponse item = subcategoryList.get(position);
-        holder.srNo.setText(String.valueOf(position + 1));
-        holder.subcategoryName.setText(item.getSubcategoryName());
+        holder.binding.srNo.setText(String.valueOf(position + 1));
+        holder.binding.subcategoryName.setText(item.getSubcategoryName());
     }
 
     @Override
@@ -46,15 +41,12 @@ public class SubcategoryAdapter extends RecyclerView.Adapter<SubcategoryAdapter.
         return subcategoryList.size();
     }
 
-    static class MyViewHolder extends RecyclerView.ViewHolder {
-        @BindView(R.id.srNo)
-        TextView srNo;
-        @BindView(R.id.subcategoryName)
-        TextView subcategoryName;
+    public static class MyViewHolder extends RecyclerView.ViewHolder {
+        private final SubcategoryListBinding binding;
 
-        MyViewHolder(@NonNull View itemView) {
-            super(itemView);
-            ButterKnife.bind(this, itemView);
+        public MyViewHolder(@NonNull SubcategoryListBinding binding) {
+            super(binding.getRoot());
+            this.binding = binding;
         }
     }
 }

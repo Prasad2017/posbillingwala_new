@@ -28,8 +28,9 @@ $i=0;
         $contact_number=$user['contact_number'];
         $aadhar_number=$user['aadhar_number'];
         $address=$user['address'];
+        $is_active = isset($user['is_active']) ? $user['is_active'] : '1';
         
-        $json[] = array("id"=>$id, "name"=>$name, "email"=>$email, "contact_number"=>$contact_number, "aadhar_number"=>$aadhar_number, "address"=>$address);
+        $json[] = array("id"=>$id, "name"=>$name, "email"=>$email, "contact_number"=>$contact_number, "aadhar_number"=>$aadhar_number, "address"=>$address, "is_active"=>$is_active);
        
          $json1 = array("dealerResponse"=>$json);
             

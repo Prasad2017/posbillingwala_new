@@ -3,6 +3,8 @@
  * Product portions for a shop — each row is Product + Portion Master + price.
  */
 include_once('config.php');
+require_once __DIR__ . '/pos_auth_guard.php';
+
 require_once __DIR__ . '/db_prepared.php';
 
 header('Content-Type: application/json; charset=utf-8');
@@ -16,6 +18,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 }
 
 $userId = isset($_GET['userId']) ? trim((string) $_GET['userId']) : '';
+        $__postedUserId = isset($_GET['userId']) ? $_GET['userId'] : (isset($userId) ? $userId : '');
+        pos_require_auth($con, $__postedUserId, isset($response) ? $response : array('status'=>'0','message'=>'Unauthorized'));
+
 if ($userId === '') {
     echo json_encode($response);
     exit;

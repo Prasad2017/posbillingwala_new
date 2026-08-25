@@ -1,11 +1,22 @@
 <?php
 include_once('config.php');
+require_once __DIR__ . '/auth_guard.php';
+owner_require_auth($con);
+
 
 $response = array();
 if($_SERVER['REQUEST_METHOD']=='POST'){
      mysqli_query($con, 'set names utf8');
     
   $customerId = $_POST['customerId'];
+$customerId = owner_resolve_user_id($con, $customerId);
+if ($customerId === null) {
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(array('status'=>'0','message'=>'Unauthorized'));
+    mysqli_close($con);
+    exit;
+}
+
   $categoryName = $_POST['categoryName'];
   $productCode = $_POST['productCode'];
   $productName = $_POST['productName'];

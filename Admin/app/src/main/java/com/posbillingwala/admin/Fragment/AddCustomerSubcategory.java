@@ -9,7 +9,6 @@ import android.text.InputType;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
@@ -17,12 +16,12 @@ import android.widget.ArrayAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.textfield.TextInputEditText;
 import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.posbillingwala.admin.Activity.MainActivity;
 import com.posbillingwala.admin.Adapter.SubcategoryAdapter;
@@ -32,20 +31,18 @@ import com.posbillingwala.admin.Model.ProductCategoryResponse;
 import com.posbillingwala.admin.Model.ProductSubcategoryResponse;
 import com.posbillingwala.admin.R;
 import com.posbillingwala.admin.Retrofit.Api;
+import com.posbillingwala.admin.databinding.FragmentAddCustomerSubcategoryBinding;
 
 import java.util.List;
 import java.util.Random;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import butterknife.OnClick;
 import cn.pedant.SweetAlert.SweetAlertDialog;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
 @SuppressLint("SetTextI18n, NonConstantResourceId, StaticFieldLeak")
-public class AddCustomerSubcategory extends Fragment {
+public class AddCustomerSubcategory extends Fragment implements View.OnClickListener {
 
     public static Activity activity;
     public static String customerId;
@@ -55,17 +52,14 @@ public class AddCustomerSubcategory extends Fragment {
     public static TextView noDataFound;
 
     View view;
-    @BindView(R.id.subcategoryName)
-    TextInputEditText subcategoryNameEdit;
-    @BindView(R.id.categorySpinner)
-    MaterialSpinner categorySpinner;
+    FragmentAddCustomerSubcategoryBinding binding;
 
     String[] categoryIdList, categoryNameList;
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        view = inflater.inflate(R.layout.fragment_add_customer_subcategory, container, false);
-        ButterKnife.bind(this, view);
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        binding = FragmentAddCustomerSubcategoryBinding.inflate(inflater, container, false);
+        view = binding.getRoot();
 
         activity = getActivity();
         MainActivity.title.setText("Subcategories");
@@ -78,11 +72,11 @@ public class AddCustomerSubcategory extends Fragment {
             }
         }
 
-        subcategoryNameEdit.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
+        binding.subcategoryName.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
 
-        subcategoryRecyclerview = view.findViewById(R.id.subcategoryRecyclerview);
-        subcategoryListCardView = view.findViewById(R.id.subcategoryListCardView);
-        noDataFound = view.findViewById(R.id.noDataFound);
+        subcategoryRecyclerview = binding.subcategoryRecyclerview;
+        subcategoryListCardView = binding.subcategoryListCardView;
+        noDataFound = binding.noDataFound;
 
         MainActivity.back.setOnClickListener(v -> {
             ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
@@ -99,7 +93,7 @@ public class AddCustomerSubcategory extends Fragment {
             return false;
         });
 
-        categorySpinner.setOnTouchListener((v, event) -> {
+        binding.categorySpinner.setOnTouchListener((v, event) -> {
             InputMethodManager imm = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
             if (imm != null) {
                 imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
@@ -107,7 +101,7 @@ public class AddCustomerSubcategory extends Fragment {
             return false;
         });
 
-        categorySpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
+        binding.categorySpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
             @Override
             public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
                 if (categoryIdList != null && position >= 0 && position < categoryIdList.length) {
@@ -117,20 +111,24 @@ public class AddCustomerSubcategory extends Fragment {
             }
         });
 
+        binding.addSubcategory.setOnClickListener(this);
+
         return view;
     }
 
-    @OnClick(R.id.addSubcategory)
-    public void onAddSubcategory() {
-        if (categoryId == null || categoryId.isEmpty()) {
-            Toast.makeText(activity, "Please select a category", Toast.LENGTH_SHORT).show();
-            return;
+    @Override
+    public void onClick(View view) {
+        if (view.getId() == R.id.addSubcategory) {
+            if (categoryId == null || categoryId.isEmpty()) {
+                Toast.makeText(activity, "Please select a category", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (binding.subcategoryName.getText().toString().trim().length() == 0) {
+                Toast.makeText(activity, "Please enter subcategory name", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            addSubcategory();
         }
-        if (subcategoryNameEdit.getText().toString().trim().length() == 0) {
-            Toast.makeText(activity, "Please enter subcategory name", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        addSubcategory();
     }
 
     private void loadCategories() {
@@ -161,10 +159,10 @@ public class AddCustomerSubcategory extends Fragment {
                     }
                     ArrayAdapter<String> adapter = new ArrayAdapter<>(activity, android.R.layout.simple_spinner_item, categoryNameList);
                     adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
-                    categorySpinner.setAdapter(adapter);
+                    binding.categorySpinner.setAdapter(adapter);
                     categoryId = categoryIdList[preselectIndex];
                     if (preselectIndex >= 0) {
-                        categorySpinner.setSelectedIndex(preselectIndex);
+                        binding.categorySpinner.setSelectedIndex(preselectIndex);
                     } else {
                         getSubcategoryList();
                     }
@@ -193,14 +191,14 @@ public class AddCustomerSubcategory extends Fragment {
         Call<AllApiResponse> call = Api.getClient().saveSubcategory(
                 customerId,
                 categoryId,
-                subcategoryNameEdit.getText().toString().trim(),
+                binding.subcategoryName.getText().toString().trim(),
                 getRandomString(10));
         call.enqueue(new Callback<AllApiResponse>() {
             @Override
             public void onResponse(Call<AllApiResponse> call, Response<AllApiResponse> response) {
                 if (response.isSuccessful() && response.body() != null && "1".equalsIgnoreCase(response.body().getStatus())) {
                     Toast.makeText(activity, response.body().getMessage(), Toast.LENGTH_SHORT).show();
-                    subcategoryNameEdit.setText("");
+                    binding.subcategoryName.setText("");
                     getSubcategoryList();
                 } else if (response.body() != null) {
                     Toast.makeText(activity, response.body().getMessage(), Toast.LENGTH_SHORT).show();

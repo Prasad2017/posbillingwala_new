@@ -23,74 +23,64 @@ import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.google.android.material.textfield.TextInputEditText;
 import com.posbillingwala.admin.Extra.AuthTokens;
 import com.posbillingwala.admin.Extra.Common;
 import com.posbillingwala.admin.Model.AllApiResponse;
 import com.posbillingwala.admin.R;
 import com.posbillingwala.admin.Retrofit.Api;
+import com.posbillingwala.admin.databinding.ActivityLoginBinding;
 
 import java.io.File;
-import java.util.List;
 
-import butterknife.BindView;
-import butterknife.BindViews;
-import butterknife.ButterKnife;
-import butterknife.OnClick;
 import cn.pedant.SweetAlert.SweetAlertDialog;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
 @SuppressLint("SetTextI18n, NonConstantResourceId")
-public class Login extends AppCompatActivity {
+public class Login extends AppCompatActivity implements View.OnClickListener {
 
-
-    @BindViews({R.id.userName, R.id.password})
-    List<TextInputEditText> textInputEditTexts;
-    @BindViews({R.id.iv_passShow})
-    List<ImageView> imageViews;
-    @BindView(R.id.loginLayout)
-    LinearLayout loginLayout;
     SharedPreferences pref;
     SharedPreferences.Editor editor;
     String m_androidId, manufacturerModel;
-    @BindView(R.id.privacyPolicy)
-    TextView textView;
+    ActivityLoginBinding binding;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Api.bindContext(this);
-        setContentView(R.layout.activity_login);
-        ButterKnife.bind(this);
+        binding = ActivityLoginBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
 
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR);
 
-        File file = new File("data/data/" + getPackageName() + "/shared_prefs/user.xml");
-        if (file.exists()) {
+        if (AuthTokens.hasValidSession(this)) {
             Intent intent = new Intent(Login.this, MainActivity.class);
             startActivity(intent);
             finish();
+            return;
+        }
+        // Stale login flag without token — force re-auth
+        File file = new File("data/data/" + getPackageName() + "/shared_prefs/user.xml");
+        if (file.exists()) {
+            AuthTokens.clear(this);
         }
 
-        textInputEditTexts.get(0).setSelection(textInputEditTexts.get(0).getText().toString().length());
+        binding.userEmail.setSelection(binding.userEmail.getText().toString().length());
 
         m_androidId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
         Log.e("m_androidId", "" + m_androidId);
         manufacturerModel = android.os.Build.MANUFACTURER + " " + android.os.Build.MODEL;
         Log.e("manufacturerModel", "" + manufacturerModel);
 
-        String privacyPolicy = "By providing licence key, I hereby agree and accept the Terms of service and Privacy Policy in use of the POS Billingwala app.";
+        String privacyPolicy = "By providing email & password, I hereby agree and accept the Terms of service and Privacy Policy in use of the POS Billingwala Admin app.";
         SpannableString spannableString = new SpannableString(privacyPolicy);
 
         // creating clickable span to be implemented as a link
@@ -140,50 +130,51 @@ public class Login extends AppCompatActivity {
 
         };
 
-        // setting the part of string to be act as a link
-        spannableString.setSpan(clickableSpan1, 56, 72, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        spannableString.setSpan(clickableSpan2, 77, 91, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        // "Terms of service" and "Privacy Policy" link spans
+        spannableString.setSpan(clickableSpan1, 61, 77, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        spannableString.setSpan(clickableSpan2, 82, 96, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 
-        textView.setText(spannableString);
-        textView.setMovementMethod(LinkMovementMethod.getInstance());
+        binding.privacyPolicy.setText(spannableString);
+        binding.privacyPolicy.setMovementMethod(LinkMovementMethod.getInstance());
+
+        binding.ivPassShow.setOnClickListener(this);
+        binding.loginCheck.setOnClickListener(this);
+        binding.newUser.setOnClickListener(this);
 
     }
 
-    @OnClick({R.id.iv_passShow, R.id.loginCheck, R.id.newUser})
+    @Override
     public void onClick(View view) {
-        switch (view.getId()) {
-            case R.id.iv_passShow:
-
-                if (textInputEditTexts.get(1).getTransformationMethod().equals(PasswordTransformationMethod.getInstance())) {
-                    imageViews.get(0).setImageResource(R.drawable.ic_hide);
-                    textInputEditTexts.get(1).setTransformationMethod(HideReturnsTransformationMethod.getInstance());
-                } else {
-                    imageViews.get(0).setImageResource(R.drawable.ic_look);
-                    textInputEditTexts.get(1).setTransformationMethod(PasswordTransformationMethod.getInstance());
-                }
-                textInputEditTexts.get(1).setSelection(textInputEditTexts.get(1).getText().toString().length());
-
-                break;
-            case R.id.loginCheck:
-                if (textInputEditTexts.get(0).getText().toString().length() > 0) {
-                    if (textInputEditTexts.get(1).getText().toString().length() > 0) {
-                        loginDealer();
-                    } else {
-                        textInputEditTexts.get(1).setError("Please enter password");
-                    }
-                } else {
-                    textInputEditTexts.get(0).setError("Please enter username");
-                }
-                break;
-
-            case R.id.newUser:
-                signUp();
-                break;
-
+        int id = view.getId();
+        if (id == R.id.iv_passShow) {
+            if (binding.password.getTransformationMethod().equals(PasswordTransformationMethod.getInstance())) {
+                binding.ivPassShow.setImageResource(R.drawable.ic_hide);
+                binding.password.setTransformationMethod(HideReturnsTransformationMethod.getInstance());
+            } else {
+                binding.ivPassShow.setImageResource(R.drawable.ic_look);
+                binding.password.setTransformationMethod(PasswordTransformationMethod.getInstance());
+            }
+            binding.password.setSelection(binding.password.getText().toString().length());
+        } else if (id == R.id.loginCheck) {
+            String email = binding.userEmail.getText() != null
+                    ? binding.userEmail.getText().toString().trim() : "";
+            String password = binding.password.getText() != null
+                    ? binding.password.getText().toString() : "";
+            if (email.isEmpty()) {
+                binding.userEmail.setError("Please enter email");
+            } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                binding.userEmail.setError("Please enter a valid email");
+            } else if (password.isEmpty()) {
+                binding.password.setError("Please enter password");
+            } else {
+                loginAdmin(email, password);
+            }
+        } else if (id == R.id.newUser) {
+            signUp();
         }
     }
 
-    private void loginDealer() {
+    private void loginAdmin(String email, String password) {
 
         SweetAlertDialog pDialog = new SweetAlertDialog(Login.this, SweetAlertDialog.PROGRESS_TYPE);
         pDialog.getProgressHelper().setBarColor(Color.parseColor("#2D7FED"));
@@ -191,17 +182,18 @@ public class Login extends AppCompatActivity {
         pDialog.setCancelable(false);
         pDialog.show();
 
-        Call<AllApiResponse> call = Api.getClient().loginDealer(textInputEditTexts.get(0).getText().toString(), textInputEditTexts.get(1).getText().toString());
+        Call<AllApiResponse> call = Api.getClient().loginAdmin(email, password);
         call.enqueue(new Callback<AllApiResponse>() {
             @Override
             public void onResponse(Call<AllApiResponse> call, Response<AllApiResponse> response) {
                 if (response.isSuccessful()) {
-                    if (response.body().getStatus().equalsIgnoreCase("true")) {
+                    if (response.body() != null && response.body().getStatus() != null
+                            && response.body().getStatus().equalsIgnoreCase("true")) {
 
                         pref = getSharedPreferences("user", Context.MODE_PRIVATE);
                         editor = pref.edit();
                         editor.putString("UserLogin", "UserLoginSuccessful");
-                        editor.commit();
+                        editor.apply();
 
                         Common.saveUserData(Login.this, "userId", "" + response.body().getUserId());
                         AuthTokens.saveFromLogin(Login.this, response.body());
@@ -211,7 +203,8 @@ public class Login extends AppCompatActivity {
                         finishAffinity();
 
                     } else {
-                        Toast.makeText(Login.this, "" + response.body().getMessage(), Toast.LENGTH_SHORT).show();
+                        String msg = response.body() != null ? response.body().getMessage() : "Login failed";
+                        Toast.makeText(Login.this, "" + msg, Toast.LENGTH_SHORT).show();
                     }
                 }
                 pDialog.dismiss();

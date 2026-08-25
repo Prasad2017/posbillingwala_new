@@ -73,10 +73,12 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
 
         File file = new File("data/data/" + getPackageName() + "/shared_prefs/user.xml");
-        if (file.exists()) {
+        if (file.exists() && AuthTokens.hasValidSession(this)) {
             Intent intent = new Intent(Login.this, MainActivity.class);
             startActivity(intent);
             finish();
+        } else if (file.exists() && !AuthTokens.hasValidSession(this)) {
+            AuthTokens.clear(this);
         }
 
         binding.userName.setSelection(binding.userName.getText().toString().length());

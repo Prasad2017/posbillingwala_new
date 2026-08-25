@@ -8,9 +8,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import com.posbillingwala.admin.Activity.MainActivity;
 import com.posbillingwala.admin.Adapter.DealerAdapter;
@@ -19,12 +19,11 @@ import com.posbillingwala.admin.Model.AllApiResponse;
 import com.posbillingwala.admin.Model.DealerResponse;
 import com.posbillingwala.admin.R;
 import com.posbillingwala.admin.Retrofit.Api;
+import com.posbillingwala.admin.databinding.FragmentAllCustomerListBinding;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import cn.pedant.SweetAlert.SweetAlertDialog;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -35,22 +34,25 @@ public class AllDealerList extends Fragment {
 
     public static Activity activity;
     View view;
-    @BindView(R.id.recyclerView)
-    RecyclerView recyclerView;
+    FragmentAllCustomerListBinding binding;
     DealerAdapter dealerAdapter;
     List<DealerResponse> dealerResponseList = new ArrayList<>();
 
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        view = inflater.inflate(R.layout.fragment_all_customer_list, container, false);
-        ButterKnife.bind(this, view);
+        binding = FragmentAllCustomerListBinding.inflate(inflater, container, false);
+        view = binding.getRoot();
 
         activity = getActivity();
-        MainActivity.title.setText("Customer List");
-
+        MainActivity.title.setText("Dealers");
+        if (binding.searchCustomer != null) {
+            ((View) binding.searchCustomer.getParent()).setVisibility(View.GONE);
+        }
+        if (binding.emptyCustomers != null) {
+            binding.emptyCustomers.setText("No dealers found.\nUse More → Add Dealer.\nLong-press a dealer for report.");
+        }
 
         return view;
 
@@ -89,10 +91,10 @@ public class AllDealerList extends Fragment {
                     if (dealerResponseList.size() > 0) {
 
                         dealerAdapter = new DealerAdapter(activity, dealerResponseList);
-                        recyclerView.setLayoutManager(new LinearLayoutManager(activity));
-                        recyclerView.setAdapter(dealerAdapter);
+                        binding.recyclerView.setLayoutManager(new LinearLayoutManager(activity));
+                        binding.recyclerView.setAdapter(dealerAdapter);
                         dealerAdapter.notifyDataSetChanged();
-                        recyclerView.setHasFixedSize(true);
+                        binding.recyclerView.setHasFixedSize(true);
                     }
                 }
                 pDialog.dismiss();

@@ -405,6 +405,7 @@
     <string name="toast_you_have_not_selected_dinein_please_cont">you have not selected dine-in. Please contact your owner</string>
     <string name="toast_you_have_not_selected_fast_billing_pleas">you have not selected fast billing. Please contact your owner</string>
     <string name="toast_you_have_not_selected_take_away_please_c">you have not selected take away. Please contact your owner</string>
+    <string name="toast_you_have_not_selected_mess_please_contact">you have not selected mess. Please contact your owner</string>
     <string name="toast_your_offline_data_will_be_send_to_the_cl">Your offline data will be send to the cloud.</string>
     <string name="ui_add_combo">Add Combo</string>
     <string name="ui_add_combo_item">Add Combo Item</string>

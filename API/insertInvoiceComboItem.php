@@ -3,6 +3,8 @@
  * Frozen combo component lines on a bill. Idempotent on invoiceComboItemNetworkStatus.
  */
 include_once('config.php');
+require_once __DIR__ . '/pos_auth_guard.php';
+pos_require_auth($con);
 require_once __DIR__ . '/db_prepared.php';
 
 header('Content-Type: application/json; charset=utf-8');

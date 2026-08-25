@@ -15,6 +15,7 @@ import androidx.fragment.app.Fragment;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.DetectConnection;
+import com.pos_billingwala.Extra.LicenseModules;
 import com.pos_billingwala.NetworkToOffline.UserSynchronizeData;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentReportSettingBinding;
@@ -71,6 +72,26 @@ public class ReportSetting extends Fragment implements View.OnClickListener {
         binding.clearInvoiceLayout.setOnClickListener(this);
         binding.invoiceMemberPaymentWiseReportLayout.setOnClickListener(this);
         binding.expenseWiseReportLayout.setOnClickListener(this);
+
+        applyModuleVisibility();
+    }
+
+    private void applyModuleVisibility() {
+        boolean showDineIn = LicenseModules.isEnabled(MainActivity.dineIn);
+        boolean showTakeAway = LicenseModules.isEnabled(MainActivity.takeAway);
+        boolean showMess = LicenseModules.isEnabled(MainActivity.mess);
+
+        LicenseModules.setVisible(binding.invoiceTableWiseReportLayout, showDineIn);
+        LicenseModules.setVisible(binding.invoiceTableWiseReportDivider, showDineIn);
+
+        LicenseModules.setVisible(binding.invoiceTakeAwayWiseReportLayout, showTakeAway);
+        LicenseModules.setVisible(binding.invoiceTakeAwayWiseReportDivider, showTakeAway);
+
+        LicenseModules.setVisible(binding.invoiceMemberPaymentWiseReportTopDivider, showMess);
+        LicenseModules.setVisible(binding.invoiceMemberPaymentWiseReportLayout, showMess);
+        LicenseModules.setVisible(binding.invoiceMemberPaymentWiseReportDivider, showMess);
+        LicenseModules.setVisible(binding.invoiceMessWiseReportLayout, showMess);
+        LicenseModules.setVisible(binding.invoiceMessWiseReportDivider, showMess);
     }
 
     @Override

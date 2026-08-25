@@ -4,12 +4,11 @@ import android.content.Context;
 import android.os.Bundle;
 import android.text.Html;
 import android.view.LayoutInflater;
-import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
+import android.widget.Filter;
+import android.widget.Filterable;
 
 import androidx.annotation.NonNull;
-import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.posbillingwala.admin.Activity.MainActivity;
@@ -20,29 +19,30 @@ import com.posbillingwala.admin.Fragment.AllCustomerProductList;
 import com.posbillingwala.admin.Fragment.CustomerDetails;
 import com.posbillingwala.admin.Fragment.NewLicenceRegistration;
 import com.posbillingwala.admin.Model.CustomerResponse;
-import com.posbillingwala.admin.R;
+import com.posbillingwala.admin.Model.LicenseResponse;
+import com.posbillingwala.admin.databinding.CustomerListBinding;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
-import butterknife.BindView;
-import butterknife.BindViews;
-import butterknife.ButterKnife;
-
-public class CustomerAdapter extends RecyclerView.Adapter<CustomerAdapter.MyViewHolder> {
+public class CustomerAdapter extends RecyclerView.Adapter<CustomerAdapter.MyViewHolder> implements Filterable {
 
     Context context;
     List<CustomerResponse> customerResponseList;
+    List<CustomerResponse> customerResponseListFull;
 
     public CustomerAdapter(Context context, List<CustomerResponse> customerResponseList) {
         this.context = context;
-        this.customerResponseList = customerResponseList;
+        this.customerResponseList = customerResponseList != null ? customerResponseList : new ArrayList<>();
+        this.customerResponseListFull = new ArrayList<>(this.customerResponseList);
     }
 
     @NonNull
     @Override
     public MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.customer_list, parent, false);
-        return new MyViewHolder(itemView);
+        CustomerListBinding binding = CustomerListBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false);
+        return new MyViewHolder(binding);
     }
 
     @Override
@@ -50,20 +50,19 @@ public class CustomerAdapter extends RecyclerView.Adapter<CustomerAdapter.MyView
 
         CustomerResponse customerResponse = customerResponseList.get(position);
 
-        String customerName = "<b>Customer Name: </b>" + customerResponse.getName();
-        holder.textViews.get(0).setText(Html.fromHtml(customerName));
+        String customerName = "<b>Owner: </b>" + customerResponse.getName();
+        holder.binding.customerName.setText(Html.fromHtml(customerName));
 
-        String customerNumber = "<b>Mobile Number: </b>" + customerResponse.getContactNumber();
-        holder.textViews.get(1).setText(Html.fromHtml(customerNumber));
+        String customerNumber = "<b>Mobile: </b>" + customerResponse.getContactNumber();
+        holder.binding.customerNumber.setText(Html.fromHtml(customerNumber));
 
-        String customerAddress = "<b>Customer Address: </b>" + customerResponse.getAddress();
-        holder.textViews.get(2).setText(Html.fromHtml(customerAddress));
+        String customerAddress = "<b>Address: </b>" + customerResponse.getAddress();
+        holder.binding.customerAddress.setText(Html.fromHtml(customerAddress));
 
-        String shopName = "<b>Shop Name: </b>" + customerResponse.getShopName();
-        holder.textViews.get(3).setText(Html.fromHtml(shopName));
+        String shopName = "<b>Restaurant: </b>" + customerResponse.getShopName();
+        holder.binding.customerShopName.setText(Html.fromHtml(shopName));
 
-        // Category
-        holder.textViews.get(4).setOnClickListener(v -> {
+        holder.binding.category.setOnClickListener(v -> {
             AddCustomerProductCategory addCustomerProductCategory = new AddCustomerProductCategory();
             Bundle bundle = new Bundle();
             bundle.putString("customerId", "" + customerResponse.getId());
@@ -72,8 +71,7 @@ public class CustomerAdapter extends RecyclerView.Adapter<CustomerAdapter.MyView
             ((MainActivity) context).loadFragment(addCustomerProductCategory, true);
         });
 
-        // Subcategory (separate page)
-        holder.textViews.get(5).setOnClickListener(v -> {
+        holder.binding.subcategory.setOnClickListener(v -> {
             AddCustomerSubcategory addCustomerSubcategory = new AddCustomerSubcategory();
             Bundle bundle = new Bundle();
             bundle.putString("customerId", "" + customerResponse.getId());
@@ -82,8 +80,7 @@ public class CustomerAdapter extends RecyclerView.Adapter<CustomerAdapter.MyView
             ((MainActivity) context).loadFragment(addCustomerSubcategory, true);
         });
 
-        // Product list
-        holder.textViews.get(6).setOnClickListener(v -> {
+        holder.binding.product.setOnClickListener(v -> {
             AllCustomerProductList allCustomerProductList = new AllCustomerProductList();
             Bundle bundle = new Bundle();
             bundle.putString("customerId", "" + customerResponse.getId());
@@ -92,8 +89,7 @@ public class CustomerAdapter extends RecyclerView.Adapter<CustomerAdapter.MyView
             ((MainActivity) context).loadFragment(allCustomerProductList, true);
         });
 
-        // Edit customer
-        holder.textViews.get(7).setOnClickListener(v -> {
+        holder.binding.editCustomer.setOnClickListener(v -> {
             CustomerDetails customerDetails = new CustomerDetails();
             Bundle bundle = new Bundle();
             bundle.putString("customerId", "" + customerResponse.getId());
@@ -102,8 +98,7 @@ public class CustomerAdapter extends RecyclerView.Adapter<CustomerAdapter.MyView
             ((MainActivity) context).loadFragment(customerDetails, true);
         });
 
-        // Add product
-        holder.textViews.get(8).setOnClickListener(v -> {
+        holder.binding.addProduct.setOnClickListener(v -> {
             AddCustomerProduct addCustomerProduct = new AddCustomerProduct();
             Bundle bundle = new Bundle();
             bundle.putString("customerId", "" + customerResponse.getId());
@@ -112,8 +107,7 @@ public class CustomerAdapter extends RecyclerView.Adapter<CustomerAdapter.MyView
             ((MainActivity) context).loadFragment(addCustomerProduct, true);
         });
 
-        // New licence
-        holder.textViews.get(9).setOnClickListener(v -> {
+        holder.binding.newLicenceRegistration.setOnClickListener(v -> {
             NewLicenceRegistration newLicenceRegistration = new NewLicenceRegistration();
             Bundle bundle = new Bundle();
             bundle.putString("customerId", "" + customerResponse.getId());
@@ -128,17 +122,66 @@ public class CustomerAdapter extends RecyclerView.Adapter<CustomerAdapter.MyView
         return customerResponseList.size();
     }
 
-    public class MyViewHolder extends RecyclerView.ViewHolder {
+    @Override
+    public Filter getFilter() {
+        return customerFilter;
+    }
 
-        @BindViews({R.id.customerName, R.id.customerNumber, R.id.customerAddress, R.id.customerShopName,
-                R.id.category, R.id.subcategory, R.id.product, R.id.editCustomer, R.id.addProduct, R.id.newLicenceRegistration})
-        List<TextView> textViews;
-        @BindView(R.id.cardView)
-        CardView cardView;
+    private final Filter customerFilter = new Filter() {
+        @Override
+        protected FilterResults performFiltering(CharSequence constraint) {
+            List<CustomerResponse> filtered = new ArrayList<>();
+            if (constraint == null || constraint.length() == 0) {
+                filtered.addAll(customerResponseListFull);
+            } else {
+                String q = constraint.toString().toLowerCase(Locale.US).trim();
+                for (CustomerResponse c : customerResponseListFull) {
+                    if (matches(c, q)) {
+                        filtered.add(c);
+                    }
+                }
+            }
+            FilterResults results = new FilterResults();
+            results.values = filtered;
+            return results;
+        }
 
-        public MyViewHolder(@NonNull View itemView) {
-            super(itemView);
-            ButterKnife.bind(this, itemView);
+        @Override
+        protected void publishResults(CharSequence constraint, FilterResults results) {
+            customerResponseList.clear();
+            if (results.values != null) {
+                //noinspection unchecked
+                customerResponseList.addAll((List<CustomerResponse>) results.values);
+            }
+            notifyDataSetChanged();
+        }
+    };
+
+    private boolean matches(CustomerResponse c, String q) {
+        if (contains(c.getId(), q) || contains(c.getName(), q) || contains(c.getShopName(), q)
+                || contains(c.getContactNumber(), q) || contains(c.getEmail(), q)) {
+            return true;
+        }
+        if (c.getLicenseResponseList() != null) {
+            for (LicenseResponse lic : c.getLicenseResponseList()) {
+                if (contains(lic.getLicenseKey(), q)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean contains(String value, String q) {
+        return value != null && value.toLowerCase(Locale.US).contains(q);
+    }
+
+    public static class MyViewHolder extends RecyclerView.ViewHolder {
+        private final CustomerListBinding binding;
+
+        public MyViewHolder(@NonNull CustomerListBinding binding) {
+            super(binding.getRoot());
+            this.binding = binding;
         }
     }
 }

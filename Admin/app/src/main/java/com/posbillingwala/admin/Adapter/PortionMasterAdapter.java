@@ -6,29 +6,24 @@ import android.content.DialogInterface;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.view.LayoutInflater;
-import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.google.android.material.textfield.TextInputEditText;
 import com.posbillingwala.admin.Fragment.AddCustomerPortionMaster;
 import com.posbillingwala.admin.Model.AllApiResponse;
 import com.posbillingwala.admin.Model.PortionMasterResponse;
-import com.posbillingwala.admin.R;
 import com.posbillingwala.admin.Retrofit.Api;
+import com.posbillingwala.admin.databinding.PortionMasterListBinding;
+import com.posbillingwala.admin.databinding.UpdatePortionMasterDialogBinding;
 
 import java.util.List;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import cn.pedant.SweetAlert.SweetAlertDialog;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -49,23 +44,24 @@ public class PortionMasterAdapter extends RecyclerView.Adapter<PortionMasterAdap
     @NonNull
     @Override
     public MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.portion_master_list, parent, false);
-        return new MyViewHolder(view);
+        PortionMasterListBinding binding = PortionMasterListBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false);
+        return new MyViewHolder(binding);
     }
 
     @Override
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
         PortionMasterResponse item = portionMasterList.get(position);
-        holder.srNo.setText(String.valueOf(position + 1));
-        holder.portionMasterName.setText(item.getPortionName());
-        holder.portionMasterEdit.setOnClickListener(v -> updatePortionMasterDialog(item));
-        holder.portionMasterRemove.setOnClickListener(v -> deletePortionMasterDialog(item));
+        holder.binding.srNo.setText(String.valueOf(position + 1));
+        holder.binding.portionMasterName.setText(item.getPortionName());
+        holder.binding.portionMasterEdit.setOnClickListener(v -> updatePortionMasterDialog(item));
+        holder.binding.portionMasterRemove.setOnClickListener(v -> deletePortionMasterDialog(item));
     }
 
     private void updatePortionMasterDialog(PortionMasterResponse item) {
         final Dialog dialog = new Dialog(context);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        dialog.setContentView(R.layout.update_portion_master_dialog);
+        UpdatePortionMasterDialogBinding dialogBinding = UpdatePortionMasterDialogBinding.inflate(LayoutInflater.from(context));
+        dialog.setContentView(dialogBinding.getRoot());
         dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         dialog.setCancelable(false);
 
@@ -74,18 +70,15 @@ public class PortionMasterAdapter extends RecyclerView.Adapter<PortionMasterAdap
         lp.width = WindowManager.LayoutParams.MATCH_PARENT;
         lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
 
-        TextInputEditText nameTxt = dialog.findViewById(R.id.portionMasterName);
-        TextView updateTxt = dialog.findViewById(R.id.updatePortionMaster);
-        TextView dismissTxt = dialog.findViewById(R.id.dismissPortionMaster);
-
-        nameTxt.setText(item.getPortionName());
-        if (nameTxt.getText() != null) {
-            nameTxt.setSelection(nameTxt.getText().length());
+        dialogBinding.portionMasterName.setText(item.getPortionName());
+        if (dialogBinding.portionMasterName.getText() != null) {
+            dialogBinding.portionMasterName.setSelection(dialogBinding.portionMasterName.getText().length());
         }
 
-        dismissTxt.setOnClickListener(v -> dialog.dismiss());
-        updateTxt.setOnClickListener(v -> {
-            String newName = nameTxt.getText() != null ? nameTxt.getText().toString().trim() : "";
+        dialogBinding.dismissPortionMaster.setOnClickListener(v -> dialog.dismiss());
+        dialogBinding.updatePortionMaster.setOnClickListener(v -> {
+            String newName = dialogBinding.portionMasterName.getText() != null
+                    ? dialogBinding.portionMasterName.getText().toString().trim() : "";
             if (newName.isEmpty()) {
                 Toast.makeText(context, "Please enter portion name", Toast.LENGTH_SHORT).show();
                 return;
@@ -148,19 +141,12 @@ public class PortionMasterAdapter extends RecyclerView.Adapter<PortionMasterAdap
         return portionMasterList.size();
     }
 
-    static class MyViewHolder extends RecyclerView.ViewHolder {
-        @BindView(R.id.srNo)
-        TextView srNo;
-        @BindView(R.id.portionMasterName)
-        TextView portionMasterName;
-        @BindView(R.id.portionMasterEdit)
-        ImageView portionMasterEdit;
-        @BindView(R.id.portionMasterRemove)
-        ImageView portionMasterRemove;
+    public static class MyViewHolder extends RecyclerView.ViewHolder {
+        private final PortionMasterListBinding binding;
 
-        MyViewHolder(@NonNull View itemView) {
-            super(itemView);
-            ButterKnife.bind(this, itemView);
+        public MyViewHolder(@NonNull PortionMasterListBinding binding) {
+            super(binding.getRoot());
+            this.binding = binding;
         }
     }
 }

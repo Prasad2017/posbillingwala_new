@@ -1,11 +1,16 @@
 <?php
 include_once('config.php');
+require_once __DIR__ . '/pos_auth_guard.php';
+
 
 $response = array();
 if($_SERVER['REQUEST_METHOD']=='POST'){
      mysqli_query($con, 'set names utf8');
     
   $userId = $_POST['userId'];
+  $__postedUserId = isset($_POST['userId']) ? $_POST['userId'] : (isset($userId) ? $userId : '');
+  pos_require_auth($con, $__postedUserId, isset($response) ? $response : array('status'=>'0','message'=>'Unauthorized'));
+
   $categoryName = $_POST['categoryName'];
   $categoryId = $_POST['categoryId'];
   $productName = $_POST['productName'];

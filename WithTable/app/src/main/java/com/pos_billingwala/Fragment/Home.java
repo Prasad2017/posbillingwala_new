@@ -64,6 +64,7 @@ import com.pos_billingwala.Extra.AppExecutors;
 import com.pos_billingwala.Extra.ShopHeaderBuilder;
 import com.pos_billingwala.Extra.Common;
 import com.pos_billingwala.Extra.LicenceExpiredUi;
+import com.pos_billingwala.Extra.LicenseModules;
 import com.pos_billingwala.Extra.LicenseValidator;
 import com.pos_billingwala.Extra.DetectConnection;
 import com.pos_billingwala.Model.CompanyResponse;
@@ -95,6 +96,7 @@ public class Home extends Fragment implements View.OnClickListener {
 
     public static Activity activity;
     public static TextView fastBilling, tableBilling, takeAwayBilling, messBilling;
+    public static View posBillingRow1, posBillingRow2;
     public static CardView totalSalesCardView, todaySalesCardView;
     /** When true, next onStart skips heavy DB/Bluetooth (used when Home is only a back-stack seed). */
     public static boolean deferHeavyWorkForNextStart = false;
@@ -195,41 +197,20 @@ public class Home extends Fragment implements View.OnClickListener {
     }
 
     public static void setValidationUI() {
-        if (MainActivity.fastBilling.equalsIgnoreCase("1")) {
-            fastBilling.setVisibility(View.VISIBLE);
-        } else {
-            fastBilling.setVisibility(View.GONE);
-        }
+        boolean showFast = LicenseModules.isEnabled(MainActivity.fastBilling);
+        boolean showDineIn = LicenseModules.isEnabled(MainActivity.dineIn);
+        boolean showTakeAway = LicenseModules.isEnabled(MainActivity.takeAway);
+        boolean showMess = LicenseModules.isEnabled(MainActivity.mess);
 
-        if (MainActivity.dineIn.equalsIgnoreCase("1")) {
-            tableBilling.setVisibility(View.VISIBLE);
-        } else {
-            tableBilling.setVisibility(View.GONE);
-        }
+        LicenseModules.setVisible(fastBilling, showFast);
+        LicenseModules.setVisible(tableBilling, showDineIn);
+        LicenseModules.setVisible(takeAwayBilling, showTakeAway);
+        LicenseModules.setVisible(messBilling, showMess);
+        LicenseModules.setVisible(posBillingRow1, showFast || showDineIn);
+        LicenseModules.setVisible(posBillingRow2, showTakeAway || showMess);
 
-        if (MainActivity.takeAway.equalsIgnoreCase("1")) {
-            takeAwayBilling.setVisibility(View.VISIBLE);
-        } else {
-            takeAwayBilling.setVisibility(View.GONE);
-        }
-
-        if (MainActivity.mess.equalsIgnoreCase("1")) {
-            messBilling.setVisibility(View.VISIBLE);
-        } else {
-            messBilling.setVisibility(View.GONE);
-        }
-
-        if (MainActivity.totalSaleData.equalsIgnoreCase("1")) {
-            totalSalesCardView.setVisibility(View.VISIBLE);
-        } else {
-            totalSalesCardView.setVisibility(View.GONE);
-        }
-
-        if (MainActivity.todaySaleData.equalsIgnoreCase("1")) {
-            todaySalesCardView.setVisibility(View.VISIBLE);
-        } else {
-            todaySalesCardView.setVisibility(View.GONE);
-        }
+        LicenseModules.setVisible(totalSalesCardView, LicenseModules.isEnabled(MainActivity.totalSaleData));
+        LicenseModules.setVisible(todaySalesCardView, LicenseModules.isEnabled(MainActivity.todaySaleData));
     }
 
     @Override
@@ -323,6 +304,8 @@ public class Home extends Fragment implements View.OnClickListener {
         tableBilling = view.findViewById(R.id.tableBilling);
         takeAwayBilling = view.findViewById(R.id.takeAwayBilling);
         messBilling = view.findViewById(R.id.messBilling);
+        posBillingRow1 = view.findViewById(R.id.posBillingRow1);
+        posBillingRow2 = view.findViewById(R.id.posBillingRow2);
         totalSalesCardView = view.findViewById(R.id.totalSalesCardView);
         todaySalesCardView = view.findViewById(R.id.todaySalesCardView);
 
@@ -403,7 +386,7 @@ public class Home extends Fragment implements View.OnClickListener {
         if (id == R.id.userSettingIcon) {
             ((MainActivity) activity).loadFragment(new UserSetting(), true);
         } else if (id == R.id.fastBilling) {
-            if (MainActivity.fastBilling.equalsIgnoreCase("1")) {
+            if (LicenseModules.isEnabled(MainActivity.fastBilling)) {
                 CreatePos createPos = new CreatePos();
                 Bundle bundle = new Bundle();
                 bundle.putString("tableNumber", "FS" + getRandomString(3));
@@ -414,22 +397,22 @@ public class Home extends Fragment implements View.OnClickListener {
                 Toast.makeText(activity, getString(R.string.toast_you_have_not_selected_fast_billing_pleas), Toast.LENGTH_SHORT).show();
             }
         } else if (id == R.id.tableBilling) {
-            if (MainActivity.dineIn.equalsIgnoreCase("1")) {
+            if (LicenseModules.isEnabled(MainActivity.dineIn)) {
                 ((MainActivity) activity).loadFragment(new InvoiceCompanyTable(), true);
             } else {
                 Toast.makeText(activity, getString(R.string.toast_you_have_not_selected_dinein_please_cont), Toast.LENGTH_SHORT).show();
             }
         } else if (id == R.id.takeAwayBilling) {
-            if (MainActivity.takeAway.equalsIgnoreCase("1")) {
+            if (LicenseModules.isEnabled(MainActivity.takeAway)) {
                 ((MainActivity) activity).loadFragment(new InvoiceTakeAway(), true);
             } else {
                 Toast.makeText(activity, getString(R.string.toast_you_have_not_selected_take_away_please_c), Toast.LENGTH_SHORT).show();
             }
         } else if (id == R.id.messBilling) {
-            if (MainActivity.mess.equalsIgnoreCase("1")) {
+            if (LicenseModules.isEnabled(MainActivity.mess)) {
                 ((MainActivity) activity).loadFragment(new InvoiceMess(), true);
             } else {
-                Toast.makeText(activity, getString(R.string.toast_you_have_not_selected_take_away_please_c), Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity, getString(R.string.toast_you_have_not_selected_mess_please_contact), Toast.LENGTH_SHORT).show();
             }
         } else if (id == R.id.subcategoryCardView) {
             ((MainActivity) activity).loadFragment(new AddSubcategory(), true);

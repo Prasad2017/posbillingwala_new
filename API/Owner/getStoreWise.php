@@ -1,5 +1,8 @@
 <?php
 include_once('config.php');
+require_once __DIR__ . '/auth_guard.php';
+owner_require_auth($con);
+
 include_once(__DIR__ . '/../licence_expiry.php');
 require_once __DIR__ . '/../company_store_fields.php';
 
@@ -12,6 +15,14 @@ mysqli_query($con, 'set names utf8');
 if ($_SERVER['REQUEST_METHOD'] == 'GET') {
 
     $userId = isset($_GET['userId']) ? $_GET['userId'] : '';
+$userId = owner_resolve_user_id($con, $userId);
+if ($userId === null) {
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(array('status'=>'0','message'=>'Unauthorized'));
+    mysqli_close($con);
+    exit;
+}
+
     $userIdEsc = mysqli_real_escape_string($con, (string) $userId);
     $today = licence_today();
 

@@ -3,6 +3,8 @@
  * Combo component upsert. Resolves combo/product/portion via *NetworkStatus like insertPortion.php.
  */
 include_once('config.php');
+require_once __DIR__ . '/pos_auth_guard.php';
+
 require_once __DIR__ . '/db_prepared.php';
 
 header('Content-Type: application/json; charset=utf-8');
@@ -16,6 +18,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $userId = isset($_POST['userId']) ? trim((string) $_POST['userId']) : '';
+  $__postedUserId = isset($_POST['userId']) ? $_POST['userId'] : (isset($userId) ? $userId : '');
+  pos_require_auth($con, $__postedUserId, isset($response) ? $response : array('status'=>'0','message'=>'Unauthorized'));
+
 $comboId = isset($_POST['comboId']) ? trim((string) $_POST['comboId']) : '';
 $comboNetworkStatus = isset($_POST['comboNetworkStatus']) ? trim((string) $_POST['comboNetworkStatus']) : '';
 $productId = isset($_POST['productId']) ? trim((string) $_POST['productId']) : '';

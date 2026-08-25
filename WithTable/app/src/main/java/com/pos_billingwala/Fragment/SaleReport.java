@@ -25,6 +25,7 @@ import com.github.dewinjm.monthyearpicker.MonthYearPickerDialogFragment;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.CalenderView.MonthPickerDialog;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.LicenseModules;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentSaleReportBinding;
 
@@ -74,7 +75,18 @@ public class SaleReport extends Fragment implements View.OnClickListener {
         binding.backToSetting.setOnClickListener(this);
         binding.menuIcon.setOnClickListener(this);
 
+        applyModuleVisibility();
+
         return view;
+    }
+
+    private void applyModuleVisibility() {
+        LicenseModules.setVisible(binding.totalFastBillingAmountCardView,
+                LicenseModules.isEnabled(MainActivity.fastBilling));
+        LicenseModules.setVisible(binding.totalTableAmountCardView,
+                LicenseModules.isEnabled(MainActivity.dineIn));
+        LicenseModules.setVisible(binding.totalTakeAwayAmountCardView,
+                LicenseModules.isEnabled(MainActivity.takeAway));
     }
 
     @Override

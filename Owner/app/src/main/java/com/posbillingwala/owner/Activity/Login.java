@@ -72,10 +72,13 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
 
         File file = new File("data/data/" + getPackageName() + "/shared_prefs/user.xml");
-        if (file.exists()) {
+        if (file.exists() && AuthTokens.hasValidSession(this)) {
             Intent intent = new Intent(Login.this, MainActivity.class);
             startActivity(intent);
             finish();
+        } else if (file.exists() && !AuthTokens.hasValidSession(this)) {
+            // Prefs exist but token expired — stay on login to get a fresh token once
+            AuthTokens.clear(this);
         }
 
         binding.mobileNumber.setSelection(binding.mobileNumber.getText().toString().length());
@@ -245,7 +248,7 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
         pDialog.setCancelable(false);
         pDialog.show();
 
-        Call<LoginResponse> call = Api.getClient().loginCheck(binding.mobileNumber.getText().toString().trim());
+        Call<LoginResponse> call = Api.getClient().loginCheck(binding.mobileNumber.getText().toString().trim(), "");
         call.enqueue(new Callback<LoginResponse>() {
             @Override
             public void onResponse(Call<LoginResponse> call, Response<LoginResponse> response) {

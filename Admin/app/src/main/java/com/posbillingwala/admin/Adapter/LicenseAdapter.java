@@ -1,8 +1,9 @@
 package com.posbillingwala.admin.Adapter;
 
 import android.annotation.SuppressLint;
-import android.app.DatePickerDialog;
 import android.app.Dialog;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
@@ -14,29 +15,26 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.ArrayAdapter;
-import android.widget.DatePicker;
-import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.textfield.TextInputEditText;
 import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.posbillingwala.admin.Activity.MainActivity;
 import com.posbillingwala.admin.Extra.LicenceValidityTiers;
+import com.posbillingwala.admin.Extra.LicenseStatusHelper;
 import com.posbillingwala.admin.Fragment.CustomerDetails;
 import com.posbillingwala.admin.Model.AllApiResponse;
 import com.posbillingwala.admin.Model.LicenseResponse;
 import com.posbillingwala.admin.R;
 import com.posbillingwala.admin.Retrofit.Api;
+import com.posbillingwala.admin.databinding.DynamicStatusDropdownBinding;
+import com.posbillingwala.admin.databinding.LicenseListBinding;
 
-import java.util.Calendar;
 import java.util.List;
 
-import butterknife.BindViews;
-import butterknife.ButterKnife;
 import cn.pedant.SweetAlert.SweetAlertDialog;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -46,11 +44,8 @@ public class LicenseAdapter extends RecyclerView.Adapter<LicenseAdapter.MyViewHo
 
     Context context;
     List<LicenseResponse> licenseResponseList;
-    String[] licenseTypeList, licenseValidityList;
+    String[] licenseValidityList;
     String customerId, licenseValidity, licenseType;
-    Calendar calender;
-    DatePickerDialog datePickerDialog;
-    private int mYear, mMonth, mDay;
 
     public LicenseAdapter(Context context, List<LicenseResponse> licenseResponseList, String customerId) {
         this.context = context;
@@ -61,8 +56,8 @@ public class LicenseAdapter extends RecyclerView.Adapter<LicenseAdapter.MyViewHo
     @NonNull
     @Override
     public MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.license_list, parent, false);
-        return new MyViewHolder(itemView);
+        LicenseListBinding binding = LicenseListBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false);
+        return new MyViewHolder(binding);
     }
 
     @SuppressLint("SetTextI18n")
@@ -71,14 +66,37 @@ public class LicenseAdapter extends RecyclerView.Adapter<LicenseAdapter.MyViewHo
 
         LicenseResponse licenseResponse = licenseResponseList.get(position);
 
-        holder.textViews.get(0).setText("" + licenseResponse.getLicenseKey());
+        holder.binding.licenseKey.setText("" + licenseResponse.getLicenseKey());
         licenseType = "" + licenseResponse.getLicenseType();
         licenseValidity = "" + licenseResponse.getLicenseValidity();
-        holder.textViews.get(1).setText("" + licenseResponse.getRegistrationDate().substring(0, 10));
-        holder.textViews.get(2).setText("" + licenseResponse.getExpiryDate());
-        holder.textViews.get(3).setText(MainActivity.currency);
-        holder.textInputEditTexts.get(0).setText("" + licenseResponse.getAmount());
-        holder.textViews.get(5).setText(LicenceValidityTiers.displayLabel(licenseValidity));
+        String regDate = licenseResponse.getRegistrationDate();
+        if (regDate != null && regDate.length() >= 10) {
+            holder.binding.registrationDate.setText(regDate.substring(0, 10));
+        } else {
+            holder.binding.registrationDate.setText(regDate != null ? regDate : "");
+        }
+        holder.binding.expiryDate.setText("" + licenseResponse.getExpiryDate());
+        holder.binding.currencyType.setText(MainActivity.currency);
+        holder.binding.amount.setText("" + licenseResponse.getAmount());
+        holder.binding.licenseValidity.setText(LicenceValidityTiers.displayLabel(licenseValidity));
+        holder.binding.licenseTYpe.setText(licenseType);
+
+        String status = LicenseStatusHelper.displayStatus(licenseResponse);
+        holder.binding.licenseStatusBadge.setText(status);
+        holder.binding.licenseStatusBadge.setBackgroundTintList(
+                android.content.res.ColorStateList.valueOf(LicenseStatusHelper.badgeColor(status)));
+
+        String deviceName = licenseResponse.getAndroidDeviceName();
+        String deviceId = licenseResponse.getAndroidDeviceId();
+        if (deviceId != null && !deviceId.trim().isEmpty()) {
+            holder.binding.deviceInfo.setVisibility(View.VISIBLE);
+            holder.binding.deviceInfo.setText("Device: " + (deviceName != null && !deviceName.isEmpty() ? deviceName : "Bound")
+                    + "\nID: " + deviceId);
+        } else {
+            holder.binding.deviceInfo.setVisibility(View.VISIBLE);
+            holder.binding.deviceInfo.setText("Device: NOT ACTIVATED");
+        }
+
         String branchLabel = licenseResponse.getBranchLabel();
         if (branchLabel == null || branchLabel.isEmpty()) {
             branchLabel = "owner".equalsIgnoreCase(licenseResponse.getUserType()) ? "Main Store" : "Franchise Branch";
@@ -95,40 +113,75 @@ public class LicenseAdapter extends RecyclerView.Adapter<LicenseAdapter.MyViewHo
                 shopAddress += ", " + licenseResponse.getPhoneNo2().trim();
             }
         }
-        holder.textViews.get(6).setText(Html.fromHtml(shopAddress));
-        holder.textViews.get(7).setText(licenseType);
+        holder.binding.shopAddress.setText(Html.fromHtml(shopAddress));
 
+        boolean suspended = LicenseStatusHelper.isSuspended(licenseResponse);
+        holder.binding.suspendReactivateLicence.setText(suspended ? "Reactivate" : "Suspend");
+        holder.binding.updateLicence.setEnabled(LicenseStatusHelper.canUpgradeOrRenew(licenseResponse));
+        holder.binding.updateLicence.setAlpha(LicenseStatusHelper.canUpgradeOrRenew(licenseResponse) ? 1f : 0.4f);
 
-        holder.textViews.get(5).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                getLicenseValidity(holder);
+        holder.binding.licenseValidity.setOnClickListener(v -> getLicenseValidity(holder));
+        holder.binding.registrationDate.setOnClickListener(null);
+        holder.binding.registrationDate.setClickable(false);
+
+        holder.binding.copyLicenseKey.setOnClickListener(v -> {
+            String key = licenseResponse.getLicenseKey();
+            if (key == null || key.isEmpty()) {
+                Toast.makeText(context, "No license key", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            ClipboardManager clipboard = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
+            if (clipboard != null) {
+                clipboard.setPrimaryClip(ClipData.newPlainText("licenseKey", key));
+                Toast.makeText(context, "License key copied", Toast.LENGTH_SHORT).show();
             }
         });
 
-        holder.textViews.get(1).setOnClickListener(null);
-        holder.textViews.get(1).setClickable(false);
-
-        holder.textViews.get(4).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (holder.textInputEditTexts.get(0).getText().length() > 0) {
-                    String amount = holder.textInputEditTexts.get(0).getText().toString();
-                    // P4-4: server computes expiry from remaining/today; registrationDate not used for renew math
-                    updateCustomerLicenceDetails(licenseResponse, licenseValidity, licenseType, "" + amount, holder.textViews.get(1).getText().toString());
-                } else {
-                    holder.textInputEditTexts.get(0).setError("Please fill this");
-                }
-            }
+        holder.binding.suspendReactivateLicence.setOnClickListener(v -> {
+            String action = LicenseStatusHelper.isSuspended(licenseResponse) ? "reactivate" : "suspend";
+            String confirmMsg = "suspend".equals(action)
+                    ? "Are you sure you want to suspend this license?\n" + licenseResponse.getLicenseKey()
+                    : "Reactivate this license?\n" + licenseResponse.getLicenseKey();
+            new AlertDialog.Builder(context)
+                    .setTitle("Confirm")
+                    .setMessage(confirmMsg)
+                    .setPositiveButton("Yes", (d, w) -> updateLicenseStatus(licenseResponse, action))
+                    .setNegativeButton("Cancel", null)
+                    .show();
         });
 
+        holder.binding.updateLicence.setOnClickListener(v -> {
+            if (!LicenseStatusHelper.canUpgradeOrRenew(licenseResponse)) {
+                Toast.makeText(context, "Suspended licenses cannot be upgraded. Reactivate first.", Toast.LENGTH_LONG).show();
+                return;
+            }
+            if (holder.binding.amount.getText().length() == 0) {
+                holder.binding.amount.setError("Please fill this");
+                return;
+            }
+            String amount = holder.binding.amount.getText().toString();
+            String currentPlan = LicenceValidityTiers.displayLabel(licenseResponse.getLicenseValidity());
+            String newPlan = LicenceValidityTiers.displayLabel(licenseValidity);
+            new AlertDialog.Builder(context)
+                    .setTitle("Confirm Upgrade / Renew")
+                    .setMessage("License Key: " + licenseResponse.getLicenseKey()
+                            + "\n\nCurrent: " + currentPlan + " (" + licenseResponse.getLicenseType() + ")"
+                            + "\nNew: " + newPlan + " (" + licenseType + ")"
+                            + "\n\nSame license key will be kept.")
+                    .setPositiveButton("Confirm", (d, w) -> updateCustomerLicenceDetails(
+                            licenseResponse, licenseValidity, licenseType, amount,
+                            holder.binding.registrationDate.getText().toString()))
+                    .setNegativeButton("Cancel", null)
+                    .show();
+        });
     }
 
     private void getLicenseValidity(MyViewHolder holder) {
 
         final Dialog dialog = new Dialog(context);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE); // before
-        dialog.setContentView(R.layout.dynamic_status_dropdown);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        DynamicStatusDropdownBinding dialogBinding = DynamicStatusDropdownBinding.inflate(LayoutInflater.from(context));
+        dialog.setContentView(dialogBinding.getRoot());
         dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         dialog.setCancelable(false);
 
@@ -137,67 +190,84 @@ public class LicenseAdapter extends RecyclerView.Adapter<LicenseAdapter.MyViewHo
         lp.width = WindowManager.LayoutParams.MATCH_PARENT;
         lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
 
-        ImageView closeDialog = dialog.findViewById(R.id.closeDialog);
-        MaterialSpinner licenseValiditySpinner = dialog.findViewById(R.id.licenseValidity);
-        TextView txtSubmit = dialog.findViewById(R.id.submit);
-
         try {
             licenseValidityList = context.getResources().getStringArray(R.array.license_validity);
             final ArrayAdapter adapter = new ArrayAdapter(context, android.R.layout.simple_spinner_item, licenseValidityList);
             adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
-            licenseValiditySpinner.setAdapter(adapter);
+            dialogBinding.licenseValidity.setAdapter(adapter);
             String currentLabel = LicenceValidityTiers.displayLabel(licenseValidity);
             int index = adapter.getPosition(currentLabel);
             if (index >= 0) {
-                licenseValiditySpinner.setSelectedIndex(index);
+                dialogBinding.licenseValidity.setSelectedIndex(index);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        closeDialog.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
-            }
-        });
+        dialogBinding.closeDialog.setOnClickListener(v -> dialog.dismiss());
 
-        licenseValiditySpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
+        dialogBinding.licenseValidity.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
             @Override
             public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
                 licenseValidity = LicenceValidityTiers.toDayCount(item);
                 if (LicenceValidityTiers.isRegularTier(licenseValidity)) {
                     licenseType = "Regular";
-                    holder.textViews.get(7).setText("Regular");
+                    holder.binding.licenseTYpe.setText("Regular");
                 } else {
                     licenseType = "Demo";
-                    holder.textViews.get(7).setText("Demo");
+                    holder.binding.licenseTYpe.setText("Demo");
                 }
             }
         });
 
-        txtSubmit.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (licenseValidity != null && licenseValidity.length() > 0) {
-                    if (LicenceValidityTiers.isRegularTier(licenseValidity)) {
-                        licenseType = "Regular";
-                        holder.textViews.get(7).setText("Regular");
-                    } else {
-                        licenseType = "Demo";
-                        holder.textViews.get(7).setText("Demo");
-                    }
-                    holder.textViews.get(5).setText(LicenceValidityTiers.displayLabel(licenseValidity));
-                    dialog.dismiss();
+        dialogBinding.submit.setOnClickListener(v -> {
+            if (licenseValidity != null && licenseValidity.length() > 0) {
+                if (LicenceValidityTiers.isRegularTier(licenseValidity)) {
+                    licenseType = "Regular";
+                    holder.binding.licenseTYpe.setText("Regular");
                 } else {
-                    Toast.makeText(context, "Please select validity", Toast.LENGTH_SHORT).show();
+                    licenseType = "Demo";
+                    holder.binding.licenseTYpe.setText("Demo");
                 }
+                holder.binding.licenseValidity.setText(LicenceValidityTiers.displayLabel(licenseValidity));
+                dialog.dismiss();
+            } else {
+                Toast.makeText(context, "Please select validity", Toast.LENGTH_SHORT).show();
             }
         });
 
         dialog.show();
         dialog.getWindow().setAttributes(lp);
+    }
 
+    private void updateLicenseStatus(LicenseResponse licenseResponse, String action) {
+        SweetAlertDialog pDialog = new SweetAlertDialog(context, SweetAlertDialog.PROGRESS_TYPE);
+        pDialog.getProgressHelper().setBarColor(Color.parseColor("#2D7FED"));
+        pDialog.setTitleText("Loading");
+        pDialog.setCancelable(false);
+        pDialog.show();
+
+        Call<AllApiResponse> call = Api.getClient().updateLicenseStatus(licenseResponse.getLicensesId(), action);
+        call.enqueue(new Callback<AllApiResponse>() {
+            @Override
+            public void onResponse(Call<AllApiResponse> call, Response<AllApiResponse> response) {
+                pDialog.dismiss();
+                if (response.isSuccessful() && response.body() != null
+                        && "1".equals(response.body().getStatus())) {
+                    Toast.makeText(context, "" + response.body().getMessage(), Toast.LENGTH_LONG).show();
+                    reloadCustomerDetails();
+                } else {
+                    String msg = response.body() != null ? response.body().getMessage() : "Unable to update license status.";
+                    Toast.makeText(context, msg, Toast.LENGTH_LONG).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<AllApiResponse> call, Throwable t) {
+                pDialog.dismiss();
+                Toast.makeText(context, "Unable to update license status. Please try again.", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void updateCustomerLicenceDetails(LicenseResponse licenseResponse, String licenseValidity, String licenseType, String amount, String registrationDate) {
@@ -212,30 +282,32 @@ public class LicenseAdapter extends RecyclerView.Adapter<LicenseAdapter.MyViewHo
         call.enqueue(new Callback<AllApiResponse>() {
             @Override
             public void onResponse(Call<AllApiResponse> call, Response<AllApiResponse> response) {
-                if (response.isSuccessful()) {
-                    if (response.body().getStatus().equalsIgnoreCase("1")) {
+                pDialog.dismiss();
+                if (response.isSuccessful() && response.body() != null) {
+                    if ("1".equals(response.body().getStatus())) {
                         Toast.makeText(context, "" + response.body().getMessage(), Toast.LENGTH_LONG).show();
-                        ((MainActivity) context).removeCurrentFragmentAndMoveBack();
-                        CustomerDetails customerDetails = new CustomerDetails();
-                        Bundle bundle = new Bundle();
-                        bundle.putString("customerId", "" + customerId);
-                        customerDetails.setArguments(bundle);
-                        ((MainActivity) context).loadFragment(customerDetails, true);
+                        reloadCustomerDetails();
                     } else {
                         Toast.makeText(context, "" + response.body().getMessage(), Toast.LENGTH_LONG).show();
                     }
                 }
-                pDialog.dismiss();
             }
 
             @Override
             public void onFailure(Call<AllApiResponse> call, Throwable t) {
                 pDialog.dismiss();
-                Toast.makeText(context, "" + t.getMessage(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "Unable to upgrade license. Please try again.", Toast.LENGTH_SHORT).show();
             }
         });
+    }
 
-
+    private void reloadCustomerDetails() {
+        ((MainActivity) context).removeCurrentFragmentAndMoveBack();
+        CustomerDetails customerDetails = new CustomerDetails();
+        Bundle bundle = new Bundle();
+        bundle.putString("customerId", "" + customerId);
+        customerDetails.setArguments(bundle);
+        ((MainActivity) context).loadFragment(customerDetails, true);
     }
 
     @Override
@@ -243,18 +315,12 @@ public class LicenseAdapter extends RecyclerView.Adapter<LicenseAdapter.MyViewHo
         return licenseResponseList.size();
     }
 
-    public class MyViewHolder extends RecyclerView.ViewHolder {
+    public static class MyViewHolder extends RecyclerView.ViewHolder {
+        private final LicenseListBinding binding;
 
-        @BindViews({R.id.licenseKey, R.id.registrationDate, R.id.expiryDate, R.id.currencyType,
-                R.id.updateLicence, R.id.licenseValidity, R.id.shopAddress, R.id.licenseTYpe})
-        List<TextView> textViews;
-        @BindViews({R.id.amount})
-        List<TextInputEditText> textInputEditTexts;
-
-        public MyViewHolder(@NonNull View itemView) {
-            super(itemView);
-            ButterKnife.bind(this, itemView);
-
+        public MyViewHolder(@NonNull LicenseListBinding binding) {
+            super(binding.getRoot());
+            this.binding = binding;
         }
     }
 }

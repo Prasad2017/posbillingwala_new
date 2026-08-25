@@ -1,9 +1,10 @@
 <?php
 	include_once('config.php');
 	include_once('licence_expiry.php');
+	require_once __DIR__ . '/auth_tokens.php';
 	mysqli_query($con, 'set names utf8');
 	header('Access-Control-Allow-Origin: *');
-    header('Access-Control-Allow-Headers: X-Requested-With');
+    header('Access-Control-Allow-Headers: X-Requested-With, Authorization, Content-Type');
     header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
     header('Content-Type: application/json');
 
@@ -61,6 +62,7 @@
 						$response["todaySaleData"] = $check['today_sale_data'];
 						
 						$response = licence_append_trial_response($con, $response, $check);
+						auth_token_append_response($con, $response, 'pos_licence', $check['id'], $android_device_id, $check['expiryDate']);
 						
 				    } else if($check['android_device_id'] == null) {
 				        $response["status"] = '2';

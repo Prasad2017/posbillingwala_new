@@ -62,6 +62,15 @@ public class LicenseResponse {
     @SerializedName("branchLabel")
     @Expose
     private String branchLabel;
+    @SerializedName("mess")
+    @Expose
+    private String mess;
+    @SerializedName("android_device_id")
+    @Expose
+    private String androidDeviceId;
+    @SerializedName("android_device_name")
+    @Expose
+    private String androidDeviceName;
 
 
     public String getLicensesId() {
@@ -202,5 +211,29 @@ public class LicenseResponse {
 
     public String getBranchLabel() {
         return branchLabel;
+    }
+
+    public String getMess() {
+        return mess;
+    }
+
+    public void setMess(String mess) {
+        this.mess = mess;
+    }
+
+    public String getAndroidDeviceId() {
+        return androidDeviceId;
+    }
+
+    public void setAndroidDeviceId(String androidDeviceId) {
+        this.androidDeviceId = androidDeviceId;
+    }
+
+    public String getAndroidDeviceName() {
+        return androidDeviceName;
+    }
+
+    public void setAndroidDeviceName(String androidDeviceName) {
+        this.androidDeviceName = androidDeviceName;
     }
 }

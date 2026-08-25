@@ -1,11 +1,16 @@
 <?php
 include_once('config.php');
+require_once __DIR__ . '/pos_auth_guard.php';
+
 
 $response = array('messTokenResponse' => array());
 mysqli_query($con, 'set names utf8mb4');
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $userId = isset($_GET['userId']) ? trim($_GET['userId']) : '';
+        $__postedUserId = isset($_GET['userId']) ? $_GET['userId'] : (isset($userId) ? $userId : '');
+        pos_require_auth($con, $__postedUserId, isset($response) ? $response : array('status'=>'0','message'=>'Unauthorized'));
+
 
     if ($userId !== '') {
         $stmt = mysqli_prepare(

@@ -1,5 +1,8 @@
 <?php
 include_once('config.php');
+require_once __DIR__ . '/auth_guard.php';
+owner_require_auth($con);
+
 
 $response = array();
 if($_SERVER['REQUEST_METHOD']=='POST'){
@@ -9,6 +12,14 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
   $categoryName = $_POST['categoryName'];
   $categoryNetworkStatus = $_POST['categoryNetworkStatus'];
   $userId = $_POST['userId'];
+$userId = owner_resolve_user_id($con, $userId);
+if ($userId === null) {
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(array('status'=>'0','message'=>'Unauthorized'));
+    mysqli_close($con);
+    exit;
+}
+
   
 	date_default_timezone_set('Asia/Kolkata');
     $date=date('Y-m-d');

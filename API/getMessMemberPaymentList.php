@@ -1,5 +1,7 @@
 <?php	
 include_once('config.php');
+require_once __DIR__ . '/pos_auth_guard.php';
+
 $i=0;
    
     $response["memberResponse"] = array();
@@ -8,6 +10,9 @@ $i=0;
     if ($_SERVER['REQUEST_METHOD'] == "GET") {
         
         $userId = $_GET['userId'];
+        $__postedUserId = isset($_GET['userId']) ? $_GET['userId'] : (isset($userId) ? $userId : '');
+        pos_require_auth($con, $__postedUserId, isset($response) ? $response : array('status'=>'0','message'=>'Unauthorized'));
+
         
         date_default_timezone_set("Asia/Calcutta");
         $date = date("Y-m-d");

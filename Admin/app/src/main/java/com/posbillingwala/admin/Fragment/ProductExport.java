@@ -23,10 +23,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.ProgressBar;
-import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -44,6 +43,7 @@ import com.posbillingwala.admin.Model.AllApiResponse;
 import com.posbillingwala.admin.Model.CustomerResponse;
 import com.posbillingwala.admin.R;
 import com.posbillingwala.admin.Retrofit.Api;
+import com.posbillingwala.admin.databinding.FragmentProductExportBinding;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -58,39 +58,30 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import butterknife.OnClick;
 import cn.pedant.SweetAlert.SweetAlertDialog;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
 @SuppressLint("SetTextI18n, NonConstantResourceId, UseCompatLoadingForDrawables, StaticFieldLeak")
-public class ProductExport extends Fragment {
+public class ProductExport extends Fragment implements View.OnClickListener {
 
     public static Activity activity;
     private final int FILE_SELECTOR_CODE = 10000;
     View view;
+    FragmentProductExportBinding binding;
     boolean isClicked;
     DownloadManager manager;
-    @BindView(R.id.filePath)
-    TextView textView;
     Uri uri;
-    @BindView(R.id.customerSpinner)
-    MaterialSpinner customerSpinner;
-    @BindView(R.id.customerProgressBar)
-    ProgressBar customerProgressBar;
     List<CustomerResponse> customerResponseList = new ArrayList<>();
     String[] customerIdList, customerNameList;
     String customerId, customerName;
 
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        view = inflater.inflate(R.layout.fragment_product_export, container, false);
-        ButterKnife.bind(this, view);
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        binding = FragmentProductExportBinding.inflate(inflater, container, false);
+        view = binding.getRoot();
 
         activity = getActivity();
         MainActivity.title.setText("Export Into DB");
@@ -120,7 +111,7 @@ public class ProductExport extends Fragment {
         });
 
 
-        customerSpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
+        binding.customerSpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
             @Override
             public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
                 customerId = customerIdList[position];
@@ -129,30 +120,31 @@ public class ProductExport extends Fragment {
             }
         });
 
+        binding.downloadLayout.setOnClickListener(this);
+        binding.fileUpload.setOnClickListener(this);
+        binding.uploadToServer.setOnClickListener(this);
+
         return view;
 
     }
 
-    @OnClick({R.id.downloadLayout, R.id.fileUpload, R.id.uploadToServer})
+    @Override
     public void onClick(View view) {
-        switch (view.getId()) {
-            case R.id.downloadLayout:
-                downloadFile();
-                break;
-            case R.id.fileUpload:
-                galleryIntent();
-                break;
-            case R.id.uploadToServer:
-                if (customerId != null) {
-                    if (uri != null) {
-                        readExcelFileFromAssets(activity, uri, customerId);
-                    } else {
-                        Toast.makeText(activity, "Please upload product excel file", Toast.LENGTH_SHORT).show();
-                    }
+        int id = view.getId();
+        if (id == R.id.downloadLayout) {
+            downloadFile();
+        } else if (id == R.id.fileUpload) {
+            galleryIntent();
+        } else if (id == R.id.uploadToServer) {
+            if (customerId != null) {
+                if (uri != null) {
+                    readExcelFileFromAssets(activity, uri, customerId);
                 } else {
-                    Toast.makeText(activity, "Please select customer", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(activity, "Please upload product excel file", Toast.LENGTH_SHORT).show();
                 }
-                break;
+            } else {
+                Toast.makeText(activity, "Please select customer", Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
@@ -200,7 +192,7 @@ public class ProductExport extends Fragment {
             uri = data.getData();
             if (uri == null) return;
             Log.e("filePath", uri.getPath());
-            textView.setText("" + uri.getPath());
+            binding.filePath.setText("" + uri.getPath());
         }
 
     }
@@ -309,7 +301,7 @@ public class ProductExport extends Fragment {
 
     private void getCustomerList() {
 
-        customerProgressBar.setVisibility(View.VISIBLE);
+        binding.customerProgressBar.setVisibility(View.VISIBLE);
 
         customerResponseList.clear();
 
@@ -321,7 +313,7 @@ public class ProductExport extends Fragment {
                     customerResponseList = response.body().getCustomerResponseList();
                     Log.e("customerResponseList", "" + customerResponseList.size());
                     if (customerResponseList.size() > 0) {
-                        customerProgressBar.setVisibility(View.GONE);
+                        binding.customerProgressBar.setVisibility(View.GONE);
 
                         customerIdList = new String[customerResponseList.size()];
                         customerNameList = new String[customerResponseList.size()];
@@ -334,21 +326,21 @@ public class ProductExport extends Fragment {
                         try {
                             final ArrayAdapter adapter = new ArrayAdapter(activity, android.R.layout.simple_spinner_item, customerNameList);
                             adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
-                            customerSpinner.setAdapter(adapter);
+                            binding.customerSpinner.setAdapter(adapter);
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
 
 
                     } else {
-                        customerProgressBar.setVisibility(View.VISIBLE);
+                        binding.customerProgressBar.setVisibility(View.VISIBLE);
                     }
                 }
             }
 
             @Override
             public void onFailure(Call<AllApiResponse> call, Throwable t) {
-                customerProgressBar.setVisibility(View.VISIBLE);
+                binding.customerProgressBar.setVisibility(View.VISIBLE);
                 Log.e("serverError", "" + t.getMessage());
             }
         });

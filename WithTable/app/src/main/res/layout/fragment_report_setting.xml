@@ -140,6 +140,7 @@
             </LinearLayout>
 
             <View
+                android:id="@+id/invoiceTableWiseReportDivider"
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:layout_marginStart="20dp"
@@ -187,6 +188,7 @@
 
 
             <View
+                android:id="@+id/invoiceTakeAwayWiseReportDivider"
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:layout_marginStart="20dp"
@@ -232,6 +234,7 @@
             </LinearLayout>
 
             <View
+                android:id="@+id/invoiceMemberPaymentWiseReportTopDivider"
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:layout_marginStart="20dp"
@@ -278,6 +281,7 @@
             </LinearLayout>
 
             <View
+                android:id="@+id/invoiceMemberPaymentWiseReportDivider"
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:layout_marginStart="20dp"
@@ -324,6 +328,7 @@
             </LinearLayout>
 
             <View
+                android:id="@+id/invoiceMessWiseReportDivider"
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:layout_marginStart="20dp"

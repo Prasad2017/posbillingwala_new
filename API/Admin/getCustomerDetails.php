@@ -59,6 +59,9 @@ $i=0;
         $fastBilling=$user_licenses['fastBilling'];
         $takeAway=$user_licenses['takeAway'];
         $dineIn=$user_licenses['dineIn'];
+        $mess = isset($user_licenses['mess']) ? $user_licenses['mess'] : '0';
+        $android_device_id = isset($user_licenses['android_device_id']) ? $user_licenses['android_device_id'] : '';
+        $android_device_name = isset($user_licenses['android_device_name']) ? $user_licenses['android_device_name'] : '';
         $branch = licence_branch_fields($user_licenses);
         
         
@@ -68,6 +71,7 @@ $i=0;
                          "phoneNo1"=>$store['phoneNo1'], "phoneNo2"=>$store['phoneNo2'],
                          "licenseKey"=>$licenseKey, "licenseValidity"=>$licenseValidity, "licenseType"=>$licenseType, "licenseStatus"=>$licenseStatus,
                          "registrationDate"=>$registrationDate, "expiryDate"=>$expiryDate, "paymentStatus"=>$paymentStatus, "amount"=>$amount, "fastBilling"=>$fastBilling, "takeAway"=>$takeAway, "dineIn"=>$dineIn,
+                         "mess"=>$mess, "android_device_id"=>$android_device_id, "android_device_name"=>$android_device_name,
                          "userType"=>$branch['userType'], "userName"=>$branch['userName'], "branchLabel"=>$branch['branchLabel']);
         
         

@@ -1,5 +1,7 @@
 <?php
 include_once('config.php');
+require_once __DIR__ . '/pos_auth_guard.php';
+
 include_once('db_prepared.php');
 
 $response = array('status' => '0', 'message' => 'Invalid request');
@@ -7,6 +9,9 @@ mysqli_query($con, 'set names utf8mb4');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $userId = isset($_POST['userId']) ? trim($_POST['userId']) : '';
+  $__postedUserId = isset($_POST['userId']) ? $_POST['userId'] : (isset($userId) ? $userId : '');
+  pos_require_auth($con, $__postedUserId, isset($response) ? $response : array('status'=>'0','message'=>'Unauthorized'));
+
     $tokenCode = isset($_POST['tokenCode']) ? trim($_POST['tokenCode']) : '';
     $memberId = isset($_POST['memberId']) ? trim($_POST['memberId']) : '';
     $memberName = isset($_POST['memberName']) ? trim($_POST['memberName']) : '';

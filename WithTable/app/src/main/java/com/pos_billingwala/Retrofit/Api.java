@@ -5,7 +5,8 @@ import android.content.Context;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.pos_billingwala.BuildConfig;
-import com.pos_billingwala.Extra.Common;
+import com.pos_billingwala.Extra.AuthTokenRefresh;
+import com.pos_billingwala.Extra.AuthTokens;
 
 import java.io.File;
 import java.util.concurrent.TimeUnit;
@@ -13,6 +14,7 @@ import java.util.concurrent.TimeUnit;
 import okhttp3.Cache;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.Response;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
@@ -39,6 +41,8 @@ public class Api {
             File cacheDirectory = new File(context.getCacheDir(), "http_cache");
             Cache cache = new Cache(cacheDirectory, 10 * 1024 * 1024); // 10 MB cache
 
+            final Context appContext = context.getApplicationContext();
+
             OkHttpClient.Builder httpClientBuilder = new OkHttpClient.Builder()
                     .connectTimeout(60, TimeUnit.SECONDS)
                     .writeTimeout(120, TimeUnit.SECONDS)
@@ -49,7 +53,7 @@ public class Api {
                     .addInterceptor(new ApiFailureInterceptor())
                     .addInterceptor(chain -> {
                         Request original = chain.request();
-                        String token = Common.getSavedUserData(context, "authToken");
+                        String token = AuthTokens.getToken(appContext);
                         if (token != null && !token.isEmpty()) {
                             Request authenticated = original.newBuilder()
                                     .header("Authorization", "Bearer " + token)
@@ -57,6 +61,26 @@ public class Api {
                             return chain.proceed(authenticated);
                         }
                         return chain.proceed(original);
+                    })
+                    .authenticator((route, response) -> {
+                        // Silent refresh for offline-bound devices — no MPIN re-prompt
+                        if (responseCount(response) >= 2) {
+                            return null;
+                        }
+                        String path = response.request().url().encodedPath();
+                        if (path != null && path.contains("refreshAuthToken.php")) {
+                            return null;
+                        }
+                        if (!AuthTokenRefresh.tryRefresh(appContext)) {
+                            return null;
+                        }
+                        String token = AuthTokens.getToken(appContext);
+                        if (token == null || token.isEmpty()) {
+                            return null;
+                        }
+                        return response.request().newBuilder()
+                                .header("Authorization", "Bearer " + token)
+                                .build();
                     });
 
             if (BuildConfig.DEBUG) {
@@ -71,5 +95,13 @@ public class Api {
         }
 
         return retrofit.create(ApiInterface.class);
+    }
+
+    private static int responseCount(Response response) {
+        int result = 1;
+        while ((response = response.priorResponse()) != null) {
+            result++;
+        }
+        return result;
     }
 }

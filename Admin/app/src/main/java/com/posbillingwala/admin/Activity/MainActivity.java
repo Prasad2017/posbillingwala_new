@@ -1,6 +1,7 @@
 package com.posbillingwala.admin.Activity;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.StrictMode;
@@ -10,6 +11,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
@@ -17,21 +19,21 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.google.android.material.appbar.AppBarLayout;
+import com.posbillingwala.admin.Extra.AuthTokens;
 import com.posbillingwala.admin.Extra.Common;
 import com.posbillingwala.admin.Fragment.AllCustomerList;
 import com.posbillingwala.admin.Fragment.AllDealerList;
 import com.posbillingwala.admin.Fragment.Home;
-import com.posbillingwala.admin.Fragment.ProductExport;
+import com.posbillingwala.admin.Fragment.MoreMenu;
 import com.posbillingwala.admin.R;
 import com.posbillingwala.admin.Retrofit.Api;
-
-import butterknife.ButterKnife;
-import butterknife.OnClick;
+import com.posbillingwala.admin.databinding.ActivityMainBinding;
 
 @SuppressLint("SetTextI18n, NonConstantResourceId, ResourceType, UseCompatLoadingForDrawables, StaticFieldLeak")
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     public static ImageView back;
+    public static ImageView logout;
     public static DrawerLayout drawerLayout;
     public static TextView title;
     public static AppBarLayout toolbarContainer;
@@ -39,14 +41,23 @@ public class MainActivity extends AppCompatActivity {
     public static String userId, currency = "₹. ";
     public static LinearLayout homeLinearLayout, dealerLinearLayout, customerLinearLayout, customerProductLinearLayout;
     boolean doubleBackToExitPressedOnce = false;
+    ActivityMainBinding binding;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Api.bindContext(this);
-        setContentView(R.layout.activity_main);
-        ButterKnife.bind(this);
+
+        if (!AuthTokens.hasValidSession(this)) {
+            AuthTokens.clear(this);
+            startActivity(new Intent(this, Login.class));
+            finish();
+            return;
+        }
+
+        binding = ActivityMainBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
         initViews();
 
@@ -54,66 +65,77 @@ public class MainActivity extends AppCompatActivity {
         StrictMode.setThreadPolicy(policy);
 
         try {
-
             userId = Common.getSavedUserData(MainActivity.this, "userId");
-
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         loadFragment(new Home(), false);
-
-
     }
 
     private void initViews() {
+        drawerLayout = binding.drawerLayout;
+        toolbarContainer = binding.toolbarContainer;
+        bottomNavigationLayout = binding.bottomNavigationLayout;
+        back = binding.appBarMainPage.back;
+        logout = binding.appBarMainPage.logout;
+        title = binding.appBarMainPage.title;
 
-        drawerLayout = findViewById(R.id.drawer_layout);
-        toolbarContainer = findViewById(R.id.toolbar_container);
-        bottomNavigationLayout = findViewById(R.id.bottomNavigationLayout);
-        back = findViewById(R.id.back);
-        title = findViewById(R.id.title);
+        homeLinearLayout = binding.homeLinearLayout;
+        dealerLinearLayout = binding.dealerLinearLayout;
+        customerLinearLayout = binding.customerLinearLayout;
+        customerProductLinearLayout = binding.customerProductLinearLayout;
 
-        homeLinearLayout = findViewById(R.id.homeLinearLayout);
-        dealerLinearLayout = findViewById(R.id.dealerLinearLayout);
-        customerLinearLayout = findViewById(R.id.customerLinearLayout);
-        customerProductLinearLayout = findViewById(R.id.customerProductLinearLayout);
-
+        back.setOnClickListener(this);
+        logout.setOnClickListener(this);
+        homeLinearLayout.setOnClickListener(this);
+        dealerLinearLayout.setOnClickListener(this);
+        customerLinearLayout.setOnClickListener(this);
+        customerProductLinearLayout.setOnClickListener(this);
     }
 
 
-    @OnClick({R.id.back, R.id.homeLinearLayout, R.id.dealerLinearLayout, R.id.customerLinearLayout, R.id.customerProductLinearLayout})
+    @Override
     public void onClick(View view) {
-        switch (view.getId()) {
-            case R.id.back:
-                removeCurrentFragmentAndMoveBack();
-                break;
-            case R.id.homeLinearLayout:
-                removeCurrentFragmentAndMoveBack();
-                loadFragment(new Home(), false);
-                break;
-
-            case R.id.dealerLinearLayout:
-                removeCurrentFragmentAndMoveBack();
-                loadFragment(new AllDealerList(), false);
-                break;
-
-            case R.id.customerLinearLayout:
-                removeCurrentFragmentAndMoveBack();
-                loadFragment(new AllCustomerList(), false);
-                break;
-
-            case R.id.customerProductLinearLayout:
-                removeCurrentFragmentAndMoveBack();
-                loadFragment(new ProductExport(), false);
-                break;
-
+        int id = view.getId();
+        if (id == R.id.back) {
+            removeCurrentFragmentAndMoveBack();
+        } else if (id == R.id.logout) {
+            confirmLogout();
+        } else if (id == R.id.homeLinearLayout) {
+            removeCurrentFragmentAndMoveBack();
+            loadFragment(new Home(), false);
+        } else if (id == R.id.dealerLinearLayout) {
+            removeCurrentFragmentAndMoveBack();
+            loadFragment(new AllDealerList(), false);
+        } else if (id == R.id.customerLinearLayout) {
+            removeCurrentFragmentAndMoveBack();
+            loadFragment(new AllCustomerList(), false);
+        } else if (id == R.id.customerProductLinearLayout) {
+            removeCurrentFragmentAndMoveBack();
+            loadFragment(new MoreMenu(), false);
         }
+    }
+
+    private void confirmLogout() {
+        new AlertDialog.Builder(this)
+                .setTitle("Logout")
+                .setMessage("Are you sure you want to logout?")
+                .setPositiveButton("Logout", (dialog, which) -> performLogout())
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    public void performLogout() {
+        AuthTokens.clear(this);
+        Intent intent = new Intent(this, Login.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
     }
 
     @Override
     public void onBackPressed() {
-        // double press to exit
         if (back.getVisibility() == View.GONE) {
             if (doubleBackToExitPressedOnce) {
                 super.onBackPressed();
@@ -127,13 +149,11 @@ public class MainActivity extends AppCompatActivity {
         Toast.makeText(this, "Press back once more to exit", Toast.LENGTH_SHORT).show();
 
         new Handler().postDelayed(new Runnable() {
-
             @Override
             public void run() {
                 doubleBackToExitPressedOnce = false;
             }
         }, 2000);
-
     }
 
     public void lockUnlockDrawer(int lockMode) {
@@ -145,7 +165,6 @@ public class MainActivity extends AppCompatActivity {
             back.setVisibility(View.GONE);
             bottomNavigationLayout.setVisibility(View.VISIBLE);
         }
-
     }
 
     public void removeCurrentFragmentAndMoveBack() {
@@ -165,5 +184,4 @@ public class MainActivity extends AppCompatActivity {
         }
         transaction.commit();
     }
-
 }

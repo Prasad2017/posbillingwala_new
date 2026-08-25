@@ -4,6 +4,8 @@
  * Price lives on product_portions (Product + Portion).
  */
 include_once('config.php');
+require_once __DIR__ . '/pos_auth_guard.php';
+
 require_once __DIR__ . '/db_prepared.php';
 
 header('Content-Type: application/json; charset=utf-8');
@@ -17,6 +19,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $userId = isset($_POST['userId']) ? trim((string) $_POST['userId']) : '';
+  $__postedUserId = isset($_POST['userId']) ? $_POST['userId'] : (isset($userId) ? $userId : '');
+  pos_require_auth($con, $__postedUserId, isset($response) ? $response : array('status'=>'0','message'=>'Unauthorized'));
+
 $portionName = isset($_POST['portionName']) ? trim((string) $_POST['portionName']) : '';
 $portionMasterNetworkStatus = isset($_POST['portionMasterNetworkStatus'])
     ? trim((string) $_POST['portionMasterNetworkStatus']) : '';

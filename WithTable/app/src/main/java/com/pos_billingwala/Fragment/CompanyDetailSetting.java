@@ -46,6 +46,7 @@ import com.karumi.dexter.listener.PermissionRequest;
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.LicenseModules;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentCompanyDetailSettingBinding;
@@ -552,7 +553,8 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
             binding.shopGSTLayout.setVisibility(View.VISIBLE);
         }
 
-        if (MainActivity.dineIn.equalsIgnoreCase("1")) {
+        if (LicenseModules.isEnabled(MainActivity.dineIn)) {
+            binding.tableSwitch.setVisibility(View.VISIBLE);
             if (tableStatus.equalsIgnoreCase("off")) {
                 binding.tableSwitch.setChecked(false);
                 binding.noOfTableLayout.setVisibility(View.GONE);
@@ -561,6 +563,7 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
                 binding.noOfTableLayout.setVisibility(View.VISIBLE);
             }
         } else {
+            binding.tableSwitch.setVisibility(View.GONE);
             binding.tableSwitch.setChecked(false);
             binding.noOfTableLayout.setVisibility(View.GONE);
         }

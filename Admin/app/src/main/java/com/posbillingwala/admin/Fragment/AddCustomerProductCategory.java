@@ -14,12 +14,12 @@ import android.widget.ArrayAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.textfield.TextInputEditText;
 import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.posbillingwala.admin.Activity.MainActivity;
 import com.posbillingwala.admin.Adapter.CategoryAdapter;
@@ -30,21 +30,19 @@ import com.posbillingwala.admin.Model.FoodTypeResponse;
 import com.posbillingwala.admin.Model.ProductCategoryResponse;
 import com.posbillingwala.admin.R;
 import com.posbillingwala.admin.Retrofit.Api;
+import com.posbillingwala.admin.databinding.FragmentAddCustomerProductCategoryBinding;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import butterknife.OnClick;
 import cn.pedant.SweetAlert.SweetAlertDialog;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
 @SuppressLint("SetTextI18n, NonConstantResourceId, UseCompatLoadingForDrawables, StaticFieldLeak")
-public class AddCustomerProductCategory extends Fragment {
+public class AddCustomerProductCategory extends Fragment implements View.OnClickListener {
 
     public static Activity activity;
     public static List<ProductCategoryResponse> productCategoryResponseList = new ArrayList<>();
@@ -54,10 +52,7 @@ public class AddCustomerProductCategory extends Fragment {
     public static TextView noDataFound;
     public static String customerId;
     View view;
-    @BindView(R.id.categoryName)
-    TextInputEditText textInputEditText;
-    @BindView(R.id.foodTypeSpinner)
-    MaterialSpinner foodTypeSpinner;
+    FragmentAddCustomerProductCategoryBinding binding;
     String[] foodTypeIdList, foodTypeNameList;
     String foodTypeId;
 
@@ -106,10 +101,9 @@ public class AddCustomerProductCategory extends Fragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        view = inflater.inflate(R.layout.fragment_add_customer_product_category, container, false);
-        ButterKnife.bind(this, view);
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        binding = FragmentAddCustomerProductCategoryBinding.inflate(inflater, container, false);
+        view = binding.getRoot();
 
         activity = getActivity();
         MainActivity.title.setText("Product Category");
@@ -121,9 +115,9 @@ public class AddCustomerProductCategory extends Fragment {
             customerId = bundle.getString("customerId");
         }
 
-        textInputEditText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
+        binding.categoryName.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
 
-        foodTypeSpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
+        binding.foodTypeSpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
             @Override
             public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
                 if (foodTypeIdList != null && position >= 0 && position < foodTypeIdList.length) {
@@ -163,13 +157,16 @@ public class AddCustomerProductCategory extends Fragment {
 
     private void initViews() {
 
-        categoryRecyclerview = view.findViewById(R.id.categoryRecyclerview);
-        categoryListCardView = view.findViewById(R.id.categoryListCardView);
-        noDataFound = view.findViewById(R.id.noDataFound);
+        categoryRecyclerview = binding.categoryRecyclerview;
+        categoryListCardView = binding.categoryListCardView;
+        noDataFound = binding.noDataFound;
+
+        binding.addCategory.setOnClickListener(this);
+        binding.managePortionMaster.setOnClickListener(this);
 
     }
 
-    @OnClick({R.id.addCategory, R.id.managePortionMaster})
+    @Override
     public void onClick(View view) {
         if (view.getId() == R.id.managePortionMaster) {
             AddCustomerPortionMaster fragment = new AddCustomerPortionMaster();
@@ -182,7 +179,7 @@ public class AddCustomerProductCategory extends Fragment {
             return;
         }
         if (view.getId() == R.id.addCategory) {
-            if (textInputEditText.getText().toString().length() > 0) {
+            if (binding.categoryName.getText().toString().length() > 0) {
                 if (foodTypeId != null) {
                     addProductCategory();
                 } else {
@@ -203,7 +200,7 @@ public class AddCustomerProductCategory extends Fragment {
         pDialog.show();
 
         String categoryNetworkStatus = getRandomString(10);
-        String categoryName = textInputEditText.getText().toString();
+        String categoryName = binding.categoryName.getText().toString();
 
         Call<AllApiResponse> call = Api.getClient().saveCategory(customerId, categoryName, categoryNetworkStatus, foodTypeId);
         call.enqueue(new Callback<AllApiResponse>() {
@@ -212,7 +209,7 @@ public class AddCustomerProductCategory extends Fragment {
                 if (response.isSuccessful()) {
                     if (response.body().getStatus().equalsIgnoreCase("1")) {
                         Toast.makeText(activity, "" + response.body().getMessage(), Toast.LENGTH_SHORT).show();
-                        textInputEditText.setText("");
+                        binding.categoryName.setText("");
                         getProductCategoryList();
                     } else {
                         Toast.makeText(activity, "" + response.body().getMessage(), Toast.LENGTH_SHORT).show();
@@ -271,7 +268,7 @@ public class AddCustomerProductCategory extends Fragment {
                         }
                         ArrayAdapter<String> adapter = new ArrayAdapter<>(activity, android.R.layout.simple_spinner_item, foodTypeNameList);
                         adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
-                        foodTypeSpinner.setAdapter(adapter);
+                        binding.foodTypeSpinner.setAdapter(adapter);
                         foodTypeId = foodTypeIdList[0];
                     }
                 }

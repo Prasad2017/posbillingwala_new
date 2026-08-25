@@ -14,8 +14,8 @@ public interface ApiInterface {
 
     @FormUrlEncoded
     @POST("Login.php")
-    Call<AllApiResponse> loginDealer(@Field("userName") String userName,
-                                     @Field("password") String password);
+    Call<AllApiResponse> loginAdmin(@Field("userEmail") String userEmail,
+                                    @Field("password") String password);
 
 
     @GET("getCustomerList.php")
@@ -34,13 +34,13 @@ public interface ApiInterface {
                                               @Field("contact_number") String contact_number,
                                               @Field("address") String address,
                                               @Field("shopName") String shopName,
-                                              @Field("licenseKey") String licenseKey,
                                               @Field("licenseValidity") String licenseValidity,
                                               @Field("licenseType") String licenseType,
                                               @Field("amount") String amount,
                                               @Field("fastBilling") String fastBilling,
                                               @Field("takeAway") String takeAway,
-                                              @Field("dineIn") String dineIn);
+                                              @Field("dineIn") String dineIn,
+                                              @Field("mess") String mess);
 
 
     @FormUrlEncoded
@@ -60,6 +60,11 @@ public interface ApiInterface {
                                                       @Field("licenseType") String licenseType,
                                                       @Field("amount") String amount,
                                                       @Field("registrationDate") String registrationDate);
+
+    @FormUrlEncoded
+    @POST("updateLicenseStatus.php")
+    Call<AllApiResponse> updateLicenseStatus(@Field("licensesId") String licensesId,
+                                             @Field("action") String action);
 
 
     @FormUrlEncoded
@@ -186,15 +191,54 @@ public interface ApiInterface {
                                                         @Field("address") String address,
                                                         @Field("shopName") String shopName,
                                                         @Field("branchName") String branchName,
-                                                        @Field("licenseKey") String licenseKey,
                                                         @Field("licenseValidity") String licenseValidity,
                                                         @Field("licenseType") String licenseType,
                                                         @Field("amount") String amount,
                                                         @Field("fastBilling") String fastBilling,
                                                         @Field("takeAway") String takeAway,
-                                                        @Field("dineIn") String dineIn);
+                                                        @Field("dineIn") String dineIn,
+                                                        @Field("mess") String mess);
 
     @GET("getProfile.php")
     Call<AllApiResponse> getProfile(@Query("userId") String dealerId);
+
+    @FormUrlEncoded
+    @POST("insertDealer.php")
+    Call<AllApiResponse> insertDealer(@Field("name") String name,
+                                      @Field("contact_number") String contact_number,
+                                      @Field("address") String address,
+                                      @Field("email") String email,
+                                      @Field("aadhar_number") String aadhar_number,
+                                      @Field("password") String password);
+
+    @FormUrlEncoded
+    @POST("updateDealerStatus.php")
+    Call<AllApiResponse> updateDealerStatus(@Field("userId") String userId,
+                                            @Field("action") String action);
+
+    @GET("getDealerReport.php")
+    Call<AllApiResponse> getDealerReport(@Query("dealerId") String dealerId);
+
+    @GET("getCustomerComboList.php")
+    Call<AllApiResponse> getCustomerComboList(@Query("userId") String userId);
+
+    @FormUrlEncoded
+    @POST("insertCustomerCombo.php")
+    Call<AllApiResponse> insertCustomerCombo(@Field("userId") String userId,
+                                             @Field("comboName") String comboName,
+                                             @Field("comboPrice") String comboPrice,
+                                             @Field("comboNetworkStatus") String comboNetworkStatus,
+                                             @Field("comboCode") String comboCode,
+                                             @Field("comboCGST") String comboCGST,
+                                             @Field("comboSGST") String comboSGST,
+                                             @Field("comboActiveStatus") String comboActiveStatus,
+                                             @Field("comboDeletedStatus") String comboDeletedStatus);
+
+    @GET("getDeviceList.php")
+    Call<AllApiResponse> getDeviceList(@Query("customerId") String customerId);
+
+    @GET("getCustomerSales.php")
+    Call<AllApiResponse> getCustomerSales(@Query("customerId") String customerId,
+                                          @Query("invoiceDate") String invoiceDate);
 
 }

@@ -23,6 +23,9 @@ public class DealerResponse {
     @SerializedName("address")
     @Expose
     private String address;
+    @SerializedName("is_active")
+    @Expose
+    private String isActive;
 
 
     public String getId() {
@@ -71,5 +74,17 @@ public class DealerResponse {
 
     public void setAddress(String address) {
         this.address = address;
+    }
+
+    public String getIsActive() {
+        return isActive;
+    }
+
+    public void setIsActive(String isActive) {
+        this.isActive = isActive;
+    }
+
+    public boolean isActiveDealer() {
+        return isActive == null || isActive.isEmpty() || "1".equals(isActive);
     }
 }

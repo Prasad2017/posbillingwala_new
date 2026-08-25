@@ -15,7 +15,8 @@ public interface ApiInterface {
 
     @FormUrlEncoded
     @POST("Login.php")
-    Call<LoginResponse> loginCheck(@Field("contactNumber") String contactNumber);
+    Call<LoginResponse> loginCheck(@Field("contactNumber") String contactNumber,
+                                   @Field("password") String password);
 
     @GET("getTotalCount.php")
     Call<AllApiResponse> getTotalCount(@Query("userId") String userId);

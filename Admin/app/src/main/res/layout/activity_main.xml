@@ -26,6 +26,7 @@
             android:orientation="vertical">
 
             <include
+                android:id="@+id/appBarMainPage"
                 layout="@layout/app_bar_main_page"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
@@ -159,7 +160,7 @@
                     android:fontFamily="@font/poppinsregular"
                     android:gravity="center"
                     android:singleLine="true"
-                    android:text="Product Import"
+                    android:text="More"
                     android:textColor="@color/black"
                     android:textSize="10sp" />
 
@@ -169,7 +170,7 @@
                     android:layout_gravity="center"
                     android:layout_marginBottom="5dp"
                     android:gravity="center"
-                    android:src="@drawable/product" />
+                    android:src="@drawable/ic_menu" />
 
             </LinearLayout>
 

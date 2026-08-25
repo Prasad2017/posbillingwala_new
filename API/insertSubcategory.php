@@ -1,5 +1,7 @@
 <?php
 include_once('config.php');
+require_once __DIR__ . '/pos_auth_guard.php';
+
 
 $response = array();
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -7,6 +9,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     mysqli_query($con, 'set names utf8');
 
     $userId = $_POST['userId'];
+  $__postedUserId = isset($_POST['userId']) ? $_POST['userId'] : (isset($userId) ? $userId : '');
+  pos_require_auth($con, $__postedUserId, isset($response) ? $response : array('status'=>'0','message'=>'Unauthorized'));
+
     $categoryId = $_POST['categoryId'];
     $categoryNetworkStatus = isset($_POST['categoryNetworkStatus']) ? $_POST['categoryNetworkStatus'] : '';
     $subcategoryName = $_POST['subcategoryName'];

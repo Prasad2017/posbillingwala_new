@@ -2,21 +2,16 @@ package com.posbillingwala.admin.Adapter;
 
 import android.content.Context;
 import android.view.LayoutInflater;
-import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.posbillingwala.admin.Activity.MainActivity;
 import com.posbillingwala.admin.Model.ProductPortionResponse;
-import com.posbillingwala.admin.R;
+import com.posbillingwala.admin.databinding.PortionListBinding;
 
 import java.util.List;
-
-import butterknife.BindViews;
-import butterknife.ButterKnife;
 
 public class PortionAdapter extends RecyclerView.Adapter<PortionAdapter.MyViewHolder> {
 
@@ -31,16 +26,16 @@ public class PortionAdapter extends RecyclerView.Adapter<PortionAdapter.MyViewHo
     @NonNull
     @Override
     public MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.portion_list, parent, false);
-        return new MyViewHolder(view);
+        PortionListBinding binding = PortionListBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false);
+        return new MyViewHolder(binding);
     }
 
     @Override
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
         ProductPortionResponse item = portionList.get(position);
-        holder.textViews.get(0).setText(String.valueOf(position + 1));
-        holder.textViews.get(1).setText(item.getPortionName());
-        holder.textViews.get(2).setText(MainActivity.currency + " " + item.getPortionPrice());
+        holder.binding.srNo.setText(String.valueOf(position + 1));
+        holder.binding.portionName.setText(item.getPortionName());
+        holder.binding.portionPrice.setText(MainActivity.currency + " " + item.getPortionPrice());
     }
 
     @Override
@@ -48,13 +43,12 @@ public class PortionAdapter extends RecyclerView.Adapter<PortionAdapter.MyViewHo
         return portionList.size();
     }
 
-    static class MyViewHolder extends RecyclerView.ViewHolder {
-        @BindViews({R.id.srNo, R.id.portionName, R.id.portionPrice})
-        List<TextView> textViews;
+    public static class MyViewHolder extends RecyclerView.ViewHolder {
+        private final PortionListBinding binding;
 
-        MyViewHolder(@NonNull View itemView) {
-            super(itemView);
-            ButterKnife.bind(this, itemView);
+        public MyViewHolder(@NonNull PortionListBinding binding) {
+            super(binding.getRoot());
+            this.binding = binding;
         }
     }
 }

@@ -1,5 +1,7 @@
 <?php
 include_once('config.php');
+require_once __DIR__ . '/pos_auth_guard.php';
+pos_require_auth($con);
 
 $response["foodTypeResponse"] = array();
 mysqli_query($con, 'set names utf8');

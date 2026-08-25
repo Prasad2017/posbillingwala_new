@@ -1,5 +1,8 @@
 <?php	
 include_once('config.php');
+require_once __DIR__ . '/auth_guard.php';
+owner_require_auth($con);
+
 require_once __DIR__ . '/../auth_tokens.php';
 require_once __DIR__ . '/../company_store_fields.php';
 $i=0;

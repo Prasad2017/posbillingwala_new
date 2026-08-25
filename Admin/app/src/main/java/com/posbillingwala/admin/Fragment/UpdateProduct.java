@@ -17,9 +17,9 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
-import com.google.android.material.textfield.TextInputEditText;
 import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.posbillingwala.admin.Activity.MainActivity;
 import com.posbillingwala.admin.Extra.DetectConnection;
@@ -30,30 +30,22 @@ import com.posbillingwala.admin.Model.ProductResponse;
 import com.posbillingwala.admin.Model.ProductSubcategoryResponse;
 import com.posbillingwala.admin.R;
 import com.posbillingwala.admin.Retrofit.Api;
+import com.posbillingwala.admin.databinding.FragmentUpdateProductBinding;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import butterknife.BindView;
-import butterknife.BindViews;
-import butterknife.ButterKnife;
-import butterknife.OnClick;
 import cn.pedant.SweetAlert.SweetAlertDialog;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
 @SuppressLint("SetTextI18n, NonConstantResourceId, UseCompatLoadingForDrawables, StaticFieldLeak")
-public class UpdateProduct extends Fragment {
+public class UpdateProduct extends Fragment implements View.OnClickListener {
 
     public static Activity activity;
     View view;
-    @BindViews({R.id.categorySpinner, R.id.unitSpinner})
-    List<MaterialSpinner> spinners;
-    @BindView(R.id.subcategorySpinner)
-    MaterialSpinner subcategorySpinner;
-    @BindViews({R.id.productName, R.id.productPrice, R.id.productCGST, R.id.productSGST})
-    List<TextInputEditText> textInputEditTexts;
+    FragmentUpdateProductBinding binding;
     String[] categoryIdList, categoryNameList, unitNameList;
     String[] subcategoryIdList, subcategoryNameList;
     String customerId, productId, categoryId, categoryName, unitName, subcategoryId;
@@ -64,11 +56,12 @@ public class UpdateProduct extends Fragment {
     boolean portionsLoaded;
 
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        view = inflater.inflate(R.layout.fragment_update_product, container, false);
-        ButterKnife.bind(this, view);
+        binding = FragmentUpdateProductBinding.inflate(inflater, container, false);
+        view = binding.getRoot();
 
         activity = getActivity();
 
@@ -82,12 +75,11 @@ public class UpdateProduct extends Fragment {
 
         MainActivity.title.setText("Update Product");
 
-        View portionSection = view.findViewById(R.id.productPortionSectionInclude);
-        portionSectionHelper = new ProductPortionSectionHelper(activity, portionSection);
+        portionSectionHelper = new ProductPortionSectionHelper(activity, binding.productPortionSectionInclude.getRoot());
         portionSectionHelper.setCustomerId(customerId);
         portionSectionHelper.setOnPortionMasterLinkClick(this::openPortionMaster);
 
-        textInputEditTexts.get(0).setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
+        binding.productName.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
 
         MainActivity.back.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -116,7 +108,7 @@ public class UpdateProduct extends Fragment {
             }
         });
 
-        spinners.get(0).setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
+        binding.categorySpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
             @Override
             public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
                 categoryId = categoryIdList[position];
@@ -125,7 +117,7 @@ public class UpdateProduct extends Fragment {
             }
         });
 
-        subcategorySpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
+        binding.subcategorySpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
             @Override
             public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
                 if (subcategoryIdList != null && position >= 0 && position < subcategoryIdList.length) {
@@ -134,14 +126,14 @@ public class UpdateProduct extends Fragment {
             }
         });
 
-        spinners.get(1).setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
+        binding.unitSpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
             @Override
             public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
                 unitName = unitNameList[position];
             }
         });
 
-        spinners.get(0).setOnTouchListener(new View.OnTouchListener() {
+        binding.categorySpinner.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 InputMethodManager imm = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -150,7 +142,7 @@ public class UpdateProduct extends Fragment {
             }
         });
 
-        spinners.get(1).setOnTouchListener(new View.OnTouchListener() {
+        binding.unitSpinner.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 InputMethodManager imm = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -158,6 +150,8 @@ public class UpdateProduct extends Fragment {
                 return false;
             }
         });
+
+        binding.updateProduct.setOnClickListener(this);
 
         return view;
 
@@ -174,12 +168,12 @@ public class UpdateProduct extends Fragment {
         ((MainActivity) activity).loadFragment(fragment, true);
     }
 
-    @OnClick({R.id.updateProduct})
+    @Override
     public void onClick(View view) {
         if (view.getId() == R.id.updateProduct) {
             if (categoryId != null) {
-                if (textInputEditTexts.get(0).getText().toString().length() > 0) {
-                    String price = textInputEditTexts.get(1).getText().toString().trim();
+                if (binding.productName.getText().toString().length() > 0) {
+                    String price = binding.productPrice.getText().toString().trim();
                     boolean hasPortions = portionSectionHelper != null && portionSectionHelper.hasPortions();
                     if (price.length() > 0 || hasPortions) {
                         if (unitName != null) {
@@ -207,14 +201,14 @@ public class UpdateProduct extends Fragment {
         pDialog.setCancelable(false);
         pDialog.show();
 
-        String price = textInputEditTexts.get(1).getText().toString().trim();
+        String price = binding.productPrice.getText().toString().trim();
         if (price.isEmpty() && portionSectionHelper.hasPortions()) {
             price = "0";
         }
 
         Call<AllApiResponse> call = Api.getClient().updateProduct(productId, categoryId, categoryName,
-                textInputEditTexts.get(0).getText().toString(), price,
-                unitName, textInputEditTexts.get(2).getText().toString(), textInputEditTexts.get(3).getText().toString(),
+                binding.productName.getText().toString(), price,
+                unitName, binding.productCGST.getText().toString(), binding.productSGST.getText().toString(),
                 subcategoryId != null ? subcategoryId : "");
         call.enqueue(new Callback<AllApiResponse>() {
             @Override
@@ -305,20 +299,21 @@ public class UpdateProduct extends Fragment {
                         unitName = productResponse.getProductUnit();
                         preselectSubcategoryId = productResponse.getSubcategoryId();
 
-                        textInputEditTexts.get(0).setText(productResponse.getProductName());
-                        textInputEditTexts.get(1).setText(productResponse.getProductPrice().replace(".00", ""));
-                        textInputEditTexts.get(2).setText(productResponse.getProductCGST());
-                        textInputEditTexts.get(3).setText(productResponse.getProductSGST());
+                        binding.productName.setText(productResponse.getProductName());
+                        binding.productPrice.setText(productResponse.getProductPrice().replace(".00", ""));
+
+                        binding.productCGST.setText(productResponse.getProductCGST());
+                        binding.productSGST.setText(productResponse.getProductSGST());
 
                         unitNameList = activity.getResources().getStringArray(R.array.product_unit);
                         try {
                             final ArrayAdapter adapter = new ArrayAdapter(activity, android.R.layout.simple_spinner_item, unitNameList);
                             adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
-                            spinners.get(1).setAdapter(adapter);
+                            binding.unitSpinner.setAdapter(adapter);
                             if (unitName != null) {
                                 int unitIndex = adapter.getPosition("" + unitName);
                                 if (unitIndex >= 0) {
-                                    spinners.get(1).setSelectedIndex(unitIndex);
+                                    binding.unitSpinner.setSelectedIndex(unitIndex);
                                 }
                             }
                         } catch (Exception e) {
@@ -364,11 +359,11 @@ public class UpdateProduct extends Fragment {
                             try {
                                 final ArrayAdapter adapter = new ArrayAdapter(activity, android.R.layout.simple_spinner_item, categoryNameList);
                                 adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
-                                spinners.get(0).setAdapter(adapter);
+                                binding.categorySpinner.setAdapter(adapter);
                                 if (categoryName != null) {
                                     int categoryIndex = adapter.getPosition("" + categoryName);
                                     if (categoryIndex >= 0) {
-                                        spinners.get(0).setSelectedIndex(categoryIndex);
+                                        binding.categorySpinner.setSelectedIndex(categoryIndex);
                                     }
                                 }
                                 loadSubcategoriesForCategory(categoryId, preselectSubcategoryId);
@@ -413,7 +408,7 @@ public class UpdateProduct extends Fragment {
                     }
                     ArrayAdapter<String> adapter = new ArrayAdapter<>(activity, android.R.layout.simple_spinner_item, subcategoryNameList);
                     adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
-                    subcategorySpinner.setAdapter(adapter);
+                    binding.subcategorySpinner.setAdapter(adapter);
                     int selection = 0;
                     if (preselectId != null && preselectId.length() > 0) {
                         for (int i = 1; i < subcategoryIdList.length; i++) {
@@ -423,7 +418,7 @@ public class UpdateProduct extends Fragment {
                             }
                         }
                     }
-                    subcategorySpinner.setSelectedIndex(selection);
+                    binding.subcategorySpinner.setSelectedIndex(selection);
                     subcategoryId = subcategoryIdList[selection];
                 }
             }

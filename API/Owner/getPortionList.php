@@ -3,6 +3,9 @@
  * Owner: Product portions list.
  */
 include_once('config.php');
+require_once __DIR__ . '/auth_guard.php';
+owner_require_auth($con);
+
 require_once __DIR__ . '/../auth_tokens.php';
 require_once dirname(__DIR__) . '/db_prepared.php';
 

@@ -20,6 +20,33 @@ public class AllApiResponse {
     @SerializedName("totalDealer")
     @Expose
     private String totalDealer;
+    @SerializedName("activeCustomer")
+    @Expose
+    private String activeCustomer;
+    @SerializedName("trialCustomer")
+    @Expose
+    private String trialCustomer;
+    @SerializedName("expiredCustomer")
+    @Expose
+    private String expiredCustomer;
+    @SerializedName("activeLicenses")
+    @Expose
+    private String activeLicenses;
+    @SerializedName("expiringLicenses")
+    @Expose
+    private String expiringLicenses;
+    @SerializedName("expiredLicenses")
+    @Expose
+    private String expiredLicenses;
+    @SerializedName("totalBranches")
+    @Expose
+    private String totalBranches;
+    @SerializedName("totalDevices")
+    @Expose
+    private String totalDevices;
+    @SerializedName("licenseKey")
+    @Expose
+    private String licenseKey;
     @SerializedName("userId")
     @Expose
     private String userId;
@@ -56,6 +83,21 @@ public class AllApiResponse {
     @SerializedName("portionMasterResponse")
     @Expose
     private List<PortionMasterResponse> portionMasterResponse;
+    @SerializedName("comboResponse")
+    @Expose
+    private List<ComboResponse> comboResponseList;
+    @SerializedName("deviceResponse")
+    @Expose
+    private List<DeviceMonitorResponse> deviceResponseList;
+    @SerializedName("invoiceResponse")
+    @Expose
+    private List<InvoiceSaleResponse> invoiceResponseList;
+    @SerializedName("billCount")
+    @Expose
+    private String billCount;
+    @SerializedName("netSales")
+    @Expose
+    private String netSales;
 
 
     public String getStatus() {
@@ -88,6 +130,78 @@ public class AllApiResponse {
 
     public void setTotalDealer(String totalDealer) {
         this.totalDealer = totalDealer;
+    }
+
+    public String getActiveCustomer() {
+        return activeCustomer;
+    }
+
+    public void setActiveCustomer(String activeCustomer) {
+        this.activeCustomer = activeCustomer;
+    }
+
+    public String getTrialCustomer() {
+        return trialCustomer;
+    }
+
+    public void setTrialCustomer(String trialCustomer) {
+        this.trialCustomer = trialCustomer;
+    }
+
+    public String getExpiredCustomer() {
+        return expiredCustomer;
+    }
+
+    public void setExpiredCustomer(String expiredCustomer) {
+        this.expiredCustomer = expiredCustomer;
+    }
+
+    public String getActiveLicenses() {
+        return activeLicenses;
+    }
+
+    public void setActiveLicenses(String activeLicenses) {
+        this.activeLicenses = activeLicenses;
+    }
+
+    public String getExpiringLicenses() {
+        return expiringLicenses;
+    }
+
+    public void setExpiringLicenses(String expiringLicenses) {
+        this.expiringLicenses = expiringLicenses;
+    }
+
+    public String getExpiredLicenses() {
+        return expiredLicenses;
+    }
+
+    public void setExpiredLicenses(String expiredLicenses) {
+        this.expiredLicenses = expiredLicenses;
+    }
+
+    public String getTotalBranches() {
+        return totalBranches;
+    }
+
+    public void setTotalBranches(String totalBranches) {
+        this.totalBranches = totalBranches;
+    }
+
+    public String getTotalDevices() {
+        return totalDevices;
+    }
+
+    public void setTotalDevices(String totalDevices) {
+        this.totalDevices = totalDevices;
+    }
+
+    public String getLicenseKey() {
+        return licenseKey;
+    }
+
+    public void setLicenseKey(String licenseKey) {
+        this.licenseKey = licenseKey;
     }
 
     public String getUserId() {
@@ -184,5 +298,45 @@ public class AllApiResponse {
 
     public void setPortionMasterResponse(List<PortionMasterResponse> portionMasterResponse) {
         this.portionMasterResponse = portionMasterResponse;
+    }
+
+    public List<ComboResponse> getComboResponseList() {
+        return comboResponseList;
+    }
+
+    public void setComboResponseList(List<ComboResponse> comboResponseList) {
+        this.comboResponseList = comboResponseList;
+    }
+
+    public List<DeviceMonitorResponse> getDeviceResponseList() {
+        return deviceResponseList;
+    }
+
+    public void setDeviceResponseList(List<DeviceMonitorResponse> deviceResponseList) {
+        this.deviceResponseList = deviceResponseList;
+    }
+
+    public List<InvoiceSaleResponse> getInvoiceResponseList() {
+        return invoiceResponseList;
+    }
+
+    public void setInvoiceResponseList(List<InvoiceSaleResponse> invoiceResponseList) {
+        this.invoiceResponseList = invoiceResponseList;
+    }
+
+    public String getBillCount() {
+        return billCount;
+    }
+
+    public void setBillCount(String billCount) {
+        this.billCount = billCount;
+    }
+
+    public String getNetSales() {
+        return netSales;
+    }
+
+    public void setNetSales(String netSales) {
+        this.netSales = netSales;
     }
 }

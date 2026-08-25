@@ -775,19 +775,27 @@ if (!function_exists('licence_normalize_contact')) {
 
 if (!function_exists('licence_generate_unique_key')) {
     /**
+     * Secure unique licence key. Format: BW-XXXX-XXXX-XXXX (uppercase alnum).
+     * Legacy callers may pass $length; when $length <= 12 the BW format is used.
+     *
      * @param mysqli $con
-     * @param int $length
+     * @param int $length unused for BW format (kept for backward compatibility)
      * @return string|null
      */
     function licence_generate_unique_key($con, $length = 10)
     {
-        $chars = '0123456789qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM';
+        $chars = '0123456789ABCDEFGHJKLMNPQRSTUVWXYZ'; // no I/O to reduce confusion
         $maxIndex = strlen($chars) - 1;
-        for ($attempt = 0; $attempt < 25; $attempt++) {
-            $key = '';
-            for ($i = 0; $i < $length; $i++) {
-                $key .= $chars[random_int(0, $maxIndex)];
+        for ($attempt = 0; $attempt < 40; $attempt++) {
+            $parts = array();
+            for ($p = 0; $p < 3; $p++) {
+                $segment = '';
+                for ($i = 0; $i < 4; $i++) {
+                    $segment .= $chars[random_int(0, $maxIndex)];
+                }
+                $parts[] = $segment;
             }
+            $key = 'BW-' . implode('-', $parts);
             $exists = db_stmt_scalar_int(
                 $con,
                 'SELECT COUNT(*) AS c FROM `licenses` WHERE `licenseKey`=?',

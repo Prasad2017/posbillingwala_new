@@ -1,5 +1,7 @@
 <?php
 include_once('config.php');
+require_once __DIR__ . '/pos_auth_guard.php';
+
 
 $response = array();
 if($_SERVER['REQUEST_METHOD']=='POST'){
@@ -10,6 +12,9 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
   $categoryDeletedStatus = $_POST['categoryDeletedStatus'];
   $categoryNetworkStatus = $_POST['categoryNetworkStatus'];
   $userId = $_POST['userId'];
+  $__postedUserId = isset($_POST['userId']) ? $_POST['userId'] : (isset($userId) ? $userId : '');
+  pos_require_auth($con, $__postedUserId, isset($response) ? $response : array('status'=>'0','message'=>'Unauthorized'));
+
   $foodTypeId = isset($_POST['foodTypeId']) ? $_POST['foodTypeId'] : '';
   $foodTypeCode = isset($_POST['foodTypeCode']) ? $_POST['foodTypeCode'] : '';
   if ($foodTypeId == '' && $foodTypeCode != '') {

@@ -13,12 +13,12 @@ import android.widget.ArrayAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.textfield.TextInputEditText;
 import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.posbillingwala.admin.Activity.MainActivity;
 import com.posbillingwala.admin.Adapter.PortionAdapter;
@@ -28,21 +28,19 @@ import com.posbillingwala.admin.Model.PortionMasterResponse;
 import com.posbillingwala.admin.Model.ProductPortionResponse;
 import com.posbillingwala.admin.R;
 import com.posbillingwala.admin.Retrofit.Api;
+import com.posbillingwala.admin.databinding.FragmentManageCustomerProductPortionsBinding;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import butterknife.OnClick;
 import cn.pedant.SweetAlert.SweetAlertDialog;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
 @SuppressLint("SetTextI18n, NonConstantResourceId, StaticFieldLeak")
-public class ManageCustomerProductPortions extends Fragment {
+public class ManageCustomerProductPortions extends Fragment implements View.OnClickListener {
 
     public static Activity activity;
     public static RecyclerView portionRecyclerview;
@@ -50,16 +48,7 @@ public class ManageCustomerProductPortions extends Fragment {
     public static TextView noDataFound;
 
     View view;
-    @BindView(R.id.productInfo)
-    TextView productInfo;
-    @BindView(R.id.portionMasterSpinner)
-    MaterialSpinner portionMasterSpinner;
-    @BindView(R.id.portionPrice)
-    TextInputEditText portionPriceEdit;
-    @BindView(R.id.portionSortOrder)
-    TextInputEditText portionSortOrderEdit;
-    @BindView(R.id.portionMasterSection)
-    View portionMasterSection;
+    FragmentManageCustomerProductPortionsBinding binding;
 
     String customerId;
     String productId;
@@ -70,9 +59,9 @@ public class ManageCustomerProductPortions extends Fragment {
     String selectedPortionMasterName;
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        view = inflater.inflate(R.layout.fragment_manage_customer_product_portions, container, false);
-        ButterKnife.bind(this, view);
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        binding = FragmentManageCustomerProductPortionsBinding.inflate(inflater, container, false);
+        view = binding.getRoot();
 
         activity = getActivity();
         MainActivity.title.setText("Product Portions");
@@ -84,12 +73,12 @@ public class ManageCustomerProductPortions extends Fragment {
             productName = bundle.getString("productName");
         }
 
-        productInfo.setText("Product: " + productName);
-        portionRecyclerview = view.findViewById(R.id.portionRecyclerview);
-        portionListCardView = view.findViewById(R.id.portionListCardView);
-        noDataFound = view.findViewById(R.id.noDataFound);
+        binding.productInfo.setText("Product: " + productName);
+        portionRecyclerview = binding.portionRecyclerview;
+        portionListCardView = binding.portionListCardView;
+        noDataFound = binding.noDataFound;
 
-        portionMasterSpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
+        binding.portionMasterSpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
             @Override
             public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
                 if (portionMasterIdList != null && position >= 0 && position < portionMasterIdList.length) {
@@ -118,17 +107,20 @@ public class ManageCustomerProductPortions extends Fragment {
             return false;
         });
 
+        binding.addPortion.setOnClickListener(this);
+        binding.managePortionMaster.setOnClickListener(this);
+
         return view;
     }
 
-    @OnClick({R.id.addPortion, R.id.managePortionMaster})
+    @Override
     public void onClick(View view) {
         if (view.getId() == R.id.addPortion) {
             if (selectedPortionMasterId == null || selectedPortionMasterId.isEmpty()) {
                 Toast.makeText(activity, "Please select a portion master", Toast.LENGTH_SHORT).show();
                 return;
             }
-            if (portionPriceEdit.getText().toString().trim().length() == 0) {
+            if (binding.portionPrice.getText().toString().trim().length() == 0) {
                 Toast.makeText(activity, "Please enter portion price", Toast.LENGTH_SHORT).show();
                 return;
             }
@@ -157,7 +149,7 @@ public class ManageCustomerProductPortions extends Fragment {
         pDialog.setCancelable(false);
         pDialog.show();
 
-        String sortOrder = portionSortOrderEdit.getText().toString().trim();
+        String sortOrder = binding.portionSortOrder.getText().toString().trim();
         if (sortOrder.length() == 0) {
             sortOrder = "0";
         }
@@ -166,7 +158,7 @@ public class ManageCustomerProductPortions extends Fragment {
                 customerId,
                 productId,
                 selectedPortionMasterName,
-                portionPriceEdit.getText().toString().trim(),
+                binding.portionPrice.getText().toString().trim(),
                 sortOrder,
                 getRandomString(10),
                 selectedPortionMasterId);
@@ -175,7 +167,7 @@ public class ManageCustomerProductPortions extends Fragment {
             public void onResponse(Call<AllApiResponse> call, Response<AllApiResponse> response) {
                 if (response.isSuccessful() && response.body() != null && "1".equalsIgnoreCase(response.body().getStatus())) {
                     Toast.makeText(activity, response.body().getMessage(), Toast.LENGTH_SHORT).show();
-                    portionPriceEdit.setText("");
+                    binding.portionPrice.setText("");
                     getPortionList();
                 } else if (response.body() != null) {
                     Toast.makeText(activity, response.body().getMessage(), Toast.LENGTH_SHORT).show();
@@ -199,7 +191,7 @@ public class ManageCustomerProductPortions extends Fragment {
                 if (response.isSuccessful() && response.body() != null) {
                     List<PortionMasterResponse> list = response.body().getPortionMasterResponse();
                     if (list != null && !list.isEmpty()) {
-                        portionMasterSection.setVisibility(View.VISIBLE);
+                        binding.portionMasterSection.setVisibility(View.VISIBLE);
                         portionMasterIdList = new String[list.size()];
                         portionMasterNameList = new String[list.size()];
                         for (int i = 0; i < list.size(); i++) {
@@ -208,11 +200,11 @@ public class ManageCustomerProductPortions extends Fragment {
                         }
                         ArrayAdapter<String> adapter = new ArrayAdapter<>(activity, android.R.layout.simple_spinner_item, portionMasterNameList);
                         adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
-                        portionMasterSpinner.setAdapter(adapter);
+                        binding.portionMasterSpinner.setAdapter(adapter);
                         selectedPortionMasterId = portionMasterIdList[0];
                         selectedPortionMasterName = portionMasterNameList[0];
                     } else {
-                        portionMasterSection.setVisibility(View.GONE);
+                        binding.portionMasterSection.setVisibility(View.GONE);
                         selectedPortionMasterId = null;
                         selectedPortionMasterName = null;
                         Toast.makeText(activity, "Please add portion masters first", Toast.LENGTH_SHORT).show();
@@ -243,11 +235,11 @@ public class ManageCustomerProductPortions extends Fragment {
                         portionRecyclerview.setAdapter(adapter);
                         portionListCardView.setVisibility(View.VISIBLE);
                         noDataFound.setVisibility(View.GONE);
-                        portionSortOrderEdit.setText(String.valueOf(list.size()));
+                        binding.portionSortOrder.setText(String.valueOf(list.size()));
                     } else {
                         portionListCardView.setVisibility(View.GONE);
                         noDataFound.setVisibility(View.VISIBLE);
-                        portionSortOrderEdit.setText("0");
+                        binding.portionSortOrder.setText("0");
                     }
                 }
             }

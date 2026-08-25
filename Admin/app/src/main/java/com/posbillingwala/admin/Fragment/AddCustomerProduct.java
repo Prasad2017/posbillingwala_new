@@ -16,9 +16,9 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
-import com.google.android.material.textfield.TextInputEditText;
 import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.posbillingwala.admin.Activity.MainActivity;
 import com.posbillingwala.admin.Extra.DetectConnection;
@@ -29,28 +29,23 @@ import com.posbillingwala.admin.Model.ProductResponse;
 import com.posbillingwala.admin.Model.ProductSubcategoryResponse;
 import com.posbillingwala.admin.R;
 import com.posbillingwala.admin.Retrofit.Api;
+import com.posbillingwala.admin.databinding.FragmentAddCustomerProductBinding;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import butterknife.BindViews;
-import butterknife.ButterKnife;
-import butterknife.OnClick;
 import cn.pedant.SweetAlert.SweetAlertDialog;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
 @SuppressLint("SetTextI18n, NonConstantResourceId, UseCompatLoadingForDrawables, StaticFieldLeak")
-public class AddCustomerProduct extends Fragment {
+public class AddCustomerProduct extends Fragment implements View.OnClickListener {
 
     public static Activity activity;
     View view;
-    @BindViews({R.id.categorySpinner, R.id.unitSpinner, R.id.subcategorySpinner})
-    List<MaterialSpinner> materialSpinners;
-    @BindViews({R.id.productName, R.id.productPrice, R.id.productCGST, R.id.productSGST})
-    List<TextInputEditText> textInputEditTexts;
+    FragmentAddCustomerProductBinding binding;
     String[] categoryIdList, categoryNameList, unitNameList;
     String[] subcategoryIdList, subcategoryNameList;
     String customerId, categoryId, categoryName, unitName, subcategoryId;
@@ -58,10 +53,11 @@ public class AddCustomerProduct extends Fragment {
     ProductPortionSectionHelper portionSectionHelper;
 
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        view = inflater.inflate(R.layout.fragment_add_customer_product, container, false);
-        ButterKnife.bind(this, view);
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        binding = FragmentAddCustomerProductBinding.inflate(inflater, container, false);
+        view = binding.getRoot();
 
         activity = getActivity();
         MainActivity.title.setText("Add Product");
@@ -71,8 +67,7 @@ public class AddCustomerProduct extends Fragment {
             customerId = bundle.getString("customerId");
         }
 
-        View portionSection = view.findViewById(R.id.productPortionSectionInclude);
-        portionSectionHelper = new ProductPortionSectionHelper(activity, portionSection);
+        portionSectionHelper = new ProductPortionSectionHelper(activity, binding.productPortionSectionInclude.getRoot());
         portionSectionHelper.setCustomerId(customerId);
         portionSectionHelper.setOnPortionMasterLinkClick(this::openPortionMaster);
 
@@ -103,9 +98,9 @@ public class AddCustomerProduct extends Fragment {
             }
         });
 
-        textInputEditTexts.get(0).setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
+        binding.productName.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
 
-        materialSpinners.get(0).setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
+        binding.categorySpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
             @Override
             public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
                 categoryId = categoryIdList[position];
@@ -114,7 +109,7 @@ public class AddCustomerProduct extends Fragment {
             }
         });
 
-        materialSpinners.get(2).setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
+        binding.subcategorySpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
             @Override
             public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
                 if (subcategoryIdList != null && position >= 0 && position < subcategoryIdList.length) {
@@ -127,19 +122,19 @@ public class AddCustomerProduct extends Fragment {
         try {
             final ArrayAdapter adapter = new ArrayAdapter(activity, android.R.layout.simple_spinner_item, unitNameList);
             adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
-            materialSpinners.get(1).setAdapter(adapter);
+            binding.unitSpinner.setAdapter(adapter);
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        materialSpinners.get(1).setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
+        binding.unitSpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
             @Override
             public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
                 unitName = unitNameList[position];
             }
         });
 
-        materialSpinners.get(0).setOnTouchListener(new View.OnTouchListener() {
+        binding.categorySpinner.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 InputMethodManager imm = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -148,7 +143,7 @@ public class AddCustomerProduct extends Fragment {
             }
         });
 
-        materialSpinners.get(1).setOnTouchListener(new View.OnTouchListener() {
+        binding.unitSpinner.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 InputMethodManager imm = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -156,6 +151,8 @@ public class AddCustomerProduct extends Fragment {
                 return false;
             }
         });
+
+        binding.addProduct.setOnClickListener(this);
 
         return view;
 
@@ -171,12 +168,12 @@ public class AddCustomerProduct extends Fragment {
         ((MainActivity) activity).loadFragment(fragment, true);
     }
 
-    @OnClick({R.id.addProduct})
+    @Override
     public void onClick(View view) {
         if (view.getId() == R.id.addProduct) {
             if (categoryId != null) {
-                if (textInputEditTexts.get(0).getText().toString().length() > 0) {
-                    String price = textInputEditTexts.get(1).getText().toString().trim();
+                if (binding.productName.getText().toString().length() > 0) {
+                    String price = binding.productPrice.getText().toString().trim();
                     boolean hasPortions = portionSectionHelper != null && portionSectionHelper.hasPortions();
                     if (price.length() > 0 || hasPortions) {
                         if (unitName != null) {
@@ -205,14 +202,14 @@ public class AddCustomerProduct extends Fragment {
         pDialog.show();
 
         String productNetworkStatus = getRandomString(10);
-        String price = textInputEditTexts.get(1).getText().toString().trim();
+        String price = binding.productPrice.getText().toString().trim();
         if (price.isEmpty() && portionSectionHelper.hasPortions()) {
             price = "0";
         }
 
         Call<AllApiResponse> call = Api.getClient().saveProduct(customerId, categoryId, categoryName,
-                textInputEditTexts.get(0).getText().toString(), price,
-                unitName, textInputEditTexts.get(2).getText().toString(), textInputEditTexts.get(3).getText().toString(),
+                binding.productName.getText().toString(), price,
+                unitName, binding.productCGST.getText().toString(), binding.productSGST.getText().toString(),
                 productNetworkStatus,
                 subcategoryId != null ? subcategoryId : "");
         call.enqueue(new Callback<AllApiResponse>() {
@@ -270,7 +267,7 @@ public class AddCustomerProduct extends Fragment {
                             }
                         }
                         if (productId == null) {
-                            String name = textInputEditTexts.get(0).getText().toString().trim();
+                            String name = binding.productName.getText().toString().trim();
                             for (int i = products.size() - 1; i >= 0; i--) {
                                 if (name.equalsIgnoreCase(products.get(i).getProductName())) {
                                     productId = products.get(i).getProductId();
@@ -367,7 +364,7 @@ public class AddCustomerProduct extends Fragment {
                         try {
                             final ArrayAdapter adapter = new ArrayAdapter(activity, android.R.layout.simple_spinner_item, categoryNameList);
                             adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
-                            materialSpinners.get(0).setAdapter(adapter);
+                            binding.categorySpinner.setAdapter(adapter);
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -405,16 +402,16 @@ public class AddCustomerProduct extends Fragment {
                         }
                         ArrayAdapter<String> adapter = new ArrayAdapter<>(activity, android.R.layout.simple_spinner_item, subcategoryNameList);
                         adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
-                        materialSpinners.get(2).setAdapter(adapter);
-                        materialSpinners.get(2).setSelectedIndex(0);
+                        binding.subcategorySpinner.setAdapter(adapter);
+                        binding.subcategorySpinner.setSelectedIndex(0);
                         subcategoryId = subcategoryIdList[0];
                     } else {
                         subcategoryIdList = new String[]{""};
                         subcategoryNameList = new String[]{"None"};
                         ArrayAdapter<String> adapter = new ArrayAdapter<>(activity, android.R.layout.simple_spinner_item, subcategoryNameList);
                         adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
-                        materialSpinners.get(2).setAdapter(adapter);
-                        materialSpinners.get(2).setSelectedIndex(0);
+                        binding.subcategorySpinner.setAdapter(adapter);
+                        binding.subcategorySpinner.setSelectedIndex(0);
                         subcategoryId = "";
                     }
                 }

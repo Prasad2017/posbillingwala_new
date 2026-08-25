@@ -3,6 +3,8 @@
  * Combo master upsert — separate from products. Idempotent on comboNetworkStatus.
  */
 include_once('config.php');
+require_once __DIR__ . '/pos_auth_guard.php';
+
 require_once __DIR__ . '/db_prepared.php';
 
 header('Content-Type: application/json; charset=utf-8');
@@ -16,6 +18,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $userId = isset($_POST['userId']) ? trim((string) $_POST['userId']) : '';
+  $__postedUserId = isset($_POST['userId']) ? $_POST['userId'] : (isset($userId) ? $userId : '');
+  pos_require_auth($con, $__postedUserId, isset($response) ? $response : array('status'=>'0','message'=>'Unauthorized'));
+
 $comboName = isset($_POST['comboName']) ? trim((string) $_POST['comboName']) : '';
 $comboCode = isset($_POST['comboCode']) ? trim((string) $_POST['comboCode']) : '';
 $comboPrice = isset($_POST['comboPrice']) ? trim((string) $_POST['comboPrice']) : '';

@@ -13,12 +13,12 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.textfield.TextInputEditText;
 import com.posbillingwala.admin.Activity.MainActivity;
 import com.posbillingwala.admin.Adapter.PortionMasterAdapter;
 import com.posbillingwala.admin.Extra.DetectConnection;
@@ -26,21 +26,19 @@ import com.posbillingwala.admin.Model.AllApiResponse;
 import com.posbillingwala.admin.Model.PortionMasterResponse;
 import com.posbillingwala.admin.R;
 import com.posbillingwala.admin.Retrofit.Api;
+import com.posbillingwala.admin.databinding.FragmentAddCustomerPortionMasterBinding;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import butterknife.OnClick;
 import cn.pedant.SweetAlert.SweetAlertDialog;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
 @SuppressLint("SetTextI18n, NonConstantResourceId, StaticFieldLeak")
-public class AddCustomerPortionMaster extends Fragment {
+public class AddCustomerPortionMaster extends Fragment implements View.OnClickListener {
 
     public static Activity activity;
     public static String customerId;
@@ -49,17 +47,16 @@ public class AddCustomerPortionMaster extends Fragment {
     public static TextView noDataFound;
 
     View view;
-    @BindView(R.id.portionMasterName)
-    TextInputEditText portionMasterNameEdit;
+    FragmentAddCustomerPortionMasterBinding binding;
 
     String returnTo;
     String productId;
     String productName;
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        view = inflater.inflate(R.layout.fragment_add_customer_portion_master, container, false);
-        ButterKnife.bind(this, view);
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        binding = FragmentAddCustomerPortionMasterBinding.inflate(inflater, container, false);
+        view = binding.getRoot();
 
         activity = getActivity();
         MainActivity.title.setText("Portion Master");
@@ -72,10 +69,10 @@ public class AddCustomerPortionMaster extends Fragment {
             productName = bundle.getString("productName");
         }
 
-        portionMasterNameEdit.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
-        portionMasterRecyclerview = view.findViewById(R.id.portionMasterRecyclerview);
-        portionMasterListCardView = view.findViewById(R.id.portionMasterListCardView);
-        noDataFound = view.findViewById(R.id.noDataFound);
+        binding.portionMasterName.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
+        portionMasterRecyclerview = binding.portionMasterRecyclerview;
+        portionMasterListCardView = binding.portionMasterListCardView;
+        noDataFound = binding.noDataFound;
 
         MainActivity.back.setOnClickListener(v -> navigateBack());
 
@@ -88,6 +85,8 @@ public class AddCustomerPortionMaster extends Fragment {
             }
             return false;
         });
+
+        binding.addPortionMaster.setOnClickListener(this);
 
         return view;
     }
@@ -124,13 +123,15 @@ public class AddCustomerPortionMaster extends Fragment {
         }
     }
 
-    @OnClick(R.id.addPortionMaster)
-    public void onAddPortionMaster() {
-        if (portionMasterNameEdit.getText().toString().trim().length() == 0) {
-            Toast.makeText(activity, "Please enter portion name", Toast.LENGTH_SHORT).show();
-            return;
+    @Override
+    public void onClick(View view) {
+        if (view.getId() == R.id.addPortionMaster) {
+            if (binding.portionMasterName.getText().toString().trim().length() == 0) {
+                Toast.makeText(activity, "Please enter portion name", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            addPortionMaster();
         }
-        addPortionMaster();
     }
 
     private void addPortionMaster() {
@@ -142,7 +143,7 @@ public class AddCustomerPortionMaster extends Fragment {
 
         Call<AllApiResponse> call = Api.getClient().savePortionMaster(
                 customerId,
-                portionMasterNameEdit.getText().toString().trim(),
+                binding.portionMasterName.getText().toString().trim(),
                 getRandomString(10),
                 "0");
         call.enqueue(new Callback<AllApiResponse>() {
@@ -150,7 +151,7 @@ public class AddCustomerPortionMaster extends Fragment {
             public void onResponse(Call<AllApiResponse> call, Response<AllApiResponse> response) {
                 if (response.isSuccessful() && response.body() != null && "1".equalsIgnoreCase(response.body().getStatus())) {
                     Toast.makeText(activity, response.body().getMessage(), Toast.LENGTH_SHORT).show();
-                    portionMasterNameEdit.setText("");
+                    binding.portionMasterName.setText("");
                     getPortionMasterList();
                 } else if (response.body() != null) {
                     Toast.makeText(activity, response.body().getMessage(), Toast.LENGTH_SHORT).show();

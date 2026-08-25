@@ -44,11 +44,24 @@
                 android:textSize="17sp" />
 
             <ImageView
+                android:id="@+id/logout"
                 android:layout_width="36dp"
                 android:layout_height="36dp"
                 android:layout_alignParentEnd="true"
                 android:layout_centerVertical="true"
                 android:layout_marginEnd="12dp"
+                android:contentDescription="@string/logout"
+                android:padding="6dp"
+                android:src="@drawable/ic_logout"
+                app:tint="@color/white" />
+
+            <ImageView
+                android:id="@+id/brandLogo"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_centerVertical="true"
+                android:layout_marginEnd="8dp"
+                android:layout_toStartOf="@+id/logout"
                 android:contentDescription="@string/app_name"
                 android:scaleType="fitCenter"
                 android:src="@drawable/app_logo" />

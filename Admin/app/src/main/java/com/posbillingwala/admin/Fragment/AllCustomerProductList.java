@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -23,11 +24,11 @@ import com.posbillingwala.admin.Model.AllApiResponse;
 import com.posbillingwala.admin.Model.ProductResponse;
 import com.posbillingwala.admin.R;
 import com.posbillingwala.admin.Retrofit.Api;
+import com.posbillingwala.admin.databinding.FragmentAllCustomerProductListBinding;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import butterknife.ButterKnife;
 import cn.pedant.SweetAlert.SweetAlertDialog;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -43,6 +44,7 @@ public class AllCustomerProductList extends Fragment {
     public static TextView noDataFound;
     public static String customerId;
     View view;
+    FragmentAllCustomerProductListBinding binding;
 
     public static void getProductList() {
 
@@ -90,10 +92,9 @@ public class AllCustomerProductList extends Fragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        view = inflater.inflate(R.layout.fragment_all_customer_product_list, container, false);
-        ButterKnife.bind(this, view);
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        binding = FragmentAllCustomerProductListBinding.inflate(inflater, container, false);
+        view = binding.getRoot();
         activity = getActivity();
 
         // Fragment locked in landscape screen orientation
@@ -139,8 +140,8 @@ public class AllCustomerProductList extends Fragment {
     }
 
     private void initViews() {
-        productRecyclerView = view.findViewById(R.id.productRecyclerView);
-        noDataFound = view.findViewById(R.id.noDataFound);
+        productRecyclerView = binding.productRecyclerView;
+        noDataFound = binding.noDataFound;
     }
 
     public void onStart() {

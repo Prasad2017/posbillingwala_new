@@ -402,6 +402,7 @@
     <string name="toast_you_have_not_selected_dinein_please_cont">तुम्ही डाइन-इन निवडले नाही. कृपया तुमच्या मालकाशी संपर्क करा</string>
     <string name="toast_you_have_not_selected_fast_billing_pleas">तुम्ही फास्ट बिलिंग निवडले नाही. कृपया तुमच्या मालकाशी संपर्क करा</string>
     <string name="toast_you_have_not_selected_take_away_please_c">तुम्ही टेक अवे निवडले नाही. कृपया तुमच्या मालकाशी संपर्क करा</string>
+    <string name="toast_you_have_not_selected_mess_please_contact">तुम्ही मेस निवडले नाही. कृपया तुमच्या मालकाशी संपर्क करा</string>
     <string name="toast_your_offline_data_will_be_send_to_the_cl">तुमचा ऑफलाइन डेटा क्लाउडवर पाठवला जाईल.</string>
     <string name="ui_add_combo">कॉम्बो जोडा</string>
     <string name="ui_add_combo_item">कॉम्बो आयटम जोडा</string>

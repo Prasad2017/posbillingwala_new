@@ -4,11 +4,11 @@ import android.app.Dialog;
 import android.content.Context;
 import android.graphics.drawable.ColorDrawable;
 import android.net.ConnectivityManager;
-import android.view.View;
+import android.view.LayoutInflater;
 import android.view.Window;
 import android.view.WindowManager;
 
-import com.posbillingwala.admin.R;
+import com.posbillingwala.admin.databinding.DialogWarningBinding;
 
 
 public class DetectConnection {
@@ -27,7 +27,8 @@ public class DetectConnection {
 
         final Dialog dialog = new Dialog(context);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE); // before
-        dialog.setContentView(R.layout.dialog_warning);
+        DialogWarningBinding binding = DialogWarningBinding.inflate(LayoutInflater.from(context));
+        dialog.setContentView(binding.getRoot());
         dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
         dialog.setCancelable(false);
 
@@ -36,14 +37,9 @@ public class DetectConnection {
         lp.width = WindowManager.LayoutParams.MATCH_PARENT;
         lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
 
-        dialog.findViewById(R.id.retry).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (checkInternetConnection(context)) {
-                    dialog.dismiss();
-                } else {
-
-                }
+        binding.retry.setOnClickListener(v -> {
+            if (checkInternetConnection(context)) {
+                dialog.dismiss();
             }
         });
 

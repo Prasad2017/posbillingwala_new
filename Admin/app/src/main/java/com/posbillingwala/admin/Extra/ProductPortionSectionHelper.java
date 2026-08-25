@@ -4,21 +4,18 @@ import android.app.Activity;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.textfield.TextInputEditText;
 import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.posbillingwala.admin.Adapter.ProductPortionDraftAdapter;
 import com.posbillingwala.admin.Model.AllApiResponse;
 import com.posbillingwala.admin.Model.PortionMasterResponse;
 import com.posbillingwala.admin.Model.ProductPortionDraft;
 import com.posbillingwala.admin.Model.ProductPortionResponse;
-import com.posbillingwala.admin.R;
 import com.posbillingwala.admin.Retrofit.Api;
+import com.posbillingwala.admin.databinding.IncludeProductPortionSectionBinding;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,16 +35,7 @@ public class ProductPortionSectionHelper {
     }
 
     private final Activity activity;
-    private final View root;
-    private final TextView managePortionMasterLink;
-    private final TextView portionSectionHint;
-    private final View portionMasterPickerSection;
-    private final TextView noPortionMasterHint;
-    private final MaterialSpinner portionMasterSpinner;
-    private final TextInputEditText inlinePortionPrice;
-    private final TextView addInlinePortion;
-    private final View inlinePortionListCard;
-    private final RecyclerView inlinePortionRecyclerview;
+    private final IncludeProductPortionSectionBinding binding;
 
     private final List<ProductPortionDraft> drafts = new ArrayList<>();
     private ProductPortionDraftAdapter adapter;
@@ -61,29 +49,20 @@ public class ProductPortionSectionHelper {
 
     public ProductPortionSectionHelper(Activity activity, View root) {
         this.activity = activity;
-        this.root = root;
-        this.managePortionMasterLink = root.findViewById(R.id.managePortionMasterLink);
-        this.portionSectionHint = root.findViewById(R.id.portionSectionHint);
-        this.portionMasterPickerSection = root.findViewById(R.id.portionMasterPickerSection);
-        this.noPortionMasterHint = root.findViewById(R.id.noPortionMasterHint);
-        this.portionMasterSpinner = root.findViewById(R.id.portionMasterSpinner);
-        this.inlinePortionPrice = root.findViewById(R.id.inlinePortionPrice);
-        this.addInlinePortion = root.findViewById(R.id.addInlinePortion);
-        this.inlinePortionListCard = root.findViewById(R.id.inlinePortionListCard);
-        this.inlinePortionRecyclerview = root.findViewById(R.id.inlinePortionRecyclerview);
+        this.binding = IncludeProductPortionSectionBinding.bind(root);
 
         adapter = new ProductPortionDraftAdapter(activity, drafts, this::removeDraftAt);
-        inlinePortionRecyclerview.setLayoutManager(new GridLayoutManager(activity, 1));
-        inlinePortionRecyclerview.setAdapter(adapter);
+        binding.inlinePortionRecyclerview.setLayoutManager(new GridLayoutManager(activity, 1));
+        binding.inlinePortionRecyclerview.setAdapter(adapter);
 
-        addInlinePortion.setOnClickListener(v -> addDraftFromForm());
-        managePortionMasterLink.setOnClickListener(v -> {
+        binding.addInlinePortion.setOnClickListener(v -> addDraftFromForm());
+        binding.managePortionMasterLink.setOnClickListener(v -> {
             if (onPortionMasterLinkClick != null) {
                 onPortionMasterLinkClick.run();
             }
         });
 
-        portionMasterSpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
+        binding.portionMasterSpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
             @Override
             public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
                 if (portionMasterIdList != null && position >= 0 && position < portionMasterIdList.length) {
@@ -153,9 +132,9 @@ public class ProductPortionSectionHelper {
 
     public void updatePriceHint() {
         if (hasPortions()) {
-            portionSectionHint.setText("Product price optional when portions exist (empty/0 allowed)");
+            binding.portionSectionHint.setText("Product price optional when portions exist (empty/0 allowed)");
         } else {
-            portionSectionHint.setText("Product price required if no portions");
+            binding.portionSectionHint.setText("Product price required if no portions");
         }
     }
 
@@ -184,15 +163,15 @@ public class ProductPortionSectionHelper {
 
     private void setupPortionMasterSpinner() {
         if (portionMasterList.isEmpty()) {
-            portionMasterPickerSection.setVisibility(View.GONE);
-            noPortionMasterHint.setVisibility(View.VISIBLE);
+            binding.portionMasterPickerSection.setVisibility(View.GONE);
+            binding.noPortionMasterHint.setVisibility(View.VISIBLE);
             selectedPortionMasterId = null;
             selectedPortionMasterName = null;
             return;
         }
 
-        noPortionMasterHint.setVisibility(View.GONE);
-        portionMasterPickerSection.setVisibility(View.VISIBLE);
+        binding.noPortionMasterHint.setVisibility(View.GONE);
+        binding.portionMasterPickerSection.setVisibility(View.VISIBLE);
         portionMasterIdList = new String[portionMasterList.size()];
         portionMasterNameList = new String[portionMasterList.size()];
         for (int i = 0; i < portionMasterList.size(); i++) {
@@ -203,7 +182,7 @@ public class ProductPortionSectionHelper {
         ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(
                 activity, android.R.layout.simple_spinner_item, portionMasterNameList);
         spinnerAdapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
-        portionMasterSpinner.setAdapter(spinnerAdapter);
+        binding.portionMasterSpinner.setAdapter(spinnerAdapter);
         selectedPortionMasterId = portionMasterIdList[0];
         selectedPortionMasterName = portionMasterNameList[0];
     }
@@ -213,8 +192,8 @@ public class ProductPortionSectionHelper {
             Toast.makeText(activity, "Please add portion masters first", Toast.LENGTH_SHORT).show();
             return;
         }
-        String price = inlinePortionPrice.getText() != null
-                ? inlinePortionPrice.getText().toString().trim() : "";
+        String price = binding.inlinePortionPrice.getText() != null
+                ? binding.inlinePortionPrice.getText().toString().trim() : "";
         if (price.isEmpty()) {
             Toast.makeText(activity, "Please enter portion price", Toast.LENGTH_SHORT).show();
             return;
@@ -225,7 +204,7 @@ public class ProductPortionSectionHelper {
                 draft.setPortionPrice(price);
                 draft.setPortionName(selectedPortionMasterName);
                 Toast.makeText(activity, "Portion price updated", Toast.LENGTH_SHORT).show();
-                inlinePortionPrice.setText("");
+                binding.inlinePortionPrice.setText("");
                 refreshDraftList();
                 updatePriceHint();
                 return;
@@ -239,7 +218,7 @@ public class ProductPortionSectionHelper {
                 drafts.size() + 1);
         draft.setPortionNetworkStatus(randomKey(10));
         drafts.add(draft);
-        inlinePortionPrice.setText("");
+        binding.inlinePortionPrice.setText("");
         Toast.makeText(activity, "Portion added", Toast.LENGTH_SHORT).show();
         refreshDraftList();
         updatePriceHint();
@@ -258,7 +237,7 @@ public class ProductPortionSectionHelper {
 
     private void refreshDraftList() {
         adapter.notifyDataSetChanged();
-        inlinePortionListCard.setVisibility(drafts.isEmpty() ? View.GONE : View.VISIBLE);
+        binding.inlinePortionListCard.setVisibility(drafts.isEmpty() ? View.GONE : View.VISIBLE);
     }
 
     public void savePortionsForProduct(String productId, SaveCallback callback) {

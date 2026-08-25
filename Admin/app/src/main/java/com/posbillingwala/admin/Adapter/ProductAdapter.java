@@ -8,7 +8,6 @@ import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -21,13 +20,11 @@ import com.posbillingwala.admin.Fragment.ManageCustomerProductPortions;
 import com.posbillingwala.admin.Fragment.UpdateProduct;
 import com.posbillingwala.admin.Model.AllApiResponse;
 import com.posbillingwala.admin.Model.ProductResponse;
-import com.posbillingwala.admin.R;
 import com.posbillingwala.admin.Retrofit.Api;
+import com.posbillingwala.admin.databinding.ProductListBinding;
 
 import java.util.List;
 
-import butterknife.BindViews;
-import butterknife.ButterKnife;
 import cn.pedant.SweetAlert.SweetAlertDialog;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -47,8 +44,8 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.MyViewHo
     @NonNull
     @Override
     public MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.product_list, parent, false);
-        return new MyViewHolder(view);
+        ProductListBinding binding = ProductListBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false);
+        return new MyViewHolder(binding);
     }
 
     @Override
@@ -57,30 +54,30 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.MyViewHo
         ProductResponse productResponse = productResponseList.get(position);
 
         String productCategory = "<b>Product Category</b>: " + productResponse.getCategoryName();
-        holder.textViews.get(0).setText(Html.fromHtml(productCategory));
+        holder.binding.productCategory.setText(Html.fromHtml(productCategory));
         String productName = "<b>Product Name</b>: " + productResponse.getProductName();
-        holder.textViews.get(1).setText(Html.fromHtml(productName));
+        holder.binding.productName.setText(Html.fromHtml(productName));
         if (productResponse.getSubcategoryName() != null && productResponse.getSubcategoryName().length() > 0) {
             String subcategoryLine = "<b>Subcategory</b>: " + productResponse.getSubcategoryName();
-            holder.textViews.get(1).setText(Html.fromHtml(productName + "<br>" + subcategoryLine));
+            holder.binding.productName.setText(Html.fromHtml(productName + "<br>" + subcategoryLine));
         }
         String productPrice = "<b>Product Price(Without GST)</b>: " + MainActivity.currency + " " + productResponse.getProductPrice();
-        holder.textViews.get(2).setText(Html.fromHtml(productPrice));
+        holder.binding.productPrice.setText(Html.fromHtml(productPrice));
         String productUnit = "<b>Product Unit</b>: " + productResponse.getProductUnit();
-        holder.textViews.get(3).setText(Html.fromHtml(productUnit));
+        holder.binding.productUnit.setText(Html.fromHtml(productUnit));
         String productCGST = "<b>Product CGST</b>: " + productResponse.getProductCGST();
-        holder.textViews.get(4).setText(Html.fromHtml(productCGST));
+        holder.binding.productCGST.setText(Html.fromHtml(productCGST));
         String productSGST = "<b>Product SGST</b>: " + productResponse.getProductSGST();
-        holder.textViews.get(5).setText(Html.fromHtml(productSGST));
+        holder.binding.productSGST.setText(Html.fromHtml(productSGST));
 
-        holder.productActions.get(0).setOnClickListener(new View.OnClickListener() {
+        holder.binding.deleteProduct.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 deleteProductDialog(productResponse.getProductId());
             }
         });
 
-        holder.productActions.get(1).setOnClickListener(new View.OnClickListener() {
+        holder.binding.updateProduct.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 UpdateProduct updateProduct = new UpdateProduct();
@@ -92,7 +89,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.MyViewHo
             }
         });
 
-        holder.productActions.get(2).setOnClickListener(new View.OnClickListener() {
+        holder.binding.managePortions.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 ManageCustomerProductPortions fragment = new ManageCustomerProductPortions();
@@ -174,16 +171,12 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.MyViewHo
         return productResponseList.size();
     }
 
-    public class MyViewHolder extends RecyclerView.ViewHolder {
+    public static class MyViewHolder extends RecyclerView.ViewHolder {
+        private final ProductListBinding binding;
 
-        @BindViews({R.id.productCategory, R.id.productName, R.id.productPrice, R.id.productUnit, R.id.productCGST, R.id.productSGST})
-        List<TextView> textViews;
-        @BindViews({R.id.deleteProduct, R.id.updateProduct, R.id.managePortions})
-        List<TextView> productActions;
-
-        public MyViewHolder(@NonNull View itemView) {
-            super(itemView);
-            ButterKnife.bind(this, itemView);
+        public MyViewHolder(@NonNull ProductListBinding binding) {
+            super(binding.getRoot());
+            this.binding = binding;
         }
     }
 }
