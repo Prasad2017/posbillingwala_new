@@ -14,8 +14,8 @@ android {
         applicationId "com.pos_billingwala"
         minSdk 26
         targetSdk 37
-        versionCode 68
-        versionName "2.0.52"
+        versionCode 69
+        versionName "2.0.53"
         multiDexEnabled true
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         // P5-4: same public host as Owner/Dealer/Admin (must share MySQL with those apps)
