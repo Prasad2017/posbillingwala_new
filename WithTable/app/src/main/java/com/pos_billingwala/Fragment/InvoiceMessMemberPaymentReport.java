@@ -17,7 +17,7 @@ import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.InvoiceMessMemberPaymentAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ListLoader;
-import com.pos_billingwala.Extra.SimpleDividerItemDecoration;
+import com.pos_billingwala.Extra.ReportCursorHelper;
 import com.pos_billingwala.Model.MemberResponse;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentInvoiceMessMemberPaymentReportBinding;
@@ -99,15 +99,14 @@ public class InvoiceMessMemberPaymentReport extends Fragment implements View.OnC
 
                 float pendingAmount = 0, paidAmount = 0;
                 for (MemberResponse memberResponse : memberResponseList) {
-                    paidAmount += Float.parseFloat(memberResponse.getPaymentPaidAmount());
+                    paidAmount += ReportCursorHelper.parseAmount(memberResponse.getPaymentPaidAmount());
                 }
 
-                pendingAmount = Float.parseFloat(memberResponseList.get(0).getPaymentMessAmount()) - paidAmount;
+                pendingAmount = ReportCursorHelper.parseAmount(memberResponseList.get(0).getPaymentMessAmount()) - paidAmount;
                 binding.pendingAmount.setText(MainActivity.currencyName + " " + pendingAmount);
 
                 InvoiceMessMemberPaymentAdapter adapter = new InvoiceMessMemberPaymentAdapter(activity, memberResponseList);
                 binding.recyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
-                binding.recyclerView.addItemDecoration(new SimpleDividerItemDecoration(activity));
                 binding.recyclerView.setAdapter(adapter);
                 adapter.notifyDataSetChanged();
                 // adapter.notifyItemInserted(memberResponseList.size() - 1);

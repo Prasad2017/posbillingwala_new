@@ -16,9 +16,10 @@ import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.InvoiceMessListAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ListLoader;
+import com.pos_billingwala.Extra.ReportUiHelper;
 import com.pos_billingwala.Model.MemberResponse;
 import com.pos_billingwala.R;
-import com.pos_billingwala.databinding.FragmentInvoiceMessMemberReportListBinding;
+import com.pos_billingwala.databinding.FragmentOperationalReportBinding;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,18 +34,24 @@ public class InvoiceMessMemberReportList extends Fragment implements View.OnClic
     POSBillingWalaDatabase posBillingWalaDatabase;
     List<MemberResponse> memberResponseList = new ArrayList<>();
     String memberId;
-    FragmentInvoiceMessMemberReportListBinding binding;
+    FragmentOperationalReportBinding binding;
 
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        binding = FragmentInvoiceMessMemberReportListBinding.inflate(inflater, container, false);
-        view = binding.getRoot(); //Root xml or viewGroup will be a part of converted view over here
+        binding = FragmentOperationalReportBinding.inflate(inflater, container, false);
+        view = binding.getRoot();
 
         activity = getActivity();
-
         posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
+        binding.toolbar.heading.setText(getString(R.string.ui_invoice_member_report));
+        binding.toolbar.menuIcon.setVisibility(View.GONE);
+        binding.toolbar.shareInvoice.setVisibility(View.GONE);
+        binding.listTitle.setText(getString(R.string.ui_invoice_member_report));
+        ReportUiHelper.setupTableHeader(binding.tableHeader, getString(R.string.ui_member_name));
+        binding.cardDonut.setVisibility(View.GONE);
+        binding.cardBar.setVisibility(View.GONE);
 
         view.setFocusableInTouchMode(true);
         view.requestFocus();
@@ -66,7 +73,7 @@ public class InvoiceMessMemberReportList extends Fragment implements View.OnClic
             memberId = bundle.getString("memberId");
         }
 
-        binding.backToSetting.setOnClickListener(this);
+        binding.toolbar.backToSetting.setOnClickListener(this);
 
         return view;
     }
@@ -97,10 +104,10 @@ public class InvoiceMessMemberReportList extends Fragment implements View.OnClic
                 invoiceMessListAdapter.notifyDataSetChanged();
                 // invoiceMessListAdapter.notifyItemInserted(memberResponseList.size() - 1);
 
-                binding.linearLayout.setVisibility(View.VISIBLE);
+                binding.nestedScrollView.setVisibility(View.VISIBLE);
                 binding.noDataFound.setVisibility(View.GONE);
             } else {
-                binding.linearLayout.setVisibility(View.GONE);
+                binding.nestedScrollView.setVisibility(View.GONE);
                 binding.noDataFound.setVisibility(View.VISIBLE);
             }
         } finally {

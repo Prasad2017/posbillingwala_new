@@ -48,7 +48,7 @@
                     android:layout_height="match_parent"
                     android:layout_gravity="center"
                     android:padding="3dp"
-                    android:src="@drawable/baseline_print_24"
+                    android:src="@drawable/ic_print"
                     app:tint="@color/white" />
 
             </androidx.cardview.widget.CardView>

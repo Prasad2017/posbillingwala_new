@@ -1,12 +1,13 @@
 <?php
 /**
- * Admin: POS device monitoring list (bound licenses).
+ * Admin: POS device monitoring list (bound licenses + live presence).
  * GET optional: customerId
  */
 include_once('config.php');
 require_once __DIR__ . '/auth_guard.php';
 require_once __DIR__ . '/../db_prepared.php';
 require_once __DIR__ . '/../licence_expiry.php';
+require_once __DIR__ . '/../pos_presence.php';
 
 header('Content-Type: application/json; charset=utf-8');
 $response = array('status' => '1', 'deviceResponse' => array());
@@ -20,11 +21,15 @@ admin_require_auth($con, array('status' => '0', 'deviceResponse' => array()));
 mysqli_query($con, 'set names utf8');
 
 $customerId = isset($_GET['customerId']) ? trim($_GET['customerId']) : '';
+$tokenSub = licence_token_last_used_subquery('l');
+$loginCol = licence_has_last_login_column($con) ? 'l.`lastLoginAt`,' : 'NULL AS lastLoginAt,';
 
 if ($customerId !== '') {
     $rows = db_stmt_fetch_all(
         $con,
-        "SELECT l.*, u.shopName, u.name AS ownerName, u.contact_number
+        "SELECT l.*, u.shopName, u.name AS ownerName, u.contact_number,
+                {$loginCol}
+                {$tokenSub} AS tokenLastUsedAt
          FROM `licenses` l
          INNER JOIN `users` u ON u.id = l.userId
          WHERE u.role_id='3' AND u.id=?
@@ -36,7 +41,9 @@ if ($customerId !== '') {
 } else {
     $rows = db_stmt_fetch_all(
         $con,
-        "SELECT l.*, u.shopName, u.name AS ownerName, u.contact_number
+        "SELECT l.*, u.shopName, u.name AS ownerName, u.contact_number,
+                {$loginCol}
+                {$tokenSub} AS tokenLastUsedAt
          FROM `licenses` l
          INNER JOIN `users` u ON u.id = l.userId
          WHERE u.role_id='3'
@@ -51,6 +58,7 @@ foreach ($rows as $row) {
     $branch = function_exists('licence_branch_fields') ? licence_branch_fields($row) : array(
         'branchLabel' => isset($row['userName']) ? $row['userName'] : ''
     );
+    $presence = licence_device_presence_fields($row);
     $response['deviceResponse'][] = array(
         'customerId' => (string) $row['userId'],
         'shopName' => isset($row['shopName']) ? (string) $row['shopName'] : '',
@@ -65,7 +73,10 @@ foreach ($rows as $row) {
         'android_device_id' => isset($row['android_device_id']) ? (string) $row['android_device_id'] : '',
         'android_device_name' => isset($row['android_device_name']) ? (string) $row['android_device_name'] : '',
         'deviceBoundAt' => isset($row['deviceBoundAt']) ? (string) $row['deviceBoundAt'] : '',
-        'connectionStatus' => 'BOUND'
+        'lastLoginAt' => $presence['lastLoginAt'],
+        'lastSeenAt' => $presence['lastSeenAt'],
+        'lastSeenLabel' => $presence['lastSeenLabel'],
+        'connectionStatus' => $presence['connectionStatus'],
     );
 }
 

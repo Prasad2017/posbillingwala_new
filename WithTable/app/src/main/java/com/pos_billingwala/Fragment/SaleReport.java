@@ -26,67 +26,61 @@ import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.CalenderView.MonthPickerDialog;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.LicenseModules;
+import com.pos_billingwala.Extra.OperationalReportCharts;
+import com.pos_billingwala.Extra.ReportCursorHelper;
 import com.pos_billingwala.R;
-import com.pos_billingwala.databinding.FragmentSaleReportBinding;
+import com.pos_billingwala.databinding.FragmentOperationalReportBinding;
 
 import java.util.Calendar;
 import java.util.Locale;
 
-
-@SuppressLint({"Range", "SetTextI18n, StaticFieldLeak"})
+@SuppressLint({"Range", "SetTextI18n", "StaticFieldLeak"})
 public class SaleReport extends Fragment implements View.OnClickListener {
 
     public static Activity activity;
     public int mYear, mMonth, mDay;
-    View view;
+
     POSBillingWalaDatabase posBillingWalaDatabase;
-    float subAmount = 0f, discount = 0f, totalAmount = 0f, totalGSTAmount = 0f, tableAmount = 0f, takeAwayAmount = 0f, fastBilling = 0f;
+    float subAmount = 0f, discount = 0f, totalAmount = 0f, totalGSTAmount = 0f,
+            tableAmount = 0f, takeAwayAmount = 0f, fastBilling = 0f;
     Calendar calender;
     DatePickerDialog datePickerDialog;
     String invoiceDate = "";
-    FragmentSaleReportBinding binding;
+    FragmentOperationalReportBinding binding;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        binding = FragmentSaleReportBinding.inflate(inflater, container, false);
-        view = binding.getRoot(); //Root xml or viewGroup will be a part of converted view over here
-
+        binding = FragmentOperationalReportBinding.inflate(inflater, container, false);
         activity = getActivity();
-
-
         posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
 
-        view.setFocusableInTouchMode(true);
-        view.requestFocus();
-        view.setOnKeyListener(new View.OnKeyListener() {
-            @Override
-            public boolean onKey(View v, int keyCode, KeyEvent event) {
+        binding.toolbar.heading.setText(getString(R.string.ui_sale_reports));
+        binding.toolbar.shareInvoice.setVisibility(View.GONE);
+        binding.listTitle.setText(getString(R.string.ui_sale_wise_report));
 
-                if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
-                    Log.i("tag", "onKey Back listener is working!!!");
-                    ((MainActivity) activity).navigateBack();
-                    return true;
-                }
-                return false;
+        View root = binding.getRoot();
+        root.setFocusableInTouchMode(true);
+        root.requestFocus();
+        root.setOnKeyListener((v, keyCode, event) -> {
+            if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
+                Log.i("SaleReport", "back pressed");
+                ((MainActivity) activity).navigateBack();
+                return true;
             }
+            return false;
         });
 
-        binding.backToSetting.setOnClickListener(this);
-        binding.menuIcon.setOnClickListener(this);
-
+        binding.toolbar.backToSetting.setOnClickListener(this);
+        binding.toolbar.menuIcon.setOnClickListener(this);
         applyModuleVisibility();
-
-        return view;
+        return root;
     }
 
     private void applyModuleVisibility() {
-        LicenseModules.setVisible(binding.totalFastBillingAmountCardView,
-                LicenseModules.isEnabled(MainActivity.fastBilling));
-        LicenseModules.setVisible(binding.totalTableAmountCardView,
-                LicenseModules.isEnabled(MainActivity.dineIn));
-        LicenseModules.setVisible(binding.totalTakeAwayAmountCardView,
-                LicenseModules.isEnabled(MainActivity.takeAway));
+        if (!LicenseModules.isEnabled(MainActivity.fastBilling) && fastBilling <= 0f) {
+            // amounts hidden via chart binding when zero
+        }
     }
 
     @Override
@@ -100,313 +94,177 @@ public class SaleReport extends Fragment implements View.OnClickListener {
     }
 
     public void setPopUpWindow() {
-
         LayoutInflater inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        view = inflater.inflate(R.layout.sale_wise_dialog, null);
-        PopupWindow mypopupWindow = new PopupWindow(view, RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT, true);
+        View popupView = inflater.inflate(R.layout.sale_wise_dialog, null);
+        PopupWindow mypopupWindow = new PopupWindow(popupView,
+                RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT, true);
 
-        LinearLayout dayWiseLayout = view.findViewById(R.id.dayWiseLayout);
-        LinearLayout monthWiseLayout = view.findViewById(R.id.monthWiseLayout);
-        LinearLayout yearWiseLayout = view.findViewById(R.id.yearWiseLayout);
+        LinearLayout dayWiseLayout = popupView.findViewById(R.id.dayWiseLayout);
+        LinearLayout monthWiseLayout = popupView.findViewById(R.id.monthWiseLayout);
+        LinearLayout yearWiseLayout = popupView.findViewById(R.id.yearWiseLayout);
 
-        //Get Current Date
         calender = Calendar.getInstance();
         mYear = calender.get(Calendar.YEAR);
         mMonth = calender.get(Calendar.MONTH);
         mDay = calender.get(Calendar.DAY_OF_MONTH);
 
-        dayWiseLayout.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mypopupWindow.dismiss();
-
-                datePickerDialog = new DatePickerDialog(activity, new DatePickerDialog.OnDateSetListener() {
-                    @Override
-                    public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
-                        if ((monthOfYear) > 9) {
-                            if ((dayOfMonth) > 9) {
-                                invoiceDate = year + "-" + (monthOfYear + 1) + "-" + dayOfMonth;
-                                getDateSaleReports(invoiceDate);
-                            } else {
-                                invoiceDate = year + "-" + (monthOfYear + 1) + "-" + "0" + dayOfMonth;
-                                getDateSaleReports(invoiceDate);
-                            }
-                        } else {
-                            if ((dayOfMonth) > 9) {
-                                invoiceDate = year + "-" + "0" + (monthOfYear + 1) + "-" + dayOfMonth;
-                                getDateSaleReports(invoiceDate);
-                            } else {
-                                invoiceDate = year + "-" + "0" + (monthOfYear + 1) + "-" + "0" + dayOfMonth;
-                                getDateSaleReports(invoiceDate);
-                            }
-                        }
-                    }
-                }, mYear, mMonth, mDay);
-
-                datePickerDialog.show();
-            }
+        dayWiseLayout.setOnClickListener(v -> {
+            mypopupWindow.dismiss();
+            datePickerDialog = new DatePickerDialog(activity, (view, year, monthOfYear, dayOfMonth) -> {
+                invoiceDate = formatDay(year, monthOfYear, dayOfMonth);
+                getDateSaleReports(invoiceDate);
+            }, mYear, mMonth, mDay);
+            datePickerDialog.show();
         });
 
-        monthWiseLayout.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mypopupWindow.dismiss();
-
-                MonthYearPickerDialogFragment dialogFragment = MonthYearPickerDialogFragment.getInstance(mMonth, mYear, "Select Month");
-                dialogFragment.show(getChildFragmentManager(), null);
-                dialogFragment.setOnDateSetListener(new MonthYearPickerDialog.OnDateSetListener() {
-                    @Override
-                    public void onDateSet(int year, int monthOfYear) {
-                        if ((monthOfYear) > 9) {
-                            invoiceDate = year + "-" + (monthOfYear + 1);
-                            getDateSaleReports(invoiceDate);
-                        } else {
-                            invoiceDate = year + "-" + "0" + (monthOfYear + 1);
-                            getDateSaleReports(invoiceDate);
-                        }
-                    }
-                });
-
-            }
+        monthWiseLayout.setOnClickListener(v -> {
+            mypopupWindow.dismiss();
+            MonthYearPickerDialogFragment dialogFragment =
+                    MonthYearPickerDialogFragment.getInstance(mMonth, mYear, "Select Month");
+            dialogFragment.show(getChildFragmentManager(), null);
+            dialogFragment.setOnDateSetListener((year, monthOfYear) -> {
+                invoiceDate = monthOfYear > 9 ? year + "-" + (monthOfYear + 1)
+                        : year + "-0" + (monthOfYear + 1);
+                getDateSaleReports(invoiceDate);
+            });
         });
 
-
-        yearWiseLayout.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mypopupWindow.dismiss();
-                MonthPickerDialog.Builder builder = new MonthPickerDialog.Builder(activity, new MonthPickerDialog.OnDateSetListener() {
-                    @Override
-                    public void onDateSet(int selectedMonth, int selectedYear) {
-                        invoiceDate = "" + selectedYear;
+        yearWiseLayout.setOnClickListener(v -> {
+            mypopupWindow.dismiss();
+            MonthPickerDialog.Builder builder = new MonthPickerDialog.Builder(activity,
+                    (selectedMonth, selectedYear) -> {
+                        invoiceDate = String.valueOf(selectedYear);
                         mYear = selectedYear;
                         getDateSaleReports(invoiceDate);
-                    }
-                }, mYear, 0);
-
-                builder.showYearOnly()
-                        .setYearRange(1990, 2050)
-                        .build()
-                        .show();
-            }
+                    }, mYear, 0);
+            builder.showYearOnly().setYearRange(1990, 2050).build().show();
         });
 
-        mypopupWindow.showAsDropDown(binding.menuIcon, 0, -75);
+        mypopupWindow.showAsDropDown(binding.toolbar.menuIcon, 0, -75);
+    }
 
+    private String formatDay(int year, int monthOfYear, int dayOfMonth) {
+        String month = monthOfYear + 1 > 9 ? String.valueOf(monthOfYear + 1) : "0" + (monthOfYear + 1);
+        String day = dayOfMonth > 9 ? String.valueOf(dayOfMonth) : "0" + dayOfMonth;
+        return year + "-" + month + "-" + day;
     }
 
     @Override
     public void onStart() {
         super.onStart();
         ((MainActivity) activity).lockUnlockDrawer(1);
+        invoiceDate = "";
         getSaleReports();
     }
 
-
     public void getSaleReports() {
-
-        getSaleDiscountReport();
-
+        discount = 0f;
+        getSaleDiscountReport(null);
         SQLiteDatabase database = posBillingWalaDatabase.getReadableDatabase();
-        Cursor cursor;
-        cursor = database.rawQuery("SELECT SUM(totalAmount) as totalAmount, SUM(subTotal) as subTotal, SUM(totalGSTAmount) as totalGSTAmount FROM " + POSBillingWalaDatabase.INVOICE_TABLE, null);
-        while (cursor.moveToNext()) {
-            if (cursor.getString(cursor.getColumnIndex("subTotal")) != null) {
-                subAmount = Float.parseFloat(cursor.getString(cursor.getColumnIndex("subTotal")));
-            } else {
-                subAmount = 0f;
+        try {
+            Cursor cursor = database.rawQuery(
+                    "SELECT SUM(totalAmount) as totalAmount, SUM(subTotal) as subTotal, "
+                            + "SUM(totalGSTAmount) as totalGSTAmount FROM "
+                            + POSBillingWalaDatabase.INVOICE_TABLE
+                            + " WHERE " + POSBillingWalaDatabase.notRefundedClause(), null);
+            if (cursor.moveToNext()) {
+                subAmount = ReportCursorHelper.readFloat(cursor, "subTotal");
+                totalAmount = ReportCursorHelper.readFloat(cursor, "totalAmount");
+                totalGSTAmount = ReportCursorHelper.readFloat(cursor, "totalGSTAmount");
             }
-
-            if (cursor.getString(cursor.getColumnIndex("totalAmount")) != null) {
-                totalAmount = Float.parseFloat(cursor.getString(cursor.getColumnIndex("totalAmount")));
-            } else {
-                totalAmount = 0f;
-            }
-
-            if (cursor.getString(cursor.getColumnIndex("totalGSTAmount")) != null) {
-                totalGSTAmount = Float.parseFloat(cursor.getString(cursor.getColumnIndex("totalGSTAmount")));
-            } else {
-                totalGSTAmount = 0f;
-            }
-
-            binding.totalSubAmount.setText(MainActivity.currencyName + " " + String.format(Locale.US, "%.2f", subAmount));
-            binding.totalGST.setText(MainActivity.currencyName + " " + String.format(Locale.US, "%.2f", totalGSTAmount));
-            binding.totalAmount.setText(MainActivity.currencyName + " " + String.format(Locale.US, "%.2f", totalAmount));
-
+            cursor.close();
+            tableAmount = queryTypeTotal(database, "table_wise", null);
+            takeAwayAmount = queryTypeTotal(database, "take_away", null);
+            fastBilling = queryTypeTotal(database, "fast_billing", null);
+        } finally {
+            database.close();
         }
-
-        cursor = database.rawQuery("SELECT SUM(totalAmount) as totalAmount FROM " + POSBillingWalaDatabase.INVOICE_TABLE + " WHERE invoiceType = 'table_wise'", null);
-        while (cursor.moveToNext()) {
-            if (cursor.getString(cursor.getColumnIndex("totalAmount")) != null) {
-                tableAmount = Float.parseFloat(cursor.getString(cursor.getColumnIndex("totalAmount")));
-            } else {
-                tableAmount = 0f;
-            }
-
-            binding.totalTableAmount.setText(MainActivity.currencyName + " " + String.format(Locale.US, "%.2f", tableAmount));
-
-        }
-
-        cursor = database.rawQuery("SELECT SUM(totalAmount) as totalAmount FROM " + POSBillingWalaDatabase.INVOICE_TABLE + " WHERE invoiceType = 'take_away'", null);
-        while (cursor.moveToNext()) {
-            if (cursor.getString(cursor.getColumnIndex("totalAmount")) != null) {
-                takeAwayAmount = Float.parseFloat(cursor.getString(cursor.getColumnIndex("totalAmount")));
-            } else {
-                takeAwayAmount = 0f;
-            }
-
-            binding.takeAwayAmount.setText(MainActivity.currencyName + " " + String.format(Locale.US, "%.2f", takeAwayAmount));
-
-        }
-
-        cursor = database.rawQuery("SELECT SUM(totalAmount) as totalAmount FROM " + POSBillingWalaDatabase.INVOICE_TABLE + " WHERE invoiceType = 'fast_billing'", null);
-        while (cursor.moveToNext()) {
-            if (cursor.getString(cursor.getColumnIndex("totalAmount")) != null) {
-                fastBilling = Float.parseFloat(cursor.getString(cursor.getColumnIndex("totalAmount")));
-            } else {
-                fastBilling = 0f;
-            }
-
-            binding.fastBillingAmount.setText(MainActivity.currencyName + " " + String.format(Locale.US, "%.2f", fastBilling));
-
-        }
-
-        database.close();
-
+        bindUi(OperationalReportCharts.formatPeriodLabel(""));
     }
 
     @SuppressLint("Range")
-    public void getSaleDiscountReport() {
-
+    public void getSaleDiscountReport(String dateFilter) {
+        float runningDiscount = 0f;
         SQLiteDatabase database = posBillingWalaDatabase.getReadableDatabase();
-        Cursor cursor = database.rawQuery("SELECT * FROM " + POSBillingWalaDatabase.INVOICE_TABLE, null);
-        while (cursor.moveToNext()) {
-            float disc = Float.parseFloat(cursor.getString(cursor.getColumnIndex("discount")));
-            float subAmt = Float.parseFloat(cursor.getString(cursor.getColumnIndex("subTotal")));
-
-            if (cursor.getString(cursor.getColumnIndex("discountType")) != null) {
-                if (cursor.getString(cursor.getColumnIndex("discountType")).equalsIgnoreCase("Amount")) {
-                    disc = disc;
+        try {
+            String sql = "SELECT * FROM " + POSBillingWalaDatabase.INVOICE_TABLE
+                    + " WHERE " + POSBillingWalaDatabase.notRefundedClause();
+            if (dateFilter != null && !dateFilter.isEmpty()) {
+                sql += " AND invoiceDate LIKE '%" + dateFilter + "%'";
+            }
+            Cursor cursor = database.rawQuery(sql, null);
+            while (cursor.moveToNext()) {
+                float disc = ReportCursorHelper.readFloat(cursor, "discount");
+                float subAmt = ReportCursorHelper.readFloat(cursor, "subTotal");
+                String discountType = cursor.getString(cursor.getColumnIndex("discountType"));
+                if (discountType != null && discountType.equalsIgnoreCase("Amount")) {
+                    // flat amount
+                } else if (disc != 0f) {
+                    disc = subAmt / (100f / disc);
                 } else {
-                    disc = subAmt / (100 / disc);
+                    disc = 0f;
                 }
-            } else {
-                disc = subAmt / (100 / disc);
+                runningDiscount += disc;
             }
-
-            discount += disc;
-
+            cursor.close();
+            discount = runningDiscount;
+        } finally {
+            database.close();
         }
+    }
 
-        binding.totalDiscount.setText(MainActivity.currencyName + " " + String.format(Locale.US, "%.2f", discount));
-
-        database.close();
-
+    private float queryTypeTotal(SQLiteDatabase database, String invoiceType, String invoiceDateFilter) {
+        String sql = "SELECT SUM(totalAmount) as totalAmount FROM " + POSBillingWalaDatabase.INVOICE_TABLE
+                + " WHERE invoiceType = '" + invoiceType + "'" + POSBillingWalaDatabase.andNotRefunded();
+        if (invoiceDateFilter != null && !invoiceDateFilter.isEmpty()) {
+            sql += " AND invoiceDate LIKE '%" + invoiceDateFilter + "%'";
+        }
+        Cursor cursor = database.rawQuery(sql, null);
+        float amount = 0f;
+        if (cursor.moveToNext()) {
+            amount = ReportCursorHelper.readFloat(cursor, "totalAmount");
+        }
+        cursor.close();
+        return amount;
     }
 
     @SuppressLint("Range")
-    public void getDateSaleReports(String invoiceDate) {
-
-        getDateWiseDiscount(invoiceDate);
-
+    public void getDateSaleReports(String selectedDate) {
+        getSaleDiscountReport(selectedDate);
         SQLiteDatabase database = posBillingWalaDatabase.getReadableDatabase();
-        Cursor cursor;
-        cursor = database.rawQuery("SELECT SUM(totalAmount) as totalAmount, SUM(subTotal) as subTotal, SUM(totalGSTAmount) as totalGSTAmount FROM " + POSBillingWalaDatabase.INVOICE_TABLE + " WHERE invoiceDate LIKE '%" + invoiceDate + "%'", null);
-        while (cursor.moveToNext()) {
-            if (cursor.getString(cursor.getColumnIndex("subTotal")) != null) {
-                subAmount = Float.parseFloat(cursor.getString(cursor.getColumnIndex("subTotal")));
-            } else {
-                subAmount = 0f;
+        try {
+            Cursor cursor = database.rawQuery(
+                    "SELECT SUM(totalAmount) as totalAmount, SUM(subTotal) as subTotal, "
+                            + "SUM(totalGSTAmount) as totalGSTAmount FROM "
+                            + POSBillingWalaDatabase.INVOICE_TABLE
+                            + " WHERE invoiceDate LIKE '%" + selectedDate + "%'"
+                            + POSBillingWalaDatabase.andNotRefunded(), null);
+            if (cursor.moveToNext()) {
+                subAmount = ReportCursorHelper.readFloat(cursor, "subTotal");
+                totalGSTAmount = ReportCursorHelper.readFloat(cursor, "totalGSTAmount");
+                totalAmount = ReportCursorHelper.readFloat(cursor, "totalAmount");
             }
-
-            if (cursor.getString(cursor.getColumnIndex("totalGSTAmount")) != null) {
-                totalGSTAmount = Float.parseFloat(cursor.getString(cursor.getColumnIndex("totalGSTAmount")));
-            } else {
-                totalGSTAmount = 0f;
-            }
-
-            if (cursor.getString(cursor.getColumnIndex("totalAmount")) != null) {
-                totalAmount = Float.parseFloat(cursor.getString(cursor.getColumnIndex("totalAmount")));
-            } else {
-                totalAmount = 0f;
-            }
-
-            binding.totalSubAmount.setText(MainActivity.currencyName + " " + String.format(Locale.US, "%.2f", subAmount));
-            binding.totalGST.setText(MainActivity.currencyName + " " + String.format(Locale.US, "%.2f", totalGSTAmount));
-            binding.totalAmount.setText(MainActivity.currencyName + " " + String.format(Locale.US, "%.2f", totalAmount));
-
+            cursor.close();
+            tableAmount = queryTypeTotal(database, "table_wise", selectedDate);
+            takeAwayAmount = queryTypeTotal(database, "take_away", selectedDate);
+            fastBilling = queryTypeTotal(database, "fast_billing", selectedDate);
+        } finally {
+            database.close();
         }
-
-        cursor = database.rawQuery("SELECT SUM(totalAmount) as totalAmount FROM " + POSBillingWalaDatabase.INVOICE_TABLE + " WHERE invoiceType = 'table_wise' AND invoiceDate LIKE '%" + invoiceDate + "%'", null);
-        while (cursor.moveToNext()) {
-            if (cursor.getString(cursor.getColumnIndex("totalAmount")) != null) {
-                tableAmount = Float.parseFloat(cursor.getString(cursor.getColumnIndex("totalAmount")));
-            } else {
-                tableAmount = 0f;
-            }
-
-            binding.totalTableAmount.setText(MainActivity.currencyName + " " + String.format(Locale.US, "%.2f", tableAmount));
-
-        }
-
-        cursor = database.rawQuery("SELECT SUM(totalAmount) as totalAmount FROM " + POSBillingWalaDatabase.INVOICE_TABLE + " WHERE invoiceType = 'take_away' AND invoiceDate LIKE '%" + invoiceDate + "%'", null);
-        while (cursor.moveToNext()) {
-            if (cursor.getString(cursor.getColumnIndex("totalAmount")) != null) {
-                takeAwayAmount = Float.parseFloat(cursor.getString(cursor.getColumnIndex("totalAmount")));
-            } else {
-                takeAwayAmount = 0f;
-            }
-
-            binding.takeAwayAmount.setText(MainActivity.currencyName + " " + String.format(Locale.US, "%.2f", takeAwayAmount));
-
-        }
-
-        cursor = database.rawQuery("SELECT SUM(totalAmount) as totalAmount FROM " + POSBillingWalaDatabase.INVOICE_TABLE + " WHERE invoiceType = 'fast_billing' AND invoiceDate LIKE '%" + invoiceDate + "%'", null);
-        while (cursor.moveToNext()) {
-            if (cursor.getString(cursor.getColumnIndex("totalAmount")) != null) {
-                fastBilling = Float.parseFloat(cursor.getString(cursor.getColumnIndex("totalAmount")));
-            } else {
-                fastBilling = 0f;
-            }
-
-            binding.fastBillingAmount.setText(MainActivity.currencyName + " " + String.format(Locale.US, "%.2f", fastBilling));
-
-        }
-
-        database.close();
+        bindUi(OperationalReportCharts.formatPeriodLabel(selectedDate));
     }
 
-    @SuppressLint("Range")
-    public void getDateWiseDiscount(String invoiceDate) {
-
-
-        float discount = 0f;
-        SQLiteDatabase database = posBillingWalaDatabase.getReadableDatabase();
-        Cursor cursor;
-        cursor = database.rawQuery("SELECT * FROM " + POSBillingWalaDatabase.INVOICE_TABLE + " WHERE invoiceDate LIKE '%" + invoiceDate + "%'", null);
-        while (cursor.moveToNext()) {
-
-            float disc = Float.parseFloat(cursor.getString(cursor.getColumnIndex("discount")));
-            float subAmt = Float.parseFloat(cursor.getString(cursor.getColumnIndex("subTotal")));
-
-            if (cursor.getString(cursor.getColumnIndex("discountType")) != null) {
-                if (cursor.getString(cursor.getColumnIndex("discountType")).equalsIgnoreCase("Amount")) {
-                    disc = disc;
-                } else {
-                    disc = subAmt / (100 / disc);
-                }
-            } else {
-                disc = subAmt / (100 / disc);
-            }
-
-            discount += disc;
-
+    private void bindUi(String periodLabel) {
+        if (!isAdded() || binding == null) {
+            return;
         }
-
-        binding.totalDiscount.setText(MainActivity.currencyName + " " + String.format(Locale.US, "%.2f", discount));
-
-        database.close();
-
+        float shownFast = LicenseModules.isEnabled(MainActivity.fastBilling) ? fastBilling : 0f;
+        float shownTable = LicenseModules.isEnabled(MainActivity.dineIn) ? tableAmount : 0f;
+        float shownTakeAway = LicenseModules.isEnabled(MainActivity.takeAway) ? takeAwayAmount : 0f;
+        OperationalReportCharts.bindSaleSummary(binding, requireContext(),
+                subAmount, totalGSTAmount, discount, totalAmount,
+                shownFast, shownTable, shownTakeAway, periodLabel);
+        binding.nestedScrollView.setVisibility(View.VISIBLE);
+        binding.noDataFound.setVisibility(View.GONE);
     }
-
 }

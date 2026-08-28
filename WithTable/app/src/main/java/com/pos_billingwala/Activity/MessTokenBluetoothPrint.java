@@ -16,7 +16,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.util.Base64;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -70,7 +69,6 @@ public class MessTokenBluetoothPrint extends BaseActivity implements View.OnClic
         binding = ActivityMessTokenBluetoothPrintBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
         posBillingWalaDatabase = new POSBillingWalaDatabase(this);
         initViews();
         readIntentExtras();

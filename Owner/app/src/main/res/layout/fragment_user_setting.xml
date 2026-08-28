@@ -30,7 +30,7 @@
                     android:layout_centerInParent="true"
                     android:layout_gravity="center"
                     android:layout_marginStart="15dp"
-                    android:src="@drawable/back"
+                    android:src="@drawable/ic_back"
                     app:tint="@color/white" />
 
                 <androidx.appcompat.widget.AppCompatTextView
@@ -77,7 +77,7 @@
                         android:layout_width="30dp"
                         android:layout_height="30dp"
                         android:layout_gravity="center"
-                        android:src="@drawable/account_setting" />
+                        android:src="@drawable/ic_person" />
 
                     <TextView
                         android:layout_width="match_parent"
@@ -96,7 +96,53 @@
                         android:layout_width="30dp"
                         android:layout_height="30dp"
                         android:layout_gravity="center"
-                        android:src="@drawable/baseline_keyboard_arrow_right_24"
+                        android:src="@drawable/ic_chevron_right"
+                        app:tint="@color/light_black" />
+
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginEnd="20dp"
+                    android:background="@color/black" />
+
+                <LinearLayout
+                    android:id="@+id/reportLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginEnd="20dp"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_report_sales"
+                        app:tint="@color/light_black" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_weight="1"
+                        android:fontFamily="@font/poppinsregular"
+                        android:gravity="center|start"
+                        android:paddingStart="10dp"
+                        android:paddingEnd="10dp"
+                        android:text="@string/reports_menu"
+                        android:textColor="@color/black"
+                        android:textSize="15sp" />
+
+                    <ImageView
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_chevron_right"
                         app:tint="@color/light_black" />
 
                 </LinearLayout>
@@ -122,7 +168,7 @@
                         android:layout_width="30dp"
                         android:layout_height="30dp"
                         android:layout_gravity="center"
-                        android:src="@drawable/reset_password" />
+                        android:src="@drawable/ic_lock" />
 
                     <TextView
                         android:layout_width="match_parent"
@@ -141,7 +187,7 @@
                         android:layout_width="30dp"
                         android:layout_height="30dp"
                         android:layout_gravity="center"
-                        android:src="@drawable/baseline_keyboard_arrow_right_24"
+                        android:src="@drawable/ic_chevron_right"
                         app:tint="@color/light_black" />
 
                 </LinearLayout>
@@ -167,7 +213,7 @@
                         android:layout_width="30dp"
                         android:layout_height="30dp"
                         android:layout_gravity="center"
-                        android:src="@drawable/dashboards" />
+                        android:src="@drawable/ic_category" />
 
                     <TextView
                         android:layout_width="match_parent"
@@ -186,7 +232,7 @@
                         android:layout_width="30dp"
                         android:layout_height="30dp"
                         android:layout_gravity="center"
-                        android:src="@drawable/baseline_keyboard_arrow_right_24"
+                        android:src="@drawable/ic_chevron_right"
                         app:tint="@color/light_black" />
 
                 </LinearLayout>
@@ -212,7 +258,7 @@
                         android:layout_width="30dp"
                         android:layout_height="30dp"
                         android:layout_gravity="center"
-                        android:src="@drawable/dashboards" />
+                        android:src="@drawable/ic_folder" />
 
                     <TextView
                         android:layout_width="match_parent"
@@ -231,7 +277,7 @@
                         android:layout_width="30dp"
                         android:layout_height="30dp"
                         android:layout_gravity="center"
-                        android:src="@drawable/baseline_keyboard_arrow_right_24"
+                        android:src="@drawable/ic_chevron_right"
                         app:tint="@color/light_black" />
 
                 </LinearLayout>
@@ -257,7 +303,7 @@
                         android:layout_width="30dp"
                         android:layout_height="30dp"
                         android:layout_gravity="center"
-                        android:src="@drawable/product" />
+                        android:src="@drawable/ic_report_product" />
 
                     <TextView
                         android:layout_width="match_parent"
@@ -276,7 +322,7 @@
                         android:layout_width="30dp"
                         android:layout_height="30dp"
                         android:layout_gravity="center"
-                        android:src="@drawable/baseline_keyboard_arrow_right_24"
+                        android:src="@drawable/ic_chevron_right"
                         app:tint="@color/light_black" />
 
                 </LinearLayout>
@@ -302,7 +348,7 @@
                         android:layout_width="30dp"
                         android:layout_height="30dp"
                         android:layout_gravity="center"
-                        android:src="@drawable/product" />
+                        android:src="@drawable/ic_cloud_download" />
 
                     <TextView
                         android:layout_width="match_parent"
@@ -321,7 +367,7 @@
                         android:layout_width="30dp"
                         android:layout_height="30dp"
                         android:layout_gravity="center"
-                        android:src="@drawable/baseline_keyboard_arrow_right_24"
+                        android:src="@drawable/ic_chevron_right"
                         app:tint="@color/light_black" />
 
                 </LinearLayout>
@@ -347,7 +393,7 @@
                         android:layout_width="30dp"
                         android:layout_height="30dp"
                         android:layout_gravity="center"
-                        android:src="@drawable/invoice" />
+                        android:src="@drawable/ic_report_invoice" />
 
                     <TextView
                         android:layout_width="match_parent"
@@ -366,7 +412,7 @@
                         android:layout_width="30dp"
                         android:layout_height="30dp"
                         android:layout_gravity="center"
-                        android:src="@drawable/baseline_keyboard_arrow_right_24"
+                        android:src="@drawable/ic_chevron_right"
                         app:tint="@color/light_black" />
 
                 </LinearLayout>
@@ -392,7 +438,7 @@
                         android:layout_width="30dp"
                         android:layout_height="30dp"
                         android:layout_gravity="center"
-                        android:src="@drawable/baseline_contact_phone_24"
+                        android:src="@drawable/ic_phone"
                         app:tint="@color/light_black" />
 
                     <TextView
@@ -412,7 +458,7 @@
                         android:layout_width="30dp"
                         android:layout_height="30dp"
                         android:layout_gravity="center"
-                        android:src="@drawable/baseline_keyboard_arrow_right_24"
+                        android:src="@drawable/ic_chevron_right"
                         app:tint="@color/light_black" />
 
                 </LinearLayout>
@@ -438,7 +484,7 @@
                         android:layout_width="30dp"
                         android:layout_height="30dp"
                         android:layout_gravity="center"
-                        android:src="@drawable/baseline_exit_to_app_24"
+                        android:src="@drawable/ic_logout"
                         app:tint="@color/light_black" />
 
                     <TextView
@@ -458,7 +504,7 @@
                         android:layout_width="30dp"
                         android:layout_height="30dp"
                         android:layout_gravity="center"
-                        android:src="@drawable/baseline_keyboard_arrow_right_24"
+                        android:src="@drawable/ic_chevron_right"
                         app:tint="@color/light_black" />
 
                 </LinearLayout>

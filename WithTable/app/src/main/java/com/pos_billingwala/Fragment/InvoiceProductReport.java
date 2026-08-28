@@ -44,10 +44,13 @@ import com.pos_billingwala.CalenderView.MonthPickerDialog;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.CartItemType;
 import com.pos_billingwala.Extra.ListLoader;
-import com.pos_billingwala.Extra.SimpleDividerItemDecoration;
+import com.pos_billingwala.Extra.ReportCursorHelper;
+import com.pos_billingwala.Extra.ReportUiHelper;
 import com.pos_billingwala.Model.InvoiceProductResponse;
 import com.pos_billingwala.R;
-import com.pos_billingwala.databinding.FragmentInvoiceProductReportBinding;
+import com.pos_billingwala.Extra.OperationalReportCharts;
+import com.pos_billingwala.Model.ReportRankItem;
+import com.pos_billingwala.databinding.FragmentOperationalReportBinding;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -67,7 +70,7 @@ public class InvoiceProductReport extends Fragment implements View.OnClickListen
     public static final String ARG_INVOICE_ITEM_TYPE = "invoiceItemType";
     public static Activity activity;
     public static NestedScrollView nestedScrollView;
-    public static FragmentInvoiceProductReportBinding binding;
+    public static FragmentOperationalReportBinding binding;
     public int mYear, mMonth, mDay;
     View view;
     POSBillingWalaDatabase posBillingWalaDatabase;
@@ -108,15 +111,27 @@ public class InvoiceProductReport extends Fragment implements View.OnClickListen
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        binding = FragmentInvoiceProductReportBinding.inflate(inflater, container, false);
-        view = binding.getRoot(); //Root xml or viewGroup will be a part of converted view over here
+        binding = FragmentOperationalReportBinding.inflate(inflater, container, false);
+        view = binding.getRoot();
+        nestedScrollView = binding.nestedScrollView;
 
         activity = getActivity();
-
         posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
 
         if (getArguments() != null) {
             invoiceItemTypeFilter = getArguments().getString(ARG_INVOICE_ITEM_TYPE);
+        }
+
+        binding.toolbar.shareInvoice.setVisibility(View.VISIBLE);
+        binding.listTitle.setText(getString(R.string.ui_product_wise_report));
+        binding.donutTitle.setText(getString(R.string.ui_top_products));
+        binding.barTitle.setText(getString(R.string.ui_amount_breakdown));
+        ReportUiHelper.setupTableHeader(binding.tableHeader,
+                getString(R.string.ui_product_name), getString(R.string.ui_quantity));
+        if (CartItemType.isCombo(invoiceItemTypeFilter)) {
+            binding.toolbar.heading.setText(getString(R.string.ui_combo_wise_report));
+        } else {
+            binding.toolbar.heading.setText(getString(R.string.ui_product_wise_report));
         }
 
         view.setFocusableInTouchMode(true);
@@ -156,12 +171,9 @@ public class InvoiceProductReport extends Fragment implements View.OnClickListen
     }
 
     public void initViews() {
-        binding.menuIcon.setOnClickListener(this);
-        binding.backToSetting.setOnClickListener(this);
-        binding.shareInvoice.setOnClickListener(this);
-        if (CartItemType.isCombo(invoiceItemTypeFilter) && binding.reportTitle != null) {
-            binding.reportTitle.setText(R.string.ui_combo_wise_report);
-        }
+        binding.toolbar.menuIcon.setOnClickListener(this);
+        binding.toolbar.backToSetting.setOnClickListener(this);
+        binding.toolbar.shareInvoice.setOnClickListener(this);
     }
 
     @Override
@@ -416,7 +428,7 @@ public class InvoiceProductReport extends Fragment implements View.OnClickListen
             }
         });
 
-        mypopupWindow.showAsDropDown(binding.menuIcon, 0, -75);
+        mypopupWindow.showAsDropDown(binding.toolbar.menuIcon, 0, -75);
 
     }
 
@@ -428,29 +440,36 @@ public class InvoiceProductReport extends Fragment implements View.OnClickListen
     }
 
 
-    public void getReportDateWiseProductList(String invoiceDate, String orderBy) {
+    public void getReportDateWiseProductList(String selectedDate, String orderBy) {
         SweetAlertDialog loader = ListLoader.show(activity);
         try {
-            if (CartItemType.isCombo(invoiceItemTypeFilter)) {
-                binding.invoiceDate.setText(getString(R.string.ui_combo_wise_report) + " [ " + invoiceDate + "]");
-            } else {
-                binding.invoiceDate.setText("Product Sale [ " + invoiceDate + "]");
-            }
+            invoiceDate = selectedDate;
+            binding.dateChip.setText(OperationalReportCharts.formatPeriodLabel(selectedDate));
 
             invoiceProductResponseList.clear();
             invoiceProductResponseList = posBillingWalaDatabase.getReportDateWiseProductList(
-                    invoiceDate, orderBy, invoiceItemTypeFilter);
+                    selectedDate, orderBy, invoiceItemTypeFilter);
             if (!invoiceProductResponseList.isEmpty()) {
                 adapter = new ReportProductAdapter(activity, invoiceProductResponseList);
                 binding.recyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
-                binding.recyclerView.addItemDecoration(new SimpleDividerItemDecoration(activity));
                 binding.recyclerView.setAdapter(adapter);
-                adapter.notifyDataSetChanged();
-                //   adapter.notifyItemInserted(invoiceProductResponseList.size() - 1);
-
+                float total = 0f;
+                for (InvoiceProductResponse product : invoiceProductResponseList) {
+                    float qty = ReportCursorHelper.parseAmount(product.getProductQuantity());
+                    float price = ReportCursorHelper.parseAmount(product.getProductPrice());
+                    total += qty * price;
+                }
+                binding.totalAmount.setText(MainActivity.currencyName + " "
+                        + String.format(Locale.US, "%.2f", total));
+                List<ReportRankItem> breakdown = OperationalReportCharts.fromProducts(
+                        invoiceProductResponseList, 8);
+                OperationalReportCharts.bindListSummary(binding, activity,
+                        invoiceProductResponseList.size(), total, breakdown,
+                        getString(R.string.ui_top_products),
+                        getString(R.string.ui_amount_breakdown),
+                        OperationalReportCharts.formatPeriodLabel(selectedDate));
                 binding.noDataFound.setVisibility(View.GONE);
                 binding.nestedScrollView.setVisibility(View.VISIBLE);
-
             } else {
                 binding.noDataFound.setVisibility(View.VISIBLE);
                 binding.nestedScrollView.setVisibility(View.GONE);

@@ -6,6 +6,7 @@
  */
 
 require_once __DIR__ . '/db_prepared.php';
+require_once __DIR__ . '/invoice_sales_filter.php';
 
 if (!function_exists('licence_lifetime_days')) {
     /** Existing product mapping for Lifetime (~30 years). */
@@ -291,6 +292,11 @@ if (!function_exists('licence_on_device_bind')) {
         if (!$updated) {
             return $response;
         }
+
+        if (!function_exists('licence_touch_last_login')) {
+            require_once __DIR__ . '/pos_presence.php';
+        }
+        licence_touch_last_login($con, (int) $row['id']);
 
         $response['status'] = '1';
         $response['message'] = 'Device bound successfully';
@@ -737,13 +743,13 @@ if (!function_exists('licence_store_sales')) {
 
         $totalSale = db_stmt_scalar_string(
             $con,
-            'SELECT SUM(`totalAmount`) AS `totalSale` FROM `invoice` WHERE `licenseId` = ?',
+            'SELECT SUM(`totalAmount`) AS `totalSale` FROM `invoice` WHERE `licenseId` = ?' . invoice_and_not_refunded(''),
             's',
             (string) $licenseId
         );
         $todaySale = db_stmt_scalar_string(
             $con,
-            'SELECT SUM(`totalAmount`) AS `todaySale` FROM `invoice` WHERE `licenseId` = ? AND `invoiceDate` LIKE CONCAT(\'%\', ?, \'%\')',
+            'SELECT SUM(`totalAmount`) AS `todaySale` FROM `invoice` WHERE `licenseId` = ? AND `invoiceDate` LIKE CONCAT(\'%\', ?, \'%\')' . invoice_and_not_refunded(''),
             'ss',
             (string) $licenseId,
             (string) $today

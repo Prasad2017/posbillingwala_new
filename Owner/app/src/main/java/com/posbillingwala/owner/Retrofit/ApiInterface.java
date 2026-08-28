@@ -161,5 +161,13 @@ public interface ApiInterface {
     @GET("getBranchComparison.php")
     Call<AllApiResponse> getBranchComparison(@Query("userId") String userId);
 
+    @GET("getSalesDashboard.php")
+    Call<AllApiResponse> getSalesDashboard(@Query("userId") String userId,
+                                           @Query("branchId") String branchId);
+
+    @GET("getSalesOverviewReport.php")
+    Call<AllApiResponse> getSalesOverviewReport(@Query("userId") String userId,
+                                                @Query("branchId") String branchId);
+
 
 }

@@ -1,25 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="6dp"
-    app:cardCornerRadius="10dp"
-    app:cardElevation="3dp">
+    android:layout_marginStart="@dimen/spacing_lg"
+    android:layout_marginTop="@dimen/spacing_sm"
+    android:layout_marginEnd="@dimen/spacing_lg"
+    android:layout_marginBottom="@dimen/spacing_xs"
+    app:cardBackgroundColor="@color/colorSurface"
+    app:cardCornerRadius="@dimen/radius_md"
+    app:cardElevation="@dimen/card_elevation"
+    app:strokeColor="@color/colorBorder"
+    app:strokeWidth="1dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="12dp">
+        android:padding="@dimen/spacing_md">
 
         <TextView
             android:id="@+id/deviceTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:fontFamily="@font/poppinsmedium"
-            android:textColor="@color/colorPrimary"
-            android:textSize="15sp" />
+            android:textColor="@color/colorTextPrimary"
+            android:textSize="@dimen/text_subtitle" />
 
         <TextView
             android:id="@+id/deviceMeta"
@@ -27,23 +33,22 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:fontFamily="@font/poppinsregular"
-            android:textColor="@color/black"
-            android:textSize="13sp" />
+            android:textColor="@color/colorTextSecondary"
+            android:textSize="@dimen/text_caption" />
 
         <TextView
             android:id="@+id/deviceStatus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:background="@drawable/button_rounded_border"
-            android:backgroundTint="#2E7D32"
+            android:background="@drawable/bg_badge_active"
             android:fontFamily="@font/poppinsmedium"
             android:paddingStart="10dp"
             android:paddingTop="2dp"
             android:paddingEnd="10dp"
             android:paddingBottom="2dp"
             android:text="ACTIVE"
-            android:textColor="@color/white"
+            android:textColor="@color/statusActive"
             android:textSize="11sp" />
     </LinearLayout>
-</androidx.cardview.widget.CardView>
+</com.google.android.material.card.MaterialCardView>

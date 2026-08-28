@@ -1,92 +1,74 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/colorBackground"
     android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:padding="@dimen/spacing_lg">
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:fontFamily="@font/poppinsmedium"
-            android:paddingBottom="12dp"
+            android:fontFamily="@font/poppinsbold"
             android:text="More"
-            android:textColor="@color/blue_grey_900"
-            android:textSize="18sp" />
+            android:textColor="@color/colorTextPrimary"
+            android:textSize="@dimen/text_heading" />
 
         <TextView
-            android:id="@+id/menuPosMonitoring"
             android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginBottom="8dp"
-            android:background="@drawable/button_rounded_border"
-            android:fontFamily="@font/poppinsmedium"
-            android:gravity="center|start"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:text="POS Monitoring"
-            android:textColor="@color/black"
-            android:textSize="15sp" />
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:fontFamily="@font/poppinsregular"
+            android:text="Dealers, catalog tools &amp; system"
+            android:textColor="@color/colorTextSecondary"
+            android:textSize="@dimen/text_body" />
 
-        <TextView
+        <include
+            android:id="@+id/menuDealers"
+            layout="@layout/item_more_menu_row"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_lg" />
+
+        <include
             android:id="@+id/menuAddDealer"
+            layout="@layout/item_more_menu_row"
             android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginBottom="8dp"
-            android:background="@drawable/button_rounded_border"
-            android:fontFamily="@font/poppinsmedium"
-            android:gravity="center|start"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:text="Add Dealer"
-            android:textColor="@color/black"
-            android:textSize="15sp" />
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_sm" />
 
-        <TextView
+        <include
+            android:id="@+id/menuPosMonitoring"
+            layout="@layout/item_more_menu_row"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_sm" />
+
+        <include
             android:id="@+id/menuProductImport"
+            layout="@layout/item_more_menu_row"
             android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginBottom="8dp"
-            android:background="@drawable/button_rounded_border"
-            android:fontFamily="@font/poppinsmedium"
-            android:gravity="center|start"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:text="Product Import"
-            android:textColor="@color/black"
-            android:textSize="15sp" />
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_sm" />
 
-        <TextView
+        <include
             android:id="@+id/menuCrashInfo"
+            layout="@layout/item_more_menu_row"
             android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginBottom="8dp"
-            android:background="@drawable/button_rounded_border"
-            android:fontFamily="@font/poppinsmedium"
-            android:gravity="center|start"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:text="Crash Reports"
-            android:textColor="@color/black"
-            android:textSize="15sp" />
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_sm" />
 
-        <TextView
+        <include
             android:id="@+id/menuSettings"
+            layout="@layout/item_more_menu_row"
             android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginBottom="8dp"
-            android:background="@drawable/button_rounded_border"
-            android:fontFamily="@font/poppinsmedium"
-            android:gravity="center|start"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:text="Settings / Logout"
-            android:textColor="@color/black"
-            android:textSize="15sp" />
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_sm" />
     </LinearLayout>
 </ScrollView>

@@ -169,6 +169,7 @@ CREATE TABLE `licenses` (
   `trialStartedAt` datetime DEFAULT NULL,
   `trialConsumed` tinyint(1) NOT NULL DEFAULT 0,
   `deviceBoundAt` datetime DEFAULT NULL,
+  `lastLoginAt` datetime DEFAULT NULL,
   `paymentStatus` text NOT NULL,
   `amount` int(11) NOT NULL,
   `userType` text NOT NULL DEFAULT 'owner',

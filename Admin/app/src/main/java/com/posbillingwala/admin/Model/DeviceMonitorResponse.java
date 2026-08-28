@@ -34,6 +34,15 @@ public class DeviceMonitorResponse {
     @SerializedName("deviceBoundAt")
     @Expose
     private String deviceBoundAt;
+    @SerializedName("lastLoginAt")
+    @Expose
+    private String lastLoginAt;
+    @SerializedName("lastSeenAt")
+    @Expose
+    private String lastSeenAt;
+    @SerializedName("lastSeenLabel")
+    @Expose
+    private String lastSeenLabel;
     @SerializedName("connectionStatus")
     @Expose
     private String connectionStatus;
@@ -81,11 +90,27 @@ public class DeviceMonitorResponse {
         return deviceBoundAt;
     }
 
+    public String getLastLoginAt() {
+        return lastLoginAt;
+    }
+
+    public String getLastSeenAt() {
+        return lastSeenAt;
+    }
+
+    public String getLastSeenLabel() {
+        return lastSeenLabel;
+    }
+
     public String getConnectionStatus() {
         return connectionStatus;
     }
 
     public String getExpiryDate() {
         return expiryDate;
+    }
+
+    public boolean isOnline() {
+        return connectionStatus != null && "ONLINE".equalsIgnoreCase(connectionStatus);
     }
 }

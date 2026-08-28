@@ -245,30 +245,7 @@ public class UserSynchronizeData {
             } while (cursor.moveToNext());
         }
         closeCursor();
-        setProgressTitle("Uploading invoices...");
-        cursor = posBillingWalaDatabase.getUnSynchronizeInvoice(NAME_NOT_SYNCED_WITH_SERVER);
-        if (cursor.moveToFirst()) {
-            do {
-                saveInvoice(cursor.getString(cursor.getColumnIndex("invoiceId")),
-                        cursor.getString(cursor.getColumnIndex("noOfTable")),
-                        cursor.getString(cursor.getColumnIndex("invoiceNumber")),
-                        cursor.getString(cursor.getColumnIndex("customerName")),
-                        cursor.getString(cursor.getColumnIndex("customerMobile")),
-                        cursor.getString(cursor.getColumnIndex("customerEmail")),
-                        cursor.getString(cursor.getColumnIndex("customerAddress")),
-                        cursor.getString(cursor.getColumnIndex("subTotal")),
-                        cursor.getString(cursor.getColumnIndex("totalGSTAmount")),
-                        cursor.getString(cursor.getColumnIndex("discount")),
-                        cursor.getString(cursor.getColumnIndex("discountType")),
-                        cursor.getString(cursor.getColumnIndex("totalAmount")),
-                        cursor.getString(cursor.getColumnIndex("paymentMode")),
-                        cursor.getString(cursor.getColumnIndex("invoiceDate")),
-                        cursor.getString(cursor.getColumnIndex("invoiceType")),
-                        cursor.getString(cursor.getColumnIndex("invoiceOrderStatus")),
-                        cursor.getString(cursor.getColumnIndex("invoiceNetworkStatus")));
-            } while (cursor.moveToNext());
-        }
-        closeCursor();
+        InvoicePendingSync.uploadDeletes(context, posBillingWalaDatabase);
         setProgressTitle("Uploading invoice items...");
         cursor = posBillingWalaDatabase.getUnSynchronizeInvoiceProduct(NAME_NOT_SYNCED_WITH_SERVER);
         if (cursor.moveToFirst()) {
@@ -309,6 +286,30 @@ public class UserSynchronizeData {
                         columnOrEmpty(cursor, "quantity"),
                         columnOrEmpty(cursor, "sortOrder"),
                         columnOrEmpty(cursor, "invoiceComboItemNetworkStatus"));
+            } while (cursor.moveToNext());
+        }
+        closeCursor();
+        setProgressTitle("Uploading invoices...");
+        cursor = posBillingWalaDatabase.getUnSynchronizeInvoice(NAME_NOT_SYNCED_WITH_SERVER);
+        if (cursor.moveToFirst()) {
+            do {
+                saveInvoice(cursor.getString(cursor.getColumnIndex("invoiceId")),
+                        cursor.getString(cursor.getColumnIndex("noOfTable")),
+                        cursor.getString(cursor.getColumnIndex("invoiceNumber")),
+                        cursor.getString(cursor.getColumnIndex("customerName")),
+                        cursor.getString(cursor.getColumnIndex("customerMobile")),
+                        cursor.getString(cursor.getColumnIndex("customerEmail")),
+                        cursor.getString(cursor.getColumnIndex("customerAddress")),
+                        cursor.getString(cursor.getColumnIndex("subTotal")),
+                        cursor.getString(cursor.getColumnIndex("totalGSTAmount")),
+                        cursor.getString(cursor.getColumnIndex("discount")),
+                        cursor.getString(cursor.getColumnIndex("discountType")),
+                        cursor.getString(cursor.getColumnIndex("totalAmount")),
+                        cursor.getString(cursor.getColumnIndex("paymentMode")),
+                        cursor.getString(cursor.getColumnIndex("invoiceDate")),
+                        cursor.getString(cursor.getColumnIndex("invoiceType")),
+                        cursor.getString(cursor.getColumnIndex("invoiceOrderStatus")),
+                        cursor.getString(cursor.getColumnIndex("invoiceNetworkStatus")));
             } while (cursor.moveToNext());
         }
         closeCursor();

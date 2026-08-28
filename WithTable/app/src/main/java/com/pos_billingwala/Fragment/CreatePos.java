@@ -7,6 +7,7 @@ import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.os.Handler;
@@ -16,6 +17,7 @@ import android.text.Editable;
 import android.text.Html;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -24,8 +26,6 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
-import android.widget.RadioButton;
-import android.widget.RadioGroup;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -738,7 +738,7 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
         lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
 
         TextView productName = dialog.findViewById(R.id.productName);
-        RadioGroup portionRadioGroup = dialog.findViewById(R.id.portionRadioGroup);
+        LinearLayout portionTabRow = dialog.findViewById(R.id.portionTabRow);
         TextView quantityMinus = dialog.findViewById(R.id.quantityMinus);
         TextView productQuantity = dialog.findViewById(R.id.productQuantity);
         TextView quantityPlus = dialog.findViewById(R.id.quantityPlus);
@@ -747,26 +747,54 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
 
         productName.setText(productResponse.getProductName());
         final int[] quantity = {1};
+        final int[] selectedIndex = {0};
         productQuantity.setText(String.valueOf(quantity[0]));
+
+        float density = activity.getResources().getDisplayMetrics().density;
+        int minHeight = (int) (96 * density);
+        int gap = (int) (8 * density);
+        boolean stacked = portions.size() > 3;
+        portionTabRow.setOrientation(stacked ? LinearLayout.VERTICAL : LinearLayout.HORIZONTAL);
+
+        final List<TextView> tabs = new ArrayList<>();
+        final Runnable refreshTabs = () -> {
+            for (int t = 0; t < tabs.size(); t++) {
+                boolean selected = t == selectedIndex[0];
+                tabs.get(t).setBackgroundResource(selected
+                        ? R.drawable.bg_portion_tab_selected
+                        : R.drawable.bg_portion_tab);
+                tabs.get(t).setTextColor(activity.getResources().getColor(
+                        selected ? R.color.white : R.color.colorPrimary));
+            }
+        };
 
         for (int i = 0; i < portions.size(); i++) {
             ProductPortionResponse portion = portions.get(i);
-            RadioButton radioButton = new RadioButton(activity);
-            radioButton.setId(View.generateViewId());
-            radioButton.setTag(i);
-            radioButton.setText(portion.getPortionName() + "  —  "
-                    + MainActivity.currencyName + " " + portion.getPortionPrice());
-            radioButton.setTextColor(activity.getResources().getColor(R.color.black));
-            radioButton.setTextSize(15);
-            radioButton.setPadding(24, 20, 24, 20);
-            radioButton.setTypeface(activity.getResources().getFont(R.font.poppinsregular));
-            portionRadioGroup.addView(radioButton, new RadioGroup.LayoutParams(
-                    RadioGroup.LayoutParams.MATCH_PARENT,
-                    RadioGroup.LayoutParams.WRAP_CONTENT));
-            if (i == 0) {
-                radioButton.setChecked(true);
+            TextView tab = new TextView(activity);
+            LinearLayout.LayoutParams params = stacked
+                    ? new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, minHeight)
+                    : new LinearLayout.LayoutParams(0, minHeight, 1f);
+            if (stacked && i > 0) {
+                params.topMargin = gap;
+            } else if (!stacked && i > 0) {
+                params.setMarginStart(gap);
             }
+            tab.setLayoutParams(params);
+            tab.setGravity(Gravity.CENTER);
+            tab.setText(portion.getPortionName() + "\n"
+                    + MainActivity.currencyName + " " + portion.getPortionPrice());
+            tab.setTextSize(18);
+            tab.setTypeface(activity.getResources().getFont(R.font.poppinsmedium), Typeface.BOLD);
+            tab.setPadding(12, 8, 12, 8);
+            final int index = i;
+            tab.setOnClickListener(v -> {
+                selectedIndex[0] = index;
+                refreshTabs.run();
+            });
+            portionTabRow.addView(tab);
+            tabs.add(tab);
         }
+        refreshTabs.run();
 
         quantityMinus.setOnClickListener(v -> {
             if (quantity[0] > 1) {
@@ -781,17 +809,7 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
 
         dismissPortion.setOnClickListener(v -> dialog.dismiss());
         addPortionToCart.setOnClickListener(v -> {
-            int checkedId = portionRadioGroup.getCheckedRadioButtonId();
-            if (checkedId == -1) {
-                Toast.makeText(activity, getString(R.string.toast_please_select_portion), Toast.LENGTH_SHORT).show();
-                return;
-            }
-            RadioButton selected = dialog.findViewById(checkedId);
-            if (selected == null || !(selected.getTag() instanceof Integer)) {
-                Toast.makeText(activity, getString(R.string.toast_please_select_portion), Toast.LENGTH_SHORT).show();
-                return;
-            }
-            int index = (Integer) selected.getTag();
+            int index = selectedIndex[0];
             if (index < 0 || index >= portions.size()) {
                 Toast.makeText(activity, getString(R.string.toast_please_select_portion), Toast.LENGTH_SHORT).show();
                 return;

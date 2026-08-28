@@ -1312,7 +1312,7 @@
                     android:layout_width="30dp"
                     android:layout_height="30dp"
                     android:layout_gravity="center"
-                    android:src="@drawable/baseline_print_24" />
+                    android:src="@drawable/ic_print" />
 
             </androidx.cardview.widget.CardView>
 
@@ -1332,7 +1332,7 @@
                     android:layout_width="30dp"
                     android:layout_height="30dp"
                     android:layout_gravity="center"
-                    android:src="@drawable/baseline_share_24" />
+                    android:src="@drawable/ic_share" />
 
             </androidx.cardview.widget.CardView>
 

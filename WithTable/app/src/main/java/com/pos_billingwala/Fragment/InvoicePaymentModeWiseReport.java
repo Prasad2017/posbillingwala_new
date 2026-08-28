@@ -44,11 +44,13 @@ import com.pos_billingwala.Adapter.ReportAdapter;
 import com.pos_billingwala.BuildConfig;
 import com.pos_billingwala.CalenderView.MonthPickerDialog;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
-import com.pos_billingwala.Extra.SimpleDividerItemDecoration;
+import com.pos_billingwala.Extra.ReportCursorHelper;
 import com.pos_billingwala.Model.InvoiceResponse;
 import com.pos_billingwala.R;
 import com.pos_billingwala.Utils.ReportToExcel;
-import com.pos_billingwala.databinding.FragmentInvoicePaymentModeWiseReportBinding;
+import com.pos_billingwala.Extra.OperationalReportCharts;
+import com.pos_billingwala.Model.ReportRankItem;
+import com.pos_billingwala.databinding.FragmentOperationalReportBinding;
 
 import java.io.File;
 import java.net.URLConnection;
@@ -76,7 +78,7 @@ public class InvoicePaymentModeWiseReport extends Fragment implements View.OnCli
     int PERMISSION_ALL = 1;
     SweetAlertDialog pDialog;
     boolean isLoading = false, isDateMonthWise = false;
-    FragmentInvoicePaymentModeWiseReportBinding binding;
+    FragmentOperationalReportBinding binding;
 
 
     public static boolean hasPermissions(Context context, String... permissions) {
@@ -108,13 +110,16 @@ public class InvoicePaymentModeWiseReport extends Fragment implements View.OnCli
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        binding = FragmentInvoicePaymentModeWiseReportBinding.inflate(inflater, container, false);
-        view = binding.getRoot(); //Root xml or viewGroup will be a part of converted view over here
+        binding = FragmentOperationalReportBinding.inflate(inflater, container, false);
+        view = binding.getRoot();
 
         activity = getActivity();
-
         posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
-        binding.heading.setText(paymentMode + " Invoice Reports");
+        binding.toolbar.heading.setText(paymentMode + " Invoice Reports");
+        binding.toolbar.shareInvoice.setVisibility(View.VISIBLE);
+        binding.listTitle.setText(getString(R.string.ui_invoice_payment_mode_report));
+        binding.donutTitle.setText(getString(R.string.ui_payment_mode));
+        binding.barTitle.setText(getString(R.string.ui_amount_breakdown));
 
         view.setFocusableInTouchMode(true);
         view.requestFocus();
@@ -145,7 +150,7 @@ public class InvoicePaymentModeWiseReport extends Fragment implements View.OnCli
         binding.nestedScrollView.setOnScrollChangeListener(new NestedScrollView.OnScrollChangeListener() {
             @Override
             public void onScrollChange(@NonNull NestedScrollView v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) {
-                if (scrollY == v.getChildAt(0).getMeasuredHeight() - v.getMeasuredHeight()) {
+                if (ReportCursorHelper.isNestedScrollAtBottom(v, scrollY)) {
                     if (!isLoading && pageNumber < totalPages) {
                         new getDownloadBills().execute();
                     }
@@ -153,9 +158,9 @@ public class InvoicePaymentModeWiseReport extends Fragment implements View.OnCli
             }
         });
 
-        binding.backToSetting.setOnClickListener(this);
-        binding.menuIcon.setOnClickListener(this);
-        binding.shareInvoice.setOnClickListener(this);
+        binding.toolbar.backToSetting.setOnClickListener(this);
+        binding.toolbar.menuIcon.setOnClickListener(this);
+        binding.toolbar.shareInvoice.setOnClickListener(this);
 
         return view;
 
@@ -312,7 +317,7 @@ public class InvoicePaymentModeWiseReport extends Fragment implements View.OnCli
             public void onClick(View v) {
                 mypopupWindow.dismiss();
                 paymentMode = "Cash";
-                binding.heading.setText(paymentMode + " Invoice Reports");
+                binding.toolbar.heading.setText(paymentMode + " Invoice Reports");
                 getReportList(paymentMode);
             }
         });
@@ -322,7 +327,7 @@ public class InvoicePaymentModeWiseReport extends Fragment implements View.OnCli
             public void onClick(View v) {
                 mypopupWindow.dismiss();
                 paymentMode = "UPI";
-                binding.heading.setText(paymentMode + " Invoice Reports");
+                binding.toolbar.heading.setText(paymentMode + " Invoice Reports");
                 getReportList(paymentMode);
             }
         });
@@ -332,7 +337,7 @@ public class InvoicePaymentModeWiseReport extends Fragment implements View.OnCli
             public void onClick(View v) {
                 mypopupWindow.dismiss();
                 paymentMode = "Bank";
-                binding.heading.setText(paymentMode + " Invoice Reports");
+                binding.toolbar.heading.setText(paymentMode + " Invoice Reports");
                 getReportList(paymentMode);
             }
         });
@@ -412,7 +417,7 @@ public class InvoicePaymentModeWiseReport extends Fragment implements View.OnCli
             }
         });
 
-        mypopupWindow.showAsDropDown(binding.menuIcon, 0, -75);
+        mypopupWindow.showAsDropDown(binding.toolbar.menuIcon, 0, -75);
 
     }
 
@@ -478,9 +483,17 @@ public class InvoicePaymentModeWiseReport extends Fragment implements View.OnCli
             invoiceResponseList.addAll(page);
             adapter = new ReportAdapter(activity, invoiceResponseList);
             binding.recyclerView.setLayoutManager(new LinearLayoutManager(activity));
-            binding.recyclerView.addItemDecoration(new SimpleDividerItemDecoration(activity));
             binding.recyclerView.setAdapter(adapter);
-            binding.totalAmount.setText(MainActivity.currencyName + " " + String.format(Locale.US, "%.2f", totalAmount));
+            binding.totalAmount.setText(MainActivity.currencyName + " "
+                    + String.format(Locale.US, "%.2f", totalAmount));
+            String period = OperationalReportCharts.formatPeriodLabel(
+                    isDateMonthWise ? invoiceDate : "");
+            List<ReportRankItem> breakdown = OperationalReportCharts.groupedBreakdown(
+                    posBillingWalaDatabase, "paymentMode",
+                    isDateMonthWise ? invoiceDate : "");
+            OperationalReportCharts.bindListSummary(binding, activity, totalPages, totalAmount,
+                    breakdown, getString(R.string.ui_payment_mode),
+                    getString(R.string.ui_amount_breakdown), period);
             binding.nestedScrollView.setVisibility(View.VISIBLE);
             binding.noDataFound.setVisibility(View.GONE);
             pageNumber = page.size();

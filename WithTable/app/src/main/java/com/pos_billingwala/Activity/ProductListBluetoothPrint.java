@@ -22,7 +22,6 @@ import android.os.Bundle;
 import android.os.StrictMode;
 import android.provider.MediaStore;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -193,7 +192,6 @@ public class ProductListBluetoothPrint extends BaseActivity implements View.OnCl
         View view = binding.getRoot(); //Root xml or viewGroup will be a part of converted view over here
         setContentView(view); //view is set by view binding
 
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
         activity = ProductListBluetoothPrint.this;
         posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
 

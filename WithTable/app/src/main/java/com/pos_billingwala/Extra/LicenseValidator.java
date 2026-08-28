@@ -54,6 +54,8 @@ public final class LicenseValidator {
         Common.saveUserData(context, "offlineGraceUntil", nullToEmpty(response.getOfflineGraceUntil()));
         Common.saveUserData(context, "trialConsumed", nullToEmpty(response.getTrialConsumed()));
 
+        persistEnabledModulesFromPayload(context, response.getLicensePayload());
+
         long issuedAtSec = parseLong(response.getIssuedAt(), 0L);
         if (issuedAtSec > 0L) {
             long issuedAtMs = issuedAtSec * 1000L;
@@ -170,6 +172,16 @@ public final class LicenseValidator {
         return context.getString(R.string.licence_msg_trial_limit_generic);
     }
 
+    /**
+     * Offline module flags: verified payload only. Safe to call off the UI thread.
+     */
+    public static SignedPayload peekVerifiedPayload(Context context) {
+        if (context == null || !hasStoredPayload(context)) {
+            return null;
+        }
+        return verifyAndParse(context);
+    }
+
     private static SignedPayload verifyAndParse(Context context) {
         try {
             String payloadB64 = Common.getSavedUserData(context, KEY_PAYLOAD);
@@ -248,6 +260,28 @@ public final class LicenseValidator {
             return trustedNowMs <= endOfExpiry.getTimeInMillis();
         } catch (ParseException e) {
             return false;
+        }
+    }
+
+    private static void persistEnabledModulesFromPayload(Context context, String payloadB64) {
+        if (context == null || payloadB64 == null || payloadB64.trim().isEmpty()) {
+            return;
+        }
+        try {
+            byte[] payloadBytes = Base64.decode(payloadB64.trim(), Base64.DEFAULT);
+            SignedPayload payload = new Gson().fromJson(
+                    new String(payloadBytes, StandardCharsets.UTF_8), SignedPayload.class);
+            if (payload == null) {
+                return;
+            }
+            LicenseModules.saveModuleFlags(context,
+                    payload.fastBilling == 1 ? "1" : null,
+                    payload.takeAway == 1 ? "1" : null,
+                    payload.dineIn == 1 ? "1" : null,
+                    payload.mess == 1 ? "1" : null,
+                    null,
+                    null);
+        } catch (Exception ignored) {
         }
     }
 

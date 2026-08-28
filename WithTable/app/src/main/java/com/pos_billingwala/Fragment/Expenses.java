@@ -17,7 +17,6 @@ import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.ExpenseAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ListLoader;
-import com.pos_billingwala.Extra.SimpleDividerItemDecoration;
 import com.pos_billingwala.Model.ExpenseResponse;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentExpensesBinding;
@@ -97,7 +96,6 @@ public class Expenses extends Fragment implements View.OnClickListener {
             if (!expenseResponseList.isEmpty()) {
                 adapter = new ExpenseAdapter(activity, expenseResponseList);
                 binding.recyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
-                binding.recyclerView.addItemDecoration(new SimpleDividerItemDecoration(activity));
                 binding.recyclerView.setAdapter(adapter);
                 adapter.notifyDataSetChanged();
                 // adapter.notifyItemInserted(expenseResponseList.size() - 1);

@@ -15,6 +15,7 @@
 --   • Portion Master (name only) + product_portions.portionMasterId
 --   • Mess QR tokens (walk-in / scan verify) — mess_token table
 --   • Combo items (separate combo master + components + bill snapshots)
+--   • Crash & Error Logs inbox (error_logs) — POS → Admin
 -- =============================================================================
 -- HOW TO RUN (phpMyAdmin — easiest):
 --   1. Open phpMyAdmin → select your POS database
@@ -879,6 +880,180 @@ WHERE (`phoneNo1` IS NULL OR TRIM(`phoneNo1`) = '')
   AND TRIM(`companyMobile`) <> '';
 
 -- =============================================================================
+-- P11 — Crash & Error Logs (POS → Admin inbox)
+-- =============================================================================
+
+CREATE TABLE IF NOT EXISTS `error_logs` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `fingerprint` CHAR(64) NOT NULL,
+  `occurrence_count` INT UNSIGNED NOT NULL DEFAULT 1,
+  `first_seen_at` DATETIME NOT NULL,
+  `last_seen_at` DATETIME NOT NULL,
+  `error_type` VARCHAR(32) NOT NULL DEFAULT 'APPLICATION',
+  `severity` VARCHAR(16) NOT NULL DEFAULT 'ERROR',
+  `error_category` VARCHAR(64) NULL DEFAULT NULL,
+  `summary` VARCHAR(512) NOT NULL DEFAULT '',
+  `app_type` VARCHAR(32) NOT NULL DEFAULT 'POS',
+  `app_version` VARCHAR(32) NULL DEFAULT NULL,
+  `customer_id` VARCHAR(64) NULL DEFAULT NULL,
+  `shop_name` VARCHAR(255) NULL DEFAULT NULL,
+  `branch_label` VARCHAR(255) NULL DEFAULT NULL,
+  `device_name` VARCHAR(255) NULL DEFAULT NULL,
+  `device_id` VARCHAR(255) NULL DEFAULT NULL,
+  `user_label` VARCHAR(255) NULL DEFAULT NULL,
+  `screen_name` VARCHAR(255) NULL DEFAULT NULL,
+  `activity_name` VARCHAR(255) NULL DEFAULT NULL,
+  `fragment_name` VARCHAR(255) NULL DEFAULT NULL,
+  `user_action` VARCHAR(512) NULL DEFAULT NULL,
+  `what_happened` TEXT NULL,
+  `user_flow` TEXT NULL,
+  `breadcrumbs` MEDIUMTEXT NULL,
+  `api_method` VARCHAR(16) NULL DEFAULT NULL,
+  `api_url` VARCHAR(1024) NULL DEFAULT NULL,
+  `http_status` INT NULL DEFAULT NULL,
+  `request_body` MEDIUMTEXT NULL,
+  `response_body` MEDIUMTEXT NULL,
+  `request_size` INT UNSIGNED NULL DEFAULT NULL,
+  `response_size` INT UNSIGNED NULL DEFAULT NULL,
+  `request_duration_ms` INT UNSIGNED NULL DEFAULT NULL,
+  `printer_type` VARCHAR(64) NULL DEFAULT NULL,
+  `printer_model` VARCHAR(128) NULL DEFAULT NULL,
+  `printer_connection` VARCHAR(64) NULL DEFAULT NULL,
+  `print_operation` VARCHAR(128) NULL DEFAULT NULL,
+  `original_error_message` MEDIUMTEXT NULL,
+  `original_exception_class` VARCHAR(512) NULL DEFAULT NULL,
+  `original_stack_trace` MEDIUMTEXT NULL,
+  `original_error_code` VARCHAR(128) NULL DEFAULT NULL,
+  `original_api_response` MEDIUMTEXT NULL,
+  `resolution_notes` TEXT NULL,
+  `resolved_at` DATETIME NULL DEFAULT NULL,
+  `resolved_by` VARCHAR(128) NULL DEFAULT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_error_logs_fingerprint` (`fingerprint`),
+  KEY `idx_error_logs_last_seen` (`last_seen_at`),
+  KEY `idx_error_logs_severity` (`severity`),
+  KEY `idx_error_logs_type` (`error_type`),
+  KEY `idx_error_logs_customer` (`customer_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- p12: POS live presence (lastLoginAt on licenses)
+SET @db := DATABASE();
+SET @sql := IF(
+    (SELECT COUNT(*) FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = @db AND TABLE_NAME = 'licenses' AND COLUMN_NAME = 'lastLoginAt') > 0,
+    'SELECT ''OK: licenses.lastLoginAt already exists'' AS msg',
+    'ALTER TABLE `licenses` ADD COLUMN `lastLoginAt` datetime DEFAULT NULL AFTER `deviceBoundAt`'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+SET @sql := IF(
+    (SELECT COUNT(*) FROM information_schema.STATISTICS
+     WHERE TABLE_SCHEMA = @db AND TABLE_NAME = 'licenses' AND INDEX_NAME = 'idx_licenses_last_login') > 0,
+    'SELECT ''OK: idx_licenses_last_login already exists'' AS msg',
+    'ALTER TABLE `licenses` ADD KEY `idx_licenses_last_login` (`lastLoginAt`)'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+-- p13: POS support tickets linked to licence / shop / device
+SET @sql := IF(
+    (SELECT COUNT(*) FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = @db AND TABLE_NAME = 'admin_support_tickets' AND COLUMN_NAME = 'licence_id') > 0,
+    'SELECT ''OK: admin_support_tickets.licence_id already exists'' AS msg',
+    'ALTER TABLE `admin_support_tickets` ADD COLUMN `licence_id` INT UNSIGNED NULL DEFAULT NULL AFTER `status`'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql := IF(
+    (SELECT COUNT(*) FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = @db AND TABLE_NAME = 'admin_support_tickets' AND COLUMN_NAME = 'user_id') > 0,
+    'SELECT ''OK: admin_support_tickets.user_id already exists'' AS msg',
+    'ALTER TABLE `admin_support_tickets` ADD COLUMN `user_id` INT UNSIGNED NULL DEFAULT NULL AFTER `licence_id`'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql := IF(
+    (SELECT COUNT(*) FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = @db AND TABLE_NAME = 'admin_support_tickets' AND COLUMN_NAME = 'shop_name') > 0,
+    'SELECT ''OK: admin_support_tickets.shop_name already exists'' AS msg',
+    'ALTER TABLE `admin_support_tickets` ADD COLUMN `shop_name` VARCHAR(255) NULL DEFAULT '''' AFTER `user_id`'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql := IF(
+    (SELECT COUNT(*) FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = @db AND TABLE_NAME = 'admin_support_tickets' AND COLUMN_NAME = 'device_name') > 0,
+    'SELECT ''OK: admin_support_tickets.device_name already exists'' AS msg',
+    'ALTER TABLE `admin_support_tickets` ADD COLUMN `device_name` VARCHAR(120) NULL DEFAULT '''' AFTER `shop_name`'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql := IF(
+    (SELECT COUNT(*) FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = @db AND TABLE_NAME = 'admin_support_tickets' AND COLUMN_NAME = 'device_id') > 0,
+    'SELECT ''OK: admin_support_tickets.device_id already exists'' AS msg',
+    'ALTER TABLE `admin_support_tickets` ADD COLUMN `device_id` VARCHAR(255) NULL DEFAULT '''' AFTER `device_name`'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- p14: Website CMS (privacy policy, client showcase, testimonials)
+CREATE TABLE IF NOT EXISTS `website_pages` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `slug` varchar(80) NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `body_html` mediumtext NOT NULL,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `website_pages_slug_unique` (`slug`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `website_clients` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `business_name` varchar(255) NOT NULL,
+  `subtitle` varchar(255) NOT NULL DEFAULT '',
+  `description` text,
+  `logo_path` varchar(500) NOT NULL DEFAULT '',
+  `photo_path` varchar(500) NOT NULL DEFAULT '',
+  `cta_url` varchar(500) NOT NULL DEFAULT '',
+  `sort_order` int unsigned NOT NULL DEFAULT 0,
+  `is_published` tinyint unsigned NOT NULL DEFAULT 1,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `website_testimonials` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `author_name` varchar(255) NOT NULL,
+  `business_name` varchar(255) NOT NULL DEFAULT '',
+  `quote` text NOT NULL,
+  `rating` tinyint unsigned NOT NULL DEFAULT 5,
+  `photo_path` varchar(500) NOT NULL DEFAULT '',
+  `sort_order` int unsigned NOT NULL DEFAULT 0,
+  `is_published` tinyint unsigned NOT NULL DEFAULT 1,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `website_contact_messages` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `subject` varchar(255) NOT NULL DEFAULT '',
+  `message` text NOT NULL,
+  `status` varchar(32) NOT NULL DEFAULT 'New',
+  `source_ip` varchar(64) NOT NULL DEFAULT '',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- =============================================================================
 -- DONE — verify upgrade + existing data still present
 -- =============================================================================
 
@@ -927,7 +1102,9 @@ SELECT
   (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'companys' AND COLUMN_NAME = 'addressLine1') AS companys_addressLine1_ok,
   (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
-   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'companys' AND COLUMN_NAME = 'phoneNo1') AS companys_phoneNo1_ok;
+   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'companys' AND COLUMN_NAME = 'phoneNo1') AS companys_phoneNo1_ok,
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES
+   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'error_logs') AS error_logs_ok;
 
 -- Business data still there (compare to first SELECT — counts must match)
 SELECT

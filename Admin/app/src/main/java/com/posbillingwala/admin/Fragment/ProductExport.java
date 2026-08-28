@@ -18,7 +18,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.Settings;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -84,32 +83,15 @@ public class ProductExport extends Fragment implements View.OnClickListener {
         view = binding.getRoot();
 
         activity = getActivity();
-        MainActivity.title.setText("Export Into DB");
+        // Keep drawer title (Product Catalog / Export Data) when opened as root
+        if (MainActivity.title != null
+                && (MainActivity.title.getText() == null
+                || MainActivity.title.getText().toString().trim().isEmpty())) {
+            ((MainActivity) activity).setScreenTitle("Export Data");
+        }
 
-        MainActivity.back.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                ((MainActivity) activity).loadFragment(new Home(), false);
-            }
-        });
-
-        view.setFocusableInTouchMode(true);
-        view.requestFocus();
-        view.setOnKeyListener(new View.OnKeyListener() {
-            @Override
-            public boolean onKey(View v, int keyCode, KeyEvent event) {
-
-                if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
-                    Log.i("tag", "onKey Back listener is working!!!");
-                    ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                    ((MainActivity) activity).loadFragment(new Home(), false);
-                    return true;
-                }
-                return false;
-            }
-        });
-
+        MainActivity.back.setOnClickListener(v ->
+                ((MainActivity) activity).removeCurrentFragmentAndMoveBack());
 
         binding.customerSpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
             @Override

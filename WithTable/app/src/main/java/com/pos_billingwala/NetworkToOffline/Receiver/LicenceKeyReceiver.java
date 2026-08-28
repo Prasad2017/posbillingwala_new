@@ -15,6 +15,7 @@ import com.pos_billingwala.Extra.AuthTokens;
 import com.pos_billingwala.Extra.Common;
 import com.pos_billingwala.Extra.DetectConnection;
 import com.pos_billingwala.Extra.LicenceExpiredUi;
+import com.pos_billingwala.Extra.LicenseModules;
 import com.pos_billingwala.Extra.LicenseSession;
 import com.pos_billingwala.Extra.Observability;
 import com.pos_billingwala.Fragment.Home;
@@ -97,27 +98,22 @@ public class LicenceKeyReceiver extends BroadcastReceiver {
                                 Common.saveUserData(context, "userName", response.body().getUserName());
                                 Common.saveUserData(context, "shopName", response.body().getShopName());
                                 Common.saveUserData(context, "shopImage", response.body().getShopImage());
-                                Common.saveUserData(context, "fastBilling", response.body().getFastBilling());
-                                Common.saveUserData(context, "takeAway", response.body().getTakeAway());
-                                Common.saveUserData(context, "dineIn", response.body().getDineIn());
-                                Common.saveUserData(context, "mess", response.body().getMess());
+                                LicenseModules.saveModuleFlags(context,
+                                        response.body().getFastBilling(),
+                                        response.body().getTakeAway(),
+                                        response.body().getDineIn(),
+                                        response.body().getMess(),
+                                        response.body().getTotalSaleData(),
+                                        response.body().getTodaySaleData());
                                 Common.saveUserData(context, "LicenceKey", response.body().getLicenceKey());
                                 Common.saveUserData(context, "LicenceKeyRegDate", response.body().getLicenceKeyRegDate());
                                 Common.saveUserData(context, "LicenceKeyExpireDate", response.body().getLicenceKeyExpireDate());
                                 Common.saveUserData(context, "reportPin", response.body().getReportPin());
-                                Common.saveUserData(context, "totalSaleData", response.body().getTotalSaleData());
-                                Common.saveUserData(context, "todaySaleData", response.body().getTodaySaleData());
                                 LicenseSession.saveFromLogin(context, response.body());
                                 AuthTokens.saveFromLogin(context, response.body());
 
-                                MainActivity.fastBilling = response.body().getFastBilling();
-                                MainActivity.takeAway = response.body().getTakeAway();
-                                MainActivity.dineIn = response.body().getDineIn();
-                                MainActivity.mess = response.body().getMess();
                                 MainActivity.LicenceKeyExpireDate = response.body().getLicenceKeyExpireDate();
                                 MainActivity.reportPin = response.body().getReportPin();
-                                MainActivity.totalSaleData = response.body().getTotalSaleData();
-                                MainActivity.todaySaleData = response.body().getTodaySaleData();
 
                                 Home.totalLicenceDays();
                                 Home.setValidationUI();

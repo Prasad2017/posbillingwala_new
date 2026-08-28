@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorBackground">
+
+    <include
+        android:id="@+id/toolbar"
+        layout="@layout/include_pos_report_toolbar" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/toolbar"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:paddingBottom="32dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:letterSpacing="0.08"
+                android:text="@string/ui_sales_and_reports"
+                android:textAllCaps="true"
+                android:textColor="@color/colorTextHint"
+                android:textSize="11sp" />
+
+            <include
+                android:id="@+id/rowSalesDashboard"
+                layout="@layout/item_report_menu_row"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp" />
+
+            <include
+                android:id="@+id/rowSalesOverview"
+                layout="@layout/item_report_menu_row"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:letterSpacing="0.08"
+                android:text="@string/ui_operational_reports"
+                android:textAllCaps="true"
+                android:textColor="@color/colorTextHint"
+                android:textSize="11sp" />
+
+            <include
+                android:id="@+id/rowInvoiceReport"
+                layout="@layout/item_report_menu_row"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp" />
+
+            <include
+                android:id="@+id/rowSaleReport"
+                layout="@layout/item_report_menu_row"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <include
+                android:id="@+id/rowTableReport"
+                layout="@layout/item_report_menu_row"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <include
+                android:id="@+id/rowTakeAwayReport"
+                layout="@layout/item_report_menu_row"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <include
+                android:id="@+id/rowPaymentReport"
+                layout="@layout/item_report_menu_row"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <include
+                android:id="@+id/rowProductReport"
+                layout="@layout/item_report_menu_row"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <include
+                android:id="@+id/rowComboReport"
+                layout="@layout/item_report_menu_row"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <include
+                android:id="@+id/rowExpenseReport"
+                layout="@layout/item_report_menu_row"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <include
+                android:id="@+id/rowMessMemberReport"
+                layout="@layout/item_report_menu_row"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <include
+                android:id="@+id/rowMessReport"
+                layout="@layout/item_report_menu_row"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:letterSpacing="0.08"
+                android:text="@string/ui_data_management"
+                android:textAllCaps="true"
+                android:textColor="@color/colorTextHint"
+                android:textSize="11sp" />
+
+            <include
+                android:id="@+id/rowDeleteAllInvoices"
+                layout="@layout/item_report_menu_row"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp" />
+        </LinearLayout>
+    </ScrollView>
+</RelativeLayout>

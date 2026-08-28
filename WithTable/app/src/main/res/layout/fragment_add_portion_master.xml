@@ -4,13 +4,16 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/colorBackground"
     android:orientation="vertical"
     tools:context=".Fragment.AddPortionMaster">
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
-        android:layout_height="50dp">
+        android:layout_height="56dp"
+        android:background="@color/colorPrimary"
+        app:elevation="4dp">
 
         <RelativeLayout
             android:layout_width="match_parent"
@@ -18,12 +21,14 @@
 
             <ImageView
                 android:id="@+id/backToCategory"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
+                android:layout_width="@dimen/touch_min"
+                android:layout_height="@dimen/touch_min"
                 android:layout_alignParentStart="true"
-                android:layout_centerInParent="true"
-                android:layout_marginStart="15dp"
-                android:src="@drawable/back"
+                android:layout_centerVertical="true"
+                android:layout_marginStart="@dimen/spacing_sm"
+                android:contentDescription="@null"
+                android:padding="@dimen/spacing_sm"
+                android:src="@drawable/ic_back"
                 app:tint="@color/white" />
 
             <androidx.appcompat.widget.AppCompatTextView
@@ -33,175 +38,164 @@
                 android:fontFamily="@font/poppinsmedium"
                 android:text="@string/portion_master_list"
                 android:textColor="@color/white"
-                android:textSize="17dp" />
-</RelativeLayout>
-
+                android:textSize="@dimen/text_title" />
+        </RelativeLayout>
     </com.google.android.material.appbar.AppBarLayout>
 
-    <androidx.core.widget.NestedScrollView
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
-        <LinearLayout
+        <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="vertical">
+            android:clipToPadding="false"
+            android:fillViewport="true"
+            android:padding="@dimen/spacing_lg"
+            android:paddingBottom="@dimen/spacing_xxl">
 
-            <androidx.cardview.widget.CardView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="5dp"
-                android:elevation="7dp"
-                app:cardBackgroundColor="#ecfffa"
-                app:cardCornerRadius="5dp"
-                app:cardElevation="7dp">
+                android:orientation="vertical">
 
-                <LinearLayout
+                <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:layout_marginTop="15dp"
-                        android:fontFamily="@font/poppinsbold"
-                        android:text="@string/portion_master_detail"
-                        android:textColor="@color/textcolor" />
-
-                    <com.google.android.material.textfield.TextInputLayout
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="15dp"
-                        android:layout_marginTop="15dp"
-                        android:layout_marginEnd="15dp"
-                        android:layout_marginBottom="5dp"
-                        app:boxStrokeColor="@color/light_black">
-
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/portionMasterName"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:fontFamily="@font/poppinsregular"
-                            android:hint="@string/portion_name"
-                            android:inputType="textCapWords"
-                            android:singleLine="true"
-                            android:textColor="@color/black"
-                            android:textSize="15dp" />
-
-                    </com.google.android.material.textfield.TextInputLayout>
-
-                    <TextView
-                        android:id="@+id/addPortionMaster"
-                        android:layout_width="match_parent"
-                        android:layout_height="40dp"
-                        android:layout_marginTop="30dp"
-                        android:background="@color/colorPrimary"
-                        android:fontFamily="@font/poppinsmedium"
-                        android:gravity="center"
-                        android:text="@string/add_portion"
-                        android:textAllCaps="true"
-                        android:textColor="@color/white"
-                        android:textSize="15dp" />
-
-                </LinearLayout>
-
-            </androidx.cardview.widget.CardView>
-
-            <androidx.cardview.widget.CardView
-                android:id="@+id/portionMasterListCardView"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="5dp"
-                app:cardCornerRadius="5dp"
-                app:cardElevation="7dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:layout_marginTop="10dp"
-                        android:fontFamily="@font/poppinsbold"
-                        android:text="@string/portion_master_list"
-                        android:textColor="@color/textcolor" />
+                    app:cardBackgroundColor="@color/colorSurface"
+                    app:cardCornerRadius="@dimen/radius_lg"
+                    app:cardElevation="@dimen/card_elevation"
+                    app:strokeColor="@color/colorBorder"
+                    app:strokeWidth="1dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="5dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginEnd="5dp"
-                        android:orientation="horizontal">
+                        android:orientation="vertical"
+                        android:padding="@dimen/spacing_lg">
 
                         <TextView
-                            android:layout_width="60dp"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:fontFamily="@font/poppinsregular"
-                            android:gravity="center"
-                            android:text="@string/ui_sr_no"
-                            android:textColor="@color/black"
-                            android:textSize="15dp" />
+                            android:fontFamily="@font/poppinsbold"
+                            android:letterSpacing="0.06"
+                            android:text="@string/portion_master_detail"
+                            android:textAllCaps="true"
+                            android:textColor="@color/colorTextSecondary"
+                            android:textSize="@dimen/text_caption" />
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/spacing_md"
+                            android:textColorHint="@color/colorTextHint"
+                            app:boxCornerRadiusBottomEnd="@dimen/radius_sm"
+                            app:boxCornerRadiusBottomStart="@dimen/radius_sm"
+                            app:boxCornerRadiusTopEnd="@dimen/radius_sm"
+                            app:boxCornerRadiusTopStart="@dimen/radius_sm"
+                            app:boxStrokeColor="@color/colorBorder"
+                            app:hintTextColor="@color/colorTextHint">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/portionMasterName"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/poppinsregular"
+                                android:hint="@string/portion_name"
+                                android:imeOptions="actionDone"
+                                android:inputType="textCapWords"
+                                android:paddingStart="@dimen/spacing_lg"
+                                android:paddingEnd="@dimen/spacing_md"
+                                android:singleLine="true"
+                                android:textColor="@color/colorTextPrimary"
+                                android:textSize="@dimen/text_body" />
+                        </com.google.android.material.textfield.TextInputLayout>
 
                         <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:fontFamily="@font/poppinsregular"
+                            android:id="@+id/addPortionMaster"
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/button_height"
+                            android:layout_marginTop="@dimen/spacing_xl"
+                            android:background="@drawable/bg_button_primary"
+                            android:fontFamily="@font/poppinsmedium"
                             android:gravity="center"
-                            android:text="@string/portion_name"
-                            android:textColor="@color/black"
-                            android:textSize="15dp" />
-
-                        <TextView
-                            android:layout_width="100dp"
-                            android:layout_height="wrap_content"
-                            android:fontFamily="@font/poppinsregular"
-                            android:gravity="center"
-                            android:text="@string/ui_action"
-                            android:textColor="@color/black"
-                            android:textSize="15dp" />
-
+                            android:text="@string/add_portion"
+                            android:textColor="@color/white"
+                            android:textSize="@dimen/text_button" />
                     </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
 
-                    <View
+                <LinearLayout
+                    android:id="@+id/portionMasterListCardView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/spacing_xl"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/poppinsbold"
+                        android:letterSpacing="0.06"
+                        android:text="@string/portion_master_list"
+                        android:textAllCaps="true"
+                        android:textColor="@color/colorTextSecondary"
+                        android:textSize="@dimen/text_caption" />
+
+                    <com.google.android.material.card.MaterialCardView
                         android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:background="@color/black" />
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_md"
+                        app:cardBackgroundColor="@color/colorSurface"
+                        app:cardCornerRadius="@dimen/radius_lg"
+                        app:cardElevation="@dimen/card_elevation"
+                        app:strokeColor="@color/colorBorder"
+                        app:strokeWidth="1dp">
 
-                    <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/portionMasterRecyclerview"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_margin="3dp"
-                        android:nestedScrollingEnabled="true"
-                        android:padding="3dp" />
-
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/portionMasterRecyclerview"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:nestedScrollingEnabled="false"
+                            android:overScrollMode="never"
+                            android:paddingTop="@dimen/spacing_xs"
+                            android:paddingBottom="@dimen/spacing_xs" />
+                    </com.google.android.material.card.MaterialCardView>
                 </LinearLayout>
+            </LinearLayout>
+        </androidx.core.widget.NestedScrollView>
 
-            </androidx.cardview.widget.CardView>
+        <LinearLayout
+            android:id="@+id/noDataFound"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="@dimen/spacing_xl"
+            android:visibility="gone">
 
+            <TextView
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:background="@drawable/bg_avatar_placeholder"
+                android:fontFamily="@font/poppinsbold"
+                android:gravity="center"
+                android:text="P"
+                android:textColor="@color/colorPrimary"
+                android:textSize="22sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_lg"
+                android:fontFamily="@font/poppinsmedium"
+                android:gravity="center"
+                android:text="@string/no_portion_master_found"
+                android:textColor="@color/colorTextSecondary"
+                android:textSize="@dimen/text_subtitle" />
         </LinearLayout>
-
-    </androidx.core.widget.NestedScrollView>
-
-    <TextView
-        android:id="@+id/noDataFound"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_marginTop="80dp"
-        android:fontFamily="@font/poppinsmedium"
-        android:gravity="center"
-        android:text="@string/no_portion_master_found"
-        android:textColor="@color/black"
-        android:textSize="17dp"
-        android:visibility="gone" />
-
+    </FrameLayout>
 </LinearLayout>

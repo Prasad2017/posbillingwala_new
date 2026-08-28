@@ -78,6 +78,8 @@ $response['message'] = 'Token refreshed';
 $response['licenceId'] = (string) $check['id'];
 $response['ownerId'] = (string) $check['userId'];
 auth_token_append_response($con, $response, 'pos_licence', $check['id'], $android_device_id, isset($check['expiryDate']) ? $check['expiryDate'] : null);
+require_once __DIR__ . '/pos_presence.php';
+licence_touch_last_login($con, (int) $check['id']);
 
 mysqli_close($con);
 echo json_encode($response);

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/navRowRoot"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?attr/selectableItemBackground"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="@dimen/spacing_lg"
+    android:paddingTop="12dp"
+    android:paddingEnd="@dimen/spacing_lg"
+    android:paddingBottom="12dp">
+
+    <ImageView
+        android:id="@+id/navRowIcon"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:contentDescription="@null"
+        android:src="@drawable/ic_nav_dashboard"
+        app:tint="@color/colorTextSecondary" />
+
+    <TextView
+        android:id="@+id/navRowTitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/spacing_md"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:fontFamily="@font/poppinsmedium"
+        android:maxLines="1"
+        android:text="Menu item"
+        android:textColor="@color/colorTextPrimary"
+        android:textSize="@dimen/text_body" />
+
+    <TextView
+        android:id="@+id/navRowBadge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_badge_expired"
+        android:fontFamily="@font/poppinsmedium"
+        android:paddingStart="7dp"
+        android:paddingTop="2dp"
+        android:paddingEnd="7dp"
+        android:paddingBottom="2dp"
+        android:text="5"
+        android:textColor="@color/statusExpired"
+        android:textSize="10sp"
+        android:visibility="gone" />
+</LinearLayout>

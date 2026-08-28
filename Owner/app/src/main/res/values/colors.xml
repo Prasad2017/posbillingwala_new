@@ -85,4 +85,15 @@
     <color name="negative_button">#00f</color>
     <color name="positive_button">#f00</color>
 
+    <color name="colorPrimaryLight">#E8ECF8</color>
+    <color name="colorBackground">#F7F9FC</color>
+    <color name="colorSurface">#FFFFFF</color>
+    <color name="colorBorder">#E5E7EB</color>
+    <color name="colorTextPrimary">#1F2937</color>
+    <color name="colorTextSecondary">#6B7280</color>
+    <color name="colorTextHint">#9CA3AF</color>
+    <color name="statusActive">#16A34A</color>
+    <color name="statusExpired">#DC2626</color>
+    <color name="statusTrial">#F59E0B</color>
+
 </resources>

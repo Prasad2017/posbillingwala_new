@@ -1,74 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:fitsSystemWindows="true"
     android:orientation="vertical">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="5dp"
-        android:orientation="horizontal">
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="@dimen/spacing_md"
+        android:paddingTop="@dimen/spacing_md"
+        android:paddingEnd="@dimen/spacing_md"
+        android:paddingBottom="@dimen/spacing_md">
 
         <TextView
             android:id="@+id/srNo"
-            android:layout_width="60dp"
-            android:layout_height="30dp"
-            android:layout_gravity="center"
-            android:fontFamily="@font/poppinslight"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="@drawable/bg_avatar_placeholder"
+            android:fontFamily="@font/poppinsmedium"
             android:gravity="center"
-            android:hint="1"
-            android:paddingStart="5dp"
-            android:paddingEnd="5dp"
-            android:textColor="@color/black"
-            android:textSize="13dp" />
+            android:textColor="@color/colorPrimary"
+            android:textSize="13sp" />
 
         <TextView
             android:id="@+id/categoryName"
-            android:layout_width="match_parent"
-            android:layout_height="30dp"
-            android:layout_gravity="center"
-            android:layout_weight="1"
-            android:fontFamily="@font/poppinslight"
-            android:gravity="center"
-            android:hint="@string/category_name"
-            android:paddingStart="5dp"
-            android:paddingEnd="5dp"
-            android:textColor="@color/black"
-            android:textSize="13dp" />
-
-        <LinearLayout
-            android:layout_width="90dp"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:gravity="center"
-            android:orientation="horizontal">
+            android:layout_marginStart="@dimen/spacing_md"
+            android:layout_weight="1"
+            android:fontFamily="@font/poppinsmedium"
+            android:textColor="@color/colorTextPrimary"
+            android:textSize="@dimen/text_subtitle" />
 
-            <ImageView
-                android:id="@+id/categoryEdit"
-                android:layout_width="25dp"
-                android:layout_height="25dp"
-                android:layout_gravity="center"
-                android:layout_marginEnd="5dp"
-                android:gravity="center"
-                android:paddingStart="5dp"
-                android:paddingEnd="5dp"
-                android:src="@drawable/baseline_mode_edit_24" />
+        <ImageView
+            android:id="@+id/categoryEdit"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:contentDescription="@null"
+            android:padding="6dp"
+            android:src="@drawable/ic_edit"
+            app:tint="@color/colorPrimary" />
 
-            <ImageView
-                android:id="@+id/categoryRemove"
-                android:layout_width="25dp"
-                android:layout_height="25dp"
-                android:layout_gravity="center"
-                android:layout_marginStart="5dp"
-                android:gravity="center"
-                android:paddingStart="5dp"
-                android:paddingEnd="5dp"
-                android:src="@drawable/baseline_delete_24" />
-
-        </LinearLayout>
-
+        <ImageView
+            android:id="@+id/categoryRemove"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:contentDescription="@null"
+            android:padding="6dp"
+            android:src="@drawable/ic_delete"
+            app:tint="@color/statusExpired" />
     </LinearLayout>
 
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/colorBorder" />
 </LinearLayout>

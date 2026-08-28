@@ -73,6 +73,7 @@ public final class AppLanguage {
 
         Configuration config = new Configuration(context.getResources().getConfiguration());
         applyLocaleToConfig(config, locale);
+        DisplayScale.applyLock(config);
         return context.createConfigurationContext(config);
     }
 
@@ -85,7 +86,7 @@ public final class AppLanguage {
     }
 
     /**
-     * Call from BaseActivity.setScreenSizeSmall() so fontScale update does not wipe the app language.
+     * Call when updating Configuration so locale is not lost (see {@link DisplayScale#refresh}).
      */
     public static void preserveLocaleOnConfig(@NonNull Context context, @NonNull Configuration configuration) {
         applyLocaleToConfig(configuration, localeFor(getSavedCode(context)));
@@ -128,6 +129,7 @@ public final class AppLanguage {
         Locale.setDefault(locale);
         applyLocaleToResources(activity, locale);
         applyLocaleToResources(activity.getApplicationContext(), locale);
+        DisplayScale.clearCachedResources(activity);
 
         if (activity instanceof MainActivity) {
             ((MainActivity) activity).reloadAfterLanguageChange();
@@ -141,8 +143,12 @@ public final class AppLanguage {
         Resources resources = context.getResources();
         Configuration config = new Configuration(resources.getConfiguration());
         applyLocaleToConfig(config, locale);
+        DisplayScale.applyLock(config);
         DisplayMetrics metrics = resources.getDisplayMetrics();
+        DisplayScale.syncMetrics(metrics);
         resources.updateConfiguration(config, metrics);
+        DisplayScale.clearCachedResources(context instanceof DisplayScale.ResourcesHost
+                ? (DisplayScale.ResourcesHost) context : null);
     }
 
     @SuppressWarnings("deprecation")

@@ -195,6 +195,37 @@
     <string name="home_fetch_data">डेटा घ्या</string>
     <string name="home_synchronize">सिंक करा</string>
     <string name="home_low_inventory">कमी स्टॉक</string>
+    <string name="home_section_sales">विक्री आढावा</string>
+    <string name="home_section_catalog">कॅटलॉग</string>
+    <string name="home_section_billing">बिलिंग सुरू करा</string>
+    <string name="home_whats_happening">आज तुमच्या स्टोअरमध्ये हे सुरू आहे.</string>
 
     <string name="press_back_again_to_exit">बाहेर पडण्यासाठी पुन्हा बॅक दाबा</string>
+
+    <string name="discount_wise_report">सवलत नुसार अहवाल</string>
+    <string name="discount_type_percentage">टक्केवारी</string>
+    <string name="discount_type_amount">रक्कम</string>
+    <string name="business_hours">व्यवसाय वेळ</string>
+    <string name="business_hours_hint">उघडण्याची आणि बंद करण्याची वेळ</string>
+    <string name="opening_time">उघडण्याची वेळ</string>
+    <string name="closing_time">बंद करण्याची वेळ</string>
+    <string name="shop_open">दुकान सुरू</string>
+    <string name="shop_closed">दुकान बंद</string>
+    <string name="business_hours_saved">व्यवसाय वेळ जतन केली</string>
+    <string name="business_hours_not_set">सेट नाही</string>
+
+    <string name="edit_bill">बिल संपादित करा</string>
+    <string name="refund_bill">परतावा</string>
+    <string name="save_bill">बिल जतन करा</string>
+    <string name="change">बदला</string>
+    <string name="bill_refunded">परतावा झाला</string>
+    <string name="refund_confirm_title">हे बिल परत करायचे?</string>
+    <string name="refund_confirm_message">हे बिल परतावा म्हणून नोंदवले जाईल आणि विक्री एकूणातून वगळले जाईल.</string>
+    <string name="refund_success">बिल परत केले</string>
+    <string name="refund_wise_report">परतावा अहवाल</string>
+    <string name="toast_cannot_edit_refunded">परतावा झालेले बिल संपादित करता येत नाही</string>
+    <string name="toast_keep_one_item">किमान एक आयटम ठेवा</string>
+    <string name="toast_bill_updated">बिल अपडेट झाले</string>
+    <string name="toast_bill_not_found">बिल सापडले नाही</string>
+
 </resources>

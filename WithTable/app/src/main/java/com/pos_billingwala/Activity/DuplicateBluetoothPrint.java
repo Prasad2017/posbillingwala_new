@@ -18,7 +18,6 @@ import android.os.Bundle;
 import android.text.Html;
 import android.util.Base64;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
@@ -44,7 +43,6 @@ import com.pos_billingwala.Adapter.DuplicateInvoiceAdapter;
 import com.pos_billingwala.Adapter.DuplicateTwoPrintAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ShopHeaderBuilder;
-import com.pos_billingwala.Extra.SimpleDividerItemDecoration;
 import com.pos_billingwala.Fragment.CreatePos;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.InvoiceProductResponse;
@@ -144,7 +142,6 @@ public class DuplicateBluetoothPrint extends BaseActivity implements View.OnClic
         View view = binding.getRoot(); //Root xml or viewGroup will be a part of converted view over here
         setContentView(view); //view is set by view binding
 
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
         activity = DuplicateBluetoothPrint.this;
         posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
 
@@ -484,7 +481,6 @@ public class DuplicateBluetoothPrint extends BaseActivity implements View.OnClic
             cartRecyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
 
             cartRecyclerView.setAdapter(duplicateInvoiceAdapter);
-            cartRecyclerView.addItemDecoration(new SimpleDividerItemDecoration(activity));
             //  duplicateInvoiceAdapter.notifyItemInserted(invoiceProductResponseList.size() - 1);
 
             //Two Inch Printer List
@@ -767,32 +763,9 @@ public class DuplicateBluetoothPrint extends BaseActivity implements View.OnClic
 
     @Override
     public void onBackPressed() {
-
-        super.onBackPressed();
-        if (cartOrderStatus.equalsIgnoreCase("table_wise")) {
-
-            Intent intent = new Intent(DuplicateBluetoothPrint.this, MainActivity.class);
-            intent.putExtra("invoiceRunningStatus", "printBill");
-            intent.putExtra("cartOrderStatus", cartOrderStatus);
-            startActivity(intent);
-            finish();
-        } else if (cartOrderStatus.equalsIgnoreCase("take_away")) {
-
-            Intent intent = new Intent(DuplicateBluetoothPrint.this, MainActivity.class);
-            intent.putExtra("invoiceRunningStatus", "printBill");
-            intent.putExtra("cartOrderStatus", cartOrderStatus);
-            startActivity(intent);
-            finish();
-
-        } else {
-
-            Intent intent = new Intent(DuplicateBluetoothPrint.this, MainActivity.class);
-            intent.putExtra("invoiceRunningStatus", "printBill");
-            intent.putExtra("cartOrderStatus", cartOrderStatus);
-            startActivity(intent);
-            finish();
-
-        }
+        // Return to the caller (invoice list / POS). Do not start a new MainActivity,
+        // which was incorrectly opening Fast Billing.
+        finish();
     }
 
 }

@@ -40,7 +40,7 @@
         android:layout_width="30dp"
         android:layout_height="30dp"
         android:layout_gravity="center"
-        android:src="@drawable/baseline_keyboard_arrow_right_24"
+        android:src="@drawable/ic_chevron_right"
         app:tint="@color/light_black" />
 
 </LinearLayout>

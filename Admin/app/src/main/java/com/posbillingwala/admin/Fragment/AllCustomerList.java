@@ -6,20 +6,23 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.posbillingwala.admin.Activity.MainActivity;
 import com.posbillingwala.admin.Adapter.CustomerAdapter;
 import com.posbillingwala.admin.Extra.DetectConnection;
+import com.posbillingwala.admin.Extra.LicenseStatusHelper;
 import com.posbillingwala.admin.Model.AllApiResponse;
 import com.posbillingwala.admin.Model.CustomerResponse;
+import com.posbillingwala.admin.Model.LicenseResponse;
 import com.posbillingwala.admin.R;
 import com.posbillingwala.admin.Retrofit.Api;
 import com.posbillingwala.admin.databinding.FragmentAllCustomerListBinding;
@@ -32,7 +35,6 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-
 @SuppressLint("SetTextI18n, NonConstantResourceId, UseCompatLoadingForDrawables, StaticFieldLeak")
 public class AllCustomerList extends Fragment {
 
@@ -41,7 +43,8 @@ public class AllCustomerList extends Fragment {
     FragmentAllCustomerListBinding binding;
     CustomerAdapter customerAdapter;
     List<CustomerResponse> customerResponseList = new ArrayList<>();
-
+    List<CustomerResponse> filteredList = new ArrayList<>();
+    String statusFilter = "ALL";
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
@@ -50,46 +53,117 @@ public class AllCustomerList extends Fragment {
         view = binding.getRoot();
 
         activity = getActivity();
-        MainActivity.title.setText("Customers");
+        // Keep title from navigateRoot (Customers / Licenses / etc.)
+        if (MainActivity.title != null
+                && (MainActivity.title.getText() == null
+                || MainActivity.title.getText().toString().trim().isEmpty())) {
+            ((MainActivity) activity).setScreenTitle("Customers");
+        }
 
-        MainActivity.back.setOnClickListener(v -> {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-            ((MainActivity) activity).loadFragment(new Home(), false);
-        });
-
-        view.setFocusableInTouchMode(true);
-        view.requestFocus();
-        view.setOnKeyListener((v, keyCode, event) -> {
-            if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
-                ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                ((MainActivity) activity).loadFragment(new Home(), false);
-                return true;
-            }
-            return false;
-        });
-
-        binding.searchCustomer.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (customerAdapter != null) {
-                    customerAdapter.getFilter().filter(s);
-                    binding.emptyCustomers.setVisibility(
-                            customerAdapter.getItemCount() == 0 ? View.VISIBLE : View.GONE);
+        if (binding.searchCustomer != null) {
+            binding.searchCustomer.addTextChangedListener(new TextWatcher() {
+                @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    applyFilters();
                 }
-            }
+                @Override public void afterTextChanged(Editable s) {}
+            });
+        }
 
-            @Override
-            public void afterTextChanged(Editable s) {
-            }
-        });
+        if (binding.fabAddCustomer != null) {
+            binding.fabAddCustomer.setOnClickListener(v ->
+                    ((MainActivity) activity).navigateDetail(new CustomerRegistration(), "Add Customer"));
+        }
+
+        if (binding.chipAll != null) {
+            binding.chipAll.setOnClickListener(v -> setStatusFilter("ALL"));
+            binding.chipActive.setOnClickListener(v -> setStatusFilter("ACTIVE"));
+            binding.chipTrial.setOnClickListener(v -> setStatusFilter("TRIAL"));
+            binding.chipExpired.setOnClickListener(v -> setStatusFilter("EXPIRED"));
+            Bundle args = getArguments();
+            String initial = args != null ? args.getString("statusFilter", "ALL") : "ALL";
+            if (initial == null || initial.isEmpty()) initial = "ALL";
+            statusFilter = initial;
+            highlightChip(initial);
+        }
 
         return view;
     }
 
+    private void setStatusFilter(String filter) {
+        statusFilter = filter;
+        highlightChip(filter);
+        applyFilters();
+    }
+
+    private void highlightChip(String selected) {
+        styleChip(binding.chipAll, "ALL".equals(selected));
+        styleChip(binding.chipActive, "ACTIVE".equals(selected));
+        styleChip(binding.chipTrial, "TRIAL".equals(selected));
+        styleChip(binding.chipExpired, "EXPIRED".equals(selected));
+    }
+
+    private void styleChip(TextView chip, boolean selected) {
+        if (chip == null) return;
+        chip.setBackgroundResource(selected ? R.drawable.bg_month_chip : R.drawable.bg_card);
+        chip.setTextColor(ContextCompat.getColor(requireContext(),
+                selected ? R.color.colorPrimary : R.color.colorTextSecondary));
+    }
+
+    private void applyFilters() {
+        String q = binding.searchCustomer.getText() != null
+                ? binding.searchCustomer.getText().toString().trim().toLowerCase() : "";
+        filteredList.clear();
+        int all = 0, active = 0, trial = 0, expired = 0;
+        for (CustomerResponse c : customerResponseList) {
+            if (c == null) continue;
+            String status = customerStatus(c);
+            all++;
+            if (LicenseStatusHelper.STATUS_TRIAL.equals(status)) trial++;
+            else if (LicenseStatusHelper.STATUS_EXPIRED.equals(status)
+                    || LicenseStatusHelper.STATUS_SUSPENDED.equals(status)
+                    || LicenseStatusHelper.STATUS_REVOKED.equals(status)) expired++;
+            else active++;
+
+            boolean statusOk = "ALL".equals(statusFilter)
+                    || ("ACTIVE".equals(statusFilter) && !LicenseStatusHelper.STATUS_TRIAL.equals(status)
+                    && !LicenseStatusHelper.STATUS_EXPIRED.equals(status)
+                    && !LicenseStatusHelper.STATUS_SUSPENDED.equals(status)
+                    && !LicenseStatusHelper.STATUS_REVOKED.equals(status))
+                    || ("TRIAL".equals(statusFilter) && LicenseStatusHelper.STATUS_TRIAL.equals(status))
+                    || ("EXPIRED".equals(statusFilter) && (LicenseStatusHelper.STATUS_EXPIRED.equals(status)
+                    || LicenseStatusHelper.STATUS_SUSPENDED.equals(status)
+                    || LicenseStatusHelper.STATUS_REVOKED.equals(status)));
+            if (!statusOk) continue;
+
+            String shop = c.getShopName() != null ? c.getShopName().toLowerCase() : "";
+            String name = c.getName() != null ? c.getName().toLowerCase() : "";
+            String mobile = c.getContactNumber() != null ? c.getContactNumber().toLowerCase() : "";
+            if (q.isEmpty() || shop.contains(q) || name.contains(q) || mobile.contains(q)) {
+                filteredList.add(c);
+            }
+        }
+        if (binding.chipAll != null) {
+            binding.chipAll.setText("All (" + all + ")");
+            binding.chipActive.setText("Active (" + active + ")");
+            binding.chipTrial.setText("Trial (" + trial + ")");
+            binding.chipExpired.setText("Expired (" + expired + ")");
+        }
+        customerAdapter = new CustomerAdapter(activity, filteredList);
+        binding.recyclerView.setLayoutManager(new LinearLayoutManager(activity));
+        binding.recyclerView.setAdapter(customerAdapter);
+        binding.emptyCustomers.setVisibility(filteredList.isEmpty() ? View.VISIBLE : View.GONE);
+    }
+
+    private String customerStatus(CustomerResponse customer) {
+        if (customer.getLicenseResponseList() == null || customer.getLicenseResponseList().isEmpty()) {
+            return LicenseStatusHelper.STATUS_PENDING;
+        }
+        LicenseResponse primary = customer.getLicenseResponseList().get(0);
+        return LicenseStatusHelper.displayStatus(primary);
+    }
+
+    @Override
     public void onStart() {
         super.onStart();
         MainActivity.title.setVisibility(View.VISIBLE);
@@ -103,9 +177,8 @@ public class AllCustomerList extends Fragment {
     }
 
     private void getCustomerList() {
-
         SweetAlertDialog pDialog = new SweetAlertDialog(activity, SweetAlertDialog.PROGRESS_TYPE);
-        pDialog.getProgressHelper().setBarColor(Color.parseColor("#2D7FED"));
+        pDialog.getProgressHelper().setBarColor(Color.parseColor("#2563EB"));
         pDialog.setTitleText("Loading");
         pDialog.setCancelable(false);
         pDialog.show();
@@ -119,14 +192,7 @@ public class AllCustomerList extends Fragment {
                 if (response.isSuccessful() && response.body() != null
                         && response.body().getCustomerResponseList() != null) {
                     customerResponseList = new ArrayList<>(response.body().getCustomerResponseList());
-                    customerAdapter = new CustomerAdapter(activity, customerResponseList);
-                    binding.recyclerView.setLayoutManager(new LinearLayoutManager(activity));
-                    binding.recyclerView.setAdapter(customerAdapter);
-                    binding.emptyCustomers.setVisibility(customerResponseList.isEmpty() ? View.VISIBLE : View.GONE);
-                    if (binding.searchCustomer.getText() != null
-                            && binding.searchCustomer.getText().length() > 0) {
-                        customerAdapter.getFilter().filter(binding.searchCustomer.getText());
-                    }
+                    applyFilters();
                 } else {
                     binding.emptyCustomers.setVisibility(View.VISIBLE);
                 }

@@ -33,7 +33,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -63,7 +62,7 @@ import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.BuildConfig;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.AppExecutors;
-import com.pos_billingwala.Extra.ShopHeaderBuilder;
+import com.pos_billingwala.Extra.BusinessHours;
 import com.pos_billingwala.Extra.Common;
 import com.pos_billingwala.Extra.LicenceExpiredUi;
 import com.pos_billingwala.Extra.LicenseModules;
@@ -76,6 +75,7 @@ import com.pos_billingwala.NetworkToOffline.Receiver.LicenceKeyReceiver;
 import com.pos_billingwala.NetworkToOffline.Receiver.OfflineToNetworkReceiver;
 import com.pos_billingwala.NetworkToOffline.UserSynchronizeData;
 import com.pos_billingwala.Print.KOTWoosimPrnMng;
+import com.pos_billingwala.Print.PrinterConnectionHelper;
 import com.pos_billingwala.Print.WoosimPrnMng;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentHomeBinding;
@@ -97,7 +97,7 @@ import java.util.concurrent.TimeUnit;
 public class Home extends Fragment implements View.OnClickListener {
 
     public static Activity activity;
-    public static TextView fastBilling, tableBilling, takeAwayBilling, messBilling;
+    public static View fastBilling, tableBilling, takeAwayBilling, messBilling;
     public static View posBillingRow1, posBillingRow2;
     public static CardView totalSalesCardView, todaySalesCardView;
     /** When true, next onStart skips heavy DB/Bluetooth (used when Home is only a back-stack seed). */
@@ -136,7 +136,6 @@ public class Home extends Fragment implements View.OnClickListener {
     private final SimpleDateFormat homeDateTimeFormat =
             new SimpleDateFormat("EEE, dd MMM yyyy  hh:mm:ss a", Locale.getDefault());
     private int lastGreetingHour = -1;
-    private String cachedDisplayShopName;
     private Bitmap cachedStoreLogo;
     private String cachedStoreLogoRaw;
     private List<CompanyResponse> cachedCompanyDetails;
@@ -220,6 +219,19 @@ public class Home extends Fragment implements View.OnClickListener {
     }
 
     public static void setValidationUI() {
+        applyModuleVisibility();
+        if (activity == null) {
+            return;
+        }
+        AppExecutors.get().io().execute(() -> {
+            boolean restored = LicenseModules.hydrateMissingFlagsFromPayload(activity);
+            if (restored) {
+                AppExecutors.get().main(Home::applyModuleVisibility);
+            }
+        });
+    }
+
+    private static void applyModuleVisibility() {
         boolean showFast = LicenseModules.isEnabled(MainActivity.fastBilling);
         boolean showDineIn = LicenseModules.isEnabled(MainActivity.dineIn);
         boolean showTakeAway = LicenseModules.isEnabled(MainActivity.takeAway);
@@ -267,9 +279,9 @@ public class Home extends Fragment implements View.OnClickListener {
         });
 
         initViews();
+        binding.swipeRefreshLayout.setColorSchemeResources(R.color.colorPrimary);
         setValidationUI();
         initAds();
-        enableBluetooth();
 
         return view;
 
@@ -344,10 +356,22 @@ public class Home extends Fragment implements View.OnClickListener {
         binding.hideShowTodaySale.setOnClickListener(this);
         binding.fetchDataLayout.setOnClickListener(this);
         binding.synchronizeLayout.setOnClickListener(this);
+        totalSalesCardView.setOnClickListener(this);
+        todaySalesCardView.setOnClickListener(this);
 
     }
 
     public void initAds() {
+        if (activity == null) {
+            return;
+        }
+        View adHost = view != null ? view.findViewById(R.id.ad_view) : null;
+        if (!DetectConnection.checkInternetConnection(activity)) {
+            if (adHost != null) {
+                adHost.setVisibility(View.GONE);
+            }
+            return;
+        }
 
         // Initialize the Mobile Ads SDK.
         MobileAds.initialize(activity, new OnInitializationCompleteListener() {
@@ -463,6 +487,14 @@ public class Home extends Fragment implements View.OnClickListener {
             confirmFetchData();
         } else if (id == R.id.synchronizeLayout) {
             confirmSynchronizeData();
+        } else if (id == R.id.totalSalesCardView) {
+            if (LicenseModules.isEnabled(MainActivity.totalSaleData)) {
+                ((MainActivity) activity).loadFragment(new SalesOverview(), true);
+            }
+        } else if (id == R.id.todaySalesCardView) {
+            if (LicenseModules.isEnabled(MainActivity.todaySaleData)) {
+                ((MainActivity) activity).loadFragment(new SalesDashboard(), true);
+            }
         }
 
     }
@@ -545,11 +577,7 @@ public class Home extends Fragment implements View.OnClickListener {
         if (!MainActivity.userId.equalsIgnoreCase("")) {
             totalLicenceDays();
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            requestNewPermission();
-        } else {
-            requestPermission();
-        }
+        requestPermissionsOnce();
         getTotalCount();
         getLowInventoryList();
         // Defer Bluetooth so first paint / dashboard bind stay smooth
@@ -575,12 +603,8 @@ public class Home extends Fragment implements View.OnClickListener {
             }
             AppExecutors.get().io().execute(() -> {
                 try {
-                    if (!bluetoothAddress.equalsIgnoreCase("")) {
-                        new WoosimPrnMng(activity, bluetoothAddress, activity);
-                    }
-                    if (!bluetoothKOTAddress.equalsIgnoreCase("")) {
-                        new KOTWoosimPrnMng(activity, bluetoothKOTAddress, activity);
-                    }
+                    PrinterConnectionHelper.autoConnectBillPrinter(activity, bluetoothAddress);
+                    PrinterConnectionHelper.autoConnectKotPrinter(activity, bluetoothKOTAddress);
                 } catch (Exception e) {
                     Log.e("Home", "getPrinterSettingDetails connect", e);
                 }
@@ -652,13 +676,16 @@ public class Home extends Fragment implements View.OnClickListener {
                 }
                 cursor.close();
 
-                cursor = database.rawQuery("SELECT SUM(totalAmount) as totalAmount FROM " + POSBillingWalaDatabase.INVOICE_TABLE, null);
+                cursor = database.rawQuery("SELECT SUM(totalAmount) as totalAmount FROM " + POSBillingWalaDatabase.INVOICE_TABLE
+                        + " WHERE " + POSBillingWalaDatabase.notRefundedClause(), null);
                 if (cursor.moveToNext()) {
                     totalSaleText = currencyName + " " + formatCompactAmount(cursor.getString(cursor.getColumnIndex("totalAmount")));
                 }
                 cursor.close();
 
-                cursor = database.rawQuery("SELECT SUM(totalAmount) as totalAmount FROM " + POSBillingWalaDatabase.INVOICE_TABLE + " WHERE invoiceDate LIKE ?", new String[]{"%" + todayDate + "%"});
+                cursor = database.rawQuery("SELECT SUM(totalAmount) as totalAmount FROM " + POSBillingWalaDatabase.INVOICE_TABLE
+                        + " WHERE invoiceDate LIKE ? AND " + POSBillingWalaDatabase.notRefundedClause(),
+                        new String[]{"%" + todayDate + "%"});
                 if (cursor.moveToNext()) {
                     todaySaleText = currencyName + " " + formatCompactAmount(cursor.getString(cursor.getColumnIndex("totalAmount")));
                 }
@@ -719,8 +746,21 @@ public class Home extends Fragment implements View.OnClickListener {
         return String.format(Locale.US, "%.2f", totalAmt);
     }
 
-    public void requestNewPermission() {
+    private boolean permissionsRequestedThisSession;
 
+    private void requestPermissionsOnce() {
+        if (permissionsRequestedThisSession || activity == null) {
+            return;
+        }
+        permissionsRequestedThisSession = true;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            requestNewPermission();
+        } else {
+            requestPermission();
+        }
+    }
+
+    public void requestNewPermission() {
         Dexter.withContext(activity)
                 .withPermissions(
                         Manifest.permission.CAMERA,
@@ -743,7 +783,6 @@ public class Home extends Fragment implements View.OnClickListener {
                         token.continuePermissionRequest();
                     }
                 }).check();
-
     }
 
     public void requestPermission() {
@@ -763,8 +802,7 @@ public class Home extends Fragment implements View.OnClickListener {
                         if (report.areAllPermissionsGranted()) {
                             createFolder();
                         } else if (report.isAnyPermissionPermanentlyDenied()) {
-                            //  showSettingsDialog();
-                            requestPermission();
+                            // Do not re-request in a loop — that hangs the Home screen.
                         }
                     }
 
@@ -868,6 +906,7 @@ public class Home extends Fragment implements View.OnClickListener {
         registerConnectivityReceivers();
         updateHomeHeader();
         startHomeClock();
+        setValidationUI();
     }
 
     private void updateHomeHeader() {
@@ -875,7 +914,7 @@ public class Home extends Fragment implements View.OnClickListener {
             return;
         }
         lastGreetingHour = -1;
-        binding.shopName.setText(getGreeting() + ", " + getDisplayShopName());
+        binding.shopName.setText(getGreeting());
         updateHomeDateTime();
         updateOnlineStatusUi();
         loadHomeStoreImage();
@@ -909,11 +948,23 @@ public class Home extends Fragment implements View.OnClickListener {
         }
         Date now = new Date();
         binding.homeDateTime.setText(homeDateTimeFormat.format(now));
+        if (binding.homeBusinessHours != null) {
+            String hoursLine = BusinessHours.homeStatusLine(activity);
+            if (hoursLine.isEmpty()) {
+                binding.homeBusinessHours.setVisibility(View.GONE);
+            } else {
+                binding.homeBusinessHours.setVisibility(View.VISIBLE);
+                binding.homeBusinessHours.setText(hoursLine);
+                boolean open = BusinessHours.isOpenNow(activity);
+                binding.homeBusinessHours.setTextColor(ContextCompat.getColor(activity,
+                        open ? R.color.green_700 : R.color.red_900));
+            }
+        }
 
         int hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
         if (hour != lastGreetingHour && binding.shopName != null) {
             lastGreetingHour = hour;
-            binding.shopName.setText(getGreeting() + ", " + getDisplayShopName());
+            binding.shopName.setText(getGreeting());
         }
     }
 
@@ -928,40 +979,6 @@ public class Home extends Fragment implements View.OnClickListener {
         } else {
             return getString(R.string.good_night);
         }
-    }
-
-    private String getDisplayShopName() {
-        if (cachedDisplayShopName != null) {
-            return cachedDisplayShopName;
-        }
-        if (!TextUtils.isEmpty(MainActivity.shopName)) {
-            cachedDisplayShopName = MainActivity.shopName;
-            return cachedDisplayShopName;
-        }
-        // Resolve shop name off the main thread; show placeholder until ready
-        AppExecutors.get().db().execute(() -> {
-            String resolved = "POS Billingwala";
-            try {
-                List<CompanyResponse> companyList = getCachedCompanyDetails();
-                if (companyList != null && !companyList.isEmpty()) {
-                    String name = ShopHeaderBuilder.resolveShopName1(companyList.get(0));
-                    if (!TextUtils.isEmpty(name)) {
-                        resolved = name;
-                    }
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            final String shop = resolved;
-            AppExecutors.get().main(() -> {
-                if (!isAdded() || binding == null) {
-                    return;
-                }
-                cachedDisplayShopName = shop;
-                binding.shopName.setText(getGreeting() + ", " + shop);
-            });
-        });
-        return "POS Billingwala";
     }
 
     private synchronized List<CompanyResponse> getCachedCompanyDetails() {
@@ -1016,7 +1033,8 @@ public class Home extends Fragment implements View.OnClickListener {
                     binding.userPhoto.setImageBitmap(logoBitmap);
                     return;
                 }
-                if (!TextUtils.isEmpty(MainActivity.shopImage)) {
+                if (!TextUtils.isEmpty(MainActivity.shopImage)
+                        && DetectConnection.checkInternetConnection(activity)) {
                     try {
                         Picasso.get()
                                 .load(BuildConfig.MEDIA_BASE_URL + MainActivity.shopImage)

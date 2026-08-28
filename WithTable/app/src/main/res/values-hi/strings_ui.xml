@@ -52,7 +52,8 @@
     <string name="ui_day_wise_less_sale_out_product">दिन अनुसार कम बिकने वाले उत्पाद</string>
     <string name="ui_day_wise_top_sale_out_product">दिन अनुसार सबसे ज़्यादा बिकने वाले उत्पाद</string>
     <string name="ui_delete">हटाएं</string>
-    <string name="ui_delete_all_invoice_सर्व_बले_हटव">सभी इनवॉइस हटाएं</string>
+    <string name="ui_data_management">डेटा प्रबंधन</string>
+    <string name="ui_delete_all_invoices_hint">क्लाउड सिंक के बाद सभी स्थानीय इनवॉइस हटाएं</string>
     <string name="ui_designed_by_pos_billingwala">POS Billingwala द्वारा डिज़ाइन किया गया</string>
     <string name="ui_discount">छूट</string>
     <string name="ui_discount_detail">छूट विवरण</string>
@@ -379,6 +380,8 @@
     <string name="toast_print_layout_failed">प्रिंट लेआउट विफल</string>
     <string name="toast_printer_not_ready">प्रिंटर तैयार नहीं है</string>
     <string name="toast_printer_offline_connect">प्रिंटर ऑफलाइन — कनेक्ट करके फिर कोशिश करें</string>
+    <string name="toast_printer_connecting">प्रिंटर से कनेक्ट हो रहा है… कनेक्ट होने के बाद फिर Print दबाएं.</string>
+    <string name="toast_printer_not_connected_select">प्रिंटर कनेक्ट नहीं है। कृपया Bluetooth प्रिंटर चुनें.</string>
     <string name="toast_test_print_sent">टेस्ट प्रिंट भेजा गया</string>
     <string name="toast_printer_disconnect">प्रिंटर डिस्कनेक्ट</string>
     <string name="toast_printing_in_progress">प्रिंटिंग जारी है</string>

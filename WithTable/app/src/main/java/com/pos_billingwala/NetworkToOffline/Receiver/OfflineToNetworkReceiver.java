@@ -14,6 +14,7 @@ import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.DetectConnection;
 import com.pos_billingwala.Extra.Observability;
 import com.pos_billingwala.Model.AllApiResponse;
+import com.pos_billingwala.NetworkToOffline.InvoicePendingSync;
 import com.pos_billingwala.NetworkToOffline.OfflineSyncExecutor;
 import com.pos_billingwala.Retrofit.Api;
 
@@ -203,29 +204,7 @@ public class OfflineToNetworkReceiver extends BroadcastReceiver {
                         cursor.getString(cursor.getColumnIndex("companyFssis")));
             } while (cursor.moveToNext());
         }
-        //getting all the unSynced Invoice Details
-        cursor = posBillingWalaDatabase.getUnSynchronizeInvoice(NAME_NOT_SYNCED_WITH_SERVER);
-        if (cursor.moveToFirst()) {
-            do {
-                saveInvoice(cursor.getString(cursor.getColumnIndex("invoiceId")),
-                        cursor.getString(cursor.getColumnIndex("noOfTable")),
-                        cursor.getString(cursor.getColumnIndex("invoiceNumber")),
-                        cursor.getString(cursor.getColumnIndex("customerName")),
-                        cursor.getString(cursor.getColumnIndex("customerMobile")),
-                        cursor.getString(cursor.getColumnIndex("customerEmail")),
-                        cursor.getString(cursor.getColumnIndex("customerAddress")),
-                        cursor.getString(cursor.getColumnIndex("subTotal")),
-                        cursor.getString(cursor.getColumnIndex("totalGSTAmount")),
-                        cursor.getString(cursor.getColumnIndex("discount")),
-                        cursor.getString(cursor.getColumnIndex("discountType")),
-                        cursor.getString(cursor.getColumnIndex("totalAmount")),
-                        cursor.getString(cursor.getColumnIndex("paymentMode")),
-                        cursor.getString(cursor.getColumnIndex("invoiceDate")),
-                        cursor.getString(cursor.getColumnIndex("invoiceType")),
-                        cursor.getString(cursor.getColumnIndex("invoiceOrderStatus")),
-                        cursor.getString(cursor.getColumnIndex("invoiceNetworkStatus")));
-            } while (cursor.moveToNext());
-        }
+        InvoicePendingSync.uploadDeletes(context, posBillingWalaDatabase);
         //getting all the unSynced Invoice Product Details
         cursor = posBillingWalaDatabase.getUnSynchronizeInvoiceProduct(NAME_NOT_SYNCED_WITH_SERVER);
         if (cursor.moveToFirst()) {
@@ -265,6 +244,29 @@ public class OfflineToNetworkReceiver extends BroadcastReceiver {
                         columnOrEmpty(cursor, "quantity"),
                         columnOrEmpty(cursor, "sortOrder"),
                         columnOrEmpty(cursor, "invoiceComboItemNetworkStatus"));
+            } while (cursor.moveToNext());
+        }
+        //getting all the unSynced Invoice Details
+        cursor = posBillingWalaDatabase.getUnSynchronizeInvoice(NAME_NOT_SYNCED_WITH_SERVER);
+        if (cursor.moveToFirst()) {
+            do {
+                saveInvoice(cursor.getString(cursor.getColumnIndex("invoiceId")),
+                        cursor.getString(cursor.getColumnIndex("noOfTable")),
+                        cursor.getString(cursor.getColumnIndex("invoiceNumber")),
+                        cursor.getString(cursor.getColumnIndex("customerName")),
+                        cursor.getString(cursor.getColumnIndex("customerMobile")),
+                        cursor.getString(cursor.getColumnIndex("customerEmail")),
+                        cursor.getString(cursor.getColumnIndex("customerAddress")),
+                        cursor.getString(cursor.getColumnIndex("subTotal")),
+                        cursor.getString(cursor.getColumnIndex("totalGSTAmount")),
+                        cursor.getString(cursor.getColumnIndex("discount")),
+                        cursor.getString(cursor.getColumnIndex("discountType")),
+                        cursor.getString(cursor.getColumnIndex("totalAmount")),
+                        cursor.getString(cursor.getColumnIndex("paymentMode")),
+                        cursor.getString(cursor.getColumnIndex("invoiceDate")),
+                        cursor.getString(cursor.getColumnIndex("invoiceType")),
+                        cursor.getString(cursor.getColumnIndex("invoiceOrderStatus")),
+                        cursor.getString(cursor.getColumnIndex("invoiceNetworkStatus")));
             } while (cursor.moveToNext());
         }
         //getting all the unSynced Mess Member

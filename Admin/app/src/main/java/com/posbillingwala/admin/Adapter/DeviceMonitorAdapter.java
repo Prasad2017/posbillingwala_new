@@ -39,8 +39,14 @@ public class DeviceMonitorAdapter extends RecyclerView.Adapter<DeviceMonitorAdap
                         + "\nOwner: " + nz(d.getOwnerName())
                         + " · " + nz(d.getContactNumber())
                         + "\nBound: " + nz(d.getDeviceBoundAt())
+                        + "\nLast seen: " + (d.getLastSeenLabel() != null ? d.getLastSeenLabel() : nz(d.getLastSeenAt()))
+                        + "\nLast login: " + nz(d.getLastLoginAt())
                         + "\nExpiry: " + nz(d.getExpiryDate()));
-        holder.binding.status.setText(d.getConnectionStatus() != null ? d.getConnectionStatus() : "BOUND");
+        String status = d.getConnectionStatus() != null ? d.getConnectionStatus() : "OFFLINE";
+        holder.binding.status.setText(status);
+        holder.binding.status.setTextColor(d.isOnline()
+                ? holder.itemView.getContext().getColor(android.R.color.holo_green_dark)
+                : holder.itemView.getContext().getColor(android.R.color.darker_gray));
     }
 
     private static String nz(String v) {

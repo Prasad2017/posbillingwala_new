@@ -24,7 +24,7 @@
                 android:layout_centerInParent="true"
                 android:layout_gravity="center"
                 android:layout_marginStart="15dp"
-                android:src="@drawable/back"
+                android:src="@drawable/ic_back"
                 app:tint="@color/white" />
 
             <androidx.appcompat.widget.AppCompatTextView
@@ -69,7 +69,7 @@
                     android:layout_width="30dp"
                     android:layout_height="30dp"
                     android:layout_gravity="center"
-                    android:src="@drawable/invoice" />
+                    android:src="@drawable/ic_report_invoice" />
 
                 <TextView
                     android:layout_width="match_parent"
@@ -88,7 +88,7 @@
                     android:layout_width="30dp"
                     android:layout_height="30dp"
                     android:layout_gravity="center"
-                    android:src="@drawable/baseline_keyboard_arrow_right_24"
+                    android:src="@drawable/ic_chevron_right"
                     app:tint="@color/light_black" />
 
             </LinearLayout>
@@ -114,7 +114,7 @@
                     android:layout_width="30dp"
                     android:layout_height="30dp"
                     android:layout_gravity="center"
-                    android:src="@drawable/baseline_table_bar_24"
+                    android:src="@drawable/ic_table"
                     app:tint="@color/light_black" />
 
                 <TextView
@@ -134,7 +134,7 @@
                     android:layout_width="30dp"
                     android:layout_height="30dp"
                     android:layout_gravity="center"
-                    android:src="@drawable/baseline_keyboard_arrow_right_24"
+                    android:src="@drawable/ic_chevron_right"
                     app:tint="@color/light_black" />
 
             </LinearLayout>
@@ -161,7 +161,7 @@
                     android:layout_width="30dp"
                     android:layout_height="30dp"
                     android:layout_gravity="center"
-                    android:src="@drawable/baseline_directions_walk_24"
+                    android:src="@drawable/ic_takeaway"
                     app:tint="@color/light_black" />
 
                 <TextView
@@ -181,7 +181,7 @@
                     android:layout_width="30dp"
                     android:layout_height="30dp"
                     android:layout_gravity="center"
-                    android:src="@drawable/baseline_keyboard_arrow_right_24"
+                    android:src="@drawable/ic_chevron_right"
                     app:tint="@color/light_black" />
 
             </LinearLayout>
@@ -209,7 +209,8 @@
                     android:layout_width="30dp"
                     android:layout_height="30dp"
                     android:layout_gravity="center"
-                    android:src="@drawable/rupee_pending" />
+                    android:src="@drawable/ic_report_payment"
+                    app:tint="@color/light_black" />
 
                 <TextView
                     android:layout_width="match_parent"
@@ -228,7 +229,7 @@
                     android:layout_width="30dp"
                     android:layout_height="30dp"
                     android:layout_gravity="center"
-                    android:src="@drawable/baseline_keyboard_arrow_right_24"
+                    android:src="@drawable/ic_chevron_right"
                     app:tint="@color/light_black" />
 
             </LinearLayout>
@@ -255,7 +256,7 @@
                     android:layout_width="30dp"
                     android:layout_height="30dp"
                     android:layout_gravity="center"
-                    android:src="@drawable/baseline_person_24"
+                    android:src="@drawable/ic_person"
                     app:tint="@color/light_black" />
 
                 <TextView
@@ -275,7 +276,7 @@
                     android:layout_width="30dp"
                     android:layout_height="30dp"
                     android:layout_gravity="center"
-                    android:src="@drawable/baseline_keyboard_arrow_right_24"
+                    android:src="@drawable/ic_chevron_right"
                     app:tint="@color/light_black" />
 
             </LinearLayout>
@@ -302,7 +303,7 @@
                     android:layout_width="30dp"
                     android:layout_height="30dp"
                     android:layout_gravity="center"
-                    android:src="@drawable/mess"
+                    android:src="@drawable/ic_report_mess"
                     app:tint="@color/light_black" />
 
                 <TextView
@@ -322,7 +323,7 @@
                     android:layout_width="30dp"
                     android:layout_height="30dp"
                     android:layout_gravity="center"
-                    android:src="@drawable/baseline_keyboard_arrow_right_24"
+                    android:src="@drawable/ic_chevron_right"
                     app:tint="@color/light_black" />
 
             </LinearLayout>
@@ -349,7 +350,7 @@
                     android:layout_width="30dp"
                     android:layout_height="30dp"
                     android:layout_gravity="center"
-                    android:src="@drawable/product"
+                    android:src="@drawable/ic_report_product"
                     app:tint="@color/light_black" />
 
                 <TextView
@@ -369,7 +370,7 @@
                     android:layout_width="30dp"
                     android:layout_height="30dp"
                     android:layout_gravity="center"
-                    android:src="@drawable/baseline_keyboard_arrow_right_24"
+                    android:src="@drawable/ic_chevron_right"
                     app:tint="@color/light_black" />
 
             </LinearLayout>
@@ -395,7 +396,7 @@
                     android:layout_width="30dp"
                     android:layout_height="30dp"
                     android:layout_gravity="center"
-                    android:src="@drawable/product"
+                    android:src="@drawable/ic_report_combo"
                     app:tint="@color/light_black" />
 
                 <TextView
@@ -415,7 +416,7 @@
                     android:layout_width="30dp"
                     android:layout_height="30dp"
                     android:layout_gravity="center"
-                    android:src="@drawable/baseline_keyboard_arrow_right_24"
+                    android:src="@drawable/ic_chevron_right"
                     app:tint="@color/light_black" />
 
             </LinearLayout>
@@ -441,7 +442,7 @@
                     android:layout_width="30dp"
                     android:layout_height="30dp"
                     android:layout_gravity="center"
-                    android:src="@drawable/baseline_trending_up_24"
+                    android:src="@drawable/ic_trending_up"
                     app:tint="@color/light_black" />
 
                 <TextView
@@ -461,7 +462,99 @@
                     android:layout_width="30dp"
                     android:layout_height="30dp"
                     android:layout_gravity="center"
-                    android:src="@drawable/baseline_keyboard_arrow_right_24"
+                    android:src="@drawable/ic_chevron_right"
+                    app:tint="@color/light_black" />
+
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginStart="20dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="20dp"
+                android:background="@color/black" />
+
+            <LinearLayout
+                android:id="@+id/discountWiseReportLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:layout_marginTop="15dp"
+                android:layout_marginEnd="20dp"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_report_sales"
+                    app:tint="@color/light_black" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_weight="1"
+                    android:fontFamily="@font/poppinsregular"
+                    android:gravity="center|start"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp"
+                    android:text="@string/discount_wise_report"
+                    android:textColor="@color/black"
+                    android:textSize="15dp" />
+
+                <ImageView
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_chevron_right"
+                    app:tint="@color/light_black" />
+
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginStart="20dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="20dp"
+                android:background="@color/black" />
+
+            <LinearLayout
+                android:id="@+id/refundWiseReportLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:layout_marginTop="15dp"
+                android:layout_marginEnd="20dp"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_report_sales"
+                    app:tint="@color/light_black" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_weight="1"
+                    android:fontFamily="@font/poppinsregular"
+                    android:gravity="center|start"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp"
+                    android:text="@string/refund_wise_report"
+                    android:textColor="@color/black"
+                    android:textSize="15dp" />
+
+                <ImageView
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_chevron_right"
                     app:tint="@color/light_black" />
 
             </LinearLayout>
@@ -487,7 +580,7 @@
                     android:layout_width="30dp"
                     android:layout_height="30dp"
                     android:layout_gravity="center"
-                    android:src="@drawable/expense"
+                    android:src="@drawable/ic_expense"
                     app:tint="@color/light_black" />
 
                 <TextView
@@ -507,7 +600,7 @@
                     android:layout_width="30dp"
                     android:layout_height="30dp"
                     android:layout_gravity="center"
-                    android:src="@drawable/baseline_keyboard_arrow_right_24"
+                    android:src="@drawable/ic_chevron_right"
                     app:tint="@color/light_black" />
 
             </LinearLayout>
@@ -533,7 +626,7 @@
                     android:layout_width="30dp"
                     android:layout_height="30dp"
                     android:layout_gravity="center"
-                    android:src="@drawable/baseline_folder_delete_24"
+                    android:src="@drawable/ic_delete"
                     app:tint="@color/light_black" />
 
                 <TextView
@@ -553,7 +646,7 @@
                     android:layout_width="30dp"
                     android:layout_height="30dp"
                     android:layout_gravity="center"
-                    android:src="@drawable/baseline_keyboard_arrow_right_24"
+                    android:src="@drawable/ic_chevron_right"
                     app:tint="@color/light_black" />
 
             </LinearLayout>

@@ -44,11 +44,13 @@ import com.pos_billingwala.Adapter.ReportAdapter;
 import com.pos_billingwala.BuildConfig;
 import com.pos_billingwala.CalenderView.MonthPickerDialog;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
-import com.pos_billingwala.Extra.SimpleDividerItemDecoration;
+import com.pos_billingwala.Extra.ReportCursorHelper;
 import com.pos_billingwala.Model.InvoiceResponse;
+import com.pos_billingwala.Model.ReportRankItem;
 import com.pos_billingwala.R;
 import com.pos_billingwala.Utils.ReportToExcel;
-import com.pos_billingwala.databinding.FragmentInvoiceReportBinding;
+import com.pos_billingwala.Extra.OperationalReportCharts;
+import com.pos_billingwala.databinding.FragmentOperationalReportBinding;
 
 import java.io.File;
 import java.net.URLConnection;
@@ -76,7 +78,7 @@ public class InvoiceReport extends Fragment implements View.OnClickListener {
     int PERMISSION_ALL = 1;
     SweetAlertDialog pDialog;
     boolean isLoading = false, isDateMonthWise = false;
-    FragmentInvoiceReportBinding binding;
+    FragmentOperationalReportBinding binding;
 
 
     public static boolean hasPermissions(Context context, String... permissions) {
@@ -108,10 +110,15 @@ public class InvoiceReport extends Fragment implements View.OnClickListener {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        binding = FragmentInvoiceReportBinding.inflate(inflater, container, false);
-        view = binding.getRoot(); //Root xml or viewGroup will be a part of converted view over here
+        binding = FragmentOperationalReportBinding.inflate(inflater, container, false);
+        view = binding.getRoot();
 
         activity = getActivity();
+        binding.toolbar.heading.setText(getString(R.string.ui_invoice_reports));
+        binding.toolbar.shareInvoice.setVisibility(View.VISIBLE);
+        binding.listTitle.setText(getString(R.string.ui_invoice_sale));
+        binding.donutTitle.setText(getString(R.string.ui_billing_wise_details));
+        binding.barTitle.setText(getString(R.string.ui_sales_trend));
 
         posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
 
@@ -144,7 +151,7 @@ public class InvoiceReport extends Fragment implements View.OnClickListener {
         binding.nestedScrollView.setOnScrollChangeListener(new NestedScrollView.OnScrollChangeListener() {
             @Override
             public void onScrollChange(@NonNull NestedScrollView v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) {
-                if (scrollY == v.getChildAt(0).getMeasuredHeight() - v.getMeasuredHeight()) {
+                if (ReportCursorHelper.isNestedScrollAtBottom(v, scrollY)) {
                     if (!isLoading && pageNumber < totalPages) {
                         new getDownloadBills().execute();
                     }
@@ -152,9 +159,9 @@ public class InvoiceReport extends Fragment implements View.OnClickListener {
             }
         });
 
-        binding.backToSetting.setOnClickListener(this);
-        binding.menuIcon.setOnClickListener(this);
-        binding.shareInvoice.setOnClickListener(this);
+        binding.toolbar.backToSetting.setOnClickListener(this);
+        binding.toolbar.menuIcon.setOnClickListener(this);
+        binding.toolbar.shareInvoice.setOnClickListener(this);
 
         return view;
 
@@ -375,7 +382,7 @@ public class InvoiceReport extends Fragment implements View.OnClickListener {
             }
         });
 
-        mypopupWindow.showAsDropDown(binding.menuIcon, 0, -75);
+        mypopupWindow.showAsDropDown(binding.toolbar.menuIcon, 0, -75);
 
     }
 
@@ -443,9 +450,17 @@ public class InvoiceReport extends Fragment implements View.OnClickListener {
             invoiceResponseList.addAll(page);
             adapter = new ReportAdapter(activity, invoiceResponseList);
             binding.recyclerView.setLayoutManager(new LinearLayoutManager(activity));
-            binding.recyclerView.addItemDecoration(new SimpleDividerItemDecoration(activity));
             binding.recyclerView.setAdapter(adapter);
-            binding.totalAmount.setText(MainActivity.currencyName + " " + String.format(Locale.US, "%.2f", totalAmount));
+            binding.totalAmount.setText(MainActivity.currencyName + " "
+                    + String.format(Locale.US, "%.2f", totalAmount));
+            String period = OperationalReportCharts.formatPeriodLabel(
+                    isDateMonthWise ? invoiceDate : "");
+            List<ReportRankItem> breakdown = OperationalReportCharts.groupedBreakdown(
+                    posBillingWalaDatabase, "invoiceType",
+                    isDateMonthWise ? invoiceDate : "");
+            OperationalReportCharts.bindListSummary(binding, activity, totalPages, totalAmount,
+                    breakdown, getString(R.string.ui_billing_wise_details),
+                    getString(R.string.ui_amount_breakdown), period);
             binding.nestedScrollView.setVisibility(View.VISIBLE);
             binding.noDataFound.setVisibility(View.GONE);
             pageNumber = page.size();

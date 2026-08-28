@@ -13,8 +13,10 @@ android {
         versionCode 2
         versionName "1.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        // P5-4: same public host family as POS / Owner / Dealer
-        buildConfigField "String", "API_BASE_URL", "\"http://www.posbillingwala.com/androidApp/Admin/\""
+        // Testing against dev host (switch back to www for production)
+        buildConfigField "String", "API_BASE_URL", "\"http://dev.posbillingwala.com/androidApp/Admin/\""
+        // true = allow screenshots/recording on every screen. Set false for production.
+        buildConfigField "boolean", "ALLOW_SCREENSHOT", "true"
     }
 
     buildFeatures {
@@ -86,5 +88,7 @@ dependencies {
     implementation 'de.hdodenhof:circleimageview:3.1.0'
 
     implementation 'androidx.work:work-runtime:2.11.2'
+    implementation 'androidx.coordinatorlayout:coordinatorlayout:1.3.0'
+    implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
 
 }

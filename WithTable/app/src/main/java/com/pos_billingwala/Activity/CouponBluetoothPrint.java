@@ -19,7 +19,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.util.Base64;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -110,7 +109,6 @@ public class CouponBluetoothPrint extends BaseActivity implements View.OnClickLi
         View view = binding.getRoot(); //Root xml or viewGroup will be a part of converted view over here
         setContentView(view); //view is set by view binding
 
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
         activity = CouponBluetoothPrint.this;
         posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
 
@@ -504,18 +502,14 @@ public class CouponBluetoothPrint extends BaseActivity implements View.OnClickLi
 
     @Override
     public void onBackPressed() {
-        super.onBackPressed();
         onCallBack();
     }
 
     public void onCallBack() {
-
-        Intent intent = new Intent(CouponBluetoothPrint.this, MainActivity.class);
-        intent.putExtra("invoiceRunningStatus", "mess");
-        intent.putExtra("cartOrderStatus", cartOrderStatus);
-        startActivity(intent);
-        finish();
-
+        // Return to Mess / the screen that opened print. Do not start a new MainActivity.
+        if (!isFinishing()) {
+            finish();
+        }
     }
 
     public void requestPermission() {

@@ -21,7 +21,6 @@ import android.text.style.ClickableSpan;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
-import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -39,6 +38,8 @@ import com.google.android.gms.ads.initialization.OnInitializationCompleteListene
 import com.pos_billingwala.Extra.AuthTokens;
 import com.pos_billingwala.Extra.Common;
 import com.pos_billingwala.Extra.LicenceExpiredUi;
+import com.pos_billingwala.Extra.LicenceScopeGuard;
+import com.pos_billingwala.Extra.LicenseModules;
 import com.pos_billingwala.Extra.LicenseSession;
 import com.pos_billingwala.Extra.Observability;
 import com.pos_billingwala.Model.LoginResponse;
@@ -82,8 +83,6 @@ public class LoginMPin extends BaseActivity implements View.OnClickListener {
         binding = ActivityLoginMpinBinding.inflate(getLayoutInflater());
         View view = binding.getRoot(); //Root xml or viewGroup will be a part of converted view over here
         setContentView(view); //view is set by view binding
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
-
         File file = new File("data/data/" + getPackageName() + "/shared_prefs/" + Common.SHARED_PREF + ".xml");
         if (file.exists()) {
             Intent intent = new Intent(LoginMPin.this, MainActivity.class);
@@ -377,19 +376,21 @@ public class LoginMPin extends BaseActivity implements View.OnClickListener {
                                 Common.saveUserData(LoginMPin.this, "userName", response.body().getUserName());
                                 Common.saveUserData(LoginMPin.this, "shopName", response.body().getShopName());
                                 Common.saveUserData(LoginMPin.this, "shopImage", response.body().getShopImage());
-                                Common.saveUserData(LoginMPin.this, "fastBilling", response.body().getFastBilling());
-                                Common.saveUserData(LoginMPin.this, "takeAway", response.body().getTakeAway());
-                                Common.saveUserData(LoginMPin.this, "dineIn", response.body().getDineIn());
-                                Common.saveUserData(LoginMPin.this, "mess", response.body().getMess());
+                                LicenseModules.saveModuleFlags(LoginMPin.this,
+                                        response.body().getFastBilling(),
+                                        response.body().getTakeAway(),
+                                        response.body().getDineIn(),
+                                        response.body().getMess(),
+                                        response.body().getTotalSaleData(),
+                                        response.body().getTodaySaleData());
                                 Common.saveUserData(LoginMPin.this, "LicenceKey", response.body().getLicenceKey());
                                 Common.saveUserData(LoginMPin.this, "appPin", response.body().getMpin());
                                 Common.saveUserData(LoginMPin.this, "LicenceKeyRegDate", response.body().getLicenceKeyRegDate());
                                 Common.saveUserData(LoginMPin.this, "LicenceKeyExpireDate", response.body().getLicenceKeyExpireDate());
                                 Common.saveUserData(LoginMPin.this, "reportPin", response.body().getReportPin());
-                                Common.saveUserData(LoginMPin.this, "totalSaleData", response.body().getTotalSaleData());
-                                Common.saveUserData(LoginMPin.this, "todaySaleData", response.body().getTodaySaleData());
                                 LicenseSession.saveFromLogin(LoginMPin.this, response.body());
                                 AuthTokens.saveFromLogin(LoginMPin.this, response.body());
+                                LicenceScopeGuard.onLoginSuccess(LoginMPin.this, response.body());
 
                                 Intent intent = new Intent(LoginMPin.this, MainActivity.class);
                                 startActivity(intent);

@@ -3,6 +3,7 @@ package com.pos_billingwala.Fragment;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Dialog;
+import android.app.TimePickerDialog;
 import android.content.ActivityNotFoundException;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -27,6 +28,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.gms.ads.AdListener;
@@ -48,6 +50,7 @@ import com.pos_billingwala.Activity.LoginMPin;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.AppLanguage;
+import com.pos_billingwala.Extra.BusinessHours;
 import com.pos_billingwala.Extra.AuthTokens;
 import com.pos_billingwala.Extra.Common;
 import com.pos_billingwala.Extra.DetectConnection;
@@ -62,6 +65,7 @@ import com.pos_billingwala.Print.WoosimPrnMng;
 import com.pos_billingwala.R;
 import com.pos_billingwala.Retrofit.Api;
 import com.pos_billingwala.databinding.FragmentUserSettingBinding;
+import com.pos_billingwala.databinding.ItemReportMenuRowBinding;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -126,29 +130,80 @@ public class UserSetting extends Fragment implements View.OnClickListener {
     }
 
     public void initViews() {
-
-        binding.backToHome.setOnClickListener(this);
+        binding.toolbar.toolbarTitle.setText(getString(R.string.user_setting_title));
+        binding.toolbar.backButton.setOnClickListener(this);
         binding.appDevelopedBy.setOnClickListener(this);
-        binding.reportLayout.setOnClickListener(this);
-        binding.masterDataLayout.setOnClickListener(this);
-        binding.invoiceDetailsLayout.setOnClickListener(this);
-        binding.shopDetailLayout.setOnClickListener(this);
-        binding.inventoryManagementLayout.setOnClickListener(this);
-        binding.expenseManagementLayout.setOnClickListener(this);
-        binding.printerDetailLayout.setOnClickListener(this);
-        binding.aboutLayout.setOnClickListener(this);
-        binding.fetchDataLayout.setOnClickListener(this);
-        binding.synchronizeLayout.setOnClickListener(this);
-        binding.logoutLayout.setOnClickListener(this);
-        binding.rateUsLayout.setOnClickListener(this);
-        binding.updateAppLayout.setOnClickListener(this);
-        binding.shareAppLayout.setOnClickListener(this);
-        binding.appPinLayout.setOnClickListener(this);
-        binding.languageLayout.setOnClickListener(this);
 
-        binding.selectedLanguage.setText(getString(
+        setupRow(binding.invoiceDetailsLayout, R.drawable.ic_report_invoice, R.drawable.bg_quick_action_green,
+                R.color.green_600, getString(R.string.setting_invoice_details), getString(R.string.setting_hint_invoice));
+        setupRow(binding.reportLayout, R.drawable.ic_report_sales, R.drawable.bg_quick_action_blue,
+                R.color.colorPrimary, getString(R.string.setting_reports), getString(R.string.setting_hint_reports));
+        setupRow(binding.masterDataLayout, R.drawable.ic_inventory, R.drawable.bg_quick_action_purple,
+                R.color.deepPurple, getString(R.string.setting_master_data), getString(R.string.setting_hint_master));
+        setupRow(binding.shopDetailLayout, R.drawable.ic_business, R.drawable.bg_quick_action_orange,
+                R.color.statusTrial, getString(R.string.setting_shop_details), getString(R.string.setting_hint_shop));
+        setupRow(binding.businessHoursLayout, R.drawable.ic_calendar, R.drawable.bg_quick_action_blue,
+                R.color.colorPrimary, getString(R.string.business_hours), getString(R.string.business_hours_hint));
+        setupRow(binding.printerDetailLayout, R.drawable.ic_print, R.drawable.bg_quick_action_green,
+                R.color.green_600, getString(R.string.setting_printer_details), getString(R.string.setting_hint_printer));
+        setupRow(binding.inventoryManagementLayout, R.drawable.ic_report_product, R.drawable.bg_quick_action_orange,
+                R.color.statusTrial, getString(R.string.setting_inventory), getString(R.string.setting_hint_inventory));
+        setupRow(binding.expenseManagementLayout, R.drawable.ic_report_expense, R.drawable.bg_quick_action_purple,
+                R.color.deepPurple, getString(R.string.setting_expense), getString(R.string.setting_hint_expense));
+        setupRow(binding.supportLayout, R.drawable.ic_phone, R.drawable.bg_quick_action_blue,
+                R.color.colorPrimary, getString(R.string.setting_support), getString(R.string.setting_hint_support));
+        setupRow(binding.aboutLayout, R.drawable.ic_info, R.drawable.bg_quick_action_green,
+                R.color.green_600, getString(R.string.setting_about), getString(R.string.setting_hint_about));
+        setupRow(binding.fetchDataLayout, R.drawable.ic_cloud_download, R.drawable.bg_quick_action_orange,
+                R.color.statusTrial, getString(R.string.setting_fetch_data), getString(R.string.setting_hint_fetch));
+        setupRow(binding.updateAppLayout, R.drawable.ic_store, R.drawable.bg_quick_action_purple,
+                R.color.deepPurple, getString(R.string.setting_update_app), getString(R.string.setting_hint_update));
+        setupRow(binding.synchronizeLayout, R.drawable.ic_cloud_upload, R.drawable.bg_quick_action_blue,
+                R.color.colorPrimary, getString(R.string.setting_synchronize), getString(R.string.setting_hint_sync));
+        setupRow(binding.appPinLayout, R.drawable.ic_lock, R.drawable.bg_quick_action_green,
+                R.color.green_600, getString(R.string.setting_change_pin), getString(R.string.setting_hint_pin));
+        setupRow(binding.languageLayout, R.drawable.ic_language, R.drawable.bg_quick_action_orange,
+                R.color.statusTrial, getString(R.string.language_settings), getString(R.string.language_settings_subtitle));
+        setupRow(binding.rateUsLayout, R.drawable.ic_star, R.drawable.bg_quick_action_purple,
+                R.color.deepPurple, getString(R.string.setting_rate_us), getString(R.string.setting_hint_rate));
+        setupRow(binding.shareAppLayout, R.drawable.ic_share, R.drawable.bg_quick_action_blue,
+                R.color.colorPrimary, getString(R.string.setting_share_app), getString(R.string.setting_hint_share));
+        setupRow(binding.logoutLayout, R.drawable.ic_logout, R.drawable.bg_quick_action_red,
+                R.color.statusExpired, getString(R.string.setting_logout), getString(R.string.setting_hint_logout));
+        binding.logoutLayout.menuTitle.setTextColor(ContextCompat.getColor(requireContext(), R.color.statusExpired));
+
+        binding.invoiceDetailsLayout.getRoot().setOnClickListener(this);
+        binding.reportLayout.getRoot().setOnClickListener(this);
+        binding.masterDataLayout.getRoot().setOnClickListener(this);
+        binding.shopDetailLayout.getRoot().setOnClickListener(this);
+        binding.businessHoursLayout.getRoot().setOnClickListener(this);
+        binding.printerDetailLayout.getRoot().setOnClickListener(this);
+        binding.inventoryManagementLayout.getRoot().setOnClickListener(this);
+        binding.expenseManagementLayout.getRoot().setOnClickListener(this);
+        binding.supportLayout.getRoot().setOnClickListener(this);
+        binding.aboutLayout.getRoot().setOnClickListener(this);
+        binding.fetchDataLayout.getRoot().setOnClickListener(this);
+        binding.updateAppLayout.getRoot().setOnClickListener(this);
+        binding.synchronizeLayout.getRoot().setOnClickListener(this);
+        binding.appPinLayout.getRoot().setOnClickListener(this);
+        binding.languageLayout.getRoot().setOnClickListener(this);
+        binding.rateUsLayout.getRoot().setOnClickListener(this);
+        binding.shareAppLayout.getRoot().setOnClickListener(this);
+        binding.logoutLayout.getRoot().setOnClickListener(this);
+
+        binding.languageLayout.menuSubtitle.setText(getString(
                 R.string.language_current,
                 AppLanguage.displayName(activity, AppLanguage.getSavedCode(activity))));
+    }
+
+    private void setupRow(ItemReportMenuRowBinding row, int iconRes, int bgRes, int tintColor,
+                          String title, String subtitle) {
+        row.menuIcon.setBackgroundResource(bgRes);
+        row.menuIcon.setImageResource(iconRes);
+        row.menuIcon.clearColorFilter();
+        row.menuIcon.setColorFilter(ContextCompat.getColor(requireContext(), tintColor));
+        row.menuTitle.setText(title);
+        row.menuSubtitle.setText(subtitle);
     }
 
     public void initAds() {
@@ -210,7 +265,7 @@ public class UserSetting extends Fragment implements View.OnClickListener {
     @Override
     public void onClick(View view) {
         int id = view.getId();
-        if (id == R.id.backToHome) {
+        if (id == R.id.backButton) {
             ((MainActivity) activity).navigateBack();
         } else if (id == R.id.appDevelopedBy) {
             Intent browserIntent = new Intent(Intent.ACTION_VIEW);
@@ -224,6 +279,8 @@ public class UserSetting extends Fragment implements View.OnClickListener {
             ((MainActivity) activity).loadFragment(new OrderInvoice(), true);
         } else if (id == R.id.shopDetailLayout) {
             ((MainActivity) activity).loadFragment(new CompanyDetailSetting(), true);
+        } else if (id == R.id.businessHoursLayout) {
+            showBusinessHoursDialog();
         } else if (id == R.id.printerDetailLayout) {
             startActivity(new Intent(activity, CompanyPrinterSetting.class));
         } else if (id == R.id.inventoryManagementLayout) {
@@ -232,6 +289,13 @@ public class UserSetting extends Fragment implements View.OnClickListener {
             ((MainActivity) activity).loadFragment(new Expenses(), true);
         } else if (id == R.id.aboutLayout) {
             ((MainActivity) activity).loadFragment(new AboutUs(), true);
+        } else if (id == R.id.supportLayout) {
+            if (DetectConnection.checkInternetConnection(activity)) {
+                ((MainActivity) activity).loadFragment(new SupportHub(), true);
+            } else {
+                Toast.makeText(activity, getString(R.string.support_online_only_notice), Toast.LENGTH_LONG).show();
+                DetectConnection.noInternetConnection(activity);
+            }
         } else if (id == R.id.fetchDataLayout) {
             confirmFetchData();
         } else if (id == R.id.synchronizeLayout) {
@@ -459,7 +523,7 @@ public class UserSetting extends Fragment implements View.OnClickListener {
 
                 if (reportPin.getText().toString().equalsIgnoreCase(pin)) {
                     dialog.dismiss();
-                    ((MainActivity) activity).loadFragment(new ReportSetting(), true);
+                    ((MainActivity) activity).loadFragment(new ReportsHub(), true);
                 } else {
                     reportPin.requestFocus();
                     reportPin.setError("Enter correct pin");
@@ -623,6 +687,55 @@ public class UserSetting extends Fragment implements View.OnClickListener {
         super.onStart();
         ((MainActivity) activity).lockUnlockDrawer(1);
         getPrinterSettingDetails();
+        refreshBusinessHoursLabel();
+    }
+
+    private void refreshBusinessHoursLabel() {
+        if (binding == null || binding.businessHoursLayout == null) {
+            return;
+        }
+        binding.businessHoursLayout.menuSubtitle.setText(BusinessHours.displayRange(activity));
+    }
+
+    private void showBusinessHoursDialog() {
+        View content = LayoutInflater.from(activity).inflate(R.layout.dialog_business_hours, null);
+        TextView openingValue = content.findViewById(R.id.openingTimeValue);
+        TextView closingValue = content.findViewById(R.id.closingTimeValue);
+        final int[] openingMinutes = {
+                BusinessHours.isConfigured(activity) ? BusinessHours.openingMinutes(activity) : 9 * 60
+        };
+        final int[] closingMinutes = {
+                BusinessHours.isConfigured(activity) ? BusinessHours.closingMinutes(activity) : 22 * 60
+        };
+        Runnable refreshTimes = () -> {
+            openingValue.setText(getString(R.string.opening_time) + ": "
+                    + BusinessHours.formatMinutes(openingMinutes[0]));
+            closingValue.setText(getString(R.string.closing_time) + ": "
+                    + BusinessHours.formatMinutes(closingMinutes[0]));
+        };
+        refreshTimes.run();
+        openingValue.setOnClickListener(v -> pickBusinessTime(openingMinutes, refreshTimes));
+        closingValue.setOnClickListener(v -> pickBusinessTime(closingMinutes, refreshTimes));
+
+        new MaterialAlertDialogBuilder(activity, R.style.ThemeDialog)
+                .setTitle(R.string.business_hours)
+                .setView(content)
+                .setPositiveButton(R.string.ui_androidstringok, (dialog, which) -> {
+                    BusinessHours.save(activity, openingMinutes[0], closingMinutes[0]);
+                    refreshBusinessHoursLabel();
+                    Toast.makeText(activity, R.string.business_hours_saved, Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+    }
+
+    private void pickBusinessTime(int[] minutesHolder, Runnable onPicked) {
+        int hour = Math.max(0, minutesHolder[0]) / 60;
+        int minute = Math.max(0, minutesHolder[0]) % 60;
+        new TimePickerDialog(activity, (view, hourOfDay, minuteOfHour) -> {
+            minutesHolder[0] = hourOfDay * 60 + minuteOfHour;
+            onPicked.run();
+        }, hour, minute, false).show();
     }
 
     @SuppressLint("MissingPermission")
@@ -643,7 +756,7 @@ public class UserSetting extends Fragment implements View.OnClickListener {
             String bluetoothKOTAddress = printerSettingResponse.getBluetoothKOTAddress() != null ? printerSettingResponse.getBluetoothKOTAddress() : "";
             if (!bluetoothKOTAddress.equalsIgnoreCase("")) {
                 try {
-                    new KOTWoosimPrnMng(activity, bluetoothAddress, activity);
+                    new KOTWoosimPrnMng(activity, bluetoothKOTAddress, activity);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

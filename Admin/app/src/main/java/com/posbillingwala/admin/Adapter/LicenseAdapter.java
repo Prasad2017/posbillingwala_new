@@ -82,9 +82,7 @@ public class LicenseAdapter extends RecyclerView.Adapter<LicenseAdapter.MyViewHo
         holder.binding.licenseTYpe.setText(licenseType);
 
         String status = LicenseStatusHelper.displayStatus(licenseResponse);
-        holder.binding.licenseStatusBadge.setText(status);
-        holder.binding.licenseStatusBadge.setBackgroundTintList(
-                android.content.res.ColorStateList.valueOf(LicenseStatusHelper.badgeColor(status)));
+        LicenseStatusHelper.applyBadge(holder.binding.licenseStatusBadge, status);
 
         String deviceName = licenseResponse.getAndroidDeviceName();
         String deviceId = licenseResponse.getAndroidDeviceId();

@@ -37,6 +37,12 @@ public class InvoiceSaleResponse {
     @SerializedName("licenseKey")
     @Expose
     private String licenseKey;
+    @SerializedName("shopName")
+    @Expose
+    private String shopName;
+    @SerializedName("paymentStatus")
+    @Expose
+    private String paymentStatus;
 
     public String getInvoiceId() {
         return invoiceId;
@@ -80,5 +86,13 @@ public class InvoiceSaleResponse {
 
     public String getLicenseKey() {
         return licenseKey;
+    }
+
+    public String getShopName() {
+        return shopName;
+    }
+
+    public String getPaymentStatus() {
+        return paymentStatus != null ? paymentStatus : "Paid";
     }
 }

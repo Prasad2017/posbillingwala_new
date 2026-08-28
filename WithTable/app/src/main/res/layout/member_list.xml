@@ -1,120 +1,81 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/tableNumberCardView"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="5dp"
-    app:cardBackgroundColor="@color/white"
-    app:cardCornerRadius="7dp"
-    app:cardUseCompatPadding="true">
+    android:orientation="vertical">
 
     <LinearLayout
+        android:id="@+id/tableNumberCardView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_margin="5dp"
-        android:gravity="center"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:paddingStart="14dp"
+        android:paddingTop="12dp"
+        android:paddingEnd="14dp"
+        android:paddingBottom="8dp">
 
         <TextView
             android:id="@+id/memberName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginTop="5dp"
-            android:fontFamily="@font/poppinslight"
-            android:gravity="center|start"
-            android:hint="@string/ui_name"
-            android:paddingStart="15dp"
-            android:paddingEnd="15dp"
-            android:textColor="@color/black"
-            android:textSize="14dp" />
+            android:textColor="@color/colorTextPrimary"
+            android:textSize="14sp"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/memberMobileNumber"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
+            android:layout_marginTop="4dp"
             android:autoLink="phone"
-            android:fontFamily="@font/poppinslight"
-            android:gravity="center|start"
-            android:hint="@string/trial_signup_contact"
-            android:paddingStart="15dp"
-            android:paddingEnd="15dp"
-            android:textColor="@color/black"
-            android:textSize="14dp" />
+            android:textColor="@color/colorTextSecondary"
+            android:textSize="13sp" />
 
         <TextView
             android:id="@+id/memberAddress"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:fontFamily="@font/poppinslight"
-            android:gravity="center|start"
-            android:hint="@string/ui_address"
-            android:paddingStart="15dp"
-            android:paddingEnd="15dp"
-            android:textColor="@color/black"
-            android:textSize="14dp" />
+            android:layout_marginTop="4dp"
+            android:textColor="@color/colorTextSecondary"
+            android:textSize="12sp" />
 
         <TextView
             android:id="@+id/memberMessAmount"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:fontFamily="@font/poppinslight"
-            android:gravity="center|start"
-            android:hint="@string/ui_mess_amount"
-            android:paddingStart="15dp"
-            android:paddingEnd="15dp"
-            android:textColor="@color/black"
-            android:textSize="14dp" />
+            android:layout_marginTop="6dp"
+            android:textColor="@color/colorTextPrimary"
+            android:textSize="12sp" />
 
         <TextView
             android:id="@+id/memberPaidAmount"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:fontFamily="@font/poppinslight"
-            android:gravity="center|start"
-            android:hint="@string/ui_paid_amount"
-            android:paddingStart="15dp"
-            android:paddingEnd="15dp"
-            android:textColor="@color/black"
-            android:textSize="14dp" />
+            android:layout_marginTop="2dp"
+            android:textColor="@color/colorTextPrimary"
+            android:textSize="12sp" />
 
         <TextView
             android:id="@+id/memberPendingAmount"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:fontFamily="@font/poppinslight"
-            android:gravity="center|start"
-            android:hint="@string/ui_pending_amount"
-            android:paddingStart="15dp"
-            android:paddingEnd="15dp"
-            android:textColor="@color/black"
-            android:textSize="14dp" />
+            android:layout_marginTop="2dp"
+            android:textColor="@color/statusExpired"
+            android:textSize="12sp"
+            android:textStyle="bold" />
 
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center|end"
-            android:layout_marginStart="10dp"
-            android:layout_marginTop="5dp"
-            android:layout_marginBottom="5dp"
-            android:gravity="center"
+            android:layout_marginTop="8dp"
+            android:gravity="end"
             android:orientation="horizontal">
 
             <TextView
                 android:id="@+id/deleteMember"
                 android:layout_width="wrap_content"
-                android:layout_height="25dp"
-                android:layout_gravity="center"
-                android:layout_marginStart="5dp"
-                android:layout_marginEnd="5dp"
-                android:layout_weight="1"
+                android:layout_height="28dp"
+                android:layout_marginEnd="6dp"
                 android:background="@drawable/button_rounded_border"
                 android:backgroundTint="@color/red_900"
                 android:fontFamily="@font/poppinsregular"
@@ -123,17 +84,14 @@
                 android:paddingEnd="10dp"
                 android:text="@string/ui_delete"
                 android:textColor="@color/white"
-                android:textSize="12dp"
+                android:textSize="11sp"
                 android:visibility="gone" />
 
             <TextView
                 android:id="@+id/updateMember"
                 android:layout_width="wrap_content"
-                android:layout_height="25dp"
-                android:layout_gravity="center"
-                android:layout_marginStart="5dp"
-                android:layout_marginEnd="5dp"
-                android:layout_weight="1"
+                android:layout_height="28dp"
+                android:layout_marginEnd="6dp"
                 android:background="@drawable/button_rounded_border"
                 android:backgroundTint="@color/green_700"
                 android:fontFamily="@font/poppinsregular"
@@ -142,16 +100,12 @@
                 android:paddingEnd="10dp"
                 android:text="@string/ui_update"
                 android:textColor="@color/white"
-                android:textSize="13dp" />
+                android:textSize="11sp" />
 
             <TextView
                 android:id="@+id/paymentNew"
                 android:layout_width="wrap_content"
-                android:layout_height="25dp"
-                android:layout_gravity="center"
-                android:layout_marginStart="5dp"
-                android:layout_marginEnd="5dp"
-                android:layout_weight="1"
+                android:layout_height="28dp"
                 android:background="@drawable/button_rounded_border"
                 android:backgroundTint="@color/colorPrimary"
                 android:fontFamily="@font/poppinsregular"
@@ -160,19 +114,15 @@
                 android:paddingEnd="10dp"
                 android:text="@string/ui_new_payment"
                 android:textColor="@color/white"
-                android:textSize="13dp" />
-
+                android:textSize="11sp" />
         </LinearLayout>
 
         <TextView
             android:id="@+id/paymentMember"
             android:layout_width="wrap_content"
-            android:layout_height="25dp"
-            android:layout_gravity="center|end"
-            android:layout_marginStart="5dp"
-            android:layout_marginEnd="5dp"
-            android:layout_marginBottom="5dp"
-            android:layout_weight="1"
+            android:layout_height="28dp"
+            android:layout_gravity="end"
+            android:layout_marginTop="6dp"
             android:background="@drawable/button_rounded_border"
             android:backgroundTint="@color/red"
             android:fontFamily="@font/poppinsregular"
@@ -181,9 +131,11 @@
             android:paddingEnd="10dp"
             android:text="@string/ui_pay_pending_payment"
             android:textColor="@color/white"
-            android:textSize="13dp" />
-
-
+            android:textSize="11sp" />
     </LinearLayout>
 
-</androidx.cardview.widget.CardView>
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/colorBorder" />
+</LinearLayout>

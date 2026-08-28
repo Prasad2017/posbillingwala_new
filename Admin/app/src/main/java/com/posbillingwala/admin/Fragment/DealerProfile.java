@@ -132,7 +132,7 @@ public class DealerProfile extends Fragment implements View.OnClickListener {
         super.onStart();
         Log.e("onStart", "called");
         MainActivity.title.setVisibility(View.VISIBLE);
-        ((MainActivity) activity).lockUnlockDrawer(0);
+        ((MainActivity) activity).lockUnlockDrawer(1);
         MainActivity.drawerLayout.closeDrawers();
         if (DetectConnection.checkInternetConnection(activity)) {
             getProfile();

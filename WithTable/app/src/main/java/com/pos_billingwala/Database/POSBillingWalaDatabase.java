@@ -10,6 +10,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import com.pos_billingwala.Extra.BranchSession;
 import com.pos_billingwala.Extra.CartItemType;
 import com.pos_billingwala.Extra.ComboValidator;
+import com.pos_billingwala.Extra.ReportCursorHelper;
 import com.pos_billingwala.Model.ComboItemDraft;
 import com.pos_billingwala.Model.ComboItemResponse;
 import com.pos_billingwala.Model.ComboResponse;
@@ -65,8 +66,85 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
     public static final String COMBO_ITEM_TABLE = "combo_item";
     public static final String CART_COMBO_ITEM_TABLE = "cart_combo_item";
     public static final String INVOICE_COMBO_ITEM_TABLE = "invoice_combo_item";
+    public static final String INVOICE_PRODUCT_DELETE_QUEUE_TABLE = "invoice_product_delete_queue";
     // Database Version
-    public static final int DATABASE_VERSION = 21;
+    public static final int DATABASE_VERSION = 22;
+
+    /** SQL suffix: only rows for the logged-in licence branch. */
+    private static String andBranchScope(String tableAlias) {
+        String branchId = BranchSession.effectiveBranchId();
+        if (branchId == null || branchId.isEmpty()) {
+            return "";
+        }
+        String column = (tableAlias == null || tableAlias.isEmpty()) ? "branchId" : tableAlias + ".branchId";
+        return " AND " + column + " = '" + branchId.replace("'", "''") + "'";
+    }
+
+    private static String whereBranchScope(String tableAlias) {
+        String branchId = BranchSession.effectiveBranchId();
+        if (branchId == null || branchId.isEmpty()) {
+            return "";
+        }
+        String column = (tableAlias == null || tableAlias.isEmpty()) ? "branchId" : tableAlias + ".branchId";
+        return " WHERE " + column + " = '" + branchId.replace("'", "''") + "'";
+    }
+
+    /** Exclude refunded bills from sales totals and payment reports. */
+    public static String notRefundedClause() {
+        return "IFNULL(invoiceOrderStatus,'completed') != 'refunded'";
+    }
+
+    public static String andNotRefunded() {
+        return " AND " + notRefundedClause();
+    }
+
+    public boolean hasInvoicesForOtherBranch(String branchId) {
+        if (branchId == null || branchId.isEmpty()) {
+            return false;
+        }
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = db.rawQuery(
+                "SELECT 1 FROM " + INVOICE_TABLE
+                        + " WHERE branchId IS NOT NULL AND TRIM(branchId) != '' AND branchId != ? LIMIT 1",
+                new String[]{branchId});
+        boolean found = cursor.moveToFirst();
+        cursor.close();
+        db.close();
+        return found;
+    }
+
+    public void purgeLocalDataNotMatchingBranch(String branchId) {
+        if (branchId == null || branchId.isEmpty()) {
+            return;
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        try {
+            String notThisBranch = "branchId IS NULL OR TRIM(branchId) = '' OR branchId != ?";
+            db.execSQL(
+                    "DELETE FROM " + INVOICE_PRODUCT_TABLE
+                            + " WHERE invoiceNumber IN (SELECT invoiceNumber FROM " + INVOICE_TABLE
+                            + " WHERE " + notThisBranch + ")",
+                    new Object[]{branchId});
+            db.delete(INVOICE_TABLE, notThisBranch, new String[]{branchId});
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+            db.close();
+        }
+    }
+
+    public void claimUnscopedRowsForBranch(String branchId) {
+        if (branchId == null || branchId.isEmpty()) {
+            return;
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("branchId", branchId);
+        db.update(INVOICE_TABLE, values, "branchId IS NULL OR TRIM(branchId) = ''", null);
+        db.update(INVOICE_PRODUCT_TABLE, values, "branchId IS NULL OR TRIM(branchId) = ''", null);
+        db.close();
+    }
 
     /**********************************************  QUERY START PART  **********************************************/
 
@@ -203,6 +281,12 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             + " invoiceComboItemNetworkStatus VARCHAR,"
             + " invoiceComboItemStatus TINYINT DEFAULT 0)";
 
+    public final String INVOICE_PRODUCT_DELETE_QUEUE_QUERY = "CREATE TABLE IF NOT EXISTS "
+            + INVOICE_PRODUCT_DELETE_QUEUE_TABLE
+            + "(deleteId INTEGER PRIMARY KEY AUTOINCREMENT,"
+            + " invoiceNumber VARCHAR,"
+            + " invoiceProductNetworkStatus VARCHAR)";
+
     /**********************************************  QUERY END PART  **********************************************/
 
     /********************************************** Alter Query  **********************************************/
@@ -290,6 +374,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         db.execSQL(COMBO_ITEM_QUERY);
         db.execSQL(CART_COMBO_ITEM_QUERY);
         db.execSQL(INVOICE_COMBO_ITEM_QUERY);
+        db.execSQL(INVOICE_PRODUCT_DELETE_QUEUE_QUERY);
         ensureFoodTypeCatalog(db);
     }
 
@@ -382,6 +467,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         addColumnIfNotExists(db, INVOICE_PRODUCT_TABLE, "invoiceItemType", ALTER_INVOICE_ITEM_TYPE_QUERY);
         addColumnIfNotExists(db, INVOICE_PRODUCT_TABLE, "comboId", ALTER_INVOICE_COMBO_ID_QUERY);
         addColumnIfNotExists(db, INVOICE_PRODUCT_TABLE, "snapshotComboComponents", ALTER_INVOICE_SNAPSHOT_COMBO_COMPONENTS_QUERY);
+        db.execSQL(INVOICE_PRODUCT_DELETE_QUEUE_QUERY);
         ensureUniqueSyncIndexes(db);
     }
 
@@ -1025,6 +1111,28 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         values.put("subcategoryStatus", 0);
         db.update(PRODUCT_SUBCATEGORY_TABLE, values, "subcategoryId=?", new String[]{subcategoryId});
         db.close();
+    }
+
+    public String getSubcategoryNameById(String subcategoryId) {
+        if (subcategoryId == null || subcategoryId.trim().isEmpty()) {
+            return null;
+        }
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT subcategoryName FROM " + PRODUCT_SUBCATEGORY_TABLE
+                            + " WHERE subcategoryId = ? AND IFNULL(subcategoryDeletedStatus, '0') = '0' LIMIT 1",
+                    new String[]{subcategoryId});
+            if (cursor.moveToFirst()) {
+                return cursor.getString(0);
+            }
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return null;
     }
 
     public List<ProductSubcategoryResponse> getProductSubcategoryList(String categoryId) {
@@ -1890,7 +1998,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         List<InvoiceResponse> invoiceResponseList = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
 
-        Cursor cursor = db.rawQuery("SELECT * FROM " + INVOICE_TABLE + " WHERE invoiceNumber='" + invoiceNumber + "' AND paymentMode=''", null);
+        Cursor cursor = db.rawQuery("SELECT * FROM " + INVOICE_TABLE + " WHERE invoiceNumber='" + invoiceNumber + "' AND paymentMode=''" + andBranchScope(null), null);
         InvoiceResponse invoiceResponse;
         while (cursor.moveToNext()) {
             invoiceResponse = new InvoiceResponse();
@@ -1923,7 +2031,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         List<InvoiceResponse> invoiceResponseList = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
 
-        Cursor cursor = db.rawQuery("SELECT * FROM " + INVOICE_TABLE + " WHERE noOfTable='" + tableNumber + "' AND paymentMode=''", null);
+        Cursor cursor = db.rawQuery("SELECT * FROM " + INVOICE_TABLE + " WHERE noOfTable='" + tableNumber + "' AND paymentMode=''" + andBranchScope(null), null);
         InvoiceResponse invoiceResponse;
         while (cursor.moveToNext()) {
             invoiceResponse = new InvoiceResponse();
@@ -1974,6 +2082,74 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
 
     }
 
+    public void refundInvoice(String invoiceNumber) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put("invoiceOrderStatus", "refunded");
+        contentValues.put("invoiceStatus", "0");
+        db.update(INVOICE_TABLE, contentValues, "invoiceNumber=?", new String[]{invoiceNumber});
+        db.close();
+    }
+
+    public void updateInvoiceHeader(String invoiceNumber, String subTotal, String totalGSTAmount,
+                                    String discount, String discountType, String totalAmount, String paymentMode) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put("subTotal", subTotal);
+        contentValues.put("totalGSTAmount", totalGSTAmount);
+        contentValues.put("discount", discount);
+        contentValues.put("discountType", discountType);
+        contentValues.put("totalAmount", totalAmount);
+        contentValues.put("paymentMode", paymentMode);
+        contentValues.put("invoiceStatus", "0");
+        db.update(INVOICE_TABLE, contentValues, "invoiceNumber=?", new String[]{invoiceNumber});
+        db.close();
+    }
+
+    public void updateInvoiceProductQuantity(String invoiceProductId, String productQuantity) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put("productQuantity", productQuantity);
+        contentValues.put("invoiceProductStatus", 0);
+        db.update(INVOICE_PRODUCT_TABLE, contentValues, "invoiceProductId=?", new String[]{invoiceProductId});
+        db.close();
+    }
+
+    public void deleteInvoiceProduct(String invoiceProductId) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery(
+                "SELECT invoiceNumber, invoiceProductNetworkStatus FROM " + INVOICE_PRODUCT_TABLE
+                        + " WHERE invoiceProductId=?",
+                new String[]{invoiceProductId});
+        String invoiceNumber = null;
+        String networkStatus = null;
+        if (cursor.moveToFirst()) {
+            invoiceNumber = cursor.getString(0);
+            networkStatus = cursor.getString(1);
+        }
+        cursor.close();
+        if (networkStatus != null && !networkStatus.trim().isEmpty()) {
+            ContentValues queue = new ContentValues();
+            queue.put("invoiceNumber", invoiceNumber != null ? invoiceNumber : "");
+            queue.put("invoiceProductNetworkStatus", networkStatus);
+            db.insert(INVOICE_PRODUCT_DELETE_QUEUE_TABLE, null, queue);
+            db.delete(INVOICE_COMBO_ITEM_TABLE, "invoiceProductNetworkStatus=?", new String[]{networkStatus});
+        }
+        db.delete(INVOICE_PRODUCT_TABLE, "invoiceProductId=?", new String[]{invoiceProductId});
+        db.close();
+    }
+
+    public Cursor getPendingInvoiceProductDeletes() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.rawQuery("SELECT * FROM " + INVOICE_PRODUCT_DELETE_QUEUE_TABLE, null);
+    }
+
+    public void removePendingInvoiceProductDelete(String deleteId) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.delete(INVOICE_PRODUCT_DELETE_QUEUE_TABLE, "deleteId=?", new String[]{deleteId});
+        db.close();
+    }
+
     public boolean saveInvoice(List<ProductCartResponse> productCartResponseList, String noOfTable, String customerName, String customerMobile,
                                String customerAddress, String invoiceNumber, float subtotal, float totalGSTAmount, float discount, String discountType, float totalAmount,
                                String paymentMode, String invoiceDate, String invoiceType, String invoiceNetworkStatus, int invoiceStatus) {
@@ -1991,7 +2167,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         contentValues.put("customerName", customerName);
         contentValues.put("customerMobile", customerMobile);
         contentValues.put("customerAddress", customerAddress);
-        contentValues.put("subtotal", String.valueOf(subtotal));
+        contentValues.put("subTotal", String.valueOf(subtotal));
         contentValues.put("totalGSTAmount", String.valueOf(totalGSTAmount));
         contentValues.put("discount", String.valueOf(discount));
         contentValues.put("discountType", discountType);
@@ -2409,7 +2585,15 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         List<ProductResponse> productResponseList = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
 
-        Cursor cursor = db.rawQuery("SELECT * FROM product LEFT JOIN product_category ON product_category.categoryName = product.categoryName WHERE product.categoryName !='' AND product.productDeletedStatus = '0' GROUP BY product.productName ORDER BY product.productId", null);
+        Cursor cursor = db.rawQuery(
+                "SELECT product.*, ps.subcategoryName AS subcategoryName "
+                        + "FROM " + PRODUCT_TABLE + " product "
+                        + "LEFT JOIN " + PRODUCT_CATEGORY_TABLE + " ON " + PRODUCT_CATEGORY_TABLE + ".categoryName = product.categoryName "
+                        + "LEFT JOIN " + PRODUCT_SUBCATEGORY_TABLE + " ps ON product.subcategoryId = ps.subcategoryId "
+                        + "AND IFNULL(ps.subcategoryDeletedStatus, '0') = '0' "
+                        + "WHERE IFNULL(product.categoryName, '') != '' AND IFNULL(product.productDeletedStatus, '0') = '0' "
+                        + "GROUP BY product.productName ORDER BY product.productId",
+                null);
         ProductResponse productResponse;
         while (cursor.moveToNext()) {
             productResponse = new ProductResponse();
@@ -2429,6 +2613,14 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             productResponse.setProductCGST(cursor.getString(cursor.getColumnIndex("productCGST")));
             productResponse.setProductSGST(cursor.getString(cursor.getColumnIndex("productSGST")));
             productResponse.setProductStatus(cursor.getString(cursor.getColumnIndex("productStatus")));
+            int subcategoryIdCol = cursor.getColumnIndex("subcategoryId");
+            if (subcategoryIdCol >= 0 && !cursor.isNull(subcategoryIdCol)) {
+                productResponse.setSubcategoryId(cursor.getString(subcategoryIdCol));
+            }
+            int subcategoryNameCol = cursor.getColumnIndex("subcategoryName");
+            if (subcategoryNameCol >= 0 && !cursor.isNull(subcategoryNameCol)) {
+                productResponse.setSubcategoryName(cursor.getString(subcategoryNameCol));
+            }
             productResponseList.add(productResponse);
         }
         db.close();
@@ -2758,7 +2950,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = null;
         try {
-            cursor = db.rawQuery("SELECT COUNT(*) FROM " + INVOICE_TABLE + " WHERE invoiceStatus = 0", null);
+            cursor = db.rawQuery("SELECT COUNT(*) FROM " + INVOICE_TABLE + " WHERE invoiceStatus = 0" + andBranchScope(null), null);
             if (cursor.moveToFirst()) {
                 return cursor.getInt(0);
             }
@@ -2890,7 +3082,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
 
     public Cursor getUnSynchronizeInvoice(int status) {
         SQLiteDatabase db = this.getReadableDatabase();
-        String sql = "SELECT * FROM " + INVOICE_TABLE + " WHERE invoiceStatus = '" + status + "' ";
+        String sql = "SELECT * FROM " + INVOICE_TABLE + " WHERE invoiceStatus = '" + status + "' " + andBranchScope(null);
         Cursor cursor = db.rawQuery(sql, null);
         return cursor;
     }
@@ -2934,7 +3126,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         contentValues.put("customerName", invoiceResponse.getCustomerName());
         contentValues.put("customerMobile", invoiceResponse.getCustomerMobile());
         contentValues.put("customerAddress", invoiceResponse.getCustomerAddress());
-        contentValues.put("subtotal", invoiceResponse.getSubTotal());
+        contentValues.put("subTotal", invoiceResponse.getSubTotal());
         contentValues.put("totalGSTAmount", invoiceResponse.getTotalGSTAmount());
         contentValues.put("discount", invoiceResponse.getDiscount());
         contentValues.put("discountType", invoiceResponse.getDiscountType());
@@ -3007,9 +3199,9 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         int totalCount = 0;
         String sql;
         if (!invoiceDate.isEmpty()) {
-            sql = "SELECT COUNT(invoiceId) as totalCount FROM " + INVOICE_TABLE + " WHERE paymentMode = '" + paymentMode + "' AND invoiceDate LIKE '%" + invoiceDate + "%'";
+            sql = "SELECT COUNT(invoiceId) as totalCount FROM " + INVOICE_TABLE + " WHERE paymentMode = '" + paymentMode + "' AND invoiceDate LIKE '%" + invoiceDate + "%'" + andBranchScope(null);
         } else {
-            sql = "SELECT COUNT(invoiceId) as totalCount FROM " + INVOICE_TABLE + " WHERE paymentMode = '" + paymentMode + "'";
+            sql = "SELECT COUNT(invoiceId) as totalCount FROM " + INVOICE_TABLE + " WHERE paymentMode = '" + paymentMode + "'" + andBranchScope(null);
         }
         Cursor cursor = db.rawQuery(sql, null);
         while (cursor.moveToNext()) {
@@ -3025,9 +3217,9 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         int totalCount = 0;
         String sql;
         if (!invoiceDate.isEmpty()) {
-            sql = "SELECT COUNT(invoiceId) as totalCount FROM " + INVOICE_TABLE + " WHERE invoiceDate LIKE '%" + invoiceDate + "%'";
+            sql = "SELECT COUNT(invoiceId) as totalCount FROM " + INVOICE_TABLE + " WHERE invoiceDate LIKE '%" + invoiceDate + "%'" + andBranchScope(null);
         } else {
-            sql = "SELECT COUNT(invoiceId) as totalCount FROM " + INVOICE_TABLE;
+            sql = "SELECT COUNT(invoiceId) as totalCount FROM " + INVOICE_TABLE + whereBranchScope(null);
         }
         Cursor cursor = db.rawQuery(sql, null);
         while (cursor.moveToNext()) {
@@ -3048,14 +3240,15 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         float totalAmount = 0;
         String sql;
         if (!invoiceDate.isEmpty()) {
-            sql = "SELECT SUM(totalAmount) as totalAmount FROM " + INVOICE_TABLE + " WHERE paymentMode = '" + paymentMode + "' AND invoiceDate LIKE '%" + invoiceDate + "%'";
+            sql = "SELECT SUM(totalAmount) as totalAmount FROM " + INVOICE_TABLE + " WHERE paymentMode = '" + paymentMode + "' AND invoiceDate LIKE '%" + invoiceDate + "%'" + andBranchScope(null) + andNotRefunded();
         } else {
-            sql = "SELECT SUM(totalAmount) as totalAmount FROM " + INVOICE_TABLE + " WHERE paymentMode = '" + paymentMode + "'";
+            sql = "SELECT SUM(totalAmount) as totalAmount FROM " + INVOICE_TABLE + " WHERE paymentMode = '" + paymentMode + "'" + andBranchScope(null) + andNotRefunded();
         }
         Cursor cursor = db.rawQuery(sql, null);
         while (cursor.moveToNext()) {
-            totalAmount = Float.parseFloat(cursor.getString(cursor.getColumnIndex("totalAmount")));
+            totalAmount = ReportCursorHelper.readFloat(cursor, "totalAmount");
         }
+        cursor.close();
         db.close();
         return totalAmount;
     }
@@ -3066,14 +3259,20 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         float totalAmount = 0;
         String sql;
         if (!invoiceDate.isEmpty()) {
-            sql = "SELECT SUM(totalAmount) as totalAmount FROM " + INVOICE_TABLE + " WHERE invoiceDate LIKE '%" + invoiceDate + "%'";
+            sql = "SELECT SUM(totalAmount) as totalAmount FROM " + INVOICE_TABLE + " WHERE invoiceDate LIKE '%" + invoiceDate + "%'" + andBranchScope(null) + andNotRefunded();
         } else {
-            sql = "SELECT SUM(totalAmount) as totalAmount FROM " + INVOICE_TABLE;
+            String scope = whereBranchScope(null);
+            if (scope.isEmpty()) {
+                sql = "SELECT SUM(totalAmount) as totalAmount FROM " + INVOICE_TABLE + " WHERE " + notRefundedClause();
+            } else {
+                sql = "SELECT SUM(totalAmount) as totalAmount FROM " + INVOICE_TABLE + scope + andNotRefunded();
+            }
         }
         Cursor cursor = db.rawQuery(sql, null);
         while (cursor.moveToNext()) {
-            totalAmount = Float.parseFloat(cursor.getString(cursor.getColumnIndex("totalAmount")));
+            totalAmount = ReportCursorHelper.readFloat(cursor, "totalAmount");
         }
+        cursor.close();
         db.close();
         return totalAmount;
     }
@@ -3084,9 +3283,9 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getReadableDatabase();
         String sql;
         if (!invoiceDate.isEmpty()) {
-            sql = "SELECT * FROM " + INVOICE_TABLE + " WHERE paymentMode = '" + paymentMode + "' AND invoiceDate LIKE '%" + invoiceDate + "%' ORDER BY invoiceDate DESC LIMIT " + offset + ", 25";
+            sql = "SELECT * FROM " + INVOICE_TABLE + " WHERE paymentMode = '" + paymentMode + "' AND invoiceDate LIKE '%" + invoiceDate + "%'" + andBranchScope(null) + andNotRefunded() + " ORDER BY invoiceDate DESC LIMIT " + offset + ", 25";
         } else {
-            sql = "SELECT * FROM " + INVOICE_TABLE + " WHERE paymentMode = '" + paymentMode + "' ORDER BY invoiceDate DESC LIMIT " + offset + ", 25";
+            sql = "SELECT * FROM " + INVOICE_TABLE + " WHERE paymentMode = '" + paymentMode + "'" + andBranchScope(null) + andNotRefunded() + " ORDER BY invoiceDate DESC LIMIT " + offset + ", 25";
         }
 
         Cursor cursor = db.rawQuery(sql, null);
@@ -3125,9 +3324,9 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getReadableDatabase();
         String sql;
         if (!invoiceDate.isEmpty()) {
-            sql = "SELECT * FROM " + INVOICE_TABLE + " WHERE invoiceDate LIKE '%" + invoiceDate + "%' ORDER BY invoiceDate DESC LIMIT " + offset + ", 25";
+            sql = "SELECT * FROM " + INVOICE_TABLE + " WHERE invoiceDate LIKE '%" + invoiceDate + "%'" + andBranchScope(null) + " ORDER BY invoiceDate DESC LIMIT " + offset + ", 25";
         } else {
-            sql = "SELECT * FROM " + INVOICE_TABLE + " ORDER BY invoiceDate DESC LIMIT " + offset + ", 25";
+            sql = "SELECT * FROM " + INVOICE_TABLE + whereBranchScope(null) + " ORDER BY invoiceDate DESC LIMIT " + offset + ", 25";
         }
 
         Cursor cursor = db.rawQuery(sql, null);
@@ -3144,6 +3343,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             invoiceResponse.setSubTotal(cursor.getString(cursor.getColumnIndex("subTotal")));
             invoiceResponse.setTotalGSTAmount(cursor.getString(cursor.getColumnIndex("totalGSTAmount")));
             invoiceResponse.setDiscount(cursor.getString(cursor.getColumnIndex("discount")));
+            invoiceResponse.setDiscountType(cursor.getString(cursor.getColumnIndex("discountType")));
             invoiceResponse.setTotalAmount(cursor.getString(cursor.getColumnIndex("totalAmount")));
             invoiceResponse.setPaymentMode(cursor.getString(cursor.getColumnIndex("paymentMode")));
             invoiceResponse.setInvoiceDate(cursor.getString(cursor.getColumnIndex("invoiceDate")));
@@ -3164,9 +3364,9 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getReadableDatabase();
         String sql;
         if (invoiceDate != null) {
-            sql = "SELECT * FROM " + INVOICE_TABLE + " WHERE invoiceDate LIKE '%" + invoiceDate + "%' ORDER BY invoiceId DESC LIMIT " + offset + ", 25";
+            sql = "SELECT * FROM " + INVOICE_TABLE + " WHERE invoiceDate LIKE '%" + invoiceDate + "%'" + andBranchScope(null) + " ORDER BY invoiceId DESC LIMIT " + offset + ", 25";
         } else {
-            sql = "SELECT * FROM " + INVOICE_TABLE + " ORDER BY invoiceId DESC LIMIT " + offset + ", 25";
+            sql = "SELECT * FROM " + INVOICE_TABLE + whereBranchScope(null) + " ORDER BY invoiceId DESC LIMIT " + offset + ", 25";
         }
 
         Cursor cursor = db.rawQuery(sql, null);
@@ -3203,9 +3403,9 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         int totalCount = 0;
         String sql;
         if (!invoiceDate.isEmpty()) {
-            sql = "SELECT COUNT(invoiceId) as totalCount FROM " + INVOICE_TABLE + " WHERE invoiceType = '" + table_wise + "' AND invoiceDate LIKE '%" + invoiceDate + "%'";
+            sql = "SELECT COUNT(invoiceId) as totalCount FROM " + INVOICE_TABLE + " WHERE invoiceType = '" + table_wise + "' AND invoiceDate LIKE '%" + invoiceDate + "%'" + andBranchScope(null);
         } else {
-            sql = "SELECT COUNT(invoiceId) as totalCount FROM " + INVOICE_TABLE + " WHERE invoiceType = '" + table_wise + "'";
+            sql = "SELECT COUNT(invoiceId) as totalCount FROM " + INVOICE_TABLE + " WHERE invoiceType = '" + table_wise + "'" + andBranchScope(null);
         }
         Cursor cursor = db.rawQuery(sql, null);
         while (cursor.moveToNext()) {
@@ -3221,14 +3421,15 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         float totalAmount = 0;
         String sql;
         if (!invoiceDate.isEmpty()) {
-            sql = "SELECT SUM(totalAmount) as totalAmount FROM " + INVOICE_TABLE + " WHERE invoiceType = '" + table_wise + "' AND invoiceDate LIKE '%" + invoiceDate + "%'";
+            sql = "SELECT SUM(totalAmount) as totalAmount FROM " + INVOICE_TABLE + " WHERE invoiceType = '" + table_wise + "' AND invoiceDate LIKE '%" + invoiceDate + "%'" + andBranchScope(null);
         } else {
-            sql = "SELECT SUM(totalAmount) as totalAmount FROM " + INVOICE_TABLE + " WHERE invoiceType = '" + table_wise + "'";
+            sql = "SELECT SUM(totalAmount) as totalAmount FROM " + INVOICE_TABLE + " WHERE invoiceType = '" + table_wise + "'" + andBranchScope(null);
         }
         Cursor cursor = db.rawQuery(sql, null);
         while (cursor.moveToNext()) {
-            totalAmount = Float.parseFloat(cursor.getString(cursor.getColumnIndex("totalAmount")));
+            totalAmount = ReportCursorHelper.readFloat(cursor, "totalAmount");
         }
+        cursor.close();
         db.close();
         return totalAmount;
     }
@@ -3239,9 +3440,9 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getReadableDatabase();
         String sql;
         if (!invoiceDate.isEmpty()) {
-            sql = "SELECT SUM(totalAmount) as totalAmount, noOfTable, invoiceType FROM  " + INVOICE_TABLE + " WHERE invoiceType = '" + table_wise + "' AND invoiceDate LIKE '%" + invoiceDate + "%' GROUP BY noOfTable LIMIT " + offset + ", 25";
+            sql = "SELECT SUM(totalAmount) as totalAmount, noOfTable, invoiceType FROM  " + INVOICE_TABLE + " WHERE invoiceType = '" + table_wise + "' AND invoiceDate LIKE '%" + invoiceDate + "%'" + andBranchScope(null) + " GROUP BY noOfTable LIMIT " + offset + ", 25";
         } else {
-            sql = "SELECT SUM(totalAmount) as totalAmount, noOfTable, invoiceType FROM  " + INVOICE_TABLE + " WHERE invoiceType = '" + table_wise + "' GROUP BY noOfTable LIMIT " + offset + ", 25";
+            sql = "SELECT SUM(totalAmount) as totalAmount, noOfTable, invoiceType FROM  " + INVOICE_TABLE + " WHERE invoiceType = '" + table_wise + "'" + andBranchScope(null) + " GROUP BY noOfTable LIMIT " + offset + ", 25";
         }
         Cursor cursor = db.rawQuery(sql, null);
         InvoiceResponse invoiceResponse;
@@ -3262,7 +3463,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         List<InvoiceResponse> invoiceResponseList = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
 
-        Cursor cursor = db.rawQuery("SELECT SUM(totalAmount) as totalAmount, noOfTable, invoiceType FROM  " + INVOICE_TABLE + " WHERE invoiceType = '" + table_wise + "' AND invoiceDate LIKE '%" + invoiceDate + "%' GROUP BY noOfTable", null);
+        Cursor cursor = db.rawQuery("SELECT SUM(totalAmount) as totalAmount, noOfTable, invoiceType FROM  " + INVOICE_TABLE + " WHERE invoiceType = '" + table_wise + "' AND invoiceDate LIKE '%" + invoiceDate + "%'" + andBranchScope(null) + " GROUP BY noOfTable", null);
         InvoiceResponse invoiceResponse;
         while (cursor.moveToNext()) {
             invoiceResponse = new InvoiceResponse();
@@ -3281,7 +3482,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         List<InvoiceResponse> invoiceResponseList = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
 
-        Cursor cursor = db.rawQuery("SELECT * FROM " + INVOICE_TABLE + " WHERE invoiceId = '" + invoiceId + "'", null);
+        Cursor cursor = db.rawQuery("SELECT * FROM " + INVOICE_TABLE + " WHERE invoiceId = '" + invoiceId + "'" + andBranchScope(null), null);
         InvoiceResponse invoiceResponse;
         while (cursor.moveToNext()) {
             invoiceResponse = new InvoiceResponse();
@@ -3308,6 +3509,73 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         db.close();
         return invoiceResponseList;
 
+    }
+
+    private String discountInvoiceWhere(String invoiceDate) {
+        String where = " WHERE CAST(IFNULL(discount,'0') AS REAL) > 0";
+        if (invoiceDate != null && !invoiceDate.trim().isEmpty()) {
+            where += " AND invoiceDate LIKE '%" + invoiceDate.replace("'", "''") + "%'";
+        }
+        return where + andNotRefunded() + andBranchScope(null);
+    }
+
+    private String refundInvoiceWhere(String invoiceDate) {
+        String where = " WHERE LOWER(IFNULL(invoiceOrderStatus,'')) = 'refunded'";
+        if (invoiceDate != null && !invoiceDate.trim().isEmpty()) {
+            where += " AND invoiceDate LIKE '%" + invoiceDate.replace("'", "''") + "%'";
+        }
+        return where + andBranchScope(null);
+    }
+
+    public List<InvoiceResponse> getDiscountInvoiceList(String invoiceDate, int offset, int limit) {
+        List<InvoiceResponse> invoiceResponseList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        int safeLimit = limit > 0 ? limit : 25;
+        String sql = "SELECT * FROM " + INVOICE_TABLE + discountInvoiceWhere(invoiceDate)
+                + " ORDER BY invoiceDate DESC LIMIT " + offset + ", " + safeLimit;
+        Cursor cursor = db.rawQuery(sql, null);
+        while (cursor.moveToNext()) {
+            InvoiceResponse invoiceResponse = new InvoiceResponse();
+            invoiceResponse.setInvoiceId(cursor.getString(cursor.getColumnIndex("invoiceId")));
+            invoiceResponse.setNoOfTable(cursor.getString(cursor.getColumnIndex("noOfTable")));
+            invoiceResponse.setInvoiceNumber(cursor.getString(cursor.getColumnIndex("invoiceNumber")));
+            invoiceResponse.setSubTotal(cursor.getString(cursor.getColumnIndex("subTotal")));
+            invoiceResponse.setDiscount(cursor.getString(cursor.getColumnIndex("discount")));
+            invoiceResponse.setDiscountType(cursor.getString(cursor.getColumnIndex("discountType")));
+            invoiceResponse.setTotalAmount(cursor.getString(cursor.getColumnIndex("totalAmount")));
+            invoiceResponse.setInvoiceDate(cursor.getString(cursor.getColumnIndex("invoiceDate")));
+            invoiceResponse.setInvoiceType(cursor.getString(cursor.getColumnIndex("invoiceType")));
+            invoiceResponseList.add(invoiceResponse);
+        }
+        cursor.close();
+        db.close();
+        return invoiceResponseList;
+    }
+
+    public List<InvoiceResponse> getRefundInvoiceList(String invoiceDate, int offset, int limit) {
+        List<InvoiceResponse> invoiceResponseList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        int safeLimit = limit > 0 ? limit : 25;
+        String sql = "SELECT * FROM " + INVOICE_TABLE + refundInvoiceWhere(invoiceDate)
+                + " ORDER BY invoiceDate DESC LIMIT " + offset + ", " + safeLimit;
+        Cursor cursor = db.rawQuery(sql, null);
+        while (cursor.moveToNext()) {
+            InvoiceResponse invoiceResponse = new InvoiceResponse();
+            invoiceResponse.setInvoiceId(cursor.getString(cursor.getColumnIndex("invoiceId")));
+            invoiceResponse.setNoOfTable(cursor.getString(cursor.getColumnIndex("noOfTable")));
+            invoiceResponse.setInvoiceNumber(cursor.getString(cursor.getColumnIndex("invoiceNumber")));
+            invoiceResponse.setSubTotal(cursor.getString(cursor.getColumnIndex("subTotal")));
+            invoiceResponse.setDiscount(cursor.getString(cursor.getColumnIndex("discount")));
+            invoiceResponse.setDiscountType(cursor.getString(cursor.getColumnIndex("discountType")));
+            invoiceResponse.setTotalAmount(cursor.getString(cursor.getColumnIndex("totalAmount")));
+            invoiceResponse.setInvoiceDate(cursor.getString(cursor.getColumnIndex("invoiceDate")));
+            invoiceResponse.setInvoiceType(cursor.getString(cursor.getColumnIndex("invoiceType")));
+            invoiceResponse.setInvoiceOrderStatus(cursor.getString(cursor.getColumnIndex("invoiceOrderStatus")));
+            invoiceResponseList.add(invoiceResponse);
+        }
+        cursor.close();
+        db.close();
+        return invoiceResponseList;
     }
 
     public List<InvoiceProductResponse> getInvoiceProductList(String invoiceNumber) {
@@ -3580,9 +3848,9 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         int totalCount = 0;
         String sql;
         if (!invoiceDate.isEmpty()) {
-            sql = "SELECT COUNT(invoiceId) as totalCount FROM " + INVOICE_TABLE + " WHERE noOfTable = '" + noOfTable + "' AND invoiceType = '" + cartOrderStatus + "' AND invoiceDate LIKE '%" + invoiceDate + "%'";
+            sql = "SELECT COUNT(invoiceId) as totalCount FROM " + INVOICE_TABLE + " WHERE noOfTable = '" + noOfTable + "' AND invoiceType = '" + cartOrderStatus + "' AND invoiceDate LIKE '%" + invoiceDate + "%'" + andBranchScope(null);
         } else {
-            sql = "SELECT COUNT(invoiceId) as totalCount FROM " + INVOICE_TABLE + " WHERE noOfTable = '" + noOfTable + "' AND invoiceType = '" + cartOrderStatus + "'";
+            sql = "SELECT COUNT(invoiceId) as totalCount FROM " + INVOICE_TABLE + " WHERE noOfTable = '" + noOfTable + "' AND invoiceType = '" + cartOrderStatus + "'" + andBranchScope(null);
         }
         Cursor cursor = db.rawQuery(sql, null);
         while (cursor.moveToNext()) {
@@ -3598,14 +3866,15 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         float totalAmount = 0;
         String sql;
         if (!invoiceDate.isEmpty()) {
-            sql = "SELECT SUM(totalAmount) as totalAmount FROM " + INVOICE_TABLE + " WHERE noOfTable = '" + noOfTable + "' AND invoiceType = '" + cartOrderStatus + "' AND invoiceDate LIKE '%" + invoiceDate + "%'";
+            sql = "SELECT SUM(totalAmount) as totalAmount FROM " + INVOICE_TABLE + " WHERE noOfTable = '" + noOfTable + "' AND invoiceType = '" + cartOrderStatus + "' AND invoiceDate LIKE '%" + invoiceDate + "%'" + andBranchScope(null);
         } else {
-            sql = "SELECT SUM(totalAmount) as totalAmount FROM " + INVOICE_TABLE + " WHERE noOfTable = '" + noOfTable + "' AND invoiceType = '" + cartOrderStatus + "'";
+            sql = "SELECT SUM(totalAmount) as totalAmount FROM " + INVOICE_TABLE + " WHERE noOfTable = '" + noOfTable + "' AND invoiceType = '" + cartOrderStatus + "'" + andBranchScope(null);
         }
         Cursor cursor = db.rawQuery(sql, null);
         while (cursor.moveToNext()) {
-            totalAmount = Float.parseFloat(cursor.getString(cursor.getColumnIndex("totalAmount")));
+            totalAmount = ReportCursorHelper.readFloat(cursor, "totalAmount");
         }
+        cursor.close();
         db.close();
         return totalAmount;
     }
@@ -3616,9 +3885,9 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getReadableDatabase();
         String sql;
         if (!invoiceDate.isEmpty()) {
-            sql = "SELECT * FROM " + INVOICE_TABLE + " WHERE noOfTable = '" + noOfTable + "' AND invoiceType = '" + cartOrderStatus + "' AND invoiceDate LIKE '%" + invoiceDate + "%' ORDER BY invoiceDate DESC LIMIT " + offset + ", 25";
+            sql = "SELECT * FROM " + INVOICE_TABLE + " WHERE noOfTable = '" + noOfTable + "' AND invoiceType = '" + cartOrderStatus + "' AND invoiceDate LIKE '%" + invoiceDate + "%'" + andBranchScope(null) + " ORDER BY invoiceDate DESC LIMIT " + offset + ", 25";
         } else {
-            sql = "SELECT * FROM " + INVOICE_TABLE + " WHERE noOfTable = '" + noOfTable + "' AND invoiceType = '" + cartOrderStatus + "' ORDER BY invoiceDate DESC LIMIT " + offset + ", 25";
+            sql = "SELECT * FROM " + INVOICE_TABLE + " WHERE noOfTable = '" + noOfTable + "' AND invoiceType = '" + cartOrderStatus + "'" + andBranchScope(null) + " ORDER BY invoiceDate DESC LIMIT " + offset + ", 25";
         }
         Cursor cursor = db.rawQuery(sql, null);
         InvoiceResponse invoiceResponse;
@@ -3654,7 +3923,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         List<InvoiceResponse> invoiceResponseList = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
 
-        Cursor cursor = db.rawQuery("SELECT * FROM " + INVOICE_TABLE + " WHERE noOfTable = '" + noOfTable + "' AND invoiceType = '" + cartOrderStatus + "' AND invoiceDate LIKE '%" + invoiceDate + "%' ORDER BY invoiceId DESC", null);
+        Cursor cursor = db.rawQuery("SELECT * FROM " + INVOICE_TABLE + " WHERE noOfTable = '" + noOfTable + "' AND invoiceType = '" + cartOrderStatus + "' AND invoiceDate LIKE '%" + invoiceDate + "%'" + andBranchScope(null) + " ORDER BY invoiceId DESC", null);
         InvoiceResponse invoiceResponse;
         while (cursor.moveToNext()) {
             invoiceResponse = new InvoiceResponse();
@@ -3702,7 +3971,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         List<InvoiceResponse> invoiceResponseList = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
 
-        Cursor cursor = db.rawQuery("SELECT * FROM " + INVOICE_TABLE + " WHERE invoiceType = '" + cartOrderStatus + "' ORDER BY invoiceId DESC LIMIT 1", null);
+        Cursor cursor = db.rawQuery("SELECT * FROM " + INVOICE_TABLE + " WHERE invoiceType = '" + cartOrderStatus + "'" + andBranchScope(null) + " ORDER BY invoiceId DESC LIMIT 1", null);
         InvoiceResponse invoiceResponse;
         while (cursor.moveToNext()) {
             invoiceResponse = new InvoiceResponse();
@@ -3745,7 +4014,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             typeFilter = " AND IFNULL(invoice_final_product.invoiceItemType, 'PRODUCT') = '"
                     + invoiceItemType.replace("'", "") + "' ";
         }
-        String sql = "SELECT invoice_final_product.productName, SUM(invoice_final_product.productQuantity) AS productQuantity FROM invoice_final_product LEFT JOIN invoice ON invoice.invoiceNumber = invoice_final_product.invoiceNumber WHERE invoice.invoiceDate LIKE '%" + invoiceDate + "%'" + typeFilter + " GROUP BY invoice_final_product.productName ORDER BY invoice_final_product.productQuantity " + orderBy;
+        String sql = "SELECT invoice_final_product.productName, SUM(invoice_final_product.productQuantity) AS productQuantity FROM invoice_final_product LEFT JOIN invoice ON invoice.invoiceNumber = invoice_final_product.invoiceNumber WHERE invoice.invoiceDate LIKE '%" + invoiceDate + "%'" + typeFilter + andBranchScope("invoice") + " GROUP BY invoice_final_product.productName ORDER BY invoice_final_product.productQuantity " + orderBy;
         Cursor cursor = db.rawQuery(sql, null);
         InvoiceProductResponse invoiceProductResponse;
         while (cursor.moveToNext()) {
@@ -5163,7 +5432,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
                 contentValues.put("customerName", invoiceResponse.getCustomerName());
                 contentValues.put("customerMobile", invoiceResponse.getCustomerMobile());
                 contentValues.put("customerAddress", invoiceResponse.getCustomerAddress());
-                contentValues.put("subtotal", invoiceResponse.getSubTotal());
+                contentValues.put("subTotal", invoiceResponse.getSubTotal());
                 contentValues.put("totalGSTAmount", invoiceResponse.getTotalGSTAmount());
                 contentValues.put("discount", invoiceResponse.getDiscount());
                 contentValues.put("discountType", invoiceResponse.getDiscountType());

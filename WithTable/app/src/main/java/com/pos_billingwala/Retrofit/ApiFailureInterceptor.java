@@ -1,5 +1,6 @@
 package com.pos_billingwala.Retrofit;
 
+import com.pos_billingwala.Extra.ErrorLogUploader;
 import com.pos_billingwala.Extra.Observability;
 
 import java.io.IOException;
@@ -20,25 +21,31 @@ import okhttp3.ResponseBody;
 import okio.Buffer;
 
 /**
- * Logs every failed API call to Crashlytics + Logcat with URL, request, response,
- * HTTP status / network reason, and screen context.
+ * Logs every failed API call to Crashlytics + Admin error inbox with URL, request, response,
+ * HTTP status / network reason, duration, and screen context.
  */
 public final class ApiFailureInterceptor implements Interceptor {
 
     /** Max bytes read from request/response bodies for failure logs. */
-    private static final long MAX_BODY_BYTES = 65536L;
+    private static final long MAX_BODY_BYTES = 20480L;
 
     @Override
     public Response intercept(Chain chain) throws IOException {
         Request request = chain.request();
+        String safeUrl = sanitizeUrl(request.url());
+        if (ErrorLogUploader.isIngestUrl(safeUrl)) {
+            return chain.proceed(request);
+        }
+
         String rawBody = readRequestBody(request);
         Request rebuilt = rebuildRequest(request, rawBody);
         String requestSnapshot = ApiLogSanitizer.sanitize(captureForLog(rawBody));
         String apiName = apiNameFromUrl(request.url());
-        String safeUrl = sanitizeUrl(request.url());
+        long startedAt = System.nanoTime();
 
         try {
             Response response = chain.proceed(rebuilt);
+            long durationMs = (System.nanoTime() - startedAt) / 1_000_000L;
             if (!response.isSuccessful()) {
                 String responseSnapshot = snapshotResponseBody(response);
                 String reason = buildHttpFailureReason(response.code(), response.message(), responseSnapshot);
@@ -49,11 +56,14 @@ public final class ApiFailureInterceptor implements Interceptor {
                         response.code(),
                         reason,
                         requestSnapshot,
-                        responseSnapshot
+                        responseSnapshot,
+                        durationMs,
+                        null
                 );
             }
             return response;
         } catch (IOException e) {
+            long durationMs = (System.nanoTime() - startedAt) / 1_000_000L;
             Observability.logApiFailure(
                     request.method(),
                     safeUrl,
@@ -61,7 +71,9 @@ public final class ApiFailureInterceptor implements Interceptor {
                     0,
                     buildNetworkFailureReason(e),
                     requestSnapshot,
-                    null
+                    null,
+                    durationMs,
+                    e
             );
             throw e;
         }
@@ -178,7 +190,7 @@ public final class ApiFailureInterceptor implements Interceptor {
         if (raw.length() <= MAX_BODY_BYTES) {
             return raw;
         }
-        return raw.substring(0, (int) MAX_BODY_BYTES) + "…[truncated at 64KB]";
+        return raw.substring(0, (int) MAX_BODY_BYTES) + "…[truncated at 20KB]";
     }
 
     private static String snapshotResponseBody(Response response) {

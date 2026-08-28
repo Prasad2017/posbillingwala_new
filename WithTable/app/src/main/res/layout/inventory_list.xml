@@ -2,74 +2,66 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:fitsSystemWindows="true"
     android:orientation="vertical">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:orientation="horizontal">
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="12dp"
+        android:paddingTop="10dp"
+        android:paddingEnd="12dp"
+        android:paddingBottom="10dp">
 
         <TextView
             android:id="@+id/srNo"
-            android:layout_width="50dp"
+            android:layout_width="36dp"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:fontFamily="@font/poppinsmedium"
             android:gravity="center"
-            android:padding="5dp"
-            android:textColor="@color/black"
-            android:textSize="14dp" />
+            android:textColor="@color/colorTextHint"
+            android:textSize="12sp"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/productName"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
             android:layout_weight="1"
-            android:fontFamily="@font/poppinsmedium"
-            android:gravity="center"
-            android:padding="5dp"
-            android:textColor="@color/black"
-            android:textSize="14dp" />
+            android:ellipsize="end"
+            android:maxLines="2"
+            android:textColor="@color/colorTextPrimary"
+            android:textSize="13sp"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/inventoryQty"
-            android:layout_width="match_parent"
+            android:layout_width="56dp"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_weight="1"
-            android:fontFamily="@font/poppinsmedium"
             android:gravity="center"
-            android:padding="5dp"
-            android:textColor="@color/black"
-            android:textSize="14dp" />
+            android:textColor="@color/colorTextSecondary"
+            android:textSize="12sp" />
 
         <TextView
             android:id="@+id/afterSaleInventoryQty"
-            android:layout_width="match_parent"
+            android:layout_width="56dp"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_weight="1"
-            android:fontFamily="@font/poppinsmedium"
             android:gravity="center"
-            android:padding="5dp"
-            android:textColor="@color/black"
-            android:textSize="14dp" />
+            android:textColor="@color/colorTextSecondary"
+            android:textSize="12sp" />
 
         <TextView
             android:id="@+id/saleInventoryQty"
-            android:layout_width="match_parent"
+            android:layout_width="56dp"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_weight="1"
-            android:fontFamily="@font/poppinsmedium"
-            android:gravity="center"
-            android:padding="5dp"
-            android:textColor="@color/black"
-            android:textSize="14dp" />
-
+            android:gravity="end"
+            android:textColor="@color/colorPrimary"
+            android:textSize="12sp"
+            android:textStyle="bold" />
     </LinearLayout>
 
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/colorBorder" />
 </LinearLayout>

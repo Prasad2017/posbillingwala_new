@@ -59,6 +59,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $response = licence_append_trial_response($con, $response, $check);
                 $response = licence_append_signed_payload($con, $response, $check, $android_device_id);
                 auth_token_append_response($con, $response, 'pos_licence', $check['id'], $android_device_id, $check['expiryDate']);
+                require_once __DIR__ . '/pos_presence.php';
+                licence_touch_last_login($con, (int) $check['id']);
             }
         } else {
             $response['status'] = '0';

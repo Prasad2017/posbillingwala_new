@@ -71,6 +71,15 @@ public class LicenseResponse {
     @SerializedName("android_device_name")
     @Expose
     private String androidDeviceName;
+    @SerializedName("customerId")
+    @Expose
+    private String customerId;
+    @SerializedName("customerName")
+    @Expose
+    private String customerName;
+    @SerializedName("shopName")
+    @Expose
+    private String shopName;
 
 
     public String getLicensesId() {
@@ -235,5 +244,17 @@ public class LicenseResponse {
 
     public void setAndroidDeviceName(String androidDeviceName) {
         this.androidDeviceName = androidDeviceName;
+    }
+
+    public String getCustomerId() {
+        return customerId;
+    }
+
+    public String getCustomerName() {
+        return customerName;
+    }
+
+    public String getShopName() {
+        return shopName;
     }
 }

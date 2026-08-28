@@ -1,195 +1,67 @@
 package com.pos_billingwala.Print;
 
-import android.Manifest;
-import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
 import android.content.Context;
-import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.os.Handler;
-import android.os.Message;
-import android.util.Log;
-import android.widget.Toast;
 
-import androidx.core.app.ActivityCompat;
-
-import com.pos_billingwala.R;
-import com.woosim.printer.WoosimService;
-
-
-@SuppressLint("StaticFieldLeak")
-public class KOTWoosimPrnMng {
+/**
+ * Thin facade for the KOT printer — delegates to {@link BluetoothPrinterChannel#kot()}.
+ */
+public final class KOTWoosimPrnMng {
 
     public static final int REQUEST_ENABLE_BT = 4;
     public static final int REQUEST_CONNECT_DEVICE = 6;
 
-    public static final int MESSAGE_DEVICE_NAME = 1;
-    public static final int MESSAGE_TOAST = 2;
-    public static final int MESSAGE_READ = 3;
+    public static final int MESSAGE_DEVICE_NAME = BluetoothPrintCallbacks.MESSAGE_DEVICE_NAME;
+    public static final int MESSAGE_TOAST = BluetoothPrintCallbacks.MESSAGE_TOAST;
+    public static final int MESSAGE_READ = BluetoothPrintCallbacks.MESSAGE_READ;
+    public static final String DEVICE_NAME = BluetoothPrintCallbacks.DEVICE_NAME;
+    public static final String TOAST = BluetoothPrintCallbacks.TOAST;
 
-    // Key names received from the BluetoothPrintService Handler
-    public static final String DEVICE_NAME = "device_name";
-    public static final String TOAST = "toast";
-    private static final String TAG = "Bluetooth";
-    static Context context = null;
-    static Activity act = null;
-    static boolean printerConnected = false;
-    private static BluetoothPrintService mPrintService = null;
-    private static WoosimService mWoosim = null;
-    protected Context contx;
-    private String mDeviceAddr = "";
-    private BluetoothDevice device;
-
-    @SuppressLint("HandlerLeak")
-    public KOTWoosimPrnMng(Context c, String deviceAddr, Context context) {
-        mDeviceAddr = deviceAddr;
-        contx = c;
-        act = (Activity) context;
-
-        if (deviceAddr.isEmpty()) {
-            pairPrinter(contx, act);
-        } else {
-
-            BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-            device = mBluetoothAdapter.getRemoteDevice(mDeviceAddr);
-
-            Handler mHandler = new Handler() {
-                @Override
-                public void handleMessage(Message msg) {
-                    switch (msg.what) {
-                        case MESSAGE_DEVICE_NAME:
-                            try {
-                                String mConnectedDeviceName = msg.getData().getString(DEVICE_NAME);
-                                Toast.makeText(contx, contx.getString(R.string.connected) + " " + mConnectedDeviceName, Toast.LENGTH_SHORT).show();
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                            break;
-                        case MESSAGE_TOAST:
-                            if (mWoosim != null) {
-                                Log.e("handleMessage: ", "" + msg.getData().getInt(TOAST));
-                            }
-                            break;
-                        case MESSAGE_READ:
-                            if (mWoosim != null && msg.obj != null) {
-                                mWoosim.processRcvData((byte[]) msg.obj, msg.arg1);
-                            }
-                            break;
-                        case WoosimService.MESSAGE_PRINTER:
-                            Toast.makeText(contx, contx.getString(R.string.toast_msr_message), Toast.LENGTH_SHORT).show();
-                            break;
-                        default:
-                            Log.e(TAG, "Unknown message: " + msg.what);
-                            break;
-                    }
-                }
-            };
-
-            if (mWoosim == null) mWoosim = new WoosimService(mHandler);
-            if (mPrintService == null) {
-                mPrintService = new BluetoothPrintService(contx, mHandler);
-            }
-
-            if (mPrintService.getState() == BluetoothPrintService.STATE_NONE) {
-                mPrintService.start();
-            }
-
-            if (mPrintService.getState() == BluetoothPrintService.STATE_LISTEN) {
-                mPrintService.connect(device, false);
-            } else {
-                if (mPrintService.getState() == BluetoothPrintService.STATE_CONNECTED)
-                    printInfo(deviceAddr);
-            }
-        }
-
+    private KOTWoosimPrnMng() {
     }
 
-    public static void releaseAllocations(Context context) {
-        try {
-            printerConnected = false;
-            if (mPrintService != null) {
-                final BluetoothPrintService service = mPrintService;
-                mPrintService = null;
-                new Thread(() -> {
-                    try {
-                        service.stop();
-                    } catch (Exception e) {
-                        Log.e(TAG, "releaseAllocations stop failed", e);
-                    }
-                }, "kot-printer-release").start();
-            }
-            mWoosim = null;
-            if (context != null) {
-                Toast.makeText(context, context.getString(R.string.toast_printer_disconnect), Toast.LENGTH_SHORT).show();
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "releaseAllocations failed", e);
-        }
+    public static void connect(Context context, String deviceAddr, Activity host) {
+        BluetoothPrinterChannel.kot().connect(context, deviceAddr, host,
+                deviceAddr == null || deviceAddr.trim().isEmpty());
     }
 
-    public static boolean isBTopen(Context con, Activity activity) {
-        BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        if (mBluetoothAdapter == null) {
-            Toast.makeText(con, con.getString(R.string.toast_bluetooth_is_not_supported_on_this_devic), Toast.LENGTH_SHORT).show();
-            return false;
-        }
-
-        if (!mBluetoothAdapter.isEnabled()) {
-            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            if (ActivityCompat.checkSelfPermission(activity, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-                return true;
-            }
-            activity.startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
-            return false;
-        }
-        return true;
+    public KOTWoosimPrnMng(Context context, String deviceAddr, Context host) {
+        connect(context, deviceAddr, host instanceof Activity ? (Activity) host : null);
     }
 
-    public static void pairPrinter(Context con, Activity act1) {
-        // Check if Bluetooth is enabled before pairing
-        context = con;
-        act = act1;
-        Intent serverIntent = new Intent(context, DeviceListActivity.class);
-        act.startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE);
+    public static void pairPrinter(Context context, Activity activity) {
+        BluetoothPrinterChannel.kot().openDevicePicker(activity);
+    }
+
+    public static boolean isBTopen(Context context, Activity activity) {
+        return BluetoothPrinterChannel.kot().ensureBluetoothOn(activity, true);
     }
 
     public static BluetoothPrintService getServiceInstance() {
-        return mPrintService;
+        return BluetoothPrinterChannel.kot().getPrintService();
     }
 
-    public static boolean isPrinterConnected(Context con, Activity act1) {
-        context = con;
-        act = act1;
-        return printerConnected;
+    public static boolean isServiceConnected() {
+        return BluetoothPrinterChannel.kot().isReady();
+    }
+
+    public static boolean isPrinterConnected(Context context, Activity activity) {
+        return isServiceConnected();
     }
 
     public static void sendAutoCutter() {
         try {
-            if (mPrintService == null) {
-                return;
-            }
-            byte[] cutCommand = new byte[]{0x1B, 0x69};
-            mPrintService.write(cutCommand);
-            Log.d(TAG, "Auto cut command sent");
-        } catch (Exception e) {
-            Log.e(TAG, "sendAutoCutter failed", e);
+            byte[] cut = new byte[]{0x1B, 0x69};
+            BluetoothPrinterChannel.kot().write(cut);
+        } catch (Exception ignored) {
         }
     }
 
+    public static void releaseAllocations(Context context) {
+        BluetoothPrinterChannel.kot().release(context);
+    }
+
     public boolean printSucc() {
-        return mPrintService.getState() == BluetoothPrintService.STATE_CONNECTED;
+        return isServiceConnected();
     }
-
-    public String getDeviceAddr() {
-        return mDeviceAddr;
-    }
-
-    private void printInfo(String deviceAddr) {
-        printerConnected = true;
-        Log.d(TAG, "Connecting to device: " + deviceAddr);
-    }
-
-
 }

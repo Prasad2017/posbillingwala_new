@@ -37,10 +37,8 @@ public class PosMonitoring extends Fragment {
         binding = FragmentPosMonitoringBinding.inflate(inflater, container, false);
         activity = getActivity();
         MainActivity.title.setText("POS Monitoring");
-        MainActivity.back.setOnClickListener(v -> {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-            ((MainActivity) activity).loadFragment(new MoreMenu(), false);
-        });
+        MainActivity.back.setOnClickListener(v ->
+                ((MainActivity) activity).removeCurrentFragmentAndMoveBack());
         return binding.getRoot();
     }
 
@@ -48,7 +46,7 @@ public class PosMonitoring extends Fragment {
     public void onStart() {
         super.onStart();
         MainActivity.title.setVisibility(View.VISIBLE);
-        ((MainActivity) activity).lockUnlockDrawer(1);
+        ((MainActivity) activity).lockUnlockDrawer(0);
         if (DetectConnection.checkInternetConnection(activity)) {
             loadDevices();
         } else {

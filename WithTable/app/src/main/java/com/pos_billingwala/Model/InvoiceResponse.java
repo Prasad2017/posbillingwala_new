@@ -201,6 +201,10 @@ public class InvoiceResponse {
         this.invoiceOrderStatus = invoiceOrderStatus;
     }
 
+    public boolean isRefunded() {
+        return invoiceOrderStatus != null && "refunded".equalsIgnoreCase(invoiceOrderStatus.trim());
+    }
+
     public String getInvoiceNetworkStatus() {
         return invoiceNetworkStatus;
     }

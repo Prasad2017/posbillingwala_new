@@ -51,6 +51,9 @@ public final class Observability {
             // even if Crashlytics init is slow or partially fails.
             installFatalCrashHandler();
 
+            ErrorLogReporter.init(application);
+            ErrorLogQueue.init(application);
+
             FirebaseCrashlytics crashlytics = FirebaseCrashlytics.getInstance();
             crashlytics.setCrashlyticsCollectionEnabled(true);
             FirebasePerformance.getInstance().setPerformanceCollectionEnabled(true);
@@ -61,6 +64,7 @@ public final class Observability {
             // Re-wrap after Firebase so our enricher stays outermost and still chains to Crashlytics.
             installFatalCrashHandler();
             syncScreenToCrashlytics();
+            ErrorLogQueue.flushAsync();
             Log.i(TAG, "Observability initialized | catches ALL uncaught crashes"
                     + " (UI, DB, print, sync, API, OOM, …) | screen=" + buildScreenName());
         } catch (Exception e) {
@@ -92,8 +96,19 @@ public final class Observability {
         try {
             Log.d(TAG, message);
             FirebaseCrashlytics.getInstance().log(message);
+            ErrorLogReporter.addBreadcrumb(message);
         } catch (Exception e) {
             Log.e(TAG, "log failed: " + describeThrowable(e), e);
+        }
+    }
+
+    /** Record a user-facing action for Admin error context. */
+    public static void recordUserAction(String action) {
+        try {
+            ErrorLogReporter.recordUserAction(action);
+            log("USER_ACTION " + action);
+        } catch (Exception e) {
+            Log.e(TAG, "recordUserAction failed: " + describeThrowable(e), e);
         }
     }
 
@@ -126,6 +141,15 @@ public final class Observability {
             Log.e(TAG, line, error);
             crashlytics.log(line);
             crashlytics.recordException(error);
+
+            String ctxLower = safeContext.toLowerCase();
+            if (ctxLower.contains("print") || ctxLower.contains("bluetooth")) {
+                ErrorLogReporter.reportPrinterError(error, "Bluetooth Printer", "", "Bluetooth", safeContext);
+            } else if (ctxLower.contains("db") || ctxLower.contains("sqlite") || ctxLower.contains("invoice")) {
+                ErrorLogReporter.reportDatabaseError(error, safeContext);
+            } else {
+                ErrorLogReporter.reportAppError(error, safeContext, "ERROR", false);
+            }
         } catch (Exception e) {
             Log.e(TAG, "logNonFatal failed while reporting: " + describeThrowable(e), e);
         }
@@ -164,10 +188,28 @@ public final class Observability {
     public static void setFragmentScreen(String fragmentName) {
         currentFragment = (fragmentName != null) ? fragmentName : "";
         syncScreenToCrashlytics();
+        try {
+            ErrorLogReporter.addBreadcrumb("Opened "
+                    + ScreenNames.friendly(currentActivity, currentFragment));
+        } catch (Exception ignored) {
+        }
     }
 
     public static String getCurrentScreenName() {
         return buildScreenName();
+    }
+
+    public static String getActivityName() {
+        return currentActivity != null ? currentActivity : "";
+    }
+
+    public static String getFragmentName() {
+        return currentFragment != null ? currentFragment : "";
+    }
+
+    /** Public wrapper for Admin error classification. */
+    public static String categorizeErrorPublic(Throwable error) {
+        return categorizeError(error);
     }
 
     /**
@@ -183,7 +225,24 @@ public final class Observability {
             String requestBody,
             String responseBody
     ) {
+        logApiFailure(method, url, apiName, statusCode, reason, requestBody, responseBody, 0L, null);
+    }
+
+    public static void logApiFailure(
+            String method,
+            String url,
+            String apiName,
+            int statusCode,
+            String reason,
+            String requestBody,
+            String responseBody,
+            long durationMs,
+            Throwable networkError
+    ) {
         try {
+            if (ErrorLogUploader.isIngestUrl(url)) {
+                return;
+            }
             FirebaseCrashlytics crashlytics = FirebaseCrashlytics.getInstance();
             String screen = buildScreenName();
             String safeMethod = method != null ? method : "UNKNOWN";
@@ -220,6 +279,11 @@ public final class Observability {
             logChunked(crashlytics, "API_REQUEST", safeRequest);
             logChunked(crashlytics, "API_RESPONSE", safeResponse);
             crashlytics.recordException(new ApiFailureException(summary));
+
+            ErrorLogReporter.reportApiError(
+                    safeMethod, url, safeApi, statusCode, safeReason,
+                    safeRequest, safeResponse, durationMs, networkError
+            );
         } catch (Exception e) {
             Log.e(TAG, "logApiFailure failed: " + describeThrowable(e), e);
         }
@@ -328,6 +392,7 @@ public final class Observability {
             Log.e(TAG, block, error);
             crashlytics.log(line);
             logChunked(crashlytics, "CRASH_STACK", topFrames);
+            ErrorLogReporter.reportAppError(error, "fatal_crash", "CRITICAL", true);
         } catch (Exception e) {
             // Last resort — never let enrichment itself hide the original crash.
             Log.e(TAG, "FATAL CRASH (enrichment failed): " + error, error);

@@ -11,6 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.pos_billingwala.Activity.MainActivity;
+import com.pos_billingwala.Extra.ReportCursorHelper;
 import com.pos_billingwala.Fragment.InvoiceTableListReport;
 import com.pos_billingwala.Model.InvoiceResponse;
 import com.pos_billingwala.databinding.InvoiceTableReportListBinding;
@@ -43,7 +44,7 @@ public class InvoiceTableReportAdapter extends RecyclerView.Adapter<InvoiceTable
 
         holder.binding.srNo.setText(String.valueOf(position + 1));
         holder.binding.invoiceNumber.setText(invoiceResponse.getNoOfTable());
-        float totalAmount = Float.parseFloat(invoiceResponse.getTotalAmount());
+        float totalAmount = ReportCursorHelper.parseAmount(invoiceResponse.getTotalAmount());
         holder.binding.invoiceAmount.setText(MainActivity.currencyName + " " + String.format(Locale.US, "%.2f", totalAmount));
 
         holder.binding.linearLayout.setOnClickListener(new View.OnClickListener() {

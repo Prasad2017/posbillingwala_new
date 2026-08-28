@@ -9,11 +9,13 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentMasterDataBinding;
+import com.pos_billingwala.databinding.ItemReportMenuRowBinding;
 
 public class MasterData extends Fragment implements View.OnClickListener {
 
@@ -50,18 +52,40 @@ public class MasterData extends Fragment implements View.OnClickListener {
     }
 
     public void initViews() {
-        binding.backToSetting.setOnClickListener(this);
-        binding.categoryLayout.setOnClickListener(this);
-        binding.subcategoryLayout.setOnClickListener(this);
-        binding.portionLayout.setOnClickListener(this);
-        binding.productLayout.setOnClickListener(this);
-        binding.comboLayout.setOnClickListener(this);
+        binding.toolbar.toolbarTitle.setText(getString(R.string.master_data_title));
+        binding.toolbar.backButton.setOnClickListener(this);
+        setupRow(binding.categoryLayout, R.drawable.ic_category, R.drawable.bg_quick_action_blue,
+                R.color.colorPrimary, getString(R.string.master_category), getString(R.string.master_hint_category));
+        setupRow(binding.subcategoryLayout, R.drawable.ic_folder, R.drawable.bg_quick_action_purple,
+                R.color.deepPurple, getString(R.string.master_subcategory), getString(R.string.master_hint_subcategory));
+        setupRow(binding.portionLayout, R.drawable.ic_layers, R.drawable.bg_quick_action_orange,
+                R.color.statusTrial, getString(R.string.master_portions), getString(R.string.master_hint_portions));
+        setupRow(binding.productLayout, R.drawable.ic_report_product, R.drawable.bg_quick_action_green,
+                R.color.green_600, getString(R.string.master_products), getString(R.string.master_hint_products));
+        setupRow(binding.comboLayout, R.drawable.ic_report_combo, R.drawable.bg_quick_action_blue,
+                R.color.colorPrimary, getString(R.string.master_combos), getString(R.string.master_hint_combos));
+
+        binding.categoryLayout.getRoot().setOnClickListener(this);
+        binding.subcategoryLayout.getRoot().setOnClickListener(this);
+        binding.portionLayout.getRoot().setOnClickListener(this);
+        binding.productLayout.getRoot().setOnClickListener(this);
+        binding.comboLayout.getRoot().setOnClickListener(this);
+    }
+
+    private void setupRow(ItemReportMenuRowBinding row, int iconRes, int bgRes, int tintColor,
+                          String title, String subtitle) {
+        row.menuIcon.setBackgroundResource(bgRes);
+        row.menuIcon.setImageResource(iconRes);
+        row.menuIcon.clearColorFilter();
+        row.menuIcon.setColorFilter(ContextCompat.getColor(requireContext(), tintColor));
+        row.menuTitle.setText(title);
+        row.menuSubtitle.setText(subtitle);
     }
 
     @Override
     public void onClick(View view) {
         int id = view.getId();
-        if (id == R.id.backToSetting) {
+        if (id == R.id.backButton) {
             goToSettings();
         } else if (id == R.id.categoryLayout) {
             AddCategory addCategory = new AddCategory();

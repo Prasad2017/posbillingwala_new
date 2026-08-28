@@ -72,6 +72,8 @@ public class ReportSetting extends Fragment implements View.OnClickListener {
         binding.clearInvoiceLayout.setOnClickListener(this);
         binding.invoiceMemberPaymentWiseReportLayout.setOnClickListener(this);
         binding.expenseWiseReportLayout.setOnClickListener(this);
+        binding.discountWiseReportLayout.setOnClickListener(this);
+        binding.refundWiseReportLayout.setOnClickListener(this);
 
         applyModuleVisibility();
     }
@@ -123,6 +125,10 @@ public class ReportSetting extends Fragment implements View.OnClickListener {
             ((MainActivity) activity).loadFragment(new SaleReport(), true);
         } else if (id == R.id.expenseWiseReportLayout) {
             ((MainActivity) activity).loadFragment(new InvoiceExpenseReport(), true);
+        } else if (id == R.id.discountWiseReportLayout) {
+            ((MainActivity) activity).loadFragment(new InvoiceDiscountReport(), true);
+        } else if (id == R.id.refundWiseReportLayout) {
+            ((MainActivity) activity).loadFragment(new InvoiceRefundReport(), true);
         } else if (id == R.id.clearInvoiceLayout) {
             int unsynced = posBillingWalaDatabase.countUnsyncedInvoices();
             if (unsynced > 0) {

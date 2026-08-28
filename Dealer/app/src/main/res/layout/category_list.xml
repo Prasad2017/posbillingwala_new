@@ -69,7 +69,7 @@
                 android:gravity="center"
                 android:paddingStart="5dp"
                 android:paddingEnd="5dp"
-                android:src="@drawable/baseline_mode_edit_24" />
+                android:src="@drawable/ic_edit" />
 
             <ImageView
                 android:id="@+id/categoryRemove"
@@ -80,7 +80,7 @@
                 android:gravity="center"
                 android:paddingStart="5dp"
                 android:paddingEnd="5dp"
-                android:src="@drawable/baseline_delete_24" />
+                android:src="@drawable/ic_delete" />
 
         </LinearLayout>
 

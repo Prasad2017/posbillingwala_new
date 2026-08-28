@@ -236,6 +236,13 @@ if (!function_exists('auth_token_resolve')) {
             (int) $row['id']
         );
 
+        if ($row['actor_type'] === 'pos_licence') {
+            if (!function_exists('licence_touch_last_login')) {
+                require_once __DIR__ . '/pos_presence.php';
+            }
+            licence_touch_last_login($con, (int) $row['actor_id']);
+        }
+
         return $row;
     }
 }

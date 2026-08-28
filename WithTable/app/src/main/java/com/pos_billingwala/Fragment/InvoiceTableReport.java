@@ -29,10 +29,13 @@ import com.pos_billingwala.Adapter.InvoiceTableReportAdapter;
 import com.pos_billingwala.CalenderView.MonthPickerDialog;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ListLoader;
-import com.pos_billingwala.Extra.SimpleDividerItemDecoration;
+import com.pos_billingwala.Extra.ReportCursorHelper;
+import com.pos_billingwala.Extra.ReportUiHelper;
 import com.pos_billingwala.Model.InvoiceResponse;
 import com.pos_billingwala.R;
-import com.pos_billingwala.databinding.FragmentInvoiceTableReportBinding;
+import com.pos_billingwala.Extra.OperationalReportCharts;
+import com.pos_billingwala.Model.ReportRankItem;
+import com.pos_billingwala.databinding.FragmentOperationalReportBinding;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -56,18 +59,22 @@ public class InvoiceTableReport extends Fragment implements View.OnClickListener
     DatePickerDialog datePickerDialog;
     String invoiceDate = "";
     boolean isLoading = false, isDateMonthWise = false;
-    FragmentInvoiceTableReportBinding binding;
+    FragmentOperationalReportBinding binding;
 
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        binding = FragmentInvoiceTableReportBinding.inflate(inflater, container, false);
-        view = binding.getRoot(); //Root xml or viewGroup will be a part of converted view over here
+        binding = FragmentOperationalReportBinding.inflate(inflater, container, false);
+        view = binding.getRoot();
 
         activity = getActivity();
-
         posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
+        binding.toolbar.heading.setText(getString(R.string.ui_invoice_table_report));
+        binding.toolbar.shareInvoice.setVisibility(View.GONE);
+        binding.listTitle.setText(getString(R.string.ui_table_summary));
+        binding.donutTitle.setText(getString(R.string.ui_table_number));
+        binding.barTitle.setText(getString(R.string.ui_amount_breakdown));
 
         view.setFocusableInTouchMode(true);
         view.requestFocus();
@@ -87,7 +94,7 @@ public class InvoiceTableReport extends Fragment implements View.OnClickListener
         binding.nestedScrollView.setOnScrollChangeListener(new NestedScrollView.OnScrollChangeListener() {
             @Override
             public void onScrollChange(@NonNull NestedScrollView v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) {
-                if (scrollY == v.getChildAt(0).getMeasuredHeight() - v.getMeasuredHeight()) {
+                if (ReportCursorHelper.isNestedScrollAtBottom(v, scrollY)) {
                     if (!isLoading && pageNumber < totalPages) {
                         new getDownloadBills().execute();
                     }
@@ -95,8 +102,8 @@ public class InvoiceTableReport extends Fragment implements View.OnClickListener
             }
         });
 
-        binding.backToSetting.setOnClickListener(this);
-        binding.menuIcon.setOnClickListener(this);
+        binding.toolbar.backToSetting.setOnClickListener(this);
+        binding.toolbar.menuIcon.setOnClickListener(this);
 
         return view;
     }
@@ -203,7 +210,7 @@ public class InvoiceTableReport extends Fragment implements View.OnClickListener
             }
         });
 
-        mypopupWindow.showAsDropDown(binding.menuIcon, 0, -75);
+        mypopupWindow.showAsDropDown(binding.toolbar.menuIcon, 0, -75);
 
     }
 
@@ -246,9 +253,18 @@ public class InvoiceTableReport extends Fragment implements View.OnClickListener
             invoiceResponseList.addAll(page);
             adapter = new InvoiceTableReportAdapter(activity, invoiceResponseList);
             binding.recyclerView.setLayoutManager(new LinearLayoutManager(activity));
-            binding.recyclerView.addItemDecoration(new SimpleDividerItemDecoration(activity));
             binding.recyclerView.setAdapter(adapter);
-            binding.totalAmount.setText(MainActivity.currencyName + " " + String.format(Locale.US, "%.2f", totalAmount));
+            binding.totalAmount.setText(MainActivity.currencyName + " "
+                    + String.format(Locale.US, "%.2f", totalAmount));
+            String period = OperationalReportCharts.formatPeriodLabel(
+                    isDateMonthWise ? invoiceDate : "");
+            List<ReportRankItem> breakdown = OperationalReportCharts.groupedBreakdown(
+                    posBillingWalaDatabase, "noOfTable",
+                    isDateMonthWise ? invoiceDate : "", "invoiceType = 'table_wise'");
+            OperationalReportCharts.bindListSummary(binding, activity, totalPages, totalAmount,
+                    breakdown, getString(R.string.ui_table_number),
+                    getString(R.string.ui_amount_breakdown), period);
+            ReportUiHelper.setupTableHeader(binding.tableHeader, getString(R.string.ui_table_number));
             binding.nestedScrollView.setVisibility(View.VISIBLE);
             binding.noDataFound.setVisibility(View.GONE);
             pageNumber = page.size();

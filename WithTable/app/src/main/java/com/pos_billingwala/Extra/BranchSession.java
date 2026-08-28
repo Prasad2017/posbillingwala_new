@@ -8,7 +8,7 @@ import com.pos_billingwala.Activity.MainActivity;
 
 /**
  * Multi-branch session scope: organization → branch → device.
- * Single-branch customers: branchId defaults to userId (licence id); no config needed.
+ * Each POS login is bound to one licence (one branch). Cross-branch reports use the Owner app.
  */
 public final class BranchSession {
 
