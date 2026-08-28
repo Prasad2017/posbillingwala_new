@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">Shop Owner</string>
+    <string name="splash_loading">Loading Shop Owner...</string>
     <string name="privacy_policy">By providing username &amp; password, I hereby agree and accept the <u><font fgcolor='#df0052'>Terms of service</font></u> and <u><font fgcolor='#df0052'>Privacy Policy</font></u> in use of the POS Billingwala app.</string>
     <string name="sign_in_msg">Sign In to \nkeep do amazing Billing\nwith POS Billingwala</string>
     <string name="mobile_number_msg">Enter your shop licence key. We\'ll verify your account, so we know you\'re real.</string>
@@ -30,5 +31,46 @@
     <string name="product_export">Product Export</string>
     <string name="developed_by">Developed by Cana Tech Solutions Private Limited</string>
 
+    <string name="reports_hub">Reports Hub</string>
+    <string name="sales_dashboard">Sales Dashboard</string>
+    <string name="sales_overview">Sales Overview</string>
+    <string name="sales_trend">Sales trend &amp; KPIs</string>
+    <string name="top_branches">Top branches by sales</string>
+    <string name="branch_comparison">Branch Comparison</string>
+    <string name="all_branches">All Branches</string>
+    <string name="select_branch">Select Branch</string>
+    <string name="store_wise_sales">Store-wise Sales</string>
+    <string name="total_today_sales">Total &amp; today sales</string>
+    <string name="order_invoices">Order Invoices</string>
+    <string name="invoice_list">Cloud invoice list</string>
+    <string name="total_sales">Total Sales</string>
+    <string name="net_sales">Net Sales</string>
+    <string name="total_bills">Total Bills</string>
+    <string name="avg_bill">Avg. Bill</string>
+    <string name="total_invoices">Total Invoices</string>
+    <string name="no_sales_found">No sales found</string>
+    <string name="no_data_found">No data found</string>
+    <string name="loading">Loading</string>
+    <string name="reports_and_analytics">Reports &amp; Analytics</string>
+    <string name="ui_today">Today</string>
+    <string name="ui_this_month">This Month</string>
+    <string name="ui_sales_trend">Sales Trend</string>
+    <string name="ui_recent_bills">Recent Bills</string>
+    <string name="ui_view_all">View All</string>
+    <string name="ui_top_customers">Top Customers by Sales</string>
+    <string name="ui_sales_and_reports">Sales &amp; Analytics</string>
+    <string name="ui_operational_reports">Operational Reports</string>
+    <string name="ui_data_management">Data Management</string>
+    <string name="ui_no_sales_found">No sales found</string>
+    <string name="ui_reports_hub">Reports Hub</string>
+    <string name="owner_multi_branch">All branches or select one</string>
+    <string name="home_whats_happening">Here\'s what\'s happening across your stores today.</string>
+    <string name="home_section_overview">Business Overview</string>
+    <string name="home_section_sales">Sales</string>
+    <string name="home_total_category">Total Category</string>
+    <string name="home_total_products">Total Products</string>
+    <string name="home_today_sales">Today\'s Sales</string>
+    <string name="compare_branches">Compare Branches</string>
+    <string name="compare_branches_subtitle">Side-by-side sales across all stores</string>
 
 </resources>

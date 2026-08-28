@@ -29,6 +29,9 @@ public class ProductResponse {
     @SerializedName("subcategoryId")
     @Expose
     String subcategoryId;
+    @SerializedName("subcategoryName")
+    @Expose
+    String subcategoryName;
     @SerializedName("productName")
     @Expose
     String productName;
@@ -81,6 +84,14 @@ public class ProductResponse {
 
     public void setSubcategoryId(String subcategoryId) {
         this.subcategoryId = subcategoryId;
+    }
+
+    public String getSubcategoryName() {
+        return subcategoryName;
+    }
+
+    public void setSubcategoryName(String subcategoryName) {
+        this.subcategoryName = subcategoryName;
     }
 
     public String getProductName() {

@@ -45,6 +45,7 @@ public class DetectConnection {
 
         dialog.show();
         dialog.getWindow().setAttributes(lp);
+        ScreenshotConfig.applyDialog(dialog);
 
     }
 

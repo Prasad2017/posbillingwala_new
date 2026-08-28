@@ -13,10 +13,20 @@ import java.util.List;
 
 public class SalesAdapter extends RecyclerView.Adapter<SalesAdapter.Holder> {
 
+    public interface OnInvoiceClick {
+        void onClick(InvoiceSaleResponse invoice);
+    }
+
     private final List<InvoiceSaleResponse> items;
+    private final OnInvoiceClick listener;
 
     public SalesAdapter(List<InvoiceSaleResponse> items) {
+        this(items, null);
+    }
+
+    public SalesAdapter(List<InvoiceSaleResponse> items, OnInvoiceClick listener) {
         this.items = items;
+        this.listener = listener;
     }
 
     @NonNull
@@ -28,16 +38,22 @@ public class SalesAdapter extends RecyclerView.Adapter<SalesAdapter.Holder> {
     @Override
     public void onBindViewHolder(@NonNull Holder holder, int position) {
         InvoiceSaleResponse inv = items.get(position);
-        holder.binding.title.setText("Bill #" + nz(inv.getInvoiceNumber()) + " · ₹ " + nz(inv.getTotalAmount()));
+        String number = nz(inv.getInvoiceNumber());
+        holder.binding.title.setText((number.startsWith("#") ? "Bill " : "Bill #") + number
+                + " · ₹ " + nz(inv.getTotalAmount()));
+        String customer = nz(inv.getCustomerName());
+        if ("-".equals(customer) && inv.getShopName() != null && !inv.getShopName().isEmpty()) {
+            customer = inv.getShopName();
+        }
         holder.binding.meta.setText(
                 "Date: " + nz(inv.getInvoiceDate())
-                        + "\nType: " + nz(inv.getInvoiceType())
-                        + " · Pay: " + nz(inv.getPaymentMode())
-                        + "\nBranch: " + nz(inv.getBranchName())
-                        + "\nCustomer: " + nz(inv.getCustomerName())
-                        + "\nTax: ₹ " + nz(inv.getTotalGSTAmount())
-                        + " · Disc: ₹ " + nz(inv.getDiscount()));
-        holder.binding.status.setText(nz(inv.getPaymentMode()).isEmpty() ? "SALE" : inv.getPaymentMode());
+                        + "\nCustomer: " + customer
+                        + (inv.getPaymentMode() != null && !inv.getPaymentMode().isEmpty()
+                        ? "\nPay: " + inv.getPaymentMode() : ""));
+        holder.binding.status.setText(inv.getPaymentStatus());
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) listener.onClick(inv);
+        });
     }
 
     private static String nz(String v) {

@@ -34,14 +34,14 @@ owner_require_auth($con);
 			$sql_total_sale="SELECT SUM(`totalAmount`) as `totalSale` FROM `invoice` 
 			             LEFT JOIN `licenses` ON `licenses`.`id` = `invoice`.`licenseId` 
 			             LEFT JOIN `users` ON `users`.`id` = `licenses`.`userId` 
-			             WHERE `users`.`id` = '$userId'";
+			             WHERE `users`.`id` = '$userId' AND IFNULL(`invoice`.`invoiceOrderStatus`,'completed') <> 'refunded'";
 		    $res_total_sale = mysqli_query($con, $sql_total_sale);
 			$check_total_sale = mysqli_fetch_array($res_total_sale);
 			
 			$sql_today_sale="SELECT SUM(`totalAmount`) as `todaySale` FROM `invoice` 
 			             LEFT JOIN `licenses` ON `licenses`.`id` = `invoice`.`licenseId` 
 			             LEFT JOIN `users` ON `users`.`id` = `licenses`.`userId` 
-			             WHERE `users`.`id` = '$userId' AND `invoice`.`invoiceDate` LIKE '%$date%'";
+			             WHERE `users`.`id` = '$userId' AND `invoice`.`invoiceDate` LIKE '%$date%' AND IFNULL(`invoice`.`invoiceOrderStatus`,'completed') <> 'refunded'";
 		    $res_today_sale = mysqli_query($con, $sql_today_sale);
 			$check_today_sale = mysqli_fetch_array($res_today_sale);
 

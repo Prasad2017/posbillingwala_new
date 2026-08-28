@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:parentTag="android.widget.FrameLayout">
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/dropdownInputLayout"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColorHint="@color/colorTextHint"
+        app:boxCornerRadiusBottomEnd="@dimen/radius_sm"
+        app:boxCornerRadiusBottomStart="@dimen/radius_sm"
+        app:boxCornerRadiusTopEnd="@dimen/radius_sm"
+        app:boxCornerRadiusTopStart="@dimen/radius_sm"
+        app:boxStrokeColor="@color/colorBorder"
+        app:endIconDrawable="@drawable/ic_dropdown_arrow"
+        app:endIconMode="custom"
+        app:endIconTint="@color/colorTextSecondary"
+        app:hintTextColor="@color/colorTextHint">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/dropdownValue"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:cursorVisible="false"
+            android:focusable="false"
+            android:fontFamily="@font/poppinsregular"
+            android:inputType="none"
+            android:longClickable="false"
+            android:paddingStart="@dimen/spacing_lg"
+            android:paddingEnd="@dimen/spacing_md"
+            android:textColor="@color/colorTextPrimary"
+            android:textIsSelectable="false"
+            android:textSize="@dimen/text_body" />
+    </com.google.android.material.textfield.TextInputLayout>
+</merge>

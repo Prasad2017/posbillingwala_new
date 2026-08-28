@@ -1,41 +1,92 @@
 <?php
+/**
+ * Update dealer profile fields.
+ * POST: userId, dealerName, dealerMobileNumber, dealerAddress, dealerEmail, dealerAadhaarNumber
+ */
 include_once('config.php');
 require_once __DIR__ . '/auth_guard.php';
+require_once __DIR__ . '/../db_prepared.php';
 
-$response = array();
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+header('Content-Type: application/json; charset=utf-8');
+$response = array('status' => '0', 'message' => 'update failed');
 
-    admin_require_auth($con);
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    $response['message'] = 'Use POST';
+    echo json_encode($response);
+    exit;
+}
 
-    mysqli_query($con, 'set names utf8');
+admin_require_auth($con, $response);
+mysqli_query($con, 'set names utf8');
 
-    $userId = isset($_POST['userId']) ? $_POST['userId'] : '';
-    $dealerName = isset($_POST['dealerName']) ? $_POST['dealerName'] : '';
-    $dealerMobileNumber = isset($_POST['dealerMobileNumber']) ? $_POST['dealerMobileNumber'] : '';
-    $dealerAddress = isset($_POST['dealerAddress']) ? $_POST['dealerAddress'] : '';
-    $dealerEmail = isset($_POST['dealerEmail']) ? $_POST['dealerEmail'] : '';
-    $dealerAadhaarNumber = isset($_POST['dealerAadhaarNumber']) ? $_POST['dealerAadhaarNumber'] : '';
+$userId = isset($_POST['userId']) ? trim($_POST['userId']) : '';
+$dealerName = isset($_POST['dealerName']) ? trim($_POST['dealerName']) : '';
+$dealerMobileNumber = isset($_POST['dealerMobileNumber']) ? trim($_POST['dealerMobileNumber']) : '';
+$dealerAddress = isset($_POST['dealerAddress']) ? trim($_POST['dealerAddress']) : '';
+$dealerEmail = isset($_POST['dealerEmail']) ? trim($_POST['dealerEmail']) : '';
+$dealerAadhaarNumber = isset($_POST['dealerAadhaarNumber'])
+    ? preg_replace('/\D/', '', trim($_POST['dealerAadhaarNumber']))
+    : '';
 
-    $userIdEsc = mysqli_real_escape_string($con, $userId);
-    $dealerNameEsc = mysqli_real_escape_string($con, $dealerName);
-    $dealerMobileNumberEsc = mysqli_real_escape_string($con, $dealerMobileNumber);
-    $dealerAddressEsc = mysqli_real_escape_string($con, $dealerAddress);
-    $dealerEmailEsc = mysqli_real_escape_string($con, $dealerEmail);
-    $dealerAadhaarNumberEsc = mysqli_real_escape_string($con, $dealerAadhaarNumber);
+if ($userId === '' || $dealerName === '' || $dealerMobileNumber === '') {
+    $response['message'] = 'userId, name and mobile are required.';
+    echo json_encode($response);
+    exit;
+}
+if ($dealerAadhaarNumber !== '' && strlen($dealerAadhaarNumber) !== 12) {
+    $response['message'] = 'Aadhaar must be 12 digits.';
+    echo json_encode($response);
+    exit;
+}
 
-    $sth = "UPDATE `users` SET `name`='$dealerNameEsc', `contact_number`='$dealerMobileNumberEsc', `address`='$dealerAddressEsc',
-            `email`='$dealerEmailEsc', `aadhar_number`='$dealerAadhaarNumberEsc' WHERE `id`='$userIdEsc'";
+$uid = (int) $userId;
+$existing = db_stmt_fetch_one(
+    $con,
+    "SELECT id FROM `users` WHERE id=? AND role_id='2' LIMIT 1",
+    'i',
+    $uid
+);
+if ($existing === null) {
+    $response['message'] = 'Dealer not found.';
+    echo json_encode($response);
+    exit;
+}
 
-    if (mysqli_query($con, $sth)) {
-        $response['status'] = '1';
-        $response['message'] = 'update successful!';
-    } else {
-        $response['status'] = '0';
-        $response['message'] = 'update failed...';
+if ($dealerAadhaarNumber !== '') {
+    $dup = db_stmt_scalar_int(
+        $con,
+        "SELECT COUNT(*) AS c FROM `users` WHERE aadhar_number=? AND role_id='2' AND id<>?",
+        'si',
+        $dealerAadhaarNumber,
+        $uid
+    );
+    if ($dup > 0) {
+        $response['message'] = 'Aadhaar already registered for another dealer.';
+        echo json_encode($response);
+        exit;
     }
 }
 
-header('Content-type: application/json; charset=utf-8');
-echo json_encode($response);
+$ok = db_stmt_execute(
+    $con,
+    "UPDATE `users`
+     SET `name`=?, `contact_number`=?, `address`=?, `email`=?, `aadhar_number`=?
+     WHERE `id`=? AND `role_id`='2'",
+    'sssssi',
+    $dealerName,
+    $dealerMobileNumber,
+    $dealerAddress,
+    $dealerEmail,
+    $dealerAadhaarNumber,
+    $uid
+);
+
+if ($ok) {
+    $response['status'] = '1';
+    $response['message'] = 'update successful!';
+} else {
+    $response['message'] = 'Unable to update dealer.';
+}
+
 mysqli_close($con);
-?>
+echo json_encode($response);

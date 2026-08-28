@@ -80,6 +80,37 @@ public class AllApiResponse {
     @Expose
     public List<MessTokenResponse> messTokenResponseList;
 
+    @SerializedName("tickets")
+    @Expose
+    private List<SupportTicketItem> tickets;
+    @SerializedName("messages")
+    @Expose
+    private List<SupportTicketItem.SupportMessageItem> ticketMessages;
+    @SerializedName("ticketNo")
+    @Expose
+    private String ticketNo;
+    @SerializedName("ticketId")
+    @Expose
+    private String ticketId;
+    @SerializedName("subject")
+    @Expose
+    private String subject;
+    @SerializedName("description")
+    @Expose
+    private String description;
+    @SerializedName("category")
+    @Expose
+    private String category;
+    @SerializedName("ticketStatus")
+    @Expose
+    private String ticketStatus;
+    @SerializedName("createdAt")
+    @Expose
+    private String createdAt;
+    @SerializedName("appName")
+    @Expose
+    private String appName;
+
 
     public String getStatus() {
         return status;
@@ -272,4 +303,15 @@ public class AllApiResponse {
     public void setMessTokenResponseList(List<MessTokenResponse> messTokenResponseList) {
         this.messTokenResponseList = messTokenResponseList;
     }
+
+    public List<SupportTicketItem> getTickets() { return tickets; }
+    public List<SupportTicketItem.SupportMessageItem> getTicketMessages() { return ticketMessages; }
+    public String getTicketNo() { return ticketNo; }
+    public String getTicketId() { return ticketId; }
+    public String getSubject() { return subject; }
+    public String getDescription() { return description; }
+    public String getCategory() { return category; }
+    public String getTicketStatus() { return ticketStatus; }
+    public String getCreatedAt() { return createdAt; }
+    public String getAppName() { return appName; }
 }

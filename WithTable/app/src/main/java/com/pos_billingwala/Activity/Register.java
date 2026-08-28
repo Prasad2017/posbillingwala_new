@@ -6,7 +6,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.text.Html;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -34,8 +33,6 @@ public class Register extends BaseActivity implements View.OnClickListener {
         super.onCreate(savedInstanceState);
         binding = ActivityRegisterBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
-
         binding.backToLogin.setOnClickListener(this);
         binding.alreadyLogin.setOnClickListener(this);
         binding.submitSignup.setOnClickListener(this);

@@ -12,7 +12,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -21,7 +20,6 @@ import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.PortionMasterAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ListLoader;
-import com.pos_billingwala.Extra.SimpleDividerItemDecoration;
 import com.pos_billingwala.Model.PortionMasterResponse;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentAddPortionMasterBinding;
@@ -39,8 +37,8 @@ public class AddPortionMaster extends Fragment implements View.OnClickListener {
     public static List<PortionMasterResponse> portionMasterResponseList = new ArrayList<>();
     public static PortionMasterAdapter portionMasterAdapter;
     public static RecyclerView portionMasterRecyclerview;
-    public static CardView portionMasterListCardView;
-    public static TextView noDataFound;
+    public static View portionMasterListCardView;
+    public static View noDataFound;
 
     View view;
     FragmentAddPortionMasterBinding binding;
@@ -54,7 +52,6 @@ public class AddPortionMaster extends Fragment implements View.OnClickListener {
                 portionMasterAdapter = new PortionMasterAdapter(activity, portionMasterResponseList);
                 portionMasterRecyclerview.setLayoutManager(new GridLayoutManager(activity, 1));
                 portionMasterRecyclerview.setAdapter(portionMasterAdapter);
-                portionMasterRecyclerview.addItemDecoration(new SimpleDividerItemDecoration(activity));
 
                 portionMasterListCardView.setVisibility(View.VISIBLE);
                 noDataFound.setVisibility(View.GONE);
@@ -104,30 +101,7 @@ public class AddPortionMaster extends Fragment implements View.OnClickListener {
     }
 
     private void navigateBack() {
-        if (getArguments() == null) {
-            ((MainActivity) activity).goBackTo(new AddCategory(), false);
-            return;
-        }
-        String returnTo = getArguments().getString("returnTo");
-        if ("productPortions".equals(returnTo)) {
-            ManageProductPortions manageProductPortions = new ManageProductPortions();
-            Bundle bundle = new Bundle();
-            bundle.putString("productId", getArguments().getString("productId"));
-            manageProductPortions.setArguments(bundle);
-            ((MainActivity) activity).goBackTo(manageProductPortions, false);
-        } else if ("addProduct".equals(returnTo)) {
-            ((MainActivity) activity).goBackTo(new AddProduct(), false);
-        } else if ("masterData".equals(returnTo)) {
-            ((MainActivity) activity).navigateBack();
-        } else if ("updateProduct".equals(returnTo)) {
-            UpdateProduct updateProduct = new UpdateProduct();
-            Bundle bundle = new Bundle();
-            bundle.putString("productId", getArguments().getString("productId"));
-            updateProduct.setArguments(bundle);
-            ((MainActivity) activity).goBackTo(updateProduct, false);
-        } else {
-            ((MainActivity) activity).goBackTo(new AddCategory(), false);
-        }
+        ((MainActivity) activity).navigateBack();
     }
 
     @Override

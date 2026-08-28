@@ -2,7 +2,6 @@ package com.pos_billingwala.Extra;
 
 import android.app.Activity;
 import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -10,7 +9,6 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.textfield.TextInputEditText;
-import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.pos_billingwala.Adapter.ProductPortionDraftAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Model.PortionMasterResponse;
@@ -36,7 +34,7 @@ public class ProductPortionSectionHelper {
     private final TextView portionSectionHint;
     private final View portionMasterPickerSection;
     private final TextView noPortionMasterHint;
-    private final MaterialSpinner portionMasterSpinner;
+    private final SearchableDropdownView portionMasterDropdown;
     private final TextInputEditText inlinePortionPrice;
     private final TextView addInlinePortion;
     private final View inlinePortionListCard;
@@ -60,7 +58,7 @@ public class ProductPortionSectionHelper {
         this.portionSectionHint = root.findViewById(R.id.portionSectionHint);
         this.portionMasterPickerSection = root.findViewById(R.id.portionMasterPickerSection);
         this.noPortionMasterHint = root.findViewById(R.id.noPortionMasterHint);
-        this.portionMasterSpinner = root.findViewById(R.id.portionMasterSpinner);
+        this.portionMasterDropdown = root.findViewById(R.id.portionMasterDropdown);
         this.inlinePortionPrice = root.findViewById(R.id.inlinePortionPrice);
         this.addInlinePortion = root.findViewById(R.id.addInlinePortion);
         this.inlinePortionListCard = root.findViewById(R.id.inlinePortionListCard);
@@ -177,18 +175,13 @@ public class ProductPortionSectionHelper {
             portionMasterNameList[i] = portionMasterList.get(i).getPortionName();
         }
 
-        ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(
-                activity, android.R.layout.simple_spinner_item, portionMasterNameList);
-        spinnerAdapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
-        portionMasterSpinner.setAdapter(spinnerAdapter);
+        portionMasterDropdown.setItems(portionMasterNameList);
+        portionMasterDropdown.setSelectedIndex(0);
         selectedPortionMasterId = portionMasterIdList[0];
-        portionMasterSpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
-            @Override
-            public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
-                selectedPortionMasterId = portionMasterIdList[position];
-                portionMasterPicked = true;
-                notifyPortionsChanged();
-            }
+        portionMasterDropdown.setOnItemSelectedListener((position, item) -> {
+            selectedPortionMasterId = portionMasterIdList[position];
+            portionMasterPicked = true;
+            notifyPortionsChanged();
         });
     }
 

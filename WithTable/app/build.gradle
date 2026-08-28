@@ -17,9 +17,11 @@ android {
         versionCode 69
         versionName "2.0.53"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
-        // P5-4: same public host as Owner/Dealer/Admin (must share MySQL with those apps)
-        buildConfigField "String", "API_BASE_URL", "\"http://www.posbillingwala.com/androidApp/\""
-        buildConfigField "String", "MEDIA_BASE_URL", "\"http://www.posbillingwala.com/storage/app/\""
+        // Testing against dev host (switch back to www for production)
+        buildConfigField "String", "API_BASE_URL", "\"http://dev.posbillingwala.com/androidApp/\""
+        buildConfigField "String", "MEDIA_BASE_URL", "\"http://dev.posbillingwala.com/storage/app/\""
+        // true = allow screenshots/recording on every screen (activities + fragments). Set false for production.
+        buildConfigField "boolean", "ALLOW_SCREENSHOT", "true"
     }
 
     buildFeatures {
@@ -107,5 +109,7 @@ dependencies {
     //Mess QR token scan + generate
     implementation 'com.google.zxing:core:3.5.4'
     implementation 'com.journeyapps:zxing-android-embedded:4.3.0'
+    // Charts for sales dashboard
+    implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
 
 }

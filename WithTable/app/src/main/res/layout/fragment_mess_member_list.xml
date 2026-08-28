@@ -24,7 +24,7 @@
                 android:layout_centerInParent="true"
                 android:layout_gravity="center"
                 android:layout_marginStart="15dp"
-                android:src="@drawable/back"
+                android:src="@drawable/ic_back"
                 app:tint="@color/white" />
 
             <androidx.appcompat.widget.AppCompatTextView
@@ -78,13 +78,27 @@
             android:textColor="@color/black"
             android:textSize="15dp" />
 
-        <com.pos_billingwala.Extra.AutoFitGridRecyclerView
-            android:id="@+id/recyclerView"
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:columnWidth="200dp"
-            android:nestedScrollingEnabled="true"
-            android:padding="5dp" />
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginBottom="8dp"
+            app:cardBackgroundColor="@color/colorBackground"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/colorBorder"
+            app:strokeWidth="1dp">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:nestedScrollingEnabled="true"
+                android:overScrollMode="never" />
+        </com.google.android.material.card.MaterialCardView>
 
     </LinearLayout>
 

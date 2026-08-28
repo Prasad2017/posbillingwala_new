@@ -93,6 +93,7 @@ public class UserSetting extends Fragment implements View.OnClickListener {
         binding.invoiceDetailsLayout.setOnClickListener(this);
         binding.logoutLayout.setOnClickListener(this);
         binding.reportPinLayout.setOnClickListener(this);
+        binding.reportLayout.setOnClickListener(this);
         binding.aboutLayout.setOnClickListener(this);
         binding.profileLayout.setOnClickListener(this);
 
@@ -153,6 +154,8 @@ public class UserSetting extends Fragment implements View.OnClickListener {
         } else if (id == R.id.appDevelopedBy) {
             Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://thecanatech.com/"));
             startActivity(browserIntent);
+        } else if (id == R.id.reportLayout) {
+            openReportsHub();
         } else if (id == R.id.reportPinLayout) {
             setReportPassword();
         } else if (id == R.id.categoryLayout) {
@@ -183,6 +186,32 @@ public class UserSetting extends Fragment implements View.OnClickListener {
         } else if (id == R.id.logoutLayout) {
             logout();
         }
+    }
+
+    public void openReportsHub() {
+        final Dialog dialog = new Dialog(activity);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setContentView(R.layout.report_password_dialog);
+        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        dialog.setCancelable(false);
+
+        TextView continueToReport = dialog.findViewById(R.id.continueToReport);
+        TextView dismissReport = dialog.findViewById(R.id.dismissReport);
+        TextInputEditText reportPin = dialog.findViewById(R.id.reportPin);
+
+        dismissReport.setOnClickListener(v -> dialog.dismiss());
+        continueToReport.setOnClickListener(v -> {
+            String pin = MainActivity.reportPin != null ? MainActivity.reportPin : "9082";
+            if (reportPin.getText().toString().equalsIgnoreCase(pin)) {
+                dialog.dismiss();
+                ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
+                ((MainActivity) activity).loadFragment(new ReportsHub(), true);
+            } else {
+                reportPin.requestFocus();
+                reportPin.setError("Enter correct pin");
+            }
+        });
+        dialog.show();
     }
 
     public void setReportPassword() {

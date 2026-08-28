@@ -1,8 +1,12 @@
 package com.posbillingwala.admin.Extra;
 
 import android.graphics.Color;
+import android.widget.TextView;
+
+import androidx.core.content.ContextCompat;
 
 import com.posbillingwala.admin.Model.LicenseResponse;
+import com.posbillingwala.admin.R;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -12,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Maps license row fields to CRM status labels and badge colors.
+ * Dealers have no licenses — use Active/Inactive separately.
  */
 public final class LicenseStatusHelper {
 
@@ -27,13 +32,20 @@ public final class LicenseStatusHelper {
     private LicenseStatusHelper() {
     }
 
+    /**
+     * License status from type / expiry / DB status.
+     * A present license key is enough for Active/Trial — device bind is not required.
+     */
     public static String displayStatus(LicenseResponse license) {
         if (license == null) {
             return STATUS_PENDING;
         }
+
         String raw = safe(license.getLicenseStatus()).toLowerCase(Locale.US);
         String type = safe(license.getLicenseType()).toLowerCase(Locale.US);
         String validity = LicenceValidityTiers.toDayCount(license.getLicenseValidity());
+        String key = safe(license.getLicenseKey());
+        boolean hasKey = !key.isEmpty();
 
         if (raw.contains("suspend")) {
             return STATUS_SUSPENDED;
@@ -41,57 +53,154 @@ public final class LicenseStatusHelper {
         if (raw.contains("revok")) {
             return STATUS_REVOKED;
         }
+
         if ("10958".equals(validity) || "lifetime".equalsIgnoreCase(safe(license.getLicenseValidity()))) {
-            if (!raw.contains("expire") && !raw.contains("suspend")) {
+            if (!raw.contains("expire")) {
                 return STATUS_LIFETIME;
             }
         }
+
         if (raw.contains("expire") || isPastExpiry(license.getExpiryDate())) {
             return STATUS_EXPIRED;
         }
-        String deviceId = safe(license.getAndroidDeviceId());
-        if (deviceId.isEmpty()) {
-            if ("demo".equals(type) || "trial".equals(type) || "7".equals(validity)) {
-                return STATUS_TRIAL;
-            }
-            return STATUS_PENDING;
-        }
-        if ("demo".equals(type) || "trial".equals(type) || "7".equals(validity)) {
-            if (daysUntilExpiry(license.getExpiryDate()) <= 2 && daysUntilExpiry(license.getExpiryDate()) >= 0) {
+
+        boolean isTrial = "demo".equals(type) || "trial".equals(type) || "7".equals(validity);
+        long daysLeft = daysUntilExpiry(license.getExpiryDate());
+
+        if (isTrial) {
+            if (daysLeft >= 0 && daysLeft <= 2) {
                 return STATUS_EXPIRING;
             }
             return STATUS_TRIAL;
         }
-        long daysLeft = daysUntilExpiry(license.getExpiryDate());
+
         if (daysLeft >= 0 && daysLeft <= 30) {
             return STATUS_EXPIRING;
         }
-        if (raw.contains("pending")) {
+
+        if (raw.contains("pending") && !hasKey) {
             return STATUS_PENDING;
         }
-        return STATUS_ACTIVE;
+
+        // License key present (or any non-expired paid license) → Active
+        if (hasKey || !raw.isEmpty() || !safe(license.getExpiryDate()).isEmpty()) {
+            return STATUS_ACTIVE;
+        }
+
+        return STATUS_PENDING;
+    }
+
+    /** Short chip/list label: Active, Trial, Expired, Expiring, … */
+    public static String shortLabel(String displayStatus) {
+        if (displayStatus == null) {
+            return "Pending";
+        }
+        switch (displayStatus) {
+            case STATUS_ACTIVE:
+                return "Active";
+            case STATUS_LIFETIME:
+                return "Lifetime";
+            case STATUS_TRIAL:
+                return "Trial";
+            case STATUS_EXPIRING:
+                return "Expiring";
+            case STATUS_EXPIRED:
+                return "Expired";
+            case STATUS_SUSPENDED:
+                return "Suspended";
+            case STATUS_REVOKED:
+                return "Revoked";
+            case STATUS_PENDING:
+            default:
+                return "Pending";
+        }
     }
 
     public static int badgeColor(String displayStatus) {
         if (displayStatus == null) {
-            return Color.parseColor("#607D8B");
+            return Color.parseColor("#6B7280");
         }
         switch (displayStatus) {
             case STATUS_ACTIVE:
             case STATUS_LIFETIME:
-                return Color.parseColor("#2E7D32");
+                return Color.parseColor("#16A34A"); // green
             case STATUS_TRIAL:
-                return Color.parseColor("#1565C0");
+                return Color.parseColor("#F59E0B"); // amber
             case STATUS_EXPIRING:
-                return Color.parseColor("#EF6C00");
+                return Color.parseColor("#F59E0B"); // amber
             case STATUS_EXPIRED:
             case STATUS_REVOKED:
-                return Color.parseColor("#C62828");
+                return Color.parseColor("#DC2626"); // red
             case STATUS_SUSPENDED:
-                return Color.parseColor("#6A1B9A");
             case STATUS_PENDING:
             default:
-                return Color.parseColor("#546E7A");
+                return Color.parseColor("#6B7280"); // grey
+        }
+    }
+
+    public static int badgeBackgroundRes(String displayStatus) {
+        if (displayStatus == null) {
+            return R.drawable.bg_badge_suspended;
+        }
+        switch (displayStatus) {
+            case STATUS_ACTIVE:
+            case STATUS_LIFETIME:
+                return R.drawable.bg_badge_active;
+            case STATUS_TRIAL:
+            case STATUS_EXPIRING:
+                return R.drawable.bg_badge_trial;
+            case STATUS_EXPIRED:
+            case STATUS_REVOKED:
+                return R.drawable.bg_badge_expired;
+            case STATUS_SUSPENDED:
+            case STATUS_PENDING:
+            default:
+                return R.drawable.bg_badge_suspended;
+        }
+    }
+
+    public static int badgeTextColorRes(String displayStatus) {
+        if (displayStatus == null) {
+            return R.color.statusSuspended;
+        }
+        switch (displayStatus) {
+            case STATUS_ACTIVE:
+            case STATUS_LIFETIME:
+                return R.color.statusActive;
+            case STATUS_TRIAL:
+            case STATUS_EXPIRING:
+                return R.color.statusTrial;
+            case STATUS_EXPIRED:
+            case STATUS_REVOKED:
+                return R.color.statusExpired;
+            case STATUS_SUSPENDED:
+            case STATUS_PENDING:
+            default:
+                return R.color.statusSuspended;
+        }
+    }
+
+    public static void applyBadge(TextView badge, String displayStatus) {
+        if (badge == null) return;
+        badge.setText(shortLabel(displayStatus));
+        badge.setBackgroundResource(badgeBackgroundRes(displayStatus));
+        badge.setBackgroundTintList(null);
+        badge.setTextColor(ContextCompat.getColor(badge.getContext(), badgeTextColorRes(displayStatus)));
+    }
+
+    /** Dealer accounts have no licenses — Active / Inactive only. */
+    public static void applyDealerBadge(TextView badge, boolean active) {
+        if (badge == null) return;
+        if (active) {
+            badge.setText("Active");
+            badge.setBackgroundResource(R.drawable.bg_badge_active);
+            badge.setBackgroundTintList(null);
+            badge.setTextColor(ContextCompat.getColor(badge.getContext(), R.color.statusActive));
+        } else {
+            badge.setText("Inactive");
+            badge.setBackgroundResource(R.drawable.bg_badge_suspended);
+            badge.setBackgroundTintList(null);
+            badge.setTextColor(ContextCompat.getColor(badge.getContext(), R.color.statusSuspended));
         }
     }
 

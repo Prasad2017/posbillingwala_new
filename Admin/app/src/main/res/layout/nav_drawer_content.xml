@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="280dp"
+    android:layout_height="match_parent"
+    android:background="@color/colorSurface"
+    android:clickable="true"
+    android:focusable="true"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_nav_drawer_header"
+        android:orientation="vertical"
+        android:padding="@dimen/spacing_lg">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:adjustViewBounds="true"
+            android:contentDescription="@string/app_name"
+            android:maxHeight="56dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/app_logo" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_xs"
+            android:fontFamily="@font/poppinsbold"
+            android:text="Admin Panel"
+            android:textColor="@color/white"
+            android:textSize="@dimen/text_caption" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/poppinsregular"
+            android:text="Admin Panel"
+            android:textColor="#CCFFFFFF"
+            android:textSize="@dimen/text_caption" />
+
+        <TextView
+            android:id="@+id/drawerUserEmail"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:ellipsize="end"
+            android:fontFamily="@font/poppinsregular"
+            android:maxLines="1"
+            android:text="admin@posbillingwala.com"
+            android:textColor="#B3FFFFFF"
+            android:textSize="@dimen/text_caption" />
+    </LinearLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="@dimen/spacing_md">
+
+            <include
+                android:id="@+id/navDashboard"
+                layout="@layout/item_nav_drawer_row" />
+
+            <TextView
+                style="@style/TextAppearance.Admin.Caption"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingStart="@dimen/spacing_lg"
+                android:paddingTop="@dimen/spacing_md"
+                android:paddingEnd="@dimen/spacing_lg"
+                android:paddingBottom="@dimen/spacing_xs"
+                android:letterSpacing="0.08"
+                android:text="Customers"
+                android:textAllCaps="true"
+                android:textColor="@color/colorTextHint"
+                android:textSize="11sp" />
+
+            <include
+                android:id="@+id/navCustomers"
+                layout="@layout/item_nav_drawer_row" />
+
+            <include
+                android:id="@+id/navAddCustomer"
+                layout="@layout/item_nav_drawer_row" />
+
+            <include
+                android:id="@+id/navLicenses"
+                layout="@layout/item_nav_drawer_row" />
+
+            <include
+                android:id="@+id/navDevices"
+                layout="@layout/item_nav_drawer_row" />
+
+            <TextView
+                style="@style/TextAppearance.Admin.Caption"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingStart="@dimen/spacing_lg"
+                android:paddingTop="@dimen/spacing_md"
+                android:paddingEnd="@dimen/spacing_lg"
+                android:paddingBottom="@dimen/spacing_xs"
+                android:letterSpacing="0.08"
+                android:text="Dealers"
+                android:textAllCaps="true"
+                android:textColor="@color/colorTextHint"
+                android:textSize="11sp" />
+
+            <include
+                android:id="@+id/navDealers"
+                layout="@layout/item_nav_drawer_row" />
+
+            <include
+                android:id="@+id/navAddDealer"
+                layout="@layout/item_nav_drawer_row" />
+
+            <TextView
+                style="@style/TextAppearance.Admin.Caption"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingStart="@dimen/spacing_lg"
+                android:paddingTop="@dimen/spacing_md"
+                android:paddingEnd="@dimen/spacing_lg"
+                android:paddingBottom="@dimen/spacing_xs"
+                android:letterSpacing="0.08"
+                android:text="Business"
+                android:textAllCaps="true"
+                android:textColor="@color/colorTextHint"
+                android:textSize="11sp" />
+
+            <include
+                android:id="@+id/navSales"
+                layout="@layout/item_nav_drawer_row" />
+
+            <include
+                android:id="@+id/navReports"
+                layout="@layout/item_nav_drawer_row" />
+
+            <include
+                android:id="@+id/navCatalog"
+                layout="@layout/item_nav_drawer_row" />
+
+            <include
+                android:id="@+id/navExport"
+                layout="@layout/item_nav_drawer_row" />
+
+            <TextView
+                style="@style/TextAppearance.Admin.Caption"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingStart="@dimen/spacing_lg"
+                android:paddingTop="@dimen/spacing_md"
+                android:paddingEnd="@dimen/spacing_lg"
+                android:paddingBottom="@dimen/spacing_xs"
+                android:letterSpacing="0.08"
+                android:text="More"
+                android:textAllCaps="true"
+                android:textColor="@color/colorTextHint"
+                android:textSize="11sp" />
+
+            <include
+                android:id="@+id/navNotifications"
+                layout="@layout/item_nav_drawer_row" />
+
+            <include
+                android:id="@+id/navSettings"
+                layout="@layout/item_nav_drawer_row" />
+
+            <include
+                android:id="@+id/navCrash"
+                layout="@layout/item_nav_drawer_row" />
+
+            <include
+                android:id="@+id/navSupport"
+                layout="@layout/item_nav_drawer_row" />
+
+            <include
+                android:id="@+id/navAbout"
+                layout="@layout/item_nav_drawer_row" />
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/colorDivider" />
+
+    <LinearLayout
+        android:id="@+id/navLogout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?attr/selectableItemBackground"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="@dimen/spacing_lg">
+
+        <ImageView
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:contentDescription="@string/logout"
+            android:src="@drawable/ic_logout"
+            app:tint="@color/statusExpired" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/spacing_md"
+            android:fontFamily="@font/poppinsmedium"
+            android:text="@string/logout"
+            android:textColor="@color/statusExpired"
+            android:textSize="@dimen/text_body" />
+    </LinearLayout>
+</LinearLayout>

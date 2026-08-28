@@ -41,6 +41,19 @@ public class BranchComparisonResponse {
     @SerializedName("currencyName")
     @Expose
     public String currencyName;
+    @SerializedName("shopName1")
+    @Expose
+    public String shopName1;
+    @SerializedName("companyName")
+    @Expose
+    public String companyName;
+
+    public String getShopName1() {
+        if (shopName1 != null && !shopName1.trim().isEmpty()) {
+            return shopName1;
+        }
+        return companyName;
+    }
 
     public String getBranchLabel() {
         return branchLabel;

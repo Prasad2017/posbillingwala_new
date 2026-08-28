@@ -63,6 +63,8 @@
 						
 						$response = licence_append_trial_response($con, $response, $check);
 						auth_token_append_response($con, $response, 'pos_licence', $check['id'], $android_device_id, $check['expiryDate']);
+						require_once __DIR__ . '/pos_presence.php';
+						licence_touch_last_login($con, (int) $check['id']);
 						
 				    } else if($check['android_device_id'] == null) {
 				        $response["status"] = '2';

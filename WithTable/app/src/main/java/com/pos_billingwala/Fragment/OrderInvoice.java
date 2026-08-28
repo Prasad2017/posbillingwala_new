@@ -18,6 +18,7 @@ import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.InvoiceAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ListLoader;
+import com.pos_billingwala.Extra.ReportCursorHelper;
 import com.pos_billingwala.Model.InvoiceResponse;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentOrderInvoiceBinding;
@@ -68,7 +69,7 @@ public class OrderInvoice extends Fragment implements View.OnClickListener {
         binding.nestedScrollView.setOnScrollChangeListener(new NestedScrollView.OnScrollChangeListener() {
             @Override
             public void onScrollChange(@NonNull NestedScrollView v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) {
-                if (scrollY == v.getChildAt(0).getMeasuredHeight() - v.getMeasuredHeight()) {
+                if (ReportCursorHelper.isNestedScrollAtBottom(v, scrollY)) {
                     if (!isLoading && pageNumber < totalPages) {
                         new LoadMoreInvoices().execute();
                     }

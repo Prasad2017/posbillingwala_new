@@ -69,8 +69,6 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
         Api.bindContext(this);
         binding = ActivityLoginBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
-
         File file = new File("data/data/" + getPackageName() + "/shared_prefs/user.xml");
         if (file.exists() && AuthTokens.hasValidSession(this)) {
             Intent intent = new Intent(Login.this, MainActivity.class);

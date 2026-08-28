@@ -3,7 +3,6 @@ package com.posbillingwala.admin.Adapter;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,7 +13,8 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.posbillingwala.admin.Activity.MainActivity;
-import com.posbillingwala.admin.Extra.AadhaarMask;
+import com.posbillingwala.admin.Extra.LicenseStatusHelper;
+import com.posbillingwala.admin.Fragment.DealerDetails;
 import com.posbillingwala.admin.Fragment.DealerProfile;
 import com.posbillingwala.admin.Fragment.DealerReport;
 import com.posbillingwala.admin.Model.AllApiResponse;
@@ -51,24 +51,31 @@ public class DealerAdapter extends RecyclerView.Adapter<DealerAdapter.MyViewHold
 
         DealerResponse dealerResponse = dealerResponseList.get(position);
 
-        String status = dealerResponse.isActiveDealer() ? "ACTIVE" : "INACTIVE";
-        holder.binding.dealerName.setText(Html.fromHtml("<b>Name: </b>" + dealerResponse.getName()
-                + "  ·  <b>" + status + "</b>"));
-        holder.binding.dealerNumber.setText(Html.fromHtml("<b>Mobile Number: </b>" + dealerResponse.getContactNumber()));
-        holder.binding.dealerAddress.setText(Html.fromHtml("<b>Address: </b>" + dealerResponse.getAddress()));
-        holder.binding.dealerAadhaarNumber.setText(Html.fromHtml("<b>Aadhaar: </b>"
-                + AadhaarMask.mask(dealerResponse.getAadharNumber())));
+        holder.binding.dealerName.setText(
+                dealerResponse.getName() != null ? dealerResponse.getName() : "—");
+        holder.binding.dealerNumber.setText(
+                dealerResponse.getContactNumber() != null ? dealerResponse.getContactNumber() : "—");
+        holder.binding.dealerAddress.setText(
+                dealerResponse.getAddress() != null ? dealerResponse.getAddress() : "");
+        holder.binding.dealerAadhaarNumber.setText(
+                "Customers: " + (dealerResponse.getTotalCustomer() != null
+                        ? dealerResponse.getTotalCustomer() : "0"));
 
-        holder.binding.editDealer.setOnClickListener(v -> {
-            DealerProfile dealerProfile = new DealerProfile();
-            Bundle bundle = new Bundle();
-            bundle.putString("dealerId", dealerResponse.getId());
-            dealerProfile.setArguments(bundle);
-            ((MainActivity) context).removeCurrentFragmentAndMoveBack();
-            ((MainActivity) context).loadFragment(dealerProfile, true);
-        });
+        if (holder.binding.dealerInitials != null) {
+            holder.binding.dealerInitials.setText(initials(dealerResponse.getName()));
+        }
 
-        holder.binding.deleteDealer.setText(dealerResponse.isActiveDealer() ? "Deactivate" : "Activate");
+        if (holder.binding.dealerStatusBadge != null) {
+            holder.binding.dealerStatusBadge.setVisibility(View.VISIBLE);
+            LicenseStatusHelper.applyDealerBadge(
+                    holder.binding.dealerStatusBadge, dealerResponse.isActiveDealer());
+        }
+
+        holder.binding.editDealer.setOnClickListener(v -> openDetails(dealerResponse));
+
+        holder.itemView.setOnClickListener(v -> openDetails(dealerResponse));
+        holder.binding.cardView.setOnClickListener(v -> openDetails(dealerResponse));
+
         holder.binding.deleteDealer.setOnClickListener(v -> {
             boolean active = dealerResponse.isActiveDealer();
             String action = active ? "deactivate" : "activate";
@@ -81,6 +88,7 @@ public class DealerAdapter extends RecyclerView.Adapter<DealerAdapter.MyViewHold
                     .setNegativeButton("Cancel", null)
                     .show();
         });
+        // Long-press still opens report via item long click below
 
         holder.itemView.setOnLongClickListener(v -> {
             DealerReport report = new DealerReport();
@@ -93,9 +101,33 @@ public class DealerAdapter extends RecyclerView.Adapter<DealerAdapter.MyViewHold
         });
     }
 
+    private void openDetails(DealerResponse dealerResponse) {
+        DealerDetails details = new DealerDetails();
+        Bundle bundle = new Bundle();
+        bundle.putString("dealerId", dealerResponse.getId());
+        bundle.putString("dealerName", dealerResponse.getName());
+        bundle.putString("dealerMobile", dealerResponse.getContactNumber());
+        bundle.putString("dealerEmail", dealerResponse.getEmail());
+        bundle.putString("dealerAddress", dealerResponse.getAddress());
+        bundle.putString("dealerAadhaar", dealerResponse.getAadharNumber());
+        bundle.putBoolean("dealerActive", dealerResponse.isActiveDealer());
+        details.setArguments(bundle);
+        ((MainActivity) context).loadFragment(details, true);
+    }
+
+    private static String initials(String name) {
+        if (name == null || name.trim().isEmpty()) return "D";
+        String[] parts = name.trim().split("\\s+");
+        if (parts.length == 1) {
+            String p = parts[0];
+            return p.length() >= 2 ? p.substring(0, 2).toUpperCase() : p.toUpperCase();
+        }
+        return ("" + parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+    }
+
     private void updateStatus(DealerResponse dealer, String action, int position) {
         SweetAlertDialog pDialog = new SweetAlertDialog(context, SweetAlertDialog.PROGRESS_TYPE);
-        pDialog.getProgressHelper().setBarColor(Color.parseColor("#2D7FED"));
+        pDialog.getProgressHelper().setBarColor(Color.parseColor("#2563EB"));
         pDialog.setTitleText("Updating");
         pDialog.setCancelable(false);
         pDialog.show();

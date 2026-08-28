@@ -5,15 +5,16 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.posbillingwala.admin.Activity.MainActivity;
 import com.posbillingwala.admin.R;
 import com.posbillingwala.admin.databinding.FragmentMoreMenuBinding;
+import com.posbillingwala.admin.databinding.ItemMoreMenuRowBinding;
 
 public class MoreMenu extends Fragment {
 
@@ -26,17 +27,30 @@ public class MoreMenu extends Fragment {
         activity = getActivity();
         MainActivity.title.setText("More");
 
-        binding.menuPosMonitoring.setOnClickListener(v ->
-                ((MainActivity) activity).loadFragment(new PosMonitoring(), true));
-        binding.menuAddDealer.setOnClickListener(v ->
+        setupRow(binding.menuDealers, R.drawable.ic_report_dealers, R.drawable.bg_quick_action_orange,
+                R.color.statusTrial, "Dealers", "View & manage dealers");
+        setupRow(binding.menuAddDealer, R.drawable.ic_nav_add_dealer, R.drawable.bg_quick_action_green,
+                R.color.statusActive, "Add Dealer", "Register a new dealer");
+        setupRow(binding.menuPosMonitoring, R.drawable.ic_nav_devices, R.drawable.bg_quick_action_blue,
+                R.color.colorPrimary, "POS Monitoring", "Device online status");
+        setupRow(binding.menuProductImport, R.drawable.ic_nav_export, R.drawable.bg_quick_action_navy,
+                R.color.colorPrimaryDark, "Product Import", "Export / import catalog");
+        setupRow(binding.menuCrashInfo, R.drawable.ic_crash, R.drawable.bg_quick_action_violet,
+                R.color.deep_purple_400, "Crash & Error Logs", "POS crashes & API failures");
+        setupRow(binding.menuSettings, R.drawable.ic_logout, R.drawable.bg_quick_action_red,
+                R.color.statusExpired, "Logout", "Sign out of admin app");
+
+        binding.menuDealers.getRoot().setOnClickListener(v ->
+                ((MainActivity) activity).loadFragment(new AllDealerList(), true));
+        binding.menuAddDealer.getRoot().setOnClickListener(v ->
                 ((MainActivity) activity).loadFragment(new AddDealer(), true));
-        binding.menuProductImport.setOnClickListener(v ->
+        binding.menuPosMonitoring.getRoot().setOnClickListener(v ->
+                ((MainActivity) activity).loadFragment(new PosMonitoring(), true));
+        binding.menuProductImport.getRoot().setOnClickListener(v ->
                 ((MainActivity) activity).loadFragment(new ProductExport(), true));
-        binding.menuCrashInfo.setOnClickListener(v ->
-                Toast.makeText(activity,
-                        "POS crashes are reported via Firebase Crashlytics. No in-app crash inbox yet.",
-                        Toast.LENGTH_LONG).show());
-        binding.menuSettings.setOnClickListener(v -> {
+        binding.menuCrashInfo.getRoot().setOnClickListener(v ->
+                ((MainActivity) activity).loadFragment(new CrashLogsList(), true));
+        binding.menuSettings.getRoot().setOnClickListener(v -> {
             if (activity instanceof MainActivity) {
                 new AlertDialog.Builder(activity)
                         .setTitle("Logout")
@@ -48,6 +62,18 @@ public class MoreMenu extends Fragment {
         });
 
         return binding.getRoot();
+    }
+
+    private void setupRow(ItemMoreMenuRowBinding row, int iconRes, int bgRes, int tintColor,
+                          String title, String subtitle) {
+        row.menuIcon.setBackgroundResource(bgRes);
+        row.menuIcon.setImageResource(iconRes);
+        row.menuIcon.setColorFilter(ContextCompat.getColor(requireContext(), tintColor));
+        row.menuTitle.setText(title);
+        row.menuSubtitle.setText(subtitle);
+        if ("Logout".equals(title)) {
+            row.menuTitle.setTextColor(ContextCompat.getColor(requireContext(), R.color.statusExpired));
+        }
     }
 
     @Override

@@ -18,6 +18,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.textfield.TextInputEditText;
@@ -123,6 +124,7 @@ public class MessMemberList extends Fragment implements View.OnClickListener {
 
     public void initViews() {
         recyclerView = view.findViewById(R.id.recyclerView);
+        recyclerView.setLayoutManager(new LinearLayoutManager(activity));
         linearLayout = view.findViewById(R.id.linearLayout);
         textInputEditText = view.findViewById(R.id.searchMessMember);
         noDataFound = view.findViewById(R.id.noDataFound);

@@ -2,8 +2,6 @@ package com.posbillingwala.owner.Activity;
 
 import android.os.Bundle;
 import android.os.StrictMode;
-import android.view.WindowManager;
-
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
@@ -11,6 +9,7 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.posbillingwala.owner.Extra.Common;
+import com.posbillingwala.owner.Extra.ScreenshotConfig;
 import com.posbillingwala.owner.Fragment.Home;
 import com.posbillingwala.owner.R;
 import com.posbillingwala.owner.Retrofit.Api;
@@ -21,17 +20,18 @@ public class MainActivity extends AppCompatActivity {
     public ActivityMainBinding binding;
     public static DrawerLayout drawerLayout;
     public static String userId, currency = "₹.", reportPin;
+    public static int branchCount = 1;
     boolean doubleBackToExitPressedOnce = false;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        ScreenshotConfig.apply(this);
         Api.bindContext(this);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
-
+        ScreenshotConfig.apply(this);
         initViews();
 
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
@@ -46,6 +46,12 @@ public class MainActivity extends AppCompatActivity {
 
         loadFragment(new Home(), false);
 
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        ScreenshotConfig.apply(this);
     }
 
     public void initViews() {

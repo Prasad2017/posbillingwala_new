@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">Billingwala</string>
+    <string name="splash_loading">Loading POS Billing...</string>
     <string name="privacy_policy">By providing username &amp; password, I hereby agree and accept the <u><font fgcolor='#df0052'>Terms of service</font></u> and <u><font fgcolor='#df0052'>Privacy Policy</font></u> in use of the POS Billingwala app.</string>
     <string name="sign_in_msg">Sign in to POS Billingwala</string>
     <string name="mobile_number_msg">Enter your shop licence key to verify your account and start billing.</string>
@@ -181,7 +182,32 @@
     <string name="setting_printer_details">Printer Details</string>
     <string name="setting_inventory">Inventory Management</string>
     <string name="setting_expense">Expense Management</string>
+    <string name="setting_support">Help &amp; Support</string>
     <string name="setting_about">About Us</string>
+    <string name="support_online_only_notice">Support tickets work only when you are online. Create a ticket or refresh to see admin replies. For urgent help, call support.</string>
+    <string name="support_create_ticket">Create Support Ticket</string>
+    <string name="support_my_tickets">My Support Tickets</string>
+    <string name="support_category">Category</string>
+    <string name="support_subject">Subject</string>
+    <string name="support_description">Describe your issue</string>
+    <string name="support_submit">Submit Ticket</string>
+    <string name="support_submitting">Submitting…</string>
+    <string name="support_submitted">Ticket submitted</string>
+    <string name="support_subject_required">Subject is required</string>
+    <string name="support_loading">Loading…</string>
+    <string name="support_no_tickets">No tickets yet</string>
+    <string name="support_load_failed">Could not connect. Check internet.</string>
+    <string name="support_reply">Your reply</string>
+    <string name="support_send_reply">Send Reply</string>
+    <string name="support_reply_sent">Reply sent</string>
+    <string name="support_reply_required">Enter a message</string>
+    <string name="support_ticket_closed">This ticket is closed</string>
+    <string name="support_refresh">Refresh tickets</string>
+    <string name="support_ticket_details">Ticket details</string>
+    <string name="support_admin">Support team</string>
+    <string name="support_you">You</string>
+    <string name="support_ticket_open_banner">Status: %1$s — pull refresh to see new admin replies (online only)</string>
+    <string name="support_ticket_closed_banner">Status: %1$s — this ticket is closed. Open a new ticket if you need more help.</string>
     <string name="setting_fetch_data">Fetch Data From Cloud</string>
     <string name="setting_update_app">Update App</string>
     <string name="setting_synchronize">Offline Data Synchronize with Cloud</string>
@@ -189,6 +215,31 @@
     <string name="setting_rate_us">Rate Us</string>
     <string name="setting_share_app">Share App</string>
     <string name="setting_logout">Logout</string>
+    <string name="setting_section_billing">Billing &amp; catalog</string>
+    <string name="setting_section_store">Store</string>
+    <string name="setting_section_cloud">Cloud &amp; app</string>
+    <string name="setting_section_account">Account</string>
+    <string name="setting_hint_invoice">Bill format, reprints &amp; invoice list</string>
+    <string name="setting_hint_reports">Sales, product &amp; payment reports</string>
+    <string name="setting_hint_master">Categories, products, portions &amp; combos</string>
+    <string name="setting_hint_shop">Business profile, address &amp; GST</string>
+    <string name="setting_hint_printer">Bluetooth / USB printer setup</string>
+    <string name="setting_hint_inventory">Stock in, stock out &amp; balances</string>
+    <string name="setting_hint_expense">Record and track shop expenses</string>
+    <string name="setting_hint_support">Tickets, FAQs &amp; remote help</string>
+    <string name="setting_hint_about">App, company &amp; contact details</string>
+    <string name="setting_hint_fetch">Download latest data from cloud</string>
+    <string name="setting_hint_update">Check Play Store for a new version</string>
+    <string name="setting_hint_sync">Upload offline bills to cloud</string>
+    <string name="setting_hint_pin">Change POS login PIN</string>
+    <string name="setting_hint_rate">Rate POS Billingwala on Play Store</string>
+    <string name="setting_hint_share">Share the app with other shops</string>
+    <string name="setting_hint_logout">Sign out of this device</string>
+    <string name="master_hint_category">Food groups such as Veg, Non Veg</string>
+    <string name="master_hint_subcategory">Starter, Main Course, Beverage</string>
+    <string name="master_hint_portions">Half, Full and other sizes</string>
+    <string name="master_hint_products">Menu items and prices</string>
+    <string name="master_hint_combos">Combo meals and offers</string>
 
     <string name="home_total_sales">Total\nSales</string>
     <string name="home_today_sales">Today\'s\nSales</string>
@@ -199,7 +250,37 @@
     <string name="home_fetch_data">Fetch Data</string>
     <string name="home_synchronize">Synchronize</string>
     <string name="home_low_inventory">Low Inventory</string>
+    <string name="home_section_sales">Sales Overview</string>
+    <string name="home_section_catalog">Catalog</string>
+    <string name="home_section_billing">Start Billing</string>
+    <string name="home_whats_happening">Here\'s what\'s happening in your store today.</string>
 
     <string name="press_back_again_to_exit">Press back again to exit</string>
+
+    <string name="discount_wise_report">Discount Wise Report</string>
+    <string name="discount_type_percentage">Percentage</string>
+    <string name="discount_type_amount">Flat Amount</string>
+    <string name="business_hours">Business Hours</string>
+    <string name="business_hours_hint">Opening and closing time</string>
+    <string name="opening_time">Opening Time</string>
+    <string name="closing_time">Closing Time</string>
+    <string name="shop_open">Shop Open</string>
+    <string name="shop_closed">Shop Closed</string>
+    <string name="business_hours_saved">Business hours saved</string>
+    <string name="business_hours_not_set">Not set</string>
+
+    <string name="edit_bill">Edit Bill</string>
+    <string name="refund_bill">Refund</string>
+    <string name="save_bill">Save Bill</string>
+    <string name="change">Change</string>
+    <string name="bill_refunded">Refunded</string>
+    <string name="refund_confirm_title">Refund this bill?</string>
+    <string name="refund_confirm_message">This bill will be marked refunded and excluded from sales totals.</string>
+    <string name="refund_success">Bill refunded</string>
+    <string name="refund_wise_report">Refund Wise Report</string>
+    <string name="toast_cannot_edit_refunded">Cannot edit a refunded bill</string>
+    <string name="toast_keep_one_item">Keep at least one item</string>
+    <string name="toast_bill_updated">Bill updated</string>
+    <string name="toast_bill_not_found">Bill not found</string>
 
 </resources>

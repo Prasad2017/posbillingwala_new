@@ -2,10 +2,8 @@ package com.posbillingwala.admin.Fragment;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -63,31 +61,21 @@ public class CustomerDetails extends Fragment implements View.OnClickListener {
         view = binding.getRoot();
 
         activity = getActivity();
-        MainActivity.title.setText("Customer Details");
+        ((MainActivity) activity).setScreenTitle("Customer Details");
 
         Bundle bundle = getArguments();
         if (bundle != null) {
             customerId = bundle.getString("customerId");
         }
 
-        MainActivity.back.setOnClickListener(v -> {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-            ((MainActivity) activity).loadFragment(new AllCustomerList(), false);
-        });
-
-        view.setFocusableInTouchMode(true);
-        view.requestFocus();
-        view.setOnKeyListener((v, keyCode, event) -> {
-            if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
-                ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                ((MainActivity) activity).loadFragment(new AllCustomerList(), false);
-                return true;
-            }
-            return false;
-        });
+        MainActivity.back.setOnClickListener(v ->
+                ((MainActivity) activity).removeCurrentFragmentAndMoveBack());
 
         setupTabs();
         binding.updateCustomer.setOnClickListener(this);
+        if (binding.fabAddLicense != null) {
+            binding.fabAddLicense.setOnClickListener(v -> openAddLicense());
+        }
         binding.openCatalog.setOnClickListener(v -> {
             AddCustomerProductCategory category = new AddCustomerProductCategory();
             Bundle b = new Bundle();
@@ -95,6 +83,27 @@ public class CustomerDetails extends Fragment implements View.OnClickListener {
             category.setArguments(b);
             ((MainActivity) activity).loadFragment(category, true);
         });
+        if (binding.catalogCategoriesCard != null) {
+            binding.catalogCategoriesCard.setOnClickListener(v -> binding.openCatalog.performClick());
+        }
+        if (binding.catalogSubcategoriesCard != null) {
+            binding.catalogSubcategoriesCard.setOnClickListener(v -> {
+                AddCustomerSubcategory sub = new AddCustomerSubcategory();
+                Bundle b = new Bundle();
+                b.putString("customerId", customerId);
+                sub.setArguments(b);
+                ((MainActivity) activity).loadFragment(sub, true);
+            });
+        }
+        if (binding.catalogProductsCard != null) {
+            binding.catalogProductsCard.setOnClickListener(v -> {
+                AllCustomerProductList products = new AllCustomerProductList();
+                Bundle b = new Bundle();
+                b.putString("customerId", customerId);
+                products.setArguments(b);
+                ((MainActivity) activity).loadFragment(products, true);
+            });
+        }
         binding.openCombos.setOnClickListener(v -> {
             CustomerCombos combos = new CustomerCombos();
             Bundle b = new Bundle();
@@ -112,6 +121,21 @@ public class CustomerDetails extends Fragment implements View.OnClickListener {
 
         showPanel(TAB_OVERVIEW);
         return view;
+    }
+
+    private void openAddLicense() {
+        NewLicenceRegistration license = new NewLicenceRegistration();
+        Bundle b = new Bundle();
+        b.putString("customerId", customerId);
+        if (!customerResponseList.isEmpty()) {
+            CustomerResponse c = customerResponseList.get(0);
+            b.putString("customerName", c.getName());
+            b.putString("customerMobile", c.getContactNumber());
+            b.putString("customerAddress", c.getAddress());
+            b.putString("shopName", c.getShopName());
+        }
+        license.setArguments(b);
+        ((MainActivity) activity).loadFragment(license, true);
     }
 
     private void setupTabs() {
@@ -252,8 +276,9 @@ public class CustomerDetails extends Fragment implements View.OnClickListener {
                 binding.customerShopName.setText(safe(customer.getShopName()));
 
                 binding.headerShopName.setText(safe(customer.getShopName()));
-                binding.headerOwnerLine.setText("Owner: " + safe(customer.getName())
-                        + "  ·  Mobile: " + safe(customer.getContactNumber()));
+                if (binding.headerCustomerId != null) {
+                    binding.headerCustomerId.setText("Customer ID: " + safe(customer.getId()));
+                }
 
                 List<LicenseResponse> licenses = customer.getLicenseResponseList();
                 if (licenses == null) {
@@ -262,6 +287,12 @@ public class CustomerDetails extends Fragment implements View.OnClickListener {
                 licenseResponseList = new ArrayList<>(licenses);
 
                 int branchCount = licenseResponseList.size();
+                if (customer.getBranchCount() != null && !customer.getBranchCount().isEmpty()) {
+                    try {
+                        branchCount = Integer.parseInt(customer.getBranchCount());
+                    } catch (Exception ignored) {
+                    }
+                }
                 int licenseCount = licenseResponseList.size();
                 deviceList.clear();
                 for (LicenseResponse lic : licenseResponseList) {
@@ -272,14 +303,37 @@ public class CustomerDetails extends Fragment implements View.OnClickListener {
                 }
                 int deviceCount = deviceList.size();
 
-                binding.statBranches.setText(branchCount + "\nBranches");
-                binding.statLicenses.setText(licenseCount + "\nLicenses");
-                binding.statDevices.setText(deviceCount + "\nDevices");
+                binding.statBranchesValue.setText(String.valueOf(branchCount));
+                binding.statLicensesValue.setText(String.valueOf(licenseCount));
+                binding.statDevicesValue.setText(String.valueOf(deviceCount));
 
                 String overallStatus = overallCustomerStatus(licenseResponseList);
-                binding.headerStatusBadge.setText(overallStatus);
-                binding.headerStatusBadge.setBackgroundTintList(
-                        ColorStateList.valueOf(LicenseStatusHelper.badgeColor(overallStatus)));
+                LicenseStatusHelper.applyBadge(binding.headerStatusBadge, overallStatus);
+
+                bindInfoRow(binding.rowShopName, "Shop Name", safe(customer.getShopName()));
+                bindInfoRow(binding.rowOwnerName, "Owner Name", safe(customer.getName()));
+                bindInfoRow(binding.rowMobile, "Mobile Number", safe(customer.getContactNumber()));
+                bindInfoRow(binding.rowEmail, "Email", safe(customer.getEmail()));
+                bindInfoRow(binding.rowAddress, "Address", safe(customer.getAddress()));
+                String dealerLine = customer.getDealerName() != null && !customer.getDealerName().trim().isEmpty()
+                        ? "  ·  Dealer: " + customer.getDealerName() : "";
+                binding.headerOwnerLine.setText("Owner: " + safe(customer.getName())
+                        + "  ·  Mobile: " + safe(customer.getContactNumber()) + dealerLine);
+
+                if (response.body().getCategoryCount() != null) {
+                    if (binding.catalogCategoryCount != null) {
+                        binding.catalogCategoryCount.setText(nz(response.body().getCategoryCount()));
+                    }
+                    if (binding.catalogSubcategoryCount != null) {
+                        binding.catalogSubcategoryCount.setText(nz(response.body().getSubcategoryCount()));
+                    }
+                    if (binding.catalogProductCount != null) {
+                        binding.catalogProductCount.setText(nz(response.body().getProductCount()));
+                    }
+                }
+
+                bindLicenseSummary(licenseResponseList);
+                loadCatalogSummary();
 
                 // Licenses tab
                 if (licenseResponseList.isEmpty()) {
@@ -326,6 +380,85 @@ public class CustomerDetails extends Fragment implements View.OnClickListener {
                 dialog.setCancelClickListener(SweetAlertDialog::dismiss).show();
             }
         });
+    }
+
+    private void bindLicenseSummary(List<LicenseResponse> licenses) {
+        if (binding.summaryActiveLicenses == null) return;
+        int active = 0, expiring = 0, expired = 0, trial = 0;
+        String nextExpiry = null;
+        for (LicenseResponse lic : licenses) {
+            String status = LicenseStatusHelper.displayStatus(lic);
+            if (LicenseStatusHelper.STATUS_TRIAL.equals(status)) {
+                trial++;
+            } else if (LicenseStatusHelper.STATUS_EXPIRING.equals(status)) {
+                expiring++;
+                active++;
+            } else if (LicenseStatusHelper.STATUS_ACTIVE.equals(status)
+                    || LicenseStatusHelper.STATUS_LIFETIME.equals(status)
+                    || LicenseStatusHelper.STATUS_PENDING.equals(status)) {
+                active++;
+            } else if (LicenseStatusHelper.STATUS_EXPIRED.equals(status)
+                    || LicenseStatusHelper.STATUS_SUSPENDED.equals(status)
+                    || LicenseStatusHelper.STATUS_REVOKED.equals(status)) {
+                expired++;
+            }
+            String exp = lic.getExpiryDate();
+            if (exp != null && !exp.trim().isEmpty()) {
+                if (nextExpiry == null || exp.compareTo(nextExpiry) < 0) {
+                    if (!LicenseStatusHelper.STATUS_EXPIRED.equals(status)) {
+                        nextExpiry = exp;
+                    }
+                }
+            }
+        }
+        binding.summaryActiveLicenses.setText(String.valueOf(active));
+        binding.summaryExpiringLicenses.setText(String.valueOf(expiring));
+        binding.summaryExpiredLicenses.setText(String.valueOf(expired));
+        binding.summaryTrialLicenses.setText(String.valueOf(trial));
+        binding.summaryNextExpiry.setText(nextExpiry != null ? nextExpiry : "—");
+
+        bindInfoRow(binding.rowActiveLicenses, "Active Licenses", String.valueOf(active));
+        bindInfoRow(binding.rowExpiringLicenses, "Expiring Soon", String.valueOf(expiring));
+        bindInfoRow(binding.rowExpiredLicenses, "Expired Licenses", String.valueOf(expired));
+        bindInfoRow(binding.rowTrialLicenses, "Trial Licenses", String.valueOf(trial));
+        bindInfoRow(binding.rowNextExpiry, "Next Expiry", nextExpiry != null ? nextExpiry : "—");
+    }
+
+    private void bindInfoRow(com.posbillingwala.admin.databinding.ItemInfoRowBinding row, String label, String value) {
+        if (row == null) return;
+        row.infoLabel.setText(label);
+        row.infoValue.setText(value != null && !value.trim().isEmpty() ? value : "—");
+    }
+
+    private void loadCatalogSummary() {
+        if (customerId == null || customerId.trim().isEmpty()) return;
+        Api.getClient().getCustomerCatalogSummary(customerId).enqueue(new Callback<AllApiResponse>() {
+            @Override
+            public void onResponse(Call<AllApiResponse> call, Response<AllApiResponse> response) {
+                if (!isAdded() || binding == null) return;
+                if (response.isSuccessful() && response.body() != null
+                        && "true".equalsIgnoreCase(response.body().getStatus())) {
+                    AllApiResponse body = response.body();
+                    if (binding.catalogCategoryCount != null) {
+                        binding.catalogCategoryCount.setText(nz(body.getCategoryCount()));
+                    }
+                    if (binding.catalogSubcategoryCount != null) {
+                        binding.catalogSubcategoryCount.setText(nz(body.getSubcategoryCount()));
+                    }
+                    if (binding.catalogProductCount != null) {
+                        binding.catalogProductCount.setText(nz(body.getProductCount()));
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<AllApiResponse> call, Throwable t) {
+            }
+        });
+    }
+
+    private static String nz(String v) {
+        return v == null || v.trim().isEmpty() ? "0" : v.trim();
     }
 
     private static String overallCustomerStatus(List<LicenseResponse> licenses) {

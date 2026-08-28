@@ -24,7 +24,7 @@
             <ImageView
                 android:layout_width="20dp"
                 android:layout_height="20dp"
-                android:src="@drawable/invoice" />
+                android:src="@drawable/ic_report_invoice" />
 
             <TextView
                 android:id="@+id/saveInvoice"
@@ -51,7 +51,7 @@
             <ImageView
                 android:layout_width="20dp"
                 android:layout_height="20dp"
-                android:src="@drawable/baseline_print_24"
+                android:src="@drawable/ic_print"
                 app:tint="@color/white" />
 
             <TextView

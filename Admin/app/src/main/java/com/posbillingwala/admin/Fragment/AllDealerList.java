@@ -3,14 +3,18 @@ package com.posbillingwala.admin.Fragment;
 import android.app.Activity;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.util.Log;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Filter;
+import android.widget.Filterable;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.posbillingwala.admin.Activity.MainActivity;
 import com.posbillingwala.admin.Adapter.DealerAdapter;
@@ -29,7 +33,6 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-
 public class AllDealerList extends Fragment {
 
     public static Activity activity;
@@ -37,7 +40,8 @@ public class AllDealerList extends Fragment {
     FragmentAllCustomerListBinding binding;
     DealerAdapter dealerAdapter;
     List<DealerResponse> dealerResponseList = new ArrayList<>();
-
+    List<DealerResponse> filteredDealers = new ArrayList<>();
+    String statusFilter = "ALL";
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
@@ -47,20 +51,53 @@ public class AllDealerList extends Fragment {
 
         activity = getActivity();
         MainActivity.title.setText("Dealers");
+
         if (binding.searchCustomer != null) {
-            ((View) binding.searchCustomer.getParent()).setVisibility(View.GONE);
+            binding.searchCustomer.setHint("Search dealer name or mobile");
+            ((View) binding.searchCustomer.getParent()).setVisibility(View.VISIBLE);
+            binding.searchCustomer.addTextChangedListener(new TextWatcher() {
+                @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    applyFilters();
+                }
+                @Override public void afterTextChanged(Editable s) {}
+            });
+        }
+        if (binding.chipAll != null) {
+            binding.chipTrial.setVisibility(View.GONE);
+            binding.chipExpired.setText("Inactive");
+            binding.chipAll.setOnClickListener(v -> { statusFilter = "ALL"; highlightDealerChips(); applyFilters(); });
+            binding.chipActive.setOnClickListener(v -> { statusFilter = "ACTIVE"; highlightDealerChips(); applyFilters(); });
+            binding.chipExpired.setOnClickListener(v -> { statusFilter = "INACTIVE"; highlightDealerChips(); applyFilters(); });
+            highlightDealerChips();
         }
         if (binding.emptyCustomers != null) {
-            binding.emptyCustomers.setText("No dealers found.\nUse More → Add Dealer.\nLong-press a dealer for report.");
+            binding.emptyCustomers.setText("No dealers found.\nUse + to add a dealer.");
+        }
+        if (binding.fabAddCustomer != null) {
+            binding.fabAddCustomer.setOnClickListener(v ->
+                    ((MainActivity) activity).navigateDetail(new AddDealer(), "Add Dealer"));
         }
 
         return view;
-
     }
 
+    private void highlightDealerChips() {
+        styleChip(binding.chipAll, "ALL".equals(statusFilter));
+        styleChip(binding.chipActive, "ACTIVE".equals(statusFilter));
+        styleChip(binding.chipExpired, "INACTIVE".equals(statusFilter));
+    }
+
+    private void styleChip(android.widget.TextView chip, boolean selected) {
+        if (chip == null) return;
+        chip.setBackgroundResource(selected ? R.drawable.bg_month_chip : R.drawable.bg_card);
+        chip.setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(),
+                selected ? R.color.colorPrimary : R.color.colorTextSecondary));
+    }
+
+    @Override
     public void onStart() {
         super.onStart();
-        Log.e("onStart", "called");
         MainActivity.title.setVisibility(View.VISIBLE);
         ((MainActivity) activity).lockUnlockDrawer(0);
         MainActivity.drawerLayout.closeDrawers();
@@ -71,10 +108,40 @@ public class AllDealerList extends Fragment {
         }
     }
 
-    private void getDealerList() {
+    private void applyFilters() {
+        String q = binding.searchCustomer != null && binding.searchCustomer.getText() != null
+                ? binding.searchCustomer.getText().toString().trim().toLowerCase() : "";
+        filteredDealers.clear();
+        int all = 0, active = 0, inactive = 0;
+        for (DealerResponse d : dealerResponseList) {
+            if (d == null) continue;
+            all++;
+            if (d.isActiveDealer()) active++;
+            else inactive++;
+            boolean statusOk = "ALL".equals(statusFilter)
+                    || ("ACTIVE".equals(statusFilter) && d.isActiveDealer())
+                    || ("INACTIVE".equals(statusFilter) && !d.isActiveDealer());
+            if (!statusOk) continue;
+            String name = d.getName() != null ? d.getName().toLowerCase() : "";
+            String mobile = d.getContactNumber() != null ? d.getContactNumber().toLowerCase() : "";
+            if (q.isEmpty() || name.contains(q) || mobile.contains(q)) {
+                filteredDealers.add(d);
+            }
+        }
+        if (binding.chipAll != null) {
+            binding.chipAll.setText("All (" + all + ")");
+            binding.chipActive.setText("Active (" + active + ")");
+            binding.chipExpired.setText("Inactive (" + inactive + ")");
+        }
+        dealerAdapter = new DealerAdapter(activity, filteredDealers);
+        binding.recyclerView.setLayoutManager(new LinearLayoutManager(activity));
+        binding.recyclerView.setAdapter(dealerAdapter);
+        binding.emptyCustomers.setVisibility(filteredDealers.isEmpty() ? View.VISIBLE : View.GONE);
+    }
 
+    private void getDealerList() {
         SweetAlertDialog pDialog = new SweetAlertDialog(activity, SweetAlertDialog.PROGRESS_TYPE);
-        pDialog.getProgressHelper().setBarColor(Color.parseColor("#2D7FED"));
+        pDialog.getProgressHelper().setBarColor(Color.parseColor("#2563EB"));
         pDialog.setTitleText("Loading");
         pDialog.setCancelable(false);
         pDialog.show();
@@ -85,17 +152,12 @@ public class AllDealerList extends Fragment {
         call.enqueue(new Callback<AllApiResponse>() {
             @Override
             public void onResponse(Call<AllApiResponse> call, Response<AllApiResponse> response) {
-                if (response.isSuccessful()) {
-                    dealerResponseList = response.body().getDealerResponseList();
-                    Log.e("customerResponseList", "" + dealerResponseList.size());
-                    if (dealerResponseList.size() > 0) {
-
-                        dealerAdapter = new DealerAdapter(activity, dealerResponseList);
-                        binding.recyclerView.setLayoutManager(new LinearLayoutManager(activity));
-                        binding.recyclerView.setAdapter(dealerAdapter);
-                        dealerAdapter.notifyDataSetChanged();
-                        binding.recyclerView.setHasFixedSize(true);
-                    }
+                if (response.isSuccessful() && response.body() != null
+                        && response.body().getDealerResponseList() != null) {
+                    dealerResponseList = new ArrayList<>(response.body().getDealerResponseList());
+                    applyFilters();
+                } else {
+                    binding.emptyCustomers.setVisibility(View.VISIBLE);
                 }
                 pDialog.dismiss();
             }
@@ -105,16 +167,9 @@ public class AllDealerList extends Fragment {
                 pDialog.dismiss();
                 SweetAlertDialog sweetAlertDialog = new SweetAlertDialog(activity, SweetAlertDialog.ERROR_TYPE);
                 sweetAlertDialog.setTitleText("Oops...");
-                sweetAlertDialog.setContentText("Something went wrong!");
-                sweetAlertDialog.setCancelClickListener(new SweetAlertDialog.OnSweetClickListener() {
-                    @Override
-                    public void onClick(SweetAlertDialog sweetAlertDialog) {
-                        sweetAlertDialog.dismiss();
-                    }
-                }).show();
+                sweetAlertDialog.setContentText("Unable to load dealers. Please try again.");
+                sweetAlertDialog.setCancelClickListener(SweetAlertDialog::dismiss).show();
             }
         });
-
     }
-
 }

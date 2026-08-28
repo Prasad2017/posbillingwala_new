@@ -17,7 +17,6 @@ import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.InventoryAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ListLoader;
-import com.pos_billingwala.Extra.SimpleDividerItemDecoration;
 import com.pos_billingwala.Model.InventoryResponse;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentInventoryBinding;
@@ -97,7 +96,6 @@ public class Inventory extends Fragment implements View.OnClickListener {
 
                 adapter = new InventoryAdapter(activity, inventoryResponseList);
                 binding.recyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
-                binding.recyclerView.addItemDecoration(new SimpleDividerItemDecoration(activity));
                 binding.recyclerView.setAdapter(adapter);
                 adapter.notifyDataSetChanged();
                 //  adapter.notifyItemInserted(inventoryResponseList.size() - 1);

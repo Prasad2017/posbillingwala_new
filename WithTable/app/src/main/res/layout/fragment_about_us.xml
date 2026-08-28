@@ -27,7 +27,7 @@
                 android:layout_gravity="center"
                 android:layout_marginStart="15dp"
                 android:contentDescription="@string/about_us"
-                android:src="@drawable/back"
+                android:src="@drawable/ic_back"
                 app:tint="@color/white" />
 
             <androidx.appcompat.widget.AppCompatTextView

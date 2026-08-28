@@ -39,12 +39,12 @@ import com.github.dewinjm.monthyearpicker.MonthYearPickerDialog;
 import com.github.dewinjm.monthyearpicker.MonthYearPickerDialogFragment;
 import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.pos_billingwala.Activity.MainActivity;
-import com.pos_billingwala.Adapter.ReportAdapter;
+import com.pos_billingwala.Adapter.ReportDetailTableAdapter;
 import com.pos_billingwala.BuildConfig;
 import com.pos_billingwala.CalenderView.MonthPickerDialog;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ListLoader;
-import com.pos_billingwala.Extra.SimpleDividerItemDecoration;
+import com.pos_billingwala.Extra.ReportCursorHelper;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.InvoiceResponse;
 import com.pos_billingwala.R;
@@ -68,7 +68,7 @@ public class InvoiceTableListReport extends Fragment implements View.OnClickList
     public int mYear, mMonth, mDay;
     View view;
     POSBillingWalaDatabase posBillingWalaDatabase;
-    ReportAdapter adapter;
+    ReportDetailTableAdapter adapter;
     List<InvoiceResponse> invoiceResponseList = new ArrayList<>();
     List<CompanyResponse> companyResponseList = new ArrayList<>();
     String noOfTable, invoiceType;
@@ -97,7 +97,9 @@ public class InvoiceTableListReport extends Fragment implements View.OnClickList
             invoiceType = bundle.getString("invoiceType");
         }
 
-        binding.heading.setText("Report of " + noOfTable);
+        binding.toolbar.heading.setText(getString(R.string.ui_report_of, noOfTable != null ? noOfTable : ""));
+        binding.toolbar.shareInvoice.setVisibility(android.view.View.VISIBLE);
+        binding.listTitle.setText(getString(R.string.ui_invoice_detail_list));
 
         view.setFocusableInTouchMode(true);
         view.requestFocus();
@@ -117,7 +119,7 @@ public class InvoiceTableListReport extends Fragment implements View.OnClickList
         binding.nestedScrollView.setOnScrollChangeListener(new NestedScrollView.OnScrollChangeListener() {
             @Override
             public void onScrollChange(@NonNull NestedScrollView v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) {
-                if (scrollY == v.getChildAt(0).getMeasuredHeight() - v.getMeasuredHeight()) {
+                if (ReportCursorHelper.isNestedScrollAtBottom(v, scrollY)) {
                     if (!isLoading && pageNumber < totalPages) {
                         new getDownloadBills().execute();
                     }
@@ -125,9 +127,9 @@ public class InvoiceTableListReport extends Fragment implements View.OnClickList
             }
         });
 
-        binding.backToSetting.setOnClickListener(this);
-        binding.menuIcon.setOnClickListener(this);
-        binding.shareInvoice.setOnClickListener(this);
+        binding.toolbar.backToSetting.setOnClickListener(this);
+        binding.toolbar.menuIcon.setOnClickListener(this);
+        binding.toolbar.shareInvoice.setOnClickListener(this);
 
         return view;
     }
@@ -322,7 +324,7 @@ public class InvoiceTableListReport extends Fragment implements View.OnClickList
             }
         });
 
-        mypopupWindow.showAsDropDown(binding.menuIcon, 0, -75);
+        mypopupWindow.showAsDropDown(binding.toolbar.menuIcon, 0, -75);
 
     }
 
@@ -374,7 +376,9 @@ public class InvoiceTableListReport extends Fragment implements View.OnClickList
             @Override
             public void onItemSelected(MaterialSpinner view, int position, long id, Object item) {
                 noOfTable = tableList[position];
-                binding.heading.setText("Report of " + noOfTable);
+                binding.toolbar.heading.setText(getString(R.string.ui_report_of, noOfTable != null ? noOfTable : ""));
+        binding.toolbar.shareInvoice.setVisibility(android.view.View.VISIBLE);
+        binding.listTitle.setText(getString(R.string.ui_invoice_detail_list));
             }
         });
 
@@ -439,9 +443,8 @@ public class InvoiceTableListReport extends Fragment implements View.OnClickList
         invoiceResponseList = new ArrayList<>();
         if (page != null && !page.isEmpty()) {
             invoiceResponseList.addAll(page);
-            adapter = new ReportAdapter(activity, invoiceResponseList);
+            adapter = new ReportDetailTableAdapter(activity, invoiceResponseList);
             binding.recyclerView.setLayoutManager(new LinearLayoutManager(activity));
-            binding.recyclerView.addItemDecoration(new SimpleDividerItemDecoration(activity));
             binding.recyclerView.setAdapter(adapter);
             binding.totalAmount.setText(MainActivity.currencyName + " " + String.format(Locale.US, "%.2f", totalAmount));
             binding.nestedScrollView.setVisibility(View.VISIBLE);

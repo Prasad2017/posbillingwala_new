@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">Dealer</string>
+    <string name="splash_loading">Loading Dealer Panel...</string>
     <string name="privacy_policy">By providing username &amp; password, I hereby agree and accept the <u><font fgcolor='#df0052'>Terms of service</font></u> and <u><font fgcolor='#df0052'>Privacy Policy</font></u> in use of the POS Billingwala app.</string>
     <string name="sign_in_msg">Sign In to \nkeep do amazing Billing\nwith POS Billingwala</string>
     <string name="mobile_number_msg">Enter your shop licence key. We\'ll verify your account, so we know you\'re real.</string>

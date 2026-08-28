@@ -1,52 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <!-- Customize your theme here. -->
+    <style name="AppTheme" parent="Theme.MaterialComponents.Light.NoActionBar">
         <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorPrimaryDark">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
-        <item name="android:windowIsTranslucent">true</item>
+        <item name="colorSecondary">@color/colorPrimary</item>
+        <item name="android:colorBackground">@color/colorBackground</item>
+        <item name="colorSurface">@color/colorSurface</item>
+        <item name="android:statusBarColor">@color/colorPrimaryDark</item>
+        <item name="android:windowBackground">@color/colorBackground</item>
+        <item name="android:windowIsTranslucent">false</item>
         <item name="windowNoTitle">true</item>
         <item name="windowActionBar">false</item>
+        <item name="materialButtonStyle">@style/Widget.Admin.Button.Primary</item>
+        <item name="textInputStyle">@style/Widget.Admin.TextInput</item>
+    </style>
 
+    <!-- Typography (base parents required for dotted style names) -->
+    <style name="TextAppearance.Admin" parent="TextAppearance.MaterialComponents.Body1" />
+
+    <style name="TextAppearance.Admin.Heading" parent="TextAppearance.Admin">
+        <item name="android:fontFamily">@font/poppinsbold</item>
+        <item name="android:textSize">@dimen/text_heading</item>
+        <item name="android:textColor">@color/colorTextPrimary</item>
+    </style>
+
+    <style name="TextAppearance.Admin.Title" parent="TextAppearance.Admin">
+        <item name="android:fontFamily">@font/poppinsmedium</item>
+        <item name="android:textSize">@dimen/text_title</item>
+        <item name="android:textColor">@color/colorTextPrimary</item>
+    </style>
+
+    <style name="TextAppearance.Admin.Subtitle" parent="TextAppearance.Admin">
+        <item name="android:fontFamily">@font/poppinsmedium</item>
+        <item name="android:textSize">@dimen/text_subtitle</item>
+        <item name="android:textColor">@color/colorTextSecondary</item>
+    </style>
+
+    <style name="TextAppearance.Admin.Body" parent="TextAppearance.Admin">
+        <item name="android:fontFamily">@font/poppinsregular</item>
+        <item name="android:textSize">@dimen/text_body</item>
+        <item name="android:textColor">@color/colorTextPrimary</item>
+    </style>
+
+    <style name="TextAppearance.Admin.Caption" parent="TextAppearance.Admin">
+        <item name="android:fontFamily">@font/poppinsregular</item>
+        <item name="android:textSize">@dimen/text_caption</item>
+        <item name="android:textColor">@color/colorTextSecondary</item>
+    </style>
+
+    <style name="TextAppearance.Admin.Button" parent="TextAppearance.Admin">
+        <item name="android:fontFamily">@font/poppinsmedium</item>
+        <item name="android:textSize">@dimen/text_button</item>
+        <item name="android:textAllCaps">false</item>
+    </style>
+
+    <!-- Buttons -->
+    <style name="Widget.Admin" parent="" />
+    <style name="Widget.Admin.Button" parent="Widget.MaterialComponents.Button" />
+
+    <style name="Widget.Admin.Button.Primary" parent="Widget.Admin.Button">
+        <item name="android:layout_height">@dimen/button_height</item>
+        <item name="android:minHeight">@dimen/button_height</item>
+        <item name="android:textAppearance">@style/TextAppearance.Admin.Button</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="backgroundTint">@color/colorPrimary</item>
+        <item name="cornerRadius">@dimen/radius_md</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="elevation">0dp</item>
+    </style>
+
+    <style name="Widget.Admin.Button.Secondary" parent="Widget.MaterialComponents.Button.OutlinedButton">
+        <item name="android:layout_height">@dimen/button_height</item>
+        <item name="android:minHeight">@dimen/button_height</item>
+        <item name="android:textAppearance">@style/TextAppearance.Admin.Button</item>
+        <item name="android:textColor">@color/colorPrimary</item>
+        <item name="strokeColor">@color/colorPrimary</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="cornerRadius">@dimen/radius_md</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+    </style>
+
+    <style name="Widget.Admin.Button.Destructive" parent="Widget.Admin.Button">
+        <item name="android:layout_height">@dimen/button_height</item>
+        <item name="android:minHeight">@dimen/button_height</item>
+        <item name="android:textAppearance">@style/TextAppearance.Admin.Button</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="backgroundTint">@color/statusExpired</item>
+        <item name="cornerRadius">@dimen/radius_md</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+    </style>
+
+    <!-- Inputs -->
+    <style name="Widget.Admin.TextInput" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="boxCornerRadiusBottomEnd">@dimen/radius_md</item>
+        <item name="boxCornerRadiusBottomStart">@dimen/radius_md</item>
+        <item name="boxCornerRadiusTopEnd">@dimen/radius_md</item>
+        <item name="boxCornerRadiusTopStart">@dimen/radius_md</item>
+        <item name="boxStrokeColor">@color/colorPrimary</item>
+        <item name="hintTextColor">@color/colorTextSecondary</item>
+        <item name="android:textColorHint">@color/colorTextHint</item>
     </style>
 
     <style name="CustomDropDownTilStyle" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
-        <item name="android:textColorHint">@color/light_black</item>
+        <item name="android:textColorHint">@color/colorTextHint</item>
         <item name="fontFamily">@font/poppinsregular</item>
         <item name="android:textSize">15sp</item>
         <item name="overlapAnchor">true</item>
-        <item name="hintTextColor">@color/colorAccent</item>
-        <item name="boxStrokeColor">@color/colorAccent</item>
-        <item name="colorControlNormal">@color/colorAccent</item>
-        <item name="colorControlActivated">@color/colorAccent</item>
-        <item name="colorControlHighlight">@color/colorAccent</item>
-        <item name="boxCornerRadiusBottomEnd">5dp</item>
-        <item name="boxCornerRadiusBottomStart">5dp</item>
-        <item name="boxCornerRadiusTopEnd">5dp</item>
-        <item name="boxCornerRadiusTopStart">5dp</item>
+        <item name="hintTextColor">@color/colorPrimary</item>
+        <item name="boxStrokeColor">@color/colorPrimary</item>
+        <item name="boxCornerRadiusBottomEnd">@dimen/radius_md</item>
+        <item name="boxCornerRadiusBottomStart">@dimen/radius_md</item>
+        <item name="boxCornerRadiusTopEnd">@dimen/radius_md</item>
+        <item name="boxCornerRadiusTopStart">@dimen/radius_md</item>
     </style>
 
-    <style name="RatingBar" parent="Theme.AppCompat">
-        <item name="colorControlNormal">@color/light_black</item>
-        <item name="colorControlActivated">#DC9340</item>
-    </style>
-
-    <style name="spinnerItemStyle" parent="android:Widget.TextView.SpinnerItem">
-
-    </style>
-
-    <style name="spinnerDropDownItemStyle" parent="android:TextAppearance.Widget.TextView.SpinnerItem">
-
+    <!-- Cards -->
+    <style name="Widget.Admin.Card" parent="Widget.MaterialComponents.CardView">
+        <item name="cardBackgroundColor">@color/colorSurface</item>
+        <item name="cardCornerRadius">@dimen/radius_md</item>
+        <item name="cardElevation">@dimen/card_elevation</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="strokeColor">@color/colorBorder</item>
     </style>
 
     <style name="MyCardView" parent="@style/Widget.MaterialComponents.CardView">
         <item name="shapeAppearanceOverlay">@style/ShapeAppearanceOverlay.MaterialCardView</item>
     </style>
-
 
     <style name="ShapeAppearanceOverlay.MaterialCardView" parent="">
         <item name="cornerFamily">rounded</item>
@@ -56,20 +142,24 @@
         <item name="cornerSizeBottomLeft">0dp</item>
     </style>
 
-
-    <style name="MonthPickerDialogStyle">
-        <!-- Customize month picker theme here. -->
-        <!-- <item name="monthBgColor">#FFFFFF</item>
-         <item name="monthBgSelectedColor">#FF4081</item>
-         <item name="monthFontColorSelected">#ffffff</item>
-         <item name="monthFontColorNormal">#000000</item>
-         <item name="monthFontColorDisabled">#33000000</item>
-
-         <item name="headerBgColor">#FF4081</item>
-         <item name="headerFontColorSelected">#ffffff</item>
-         <item name="headerFontColorNormal">#85ffffff</item>
-         <item name="headerTitleColor">#ffffff</item>-->
+    <!-- Status badge -->
+    <style name="Widget.Admin.Badge">
+        <item name="android:fontFamily">@font/poppinsmedium</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:paddingStart">10dp</item>
+        <item name="android:paddingEnd">10dp</item>
+        <item name="android:paddingTop">3dp</item>
+        <item name="android:paddingBottom">3dp</item>
+        <item name="android:background">@drawable/bg_badge_active</item>
     </style>
 
+    <style name="RatingBar" parent="Theme.AppCompat">
+        <item name="colorControlNormal">@color/light_black</item>
+        <item name="colorControlActivated">#DC9340</item>
+    </style>
+
+    <style name="spinnerItemStyle" parent="android:Widget.TextView.SpinnerItem" />
+    <style name="spinnerDropDownItemStyle" parent="android:TextAppearance.Widget.TextView.SpinnerItem" />
+    <style name="MonthPickerDialogStyle" />
 
 </resources>

@@ -40,6 +40,9 @@ public class InvoiceAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
     public static @NonNull String getInvoiceType(InvoiceResponse invoiceResponse) {
         String invoiceType = "";
+        if (invoiceResponse.getInvoiceType() == null) {
+            return invoiceType;
+        }
         if (invoiceResponse.getInvoiceType().equalsIgnoreCase("table_wise")) {
             invoiceType = "<b>Invoice Type:</b> Table No- " + invoiceResponse.getNoOfTable();
         } else if (invoiceResponse.getInvoiceType().equalsIgnoreCase("take_away")) {
@@ -106,6 +109,7 @@ public class InvoiceAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         holder.binding.totalAmount.setText(Html.fromHtml(totalAmount));
         String paymentMode = "<b>Payment Mode</b>: " + invoiceResponse.getPaymentMode();
         holder.binding.payableMode.setText(Html.fromHtml(paymentMode));
+        holder.binding.refundedLabel.setVisibility(invoiceResponse.isRefunded() ? View.VISIBLE : View.GONE);
 
         holder.binding.invoiceCardView.setOnClickListener(new View.OnClickListener() {
             @Override

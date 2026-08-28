@@ -26,6 +26,12 @@ public class DealerResponse {
     @SerializedName("is_active")
     @Expose
     private String isActive;
+    @SerializedName("totalCustomer")
+    @Expose
+    private String totalCustomer;
+    @SerializedName("joiningDate")
+    @Expose
+    private String joiningDate;
 
 
     public String getId() {
@@ -86,5 +92,13 @@ public class DealerResponse {
 
     public boolean isActiveDealer() {
         return isActive == null || isActive.isEmpty() || "1".equals(isActive);
+    }
+
+    public String getTotalCustomer() {
+        return totalCustomer;
+    }
+
+    public String getJoiningDate() {
+        return joiningDate;
     }
 }

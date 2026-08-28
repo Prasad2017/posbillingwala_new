@@ -10,7 +10,8 @@ Offline-first point-of-sale for restaurants and shops — four Android apps, a s
 | `Owner/` | Shop owner app — invoices, sales, multi-branch view, full catalog CRUD |
 | `Dealer/` | Dealer app — customer & licence registration / renew, catalog setup |
 | `Admin/` | Admin app — dealers, customers, licences, catalog |
-| `posbillingwala.com/` | Marketing site + Laravel web admin (`adminpanel/`) |
+| `website/` | Marketing site (deploy to domain root) |
+| `admin.posbillingwala.com/` | Laravel web admin |
 | `API/` | PHP REST API (POS root + `Owner/` / `Dealer/` / `Admin/`) |
 | `API/migrations/` | Additive SQL upgrades (safe to re-run) |
 | `API/schema/` | Install helper + schema-only reference |
@@ -41,7 +42,7 @@ Each Android app is a **standalone Gradle project** — open its folder in Andro
 |-------|------|
 | Android | Java 17, Activities/Fragments, ViewBinding, SQLite, Retrofit, WorkManager, Firebase |
 | API | PHP REST (`API/db_connection.php`, prepared helpers, auth tokens) |
-| Web | Static marketing site + Laravel 9 admin (`posbillingwala.com/adminpanel`) |
+| Web | Static marketing site (`website/`) + Laravel 9 admin (`admin.posbillingwala.com/`) |
 | Database | MySQL — shared by all apps and web admin |
 
 ## App versions
@@ -69,9 +70,10 @@ Copy `API/db_local.example.php` → `API/db_local.php` locally. Firebase config 
 
 ## Quick start — website & web admin
 
-1. Upload `posbillingwala.com/` to the hosting document root.
-2. Configure `adminpanel/.env` (production DB, `APP_DEBUG=false`).
-3. Run `composer install --no-dev` inside `adminpanel/`.
+1. Upload `website/` to the hosting document root.
+2. Upload/configure `admin.posbillingwala.com/` (Laravel web admin).
+3. Configure `admin.posbillingwala.com/.env` (production DB, `APP_DEBUG=false`).
+4. Run `composer install --no-dev` inside the admin folder.
 4. Run `php artisan key:generate`, then cache config/routes/views.
 5. Ensure DB has catalog + licence tables (see Database below).
 
@@ -81,7 +83,7 @@ Copy `API/db_local.example.php` → `API/db_local.php` locally. Firebase config 
 |-----|---------|
 | `https://posbillingwala.com/` | Marketing website |
 | `http://posbillingwala.com/login` | Redirects to web admin login |
-| `http://posbillingwala.com/adminpanel/login` | Web admin (Admin / Dealer / Customer) |
+| `http://posbillingwala.com/login` | Web admin (Admin / Dealer / Customer) |
 
 ## Quick start — database
 

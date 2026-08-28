@@ -1,142 +1,895 @@
 package com.posbillingwala.admin.Fragment;
 
+
+
 import android.annotation.SuppressLint;
+
 import android.app.Activity;
+
 import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
+
 import android.os.Bundle;
+
 import android.view.LayoutInflater;
+
 import android.view.View;
+
 import android.view.ViewGroup;
 
+import android.widget.LinearLayout;
+
+import android.widget.TextView;
+
+
+
 import androidx.annotation.NonNull;
+
+import androidx.core.content.ContextCompat;
+
 import androidx.fragment.app.Fragment;
 
+
+
+import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.charts.PieChart;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.data.PieData;
+import com.github.mikephil.charting.data.PieDataSet;
+import com.github.mikephil.charting.data.PieEntry;
+import com.github.mikephil.charting.formatter.PercentFormatter;
+
 import com.posbillingwala.admin.Activity.MainActivity;
+
 import com.posbillingwala.admin.Extra.DetectConnection;
+
+import com.posbillingwala.admin.Extra.LicenseStatusHelper;
+
 import com.posbillingwala.admin.Model.AllApiResponse;
+
+import com.posbillingwala.admin.Model.CustomerResponse;
+
+import com.posbillingwala.admin.Model.DealerSalesResponse;
+
+import com.posbillingwala.admin.Model.LicenseResponse;
+
 import com.posbillingwala.admin.R;
+
 import com.posbillingwala.admin.Retrofit.Api;
+
 import com.posbillingwala.admin.databinding.FragmentHomeBinding;
-import com.posbillingwala.admin.databinding.IncludeDashboardStatBinding;
+
+import com.posbillingwala.admin.databinding.IncludeDashboardKpiCardBinding;
+
+import com.posbillingwala.admin.databinding.IncludeDashboardPerfLargeBinding;
+import com.posbillingwala.admin.databinding.IncludeDashboardPerfSmallBinding;
+import com.posbillingwala.admin.databinding.ItemDealerLegendRowBinding;
+
+import com.posbillingwala.admin.databinding.ItemDashboardAttentionBinding;
+
+import com.posbillingwala.admin.databinding.ItemDashboardRecentCustomerBinding;
+
+
+
+import java.text.SimpleDateFormat;
+
+import java.util.ArrayList;
+
+import java.util.Calendar;
+
+import java.util.Collections;
+
+import java.util.Date;
+
+import java.util.List;
+
+import java.util.Locale;
+
+
 
 import cn.pedant.SweetAlert.SweetAlertDialog;
+
 import retrofit2.Call;
+
 import retrofit2.Callback;
+
 import retrofit2.Response;
 
+
+
 @SuppressLint("SetTextI18n, NonConstantResourceId, UseCompatLoadingForDrawables, StaticFieldLeak")
+
 public class Home extends Fragment implements View.OnClickListener {
 
+
+
+    private static final int MAX_CHART_DEALERS = 5;
+
+    private static final int MAX_RECENT_CUSTOMERS = 5;
+
+
+
     public static Activity activity;
+
     View view;
+
     FragmentHomeBinding binding;
 
 
+
     @Override
+
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
+
                              Bundle savedInstanceState) {
+
         binding = FragmentHomeBinding.inflate(inflater, container, false);
+
         view = binding.getRoot();
 
-        activity = getActivity();
-        MainActivity.title.setText("Dashboard");
 
-        bindStat(binding.statActiveCustomer, "Active\nCustomers");
-        bindStat(binding.statTrialCustomer, "Trial\nCustomers");
-        bindStat(binding.statExpiredCustomer, "Expired\nCustomers");
-        bindStat(binding.statActiveLicenses, "Active\nLicenses");
-        bindStat(binding.statExpiringLicenses, "Expiring\n(30 days)");
-        bindStat(binding.statExpiredLicenses, "Expired\nLicenses");
-        bindStat(binding.statBranches, "Total\nBranches");
-        bindStat(binding.statDevices, "Total\nDevices");
+
+        activity = getActivity();
+
+        ((MainActivity) activity).setScreenTitle("Dashboard");
+
+
+
+        binding.greetingText.setText(greeting() + ", Admin 👋");
+
+        binding.dateText.setText(todayLabel());
+
+
+
+        setupSectionHeaders();
+
+        setupKpiCards();
+
+        setupPerformanceCards();
+
+
+
+        stylePieChart(binding.chartDealerSales);
+        styleSparkline(binding.perfTotalSales.salesSparkline);
+
+
 
         binding.customerRegistration.setOnClickListener(this);
+
+        binding.quickAddDealer.setOnClickListener(this);
+
+        binding.quickLicenses.setOnClickListener(this);
+
         binding.onBoardCustomerList.setOnClickListener(this);
 
+
+
+        binding.headerBusinessOverview.sectionAction.setOnClickListener(v ->
+
+                ((MainActivity) activity).navigateRoot(new AllCustomerList(), "Customers", MainActivity.NAV_CUSTOMERS));
+
+        binding.headerLicenseOverview.sectionAction.setOnClickListener(v ->
+
+                ((MainActivity) activity).navigateRoot(new AllCustomerList(), "Licenses", MainActivity.NAV_LICENSES));
+
+        binding.headerRecentCustomers.sectionAction.setOnClickListener(v ->
+
+                ((MainActivity) activity).navigateRoot(new AllCustomerList(), "Customers", MainActivity.NAV_CUSTOMERS));
+
+        binding.headerDealerSales.sectionAction.setOnClickListener(v ->
+
+                ((MainActivity) activity).navigateDetail(new SalesOverview(), "Sales Overview"));
+
+
+
         return view;
+
     }
 
-    private void bindStat(IncludeDashboardStatBinding statBinding, String label) {
-        if (statBinding != null && statBinding.statLabel != null) {
-            statBinding.statLabel.setText(label);
-        }
+
+
+    private void setupSectionHeaders() {
+
+        binding.headerBusinessOverview.sectionTitle.setText("Business Overview");
+        binding.headerBusinessOverview.sectionTitle.setTextSize(20);
+        binding.headerBusinessOverview.sectionAction.setVisibility(View.GONE);
+        binding.headerLicenseOverview.sectionTitle.setText("License Overview");
+        binding.headerLicenseOverview.sectionTitle.setTextSize(20);
+        binding.headerLicenseOverview.sectionAction.setVisibility(View.GONE);
+        binding.headerDealerSales.sectionTitle.setText("Dealer Sales (This Month)");
+        binding.headerDealerSales.sectionAction.setText("View Report");
+        binding.headerAttention.sectionTitle.setText("Attention Required");
+        binding.headerAttention.sectionAction.setVisibility(View.GONE);
+        binding.headerRecentCustomers.sectionTitle.setText("Recent Customers");
+        binding.headerRecentCustomers.sectionAction.setText("View All");
+
     }
 
-    private void setStatValue(IncludeDashboardStatBinding statBinding, String value) {
-        if (statBinding != null && statBinding.statValue != null) {
-            statBinding.statValue.setText(value != null ? value : "0");
-        }
+
+
+    private void setupKpiCards() {
+
+        bindKpi(binding.kpiTotalCustomer, R.drawable.ic_nav_customers, R.drawable.bg_kpi_icon_blue,
+                R.drawable.bg_kpi_card_blue, "Total\nCustomers", R.color.colorPrimary);
+        bindKpi(binding.kpiActiveCustomer, R.drawable.ic_nav_customers, R.drawable.bg_kpi_icon_green,
+                R.drawable.bg_kpi_card_green, "Active\nCustomers", R.color.statusActive);
+        bindKpi(binding.kpiTrialCustomer, R.drawable.ic_calendar, R.drawable.bg_kpi_icon_orange,
+                R.drawable.bg_kpi_card_orange, "Trial\nCustomers", R.color.statusTrial);
+        bindKpi(binding.kpiExpiredCustomer, R.drawable.ic_warning, R.drawable.bg_kpi_icon_red,
+                R.drawable.bg_kpi_card_red, "Expired\nCustomers", R.color.statusExpired);
+
+        bindKpi(binding.kpiActiveLicenses, R.drawable.ic_report_licenses, R.drawable.bg_kpi_icon_green,
+                R.drawable.bg_kpi_card_green, "Active\nLicenses", R.color.statusActive);
+        bindKpi(binding.kpiExpiringLicenses, R.drawable.ic_warning, R.drawable.bg_kpi_icon_orange,
+                R.drawable.bg_kpi_card_orange, "Expiring\nSoon", R.color.statusTrial);
+        bindKpi(binding.kpiTrialLicenses, R.drawable.ic_calendar, R.drawable.bg_kpi_icon_blue,
+                R.drawable.bg_kpi_card_blue, "Trial\nLicenses", R.color.colorPrimary);
+        bindKpi(binding.kpiExpiredLicenses, R.drawable.ic_trending_down, R.drawable.bg_kpi_icon_red,
+                R.drawable.bg_kpi_card_red, "Expired\nLicenses", R.color.statusExpired);
+
+        binding.kpiTotalCustomer.getRoot().setOnClickListener(v -> openCustomers("ALL"));
+        binding.kpiActiveCustomer.getRoot().setOnClickListener(v -> openCustomers("ACTIVE"));
+        binding.kpiTrialCustomer.getRoot().setOnClickListener(v -> openCustomers("TRIAL"));
+        binding.kpiExpiredCustomer.getRoot().setOnClickListener(v -> openCustomers("EXPIRED"));
+        binding.kpiActiveLicenses.getRoot().setOnClickListener(v -> openLicenses("ACTIVE"));
+        binding.kpiExpiringLicenses.getRoot().setOnClickListener(v -> openLicenses("ACTIVE"));
+        binding.kpiTrialLicenses.getRoot().setOnClickListener(v -> openLicenses("TRIAL"));
+        binding.kpiExpiredLicenses.getRoot().setOnClickListener(v -> openLicenses("EXPIRED"));
     }
+
+    private void openCustomers(String statusFilter) {
+        AllCustomerList list = new AllCustomerList();
+        Bundle b = new Bundle();
+        b.putString("statusFilter", statusFilter);
+        list.setArguments(b);
+        ((MainActivity) activity).navigateRoot(list, "Customers", MainActivity.NAV_CUSTOMERS);
+    }
+
+    private void openLicenses(String statusFilter) {
+        AllCustomerList list = new AllCustomerList();
+        Bundle b = new Bundle();
+        b.putString("statusFilter", statusFilter);
+        list.setArguments(b);
+        ((MainActivity) activity).navigateRoot(list, "Licenses", MainActivity.NAV_LICENSES);
+    }
+
+    private void bindKpi(IncludeDashboardKpiCardBinding card, int iconRes, int iconBg, int cardBg,
+                         String label, int tintColor) {
+        card.kpiCardInner.setBackgroundResource(cardBg);
+        card.kpiIcon.setBackgroundResource(iconBg);
+        card.kpiIcon.setImageResource(iconRes);
+        card.kpiIcon.setColorFilter(ContextCompat.getColor(requireContext(), tintColor));
+        card.statLabel.setText(label);
+        card.statValue.setText("0");
+        card.statTrend.setVisibility(View.GONE);
+    }
+
+    private void setupPerformanceCards() {
+        bindPerfSmall(binding.perfTodaySales, R.drawable.ic_nav_sales, R.drawable.bg_kpi_icon_blue, "Today's Sales", R.color.colorPrimary);
+        bindPerfSmall(binding.perfCustomersAdded, R.drawable.ic_nav_customers, R.drawable.bg_kpi_icon_purple, "Customers Added", R.color.deepPurple);
+        bindPerfSmall(binding.perfActiveBranches, R.drawable.ic_business, R.drawable.bg_kpi_icon_green, "Active Branches", R.color.statusActive);
+        binding.perfTodaySales.getRoot().setOnClickListener(v ->
+                ((MainActivity) activity).navigateRoot(new SalesDashboard(), "Sales Dashboard", MainActivity.NAV_SALES));
+        binding.perfCustomersAdded.getRoot().setOnClickListener(v -> openCustomers("ALL"));
+        binding.perfActiveBranches.getRoot().setOnClickListener(v ->
+                ((MainActivity) activity).navigateDetail(new BranchReports(), "Branch Reports"));
+        binding.perfTotalSales.getRoot().setOnClickListener(v ->
+                ((MainActivity) activity).navigateDetail(new SalesOverview(), "Sales Overview"));
+    }
+
+    private void bindPerfSmall(IncludeDashboardPerfSmallBinding stat, int iconRes, int iconBg, String label, int tintColor) {
+        stat.perfIcon.setBackgroundResource(iconBg);
+        stat.perfIcon.setImageResource(iconRes);
+        stat.perfIcon.setColorFilter(ContextCompat.getColor(requireContext(), tintColor));
+        stat.statLabel.setText(label);
+        stat.statValue.setText("0");
+        stat.statTrend.setVisibility(View.GONE);
+    }
+
+
+
+    private String greeting() {
+
+        int hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
+
+        if (hour < 12) return "Good Morning";
+
+        if (hour < 17) return "Good Afternoon";
+
+        return "Good Evening";
+
+    }
+
+
+
+    private String todayLabel() {
+
+        return new SimpleDateFormat("dd MMM yyyy", Locale.US).format(new Date());
+
+    }
+
+
 
     @Override
+
     public void onClick(View view) {
+
         int id = view.getId();
+
         if (id == R.id.customerRegistration) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-            ((MainActivity) activity).loadFragment(new CustomerRegistration(), true);
+
+            ((MainActivity) activity).navigateDetail(new CustomerRegistration(), "Add Customer");
+
+        } else if (id == R.id.quickAddDealer) {
+
+            ((MainActivity) activity).navigateDetail(new AddDealer(), "Add Dealer");
+
+        } else if (id == R.id.quickLicenses) {
+
+            ((MainActivity) activity).navigateRoot(new AllCustomerList(), "Licenses", MainActivity.NAV_LICENSES);
+
         } else if (id == R.id.onBoardCustomerList) {
-            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-            ((MainActivity) activity).loadFragment(new AllCustomerList(), true);
+
+            ((MainActivity) activity).navigateRoot(new ReportsHub(), "Reports", MainActivity.NAV_REPORTS);
+
         }
+
     }
 
+
+
+    @Override
+
     public void onStart() {
+
         super.onStart();
-        MainActivity.title.setVisibility(View.VISIBLE);
+
         ((MainActivity) activity).lockUnlockDrawer(0);
+
+        ((MainActivity) activity).highlightNavItem(MainActivity.NAV_DASHBOARD);
+
         MainActivity.drawerLayout.closeDrawers();
+
         if (DetectConnection.checkInternetConnection(activity)) {
+
             getCustomerCount();
+
+            loadRecentCustomers();
+
+            loadDealerChart();
+
         } else {
+
             DetectConnection.noInternetConnection(activity);
+
         }
+
     }
+
+
 
     private void getCustomerCount() {
 
         SweetAlertDialog pDialog = new SweetAlertDialog(activity, SweetAlertDialog.PROGRESS_TYPE);
-        pDialog.getProgressHelper().setBarColor(Color.parseColor("#2D7FED"));
-        pDialog.setTitleText("Loading");
+
+        pDialog.getProgressHelper().setBarColor(Color.parseColor("#2563EB"));
+
+        pDialog.setTitleText("Loading dashboard");
+
         pDialog.setCancelable(false);
+
         pDialog.show();
 
-        Call<AllApiResponse> call = Api.getClient().getCustomerCount();
-        call.enqueue(new Callback<AllApiResponse>() {
+
+
+        Api.getClient().getCustomerCount().enqueue(new Callback<AllApiResponse>() {
+
+            @Override
+
+            public void onResponse(Call<AllApiResponse> call, Response<AllApiResponse> response) {
+
+                if (!isAdded() || binding == null) {
+
+                    pDialog.dismiss();
+
+                    return;
+
+                }
+
+                if (response.isSuccessful() && response.body() != null
+
+                        && response.body().getStatus() != null
+
+                        && response.body().getStatus().equalsIgnoreCase("true")) {
+
+                    AllApiResponse body = response.body();
+
+                    binding.totalCustomer.setText(nz(body.getTotalCustomer()));
+
+                    binding.totalDealer.setText(nz(body.getTotalDealer()));
+
+
+
+                    setKpiValue(binding.kpiTotalCustomer, body.getTotalCustomer());
+                    setKpiTrend(binding.kpiTotalCustomer, body.getTotalCustomerTrendLabel(), body.getTotalCustomerTrend());
+
+                    setKpiValue(binding.kpiActiveCustomer, body.getActiveCustomer());
+                    setKpiTrend(binding.kpiActiveCustomer, body.getActiveCustomerTrendLabel(), body.getActiveCustomerTrend());
+
+                    setKpiValue(binding.kpiTrialCustomer, body.getTrialCustomer());
+                    setKpiTrend(binding.kpiTrialCustomer, body.getTrialCustomerTrendLabel(), body.getTrialCustomerTrend());
+
+                    setKpiValue(binding.kpiExpiredCustomer, body.getExpiredCustomer());
+                    setKpiTrend(binding.kpiExpiredCustomer, body.getExpiredCustomerTrendLabel(), body.getExpiredCustomerTrend());
+
+                    setKpiValue(binding.kpiActiveLicenses, body.getActiveLicenses());
+                    setKpiTrend(binding.kpiActiveLicenses, body.getActiveLicensesTrendLabel(), body.getActiveLicensesTrend());
+
+                    setKpiValue(binding.kpiExpiringLicenses, body.getExpiringLicenses());
+                    setKpiTrend(binding.kpiExpiringLicenses, body.getExpiringLicensesTrendLabel(), body.getExpiringLicensesTrend());
+
+                    setKpiValue(binding.kpiTrialLicenses, body.getTrialLicenses());
+                    setKpiTrend(binding.kpiTrialLicenses, body.getTrialLicensesTrendLabel(), body.getTrialLicensesTrend());
+
+                    setKpiValue(binding.kpiExpiredLicenses, body.getExpiredLicenses());
+                    setKpiTrend(binding.kpiExpiredLicenses, body.getExpiredLicensesTrendLabel(), body.getExpiredLicensesTrend());
+
+                    setPerfLargeValue("₹ " + formatAmount(body.getNetSales()));
+                    setPerfLargeTrend(body.getNetSalesTrendLabel(), body.getNetSalesTrend());
+                    setPerfSmallValue(binding.perfTodaySales, "₹ " + formatAmount(body.getTodaySales()));
+                    setPerfSmallTrend(binding.perfTodaySales, body.getTodaySalesTrendLabel(), body.getTodaySalesTrend());
+                    setPerfSmallValue(binding.perfCustomersAdded, body.getCustomersAddedThisMonth());
+                    setPerfSmallTrend(binding.perfCustomersAdded, body.getCustomersAddedTrendLabel(), body.getCustomersAddedTrend());
+                    setPerfSmallValue(binding.perfActiveBranches, body.getTotalBranches());
+                    setPerfSmallTrend(binding.perfActiveBranches, body.getActiveBranchesTrendLabel(), body.getActiveBranchesTrend());
+                    updateSparkline(body.getSalesSparkline(), parseFloat(body.getNetSales()));
+
+                    buildAttentionItems(body);
+                    ((MainActivity) activity).setNotificationCount(
+                            Math.min(parseInt(body.getNotificationCount()), 99));
+
+                }
+
+                pDialog.dismiss();
+
+            }
+
+
+
+            @Override
+
+            public void onFailure(Call<AllApiResponse> call, Throwable t) {
+
+                pDialog.dismiss();
+
+            }
+
+        });
+
+    }
+
+
+
+    private void loadRecentCustomers() {
+
+        Api.getClient().getCustomerList(5).enqueue(new Callback<AllApiResponse>() {
+
+            @Override
+
+            public void onResponse(Call<AllApiResponse> call, Response<AllApiResponse> response) {
+
+                if (!isAdded() || binding == null) return;
+
+                List<CustomerResponse> customers = response.isSuccessful() && response.body() != null
+
+                        ? response.body().getCustomerResponseList() : null;
+
+                renderRecentCustomers(customers);
+
+            }
+
+
+
+            @Override
+
+            public void onFailure(Call<AllApiResponse> call, Throwable t) {
+
+                if (isAdded() && binding != null) {
+
+                    renderRecentCustomers(null);
+
+                }
+
+            }
+
+        });
+
+    }
+
+
+
+    private void renderRecentCustomers(List<CustomerResponse> customers) {
+
+        binding.recentCustomersContainer.removeAllViews();
+
+        if (customers == null || customers.isEmpty()) {
+
+            binding.recentCustomersEmpty.setVisibility(View.VISIBLE);
+
+            return;
+
+        }
+
+        binding.recentCustomersEmpty.setVisibility(View.GONE);
+
+        int count = Math.min(customers.size(), MAX_RECENT_CUSTOMERS);
+
+        LayoutInflater inflater = LayoutInflater.from(activity);
+
+        for (int i = 0; i < count; i++) {
+
+            CustomerResponse customer = customers.get(i);
+
+            ItemDashboardRecentCustomerBinding row =
+
+                    ItemDashboardRecentCustomerBinding.inflate(inflater, binding.recentCustomersContainer, false);
+
+            row.recentShopName.setText(customer.getShopName() != null ? customer.getShopName() : customer.getName());
+
+            row.recentLocation.setText(customer.getAddress() != null ? customer.getAddress() : "—");
+
+            applyStatusBadge(row.recentStatusBadge, customer);
+
+            row.getRoot().setOnClickListener(v -> {
+
+                CustomerDetails details = new CustomerDetails();
+
+                Bundle bundle = new Bundle();
+
+                bundle.putString("customerId", customer.getId());
+
+                details.setArguments(bundle);
+
+                ((MainActivity) activity).navigateDetail(details, "Customer Details");
+
+            });
+
+            binding.recentCustomersContainer.addView(row.getRoot());
+
+        }
+
+    }
+
+
+
+    private void applyStatusBadge(TextView badge, CustomerResponse customer) {
+        String status = LicenseStatusHelper.STATUS_PENDING;
+        if (customer.getLicenseResponseList() != null && !customer.getLicenseResponseList().isEmpty()) {
+            status = LicenseStatusHelper.displayStatus(customer.getLicenseResponseList().get(0));
+        }
+        LicenseStatusHelper.applyBadge(badge, status);
+    }
+
+
+
+    private void buildAttentionItems(AllApiResponse body) {
+
+        binding.attentionContainer.removeAllViews();
+
+        LayoutInflater inflater = LayoutInflater.from(activity);
+
+        addAttentionItem(inflater, R.drawable.ic_calendar, R.drawable.bg_alert_row_orange,
+                parseInt(body.getExpiringLicenses7Days()) + " licenses expire within 7 days", R.color.statusTrial,
+                () -> openLicenses("ACTIVE"));
+        addAttentionItem(inflater, R.drawable.ic_warning, R.drawable.bg_alert_row_red,
+                parseInt(body.getExpiredLicenses()) + " customers have expired licenses", R.color.statusExpired,
+                () -> openLicenses("EXPIRED"));
+        addAttentionItem(inflater, R.drawable.ic_nav_customers, R.drawable.bg_alert_row_blue,
+                parseInt(body.getTrialLicensesExpiringTomorrow()) + " trial licenses expire tomorrow", R.color.colorPrimary,
+                () -> openLicenses("TRIAL"));
+    }
+
+    private void addAttentionItem(LayoutInflater inflater, int iconRes, int rowBg, String text, int tintColor,
+                                  Runnable action) {
+        ItemDashboardAttentionBinding row =
+                ItemDashboardAttentionBinding.inflate(inflater, binding.attentionContainer, false);
+        row.alertRowRoot.setBackgroundResource(rowBg);
+        row.alertIcon.setImageResource(iconRes);
+        row.alertIcon.setColorFilter(ContextCompat.getColor(requireContext(), tintColor));
+        row.alertText.setText(text);
+        row.getRoot().setOnClickListener(v -> action.run());
+        binding.attentionContainer.addView(row.getRoot());
+
+    }
+
+
+
+    private void loadDealerChart() {
+        Api.getClient().getDealerSalesOverview(MAX_CHART_DEALERS).enqueue(new Callback<AllApiResponse>() {
             @Override
             public void onResponse(Call<AllApiResponse> call, Response<AllApiResponse> response) {
-                if (response.isSuccessful() && response.body() != null
-                        && response.body().getStatus() != null
-                        && response.body().getStatus().equalsIgnoreCase("true")) {
-                    AllApiResponse body = response.body();
-                    binding.totalCustomer.setText(nz(body.getTotalCustomer()));
-                    binding.totalDealer.setText(nz(body.getTotalDealer()));
-                    setStatValue(binding.statActiveCustomer, body.getActiveCustomer());
-                    setStatValue(binding.statTrialCustomer, body.getTrialCustomer());
-                    setStatValue(binding.statExpiredCustomer, body.getExpiredCustomer());
-                    setStatValue(binding.statActiveLicenses, body.getActiveLicenses());
-                    setStatValue(binding.statExpiringLicenses, body.getExpiringLicenses());
-                    setStatValue(binding.statExpiredLicenses, body.getExpiredLicenses());
-                    setStatValue(binding.statBranches, body.getTotalBranches());
-                    setStatValue(binding.statDevices, body.getTotalDevices());
-                } else {
-                    binding.totalCustomer.setText("0");
-                    binding.totalDealer.setText("0");
-                }
-                pDialog.dismiss();
+                if (!isAdded() || binding == null) return;
+                List<DealerSalesResponse> dealers = response.isSuccessful() && response.body() != null
+                        ? response.body().getDealerSalesResponseList() : null;
+                renderDealerPieChart(dealers);
             }
 
             @Override
             public void onFailure(Call<AllApiResponse> call, Throwable t) {
-                pDialog.dismiss();
-                SweetAlertDialog sweetAlertDialog = new SweetAlertDialog(activity, SweetAlertDialog.ERROR_TYPE);
-                sweetAlertDialog.setTitleText("Oops...");
-                sweetAlertDialog.setContentText("Unable to load dashboard. Please try again.");
-                sweetAlertDialog.setCancelClickListener(SweetAlertDialog::dismiss).show();
+                if (isAdded() && binding != null) {
+                    showEmptyChart(true);
+                }
             }
         });
     }
 
-    private static String nz(String value) {
-        return value == null || value.isEmpty() ? "0" : value;
+    private void renderDealerPieChart(List<DealerSalesResponse> data) {
+        if (data == null || data.isEmpty()) {
+            showEmptyChart(true);
+            return;
+        }
+
+        float total = 0f;
+        for (DealerSalesResponse d : data) {
+            float sales = parseFloat(d.getTotalSales());
+            total += sales > 0 ? sales : parseInt(d.getTotalCustomer());
+        }
+        if (total <= 0f) {
+            showEmptyChart(true);
+            return;
+        }
+        showEmptyChart(false);
+
+        List<PieEntry> entries = new ArrayList<>();
+        for (DealerSalesResponse d : data) {
+            float sales = parseFloat(d.getTotalSales());
+            float value = sales > 0 ? sales : parseInt(d.getTotalCustomer());
+            if (value > 0) {
+                entries.add(new PieEntry(value, d.shortLabel()));
+            }
+        }
+        if (entries.isEmpty()) {
+            showEmptyChart(true);
+            return;
+        }
+
+        PieDataSet set = new PieDataSet(entries, "");
+
+        set.setColors(chartColors());
+
+        set.setValueTextSize(10f);
+
+        set.setValueTextColor(Color.WHITE);
+
+        set.setSliceSpace(2f);
+
+
+
+        PieData pieData = new PieData(set);
+
+        pieData.setValueFormatter(new PercentFormatter(binding.chartDealerSales));
+
+
+
+        PieChart chart = binding.chartDealerSales;
+
+        chart.setData(pieData);
+
+        chart.setUsePercentValues(true);
+
+        chart.getDescription().setEnabled(false);
+
+        chart.setDrawHoleEnabled(true);
+
+        chart.setHoleRadius(55f);
+        chart.setTransparentCircleRadius(58f);
+        chart.setCenterText("Total Sales\n₹ " + formatIndianAmount(total));
+        chart.setCenterTextSize(10f);
+        chart.getLegend().setEnabled(false);
+        chart.setDrawEntryLabels(false);
+        pieData.setDrawValues(false);
+        chart.invalidate();
+        chart.animateY(800);
+
+        renderDealerLegend(data, total, chartColors());
     }
+
+    private void renderDealerLegend(List<DealerSalesResponse> data, float total, int[] colors) {
+        binding.dealerLegendContainer.removeAllViews();
+        if (data == null || data.isEmpty()) {
+            return;
+        }
+        LayoutInflater inflater = LayoutInflater.from(activity);
+        for (int i = 0; i < data.size(); i++) {
+            DealerSalesResponse d = data.get(i);
+            float sales = parseFloat(d.getTotalSales());
+            float value = sales > 0 ? sales : parseInt(d.getTotalCustomer());
+            if (value <= 0) continue;
+
+            ItemDealerLegendRowBinding row = ItemDealerLegendRowBinding.inflate(
+                    inflater, binding.dealerLegendContainer, false);
+            int color = colors[i % colors.length];
+            GradientDrawable dot = new GradientDrawable();
+            dot.setShape(GradientDrawable.OVAL);
+            dot.setColor(color);
+            row.legendDot.setBackground(dot);
+            row.legendName.setText(d.getDealerName());
+            row.legendAmount.setText("₹ " + formatIndianAmount(value));
+            int pct = Math.round((value / total) * 100f);
+            row.legendPercent.setText(pct + "%");
+            binding.dealerLegendContainer.addView(row.getRoot());
+        }
+    }
+
+    private int[] chartColors() {
+        return new int[]{
+                ContextCompat.getColor(requireContext(), R.color.colorPrimary),
+                ContextCompat.getColor(requireContext(), R.color.statusActive),
+                ContextCompat.getColor(requireContext(), R.color.statusTrial),
+                ContextCompat.getColor(requireContext(), R.color.deepPurple),
+                ContextCompat.getColor(requireContext(), R.color.colorTextHint)
+        };
+    }
+
+    private void showEmptyChart(boolean empty) {
+        binding.chartDealerSales.setVisibility(empty ? View.GONE : View.VISIBLE);
+        binding.chartDealerEmpty.setVisibility(empty ? View.VISIBLE : View.GONE);
+        binding.dealerLegendContainer.setVisibility(empty ? View.GONE : View.VISIBLE);
+    }
+
+    private void styleSparkline(LineChart chart) {
+        chart.getDescription().setEnabled(false);
+        chart.getLegend().setEnabled(false);
+        chart.setTouchEnabled(false);
+        chart.setDrawGridBackground(false);
+        chart.setDrawBorders(false);
+        chart.setScaleEnabled(false);
+        chart.setPinchZoom(false);
+        chart.setViewPortOffsets(0f, 0f, 0f, 0f);
+        chart.getAxisLeft().setEnabled(false);
+        chart.getAxisRight().setEnabled(false);
+        chart.getXAxis().setEnabled(false);
+    }
+
+    private void stylePieChart(PieChart chart) {
+        chart.setNoDataText("Loading dealer sales…");
+        chart.setNoDataTextColor(ContextCompat.getColor(requireContext(), R.color.colorTextSecondary));
+        chart.setEntryLabelColor(ContextCompat.getColor(requireContext(), R.color.colorTextPrimary));
+        chart.setEntryLabelTextSize(10f);
+    }
+
+    private void updateSparkline(List<String> sparkline, float fallbackBase) {
+        if (binding == null || binding.perfTotalSales.salesSparkline == null) return;
+        List<Entry> points = new ArrayList<>();
+        if (sparkline != null && !sparkline.isEmpty()) {
+            for (int i = 0; i < sparkline.size(); i++) {
+                points.add(new Entry(i, parseFloat(sparkline.get(i))));
+            }
+        } else {
+            float step = Math.max(fallbackBase / 6f, 1f);
+            for (int i = 0; i < 7; i++) {
+                points.add(new Entry(i, step * (0.6f + (i * 0.08f))));
+            }
+        }
+        LineDataSet set = new LineDataSet(points, "");
+        set.setColor(ContextCompat.getColor(requireContext(), R.color.colorPrimary));
+        set.setLineWidth(2f);
+        set.setDrawCircles(false);
+        set.setDrawValues(false);
+        set.setMode(LineDataSet.Mode.CUBIC_BEZIER);
+        set.setDrawFilled(true);
+        set.setFillColor(ContextCompat.getColor(requireContext(), R.color.colorPrimaryLight));
+        binding.perfTotalSales.salesSparkline.setData(new LineData(set));
+        binding.perfTotalSales.salesSparkline.invalidate();
+    }
+
+    private void setKpiValue(IncludeDashboardKpiCardBinding card, String value) {
+        card.statValue.setText(nz(value));
+    }
+
+    private void setKpiTrend(IncludeDashboardKpiCardBinding card, String label, String trendPct) {
+        applyTrend(card.statTrend, label, trendPct);
+    }
+
+    private void setPerfLargeValue(String value) {
+        binding.perfTotalSales.statValue.setText(value != null ? value : "₹ 0");
+    }
+
+    private void setPerfLargeTrend(String label, String trendPct) {
+        applyTrend(binding.perfTotalSales.statTrend, label, trendPct);
+    }
+
+    private void setPerfSmallValue(IncludeDashboardPerfSmallBinding stat, String value) {
+        stat.statValue.setText(value != null ? value : "0");
+    }
+
+    private void setPerfSmallTrend(IncludeDashboardPerfSmallBinding stat, String label, String trendPct) {
+        applyTrend(stat.statTrend, label, trendPct);
+    }
+
+    private void applyTrend(TextView trendView, String label, String trendPct) {
+        if (trendView == null) return;
+        if (label == null || label.trim().isEmpty()) {
+            trendView.setVisibility(View.GONE);
+            return;
+        }
+        trendView.setText(label);
+        trendView.setVisibility(View.VISIBLE);
+        float pct = parseFloat(trendPct);
+        int color = pct >= 0 ? R.color.statusActive : R.color.statusExpired;
+        trendView.setTextColor(ContextCompat.getColor(requireContext(), color));
+    }
+
+
+
+    private int parseInt(String value) {
+
+        try {
+
+            return Integer.parseInt(nz(value));
+
+        } catch (Exception e) {
+
+            return 0;
+
+        }
+
+    }
+
+
+
+    private float parseFloat(String value) {
+
+        try {
+
+            if (value == null || value.trim().isEmpty()) {
+
+                return 0f;
+
+            }
+
+            return Float.parseFloat(value.trim().replaceAll("[^0-9.-]", ""));
+
+        } catch (Exception e) {
+
+            return 0f;
+
+        }
+
+    }
+
+
+
+    private String nz(String value) {
+
+        return value == null || value.trim().isEmpty() ? "0" : value.trim();
+
+    }
+
+
+
+    private String formatIndianAmount(float value) {
+        if (value >= 100000f) {
+            return String.format(Locale.US, "%,.0f", value);
+        }
+        return String.format(Locale.US, "%,.0f", value);
+    }
+
+    private String formatAmount(String value) {
+
+        if (value == null || value.trim().isEmpty()) {
+
+            return "0";
+
+        }
+
+        return value.trim();
+
+    }
+
 }
+

@@ -37,6 +37,7 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <application
+        android:name=".OwnerApp"
         android:allowBackup="true"
         android:allowClearUserData="true"
         android:hardwareAccelerated="true"

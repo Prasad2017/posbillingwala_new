@@ -7,7 +7,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.StrictMode;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -25,6 +24,7 @@ import com.posbillingwala.dealer.AppUpdate.UpdateManager;
 import com.posbillingwala.dealer.AppUpdate.UpdateManagerConstant;
 import com.posbillingwala.dealer.Extra.AuthTokens;
 import com.posbillingwala.dealer.Extra.Common;
+import com.posbillingwala.dealer.Extra.ScreenshotConfig;
 import com.posbillingwala.dealer.Fragment.AllCustomerList;
 import com.posbillingwala.dealer.Fragment.DealerProfile;
 import com.posbillingwala.dealer.Fragment.Home;
@@ -53,10 +53,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        ScreenshotConfig.apply(this);
         Api.bindContext(this);
         setContentView(R.layout.activity_main);
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
-
+        ScreenshotConfig.apply(this);
         initViews();
 
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
@@ -74,6 +74,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         checkUpdateApp();
 
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        ScreenshotConfig.apply(this);
     }
 
     private void initViews() {

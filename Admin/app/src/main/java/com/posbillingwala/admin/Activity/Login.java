@@ -27,6 +27,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 
 import com.posbillingwala.admin.Extra.AuthTokens;
 import com.posbillingwala.admin.Extra.Common;
@@ -53,12 +54,11 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
         super.onCreate(savedInstanceState);
         Api.bindContext(this);
         binding = ActivityLoginBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
-
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR);
 
         if (AuthTokens.hasValidSession(this)) {
@@ -196,6 +196,7 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
                         editor.apply();
 
                         Common.saveUserData(Login.this, "userId", "" + response.body().getUserId());
+                        Common.saveUserData(Login.this, "userEmail", email);
                         AuthTokens.saveFromLogin(Login.this, response.body());
 
                         Intent intent = new Intent(Login.this, MainActivity.class);

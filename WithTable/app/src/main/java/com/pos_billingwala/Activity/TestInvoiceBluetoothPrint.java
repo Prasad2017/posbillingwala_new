@@ -18,7 +18,6 @@ import android.os.Bundle;
 import android.util.Base64;
 import android.util.Log;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.Toast;
 
 import androidx.core.app.ActivityCompat;
@@ -96,7 +95,6 @@ public class TestInvoiceBluetoothPrint extends BaseActivity implements View.OnCl
         binding = ActivityTestInvoiceBluetoothPrintBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
         activity = this;
         posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
 

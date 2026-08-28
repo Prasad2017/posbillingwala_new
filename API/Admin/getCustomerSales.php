@@ -6,6 +6,7 @@
 include_once('config.php');
 require_once __DIR__ . '/auth_guard.php';
 require_once __DIR__ . '/../db_prepared.php';
+require_once __DIR__ . '/../invoice_sales_filter.php';
 
 header('Content-Type: application/json; charset=utf-8');
 $response = array('status' => '1', 'invoiceResponse' => array(), 'billCount' => '0', 'netSales' => '0');
@@ -58,7 +59,10 @@ if ($invoiceDate !== '') {
 $net = 0.0;
 foreach ($rows as $row) {
     $total = isset($row['totalAmount']) ? (float) $row['totalAmount'] : 0;
-    $net += $total;
+    $orderStatus = isset($row['invoiceOrderStatus']) ? (string) $row['invoiceOrderStatus'] : 'completed';
+    if (strcasecmp($orderStatus, 'refunded') !== 0) {
+        $net += $total;
+    }
     $response['invoiceResponse'][] = array(
         'invoiceId' => (string) $row['invoiceId'],
         'invoiceNumber' => isset($row['invoiceNumber']) ? (string) $row['invoiceNumber'] : '',
@@ -71,7 +75,8 @@ foreach ($rows as $row) {
         'paymentMode' => isset($row['paymentMode']) ? (string) $row['paymentMode'] : '',
         'licenseKey' => isset($row['licenseKey']) ? (string) $row['licenseKey'] : '',
         'branchName' => isset($row['branchName']) ? (string) $row['branchName'] : '',
-        'invoiceNetworkStatus' => isset($row['invoiceNetworkStatus']) ? (string) $row['invoiceNetworkStatus'] : ''
+        'invoiceNetworkStatus' => isset($row['invoiceNetworkStatus']) ? (string) $row['invoiceNetworkStatus'] : '',
+        'invoiceOrderStatus' => $orderStatus
     );
 }
 

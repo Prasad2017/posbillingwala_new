@@ -22,7 +22,6 @@ import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.PortionAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ListLoader;
-import com.pos_billingwala.Extra.SimpleDividerItemDecoration;
 import com.pos_billingwala.Model.PortionMasterResponse;
 import com.pos_billingwala.Model.ProductPortionResponse;
 import com.pos_billingwala.Model.ProductResponse;
@@ -66,7 +65,6 @@ public class ManageProductPortions extends Fragment implements View.OnClickListe
                 portionAdapter = new PortionAdapter(activity, selectedProductId, portionResponseList);
                 portionRecyclerview.setLayoutManager(new GridLayoutManager(activity, 1));
                 portionRecyclerview.setAdapter(portionAdapter);
-                portionRecyclerview.addItemDecoration(new SimpleDividerItemDecoration(activity));
 
                 portionListCardView.setVisibility(View.VISIBLE);
                 noDataFound.setVisibility(View.GONE);
@@ -123,17 +121,7 @@ public class ManageProductPortions extends Fragment implements View.OnClickListe
     }
 
     private void navigateBack() {
-        if (getArguments() != null && "updateProduct".equals(getArguments().getString("returnTo"))) {
-            UpdateProduct updateProduct = new UpdateProduct();
-            Bundle bundle = new Bundle();
-            bundle.putString("productId", productId);
-            updateProduct.setArguments(bundle);
-            ((MainActivity) activity).goBackTo(updateProduct, false);
-        } else if (getArguments() != null && "addProduct".equals(getArguments().getString("returnTo"))) {
-            ((MainActivity) activity).navigateBack();
-        } else {
-            ((MainActivity) activity).goBackTo(new ProductMaster(), false);
-        }
+        ((MainActivity) activity).navigateBack();
     }
 
     private void loadProductInfo() {

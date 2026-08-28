@@ -8,22 +8,18 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.SubcategoryAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ListLoader;
-import com.pos_billingwala.Extra.SimpleDividerItemDecoration;
 import com.pos_billingwala.Model.ProductCategoryResponse;
 import com.pos_billingwala.Model.ProductSubcategoryResponse;
 import com.pos_billingwala.R;
@@ -42,8 +38,8 @@ public class AddSubcategory extends Fragment implements View.OnClickListener {
     public static List<ProductSubcategoryResponse> subcategoryResponseList = new ArrayList<>();
     public static SubcategoryAdapter subcategoryAdapter;
     public static RecyclerView subcategoryRecyclerview;
-    public static CardView subcategoryListCardView;
-    public static TextView noDataFound;
+    public static View subcategoryListCardView;
+    public static View noDataFound;
     View view;
 
     FragmentAddSubcategoryBinding binding;
@@ -63,7 +59,6 @@ public class AddSubcategory extends Fragment implements View.OnClickListener {
                 subcategoryAdapter = new SubcategoryAdapter(activity, subcategoryResponseList);
                 subcategoryRecyclerview.setLayoutManager(new GridLayoutManager(activity, 1));
                 subcategoryRecyclerview.setAdapter(subcategoryAdapter);
-                subcategoryRecyclerview.addItemDecoration(new SimpleDividerItemDecoration(activity));
 
                 subcategoryListCardView.setVisibility(View.VISIBLE);
                 noDataFound.setVisibility(View.GONE);
@@ -162,6 +157,7 @@ public class AddSubcategory extends Fragment implements View.OnClickListener {
         if (productCategoryResponseList.isEmpty()) {
             Toast.makeText(activity, getString(R.string.toast_please_add_a_category_first), Toast.LENGTH_SHORT).show();
             binding.addSubcategory.setEnabled(false);
+            binding.categoryDropdown.setEnabled(false);
             return;
         }
 
@@ -173,22 +169,18 @@ public class AddSubcategory extends Fragment implements View.OnClickListener {
             categoryNameList[i] = productCategoryResponseList.get(i).getCategoryName();
         }
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(activity, android.R.layout.simple_spinner_item, categoryNameList);
-        adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
-        binding.categorySpinner.setAdapter(adapter);
+        binding.categoryDropdown.setItems(categoryNameList);
+        binding.categoryDropdown.setSelectedIndex(0);
 
         categoryId = categoryIdList[0];
         categoryName = categoryNameList[0];
         selectedCategoryId = categoryId;
 
-        binding.categorySpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
-            @Override
-            public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
-                categoryId = categoryIdList[position];
-                categoryName = categoryNameList[position];
-                selectedCategoryId = categoryId;
-                getSubcategoryList();
-            }
+        binding.categoryDropdown.setOnItemSelectedListener((position, item) -> {
+            categoryId = categoryIdList[position];
+            categoryName = categoryNameList[position];
+            selectedCategoryId = categoryId;
+            getSubcategoryList();
         });
 
         getSubcategoryList();

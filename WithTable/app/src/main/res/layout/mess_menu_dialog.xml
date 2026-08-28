@@ -24,7 +24,7 @@
             <ImageView
                 android:layout_width="20dp"
                 android:layout_height="20dp"
-                android:src="@drawable/baseline_person_24"
+                android:src="@drawable/ic_person"
                 app:tint="@color/white" />
 
             <TextView
@@ -51,7 +51,7 @@
             <ImageView
                 android:layout_width="20dp"
                 android:layout_height="20dp"
-                android:src="@drawable/baseline_bill"
+                android:src="@drawable/ic_receipt"
                 app:tint="@color/white" />
 
             <TextView
@@ -77,7 +77,7 @@
             <ImageView
                 android:layout_width="20dp"
                 android:layout_height="20dp"
-                android:src="@drawable/baseline_directions_walk_24"
+                android:src="@drawable/ic_takeaway"
                 app:tint="@color/white" />
 
             <TextView

@@ -21,6 +21,9 @@ public interface ApiInterface {
     @GET("getCustomerList.php")
     Call<AllApiResponse> getCustomerList();
 
+    @GET("getCustomerList.php")
+    Call<AllApiResponse> getCustomerList(@Query("limit") int limit);
+
     @GET("getCustomerDetails.php")
     Call<AllApiResponse> getCustomerDetails(@Query("customerId") String customerId);
 
@@ -219,6 +222,12 @@ public interface ApiInterface {
     @GET("getDealerReport.php")
     Call<AllApiResponse> getDealerReport(@Query("dealerId") String dealerId);
 
+    @GET("getDealerSalesOverview.php")
+    Call<AllApiResponse> getDealerSalesOverview();
+
+    @GET("getDealerSalesOverview.php")
+    Call<AllApiResponse> getDealerSalesOverview(@Query("limit") int limit);
+
     @GET("getCustomerComboList.php")
     Call<AllApiResponse> getCustomerComboList(@Query("userId") String userId);
 
@@ -237,8 +246,104 @@ public interface ApiInterface {
     @GET("getDeviceList.php")
     Call<AllApiResponse> getDeviceList(@Query("customerId") String customerId);
 
+    @GET("getErrorLogList.php")
+    Call<AllApiResponse> getErrorLogList();
+
+    @GET("getErrorLogList.php")
+    Call<AllApiResponse> getErrorLogList(@Query("limit") int limit);
+
+    @GET("getErrorLogDetails.php")
+    Call<AllApiResponse> getErrorLogDetails(@Query("id") String id);
+
+    @FormUrlEncoded
+    @POST("updateErrorLogResolution.php")
+    Call<AllApiResponse> updateErrorLogResolution(@Field("id") String id,
+                                                   @Field("resolutionNotes") String resolutionNotes,
+                                                   @Field("resolvedBy") String resolvedBy);
+
     @GET("getCustomerSales.php")
     Call<AllApiResponse> getCustomerSales(@Query("customerId") String customerId,
                                           @Query("invoiceDate") String invoiceDate);
+
+    @GET("getCustomerCatalogSummary.php")
+    Call<AllApiResponse> getCustomerCatalogSummary(@Query("customerId") String customerId);
+
+    @GET("getDealerCustomerList.php")
+    Call<AllApiResponse> getDealerCustomerList(@Query("dealerId") String dealerId);
+
+    @GET("getDealerLicenseList.php")
+    Call<AllApiResponse> getDealerLicenseList(@Query("dealerId") String dealerId);
+
+    @GET("getSalesOverviewReport.php")
+    Call<AllApiResponse> getSalesOverviewReport();
+
+    @GET("getCustomerReport.php")
+    Call<AllApiResponse> getCustomerReport();
+
+    @GET("getLicenseReport.php")
+    Call<AllApiResponse> getLicenseReport();
+
+    @GET("getBranchReport.php")
+    Call<AllApiResponse> getBranchReport();
+
+    @GET("getDeviceReport.php")
+    Call<AllApiResponse> getDeviceReport();
+
+    @GET("getSalesDashboard.php")
+    Call<AllApiResponse> getSalesDashboard();
+
+    @GET("getRecentInvoices.php")
+    Call<AllApiResponse> getRecentInvoices(@Query("limit") int limit, @Query("q") String q);
+
+    @GET("getInvoiceDetails.php")
+    Call<AllApiResponse> getInvoiceDetails(@Query("invoiceId") String invoiceId);
+
+    @GET("getCrashList.php")
+    Call<AllApiResponse> getCrashList(@Query("q") String q, @Query("app") String app, @Query("status") String status);
+
+    @GET("getCrashDetails.php")
+    Call<AllApiResponse> getCrashDetails(@Query("crashId") String crashId);
+
+    @GET("getCrashAnalytics.php")
+    Call<AllApiResponse> getCrashAnalytics();
+
+    @FormUrlEncoded
+    @POST("updateCrashStatus.php")
+    Call<AllApiResponse> updateCrashStatus(@Field("crashId") String crashId, @Field("status") String status);
+
+    @GET("getSupportTickets.php")
+    Call<AllApiResponse> getSupportTickets(@Query("status") String status);
+
+    @GET("getSupportTicketDetails.php")
+    Call<AllApiResponse> getSupportTicketDetails(@Query("ticketId") String ticketId);
+
+    @FormUrlEncoded
+    @POST("createSupportTicket.php")
+    Call<AllApiResponse> createSupportTicket(@Field("appName") String appName,
+                                             @Field("category") String category,
+                                             @Field("subject") String subject,
+                                             @Field("description") String description);
+
+    @FormUrlEncoded
+    @POST("replySupportTicket.php")
+    Call<AllApiResponse> replySupportTicket(@Field("ticketId") String ticketId,
+                                            @Field("message") String message,
+                                            @Field("sender") String sender);
+
+    @FormUrlEncoded
+    @POST("updateSupportTicketStatus.php")
+    Call<AllApiResponse> updateSupportTicketStatus(@Field("ticketId") String ticketId,
+                                                   @Field("status") String status);
+
+    @GET("getWebsiteContacts.php")
+    Call<AllApiResponse> getWebsiteContacts(@Query("status") String status);
+
+    @GET("getWebsiteContactDetails.php")
+    Call<AllApiResponse> getWebsiteContactDetails(@Query("contactId") String contactId);
+
+    @FormUrlEncoded
+    @POST("updateWebsiteContactStatus.php")
+    Call<AllApiResponse> updateWebsiteContactStatus(@Field("contactId") String contactId,
+                                                    @Field("status") String status);
 
 }

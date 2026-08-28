@@ -4,7 +4,6 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.database.CursorWindow;
 import android.os.Bundle;
-import android.view.WindowManager;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
@@ -14,9 +13,12 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import com.pos_billingwala.Extra.AppExecutors;
 import com.pos_billingwala.Extra.AppLanguage;
 import com.pos_billingwala.Extra.BranchSession;
 import com.pos_billingwala.Extra.Common;
+import com.pos_billingwala.Extra.LicenceScopeGuard;
+import com.pos_billingwala.Extra.LicenseModules;
 import com.pos_billingwala.Extra.Observability;
 import com.pos_billingwala.Fragment.CreatePos;
 import com.pos_billingwala.Fragment.Home;
@@ -43,7 +45,6 @@ public class MainActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
         try {
             Field field = CursorWindow.class.getDeclaredField("sCursorWindowSize");
             field.setAccessible(true);
@@ -58,15 +59,16 @@ public class MainActivity extends BaseActivity {
         userId = Common.getSavedUserData(this, "userId");
         ownerId = Common.getSavedUserData(this, "ownerId");
         BranchSession.loadFromPreferences(this);
+        LicenceScopeGuard.ensureSessionScope(this);
         userName = Common.getSavedUserData(this, "userName");
         shopName = Common.getSavedUserData(this, "shopName");
         shopImage = Common.getSavedUserData(this, "shopImage");
-        fastBilling = Common.getSavedUserData(this, "fastBilling");
-        takeAway = Common.getSavedUserData(this, "takeAway");
-        dineIn = Common.getSavedUserData(this, "dineIn");
-        mess = Common.getSavedUserData(this, "mess");
-        totalSaleData = Common.getSavedUserData(this, "totalSaleData");
-        todaySaleData = Common.getSavedUserData(this, "todaySaleData");
+        LicenseModules.applySavedFlagsToSession(this);
+        AppExecutors.get().io().execute(() -> {
+            if (LicenseModules.hydrateMissingFlagsFromPayload(MainActivity.this)) {
+                AppExecutors.get().main(Home::setValidationUI);
+            }
+        });
         LicenceKey = Common.getSavedUserData(this, "LicenceKey");
         LicenceKeyRegDate = Common.getSavedUserData(this, "LicenceKeyRegDate");
         LicenceKeyExpireDate = Common.getSavedUserData(this, "LicenceKeyExpireDate");
@@ -146,8 +148,7 @@ public class MainActivity extends BaseActivity {
     public void navigateBack() {
         FragmentManager fragmentManager = getSupportFragmentManager();
         if (fragmentManager.getBackStackEntryCount() > 0) {
-            // Soft pop — avoids main-thread hitch from Immediate when returning to Home
-            fragmentManager.popBackStack();
+            fragmentManager.popBackStackImmediate();
             return;
         }
         if (isHomeVisible()) {
@@ -207,10 +208,9 @@ public class MainActivity extends BaseActivity {
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
         transaction.setReorderingAllowed(true);
         if (bool) {
-            // Forward navigation only — keep pops snappy
             transaction.setCustomAnimations(
                     android.R.anim.fade_in,
-                    android.R.anim.fade_out,
+                    0,
                     0,
                     0
             );

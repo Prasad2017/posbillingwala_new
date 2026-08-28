@@ -177,7 +177,32 @@
     <string name="setting_printer_details">प्रिंटर विवरण</string>
     <string name="setting_inventory">इन्वेंटरी प्रबंधन</string>
     <string name="setting_expense">खर्च प्रबंधन</string>
+    <string name="setting_support">सहायता और टिकट</string>
     <string name="setting_about">हमारे बारे में</string>
+    <string name="support_online_only_notice">सपोर्ट टिकट केवल ऑनलाइन काम करते हैं। टिकट बनाने या एडमिन के जवाब देखने के लिए इंटरनेट जरूरी है।</string>
+    <string name="support_create_ticket">सपोर्ट टिकट बनाएं</string>
+    <string name="support_my_tickets">मेरे टिकट</string>
+    <string name="support_category">श्रेणी</string>
+    <string name="support_subject">विषय</string>
+    <string name="support_description">समस्या लिखें</string>
+    <string name="support_submit">टिकट भेजें</string>
+    <string name="support_submitting">भेजा जा रहा है…</string>
+    <string name="support_submitted">टिकट बन गया</string>
+    <string name="support_subject_required">विषय जरूरी है</string>
+    <string name="support_loading">लोड हो रहा है…</string>
+    <string name="support_no_tickets">अभी कोई टिकट नहीं</string>
+    <string name="support_load_failed">कनेक्ट नहीं हो पाया। इंटरनेट जांचें।</string>
+    <string name="support_reply">आपका जवाब</string>
+    <string name="support_send_reply">जवाब भेजें</string>
+    <string name="support_reply_sent">जवाब भेज दिया</string>
+    <string name="support_reply_required">संदेश लिखें</string>
+    <string name="support_ticket_closed">यह टिकट बंद है</string>
+    <string name="support_refresh">टिकट रिफ्रेश करें</string>
+    <string name="support_ticket_details">टिकट विवरण</string>
+    <string name="support_admin">सपोर्ट टीम</string>
+    <string name="support_you">आप</string>
+    <string name="support_ticket_open_banner">स्थिति: %1$s — नए एडमिन जवाब के लिए रिफ्रेश करें (केवल ऑनलाइन)</string>
+    <string name="support_ticket_closed_banner">स्थिति: %1$s — टिकट बंद है। और मदद चाहिए तो नया टिकट बनाएं।</string>
     <string name="setting_fetch_data">क्लाउड से डेटा लें</string>
     <string name="setting_update_app">ऐप अपडेट करें</string>
     <string name="setting_synchronize">ऑफ़लाइन डेटा क्लाउड से सिंक करें</string>
@@ -195,6 +220,37 @@
     <string name="home_fetch_data">डेटा लें</string>
     <string name="home_synchronize">सिंक करें</string>
     <string name="home_low_inventory">कम स्टॉक</string>
+    <string name="home_section_sales">बिक्री सारांश</string>
+    <string name="home_section_catalog">कैटलॉग</string>
+    <string name="home_section_billing">बिलिंग शुरू करें</string>
+    <string name="home_whats_happening">आज आपके स्टोर में यह हो रहा है।</string>
 
     <string name="press_back_again_to_exit">बाहर निकलने के लिए फिर से बैक दबाएँ</string>
+
+    <string name="discount_wise_report">छूट के अनुसार रिपोर्ट</string>
+    <string name="discount_type_percentage">प्रतिशत</string>
+    <string name="discount_type_amount">राशि</string>
+    <string name="business_hours">व्यवसाय समय</string>
+    <string name="business_hours_hint">खुलने और बंद होने का समय</string>
+    <string name="opening_time">खुलने का समय</string>
+    <string name="closing_time">बंद होने का समय</string>
+    <string name="shop_open">दुकान खुली</string>
+    <string name="shop_closed">दुकान बंद</string>
+    <string name="business_hours_saved">व्यवसाय समय सेव हो गया</string>
+    <string name="business_hours_not_set">सेट नहीं</string>
+
+    <string name="edit_bill">बिल संपादित करें</string>
+    <string name="refund_bill">रिफंड</string>
+    <string name="save_bill">बिल सेव करें</string>
+    <string name="change">बदलें</string>
+    <string name="bill_refunded">रिफंड हो गया</string>
+    <string name="refund_confirm_title">यह बिल रिफंड करें?</string>
+    <string name="refund_confirm_message">यह बिल रिफंड के रूप में दर्ज होगा और बिक्री योग से हटा दिया जाएगा।</string>
+    <string name="refund_success">बिल रिफंड हो गया</string>
+    <string name="refund_wise_report">रिफंड रिपोर्ट</string>
+    <string name="toast_cannot_edit_refunded">रिफंड हुए बिल को संपादित नहीं कर सकते</string>
+    <string name="toast_keep_one_item">कम से कम एक आइटम रखें</string>
+    <string name="toast_bill_updated">बिल अपडेट हो गया</string>
+    <string name="toast_bill_not_found">बिल नहीं मिला</string>
+
 </resources>

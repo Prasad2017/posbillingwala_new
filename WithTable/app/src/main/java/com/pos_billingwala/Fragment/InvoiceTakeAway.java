@@ -26,7 +26,6 @@ import com.pos_billingwala.Adapter.InvoiceTakAwayAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.AppExecutors;
 import com.pos_billingwala.Extra.ListLoader;
-import com.pos_billingwala.Extra.SimpleDividerItemDecoration;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.ProductCartResponse;
 import com.pos_billingwala.R;
@@ -190,7 +189,6 @@ public class InvoiceTakeAway extends Fragment implements View.OnClickListener {
                     invoiceTakAwayAdapter = new InvoiceTakAwayAdapter(activity, productTakeAwayResponseList);
                     binding.recyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
                     binding.recyclerView.setAdapter(invoiceTakAwayAdapter);
-                    binding.recyclerView.addItemDecoration(new SimpleDividerItemDecoration(activity));
                     invoiceTakAwayAdapter.notifyDataSetChanged();
                     binding.takeAwayOrderLayout.setVisibility(View.VISIBLE);
                 } else {

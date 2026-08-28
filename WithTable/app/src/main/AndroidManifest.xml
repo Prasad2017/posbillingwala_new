@@ -93,6 +93,11 @@
             android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|fontScale|density"
             android:exported="false" />
         <activity
+            android:name=".Activity.EditInvoice"
+            android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|fontScale|density"
+            android:exported="false"
+            android:screenOrientation="fullUser" />
+        <activity
             android:name=".Activity.LoginMPin"
             android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|fontScale|density"
             android:exported="false" />
@@ -127,7 +132,8 @@
         <activity
             android:name=".Activity.BluetoothPrint"
             android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|fontScale|density"
-            android:exported="false" />
+            android:exported="false"
+            android:screenOrientation="fullUser" />
         <activity
             android:name=".Activity.Register"
             android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|fontScale|density"
@@ -139,7 +145,8 @@
         <activity
             android:name=".Activity.MainActivity"
             android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|fontScale|density"
-            android:exported="false" />
+            android:exported="false"
+            android:screenOrientation="fullUser" />
         <activity
             android:name=".Activity.SplashScreen"
             android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|fontScale|density"

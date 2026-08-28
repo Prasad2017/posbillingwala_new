@@ -20,4 +20,9 @@
         <attr name="fontFamily" format="string" />
     </declare-styleable>
 
+    <declare-styleable name="SearchableDropdownView">
+        <attr name="sdd_hint" format="string" />
+        <attr name="sdd_dialog_title" format="string" />
+    </declare-styleable>
+
 </resources>

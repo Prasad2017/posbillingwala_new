@@ -26,7 +26,6 @@ import android.provider.MediaStore;
 import android.text.Html;
 import android.util.Base64;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -47,6 +46,8 @@ import com.pos_billingwala.Adapter.TwoInvoicePrintAdapter;
 import com.pos_billingwala.BuildConfig;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ShopHeaderBuilder;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.pos_billingwala.NetworkToOffline.InvoicePendingSync;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.InvoiceProductResponse;
 import com.pos_billingwala.Model.InvoiceResponse;
@@ -139,16 +140,21 @@ public class InvoiceDetailsBluetoothPrint extends BaseActivity implements View.O
     @NonNull
     public static String getBillDetails() {
         String BillDetails = "";
-        if (invoiceResponseList.get(0).getInvoiceType().equalsIgnoreCase("table_wise")) {
+        String invoiceType = invoiceResponseList.get(0).getInvoiceType();
+        if (invoiceType != null && invoiceType.equalsIgnoreCase("table_wise")) {
             BillDetails = "<b>Bill No:</b> " + invoiceResponseList.get(0).getInvoiceNumber() + "<br/><b>Date:</b> " + invoiceResponseList.get(0).getInvoiceDate() + "<br/><b>Table No:</b> " + invoiceResponseList.get(0).getNoOfTable();
         } else {
             BillDetails = "<b>Bill No:</b> " + invoiceResponseList.get(0).getInvoiceNumber() + "<br/><b>Date:</b> " + invoiceResponseList.get(0).getInvoiceDate();
         }
 
-        if (!invoiceResponseList.get(0).getCustomerName().equalsIgnoreCase("")) {
+        String customerName = invoiceResponseList.get(0).getCustomerName();
+        if (customerName != null && !customerName.equalsIgnoreCase("")) {
             BillDetails = BillDetails + "<br/><b>Customer Name:</b> " + (invoiceResponseList.get(0).getCustomerName() != null ? invoiceResponseList.get(0).getCustomerName() : "NA") +
                     "<br/><b>Customer Mobile:</b> " + (invoiceResponseList.get(0).getCustomerMobile() != null ? invoiceResponseList.get(0).getCustomerMobile() : "NA") +
                     "<br/><b>Customer Address:</b> " + (invoiceResponseList.get(0).getCustomerAddress() != null ? invoiceResponseList.get(0).getCustomerAddress() : "NA");
+        }
+        if (invoiceResponseList.get(0).isRefunded()) {
+            BillDetails = BillDetails + "<br/><b>Status:</b> Refunded";
         }
         return String.valueOf(Html.fromHtml(BillDetails));
     }
@@ -166,7 +172,6 @@ public class InvoiceDetailsBluetoothPrint extends BaseActivity implements View.O
         View view = binding.getRoot(); //Root xml or viewGroup will be a part of converted view over here
         setContentView(view); //view is set by view binding
 
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
         Intent intent = getIntent();
         if (intent != null) {
             invoiceId = intent.getStringExtra("invoiceId");
@@ -251,6 +256,8 @@ public class InvoiceDetailsBluetoothPrint extends BaseActivity implements View.O
         binding.backToInvoice.setOnClickListener(this);
         binding.printInvoiceCardView.setOnClickListener(this);
         binding.shareInvoiceCardView.setOnClickListener(this);
+        binding.editInvoiceButton.setOnClickListener(this);
+        binding.refundInvoiceButton.setOnClickListener(this);
 
     }
 
@@ -276,8 +283,40 @@ public class InvoiceDetailsBluetoothPrint extends BaseActivity implements View.O
             }
         } else if (id == R.id.shareInvoiceCardView) {
             createPdf();
+        } else if (id == R.id.editInvoiceButton) {
+            openEditInvoice();
+        } else if (id == R.id.refundInvoiceButton) {
+            confirmRefund();
         }
 
+    }
+
+    private void openEditInvoice() {
+        if (invoiceResponseList.isEmpty() || invoiceResponseList.get(0).isRefunded()) {
+            Toast.makeText(activity, getString(R.string.toast_cannot_edit_refunded), Toast.LENGTH_SHORT).show();
+            return;
+        }
+        Intent intent = new Intent(activity, EditInvoice.class);
+        intent.putExtra("invoiceId", invoiceId);
+        startActivity(intent);
+    }
+
+    private void confirmRefund() {
+        if (invoiceResponseList.isEmpty() || invoiceResponseList.get(0).isRefunded()) {
+            return;
+        }
+        new MaterialAlertDialogBuilder(activity, R.style.ThemeDialog)
+                .setTitle(getString(R.string.refund_confirm_title))
+                .setMessage(getString(R.string.refund_confirm_message))
+                .setPositiveButton(getString(R.string.refund_bill), (dialog, which) -> {
+                    dialog.dismiss();
+                    posBillingWalaDatabase.refundInvoice(invoiceResponseList.get(0).getInvoiceNumber());
+                    Toast.makeText(activity, getString(R.string.refund_success), Toast.LENGTH_SHORT).show();
+                    InvoicePendingSync.syncPendingInvoiceChanges(activity);
+                    getInvoiceDetails();
+                })
+                .setNegativeButton(getString(R.string.cancel), (dialog, which) -> dialog.dismiss())
+                .show();
     }
 
     public void createPdf() {
@@ -520,9 +559,16 @@ public class InvoiceDetailsBluetoothPrint extends BaseActivity implements View.O
             threeInvoiceDetails.setText(Html.fromHtml(BillDetails));
 
             getInvoiceProductDetails(invoiceResponseList.get(0).getInvoiceNumber());
+            bindInvoiceActions();
 
         }
 
+    }
+
+    private void bindInvoiceActions() {
+        boolean refunded = !invoiceResponseList.isEmpty() && invoiceResponseList.get(0).isRefunded();
+        binding.refundedBanner.setVisibility(refunded ? View.VISIBLE : View.GONE);
+        binding.invoiceActionButtons.setVisibility(refunded ? View.GONE : View.VISIBLE);
     }
 
     public void getCompanyDetails() {
@@ -778,7 +824,7 @@ public class InvoiceDetailsBluetoothPrint extends BaseActivity implements View.O
             new WoosimPrnMng(activity, bluetoothAddress, InvoiceDetailsBluetoothPrint.this);
         } else if (requestCode == REQUEST_KOT_ENABLE_BT && resultCode == RESULT_OK) {
             //bluetooth enabled and request for showing available bluetooth devices
-            new KOTWoosimPrnMng(activity, bluetoothAddress, InvoiceDetailsBluetoothPrint.this);
+            new KOTWoosimPrnMng(activity, "", InvoiceDetailsBluetoothPrint.this);
         } else if (requestCode == REQUEST_KOT_CONNECT_DEVICE && resultCode == RESULT_OK) {
             //bluetooth device selected and request pairing with device
             String bluetoothAddress = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);

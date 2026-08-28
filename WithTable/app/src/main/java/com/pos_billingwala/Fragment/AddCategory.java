@@ -12,7 +12,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -21,7 +20,6 @@ import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.CategoryAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ListLoader;
-import com.pos_billingwala.Extra.SimpleDividerItemDecoration;
 import com.pos_billingwala.Model.ProductCategoryResponse;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentAddCategoryBinding;
@@ -41,8 +39,8 @@ public class AddCategory extends Fragment implements View.OnClickListener {
     public static List<ProductCategoryResponse> productCategoryNameResponseList = new ArrayList<>();
     public static CategoryAdapter categoryAdapter;
     public static RecyclerView categoryRecyclerview;
-    public static CardView categoryListCardView;
-    public static TextView noDataFound;
+    public static View categoryListCardView;
+    public static View noDataFound;
     View view;
 
     FragmentAddCategoryBinding binding;
@@ -58,7 +56,6 @@ public class AddCategory extends Fragment implements View.OnClickListener {
                 categoryAdapter = new CategoryAdapter(activity, productCategoryResponseList);
                 categoryRecyclerview.setLayoutManager(new GridLayoutManager(activity, 1));
                 categoryRecyclerview.setAdapter(categoryAdapter);
-                categoryRecyclerview.addItemDecoration(new SimpleDividerItemDecoration(activity));
 
                 categoryListCardView.setVisibility(View.VISIBLE);
                 noDataFound.setVisibility(View.GONE);

@@ -232,6 +232,12 @@ public interface ApiInterface {
                                             @Field("snapshotComboComponents") String snapshotComboComponents);
 
     @FormUrlEncoded
+    @POST("deleteInvoiceProduct.php")
+    Call<AllApiResponse> deleteInvoiceProduct(@Field("userId") String userId,
+                                              @Field("invoiceNumber") String invoiceNumber,
+                                              @Field("invoiceProductNetworkStatus") String invoiceProductNetworkStatus);
+
+    @FormUrlEncoded
     @POST("insertCombo.php")
     Call<AllApiResponse> saveCombo(@Field("userId") String userId,
                                    @Field("comboName") String comboName,
@@ -359,5 +365,64 @@ public interface ApiInterface {
                                          @Field("verifiedDate") String verifiedDate,
                                          @Field("verifyNetworkStatus") String verifyNetworkStatus);
 
+    @FormUrlEncoded
+    @POST("reportErrorLog.php")
+    Call<AllApiResponse> reportErrorLog(@Field("userId") String userId,
+                                        @Field("fingerprint") String fingerprint,
+                                        @Field("error_type") String errorType,
+                                        @Field("severity") String severity,
+                                        @Field("error_category") String errorCategory,
+                                        @Field("summary") String summary,
+                                        @Field("app_type") String appType,
+                                        @Field("app_version") String appVersion,
+                                        @Field("customer_id") String customerId,
+                                        @Field("shop_name") String shopName,
+                                        @Field("branch_label") String branchLabel,
+                                        @Field("device_name") String deviceName,
+                                        @Field("device_id") String deviceId,
+                                        @Field("user_label") String userLabel,
+                                        @Field("screen_name") String screenName,
+                                        @Field("activity_name") String activityName,
+                                        @Field("fragment_name") String fragmentName,
+                                        @Field("user_action") String userAction,
+                                        @Field("what_happened") String whatHappened,
+                                        @Field("user_flow") String userFlow,
+                                        @Field("breadcrumbs") String breadcrumbs,
+                                        @Field("api_method") String apiMethod,
+                                        @Field("api_url") String apiUrl,
+                                        @Field("http_status") String httpStatus,
+                                        @Field("request_body") String requestBody,
+                                        @Field("response_body") String responseBody,
+                                        @Field("request_size") String requestSize,
+                                        @Field("response_size") String responseSize,
+                                        @Field("request_duration_ms") String requestDurationMs,
+                                        @Field("printer_type") String printerType,
+                                        @Field("printer_model") String printerModel,
+                                        @Field("printer_connection") String printerConnection,
+                                        @Field("print_operation") String printOperation,
+                                        @Field("original_error_message") String originalErrorMessage,
+                                        @Field("original_exception_class") String originalExceptionClass,
+                                        @Field("original_stack_trace") String originalStackTrace,
+                                        @Field("original_error_code") String originalErrorCode,
+                                        @Field("original_api_response") String originalApiResponse);
+
+    @GET("getSupportTickets.php")
+    Call<AllApiResponse> getSupportTickets(@Query("userId") String userId, @Query("status") String status);
+
+    @GET("getSupportTicketDetails.php")
+    Call<AllApiResponse> getSupportTicketDetails(@Query("userId") String userId, @Query("ticketId") String ticketId);
+
+    @FormUrlEncoded
+    @POST("createSupportTicket.php")
+    Call<AllApiResponse> createSupportTicket(@Field("userId") String userId,
+                                             @Field("category") String category,
+                                             @Field("subject") String subject,
+                                             @Field("description") String description);
+
+    @FormUrlEncoded
+    @POST("replySupportTicket.php")
+    Call<AllApiResponse> replySupportTicket(@Field("userId") String userId,
+                                            @Field("ticketId") String ticketId,
+                                            @Field("message") String message);
 
 }

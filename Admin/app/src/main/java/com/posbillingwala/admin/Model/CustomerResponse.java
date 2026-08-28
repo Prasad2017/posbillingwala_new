@@ -28,6 +28,15 @@ public class CustomerResponse {
     @SerializedName("shopName")
     @Expose
     private String shopName;
+    @SerializedName("dealerId")
+    @Expose
+    private String dealerId;
+    @SerializedName("dealerName")
+    @Expose
+    private String dealerName;
+    @SerializedName("branchCount")
+    @Expose
+    private String branchCount;
     @SerializedName("licensesResponse")
     @Expose
     private List<LicenseResponse> licenseResponseList;
@@ -87,6 +96,18 @@ public class CustomerResponse {
 
     public void setShopName(String shopName) {
         this.shopName = shopName;
+    }
+
+    public String getDealerId() {
+        return dealerId;
+    }
+
+    public String getDealerName() {
+        return dealerName;
+    }
+
+    public String getBranchCount() {
+        return branchCount;
     }
 
     public List<LicenseResponse> getLicenseResponseList() {

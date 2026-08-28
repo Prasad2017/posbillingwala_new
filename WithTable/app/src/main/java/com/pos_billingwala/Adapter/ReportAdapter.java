@@ -11,6 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.pos_billingwala.Activity.MainActivity;
+import com.pos_billingwala.Extra.ReportCursorHelper;
 import com.pos_billingwala.Model.InvoiceResponse;
 import com.pos_billingwala.R;
 
@@ -23,10 +24,16 @@ public class ReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
     public static final int VIEW_TYPE_NORMAL = 1;
     Context context;
     List<InvoiceResponse> invoiceResponseList;
+    private final boolean showDiscountAmount;
 
     public ReportAdapter(Context context, List<InvoiceResponse> invoiceResponseList) {
+        this(context, invoiceResponseList, false);
+    }
+
+    public ReportAdapter(Context context, List<InvoiceResponse> invoiceResponseList, boolean showDiscountAmount) {
         this.context = context;
         this.invoiceResponseList = invoiceResponseList;
+        this.showDiscountAmount = showDiscountAmount;
     }
 
     @NonNull
@@ -58,10 +65,13 @@ public class ReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
 
         try {
             holder.srNo.setText("" + (position + 1));
-            holder.invoiceDate.setText(invoiceResponse.getInvoiceDate().substring(0, 10));
-            holder.invoiceNumber.setText(invoiceResponse.getInvoiceNumber());
-            float totalAmount = Float.parseFloat(invoiceResponse.getTotalAmount());
-            holder.invoiceAmount.setText(MainActivity.currencyName + " " + String.format(Locale.US, "%.2f", totalAmount));
+            holder.invoiceDate.setText(ReportCursorHelper.formatInvoiceDate(invoiceResponse.getInvoiceDate()));
+            holder.invoiceNumber.setText(invoiceResponse.getInvoiceNumber() != null ? invoiceResponse.getInvoiceNumber() : "");
+            float amount = showDiscountAmount
+                    ? ReportCursorHelper.discountRupees(invoiceResponse.getDiscount(),
+                    invoiceResponse.getDiscountType(), invoiceResponse.getSubTotal())
+                    : ReportCursorHelper.parseAmount(invoiceResponse.getTotalAmount());
+            holder.invoiceAmount.setText(MainActivity.currencyName + " " + String.format(Locale.US, "%.2f", amount));
         } catch (Exception e) {
             e.printStackTrace();
         }

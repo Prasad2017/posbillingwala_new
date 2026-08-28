@@ -427,7 +427,7 @@
                 android:layout_width="30dp"
                 android:layout_height="30dp"
                 android:layout_gravity="center"
-                android:src="@drawable/baseline_print_24"
+                android:src="@drawable/ic_print"
                 app:tint="@color/white" />
 
             <TextView

@@ -20,7 +20,6 @@ import android.text.style.ClickableSpan;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
-import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -39,6 +38,8 @@ import com.google.android.gms.ads.initialization.OnInitializationCompleteListene
 import com.pos_billingwala.Extra.AuthTokens;
 import com.pos_billingwala.Extra.Common;
 import com.pos_billingwala.Extra.LicenceExpiredUi;
+import com.pos_billingwala.Extra.LicenceScopeGuard;
+import com.pos_billingwala.Extra.LicenseModules;
 import com.pos_billingwala.Extra.LicenseSession;
 import com.pos_billingwala.Extra.Observability;
 import com.pos_billingwala.Model.LoginResponse;
@@ -96,8 +97,6 @@ public class Login extends BaseActivity implements View.OnClickListener {
         binding = ActivityLoginBinding.inflate(getLayoutInflater());
         View view = binding.getRoot(); //Root xml or viewGroup will be a part of converted view over here
         setContentView(view); //view is set by view binding
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
-
         File file = new File("data/data/" + getPackageName() + "/shared_prefs/" + Common.SHARED_PREF + ".xml");
         if (file.exists()) {
             Intent intent = new Intent(Login.this, MainActivity.class);
@@ -431,19 +430,21 @@ public class Login extends BaseActivity implements View.OnClickListener {
                                 Common.saveUserData(Login.this, "userName", response.body().getUserName());
                                 Common.saveUserData(Login.this, "shopName", response.body().getShopName());
                                 Common.saveUserData(Login.this, "shopImage", response.body().getShopImage());
-                                Common.saveUserData(Login.this, "fastBilling", response.body().getFastBilling());
-                                Common.saveUserData(Login.this, "takeAway", response.body().getTakeAway());
-                                Common.saveUserData(Login.this, "dineIn", response.body().getDineIn());
-                                Common.saveUserData(Login.this, "mess", response.body().getMess());
+                                LicenseModules.saveModuleFlags(Login.this,
+                                        response.body().getFastBilling(),
+                                        response.body().getTakeAway(),
+                                        response.body().getDineIn(),
+                                        response.body().getMess(),
+                                        response.body().getTotalSaleData(),
+                                        response.body().getTodaySaleData());
                                 Common.saveUserData(Login.this, "LicenceKey", response.body().getLicenceKey());
                                 Common.saveUserData(Login.this, "appPin", response.body().getMpin());
                                 Common.saveUserData(Login.this, "LicenceKeyRegDate", response.body().getLicenceKeyRegDate());
                                 Common.saveUserData(Login.this, "LicenceKeyExpireDate", response.body().getLicenceKeyExpireDate());
                                 Common.saveUserData(Login.this, "reportPin", response.body().getReportPin());
-                                Common.saveUserData(Login.this, "totalSaleData", response.body().getTotalSaleData());
-                                Common.saveUserData(Login.this, "todaySaleData", response.body().getTodaySaleData());
                                 LicenseSession.saveFromLogin(Login.this, response.body());
                                 AuthTokens.saveFromLogin(Login.this, response.body());
+                                LicenceScopeGuard.onLoginSuccess(Login.this, response.body());
 
                                 Intent intent = new Intent(Login.this, MainActivity.class);
                                 startActivity(intent);

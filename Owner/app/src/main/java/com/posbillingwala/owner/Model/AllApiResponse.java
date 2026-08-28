@@ -61,6 +61,42 @@ public class AllApiResponse {
     @SerializedName("branches")
     @Expose
     public List<BranchComparisonResponse> branchComparisonList;
+    @SerializedName("periodLabel")
+    @Expose
+    private String periodLabel;
+    @SerializedName("totalSales")
+    @Expose
+    private String totalSales;
+    @SerializedName("netSales")
+    @Expose
+    private String netSales;
+    @SerializedName("totalInvoices")
+    @Expose
+    private String totalInvoices;
+    @SerializedName("avgBill")
+    @Expose
+    private String avgBill;
+    @SerializedName("totalSalesTrend")
+    @Expose
+    private String totalSalesTrend;
+    @SerializedName("netSalesTrend")
+    @Expose
+    private String netSalesTrend;
+    @SerializedName("invoicesTrend")
+    @Expose
+    private String invoicesTrend;
+    @SerializedName("avgBillTrend")
+    @Expose
+    private String avgBillTrend;
+    @SerializedName("salesTrend")
+    @Expose
+    private List<ReportRankItem> salesTrend;
+    @SerializedName("topCustomers")
+    @Expose
+    private List<ReportRankItem> topCustomers;
+    @SerializedName("recentInvoices")
+    @Expose
+    private List<InvoiceResponse> recentInvoices;
     @SerializedName("productId")
     @Expose
     public String productId;
@@ -203,7 +239,51 @@ public class AllApiResponse {
         return productId;
     }
 
-    public void setProductId(String productId) {
-        this.productId = productId;
+    public String getPeriodLabel() {
+        return periodLabel;
+    }
+
+    public String getTotalSales() {
+        return totalSales;
+    }
+
+    public String getNetSales() {
+        return netSales;
+    }
+
+    public String getTotalInvoices() {
+        return totalInvoices;
+    }
+
+    public String getAvgBill() {
+        return avgBill;
+    }
+
+    public String getTotalSalesTrend() {
+        return totalSalesTrend;
+    }
+
+    public String getNetSalesTrend() {
+        return netSalesTrend;
+    }
+
+    public String getInvoicesTrend() {
+        return invoicesTrend;
+    }
+
+    public String getAvgBillTrend() {
+        return avgBillTrend;
+    }
+
+    public List<ReportRankItem> getSalesTrend() {
+        return salesTrend;
+    }
+
+    public List<ReportRankItem> getTopCustomers() {
+        return topCustomers;
+    }
+
+    public List<InvoiceResponse> getRecentInvoices() {
+        return recentInvoices;
     }
 }

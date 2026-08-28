@@ -33,7 +33,7 @@
                     android:layout_height="30dp"
                     android:layout_gravity="center"
                     android:padding="5dp"
-                    android:src="@drawable/back" />
+                    android:src="@drawable/ic_back" />
 
             </androidx.cardview.widget.CardView>
 
@@ -131,7 +131,7 @@
                 android:layout_height="35dp"
                 android:layout_gravity="center"
                 android:layout_marginEnd="10dp"
-                android:src="@drawable/baseline_mic_24"
+                android:src="@drawable/ic_mic"
                 app:tint="@color/black" />
 
         </LinearLayout>
@@ -199,7 +199,7 @@
                 android:layout_gravity="center"
                 android:layout_marginLeft="10dp"
                 android:layout_marginRight="5dp"
-                android:drawableLeft="@drawable/arrowback"
+                android:drawableLeft="@drawable/ic_back"
                 android:drawablePadding="10dp"
                 android:fontFamily="@font/poppinsregular"
                 android:gravity="center|left"

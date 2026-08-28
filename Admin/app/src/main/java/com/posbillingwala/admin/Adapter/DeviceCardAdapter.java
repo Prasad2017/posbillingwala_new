@@ -1,6 +1,5 @@
 package com.posbillingwala.admin.Adapter;
 
-import android.content.res.ColorStateList;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 
@@ -49,9 +48,7 @@ public class DeviceCardAdapter extends RecyclerView.Adapter<DeviceCardAdapter.Ho
         holder.binding.deviceMeta.setText(meta);
 
         String status = LicenseStatusHelper.displayStatus(lic);
-        holder.binding.deviceStatus.setText(status);
-        holder.binding.deviceStatus.setBackgroundTintList(
-                ColorStateList.valueOf(LicenseStatusHelper.badgeColor(status)));
+        LicenseStatusHelper.applyBadge(holder.binding.deviceStatus, status);
     }
 
     private static String nullToDash(String v) {

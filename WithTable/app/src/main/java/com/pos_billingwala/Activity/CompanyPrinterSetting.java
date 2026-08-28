@@ -267,7 +267,7 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
             }
             if (!bluetoothKOTAddress.equalsIgnoreCase("")) {
                 try {
-                    new KOTWoosimPrnMng(activity, bluetoothAddress, CompanyPrinterSetting.this);
+                    new KOTWoosimPrnMng(activity, bluetoothKOTAddress, CompanyPrinterSetting.this);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -332,7 +332,7 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
         } else if (requestCode == REQUEST_KOT_CONNECT_DEVICE && resultCode == RESULT_OK) {
             //bluetooth device selected and request pairing with device
             bluetoothKOTAddress = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
-            new KOTWoosimPrnMng(activity, bluetoothAddress, CompanyPrinterSetting.this);
+            new KOTWoosimPrnMng(activity, bluetoothKOTAddress, CompanyPrinterSetting.this);
         }
     }
 

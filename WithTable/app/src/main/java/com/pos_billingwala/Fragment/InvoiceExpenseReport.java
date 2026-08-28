@@ -26,10 +26,13 @@ import com.pos_billingwala.Adapter.ExpenseAdapter;
 import com.pos_billingwala.CalenderView.MonthPickerDialog;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ListLoader;
-import com.pos_billingwala.Extra.SimpleDividerItemDecoration;
+import com.pos_billingwala.Extra.ReportCursorHelper;
+import com.pos_billingwala.Extra.ReportUiHelper;
 import com.pos_billingwala.Model.ExpenseResponse;
 import com.pos_billingwala.R;
-import com.pos_billingwala.databinding.FragmentInvoiceExpenseReportBinding;
+import com.pos_billingwala.Extra.OperationalReportCharts;
+import com.pos_billingwala.Model.ReportRankItem;
+import com.pos_billingwala.databinding.FragmentOperationalReportBinding;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -51,19 +54,26 @@ public class InvoiceExpenseReport extends Fragment implements View.OnClickListen
     Calendar calender;
     DatePickerDialog datePickerDialog;
     String expenseDate = "";
-    FragmentInvoiceExpenseReportBinding binding;
+    FragmentOperationalReportBinding binding;
 
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        binding = FragmentInvoiceExpenseReportBinding.inflate(inflater, container, false);
-        view = binding.getRoot(); //Root xml or viewGroup will be a part of converted view over here
+        binding = FragmentOperationalReportBinding.inflate(inflater, container, false);
+        view = binding.getRoot();
 
         activity = getActivity();
-
-
         posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
+        binding.toolbar.heading.setText(getString(R.string.ui_expense_report));
+        binding.toolbar.shareInvoice.setVisibility(View.GONE);
+        binding.listTitle.setText(getString(R.string.ui_expense_wise_report));
+        binding.donutTitle.setText(getString(R.string.ui_expense_report));
+        binding.barTitle.setText(getString(R.string.ui_amount_breakdown));
+        ReportUiHelper.setupDetailTableHeader(binding.tableHeader,
+                getString(R.string.ui_expense_date),
+                getString(R.string.ui_expense_name),
+                getString(R.string.ui_amount));
 
         view.setFocusableInTouchMode(true);
         view.requestFocus();
@@ -80,8 +90,8 @@ public class InvoiceExpenseReport extends Fragment implements View.OnClickListen
             }
         });
 
-        binding.backToSetting.setOnClickListener(this);
-        binding.menuIcon.setOnClickListener(this);
+        binding.toolbar.backToSetting.setOnClickListener(this);
+        binding.toolbar.menuIcon.setOnClickListener(this);
 
         return view;
     }
@@ -188,37 +198,41 @@ public class InvoiceExpenseReport extends Fragment implements View.OnClickListen
             }
         });
 
-        mypopupWindow.showAsDropDown(binding.menuIcon, 0, -75);
+        mypopupWindow.showAsDropDown(binding.toolbar.menuIcon, 0, -75);
 
     }
 
-    public void getDateReportList(String expenseDate) {
+    private void bindExpenseList(List<ExpenseResponse> list, String periodLabel) {
+        if (list == null || list.isEmpty()) {
+            binding.noDataFound.setVisibility(View.VISIBLE);
+            binding.nestedScrollView.setVisibility(View.GONE);
+            return;
+        }
+        adapter = new ExpenseAdapter(activity, list);
+        binding.recyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
+        binding.recyclerView.setAdapter(adapter);
+        float totalExpenseAmount = 0f;
+        for (ExpenseResponse expenseResponse : list) {
+            totalExpenseAmount += ReportCursorHelper.parseAmount(expenseResponse.getExpenseAmount());
+        }
+        binding.totalAmount.setText(activity.getString(R.string.inr) + " "
+                + String.format(Locale.US, "%.2f", totalExpenseAmount));
+        List<ReportRankItem> breakdown = OperationalReportCharts.expenseBreakdown(
+                posBillingWalaDatabase, periodLabel.equals("All Records") ? "" : periodLabel);
+        OperationalReportCharts.bindListSummary(binding, activity, list.size(), totalExpenseAmount,
+                breakdown, getString(R.string.ui_expense_report),
+                getString(R.string.ui_amount_breakdown), periodLabel);
+        binding.noDataFound.setVisibility(View.GONE);
+        binding.nestedScrollView.setVisibility(View.VISIBLE);
+    }
+
+    public void getDateReportList(String selectedDate) {
         SweetAlertDialog loader = ListLoader.show(activity);
         try {
             expenseResponseList.clear();
-            expenseResponseList = posBillingWalaDatabase.getDateWiseExpenseList(expenseDate);
-            if (!expenseResponseList.isEmpty()) {
-
-                adapter = new ExpenseAdapter(activity, expenseResponseList);
-                binding.recyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
-                binding.recyclerView.addItemDecoration(new SimpleDividerItemDecoration(activity));
-                binding.recyclerView.setAdapter(adapter);
-                adapter.notifyDataSetChanged();
-                // adapter.notifyItemInserted(expenseResponseList.size() - 1);
-
-                float totalExpenseAmount = 0f;
-                for (ExpenseResponse expenseResponse : expenseResponseList) {
-                    totalExpenseAmount += Float.parseFloat(expenseResponse.getExpenseAmount());
-                }
-                binding.totalAmount.setText(activity.getString(R.string.inr) + " " + String.format(Locale.US, "%.2f", totalExpenseAmount));
-
-                binding.noDataFound.setVisibility(View.GONE);
-                binding.nestedScrollView.setVisibility(View.VISIBLE);
-
-            } else {
-                binding.noDataFound.setVisibility(View.VISIBLE);
-                binding.nestedScrollView.setVisibility(View.GONE);
-            }
+            expenseResponseList = posBillingWalaDatabase.getDateWiseExpenseList(selectedDate);
+            expenseDate = selectedDate;
+            bindExpenseList(expenseResponseList, OperationalReportCharts.formatPeriodLabel(selectedDate));
         } finally {
             ListLoader.dismiss(loader);
         }
@@ -237,27 +251,8 @@ public class InvoiceExpenseReport extends Fragment implements View.OnClickListen
         try {
             expenseResponseList.clear();
             expenseResponseList = posBillingWalaDatabase.getExpenseList();
-            if (!expenseResponseList.isEmpty()) {
-                adapter = new ExpenseAdapter(activity, expenseResponseList);
-                binding.recyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
-                binding.recyclerView.addItemDecoration(new SimpleDividerItemDecoration(activity));
-                binding.recyclerView.setAdapter(adapter);
-                adapter.notifyDataSetChanged();
-                //  adapter.notifyItemInserted(expenseResponseList.size() - 1);
-
-                float totalExpenseAmount = 0f;
-                for (ExpenseResponse expenseResponse : expenseResponseList) {
-                    totalExpenseAmount += Float.parseFloat(expenseResponse.getExpenseAmount());
-                }
-                binding.totalAmount.setText(activity.getString(R.string.inr) + " " + String.format(Locale.US, "%.2f", totalExpenseAmount));
-
-                binding.noDataFound.setVisibility(View.GONE);
-                binding.nestedScrollView.setVisibility(View.VISIBLE);
-
-            } else {
-                binding.noDataFound.setVisibility(View.VISIBLE);
-                binding.nestedScrollView.setVisibility(View.GONE);
-            }
+            expenseDate = "";
+            bindExpenseList(expenseResponseList, OperationalReportCharts.formatPeriodLabel(""));
         } finally {
             ListLoader.dismiss(loader);
         }

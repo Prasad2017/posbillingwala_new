@@ -38,6 +38,7 @@ import com.posbillingwala.owner.Extra.Common;
 import com.posbillingwala.owner.Extra.DetectConnection;
 import com.posbillingwala.owner.Model.AllApiResponse;
 import com.posbillingwala.owner.Model.CustomerResponse;
+import com.posbillingwala.owner.R;
 import com.posbillingwala.owner.Retrofit.Api;
 import com.posbillingwala.owner.databinding.FragmentHomeBinding;
 
@@ -72,6 +73,7 @@ public class Home extends Fragment {
         activity = getActivity();
 
         initAds();
+        binding.swipeRefreshLayout.setColorSchemeResources(R.color.colorPrimary);
 
         binding.swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
@@ -98,11 +100,7 @@ public class Home extends Fragment {
             @Override
             public void onClick(View view) {
                 ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                invoiceStoreWise = new InvoiceStoreWise();
-                bundle = new Bundle();
-                bundle.putString("saleDate", "totalSale");
-                invoiceStoreWise.setArguments(bundle);
-                ((MainActivity) activity).loadFragment(invoiceStoreWise, true);
+                ((MainActivity) activity).loadFragment(new SalesOverview(), true);
             }
         });
 
@@ -110,11 +108,7 @@ public class Home extends Fragment {
             @Override
             public void onClick(View view) {
                 ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                invoiceStoreWise = new InvoiceStoreWise();
-                bundle = new Bundle();
-                bundle.putString("saleDate", "todaySale");
-                invoiceStoreWise.setArguments(bundle);
-                ((MainActivity) activity).loadFragment(invoiceStoreWise, true);
+                ((MainActivity) activity).loadFragment(new SalesDashboard(), true);
             }
         });
 
@@ -300,6 +294,7 @@ public class Home extends Fragment {
                             branches = branchCount != null ? Integer.parseInt(branchCount) : 0;
                         } catch (NumberFormatException ignored) {
                         }
+                        MainActivity.branchCount = Math.max(1, branches);
                         binding.compareBranchesLayout.setVisibility(branches > 1 ? View.VISIBLE : View.GONE);
                     } else {
                         binding.totalCategory.setText("0");

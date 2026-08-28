@@ -4,287 +4,597 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/colorBackground"
+    android:clipToPadding="false"
+    android:paddingBottom="@dimen/spacing_xl"
     tools:context=".Fragment.Home">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingBottom="24dp">
+        android:paddingStart="@dimen/spacing_lg"
+        android:paddingTop="@dimen/spacing_md"
+        android:paddingEnd="@dimen/spacing_lg">
 
-        <ImageView
+        <!-- Greeting -->
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="72dp"
-            android:layout_gravity="center"
-            android:adjustViewBounds="true"
-            android:contentDescription="@string/app_name"
-            android:paddingStart="24dp"
-            android:paddingTop="16dp"
-            android:paddingEnd="24dp"
-            android:scaleType="fitCenter"
-            android:src="@drawable/app_logo" />
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/greetingText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/poppinsbold"
+                    android:text="Good Morning, Admin 👋"
+                    android:textColor="@color/colorTextPrimary"
+                    android:textSize="@dimen/text_heading" />
+
+                <TextView
+                    android:id="@+id/greetingSubtext"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:fontFamily="@font/poppinsregular"
+                    android:text="Here's what's happening with your business today."
+                    android:textColor="@color/colorTextSecondary"
+                    android:textSize="@dimen/text_body" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_month_chip"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="10dp"
+                android:paddingTop="6dp"
+                android:paddingEnd="10dp"
+                android:paddingBottom="6dp">
+
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_calendar"
+                    app:tint="@color/colorPrimary" />
+
+                <TextView
+                    android:id="@+id/dateText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:textColor="@color/colorTextPrimary"
+                    android:textSize="@dimen/text_caption"
+                    tools:text="25 May 2024" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Business Overview — horizontal scroll -->
+        <include
+            android:id="@+id/headerBusinessOverview"
+            layout="@layout/include_dashboard_section_header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_lg" />
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_sm"
+            android:clipToPadding="false"
+            android:overScrollMode="never"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingEnd="@dimen/spacing_xs">
+
+                <include
+                    android:id="@+id/kpiTotalCustomer"
+                    layout="@layout/include_dashboard_kpi_card"
+                    android:layout_width="128dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp" />
+
+                <include
+                    android:id="@+id/kpiActiveCustomer"
+                    layout="@layout/include_dashboard_kpi_card"
+                    android:layout_width="128dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp" />
+
+                <include
+                    android:id="@+id/kpiTrialCustomer"
+                    layout="@layout/include_dashboard_kpi_card"
+                    android:layout_width="128dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp" />
+
+                <include
+                    android:id="@+id/kpiExpiredCustomer"
+                    layout="@layout/include_dashboard_kpi_card"
+                    android:layout_width="128dp"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+        </HorizontalScrollView>
+
+        <!-- License Overview — horizontal scroll -->
+        <include
+            android:id="@+id/headerLicenseOverview"
+            layout="@layout/include_dashboard_section_header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_lg" />
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_sm"
+            android:clipToPadding="false"
+            android:overScrollMode="never"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingEnd="@dimen/spacing_xs">
+
+                <include
+                    android:id="@+id/kpiActiveLicenses"
+                    layout="@layout/include_dashboard_kpi_card"
+                    android:layout_width="128dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp" />
+
+                <include
+                    android:id="@+id/kpiExpiringLicenses"
+                    layout="@layout/include_dashboard_kpi_card"
+                    android:layout_width="128dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp" />
+
+                <include
+                    android:id="@+id/kpiTrialLicenses"
+                    layout="@layout/include_dashboard_kpi_card"
+                    android:layout_width="128dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp" />
+
+                <include
+                    android:id="@+id/kpiExpiredLicenses"
+                    layout="@layout/include_dashboard_kpi_card"
+                    android:layout_width="128dp"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+        </HorizontalScrollView>
+
+        <!-- Business Performance -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_lg"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:fontFamily="@font/poppinsbold"
+                android:text="Business Performance"
+                android:textColor="@color/colorTextPrimary"
+                android:textSize="@dimen/text_subtitle" />
+
+            <LinearLayout
+                android:id="@+id/monthFilterChip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_month_chip"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="10dp"
+                android:paddingTop="6dp"
+                android:paddingEnd="10dp"
+                android:paddingBottom="6dp">
+
+                <ImageView
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_calendar"
+                    app:tint="@color/colorPrimary" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:text="This Month"
+                    android:textColor="@color/colorPrimary"
+                    android:textSize="@dimen/text_caption" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_sm"
+            android:orientation="vertical">
+
+            <include
+                android:id="@+id/perfTotalSales"
+                layout="@layout/include_dashboard_perf_large"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_sm"
+                android:orientation="horizontal">
+
+                <include
+                    android:id="@+id/perfTodaySales"
+                    layout="@layout/include_dashboard_perf_small"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="4dp"
+                    android:layout_weight="1" />
+
+                <include
+                    android:id="@+id/perfCustomersAdded"
+                    layout="@layout/include_dashboard_perf_small"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginEnd="4dp"
+                    android:layout_weight="1" />
+
+                <include
+                    android:id="@+id/perfActiveBranches"
+                    layout="@layout/include_dashboard_perf_small"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="4dp"
+                    android:layout_weight="1" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Dealer Sales -->
+        <include
+            android:id="@+id/headerDealerSales"
+            layout="@layout/include_dashboard_section_header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_lg" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_sm"
+            app:cardBackgroundColor="@color/colorSurface"
+            app:cardCornerRadius="@dimen/radius_md"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/colorBorder"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="@dimen/spacing_md">
+
+                <FrameLayout
+                    android:layout_width="0dp"
+                    android:layout_height="200dp"
+                    android:layout_weight="1">
+
+                    <com.github.mikephil.charting.charts.PieChart
+                        android:id="@+id/chartDealerSales"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent" />
+
+                    <TextView
+                        android:id="@+id/chartDealerEmpty"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:fontFamily="@font/poppinsregular"
+                        android:gravity="center"
+                        android:text="No dealer sales data yet"
+                        android:textColor="@color/colorTextSecondary"
+                        android:visibility="gone" />
+                </FrameLayout>
+
+                <LinearLayout
+                    android:id="@+id/dealerLegendContainer"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginStart="@dimen/spacing_sm"
+                    android:layout_weight="1"
+                    android:orientation="vertical" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Attention Required -->
+        <include
+            android:id="@+id/headerAttention"
+            layout="@layout/include_dashboard_section_header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_lg" />
+
+        <LinearLayout
+            android:id="@+id/attentionContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_sm"
+            android:orientation="vertical" />
+
+        <!-- Recent Customers -->
+        <include
+            android:id="@+id/headerRecentCustomers"
+            layout="@layout/include_dashboard_section_header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_lg" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_sm"
+            app:cardBackgroundColor="@color/colorSurface"
+            app:cardCornerRadius="@dimen/radius_md"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/colorBorder"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:id="@+id/recentCustomersContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="@dimen/spacing_md" />
+
+            <TextView
+                android:id="@+id/recentCustomersEmpty"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/poppinsregular"
+                android:gravity="center"
+                android:padding="@dimen/spacing_lg"
+                android:text="No customers yet"
+                android:textColor="@color/colorTextSecondary"
+                android:visibility="gone" />
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Quick Actions -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:fontFamily="@font/poppinsmedium"
-            android:gravity="center"
-            android:padding="8dp"
-            android:text="Admin Dashboard"
-            android:textColor="@color/blue_grey_900"
-            android:textSize="16sp" />
+            android:layout_marginTop="@dimen/spacing_xl"
+            android:fontFamily="@font/poppinsbold"
+            android:text="Quick Actions"
+            android:textColor="@color/colorTextPrimary"
+            android:textSize="@dimen/text_subtitle" />
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="100dp"
+            android:layout_marginTop="@dimen/spacing_sm"
             android:orientation="horizontal">
 
-            <androidx.cardview.widget.CardView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginEnd="6dp"
-                android:layout_weight="1"
-                app:cardBackgroundColor="#CFEBEF"
-                app:cardCornerRadius="10dp"
-                app:cardElevation="4dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:orientation="vertical"
-                    android:padding="10dp">
-
-                    <TextView
-                        android:id="@+id/totalCustomer"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:fontFamily="@font/poppinsmedium"
-                        android:text="0"
-                        android:textColor="@color/black"
-                        android:textSize="20sp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:fontFamily="@font/poppinsregular"
-                        android:gravity="center"
-                        android:text="Total\nCustomers"
-                        android:textColor="@color/black"
-                        android:textSize="12sp" />
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
-
-            <androidx.cardview.widget.CardView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginEnd="12dp"
-                android:layout_weight="1"
-                app:cardBackgroundColor="#CFEBEF"
-                app:cardCornerRadius="10dp"
-                app:cardElevation="4dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:orientation="vertical"
-                    android:padding="10dp">
-
-                    <TextView
-                        android:id="@+id/totalDealer"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:fontFamily="@font/poppinsmedium"
-                        android:text="0"
-                        android:textColor="@color/black"
-                        android:textSize="20sp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:fontFamily="@font/poppinsregular"
-                        android:gravity="center"
-                        android:text="Total\nDealers"
-                        android:textColor="@color/black"
-                        android:textSize="12sp" />
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <include layout="@layout/include_dashboard_stat"
-                android:id="@+id/statActiveCustomer"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginEnd="6dp"
-                android:layout_weight="1" />
-
-            <include layout="@layout/include_dashboard_stat"
-                android:id="@+id/statTrialCustomer"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginEnd="12dp"
-                android:layout_weight="1" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <include layout="@layout/include_dashboard_stat"
-                android:id="@+id/statExpiredCustomer"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginEnd="6dp"
-                android:layout_weight="1" />
-
-            <include layout="@layout/include_dashboard_stat"
-                android:id="@+id/statActiveLicenses"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginEnd="12dp"
-                android:layout_weight="1" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <include layout="@layout/include_dashboard_stat"
-                android:id="@+id/statExpiringLicenses"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginEnd="6dp"
-                android:layout_weight="1" />
-
-            <include layout="@layout/include_dashboard_stat"
-                android:id="@+id/statExpiredLicenses"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginEnd="12dp"
-                android:layout_weight="1" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <include layout="@layout/include_dashboard_stat"
-                android:id="@+id/statBranches"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginEnd="6dp"
-                android:layout_weight="1" />
-
-            <include layout="@layout/include_dashboard_stat"
-                android:id="@+id/statDevices"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginEnd="12dp"
-                android:layout_weight="1" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:orientation="horizontal">
-
-            <androidx.cardview.widget.CardView
+            <com.google.android.material.card.MaterialCardView
                 android:id="@+id/customerRegistration"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="15dp"
-                android:layout_marginEnd="8dp"
-                android:layout_marginBottom="10dp"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="4dp"
                 android:layout_weight="1"
-                app:cardCornerRadius="10dp">
+                app:cardBackgroundColor="@color/colorSurface"
+                app:cardCornerRadius="@dimen/radius_md"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/colorBorder"
+                app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="130dp"
+                    android:layout_height="match_parent"
                     android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="8dp">
+                    android:paddingStart="6dp"
+                    android:paddingTop="@dimen/spacing_sm"
+                    android:paddingEnd="6dp"
+                    android:paddingBottom="@dimen/spacing_sm">
 
                     <ImageView
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:src="@drawable/customer_registration" />
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:background="@drawable/bg_quick_action_blue"
+                        android:contentDescription="Add Customer"
+                        android:padding="8dp"
+                        android:src="@drawable/ic_nav_add"
+                        app:tint="@color/colorPrimary" />
 
                     <TextView
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
+                        android:layout_marginTop="@dimen/spacing_xs"
+                        android:ellipsize="end"
                         android:fontFamily="@font/poppinsmedium"
                         android:gravity="center"
+                        android:maxLines="2"
+                        android:minLines="2"
                         android:text="Add Customer"
-                        android:textColor="@color/blue_grey_900"
-                        android:textSize="14sp" />
+                        android:textColor="@color/colorTextPrimary"
+                        android:textSize="10sp" />
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
+            </com.google.android.material.card.MaterialCardView>
 
-            <androidx.cardview.widget.CardView
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/quickAddDealer"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="4dp"
+                android:layout_weight="1"
+                app:cardBackgroundColor="@color/colorSurface"
+                app:cardCornerRadius="@dimen/radius_md"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/colorBorder"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingStart="6dp"
+                    android:paddingTop="@dimen/spacing_sm"
+                    android:paddingEnd="6dp"
+                    android:paddingBottom="@dimen/spacing_sm">
+
+                    <ImageView
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:background="@drawable/bg_quick_action_green"
+                        android:contentDescription="Add Dealer"
+                        android:padding="8dp"
+                        android:src="@drawable/ic_business"
+                        app:tint="@color/statusActive" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_xs"
+                        android:ellipsize="end"
+                        android:fontFamily="@font/poppinsmedium"
+                        android:gravity="center"
+                        android:maxLines="2"
+                        android:minLines="2"
+                        android:text="Add Dealer"
+                        android:textColor="@color/colorTextPrimary"
+                        android:textSize="10sp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/quickLicenses"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="4dp"
+                android:layout_weight="1"
+                app:cardBackgroundColor="@color/colorSurface"
+                app:cardCornerRadius="@dimen/radius_md"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/colorBorder"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingStart="6dp"
+                    android:paddingTop="@dimen/spacing_sm"
+                    android:paddingEnd="6dp"
+                    android:paddingBottom="@dimen/spacing_sm">
+
+                    <ImageView
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:background="@drawable/bg_quick_action_orange"
+                        android:contentDescription="Licenses"
+                        android:padding="8dp"
+                        android:src="@drawable/ic_report_licenses"
+                        app:tint="@color/statusTrial" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_xs"
+                        android:ellipsize="end"
+                        android:fontFamily="@font/poppinsmedium"
+                        android:gravity="center"
+                        android:maxLines="2"
+                        android:minLines="2"
+                        android:text="Licenses"
+                        android:textColor="@color/colorTextPrimary"
+                        android:textSize="10sp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
                 android:id="@+id/onBoardCustomerList"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:layout_marginEnd="15dp"
-                android:layout_marginBottom="10dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="4dp"
                 android:layout_weight="1"
-                app:cardCornerRadius="10dp">
+                app:cardBackgroundColor="@color/colorSurface"
+                app:cardCornerRadius="@dimen/radius_md"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/colorBorder"
+                app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="130dp"
+                    android:layout_height="match_parent"
                     android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="8dp">
+                    android:paddingStart="6dp"
+                    android:paddingTop="@dimen/spacing_sm"
+                    android:paddingEnd="6dp"
+                    android:paddingBottom="@dimen/spacing_sm">
 
                     <ImageView
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:src="@drawable/handshake" />
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:background="@drawable/bg_quick_action_purple"
+                        android:contentDescription="Reports"
+                        android:padding="8dp"
+                        android:src="@drawable/ic_nav_reports"
+                        app:tint="@color/deepPurple" />
 
                     <TextView
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
+                        android:layout_marginTop="@dimen/spacing_xs"
+                        android:ellipsize="end"
                         android:fontFamily="@font/poppinsmedium"
                         android:gravity="center"
-                        android:text="Customers"
-                        android:textColor="@color/blue_grey_900"
-                        android:textSize="14sp" />
+                        android:maxLines="2"
+                        android:minLines="2"
+                        android:text="Reports"
+                        android:textColor="@color/colorTextPrimary"
+                        android:textSize="10sp" />
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
+            </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
+
+        <TextView
+            android:id="@+id/totalCustomer"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/totalDealer"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone" />
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>
