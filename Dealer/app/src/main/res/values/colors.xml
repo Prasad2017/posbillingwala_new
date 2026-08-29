@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#4862b7</color>
+    <color name="colorPrimary">#2563EB</color>
     <color name="colorPrimaryDark">#ff0000</color>
     <color name="colorAccent">#000</color>
     <color name="white">#fff</color>
@@ -80,6 +80,22 @@
 
 
     <color name="in_app_snack_bar_text_color">#37474F</color>
+
+    <color name="colorBackground">#F7F9FC</color>
+    <color name="colorSurface">#FFFFFF</color>
+    <color name="colorBorder">#E5E7EB</color>
+    <color name="colorTextPrimary">#1F2937</color>
+    <color name="colorTextSecondary">#6B7280</color>
+    <color name="colorTextHint">#9CA3AF</color>
+    <color name="colorPrimaryLight">#DBEAFE</color>
+    <color name="statusActive">#16A34A</color>
+    <color name="statusActiveBg">#DCFCE7</color>
+    <color name="statusTrial">#F59E0B</color>
+    <color name="statusTrialBg">#FEF3C7</color>
+    <color name="statusExpired">#DC2626</color>
+    <color name="statusExpiredBg">#FEE2E2</color>
+    <color name="statusSuspended">#6B7280</color>
+    <color name="statusSuspendedBg">#F3F4F6</color>
 
     <color name="negative_button">#00f</color>
     <color name="positive_button">#f00</color>

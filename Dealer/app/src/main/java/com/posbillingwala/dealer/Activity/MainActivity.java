@@ -157,7 +157,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         BottomSheetUi.showConfirm(MainActivity.this, "Logout", "Do you want to logout from application?",
                 "YES", "NO", false, () -> {
                     AuthTokens.clear(MainActivity.this);
-                    Common.saveUserData(MainActivity.this, "userId", "");
 
                     File file1 = new File("data/data/" + getPackageName() + "/shared_prefs/user.xml");
                     if (file1.exists()) {
@@ -165,7 +164,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     }
 
                     Intent intent = new Intent(MainActivity.this, Login.class);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     startActivity(intent);
                     finish();
                 });

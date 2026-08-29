@@ -13,8 +13,8 @@
         <form class="row g-3" method="POST" action="{{ route('login') }}">
             @csrf
             <div class="col-12">
-                <label for="login" class="form-label">Email or Aadhar Number</label>
-                <input id="login" type="text" class="form-control pb-field @error('login') is-invalid @enderror" name="login" value="{{ old('login', old('email', old('aadhar_number'))) }}" required autocomplete="username" placeholder="Admin email or dealer Aadhar number" autofocus>
+                <label for="login" class="form-label">Email, mobile, or Aadhaar</label>
+                <input id="login" type="text" class="form-control pb-field @error('login') is-invalid @enderror" name="login" value="{{ old('login', old('email', old('aadhar_number'))) }}" required autocomplete="username" placeholder="Admin email, or dealer mobile / Aadhaar" autofocus>
 
                 @error('login')
                 <span class="invalid-feedback" role="alert"><strong>{{ $message }}</strong></span>

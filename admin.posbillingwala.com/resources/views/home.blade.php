@@ -5,7 +5,8 @@
   $trendClass = function ($label) {
       return (strpos((string)$label, '↓') !== false) ? 'down' : 'up';
   };
-  $userName = Auth::user()->name ?? 'Admin';
+  $isDealerDashboard = $isDealerDashboard ?? false;
+  $userName = Auth::user()->name ?? ($isDealerDashboard ? 'Dealer' : 'Admin');
   $payments = $dashboard['paymentSummary']['items'] ?? [];
   $categories = $dashboard['topCategories'] ?? [];
   $categoryColors = ['#2563eb', '#16a34a', '#ea580c', '#7c3aed', '#94a3b8'];
@@ -37,6 +38,7 @@
                             <i class='bx bx-calendar'></i>
                             <input type="date" name="date" class="pb-date-input pb-filter-auto" value="{{ $selectedDate }}" max="{{ date('Y-m-d') }}" aria-label="Select date">
                         </div>
+                        @unless($isDealerDashboard)
                         <div class="pb-filter-field">
                             <label class="pb-filter-label">Dealer</label>
                             <select name="dealer_id" class="form-select form-select-sm pb-select-search pb-filter-auto" data-placeholder="All dealers">
@@ -46,6 +48,7 @@
                                 @endforeach
                             </select>
                         </div>
+                        @endunless
                         <div class="pb-filter-field">
                             <label class="pb-filter-label">Customer</label>
                             <select name="customer_id" class="form-select form-select-sm pb-select-search pb-filter-auto" data-placeholder="All customers">
@@ -63,7 +66,7 @@
                                 <option value="online" @if(($filters['payment'] ?? '') === 'online') selected @endif>Online (UPI/Bank/Card)</option>
                             </select>
                         </div>
-                        @if(!$isToday || !empty($filters['dealer_id']) || !empty($filters['customer_id']) || !empty($filters['payment']))
+                        @if(!$isToday || (!$isDealerDashboard && !empty($filters['dealer_id'])) || !empty($filters['customer_id']) || !empty($filters['payment']))
                         <a href="{{ url('home') }}" class="btn btn-outline-primary btn-sm">Reset</a>
                         @endif
                     </form>
@@ -75,6 +78,7 @@
         </div>
 
         <div class="row g-3 mb-3">
+            @unless($isDealerDashboard)
             <div class="col-md-3 col-6">
                 <a class="kpi-card kpi-blue" href="{{ url('dealer/all') }}">
                     <span class="kpi-icon blue"><i class='bx bx-store-alt'></i></span>
@@ -82,6 +86,7 @@
                     <span class="kpi-value">{{ number_format($dashboard['totalDealers'] ?? 0) }}</span>
                 </a>
             </div>
+            @endunless
             <div class="col-md-3 col-6">
                 <a class="kpi-card kpi-purple" href="{{ url('customers/all') }}">
                     <span class="kpi-icon purple"><i class='bx bx-group'></i></span>
@@ -94,7 +99,7 @@
 
         <div class="row g-3 mb-3">
             <div class="col-md-3 col-6">
-                <a class="kpi-card kpi-blue" href="{{ url('sales/dashboard') }}">
+                <a class="kpi-card kpi-blue" href="{{ $isDealerDashboard ? url('home') : url('sales/dashboard') }}">
                     <span class="kpi-icon blue"><i class='bx bx-shopping-bag'></i></span>
                     <span class="kpi-label">Total Sales</span>
                     <span class="kpi-value">{{ \App\Services\AdminMetrics::rupee($dashboard['totalSales']) }}</span>
@@ -102,7 +107,7 @@
                 </a>
             </div>
             <div class="col-md-3 col-6">
-                <a class="kpi-card kpi-green" href="{{ url('sales/invoices') }}?date={{ $selectedDate }}&dealer_id={{ $filters['dealer_id'] ?? '' }}&customer_id={{ $filters['customer_id'] ?? '' }}&payment={{ $filters['payment'] ?? '' }}">
+                <a class="kpi-card kpi-green" href="{{ $isDealerDashboard ? url('home') : url('sales/invoices').'?date='.$selectedDate.'&dealer_id='.($filters['dealer_id'] ?? '').'&customer_id='.($filters['customer_id'] ?? '').'&payment='.($filters['payment'] ?? '') }}">
                     <span class="kpi-icon green"><i class='bx bx-receipt'></i></span>
                     <span class="kpi-label">Total Bills</span>
                     <span class="kpi-value">{{ number_format($dashboard['totalBills']) }}</span>
@@ -110,7 +115,7 @@
                 </a>
             </div>
             <div class="col-md-3 col-6">
-                <a class="kpi-card kpi-orange" href="{{ url('sales/overview') }}">
+                <a class="kpi-card kpi-orange" href="{{ $isDealerDashboard ? url('home') : url('sales/overview') }}">
                     <span class="kpi-icon orange"><i class='bx bx-package'></i></span>
                     <span class="kpi-label">Total Items Sold</span>
                     <span class="kpi-value">{{ number_format($dashboard['itemsSold']) }}</span>
@@ -120,6 +125,7 @@
         </div>
 
         <div class="row g-3 mb-3">
+            @unless($isDealerDashboard)
             <div class="col-lg-6">
                 <div class="card h-100">
                     <div class="card-body">
@@ -150,7 +156,8 @@
                     </div>
                 </div>
             </div>
-            <div class="col-lg-6">
+            @endunless
+            <div class="{{ $isDealerDashboard ? 'col-lg-12' : 'col-lg-6' }}">
                 <div class="card h-100">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -232,7 +239,9 @@
                             @endforeach
                         </div>
                         @endif
+                        @unless($isDealerDashboard)
                         <a href="{{ url('reports') }}" class="pb-view-report-link mt-2">View Full Report</a>
+                        @endunless
                     </div>
                 </div>
             </div>
@@ -244,14 +253,18 @@
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h6 class="section-title mb-0">Recent Transactions</h6>
+                            @unless($isDealerDashboard)
                             <a href="{{ url('sales/invoices') }}?date={{ $selectedDate }}&dealer_id={{ $filters['dealer_id'] ?? '' }}&customer_id={{ $filters['customer_id'] ?? '' }}&payment={{ $filters['payment'] ?? '' }}" class="btn btn-outline-primary btn-sm">View All</a>
+                            @endunless
                         </div>
                         <div class="table-responsive">
                             <table class="table pb-transactions-table">
                                 <thead>
                                     <tr>
                                         <th>Bill No.</th>
+                                        @unless($isDealerDashboard)
                                         <th>Dealer</th>
+                                        @endunless
                                         <th>Customer / Shop</th>
                                         <th>License</th>
                                         <th>Amount</th>
@@ -268,8 +281,16 @@
                                         $paymentLabel = \App\Services\AdminMetrics::normalizePaymentLabel($inv->paymentMode ?? '');
                                     @endphp
                                     <tr>
-                                        <td><a href="{{ url('sales/invoices/'.$inv->invoiceId) }}">{{ $inv->invoiceNumber }}</a></td>
+                                        <td>
+                                            @if($isDealerDashboard)
+                                            {{ $inv->invoiceNumber }}
+                                            @else
+                                            <a href="{{ url('sales/invoices/'.$inv->invoiceId) }}">{{ $inv->invoiceNumber }}</a>
+                                            @endif
+                                        </td>
+                                        @unless($isDealerDashboard)
                                         <td>{{ $inv->dealerName ?: '—' }}</td>
+                                        @endunless
                                         <td>
                                             <span class="pb-customer-cell">
                                                 <span class="pb-customer-avatar">{{ $initial }}</span>
@@ -287,7 +308,7 @@
                                         <td>{{ $timeLabel }}</td>
                                     </tr>
                                 @empty
-                                    <tr><td colspan="7">
+                                    <tr><td colspan="{{ $isDealerDashboard ? '6' : '7' }}">
                                         @include('layouts.empty-state', [
                                             'compact' => true,
                                             'title' => 'No transactions for this date',

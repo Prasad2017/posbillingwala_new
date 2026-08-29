@@ -23,6 +23,12 @@ public class AllApiResponse {
     @SerializedName("tokenExpiresAt")
     @Expose
     private String tokenExpiresAt;
+    @SerializedName("name")
+    @Expose
+    private String name;
+    @SerializedName("contact_number")
+    @Expose
+    private String contactNumber;
     @SerializedName("customerResponse")
     @Expose
     private List<CustomerResponse> customerResponseList;
@@ -71,6 +77,117 @@ public class AllApiResponse {
     @SerializedName("expiredPercent")
     @Expose
     private String expiredPercent;
+    @SerializedName("activeLicenses")
+    @Expose
+    private String activeLicenses;
+    @SerializedName("expiringLicenses")
+    @Expose
+    private String expiringLicenses;
+    @SerializedName("expiredLicenses")
+    @Expose
+    private String expiredLicenses;
+    @SerializedName("totalBranches")
+    @Expose
+    private String totalBranches;
+    @SerializedName("trialLicenses")
+    @Expose
+    private String trialLicenses;
+    @SerializedName("expiringLicenses7Days")
+    @Expose
+    private String expiringLicenses7Days;
+    @SerializedName("trialLicensesExpiringTomorrow")
+    @Expose
+    private String trialLicensesExpiringTomorrow;
+    @SerializedName("customersAddedThisMonth")
+    @Expose
+    private String customersAddedThisMonth;
+    @SerializedName("netSales")
+    @Expose
+    private String netSales;
+    @SerializedName("todaySales")
+    @Expose
+    private String todaySales;
+    @SerializedName("notificationCount")
+    @Expose
+    private String notificationCount;
+    @SerializedName("salesSparkline")
+    @Expose
+    private List<String> salesSparkline;
+    @SerializedName("dealerSalesResponse")
+    @Expose
+    private List<DealerSalesResponse> dealerSalesResponseList;
+    @SerializedName("totalCustomerTrend")
+    @Expose
+    private String totalCustomerTrend;
+    @SerializedName("activeCustomerTrend")
+    @Expose
+    private String activeCustomerTrend;
+    @SerializedName("trialCustomerTrend")
+    @Expose
+    private String trialCustomerTrend;
+    @SerializedName("expiredCustomerTrend")
+    @Expose
+    private String expiredCustomerTrend;
+    @SerializedName("activeLicensesTrend")
+    @Expose
+    private String activeLicensesTrend;
+    @SerializedName("expiringLicensesTrend")
+    @Expose
+    private String expiringLicensesTrend;
+    @SerializedName("trialLicensesTrend")
+    @Expose
+    private String trialLicensesTrend;
+    @SerializedName("expiredLicensesTrend")
+    @Expose
+    private String expiredLicensesTrend;
+    @SerializedName("netSalesTrend")
+    @Expose
+    private String netSalesTrend;
+    @SerializedName("todaySalesTrend")
+    @Expose
+    private String todaySalesTrend;
+    @SerializedName("customersAddedTrend")
+    @Expose
+    private String customersAddedTrend;
+    @SerializedName("activeBranchesTrend")
+    @Expose
+    private String activeBranchesTrend;
+    @SerializedName("totalCustomerTrendLabel")
+    @Expose
+    private String totalCustomerTrendLabel;
+    @SerializedName("activeCustomerTrendLabel")
+    @Expose
+    private String activeCustomerTrendLabel;
+    @SerializedName("trialCustomerTrendLabel")
+    @Expose
+    private String trialCustomerTrendLabel;
+    @SerializedName("expiredCustomerTrendLabel")
+    @Expose
+    private String expiredCustomerTrendLabel;
+    @SerializedName("activeLicensesTrendLabel")
+    @Expose
+    private String activeLicensesTrendLabel;
+    @SerializedName("expiringLicensesTrendLabel")
+    @Expose
+    private String expiringLicensesTrendLabel;
+    @SerializedName("trialLicensesTrendLabel")
+    @Expose
+    private String trialLicensesTrendLabel;
+    @SerializedName("expiredLicensesTrendLabel")
+    @Expose
+    private String expiredLicensesTrendLabel;
+    @SerializedName("netSalesTrendLabel")
+    @Expose
+    private String netSalesTrendLabel;
+    @SerializedName("todaySalesTrendLabel")
+    @Expose
+    private String todaySalesTrendLabel;
+    @SerializedName("customersAddedTrendLabel")
+    @Expose
+    private String customersAddedTrendLabel;
+    @SerializedName("activeBranchesTrendLabel")
+    @Expose
+    private String activeBranchesTrendLabel;
 
 
     public String getStatus() {
@@ -111,6 +228,14 @@ public class AllApiResponse {
 
     public void setTokenExpiresAt(String tokenExpiresAt) {
         this.tokenExpiresAt = tokenExpiresAt;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getContactNumber() {
+        return contactNumber;
     }
 
     public List<CustomerResponse> getCustomerResponseList() {
@@ -212,4 +337,42 @@ public class AllApiResponse {
     public String getExpiredPercent() {
         return expiredPercent;
     }
+
+    public String getActiveLicenses() { return activeLicenses; }
+    public String getExpiringLicenses() { return expiringLicenses; }
+    public String getExpiredLicenses() { return expiredLicenses; }
+    public String getTotalBranches() { return totalBranches; }
+    public String getTrialLicenses() { return trialLicenses; }
+    public String getExpiringLicenses7Days() { return expiringLicenses7Days; }
+    public String getTrialLicensesExpiringTomorrow() { return trialLicensesExpiringTomorrow; }
+    public String getCustomersAddedThisMonth() { return customersAddedThisMonth; }
+    public String getNetSales() { return netSales; }
+    public String getTodaySales() { return todaySales; }
+    public String getNotificationCount() { return notificationCount; }
+    public List<String> getSalesSparkline() { return salesSparkline; }
+    public List<DealerSalesResponse> getDealerSalesResponseList() { return dealerSalesResponseList; }
+    public String getTotalCustomerTrend() { return totalCustomerTrend; }
+    public String getActiveCustomerTrend() { return activeCustomerTrend; }
+    public String getTrialCustomerTrend() { return trialCustomerTrend; }
+    public String getExpiredCustomerTrend() { return expiredCustomerTrend; }
+    public String getActiveLicensesTrend() { return activeLicensesTrend; }
+    public String getExpiringLicensesTrend() { return expiringLicensesTrend; }
+    public String getTrialLicensesTrend() { return trialLicensesTrend; }
+    public String getExpiredLicensesTrend() { return expiredLicensesTrend; }
+    public String getNetSalesTrend() { return netSalesTrend; }
+    public String getTodaySalesTrend() { return todaySalesTrend; }
+    public String getCustomersAddedTrend() { return customersAddedTrend; }
+    public String getActiveBranchesTrend() { return activeBranchesTrend; }
+    public String getTotalCustomerTrendLabel() { return totalCustomerTrendLabel; }
+    public String getActiveCustomerTrendLabel() { return activeCustomerTrendLabel; }
+    public String getTrialCustomerTrendLabel() { return trialCustomerTrendLabel; }
+    public String getExpiredCustomerTrendLabel() { return expiredCustomerTrendLabel; }
+    public String getActiveLicensesTrendLabel() { return activeLicensesTrendLabel; }
+    public String getExpiringLicensesTrendLabel() { return expiringLicensesTrendLabel; }
+    public String getTrialLicensesTrendLabel() { return trialLicensesTrendLabel; }
+    public String getExpiredLicensesTrendLabel() { return expiredLicensesTrendLabel; }
+    public String getNetSalesTrendLabel() { return netSalesTrendLabel; }
+    public String getTodaySalesTrendLabel() { return todaySalesTrendLabel; }
+    public String getCustomersAddedTrendLabel() { return customersAddedTrendLabel; }
+    public String getActiveBranchesTrendLabel() { return activeBranchesTrendLabel; }
 }

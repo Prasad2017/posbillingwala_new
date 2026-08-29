@@ -1,323 +1,600 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:ads="http://schemas.android.com/apk/res-auto"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/colorBackground"
+    android:clipToPadding="false"
+    android:paddingBottom="@dimen/spacing_xl"
     tools:context=".Fragment.Home">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingBottom="20dp">
+        android:paddingStart="@dimen/spacing_lg"
+        android:paddingTop="@dimen/spacing_md"
+        android:paddingEnd="@dimen/spacing_lg">
 
-        <ImageView
-            android:layout_width="match_parent"
-            android:layout_height="72dp"
-            android:layout_gravity="center"
-            android:adjustViewBounds="true"
-            android:contentDescription="@string/app_name"
-            android:paddingStart="24dp"
-            android:paddingTop="16dp"
-            android:paddingEnd="24dp"
-            android:scaleType="fitCenter"
-            android:src="@drawable/app_logo" />
-
+        <!-- Greeting -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
-            android:layout_marginTop="16dp"
-            android:layout_marginEnd="12dp"
+            android:gravity="center_vertical"
             android:orientation="horizontal">
 
-            <androidx.cardview.widget.CardView
+            <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="6dp"
                 android:layout_weight="1"
-                app:cardBackgroundColor="#DBEAFE"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="0dp">
+                android:orientation="vertical">
 
-                <LinearLayout
+                <TextView
+                    android:id="@+id/greetingText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="12dp">
+                    android:fontFamily="@font/poppinsbold"
+                    android:text="Good Morning, Dealer 👋"
+                    android:textColor="@color/colorTextPrimary"
+                    android:textSize="@dimen/text_heading" />
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:fontFamily="@font/poppinsregular"
-                        android:text="Total"
-                        android:textColor="@color/light_black"
-                        android:textSize="12sp" />
+                <TextView
+                    android:id="@+id/greetingSubtext"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:fontFamily="@font/poppinsregular"
+                    android:text="Here's what's happening with your business today."
+                    android:textColor="@color/colorTextSecondary"
+                    android:textSize="@dimen/text_body" />
+            </LinearLayout>
 
-                    <TextView
-                        android:id="@+id/totalCustomer"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:fontFamily="@font/poppinsmedium"
-                        android:text="0"
-                        android:textColor="@color/black"
-                        android:textSize="20sp" />
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_month_chip"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="10dp"
+                android:paddingTop="6dp"
+                android:paddingEnd="10dp"
+                android:paddingBottom="6dp">
 
-            <androidx.cardview.widget.CardView
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_calendar"
+                    app:tint="@color/colorPrimary" />
+
+                <TextView
+                    android:id="@+id/dateText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:textColor="@color/colorTextPrimary"
+                    android:textSize="@dimen/text_caption"
+                    tools:text="25 May 2024" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Business Overview — horizontal scroll -->
+        <include
+            android:id="@+id/headerBusinessOverview"
+            layout="@layout/include_dashboard_section_header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_lg" />
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_sm"
+            android:clipToPadding="false"
+            android:overScrollMode="never"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingEnd="@dimen/spacing_xs">
+
+                <include
+                    android:id="@+id/kpiTotalCustomer"
+                    layout="@layout/include_dashboard_kpi_card"
+                    android:layout_width="128dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp" />
+
+                <include
+                    android:id="@+id/kpiActiveCustomer"
+                    layout="@layout/include_dashboard_kpi_card"
+                    android:layout_width="128dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp" />
+
+                <include
+                    android:id="@+id/kpiTrialCustomer"
+                    layout="@layout/include_dashboard_kpi_card"
+                    android:layout_width="128dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp" />
+
+                <include
+                    android:id="@+id/kpiExpiredCustomer"
+                    layout="@layout/include_dashboard_kpi_card"
+                    android:layout_width="128dp"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+        </HorizontalScrollView>
+
+        <!-- License Overview — horizontal scroll -->
+        <include
+            android:id="@+id/headerLicenseOverview"
+            layout="@layout/include_dashboard_section_header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_lg" />
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_sm"
+            android:clipToPadding="false"
+            android:overScrollMode="never"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingEnd="@dimen/spacing_xs">
+
+                <include
+                    android:id="@+id/kpiActiveLicenses"
+                    layout="@layout/include_dashboard_kpi_card"
+                    android:layout_width="128dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp" />
+
+                <include
+                    android:id="@+id/kpiExpiringLicenses"
+                    layout="@layout/include_dashboard_kpi_card"
+                    android:layout_width="128dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp" />
+
+                <include
+                    android:id="@+id/kpiTrialLicenses"
+                    layout="@layout/include_dashboard_kpi_card"
+                    android:layout_width="128dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp" />
+
+                <include
+                    android:id="@+id/kpiExpiredLicenses"
+                    layout="@layout/include_dashboard_kpi_card"
+                    android:layout_width="128dp"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+        </HorizontalScrollView>
+
+        <!-- Business Performance -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_lg"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
                 android:layout_weight="1"
-                app:cardBackgroundColor="#DCFCE7"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="0dp">
+                android:fontFamily="@font/poppinsbold"
+                android:text="Business Performance"
+                android:textColor="@color/colorTextPrimary"
+                android:textSize="@dimen/text_subtitle" />
 
-                <LinearLayout
-                    android:layout_width="match_parent"
+            <LinearLayout
+                android:id="@+id/monthFilterChip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_month_chip"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="10dp"
+                android:paddingTop="6dp"
+                android:paddingEnd="10dp"
+                android:paddingBottom="6dp">
+
+                <ImageView
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_calendar"
+                    app:tint="@color/colorPrimary" />
+
+                <TextView
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="12dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:fontFamily="@font/poppinsregular"
-                        android:text="Active"
-                        android:textColor="@color/light_black"
-                        android:textSize="12sp" />
-
-                    <TextView
-                        android:id="@+id/activeCustomer"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:fontFamily="@font/poppinsmedium"
-                        android:text="0"
-                        android:textColor="#16A34A"
-                        android:textSize="20sp" />
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
+                    android:layout_marginStart="4dp"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:text="This Month"
+                    android:textColor="@color/colorPrimary"
+                    android:textSize="@dimen/text_caption" />
+            </LinearLayout>
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginEnd="12dp"
-            android:orientation="horizontal">
+            android:layout_marginTop="@dimen/spacing_sm"
+            android:orientation="vertical">
 
-            <androidx.cardview.widget.CardView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="6dp"
-                android:layout_weight="1"
-                app:cardBackgroundColor="#FFEDD5"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="0dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="12dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:fontFamily="@font/poppinsregular"
-                        android:text="Trial"
-                        android:textColor="@color/light_black"
-                        android:textSize="12sp" />
-
-                    <TextView
-                        android:id="@+id/trialCustomer"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:fontFamily="@font/poppinsmedium"
-                        android:text="0"
-                        android:textColor="#EA580C"
-                        android:textSize="20sp" />
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
-
-            <androidx.cardview.widget.CardView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
-                android:layout_weight="1"
-                app:cardBackgroundColor="#FEE2E2"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="0dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="12dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:fontFamily="@font/poppinsregular"
-                        android:text="Expired"
-                        android:textColor="@color/light_black"
-                        android:textSize="12sp" />
-
-                    <TextView
-                        android:id="@+id/expiredCustomer"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:fontFamily="@font/poppinsmedium"
-                        android:text="0"
-                        android:textColor="#DC2626"
-                        android:textSize="20sp" />
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
-        </LinearLayout>
-
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
-            android:layout_marginTop="12dp"
-            android:layout_marginEnd="12dp"
-            app:cardBackgroundColor="@color/white"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="2dp">
+            <include
+                android:id="@+id/perfTotalSales"
+                layout="@layout/include_dashboard_perf_large"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="14dp">
+                android:layout_marginTop="@dimen/spacing_sm"
+                android:orientation="horizontal">
 
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:fontFamily="@font/poppinsmedium"
-                    android:text="Customer status"
-                    android:textColor="@color/black"
-                    android:textSize="15sp" />
+                <include
+                    android:id="@+id/perfTodaySales"
+                    layout="@layout/include_dashboard_perf_small"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="4dp"
+                    android:layout_weight="1" />
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
+                <include
+                    android:id="@+id/perfCustomersAdded"
+                    layout="@layout/include_dashboard_perf_small"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginEnd="4dp"
+                    android:layout_weight="1" />
+
+                <include
+                    android:id="@+id/perfActiveBranches"
+                    layout="@layout/include_dashboard_perf_small"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="4dp"
+                    android:layout_weight="1" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Dealer Sales -->
+        <include
+            android:id="@+id/headerDealerSales"
+            layout="@layout/include_dashboard_section_header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_lg" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_sm"
+            app:cardBackgroundColor="@color/colorSurface"
+            app:cardCornerRadius="@dimen/radius_md"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/colorBorder"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="@dimen/spacing_md">
+
+                <FrameLayout
+                    android:layout_width="0dp"
+                    android:layout_height="200dp"
+                    android:layout_weight="1">
 
                     <com.github.mikephil.charting.charts.PieChart
-                        android:id="@+id/chartDonut"
-                        android:layout_width="140dp"
-                        android:layout_height="140dp" />
+                        android:id="@+id/chartDealerSales"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent" />
 
-                    <LinearLayout
-                        android:id="@+id/legendContainer"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="12dp"
-                        android:layout_weight="1"
-                        android:orientation="vertical" />
-                </LinearLayout>
+                    <TextView
+                        android:id="@+id/chartDealerEmpty"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:fontFamily="@font/poppinsregular"
+                        android:gravity="center"
+                        android:text="No customer sales data yet"
+                        android:textColor="@color/colorTextSecondary"
+                        android:visibility="gone" />
+                </FrameLayout>
+
+                <LinearLayout
+                    android:id="@+id/dealerLegendContainer"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginStart="@dimen/spacing_sm"
+                    android:layout_weight="1"
+                    android:orientation="vertical" />
             </LinearLayout>
-        </androidx.cardview.widget.CardView>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Attention Required -->
+        <include
+            android:id="@+id/headerAttention"
+            layout="@layout/include_dashboard_section_header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_lg" />
+
+        <LinearLayout
+            android:id="@+id/attentionContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_sm"
+            android:orientation="vertical" />
+
+        <!-- Recent Customers -->
+        <include
+            android:id="@+id/headerRecentCustomers"
+            layout="@layout/include_dashboard_section_header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_lg" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_sm"
+            app:cardBackgroundColor="@color/colorSurface"
+            app:cardCornerRadius="@dimen/radius_md"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/colorBorder"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:id="@+id/recentCustomersContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="@dimen/spacing_md" />
+
+            <TextView
+                android:id="@+id/recentCustomersEmpty"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/poppinsregular"
+                android:gravity="center"
+                android:padding="@dimen/spacing_lg"
+                android:text="No customers yet"
+                android:textColor="@color/colorTextSecondary"
+                android:visibility="gone" />
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Quick Actions -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_xl"
+            android:fontFamily="@font/poppinsbold"
+            android:text="Quick Actions"
+            android:textColor="@color/colorTextPrimary"
+            android:textSize="@dimen/text_subtitle" />
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_height="100dp"
+            android:layout_marginTop="@dimen/spacing_sm"
             android:orientation="horizontal">
 
-            <androidx.cardview.widget.CardView
+            <com.google.android.material.card.MaterialCardView
                 android:id="@+id/customerRegistration"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="15dp"
-                android:layout_marginTop="10dp"
-                android:layout_marginEnd="15dp"
-                android:layout_marginBottom="10dp"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="4dp"
                 android:layout_weight="1"
-                app:cardCornerRadius="10dp">
+                app:cardBackgroundColor="@color/colorSurface"
+                app:cardCornerRadius="@dimen/radius_md"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/colorBorder"
+                app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="150dp"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="5dp">
+                    android:paddingStart="6dp"
+                    android:paddingTop="@dimen/spacing_sm"
+                    android:paddingEnd="6dp"
+                    android:paddingBottom="@dimen/spacing_sm">
 
                     <ImageView
-                        android:layout_width="50dp"
-                        android:layout_height="50dp"
-                        android:layout_gravity="center"
-                        android:layout_marginTop="15dp"
-                        android:src="@drawable/ic_person" />
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:background="@drawable/bg_quick_action_blue"
+                        android:contentDescription="Add Customer"
+                        android:padding="8dp"
+                        android:src="@drawable/ic_nav_add"
+                        app:tint="@color/colorPrimary" />
 
                     <TextView
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:layout_marginTop="20dp"
+                        android:layout_marginTop="@dimen/spacing_xs"
+                        android:ellipsize="end"
                         android:fontFamily="@font/poppinsmedium"
                         android:gravity="center"
-                        android:paddingStart="10dp"
-                        android:paddingEnd="10dp"
-                        android:text="New Customer Registration"
-                        android:textColor="@color/blue_grey_900"
-                        android:textSize="15sp" />
+                        android:maxLines="2"
+                        android:minLines="2"
+                        android:text="Add Customer"
+                        android:textColor="@color/colorTextPrimary"
+                        android:textSize="10sp" />
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
+            </com.google.android.material.card.MaterialCardView>
 
-            <androidx.cardview.widget.CardView
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/quickAddDealer"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="4dp"
+                android:layout_weight="1"
+                app:cardBackgroundColor="@color/colorSurface"
+                app:cardCornerRadius="@dimen/radius_md"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/colorBorder"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingStart="6dp"
+                    android:paddingTop="@dimen/spacing_sm"
+                    android:paddingEnd="6dp"
+                    android:paddingBottom="@dimen/spacing_sm">
+
+                    <ImageView
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:background="@drawable/bg_quick_action_green"
+                        android:contentDescription="Add Dealer"
+                        android:padding="8dp"
+                        android:src="@drawable/ic_person"
+                        app:tint="@color/statusActive" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_xs"
+                        android:ellipsize="end"
+                        android:fontFamily="@font/poppinsmedium"
+                        android:gravity="center"
+                        android:maxLines="2"
+                        android:minLines="2"
+                        android:text="Customers"
+                        android:textColor="@color/colorTextPrimary"
+                        android:textSize="10sp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/quickLicenses"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="4dp"
+                android:layout_weight="1"
+                app:cardBackgroundColor="@color/colorSurface"
+                app:cardCornerRadius="@dimen/radius_md"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/colorBorder"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingStart="6dp"
+                    android:paddingTop="@dimen/spacing_sm"
+                    android:paddingEnd="6dp"
+                    android:paddingBottom="@dimen/spacing_sm">
+
+                    <ImageView
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:background="@drawable/bg_quick_action_orange"
+                        android:contentDescription="Licenses"
+                        android:padding="8dp"
+                        android:src="@drawable/ic_report_licenses"
+                        app:tint="@color/statusTrial" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_xs"
+                        android:ellipsize="end"
+                        android:fontFamily="@font/poppinsmedium"
+                        android:gravity="center"
+                        android:maxLines="2"
+                        android:minLines="2"
+                        android:text="Licenses"
+                        android:textColor="@color/colorTextPrimary"
+                        android:textSize="10sp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
                 android:id="@+id/onBoardCustomerList"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="15dp"
-                android:layout_marginTop="10dp"
-                android:layout_marginEnd="15dp"
-                android:layout_marginBottom="10dp"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="4dp"
                 android:layout_weight="1"
-                app:cardCornerRadius="10dp">
+                app:cardBackgroundColor="@color/colorSurface"
+                app:cardCornerRadius="@dimen/radius_md"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/colorBorder"
+                app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="150dp"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="5dp">
+                    android:paddingStart="6dp"
+                    android:paddingTop="@dimen/spacing_sm"
+                    android:paddingEnd="6dp"
+                    android:paddingBottom="@dimen/spacing_sm">
 
                     <ImageView
-                        android:layout_width="50dp"
-                        android:layout_height="50dp"
-                        android:layout_gravity="center"
-                        android:layout_marginTop="15dp"
-                        android:src="@drawable/ic_business" />
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:background="@drawable/bg_quick_action_purple"
+                        android:contentDescription="Reports"
+                        android:padding="8dp"
+                        android:src="@drawable/ic_nav_export"
+                        app:tint="@color/deepPurple" />
 
                     <TextView
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:layout_marginTop="20dp"
+                        android:layout_marginTop="@dimen/spacing_xs"
+                        android:ellipsize="end"
                         android:fontFamily="@font/poppinsmedium"
                         android:gravity="center"
-                        android:paddingStart="10dp"
-                        android:paddingEnd="10dp"
-                        android:text="onBoard Customer List"
-                        android:textColor="@color/blue_grey_900"
-                        android:textSize="15sp" />
+                        android:maxLines="2"
+                        android:minLines="2"
+                        android:text="Import / Export"
+                        android:textColor="@color/colorTextPrimary"
+                        android:textSize="10sp" />
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
+            </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
 
-        <com.google.android.gms.ads.AdView
-            android:id="@+id/ad_view"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="20dp"
-            ads:adSize="SMART_BANNER"
-            ads:adUnitId="ca-app-pub-2325627373654257/9763883061" />
+        <TextView
+            android:id="@+id/totalCustomer"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/totalDealer"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone" />
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

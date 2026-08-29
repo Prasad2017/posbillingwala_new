@@ -37,6 +37,12 @@ class LoginController extends Controller
             ]);
         }
 
+        if ((int) $user->is_active !== 1) {
+            throw ValidationException::withMessages([
+                'login' => ['This account is disabled. Please contact support.'],
+            ]);
+        }
+
         if (!in_array((int) $user->role_id, [1, 2], true)) {
             throw ValidationException::withMessages([
                 'login' => ['Web login is not available for this account.'],
@@ -51,14 +57,32 @@ class LoginController extends Controller
 
     private function resolveUser(string $login): ?User
     {
-        $base = User::query()->where('is_active', 1)->whereIn('role_id', [1, 2]);
+        $base = User::query()->whereIn('role_id', [1, 2]);
 
         if (filter_var($login, FILTER_VALIDATE_EMAIL)) {
             return (clone $base)->where('email', $login)->first();
         }
 
-        if (preg_match('/^\d{12}$/', $login)) {
-            return (clone $base)->where('aadhar_number', $login)->where('role_id', 2)->first();
+        $digits = preg_replace('/\D+/', '', $login);
+
+        if (preg_match('/^\d{12}$/', $digits)) {
+            $byAadhaar = (clone $base)->where('aadhar_number', $digits)->where('role_id', 2)->first();
+            if ($byAadhaar) {
+                return $byAadhaar;
+            }
+        }
+
+        if (strlen($digits) >= 10) {
+            $mobile = substr($digits, -10);
+            $byMobile = (clone $base)->where('role_id', 2)
+                ->where(function ($query) use ($mobile, $digits) {
+                    $query->where('contact_number', $mobile)
+                        ->orWhere('contact_number', $digits);
+                })
+                ->first();
+            if ($byMobile) {
+                return $byMobile;
+            }
         }
 
         return (clone $base)->where(function ($query) use ($login) {

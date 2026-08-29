@@ -13,6 +13,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.view.WindowCompat;
 
+import com.posbillingwala.dealer.Extra.AuthTokens;
+import com.posbillingwala.dealer.Retrofit.Api;
 import com.posbillingwala.dealer.databinding.ActivitySplashScreenBinding;
 
 
@@ -26,6 +28,7 @@ public class SplashScreen extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
         super.onCreate(savedInstanceState);
+        Api.bindContext(this);
         binding = ActivitySplashScreenBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         WindowCompat.setDecorFitsSystemWindows(getWindow(), true);
@@ -49,8 +52,14 @@ public class SplashScreen extends AppCompatActivity {
                     return;
                 }
 
-                Intent i = new Intent(SplashScreen.this, Login.class);
-                startActivity(i);
+                if (AuthTokens.hasValidSession(SplashScreen.this)) {
+                    startActivity(new Intent(SplashScreen.this, MainActivity.class));
+                } else {
+                    if (AuthTokens.isTokenExpired(SplashScreen.this)) {
+                        AuthTokens.clear(SplashScreen.this);
+                    }
+                    startActivity(new Intent(SplashScreen.this, Login.class));
+                }
                 finish();
 
             }

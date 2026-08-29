@@ -47,6 +47,10 @@ public interface ApiInterface {
     @GET("getCustomerCount.php")
     Call<AllApiResponse> getCustomerCount(@Query("userId") String userId);
 
+    @GET("getCustomerSalesOverview.php")
+    Call<AllApiResponse> getCustomerSalesOverview(@Query("userId") String userId,
+                                                  @Query("limit") int limit);
+
     @FormUrlEncoded
     @POST("insertCustomer.php")
     Call<AllApiResponse> customerRegistration(@Field("userId") String userId,
