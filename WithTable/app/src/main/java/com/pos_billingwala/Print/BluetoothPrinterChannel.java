@@ -16,6 +16,8 @@ import android.widget.Toast;
 
 import androidx.core.app.ActivityCompat;
 
+import java.util.Set;
+
 import com.pos_billingwala.R;
 import com.woosim.printer.WoosimService;
 
@@ -138,7 +140,6 @@ public final class BluetoothPrinterChannel {
             }
 
             if (addr.isEmpty()) {
-                // Connect with no saved printer → device list once (no toast)
                 if (allowDevicePicker) {
                     openDevicePicker(btActivity);
                 }
@@ -147,22 +148,22 @@ public final class BluetoothPrinterChannel {
 
             if (isReady() && addr.equalsIgnoreCase(getConnectedAddress())) {
                 if (allowDevicePicker) {
-                    showToast(btActivity, btActivity.getString(R.string.connected) + " " + addr);
-                }
-                return;
-            }
-
-            if (isConnecting()) {
-                if (allowDevicePicker) {
-                    showToast(btActivity, R.string.toast_printer_connecting);
+                    showConnectedToast(btActivity, addr);
                 }
                 return;
             }
 
             if (allowDevicePicker) {
-                showToast(btActivity, R.string.toast_printer_connecting);
+                // Saved printer is not currently connected → let the user pick
+                openDevicePicker(btActivity);
+                return;
             }
-            connectInternal(addr, allowDevicePicker);
+
+            if (isConnecting()) {
+                return;
+            }
+
+            connectInternal(addr, false);
         } catch (Exception e) {
             Log.e(TAG, channelName + ": connect failed", e);
             showToast(appContext, R.string.connect_fail);
@@ -215,6 +216,32 @@ public final class BluetoothPrinterChannel {
 
     public String getSavedAddress() {
         return savedAddress != null ? savedAddress : "";
+    }
+
+    /** True when the MAC is in the phone's bonded Bluetooth list. */
+    public boolean isPairedAddress(String address) {
+        String addr = normalize(address);
+        if (addr.isEmpty()) {
+            return false;
+        }
+        try {
+            BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+            if (adapter == null) {
+                return false;
+            }
+            Set<BluetoothDevice> bonded = adapter.getBondedDevices();
+            if (bonded == null || bonded.isEmpty()) {
+                return false;
+            }
+            for (BluetoothDevice device : bonded) {
+                if (device != null && addr.equalsIgnoreCase(device.getAddress())) {
+                    return true;
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, channelName + ": isPairedAddress failed", e);
+        }
+        return false;
     }
 
     public BluetoothPrintService getPrintService() {
@@ -311,7 +338,7 @@ public final class BluetoothPrinterChannel {
                     if (userInitiatedSession && appContext != null) {
                         String name = connectedDevice != null ? connectedDevice.getName() : "";
                         String deviceLabel = name != null && !name.isEmpty() ? name : address;
-                        showToast(appContext, appContext.getString(R.string.connected) + " " + deviceLabel);
+                        showConnectedToast(appContext, deviceLabel);
                     }
                 }
 
@@ -435,6 +462,17 @@ public final class BluetoothPrinterChannel {
             Log.e(TAG, "ensureBluetoothOn failed", e);
             return false;
         }
+    }
+
+    private static void showConnectedToast(Context context, String deviceLabel) {
+        if (context == null) {
+            return;
+        }
+        String message = context.getString(R.string.toast_printer_connected);
+        if (deviceLabel != null && !deviceLabel.trim().isEmpty()) {
+            message = message + ": " + deviceLabel.trim();
+        }
+        showToast(context, message);
     }
 
     private static void showToast(Context context, int resId) {

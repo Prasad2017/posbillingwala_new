@@ -37,6 +37,7 @@ import com.pos_billingwala.Extra.ShopHeaderBuilder;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.PrinterSettingResponse;
 import com.pos_billingwala.Model.ProductCartResponse;
+import com.pos_billingwala.Print.BluetoothPrinterChannel;
 import com.pos_billingwala.Print.BluetoothPrintService;
 import com.pos_billingwala.Print.DeviceListActivity;
 import com.pos_billingwala.Print.PrintImage;
@@ -303,11 +304,22 @@ public class TestInvoiceBluetoothPrint extends BaseActivity implements View.OnCl
         return line;
     }
 
+    private String savedInvoicePrinterAddress() {
+        if (printerSettingResponseList == null || printerSettingResponseList.isEmpty()) {
+            return "";
+        }
+        String addr = printerSettingResponseList.get(0).getBluetoothAddress();
+        return addr != null ? addr : "";
+    }
+
+    private void connectInvoicePrinter() {
+        WoosimPrnMng.connectFromButton(activity, savedInvoicePrinterAddress(), activity);
+    }
+
     private void getPrinterSettingDetails() {
         printerSettingResponseList = posBillingWalaDatabase.getPrinterSettingDetails();
         if (!printerSettingResponseList.isEmpty()) {
-            String bluetoothAddress = printerSettingResponseList.get(0).getBluetoothAddress() != null
-                    ? printerSettingResponseList.get(0).getBluetoothAddress() : "";
+            String bluetoothAddress = savedInvoicePrinterAddress();
             if (!bluetoothAddress.isEmpty()) {
                 try {
                     new WoosimPrnMng(activity, bluetoothAddress, activity);
@@ -324,7 +336,7 @@ public class TestInvoiceBluetoothPrint extends BaseActivity implements View.OnCl
         if (id == R.id.backToSetting) {
             finish();
         } else if (id == R.id.connectPrinter) {
-            new WoosimPrnMng(activity, "", activity);
+            connectInvoicePrinter();
         } else if (id == R.id.testPrint) {
             runTestPrint();
         }
@@ -387,7 +399,7 @@ public class TestInvoiceBluetoothPrint extends BaseActivity implements View.OnCl
                     toastMsg = getString(R.string.toast_printer_offline_connect);
                     runOnUiThread(() -> {
                         try {
-                            new WoosimPrnMng(activity, "", TestInvoiceBluetoothPrint.this);
+                            connectInvoicePrinter();
                         } catch (Exception e) {
                             Log.e(TAG, "Connect prompt failed", e);
                         }
@@ -519,13 +531,12 @@ public class TestInvoiceBluetoothPrint extends BaseActivity implements View.OnCl
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_ENABLE_BT && resultCode == RESULT_OK) {
-            new WoosimPrnMng(activity, "", activity);
+            connectInvoicePrinter();
         } else if (requestCode == REQUEST_CONNECT_DEVICE && resultCode == RESULT_OK && data != null && data.getExtras() != null) {
             String bluetoothAddress = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
             if (bluetoothAddress != null) {
-                new WoosimPrnMng(activity, bluetoothAddress, activity);
+                BluetoothPrinterChannel.bill().onDevicePicked(bluetoothAddress);
                 if (!printerSettingResponseList.isEmpty()) {
-                    // Persist selected address into current in-memory setting for this session
                     printerSettingResponseList.get(0).setBluetoothAddress(bluetoothAddress);
                 }
             }

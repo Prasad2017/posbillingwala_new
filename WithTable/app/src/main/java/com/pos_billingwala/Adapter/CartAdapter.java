@@ -81,11 +81,23 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.MyViewHolder> 
         }
 
         holder.binding.productPrice.setText(productPriceUnit);
+        holder.binding.productPrice.setVisibility(View.GONE);
 
-        // Qty bottom sheet only from the quantity number — not − / + / price / row.
+        // Qty bottom sheet only from the quantity number — not − / + / row.
         holder.binding.getRoot().setOnClickListener(null);
-        holder.binding.productName.setOnClickListener(null);
-        holder.binding.productName.setClickable(false);
+        if (productCartResponse.isOpenPrice()) {
+            holder.binding.productName.setClickable(true);
+            holder.binding.productName.setOnClickListener(v -> {
+                int pos = holder.getBindingAdapterPosition();
+                if (pos == RecyclerView.NO_POSITION) {
+                    return;
+                }
+                setUpdateOpenPrice(productCartResponseList.get(pos));
+            });
+        } else {
+            holder.binding.productName.setOnClickListener(null);
+            holder.binding.productName.setClickable(false);
+        }
 
         holder.binding.productRemove.setOnClickListener(v -> {
             int pos = holder.getBindingAdapterPosition();
@@ -135,22 +147,9 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.MyViewHolder> 
             setUpdateQuantity(productCartResponseList.get(pos));
         });
 
-        // Open-price products only: tap amount → bottom sheet to change unit price.
-        if (productCartResponse.isOpenPrice()) {
-            holder.binding.productPrice.setClickable(true);
-            holder.binding.productPrice.setFocusable(true);
-            holder.binding.productPrice.setOnClickListener(v -> {
-                int pos = holder.getBindingAdapterPosition();
-                if (pos == RecyclerView.NO_POSITION) {
-                    return;
-                }
-                setUpdateOpenPrice(productCartResponseList.get(pos));
-            });
-        } else {
-            holder.binding.productPrice.setOnClickListener(null);
-            holder.binding.productPrice.setClickable(false);
-            holder.binding.productPrice.setFocusable(false);
-        }
+        holder.binding.productPrice.setOnClickListener(null);
+        holder.binding.productPrice.setClickable(false);
+        holder.binding.productPrice.setFocusable(false);
     }
 
     public void setUpdateQuantity(ProductCartResponse productCartResponse) {

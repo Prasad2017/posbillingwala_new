@@ -428,6 +428,7 @@
     <string name="toast_printer_not_connected_select">प्रिंटर कनेक्ट नाही. कृपया Bluetooth प्रिंटर निवडा.</string>
     <string name="toast_printer_not_found_select">सेव्ह केलेला प्रिंटर सापडला नाही. Bluetooth डिव्हाइस निवडा.</string>
     <string name="toast_test_print_sent">टेस्ट प्रिंट पाठवला</string>
+    <string name="toast_printer_connected">प्रिंटर कनेक्ट झाला</string>
     <string name="toast_printer_disconnect">प्रिंटर डिस्कनेक्ट</string>
     <string name="toast_printing_in_progress">प्रिंटिंग सुरू आहे</string>
     <string name="toast_product_added_into_cart">उत्पादन कार्टमध्ये जोडले</string>
