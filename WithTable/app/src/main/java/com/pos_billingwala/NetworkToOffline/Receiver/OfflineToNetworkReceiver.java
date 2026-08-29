@@ -268,6 +268,8 @@ public class OfflineToNetworkReceiver extends BroadcastReceiver {
                         columnOrEmpty(cursor, "packingChargeType"),
                         cursor.getString(cursor.getColumnIndex("totalAmount")),
                         cursor.getString(cursor.getColumnIndex("paymentMode")),
+                        columnOrEmpty(cursor, "cashAmount"),
+                        columnOrEmpty(cursor, "upiAmount"),
                         cursor.getString(cursor.getColumnIndex("invoiceDate")),
                         cursor.getString(cursor.getColumnIndex("invoiceType")),
                         cursor.getString(cursor.getColumnIndex("invoiceOrderStatus")),
@@ -437,14 +439,14 @@ public class OfflineToNetworkReceiver extends BroadcastReceiver {
 }
 
     public void saveInvoice(String invoiceId, String noOfTable, String invoiceNumber, String customerName, String customerMobile, String customerEmail, String customerAddress, String subTotal, String totalGSTAmount,
-                            String discount, String discountType, String packingCharge, String packingChargeType, String totalAmount, String paymentMode, String invoiceDate, String invoiceType, String invoiceOrderStatus, String invoiceNetworkStatus) {
+                            String discount, String discountType, String packingCharge, String packingChargeType, String totalAmount, String paymentMode, String cashAmount, String upiAmount, String invoiceDate, String invoiceType, String invoiceOrderStatus, String invoiceNetworkStatus) {
 
         Call<AllApiResponse> call = Api.getClient(context).saveInvoice(MainActivity.userId,
                 nz(noOfTable), nz(invoiceNumber), nz(customerName), nz(customerMobile), nz(customerEmail), nz(customerAddress),
                 nz(subTotal), nz(totalGSTAmount), nz(discount), nz(discountType),
                 nz(packingCharge).isEmpty() ? "0" : nz(packingCharge),
                 nz(packingChargeType).isEmpty() ? "Percentage" : nz(packingChargeType),
-                nz(totalAmount), nz(paymentMode),
+                nz(totalAmount), nz(paymentMode), nz(cashAmount), nz(upiAmount),
                 nz(invoiceDate), nz(invoiceType), nz(invoiceOrderStatus), nz(invoiceNetworkStatus));
         if (executeCall(call)) {
             posBillingWalaDatabase.updateSyncInvoice(invoiceId, NAME_SYNCED_WITH_SERVER);

@@ -102,6 +102,14 @@ public final class OperationalReportCharts {
                                        float subAmount, float gstAmount, float discount, float totalAmount,
                                        float fastBilling, float tableAmount, float takeAwayAmount,
                                        String periodLabel) {
+        bindSaleSummary(binding, context, subAmount, gstAmount, discount, totalAmount,
+                fastBilling, tableAmount, takeAwayAmount, periodLabel, -1f, -1f);
+    }
+
+    public static void bindSaleSummary(FragmentOperationalReportBinding binding, Context context,
+                                       float subAmount, float gstAmount, float discount, float totalAmount,
+                                       float fastBilling, float tableAmount, float takeAwayAmount,
+                                       String periodLabel, float cashTotal, float upiTotal) {
         if (binding == null || context == null) {
             return;
         }
@@ -162,6 +170,18 @@ public final class OperationalReportCharts {
         total.setLabel(context.getString(R.string.ui_total_amount));
         total.setCount(String.valueOf(totalAmount));
         amountBars.add(total);
+        if (cashTotal >= 0f) {
+            ReportRankItem cash = new ReportRankItem();
+            cash.setLabel(context.getString(R.string.ui_total_cash));
+            cash.setCount(String.valueOf(cashTotal));
+            amountBars.add(cash);
+        }
+        if (upiTotal >= 0f) {
+            ReportRankItem upi = new ReportRankItem();
+            upi.setLabel(context.getString(R.string.ui_total_upi));
+            upi.setCount(String.valueOf(upiTotal));
+            amountBars.add(upi);
+        }
         ReportUiHelper.setupBars(binding.chartBar, amountBars);
 
         float typeSum = fastBilling + tableAmount + takeAwayAmount;

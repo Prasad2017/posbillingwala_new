@@ -22,6 +22,8 @@ import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.pos_billingwala.Activity.BluetoothPrint;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Extra.BottomSheetUi;
+import com.pos_billingwala.Extra.PaymentSettlementBinder;
+import com.pos_billingwala.Extra.PaymentSettlementHelper;
 import com.pos_billingwala.Extra.ReportCursorHelper;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Fragment.CreatePos;
@@ -130,32 +132,28 @@ public class TableAdapter extends RecyclerView.Adapter<TableAdapter.MyViewHolder
         View content = LayoutInflater.from(activity).inflate(R.layout.set_payment_mode_dialog, null);
         BottomSheetDialog sheet = BottomSheetUi.showContent(activity, content, false);
 
-        TextView continueToReport = content.findViewById(R.id.continueToReport);
-        TextView dismissReport = content.findViewById(R.id.dismissReport);
-        TextView totalAmount = content.findViewById(R.id.totalAmount);
-        RadioGroup paymentGroup = content.findViewById(R.id.paymentGroup);
+        float total = ReportCursorHelper.parseAmount(invoiceResponse.getTotalAmount());
+        PaymentSettlementBinder.bind(content, total, MainActivity.currencyName,
+                invoiceResponse.getPaymentMode(),
+                new PaymentSettlementBinder.Callback() {
+                    @Override
+                    public void onConfirmed(String mode, String cashAmount, String upiAmount) {
+                        if (mode == null || mode.isEmpty()) {
+                            Toast.makeText(context, context.getString(R.string.toast_please_select_payment_mode),
+                                    Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        sheet.dismiss();
+                        posBillingWalaDatabase.updateInvoiceTablePaymentMode(
+                                invoiceNumber, tableNumber, mode, cashAmount, upiAmount);
+                        InvoiceCompanyTable.getCompanyDetails();
+                    }
 
-        totalAmount.setText("Total Amount: " + MainActivity.currencyName + invoiceResponse.getTotalAmount());
-        paymentGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(RadioGroup group, int checkedId) {
-                int selectedId = paymentGroup.getCheckedRadioButtonId();
-                RadioButton radioPayButton = group.findViewById(selectedId);
-                paymentMode = radioPayButton.getText().toString();
-            }
-        });
-
-        dismissReport.setOnClickListener(v -> sheet.dismiss());
-
-        continueToReport.setOnClickListener(v -> {
-            if (!paymentMode.isEmpty()) {
-                sheet.dismiss();
-                posBillingWalaDatabase.updateInvoiceTablePaymentMode(invoiceNumber, tableNumber, paymentMode);
-                InvoiceCompanyTable.getCompanyDetails();
-            } else {
-                Toast.makeText(context, context.getString(R.string.toast_please_select_payment_mode), Toast.LENGTH_SHORT).show();
-            }
-        });
+                    @Override
+                    public void onDismissed() {
+                        sheet.dismiss();
+                    }
+                });
     }
 
 

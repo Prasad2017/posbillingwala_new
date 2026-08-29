@@ -53,6 +53,12 @@ public class InvoiceResponse {
     @SerializedName("paymentMode")
     @Expose
     public String paymentMode;
+    @SerializedName("cashAmount")
+    @Expose
+    public String cashAmount;
+    @SerializedName("upiAmount")
+    @Expose
+    public String upiAmount;
     @SerializedName("invoiceDate")
     @Expose
     public String invoiceDate;
@@ -205,6 +211,22 @@ public class InvoiceResponse {
 
     public void setPaymentMode(String paymentMode) {
         this.paymentMode = paymentMode;
+    }
+
+    public String getCashAmount() {
+        return cashAmount != null ? cashAmount : "";
+    }
+
+    public void setCashAmount(String cashAmount) {
+        this.cashAmount = cashAmount;
+    }
+
+    public String getUpiAmount() {
+        return upiAmount != null ? upiAmount : "";
+    }
+
+    public void setUpiAmount(String upiAmount) {
+        this.upiAmount = upiAmount;
     }
 
     public String getInvoiceDate() {

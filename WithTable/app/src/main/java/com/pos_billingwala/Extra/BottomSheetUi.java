@@ -39,7 +39,7 @@ public final class BottomSheetUi {
             return;
         }
         View sheetView = LayoutInflater.from(context).inflate(R.layout.bottom_sheet_confirm, null);
-        BottomSheetDialog sheet = new BottomSheetDialog(context);
+        BottomSheetDialog sheet = create(context);
         sheet.setContentView(sheetView);
         sheet.setCancelable(cancelable);
 
@@ -72,7 +72,7 @@ public final class BottomSheetUi {
             return;
         }
         View sheetView = LayoutInflater.from(activity).inflate(R.layout.bottom_sheet_info, null);
-        BottomSheetDialog sheet = new BottomSheetDialog(activity);
+        BottomSheetDialog sheet = create(activity);
         sheet.setContentView(sheetView);
         sheet.setCancelable(cancelable);
 
@@ -120,7 +120,7 @@ public final class BottomSheetUi {
             return;
         }
         View sheetView = LayoutInflater.from(activity).inflate(R.layout.bottom_sheet_custom, null);
-        BottomSheetDialog sheet = new BottomSheetDialog(activity);
+        BottomSheetDialog sheet = create(activity);
         sheet.setContentView(sheetView);
         sheet.setCancelable(cancelable);
 
@@ -176,7 +176,7 @@ public final class BottomSheetUi {
             return;
         }
         View sheetView = LayoutInflater.from(activity).inflate(R.layout.bottom_sheet_single_choice, null);
-        BottomSheetDialog sheet = new BottomSheetDialog(activity);
+        BottomSheetDialog sheet = create(activity);
         sheet.setContentView(sheetView);
 
         TextView titleView = sheetView.findViewById(R.id.sheetTitle);
@@ -242,7 +242,7 @@ public final class BottomSheetUi {
         if (activity == null || activity.isFinishing()) {
             return null;
         }
-        BottomSheetDialog sheet = new BottomSheetDialog(activity);
+        BottomSheetDialog sheet = create(activity);
         sheet.setContentView(content);
         sheet.setCancelable(cancelable);
         present(sheet);
@@ -254,7 +254,7 @@ public final class BottomSheetUi {
             return;
         }
         View sheetView = LayoutInflater.from(context).inflate(R.layout.bottom_sheet_no_internet, null);
-        BottomSheetDialog sheet = new BottomSheetDialog(context);
+        BottomSheetDialog sheet = create(context);
         sheet.setContentView(sheetView);
         sheet.setCancelable(false);
 
@@ -276,15 +276,26 @@ public final class BottomSheetUi {
         activity.startActivity(intent);
     }
 
+    private static BottomSheetDialog create(Context context) {
+        return new BottomSheetDialog(context, R.style.Theme_Pos_BottomSheetDialog);
+    }
+
     private static void present(BottomSheetDialog sheet) {
+        if (sheet.getWindow() != null) {
+            sheet.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        }
         sheet.setOnShowListener(d -> {
             View bottomSheet = sheet.findViewById(com.google.android.material.R.id.design_bottom_sheet);
             if (bottomSheet != null) {
-                BottomSheetBehavior.from(bottomSheet).setState(BottomSheetBehavior.STATE_EXPANDED);
+                BottomSheetBehavior<View> behavior = BottomSheetBehavior.from(bottomSheet);
+                behavior.setSkipCollapsed(true);
+                behavior.setFitToContents(true);
+                behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
                 ViewCompat.setOnApplyWindowInsetsListener(bottomSheet, (v, insets) -> {
                     Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+                    Insets ime = insets.getInsets(WindowInsetsCompat.Type.ime());
                     v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(),
-                            Math.max(v.getPaddingBottom(), bars.bottom));
+                            Math.max(bars.bottom, ime.bottom));
                     return insets;
                 });
                 ViewCompat.requestApplyInsets(bottomSheet);
@@ -302,7 +313,7 @@ public final class BottomSheetUi {
         WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
         lp.copyFrom(sheet.getWindow().getAttributes());
         lp.width = WindowManager.LayoutParams.MATCH_PARENT;
-        lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
+        lp.height = WindowManager.LayoutParams.MATCH_PARENT;
         sheet.getWindow().setAttributes(lp);
     }
 }

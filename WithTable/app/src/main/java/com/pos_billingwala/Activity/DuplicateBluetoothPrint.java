@@ -42,6 +42,7 @@ import com.karumi.dexter.listener.multi.MultiplePermissionsListener;
 import com.pos_billingwala.Adapter.DuplicateInvoiceAdapter;
 import com.pos_billingwala.Adapter.DuplicateTwoPrintAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.PaymentSettlementHelper;
 import com.pos_billingwala.Extra.PaymentUpiQrHelper;
 import com.pos_billingwala.Extra.ReportCursorHelper;
 import com.pos_billingwala.Extra.ShopHeaderBuilder;
@@ -237,12 +238,20 @@ public class DuplicateBluetoothPrint extends BaseActivity implements View.OnClic
 
         if (paymentMode != null) {
             try {
-                if (paymentMode.equalsIgnoreCase("Cash")) {
+                String mode = PaymentSettlementHelper.canonicalMode(paymentMode);
+                if (PaymentSettlementHelper.MODE_CASH.equals(mode)) {
                     cashButton.setChecked(true);
                     onlineButton.setChecked(false);
-                } else if (paymentMode.equalsIgnoreCase("UPI")) {
+                } else if (PaymentSettlementHelper.MODE_UPI.equals(mode)) {
                     onlineButton.setChecked(true);
                     cashButton.setChecked(false);
+                } else if (PaymentSettlementHelper.MODE_SPLIT.equals(mode)) {
+                    RadioButton split = findViewById(R.id.splitCashUpi);
+                    if (split != null) {
+                        split.setChecked(true);
+                    }
+                    cashButton.setChecked(false);
+                    onlineButton.setChecked(false);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -251,12 +260,13 @@ public class DuplicateBluetoothPrint extends BaseActivity implements View.OnClic
             }
         }
 
-        binding.paymentGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(RadioGroup group, int checkedId) {
-                int selectedId = binding.paymentGroup.getCheckedRadioButtonId();
-                RadioButton radioPayButton = findViewById(selectedId);
-                paymentMode = radioPayButton.getText().toString();
+        binding.paymentGroup.setOnCheckedChangeListener((group, checkedId) -> {
+            if (checkedId == R.id.splitCashUpi) {
+                paymentMode = PaymentSettlementHelper.MODE_SPLIT;
+            } else if (checkedId == R.id.online) {
+                paymentMode = PaymentSettlementHelper.MODE_UPI;
+            } else if (checkedId == R.id.cash) {
+                paymentMode = PaymentSettlementHelper.MODE_CASH;
             }
         });
 

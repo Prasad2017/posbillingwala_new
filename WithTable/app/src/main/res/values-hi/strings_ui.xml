@@ -33,6 +33,15 @@
     <string name="ui_billing_details">बिलिंग विवरण</string>
     <string name="ui_billing_wise_details">बिलिंग अनुसार विवरण</string>
     <string name="ui_cash">नकद</string>
+    <string name="ui_cash_plus_upi">नकद + UPI</string>
+    <string name="ui_cash_plus_upi_mode_wise">नकद + UPI मोड अनुसार</string>
+    <string name="ui_cash_amount">नकद राशि</string>
+    <string name="ui_upi_amount">UPI राशि</string>
+    <string name="ui_total_settlement">कुल सेटलमेंट (नकद + UPI)</string>
+    <string name="ui_settlement_matched">सेटलमेंट राशि बिल राशि से मेल खाती है।</string>
+    <string name="ui_settlement_not_matched">सेटलमेंट राशि बिल राशि से मेल नहीं खाती।</string>
+    <string name="ui_total_cash">कुल नकद</string>
+    <string name="ui_total_upi">कुल UPI</string>
     <string name="ui_cash_mode_wise">नकद मोड अनुसार</string>
     <string name="ui_cashier_name">कैशियर का नाम</string>
     <string name="ui_cgst">CGST@</string>
@@ -395,6 +404,7 @@
     <string name="toast_please_select_a_category">कृपया एक श्रेणी चुनें</string>
     <string name="toast_please_select_mess_days">कृपया मेस दिन चुनें</string>
     <string name="toast_please_select_payment_mode">कृपया भुगतान मोड चुनें</string>
+    <string name="toast_settlement_must_match">नकद + UPI बिल कुल के बराबर होना चाहिए, और दोनों राशियाँ 0 से अधिक होनी चाहिए।</string>
     <string name="toast_please_select_printer">कृपया प्रिंटर चुनें</string>
     <string name="toast_please_select_printer_from_setting">कृपया सेटिंग से प्रिंटर चुनें</string>
     <string name="toast_please_select_portion">कृपया पोर्शन चुनें</string>

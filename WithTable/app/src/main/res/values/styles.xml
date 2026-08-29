@@ -9,7 +9,15 @@
         <item name="android:windowIsTranslucent">true</item>
         <item name="windowNoTitle">true</item>
         <item name="windowActionBar">false</item>
+        <item name="bottomSheetDialogTheme">@style/Theme.Pos.BottomSheetDialog</item>
 
+    </style>
+
+    <!-- Non-floating so the sheet resizes above the IME instead of sitting under it. -->
+    <style name="Theme.Pos.BottomSheetDialog" parent="ThemeOverlay.MaterialComponents.BottomSheetDialog">
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:windowSoftInputMode">adjustResize</item>
+        <item name="enableEdgeToEdge">true</item>
     </style>
 
     <style name="CustomDropDownTilStyle" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu">

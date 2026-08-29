@@ -52,6 +52,8 @@ if ($userId === null) {
         $getdata["discountType"]=$row['discountType'];
         $getdata["totalAmount"]=$row['totalAmount'];
         $getdata["paymentMode"]=$row['paymentMode'];
+        $getdata["cashAmount"]=isset($row['cashAmount']) ? $row['cashAmount'] : '0';
+        $getdata["upiAmount"]=isset($row['upiAmount']) ? $row['upiAmount'] : '0';
         $getdata["invoiceDate"]=$row['invoiceDate'];
         $getdata["invoiceOrderStatus"]=$row['invoiceOrderStatus'];
         $getdata["invoiceNetworkStatus"]=$row['invoiceNetworkStatus'];
