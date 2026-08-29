@@ -30,6 +30,9 @@ $newPassword = isset($_POST['newPassword']) ? (string) $_POST['newPassword'] : '
 
 $contactNumber = preg_replace('/\D+/', '', $contactNumber);
 $aadhaarNumber = preg_replace('/\D+/', '', $aadhaarNumber);
+if (strlen($contactNumber) > 10) {
+    $contactNumber = substr($contactNumber, -10);
+}
 
 if ($contactNumber === '' || strlen($contactNumber) < 10) {
     $response['message'] = 'Enter valid mobile number';

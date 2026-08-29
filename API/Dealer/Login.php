@@ -50,6 +50,9 @@ if ($contactNumber === '' || $password === '') {
 }
 
 $contactNumber = preg_replace('/\D+/', '', $contactNumber);
+if (strlen($contactNumber) > 10) {
+    $contactNumber = substr($contactNumber, -10);
+}
 
 if ($contactNumber === '' || strlen($contactNumber) < 10) {
     $response['message'] = 'Enter valid mobile number';
@@ -69,9 +72,11 @@ $dealer = db_stmt_fetch_one(
     $con,
     "SELECT `id`, `password`, `contact_number`, `name`, `is_active`, `role_id`
      FROM `users`
-     WHERE `contact_number`=? AND `role_id`='2'
+     WHERE `role_id`='2'
+       AND (`contact_number`=? OR RIGHT(REPLACE(`contact_number`,' ',''),10)=?)
      LIMIT 1",
-    's',
+    'ss',
+    $contactNumber,
     $contactNumber
 );
 

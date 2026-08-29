@@ -23,6 +23,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
@@ -67,22 +68,29 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
         super.onCreate(savedInstanceState);
         Api.bindContext(this);
         binding = ActivityLoginBinding.inflate(getLayoutInflater());
         View view = binding.getRoot();
         setContentView(view);
-        File file = new File("data/data/" + getPackageName() + "/shared_prefs/user.xml");
-        if (file.exists() && AuthTokens.hasValidSession(this)) {
-            Intent intent = new Intent(Login.this, MainActivity.class);
-            startActivity(intent);
+
+        if (AuthTokens.hasValidSession(this)) {
+            startActivity(new Intent(Login.this, MainActivity.class));
             finish();
-        } else if (file.exists() && !AuthTokens.hasValidSession(this)) {
+            return;
+        }
+        File file = new File("data/data/" + getPackageName() + "/shared_prefs/user.xml");
+        if (file.exists()) {
             AuthTokens.clear(this);
         }
 
-        binding.mobileNumber.setSelection(binding.mobileNumber.getText().toString().length());
-        binding.password.setSelection(binding.password.getText().toString().length());
+        if (binding.mobileNumber.getText() != null) {
+            binding.mobileNumber.setSelection(binding.mobileNumber.getText().toString().length());
+        }
+        if (binding.password.getText() != null) {
+            binding.password.setSelection(binding.password.getText().toString().length());
+        }
 
         m_androidId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
         manufacturerModel = android.os.Build.MANUFACTURER + " " + android.os.Build.MODEL;
@@ -249,8 +257,10 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
             }
             binding.password.setSelection(binding.password.getText().toString().length());
         } else if (id == R.id.loginCheck) {
-            String mobile = binding.mobileNumber.getText().toString().trim();
-            String password = binding.password.getText().toString();
+            String mobile = binding.mobileNumber.getText() != null
+                    ? binding.mobileNumber.getText().toString().trim() : "";
+            String password = binding.password.getText() != null
+                    ? binding.password.getText().toString() : "";
             if (mobile.isEmpty()) {
                 binding.mobileNumber.setError("Please enter mobile number");
                 return;
@@ -290,9 +300,13 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
                         pref = getSharedPreferences("user", Context.MODE_PRIVATE);
                         editor = pref.edit();
                         editor.putString("UserLogin", "UserLoginSuccessful");
-                        editor.commit();
+                        editor.apply();
 
-                        Common.saveUserData(Login.this, "userId", response.body().getUserId());
+                        Common.saveUserData(Login.this, "userId", "" + response.body().getUserId());
+                        if (response.body().getName() != null) {
+                            Common.saveUserData(Login.this, "userName", response.body().getName());
+                        }
+                        Common.saveUserData(Login.this, "contactNumber", mobile);
                         AuthTokens.saveFromLogin(Login.this, response.body());
 
                         Intent intent = new Intent(Login.this, MainActivity.class);
@@ -401,7 +415,8 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
             public void onResponse(Call<AllApiResponse> call, Response<AllApiResponse> response) {
                 pDialog.dismiss();
                 if (response.isSuccessful() && response.body() != null
-                        && "1".equalsIgnoreCase(response.body().getStatus())) {
+                        && ("1".equalsIgnoreCase(response.body().getStatus())
+                        || "true".equalsIgnoreCase(response.body().getStatus()))) {
                     sheet.dismiss();
                     Toast.makeText(Login.this, response.body().getMessage(), Toast.LENGTH_LONG).show();
                 } else {

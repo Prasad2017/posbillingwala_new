@@ -108,5 +108,10 @@ public final class AuthTokens {
         }
         Common.saveUserData(context, "authToken", "");
         Common.saveUserData(context, "tokenExpiresAt", "");
+        Common.saveUserData(context, "userId", "");
+        Common.saveUserData(context, "userName", "");
+        Common.saveUserData(context, "contactNumber", "");
+        android.content.SharedPreferences pref = context.getSharedPreferences("user", android.content.Context.MODE_PRIVATE);
+        pref.edit().clear().apply();
     }
 }
