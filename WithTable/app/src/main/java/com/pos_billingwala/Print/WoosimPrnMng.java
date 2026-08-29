@@ -65,8 +65,7 @@ public final class WoosimPrnMng {
 
     public static void sendAutoCutter() {
         try {
-            byte[] cut = new byte[]{0x1B, 0x69};
-            BluetoothPrinterChannel.bill().write(cut);
+            BluetoothPrinterChannel.bill().write(EscPosCommands.CUT_FULL);
         } catch (Exception ignored) {
         }
     }

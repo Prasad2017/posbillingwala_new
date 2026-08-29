@@ -160,6 +160,27 @@
     <string name="pic_load_error">Error in loading picture</string>
     <string name="print_succ">Print done successfully</string>
     <string name="print_error">Error in printing</string>
+    <string name="toast_bluetooth_printer_unavailable">Unable to connect to the Bluetooth printer.</string>
+    <string name="toast_usb_printer_unavailable">USB printer is unavailable.</string>
+    <string name="toast_network_printer_unavailable">Unable to connect to the network printer.</string>
+    <string name="toast_printer_cutter_unavailable">Paper cutter is unavailable.</string>
+    <string name="toast_printer_drawer_unavailable">Unable to open the cash drawer.</string>
+    <string name="ui_connection_type">Connection type</string>
+    <string name="ui_printer_ip">Printer IP address</string>
+    <string name="ui_printer_port">Printer port</string>
+    <string name="ui_usb_printer">Detected USB printer</string>
+    <string name="ui_auto_cut">Auto Cut</string>
+    <string name="ui_cash_drawer">Cash Drawer</string>
+    <string name="ui_open_drawer_for">Open drawer for</string>
+    <string name="ui_test_cutter">Test Cutter</string>
+    <string name="ui_test_cash_drawer">Test Cash Drawer</string>
+    <string name="ui_refresh_usb">Refresh USB</string>
+    <string name="conn_bluetooth">Bluetooth</string>
+    <string name="conn_usb">USB</string>
+    <string name="conn_wifi">Wi-Fi / LAN</string>
+    <string name="drawer_cash_only">Cash Only</string>
+    <string name="drawer_always">Always</string>
+    <string name="drawer_never">Never</string>
 
     <!--Select Photo-->
     <string name="select_photo">Select Photo</string>
@@ -244,6 +265,7 @@
     <string name="setting_hint_share">Share the app with other shops</string>
     <string name="setting_hint_logout">Sign out of this device</string>
     <string name="printer_section_printers">Printers</string>
+    <string name="printer_section_connection">Connection &amp; hardware</string>
     <string name="printer_section_invoice">Invoice</string>
     <string name="printer_section_bill">Bill options</string>
     <string name="printer_section_terms">Terms</string>

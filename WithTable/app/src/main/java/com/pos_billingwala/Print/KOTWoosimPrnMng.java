@@ -65,8 +65,7 @@ public final class KOTWoosimPrnMng {
 
     public static void sendAutoCutter() {
         try {
-            byte[] cut = new byte[]{0x1B, 0x69};
-            BluetoothPrinterChannel.kot().write(cut);
+            BluetoothPrinterChannel.kot().write(EscPosCommands.CUT_FULL);
         } catch (Exception ignored) {
         }
     }

@@ -68,7 +68,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
     public static final String INVOICE_COMBO_ITEM_TABLE = "invoice_combo_item";
     public static final String INVOICE_PRODUCT_DELETE_QUEUE_TABLE = "invoice_product_delete_queue";
     // Database Version
-    public static final int DATABASE_VERSION = 24;
+    public static final int DATABASE_VERSION = 25;
 
     /** SQL suffix: only rows for the logged-in licence branch. */
     private static String andBranchScope(String tableAlias) {
@@ -315,6 +315,24 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
     public final String ALTER_PRINTER_FEED_LINES_SETTING_QUERY = "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN printerFeedLines VARCHAR";
     public final String ALTER_KOT_PRINTER_FEED_LINES_SETTING_QUERY = "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN KotPrinterFeedLines VARCHAR";
     public final String ALTER_PRINTER_DUPLICATE_BILL_SETTING_QUERY = "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN duplicateBillUse VARCHAR";
+    public final String ALTER_PRINTER_BILL_CONN_TYPE_QUERY = "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN billConnectionType VARCHAR";
+    public final String ALTER_PRINTER_KOT_CONN_TYPE_QUERY = "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN kotConnectionType VARCHAR";
+    public final String ALTER_PRINTER_BILL_IP_QUERY = "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN billPrinterIp VARCHAR";
+    public final String ALTER_PRINTER_KOT_IP_QUERY = "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN kotPrinterIp VARCHAR";
+    public final String ALTER_PRINTER_BILL_PORT_QUERY = "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN billPrinterPort VARCHAR";
+    public final String ALTER_PRINTER_KOT_PORT_QUERY = "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN kotPrinterPort VARCHAR";
+    public final String ALTER_PRINTER_BILL_USB_QUERY = "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN billUsbDeviceKey VARCHAR";
+    public final String ALTER_PRINTER_KOT_USB_QUERY = "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN kotUsbDeviceKey VARCHAR";
+    public final String ALTER_PRINTER_SUPPORTS_CUTTER_QUERY = "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN supportsCutter VARCHAR";
+    public final String ALTER_PRINTER_SUPPORTS_DRAWER_QUERY = "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN supportsCashDrawer VARCHAR";
+    public final String ALTER_PRINTER_AUTO_CUT_QUERY = "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN autoCut VARCHAR";
+    public final String ALTER_PRINTER_AUTO_DRAWER_QUERY = "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN autoOpenCashDrawer VARCHAR";
+    public final String ALTER_PRINTER_DRAWER_MODE_QUERY = "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN drawerOpenMode VARCHAR";
+    public final String ALTER_PRINTER_DRAWER_PIN_QUERY = "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN drawerPin VARCHAR";
+    public final String ALTER_PRINTER_DRAWER_PULSE_ON_QUERY = "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN drawerPulseOn VARCHAR";
+    public final String ALTER_PRINTER_DRAWER_PULSE_OFF_QUERY = "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN drawerPulseOff VARCHAR";
+    public final String ALTER_PRINTER_CUT_COMMAND_QUERY = "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN cutCommand VARCHAR";
+    public final String ALTER_PRINTER_MODEL_QUERY = "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN printerModel VARCHAR";
     public final String ALTER_CATEGORY_FOOD_TYPE_QUERY = "ALTER TABLE " + PRODUCT_CATEGORY_TABLE + " ADD COLUMN foodTypeId INTEGER";
     public final String ALTER_CATEGORY_SORT_ORDER_QUERY = "ALTER TABLE " + PRODUCT_CATEGORY_TABLE + " ADD COLUMN categorySortOrder INTEGER DEFAULT 0";
     public final String ALTER_SUBCATEGORY_SORT_ORDER_QUERY = "ALTER TABLE " + PRODUCT_SUBCATEGORY_TABLE + " ADD COLUMN subcategorySortOrder INTEGER DEFAULT 0";
@@ -431,6 +449,24 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "printerFeedLines", ALTER_PRINTER_FEED_LINES_SETTING_QUERY);
         addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "KotPrinterFeedLines", ALTER_KOT_PRINTER_FEED_LINES_SETTING_QUERY);
         addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "duplicateBillUse", ALTER_PRINTER_DUPLICATE_BILL_SETTING_QUERY);
+        addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "billConnectionType", ALTER_PRINTER_BILL_CONN_TYPE_QUERY);
+        addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "kotConnectionType", ALTER_PRINTER_KOT_CONN_TYPE_QUERY);
+        addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "billPrinterIp", ALTER_PRINTER_BILL_IP_QUERY);
+        addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "kotPrinterIp", ALTER_PRINTER_KOT_IP_QUERY);
+        addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "billPrinterPort", ALTER_PRINTER_BILL_PORT_QUERY);
+        addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "kotPrinterPort", ALTER_PRINTER_KOT_PORT_QUERY);
+        addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "billUsbDeviceKey", ALTER_PRINTER_BILL_USB_QUERY);
+        addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "kotUsbDeviceKey", ALTER_PRINTER_KOT_USB_QUERY);
+        addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "supportsCutter", ALTER_PRINTER_SUPPORTS_CUTTER_QUERY);
+        addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "supportsCashDrawer", ALTER_PRINTER_SUPPORTS_DRAWER_QUERY);
+        addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "autoCut", ALTER_PRINTER_AUTO_CUT_QUERY);
+        addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "autoOpenCashDrawer", ALTER_PRINTER_AUTO_DRAWER_QUERY);
+        addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "drawerOpenMode", ALTER_PRINTER_DRAWER_MODE_QUERY);
+        addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "drawerPin", ALTER_PRINTER_DRAWER_PIN_QUERY);
+        addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "drawerPulseOn", ALTER_PRINTER_DRAWER_PULSE_ON_QUERY);
+        addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "drawerPulseOff", ALTER_PRINTER_DRAWER_PULSE_OFF_QUERY);
+        addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "cutCommand", ALTER_PRINTER_CUT_COMMAND_QUERY);
+        addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "printerModel", ALTER_PRINTER_MODEL_QUERY);
         // Phase 3 catalog foundation (additive only)
         db.execSQL(FOOD_TYPE_QUERY);
         db.execSQL(PRODUCT_SUBCATEGORY_QUERY);
@@ -2299,6 +2335,47 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
 
     }
 
+    /**
+     * Saves local-only printer transport / cutter / cash-drawer settings.
+     * Does not affect cloud sync payload for legacy fields.
+     */
+    public void updatePrinterTransportSettings(String settingId,
+                                               String billConnectionType, String kotConnectionType,
+                                               String billPrinterIp, String kotPrinterIp,
+                                               String billPrinterPort, String kotPrinterPort,
+                                               String billUsbDeviceKey, String kotUsbDeviceKey,
+                                               String supportsCutter, String supportsCashDrawer,
+                                               String autoCut, String autoOpenCashDrawer,
+                                               String drawerOpenMode, String drawerPin,
+                                               String drawerPulseOn, String drawerPulseOff,
+                                               String cutCommand, String printerModel) {
+        if (settingId == null || settingId.trim().isEmpty()) {
+            return;
+        }
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put("billConnectionType", billConnectionType != null ? billConnectionType : "BLUETOOTH");
+        contentValues.put("kotConnectionType", kotConnectionType != null ? kotConnectionType : "BLUETOOTH");
+        contentValues.put("billPrinterIp", billPrinterIp != null ? billPrinterIp : "");
+        contentValues.put("kotPrinterIp", kotPrinterIp != null ? kotPrinterIp : "");
+        contentValues.put("billPrinterPort", billPrinterPort != null && !billPrinterPort.isEmpty() ? billPrinterPort : "9100");
+        contentValues.put("kotPrinterPort", kotPrinterPort != null && !kotPrinterPort.isEmpty() ? kotPrinterPort : "9100");
+        contentValues.put("billUsbDeviceKey", billUsbDeviceKey != null ? billUsbDeviceKey : "");
+        contentValues.put("kotUsbDeviceKey", kotUsbDeviceKey != null ? kotUsbDeviceKey : "");
+        contentValues.put("supportsCutter", supportsCutter != null ? supportsCutter : "on");
+        contentValues.put("supportsCashDrawer", supportsCashDrawer != null ? supportsCashDrawer : "off");
+        contentValues.put("autoCut", autoCut != null ? autoCut : "on");
+        contentValues.put("autoOpenCashDrawer", autoOpenCashDrawer != null ? autoOpenCashDrawer : "on");
+        contentValues.put("drawerOpenMode", drawerOpenMode != null ? drawerOpenMode : "CASH_ONLY");
+        contentValues.put("drawerPin", drawerPin != null ? drawerPin : "0");
+        contentValues.put("drawerPulseOn", drawerPulseOn != null ? drawerPulseOn : "25");
+        contentValues.put("drawerPulseOff", drawerPulseOff != null ? drawerPulseOff : "120");
+        contentValues.put("cutCommand", cutCommand != null ? cutCommand : "FULL");
+        contentValues.put("printerModel", printerModel != null ? printerModel : "");
+        db.update(PRINTER_SETTING_TABLE, contentValues, "settingId=?", new String[]{settingId});
+        db.close();
+    }
+
     public boolean addCompanyDetails(String companyLogo, String companyName, String cashierName, String companyMobile, String companyAddress, String currencyName, String tableStatus, String noOfTable, String countryName,
                                      String stateName, String gstStatus, String gstNumber, String shopCGST, String shopSGST, String panNumber, String companyFssis, int companyStatus, String paymentLogo) {
         // Legacy callers: map single address/mobile/name into structured primary fields
@@ -3299,6 +3376,24 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
                 }
                 printerSettingResponse.setBluetoothAddress(cursor.getString(cursor.getColumnIndex("bluetoothAddress")));
                 printerSettingResponse.setBluetoothKOTAddress(cursor.getString(cursor.getColumnIndex("bluetoothKOTAddress")));
+                mapStringColumn(cursor, "billConnectionType", printerSettingResponse::setBillConnectionType);
+                mapStringColumn(cursor, "kotConnectionType", printerSettingResponse::setKotConnectionType);
+                mapStringColumn(cursor, "billPrinterIp", printerSettingResponse::setBillPrinterIp);
+                mapStringColumn(cursor, "kotPrinterIp", printerSettingResponse::setKotPrinterIp);
+                mapStringColumn(cursor, "billPrinterPort", printerSettingResponse::setBillPrinterPort);
+                mapStringColumn(cursor, "kotPrinterPort", printerSettingResponse::setKotPrinterPort);
+                mapStringColumn(cursor, "billUsbDeviceKey", printerSettingResponse::setBillUsbDeviceKey);
+                mapStringColumn(cursor, "kotUsbDeviceKey", printerSettingResponse::setKotUsbDeviceKey);
+                mapStringColumn(cursor, "supportsCutter", printerSettingResponse::setSupportsCutter);
+                mapStringColumn(cursor, "supportsCashDrawer", printerSettingResponse::setSupportsCashDrawer);
+                mapStringColumn(cursor, "autoCut", printerSettingResponse::setAutoCut);
+                mapStringColumn(cursor, "autoOpenCashDrawer", printerSettingResponse::setAutoOpenCashDrawer);
+                mapStringColumn(cursor, "drawerOpenMode", printerSettingResponse::setDrawerOpenMode);
+                mapStringColumn(cursor, "drawerPin", printerSettingResponse::setDrawerPin);
+                mapStringColumn(cursor, "drawerPulseOn", printerSettingResponse::setDrawerPulseOn);
+                mapStringColumn(cursor, "drawerPulseOff", printerSettingResponse::setDrawerPulseOff);
+                mapStringColumn(cursor, "cutCommand", printerSettingResponse::setCutCommand);
+                mapStringColumn(cursor, "printerModel", printerSettingResponse::setPrinterModel);
             } catch (Exception e) {
                 e.printStackTrace();
             }

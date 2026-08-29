@@ -1063,9 +1063,11 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                     byte[] data = printImage.getPrintImageData();
                     if (!PrinterConnectionHelper.safeWriteKot(activity, data)) {
                         toastMsg = notConnectedMsg;
-                    }
-                    if (printerSettingResponseList != null && !printerSettingResponseList.isEmpty()) {
-                        KOTCheckAndFeedPaper(printerSettingResponseList.get(0).getKotPrinterFeedLines());
+                    } else {
+                        if (printerSettingResponseList != null && !printerSettingResponseList.isEmpty()) {
+                            KOTCheckAndFeedPaper(printerSettingResponseList.get(0).getKotPrinterFeedLines());
+                        }
+                        PrinterConnectionHelper.finishKotPrint(activity);
                     }
                 }
             } catch (Exception e) {
@@ -1106,6 +1108,9 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                         toastMsg = notConnectedMsg;
                     } else if (printerSettingResponseList != null && !printerSettingResponseList.isEmpty()) {
                         checkAndFeedPaper(printerSettingResponseList.get(0).getPrinterFeedLines());
+                        PrinterConnectionHelper.finishBillPrint(activity, paymentMode);
+                    } else {
+                        PrinterConnectionHelper.finishBillPrint(activity, paymentMode);
                     }
                 }
             } catch (Exception e) {

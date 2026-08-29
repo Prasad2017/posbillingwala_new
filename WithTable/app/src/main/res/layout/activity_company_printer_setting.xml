@@ -213,6 +213,226 @@
 
                     <TextView
                         style="@style/PosSectionLabel"
+                        android:text="@string/printer_section_connection" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_md"
+                        android:fontFamily="@font/poppinsregular"
+                        android:text="@string/ui_connection_type"
+                        android:textColor="@color/colorTextSecondary"
+                        android:textSize="@dimen/text_body" />
+
+                    <com.jaredrummler.materialspinner.MaterialSpinner
+                        android:id="@+id/connectionTypeSpinner"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_sm"
+                        android:background="@drawable/bg_input"
+                        android:fontFamily="@font/poppinsregular"
+                        android:minHeight="@dimen/input_height"
+                        android:textColor="@color/colorTextPrimary"
+                        android:textSize="@dimen/text_body"
+                        app:ms_hint="@string/ui_connection_type" />
+
+                    <LinearLayout
+                        android:id="@+id/wifiPrinterLayout"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_md"
+                        android:orientation="vertical"
+                        android:visibility="gone">
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            style="@style/PosFormTextInput">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/printerIpAddress"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/poppinsregular"
+                                android:hint="@string/ui_printer_ip"
+                                android:imeOptions="actionNext"
+                                android:inputType="text"
+                                android:paddingStart="@dimen/spacing_lg"
+                                android:paddingEnd="@dimen/spacing_md"
+                                android:singleLine="true"
+                                android:textColor="@color/colorTextPrimary"
+                                android:textSize="@dimen/text_body" />
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            style="@style/PosFormTextInput"
+                            android:layout_marginTop="@dimen/spacing_md">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/printerPort"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:digits="0123456789"
+                                android:fontFamily="@font/poppinsregular"
+                                android:hint="@string/ui_printer_port"
+                                android:imeOptions="actionDone"
+                                android:inputType="number"
+                                android:paddingStart="@dimen/spacing_lg"
+                                android:paddingEnd="@dimen/spacing_md"
+                                android:singleLine="true"
+                                android:text="9100"
+                                android:textColor="@color/colorTextPrimary"
+                                android:textSize="@dimen/text_body" />
+                        </com.google.android.material.textfield.TextInputLayout>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/usbPrinterLayout"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_md"
+                        android:orientation="vertical"
+                        android:visibility="gone">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/poppinsregular"
+                            android:text="@string/ui_usb_printer"
+                            android:textColor="@color/colorTextSecondary"
+                            android:textSize="@dimen/text_body" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/spacing_sm"
+                            android:background="@drawable/bg_input"
+                            android:gravity="center_vertical"
+                            android:minHeight="@dimen/input_height"
+                            android:orientation="horizontal"
+                            android:paddingStart="@dimen/spacing_xs"
+                            android:paddingEnd="@dimen/spacing_sm">
+
+                            <com.jaredrummler.materialspinner.MaterialSpinner
+                                android:id="@+id/usbPrinterSpinner"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:fontFamily="@font/poppinsregular"
+                                android:textColor="@color/colorTextPrimary"
+                                android:textSize="@dimen/text_body"
+                                app:ms_hint="@string/ui_usb_printer" />
+
+                            <TextView
+                                android:id="@+id/refreshUsbPrinter"
+                                android:layout_width="wrap_content"
+                                android:layout_height="36dp"
+                                android:background="@drawable/bg_button_primary"
+                                android:fontFamily="@font/poppinsmedium"
+                                android:gravity="center"
+                                android:paddingStart="@dimen/spacing_md"
+                                android:paddingEnd="@dimen/spacing_md"
+                                android:text="@string/ui_refresh_usb"
+                                android:textColor="@color/white"
+                                android:textSize="@dimen/text_caption" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <androidx.appcompat.widget.SwitchCompat
+                        android:id="@+id/autoCutSwitch"
+                        style="@style/PosSwitchRow"
+                        android:layout_marginTop="@dimen/spacing_md"
+                        android:checked="true"
+                        android:text="@string/ui_auto_cut"
+                        android:textOff="Off"
+                        android:textOn="On" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/colorBorder" />
+
+                    <androidx.appcompat.widget.SwitchCompat
+                        android:id="@+id/cashDrawerSwitch"
+                        style="@style/PosSwitchRow"
+                        android:checked="false"
+                        android:text="@string/ui_cash_drawer"
+                        android:textOff="Off"
+                        android:textOn="On" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_md"
+                        android:fontFamily="@font/poppinsregular"
+                        android:text="@string/ui_open_drawer_for"
+                        android:textColor="@color/colorTextSecondary"
+                        android:textSize="@dimen/text_body" />
+
+                    <com.jaredrummler.materialspinner.MaterialSpinner
+                        android:id="@+id/drawerOpenModeSpinner"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_sm"
+                        android:background="@drawable/bg_input"
+                        android:fontFamily="@font/poppinsregular"
+                        android:minHeight="@dimen/input_height"
+                        android:textColor="@color/colorTextPrimary"
+                        android:textSize="@dimen/text_body"
+                        app:ms_hint="@string/ui_open_drawer_for" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_lg"
+                        android:gravity="center"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/testCutterButton"
+                            android:layout_width="0dp"
+                            android:layout_height="40dp"
+                            android:layout_marginEnd="@dimen/spacing_sm"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_button_primary"
+                            android:fontFamily="@font/poppinsmedium"
+                            android:gravity="center"
+                            android:text="@string/ui_test_cutter"
+                            android:textColor="@color/white"
+                            android:textSize="@dimen/text_caption" />
+
+                        <TextView
+                            android:id="@+id/testCashDrawerButton"
+                            android:layout_width="0dp"
+                            android:layout_height="40dp"
+                            android:layout_marginStart="@dimen/spacing_sm"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_button_primary"
+                            android:fontFamily="@font/poppinsmedium"
+                            android:gravity="center"
+                            android:text="@string/ui_test_cash_drawer"
+                            android:textColor="@color/white"
+                            android:textSize="@dimen/text_caption" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_lg"
+                app:cardBackgroundColor="@color/colorSurface"
+                app:cardCornerRadius="@dimen/radius_lg"
+                app:cardElevation="@dimen/card_elevation"
+                app:strokeColor="@color/colorBorder"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/spacing_lg">
+
+                    <TextView
+                        style="@style/PosSectionLabel"
                         android:text="@string/printer_section_invoice" />
 
                     <com.google.android.material.textfield.TextInputLayout

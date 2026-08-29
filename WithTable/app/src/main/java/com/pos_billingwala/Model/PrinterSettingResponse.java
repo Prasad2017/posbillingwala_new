@@ -54,6 +54,25 @@ public class PrinterSettingResponse {
     @Expose
     public String KotPrinterFeedLines;
 
+    // Local-only transport / device capability fields (offline printer upgrade)
+    public String billConnectionType;
+    public String kotConnectionType;
+    public String billPrinterIp;
+    public String kotPrinterIp;
+    public String billPrinterPort;
+    public String kotPrinterPort;
+    public String billUsbDeviceKey;
+    public String kotUsbDeviceKey;
+    public String supportsCutter;
+    public String supportsCashDrawer;
+    public String autoCut;
+    public String autoOpenCashDrawer;
+    public String drawerOpenMode;
+    public String drawerPin;
+    public String drawerPulseOn;
+    public String drawerPulseOff;
+    public String cutCommand;
+    public String printerModel;
 
     public String getSettingId() {
         return settingId;
@@ -181,5 +200,149 @@ public class PrinterSettingResponse {
 
     public void setKotPrinterFeedLines(String kotPrinterFeedLines) {
         KotPrinterFeedLines = kotPrinterFeedLines;
+    }
+
+    public String getBillConnectionType() {
+        return billConnectionType;
+    }
+
+    public void setBillConnectionType(String billConnectionType) {
+        this.billConnectionType = billConnectionType;
+    }
+
+    public String getKotConnectionType() {
+        return kotConnectionType;
+    }
+
+    public void setKotConnectionType(String kotConnectionType) {
+        this.kotConnectionType = kotConnectionType;
+    }
+
+    public String getBillPrinterIp() {
+        return billPrinterIp;
+    }
+
+    public void setBillPrinterIp(String billPrinterIp) {
+        this.billPrinterIp = billPrinterIp;
+    }
+
+    public String getKotPrinterIp() {
+        return kotPrinterIp;
+    }
+
+    public void setKotPrinterIp(String kotPrinterIp) {
+        this.kotPrinterIp = kotPrinterIp;
+    }
+
+    public String getBillPrinterPort() {
+        return billPrinterPort;
+    }
+
+    public void setBillPrinterPort(String billPrinterPort) {
+        this.billPrinterPort = billPrinterPort;
+    }
+
+    public String getKotPrinterPort() {
+        return kotPrinterPort;
+    }
+
+    public void setKotPrinterPort(String kotPrinterPort) {
+        this.kotPrinterPort = kotPrinterPort;
+    }
+
+    public String getBillUsbDeviceKey() {
+        return billUsbDeviceKey;
+    }
+
+    public void setBillUsbDeviceKey(String billUsbDeviceKey) {
+        this.billUsbDeviceKey = billUsbDeviceKey;
+    }
+
+    public String getKotUsbDeviceKey() {
+        return kotUsbDeviceKey;
+    }
+
+    public void setKotUsbDeviceKey(String kotUsbDeviceKey) {
+        this.kotUsbDeviceKey = kotUsbDeviceKey;
+    }
+
+    public String getSupportsCutter() {
+        return supportsCutter;
+    }
+
+    public void setSupportsCutter(String supportsCutter) {
+        this.supportsCutter = supportsCutter;
+    }
+
+    public String getSupportsCashDrawer() {
+        return supportsCashDrawer;
+    }
+
+    public void setSupportsCashDrawer(String supportsCashDrawer) {
+        this.supportsCashDrawer = supportsCashDrawer;
+    }
+
+    public String getAutoCut() {
+        return autoCut;
+    }
+
+    public void setAutoCut(String autoCut) {
+        this.autoCut = autoCut;
+    }
+
+    public String getAutoOpenCashDrawer() {
+        return autoOpenCashDrawer;
+    }
+
+    public void setAutoOpenCashDrawer(String autoOpenCashDrawer) {
+        this.autoOpenCashDrawer = autoOpenCashDrawer;
+    }
+
+    public String getDrawerOpenMode() {
+        return drawerOpenMode;
+    }
+
+    public void setDrawerOpenMode(String drawerOpenMode) {
+        this.drawerOpenMode = drawerOpenMode;
+    }
+
+    public String getDrawerPin() {
+        return drawerPin;
+    }
+
+    public void setDrawerPin(String drawerPin) {
+        this.drawerPin = drawerPin;
+    }
+
+    public String getDrawerPulseOn() {
+        return drawerPulseOn;
+    }
+
+    public void setDrawerPulseOn(String drawerPulseOn) {
+        this.drawerPulseOn = drawerPulseOn;
+    }
+
+    public String getDrawerPulseOff() {
+        return drawerPulseOff;
+    }
+
+    public void setDrawerPulseOff(String drawerPulseOff) {
+        this.drawerPulseOff = drawerPulseOff;
+    }
+
+    public String getCutCommand() {
+        return cutCommand;
+    }
+
+    public void setCutCommand(String cutCommand) {
+        this.cutCommand = cutCommand;
+    }
+
+    public String getPrinterModel() {
+        return printerModel;
+    }
+
+    public void setPrinterModel(String printerModel) {
+        this.printerModel = printerModel;
     }
 }

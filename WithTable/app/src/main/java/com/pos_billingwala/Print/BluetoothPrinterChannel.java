@@ -300,8 +300,21 @@ public final class BluetoothPrinterChannel {
             }
 
             ensurePrintService();
+            if (printService == null) {
+                Log.e(TAG, channelName + ": printService null after ensure");
+                if (fromUser) {
+                    showToast(appContext, R.string.connect_fail);
+                }
+                return;
+            }
             if (printService.getState() == BluetoothPrintService.STATE_NONE) {
                 printService.start();
+            }
+
+            // Prevent overlapping ConnectThreads for the same channel
+            if (printService.getState() == BluetoothPrintService.STATE_CONNECTING) {
+                Log.d(TAG, channelName + ": connect already in progress");
+                return;
             }
 
             printService.setConnectionListener(new BluetoothPrintService.ConnectionListener() {
