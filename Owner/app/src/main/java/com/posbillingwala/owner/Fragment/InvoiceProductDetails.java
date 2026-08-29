@@ -84,7 +84,7 @@ public class InvoiceProductDetails extends Fragment implements View.OnClickListe
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         binding = FragmentInvoiceProductDetailsBinding.inflate(inflater, container, false);
-        View view = binding.getRoot();
+        view = binding.getRoot();
 
         activity = getActivity();
 
@@ -132,24 +132,20 @@ public class InvoiceProductDetails extends Fragment implements View.OnClickListe
     }
 
     public void initViews() {
-
-        //***************** 2 Inch Printer Start ******************//
-        twoShopName = view.findViewById(R.id.twoShopName);
-        twoShopDetails = view.findViewById(R.id.twoShopDetails);
-        twoInvoiceDetails = view.findViewById(R.id.twoInvoiceDetails);
-        twoSubTotal = view.findViewById(R.id.twoSubTotal);
-        twoShopCGST = view.findViewById(R.id.twoShopCGST);
-        twoCGST = view.findViewById(R.id.twoCGST);
-        twoShopSGST = view.findViewById(R.id.twoShopSGST);
-        twoSGST = view.findViewById(R.id.twoSGST);
-        twoDiscount = view.findViewById(R.id.twoDiscount);
-        twoTotalAmount = view.findViewById(R.id.twoTotalAmount);
-        twoShopCGSTLayout = view.findViewById(R.id.twoShopCGSTLayout);
-        twoShopSGSTLayout = view.findViewById(R.id.twoShopSGSTLayout);
-        twoRecyclerView = view.findViewById(R.id.twoRecyclerView);
-        twoNestedScrollView = view.findViewById(R.id.twoNestedScrollView);
-        //***************** 2 Inch Printer End ******************//
-
+        twoShopName = binding.twoShopName;
+        twoShopDetails = binding.twoShopDetails;
+        twoInvoiceDetails = binding.twoInvoiceDetails;
+        twoSubTotal = binding.twoSubTotal;
+        twoShopCGST = binding.twoShopCGST;
+        twoCGST = binding.twoCGST;
+        twoShopSGST = binding.twoShopSGST;
+        twoSGST = binding.twoSGST;
+        twoDiscount = binding.twoDiscount;
+        twoTotalAmount = binding.twoTotalAmount;
+        twoShopCGSTLayout = binding.twoShopCGSTLayout;
+        twoShopSGSTLayout = binding.twoShopSGSTLayout;
+        twoRecyclerView = binding.twoRecyclerView;
+        twoNestedScrollView = binding.twoNestedScrollView;
     }
 
     public void createPdf() {
@@ -315,7 +311,9 @@ public class InvoiceProductDetails extends Fragment implements View.OnClickListe
             public void onResponse(Call<AllApiResponse> call, Response<AllApiResponse> response) {
                 if (response.isSuccessful()) {
                     invoiceProductResponseList.clear();
-                    invoiceProductResponseList = response.body().getInvoiceProductResponseList();
+                    List<InvoiceProductResponse> products = response.body() != null
+                            ? response.body().getInvoiceProductResponseList() : null;
+                    invoiceProductResponseList = products != null ? products : new ArrayList<>();
 
                     float totalPerProductAmount = 0f, totalCGST = 0f, totalSGST = 0f, totalUnitPrice = 0f, totalGST = 0f, totalPerProductGST = 0f;
                     int totalQty = 0;

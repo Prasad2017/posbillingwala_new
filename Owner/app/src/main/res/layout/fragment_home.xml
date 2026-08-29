@@ -32,13 +32,27 @@
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
-                <de.hdodenhof.circleimageview.CircleImageView
-                    android:id="@+id/userPhoto"
+                <FrameLayout
+                    android:id="@+id/userPhotoContainer"
                     android:layout_width="52dp"
-                    android:layout_height="52dp"
-                    android:src="@drawable/app_logo"
-                    app:civ_border_color="@color/colorBorder"
-                    app:civ_border_width="1dp" />
+                    android:layout_height="52dp">
+
+                    <de.hdodenhof.circleimageview.CircleImageView
+                        android:id="@+id/userPhoto"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:src="@drawable/app_logo"
+                        app:civ_border_color="@color/colorBorder"
+                        app:civ_border_width="1dp" />
+
+                    <View
+                        android:id="@+id/networkStatusDot"
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:layout_gravity="top|end"
+                        android:background="@drawable/status_dot"
+                        android:contentDescription="@string/status_online" />
+                </FrameLayout>
 
                 <LinearLayout
                     android:layout_width="0dp"
@@ -49,25 +63,33 @@
 
                     <androidx.appcompat.widget.AppCompatTextView
                         android:id="@+id/shopName"
-                        android:layout_width="0dp"
-                        android:layout_height="0dp"
-                        android:visibility="gone" />
-
-                    <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:ellipsize="end"
                         android:fontFamily="@font/poppinsbold"
+                        android:maxLines="1"
                         android:text="@string/app_name"
                         android:textColor="@color/colorTextPrimary"
                         android:textSize="@dimen/text_heading" />
 
-                    <TextView
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/homeDateTime"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/poppinsregular"
-                        android:text="@string/home_whats_happening"
                         android:textColor="@color/colorTextSecondary"
-                        android:textSize="@dimen/text_caption" />
+                        android:textSize="@dimen/text_caption"
+                        tools:text="Sat, 29 Aug 2026  07:56:00 PM" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/ownerShopName"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:fontFamily="@font/poppinsmedium"
+                        android:textColor="@color/colorTextSecondary"
+                        android:textSize="@dimen/text_caption"
+                        tools:text="Good Evening · 3 outlets · 3 licenses" />
                 </LinearLayout>
 
                 <ImageView
@@ -75,11 +97,20 @@
                     android:layout_width="40dp"
                     android:layout_height="40dp"
                     android:background="@drawable/bg_icon_circle"
-                    android:contentDescription="@null"
+                    android:contentDescription="@string/user_setting_title"
                     android:padding="8dp"
                     android:src="@drawable/ic_settings"
                     app:tint="@color/colorTextPrimary" />
             </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:fontFamily="@font/poppinsregular"
+                android:text="@string/home_whats_happening"
+                android:textColor="@color/colorTextSecondary"
+                android:textSize="@dimen/text_body" />
 
             <TextView
                 android:layout_width="match_parent"
@@ -193,6 +224,70 @@
                 </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
 
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/outletsCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_sm"
+                android:clickable="true"
+                android:focusable="true"
+                app:cardBackgroundColor="@android:color/transparent"
+                app:cardCornerRadius="@dimen/radius_md"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_kpi_card_orange"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="@dimen/spacing_md">
+
+                    <ImageView
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:background="@drawable/bg_kpi_icon_orange"
+                        android:contentDescription="@null"
+                        android:padding="8dp"
+                        android:src="@drawable/ic_store"
+                        app:tint="@color/statusTrial" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/spacing_md"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/totalOutlets"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/poppinsbold"
+                            android:textColor="@color/colorTextPrimary"
+                            android:textSize="20sp"
+                            tools:text="3" />
+
+                        <TextView
+                            android:id="@+id/outletsCaption"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/poppinsmedium"
+                            android:text="@string/home_total_outlets"
+                            android:textColor="@color/colorTextSecondary"
+                            android:textSize="@dimen/text_caption" />
+                    </LinearLayout>
+
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ic_chevron_right"
+                        app:tint="@color/colorTextHint" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -201,6 +296,15 @@
                 android:text="@string/home_section_sales"
                 android:textColor="@color/colorTextPrimary"
                 android:textSize="@dimen/text_title" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:fontFamily="@font/poppinsregular"
+                android:text="@string/home_sales_all_outlets"
+                android:textColor="@color/colorTextSecondary"
+                android:textSize="@dimen/text_caption" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -313,6 +417,195 @@
                 </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
 
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_xl"
+                android:fontFamily="@font/poppinsbold"
+                android:text="@string/home_section_insights"
+                android:textColor="@color/colorTextPrimary"
+                android:textSize="@dimen/text_title" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/salesMixCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_sm"
+                app:cardBackgroundColor="@color/colorSurface"
+                app:cardCornerRadius="@dimen/radius_md"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/colorBorder"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="14dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/poppinsmedium"
+                        android:text="@string/home_chart_sales_mix"
+                        android:textColor="@color/colorTextPrimary"
+                        android:textSize="@dimen/text_subtitle" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <com.github.mikephil.charting.charts.PieChart
+                            android:id="@+id/chartSalesMix"
+                            android:layout_width="140dp"
+                            android:layout_height="140dp" />
+
+                        <LinearLayout
+                            android:id="@+id/legendSalesMix"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/salesMixDetail"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:background="@drawable/bg_product_info_panel"
+                        android:fontFamily="@font/poppinsregular"
+                        android:padding="@dimen/spacing_sm"
+                        android:text="@string/home_chart_tap_hint"
+                        android:textColor="@color/colorPrimary"
+                        android:textSize="@dimen/text_caption" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/branchMixCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_sm"
+                app:cardBackgroundColor="@color/colorSurface"
+                app:cardCornerRadius="@dimen/radius_md"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/colorBorder"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="14dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/poppinsmedium"
+                        android:text="@string/home_chart_branch_mix"
+                        android:textColor="@color/colorTextPrimary"
+                        android:textSize="@dimen/text_subtitle" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <com.github.mikephil.charting.charts.PieChart
+                            android:id="@+id/chartBranchMix"
+                            android:layout_width="140dp"
+                            android:layout_height="140dp" />
+
+                        <LinearLayout
+                            android:id="@+id/legendBranchMix"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/branchMixDetail"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:background="@drawable/bg_product_info_panel"
+                        android:fontFamily="@font/poppinsregular"
+                        android:padding="@dimen/spacing_sm"
+                        android:text="@string/home_chart_tap_hint"
+                        android:textColor="@color/colorPrimary"
+                        android:textSize="@dimen/text_caption" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/catalogMixCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_sm"
+                app:cardBackgroundColor="@color/colorSurface"
+                app:cardCornerRadius="@dimen/radius_md"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/colorBorder"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="14dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/poppinsmedium"
+                        android:text="@string/home_chart_catalog_mix"
+                        android:textColor="@color/colorTextPrimary"
+                        android:textSize="@dimen/text_subtitle" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <com.github.mikephil.charting.charts.PieChart
+                            android:id="@+id/chartCatalogMix"
+                            android:layout_width="140dp"
+                            android:layout_height="140dp" />
+
+                        <LinearLayout
+                            android:id="@+id/legendCatalogMix"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/catalogMixDetail"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:background="@drawable/bg_product_info_panel"
+                        android:fontFamily="@font/poppinsregular"
+                        android:padding="@dimen/spacing_sm"
+                        android:text="@string/home_chart_tap_hint"
+                        android:textColor="@color/colorPrimary"
+                        android:textSize="@dimen/text_caption" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/compareBranchesLayout"
                 android:layout_width="match_parent"
@@ -364,6 +657,68 @@
                             android:layout_height="wrap_content"
                             android:fontFamily="@font/poppinsregular"
                             android:text="@string/compare_branches_subtitle"
+                            android:textColor="@color/colorTextSecondary"
+                            android:textSize="@dimen/text_caption" />
+                    </LinearLayout>
+
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ic_chevron_right"
+                        app:tint="@color/colorTextHint" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/storeWiseLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_sm"
+                android:clickable="true"
+                android:focusable="true"
+                app:cardBackgroundColor="@color/colorSurface"
+                app:cardCornerRadius="@dimen/radius_md"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/colorBorder"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="14dp">
+
+                    <ImageView
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:background="@drawable/bg_quick_action_orange"
+                        android:contentDescription="@null"
+                        android:padding="10dp"
+                        android:src="@drawable/ic_store"
+                        app:tint="@color/statusTrial" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/spacing_md"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/poppinsbold"
+                            android:text="@string/home_store_wise"
+                            android:textColor="@color/colorTextPrimary"
+                            android:textSize="@dimen/text_subtitle" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/poppinsregular"
+                            android:text="@string/home_store_wise_subtitle"
                             android:textColor="@color/colorTextSecondary"
                             android:textSize="@dimen/text_caption" />
                     </LinearLayout>

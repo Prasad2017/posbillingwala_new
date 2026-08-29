@@ -78,7 +78,9 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
             AuthTokens.clear(this);
         }
 
-        binding.mobileNumber.setSelection(binding.mobileNumber.getText().toString().length());
+        if (binding.mobileNumber.getText() != null) {
+            binding.mobileNumber.setSelection(binding.mobileNumber.getText().toString().length());
+        }
 
         String privacyPolicy = "By providing licence key, I hereby agree and accept the Terms of service and Privacy Policy in use of the POS Billingwala app.";
         SpannableString spannableString = new SpannableString(privacyPolicy);
@@ -253,6 +255,11 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
                         Common.saveUserData(Login.this, "userId", "" + response.body().getUserId());
                         Common.saveUserData(Login.this, "reportPin", "" + response.body().getReportPin());
                         AuthTokens.saveFromLogin(Login.this, response.body());
+                        if (response.body().getAuthToken() == null || response.body().getAuthToken().trim().isEmpty()) {
+                            Snackbar.make(binding.loginLayout,
+                                    "Login token missing. Update Owner APIs on the server, then login again.",
+                                    Snackbar.LENGTH_LONG).show();
+                        }
 
                         Intent intent = new Intent(Login.this, MainActivity.class);
                         startActivity(intent);

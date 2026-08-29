@@ -10,5 +10,6 @@ public class OwnerApp extends Application {
     public void onCreate() {
         super.onCreate();
         ScreenshotConfig.install(this);
+        com.posbillingwala.owner.Retrofit.Api.bindContext(this);
     }
 }

@@ -14,7 +14,7 @@ import androidx.fragment.app.Fragment;
 import com.posbillingwala.owner.Activity.MainActivity;
 import com.posbillingwala.owner.R;
 import com.posbillingwala.owner.databinding.FragmentReportsHubBinding;
-import com.posbillingwala.owner.databinding.ItemReportMenuRowBinding;
+import com.posbillingwala.owner.databinding.ItemGroupedMenuRowBinding;
 
 public class ReportsHub extends Fragment {
 
@@ -31,10 +31,10 @@ public class ReportsHub extends Fragment {
 
         setupRow(binding.rowSalesDashboard, R.drawable.ic_report_dashboard, R.drawable.bg_quick_action_blue,
                 R.color.colorPrimary, getString(R.string.sales_dashboard),
-                MainActivity.branchCount > 1 ? getString(R.string.owner_multi_branch) : getString(R.string.sales_trend));
+                MainActivity.isMultiOutlet() ? getString(R.string.owner_multi_branch) : getString(R.string.sales_trend));
         setupRow(binding.rowSalesOverview, R.drawable.ic_report_overview, R.drawable.bg_quick_action_purple,
                 R.color.deepPurple, getString(R.string.sales_overview),
-                MainActivity.branchCount > 1 ? getString(R.string.owner_multi_branch) : getString(R.string.top_branches));
+                MainActivity.isMultiOutlet() ? getString(R.string.owner_multi_branch) : getString(R.string.top_branches));
         setupRow(binding.rowInvoiceReport, R.drawable.ic_business, R.drawable.bg_quick_action_green,
                 R.color.green_600, getString(R.string.branch_comparison), getString(R.string.all_branches));
         setupRow(binding.rowSaleReport, R.drawable.ic_store, R.drawable.bg_quick_action_orange,
@@ -43,6 +43,8 @@ public class ReportsHub extends Fragment {
                 R.color.colorPrimary, getString(R.string.order_invoices), getString(R.string.invoice_list));
 
         hideUnusedRows();
+        showGroupDividers(binding.rowSalesDashboard, binding.rowSalesOverview);
+        showGroupDividers(binding.rowInvoiceReport, binding.rowSaleReport, binding.rowTableReport);
 
         binding.rowSalesDashboard.getRoot().setOnClickListener(v ->
                 ((MainActivity) activity).loadFragment(new SalesDashboard(), true));
@@ -55,7 +57,7 @@ public class ReportsHub extends Fragment {
         binding.rowTableReport.getRoot().setOnClickListener(v ->
                 ((MainActivity) activity).loadFragment(new OrderInvoice(), true));
 
-        if (MainActivity.branchCount <= 1) {
+        if (!MainActivity.isMultiOutlet()) {
             binding.rowInvoiceReport.getRoot().setVisibility(View.GONE);
         }
 
@@ -81,9 +83,11 @@ public class ReportsHub extends Fragment {
         binding.rowMessMemberReport.getRoot().setVisibility(View.GONE);
         binding.rowMessReport.getRoot().setVisibility(View.GONE);
         binding.rowDeleteAllInvoices.getRoot().setVisibility(View.GONE);
+        binding.dataManagementLabel.setVisibility(View.GONE);
+        binding.dataManagementCard.setVisibility(View.GONE);
     }
 
-    private void setupRow(ItemReportMenuRowBinding row, int iconRes, int bgRes, int tintColor,
+    private void setupRow(ItemGroupedMenuRowBinding row, int iconRes, int bgRes, int tintColor,
                           String title, String subtitle) {
         row.menuIcon.setBackgroundResource(bgRes);
         row.menuIcon.setImageResource(iconRes);
@@ -91,6 +95,12 @@ public class ReportsHub extends Fragment {
         row.menuIcon.setColorFilter(ContextCompat.getColor(requireContext(), tintColor));
         row.menuTitle.setText(title);
         row.menuSubtitle.setText(subtitle);
+    }
+
+    private void showGroupDividers(ItemGroupedMenuRowBinding... rows) {
+        for (int i = 1; i < rows.length; i++) {
+            rows[i].rowDivider.setVisibility(View.VISIBLE);
+        }
     }
 
     private void navigateBack() {

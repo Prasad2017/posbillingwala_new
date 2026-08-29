@@ -24,7 +24,6 @@ import androidx.fragment.app.Fragment;
 
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
-import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.MultiplePermissionsReport;
 import com.karumi.dexter.PermissionToken;
@@ -40,6 +39,7 @@ import com.posbillingwala.owner.Model.CatalogImportPreviewResponse;
 import com.posbillingwala.owner.Model.CatalogImportSummary;
 import com.posbillingwala.owner.R;
 import com.posbillingwala.owner.Retrofit.Api;
+import com.posbillingwala.owner.Utils.CatalogImportExportHelper;
 import com.posbillingwala.owner.Utils.CatalogFileHelper;
 import com.posbillingwala.owner.databinding.FragmentProductExportBinding;
 
@@ -82,9 +82,12 @@ public class ProductExport extends Fragment implements View.OnClickListener {
         activity = getActivity();
         customerId = MainActivity.userId;
 
-        if (binding.customerSpinner.getParent() instanceof View) {
-            ((View) binding.customerSpinner.getParent().getParent()).setVisibility(View.GONE);
-        }
+        binding.toolbar.toolbarTitle.setText("Catalog Import / Export");
+        binding.toolbar.backButton.setOnClickListener(v -> {
+            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
+            ((MainActivity) activity).loadFragment(new UserSetting(), true);
+        });
+        binding.catalogCustomerScope.setText(CatalogImportExportHelper.customerCatalogLabel(activity));
 
         Bundle bundle = getArguments();
         if (bundle != null && bundle.getString("importType") != null) {
@@ -100,12 +103,9 @@ public class ProductExport extends Fragment implements View.OnClickListener {
             }
         }
         binding.importTypeSpinner.setSelectedIndex(typeIndex);
-        binding.importTypeSpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
-            @Override
-            public void onItemSelected(MaterialSpinner spinnerView, int position, long id, String item) {
-                selectedImportType = importTypeValues[position];
-                updateTypeLabels();
-            }
+        binding.importTypeSpinner.setOnItemSelectedListener((position, item) -> {
+            selectedImportType = importTypeValues[position];
+            updateTypeLabels();
         });
         updateTypeLabels();
 

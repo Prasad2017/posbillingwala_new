@@ -4,13 +4,16 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/colorBackground"
     tools:context=".Fragment.AllCustomerProductList">
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:layout_alignParentTop="true">
+        android:layout_height="56dp"
+        android:layout_alignParentTop="true"
+        android:background="@color/colorPrimary"
+        app:elevation="4dp">
 
         <RelativeLayout
             android:layout_width="match_parent"

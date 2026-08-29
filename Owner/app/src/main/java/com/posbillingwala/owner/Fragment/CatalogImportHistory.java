@@ -49,6 +49,10 @@ public class CatalogImportHistory extends Fragment {
             typeLabel = bundle.getString("typeLabel", "Catalog");
         }
 
+        binding.toolbar.toolbarTitle.setText(typeLabel != null ? typeLabel + " History" : "Import History");
+        binding.toolbar.backButton.setOnClickListener(v ->
+                ((MainActivity) activity).removeCurrentFragmentAndMoveBack());
+
         return binding.getRoot();
     }
 

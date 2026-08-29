@@ -40,11 +40,15 @@ public class SalesOverview extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentSalesOverviewBinding.inflate(inflater, container, false);
         activity = getActivity();
+        if (getArguments() != null && getArguments().getString("branchId") != null
+                && !getArguments().getString("branchId").trim().isEmpty()) {
+            selectedBranchId = getArguments().getString("branchId");
+        }
 
         binding.toolbar.toolbarTitle.setText(getString(R.string.sales_overview));
         binding.toolbar.backButton.setOnClickListener(v -> navigateBack());
         binding.dateChip.setOnClickListener(v -> {
-            if (MainActivity.branchCount > 1) {
+            if (branchOptions.size() > 1) {
                 showBranchPicker();
             }
         });
@@ -70,7 +74,7 @@ public class SalesOverview extends Fragment {
     public void onStart() {
         super.onStart();
         if (DetectConnection.checkInternetConnection(activity)) {
-            if (MainActivity.branchCount > 1 && branchOptions.isEmpty()) {
+            if (branchOptions.isEmpty()) {
                 preloadBranches();
             } else {
                 loadOverview();
@@ -87,6 +91,9 @@ public class SalesOverview extends Fragment {
                 branchOptions.clear();
                 if (response.body() != null && response.body().getBranchComparisonList() != null) {
                     branchOptions.addAll(response.body().getBranchComparisonList());
+                }
+                if (!branchOptions.isEmpty()) {
+                    MainActivity.setOutletCounts(branchOptions.size());
                 }
                 loadOverview();
             }
@@ -121,6 +128,27 @@ public class SalesOverview extends Fragment {
                 });
     }
 
+    private String scopeLabel(String periodLabel) {
+        String period = periodLabel != null ? periodLabel : getString(R.string.ui_this_month);
+        if (branchOptions.size() <= 1) {
+            return period;
+        }
+        String branchName = getString(R.string.all_branches);
+        if (!"all".equals(selectedBranchId)) {
+            for (BranchComparisonResponse b : branchOptions) {
+                if (selectedBranchId.equals(b.getBranchId())) {
+                    if (b.getBranchLabel() != null && !b.getBranchLabel().isEmpty()) {
+                        branchName = b.getBranchLabel();
+                    } else if (b.getShopName1() != null) {
+                        branchName = b.getShopName1();
+                    }
+                    break;
+                }
+            }
+        }
+        return period + " · " + branchName;
+    }
+
     private void loadOverview() {
         SweetAlertDialog loader = new SweetAlertDialog(activity, SweetAlertDialog.PROGRESS_TYPE);
         loader.getProgressHelper().setBarColor(Color.parseColor("#4862b7"));
@@ -137,7 +165,7 @@ public class SalesOverview extends Fragment {
                         AllApiResponse body = response.body();
                         if (!"true".equalsIgnoreCase(body.getStatus())) return;
 
-                        binding.dateChip.setText(body.getPeriodLabel());
+                        binding.dateChip.setText(scopeLabel(body.getPeriodLabel()));
                         ReportUiHelper.bindKpi(binding.kpi1, getString(R.string.total_sales),
                                 ReportUiHelper.money(body.getTotalSales()), body.getTotalSalesTrend());
                         ReportUiHelper.bindKpi(binding.kpi2, getString(R.string.net_sales),

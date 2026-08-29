@@ -5,26 +5,28 @@ import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.InputType;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.textfield.TextInputEditText;
 import com.posbillingwala.owner.Activity.MainActivity;
 import com.posbillingwala.owner.Adapter.CategoryAdapter;
+import com.posbillingwala.owner.Extra.CatalogListSearch;
 import com.posbillingwala.owner.Extra.DetectConnection;
-import com.posbillingwala.owner.Extra.SimpleDividerItemDecoration;
 import com.posbillingwala.owner.Model.AllApiResponse;
 import com.posbillingwala.owner.Model.ProductCategoryResponse;
+import com.posbillingwala.owner.R;
 import com.posbillingwala.owner.Retrofit.Api;
 import com.posbillingwala.owner.Utils.CatalogImportExportHelper;
 import com.posbillingwala.owner.databinding.FragmentAddCustomerProductCategoryBinding;
@@ -45,8 +47,10 @@ public class AddCustomerProductCategory extends Fragment {
     public static List<ProductCategoryResponse> productCategoryResponseList = new ArrayList<>();
     public static CategoryAdapter categoryAdapter;
     public static RecyclerView categoryRecyclerview;
-    public static CardView categoryListCardView;
-    public static TextView noDataFound;
+    public static View categoryListCardView;
+    public static View noDataFound;
+    public static View listNoResults;
+    public static TextInputEditText searchCategory;
     public FragmentAddCustomerProductCategoryBinding binding;
     CatalogImportExportHelper catalogImportExportHelper;
 
@@ -62,19 +66,14 @@ public class AddCustomerProductCategory extends Fragment {
             @Override
             public void onResponse(Call<AllApiResponse> call, Response<AllApiResponse> response) {
                 if (response.isSuccessful()) {
-                    productCategoryResponseList = response.body().getProductCategoryResponseList();
+                    productCategoryResponseList = response.body() != null
+                            && response.body().getProductCategoryResponseList() != null
+                            ? response.body().getProductCategoryResponseList()
+                            : new ArrayList<>();
                     if (!productCategoryResponseList.isEmpty()) {
-                        categoryAdapter = new CategoryAdapter(activity, productCategoryResponseList);
-                        categoryRecyclerview.setLayoutManager(new GridLayoutManager(activity, 1));
-                        categoryRecyclerview.setAdapter(categoryAdapter);
-                        categoryRecyclerview.addItemDecoration(new SimpleDividerItemDecoration(activity));
-                        categoryAdapter.notifyDataSetChanged();
-                        categoryAdapter.notifyItemInserted(productCategoryResponseList.size() - 1);
-                        categoryRecyclerview.setHasFixedSize(true);
-
                         categoryListCardView.setVisibility(View.VISIBLE);
                         noDataFound.setVisibility(View.GONE);
-
+                        applyCategorySearch();
                     } else {
                         categoryListCardView.setVisibility(View.GONE);
                         noDataFound.setVisibility(View.VISIBLE);
@@ -104,6 +103,22 @@ public class AddCustomerProductCategory extends Fragment {
         catalogImportExportHelper = new CatalogImportExportHelper(
                 this, MainActivity.userId, "categories", "Categories", AddCustomerProductCategory::getProductCategoryList);
         catalogImportExportHelper.bindBar(binding.catalogImportExportBar.getRoot());
+
+        binding.listSearch.listSearchInput.setHint(R.string.ui_search_category);
+        binding.listSearch.listSearchInput.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                applyCategorySearch();
+            }
+        });
 
         binding.categoryName.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
 
@@ -150,8 +165,27 @@ public class AddCustomerProductCategory extends Fragment {
 
     public void initViews() {
         categoryRecyclerview = binding.categoryRecyclerview;
+        categoryRecyclerview.setLayoutManager(new GridLayoutManager(activity, 1));
         categoryListCardView = binding.categoryListCardView;
         noDataFound = binding.noDataFound;
+        listNoResults = binding.listNoResults;
+        searchCategory = binding.listSearch.listSearchInput;
+    }
+
+    public static void applyCategorySearch() {
+        if (activity == null || categoryRecyclerview == null || productCategoryResponseList == null) {
+            return;
+        }
+        String query = CatalogListSearch.currentQuery(searchCategory);
+        List<ProductCategoryResponse> filtered = new ArrayList<>();
+        for (ProductCategoryResponse item : productCategoryResponseList) {
+            if (item != null && CatalogListSearch.matches(query, item.getCategoryName())) {
+                filtered.add(item);
+            }
+        }
+        categoryAdapter = new CategoryAdapter(activity, filtered);
+        categoryRecyclerview.setAdapter(categoryAdapter);
+        CatalogListSearch.showFilterEmpty(categoryRecyclerview, listNoResults, !filtered.isEmpty());
     }
 
     public void addProductCategory() {

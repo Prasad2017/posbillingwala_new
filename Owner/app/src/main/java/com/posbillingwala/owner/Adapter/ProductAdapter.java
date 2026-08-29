@@ -3,7 +3,7 @@ package com.posbillingwala.owner.Adapter;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.text.Html;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,9 +21,10 @@ import com.posbillingwala.owner.Model.AllApiResponse;
 import com.posbillingwala.owner.Model.ProductResponse;
 import com.posbillingwala.owner.R;
 import com.posbillingwala.owner.Retrofit.Api;
-import com.posbillingwala.owner.databinding.ProductListBinding; // Import the generated binding class
+import com.posbillingwala.owner.databinding.ProductListBinding;
 
 import java.util.List;
+import java.util.Locale;
 
 import cn.pedant.SweetAlert.SweetAlertDialog;
 import retrofit2.Call;
@@ -52,53 +53,83 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.MyViewHo
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
         ProductResponse productResponse = productResponseList.get(position);
 
-        String productCategory = "<b>Product Category</b>: " + productResponse.getCategoryName();
-        holder.binding.productCategory.setText(Html.fromHtml(productCategory));
-        String productName = "<b>Product Name</b>: " + productResponse.getProductName();
-        if (productResponse.getSubcategoryName() != null && productResponse.getSubcategoryName().length() > 0) {
-            String subcategoryLine = "<b>Subcategory</b>: " + productResponse.getSubcategoryName();
-            holder.binding.productName.setText(Html.fromHtml(productName + "<br>" + subcategoryLine));
+        String name = productResponse.getProductName() != null ? productResponse.getProductName().trim() : "";
+        holder.binding.productInitial.setText(getInitial(name));
+        holder.binding.productName.setText(name);
+
+        String categoryName = productResponse.getCategoryName();
+        if (TextUtils.isEmpty(categoryName)) {
+            holder.binding.productCategory.setVisibility(View.GONE);
         } else {
-            holder.binding.productName.setText(Html.fromHtml(productName));
+            holder.binding.productCategory.setVisibility(View.VISIBLE);
+            holder.binding.productCategory.setText(categoryName);
         }
-        String productPrice = "<b>Product Price(Without GST)</b>: " + MainActivity.currency + " " + productResponse.getProductPrice();
-        holder.binding.productPrice.setText(Html.fromHtml(productPrice));
-        String productUnit = "<b>Product Unit</b>: " + productResponse.getProductUnit();
-        holder.binding.productUnit.setText(Html.fromHtml(productUnit));
-        String productCGST = "<b>Product CGST</b>: " + productResponse.getProductCGST();
-        holder.binding.productCGST.setText(Html.fromHtml(productCGST));
-        String productSGST = "<b>Product SGST</b>: " + productResponse.getProductSGST();
-        holder.binding.productSGST.setText(Html.fromHtml(productSGST));
 
-        holder.binding.deleteProduct.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                deleteProductDialog(productResponse.getProductId());
-            }
-        });
+        String subcategoryName = productResponse.getSubcategoryName();
+        if (!TextUtils.isEmpty(subcategoryName)) {
+            holder.binding.productSubcategory.setVisibility(View.VISIBLE);
+            holder.binding.productSubcategory.setText(subcategoryName);
+        } else {
+            holder.binding.productSubcategory.setVisibility(View.GONE);
+        }
 
-        holder.binding.updateProduct.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                UpdateProduct updateProduct = new UpdateProduct();
-                Bundle bundle = new Bundle();
-                bundle.putString("productId", productResponse.getProductId());
-                updateProduct.setArguments(bundle);
-                ((MainActivity) context).loadFragment(updateProduct, true);
-            }
-        });
+        String code = productResponse.getProductCode();
+        if (!TextUtils.isEmpty(code)) {
+            holder.binding.productCode.setText("#" + code);
+            holder.binding.productCode.setVisibility(View.VISIBLE);
+        } else {
+            holder.binding.productCode.setVisibility(View.GONE);
+        }
 
-        holder.binding.managePortions.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                ManageCustomerProductPortions fragment = new ManageCustomerProductPortions();
-                Bundle bundle = new Bundle();
-                bundle.putString("productId", productResponse.getProductId());
-                bundle.putString("productName", productResponse.getProductName());
-                fragment.setArguments(bundle);
-                ((MainActivity) context).loadFragment(fragment, true);
-            }
+        String unit = productResponse.getProductUnit();
+        if (!TextUtils.isEmpty(unit)) {
+            holder.binding.productUnit.setVisibility(View.VISIBLE);
+            holder.binding.productUnit.setText(unit);
+        } else {
+            holder.binding.productUnit.setVisibility(View.GONE);
+        }
+
+        String currency = MainActivity.currency != null ? MainActivity.currency + " " : "";
+        String price = productResponse.getProductPrice();
+        holder.binding.productPrice.setText(!TextUtils.isEmpty(price) ? currency + price : "");
+
+        String cgst = productResponse.getProductCGST();
+        String sgst = productResponse.getProductSGST();
+        boolean hasCgst = !TextUtils.isEmpty(cgst);
+        boolean hasSgst = !TextUtils.isEmpty(sgst);
+        if (hasCgst || hasSgst) {
+            holder.binding.productGstRow.setVisibility(View.VISIBLE);
+            holder.binding.productCGST.setText("CGST " + (hasCgst ? cgst + "%" : "-"));
+            holder.binding.productSGST.setText("SGST " + (hasSgst ? sgst + "%" : "-"));
+        } else {
+            holder.binding.productGstRow.setVisibility(View.GONE);
+        }
+
+        holder.binding.managePortionsLabel.setText(R.string.manage_portions);
+
+        holder.binding.deleteProduct.setOnClickListener(v -> deleteProductDialog(productResponse.getProductId()));
+        holder.binding.updateProduct.setOnClickListener(v -> {
+            UpdateProduct updateProduct = new UpdateProduct();
+            Bundle bundle = new Bundle();
+            bundle.putString("productId", productResponse.getProductId());
+            updateProduct.setArguments(bundle);
+            ((MainActivity) context).loadFragment(updateProduct, true);
         });
+        holder.binding.managePortions.setOnClickListener(v -> {
+            ManageCustomerProductPortions fragment = new ManageCustomerProductPortions();
+            Bundle bundle = new Bundle();
+            bundle.putString("productId", productResponse.getProductId());
+            bundle.putString("productName", productResponse.getProductName());
+            fragment.setArguments(bundle);
+            ((MainActivity) context).loadFragment(fragment, true);
+        });
+    }
+
+    private static String getInitial(String name) {
+        if (TextUtils.isEmpty(name)) {
+            return "P";
+        }
+        return name.substring(0, 1).toUpperCase(Locale.getDefault());
     }
 
     private void deleteProductDialog(String productId) {

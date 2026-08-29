@@ -11,11 +11,9 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -43,8 +41,8 @@ public class AddCustomerPortionMaster extends Fragment implements View.OnClickLi
 
     public static Activity activity;
     public static RecyclerView portionMasterRecyclerview;
-    public static CardView portionMasterListCardView;
-    public static TextView noDataFound;
+    public static View portionMasterListCardView;
+    public static View noDataFound;
 
     FragmentAddCustomerPortionMasterBinding binding;
     CatalogImportExportHelper catalogImportExportHelper;

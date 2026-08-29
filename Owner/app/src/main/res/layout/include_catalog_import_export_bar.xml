@@ -1,31 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="5dp"
-    app:cardCornerRadius="8dp"
-    app:cardElevation="4dp">
+    android:layout_marginBottom="@dimen/spacing_md"
+    app:cardBackgroundColor="@color/colorSurface"
+    app:cardCornerRadius="@dimen/radius_lg"
+    app:cardElevation="@dimen/card_elevation"
+    app:strokeColor="@color/colorBorder"
+    app:strokeWidth="1dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="8dp">
+        android:padding="@dimen/spacing_md">
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:fontFamily="@font/poppinsmedium"
+            android:fontFamily="@font/poppinsbold"
             android:gravity="center"
+            android:letterSpacing="0.06"
             android:text="Import / Export"
-            android:textColor="@color/colorPrimary"
-            android:textSize="13sp" />
+            android:textAllCaps="true"
+            android:textColor="@color/colorTextSecondary"
+            android:textSize="@dimen/text_caption" />
+
+        <TextView
+            android:id="@+id/catalogCustomerScope"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:fontFamily="@font/poppinsregular"
+            android:gravity="center"
+            android:text="Customer catalog (all outlets)"
+            android:textColor="@color/colorTextSecondary"
+            android:textSize="11sp" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="@dimen/spacing_sm"
             android:gravity="center"
             android:orientation="horizontal">
 
@@ -35,8 +51,8 @@
                 android:layout_height="36dp"
                 android:layout_margin="3dp"
                 android:layout_weight="1"
-                android:background="@drawable/button_rounded_border"
-                android:fontFamily="@font/poppinsregular"
+                android:background="@drawable/bg_button_outline"
+                android:fontFamily="@font/poppinsmedium"
                 android:gravity="center"
                 android:text="Demo"
                 android:textColor="@color/colorPrimary"
@@ -48,8 +64,8 @@
                 android:layout_height="36dp"
                 android:layout_margin="3dp"
                 android:layout_weight="1"
-                android:background="@drawable/button_rounded_border"
-                android:fontFamily="@font/poppinsregular"
+                android:background="@drawable/bg_button_outline"
+                android:fontFamily="@font/poppinsmedium"
                 android:gravity="center"
                 android:text="Import"
                 android:textColor="@color/colorPrimary"
@@ -61,8 +77,8 @@
                 android:layout_height="36dp"
                 android:layout_margin="3dp"
                 android:layout_weight="1"
-                android:background="@drawable/button_rounded_border"
-                android:fontFamily="@font/poppinsregular"
+                android:background="@drawable/bg_button_outline"
+                android:fontFamily="@font/poppinsmedium"
                 android:gravity="center"
                 android:text="Export"
                 android:textColor="@color/colorPrimary"
@@ -74,12 +90,12 @@
                 android:layout_height="36dp"
                 android:layout_margin="3dp"
                 android:layout_weight="1"
-                android:background="@drawable/button_rounded_border"
-                android:fontFamily="@font/poppinsregular"
+                android:background="@drawable/bg_button_outline"
+                android:fontFamily="@font/poppinsmedium"
                 android:gravity="center"
                 android:text="History"
                 android:textColor="@color/colorPrimary"
                 android:textSize="12sp" />
         </LinearLayout>
     </LinearLayout>
-</androidx.cardview.widget.CardView>
+</com.google.android.material.card.MaterialCardView>

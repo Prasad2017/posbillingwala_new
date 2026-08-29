@@ -21,6 +21,17 @@ public class MainActivity extends AppCompatActivity {
     public static DrawerLayout drawerLayout;
     public static String userId, currency = "₹.", reportPin;
     public static int branchCount = 1;
+    public static int licenseCount = 1;
+
+    public static void setOutletCounts(int outlets) {
+        int value = Math.max(0, outlets);
+        branchCount = value;
+        licenseCount = value;
+    }
+
+    public static boolean isMultiOutlet() {
+        return branchCount > 1 || licenseCount > 1;
+    }
     boolean doubleBackToExitPressedOnce = false;
 
 

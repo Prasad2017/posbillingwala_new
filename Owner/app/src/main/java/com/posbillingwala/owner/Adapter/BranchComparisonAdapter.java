@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.posbillingwala.owner.Extra.ReportUiHelper;
 import com.posbillingwala.owner.Model.BranchComparisonResponse;
 import com.posbillingwala.owner.databinding.BranchComparisonItemBinding;
 
@@ -40,10 +41,10 @@ public class BranchComparisonAdapter extends RecyclerView.Adapter<BranchComparis
                 ? (row.getAndroidDeviceName() != null ? row.getAndroidDeviceName() : "Bound")
                 : "Offline / not bound";
 
-        String metrics = "Total: " + currency + " " + row.getTotalSale()
-                + "\nToday: " + currency + " " + row.getTodaySale()
+        String metrics = "Total: " + ReportUiHelper.money(currency, row.getTotalSale())
+                + "\nToday: " + ReportUiHelper.money(currency, row.getTodaySale())
                 + "\nBills: " + row.getBillCount() + " (today: " + row.getTodayBillCount() + ")"
-                + "\nAvg bill: " + currency + " " + row.getAvgBillAmount()
+                + "\nAvg bill: " + ReportUiHelper.money(currency, row.getAvgBillAmount())
                 + "\nDevice: " + device;
 
         holder.binding.metrics.setText(metrics);

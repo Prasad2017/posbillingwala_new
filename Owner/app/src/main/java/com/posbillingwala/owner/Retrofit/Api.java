@@ -47,10 +47,15 @@ public class Api {
                         if (appContext != null) {
                             String token = Common.getSavedUserData(appContext, "authToken");
                             if (token != null && !token.isEmpty()) {
-                                Request authenticated = original.newBuilder()
+                                Request.Builder builder = original.newBuilder()
                                         .header("Authorization", "Bearer " + token)
-                                        .build();
-                                return chain.proceed(authenticated);
+                                        .header("X-Auth-Token", token);
+                                if (original.url().queryParameter("authToken") == null) {
+                                    builder.url(original.url().newBuilder()
+                                            .setQueryParameter("authToken", token)
+                                            .build());
+                                }
+                                return chain.proceed(builder.build());
                             }
                         }
                         return chain.proceed(original);

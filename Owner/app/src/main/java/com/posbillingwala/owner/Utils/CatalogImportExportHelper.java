@@ -13,6 +13,7 @@ import androidx.fragment.app.Fragment;
 
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.posbillingwala.owner.Extra.Common;
 import com.posbillingwala.owner.Extra.BottomSheetUi;
 import com.posbillingwala.owner.Activity.MainActivity;
 import com.posbillingwala.owner.Fragment.CatalogImportHistory;
@@ -64,6 +65,14 @@ public class CatalogImportExportHelper {
         this.fileRequestCode = FILE_REQUEST_BASE + Math.abs(importType.hashCode() % 100);
     }
 
+    public static String customerCatalogLabel(Activity activity) {
+        String shop = activity != null ? Common.getSavedUserData(activity, "shopName") : "";
+        String name = activity != null ? Common.getSavedUserData(activity, "customerName") : "";
+        String label = shop != null && !shop.trim().isEmpty() ? shop.trim()
+                : (name != null && !name.trim().isEmpty() ? name.trim() : "this customer");
+        return "Customer catalog · " + label + " (all outlets)";
+    }
+
     public void bindBar(View barRoot) {
         if (barRoot == null || customerId == null || customerId.isEmpty()) {
             return;
@@ -72,6 +81,10 @@ public class CatalogImportExportHelper {
         TextView importBtn = barRoot.findViewById(R.id.catalogImportBtn);
         TextView exportBtn = barRoot.findViewById(R.id.catalogExportBtn);
         TextView historyBtn = barRoot.findViewById(R.id.catalogHistoryBtn);
+        TextView scope = barRoot.findViewById(R.id.catalogCustomerScope);
+        if (scope != null) {
+            scope.setText(customerCatalogLabel(activity));
+        }
 
         if (demoBtn != null) {
             demoBtn.setOnClickListener(v -> downloadTemplate());
