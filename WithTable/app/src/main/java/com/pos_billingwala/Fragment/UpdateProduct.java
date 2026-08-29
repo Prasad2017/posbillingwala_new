@@ -110,7 +110,8 @@ public class UpdateProduct extends Fragment implements View.OnClickListener {
                 if (!binding.productFormBody.productName.getText().toString().isEmpty()) {
                     String price = binding.productFormBody.productPrice.getText().toString().trim();
                     boolean hasPortions = portionSectionHelper != null && portionSectionHelper.hasPortions();
-                    if (!price.isEmpty() || hasPortions) {
+                    boolean openPrice = binding.productFormBody.openPriceSwitch.isChecked();
+                    if (!price.isEmpty() || hasPortions || openPrice) {
                         if (unitName != null) {
                             updateProduct();
                         } else {
@@ -140,12 +141,14 @@ public class UpdateProduct extends Fragment implements View.OnClickListener {
     public void updateProduct() {
 
         String productPrice = binding.productFormBody.productPrice.getText().toString().trim();
-        if (productPrice.isEmpty() && portionSectionHelper.hasPortions()) {
+        boolean openPriceOn = binding.productFormBody.openPriceSwitch.isChecked();
+        if (productPrice.isEmpty() && (portionSectionHelper.hasPortions() || openPriceOn)) {
             productPrice = "0";
         }
+        String openPrice = openPriceOn ? "on" : "off";
 
         posBillingWalaDatabase.updateProduct(MainActivity.userId, productId, categoryId, categoryName, binding.productFormBody.productCode.getText().toString(), binding.productFormBody.productName.getText().toString(), productPrice,
-                unitName, binding.productFormBody.productCGST.getText().toString(), binding.productFormBody.productSGST.getText().toString(), 0, subcategoryId);
+                unitName, binding.productFormBody.productCGST.getText().toString(), binding.productFormBody.productSGST.getText().toString(), 0, subcategoryId, openPrice);
 
         portionSectionHelper.savePortionsForProduct(productId);
 
@@ -207,6 +210,7 @@ public class UpdateProduct extends Fragment implements View.OnClickListener {
             binding.productFormBody.productCGST.setText(productResponse.getProductCGST());
             binding.productFormBody.productSGST.setText(productResponse.getProductSGST());
             binding.productFormBody.productCode.setText(productResponse.getProductCode());
+            binding.productFormBody.openPriceSwitch.setChecked(productResponse.isOpenPrice());
 
             unitNameList = activity.getResources().getStringArray(R.array.product_unit);
             binding.productFormBody.unitDropdown.setItems(unitNameList);

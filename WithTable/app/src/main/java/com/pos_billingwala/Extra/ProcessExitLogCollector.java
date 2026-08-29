@@ -94,16 +94,18 @@ public final class ProcessExitLogCollector {
                 if (!shouldSave(info, description, trace)) {
                     continue;
                 }
+                String extras = buildExtras(info);
                 ErrorLogReporter.reportProcessExit(
                         reasonType(info),
                         reasonLabel(info),
                         exceptionClassOf(description, trace, info.getReason()),
                         description,
-                        trace,
+                        mergeTrace(trace, extras),
                         ts,
                         info.getPid(),
                         info.getReason(),
-                        info.getStatus()
+                        info.getStatus(),
+                        severityFor(info)
                 );
                 saved++;
             }
@@ -191,10 +193,81 @@ public final class ProcessExitLogCollector {
             if (reason == ApplicationExitInfo.REASON_CRASH_NATIVE) {
                 return "NativeCrash";
             }
+            // LMK is OS reclaim — not a Java OutOfMemoryError stack.
             if (reason == ApplicationExitInfo.REASON_LOW_MEMORY) {
-                return "java.lang.OutOfMemoryError";
+                return "android.app.ApplicationExitInfo.LOW_MEMORY";
             }
             return "ProcessExit";
+        }
+
+        private static String severityFor(ApplicationExitInfo info) {
+            if (info.getReason() == ApplicationExitInfo.REASON_LOW_MEMORY) {
+                int importance = info.getImportance();
+                // Cached / gone processes are normal OS reclaim under device pressure.
+                if (importance >= ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED) {
+                    return "WARNING";
+                }
+                if (importance >= ActivityManager.RunningAppProcessInfo.IMPORTANCE_SERVICE) {
+                    return "ERROR";
+                }
+                return "CRITICAL";
+            }
+            if (info.getReason() == ApplicationExitInfo.REASON_ANR
+                    || info.getReason() == ApplicationExitInfo.REASON_CRASH
+                    || info.getReason() == ApplicationExitInfo.REASON_CRASH_NATIVE) {
+                return "CRITICAL";
+            }
+            return "ERROR";
+        }
+
+        private static String buildExtras(ApplicationExitInfo info) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("importance=").append(importanceLabel(info.getImportance()));
+            sb.append(" (").append(info.getImportance()).append(')');
+            long pss = info.getPss();
+            if (pss > 0) {
+                sb.append("\npss_kb=").append(pss);
+            }
+            if (Build.VERSION.SDK_INT >= 35) {
+                try {
+                    long rss = info.getRss();
+                    if (rss > 0) {
+                        sb.append("\nrss_kb=").append(rss);
+                    }
+                } catch (Throwable ignored) {
+                }
+            }
+            if (info.getReason() == ApplicationExitInfo.REASON_LOW_MEMORY) {
+                sb.append("\nnote=OS Low Memory Killer reclaimed this process; ");
+                sb.append("not a Java OutOfMemoryError unless a heap dump/stack says so.");
+            }
+            return sb.toString();
+        }
+
+        private static String importanceLabel(int importance) {
+            if (importance <= ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
+                return "FOREGROUND";
+            }
+            if (importance <= ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE) {
+                return "VISIBLE";
+            }
+            if (importance <= ActivityManager.RunningAppProcessInfo.IMPORTANCE_SERVICE) {
+                return "SERVICE";
+            }
+            if (importance <= ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED) {
+                return "CACHED";
+            }
+            return "GONE_OR_OTHER";
+        }
+
+        private static String mergeTrace(String trace, String extras) {
+            if (extras == null || extras.isEmpty()) {
+                return trace != null ? trace : "";
+            }
+            if (trace == null || trace.isEmpty()) {
+                return extras;
+            }
+            return extras + "\n\n" + trace;
         }
 
         private static String readTrace(ApplicationExitInfo info) {

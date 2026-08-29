@@ -122,7 +122,8 @@ public class AddProduct extends Fragment implements View.OnClickListener {
                 if (!binding.productFormBody.productName.getText().toString().isEmpty()) {
                     String price = binding.productFormBody.productPrice.getText().toString().trim();
                     boolean hasPortions = portionSectionHelper != null && portionSectionHelper.hasPortions();
-                    if (!price.isEmpty() || hasPortions) {
+                    boolean openPrice = binding.productFormBody.openPriceSwitch.isChecked();
+                    if (!price.isEmpty() || hasPortions || openPrice) {
                         if (unitName != null) {
                             addProduct();
                         } else {
@@ -144,16 +145,19 @@ public class AddProduct extends Fragment implements View.OnClickListener {
 
         String networkStatus = getRandomString(10);
         String productPrice = binding.productFormBody.productPrice.getText().toString().trim();
-        if (productPrice.isEmpty() && portionSectionHelper.hasPortions()) {
+        boolean openPriceOn = binding.productFormBody.openPriceSwitch.isChecked();
+        if (productPrice.isEmpty() && (portionSectionHelper.hasPortions() || openPriceOn)) {
             productPrice = "0";
         }
+        String openPrice = openPriceOn ? "on" : "off";
         long rowId = posBillingWalaDatabase.addProductAndReturnId(
                 MainActivity.ownerId, categoryId, categoryName,
                 binding.productFormBody.productCode.getText().toString(),
                 binding.productFormBody.productName.getText().toString(),
                 productPrice,
                 unitName, binding.productFormBody.productCGST.getText().toString(),
-                binding.productFormBody.productSGST.getText().toString(), 0, networkStatus, "0", subcategoryId);
+                binding.productFormBody.productSGST.getText().toString(), 0, networkStatus, "0", subcategoryId,
+                openPrice);
 
         String newProductId = rowId > 0 ? String.valueOf(rowId) : null;
         if (newProductId == null) {

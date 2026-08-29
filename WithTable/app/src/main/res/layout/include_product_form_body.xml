@@ -149,6 +149,24 @@
                     android:textSize="@dimen/text_body" />
             </com.google.android.material.textfield.TextInputLayout>
 
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/openPriceSwitch"
+                style="@style/PosSwitchRow"
+                android:layout_marginTop="@dimen/spacing_md"
+                android:checked="false"
+                android:text="@string/ui_open_price"
+                android:textOff="Off"
+                android:textOn="On" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_xs"
+                android:fontFamily="@font/poppinsregular"
+                android:text="@string/ui_open_price_hint"
+                android:textColor="@color/colorTextSecondary"
+                android:textSize="@dimen/text_caption" />
+
             <LinearLayout
                 android:id="@+id/productPriceSection"
                 android:layout_width="match_parent"

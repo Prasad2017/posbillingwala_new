@@ -59,6 +59,9 @@ public class ProductCartResponse {
     @SerializedName("snapshotLinePrice")
     @Expose
     public String snapshotLinePrice;
+    @SerializedName("openPrice")
+    @Expose
+    public String openPrice;
     @SerializedName("cartItemType")
     @Expose
     public String cartItemType;
@@ -212,6 +215,18 @@ public class ProductCartResponse {
 
     public void setSnapshotLinePrice(String snapshotLinePrice) {
         this.snapshotLinePrice = snapshotLinePrice;
+    }
+
+    public String getOpenPrice() {
+        return openPrice != null ? openPrice : "off";
+    }
+
+    public void setOpenPrice(String openPrice) {
+        this.openPrice = openPrice;
+    }
+
+    public boolean isOpenPrice() {
+        return openPrice != null && "on".equalsIgnoreCase(openPrice.trim());
     }
 
     public String getCartItemType() {

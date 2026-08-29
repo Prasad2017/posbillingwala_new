@@ -70,14 +70,20 @@ public final class DeviceHealthMonitor {
 
     /** Called from ComponentCallbacks2.onTrimMemory. */
     public static void onTrimMemory(int level) {
-        if (level >= android.content.ComponentCallbacks2.TRIM_MEMORY_COMPLETE
-                || level >= android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL) {
+        // Trim levels are two series — do not use >= across them:
+        // Running: MODERATE=5, LOW=10, CRITICAL=15
+        // Background: UI_HIDDEN=20, BACKGROUND=40, MODERATE=60, COMPLETE=80
+        // UI_HIDDEN is normal (user left the UI); only RUNNING_CRITICAL / COMPLETE are severe.
+        if (level == android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL
+                || level >= android.content.ComponentCallbacks2.TRIM_MEMORY_COMPLETE) {
             reportMemoryIssue("LOW_MEMORY", "ERROR", "trim_memory_" + level,
                     "Critical memory trim level=" + level);
-        } else if (level >= android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW
-                || level >= android.content.ComponentCallbacks2.TRIM_MEMORY_MODERATE) {
+        } else if (level == android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW
+                || level == android.content.ComponentCallbacks2.TRIM_MEMORY_MODERATE
+                || level == android.content.ComponentCallbacks2.TRIM_MEMORY_BACKGROUND) {
             Observability.log("SYSTEM trim_memory level=" + level + " — memory pressure");
         }
+        // TRIM_MEMORY_UI_HIDDEN / RUNNING_MODERATE: normal — no report
     }
 
     public static void checkStorageAsync() {

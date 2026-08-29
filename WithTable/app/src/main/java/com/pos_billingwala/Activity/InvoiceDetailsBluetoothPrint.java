@@ -417,13 +417,17 @@ public class InvoiceDetailsBluetoothPrint extends BaseActivity implements View.O
 
         if (WoosimPrnMng.isPrinterConnected(getApplicationContext(), InvoiceDetailsBluetoothPrint.this)) {
 
-            BluetoothPrintService mService = null;
-            mService = WoosimPrnMng.getServiceInstance();
+            BluetoothPrintService mService = WoosimPrnMng.getServiceInstance();
+            if (mService == null) {
+                Toast.makeText(activity, getString(R.string.toast_printer_not_connected_select), Toast.LENGTH_SHORT).show();
+                return;
+            }
             PrintImage PrintImage = new PrintImage(getResizedBitmap(image, effectivePrintWidth));
             PrintImage.PrepareImage(dither.floyd_steinberg, 128);
             mService.write(PrintImage.getPrintImageData());
 
-            checkAndFeedPaper(printerSettingResponseList.get(0).getKotPrinterFeedLines());
+            String feed = printerSettingResponseList.get(0).getPrinterFeedLines();
+            checkAndFeedPaper(feed == null || feed.trim().isEmpty() ? "1" : feed);
 
         } else {
             //Printer not connected and send request for connecting printer
@@ -504,22 +508,27 @@ public class InvoiceDetailsBluetoothPrint extends BaseActivity implements View.O
     }
 
     public void checkAndFeedPaper(String lines) {
-
-        if (WoosimPrnMng.isPrinterConnected(activity, InvoiceDetailsBluetoothPrint.this)) {
-            BluetoothPrintService mService = null;
-            mService = KOTWoosimPrnMng.getServiceInstance();
-            StringBuilder lineBreaks = new StringBuilder();
-            for (int i = 0; i < Integer.parseInt(lines); i++) {
-                lineBreaks.append("\n"); // Add a newline character for each extra line
+        try {
+            if (lines == null || lines.trim().isEmpty()) {
+                return;
             }
-            // Convert to bytes and send to the printer
-            byte[] lineBreakBytes = lineBreaks.toString().getBytes();
-            mService.write(lineBreakBytes);
-        } else {
-            //Printer not connected and send request for connecting printer
-            new WoosimPrnMng(activity, "", InvoiceDetailsBluetoothPrint.this);
+            if (!WoosimPrnMng.isPrinterConnected(activity, InvoiceDetailsBluetoothPrint.this)) {
+                new WoosimPrnMng(activity, "", InvoiceDetailsBluetoothPrint.this);
+                return;
+            }
+            // Bill printer feed — must use WoosimPrnMng, not KOTWoosimPrnMng
+            BluetoothPrintService mService = WoosimPrnMng.getServiceInstance();
+            if (mService == null) {
+                return;
+            }
+            int count = Integer.parseInt(lines.trim());
+            StringBuilder lineBreaks = new StringBuilder();
+            for (int i = 0; i < count; i++) {
+                lineBreaks.append("\n");
+            }
+            mService.write(lineBreaks.toString().getBytes());
+        } catch (Exception ignored) {
         }
-
     }
 
     public void hideDialog() {

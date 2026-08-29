@@ -126,7 +126,8 @@ public interface ApiInterface {
                                      @Field("productSGST") String productSGST,
                                      @Field("productNetworkStatus") String productNetworkStatus,
                                      @Field("productDeletedStatus") String productDeletedStatus,
-                                     @Field("subcategoryId") String subcategoryId);
+                                     @Field("subcategoryId") String subcategoryId,
+                                     @Field("openPrice") String openPrice);
 
     @FormUrlEncoded
     @POST("insertPortionMaster.php")

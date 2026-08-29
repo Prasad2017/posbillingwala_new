@@ -173,7 +173,8 @@ public class UserSynchronizeData {
                         cursor.getString(cursor.getColumnIndex("productSGST")),
                         cursor.getString(cursor.getColumnIndex("productNetworkStatus")),
                         cursor.getString(cursor.getColumnIndex("productDeletedStatus")),
-                        columnOrEmpty(cursor, "subcategoryId"));
+                        columnOrEmpty(cursor, "subcategoryId"),
+                        columnOrEmpty(cursor, "openPrice"));
             } while (cursor.moveToNext());
         }
         closeCursor();
@@ -562,8 +563,9 @@ public class UserSynchronizeData {
         }
     }
 
-    public void saveProduct(String productId, String categoryId, String categoryName, String productCode, String productName, String productPrice, String productUnit, String productCGST, String productSGST, String productNetworkStatus, String productDeletedStatus, String subcategoryId) {
-        if (executeCall(Api.getClient(context).saveProduct(MainActivity.ownerId, categoryId, categoryName, productCode, productName, productPrice, productUnit, productCGST, productSGST, productNetworkStatus, productDeletedStatus, subcategoryId))) {
+    public void saveProduct(String productId, String categoryId, String categoryName, String productCode, String productName, String productPrice, String productUnit, String productCGST, String productSGST, String productNetworkStatus, String productDeletedStatus, String subcategoryId, String openPrice) {
+        String openPriceValue = (openPrice == null || openPrice.trim().isEmpty()) ? "off" : openPrice;
+        if (executeCall(Api.getClient(context).saveProduct(MainActivity.ownerId, categoryId, categoryName, productCode, productName, productPrice, productUnit, productCGST, productSGST, productNetworkStatus, productDeletedStatus, subcategoryId, openPriceValue))) {
             posBillingWalaDatabase.updateSyncProduct(productId, NAME_SYNCED_WITH_SERVER);
         }
     }

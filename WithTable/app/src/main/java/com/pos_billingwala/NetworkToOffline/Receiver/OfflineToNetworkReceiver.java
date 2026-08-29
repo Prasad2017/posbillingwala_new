@@ -94,7 +94,8 @@ public class OfflineToNetworkReceiver extends BroadcastReceiver {
                         cursor.getString(cursor.getColumnIndex("productSGST")),
                         cursor.getString(cursor.getColumnIndex("productNetworkStatus")),
                         cursor.getString(cursor.getColumnIndex("productDeletedStatus")),
-                        columnOrEmpty(cursor, "subcategoryId"));
+                        columnOrEmpty(cursor, "subcategoryId"),
+                        columnOrEmpty(cursor, "openPrice"));
             } while (cursor.moveToNext());
         }
         cursor = posBillingWalaDatabase.getUnSynchronizePortionMaster(NAME_NOT_SYNCED_WITH_SERVER);
@@ -486,9 +487,10 @@ public class OfflineToNetworkReceiver extends BroadcastReceiver {
         }
 }
 
-    public void saveProduct(String productId, String categoryId, String categoryName, String productCode, String productName, String productPrice, String productUnit, String productCGST, String productSGST, String productNetworkStatus, String productDeletedStatus, String subcategoryId) {
+    public void saveProduct(String productId, String categoryId, String categoryName, String productCode, String productName, String productPrice, String productUnit, String productCGST, String productSGST, String productNetworkStatus, String productDeletedStatus, String subcategoryId, String openPrice) {
 
-        Call<AllApiResponse> call = Api.getClient(context).saveProduct(MainActivity.ownerId, categoryId, categoryName, productCode, productName, productPrice, productUnit, productCGST, productSGST, productNetworkStatus, productDeletedStatus, subcategoryId);
+        String openPriceValue = (openPrice == null || openPrice.trim().isEmpty()) ? "off" : openPrice;
+        Call<AllApiResponse> call = Api.getClient(context).saveProduct(MainActivity.ownerId, categoryId, categoryName, productCode, productName, productPrice, productUnit, productCGST, productSGST, productNetworkStatus, productDeletedStatus, subcategoryId, openPriceValue);
         if (executeCall(call)) {
             posBillingWalaDatabase.updateSyncProduct(productId, NAME_SYNCED_WITH_SERVER);
         }

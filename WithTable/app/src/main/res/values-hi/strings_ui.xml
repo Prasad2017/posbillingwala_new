@@ -20,6 +20,9 @@
     <string name="ui_after_sale_qty">बिक्री के बाद मात्रा</string>
     <string name="ui_alternet_mobile_number">वैकल्पिक मोबाइल नंबर</string>
     <string name="ui_amount">राशि</string>
+    <string name="ui_open_price">ओपन प्राइस</string>
+    <string name="ui_open_price_hint">बिलिंग के समय कीमत दर्ज करें (कार्ट पर राशि टैप करें)</string>
+    <string name="ui_enter_amount">राशि दर्ज करें*</string>
     <string name="ui_amount_collected_optional">एकत्रित राशि (वैकल्पिक)</string>
     <string name="ui_all">सभी</string>
     <string name="ui_back">वापस</string>

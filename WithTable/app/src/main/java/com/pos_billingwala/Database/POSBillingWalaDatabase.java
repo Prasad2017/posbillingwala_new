@@ -68,7 +68,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
     public static final String INVOICE_COMBO_ITEM_TABLE = "invoice_combo_item";
     public static final String INVOICE_PRODUCT_DELETE_QUEUE_TABLE = "invoice_product_delete_queue";
     // Database Version
-    public static final int DATABASE_VERSION = 22;
+    public static final int DATABASE_VERSION = 23;
 
     /** SQL suffix: only rows for the logged-in licence branch. */
     private static String andBranchScope(String tableAlias) {
@@ -192,7 +192,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
     public final String PRODUCT_QUERY = "CREATE TABLE IF NOT EXISTS " + PRODUCT_TABLE
             + "(productId INTEGER PRIMARY KEY AUTOINCREMENT, userId VARCHAR, categoryId VARCHAR, categoryName VARCHAR,"
             + " subcategoryId INTEGER,"
-            + " productCode VARCHAR, productName VARCHAR, productPrice VARCHAR, "
+            + " productCode VARCHAR, productName VARCHAR, productPrice VARCHAR, openPrice VARCHAR,"
             + "productUnit VARCHAR, productCGST VARCHAR, productSGST VARCHAR, productWithGSTPrice VARCHAR,"
             + " productDeletedStatus VARCHAR, productNetworkStatus VARCHAR, productStatus TINYINT)";
 
@@ -315,6 +315,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
     public final String ALTER_PRINTER_DUPLICATE_BILL_SETTING_QUERY = "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN duplicateBillUse VARCHAR";
     public final String ALTER_CATEGORY_FOOD_TYPE_QUERY = "ALTER TABLE " + PRODUCT_CATEGORY_TABLE + " ADD COLUMN foodTypeId INTEGER";
     public final String ALTER_PRODUCT_SUBCATEGORY_QUERY = "ALTER TABLE " + PRODUCT_TABLE + " ADD COLUMN subcategoryId INTEGER";
+    public final String ALTER_PRODUCT_OPEN_PRICE_QUERY = "ALTER TABLE " + PRODUCT_TABLE + " ADD COLUMN openPrice VARCHAR";
     public final String ALTER_PRODUCT_PORTION_MASTER_QUERY = "ALTER TABLE " + PRODUCT_PORTION_TABLE + " ADD COLUMN portionMasterId INTEGER";
     public final String ALTER_CART_PORTION_ID_QUERY = "ALTER TABLE " + CART_PRODUCT_TABLE + " ADD COLUMN portionId VARCHAR";
     public final String ALTER_CART_PORTION_NAME_QUERY = "ALTER TABLE " + CART_PRODUCT_TABLE + " ADD COLUMN portionName VARCHAR";
@@ -433,6 +434,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         db.execSQL(PRODUCT_PORTION_QUERY);
         addColumnIfNotExists(db, PRODUCT_CATEGORY_TABLE, "foodTypeId", ALTER_CATEGORY_FOOD_TYPE_QUERY);
         addColumnIfNotExists(db, PRODUCT_TABLE, "subcategoryId", ALTER_PRODUCT_SUBCATEGORY_QUERY);
+        addColumnIfNotExists(db, PRODUCT_TABLE, "openPrice", ALTER_PRODUCT_OPEN_PRICE_QUERY);
         addColumnIfNotExists(db, PRODUCT_PORTION_TABLE, "portionMasterId", ALTER_PRODUCT_PORTION_MASTER_QUERY);
         migrateProductPortionsToPortionMaster(db);
         addColumnIfNotExists(db, CART_PRODUCT_TABLE, "portionId", ALTER_CART_PORTION_ID_QUERY);
@@ -1752,10 +1754,14 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
     }
 
     public void addProduct(String userId, String categoryId, String categoryName, String productCode, String productName, String productPrice, String unitName, String productCGST, String productSGST, int productStatus, String productNetworkStatus, String productDeletedStatus) {
-        addProduct(userId, categoryId, categoryName, productCode, productName, productPrice, unitName, productCGST, productSGST, productStatus, productNetworkStatus, productDeletedStatus, null);
+        addProduct(userId, categoryId, categoryName, productCode, productName, productPrice, unitName, productCGST, productSGST, productStatus, productNetworkStatus, productDeletedStatus, null, "off");
     }
 
     public void addProduct(String userId, String categoryId, String categoryName, String productCode, String productName, String productPrice, String unitName, String productCGST, String productSGST, int productStatus, String productNetworkStatus, String productDeletedStatus, String subcategoryId) {
+        addProduct(userId, categoryId, categoryName, productCode, productName, productPrice, unitName, productCGST, productSGST, productStatus, productNetworkStatus, productDeletedStatus, subcategoryId, "off");
+    }
+
+    public void addProduct(String userId, String categoryId, String categoryName, String productCode, String productName, String productPrice, String unitName, String productCGST, String productSGST, int productStatus, String productNetworkStatus, String productDeletedStatus, String subcategoryId, String openPrice) {
 
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
@@ -1776,6 +1782,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         contentValues.put("productCode", productCode);
         contentValues.put("productName", productName);
         contentValues.put("productPrice", productPrice);
+        contentValues.put("openPrice", openPrice != null && !openPrice.isEmpty() ? openPrice : "off");
         contentValues.put("productUnit", unitName);
         contentValues.put("productCGST", productCGST);
         contentValues.put("productSGST", productSGST);
@@ -1795,6 +1802,15 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
                                     String productName, String productPrice, String unitName, String productCGST,
                                     String productSGST, int productStatus, String productNetworkStatus,
                                     String productDeletedStatus, String subcategoryId) {
+        return addProductAndReturnId(userId, categoryId, categoryName, productCode, productName, productPrice,
+                unitName, productCGST, productSGST, productStatus, productNetworkStatus, productDeletedStatus,
+                subcategoryId, "off");
+    }
+
+    public long addProductAndReturnId(String userId, String categoryId, String categoryName, String productCode,
+                                    String productName, String productPrice, String unitName, String productCGST,
+                                    String productSGST, int productStatus, String productNetworkStatus,
+                                    String productDeletedStatus, String subcategoryId, String openPrice) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
 
@@ -1813,6 +1829,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         contentValues.put("productCode", productCode);
         contentValues.put("productName", productName);
         contentValues.put("productPrice", productPrice);
+        contentValues.put("openPrice", openPrice != null && !openPrice.isEmpty() ? openPrice : "off");
         contentValues.put("productUnit", unitName);
         contentValues.put("productCGST", productCGST);
         contentValues.put("productSGST", productSGST);
@@ -1899,6 +1916,12 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         mapStringColumn(cursor, "cartItemType", item::setCartItemType);
         mapStringColumn(cursor, "comboId", item::setComboId);
         mapStringColumn(cursor, "snapshotComboComponents", item::setSnapshotComboComponents);
+        int openPriceCol = cursor.getColumnIndex("openPrice");
+        if (openPriceCol >= 0 && !cursor.isNull(openPriceCol)) {
+            item.setOpenPrice(cursor.getString(openPriceCol));
+        } else {
+            item.setOpenPrice("off");
+        }
     }
 
     private void mapInvoiceLineSnapshots(Cursor cursor, InvoiceProductResponse item) {
@@ -2415,10 +2438,14 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
     }
 
     public void updateProduct(String userId, String productId, String categoryId, String categoryName, String productCode, String productName, String productPrice, String unitName, String productCGST, String productSGST, int productStatus) {
-        updateProduct(userId, productId, categoryId, categoryName, productCode, productName, productPrice, unitName, productCGST, productSGST, productStatus, null);
+        updateProduct(userId, productId, categoryId, categoryName, productCode, productName, productPrice, unitName, productCGST, productSGST, productStatus, null, "off");
     }
 
     public void updateProduct(String userId, String productId, String categoryId, String categoryName, String productCode, String productName, String productPrice, String unitName, String productCGST, String productSGST, int productStatus, String subcategoryId) {
+        updateProduct(userId, productId, categoryId, categoryName, productCode, productName, productPrice, unitName, productCGST, productSGST, productStatus, subcategoryId, "off");
+    }
+
+    public void updateProduct(String userId, String productId, String categoryId, String categoryName, String productCode, String productName, String productPrice, String unitName, String productCGST, String productSGST, int productStatus, String subcategoryId, String openPrice) {
 
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
@@ -2441,6 +2468,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         contentValues.put("productCode", productCode);
         contentValues.put("productName", productName);
         contentValues.put("productPrice", productPrice);
+        contentValues.put("openPrice", openPrice != null && !openPrice.isEmpty() ? openPrice : "off");
         contentValues.put("productUnit", unitName);
         contentValues.put("productCGST", productCGST);
         contentValues.put("productSGST", productSGST);
@@ -2580,6 +2608,12 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         productResponse.setProductCGST(cursor.getString(cursor.getColumnIndex("productCGST")));
         productResponse.setProductSGST(cursor.getString(cursor.getColumnIndex("productSGST")));
         productResponse.setProductStatus(cursor.getString(cursor.getColumnIndex("productStatus")));
+        int openPriceCol = cursor.getColumnIndex("openPrice");
+        if (openPriceCol >= 0 && !cursor.isNull(openPriceCol)) {
+            productResponse.setOpenPrice(cursor.getString(openPriceCol));
+        } else {
+            productResponse.setOpenPrice("off");
+        }
         int subcategoryCol = cursor.getColumnIndex("subcategoryId");
         if (subcategoryCol >= 0 && !cursor.isNull(subcategoryCol)) {
             productResponse.setSubcategoryId(cursor.getString(subcategoryCol));
@@ -2599,14 +2633,17 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         Cursor cursor;
         if (portionId != null && !portionId.trim().isEmpty()) {
             cursor = db.rawQuery(
-                    "SELECT * FROM " + CART_PRODUCT_TABLE
-                            + " WHERE productId = ? AND portionId = ? AND noOfTable = ? AND cartOrderStatus = ?",
+                    "SELECT cart_product.*, IFNULL(product.openPrice, 'off') AS openPrice FROM " + CART_PRODUCT_TABLE
+                            + " LEFT JOIN " + PRODUCT_TABLE + " ON product.productId = cart_product.productId"
+                            + " WHERE cart_product.productId = ? AND cart_product.portionId = ?"
+                            + " AND cart_product.noOfTable = ? AND cart_product.cartOrderStatus = ?",
                     new String[]{productId, portionId, tableNumber, cartOrderStatus});
         } else {
             cursor = db.rawQuery(
-                    "SELECT * FROM " + CART_PRODUCT_TABLE
-                            + " WHERE productId = ? AND (portionId IS NULL OR portionId = '')"
-                            + " AND noOfTable = ? AND cartOrderStatus = ?",
+                    "SELECT cart_product.*, IFNULL(product.openPrice, 'off') AS openPrice FROM " + CART_PRODUCT_TABLE
+                            + " LEFT JOIN " + PRODUCT_TABLE + " ON product.productId = cart_product.productId"
+                            + " WHERE cart_product.productId = ? AND (cart_product.portionId IS NULL OR cart_product.portionId = '')"
+                            + " AND cart_product.noOfTable = ? AND cart_product.cartOrderStatus = ?",
                     new String[]{productId, tableNumber, cartOrderStatus});
         }
         ProductCartResponse productResponse;
@@ -2640,7 +2677,11 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         List<ProductCartResponse> productCartResponseList = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
 
-        Cursor cursor = db.rawQuery("SELECT * FROM " + CART_PRODUCT_TABLE + " WHERE noOfTable = '" + tableNumber + "' AND cartOrderStatus = '" + cartOrderStatus + "'", null);
+        Cursor cursor = db.rawQuery(
+                "SELECT cart_product.*, IFNULL(product.openPrice, 'off') AS openPrice FROM " + CART_PRODUCT_TABLE
+                        + " LEFT JOIN " + PRODUCT_TABLE + " ON product.productId = cart_product.productId"
+                        + " WHERE cart_product.noOfTable = ? AND cart_product.cartOrderStatus = ?",
+                new String[]{tableNumber, cartOrderStatus});
         ProductCartResponse productResponse;
         while (cursor.moveToNext()) {
             productResponse = new ProductCartResponse();
@@ -2699,6 +2740,12 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             productResponse.setProductCGST(cursor.getString(cursor.getColumnIndex("productCGST")));
             productResponse.setProductSGST(cursor.getString(cursor.getColumnIndex("productSGST")));
             productResponse.setProductStatus(cursor.getString(cursor.getColumnIndex("productStatus")));
+            int openPriceAllCol = cursor.getColumnIndex("openPrice");
+            if (openPriceAllCol >= 0 && !cursor.isNull(openPriceAllCol)) {
+                productResponse.setOpenPrice(cursor.getString(openPriceAllCol));
+            } else {
+                productResponse.setOpenPrice("off");
+            }
             int subcategoryIdCol = cursor.getColumnIndex("subcategoryId");
             if (subcategoryIdCol >= 0 && !cursor.isNull(subcategoryIdCol)) {
                 productResponse.setSubcategoryId(cursor.getString(subcategoryIdCol));
@@ -2775,6 +2822,12 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
                 productResponse.setProductCGST(cursor.getString(cursor.getColumnIndex("productCGST")));
                 productResponse.setProductSGST(cursor.getString(cursor.getColumnIndex("productSGST")));
                 productResponse.setProductStatus(cursor.getString(cursor.getColumnIndex("productStatus")));
+                int openPriceSearchCol = cursor.getColumnIndex("openPrice");
+                if (openPriceSearchCol >= 0 && !cursor.isNull(openPriceSearchCol)) {
+                    productResponse.setOpenPrice(cursor.getString(openPriceSearchCol));
+                } else {
+                    productResponse.setOpenPrice("off");
+                }
                 int cartQtyIdx = cursor.getColumnIndex("productCartQuantity");
                 if (cartQtyIdx >= 0 && !cursor.isNull(cartQtyIdx)) {
                     productResponse.setProductCartQuantity(cursor.getString(cartQtyIdx));
@@ -2840,6 +2893,12 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             productResponse.setProductCGST(cursor.getString(cursor.getColumnIndex("productCGST")));
             productResponse.setProductSGST(cursor.getString(cursor.getColumnIndex("productSGST")));
             productResponse.setProductStatus(cursor.getString(cursor.getColumnIndex("productStatus")));
+            int openPriceCol = cursor.getColumnIndex("openPrice");
+            if (openPriceCol >= 0 && !cursor.isNull(openPriceCol)) {
+                productResponse.setOpenPrice(cursor.getString(openPriceCol));
+            } else {
+                productResponse.setOpenPrice("off");
+            }
             int subcategoryCol = cursor.getColumnIndex("subcategoryId");
             if (subcategoryCol >= 0 && !cursor.isNull(subcategoryCol)) {
                 productResponse.setSubcategoryId(cursor.getString(subcategoryCol));
@@ -5568,6 +5627,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
                 contentValues.put("productCode", product.getProductCode());
                 contentValues.put("productName", product.getProductName());
                 contentValues.put("productPrice", product.getProductPrice());
+                contentValues.put("openPrice", product.getOpenPrice());
                 contentValues.put("productUnit", product.getProductUnit());
                 contentValues.put("productCGST", product.getProductCGST());
                 contentValues.put("productSGST", product.getProductSGST());
