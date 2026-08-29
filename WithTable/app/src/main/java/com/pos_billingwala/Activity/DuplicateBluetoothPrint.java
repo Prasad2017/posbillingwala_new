@@ -42,6 +42,7 @@ import com.karumi.dexter.listener.multi.MultiplePermissionsListener;
 import com.pos_billingwala.Adapter.DuplicateInvoiceAdapter;
 import com.pos_billingwala.Adapter.DuplicateTwoPrintAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.PaymentUpiQrHelper;
 import com.pos_billingwala.Extra.ShopHeaderBuilder;
 import com.pos_billingwala.Fragment.CreatePos;
 import com.pos_billingwala.Model.CompanyResponse;
@@ -610,15 +611,44 @@ public class DuplicateBluetoothPrint extends BaseActivity implements View.OnClic
             threeDiscount.setText(inr + String.format(Locale.US, "%.2f", discountAmt));
             threeTotalAmount.setText(inr + String.format(Locale.US, "%.2f", totalAmount));
 
+            applyPaymentQr(totalAmount);
+
             cartLayout.setVisibility(View.VISIBLE);
             noDataFound.setVisibility(View.GONE);
 
         } else {
+            applyPaymentQr(0);
             cartLayout.setVisibility(View.GONE);
             noDataFound.setVisibility(View.VISIBLE);
         }
 
 
+    }
+
+    public void applyPaymentQr(float payableAmount) {
+        if (twoQRLogo == null || threeQRLogo == null) {
+            return;
+        }
+        boolean paymentOn = printerSettingResponseList != null
+                && !printerSettingResponseList.isEmpty()
+                && printerSettingResponseList.get(0).getPaymentUse() != null
+                && printerSettingResponseList.get(0).getPaymentUse().equalsIgnoreCase("on");
+
+        String upiId = "";
+        String payeeName = "";
+        String note = "";
+        if (companyResponseList != null && !companyResponseList.isEmpty()) {
+            upiId = companyResponseList.get(0).getPaymentLogo();
+            payeeName = ShopHeaderBuilder.resolveShopName1(companyResponseList.get(0));
+        }
+        if (invoiceResponseList != null && !invoiceResponseList.isEmpty()) {
+            note = invoiceResponseList.get(0).getInvoiceNumber();
+        }
+        boolean applied = paymentOn
+                && PaymentUpiQrHelper.applyQrToViews(upiId, payeeName, payableAmount, note, twoQRLogo, threeQRLogo);
+        int visibility = applied ? View.VISIBLE : View.GONE;
+        twoQRLogo.setVisibility(visibility);
+        threeQRLogo.setVisibility(visibility);
     }
 
     public void getCompanyDetails() {
@@ -643,16 +673,6 @@ public class DuplicateBluetoothPrint extends BaseActivity implements View.OnClic
                 Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
                 twoCompanyLogo.setImageBitmap(bitmap);
                 threeCompanyLogo.setImageBitmap(bitmap);
-            }
-
-            if (companyResponseList.get(0).getPaymentLogo() != null) {
-                String paymentLogo = companyResponseList.get(0).getPaymentLogo();
-                // decode base64 string
-                byte[] bytes = Base64.decode(paymentLogo, Base64.DEFAULT);
-                // Initialize bitmap
-                Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-                twoQRLogo.setImageBitmap(bitmap);
-                threeQRLogo.setImageBitmap(bitmap);
             }
 
         }
@@ -682,19 +702,6 @@ public class DuplicateBluetoothPrint extends BaseActivity implements View.OnClic
                 twoCompanyLogo.setVisibility(View.GONE);
                 threeCompanyLogo.setVisibility(View.GONE);
             }
-            //QR Code Payment
-            if (printerSettingResponseList.get(0).getPaymentUse() != null) {
-                if (printerSettingResponseList.get(0).getPaymentUse().equalsIgnoreCase("on")) {
-                    twoQRLogo.setVisibility(View.VISIBLE);
-                    threeQRLogo.setVisibility(View.VISIBLE);
-                } else {
-                    twoQRLogo.setVisibility(View.GONE);
-                    threeQRLogo.setVisibility(View.GONE);
-                }
-            } else {
-                twoQRLogo.setVisibility(View.GONE);
-                threeQRLogo.setVisibility(View.GONE);
-            }
 
             if (printerSettingResponseList.get(0).getInvoiceTermsCondition() != null) {
                 twoInvoiceTermsCondition.setText(printerSettingResponseList.get(0).getInvoiceTermsCondition());
@@ -709,6 +716,7 @@ public class DuplicateBluetoothPrint extends BaseActivity implements View.OnClic
             threeCompanyLogo.setVisibility(View.GONE);
             twoInvoiceTermsCondition.setVisibility(View.GONE);
             threeInvoiceTermsCondition.setVisibility(View.GONE);
+            applyPaymentQr(0);
         }
     }
 

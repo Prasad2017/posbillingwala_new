@@ -23,6 +23,9 @@ public class ProductCategoryResponse {
     @SerializedName("categoryName")
     @Expose
     String categoryName;
+    @SerializedName("categorySortOrder")
+    @Expose
+    String categorySortOrder;
 
     public String getCategoryId() {
         return categoryId;
@@ -70,5 +73,13 @@ public class ProductCategoryResponse {
 
     public void setFoodTypeCode(String foodTypeCode) {
         this.foodTypeCode = foodTypeCode;
+    }
+
+    public String getCategorySortOrder() {
+        return categorySortOrder;
+    }
+
+    public void setCategorySortOrder(String categorySortOrder) {
+        this.categorySortOrder = categorySortOrder;
     }
 }

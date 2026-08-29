@@ -68,7 +68,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
     public static final String INVOICE_COMBO_ITEM_TABLE = "invoice_combo_item";
     public static final String INVOICE_PRODUCT_DELETE_QUEUE_TABLE = "invoice_product_delete_queue";
     // Database Version
-    public static final int DATABASE_VERSION = 23;
+    public static final int DATABASE_VERSION = 24;
 
     /** SQL suffix: only rows for the logged-in licence branch. */
     private static String andBranchScope(String tableAlias) {
@@ -159,6 +159,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             + "(categoryId INTEGER PRIMARY KEY AUTOINCREMENT,"
             + " categoryName VARCHAR,"
             + " foodTypeId INTEGER,"
+            + " categorySortOrder INTEGER DEFAULT 0,"
             + " categoryDeletedStatus VARCHAR,"
             + " categoryNetworkStatus VARCHAR,"
             + " categoryStatus TINYINT)";
@@ -167,6 +168,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             + "(subcategoryId INTEGER PRIMARY KEY AUTOINCREMENT,"
             + " categoryId INTEGER,"
             + " subcategoryName VARCHAR,"
+            + " subcategorySortOrder INTEGER DEFAULT 0,"
             + " subcategoryDeletedStatus VARCHAR DEFAULT '0',"
             + " subcategoryNetworkStatus VARCHAR,"
             + " subcategoryStatus TINYINT DEFAULT 0)";
@@ -314,6 +316,8 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
     public final String ALTER_KOT_PRINTER_FEED_LINES_SETTING_QUERY = "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN KotPrinterFeedLines VARCHAR";
     public final String ALTER_PRINTER_DUPLICATE_BILL_SETTING_QUERY = "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN duplicateBillUse VARCHAR";
     public final String ALTER_CATEGORY_FOOD_TYPE_QUERY = "ALTER TABLE " + PRODUCT_CATEGORY_TABLE + " ADD COLUMN foodTypeId INTEGER";
+    public final String ALTER_CATEGORY_SORT_ORDER_QUERY = "ALTER TABLE " + PRODUCT_CATEGORY_TABLE + " ADD COLUMN categorySortOrder INTEGER DEFAULT 0";
+    public final String ALTER_SUBCATEGORY_SORT_ORDER_QUERY = "ALTER TABLE " + PRODUCT_SUBCATEGORY_TABLE + " ADD COLUMN subcategorySortOrder INTEGER DEFAULT 0";
     public final String ALTER_PRODUCT_SUBCATEGORY_QUERY = "ALTER TABLE " + PRODUCT_TABLE + " ADD COLUMN subcategoryId INTEGER";
     public final String ALTER_PRODUCT_OPEN_PRICE_QUERY = "ALTER TABLE " + PRODUCT_TABLE + " ADD COLUMN openPrice VARCHAR";
     public final String ALTER_PRODUCT_PORTION_MASTER_QUERY = "ALTER TABLE " + PRODUCT_PORTION_TABLE + " ADD COLUMN portionMasterId INTEGER";
@@ -433,6 +437,10 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         db.execSQL(PORTION_MASTER_QUERY);
         db.execSQL(PRODUCT_PORTION_QUERY);
         addColumnIfNotExists(db, PRODUCT_CATEGORY_TABLE, "foodTypeId", ALTER_CATEGORY_FOOD_TYPE_QUERY);
+        addColumnIfNotExists(db, PRODUCT_CATEGORY_TABLE, "categorySortOrder", ALTER_CATEGORY_SORT_ORDER_QUERY);
+        addColumnIfNotExists(db, PRODUCT_SUBCATEGORY_TABLE, "subcategorySortOrder", ALTER_SUBCATEGORY_SORT_ORDER_QUERY);
+        backfillCategorySortOrders(db);
+        backfillSubcategorySortOrders(db);
         addColumnIfNotExists(db, PRODUCT_TABLE, "subcategoryId", ALTER_PRODUCT_SUBCATEGORY_QUERY);
         addColumnIfNotExists(db, PRODUCT_TABLE, "openPrice", ALTER_PRODUCT_OPEN_PRICE_QUERY);
         addColumnIfNotExists(db, PRODUCT_PORTION_TABLE, "portionMasterId", ALTER_PRODUCT_PORTION_MASTER_QUERY);
@@ -572,6 +580,75 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             mapLikelyBeverageCategories(db);
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    /** Assign stable sort values for legacy rows that still have 0. */
+    private void backfillCategorySortOrders(SQLiteDatabase db) {
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT categoryId FROM " + PRODUCT_CATEGORY_TABLE
+                            + " WHERE IFNULL(categorySortOrder, 0) = 0"
+                            + " ORDER BY categoryId ASC",
+                    null);
+            int order = 1;
+            Cursor maxCursor = db.rawQuery(
+                    "SELECT IFNULL(MAX(categorySortOrder), 0) FROM " + PRODUCT_CATEGORY_TABLE, null);
+            if (maxCursor.moveToFirst()) {
+                order = Math.max(1, maxCursor.getInt(0) + 1);
+            }
+            maxCursor.close();
+            while (cursor.moveToNext()) {
+                ContentValues values = new ContentValues();
+                values.put("categorySortOrder", order++);
+                db.update(PRODUCT_CATEGORY_TABLE, values, "categoryId=?",
+                        new String[]{cursor.getString(0)});
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
+    private void backfillSubcategorySortOrders(SQLiteDatabase db) {
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT subcategoryId, categoryId FROM " + PRODUCT_SUBCATEGORY_TABLE
+                            + " WHERE IFNULL(subcategorySortOrder, 0) = 0"
+                            + " ORDER BY categoryId ASC, subcategoryId ASC",
+                    null);
+            String lastCategoryId = null;
+            int order = 1;
+            while (cursor.moveToNext()) {
+                String categoryId = cursor.getString(1);
+                if (lastCategoryId == null || !lastCategoryId.equals(categoryId)) {
+                    lastCategoryId = categoryId;
+                    order = 1;
+                    Cursor maxCursor = db.rawQuery(
+                            "SELECT IFNULL(MAX(subcategorySortOrder), 0) FROM " + PRODUCT_SUBCATEGORY_TABLE
+                                    + " WHERE categoryId = ?",
+                            new String[]{categoryId != null ? categoryId : ""});
+                    if (maxCursor.moveToFirst()) {
+                        order = Math.max(1, maxCursor.getInt(0) + 1);
+                    }
+                    maxCursor.close();
+                }
+                ContentValues values = new ContentValues();
+                values.put("subcategorySortOrder", order++);
+                db.update(PRODUCT_SUBCATEGORY_TABLE, values, "subcategoryId=?",
+                        new String[]{cursor.getString(0)});
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
         }
     }
 
@@ -739,11 +816,13 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             String[] args;
             if (foodTypeId == null || foodTypeId.trim().isEmpty()) {
                 sql = "SELECT * FROM " + PRODUCT_CATEGORY_TABLE
-                        + " WHERE categoryDeletedStatus = '0' GROUP BY categoryName";
+                        + " WHERE categoryDeletedStatus = '0'"
+                        + " ORDER BY IFNULL(categorySortOrder, 0) ASC, categoryId ASC";
                 args = null;
             } else {
                 sql = "SELECT * FROM " + PRODUCT_CATEGORY_TABLE
-                        + " WHERE categoryDeletedStatus = '0' AND foodTypeId = ? GROUP BY categoryName";
+                        + " WHERE categoryDeletedStatus = '0' AND foodTypeId = ?"
+                        + " ORDER BY IFNULL(categorySortOrder, 0) ASC, categoryId ASC";
                 args = new String[]{foodTypeId};
             }
             cursor = db.rawQuery(sql, args);
@@ -754,6 +833,10 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
                 productCategoryResponse.setCategoryDeletedStatus(cursor.getString(cursor.getColumnIndex("categoryDeletedStatus")));
                 productCategoryResponse.setCategoryNetworkStatus(cursor.getString(cursor.getColumnIndex("categoryNetworkStatus")));
                 productCategoryResponse.setFoodTypeId(cursor.getString(cursor.getColumnIndex("foodTypeId")));
+                int sortCol = cursor.getColumnIndex("categorySortOrder");
+                if (sortCol >= 0 && !cursor.isNull(sortCol)) {
+                    productCategoryResponse.setCategorySortOrder(cursor.getString(sortCol));
+                }
                 list.add(productCategoryResponse);
             }
         } finally {
@@ -1008,17 +1091,75 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
     }
 
     public boolean insertProductCategory(String categoryName, int categoryStatus, String categoryDeletedStatus, String categoryNetworkStatus) {
-        return insertProductCategory(categoryName, categoryStatus, categoryDeletedStatus, categoryNetworkStatus, 0);
+        return insertProductCategory(categoryName, categoryStatus, categoryDeletedStatus, categoryNetworkStatus, 0, -1);
     }
 
     public boolean insertProductCategory(String categoryName, int categoryStatus, String categoryDeletedStatus,
                                          String categoryNetworkStatus, long foodTypeId) {
+        return insertProductCategory(categoryName, categoryStatus, categoryDeletedStatus, categoryNetworkStatus, foodTypeId, -1);
+    }
+
+    public boolean insertProductCategory(String categoryName, int categoryStatus, String categoryDeletedStatus,
+                                         String categoryNetworkStatus, long foodTypeId, int categorySortOrder) {
 
         SQLiteDatabase db = this.getWritableDatabase();
+        if (categoryNetworkStatus != null && !categoryNetworkStatus.trim().isEmpty()) {
+            Cursor existing = null;
+            try {
+                existing = db.rawQuery(
+                        "SELECT categoryId FROM " + PRODUCT_CATEGORY_TABLE
+                                + " WHERE categoryNetworkStatus = ? LIMIT 1",
+                        new String[]{categoryNetworkStatus});
+                if (existing.moveToFirst()) {
+                    String existingId = existing.getString(0);
+                    ContentValues update = new ContentValues();
+                    update.put("categoryName", categoryName);
+                    update.put("categoryDeletedStatus", categoryDeletedStatus);
+                    if (foodTypeId > 0) {
+                        update.put("foodTypeId", foodTypeId);
+                    }
+                    if (categorySortOrder >= 0) {
+                        Cursor statusCursor = null;
+                        try {
+                            statusCursor = db.rawQuery(
+                                    "SELECT categoryStatus FROM " + PRODUCT_CATEGORY_TABLE
+                                            + " WHERE categoryId = ? LIMIT 1",
+                                    new String[]{existingId});
+                            boolean dirty = false;
+                            if (statusCursor.moveToFirst()) {
+                                String status = statusCursor.getString(0);
+                                dirty = "0".equals(status);
+                            }
+                            if (!dirty) {
+                                update.put("categorySortOrder", categorySortOrder);
+                            }
+                        } finally {
+                            if (statusCursor != null) {
+                                statusCursor.close();
+                            }
+                        }
+                    }
+                    db.update(PRODUCT_CATEGORY_TABLE, update, "categoryId=?",
+                            new String[]{existingId});
+                    db.close();
+                    return false;
+                }
+            } finally {
+                if (existing != null) {
+                    existing.close();
+                }
+            }
+        }
+
         ContentValues contentValues = new ContentValues();
 
         if (foodTypeId <= 0) {
             foodTypeId = getDefaultFoodTypeId();
+        }
+
+        int sortOrder = categorySortOrder;
+        if (sortOrder < 0) {
+            sortOrder = getNextCategorySortOrder(db);
         }
 
         contentValues.put("categoryName", categoryName);
@@ -1026,6 +1167,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         contentValues.put("categoryDeletedStatus", categoryDeletedStatus);
         contentValues.put("categoryNetworkStatus", categoryNetworkStatus);
         contentValues.put("foodTypeId", foodTypeId);
+        contentValues.put("categorySortOrder", sortOrder);
 
         db.insert(PRODUCT_CATEGORY_TABLE, null, contentValues);
         db.close();
@@ -1034,13 +1176,79 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
 
     }
 
+    private int getNextCategorySortOrder(SQLiteDatabase db) {
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT IFNULL(MAX(categorySortOrder), 0) FROM " + PRODUCT_CATEGORY_TABLE, null);
+            if (cursor.moveToFirst()) {
+                return cursor.getInt(0) + 1;
+            }
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return 1;
+    }
+
     public boolean insertProductSubcategory(String categoryId, String subcategoryName,
                                             String subcategoryDeletedStatus, String subcategoryNetworkStatus,
                                             int subcategoryStatus) {
-        if (subcategoryNetworkStatusExists(subcategoryNetworkStatus)) {
-            return false;
-        }
+        return insertProductSubcategory(categoryId, subcategoryName, subcategoryDeletedStatus,
+                subcategoryNetworkStatus, subcategoryStatus, -1);
+    }
+
+    public boolean insertProductSubcategory(String categoryId, String subcategoryName,
+                                            String subcategoryDeletedStatus, String subcategoryNetworkStatus,
+                                            int subcategoryStatus, int subcategorySortOrder) {
         SQLiteDatabase db = this.getWritableDatabase();
+        if (subcategoryNetworkStatus != null && !subcategoryNetworkStatus.trim().isEmpty()) {
+            Cursor existing = null;
+            try {
+                existing = db.rawQuery(
+                        "SELECT subcategoryId FROM " + PRODUCT_SUBCATEGORY_TABLE
+                                + " WHERE subcategoryNetworkStatus = ? LIMIT 1",
+                        new String[]{subcategoryNetworkStatus});
+                if (existing.moveToFirst()) {
+                    String existingId = existing.getString(0);
+                    ContentValues update = new ContentValues();
+                    update.put("categoryId", categoryId);
+                    update.put("subcategoryName", subcategoryName);
+                    update.put("subcategoryDeletedStatus",
+                            subcategoryDeletedStatus != null ? subcategoryDeletedStatus : "0");
+                    if (subcategorySortOrder >= 0) {
+                        Cursor statusCursor = null;
+                        try {
+                            statusCursor = db.rawQuery(
+                                    "SELECT subcategoryStatus FROM " + PRODUCT_SUBCATEGORY_TABLE
+                                            + " WHERE subcategoryId = ? LIMIT 1",
+                                    new String[]{existingId});
+                            boolean dirty = false;
+                            if (statusCursor.moveToFirst()) {
+                                String status = statusCursor.getString(0);
+                                dirty = "0".equals(status);
+                            }
+                            if (!dirty) {
+                                update.put("subcategorySortOrder", subcategorySortOrder);
+                            }
+                        } finally {
+                            if (statusCursor != null) {
+                                statusCursor.close();
+                            }
+                        }
+                    }
+                    db.update(PRODUCT_SUBCATEGORY_TABLE, update, "subcategoryId=?",
+                            new String[]{existingId});
+                    db.close();
+                    return false;
+                }
+            } finally {
+                if (existing != null) {
+                    existing.close();
+                }
+            }
+        }
         ContentValues values = new ContentValues();
         values.put("categoryId", categoryId);
         values.put("subcategoryName", subcategoryName);
@@ -1048,9 +1256,85 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
                 subcategoryDeletedStatus != null ? subcategoryDeletedStatus : "0");
         values.put("subcategoryNetworkStatus", subcategoryNetworkStatus);
         values.put("subcategoryStatus", subcategoryStatus);
+        int sortOrder = subcategorySortOrder;
+        if (sortOrder < 0) {
+            sortOrder = getNextSubcategorySortOrder(db, categoryId);
+        }
+        values.put("subcategorySortOrder", sortOrder);
         long rowId = db.insert(PRODUCT_SUBCATEGORY_TABLE, null, values);
         db.close();
         return rowId != -1;
+    }
+
+    private int getNextSubcategorySortOrder(SQLiteDatabase db, String categoryId) {
+        Cursor cursor = null;
+        try {
+            if (categoryId == null || categoryId.trim().isEmpty()) {
+                cursor = db.rawQuery(
+                        "SELECT IFNULL(MAX(subcategorySortOrder), 0) FROM " + PRODUCT_SUBCATEGORY_TABLE, null);
+            } else {
+                cursor = db.rawQuery(
+                        "SELECT IFNULL(MAX(subcategorySortOrder), 0) FROM " + PRODUCT_SUBCATEGORY_TABLE
+                                + " WHERE categoryId = ?",
+                        new String[]{categoryId});
+            }
+            if (cursor.moveToFirst()) {
+                return cursor.getInt(0) + 1;
+            }
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return 1;
+    }
+
+    public void updateCategorySortOrders(List<String> categoryIdsInOrder) {
+        if (categoryIdsInOrder == null || categoryIdsInOrder.isEmpty()) {
+            return;
+        }
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.beginTransaction();
+        try {
+            int order = 1;
+            for (String categoryId : categoryIdsInOrder) {
+                if (categoryId == null || categoryId.trim().isEmpty() || "ALL".equals(categoryId)) {
+                    continue;
+                }
+                ContentValues values = new ContentValues();
+                values.put("categorySortOrder", order++);
+                values.put("categoryStatus", 0);
+                db.update(PRODUCT_CATEGORY_TABLE, values, "categoryId=?", new String[]{categoryId});
+            }
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+            db.close();
+        }
+    }
+
+    public void updateSubcategorySortOrders(List<String> subcategoryIdsInOrder) {
+        if (subcategoryIdsInOrder == null || subcategoryIdsInOrder.isEmpty()) {
+            return;
+        }
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.beginTransaction();
+        try {
+            int order = 1;
+            for (String subcategoryId : subcategoryIdsInOrder) {
+                if (subcategoryId == null || subcategoryId.trim().isEmpty()) {
+                    continue;
+                }
+                ContentValues values = new ContentValues();
+                values.put("subcategorySortOrder", order++);
+                values.put("subcategoryStatus", 0);
+                db.update(PRODUCT_SUBCATEGORY_TABLE, values, "subcategoryId=?", new String[]{subcategoryId});
+            }
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+            db.close();
+        }
     }
 
     public boolean subcategoryNetworkStatusExists(String subcategoryNetworkStatus) {
@@ -1152,13 +1436,13 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             if (categoryId == null || categoryId.trim().isEmpty()) {
                 cursor = db.rawQuery(
                         "SELECT * FROM " + PRODUCT_SUBCATEGORY_TABLE
-                                + " WHERE subcategoryDeletedStatus = '0' ORDER BY subcategoryName ASC",
+                                + " WHERE subcategoryDeletedStatus = '0' ORDER BY subcategorySortOrder ASC, subcategoryId ASC",
                         null);
             } else {
                 cursor = db.rawQuery(
                         "SELECT * FROM " + PRODUCT_SUBCATEGORY_TABLE
                                 + " WHERE subcategoryDeletedStatus = '0' AND categoryId = ?"
-                                + " ORDER BY subcategoryName ASC",
+                                + " ORDER BY subcategorySortOrder ASC, subcategoryId ASC",
                         new String[]{categoryId});
             }
             while (cursor.moveToNext()) {
@@ -1169,6 +1453,10 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
                 item.setSubcategoryDeletedStatus(cursor.getString(cursor.getColumnIndex("subcategoryDeletedStatus")));
                 item.setSubcategoryNetworkStatus(cursor.getString(cursor.getColumnIndex("subcategoryNetworkStatus")));
                 item.setSubcategoryStatus(cursor.getString(cursor.getColumnIndex("subcategoryStatus")));
+                int sortCol = cursor.getColumnIndex("subcategorySortOrder");
+                if (sortCol >= 0 && !cursor.isNull(sortCol)) {
+                    item.setSubcategorySortOrder(cursor.getString(sortCol));
+                }
                 list.add(item);
             }
         } finally {
@@ -2486,7 +2774,11 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         List<ProductCategoryResponse> productCategoryResponseList = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
 
-        Cursor cursor = db.rawQuery("SELECT * FROM " + PRODUCT_CATEGORY_TABLE + " WHERE categoryDeletedStatus = '0' GROUP BY categoryName", null);
+        Cursor cursor = db.rawQuery(
+                "SELECT * FROM " + PRODUCT_CATEGORY_TABLE
+                        + " WHERE categoryDeletedStatus = '0'"
+                        + " ORDER BY IFNULL(categorySortOrder, 0) ASC, categoryId ASC",
+                null);
         ProductCategoryResponse productCategoryResponse;
         while (cursor.moveToNext()) {
             productCategoryResponse = new ProductCategoryResponse();
@@ -2497,6 +2789,10 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             int foodTypeCol = cursor.getColumnIndex("foodTypeId");
             if (foodTypeCol >= 0 && !cursor.isNull(foodTypeCol)) {
                 productCategoryResponse.setFoodTypeId(cursor.getString(foodTypeCol));
+            }
+            int sortCol = cursor.getColumnIndex("categorySortOrder");
+            if (sortCol >= 0 && !cursor.isNull(sortCol)) {
+                productCategoryResponse.setCategorySortOrder(cursor.getString(sortCol));
             }
             productCategoryResponseList.add(productCategoryResponse);
         }

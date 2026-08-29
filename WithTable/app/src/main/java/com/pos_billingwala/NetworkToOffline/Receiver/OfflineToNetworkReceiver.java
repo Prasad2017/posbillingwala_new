@@ -65,7 +65,8 @@ public class OfflineToNetworkReceiver extends BroadcastReceiver {
                         cursor.getString(cursor.getColumnIndex("categoryName")),
                         cursor.getString(cursor.getColumnIndex("categoryDeletedStatus")),
                         cursor.getString(cursor.getColumnIndex("categoryNetworkStatus")),
-                        resolveFoodTypeCode(cursor));
+                        resolveFoodTypeCode(cursor),
+                        columnOrEmpty(cursor, "categorySortOrder"));
             } while (cursor.moveToNext());
         }
         cursor = posBillingWalaDatabase.getUnSynchronizeSubcategory(NAME_NOT_SYNCED_WITH_SERVER);
@@ -76,7 +77,8 @@ public class OfflineToNetworkReceiver extends BroadcastReceiver {
                         columnOrEmpty(cursor, "categoryNetworkStatus"),
                         cursor.getString(cursor.getColumnIndex("subcategoryName")),
                         cursor.getString(cursor.getColumnIndex("subcategoryDeletedStatus")),
-                        cursor.getString(cursor.getColumnIndex("subcategoryNetworkStatus")));
+                        cursor.getString(cursor.getColumnIndex("subcategoryNetworkStatus")),
+                        columnOrEmpty(cursor, "subcategorySortOrder"));
             } while (cursor.moveToNext());
         }
         //getting all the unSynced Product
@@ -496,17 +498,17 @@ public class OfflineToNetworkReceiver extends BroadcastReceiver {
         }
 }
 
-    public void saveCategory(String categoryId, String categoryName, String categoryDeletedStatus, String categoryNetworkStatus, String foodTypeCode) {
+    public void saveCategory(String categoryId, String categoryName, String categoryDeletedStatus, String categoryNetworkStatus, String foodTypeCode, String categorySortOrder) {
 
-        Call<AllApiResponse> call = Api.getClient(context).saveCategory(MainActivity.ownerId, categoryName, categoryDeletedStatus, categoryNetworkStatus, foodTypeCode);
+        Call<AllApiResponse> call = Api.getClient(context).saveCategory(MainActivity.ownerId, categoryName, categoryDeletedStatus, categoryNetworkStatus, foodTypeCode, categorySortOrder);
         if (executeCall(call)) {
             posBillingWalaDatabase.updateSyncCategory(categoryId, NAME_SYNCED_WITH_SERVER);
         }
 }
 
-    public void saveSubcategory(String subcategoryId, String categoryId, String categoryNetworkStatus, String subcategoryName, String subcategoryDeletedStatus, String subcategoryNetworkStatus) {
+    public void saveSubcategory(String subcategoryId, String categoryId, String categoryNetworkStatus, String subcategoryName, String subcategoryDeletedStatus, String subcategoryNetworkStatus, String subcategorySortOrder) {
 
-        Call<AllApiResponse> call = Api.getClient(context).saveSubcategory(MainActivity.ownerId, categoryId, categoryNetworkStatus, subcategoryName, subcategoryDeletedStatus, subcategoryNetworkStatus);
+        Call<AllApiResponse> call = Api.getClient(context).saveSubcategory(MainActivity.ownerId, categoryId, categoryNetworkStatus, subcategoryName, subcategoryDeletedStatus, subcategoryNetworkStatus, subcategorySortOrder);
         if (executeCall(call)) {
             posBillingWalaDatabase.updateSyncSubcategory(subcategoryId, NAME_SYNCED_WITH_SERVER);
         }

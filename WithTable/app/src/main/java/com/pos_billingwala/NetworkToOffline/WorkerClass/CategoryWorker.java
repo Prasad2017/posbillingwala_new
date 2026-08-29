@@ -46,7 +46,15 @@ public class CategoryWorker extends Worker {
                         if (category.getFoodTypeCode() != null && !category.getFoodTypeCode().trim().isEmpty()) {
                             foodTypeId = database.getFoodTypeIdByCode(category.getFoodTypeCode());
                         }
-                        database.insertProductCategory(category.getCategoryName(), 1, category.getCategoryDeletedStatus(), category.getCategoryNetworkStatus(), foodTypeId);
+                        int sortOrder = -1;
+                        try {
+                            if (category.getCategorySortOrder() != null && !category.getCategorySortOrder().trim().isEmpty()) {
+                                sortOrder = Integer.parseInt(category.getCategorySortOrder().trim());
+                            }
+                        } catch (NumberFormatException ignored) {
+                        }
+                        database.insertProductCategory(category.getCategoryName(), 1, category.getCategoryDeletedStatus(),
+                                category.getCategoryNetworkStatus(), foodTypeId, sortOrder);
                     }
                 }
             }

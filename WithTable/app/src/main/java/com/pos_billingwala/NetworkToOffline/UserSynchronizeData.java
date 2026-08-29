@@ -141,7 +141,8 @@ public class UserSynchronizeData {
                         cursor.getString(cursor.getColumnIndex("categoryName")),
                         cursor.getString(cursor.getColumnIndex("categoryDeletedStatus")),
                         cursor.getString(cursor.getColumnIndex("categoryNetworkStatus")),
-                        resolveFoodTypeCode(cursor));
+                        resolveFoodTypeCode(cursor),
+                        columnOrEmpty(cursor, "categorySortOrder"));
             } while (cursor.moveToNext());
         }
         closeCursor();
@@ -154,7 +155,8 @@ public class UserSynchronizeData {
                         columnOrEmpty(cursor, "categoryNetworkStatus"),
                         cursor.getString(cursor.getColumnIndex("subcategoryName")),
                         cursor.getString(cursor.getColumnIndex("subcategoryDeletedStatus")),
-                        cursor.getString(cursor.getColumnIndex("subcategoryNetworkStatus")));
+                        cursor.getString(cursor.getColumnIndex("subcategoryNetworkStatus")),
+                        columnOrEmpty(cursor, "subcategorySortOrder"));
             } while (cursor.moveToNext());
         }
         closeCursor();
@@ -570,14 +572,14 @@ public class UserSynchronizeData {
         }
     }
 
-    public void saveCategory(String categoryId, String categoryName, String categoryDeletedStatus, String categoryNetworkStatus, String foodTypeCode) {
-        if (executeCall(Api.getClient(context).saveCategory(MainActivity.ownerId, categoryName, categoryDeletedStatus, categoryNetworkStatus, foodTypeCode))) {
+    public void saveCategory(String categoryId, String categoryName, String categoryDeletedStatus, String categoryNetworkStatus, String foodTypeCode, String categorySortOrder) {
+        if (executeCall(Api.getClient(context).saveCategory(MainActivity.ownerId, categoryName, categoryDeletedStatus, categoryNetworkStatus, foodTypeCode, categorySortOrder))) {
             posBillingWalaDatabase.updateSyncCategory(categoryId, NAME_SYNCED_WITH_SERVER);
         }
     }
 
-    public void saveSubcategory(String subcategoryId, String categoryId, String categoryNetworkStatus, String subcategoryName, String subcategoryDeletedStatus, String subcategoryNetworkStatus) {
-        if (executeCall(Api.getClient(context).saveSubcategory(MainActivity.ownerId, categoryId, categoryNetworkStatus, subcategoryName, subcategoryDeletedStatus, subcategoryNetworkStatus))) {
+    public void saveSubcategory(String subcategoryId, String categoryId, String categoryNetworkStatus, String subcategoryName, String subcategoryDeletedStatus, String subcategoryNetworkStatus, String subcategorySortOrder) {
+        if (executeCall(Api.getClient(context).saveSubcategory(MainActivity.ownerId, categoryId, categoryNetworkStatus, subcategoryName, subcategoryDeletedStatus, subcategoryNetworkStatus, subcategorySortOrder))) {
             posBillingWalaDatabase.updateSyncSubcategory(subcategoryId, NAME_SYNCED_WITH_SERVER);
         }
     }

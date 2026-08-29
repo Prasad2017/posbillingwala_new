@@ -32,6 +32,7 @@ import com.karumi.dexter.listener.multi.MultiplePermissionsListener;
 import com.pos_billingwala.Adapter.ThreePrintAdapter;
 import com.pos_billingwala.Adapter.TwoPrintAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.PaymentUpiQrHelper;
 import com.pos_billingwala.Extra.ShopHeaderBuilder;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.PrinterSettingResponse;
@@ -186,7 +187,6 @@ public class TestInvoiceBluetoothPrint extends BaseActivity implements View.OnCl
         }
 
         applyLogoToggle(logoOn);
-        applyQrToggle(qrOn);
 
         String dateStr = new SimpleDateFormat("dd-MM-yyyy HH:mm", Locale.US).format(new Date());
         StringBuilder invoiceDetails = new StringBuilder();
@@ -205,6 +205,7 @@ public class TestInvoiceBluetoothPrint extends BaseActivity implements View.OnCl
             float qty = Float.parseFloat(line.getProductQuantity());
             subTotal += price * qty;
         }
+        applyPaymentQr(qrOn, subTotal, shopName, invoicePrefix + "-TEST");
         String subTotalText = "Sub Total: " + currency + String.format(Locale.US, "%.2f", subTotal);
         String totalText = "Total: " + currency + String.format(Locale.US, "%.2f", subTotal);
 
@@ -232,7 +233,6 @@ public class TestInvoiceBluetoothPrint extends BaseActivity implements View.OnCl
 
     private void applyCompanyImages(CompanyResponse company) {
         companyLogoReady = false;
-        paymentQrReady = false;
 
         if (company.getCompanyLogo() != null && !company.getCompanyLogo().trim().isEmpty()) {
             try {
@@ -248,21 +248,6 @@ public class TestInvoiceBluetoothPrint extends BaseActivity implements View.OnCl
                 Log.e(TAG, "Logo decode failed", e);
             }
         }
-
-        if (company.getPaymentLogo() != null && !company.getPaymentLogo().trim().isEmpty()) {
-            try {
-                byte[] bytes = Base64.decode(company.getPaymentLogo(), Base64.DEFAULT);
-                Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-                if (bitmap != null) {
-                    binding.previewQRLogo.setImageBitmap(bitmap);
-                    binding.twoQRLogo.setImageBitmap(bitmap);
-                    binding.threeQRLogo.setImageBitmap(bitmap);
-                    paymentQrReady = true;
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "QR decode failed", e);
-            }
-        }
     }
 
     /** Matches BluetoothPrint: logoUse / paymentUse control visibility. */
@@ -274,9 +259,17 @@ public class TestInvoiceBluetoothPrint extends BaseActivity implements View.OnCl
         binding.threeCompanyLogo.setVisibility(visibility);
     }
 
-    private void applyQrToggle(boolean qrOn) {
-        // Only show QR when toggle ON and a payment QR image exists
-        int visibility = (qrOn && paymentQrReady) ? View.VISIBLE : View.GONE;
+    private void applyPaymentQr(boolean qrOn, float amount, String payeeName, String note) {
+        String upiId = "";
+        if (!companyResponseList.isEmpty()) {
+            upiId = companyResponseList.get(0).getPaymentLogo();
+        }
+        boolean applied = qrOn
+                && PaymentUpiQrHelper.applyQrToViews(
+                upiId, payeeName, amount, note,
+                binding.previewQRLogo, binding.twoQRLogo, binding.threeQRLogo);
+        paymentQrReady = applied;
+        int visibility = applied ? View.VISIBLE : View.GONE;
         binding.previewQRLogo.setVisibility(visibility);
         binding.twoQRLogo.setVisibility(visibility);
         binding.threeQRLogo.setVisibility(visibility);

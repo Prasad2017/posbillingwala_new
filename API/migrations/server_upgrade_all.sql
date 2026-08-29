@@ -1067,6 +1067,44 @@ CREATE TABLE IF NOT EXISTS `website_contact_messages` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- =============================================================================
+-- Category / subcategory display order (POS billing drag-reorder)
+-- =============================================================================
+
+SET @col_exists := (
+  SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE()
+    AND TABLE_NAME = 'categories'
+    AND COLUMN_NAME = 'categorySortOrder'
+);
+SET @sql := IF(
+  @col_exists > 0,
+  'SELECT ''OK: categories.categorySortOrder already exists'' AS msg',
+  'ALTER TABLE `categories` ADD COLUMN `categorySortOrder` int(11) NOT NULL DEFAULT 0 AFTER `categoryName`'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+UPDATE `categories`
+SET `categorySortOrder` = `categoryId`
+WHERE IFNULL(`categorySortOrder`, 0) = 0;
+
+SET @col_exists := (
+  SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE()
+    AND TABLE_NAME = 'product_subcategories'
+    AND COLUMN_NAME = 'subcategorySortOrder'
+);
+SET @sql := IF(
+  @col_exists > 0,
+  'SELECT ''OK: product_subcategories.subcategorySortOrder already exists'' AS msg',
+  'ALTER TABLE `product_subcategories` ADD COLUMN `subcategorySortOrder` int(11) NOT NULL DEFAULT 0 AFTER `subcategoryName`'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+UPDATE `product_subcategories`
+SET `subcategorySortOrder` = `subcategoryId`
+WHERE IFNULL(`subcategorySortOrder`, 0) = 0;
+
+-- =============================================================================
 -- DONE — verify upgrade + existing data still present
 -- =============================================================================
 
@@ -1100,6 +1138,10 @@ SELECT
    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'branch_access_grants') AS branch_grants_ok,
   (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'categories' AND COLUMN_NAME = 'foodTypeId') AS categories_foodTypeId_ok,
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'categories' AND COLUMN_NAME = 'categorySortOrder') AS categories_sort_ok,
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'product_subcategories' AND COLUMN_NAME = 'subcategorySortOrder') AS subcategories_sort_ok,
   (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'products' AND COLUMN_NAME = 'subcategoryId') AS products_subcategoryId_ok,
   (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS

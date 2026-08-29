@@ -38,12 +38,20 @@ public class SubcategoryWorker extends Worker {
                 List<ProductSubcategoryResponse> list = response.body().getSubcategoryResponseList();
                 if (list != null) {
                     for (ProductSubcategoryResponse item : list) {
+                        int sortOrder = -1;
+                        try {
+                            if (item.getSubcategorySortOrder() != null && !item.getSubcategorySortOrder().trim().isEmpty()) {
+                                sortOrder = Integer.parseInt(item.getSubcategorySortOrder().trim());
+                            }
+                        } catch (NumberFormatException ignored) {
+                        }
                         database.insertProductSubcategory(
                                 item.getCategoryId(),
                                 item.getSubcategoryName(),
                                 item.getSubcategoryDeletedStatus(),
                                 item.getSubcategoryNetworkStatus(),
-                                1);
+                                1,
+                                sortOrder);
                     }
                 }
             }

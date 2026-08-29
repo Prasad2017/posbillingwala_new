@@ -17,6 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $subcategoryName = $_POST['subcategoryName'];
     $subcategoryDeletedStatus = $_POST['subcategoryDeletedStatus'];
     $subcategoryNetworkStatus = $_POST['subcategoryNetworkStatus'];
+    $subcategorySortOrder = isset($_POST['subcategorySortOrder']) ? intval($_POST['subcategorySortOrder']) : -1;
 
     if ($subcategoryDeletedStatus == "1") {
         $subcategoryDeletedStatus = 'deactive';
@@ -39,7 +40,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($check)) {
 
         $subcategoryId = $check['subcategoryId'];
-        $sql = "UPDATE `product_subcategories` SET `categoryId`='$categoryId', `subcategoryName`='$subcategoryName', `subcategoryStatus`='$subcategoryDeletedStatus' WHERE `subcategoryId`='$subcategoryId'";
+        $sortSql = ($subcategorySortOrder >= 0) ? ", `subcategorySortOrder`='$subcategorySortOrder'" : "";
+        $sql = "UPDATE `product_subcategories` SET `categoryId`='$categoryId', `subcategoryName`='$subcategoryName', `subcategoryStatus`='$subcategoryDeletedStatus'$sortSql WHERE `subcategoryId`='$subcategoryId'";
 
         if (mysqli_query($con, $sql)) {
             $response["status"] = '1';
@@ -51,8 +53,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     } else {
 
-        $sql = "INSERT INTO `product_subcategories`(`userId`, `categoryId`, `subcategoryName`, `subcategoryNetworkStatus`, `subcategoryStatus`)
-                VALUES ('$userId', '$categoryId', '$subcategoryName', '$subcategoryNetworkStatus', '$subcategoryDeletedStatus')";
+        $nextSort = $subcategorySortOrder;
+        if ($nextSort < 0) {
+            $sortRes = mysqli_query($con, "SELECT IFNULL(MAX(`subcategorySortOrder`), 0) + 1 AS nextSort FROM `product_subcategories` WHERE `userId`='$userId' AND `categoryId`='$categoryId'");
+            $sortRow = mysqli_fetch_array($sortRes);
+            $nextSort = isset($sortRow['nextSort']) ? intval($sortRow['nextSort']) : 1;
+        }
+        $sql = "INSERT INTO `product_subcategories`(`userId`, `categoryId`, `subcategoryName`, `subcategoryNetworkStatus`, `subcategoryStatus`, `subcategorySortOrder`)
+                VALUES ('$userId', '$categoryId', '$subcategoryName', '$subcategoryNetworkStatus', '$subcategoryDeletedStatus', '$nextSort')";
 
         if (mysqli_query($con, $sql)) {
             $response["status"] = '1';
