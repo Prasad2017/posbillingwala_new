@@ -188,8 +188,6 @@ public class EditInvoice extends BaseActivity {
         if (paymentMode.equalsIgnoreCase(getString(R.string.ui_upi)) || paymentMode.equalsIgnoreCase("UPI")
                 || paymentMode.equalsIgnoreCase("Online")) {
             paymentGroup.check(R.id.online);
-        } else if (paymentMode.equalsIgnoreCase(getString(R.string.ui_bank)) || paymentMode.equalsIgnoreCase("Bank")) {
-            paymentGroup.check(R.id.bank);
         } else {
             paymentGroup.check(R.id.cash);
         }
