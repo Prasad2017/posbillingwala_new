@@ -26,16 +26,22 @@ public final class WoosimPrnMng {
     }
 
     /**
-     * Connect button: reconnect to saved MAC, or open Bluetooth device list once
-     * if the address is empty / printer is not paired.
+     * Connect button: if the saved printer is already connected, keep it.
+     * Otherwise open the Bluetooth device list (empty MAC, unpaired, or offline).
      */
     public static void connectFromButton(Context context, String deviceAddr, Activity host) {
-        String addr = deviceAddr != null ? deviceAddr.trim() : "";
-        if (addr.isEmpty()) {
+        connectFromButton(context, deviceAddr, host, false);
+    }
+
+    /**
+     * @param forceDeviceList when true (paper size changed), always show a fresh device list.
+     */
+    public static void connectFromButton(Context context, String deviceAddr, Activity host, boolean forceDeviceList) {
+        if (forceDeviceList) {
             BluetoothPrinterChannel.bill().openDevicePicker(host);
-        } else {
-            BluetoothPrinterChannel.bill().connect(context, addr, host, true);
+            return;
         }
+        BluetoothPrinterChannel.bill().connect(context, deviceAddr, host, true);
     }
 
     /** Legacy entry point used across the app. */

@@ -69,48 +69,18 @@
 
                 <RadioButton
                     android:id="@+id/cash"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:layout_weight="1"
-                    android:fontFamily="@font/poppinsregular"
-                    android:gravity="center|start"
-                    android:minHeight="36dp"
-                    android:paddingStart="2dp"
-                    android:paddingEnd="2dp"
-                    android:text="@string/ui_cash"
-                    android:textColor="@color/black"
-                    android:textSize="13sp" />
+                    style="@style/PaymentModeRadio"
+                    android:text="@string/ui_cash" />
 
                 <RadioButton
                     android:id="@+id/online"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:layout_weight="1"
-                    android:fontFamily="@font/poppinsregular"
-                    android:gravity="center|start"
-                    android:minHeight="36dp"
-                    android:paddingStart="2dp"
-                    android:paddingEnd="2dp"
-                    android:text="@string/ui_upi"
-                    android:textColor="@color/black"
-                    android:textSize="13sp" />
+                    style="@style/PaymentModeRadio"
+                    android:text="@string/ui_upi" />
 
                 <RadioButton
                     android:id="@+id/splitCashUpi"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:layout_weight="1.3"
-                    android:fontFamily="@font/poppinsregular"
-                    android:gravity="center|start"
-                    android:minHeight="36dp"
-                    android:paddingStart="2dp"
-                    android:paddingEnd="2dp"
-                    android:text="@string/ui_cash_plus_upi"
-                    android:textColor="@color/black"
-                    android:textSize="12sp" />
+                    style="@style/PaymentModeRadio"
+                    android:text="@string/ui_cash_plus_upi" />
 
             </RadioGroup>
 

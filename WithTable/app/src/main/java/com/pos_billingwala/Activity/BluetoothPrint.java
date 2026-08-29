@@ -936,16 +936,23 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                 progressDialog = new ProgressDialog(activity);
                 progressDialog.setMessage(getString(R.string.toast_printing_in_progress));
 
-                if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("2-Inch")) {
-                    printKOT2InchBill(false);
-                } else if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("3-Inch")) {
+                String kotSize = printerSettingResponseList.get(0).getKOTPrinterName();
+                if (kotSize == null || kotSize.trim().isEmpty()) {
+                    kotSize = printerSettingResponseList.get(0).getPrinterName();
+                }
+                if (kotSize != null && kotSize.equalsIgnoreCase("3-Inch")) {
                     printKOT3InchBill(false);
+                } else {
+                    printKOT2InchBill(false);
                 }
 
             } else {
                 Toast.makeText(activity, getString(R.string.toast_please_select_printer_from_setting), Toast.LENGTH_SHORT).show();
             }
         } else if (id == R.id.printInvoiceCardView) {
+            if (!requirePaymentModeSelected()) {
+                return;
+            }
             if (printerSettingResponseList != null && !printerSettingResponseList.isEmpty()) {
                 String billAddress = printerSettingResponseList.get(0).getBluetoothAddress();
                 if (!PrinterConnectionHelper.ensureBillPrinter(activity,
@@ -1014,7 +1021,19 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
         }
     }
 
+    private boolean requirePaymentModeSelected() {
+        int checkedId = binding.paymentGroup != null ? binding.paymentGroup.getCheckedRadioButtonId() : -1;
+        if (checkedId != -1 && paymentMode != null && !paymentMode.trim().isEmpty()) {
+            return true;
+        }
+        Toast.makeText(activity, getString(R.string.toast_please_select_payment_mode), Toast.LENGTH_SHORT).show();
+        return false;
+    }
+
     private void shareInvoice() {
+        if (!requirePaymentModeSelected()) {
+            return;
+        }
         View customerContent = LayoutInflater.from(activity).inflate(R.layout.update_customer_dialog, null);
         BottomSheetDialog customerSheet = BottomSheetUi.showContent(activity, customerContent, false);
 
@@ -1378,6 +1397,9 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                 Toast.makeText(activity, getString(R.string.toast_cart_is_empty), Toast.LENGTH_SHORT).show();
                 return;
             }
+            if (!requirePaymentModeSelected()) {
+                return;
+            }
             invoiceNumber = resolveInvoiceNumber();
             saveInvoice("", "", "", 0);
         });
@@ -1488,6 +1510,10 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
 
         if (productCartResponseList == null || productCartResponseList.isEmpty()) {
             Toast.makeText(activity, getString(R.string.toast_cart_is_empty), Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (!requirePaymentModeSelected()) {
             return;
         }
 
@@ -1886,6 +1912,9 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                 String bluetoothAddress = data.getStringExtra(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
                 if (bluetoothAddress != null) {
                     BluetoothPrinterChannel.bill().onDevicePicked(bluetoothAddress);
+                    if (printerSettingResponseList != null && !printerSettingResponseList.isEmpty()) {
+                        printerSettingResponseList.get(0).setBluetoothAddress(bluetoothAddress);
+                    }
                 }
             } else if (requestCode == REQUEST_KOT_ENABLE_BT && resultCode == RESULT_OK) {
                 String kotAddr = "";
@@ -1898,6 +1927,9 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                 String bluetoothAddress = data.getStringExtra(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
                 if (bluetoothAddress != null) {
                     BluetoothPrinterChannel.kot().onDevicePicked(bluetoothAddress);
+                    if (printerSettingResponseList != null && !printerSettingResponseList.isEmpty()) {
+                        printerSettingResponseList.get(0).setBluetoothKOTAddress(bluetoothAddress);
+                    }
                 }
             }
         } catch (Exception e) {

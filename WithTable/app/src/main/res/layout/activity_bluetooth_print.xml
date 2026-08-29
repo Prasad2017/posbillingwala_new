@@ -1278,7 +1278,7 @@
 
                         <RadioGroup
                             android:id="@+id/paymentGroup"
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_gravity="center"
                             android:layout_marginStart="5dp"
@@ -1289,54 +1289,18 @@
 
                             <RadioButton
                                 android:id="@+id/cash"
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:layout_gravity="center"
-                                android:layout_marginStart="5dp"
-                                android:layout_marginEnd="5dp"
-                                android:layout_weight="1"
-                                android:fontFamily="@font/poppinsregular"
-                                android:gravity="center|start"
-                                android:paddingStart="10dp"
-                                android:paddingEnd="10dp"
-                                android:text="@string/ui_cash"
-                                android:textAllCaps="true"
-                                android:textColor="@color/black"
-                                android:textSize="15dp" />
+                                style="@style/PaymentModeRadio"
+                                android:text="@string/ui_cash" />
 
                             <RadioButton
                                 android:id="@+id/online"
-                                android:layout_width="match_parent"
-                                android:layout_height="30dp"
-                                android:layout_gravity="center"
-                                android:layout_marginStart="5dp"
-                                android:layout_marginEnd="5dp"
-                                android:layout_weight="1"
-                                android:fontFamily="@font/poppinsregular"
-                                android:gravity="center|start"
-                                android:paddingStart="10dp"
-                                android:paddingEnd="10dp"
-                                android:text="@string/ui_upi"
-                                android:textAllCaps="true"
-                                android:textColor="@color/black"
-                                android:textSize="15dp" />
+                                style="@style/PaymentModeRadio"
+                                android:text="@string/ui_upi" />
 
                             <RadioButton
                                 android:id="@+id/splitCashUpi"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_gravity="center"
-                                android:layout_marginStart="5dp"
-                                android:layout_marginEnd="5dp"
-                                android:layout_weight="1"
-                                android:fontFamily="@font/poppinsregular"
-                                android:gravity="center|start"
-                                android:paddingStart="4dp"
-                                android:paddingEnd="4dp"
-                                android:text="@string/ui_cash_plus_upi"
-                                android:textAllCaps="true"
-                                android:textColor="@color/black"
-                                android:textSize="12dp" />
+                                style="@style/PaymentModeRadio"
+                                android:text="@string/ui_cash_plus_upi" />
 
                         </RadioGroup>
 

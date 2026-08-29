@@ -41,11 +41,7 @@ public final class PrinterConnectionHelper {
             if (isBillPrinterReady()) {
                 return true;
             }
-            if (BluetoothPrinterChannel.bill().isConnecting()) {
-                showToast(activity, R.string.toast_printer_connecting);
-                return false;
-            }
-            BluetoothPrinterChannel.bill().connect(activity, savedAddress, activity, false);
+            WoosimPrnMng.connectFromButton(activity, savedAddress, activity, false);
             return isBillPrinterReady();
         } catch (Exception e) {
             showToast(activity, R.string.connect_fail);
@@ -58,11 +54,7 @@ public final class PrinterConnectionHelper {
             if (isKotPrinterReady()) {
                 return true;
             }
-            if (BluetoothPrinterChannel.kot().isConnecting()) {
-                showToast(activity, R.string.toast_printer_connecting);
-                return false;
-            }
-            BluetoothPrinterChannel.kot().connect(activity, savedAddress, activity, false);
+            KOTWoosimPrnMng.connectFromButton(activity, savedAddress, activity, false);
             return isKotPrinterReady();
         } catch (Exception e) {
             showToast(activity, R.string.connect_fail);

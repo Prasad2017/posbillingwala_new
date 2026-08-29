@@ -276,7 +276,10 @@ public class DuplicateBluetoothPrint extends BaseActivity implements View.OnClic
     @Override
     public void onClick(View view) {
         if (view.getId() == R.id.printInvoiceCardView) {
-            if (paymentMode != null) {
+            boolean paymentSelected = binding.paymentGroup != null
+                    && binding.paymentGroup.getCheckedRadioButtonId() != -1
+                    && paymentMode != null && !paymentMode.trim().isEmpty();
+            if (paymentSelected) {
                 if (!printerSettingResponseList.isEmpty()) {
                     progressDialog = new ProgressDialog(activity);
                     progressDialog.setMessage(getString(R.string.toast_printing_in_progress));
