@@ -39,6 +39,7 @@ $i=0;
         $getdata["productUnit"]=$row['productUnit'];
         $getdata["productCGST"]=$row['productCGST'];
         $getdata["productSGST"]=$row['productSGST'];
+        $getdata["openPrice"]=isset($row['openPrice']) && $row['openPrice'] !== '' ? $row['openPrice'] : 'off';
         if($row['productStatus'] == 'active') {
            $getdata["productDeletedStatus"]='0';
         } else {

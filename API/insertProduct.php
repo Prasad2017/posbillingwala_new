@@ -22,6 +22,10 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
   $productNetworkStatus = $_POST['productNetworkStatus'];
   $productDeletedStatus = $_POST['productDeletedStatus'];
   $subcategoryId = isset($_POST['subcategoryId']) ? $_POST['subcategoryId'] : '';
+  $openPrice = isset($_POST['openPrice']) ? $_POST['openPrice'] : 'off';
+  if ($openPrice !== 'on') {
+      $openPrice = 'off';
+  }
   
   if($productDeletedStatus == '1') {
         $productDeletedStatus = 'deactive';
@@ -50,7 +54,7 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 				    
 				    $subSql = ($subcategoryId != '') ? ", `subcategoryId`='$subcategoryId'" : "";
 				    $sql="UPDATE `products` SET `categoryId`='$categoryId', `productCode`='$productCode', `productName`='$productName', `productPrice`='$productPrice', `productUnit`='$productUnit', 
-				          `productCGST`='$productCGST', `productSGST`='$productSGST', `productStatus`='$productDeletedStatus'$subSql WHERE `productId`='$productId'";
+				          `productCGST`='$productCGST', `productSGST`='$productSGST', `openPrice`='$openPrice', `productStatus`='$productDeletedStatus'$subSql WHERE `productId`='$productId'";
 				    
 				    }
 				    
@@ -83,8 +87,8 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 
                  $subCol = ($subcategoryId != '') ? ", `subcategoryId`" : "";
                  $subVal = ($subcategoryId != '') ? ", '$subcategoryId'" : "";
-                 $sql="INSERT INTO `products`(`userId`, `categoryId`, `productCode`, `productName`, `productPrice`, `productUnit`, `productCGST`, `productSGST`, `productNetworkStatus`, `productStatus`$subCol) 
-                       VALUES ('$userId', '$categoryId', '$productCode', '$productName', '$productPrice', '$productUnit', '$productCGST', '$productSGST', '$productNetworkStatus', '$productDeletedStatus'$subVal)";
+                 $sql="INSERT INTO `products`(`userId`, `categoryId`, `productCode`, `productName`, `productPrice`, `productUnit`, `productCGST`, `productSGST`, `openPrice`, `productNetworkStatus`, `productStatus`$subCol) 
+                       VALUES ('$userId', '$categoryId', '$productCode', '$productName', '$productPrice', '$productUnit', '$productCGST', '$productSGST', '$openPrice', '$productNetworkStatus', '$productDeletedStatus'$subVal)";
 
                  if(mysqli_query($con,$sql)){
 	

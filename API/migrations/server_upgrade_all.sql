@@ -131,6 +131,19 @@ SET @sql = (
 );
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
+-- Open price: cashier enters unit price at billing (on/off)
+SET @sql = (
+  SELECT IF(
+    (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = 'products'
+       AND COLUMN_NAME = 'openPrice') > 0,
+    'SELECT ''OK: products.openPrice already exists'' AS msg',
+    'ALTER TABLE `products` ADD COLUMN `openPrice` VARCHAR(10) NOT NULL DEFAULT ''off'' AFTER `productPrice`'
+  )
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
 -- =============================================================================
 -- STEP 3 of 9 — Product portions (Half / Full / Kg prices)
 -- =============================================================================
@@ -1089,6 +1102,8 @@ SELECT
    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'categories' AND COLUMN_NAME = 'foodTypeId') AS categories_foodTypeId_ok,
   (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'products' AND COLUMN_NAME = 'subcategoryId') AS products_subcategoryId_ok,
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'products' AND COLUMN_NAME = 'openPrice') AS products_openPrice_ok,
   (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'invoice_final_product' AND COLUMN_NAME = 'portionId') AS invoice_portionId_ok,
   (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS

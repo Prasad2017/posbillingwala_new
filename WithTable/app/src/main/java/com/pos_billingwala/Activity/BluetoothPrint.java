@@ -45,11 +45,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
 import androidx.core.widget.NestedScrollView;
-import androidx.lifecycle.LifecycleOwner;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.work.OneTimeWorkRequest;
-import androidx.work.WorkManager;
 
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.textfield.TextInputEditText;
@@ -88,7 +85,6 @@ import com.pos_billingwala.Print.PrintImage;
 import com.pos_billingwala.Print.PrintImage.dither;
 import com.pos_billingwala.Print.WoosimPrnMng;
 import com.pos_billingwala.R;
-import com.pos_billingwala.WorkerClass.CartProductWorker;
 import com.pos_billingwala.databinding.ActivityBluetoothPrintBinding;
 
 import java.io.File;
@@ -139,6 +135,8 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
     public static List<PrinterSettingResponse> printerSettingResponseList = new ArrayList<>();
     public static POSBillingWalaDatabase posBillingWalaDatabase;
     public static CartAdapter cartAdapter;
+    /** Drops stale cart DB reloads when several getCartProductList() calls overlap. */
+    private static int cartLoadRequestId = 0;
     public static TextView totalPayableAmountTxt, subTotalTxt, discountTxt, totalAmountTxt;
     public static RelativeLayout cartLayout;
     public static TextView noDataFound;
@@ -161,224 +159,227 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
     int REQUEST_KOT_ENABLE_BT = 8, REQUEST_KOT_CONNECT_DEVICE = 10;
 
 
+    /**
+     * Reload cart from DB (initial open / clear / discount). Uses AppExecutors — not WorkManager —
+     * so qty taps never stack workers or show a loading flash.
+     */
     public static void getCartProductList() {
+        if (activity == null || posBillingWalaDatabase == null) {
+            return;
+        }
+        final String table = tableNumber;
+        final String orderStatus = cartOrderStatus;
+        final int requestId = ++cartLoadRequestId;
+        AppExecutors.get().db().execute(() -> {
+            List<ProductCartResponse> loaded;
+            try {
+                loaded = posBillingWalaDatabase.getCartProductList(table, orderStatus);
+            } catch (Exception e) {
+                Log.e("BluetoothPrint", "getCartProductList db failed", e);
+                loaded = new ArrayList<>();
+            }
+            final List<ProductCartResponse> result = loaded != null ? loaded : new ArrayList<>();
+            AppExecutors.get().main(() -> {
+                if (requestId != cartLoadRequestId || activity == null) {
+                    return;
+                }
+                try {
+                    productCartResponseList.clear();
+                    productCartResponseList.addAll(result);
+                    applyCartListToUi(true);
+                } catch (Exception e) {
+                    Log.e("BluetoothPrint", "getCartProductList failed", e);
+                    Toast.makeText(activity, activity.getString(R.string.toast_print_failed), Toast.LENGTH_SHORT).show();
+                }
+            });
+        });
+    }
 
-        OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(CartProductWorker.class).build();
-        WorkManager.getInstance(activity).getWorkInfoByIdLiveData(workRequest.getId())
-                .observe((LifecycleOwner) activity, workInfo -> {
-                    try {
-                    if (workInfo != null && workInfo.getState().isFinished()) {
+    /**
+     * After +/- / open-price / delete already updated the in-memory list + DB.
+     * Refresh totals and print previews only — no DB reload, no loading UI.
+     */
+    public static void refreshCartUiAfterLocalEdit() {
+        if (activity == null) {
+            return;
+        }
+        try {
+            applyCartListToUi(false);
+        } catch (Exception e) {
+            Log.e("BluetoothPrint", "refreshCartUiAfterLocalEdit failed", e);
+        }
+    }
 
-                        float totalPerProductAmount = 0f, discountAmount = 0f, totalUnitPrice = 0f, totalCGST = 0f, totalSGST = 0f, totalGST = 0f, totalPerProductGST = 0f, subTotalAmt = 0f, totalShopGST = 0f;
-                        int totalQty = 0;
-                        float shopCGST = 0f, shopSGST = 0f, totalAmt = 0f;
+    private static void applyCartListToUi(boolean rebindCartAdapter) {
+        float totalPerProductAmount = 0f, discountAmount = 0f, totalCGST = 0f, totalSGST = 0f,
+                totalGST = 0f, totalPerProductGST = 0f, subTotalAmt = 0f, totalShopGST = 0f;
+        float shopCGST = 0f, shopSGST = 0f, totalAmt = 0f;
 
-                        if (!productCartResponseList.isEmpty()) {
+        if (!productCartResponseList.isEmpty()) {
+            if (rebindCartAdapter || cartAdapter == null || cartRecyclerView.getAdapter() != cartAdapter) {
+                cartAdapter = new CartAdapter(activity, productCartResponseList);
+                cartRecyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
+                cartRecyclerView.setAdapter(cartAdapter);
+            }
+            // Local +/- / price edits already notified the cart row — do not rebind the whole list.
 
-                            //Add to Cart Purchase Product list
-                            cartAdapter = new CartAdapter(activity, productCartResponseList);
-                            cartRecyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
+            // Print preview lists only needed on full reload / before print — not on every qty tap.
+            if (rebindCartAdapter) {
+                TwoPrintAdapter twoPrintAdapter = new TwoPrintAdapter(activity, productCartResponseList);
+                twoRecyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
+                twoRecyclerView.setAdapter(twoPrintAdapter);
 
-                            cartRecyclerView.setAdapter(cartAdapter);
-                            // cartAdapter.notifyItemInserted(productCartResponseList.size() - 1);
+                ThreePrintAdapter threePrintAdapter = new ThreePrintAdapter(activity, productCartResponseList);
+                threeRecyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
+                threeRecyclerView.setAdapter(threePrintAdapter);
 
-                            //Two Inch Printer List
-                            TwoPrintAdapter twoPrintAdapter = new TwoPrintAdapter(activity, productCartResponseList);
-                            twoRecyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
+                TwoKOTPrintAdapter twoKOTPrintAdapter = new TwoKOTPrintAdapter(activity, productCartResponseList);
+                twoKOTRecyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
+                twoKOTRecyclerView.setAdapter(twoKOTPrintAdapter);
+                threeKOTRecyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
+                threeKOTRecyclerView.setAdapter(twoKOTPrintAdapter);
+            } else {
+                if (twoRecyclerView.getAdapter() != null) {
+                    twoRecyclerView.getAdapter().notifyDataSetChanged();
+                }
+                if (threeRecyclerView.getAdapter() != null) {
+                    threeRecyclerView.getAdapter().notifyDataSetChanged();
+                }
+                if (twoKOTRecyclerView.getAdapter() != null) {
+                    twoKOTRecyclerView.getAdapter().notifyDataSetChanged();
+                }
+                if (threeKOTRecyclerView.getAdapter() != null) {
+                    threeKOTRecyclerView.getAdapter().notifyDataSetChanged();
+                }
+            }
 
-                            twoRecyclerView.setAdapter(twoPrintAdapter);
-                            //Three Inch Printer List
-                            ThreePrintAdapter threePrintAdapter = new ThreePrintAdapter(activity, productCartResponseList);
-                            threeRecyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
+            for (ProductCartResponse productCartResponse : productCartResponseList) {
+                discountTxt.setText("Discount(%)\n" + productCartResponse.getCartDiscount());
+                discountAmount = Float.parseFloat(productCartResponseList.get(0).getCartDiscount());
+                discountType = productCartResponse.getCartDiscountType();
 
-                            threeRecyclerView.setAdapter(threePrintAdapter);
-
-                            //Two Inch KOT Printer List
-                            TwoKOTPrintAdapter twoKOTPrintAdapter = new TwoKOTPrintAdapter(activity, productCartResponseList);
-                            twoKOTRecyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
-
-                            twoKOTRecyclerView.setAdapter(twoKOTPrintAdapter);
-                            //Three Inch KOT Printer List
-                            threeKOTRecyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
-
-                            threeKOTRecyclerView.setAdapter(twoKOTPrintAdapter);
-
-                            for (ProductCartResponse productCartResponse : productCartResponseList) {
-
-                                discountTxt.setText("Discount(%)\n" + productCartResponse.getCartDiscount());
-                                discountAmount = Float.parseFloat(productCartResponseList.get(0).getCartDiscount());
-                                discountType = productCartResponse.getCartDiscountType();
-
-                                float productPrice = Float.parseFloat(productCartResponse.getResolvedLinePrice());
-                                totalUnitPrice += Float.parseFloat(productCartResponse.getResolvedLinePrice());
-                                float productQuantity = Float.parseFloat(productCartResponse.getProductQuantity());
-                                if (!CreatePos.companyResponseList.isEmpty()) {
-                                    if (CreatePos.companyResponseList.get(0).getGstStatus() != null) {
-                                        if (CreatePos.companyResponseList.get(0).getGstStatus().equalsIgnoreCase("On")) {
-                                            if (productCartResponse.getProductCGST() != null
-                                                    && !productCartResponse.getProductCGST().equalsIgnoreCase("")) {
-                                                totalCGST += Float.parseFloat(productCartResponse.getProductCGST());
-                                            }
-
-                                            if (productCartResponse.getProductSGST() != null
-                                                    && !productCartResponse.getProductSGST().equalsIgnoreCase("")) {
-                                                totalSGST += Float.parseFloat(productCartResponse.getProductSGST());
-                                            }
-
-                                            totalQty += Float.parseFloat(productCartResponse.getProductQuantity());
-
-                                            totalPerProductGST = (productPrice * ((totalCGST + totalSGST) / 100));
-                                            totalGST += (productPrice * ((totalCGST + totalSGST) / 100)) * productQuantity;
-
-                                            totalPerProductAmount = totalPerProductAmount + ((productPrice + totalPerProductGST) * productQuantity);
-                                        } else {
-                                            totalPerProductAmount = totalPerProductAmount + (productPrice * productQuantity);
-                                        }
-                                    } else {
-                                        totalPerProductAmount = totalPerProductAmount + (productPrice * productQuantity);
-                                    }
-                                } else {
-                                    totalPerProductAmount = totalPerProductAmount + (productPrice * productQuantity);
-                                }
+                float productPrice = Float.parseFloat(productCartResponse.getResolvedLinePrice());
+                float productQuantity = Float.parseFloat(productCartResponse.getProductQuantity());
+                if (!CreatePos.companyResponseList.isEmpty()) {
+                    if (CreatePos.companyResponseList.get(0).getGstStatus() != null) {
+                        if (CreatePos.companyResponseList.get(0).getGstStatus().equalsIgnoreCase("On")) {
+                            if (productCartResponse.getProductCGST() != null
+                                    && !productCartResponse.getProductCGST().equalsIgnoreCase("")) {
+                                totalCGST += Float.parseFloat(productCartResponse.getProductCGST());
                             }
-
-                            subTotalAmt = totalPerProductAmount + totalGST;
-
-
-                            if (!companyResponseList.isEmpty()
-                                    && companyResponseList.get(0).getGstStatus() != null) {
-
-                                if (companyResponseList.get(0).getGstStatus().equalsIgnoreCase("On")) {
-
-                                    if (companyResponseList.get(0).getShopCGST() != null) {
-                                        if (!companyResponseList.get(0).getShopCGST().trim().equalsIgnoreCase("")) {
-                                            shopCGST = subTotalAmt * (Float.parseFloat(companyResponseList.get(0).getShopCGST().trim()) / 100);
-
-                                            twoShopCGST.setText("CGST@" + companyResponseList.get(0).getShopCGST() + "%");
-                                            twoCGST.setText(inr + String.format(Locale.US, "%.2f", shopCGST));
-                                            twoShopCGSTLayout.setVisibility(View.VISIBLE);
-
-                                            threeShopCGST.setText("CGST@" + companyResponseList.get(0).getShopCGST() + "%");
-                                            threeCGST.setText(inr + String.format(Locale.US, "%.2f", shopCGST));
-                                            threeShopCGSTLayout.setVisibility(View.VISIBLE);
-
-                                        } else {
-                                            twoShopCGSTLayout.setVisibility(View.GONE);
-                                            threeShopCGSTLayout.setVisibility(View.GONE);
-                                        }
-                                    } else {
-                                        twoShopCGSTLayout.setVisibility(View.GONE);
-                                        threeShopCGSTLayout.setVisibility(View.GONE);
-                                    }
-
-                                    if (companyResponseList.get(0).getShopSGST() != null) {
-                                        if (!companyResponseList.get(0).getShopSGST().trim().equalsIgnoreCase("")) {
-                                            shopSGST = subTotalAmt * (Float.parseFloat(companyResponseList.get(0).getShopSGST().trim()) / 100);
-
-                                            twoShopSGST.setText("SGST@" + companyResponseList.get(0).getShopSGST() + "%");
-                                            twoSGST.setText(inr + String.format(Locale.US, "%.2f", shopSGST));
-                                            twoShopSGSTLayout.setVisibility(View.VISIBLE);
-
-                                            threeShopSGST.setText("SGST@" + companyResponseList.get(0).getShopSGST() + "%");
-                                            threeSGST.setText(inr + String.format(Locale.US, "%.2f", shopSGST));
-                                            threeShopSGSTLayout.setVisibility(View.VISIBLE);
-
-                                        } else {
-                                            twoShopSGSTLayout.setVisibility(View.GONE);
-                                            threeShopSGSTLayout.setVisibility(View.GONE);
-                                        }
-                                    } else {
-                                        twoShopSGSTLayout.setVisibility(View.GONE);
-                                        threeShopSGSTLayout.setVisibility(View.GONE);
-                                    }
-
-                                } else {
-                                    twoShopCGSTLayout.setVisibility(View.GONE);
-                                    threeShopCGSTLayout.setVisibility(View.GONE);
-
-                                    twoShopSGSTLayout.setVisibility(View.GONE);
-                                    threeShopSGSTLayout.setVisibility(View.GONE);
-                                }
-
-                            } else {
-                                twoShopCGSTLayout.setVisibility(View.GONE);
-                                threeShopCGSTLayout.setVisibility(View.GONE);
-
-                                twoShopSGSTLayout.setVisibility(View.GONE);
-                                threeShopSGSTLayout.setVisibility(View.GONE);
+                            if (productCartResponse.getProductSGST() != null
+                                    && !productCartResponse.getProductSGST().equalsIgnoreCase("")) {
+                                totalSGST += Float.parseFloat(productCartResponse.getProductSGST());
                             }
-
-
-                            totalShopGST = shopCGST + shopSGST;
-
-                            subTotalTxt.setText("Sub Total\n" + inr + String.format(Locale.US, "%.2f", subTotalAmt));
-                            twoSubTotal.setText(inr + String.format(Locale.US, "%.2f", subTotalAmt));
-                            threeSubTotal.setText(inr + String.format(Locale.US, "%.2f", subTotalAmt));
-
-                            if (discountType != null) {
-                                if (discountType.equalsIgnoreCase("Amount")) {
-                                    discountAmount = discountAmount;
-                                } else {
-                                    discountAmount = subTotalAmt / (100 / discountAmount);
-                                }
-
-                                twoDiscountLayout.setVisibility(View.VISIBLE);
-                                threeDiscountLayout.setVisibility(View.VISIBLE);
-
-                            } else {
-                                discountAmount = subTotalAmt / (100 / discountAmount);
-                                twoDiscountLayout.setVisibility(View.GONE);
-                                threeDiscountLayout.setVisibility(View.GONE);
-                            }
-
-                            twoDiscount.setText(inr + String.format(Locale.US, "%.2f", discountAmount));
-                            threeDiscount.setText(inr + String.format(Locale.US, "%.2f", discountAmount));
-
-                            if (!companyResponseList.isEmpty()
-                                    && companyResponseList.get(0).getGstStatus() != null
-                                    && companyResponseList.get(0).getGstStatus().equalsIgnoreCase("on")) {
-                                totalAmt = (subTotalAmt - discountAmount) + totalShopGST;
-                            } else {
-                                totalAmt = subTotalAmt - discountAmount;
-                            }
-
-                            float totalAmount = (float) Math.ceil(totalAmt);
-
-                            String totalPayableAmount = "Payable Amount<br/><b>" + inr + String.format(Locale.US, "%.2f", totalAmount) + "</b>";
-                            totalAmountTxt.setText("Total Amount\n" + inr + String.format(Locale.US, "%.2f", totalAmt));
-                            totalPayableAmountTxt.setText(Html.fromHtml(totalPayableAmount));
-
-                            twoTotalAmount.setText(inr + String.format(Locale.US, "%.2f", totalAmount));
-                            threeTotalAmount.setText(inr + String.format(Locale.US, "%.2f", totalAmount));
-
-                            cartLayout.setVisibility(View.VISIBLE);
-                            noDataFound.setVisibility(View.GONE);
-                            if (clearCartButton != null) {
-                                clearCartButton.setVisibility(View.VISIBLE);
-                            }
-
+                            totalPerProductGST = (productPrice * ((totalCGST + totalSGST) / 100));
+                            totalGST += (productPrice * ((totalCGST + totalSGST) / 100)) * productQuantity;
+                            totalPerProductAmount = totalPerProductAmount
+                                    + ((productPrice + totalPerProductGST) * productQuantity);
                         } else {
-                            cartLayout.setVisibility(View.GONE);
-                            noDataFound.setVisibility(View.VISIBLE);
-                            if (clearCartButton != null) {
-                                clearCartButton.setVisibility(View.GONE);
-                            }
+                            totalPerProductAmount = totalPerProductAmount + (productPrice * productQuantity);
                         }
-
-
+                    } else {
+                        totalPerProductAmount = totalPerProductAmount + (productPrice * productQuantity);
                     }
-                    } catch (Exception e) {
-                        Log.e("BluetoothPrint", "getCartProductList failed", e);
-                        if (activity != null) {
-                            Toast.makeText(activity, activity.getString(R.string.toast_print_failed), Toast.LENGTH_SHORT).show();
-                        }
+                } else {
+                    totalPerProductAmount = totalPerProductAmount + (productPrice * productQuantity);
+                }
+            }
+
+            subTotalAmt = totalPerProductAmount + totalGST;
+
+            if (!companyResponseList.isEmpty() && companyResponseList.get(0).getGstStatus() != null) {
+                if (companyResponseList.get(0).getGstStatus().equalsIgnoreCase("On")) {
+                    if (companyResponseList.get(0).getShopCGST() != null
+                            && !companyResponseList.get(0).getShopCGST().trim().equalsIgnoreCase("")) {
+                        shopCGST = subTotalAmt
+                                * (Float.parseFloat(companyResponseList.get(0).getShopCGST().trim()) / 100);
+                        twoShopCGST.setText("CGST@" + companyResponseList.get(0).getShopCGST() + "%");
+                        twoCGST.setText(inr + String.format(Locale.US, "%.2f", shopCGST));
+                        twoShopCGSTLayout.setVisibility(View.VISIBLE);
+                        threeShopCGST.setText("CGST@" + companyResponseList.get(0).getShopCGST() + "%");
+                        threeCGST.setText(inr + String.format(Locale.US, "%.2f", shopCGST));
+                        threeShopCGSTLayout.setVisibility(View.VISIBLE);
+                    } else {
+                        twoShopCGSTLayout.setVisibility(View.GONE);
+                        threeShopCGSTLayout.setVisibility(View.GONE);
                     }
-                });
+                    if (companyResponseList.get(0).getShopSGST() != null
+                            && !companyResponseList.get(0).getShopSGST().trim().equalsIgnoreCase("")) {
+                        shopSGST = subTotalAmt
+                                * (Float.parseFloat(companyResponseList.get(0).getShopSGST().trim()) / 100);
+                        twoShopSGST.setText("SGST@" + companyResponseList.get(0).getShopSGST() + "%");
+                        twoSGST.setText(inr + String.format(Locale.US, "%.2f", shopSGST));
+                        twoShopSGSTLayout.setVisibility(View.VISIBLE);
+                        threeShopSGST.setText("SGST@" + companyResponseList.get(0).getShopSGST() + "%");
+                        threeSGST.setText(inr + String.format(Locale.US, "%.2f", shopSGST));
+                        threeShopSGSTLayout.setVisibility(View.VISIBLE);
+                    } else {
+                        twoShopSGSTLayout.setVisibility(View.GONE);
+                        threeShopSGSTLayout.setVisibility(View.GONE);
+                    }
+                } else {
+                    twoShopCGSTLayout.setVisibility(View.GONE);
+                    threeShopCGSTLayout.setVisibility(View.GONE);
+                    twoShopSGSTLayout.setVisibility(View.GONE);
+                    threeShopSGSTLayout.setVisibility(View.GONE);
+                }
+            } else {
+                twoShopCGSTLayout.setVisibility(View.GONE);
+                threeShopCGSTLayout.setVisibility(View.GONE);
+                twoShopSGSTLayout.setVisibility(View.GONE);
+                threeShopSGSTLayout.setVisibility(View.GONE);
+            }
 
-        // Enqueue the work request
-        WorkManager.getInstance(activity).enqueue(workRequest);
+            totalShopGST = shopCGST + shopSGST;
 
+            subTotalTxt.setText("Sub Total\n" + inr + String.format(Locale.US, "%.2f", subTotalAmt));
+            twoSubTotal.setText(inr + String.format(Locale.US, "%.2f", subTotalAmt));
+            threeSubTotal.setText(inr + String.format(Locale.US, "%.2f", subTotalAmt));
 
+            if (discountType != null) {
+                if (!discountType.equalsIgnoreCase("Amount")) {
+                    discountAmount = subTotalAmt / (100 / discountAmount);
+                }
+                twoDiscountLayout.setVisibility(View.VISIBLE);
+                threeDiscountLayout.setVisibility(View.VISIBLE);
+            } else {
+                discountAmount = subTotalAmt / (100 / discountAmount);
+                twoDiscountLayout.setVisibility(View.GONE);
+                threeDiscountLayout.setVisibility(View.GONE);
+            }
+
+            twoDiscount.setText(inr + String.format(Locale.US, "%.2f", discountAmount));
+            threeDiscount.setText(inr + String.format(Locale.US, "%.2f", discountAmount));
+
+            if (!companyResponseList.isEmpty()
+                    && companyResponseList.get(0).getGstStatus() != null
+                    && companyResponseList.get(0).getGstStatus().equalsIgnoreCase("on")) {
+                totalAmt = (subTotalAmt - discountAmount) + totalShopGST;
+            } else {
+                totalAmt = subTotalAmt - discountAmount;
+            }
+
+            float totalAmount = (float) Math.ceil(totalAmt);
+            String totalPayableAmount = "Payable Amount<br/><b>" + inr
+                    + String.format(Locale.US, "%.2f", totalAmount) + "</b>";
+            totalAmountTxt.setText("Total Amount\n" + inr + String.format(Locale.US, "%.2f", totalAmt));
+            totalPayableAmountTxt.setText(Html.fromHtml(totalPayableAmount));
+            twoTotalAmount.setText(inr + String.format(Locale.US, "%.2f", totalAmount));
+            threeTotalAmount.setText(inr + String.format(Locale.US, "%.2f", totalAmount));
+
+            cartLayout.setVisibility(View.VISIBLE);
+            noDataFound.setVisibility(View.GONE);
+            if (clearCartButton != null) {
+                clearCartButton.setVisibility(View.VISIBLE);
+            }
+        } else {
+            cartLayout.setVisibility(View.GONE);
+            noDataFound.setVisibility(View.VISIBLE);
+            if (clearCartButton != null) {
+                clearCartButton.setVisibility(View.GONE);
+            }
+        }
     }
 
     public static void createFolder() {

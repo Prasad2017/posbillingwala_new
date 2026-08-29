@@ -20,6 +20,9 @@
     <string name="ui_after_sale_qty">After Sale Qty</string>
     <string name="ui_alternet_mobile_number">Alternet Mobile Number</string>
     <string name="ui_amount">AMOUNT</string>
+    <string name="ui_open_price">Open Price</string>
+    <string name="ui_open_price_hint">Price is entered while billing (tap amount on cart)</string>
+    <string name="ui_enter_amount">Enter Amount*</string>
     <string name="ui_amount_collected_optional">Amount collected (optional)</string>
     <string name="ui_all">All</string>
     <string name="ui_androidstringcancel">@android:string/cancel</string>

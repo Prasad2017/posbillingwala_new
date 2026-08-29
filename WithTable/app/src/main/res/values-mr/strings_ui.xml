@@ -20,6 +20,9 @@
     <string name="ui_after_sale_qty">विक्रीनंतर प्रमाण</string>
     <string name="ui_alternet_mobile_number">पर्यायी मोबाइल नंबर</string>
     <string name="ui_amount">रक्कम</string>
+    <string name="ui_open_price">ओपन प्राइस</string>
+    <string name="ui_open_price_hint">बिलिंगवेळी किंमत प्रविष्ट करा (कार्टवर रक्कम टॅप करा)</string>
+    <string name="ui_enter_amount">रक्कम प्रविष्ट करा*</string>
     <string name="ui_amount_collected_optional">गोळा केलेली रक्कम (पर्यायी)</string>
     <string name="ui_all">सर्व</string>
     <string name="ui_back">मागे</string>

@@ -204,6 +204,13 @@ public final class ErrorLogReporter {
     public static void reportProcessExit(String errorType, String category, String exceptionClass,
                                          String description, String trace, long timestampMs,
                                          int pid, int reasonCode, int statusCode) {
+        reportProcessExit(errorType, category, exceptionClass, description, trace,
+                timestampMs, pid, reasonCode, statusCode, "CRITICAL");
+    }
+
+    public static void reportProcessExit(String errorType, String category, String exceptionClass,
+                                         String description, String trace, long timestampMs,
+                                         int pid, int reasonCode, int statusCode, String severity) {
         try {
             String type = errorType != null && !errorType.isEmpty() ? errorType : "CRASH";
             String clazz = exceptionClass != null && !exceptionClass.isEmpty()
@@ -214,11 +221,13 @@ public final class ErrorLogReporter {
             String stack = trace != null ? trace : "";
             String cat = category != null ? category : "java_crash";
             String summary = buildProcessExitSummary(type, clazz, originalMsg);
+            String sev = severity != null && !severity.isEmpty() ? severity : "CRITICAL";
 
-            ErrorLogPayload p = basePayload(type, "CRITICAL", cat, summary);
+            ErrorLogPayload p = basePayload(type, sev, cat, summary);
             fillOriginals(p, originalMsg, clazz, stack, cat);
             p.put("user_action", "App process exited (system crash history)");
-            p.put("what_happened", buildProcessExitWhatHappened(type, clazz, originalMsg, pid, reasonCode, statusCode, timestampMs));
+            p.put("what_happened", buildProcessExitWhatHappened(type, clazz, originalMsg, pid,
+                    reasonCode, statusCode, timestampMs, stack));
             p.put("fingerprint", fingerprint(type, clazz, originalMsg, "system_exit", reasonCode));
             ErrorLogQueue.enqueue(p);
             addBreadcrumb("SYSTEM_EXIT " + type + " " + clazz);
@@ -518,7 +527,7 @@ public final class ErrorLogReporter {
             return "Native crash — " + name;
         }
         if ("LOW_MEMORY".equals(type)) {
-            return "App killed — low memory / OutOfMemory";
+            return "App reclaimed by OS Low Memory Killer (not a Java OOM)";
         }
         String desc = description != null ? description.trim() : "";
         String nameLower = name.toLowerCase(Locale.US);
@@ -532,7 +541,8 @@ public final class ErrorLogReporter {
 
     private static String buildProcessExitWhatHappened(String type, String exceptionClass,
                                                        String original, int pid, int reasonCode,
-                                                       int statusCode, long timestampMs) {
+                                                       int statusCode, long timestampMs,
+                                                       String extrasOrTrace) {
         StringBuilder sb = new StringBuilder();
         sb.append("Android recorded a process exit (same source as Play Protect \"View history\").");
         sb.append("\nType: ").append(type);
@@ -545,6 +555,11 @@ public final class ErrorLogReporter {
         }
         if (original != null && !original.isEmpty()) {
             sb.append("\nOriginal: ").append(original);
+        }
+        if (extrasOrTrace != null && !extrasOrTrace.isEmpty()) {
+            // Prefer the short extras header (importance/pss) over a huge ANR dump.
+            String head = extrasOrTrace.length() > 800 ? extrasOrTrace.substring(0, 800) : extrasOrTrace;
+            sb.append("\nDetails:\n").append(head.trim());
         }
         return sb.toString();
     }
@@ -560,6 +575,9 @@ public final class ErrorLogReporter {
         }
         if ("OutOfMemoryError".equals(simple)) {
             return "Out of memory";
+        }
+        if ("LOW_MEMORY".equals(simple)) {
+            return "System low-memory kill (LMK)";
         }
         return simple;
     }
