@@ -2,12 +2,18 @@ package com.posbillingwala.owner.Retrofit;
 
 
 import com.posbillingwala.owner.Model.AllApiResponse;
+import com.posbillingwala.owner.Model.CatalogImportHistoryResponse;
+import com.posbillingwala.owner.Model.CatalogImportPreviewResponse;
 import com.posbillingwala.owner.Model.LoginResponse;
 
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.http.Field;
 import retrofit2.http.FormUrlEncoded;
 import retrofit2.http.GET;
+import retrofit2.http.Multipart;
+import retrofit2.http.Part;
 import retrofit2.http.POST;
 import retrofit2.http.Query;
 
@@ -169,5 +175,19 @@ public interface ApiInterface {
     Call<AllApiResponse> getSalesOverviewReport(@Query("userId") String userId,
                                                 @Query("branchId") String branchId);
 
+    @Multipart
+    @POST("catalogImportValidate.php")
+    Call<CatalogImportPreviewResponse> catalogImportValidate(@Part("customerId") RequestBody customerId,
+                                                             @Part("importType") RequestBody importType,
+                                                             @Part MultipartBody.Part importFile);
+
+    @FormUrlEncoded
+    @POST("catalogImportConfirm.php")
+    Call<CatalogImportPreviewResponse> catalogImportConfirm(@Field("customerId") String customerId,
+                                                            @Field("importSessionId") String importSessionId);
+
+    @GET("catalogImportHistory.php")
+    Call<CatalogImportHistoryResponse> catalogImportHistory(@Query("customerId") String customerId,
+                                                            @Query("importType") String importType);
 
 }

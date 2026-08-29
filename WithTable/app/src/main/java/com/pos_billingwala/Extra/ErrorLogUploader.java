@@ -30,26 +30,33 @@ public final class ErrorLogUploader {
         return url.contains(INGEST_PATH);
     }
 
-    static void flushPending(Context context) {
+    /** Uploads queued crash/error logs. Returns how many files were accepted by the server. */
+    public static int flushPending(Context context) {
+        int uploaded = 0;
         if (context == null) {
-            return;
+            return 0;
         }
         if (!ErrorLogQueue.tryBeginFlush()) {
-            return;
+            return 0;
         }
         try {
             List<File> pending = ErrorLogQueue.listPending(context);
+            boolean networkDown = false;
             for (File file : pending) {
+                if (networkDown) {
+                    break;
+                }
                 ErrorLogPayload payload = ErrorLogQueue.readFile(file);
                 if (payload == null) {
                     ErrorLogQueue.deleteFile(file);
                     continue;
                 }
-                if (uploadOne(context, payload)) {
+                int result = uploadOne(context, payload);
+                if (result == 1) {
                     ErrorLogQueue.deleteFile(file);
-                } else {
-                    // Stop on first network failure; retry later.
-                    break;
+                    uploaded++;
+                } else if (result < 0) {
+                    networkDown = true;
                 }
             }
         } catch (Throwable t) {
@@ -57,13 +64,18 @@ public final class ErrorLogUploader {
         } finally {
             ErrorLogQueue.endFlush();
         }
+        return uploaded;
     }
 
-    private static boolean uploadOne(Context context, ErrorLogPayload p) {
+    /** @return 1 saved, 0 keep+continue, -1 network down (stop queue) */
+    private static int uploadOne(Context context, ErrorLogPayload p) {
         try {
             String userId = p.get("userId");
             if (userId.isEmpty()) {
                 userId = Common.getSavedUserData(context, "userId");
+            }
+            if (userId.isEmpty()) {
+                userId = Common.getSavedUserData(context, "ownerId");
             }
             Response<AllApiResponse> response = Api.getClient(context).reportErrorLog(
                     userId,
@@ -107,10 +119,13 @@ public final class ErrorLogUploader {
             ).execute();
             return response.isSuccessful()
                     && response.body() != null
-                    && "1".equals(response.body().getStatus());
+                    && "1".equals(response.body().getStatus()) ? 1 : 0;
+        } catch (java.io.IOException t) {
+            Log.w(TAG, "uploadOne network (will retry): " + t.getMessage());
+            return -1;
         } catch (Throwable t) {
             Log.w(TAG, "uploadOne failed (will retry): " + t.getMessage());
-            return false;
+            return 0;
         }
     }
 }

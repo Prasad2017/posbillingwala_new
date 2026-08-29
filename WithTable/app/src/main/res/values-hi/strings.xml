@@ -1,8 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Billingwala</string>
+    <string name="splash_loading">POS बिलिंग लोड हो रहा है...</string>
     <string name="privacy_policy">यूज़रनेम और पासवर्ड देकर, मैं POS Billingwala ऐप के उपयोग के <u><font fgcolor='#df0052'>नियम और शर्तें</font></u> तथा <u><font fgcolor='#df0052'>गोपनीयता नीति</font></u> स्वीकार करता/करती हूँ।</string>
     <string name="sign_in_msg">POS Billingwala में साइन इन करें</string>
+    <string name="welcome_back">वापसी पर स्वागत है!</string>
+    <string name="login_subtitle">अपने POS Billingwala खाते में साइन इन करें।</string>
+    <string name="licence_key_label">लाइसेंस कुंजी</string>
+    <string name="login_security_notice">आपका डेटा हमारे पास सुरक्षित है। जारी रखकर, आप हमारी सेवा की शर्तों और गोपनीयता नीति से सहमत हैं।</string>
+    <string name="terms_of_service">सेवा की शर्तें</string>
+    <string name="privacy_policy_label">गोपनीयता नीति</string>
+    <string name="special_offers">विशेष ऑफ़र</string>
+    <string name="shop_now">अभी खरीदें</string>
     <string name="mobile_number_msg">अपनी दुकान की लाइसेंस कुंजी दर्ज करें और बिलिंग शुरू करें।</string>
     <string name="mpin_msg">अपना दुकान PB-PIN दर्ज करें। हम आपका खाता सत्यापित करेंगे।</string>
 
@@ -10,7 +19,7 @@
     <string name="label_month">महीना</string>
     <string name="label_year">वर्ष</string>
 
-    <string name="new_user">खाता नहीं है? <u><b><font fgcolor='#ff0000'>साइन अप</font></b></u></string>
+    <string name="new_user">खाता नहीं है? <u><b><font fgcolor='#4862b7'>साइन अप</font></b></u></string>
     <string name="mpin_login"><b><font fgcolor='#df0052'>PB-PIN</font></b> से लॉगिन करें</string>
     <string name="support_phone_display">+91 89831 49299</string>
     <string name="support_phone_dial">+918983149299</string>
@@ -210,6 +219,43 @@
     <string name="setting_rate_us">हमें रेट करें</string>
     <string name="setting_share_app">ऐप शेयर करें</string>
     <string name="setting_logout">लॉग आउट</string>
+    <string name="setting_section_billing">बिलिंग और कैटलॉग</string>
+    <string name="setting_section_store">दुकान</string>
+    <string name="setting_section_cloud">क्लाउड और ऐप</string>
+    <string name="setting_section_account">खाता</string>
+    <string name="setting_hint_invoice">बिल फ़ॉर्मेट, रीप्रिंट और इनवॉइस सूची</string>
+    <string name="setting_hint_reports">बिक्री, उत्पाद और भुगतान रिपोर्ट</string>
+    <string name="setting_hint_master">श्रेणी, उत्पाद, पोर्शन और कॉम्बो</string>
+    <string name="setting_hint_shop">व्यवसाय प्रोफ़ाइल, पता और GST</string>
+    <string name="setting_hint_printer">ब्लूटूथ / USB प्रिंटर सेटअप</string>
+    <string name="setting_hint_inventory">स्टॉक इन, स्टॉक आउट और बैलेंस</string>
+    <string name="setting_hint_expense">दुकान के खर्च रिकॉर्ड करें</string>
+    <string name="setting_hint_support">टिकट, FAQ और सहायता</string>
+    <string name="setting_hint_about">ऐप, कंपनी और संपर्क विवरण</string>
+    <string name="setting_hint_fetch">क्लाउड से नवीनतम डेटा डाउनलोड करें</string>
+    <string name="setting_hint_update">नया वर्शन के लिए Play Store जाँचें</string>
+    <string name="setting_hint_sync">ऑफ़लाइन बिल क्लाउड पर अपलोड करें</string>
+    <string name="setting_hint_pin">POS लॉगिन PIN बदलें</string>
+    <string name="setting_hint_rate">Play Store पर POS Billingwala रेट करें</string>
+    <string name="setting_hint_share">ऐप अन्य दुकानों के साथ शेयर करें</string>
+    <string name="setting_hint_logout">इस डिवाइस से साइन आउट करें</string>
+    <string name="printer_section_printers">प्रिंटर</string>
+    <string name="printer_section_invoice">इनवॉइस</string>
+    <string name="printer_section_bill">बिल विकल्प</string>
+    <string name="printer_section_terms">नियम</string>
+    <string name="shop_section_branding">ब्रांडिंग</string>
+    <string name="shop_section_identity">दुकान पहचान</string>
+    <string name="shop_section_contact">संपर्क</string>
+    <string name="shop_section_operations">संचालन</string>
+    <string name="shop_section_tax">टैक्स और अनुपालन</string>
+    <string name="shop_section_payment">पेमेंट QR</string>
+    <string name="shop_logo_hint">लोगो सक्षम होने पर प्रिंटेड बिल पर दिखेगा</string>
+    <string name="shop_qr_hint">पेमेंट QR सक्षम होने पर बिल पर दिखेगा</string>
+    <string name="master_hint_category">वेज, नॉन वेज जैसे फ़ूड ग्रुप</string>
+    <string name="master_hint_subcategory">स्टार्टर, मेन कोर्स, पेय</string>
+    <string name="master_hint_portions">हाफ़, फुल और अन्य साइज़</string>
+    <string name="master_hint_products">मेनू आइटम और कीमतें</string>
+    <string name="master_hint_combos">कॉम्बो मील और ऑफ़र</string>
 
     <string name="home_total_sales">कुल\nबिक्री</string>
     <string name="home_today_sales">आज की\nबिक्री</string>
@@ -226,6 +272,71 @@
     <string name="home_whats_happening">आज आपके स्टोर में यह हो रहा है।</string>
 
     <string name="press_back_again_to_exit">बाहर निकलने के लिए फिर से बैक दबाएँ</string>
+    <string name="sync_started_in_background">सिंक शुरू हो गया। यह बैकग्राउंड में चलता रहेगा — स्क्रीन लॉक कर सकते हैं या ऐप छोड़ सकते हैं।</string>
+    <string name="sync_already_running">सिंक पहले से बैकग्राउंड में चल रहा है</string>
+    <string name="sync_notification_channel">क्लाउड सिंक</string>
+    <string name="sync_notification_title">POS Billingwala सिंक</string>
+    <string name="sync_notification_uploading">ऑफ़लाइन डेटा क्लाउड पर अपलोड हो रहा है…</string>
+    <string name="sync_notification_complete">ऑफ़लाइन डेटा क्लाउड पर अपलोड हो गया</string>
+    <string name="sync_notification_failed">क्लाउड सिंक असफल। ऐप खोलकर फिर कोशिश करें।</string>
+    <string name="sync_notification_progress_count">%1$s (%2$d अपलोड)</string>
+    <string name="sync_notification_complete_count">%d रिकॉर्ड क्लाउड पर अपलोड हुए</string>
+    <string name="sync_notification_partial">%1$d अपलोड, %2$d अभी बाकी। समीक्षा के लिए टैप करें।</string>
+    <string name="sync_tables_section">टेबल</string>
+    <string name="sync_status_complete">पूर्ण</string>
+    <string name="sync_status_pending_count">%d बाकी</string>
+    <string name="sync_status_syncing">सिंक हो रहा है…</string>
+    <string name="sync_action_sync">सिंक</string>
+    <string name="sync_action_syncing">सिंक हो रहा है…</string>
+    <string name="sync_action_done">हो गया</string>
+    <string name="sync_summary_all_complete">सारा डेटा क्लाउड पर है</string>
+    <string name="sync_summary_nothing_pending">अपलोड करने के लिए कुछ नहीं</string>
+    <string name="sync_summary_pending_count">%d रिकॉर्ड अपलोड बाकी</string>
+    <string name="sync_summary_uploaded_count">इस सिंक में %d रिकॉर्ड अपलोड हुए</string>
+    <string name="sync_summary_uploaded_remaining">इस सिंक में %1$d अपलोड · %2$d अभी बाकी</string>
+    <string name="sync_summary_uploading">%1$d अपलोड · %2$d बाकी</string>
+    <string name="sync_summary_ready">बाकी डेटा अपलोड करने के लिए सिंक टैप करें</string>
+    <string name="sync_summary_failed">पिछला सिंक पूरा नहीं हुआ। फिर कोशिश के लिए सिंक टैप करें।</string>
+    <string name="sync_table_categories">श्रेणियाँ</string>
+    <string name="sync_table_subcategories">उपश्रेणियाँ</string>
+    <string name="sync_table_products">उत्पाद</string>
+    <string name="sync_table_portion_master">पोर्शन मास्टर</string>
+    <string name="sync_table_portions">पोर्शन</string>
+    <string name="sync_table_combos">कॉम्बो</string>
+    <string name="sync_table_combo_items">कॉम्बो आइटम</string>
+    <string name="sync_table_printer">प्रिंटर सेटिंग</string>
+    <string name="sync_table_company">दुकान विवरण</string>
+    <string name="sync_table_invoice_deletes">इनवॉइस आइटम डिलीट</string>
+    <string name="sync_table_invoice_items">इनवॉइस आइटम</string>
+    <string name="sync_table_invoice_combo_items">इनवॉइस कॉम्बो आइटम</string>
+    <string name="sync_table_invoices">इनवॉइस</string>
+    <string name="sync_table_mess_members">मेस सदस्य</string>
+    <string name="sync_table_mess_payments">मेस भुगतान</string>
+    <string name="sync_table_mess_invoices">मेस इनवॉइस</string>
+    <string name="sync_table_inventory">इन्वेंटरी</string>
+    <string name="sync_table_expenses">खर्च</string>
+    <string name="sync_table_mess_tokens">मेस टोकन</string>
+    <string name="sync_table_error_logs">एरर लॉग</string>
+    <string name="sync_progress_categories">श्रेणियाँ अपलोड हो रही हैं…</string>
+    <string name="sync_progress_subcategories">उपश्रेणियाँ अपलोड हो रही हैं…</string>
+    <string name="sync_progress_products">उत्पाद अपलोड हो रहे हैं…</string>
+    <string name="sync_progress_portion_master">पोर्शन मास्टर अपलोड हो रहा है…</string>
+    <string name="sync_progress_portions">पोर्शन अपलोड हो रहे हैं…</string>
+    <string name="sync_progress_combos">कॉम्बो अपलोड हो रहे हैं…</string>
+    <string name="sync_progress_combo_items">कॉम्बो आइटम अपलोड हो रहे हैं…</string>
+    <string name="sync_progress_printer">प्रिंटर सेटिंग अपलोड हो रही है…</string>
+    <string name="sync_progress_company">दुकान विवरण अपलोड हो रहा है…</string>
+    <string name="sync_progress_invoice_deletes">इनवॉइस डिलीट अपलोड हो रहे हैं…</string>
+    <string name="sync_progress_invoice_items">इनवॉइस आइटम अपलोड हो रहे हैं…</string>
+    <string name="sync_progress_invoice_combo_items">इनवॉइस कॉम्बो आइटम अपलोड हो रहे हैं…</string>
+    <string name="sync_progress_invoices">इनवॉइस अपलोड हो रहे हैं…</string>
+    <string name="sync_progress_mess_members">मेस सदस्य अपलोड हो रहे हैं…</string>
+    <string name="sync_progress_mess_payments">मेस भुगतान अपलोड हो रहे हैं…</string>
+    <string name="sync_progress_mess_invoices">मेस इनवॉइस अपलोड हो रहे हैं…</string>
+    <string name="sync_progress_inventory">इन्वेंटरी अपलोड हो रही है…</string>
+    <string name="sync_progress_expenses">खर्च अपलोड हो रहे हैं…</string>
+    <string name="sync_progress_mess_tokens">मेस टोकन अपलोड हो रहे हैं…</string>
+    <string name="sync_progress_error_logs">एरर लॉग अपलोड हो रहे हैं…</string>
 
     <string name="discount_wise_report">छूट के अनुसार रिपोर्ट</string>
     <string name="discount_type_percentage">प्रतिशत</string>

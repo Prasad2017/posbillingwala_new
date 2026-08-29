@@ -2,6 +2,7 @@ package com.posbillingwala.owner.Fragment;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.text.InputType;
@@ -26,6 +27,7 @@ import com.posbillingwala.owner.Model.AllApiResponse;
 import com.posbillingwala.owner.Model.PortionMasterResponse;
 import com.posbillingwala.owner.R;
 import com.posbillingwala.owner.Retrofit.Api;
+import com.posbillingwala.owner.Utils.CatalogImportExportHelper;
 import com.posbillingwala.owner.databinding.FragmentAddCustomerPortionMasterBinding;
 
 import java.util.List;
@@ -45,6 +47,7 @@ public class AddCustomerPortionMaster extends Fragment implements View.OnClickLi
     public static TextView noDataFound;
 
     FragmentAddCustomerPortionMasterBinding binding;
+    CatalogImportExportHelper catalogImportExportHelper;
     private String returnTo;
 
     @Override
@@ -61,6 +64,10 @@ public class AddCustomerPortionMaster extends Fragment implements View.OnClickLi
         portionMasterRecyclerview = binding.portionMasterRecyclerview;
         portionMasterListCardView = binding.portionMasterListCardView;
         noDataFound = binding.noDataFound;
+
+        catalogImportExportHelper = new CatalogImportExportHelper(
+                this, MainActivity.userId, "portions", "Portions", AddCustomerPortionMaster::getPortionMasterList);
+        catalogImportExportHelper.bindBar(binding.catalogImportExportBar.getRoot());
 
         binding.backToHome.setOnClickListener(v -> navigateBack());
         binding.getRoot().setFocusableInTouchMode(true);
@@ -177,6 +184,14 @@ public class AddCustomerPortionMaster extends Fragment implements View.OnClickLi
             sb.append(allowed.charAt(random.nextInt(allowed.length())));
         }
         return sb.toString();
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (catalogImportExportHelper != null) {
+            catalogImportExportHelper.handleActivityResult(requestCode, resultCode, data);
+        }
     }
 
     @Override

@@ -272,10 +272,29 @@ public final class OperationalReportCharts {
                 ContextCompat.getColor(context, R.color.colorTextSecondary));
     }
 
+    private static boolean applyingChartSelection;
+
     private static void selectBreakdownItem(FragmentOperationalReportBinding binding,
                                             List<ReportRankItem> items, int index,
                                             String currency, float sum, String pieCenterText,
                                             boolean syncLegend, boolean updatePieCenter) {
+        if (applyingChartSelection || binding == null || items == null
+                || index < 0 || index >= items.size()) {
+            return;
+        }
+        applyingChartSelection = true;
+        try {
+            applyBreakdownSelection(binding, items, index, currency, sum, pieCenterText,
+                    syncLegend, updatePieCenter);
+        } finally {
+            applyingChartSelection = false;
+        }
+    }
+
+    private static void applyBreakdownSelection(FragmentOperationalReportBinding binding,
+                                                List<ReportRankItem> items, int index,
+                                                String currency, float sum, String pieCenterText,
+                                                boolean syncLegend, boolean updatePieCenter) {
         if (binding == null || items == null || index < 0 || index >= items.size()) {
             return;
         }
@@ -301,7 +320,7 @@ public final class OperationalReportCharts {
             String center = label + "\n" + ReportUiHelper.money(currency, amount) + "\n" + percent + "%";
             binding.chartDonut.setCenterText(center);
             binding.chartDonut.setCenterTextSize(11f);
-            binding.chartDonut.highlightValue((float) index, 0);
+            binding.chartDonut.highlightValue((float) index, 0, false);
         } else {
             binding.chartDonut.highlightValues(null);
         }
@@ -315,15 +334,20 @@ public final class OperationalReportCharts {
     }
 
     private static void clearBreakdownSelection(FragmentOperationalReportBinding binding, String pieCenterText) {
-        if (binding == null) {
+        if (applyingChartSelection || binding == null) {
             return;
         }
-        showChartTapHint(binding);
-        binding.chartDonut.setCenterText(pieCenterText != null ? pieCenterText : "");
-        binding.chartDonut.setCenterTextSize(12f);
-        binding.chartDonut.highlightValues(null);
-        binding.chartBar.highlightValues(null);
-        ReportUiHelper.clearLegendHighlight(binding.legendContainer);
+        applyingChartSelection = true;
+        try {
+            showChartTapHint(binding);
+            binding.chartDonut.setCenterText(pieCenterText != null ? pieCenterText : "");
+            binding.chartDonut.setCenterTextSize(12f);
+            binding.chartDonut.highlightValues(null);
+            binding.chartBar.highlightValues(null);
+            ReportUiHelper.clearLegendHighlight(binding.legendContainer);
+        } finally {
+            applyingChartSelection = false;
+        }
     }
 
     private static float itemAmount(ReportRankItem item) {

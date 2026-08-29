@@ -431,12 +431,18 @@ public class OfflineNetworkData {
     public void saveInvoice(String invoiceId, String noOfTable, String invoiceNumber, String customerName, String customerMobile, String customerEmail, String customerAddress, String subTotal, String totalGSTAmount,
                             String discount, String discountType, String totalAmount, String paymentMode, String invoiceDate, String invoiceType, String invoiceOrderStatus, String invoiceNetworkStatus) {
 
-        Call<AllApiResponse> call = Api.getClient(activity).saveInvoice(MainActivity.userId, noOfTable, invoiceNumber, customerName, customerMobile, customerEmail, customerAddress, subTotal,
-                totalGSTAmount, discount, discountType, totalAmount, paymentMode, invoiceDate, invoiceType, invoiceOrderStatus, invoiceNetworkStatus);
+        Call<AllApiResponse> call = Api.getClient(activity).saveInvoice(MainActivity.userId,
+                nz(noOfTable), nz(invoiceNumber), nz(customerName), nz(customerMobile), nz(customerEmail), nz(customerAddress),
+                nz(subTotal), nz(totalGSTAmount), nz(discount), nz(discountType), nz(totalAmount), nz(paymentMode),
+                nz(invoiceDate), nz(invoiceType), nz(invoiceOrderStatus), nz(invoiceNetworkStatus));
         if (executeCall(call)) {
             posBillingWalaDatabase.updateSyncInvoice(invoiceId, NAME_SYNCED_WITH_SERVER);
         }
 }
+
+    private static String nz(String value) {
+        return value != null ? value : "";
+    }
 
     public void saveCompanyDetails(String companyId, String companyLogo, String companyName, String cashierName, String companyMobile, String companyAddress,
                                    String shopName1, String shopName2, String addressLine1, String addressLine2, String addressLine3, String phoneNo1, String phoneNo2,

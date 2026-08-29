@@ -21,7 +21,9 @@ public final class ErrorLogQueue {
 
     private static final String TAG = "POS_ERR_QUEUE";
     private static final String DIR = "error_log_queue";
-    private static final int MAX_PENDING_FILES = 100;
+    private static final String ARCHIVE_DIR = "error_log_archive";
+    private static final int MAX_PENDING_FILES = 300;
+    private static final int MAX_ARCHIVE_FILES = 200;
 
     private static final ExecutorService EXEC = Executors.newSingleThreadExecutor(r -> {
         Thread t = new Thread(r, "ErrorLogQueue");
@@ -87,6 +89,13 @@ public final class ErrorLogQueue {
         });
     }
 
+    public static int pendingCount(Context ctx) {
+        if (ctx == null) {
+            return 0;
+        }
+        return listPending(ctx).size();
+    }
+
     static List<File> listPending(Context ctx) {
         List<File> out = new ArrayList<>();
         File dir = queueDir(ctx);
@@ -135,18 +144,43 @@ public final class ErrorLogQueue {
 
     private static void writePayload(Context ctx, ErrorLogPayload payload) throws Exception {
         File dir = queueDir(ctx);
-        trimIfNeeded(dir);
+        trimIfNeeded(dir, MAX_PENDING_FILES);
         String name = "err_" + System.currentTimeMillis() + "_" + (int) (Math.random() * 100000) + ".json";
-        File file = new File(dir, name);
         byte[] bytes = payload.toJson().getBytes(StandardCharsets.UTF_8);
-        try (FileOutputStream fos = new FileOutputStream(file)) {
+        writeSynced(new File(dir, name), bytes);
+        try {
+            File archive = new File(archiveDir(ctx), name);
+            writeSynced(archive, bytes);
+            trimIfNeeded(archiveDir(ctx), MAX_ARCHIVE_FILES);
+        } catch (Throwable t) {
+            Log.w(TAG, "archive copy failed: " + t.getMessage());
+        }
+    }
+
+    /** Durably flush so a fatal crash cannot lose the file before process death. */
+    private static void writeSynced(File file, byte[] bytes) throws Exception {
+        FileOutputStream fos = new FileOutputStream(file);
+        try {
             fos.write(bytes);
             fos.flush();
+            fos.getFD().sync();
+        } finally {
+            try {
+                fos.close();
+            } catch (Exception ignored) {
+            }
         }
     }
 
     private static File queueDir(Context ctx) {
-        File dir = new File(ctx.getFilesDir(), DIR);
+        return ensureDir(new File(ctx.getFilesDir(), DIR));
+    }
+
+    private static File archiveDir(Context ctx) {
+        return ensureDir(new File(ctx.getFilesDir(), ARCHIVE_DIR));
+    }
+
+    private static File ensureDir(File dir) {
         if (!dir.exists()) {
             //noinspection ResultOfMethodCallIgnored
             dir.mkdirs();
@@ -154,9 +188,9 @@ public final class ErrorLogQueue {
         return dir;
     }
 
-    private static void trimIfNeeded(File dir) {
+    private static void trimIfNeeded(File dir, int maxFiles) {
         File[] files = dir.listFiles((d, name) -> name != null && name.endsWith(".json"));
-        if (files == null || files.length < MAX_PENDING_FILES) {
+        if (files == null || files.length < maxFiles) {
             return;
         }
         List<File> list = new ArrayList<>();
@@ -164,7 +198,7 @@ public final class ErrorLogQueue {
             list.add(f);
         }
         list.sort((a, b) -> Long.compare(a.lastModified(), b.lastModified()));
-        int remove = list.size() - MAX_PENDING_FILES + 1;
+        int remove = list.size() - maxFiles + 1;
         for (int i = 0; i < remove && i < list.size(); i++) {
             //noinspection ResultOfMethodCallIgnored
             list.get(i).delete();

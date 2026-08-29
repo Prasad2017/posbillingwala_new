@@ -13,7 +13,6 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.os.LocaleListCompat;
 
-import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.R;
 
 import java.util.Locale;
@@ -21,17 +20,16 @@ import java.util.Locale;
 /**
  * App language: English / Hindi / Marathi.
  * <p>
- * Driven by SharedPreferences + {@link #wrap(Context)}. Live calls to
- * {@code AppCompatDelegate.setApplicationLocales} recreate the Activity and look
- * like a crash, so language changes apply in-place instead.
+ * Android 13+ (this app targets API 37) applies per-app locales through
+ * {@link AppCompatDelegate#setApplicationLocales}. In-place
+ * {@code Resources.updateConfiguration} is ignored, so changing language must
+ * persist the code, set application locales, and let the Activity restart.
  */
 public final class AppLanguage {
 
     public static final String KEY_APP_LANGUAGE = "appLanguage";
-
-    /** @deprecated Kept for clearing any leftover flag from older builds. */
-    @Deprecated
     public static final String KEY_REOPEN_USER_SETTING = "reopenUserSetting";
+    public static final String KEY_LANGUAGE_TOAST_PENDING = "languageToastPending";
 
     public static final String EN = "en";
     public static final String HI = "hi";
@@ -64,7 +62,7 @@ public final class AppLanguage {
         return Locale.ENGLISH;
     }
 
-    /** Wrap activity context so inflate uses the right strings.xml. */
+    /** Wrap activity/application context so inflate uses the right strings.xml. */
     @NonNull
     public static Context wrap(@NonNull Context context) {
         String code = getSavedCode(context);
@@ -92,26 +90,32 @@ public final class AppLanguage {
         applyLocaleToConfig(configuration, localeFor(getSavedCode(context)));
     }
 
-    /**
-     * Cold start — set JVM default from prefs and clear any prior AppCompat per-app
-     * locales (from older builds) so {@link #wrap} alone controls language.
-     * Safe only from Application.onCreate (no Activity on screen yet).
-     */
-    public static void applyStored(@NonNull Context context) {
-        Locale.setDefault(localeFor(getSavedCode(context)));
-        try {
-            if (!AppCompatDelegate.getApplicationLocales().isEmpty()) {
-                AppCompatDelegate.setApplicationLocales(LocaleListCompat.getEmptyLocaleList());
-            }
-        } catch (Exception ignored) {
-            // Ignore — wrap() still applies the saved language.
+    public static boolean configHasSavedLocale(@NonNull Context context, @NonNull Configuration configuration) {
+        Locale wanted = localeFor(getSavedCode(context));
+        Locale actual;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            LocaleList locales = configuration.getLocales();
+            actual = locales == null || locales.isEmpty() ? null : locales.get(0);
+        } else {
+            actual = configuration.locale;
         }
+        return actual != null && wanted.getLanguage().equals(actual.getLanguage());
     }
 
     /**
-     * Save language and apply in-place without closing/recreating the Activity.
+     * Cold start — apply saved language through the official per-app locale API
+     * so Android 13+ does not fall back to the device language.
      */
-    @SuppressWarnings("deprecation")
+    public static void applyStored(@NonNull Context context) {
+        String code = getSavedCode(context);
+        Locale.setDefault(localeFor(code));
+        syncApplicationLocales(code);
+    }
+
+    /**
+     * Save language and apply it app-wide. AppCompat recreates activities so every
+     * screen inflates from values-hi / values-mr.
+     */
     public static void setLanguage(@NonNull Activity activity, @NonNull String languageCode) {
         String code = languageCode.trim().toLowerCase(Locale.ROOT);
         if (!EN.equals(code) && !HI.equals(code) && !MR.equals(code)) {
@@ -121,43 +125,41 @@ public final class AppLanguage {
             return;
         }
         Common.saveUserData(activity, KEY_APP_LANGUAGE, code);
-        // Clear legacy recreate flag if present from older builds
-        Common.saveUserData(activity, KEY_REOPEN_USER_SETTING, "0");
-        Common.saveUserData(activity, "languageToastPending", "0");
+        Common.saveUserData(activity, KEY_REOPEN_USER_SETTING, "1");
+        Common.saveUserData(activity, KEY_LANGUAGE_TOAST_PENDING, "1");
 
         Locale locale = localeFor(code);
         Locale.setDefault(locale);
-        applyLocaleToResources(activity, locale);
-        applyLocaleToResources(activity.getApplicationContext(), locale);
         DisplayScale.clearCachedResources(activity);
+        DisplayScale.clearCachedResources(activity.getApplicationContext());
 
-        if (activity instanceof MainActivity) {
-            ((MainActivity) activity).reloadAfterLanguageChange();
+        boolean alreadyApplied = isApplicationLocale(code);
+        syncApplicationLocales(code);
+
+        if (alreadyApplied) {
+            applyLocaleToResources(activity, locale);
+            applyLocaleToResources(activity.getApplicationContext(), locale);
+            activity.recreate();
         }
-        Toast.makeText(activity, R.string.language_changed, Toast.LENGTH_SHORT).show();
     }
 
-    /** Update Resources so reinflated layouts pick values-hi / values-mr immediately. */
-    @SuppressWarnings("deprecation")
-    private static void applyLocaleToResources(@NonNull Context context, @NonNull Locale locale) {
-        Resources resources = context.getResources();
-        Configuration config = new Configuration(resources.getConfiguration());
-        applyLocaleToConfig(config, locale);
-        DisplayScale.applyLock(config);
-        DisplayMetrics metrics = resources.getDisplayMetrics();
-        DisplayScale.syncMetrics(metrics);
-        resources.updateConfiguration(config, metrics);
-        DisplayScale.clearCachedResources(context instanceof DisplayScale.ResourcesHost
-                ? (DisplayScale.ResourcesHost) context : null);
+    public static boolean shouldReopenUserSetting(@NonNull Context context) {
+        return "1".equals(Common.getSavedUserData(context, KEY_REOPEN_USER_SETTING));
     }
 
-    @SuppressWarnings("deprecation")
     public static boolean consumeReopenUserSetting(@NonNull Context context) {
-        if ("1".equals(Common.getSavedUserData(context, KEY_REOPEN_USER_SETTING))) {
+        if (shouldReopenUserSetting(context)) {
             Common.saveUserData(context, KEY_REOPEN_USER_SETTING, "0");
             return true;
         }
         return false;
+    }
+
+    public static void showPendingLanguageToast(@NonNull Context context) {
+        if ("1".equals(Common.getSavedUserData(context, KEY_LANGUAGE_TOAST_PENDING))) {
+            Common.saveUserData(context, KEY_LANGUAGE_TOAST_PENDING, "0");
+            Toast.makeText(context, R.string.language_changed, Toast.LENGTH_SHORT).show();
+        }
     }
 
     @NonNull
@@ -193,5 +195,39 @@ public final class AppLanguage {
             return MR;
         }
         return EN;
+    }
+
+    private static boolean isApplicationLocale(@NonNull String code) {
+        try {
+            LocaleListCompat current = AppCompatDelegate.getApplicationLocales();
+            return !current.isEmpty() && code.equals(current.toLanguageTags());
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
+
+    private static void syncApplicationLocales(@NonNull String code) {
+        try {
+            LocaleListCompat locales = LocaleListCompat.forLanguageTags(code);
+            if (!locales.equals(AppCompatDelegate.getApplicationLocales())) {
+                AppCompatDelegate.setApplicationLocales(locales);
+            }
+        } catch (Exception ignored) {
+            // wrap() still applies the saved language on older devices.
+        }
+    }
+
+    /** Update Resources so reinflated layouts pick values-hi / values-mr immediately. */
+    @SuppressWarnings("deprecation")
+    private static void applyLocaleToResources(@NonNull Context context, @NonNull Locale locale) {
+        Resources resources = context.getResources();
+        Configuration config = new Configuration(resources.getConfiguration());
+        applyLocaleToConfig(config, locale);
+        DisplayScale.applyLock(config);
+        DisplayMetrics metrics = resources.getDisplayMetrics();
+        DisplayScale.syncMetrics(metrics);
+        resources.updateConfiguration(config, metrics);
+        DisplayScale.clearCachedResources(context instanceof DisplayScale.ResourcesHost
+                ? (DisplayScale.ResourcesHost) context : null);
     }
 }

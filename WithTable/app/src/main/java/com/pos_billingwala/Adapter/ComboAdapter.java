@@ -1,7 +1,6 @@
 package com.pos_billingwala.Adapter;
 
 import android.content.Context;
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.text.Html;
 import android.view.LayoutInflater;
@@ -11,9 +10,9 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.BottomSheetUi;
 import com.pos_billingwala.Fragment.ComboMaster;
 import com.pos_billingwala.Fragment.UpdateCombo;
 import com.pos_billingwala.Model.ComboItemResponse;
@@ -86,17 +85,18 @@ public class ComboAdapter extends RecyclerView.Adapter<ComboAdapter.Holder> {
     }
 
     private void confirmDelete(String comboId) {
-        new MaterialAlertDialogBuilder(context)
-                .setTitle(context.getString(R.string.toast_are_you_sure))
-                .setMessage(context.getString(R.string.ui_combo_delete_confirm))
-                .setPositiveButton("YES", (DialogInterface dialog, int which) -> {
-                    dialog.dismiss();
+        BottomSheetUi.showConfirm(
+                context,
+                context.getString(R.string.toast_are_you_sure),
+                context.getString(R.string.ui_combo_delete_confirm),
+                "YES",
+                "NO",
+                true,
+                () -> {
                     database.deleteCombo(comboId);
                     Toast.makeText(context, context.getString(R.string.ui_combo_deleted), Toast.LENGTH_SHORT).show();
                     ComboMaster.getComboList();
-                })
-                .setNegativeButton("NO", (dialog, which) -> dialog.dismiss())
-                .show();
+                });
     }
 
     private String nullToDash(String value) {

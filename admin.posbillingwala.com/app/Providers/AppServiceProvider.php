@@ -30,8 +30,13 @@ class AppServiceProvider extends ServiceProvider
         }
 
         View::composer('*', function ($view) {
-            $view->with('adminLogoUrl', AdminBranding::logoUrl());
-            $view->with('adminFaviconUrl', AdminBranding::faviconUrl());
+            try {
+                $view->with('adminLogoUrl', AdminBranding::logoUrl());
+                $view->with('adminFaviconUrl', AdminBranding::faviconUrl());
+            } catch (\Throwable $e) {
+                $view->with('adminLogoUrl', asset('assets/images/app_logo.png'));
+                $view->with('adminFaviconUrl', asset('assets/images/app_logo.png'));
+            }
         });
     }
 }

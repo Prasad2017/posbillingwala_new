@@ -2,6 +2,7 @@ package com.posbillingwala.dealer.Fragment;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.text.InputType;
@@ -21,7 +22,6 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.jaredrummler.materialspinner.MaterialSpinner;
-
 import com.posbillingwala.dealer.Activity.MainActivity;
 import com.posbillingwala.dealer.Adapter.CategoryAdapter;
 import com.posbillingwala.dealer.Extra.DetectConnection;
@@ -31,6 +31,7 @@ import com.posbillingwala.dealer.Model.FoodTypeResponse;
 import com.posbillingwala.dealer.Model.ProductCategoryResponse;
 import com.posbillingwala.dealer.R;
 import com.posbillingwala.dealer.Retrofit.Api;
+import com.posbillingwala.dealer.Utils.CatalogImportExportHelper;
 import com.posbillingwala.dealer.databinding.FragmentAddCustomerProductCategoryBinding;
 
 import java.util.ArrayList;
@@ -56,6 +57,7 @@ public class AddCustomerProductCategory extends Fragment implements View.OnClick
     FragmentAddCustomerProductCategoryBinding binding;
     String[] foodTypeIdList, foodTypeNameList;
     String foodTypeId;
+    CatalogImportExportHelper catalogImportExportHelper;
 
     public static void getProductCategoryList() {
 
@@ -71,7 +73,7 @@ public class AddCustomerProductCategory extends Fragment implements View.OnClick
             public void onResponse(Call<AllApiResponse> call, Response<AllApiResponse> response) {
                 if (response.isSuccessful()) {
                     productCategoryResponseList = response.body().getProductCategoryResponseList();
-                    if (!productCategoryResponseList.isEmpty()) {
+                    if (productCategoryResponseList.size() > 0) {
 
                         categoryAdapter = new CategoryAdapter(activity, productCategoryResponseList);
                         categoryRecyclerview.setLayoutManager(new GridLayoutManager(activity, 1));
@@ -102,11 +104,9 @@ public class AddCustomerProductCategory extends Fragment implements View.OnClick
     }
 
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentAddCustomerProductCategoryBinding.inflate(inflater, container, false);
         view = binding.getRoot();
-
 
         activity = getActivity();
         MainActivity.title.setText("Product Category");
@@ -116,6 +116,12 @@ public class AddCustomerProductCategory extends Fragment implements View.OnClick
         Bundle bundle = getArguments();
         if (bundle != null) {
             customerId = bundle.getString("customerId");
+        }
+
+        if (customerId != null) {
+            catalogImportExportHelper = new CatalogImportExportHelper(
+                    this, customerId, "categories", "Categories", AddCustomerProductCategory::getProductCategoryList);
+            catalogImportExportHelper.bindBar(binding.catalogImportExportBar.getRoot());
         }
 
         binding.categoryName.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
@@ -158,11 +164,19 @@ public class AddCustomerProductCategory extends Fragment implements View.OnClick
 
     }
 
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (catalogImportExportHelper != null) {
+            catalogImportExportHelper.handleActivityResult(requestCode, resultCode, data);
+        }
+    }
+
     private void initViews() {
 
-        categoryRecyclerview = view.findViewById(R.id.categoryRecyclerview);
-        categoryListCardView = view.findViewById(R.id.categoryListCardView);
-        noDataFound = view.findViewById(R.id.noDataFound);
+        categoryRecyclerview = binding.categoryRecyclerview;
+        categoryListCardView = binding.categoryListCardView;
+        noDataFound = binding.noDataFound;
 
         binding.addCategory.setOnClickListener(this);
         binding.managePortionMaster.setOnClickListener(this);
@@ -179,8 +193,10 @@ public class AddCustomerProductCategory extends Fragment implements View.OnClick
             fragment.setArguments(bundle);
             ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
             ((MainActivity) activity).loadFragment(fragment, true);
-        } else if (view.getId() == R.id.addCategory) {
-            if (!binding.categoryName.getText().toString().isEmpty()) {
+            return;
+        }
+        if (view.getId() == R.id.addCategory) {
+            if (binding.categoryName.getText().toString().length() > 0) {
                 if (foodTypeId != null) {
                     addProductCategory();
                 } else {
@@ -260,7 +276,7 @@ public class AddCustomerProductCategory extends Fragment implements View.OnClick
             public void onResponse(Call<AllApiResponse> call, Response<AllApiResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     List<FoodTypeResponse> foodTypes = response.body().getFoodTypeResponseList();
-                    if (foodTypes != null && !foodTypes.isEmpty()) {
+                    if (foodTypes != null && foodTypes.size() > 0) {
                         foodTypeIdList = new String[foodTypes.size()];
                         foodTypeNameList = new String[foodTypes.size()];
                         for (int i = 0; i < foodTypes.size(); i++) {

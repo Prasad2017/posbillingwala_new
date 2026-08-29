@@ -39,12 +39,40 @@ class SalesController extends Controller
             abort(403);
         }
         $q = trim((string) $request->get('q', ''));
-        $invoices = AdminMetrics::recentInvoices(100, $q);
+        $filters = AdminMetrics::parseDashboardFilters($request->only(['dealer_id', 'customer_id', 'payment']));
+        $selectedDate = trim((string) $request->get('date', ''));
+        if ($selectedDate !== '') {
+            $selectedDate = AdminMetrics::resolveDashboardDate($selectedDate)->toDateString();
+        }
+
+        $invoices = AdminMetrics::recentInvoices(100, $q, $selectedDate !== '' ? $selectedDate : null, $filters);
         $total = 0;
         foreach ($invoices as $inv) {
             $total += (float) $inv->totalAmount;
         }
-        return view('sales.invoices', compact('invoices', 'q', 'total'));
+
+        $summaryFrom = $selectedDate !== '' ? $selectedDate : AdminMetrics::today()->toDateString();
+        $paymentSummary = $selectedDate !== ''
+            ? AdminMetrics::paymentSummary($summaryFrom, $summaryFrom, $filters)
+            : AdminMetrics::paymentSummaryFromInvoices($invoices);
+
+        $dealers = \App\Models\User::where('role_id', 2)->where('is_active', 1)->orderBy('name')->get(['id', 'name']);
+        $customersQuery = \App\Models\User::where('role_id', 3)->where('is_active', 1);
+        if ($filters['dealer_id'] > 0) {
+            $customersQuery->where('dealerId', $filters['dealer_id']);
+        }
+        $customers = $customersQuery->orderBy('name')->get(['id', 'name', 'shopName']);
+
+        return view('sales.invoices', compact(
+            'invoices',
+            'q',
+            'total',
+            'filters',
+            'selectedDate',
+            'paymentSummary',
+            'dealers',
+            'customers'
+        ));
     }
 
     public function invoiceDetails($id)

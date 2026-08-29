@@ -59,7 +59,9 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
             android:layout_marginTop="@dimen/spacing_xl"
+            android:layout_marginEnd="8dp"
             android:orientation="horizontal">
 
             <TextView
@@ -68,7 +70,7 @@
                 android:layout_height="@dimen/button_height"
                 android:layout_marginEnd="@dimen/spacing_sm"
                 android:layout_weight="1"
-                android:background="@drawable/bg_button_dismiss"
+                android:background="@drawable/bg_sheet_btn_danger"
                 android:fontFamily="@font/poppinsmedium"
                 android:gravity="center"
                 android:text="@string/ui_dismiss"
@@ -81,7 +83,7 @@
                 android:layout_height="@dimen/button_height"
                 android:layout_marginStart="@dimen/spacing_sm"
                 android:layout_weight="1"
-                android:background="@drawable/bg_button_primary"
+                android:background="@drawable/bg_sheet_btn_primary"
                 android:fontFamily="@font/poppinsmedium"
                 android:gravity="center"
                 android:text="@string/ui_update"

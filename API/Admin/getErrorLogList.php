@@ -7,6 +7,7 @@ include_once('config.php');
 require_once __DIR__ . '/auth_guard.php';
 require_once __DIR__ . '/../db_prepared.php';
 require_once __DIR__ . '/../log_sanitizer.php';
+require_once __DIR__ . '/../error_logs_ensure.php';
 
 header('Content-Type: application/json; charset=utf-8');
 $response = array('status' => '1', 'errorLogList' => array());
@@ -18,11 +19,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 
 admin_require_auth($con, array('status' => '0', 'errorLogList' => array()));
 mysqli_query($con, 'set names utf8');
+error_logs_ensure($con);
 
 $severity = isset($_GET['severity']) ? trim($_GET['severity']) : '';
 $errorType = isset($_GET['errorType']) ? trim($_GET['errorType']) : '';
 $customerId = isset($_GET['customerId']) ? trim($_GET['customerId']) : '';
-$limit = isset($_GET['limit']) ? max(1, min(200, (int) $_GET['limit'])) : 100;
+$limit = isset($_GET['limit']) ? max(1, min(500, (int) $_GET['limit'])) : 200;
 $offset = isset($_GET['offset']) ? max(0, (int) $_GET['offset']) : 0;
 
 $where = array('1=1');
@@ -35,9 +37,15 @@ if ($severity !== '') {
     $params[] = $severity;
 }
 if ($errorType !== '') {
-    $where[] = '`error_type`=?';
-    $types .= 's';
-    $params[] = $errorType;
+    if (strtoupper($errorType) === 'CRASH') {
+        $where[] = "`error_type` IN ('CRASH','ANR','NATIVE_CRASH','LOW_MEMORY')";
+    } elseif (strtoupper($errorType) === 'DEVICE') {
+        $where[] = "`error_type` IN ('DEVICE','LOW_MEMORY')";
+    } else {
+        $where[] = '`error_type`=?';
+        $types .= 's';
+        $params[] = $errorType;
+    }
 }
 if ($customerId !== '') {
     $where[] = '`customer_id`=?';

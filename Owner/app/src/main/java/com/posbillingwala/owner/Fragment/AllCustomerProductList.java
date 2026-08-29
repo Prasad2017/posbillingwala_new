@@ -2,6 +2,7 @@ package com.posbillingwala.owner.Fragment;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
@@ -23,6 +24,7 @@ import com.posbillingwala.owner.Model.AllApiResponse;
 import com.posbillingwala.owner.Model.ProductResponse;
 import com.posbillingwala.owner.R;
 import com.posbillingwala.owner.Retrofit.Api;
+import com.posbillingwala.owner.Utils.CatalogImportExportHelper;
 import com.posbillingwala.owner.databinding.FragmentAllCustomerProductListBinding;
 
 import java.util.ArrayList;
@@ -43,6 +45,7 @@ public class AllCustomerProductList extends Fragment implements View.OnClickList
     public static TextView noDataFound;
     View view;
     FragmentAllCustomerProductListBinding binding;
+    CatalogImportExportHelper catalogImportExportHelper;
 
     public static void getProductList() {
 
@@ -99,6 +102,10 @@ public class AllCustomerProductList extends Fragment implements View.OnClickList
 
         initViews();
 
+        catalogImportExportHelper = new CatalogImportExportHelper(
+                this, MainActivity.userId, "products", "Products", AllCustomerProductList::getProductList);
+        catalogImportExportHelper.bindBar(binding.catalogImportExportBar.getRoot());
+
         view.setFocusableInTouchMode(true);
         view.requestFocus();
         view.setOnKeyListener(new View.OnKeyListener() {
@@ -132,6 +139,14 @@ public class AllCustomerProductList extends Fragment implements View.OnClickList
     public void initViews() {
         productRecyclerView = view.findViewById(R.id.productRecyclerView);
         noDataFound = view.findViewById(R.id.noDataFound);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (catalogImportExportHelper != null) {
+            catalogImportExportHelper.handleActivityResult(requestCode, resultCode, data);
+        }
     }
 
     public void onStart() {

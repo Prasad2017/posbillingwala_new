@@ -5,12 +5,10 @@ import static com.pos_billingwala.Utils.RequestCodes.directory_path;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.DatePickerDialog;
-import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -19,8 +17,6 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.DatePicker;
 import android.widget.LinearLayout;
@@ -37,12 +33,14 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.github.dewinjm.monthyearpicker.MonthYearPickerDialog;
 import com.github.dewinjm.monthyearpicker.MonthYearPickerDialogFragment;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.ReportDetailTableAdapter;
 import com.pos_billingwala.BuildConfig;
 import com.pos_billingwala.CalenderView.MonthPickerDialog;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.BottomSheetUi;
 import com.pos_billingwala.Extra.ListLoader;
 import com.pos_billingwala.Extra.ReportCursorHelper;
 import com.pos_billingwala.Model.CompanyResponse;
@@ -329,28 +327,14 @@ public class InvoiceTableListReport extends Fragment implements View.OnClickList
     }
 
     public void selectTableList() {
+        View content = LayoutInflater.from(activity).inflate(R.layout.table_list_dialog, null);
+        BottomSheetDialog sheet = BottomSheetUi.showContent(activity, content, false);
 
-        final Dialog dialog = new Dialog(activity);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE); // before
-        dialog.setContentView(R.layout.table_list_dialog);
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
-        dialog.setCancelable(false);
+        TextView dismissTable = content.findViewById(R.id.dismissTable);
+        TextView selectTable = content.findViewById(R.id.selectTable);
+        MaterialSpinner tableSpinner = content.findViewById(R.id.tableSpinner);
 
-        WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
-        lp.copyFrom(dialog.getWindow().getAttributes());
-        lp.width = WindowManager.LayoutParams.MATCH_PARENT;
-        lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
-
-        TextView dismissTable = dialog.findViewById(R.id.dismissTable);
-        TextView selectTable = dialog.findViewById(R.id.selectTable);
-        MaterialSpinner tableSpinner = dialog.findViewById(R.id.tableSpinner);
-
-        dismissTable.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
-            }
-        });
+        dismissTable.setOnClickListener(v -> sheet.dismiss());
 
         if (!companyResponseList.isEmpty()) {
 
@@ -382,17 +366,10 @@ public class InvoiceTableListReport extends Fragment implements View.OnClickList
             }
         });
 
-        selectTable.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
-                getTableReportList();
-            }
+        selectTable.setOnClickListener(v -> {
+            sheet.dismiss();
+            getTableReportList();
         });
-
-        dialog.show();
-        dialog.getWindow().setAttributes(lp);
-
     }
 
     @Override

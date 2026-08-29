@@ -41,9 +41,16 @@ function admin_ensure_support_crash_tables($con) {
         `user_id` VARCHAR(40) DEFAULT '',
         `occurrences` INT NOT NULL DEFAULT 1,
         `stack_trace` MEDIUMTEXT,
+        `source_fingerprint` VARCHAR(64) DEFAULT NULL,
         `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        KEY `idx_crash_fp` (`source_fingerprint`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    $fpCol = mysqli_query($con, "SHOW COLUMNS FROM `admin_crash_logs` LIKE 'source_fingerprint'");
+    if ($fpCol && mysqli_num_rows($fpCol) === 0) {
+        mysqli_query($con, "ALTER TABLE `admin_crash_logs` ADD COLUMN `source_fingerprint` VARCHAR(64) DEFAULT NULL, ADD KEY `idx_crash_fp` (`source_fingerprint`)");
+    }
 }
 
 function admin_ensure_website_tables($con) {

@@ -17,6 +17,7 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.posbillingwala.admin.Activity.MainActivity;
+import com.posbillingwala.admin.Extra.BottomSheetUi;
 import com.posbillingwala.admin.R;
 import com.posbillingwala.admin.databinding.ItemReportMenuRowBinding;
 
@@ -72,12 +73,8 @@ public class SettingsHub extends Fragment {
         addSection(root, "ACCOUNT");
         addRow(inflater, root, R.drawable.ic_logout, R.drawable.bg_quick_action_red, R.color.statusExpired,
                 "Logout", "Sign out of admin app", () ->
-                        new androidx.appcompat.app.AlertDialog.Builder(activity)
-                                .setTitle("Logout")
-                                .setMessage("Are you sure you want to logout?")
-                                .setPositiveButton("Logout", (d, w) -> ((MainActivity) activity).performLogout())
-                                .setNegativeButton("Cancel", null)
-                                .show());
+                        BottomSheetUi.showConfirm(activity, "Logout", "Are you sure you want to logout?",
+                                "Logout", "Cancel", true, () -> ((MainActivity) activity).performLogout()));
 
         scroll.addView(root);
         return scroll;

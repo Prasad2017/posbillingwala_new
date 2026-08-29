@@ -104,7 +104,9 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
             android:layout_marginTop="30dp"
+            android:layout_marginEnd="8dp"
             android:orientation="horizontal">
 
             <TextView
@@ -113,7 +115,7 @@
                 android:layout_height="40dp"
                 android:layout_gravity="center"
                 android:layout_weight="1"
-                android:background="@color/red"
+                android:background="@drawable/bg_sheet_btn_danger"
                 android:fontFamily="@font/poppinsregular"
                 android:gravity="center"
                 android:text="@string/ui_dismiss"
@@ -126,7 +128,7 @@
                 android:layout_height="40dp"
                 android:layout_gravity="center"
                 android:layout_weight="1"
-                android:background="@color/colorPrimary"
+                android:background="@drawable/bg_sheet_btn_success"
                 android:fontFamily="@font/poppinsregular"
                 android:gravity="center"
                 android:text="@string/ui_add_discount"

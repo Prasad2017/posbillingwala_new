@@ -20,10 +20,22 @@ public final class WoosimPrnMng {
     private WoosimPrnMng() {
     }
 
-    /** @noinspection unused — constructed from billing / settings screens */
+    /** Quiet reconnect (settings load / print screens) — never opens device list. */
     public static void connect(Context context, String deviceAddr, Activity host) {
-        BluetoothPrinterChannel.bill().connect(context, deviceAddr, host,
-                deviceAddr == null || deviceAddr.trim().isEmpty());
+        BluetoothPrinterChannel.bill().connect(context, deviceAddr, host, false);
+    }
+
+    /**
+     * Connect button: reconnect to saved MAC, or open Bluetooth device list once
+     * if the address is empty / printer is not paired.
+     */
+    public static void connectFromButton(Context context, String deviceAddr, Activity host) {
+        String addr = deviceAddr != null ? deviceAddr.trim() : "";
+        if (addr.isEmpty()) {
+            BluetoothPrinterChannel.bill().openDevicePicker(host);
+        } else {
+            BluetoothPrinterChannel.bill().connect(context, addr, host, true);
+        }
     }
 
     /** Legacy entry point used across the app. */

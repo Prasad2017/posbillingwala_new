@@ -1,7 +1,6 @@
 package com.posbillingwala.dealer.Activity;
 
 import android.annotation.SuppressLint;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -19,7 +18,7 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.google.android.material.appbar.AppBarLayout;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.posbillingwala.dealer.Extra.BottomSheetUi;
 import com.posbillingwala.dealer.AppUpdate.UpdateManager;
 import com.posbillingwala.dealer.AppUpdate.UpdateManagerConstant;
 import com.posbillingwala.dealer.Extra.AuthTokens;
@@ -155,36 +154,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void logout() {
 
-        new MaterialAlertDialogBuilder(MainActivity.this, R.style.ThemeDialog)
-                .setTitle("Logout")
-                .setMessage("Do you want to logout from application?")
-                .setCancelable(false)
-                .setPositiveButton("YES", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        dialogInterface.dismiss();
-                        AuthTokens.clear(MainActivity.this);
-                        Common.saveUserData(MainActivity.this, "userId", "");
+        BottomSheetUi.showConfirm(MainActivity.this, "Logout", "Do you want to logout from application?",
+                "YES", "NO", false, () -> {
+                    AuthTokens.clear(MainActivity.this);
+                    Common.saveUserData(MainActivity.this, "userId", "");
 
-                        File file1 = new File("data/data/" + getPackageName() + "/shared_prefs/user.xml");
-                        if (file1.exists()) {
-                            file1.delete();
-                        }
-
-                        Intent intent = new Intent(MainActivity.this, Login.class);
-                        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                        startActivity(intent);
-                        finish();
-
+                    File file1 = new File("data/data/" + getPackageName() + "/shared_prefs/user.xml");
+                    if (file1.exists()) {
+                        file1.delete();
                     }
-                })
-                .setNegativeButton("NO", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        dialogInterface.dismiss();
-                    }
-                })
-                .show();
+
+                    Intent intent = new Intent(MainActivity.this, Login.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    startActivity(intent);
+                    finish();
+                });
 
     }
 

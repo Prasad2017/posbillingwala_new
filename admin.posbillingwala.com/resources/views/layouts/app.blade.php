@@ -28,7 +28,7 @@
     <link rel="stylesheet" href="{{asset('assets/css/dark-theme.css')}}" />
     <link rel="stylesheet" href="{{asset('assets/css/semi-dark.css')}}" />
     <link rel="stylesheet" href="{{asset('assets/css/header-colors.css')}}" />
-    <link rel="stylesheet" href="{{asset('assets/css/pos-brand.css')}}" />
+    <link rel="stylesheet" href="{{asset('assets/css/pos-brand.css')}}?v={{ is_file(base_path('assets/css/pos-brand.css')) ? filemtime(base_path('assets/css/pos-brand.css')) : time() }}" />
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
     <script src="{{asset('assets/plugins/chartjs/js/Chart.min.js')}}"></script>
     <script>
@@ -166,6 +166,24 @@
                 dropdownParent: $group.length ? $group.parent() : $('body')
             });
         });
+        $root.find('.pb-filter-auto').each(function () {
+            var $el = $(this);
+            if ($el.data('pbAutoSubmit')) {
+                return;
+            }
+            $el.data('pbAutoSubmit', true);
+            var submitForm = function () {
+                var form = $el.closest('form')[0];
+                if (form) {
+                    form.submit();
+                }
+            };
+            if ($el.is('select') && $el.hasClass('pb-select-search')) {
+                $el.on('select2:select select2:clear', submitForm);
+            } else {
+                $el.on('change', submitForm);
+            }
+        });
     };
     </script>
 
@@ -232,18 +250,22 @@
     </script>
     <script>
         $(document).ready(function() {
+            if (!$('#example2').length || !$.fn.DataTable) {
+                return;
+            }
             var table = $('#example2').DataTable( {
                 lengthChange: false,
                 buttons: [ 'copy', 'excel', 'pdf', 'print']
             } );
-         
-            table.buttons().container()
-                .appendTo( '#example2_wrapper .col-md-6:eq(0)' );
+            if (table.buttons) {
+                table.buttons().container()
+                    .appendTo( '#example2_wrapper .col-md-6:eq(0)' );
+            }
         } );
     </script>
     <!--app JS-->
     <script src="{{asset('assets/plugins/select2/js/select2.min.js')}}"></script>
-    <script src="{{asset('assets/js/app.js')}}"></script>
+    <script src="{{asset('assets/js/app.js')}}?v={{ is_file(base_path('assets/js/app.js')) ? filemtime(base_path('assets/js/app.js')) : time() }}"></script>
     <script>
         $(function () {
             PB.initForms();

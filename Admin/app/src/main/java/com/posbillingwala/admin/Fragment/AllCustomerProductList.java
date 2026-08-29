@@ -2,6 +2,7 @@ package com.posbillingwala.admin.Fragment;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -24,6 +25,7 @@ import com.posbillingwala.admin.Model.AllApiResponse;
 import com.posbillingwala.admin.Model.ProductResponse;
 import com.posbillingwala.admin.R;
 import com.posbillingwala.admin.Retrofit.Api;
+import com.posbillingwala.admin.Utils.CatalogImportExportHelper;
 import com.posbillingwala.admin.databinding.FragmentAllCustomerProductListBinding;
 
 import java.util.ArrayList;
@@ -45,6 +47,7 @@ public class AllCustomerProductList extends Fragment {
     public static String customerId;
     View view;
     FragmentAllCustomerProductListBinding binding;
+    CatalogImportExportHelper catalogImportExportHelper;
 
     public static void getProductList() {
 
@@ -107,6 +110,12 @@ public class AllCustomerProductList extends Fragment {
             customerId = bundle.getString("customerId");
         }
 
+        if (customerId != null) {
+            catalogImportExportHelper = new CatalogImportExportHelper(
+                    this, customerId, "products", "Products", AllCustomerProductList::getProductList);
+            catalogImportExportHelper.bindBar(binding.catalogImportExportBar.getRoot());
+        }
+
         initViews();
 
         MainActivity.title.setText("Product List");
@@ -137,6 +146,14 @@ public class AllCustomerProductList extends Fragment {
 
 
         return view;
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (catalogImportExportHelper != null) {
+            catalogImportExportHelper.handleActivityResult(requestCode, resultCode, data);
+        }
     }
 
     private void initViews() {

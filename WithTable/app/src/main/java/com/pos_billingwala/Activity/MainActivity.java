@@ -26,6 +26,7 @@ import com.pos_billingwala.Fragment.InvoiceCompanyTable;
 import com.pos_billingwala.Fragment.InvoiceMess;
 import com.pos_billingwala.Fragment.InvoiceTakeAway;
 import com.pos_billingwala.Fragment.UserSetting;
+import com.pos_billingwala.NetworkToOffline.CloudSyncNav;
 import com.pos_billingwala.R;
 
 import java.lang.reflect.Field;
@@ -42,6 +43,10 @@ public class MainActivity extends BaseActivity {
     @SuppressLint("DiscouragedPrivateApi")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        boolean reopenSettings = AppLanguage.shouldReopenUserSetting(this);
+        if (reopenSettings) {
+            savedInstanceState = null;
+        }
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -91,9 +96,14 @@ public class MainActivity extends BaseActivity {
                 cartOrderStatus = "";
             }
 
-            if (AppLanguage.consumeReopenUserSetting(this)) {
+            if (CloudSyncNav.consumeOpen(this, getIntent())) {
+                getSupportFragmentManager().popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+                loadFragment(new Home(), false);
+                getWindow().getDecorView().post(this::openCloudSyncStatus);
+            } else if (AppLanguage.consumeReopenUserSetting(this)) {
                 getSupportFragmentManager().popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
                 loadFragment(new UserSetting(), false);
+                AppLanguage.showPendingLanguageToast(this);
             } else if (savedInstanceState == null) {
                 if (invoiceRunningStatus.equalsIgnoreCase("")) {
                     loadFragment(new Home(), false);
@@ -117,12 +127,24 @@ public class MainActivity extends BaseActivity {
         }
     }
 
-    /** Soft language change: reinflate Settings with the new locale (no Activity recreate). */
-    @SuppressWarnings("deprecation")
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        if (CloudSyncNav.consumeOpen(this, intent)) {
+            openCloudSyncStatus();
+        }
+    }
+
+    public void openCloudSyncStatus() {
+        CloudSyncNav.openOn(this);
+    }
+
+    /** Fallback if AppCompat did not recreate: reinflate Settings with the new locale. */
     public void reloadAfterLanguageChange() {
-        Common.saveUserData(this, AppLanguage.KEY_REOPEN_USER_SETTING, "0");
         getSupportFragmentManager().popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
         loadFragment(new UserSetting(), false);
+        AppLanguage.showPendingLanguageToast(this);
     }
 
     public void initViews() {

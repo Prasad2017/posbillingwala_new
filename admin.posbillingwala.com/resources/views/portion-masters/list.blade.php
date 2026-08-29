@@ -32,7 +32,7 @@
                             <tr>
                                 <th>Id</th>
                                 <th>Portion Name</th>
-                                <th>Customer Id</th>
+                                <th>Customer</th>
                                 <th>Status</th>
                                 <th>Action</th>
                             </tr>
@@ -56,7 +56,10 @@ $(document).ready(function(){
         columns: [
             { mData: "portionMasterId", bSortable: false },
             { mData: "portionName", bSortable: false },
-            { mData: "userId", bSortable: false },
+            { mData: "customerName", bSortable: false, mRender: function(data, type, row){
+                if (data) { return data + (row.shopName ? ' — ' + row.shopName : ''); }
+                return row.userId || '-';
+            }},
             { mData: "portionMasterStatus", bSortable: false },
             { mData: "portionMasterId", bSortable: false, mRender: function(id, type, row){
                 var label = row.portionMasterStatus === 'active' ? 'Deactivate' : 'Activate';

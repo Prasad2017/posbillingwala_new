@@ -20,7 +20,7 @@ import com.pos_billingwala.Extra.LicenseModules;
 import com.pos_billingwala.NetworkToOffline.UserSynchronizeData;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentReportsHubBinding;
-import com.pos_billingwala.databinding.ItemReportMenuRowBinding;
+import com.pos_billingwala.databinding.ItemGroupedMenuRowBinding;
 
 public class ReportsHub extends Fragment {
 
@@ -119,6 +119,20 @@ public class ReportsHub extends Fragment {
         binding.rowDeleteAllInvoices.getRoot().setOnClickListener(v -> clearAllInvoices());
 
         applyModuleVisibility();
+        showGroupDividers(binding.rowSalesDashboard, binding.rowSalesOverview);
+        showGroupDividers(
+                binding.rowInvoiceReport,
+                binding.rowSaleReport,
+                binding.rowTableReport,
+                binding.rowTakeAwayReport,
+                binding.rowPaymentReport,
+                binding.rowDiscountReport,
+                binding.rowRefundReport,
+                binding.rowProductReport,
+                binding.rowComboReport,
+                binding.rowExpenseReport,
+                binding.rowMessMemberReport,
+                binding.rowMessReport);
 
         View root = binding.getRoot();
         root.setFocusableInTouchMode(true);
@@ -134,7 +148,7 @@ public class ReportsHub extends Fragment {
         return root;
     }
 
-    private void setupRow(ItemReportMenuRowBinding row, int iconRes, int bgRes, int tintColor,
+    private void setupRow(ItemGroupedMenuRowBinding row, int iconRes, int bgRes, int tintColor,
                           String title, String subtitle) {
         row.menuIcon.setBackgroundResource(bgRes);
         row.menuIcon.setImageResource(iconRes);
@@ -142,6 +156,18 @@ public class ReportsHub extends Fragment {
         row.menuIcon.setColorFilter(ContextCompat.getColor(requireContext(), tintColor));
         row.menuTitle.setText(title);
         row.menuSubtitle.setText(subtitle);
+    }
+
+    private void showGroupDividers(ItemGroupedMenuRowBinding... rows) {
+        boolean firstVisible = true;
+        for (ItemGroupedMenuRowBinding row : rows) {
+            if (row.getRoot().getVisibility() != View.VISIBLE) {
+                row.rowDivider.setVisibility(View.GONE);
+                continue;
+            }
+            row.rowDivider.setVisibility(firstVisible ? View.GONE : View.VISIBLE);
+            firstVisible = false;
+        }
     }
 
     private void applyModuleVisibility() {
@@ -162,7 +188,8 @@ public class ReportsHub extends Fragment {
                     unsynced + " unsynced bill(s). Upload to cloud first — clear blocked to protect data.",
                     Toast.LENGTH_LONG).show();
             if (DetectConnection.checkInternetConnection(activity)) {
-                new UserSynchronizeData(activity);
+                ((MainActivity) activity).openCloudSyncStatus();
+                UserSynchronizeData.start(activity, false);
             } else {
                 DetectConnection.noInternetConnection(activity);
             }

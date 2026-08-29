@@ -46,39 +46,46 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 
 
 
-  $noOfTable = $_POST['noOfTable'];
+  $post = function ($key, $default = '') {
+      return isset($_POST[$key]) ? (string) $_POST[$key] : $default;
+  };
 
-  $invoiceType = $_POST['invoiceType'];
+  $noOfTable = $post('noOfTable');
 
-  $invoiceNumber = $_POST['invoiceNumber'];
+  $invoiceType = $post('invoiceType');
 
-  $customerName = $_POST['customerName'];
+  $invoiceNumber = $post('invoiceNumber');
 
-  $customerMobile = $_POST['customerMobile'];
+  $customerName = $post('customerName');
 
-  $customerAddress = $_POST['customerAddress'];
+  $customerMobile = $post('customerMobile');
 
-  $subTotal = $_POST['subTotal'];
+  $customerAddress = $post('customerAddress');
 
-  $totalGSTAmount = $_POST['totalGSTAmount'];
+  $subTotal = $post('subTotal', '0');
 
-  $discount = $_POST['discount'];
+  $totalGSTAmount = $post('totalGSTAmount', '0');
 
-  $discountType = $_POST['discountType'];
+  $discount = $post('discount', '0');
 
-  $totalAmount = $_POST['totalAmount'];
+  $discountType = $post('discountType', '');
 
-  $paymentMode = $_POST['paymentMode'];
+  $totalAmount = $post('totalAmount', '0');
 
-  $invoiceDate = $_POST['invoiceDate'];
+  $paymentMode = $post('paymentMode');
 
-  $invoiceOrderStatus = $_POST['invoiceOrderStatus'];
+  $invoiceDate = $post('invoiceDate');
 
-  $invoiceNetworkStatus = $_POST['invoiceNetworkStatus'];
+  $invoiceOrderStatus = $post('invoiceOrderStatus');
+
+  $invoiceNetworkStatus = $post('invoiceNetworkStatus');
 
   
 
   $date = strtotime($invoiceDate);
+  if ($date === false) {
+      $date = time();
+  }
 
   $invoiceDate = date('Y-m-d H:i:s', $date);
 

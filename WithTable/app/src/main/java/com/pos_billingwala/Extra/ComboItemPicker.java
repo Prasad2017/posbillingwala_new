@@ -1,13 +1,10 @@
 package com.pos_billingwala.Extra;
 
 import android.app.Activity;
-import android.app.Dialog;
-import android.graphics.drawable.ColorDrawable;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.LayoutInflater;
 import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
@@ -20,6 +17,7 @@ import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Model.ComboItemDraft;
 import com.pos_billingwala.Model.ProductPortionResponse;
 import com.pos_billingwala.Model.ProductResponse;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.pos_billingwala.R;
 
 import java.util.ArrayList;
@@ -41,32 +39,20 @@ public final class ComboItemPicker {
         if (activity == null || database == null) {
             return;
         }
-        final Dialog dialog = new Dialog(activity);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        dialog.setContentView(R.layout.dialog_add_combo_item);
-        if (dialog.getWindow() != null) {
-            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
-        }
-        dialog.setCancelable(true);
+        View dialogView = LayoutInflater.from(activity).inflate(R.layout.dialog_add_combo_item, null);
+        BottomSheetDialog sheet = BottomSheetUi.showContent(activity, dialogView, true);
 
-        WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
-        if (dialog.getWindow() != null) {
-            lp.copyFrom(dialog.getWindow().getAttributes());
-            lp.width = WindowManager.LayoutParams.MATCH_PARENT;
-            lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
-        }
-
-        TextInputEditText search = dialog.findViewById(R.id.comboItemProductSearch);
-        AutoFitGridRecyclerView productList = dialog.findViewById(R.id.comboItemProductRecyclerView);
-        LinearLayout portionSection = dialog.findViewById(R.id.comboItemPortionSection);
-        RadioGroup portionGroup = dialog.findViewById(R.id.comboItemPortionRadioGroup);
-        TextView selectedProductName = dialog.findViewById(R.id.comboItemSelectedProduct);
-        TextView quantityMinus = dialog.findViewById(R.id.comboItemQuantityMinus);
-        TextView quantityValue = dialog.findViewById(R.id.comboItemQuantity);
-        TextView quantityPlus = dialog.findViewById(R.id.comboItemQuantityPlus);
-        TextView dismiss = dialog.findViewById(R.id.comboItemDismiss);
-        TextView save = dialog.findViewById(R.id.comboItemSave);
-        TextView noProduct = dialog.findViewById(R.id.comboItemNoProduct);
+        TextInputEditText search = dialogView.findViewById(R.id.comboItemProductSearch);
+        AutoFitGridRecyclerView productList = dialogView.findViewById(R.id.comboItemProductRecyclerView);
+        LinearLayout portionSection = dialogView.findViewById(R.id.comboItemPortionSection);
+        RadioGroup portionGroup = dialogView.findViewById(R.id.comboItemPortionRadioGroup);
+        TextView selectedProductName = dialogView.findViewById(R.id.comboItemSelectedProduct);
+        TextView quantityMinus = dialogView.findViewById(R.id.comboItemQuantityMinus);
+        TextView quantityValue = dialogView.findViewById(R.id.comboItemQuantity);
+        TextView quantityPlus = dialogView.findViewById(R.id.comboItemQuantityPlus);
+        TextView dismiss = dialogView.findViewById(R.id.comboItemDismiss);
+        TextView save = dialogView.findViewById(R.id.comboItemSave);
+        TextView noProduct = dialogView.findViewById(R.id.comboItemNoProduct);
 
         List<ProductResponse> allProducts = database.getAllProductList("", "");
         List<ProductResponse> visible = new ArrayList<>(allProducts);
@@ -141,7 +127,7 @@ public final class ComboItemPicker {
             quantity[0]++;
             quantityValue.setText(String.valueOf(quantity[0]));
         });
-        dismiss.setOnClickListener(v -> dialog.dismiss());
+        dismiss.setOnClickListener(v -> sheet.dismiss());
         save.setOnClickListener(v -> {
             ProductResponse product = selectedProduct[0];
             if (product == null) {
@@ -154,7 +140,7 @@ public final class ComboItemPicker {
             String portionName = null;
             if (hasPortions) {
                 int checkedId = portionGroup.getCheckedRadioButtonId();
-                RadioButton selected = dialog.findViewById(checkedId);
+                RadioButton selected = dialogView.findViewById(checkedId);
                 if (selected == null || !(selected.getTag() instanceof Integer)) {
                     Toast.makeText(activity, activity.getString(R.string.toast_please_select_portion), Toast.LENGTH_SHORT).show();
                     return;
@@ -185,13 +171,8 @@ public final class ComboItemPicker {
             if (listener != null) {
                 listener.onItemPicked(draft);
             }
-            dialog.dismiss();
+            sheet.dismiss();
         });
-
-        dialog.show();
-        if (dialog.getWindow() != null) {
-            dialog.getWindow().setAttributes(lp);
-        }
     }
 
     public static String mapError(Activity activity, String code) {

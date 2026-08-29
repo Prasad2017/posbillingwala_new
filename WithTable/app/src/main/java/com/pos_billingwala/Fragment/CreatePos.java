@@ -2,13 +2,10 @@ package com.pos_billingwala.Fragment;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.Dialog;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Typeface;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -22,8 +19,6 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.RelativeLayout;
@@ -34,8 +29,8 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.chip.Chip;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.pos_billingwala.Activity.BluetoothPrint;
 import com.pos_billingwala.Activity.DuplicateBluetoothPrint;
@@ -46,6 +41,7 @@ import com.pos_billingwala.Adapter.HomeProductAdapter;
 import com.pos_billingwala.Model.ComboResponse;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.AppExecutors;
+import com.pos_billingwala.Extra.BottomSheetUi;
 import com.pos_billingwala.Extra.ListLoader;
 import com.pos_billingwala.Interface.ClickListerInterface;
 import com.pos_billingwala.Model.CompanyResponse;
@@ -410,24 +406,14 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
             Toast.makeText(activity, getString(R.string.toast_cart_is_empty), Toast.LENGTH_SHORT).show();
             return;
         }
-        new MaterialAlertDialogBuilder(activity, R.style.ThemeDialog)
-                .setTitle(getString(R.string.ui_clear_cart_confirm_title))
-                .setMessage(getString(R.string.ui_clear_cart_confirm_message))
-                .setCancelable(true)
-                .setPositiveButton("YES", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        dialogInterface.dismiss();
-                        clearCart();
-                    }
-                })
-                .setNegativeButton("NO", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        dialogInterface.dismiss();
-                    }
-                })
-                .show();
+        BottomSheetUi.showConfirm(
+                activity,
+                getString(R.string.ui_clear_cart_confirm_title),
+                getString(R.string.ui_clear_cart_confirm_message),
+                "YES",
+                "NO",
+                true,
+                this::clearCart);
     }
 
     private void clearCart() {
@@ -640,22 +626,13 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
     }
 
     public void setUpdateQuantity(ProductResponse productResponse, ProductPortionResponse portion) {
+        View content = LayoutInflater.from(activity).inflate(R.layout.update_amount_quantity_dialog, null);
+        BottomSheetDialog sheet = BottomSheetUi.showContent(activity, content, false);
 
-        final Dialog dialog = new Dialog(activity);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE); // before
-        dialog.setContentView(R.layout.update_amount_quantity_dialog);
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
-        dialog.setCancelable(false);
-
-        WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
-        lp.copyFrom(dialog.getWindow().getAttributes());
-        lp.width = WindowManager.LayoutParams.MATCH_PARENT;
-        lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
-
-        TextView continueToQuantity = dialog.findViewById(R.id.continueToQuantity);
-        TextView dismissQuantity = dialog.findViewById(R.id.dismissQuantity);
-        TextInputEditText amountTxt = dialog.findViewById(R.id.amount);
-        TextInputEditText quantityTxt = dialog.findViewById(R.id.quantity);
+        TextView continueToQuantity = content.findViewById(R.id.continueToQuantity);
+        TextView dismissQuantity = content.findViewById(R.id.dismissQuantity);
+        TextInputEditText amountTxt = content.findViewById(R.id.amount);
+        TextInputEditText quantityTxt = content.findViewById(R.id.quantity);
 
         String defaultPrice = resolveLinePrice(productResponse, portion);
         if (!productCartResponseList.isEmpty()) {
@@ -669,39 +646,27 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
         quantityTxt.setSelection(quantityTxt.getText().toString().length());
         amountTxt.setSelection(amountTxt.getText().toString().length());
 
-        dismissQuantity.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
-            }
-        });
+        dismissQuantity.setOnClickListener(v -> sheet.dismiss());
 
-        continueToQuantity.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (!quantityTxt.getText().toString().isEmpty()) {
-                    if (Float.parseFloat(quantityTxt.getText().toString()) > 0) {
-                        float totalQuantity = Float.parseFloat(quantityTxt.getText().toString());
-                        if (!productCartResponseList.isEmpty()) {
-                            updateCart(productCartResponseList.get(0).getCartId(), String.valueOf(totalQuantity), amountTxt.getText().toString());
-                        } else {
-                            addToCart(productResponse, amountTxt.getText().toString(), String.valueOf(totalQuantity), portion);
-                        }
-                        dialog.dismiss();
+        continueToQuantity.setOnClickListener(v -> {
+            if (!quantityTxt.getText().toString().isEmpty()) {
+                if (Float.parseFloat(quantityTxt.getText().toString()) > 0) {
+                    float totalQuantity = Float.parseFloat(quantityTxt.getText().toString());
+                    if (!productCartResponseList.isEmpty()) {
+                        updateCart(productCartResponseList.get(0).getCartId(), String.valueOf(totalQuantity), amountTxt.getText().toString());
                     } else {
-                        quantityTxt.setError("Enter Quantity");
-                        quantityTxt.requestFocus();
+                        addToCart(productResponse, amountTxt.getText().toString(), String.valueOf(totalQuantity), portion);
                     }
+                    sheet.dismiss();
                 } else {
                     quantityTxt.setError("Enter Quantity");
                     quantityTxt.requestFocus();
                 }
+            } else {
+                quantityTxt.setError("Enter Quantity");
+                quantityTxt.requestFocus();
             }
         });
-
-        dialog.show();
-        dialog.getWindow().setAttributes(lp);
-
     }
 
     @Override
@@ -726,24 +691,16 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
     }
 
     private void showPortionDialog(ProductResponse productResponse, List<ProductPortionResponse> portions) {
-        final Dialog dialog = new Dialog(activity);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        dialog.setContentView(R.layout.dialog_select_portion);
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
-        dialog.setCancelable(false);
+        View dialogView = LayoutInflater.from(activity).inflate(R.layout.dialog_select_portion, null);
+        BottomSheetDialog sheet = BottomSheetUi.showContent(activity, dialogView, false);
 
-        WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
-        lp.copyFrom(dialog.getWindow().getAttributes());
-        lp.width = WindowManager.LayoutParams.MATCH_PARENT;
-        lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
-
-        TextView productName = dialog.findViewById(R.id.productName);
-        LinearLayout portionTabRow = dialog.findViewById(R.id.portionTabRow);
-        TextView quantityMinus = dialog.findViewById(R.id.quantityMinus);
-        TextView productQuantity = dialog.findViewById(R.id.productQuantity);
-        TextView quantityPlus = dialog.findViewById(R.id.quantityPlus);
-        TextView dismissPortion = dialog.findViewById(R.id.dismissPortion);
-        TextView addPortionToCart = dialog.findViewById(R.id.addPortionToCart);
+        TextView productName = dialogView.findViewById(R.id.productName);
+        LinearLayout portionTabRow = dialogView.findViewById(R.id.portionTabRow);
+        TextView quantityMinus = dialogView.findViewById(R.id.quantityMinus);
+        TextView productQuantity = dialogView.findViewById(R.id.productQuantity);
+        TextView quantityPlus = dialogView.findViewById(R.id.quantityPlus);
+        TextView dismissPortion = dialogView.findViewById(R.id.dismissPortion);
+        TextView addPortionToCart = dialogView.findViewById(R.id.addPortionToCart);
 
         productName.setText(productResponse.getProductName());
         final int[] quantity = {1};
@@ -807,7 +764,7 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
             productQuantity.setText(String.valueOf(quantity[0]));
         });
 
-        dismissPortion.setOnClickListener(v -> dialog.dismiss());
+        dismissPortion.setOnClickListener(v -> sheet.dismiss());
         addPortionToCart.setOnClickListener(v -> {
             int index = selectedIndex[0];
             if (index < 0 || index >= portions.size()) {
@@ -815,11 +772,8 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
                 return;
             }
             addSelectedPortionToCart(productResponse, portions.get(index), quantity[0]);
-            dialog.dismiss();
+            sheet.dismiss();
         });
-
-        dialog.show();
-        dialog.getWindow().setAttributes(lp);
     }
 
     private void addSelectedPortionToCart(ProductResponse productResponse, ProductPortionResponse portion, int quantity) {

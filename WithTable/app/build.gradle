@@ -14,12 +14,11 @@ android {
         applicationId "com.pos_billingwala"
         minSdk 26
         targetSdk 37
-        versionCode 69
-        versionName "2.0.53"
+        versionCode 70
+        versionName "2.0.54"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
-        // Testing against dev host (switch back to www for production)
-        buildConfigField "String", "API_BASE_URL", "\"http://dev.posbillingwala.com/androidApp/\""
-        buildConfigField "String", "MEDIA_BASE_URL", "\"http://dev.posbillingwala.com/storage/app/\""
+        buildConfigField "String", "API_BASE_URL", "\"http://posbillingwala.com/androidApp/\""
+        buildConfigField "String", "MEDIA_BASE_URL", "\"http://posbillingwala.com/storage/app/\""
         // true = allow screenshots/recording on every screen (activities + fragments). Set false for production.
         buildConfigField "boolean", "ALLOW_SCREENSHOT", "true"
     }

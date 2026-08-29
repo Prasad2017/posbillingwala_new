@@ -1,11 +1,13 @@
 @extends('layouts.app')
+@section('page_title', 'Settings')
 @section('content')
 <div class="page-wrapper">
     <div class="page-content">
-        <div class="kpi-card kpi-blue mb-3" style="padding:1.25rem;">
-            <h5 class="dash-hello mb-1">Settings</h5>
-            <p class="mb-0">{{ $user->name }} · {{ $user->email ?: $user->contact_number }}</p>
-        </div>
+        @include('layouts.flash')
+        @include('layouts.page-header', [
+            'title' => 'Settings',
+            'subtitle' => $user->name . ' · ' . ($user->email ?: $user->contact_number),
+        ])
         <a class="hub-row" href="{{ url('settings/profile') }}">
             <span class="hub-icon kpi-icon blue"><i class='bx bx-user'></i></span>
             <div><h6>Profile Update</h6><p>Update your name, email, and contact details</p></div>

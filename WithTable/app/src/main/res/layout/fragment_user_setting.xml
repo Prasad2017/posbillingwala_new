@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:ads="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -31,24 +32,34 @@
                 android:textColor="@color/colorTextHint"
                 android:textSize="11sp" />
 
-            <include
-                android:id="@+id/invoiceDetailsLayout"
-                layout="@layout/item_report_menu_row"
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp" />
+                android:layout_marginTop="12dp"
+                app:cardBackgroundColor="@color/colorSurface"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/colorBorder"
+                app:strokeWidth="1dp">
 
-            <include
-                android:id="@+id/reportLayout"
-                layout="@layout/item_report_menu_row"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
 
-            <include
-                android:id="@+id/masterDataLayout"
-                layout="@layout/item_report_menu_row"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                    <include
+                        android:id="@+id/invoiceDetailsLayout"
+                        layout="@layout/item_grouped_menu_row" />
+
+                    <include
+                        android:id="@+id/reportLayout"
+                        layout="@layout/item_grouped_menu_row" />
+
+                    <include
+                        android:id="@+id/masterDataLayout"
+                        layout="@layout/item_grouped_menu_row" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
             <TextView
                 android:layout_width="match_parent"
@@ -60,36 +71,42 @@
                 android:textColor="@color/colorTextHint"
                 android:textSize="11sp" />
 
-            <include
-                android:id="@+id/shopDetailLayout"
-                layout="@layout/item_report_menu_row"
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp" />
+                android:layout_marginTop="12dp"
+                app:cardBackgroundColor="@color/colorSurface"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/colorBorder"
+                app:strokeWidth="1dp">
 
-            <include
-                android:id="@+id/businessHoursLayout"
-                layout="@layout/item_report_menu_row"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
 
-            <include
-                android:id="@+id/printerDetailLayout"
-                layout="@layout/item_report_menu_row"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                    <include
+                        android:id="@+id/shopDetailLayout"
+                        layout="@layout/item_grouped_menu_row" />
 
-            <include
-                android:id="@+id/inventoryManagementLayout"
-                layout="@layout/item_report_menu_row"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                    <include
+                        android:id="@+id/businessHoursLayout"
+                        layout="@layout/item_grouped_menu_row" />
 
-            <include
-                android:id="@+id/expenseManagementLayout"
-                layout="@layout/item_report_menu_row"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                    <include
+                        android:id="@+id/printerDetailLayout"
+                        layout="@layout/item_grouped_menu_row" />
+
+                    <include
+                        android:id="@+id/inventoryManagementLayout"
+                        layout="@layout/item_grouped_menu_row" />
+
+                    <include
+                        android:id="@+id/expenseManagementLayout"
+                        layout="@layout/item_grouped_menu_row" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
             <TextView
                 android:layout_width="match_parent"
@@ -101,36 +118,42 @@
                 android:textColor="@color/colorTextHint"
                 android:textSize="11sp" />
 
-            <include
-                android:id="@+id/supportLayout"
-                layout="@layout/item_report_menu_row"
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp" />
+                android:layout_marginTop="12dp"
+                app:cardBackgroundColor="@color/colorSurface"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/colorBorder"
+                app:strokeWidth="1dp">
 
-            <include
-                android:id="@+id/aboutLayout"
-                layout="@layout/item_report_menu_row"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
 
-            <include
-                android:id="@+id/fetchDataLayout"
-                layout="@layout/item_report_menu_row"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                    <include
+                        android:id="@+id/supportLayout"
+                        layout="@layout/item_grouped_menu_row" />
 
-            <include
-                android:id="@+id/updateAppLayout"
-                layout="@layout/item_report_menu_row"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                    <include
+                        android:id="@+id/aboutLayout"
+                        layout="@layout/item_grouped_menu_row" />
 
-            <include
-                android:id="@+id/synchronizeLayout"
-                layout="@layout/item_report_menu_row"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                    <include
+                        android:id="@+id/fetchDataLayout"
+                        layout="@layout/item_grouped_menu_row" />
+
+                    <include
+                        android:id="@+id/updateAppLayout"
+                        layout="@layout/item_grouped_menu_row" />
+
+                    <include
+                        android:id="@+id/synchronizeLayout"
+                        layout="@layout/item_grouped_menu_row" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
             <TextView
                 android:layout_width="match_parent"
@@ -142,36 +165,42 @@
                 android:textColor="@color/colorTextHint"
                 android:textSize="11sp" />
 
-            <include
-                android:id="@+id/appPinLayout"
-                layout="@layout/item_report_menu_row"
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp" />
+                android:layout_marginTop="12dp"
+                app:cardBackgroundColor="@color/colorSurface"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/colorBorder"
+                app:strokeWidth="1dp">
 
-            <include
-                android:id="@+id/languageLayout"
-                layout="@layout/item_report_menu_row"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
 
-            <include
-                android:id="@+id/rateUsLayout"
-                layout="@layout/item_report_menu_row"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                    <include
+                        android:id="@+id/appPinLayout"
+                        layout="@layout/item_grouped_menu_row" />
 
-            <include
-                android:id="@+id/shareAppLayout"
-                layout="@layout/item_report_menu_row"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                    <include
+                        android:id="@+id/languageLayout"
+                        layout="@layout/item_grouped_menu_row" />
 
-            <include
-                android:id="@+id/logoutLayout"
-                layout="@layout/item_report_menu_row"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                    <include
+                        android:id="@+id/rateUsLayout"
+                        layout="@layout/item_grouped_menu_row" />
+
+                    <include
+                        android:id="@+id/shareAppLayout"
+                        layout="@layout/item_grouped_menu_row" />
+
+                    <include
+                        android:id="@+id/logoutLayout"
+                        layout="@layout/item_grouped_menu_row" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
             <ImageView
                 android:layout_width="120dp"

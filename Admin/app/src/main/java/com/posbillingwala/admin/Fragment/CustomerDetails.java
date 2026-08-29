@@ -83,6 +83,15 @@ public class CustomerDetails extends Fragment implements View.OnClickListener {
             category.setArguments(b);
             ((MainActivity) activity).loadFragment(category, true);
         });
+        if (binding.openImportExport != null) {
+            binding.openImportExport.setOnClickListener(v -> {
+                ProductExport export = new ProductExport();
+                Bundle b = new Bundle();
+                b.putString("customerId", customerId);
+                export.setArguments(b);
+                ((MainActivity) activity).loadFragment(export, true);
+            });
+        }
         if (binding.catalogCategoriesCard != null) {
             binding.catalogCategoriesCard.setOnClickListener(v -> binding.openCatalog.performClick());
         }
@@ -102,6 +111,15 @@ public class CustomerDetails extends Fragment implements View.OnClickListener {
                 b.putString("customerId", customerId);
                 products.setArguments(b);
                 ((MainActivity) activity).loadFragment(products, true);
+            });
+        }
+        if (binding.catalogPortionsCard != null) {
+            binding.catalogPortionsCard.setOnClickListener(v -> {
+                AddCustomerPortionMaster portions = new AddCustomerPortionMaster();
+                Bundle b = new Bundle();
+                b.putString("customerId", customerId);
+                portions.setArguments(b);
+                ((MainActivity) activity).loadFragment(portions, true);
             });
         }
         binding.openCombos.setOnClickListener(v -> {
@@ -330,6 +348,9 @@ public class CustomerDetails extends Fragment implements View.OnClickListener {
                     if (binding.catalogProductCount != null) {
                         binding.catalogProductCount.setText(nz(response.body().getProductCount()));
                     }
+                    if (binding.catalogPortionCount != null) {
+                        binding.catalogPortionCount.setText(nz(response.body().getPortionCount()));
+                    }
                 }
 
                 bindLicenseSummary(licenseResponseList);
@@ -447,6 +468,9 @@ public class CustomerDetails extends Fragment implements View.OnClickListener {
                     }
                     if (binding.catalogProductCount != null) {
                         binding.catalogProductCount.setText(nz(body.getProductCount()));
+                    }
+                    if (binding.catalogPortionCount != null) {
+                        binding.catalogPortionCount.setText(nz(body.getPortionCount()));
                     }
                 }
             }

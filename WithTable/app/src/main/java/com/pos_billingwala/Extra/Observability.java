@@ -61,12 +61,14 @@ public final class Observability {
             loadStoredUserContext(application);
             registerActivityTracking(application);
             registerMemoryBreadcrumbs(application);
+            DeviceHealthMonitor.init(application);
             // Re-wrap after Firebase so our enricher stays outermost and still chains to Crashlytics.
             installFatalCrashHandler();
             syncScreenToCrashlytics();
             ErrorLogQueue.flushAsync();
+            ProcessExitLogCollector.collectAsync(application);
             Log.i(TAG, "Observability initialized | catches ALL uncaught crashes"
-                    + " (UI, DB, print, sync, API, OOM, …) | screen=" + buildScreenName());
+                    + " (UI, DB, print, sync, API, OOM, NPE, ANR, native, …) | screen=" + buildScreenName());
         } catch (Exception e) {
             Log.e(TAG, "Observability.init failed: " + describeThrowable(e), e);
             installFatalCrashHandler();
@@ -83,6 +85,7 @@ public final class Observability {
             if (licenceKey != null && !licenceKey.trim().isEmpty()) {
                 crashlytics.setCustomKey("licence_key", licenceKey.trim());
             }
+            ErrorLogQueue.flushAsync();
         } catch (Exception e) {
             Log.e(TAG, "setUserContext failed: " + describeThrowable(e), e);
         }
@@ -374,6 +377,11 @@ public final class Observability {
             crashlytics.setCustomKey("crash_is_main_thread", mainThread);
             crashlytics.setCustomKey("crash_where", truncate(crashWhere, CUSTOM_KEY_MAX));
             crashlytics.setCustomKey("crash_stack_top", truncate(topFrames, CUSTOM_KEY_MAX));
+            try {
+                crashlytics.setCustomKey("device_memory",
+                        truncate(DeviceHealthMonitor.memorySnapshot(null), CUSTOM_KEY_MAX));
+            } catch (Throwable ignored) {
+            }
             syncScreenToCrashlytics();
 
             String header = "========== APP CRASH (FATAL) ==========";
@@ -460,15 +468,12 @@ public final class Observability {
 
             @Override
             public void onLowMemory() {
-                log("SYSTEM low_memory — app may crash with OutOfMemoryError soon");
+                DeviceHealthMonitor.onLowMemory();
             }
 
             @Override
             public void onTrimMemory(int level) {
-                if (level >= android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL
-                        || level >= android.content.ComponentCallbacks2.TRIM_MEMORY_COMPLETE) {
-                    log("SYSTEM trim_memory level=" + level + " — memory pressure");
-                }
+                DeviceHealthMonitor.onTrimMemory(level);
             }
         });
     }

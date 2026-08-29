@@ -163,7 +163,9 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
         });
 
         binding.addProfile.setOnClickListener(this);
+        binding.profilePhoto.setOnClickListener(this);
         binding.addPaymentQR.setOnClickListener(this);
+        binding.paymentQRPhoto.setOnClickListener(this);
         binding.backToSetting.setOnClickListener(this);
         binding.saveDetails.setOnClickListener(this);
 
@@ -174,10 +176,10 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
     @Override
     public void onClick(View view) {
         int id = view.getId();
-        if (id == R.id.addProfile) {
+        if (id == R.id.addProfile || id == R.id.profilePhoto) {
             imageName = "profile";
             selectImage();
-        } else if (id == R.id.addPaymentQR) {
+        } else if (id == R.id.addPaymentQR || id == R.id.paymentQRPhoto) {
             imageName = "paymentQR";
             selectImage();
         } else if (id == R.id.backToSetting) {
@@ -532,6 +534,7 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
         }
 
         if (LicenseModules.isEnabled(MainActivity.dineIn)) {
+            binding.tableSectionLayout.setVisibility(View.VISIBLE);
             binding.tableSwitch.setVisibility(View.VISIBLE);
             if (tableStatus.equalsIgnoreCase("off")) {
                 binding.tableSwitch.setChecked(false);
@@ -541,6 +544,7 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
                 binding.noOfTableLayout.setVisibility(View.VISIBLE);
             }
         } else {
+            binding.tableSectionLayout.setVisibility(View.GONE);
             binding.tableSwitch.setVisibility(View.GONE);
             binding.tableSwitch.setChecked(false);
             binding.noOfTableLayout.setVisibility(View.GONE);

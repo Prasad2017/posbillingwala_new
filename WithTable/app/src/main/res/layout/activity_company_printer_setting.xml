@@ -1,17 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/colorBackground"
     android:fitsSystemWindows="true"
-    tools:context=".Fragment.AddProduct">
+    android:orientation="vertical"
+    tools:context=".Activity.CompanyPrinterSetting">
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:layout_alignParentTop="true">
+        android:layout_height="56dp"
+        android:background="@color/colorPrimary"
+        app:elevation="4dp">
 
         <RelativeLayout
             android:layout_width="match_parent"
@@ -19,468 +22,441 @@
 
             <ImageView
                 android:id="@+id/backToSetting"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
+                android:layout_width="@dimen/touch_min"
+                android:layout_height="@dimen/touch_min"
                 android:layout_alignParentStart="true"
-                android:layout_centerInParent="true"
-                android:layout_gravity="center"
-                android:layout_marginStart="15dp"
+                android:layout_centerVertical="true"
+                android:layout_marginStart="@dimen/spacing_sm"
+                android:contentDescription="@null"
+                android:padding="@dimen/spacing_sm"
                 android:src="@drawable/ic_back"
                 app:tint="@color/white" />
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:layout_toStartOf="@+id/invoicePreview"
-                android:layout_toEndOf="@+id/backToSetting"
+                android:layout_centerVertical="true"
+                android:layout_toStartOf="@id/invoicePreview"
+                android:layout_toEndOf="@id/backToSetting"
+                android:ellipsize="end"
                 android:fontFamily="@font/poppinsmedium"
                 android:gravity="center"
-                android:paddingStart="5dp"
-                android:paddingEnd="5dp"
+                android:maxLines="1"
                 android:text="@string/setting_printer_details"
                 android:textColor="@color/white"
-                android:textSize="17dp" />
+                android:textSize="@dimen/text_title" />
 
             <TextView
                 android:id="@+id/invoicePreview"
                 android:layout_width="wrap_content"
-                android:layout_height="35dp"
+                android:layout_height="32dp"
                 android:layout_alignParentEnd="true"
-                android:layout_centerInParent="true"
-                android:layout_marginEnd="10dp"
-                android:background="@drawable/button_rounded_border"
-                android:backgroundTint="@color/white"
-                android:fontFamily="@font/poppinsregular"
+                android:layout_centerVertical="true"
+                android:layout_marginEnd="@dimen/spacing_md"
+                android:background="@drawable/bg_toolbar_chip"
+                android:fontFamily="@font/poppinsmedium"
                 android:gravity="center"
-                android:paddingStart="10dp"
-                android:paddingEnd="10dp"
+                android:paddingStart="@dimen/spacing_md"
+                android:paddingEnd="@dimen/spacing_md"
                 android:text="@string/ui_invoice_preview"
-                android:textColor="@color/black"
-                android:textSize="13dp" />
+                android:textColor="@color/colorPrimary"
+                android:textSize="@dimen/text_caption" />
         </RelativeLayout>
-
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_above="@+id/saveSetting"
-        android:layout_below="@id/appBarLayout">
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:fillViewport="true"
+        android:padding="@dimen/spacing_lg">
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="10dp">
+            android:paddingBottom="@dimen/spacing_md">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center|start"
-                android:layout_marginStart="5dp"
-                android:layout_marginTop="15dp"
-                android:fontFamily="@font/poppinsregular"
-                android:gravity="center"
-                android:text="@string/ui_invoice_printer_name"
-                android:textColor="@color/textcolor" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:background="@drawable/button_rounded_border"
-                android:orientation="horizontal">
-
-                <com.jaredrummler.materialspinner.MaterialSpinner
-                    android:id="@+id/printerSpinner"
-                    android:layout_width="match_parent"
-                    android:layout_height="45dp"
-                    android:layout_gravity="center"
-                    android:layout_margin="5dp"
-                    android:layout_weight="1"
-                    android:fontFamily="@font/poppinsregular"
-                    android:gravity="center|start"
-                    android:paddingStart="10dp"
-                    android:textColor="@color/black"
-                    android:textSize="15dp"
-                    app:ms_hint="Select Printer" />
-
-                <TextView
-                    android:id="@+id/connectPrinter"
-                    android:layout_width="100dp"
-                    android:layout_height="50dp"
-                    android:layout_gravity="center"
-                    android:background="@drawable/button_rounded_border"
-                    android:backgroundTint="@color/colorPrimary"
-                    android:fontFamily="@font/poppinsmedium"
-                    android:gravity="center"
-                    android:paddingStart="10dp"
-                    android:paddingEnd="10dp"
-                    android:text="@string/ui_connect"
-                    android:textColor="@color/white"
-                    android:textSize="15sp" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/KOTPrinterLayout"
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="15dp"
-                android:orientation="vertical"
-                android:visibility="gone">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center|start"
-                    android:layout_marginStart="5dp"
-                    android:fontFamily="@font/poppinsregular"
-                    android:gravity="center"
-                    android:text="@string/ui_kot_print_printer_name"
-                    android:textColor="@color/textcolor" />
+                app:cardBackgroundColor="@color/colorSurface"
+                app:cardCornerRadius="@dimen/radius_lg"
+                app:cardElevation="@dimen/card_elevation"
+                app:strokeColor="@color/colorBorder"
+                app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="50dp"
-                    android:background="@drawable/button_rounded_border"
-                    android:orientation="horizontal">
-
-                    <com.jaredrummler.materialspinner.MaterialSpinner
-                        android:id="@+id/KOTPrinterSpinner"
-                        android:layout_width="match_parent"
-                        android:layout_height="45dp"
-                        android:layout_gravity="center"
-                        android:layout_margin="5dp"
-                        android:layout_weight="1"
-                        android:fontFamily="@font/poppinsregular"
-                        android:gravity="center|start"
-                        android:paddingStart="10dp"
-                        android:textColor="@color/black"
-                        android:textSize="15dp"
-                        app:ms_hint="Select Printer" />
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/spacing_lg">
 
                     <TextView
-                        android:id="@+id/connectKOTPrinter"
-                        android:layout_width="100dp"
-                        android:layout_height="50dp"
-                        android:layout_gravity="center"
-                        android:background="@drawable/button_rounded_border"
-                        android:backgroundTint="@color/colorPrimary"
-                        android:fontFamily="@font/poppinsmedium"
-                        android:gravity="center"
-                        android:paddingStart="10dp"
-                        android:paddingEnd="10dp"
-                        android:text="@string/ui_connect"
-                        android:textColor="@color/white"
-                        android:textSize="15sp" />
+                        style="@style/PosSectionLabel"
+                        android:text="@string/printer_section_printers" />
 
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_md"
+                        android:fontFamily="@font/poppinsregular"
+                        android:text="@string/ui_invoice_printer_name"
+                        android:textColor="@color/colorTextSecondary"
+                        android:textSize="@dimen/text_body" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_sm"
+                        android:background="@drawable/bg_input"
+                        android:gravity="center_vertical"
+                        android:minHeight="@dimen/input_height"
+                        android:orientation="horizontal"
+                        android:paddingStart="@dimen/spacing_xs"
+                        android:paddingEnd="@dimen/spacing_sm">
+
+                        <com.jaredrummler.materialspinner.MaterialSpinner
+                            android:id="@+id/printerSpinner"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:fontFamily="@font/poppinsregular"
+                            android:textColor="@color/colorTextPrimary"
+                            android:textSize="@dimen/text_body"
+                            app:ms_hint="Select Printer" />
+
+                        <TextView
+                            android:id="@+id/connectPrinter"
+                            android:layout_width="wrap_content"
+                            android:layout_height="36dp"
+                            android:background="@drawable/bg_button_primary"
+                            android:fontFamily="@font/poppinsmedium"
+                            android:gravity="center"
+                            android:paddingStart="@dimen/spacing_md"
+                            android:paddingEnd="@dimen/spacing_md"
+                            android:text="@string/ui_connect"
+                            android:textColor="@color/white"
+                            android:textSize="@dimen/text_caption" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/KOTPrinterLayout"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_md"
+                        android:orientation="vertical"
+                        android:visibility="gone">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/poppinsregular"
+                            android:text="@string/ui_kot_print_printer_name"
+                            android:textColor="@color/colorTextSecondary"
+                            android:textSize="@dimen/text_body" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/spacing_sm"
+                            android:background="@drawable/bg_input"
+                            android:gravity="center_vertical"
+                            android:minHeight="@dimen/input_height"
+                            android:orientation="horizontal"
+                            android:paddingStart="@dimen/spacing_xs"
+                            android:paddingEnd="@dimen/spacing_sm">
+
+                            <com.jaredrummler.materialspinner.MaterialSpinner
+                                android:id="@+id/KOTPrinterSpinner"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:fontFamily="@font/poppinsregular"
+                                android:textColor="@color/colorTextPrimary"
+                                android:textSize="@dimen/text_body"
+                                app:ms_hint="Select Printer" />
+
+                            <TextView
+                                android:id="@+id/connectKOTPrinter"
+                                android:layout_width="wrap_content"
+                                android:layout_height="36dp"
+                                android:background="@drawable/bg_button_primary"
+                                android:fontFamily="@font/poppinsmedium"
+                                android:gravity="center"
+                                android:paddingStart="@dimen/spacing_md"
+                                android:paddingEnd="@dimen/spacing_md"
+                                android:text="@string/ui_connect"
+                                android:textColor="@color/white"
+                                android:textSize="@dimen/text_caption" />
+                        </LinearLayout>
+                    </LinearLayout>
                 </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
-            </LinearLayout>
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/invoicePrefixLayout"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_marginTop="10dp"
-                android:layout_marginBottom="5dp"
-                android:gravity="center"
-                android:textColorHint="@color/light_black"
-                app:boxCornerRadiusBottomEnd="5dp"
-                app:boxCornerRadiusBottomStart="5dp"
-                app:boxCornerRadiusTopEnd="5dp"
-                app:boxCornerRadiusTopStart="5dp"
-                app:boxStrokeColor="@color/light_black">
+                android:layout_marginTop="@dimen/spacing_lg"
+                app:cardBackgroundColor="@color/colorSurface"
+                app:cardCornerRadius="@dimen/radius_lg"
+                app:cardElevation="@dimen/card_elevation"
+                app:strokeColor="@color/colorBorder"
+                app:strokeWidth="1dp">
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/invoicePrefix"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:digits="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ./-"
-                    android:drawableTint="@color/light_black"
-                    android:fontFamily="@font/poppinsregular"
-                    android:hint="@string/ui_sales_invoice_prefix"
-                    android:imeOptions="actionNext"
-                    android:inputType="textCapCharacters"
-                    android:paddingStart="15dp"
-                    android:paddingEnd="10dp"
-                    android:singleLine="true"
-                    android:textAllCaps="true"
-                    android:textColor="@color/black"
-                    android:textColorHint="@color/light_black"
-                    android:textSize="15dp" />
+                    android:orientation="vertical"
+                    android:padding="@dimen/spacing_lg">
 
-            </com.google.android.material.textfield.TextInputLayout>
+                    <TextView
+                        style="@style/PosSectionLabel"
+                        android:text="@string/printer_section_invoice" />
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/printerFeedLinesLayout"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/invoicePrefixLayout"
+                        style="@style/PosFormTextInput"
+                        android:layout_marginTop="@dimen/spacing_md">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/invoicePrefix"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:digits="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ./-"
+                            android:fontFamily="@font/poppinsregular"
+                            android:hint="@string/ui_sales_invoice_prefix"
+                            android:imeOptions="actionNext"
+                            android:inputType="textCapCharacters"
+                            android:paddingStart="@dimen/spacing_lg"
+                            android:paddingEnd="@dimen/spacing_md"
+                            android:singleLine="true"
+                            android:textAllCaps="true"
+                            android:textColor="@color/colorTextPrimary"
+                            android:textSize="@dimen/text_body" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/printerFeedLinesLayout"
+                        style="@style/PosFormTextInput"
+                        android:layout_marginTop="@dimen/spacing_md">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/printerFeedLines"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:digits="0123456789"
+                            android:fontFamily="@font/poppinsregular"
+                            android:hint="@string/ui_print_feed_lines"
+                            android:imeOptions="actionNext"
+                            android:inputType="numberDecimal"
+                            android:paddingStart="@dimen/spacing_lg"
+                            android:paddingEnd="@dimen/spacing_md"
+                            android:singleLine="true"
+                            android:textColor="@color/colorTextPrimary"
+                            android:textSize="@dimen/text_body" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/KotPrinterFeedLinesLayout"
+                        style="@style/PosFormTextInput"
+                        android:layout_marginTop="@dimen/spacing_md">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/KotPrinterFeedLines"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:digits="0123456789"
+                            android:fontFamily="@font/poppinsregular"
+                            android:hint="@string/ui_kot_print_feed_lines"
+                            android:imeOptions="actionNext"
+                            android:inputType="numberDecimal"
+                            android:paddingStart="@dimen/spacing_lg"
+                            android:paddingEnd="@dimen/spacing_md"
+                            android:singleLine="true"
+                            android:textColor="@color/colorTextPrimary"
+                            android:textSize="@dimen/text_body" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_marginTop="10dp"
-                android:layout_marginBottom="5dp"
-                android:gravity="center"
-                android:textColorHint="@color/light_black"
-                app:boxCornerRadiusBottomEnd="5dp"
-                app:boxCornerRadiusBottomStart="5dp"
-                app:boxCornerRadiusTopEnd="5dp"
-                app:boxCornerRadiusTopStart="5dp"
-                app:boxStrokeColor="@color/light_black">
+                android:layout_marginTop="@dimen/spacing_lg"
+                app:cardBackgroundColor="@color/colorSurface"
+                app:cardCornerRadius="@dimen/radius_lg"
+                app:cardElevation="@dimen/card_elevation"
+                app:strokeColor="@color/colorBorder"
+                app:strokeWidth="1dp">
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/printerFeedLines"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:digits="0123456789"
-                    android:drawableTint="@color/light_black"
-                    android:fontFamily="@font/poppinsregular"
-                    android:hint="@string/ui_print_feed_lines"
-                    android:imeOptions="actionNext"
-                    android:inputType="numberDecimal"
-                    android:paddingStart="15dp"
-                    android:paddingEnd="10dp"
-                    android:singleLine="true"
-                    android:textAllCaps="true"
-                    android:textColor="@color/black"
-                    android:textColorHint="@color/light_black"
-                    android:textSize="15dp" />
+                    android:orientation="vertical"
+                    android:paddingStart="@dimen/spacing_lg"
+                    android:paddingTop="@dimen/spacing_lg"
+                    android:paddingEnd="@dimen/spacing_lg"
+                    android:paddingBottom="@dimen/spacing_sm">
 
-            </com.google.android.material.textfield.TextInputLayout>
+                    <TextView
+                        style="@style/PosSectionLabel"
+                        android:text="@string/printer_section_bill" />
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/KotPrinterFeedLinesLayout"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    <androidx.appcompat.widget.SwitchCompat
+                        android:id="@+id/logoSwitch"
+                        style="@style/PosSwitchRow"
+                        android:layout_marginTop="@dimen/spacing_sm"
+                        android:checked="false"
+                        android:text="@string/ui_use_logo_on_bill"
+                        android:textOff="Off"
+                        android:textOn="On" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/colorBorder" />
+
+                    <androidx.appcompat.widget.SwitchCompat
+                        android:id="@+id/paymentSwitch"
+                        style="@style/PosSwitchRow"
+                        android:checked="false"
+                        android:text="@string/ui_use_payment_qr_on_bill"
+                        android:textOff="Off"
+                        android:textOn="On" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/colorBorder" />
+
+                    <androidx.appcompat.widget.SwitchCompat
+                        android:id="@+id/customerSwitch"
+                        style="@style/PosSwitchRow"
+                        android:checked="false"
+                        android:text="@string/ui_use_customer_details_on_bill"
+                        android:textOff="Off"
+                        android:textOn="On" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/colorBorder" />
+
+                    <androidx.appcompat.widget.SwitchCompat
+                        android:id="@+id/productQuantityUpdate"
+                        style="@style/PosSwitchRow"
+                        android:checked="false"
+                        android:text="@string/ui_product_quantity_update"
+                        android:textOff="Off"
+                        android:textOn="On" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/colorBorder" />
+
+                    <androidx.appcompat.widget.SwitchCompat
+                        android:id="@+id/duplicateBillSwitch"
+                        style="@style/PosSwitchRow"
+                        android:checked="false"
+                        android:text="@string/ui_duplicate_bill_copy"
+                        android:textOff="Off"
+                        android:textOn="On" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="@dimen/spacing_sm"
+                        android:fontFamily="@font/poppinsregular"
+                        android:text="@string/ui_duplicate_bill_copy_hint"
+                        android:textColor="@color/colorTextHint"
+                        android:textSize="@dimen/text_caption" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_marginTop="10dp"
-                android:layout_marginBottom="5dp"
-                android:gravity="center"
-                android:textColorHint="@color/light_black"
-                app:boxCornerRadiusBottomEnd="5dp"
-                app:boxCornerRadiusBottomStart="5dp"
-                app:boxCornerRadiusTopEnd="5dp"
-                app:boxCornerRadiusTopStart="5dp"
-                app:boxStrokeColor="@color/light_black">
+                android:layout_marginTop="@dimen/spacing_lg"
+                app:cardBackgroundColor="@color/colorSurface"
+                app:cardCornerRadius="@dimen/radius_lg"
+                app:cardElevation="@dimen/card_elevation"
+                app:strokeColor="@color/colorBorder"
+                app:strokeWidth="1dp">
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/KotPrinterFeedLines"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:digits="0123456789"
-                    android:drawableTint="@color/light_black"
-                    android:fontFamily="@font/poppinsregular"
-                    android:hint="@string/ui_kot_print_feed_lines"
-                    android:imeOptions="actionNext"
-                    android:inputType="numberDecimal"
-                    android:paddingStart="15dp"
-                    android:paddingEnd="10dp"
-                    android:singleLine="true"
-                    android:textAllCaps="true"
-                    android:textColor="@color/black"
-                    android:textColorHint="@color/light_black"
-                    android:textSize="15dp" />
+                    android:orientation="vertical"
+                    android:padding="@dimen/spacing_lg">
 
-            </com.google.android.material.textfield.TextInputLayout>
+                    <TextView
+                        style="@style/PosSectionLabel"
+                        android:text="@string/printer_section_terms" />
 
-            <androidx.appcompat.widget.SwitchCompat
-                android:id="@+id/logoSwitch"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:layout_gravity="center"
-                android:layout_marginTop="10dp"
-                android:layout_marginBottom="5dp"
-                android:checked="false"
-                android:fontFamily="@font/poppinsregular"
-                android:gravity="center|start"
-                android:paddingStart="15dp"
-                android:paddingEnd="10dp"
-                android:switchMinWidth="45dp"
-                android:switchPadding="30dp"
-                android:text="@string/ui_use_logo_on_bill"
-                android:textColor="@color/black"
-                android:textOff="Off"
-                android:textOn="On"
-                android:textSize="15dp" />
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/invoiceTitleLayout"
+                        style="@style/PosFormTextInput"
+                        android:layout_marginTop="@dimen/spacing_md"
+                        android:visibility="gone">
 
-            <androidx.appcompat.widget.SwitchCompat
-                android:id="@+id/paymentSwitch"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:layout_gravity="center"
-                android:layout_marginTop="10dp"
-                android:layout_marginBottom="5dp"
-                android:checked="false"
-                android:fontFamily="@font/poppinsregular"
-                android:gravity="center|start"
-                android:paddingStart="15dp"
-                android:paddingEnd="10dp"
-                android:switchMinWidth="45dp"
-                android:switchPadding="30dp"
-                android:text="@string/ui_use_payment_qr_on_bill"
-                android:textColor="@color/black"
-                android:textOff="Off"
-                android:textOn="On"
-                android:textSize="15dp" />
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/invoiceTitle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/poppinsregular"
+                            android:hint="@string/ui_sales_invoice_title"
+                            android:imeOptions="actionNext"
+                            android:inputType="textCapWords"
+                            android:paddingStart="@dimen/spacing_lg"
+                            android:paddingEnd="@dimen/spacing_md"
+                            android:singleLine="true"
+                            android:textColor="@color/colorTextPrimary"
+                            android:textSize="@dimen/text_body" />
+                    </com.google.android.material.textfield.TextInputLayout>
 
-            <androidx.appcompat.widget.SwitchCompat
-                android:id="@+id/customerSwitch"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:layout_gravity="center"
-                android:layout_marginTop="10dp"
-                android:layout_marginBottom="5dp"
-                android:checked="false"
-                android:fontFamily="@font/poppinsregular"
-                android:gravity="center|start"
-                android:paddingStart="15dp"
-                android:paddingEnd="10dp"
-                android:switchMinWidth="45dp"
-                android:switchPadding="30dp"
-                android:text="@string/ui_use_customer_details_on_bill"
-                android:textColor="@color/black"
-                android:textOff="Off"
-                android:textOn="On"
-                android:textSize="15dp" />
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/invoiceTermsConditionLayout"
+                        style="@style/PosFormTextInput"
+                        android:layout_marginTop="@dimen/spacing_md">
 
-            <androidx.appcompat.widget.SwitchCompat
-                android:id="@+id/productQuantityUpdate"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:layout_gravity="center"
-                android:layout_marginTop="10dp"
-                android:layout_marginBottom="5dp"
-                android:checked="false"
-                android:fontFamily="@font/poppinsregular"
-                android:gravity="center|start"
-                android:paddingStart="15dp"
-                android:paddingEnd="10dp"
-                android:switchMinWidth="45dp"
-                android:switchPadding="30dp"
-                android:text="@string/ui_product_quantity_update"
-                android:textColor="@color/black"
-                android:textOff="Off"
-                android:textOn="On"
-                android:textSize="15dp" />
-
-            <androidx.appcompat.widget.SwitchCompat
-                android:id="@+id/duplicateBillSwitch"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:layout_gravity="center"
-                android:layout_marginTop="10dp"
-                android:layout_marginBottom="5dp"
-                android:checked="false"
-                android:fontFamily="@font/poppinsregular"
-                android:gravity="center|start"
-                android:paddingStart="15dp"
-                android:paddingEnd="10dp"
-                android:switchMinWidth="45dp"
-                android:switchPadding="30dp"
-                android:text="@string/ui_duplicate_bill_copy"
-                android:textColor="@color/black"
-                android:textOff="Off"
-                android:textOn="On"
-                android:textSize="15dp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="15dp"
-                android:layout_marginEnd="10dp"
-                android:layout_marginBottom="5dp"
-                android:fontFamily="@font/poppinsregular"
-                android:text="@string/ui_duplicate_bill_copy_hint"
-                android:textColor="@color/textcolor"
-                android:textSize="12dp" />
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/invoiceTitleLayout"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_marginTop="10dp"
-                android:layout_marginBottom="5dp"
-                android:gravity="center"
-                android:textColorHint="@color/light_black"
-                android:visibility="gone"
-                app:boxCornerRadiusBottomEnd="5dp"
-                app:boxCornerRadiusBottomStart="5dp"
-                app:boxCornerRadiusTopEnd="5dp"
-                app:boxCornerRadiusTopStart="5dp"
-                app:boxStrokeColor="@color/light_black">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/invoiceTitle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:drawableTint="@color/light_black"
-                    android:fontFamily="@font/poppinsregular"
-                    android:hint="@string/ui_sales_invoice_title"
-                    android:imeOptions="actionNext"
-                    android:inputType="textCapWords"
-                    android:paddingStart="15dp"
-                    android:paddingEnd="10dp"
-                    android:singleLine="true"
-                    android:textColor="@color/black"
-                    android:textColorHint="@color/light_black"
-                    android:textSize="15dp" />
-
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/invoiceTermsConditionLayout"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_marginTop="10dp"
-                android:layout_marginBottom="5dp"
-                android:gravity="center"
-                android:textColorHint="@color/light_black"
-                app:boxCornerRadiusBottomEnd="5dp"
-                app:boxCornerRadiusBottomStart="5dp"
-                app:boxCornerRadiusTopEnd="5dp"
-                app:boxCornerRadiusTopStart="5dp"
-                app:boxStrokeColor="@color/light_black">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/invoiceTermsCondition"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:digits="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ. "
-                    android:fontFamily="@font/poppinsregular"
-                    android:hint="@string/ui_invoice_terms_amp_conditions"
-                    android:inputType="textCapWords|textMultiLine"
-                    android:paddingStart="15dp"
-                    android:paddingEnd="10dp"
-                    android:textColor="@color/black"
-                    android:textColorHint="@color/light_black"
-                    android:textSize="15dp" />
-
-            </com.google.android.material.textfield.TextInputLayout>
-
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/invoiceTermsCondition"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:digits="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ. "
+                            android:fontFamily="@font/poppinsregular"
+                            android:hint="@string/ui_invoice_terms_amp_conditions"
+                            android:inputType="textCapWords|textMultiLine"
+                            android:minLines="3"
+                            android:paddingStart="@dimen/spacing_lg"
+                            android:paddingEnd="@dimen/spacing_md"
+                            android:textColor="@color/colorTextPrimary"
+                            android:textSize="@dimen/text_body" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
-
     </androidx.core.widget.NestedScrollView>
 
-    <TextView
-        android:id="@+id/saveSetting"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:layout_alignParentBottom="true"
-        android:layout_gravity="center"
-        android:background="@color/colorPrimary"
-        android:fontFamily="@font/poppinsmedium"
-        android:gravity="center"
-        android:text="@string/ui_save_setting"
-        android:textAllCaps="true"
-        android:textColor="@color/white"
-        android:textSize="17dp" />
+        android:layout_height="wrap_content"
+        android:background="@color/colorSurface"
+        android:elevation="8dp"
+        android:padding="@dimen/spacing_lg">
 
-</RelativeLayout>
+        <TextView
+            android:id="@+id/saveSetting"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/button_height"
+            android:background="@drawable/bg_button_primary"
+            android:fontFamily="@font/poppinsmedium"
+            android:gravity="center"
+            android:text="@string/ui_save_setting"
+            android:textColor="@color/white"
+            android:textSize="@dimen/text_button" />
+    </LinearLayout>
+</LinearLayout>

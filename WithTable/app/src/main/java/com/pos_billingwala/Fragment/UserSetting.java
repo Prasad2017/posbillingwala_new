@@ -2,15 +2,12 @@ package com.pos_billingwala.Fragment;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.Dialog;
 import android.app.TimePickerDialog;
 import android.content.ActivityNotFoundException;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -21,8 +18,6 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -39,7 +34,7 @@ import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.initialization.InitializationStatus;
 import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
 import com.google.android.gms.tasks.Task;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.play.core.appupdate.AppUpdateInfo;
 import com.google.android.play.core.appupdate.AppUpdateManager;
@@ -50,6 +45,7 @@ import com.pos_billingwala.Activity.LoginMPin;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.AppLanguage;
+import com.pos_billingwala.Extra.BottomSheetUi;
 import com.pos_billingwala.Extra.BusinessHours;
 import com.pos_billingwala.Extra.AuthTokens;
 import com.pos_billingwala.Extra.Common;
@@ -57,6 +53,7 @@ import com.pos_billingwala.Extra.DetectConnection;
 import com.pos_billingwala.Model.AllApiResponse;
 import com.pos_billingwala.Model.LoginResponse;
 import com.pos_billingwala.Model.PrinterSettingResponse;
+import com.pos_billingwala.NetworkToOffline.CloudSyncNav;
 import com.pos_billingwala.NetworkToOffline.NetworkDataFetcher;
 import com.pos_billingwala.NetworkToOffline.OfflineNetworkData;
 import com.pos_billingwala.NetworkToOffline.UserSynchronizeData;
@@ -65,7 +62,7 @@ import com.pos_billingwala.Print.WoosimPrnMng;
 import com.pos_billingwala.R;
 import com.pos_billingwala.Retrofit.Api;
 import com.pos_billingwala.databinding.FragmentUserSettingBinding;
-import com.pos_billingwala.databinding.ItemReportMenuRowBinding;
+import com.pos_billingwala.databinding.ItemGroupedMenuRowBinding;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -172,31 +169,78 @@ public class UserSetting extends Fragment implements View.OnClickListener {
                 R.color.statusExpired, getString(R.string.setting_logout), getString(R.string.setting_hint_logout));
         binding.logoutLayout.menuTitle.setTextColor(ContextCompat.getColor(requireContext(), R.color.statusExpired));
 
-        binding.invoiceDetailsLayout.getRoot().setOnClickListener(this);
-        binding.reportLayout.getRoot().setOnClickListener(this);
-        binding.masterDataLayout.getRoot().setOnClickListener(this);
-        binding.shopDetailLayout.getRoot().setOnClickListener(this);
-        binding.businessHoursLayout.getRoot().setOnClickListener(this);
-        binding.printerDetailLayout.getRoot().setOnClickListener(this);
-        binding.inventoryManagementLayout.getRoot().setOnClickListener(this);
-        binding.expenseManagementLayout.getRoot().setOnClickListener(this);
-        binding.supportLayout.getRoot().setOnClickListener(this);
-        binding.aboutLayout.getRoot().setOnClickListener(this);
-        binding.fetchDataLayout.getRoot().setOnClickListener(this);
-        binding.updateAppLayout.getRoot().setOnClickListener(this);
-        binding.synchronizeLayout.getRoot().setOnClickListener(this);
-        binding.appPinLayout.getRoot().setOnClickListener(this);
-        binding.languageLayout.getRoot().setOnClickListener(this);
-        binding.rateUsLayout.getRoot().setOnClickListener(this);
-        binding.shareAppLayout.getRoot().setOnClickListener(this);
-        binding.logoutLayout.getRoot().setOnClickListener(this);
+        showGroupDividers(binding.invoiceDetailsLayout, binding.reportLayout, binding.masterDataLayout);
+        showGroupDividers(binding.shopDetailLayout, binding.businessHoursLayout, binding.printerDetailLayout,
+                binding.inventoryManagementLayout, binding.expenseManagementLayout);
+        showGroupDividers(binding.supportLayout, binding.aboutLayout, binding.fetchDataLayout,
+                binding.updateAppLayout, binding.synchronizeLayout);
+        showGroupDividers(binding.appPinLayout, binding.languageLayout, binding.rateUsLayout,
+                binding.shareAppLayout, binding.logoutLayout);
+
+        binding.invoiceDetailsLayout.getRoot().setOnClickListener(v ->
+                ((MainActivity) activity).loadFragment(new OrderInvoice(), true));
+        binding.reportLayout.getRoot().setOnClickListener(v -> setReportPassword());
+        binding.masterDataLayout.getRoot().setOnClickListener(v ->
+                ((MainActivity) activity).loadFragment(new MasterData(), true));
+        binding.shopDetailLayout.getRoot().setOnClickListener(v ->
+                ((MainActivity) activity).loadFragment(new CompanyDetailSetting(), true));
+        binding.businessHoursLayout.getRoot().setOnClickListener(v -> showBusinessHoursDialog());
+        binding.printerDetailLayout.getRoot().setOnClickListener(v ->
+                startActivity(new Intent(activity, CompanyPrinterSetting.class)));
+        binding.inventoryManagementLayout.getRoot().setOnClickListener(v ->
+                ((MainActivity) activity).loadFragment(new Inventory(), true));
+        binding.expenseManagementLayout.getRoot().setOnClickListener(v ->
+                ((MainActivity) activity).loadFragment(new Expenses(), true));
+        binding.supportLayout.getRoot().setOnClickListener(v -> {
+            if (DetectConnection.checkInternetConnection(activity)) {
+                ((MainActivity) activity).loadFragment(new SupportHub(), true);
+            } else {
+                Toast.makeText(activity, getString(R.string.support_online_only_notice), Toast.LENGTH_LONG).show();
+                DetectConnection.noInternetConnection(activity);
+            }
+        });
+        binding.aboutLayout.getRoot().setOnClickListener(v ->
+                ((MainActivity) activity).loadFragment(new AboutUs(), true));
+        binding.fetchDataLayout.getRoot().setOnClickListener(v -> confirmFetchData());
+        binding.updateAppLayout.getRoot().setOnClickListener(v -> checkAppUpdates());
+        binding.synchronizeLayout.getRoot().setOnClickListener(v ->
+                CloudSyncNav.openFromUi(activity));
+        binding.appPinLayout.getRoot().setOnClickListener(v -> {
+            if (DetectConnection.checkInternetConnection(activity)) {
+                changeAppMpin();
+            } else {
+                DetectConnection.noInternetConnection(activity);
+            }
+        });
+        binding.languageLayout.getRoot().setOnClickListener(v -> showLanguagePicker());
+        binding.rateUsLayout.getRoot().setOnClickListener(v -> {
+            try {
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + activity.getPackageName())));
+            } catch (ActivityNotFoundException anfe) {
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + activity.getPackageName())));
+            }
+        });
+        binding.shareAppLayout.getRoot().setOnClickListener(v -> {
+            Intent shareIntent = new Intent(Intent.ACTION_SEND);
+            shareIntent.setType("text/*");
+            shareIntent.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.app_name));
+            shareIntent.putExtra(Intent.EXTRA_TEXT, appUrl + " Download POSBillingwala APP using " + appLink + getActivity().getPackageName());
+            startActivity(Intent.createChooser(shareIntent, "Share Using"));
+        });
+        binding.logoutLayout.getRoot().setOnClickListener(v -> {
+            if (DetectConnection.checkInternetConnection(activity)) {
+                logout();
+            } else {
+                DetectConnection.noInternetConnection(activity);
+            }
+        });
 
         binding.languageLayout.menuSubtitle.setText(getString(
                 R.string.language_current,
                 AppLanguage.displayName(activity, AppLanguage.getSavedCode(activity))));
     }
 
-    private void setupRow(ItemReportMenuRowBinding row, int iconRes, int bgRes, int tintColor,
+    private void setupRow(ItemGroupedMenuRowBinding row, int iconRes, int bgRes, int tintColor,
                           String title, String subtitle) {
         row.menuIcon.setBackgroundResource(bgRes);
         row.menuIcon.setImageResource(iconRes);
@@ -204,6 +248,12 @@ public class UserSetting extends Fragment implements View.OnClickListener {
         row.menuIcon.setColorFilter(ContextCompat.getColor(requireContext(), tintColor));
         row.menuTitle.setText(title);
         row.menuSubtitle.setText(subtitle);
+    }
+
+    private void showGroupDividers(ItemGroupedMenuRowBinding... rows) {
+        for (int i = 1; i < rows.length; i++) {
+            rows[i].rowDivider.setVisibility(View.VISIBLE);
+        }
     }
 
     public void initAds() {
@@ -271,64 +321,6 @@ public class UserSetting extends Fragment implements View.OnClickListener {
             Intent browserIntent = new Intent(Intent.ACTION_VIEW);
             browserIntent.setData(Uri.parse("https://thecanatech.com/"));
             startActivity(browserIntent);
-        } else if (id == R.id.reportLayout) {
-            setReportPassword();
-        } else if (id == R.id.masterDataLayout) {
-            ((MainActivity) activity).loadFragment(new MasterData(), true);
-        } else if (id == R.id.invoiceDetailsLayout) {
-            ((MainActivity) activity).loadFragment(new OrderInvoice(), true);
-        } else if (id == R.id.shopDetailLayout) {
-            ((MainActivity) activity).loadFragment(new CompanyDetailSetting(), true);
-        } else if (id == R.id.businessHoursLayout) {
-            showBusinessHoursDialog();
-        } else if (id == R.id.printerDetailLayout) {
-            startActivity(new Intent(activity, CompanyPrinterSetting.class));
-        } else if (id == R.id.inventoryManagementLayout) {
-            ((MainActivity) activity).loadFragment(new Inventory(), true);
-        } else if (id == R.id.expenseManagementLayout) {
-            ((MainActivity) activity).loadFragment(new Expenses(), true);
-        } else if (id == R.id.aboutLayout) {
-            ((MainActivity) activity).loadFragment(new AboutUs(), true);
-        } else if (id == R.id.supportLayout) {
-            if (DetectConnection.checkInternetConnection(activity)) {
-                ((MainActivity) activity).loadFragment(new SupportHub(), true);
-            } else {
-                Toast.makeText(activity, getString(R.string.support_online_only_notice), Toast.LENGTH_LONG).show();
-                DetectConnection.noInternetConnection(activity);
-            }
-        } else if (id == R.id.fetchDataLayout) {
-            confirmFetchData();
-        } else if (id == R.id.synchronizeLayout) {
-            confirmSynchronizeData();
-        } else if (id == R.id.logoutLayout) {
-            if (DetectConnection.checkInternetConnection(activity)) {
-                logout();
-            } else {
-                DetectConnection.noInternetConnection(activity);
-            }
-        } else if (id == R.id.rateUsLayout) {
-            try {
-                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + activity.getPackageName())));
-            } catch (ActivityNotFoundException anfe) {
-                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + activity.getPackageName())));
-            }
-        } else if (id == R.id.updateAppLayout) {
-            checkAppUpdates();
-        } else if (id == R.id.shareAppLayout) {
-            // share app with your friends
-            Intent shareIntent = new Intent(Intent.ACTION_SEND);
-            shareIntent.setType("text/*");
-            shareIntent.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.app_name));
-            shareIntent.putExtra(Intent.EXTRA_TEXT, appUrl + " Download POSBillingwala APP using " + appLink + getActivity().getPackageName());
-            startActivity(Intent.createChooser(shareIntent, "Share Using"));
-        } else if (id == R.id.appPinLayout) {
-            if (DetectConnection.checkInternetConnection(activity)) {
-                changeAppMpin();
-            } else {
-                DetectConnection.noInternetConnection(activity);
-            }
-        } else if (id == R.id.languageLayout) {
-            showLanguagePicker();
         }
     }
 
@@ -339,37 +331,23 @@ public class UserSetting extends Fragment implements View.OnClickListener {
                 getString(R.string.language_marathi)
         };
         int checked = AppLanguage.selectedIndex(activity);
-        new MaterialAlertDialogBuilder(activity, R.style.ThemeDialog)
-                .setTitle(R.string.language_settings)
-                .setSingleChoiceItems(languages, checked, (dialog, which) -> {
-                    dialog.dismiss();
-                    String code = AppLanguage.codeForIndex(which);
+        BottomSheetUi.showSingleChoice(activity, getString(R.string.language_settings), languages, checked, true,
+                index -> {
+                    String code = AppLanguage.codeForIndex(index);
                     if (!code.equals(AppLanguage.getSavedCode(activity))) {
-                        // Applies in-place (no Activity recreate / app flash)
                         AppLanguage.setLanguage(activity, code);
                     }
-                })
-                .setNegativeButton(R.string.cancel, (dialog, which) -> dialog.dismiss())
-                .show();
+                });
     }
 
     public void changeAppMpin() {
+        View content = LayoutInflater.from(activity).inflate(R.layout.report_password_dialog, null);
+        BottomSheetDialog sheet = BottomSheetUi.showContent(activity, content, false);
 
-        final Dialog dialog = new Dialog(activity);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE); // before
-        dialog.setContentView(R.layout.report_password_dialog);
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
-        dialog.setCancelable(false);
-
-        WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
-        lp.copyFrom(dialog.getWindow().getAttributes());
-        lp.width = WindowManager.LayoutParams.MATCH_PARENT;
-        lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
-
-        TextView continueToReport = dialog.findViewById(R.id.continueToReport);
-        TextView dismissReport = dialog.findViewById(R.id.dismissReport);
-        TextInputEditText reportPin = dialog.findViewById(R.id.reportPin);
-        TextView details = dialog.findViewById(R.id.details);
+        TextView continueToReport = content.findViewById(R.id.continueToReport);
+        TextView dismissReport = content.findViewById(R.id.dismissReport);
+        TextInputEditText reportPin = content.findViewById(R.id.reportPin);
+        TextView details = content.findViewById(R.id.details);
 
         details.setText("Change App Login PB-PIN");
         String appPin = Common.getSavedUserData(activity, "appPin");
@@ -378,31 +356,17 @@ public class UserSetting extends Fragment implements View.OnClickListener {
         InputFilter[] fArray = new InputFilter[1];
         fArray[0] = new InputFilter.LengthFilter(maxLength);
         reportPin.setFilters(fArray);
-        dismissReport.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
+        dismissReport.setOnClickListener(v -> sheet.dismiss());
+
+        continueToReport.setOnClickListener(v -> {
+            if (reportPin.getText().toString().length() == 4) {
+                sheet.dismiss();
+                updateMpin(reportPin.getText().toString());
+            } else {
+                reportPin.requestFocus();
+                reportPin.setError("Please enter 4 digit App PIN");
             }
         });
-
-        continueToReport.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (reportPin.getText().toString().length() == 4) {
-                    dialog.dismiss();
-                    updateMpin(reportPin.getText().toString());
-                } else {
-                    reportPin.requestFocus();
-                    reportPin.setError("Please enter 4 digit App PIN");
-                }
-            }
-        });
-
-        dialog.show();
-        Window window = dialog.getWindow();
-        window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT);
-        dialog.getWindow().setAttributes(lp);
-
     }
 
     public void updateMpin(String enteredMpin) {
@@ -457,16 +421,20 @@ public class UserSetting extends Fragment implements View.OnClickListener {
             if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE) {
                 if (!(activity.isFinishing())) {
                     String strMessage = "Please update our <b> POS " + getResources().getString(R.string.app_name) + "</b> app to new version to continue. Before update our app please upload your data on server. We ae not responsible for losing your data.";
-                    new MaterialAlertDialogBuilder(activity, R.style.ThemeDialog)
-                            .setIcon(getResources().getDrawable(R.mipmap.ic_launcher))
-                            .setTitle(getString(R.string.toast_new_version_available))
-                            .setCancelable(false)
-                            .setMessage(Html.fromHtml(strMessage))
-                            .setPositiveButton("Update", (dialog, whichButton) -> {
+                    BottomSheetUi.showAction(
+                            activity,
+                            getString(R.string.toast_new_version_available),
+                            Html.fromHtml(strMessage),
+                            "Update",
+                            "Cancel",
+                            R.mipmap.ic_launcher,
+                            false,
+                            () -> {
                                 Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + activity.getPackageName() + "&hl=en"));
                                 startActivityForResult(intent, 100);
                                 activity.finish();
-                            }).setNegativeButton("Cancel", (dialog, whichButton) -> dialog.dismiss()).show();
+                            },
+                            null);
                 }
             } else {
                 Toast.makeText(activity, getString(R.string.toast_app_update_not_available), Toast.LENGTH_SHORT).show();
@@ -487,85 +455,50 @@ public class UserSetting extends Fragment implements View.OnClickListener {
     }
 
     public void setReportPassword() {
+        View content = LayoutInflater.from(activity).inflate(R.layout.report_password_dialog, null);
+        BottomSheetDialog sheet = BottomSheetUi.showContent(activity, content, false);
 
-        final Dialog dialog = new Dialog(activity);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE); // before
-        dialog.setContentView(R.layout.report_password_dialog);
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
-        dialog.setCancelable(false);
+        TextView continueToReport = content.findViewById(R.id.continueToReport);
+        TextView dismissReport = content.findViewById(R.id.dismissReport);
+        TextInputEditText reportPin = content.findViewById(R.id.reportPin);
 
-        WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
-        lp.copyFrom(dialog.getWindow().getAttributes());
-        lp.width = WindowManager.LayoutParams.MATCH_PARENT;
-        lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
+        dismissReport.setOnClickListener(v -> sheet.dismiss());
 
-        TextView continueToReport = dialog.findViewById(R.id.continueToReport);
-        TextView dismissReport = dialog.findViewById(R.id.dismissReport);
-        TextInputEditText reportPin = dialog.findViewById(R.id.reportPin);
+        continueToReport.setOnClickListener(v -> {
+            String pin;
+            if (MainActivity.reportPin != null) {
+                pin = MainActivity.reportPin;
+            } else {
+                pin = "9082";
+            }
 
-        dismissReport.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
+            if (reportPin.getText().toString().equalsIgnoreCase(pin)) {
+                sheet.dismiss();
+                ((MainActivity) activity).loadFragment(new ReportsHub(), true);
+            } else {
+                reportPin.requestFocus();
+                reportPin.setError("Enter correct pin");
             }
         });
-
-        continueToReport.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                String pin;
-                if (MainActivity.reportPin != null) {
-                    pin = MainActivity.reportPin;
-                } else {
-                    pin = "9082";
-                }
-
-                if (reportPin.getText().toString().equalsIgnoreCase(pin)) {
-                    dialog.dismiss();
-                    ((MainActivity) activity).loadFragment(new ReportsHub(), true);
-                } else {
-                    reportPin.requestFocus();
-                    reportPin.setError("Enter correct pin");
-                }
-            }
-        });
-
-        dialog.show();
-        Window window = dialog.getWindow();
-        window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT);
-        dialog.getWindow().setAttributes(lp);
-
     }
 
     public void logout() {
 
-        new MaterialAlertDialogBuilder(activity, R.style.ThemeDialog)
-                .setTitle(getString(R.string.setting_logout))
-                .setMessage(getString(R.string.toast_do_you_want_to_logout_from_application))
-                .setCancelable(false)
-                .setPositiveButton("YES", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        dialogInterface.dismiss();
-                        if (DetectConnection.checkInternetConnection(activity)) {
-                            //Offline Receiver register
-                            offlineNetworkData = new OfflineNetworkData(activity, "Not-Update");
-                            serverLogout();
-                        } else {
-                            DetectConnection.noInternetConnection(activity);
-                        }
-
+        BottomSheetUi.showConfirm(
+                activity,
+                getString(R.string.setting_logout),
+                getString(R.string.toast_do_you_want_to_logout_from_application),
+                "YES",
+                "NO",
+                false,
+                () -> {
+                    if (DetectConnection.checkInternetConnection(activity)) {
+                        offlineNetworkData = new OfflineNetworkData(activity, "Not-Update");
+                        serverLogout();
+                    } else {
+                        DetectConnection.noInternetConnection(activity);
                     }
-                })
-                .setNegativeButton("NO", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        dialogInterface.dismiss();
-                    }
-                })
-                .show();
-
+                });
     }
 
     public void serverLogout() {
@@ -627,59 +560,39 @@ public class UserSetting extends Fragment implements View.OnClickListener {
 
     public void confirmFetchData() {
 
-        new MaterialAlertDialogBuilder(activity, R.style.ThemeDialog)
-                .setTitle(getString(R.string.toast_do_you_want_to_confirm_to_fetch_from_clo))
-                .setMessage(getString(R.string.toast_local_data_will_be_replaced_with_cloud_d))
-                .setCancelable(false)
-                .setPositiveButton("YES", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        dialogInterface.dismiss();
-                        if (DetectConnection.checkInternetConnection(activity)) {
-                            Toast.makeText(activity, getString(R.string.toast_data_fetching_started), Toast.LENGTH_SHORT).show();
-                            NetworkDataFetcher.resetAndFetchAllData(activity, posBillingWalaDatabase);
-                        } else {
-                            DetectConnection.noInternetConnection(activity);
-                        }
+        BottomSheetUi.showConfirm(
+                activity,
+                getString(R.string.toast_do_you_want_to_confirm_to_fetch_from_clo),
+                getString(R.string.toast_local_data_will_be_replaced_with_cloud_d),
+                "YES",
+                "NO",
+                false,
+                () -> {
+                    if (DetectConnection.checkInternetConnection(activity)) {
+                        Toast.makeText(activity, getString(R.string.toast_data_fetching_started), Toast.LENGTH_SHORT).show();
+                        NetworkDataFetcher.resetAndFetchAllData(activity, posBillingWalaDatabase);
+                    } else {
+                        DetectConnection.noInternetConnection(activity);
                     }
-                })
-                .setNegativeButton("NO", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        dialogInterface.dismiss();
-                    }
-                })
-                .show();
-
+                });
     }
 
     public void confirmSynchronizeData() {
 
-        new MaterialAlertDialogBuilder(activity, R.style.ThemeDialog)
-                .setTitle(getString(R.string.toast_do_you_want_to_confirm_to_send_on_cloud))
-                .setMessage(getString(R.string.toast_your_offline_data_will_be_send_to_the_cl))
-                .setCancelable(false)
-                .setPositiveButton("YES", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        dialogInterface.dismiss();
-                        if (DetectConnection.checkInternetConnection(activity)) {
-                            Toast.makeText(activity, getString(R.string.toast_offline_data_uploading_to_server), Toast.LENGTH_SHORT).show();
-                            UserSynchronizeData userSynchronizeData = new UserSynchronizeData(activity);
-                        } else {
-                            DetectConnection.noInternetConnection(activity);
-                        }
-
+        BottomSheetUi.showConfirm(
+                activity,
+                getString(R.string.toast_do_you_want_to_confirm_to_send_on_cloud),
+                getString(R.string.toast_your_offline_data_will_be_send_to_the_cl),
+                "YES",
+                "NO",
+                false,
+                () -> {
+                    if (DetectConnection.checkInternetConnection(activity)) {
+                        UserSynchronizeData.start(activity);
+                    } else {
+                        DetectConnection.noInternetConnection(activity);
                     }
-                })
-                .setNegativeButton("NO", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        dialogInterface.dismiss();
-                    }
-                })
-                .show();
-
+                });
     }
 
     @Override
@@ -717,16 +630,19 @@ public class UserSetting extends Fragment implements View.OnClickListener {
         openingValue.setOnClickListener(v -> pickBusinessTime(openingMinutes, refreshTimes));
         closingValue.setOnClickListener(v -> pickBusinessTime(closingMinutes, refreshTimes));
 
-        new MaterialAlertDialogBuilder(activity, R.style.ThemeDialog)
-                .setTitle(R.string.business_hours)
-                .setView(content)
-                .setPositiveButton(R.string.ui_androidstringok, (dialog, which) -> {
+        BottomSheetUi.showCustom(
+                activity,
+                getString(R.string.business_hours),
+                content,
+                getString(R.string.ui_androidstringok),
+                getString(R.string.cancel),
+                true,
+                () -> {
                     BusinessHours.save(activity, openingMinutes[0], closingMinutes[0]);
                     refreshBusinessHoursLabel();
                     Toast.makeText(activity, R.string.business_hours_saved, Toast.LENGTH_SHORT).show();
-                })
-                .setNegativeButton(R.string.cancel, null)
-                .show();
+                },
+                null);
     }
 
     private void pickBusinessTime(int[] minutesHolder, Runnable onPicked) {

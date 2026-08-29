@@ -72,6 +72,8 @@ public class DealerProfile extends Fragment implements View.OnClickListener {
         });
 
         binding.update.setOnClickListener(this);
+        binding.changePassword.setOnClickListener(v ->
+                ((MainActivity) activity).loadFragment(new ChangePassword(), true));
 
         return view;
 

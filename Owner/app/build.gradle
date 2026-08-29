@@ -15,8 +15,7 @@ android {
         versionName "1.0.6"
         multiDexEnabled true
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
-        // Testing against dev host (switch back to www for production)
-        buildConfigField "String", "API_BASE_URL", "\"http://dev.posbillingwala.com/androidApp/Owner/\""
+        buildConfigField "String", "API_BASE_URL", "\"http://posbillingwala.com/androidApp/Owner/\""
         // true = allow screenshots/recording on every screen. Set false for production.
         buildConfigField "boolean", "ALLOW_SCREENSHOT", "true"
     }

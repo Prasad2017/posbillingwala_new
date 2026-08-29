@@ -11,3 +11,6 @@ $dbName = 'spllmgkn_posbill';
 // Optional: absolute path to RSA private key for license payload signing (gitignored PEM).
 // Default fallback: API/license_signing_private.pem
 // $licenseSigningPrivateKeyPath = '/secure/path/license_signing_private.pem';
+
+// Required for API/cron/expireLicenses.php (or set env CRON_SECRET).
+// $cronSecret = 'change-me-to-a-long-random-string';

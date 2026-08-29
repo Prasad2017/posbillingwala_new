@@ -2,6 +2,7 @@ package com.posbillingwala.admin.Fragment;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.text.InputType;
@@ -30,6 +31,7 @@ import com.posbillingwala.admin.Model.FoodTypeResponse;
 import com.posbillingwala.admin.Model.ProductCategoryResponse;
 import com.posbillingwala.admin.R;
 import com.posbillingwala.admin.Retrofit.Api;
+import com.posbillingwala.admin.Utils.CatalogImportExportHelper;
 import com.posbillingwala.admin.databinding.FragmentAddCustomerProductCategoryBinding;
 
 import java.util.ArrayList;
@@ -55,6 +57,7 @@ public class AddCustomerProductCategory extends Fragment implements View.OnClick
     FragmentAddCustomerProductCategoryBinding binding;
     String[] foodTypeIdList, foodTypeNameList;
     String foodTypeId;
+    CatalogImportExportHelper catalogImportExportHelper;
 
     public static void getProductCategoryList() {
 
@@ -115,6 +118,12 @@ public class AddCustomerProductCategory extends Fragment implements View.OnClick
             customerId = bundle.getString("customerId");
         }
 
+        if (customerId != null) {
+            catalogImportExportHelper = new CatalogImportExportHelper(
+                    this, customerId, "categories", "Categories", AddCustomerProductCategory::getProductCategoryList);
+            catalogImportExportHelper.bindBar(binding.catalogImportExportBar.getRoot());
+        }
+
         binding.categoryName.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
 
         binding.foodTypeSpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
@@ -153,6 +162,14 @@ public class AddCustomerProductCategory extends Fragment implements View.OnClick
 
         return view;
 
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (catalogImportExportHelper != null) {
+            catalogImportExportHelper.handleActivityResult(requestCode, resultCode, data);
+        }
     }
 
     private void initViews() {

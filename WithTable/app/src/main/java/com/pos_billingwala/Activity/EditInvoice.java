@@ -1,13 +1,10 @@
 package com.pos_billingwala.Activity;
 
 import android.annotation.SuppressLint;
-import android.app.Dialog;
 import android.content.Intent;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
@@ -16,10 +13,12 @@ import android.widget.Toast;
 
 import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.textfield.TextInputEditText;
 import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.pos_billingwala.Adapter.EditInvoiceProductAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.BottomSheetUi;
 import com.pos_billingwala.Extra.ReportCursorHelper;
 import com.pos_billingwala.NetworkToOffline.InvoicePendingSync;
 import com.pos_billingwala.Model.CompanyResponse;
@@ -136,21 +135,13 @@ public class EditInvoice extends BaseActivity {
     }
 
     private void showDiscountDialog() {
-        final Dialog dialog = new Dialog(this);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        dialog.setContentView(R.layout.update_discount_dialog);
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
-        dialog.setCancelable(true);
+        View content = LayoutInflater.from(this).inflate(R.layout.update_discount_dialog, null);
+        BottomSheetDialog sheet = BottomSheetUi.showContent(this, content, true);
 
-        WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
-        lp.copyFrom(dialog.getWindow().getAttributes());
-        lp.width = WindowManager.LayoutParams.MATCH_PARENT;
-        lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
-
-        TextInputEditText discountInput = dialog.findViewById(R.id.discountPercentage);
-        TextView addDiscount = dialog.findViewById(R.id.addDiscountPercentage);
-        TextView dismissDiscount = dialog.findViewById(R.id.dismissDiscountPercentage);
-        MaterialSpinner discountTypeSpinner = dialog.findViewById(R.id.discountTypeSpinner);
+        TextInputEditText discountInput = content.findViewById(R.id.discountPercentage);
+        TextView addDiscount = content.findViewById(R.id.addDiscountPercentage);
+        TextView dismissDiscount = content.findViewById(R.id.dismissDiscountPercentage);
+        MaterialSpinner discountTypeSpinner = content.findViewById(R.id.discountTypeSpinner);
 
         String[] discountTypeList = getResources().getStringArray(R.array.discount_type);
         ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(this,
@@ -169,7 +160,7 @@ public class EditInvoice extends BaseActivity {
         });
         discountInput.setText(discountRaw);
 
-        dismissDiscount.setOnClickListener(v -> dialog.dismiss());
+        dismissDiscount.setOnClickListener(v -> sheet.dismiss());
         addDiscount.setOnClickListener(v -> {
             String value = discountInput.getText() != null ? discountInput.getText().toString().trim() : "";
             if (value.isEmpty()) {
@@ -177,29 +168,18 @@ public class EditInvoice extends BaseActivity {
             }
             discountRaw = value;
             recalculate();
-            dialog.dismiss();
+            sheet.dismiss();
         });
-
-        dialog.show();
-        dialog.getWindow().setAttributes(lp);
     }
 
     private void showPaymentDialog() {
-        final Dialog dialog = new Dialog(this);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        dialog.setContentView(R.layout.set_payment_mode_dialog);
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
-        dialog.setCancelable(true);
+        View content = LayoutInflater.from(this).inflate(R.layout.set_payment_mode_dialog, null);
+        BottomSheetDialog sheet = BottomSheetUi.showContent(this, content, true);
 
-        WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
-        lp.copyFrom(dialog.getWindow().getAttributes());
-        lp.width = WindowManager.LayoutParams.MATCH_PARENT;
-        lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
-
-        TextView continueToReport = dialog.findViewById(R.id.continueToReport);
-        TextView dismissReport = dialog.findViewById(R.id.dismissReport);
-        TextView totalView = dialog.findViewById(R.id.totalAmount);
-        RadioGroup paymentGroup = dialog.findViewById(R.id.paymentGroup);
+        TextView continueToReport = content.findViewById(R.id.continueToReport);
+        TextView dismissReport = content.findViewById(R.id.dismissReport);
+        TextView totalView = content.findViewById(R.id.totalAmount);
+        RadioGroup paymentGroup = content.findViewById(R.id.paymentGroup);
 
         String inr = MainActivity.currencyName != null ? MainActivity.currencyName : "";
         totalView.setText(getString(R.string.ui_total_amount) + ": " + inr
@@ -221,7 +201,7 @@ public class EditInvoice extends BaseActivity {
             }
         });
 
-        dismissReport.setOnClickListener(v -> dialog.dismiss());
+        dismissReport.setOnClickListener(v -> sheet.dismiss());
         continueToReport.setOnClickListener(v -> {
             int selectedId = paymentGroup.getCheckedRadioButtonId();
             RadioButton selected = paymentGroup.findViewById(selectedId);
@@ -229,11 +209,8 @@ public class EditInvoice extends BaseActivity {
                 paymentMode = selected.getText().toString();
             }
             recalculate();
-            dialog.dismiss();
+            sheet.dismiss();
         });
-
-        dialog.show();
-        dialog.getWindow().setAttributes(lp);
     }
 
     private void saveInvoice() {

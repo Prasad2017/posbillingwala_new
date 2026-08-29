@@ -2,13 +2,10 @@ package com.pos_billingwala.Extra;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.pos_billingwala.R;
 
 import java.util.Locale;
@@ -28,20 +25,18 @@ public final class LicenceExpiredUi {
         if (activity == null || activity.isFinishing()) {
             return;
         }
-        new MaterialAlertDialogBuilder(activity, R.style.ThemeDialog)
-                .setIcon(R.mipmap.ic_launcher)
-                .setTitle(R.string.licence_expired_title)
-                .setMessage(activity.getString(
+        BottomSheetUi.showAction(
+                activity,
+                activity.getString(R.string.licence_expired_title),
+                activity.getString(
                         R.string.licence_expired_message,
-                        activity.getString(R.string.support_phone_display)))
-                .setCancelable(false)
-                .setPositiveButton(R.string.licence_expired_call, (dialog, which) -> {
-                    Intent intent = new Intent(Intent.ACTION_DIAL);
-                    intent.setData(Uri.parse("tel:" + activity.getString(R.string.support_phone_dial)));
-                    activity.startActivity(intent);
-                })
-                .setNegativeButton(R.string.licence_expired_ok, (dialog, which) -> dialog.dismiss())
-                .show();
+                        activity.getString(R.string.support_phone_display)),
+                activity.getString(R.string.licence_expired_call),
+                activity.getString(R.string.licence_expired_ok),
+                R.mipmap.ic_launcher,
+                false,
+                () -> BottomSheetUi.dialSupport(activity),
+                null);
     }
 
     /**
@@ -102,17 +97,15 @@ public final class LicenceExpiredUi {
         if (activity == null || activity.isFinishing() || message == null) {
             return;
         }
-        new MaterialAlertDialogBuilder(activity, R.style.ThemeDialog)
-                .setIcon(R.mipmap.ic_launcher)
-                .setTitle(R.string.app_name)
-                .setMessage(message)
-                .setCancelable(false)
-                .setPositiveButton(R.string.licence_expired_call, (dialog, which) -> {
-                    Intent intent = new Intent(Intent.ACTION_DIAL);
-                    intent.setData(Uri.parse("tel:" + activity.getString(R.string.support_phone_dial)));
-                    activity.startActivity(intent);
-                })
-                .setNegativeButton(R.string.licence_expired_ok, (dialog, which) -> dialog.dismiss())
-                .show();
+        BottomSheetUi.showAction(
+                activity,
+                activity.getString(R.string.app_name),
+                message,
+                activity.getString(R.string.licence_expired_call),
+                activity.getString(R.string.licence_expired_ok),
+                R.mipmap.ic_launcher,
+                false,
+                () -> BottomSheetUi.dialSupport(activity),
+                null);
     }
 }

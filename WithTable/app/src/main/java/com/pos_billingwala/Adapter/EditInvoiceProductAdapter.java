@@ -9,8 +9,8 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.pos_billingwala.Activity.MainActivity;
+import com.pos_billingwala.Extra.BottomSheetUi;
 import com.pos_billingwala.Extra.ReportCursorHelper;
 import com.pos_billingwala.Model.InvoiceProductResponse;
 import com.pos_billingwala.R;
@@ -87,15 +87,14 @@ public class EditInvoiceProductAdapter extends RecyclerView.Adapter<EditInvoiceP
         if (position < 0 || position >= lines.size()) {
             return;
         }
-        new MaterialAlertDialogBuilder(context, R.style.ThemeDialog)
-                .setTitle(context.getString(R.string.toast_delete_product))
-                .setMessage(context.getString(R.string.toast_do_you_want_to_delete_from_bill))
-                .setPositiveButton(context.getString(android.R.string.yes), (dialog, which) -> {
-                    dialog.dismiss();
-                    removeLine(position);
-                })
-                .setNegativeButton(context.getString(android.R.string.no), (dialog, which) -> dialog.dismiss())
-                .show();
+        BottomSheetUi.showConfirm(
+                context,
+                context.getString(R.string.toast_delete_product),
+                context.getString(R.string.toast_do_you_want_to_delete_from_bill),
+                context.getString(android.R.string.yes),
+                context.getString(android.R.string.no),
+                true,
+                () -> removeLine(position));
     }
 
     private void removeLine(int position) {

@@ -2,7 +2,6 @@ package com.posbillingwala.owner.Activity;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -17,11 +16,11 @@ import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.view.WindowCompat;
 
 import com.google.android.gms.tasks.Task;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.play.core.appupdate.AppUpdateInfo;
 import com.google.android.play.core.appupdate.AppUpdateManager;
 import com.google.android.play.core.appupdate.AppUpdateManagerFactory;
 import com.google.android.play.core.install.model.UpdateAvailability;
+import com.posbillingwala.owner.Extra.BottomSheetUi;
 import com.posbillingwala.owner.R;
 import com.posbillingwala.owner.databinding.ActivitySplashScreenBinding;
 
@@ -56,18 +55,16 @@ public class SplashScreen extends AppCompatActivity {
             if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE) {
                 if (!(SplashScreen.this.isFinishing())) {
                     String strMessage = "Please update our <b> POS " + getResources().getString(R.string.app_name) + "</b> app to new version to continue.";
-                    new MaterialAlertDialogBuilder(SplashScreen.this, R.style.ThemeDialog).setIcon(getResources().getDrawable(R.mipmap.ic_launcher)).setTitle("New version available").setCancelable(false).setMessage(Html.fromHtml(strMessage)).setPositiveButton("Update", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int i) {
-                            dialogInterface.dismiss();
-                        }
-                    }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int i) {
-                            dialogInterface.dismiss();
-                            moveNext();
-                        }
-                    }).show();
+                    BottomSheetUi.showAction(
+                            SplashScreen.this,
+                            "New version available",
+                            Html.fromHtml(strMessage),
+                            "Update",
+                            "Cancel",
+                            R.mipmap.ic_launcher,
+                            false,
+                            null,
+                            this::moveNext);
                 }
             } else {
                 moveNext();

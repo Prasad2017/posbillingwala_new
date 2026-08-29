@@ -30,8 +30,6 @@ import android.widget.Toast;
 
 
 
-import androidx.appcompat.app.AlertDialog;
-
 import androidx.appcompat.app.AppCompatActivity;
 
 import androidx.appcompat.app.AppCompatDelegate;
@@ -53,6 +51,7 @@ import androidx.fragment.app.FragmentTransaction;
 import com.google.android.material.appbar.AppBarLayout;
 
 import com.posbillingwala.admin.Extra.AuthTokens;
+import com.posbillingwala.admin.Extra.BottomSheetUi;
 
 import com.posbillingwala.admin.Extra.Common;
 
@@ -82,7 +81,7 @@ import com.posbillingwala.admin.Fragment.SettingsNotifications;
 
 import com.posbillingwala.admin.Fragment.SupportHub;
 
-import com.posbillingwala.admin.Fragment.CrashLogsList;
+import com.posbillingwala.admin.Fragment.CrashErrorLogList;
 
 import com.posbillingwala.admin.Fragment.SalesDashboard;
 
@@ -312,7 +311,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         configureNavRow(binding.navDrawer.navSettings, R.drawable.ic_settings, "Settings", 0);
 
-        configureNavRow(binding.navDrawer.navCrash, R.drawable.ic_crash, "Crash Logs", 0);
+        configureNavRow(binding.navDrawer.navCrash, R.drawable.ic_crash, "Crash & Error Logs", 0);
 
         configureNavRow(binding.navDrawer.navSupport, R.drawable.ic_nav_support, "Help & Support", 0);
 
@@ -497,7 +496,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             case NAV_CRASH:
 
-                navigateRoot(new CrashLogsList(), "Crash Logs", NAV_CRASH);
+                navigateRoot(new CrashErrorLogList(), "Crash & Error Logs", NAV_CRASH);
 
                 break;
 
@@ -671,7 +670,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             Intent intent = new Intent(Intent.ACTION_VIEW,
 
-                    Uri.parse("http://www.posbillingwala.com/about.html"));
+                    Uri.parse("http://posbillingwala.com/about.html"));
 
             startActivity(intent);
 
@@ -733,17 +732,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         drawerLayout.closeDrawers();
 
-        new AlertDialog.Builder(this)
-
-                .setTitle("Logout")
-
-                .setMessage("Are you sure you want to logout?")
-
-                .setPositiveButton("Logout", (dialog, which) -> performLogout())
-
-                .setNegativeButton("Cancel", null)
-
-                .show();
+        BottomSheetUi.showConfirm(this, "Logout", "Are you sure you want to logout?",
+                "Logout", "Cancel", true, this::performLogout);
 
     }
 

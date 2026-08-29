@@ -1,13 +1,11 @@
 package com.pos_billingwala.Activity;
 
 import android.annotation.SuppressLint;
-import android.app.Dialog;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -19,8 +17,8 @@ import android.text.TextWatcher;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
-import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -35,8 +33,11 @@ import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.initialization.InitializationStatus;
 import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.pos_billingwala.Extra.AuthTokens;
+import com.pos_billingwala.Extra.BottomSheetUi;
 import com.pos_billingwala.Extra.Common;
+import com.pos_billingwala.NetworkToOffline.CloudSyncNav;
 import com.pos_billingwala.Extra.LicenceExpiredUi;
 import com.pos_billingwala.Extra.LicenceScopeGuard;
 import com.pos_billingwala.Extra.LicenseModules;
@@ -86,6 +87,7 @@ public class LoginMPin extends BaseActivity implements View.OnClickListener {
         File file = new File("data/data/" + getPackageName() + "/shared_prefs/" + Common.SHARED_PREF + ".xml");
         if (file.exists()) {
             Intent intent = new Intent(LoginMPin.this, MainActivity.class);
+            CloudSyncNav.copyOpenFlag(getIntent(), intent);
             startActivity(intent);
             finish();
         }
@@ -105,7 +107,7 @@ public class LoginMPin extends BaseActivity implements View.OnClickListener {
         ClickableSpan clickableSpan1 = new ClickableSpan() {
             public void onClick(@NonNull View widget) {
 
-                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.posbillingwala.com/PlayStore/privacy_policy.html"));
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://posbillingwala.com/PlayStore/privacy_policy.html"));
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 try {
                     startActivity(intent);
@@ -129,7 +131,7 @@ public class LoginMPin extends BaseActivity implements View.OnClickListener {
             @Override
             public void onClick(@NonNull View widget) {
 
-                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.posbillingwala.com/PlayStore/privacy_policy.html"));
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://posbillingwala.com/PlayStore/privacy_policy.html"));
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 try {
                     startActivity(intent);
@@ -391,8 +393,12 @@ public class LoginMPin extends BaseActivity implements View.OnClickListener {
                                 LicenseSession.saveFromLogin(LoginMPin.this, response.body());
                                 AuthTokens.saveFromLogin(LoginMPin.this, response.body());
                                 LicenceScopeGuard.onLoginSuccess(LoginMPin.this, response.body());
+                                Observability.setUserContext(
+                                        response.body().getLicenceId(),
+                                        response.body().getLicenceKey());
 
                                 Intent intent = new Intent(LoginMPin.this, MainActivity.class);
+                                CloudSyncNav.copyOpenFlag(getIntent(), intent);
                                 startActivity(intent);
                                 finishAffinity();
 
@@ -407,33 +413,20 @@ public class LoginMPin extends BaseActivity implements View.OnClickListener {
                         LicenceExpiredUi.showForServerMessage(LoginMPin.this, response.body().getMessage());
                     } else if (response.body().getStatus().equalsIgnoreCase("3")) {
                         pDialog.dismiss();
-                        final Dialog dialog = new Dialog(LoginMPin.this);
-                        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE); // before
-                        dialog.setContentView(R.layout.login_device_dialog);
-                        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
-                        dialog.setCancelable(false);
-                        TextView message = dialog.findViewById(R.id.message);
-                        TextView txtYes = dialog.findViewById(R.id.yes);
-                        TextView txtNo = dialog.findViewById(R.id.no);
+                        View content = LayoutInflater.from(LoginMPin.this).inflate(R.layout.login_device_dialog, null);
+                        BottomSheetDialog sheet = BottomSheetUi.showContent(LoginMPin.this, content, false);
+                        TextView message = content.findViewById(R.id.message);
+                        TextView txtYes = content.findViewById(R.id.yes);
+                        TextView txtNo = content.findViewById(R.id.no);
 
                         message.setText(getString(R.string.licence_msg_device_already_registered));
 
-                        txtYes.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                dialog.dismiss();
-                                updateLicenceKey();
-                            }
+                        txtYes.setOnClickListener(v -> {
+                            sheet.dismiss();
+                            updateLicenceKey();
                         });
 
-                        txtNo.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                dialog.dismiss();
-                            }
-                        });
-
-                        dialog.show();
+                        txtNo.setOnClickListener(v -> sheet.dismiss());
 
                     } else if (response.body().getStatus().equalsIgnoreCase("2")) {
                         pDialog.dismiss();

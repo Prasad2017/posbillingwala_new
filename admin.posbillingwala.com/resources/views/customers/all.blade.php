@@ -1,31 +1,20 @@
 @extends('layouts.app')
+@section('page_title', 'Customers')
 @section('content')
 <div class="page-wrapper">
     <div class="page-content">
-        <!--breadcrumb-->
         @include('layouts.flash')
-        <div class="page-breadcrumb d-none d-sm-flex align-items-center mb-3">
-            <div class="breadcrumb-title pe-3"><i class='bx bx-group me-1'></i>Customers</div>
-            <div class="ps-3">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb mb-0 p-0">
-                        <li class="breadcrumb-item"><a href="{{ url('home') }}"><i class="bx bx-home-alt"></i></a></li>
-                        <li class="breadcrumb-item active" aria-current="page">All Customers</li>
-                    </ol>
-                </nav>
-            </div>
-            <div class="ms-auto">
-                <a href="{{ url('customers/add') }}" class="btn btn-primary px-4">
-                    <i class="bx bx-user-plus me-1"></i>Add Customer
-                </a>
-            </div>
-        </div>
-        <h6 class="mb-0 text-uppercase"><i class='bx bx-list-ul me-1'></i>All Records</h6>
-        <hr/>
+        @include('layouts.page-header', [
+            'title' => 'All Customers',
+            'subtitle' => 'Manage shop owners, licenses, and catalog access.',
+            'actionUrl' => url('customers/add'),
+            'actionLabel' => 'Add Customer',
+            'actionIcon' => 'bx-user-plus',
+        ])
         <div class="card">
             <div class="card-body">
                 <div class="table-responsive">
-                    <table id="myTable" class="table table-striped table-bordered" style="width:100%">
+                    <table id="myTable" class="table pb-transactions-table" style="width:100%">
                         <thead>
                             <tr>
                                 <th>Customer Name</th>

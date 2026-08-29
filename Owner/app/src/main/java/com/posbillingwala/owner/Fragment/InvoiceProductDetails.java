@@ -6,7 +6,6 @@ import static com.posbillingwala.owner.Utils.RequestCodes.directory_path;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -35,7 +34,6 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.MultiplePermissionsReport;
 import com.karumi.dexter.PermissionToken;
@@ -44,6 +42,7 @@ import com.karumi.dexter.listener.multi.MultiplePermissionsListener;
 import com.posbillingwala.owner.Activity.MainActivity;
 import com.posbillingwala.owner.Adapter.InvoiceProductAdapter;
 import com.posbillingwala.owner.BuildConfig;
+import com.posbillingwala.owner.Extra.BottomSheetUi;
 import com.posbillingwala.owner.Extra.DetectConnection;
 import com.posbillingwala.owner.Extra.ShopHeaderBuilder;
 import com.posbillingwala.owner.Model.AllApiResponse;
@@ -453,24 +452,9 @@ public class InvoiceProductDetails extends Fragment implements View.OnClickListe
 
     public void showSettingsDialog() {
 
-        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(activity);
-        builder.setTitle("Need Permissions");
-        builder.setMessage("This app needs permission to use this feature. You can grant them in app settings.");
-        builder.setPositiveButton("GOTO SETTINGS", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.cancel();
-                openSettings();
-            }
-
-        });
-        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.cancel();
-            }
-        });
-        builder.show();
+        BottomSheetUi.showConfirm(activity, "Need Permissions",
+                "This app needs permission to use this feature. You can grant them in app settings.",
+                "GOTO SETTINGS", "Cancel", true, this::openSettings);
 
     }
 

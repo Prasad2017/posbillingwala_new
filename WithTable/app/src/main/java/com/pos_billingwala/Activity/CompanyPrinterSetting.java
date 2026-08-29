@@ -175,11 +175,10 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
         if (id == R.id.backToSetting) {
             finish();
         } else if (id == R.id.connectPrinter) {
-            //Printer not connected and send request for connecting printer
-            new WoosimPrnMng(activity, "", CompanyPrinterSetting.this);
+            // Connect button only: show device list if saved printer not found
+            WoosimPrnMng.connectFromButton(activity, bluetoothAddress, CompanyPrinterSetting.this);
         } else if (id == R.id.connectKOTPrinter) {
-            //Printer not connected and send request for connecting printer
-            new WoosimPrnMng(activity, "", CompanyPrinterSetting.this);
+            KOTWoosimPrnMng.connectFromButton(activity, bluetoothKOTAddress, CompanyPrinterSetting.this);
         } else if (id == R.id.invoicePreview) {
             startActivity(new Intent(activity, TestInvoiceBluetoothPrint.class));
         } else if (id == R.id.saveSetting) {
@@ -320,15 +319,14 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_ENABLE_BT && resultCode == RESULT_OK) {
-            //bluetooth enabled and request for showing available bluetooth devices
-            new WoosimPrnMng(activity, "", CompanyPrinterSetting.this);
+            // BT enabled — reconnect saved bill printer; list only if none saved
+            WoosimPrnMng.connectFromButton(activity, bluetoothAddress, CompanyPrinterSetting.this);
         } else if (requestCode == REQUEST_CONNECT_DEVICE && resultCode == RESULT_OK) {
             //bluetooth device selected and request pairing with device
             bluetoothAddress = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
             new WoosimPrnMng(activity, bluetoothAddress, CompanyPrinterSetting.this);
         } else if (requestCode == REQUEST_KOT_ENABLE_BT && resultCode == RESULT_OK) {
-            //bluetooth enabled and request for showing available bluetooth devices
-            new KOTWoosimPrnMng(activity, "", CompanyPrinterSetting.this);
+            KOTWoosimPrnMng.connectFromButton(activity, bluetoothKOTAddress, CompanyPrinterSetting.this);
         } else if (requestCode == REQUEST_KOT_CONNECT_DEVICE && resultCode == RESULT_OK) {
             //bluetooth device selected and request pairing with device
             bluetoothKOTAddress = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);

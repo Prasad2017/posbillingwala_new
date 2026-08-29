@@ -3,6 +3,14 @@
     <string name="splash_loading">Loading POS Billing...</string>
     <string name="privacy_policy">By providing username &amp; password, I hereby agree and accept the <u><font fgcolor='#df0052'>Terms of service</font></u> and <u><font fgcolor='#df0052'>Privacy Policy</font></u> in use of the POS Billingwala app.</string>
     <string name="sign_in_msg">Sign in to POS Billingwala</string>
+    <string name="welcome_back">Welcome Back!</string>
+    <string name="login_subtitle">Sign in to your POS Billingwala account.</string>
+    <string name="licence_key_label">Licence Key</string>
+    <string name="login_security_notice">Your data is safe with us. By continuing, you agree to our Terms of Service and Privacy Policy.</string>
+    <string name="terms_of_service">Terms of Service</string>
+    <string name="privacy_policy_label">Privacy Policy</string>
+    <string name="special_offers">Special Offers</string>
+    <string name="shop_now">Shop Now</string>
     <string name="mobile_number_msg">Enter your shop licence key to verify your account and start billing.</string>
     <string name="mpin_msg">Enter your shop PB-PIN. We\'ll verify your account, so we know you\'re real.</string>
 
@@ -11,13 +19,13 @@
     <string name="label_month">MONTH</string>
     <string name="label_year">YEAR</string>
 
-    <string name="new_user">Don\'t have an account? <u><b><font fgcolor='#ff0000'>Sign Up</font></b></u></string>
+    <string name="new_user">Don\'t have an account? <u><b><font fgcolor='#4862b7'>Sign Up</font></b></u></string>
     <string name="mpin_login">Login with <b><font fgcolor='#df0052'>PB-PIN</font></b></string>
     <string name="support_phone_display">+91 89831 49299</string>
     <string name="support_phone_dial">+918983149299</string>
 
     <!-- Licence & auth — keep all user-facing copy here for future language packs (values-hi, etc.) -->
-    <string name="enter_licence_key_hint">Enter licence key</string>
+    <string name="enter_licence_key_hint">Enter your shop licence key</string>
     <string name="enter_valid_licence_key">Please enter a valid licence key</string>
     <string name="welcome_pos_billingwala">Welcome to POS Billingwala</string>
     <string name="loading">Loading</string>
@@ -235,6 +243,18 @@
     <string name="setting_hint_rate">Rate POS Billingwala on Play Store</string>
     <string name="setting_hint_share">Share the app with other shops</string>
     <string name="setting_hint_logout">Sign out of this device</string>
+    <string name="printer_section_printers">Printers</string>
+    <string name="printer_section_invoice">Invoice</string>
+    <string name="printer_section_bill">Bill options</string>
+    <string name="printer_section_terms">Terms</string>
+    <string name="shop_section_branding">Branding</string>
+    <string name="shop_section_identity">Shop identity</string>
+    <string name="shop_section_contact">Contact</string>
+    <string name="shop_section_operations">Operations</string>
+    <string name="shop_section_tax">Tax &amp; compliance</string>
+    <string name="shop_section_payment">Payment QR</string>
+    <string name="shop_logo_hint">Shown on printed bills when logo is enabled</string>
+    <string name="shop_qr_hint">Shown on bills when payment QR is enabled</string>
     <string name="master_hint_category">Food groups such as Veg, Non Veg</string>
     <string name="master_hint_subcategory">Starter, Main Course, Beverage</string>
     <string name="master_hint_portions">Half, Full and other sizes</string>
@@ -256,6 +276,71 @@
     <string name="home_whats_happening">Here\'s what\'s happening in your store today.</string>
 
     <string name="press_back_again_to_exit">Press back again to exit</string>
+    <string name="sync_started_in_background">Sync started. It continues in the background — you can lock the screen or leave the app.</string>
+    <string name="sync_already_running">Sync is already running in the background</string>
+    <string name="sync_notification_channel">Cloud sync</string>
+    <string name="sync_notification_title">POS Billingwala sync</string>
+    <string name="sync_notification_uploading">Uploading offline data to cloud…</string>
+    <string name="sync_notification_complete">Offline data uploaded to cloud</string>
+    <string name="sync_notification_failed">Cloud sync failed. Open the app and try again.</string>
+    <string name="sync_notification_progress_count">%1$s (%2$d uploaded)</string>
+    <string name="sync_notification_complete_count">%d records uploaded to cloud</string>
+    <string name="sync_notification_partial">%1$d uploaded, %2$d still pending. Tap to review.</string>
+    <string name="sync_tables_section">Tables</string>
+    <string name="sync_status_complete">Complete</string>
+    <string name="sync_status_pending_count">%d pending</string>
+    <string name="sync_status_syncing">Syncing…</string>
+    <string name="sync_action_sync">Sync</string>
+    <string name="sync_action_syncing">Syncing…</string>
+    <string name="sync_action_done">Done</string>
+    <string name="sync_summary_all_complete">All data is on the cloud</string>
+    <string name="sync_summary_nothing_pending">Nothing left to upload</string>
+    <string name="sync_summary_pending_count">%d records pending upload</string>
+    <string name="sync_summary_uploaded_count">%d records uploaded this sync</string>
+    <string name="sync_summary_uploaded_remaining">%1$d uploaded this sync · %2$d still pending</string>
+    <string name="sync_summary_uploading">%1$d uploaded · %2$d remaining</string>
+    <string name="sync_summary_ready">Tap Sync to upload pending data</string>
+    <string name="sync_summary_failed">Last sync did not finish. Tap Sync to retry.</string>
+    <string name="sync_table_categories">Categories</string>
+    <string name="sync_table_subcategories">Subcategories</string>
+    <string name="sync_table_products">Products</string>
+    <string name="sync_table_portion_master">Portion master</string>
+    <string name="sync_table_portions">Portions</string>
+    <string name="sync_table_combos">Combos</string>
+    <string name="sync_table_combo_items">Combo items</string>
+    <string name="sync_table_printer">Printer settings</string>
+    <string name="sync_table_company">Shop details</string>
+    <string name="sync_table_invoice_deletes">Invoice item deletes</string>
+    <string name="sync_table_invoice_items">Invoice items</string>
+    <string name="sync_table_invoice_combo_items">Invoice combo items</string>
+    <string name="sync_table_invoices">Invoices</string>
+    <string name="sync_table_mess_members">Mess members</string>
+    <string name="sync_table_mess_payments">Mess payments</string>
+    <string name="sync_table_mess_invoices">Mess invoices</string>
+    <string name="sync_table_inventory">Inventory</string>
+    <string name="sync_table_expenses">Expenses</string>
+    <string name="sync_table_mess_tokens">Mess tokens</string>
+    <string name="sync_table_error_logs">Error logs</string>
+    <string name="sync_progress_categories">Uploading categories…</string>
+    <string name="sync_progress_subcategories">Uploading subcategories…</string>
+    <string name="sync_progress_products">Uploading products…</string>
+    <string name="sync_progress_portion_master">Uploading portion master…</string>
+    <string name="sync_progress_portions">Uploading portions…</string>
+    <string name="sync_progress_combos">Uploading combos…</string>
+    <string name="sync_progress_combo_items">Uploading combo items…</string>
+    <string name="sync_progress_printer">Uploading printer settings…</string>
+    <string name="sync_progress_company">Uploading shop details…</string>
+    <string name="sync_progress_invoice_deletes">Uploading invoice deletes…</string>
+    <string name="sync_progress_invoice_items">Uploading invoice items…</string>
+    <string name="sync_progress_invoice_combo_items">Uploading invoice combo items…</string>
+    <string name="sync_progress_invoices">Uploading invoices…</string>
+    <string name="sync_progress_mess_members">Uploading mess members…</string>
+    <string name="sync_progress_mess_payments">Uploading mess payments…</string>
+    <string name="sync_progress_mess_invoices">Uploading mess invoices…</string>
+    <string name="sync_progress_inventory">Uploading inventory…</string>
+    <string name="sync_progress_expenses">Uploading expenses…</string>
+    <string name="sync_progress_mess_tokens">Uploading mess tokens…</string>
+    <string name="sync_progress_error_logs">Uploading error logs…</string>
 
     <string name="discount_wise_report">Discount Wise Report</string>
     <string name="discount_type_percentage">Percentage</string>

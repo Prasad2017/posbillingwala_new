@@ -18,7 +18,7 @@ public class PosBillingWalaApp extends Application implements DisplayScale.Resou
 
     @Override
     protected void attachBaseContext(Context base) {
-        super.attachBaseContext(DisplayScale.wrap(base));
+        super.attachBaseContext(AppLanguage.wrap(DisplayScale.wrap(base)));
     }
 
     @Override

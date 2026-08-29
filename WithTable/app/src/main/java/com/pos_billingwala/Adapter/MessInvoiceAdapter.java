@@ -1,15 +1,12 @@
 package com.pos_billingwala.Adapter;
 
 import android.annotation.SuppressLint;
-import android.app.Dialog;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.drawable.ColorDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.PopupWindow;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -18,11 +15,13 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.textfield.TextInputEditText;
 import com.pos_billingwala.Activity.CouponBluetoothPrint;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Activity.MessTokenBluetoothPrint;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.BottomSheetUi;
 import com.pos_billingwala.Extra.MessTokenQrHelper;
 import com.pos_billingwala.Model.MemberResponse;
 import com.pos_billingwala.Model.MessInvoiceResponse;
@@ -132,81 +131,60 @@ public class MessInvoiceAdapter extends RecyclerView.Adapter<MessInvoiceAdapter.
     }
 
     public void setBillPrintPassword(MemberResponse memberResponse, boolean issueQrToken) {
+        Activity activity = (Activity) context;
+        View content = LayoutInflater.from(activity).inflate(R.layout.report_password_dialog, null);
+        BottomSheetDialog sheet = BottomSheetUi.showContent(activity, content, false);
 
-        final Dialog dialog = new Dialog(context);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE); // before
-        dialog.setContentView(R.layout.report_password_dialog);
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
-        dialog.setCancelable(false);
-
-        WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
-        lp.copyFrom(dialog.getWindow().getAttributes());
-        lp.width = WindowManager.LayoutParams.MATCH_PARENT;
-        lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
-
-        TextView continueToReport = dialog.findViewById(R.id.continueToReport);
-        TextView dismissReport = dialog.findViewById(R.id.dismissReport);
-        TextInputEditText reportPin = dialog.findViewById(R.id.reportPin);
-        TextView detailsTxt = dialog.findViewById(R.id.details);
+        TextView continueToReport = content.findViewById(R.id.continueToReport);
+        TextView dismissReport = content.findViewById(R.id.dismissReport);
+        TextInputEditText reportPin = content.findViewById(R.id.reportPin);
+        TextView detailsTxt = content.findViewById(R.id.details);
         detailsTxt.setText(issueQrToken ? "QR Token Password" : "Bill Print Password");
 
-        dismissReport.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
-            }
-        });
+        dismissReport.setOnClickListener(v -> sheet.dismiss());
 
-        continueToReport.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        continueToReport.setOnClickListener(v -> {
+            if (reportPin.getText().toString().equalsIgnoreCase(memberResponse.getMemberMobileNumber())) {
+                sheet.dismiss();
 
-                if (reportPin.getText().toString().equalsIgnoreCase(memberResponse.getMemberMobileNumber())) {
-                    dialog.dismiss();
+                Date c = Calendar.getInstance().getTime();
+                System.out.println("Current time => " + c);
+                SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+                String paymentDate = df.format(c);
 
-                    Date c = Calendar.getInstance().getTime();
-                    System.out.println("Current time => " + c);
-                    SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-                    String paymentDate = df.format(c);
+                messInvoiceResponseList = posBillingWalaDatabase.gerMessInvoiceUserWiseList(memberResponse.getMemberName(), paymentDate);
 
-                    messInvoiceResponseList = posBillingWalaDatabase.gerMessInvoiceUserWiseList(memberResponse.getMemberName(), paymentDate);
+                if (memberResponse.getMessTotalDays().equalsIgnoreCase("One Time")) {
+                    messDays = 1;
+                } else {
+                    messDays = 2;
+                }
 
-                    if (memberResponse.getMessTotalDays().equalsIgnoreCase("One Time")) {
-                        messDays = 1;
+                if (messDays > messInvoiceResponseList.size()) {
+
+                    if (issueQrToken) {
+                        openMemberQrToken(memberResponse, messInvoiceResponseList.size());
                     } else {
-                        messDays = 2;
-                    }
-
-                    if (messDays > messInvoiceResponseList.size()) {
-
-                        if (issueQrToken) {
-                            openMemberQrToken(memberResponse, messInvoiceResponseList.size());
-                        } else {
-                            Intent intent = new Intent(context, CouponBluetoothPrint.class);
-                            intent.putExtra("invoiceRunningStatus", "printBill");
-                            intent.putExtra("cartOrderStatus", "mess");
-                            intent.putExtra("memberId", memberResponse.getMemberId());
-                            intent.putExtra("memberName", memberResponse.getMemberName());
-                            intent.putExtra("memberMobileNumber", memberResponse.getMemberMobileNumber());
-                            intent.putExtra("messDays", "" + messDays);
-                            intent.putExtra("messInvoiceResponseList", "" + messInvoiceResponseList.size());
-                            context.startActivity(intent);
-                        }
-
-                    } else {
-                        Toast.makeText(context, context.getString(R.string.toast_already_coupon_created), Toast.LENGTH_SHORT).show();
+                        Intent intent = new Intent(context, CouponBluetoothPrint.class);
+                        intent.putExtra("invoiceRunningStatus", "printBill");
+                        intent.putExtra("cartOrderStatus", "mess");
+                        intent.putExtra("memberId", memberResponse.getMemberId());
+                        intent.putExtra("memberName", memberResponse.getMemberName());
+                        intent.putExtra("memberMobileNumber", memberResponse.getMemberMobileNumber());
+                        intent.putExtra("messDays", "" + messDays);
+                        intent.putExtra("messInvoiceResponseList", "" + messInvoiceResponseList.size());
+                        context.startActivity(intent);
                     }
 
                 } else {
-                    reportPin.requestFocus();
-                    reportPin.setError("Enter correct pin");
+                    Toast.makeText(context, context.getString(R.string.toast_already_coupon_created), Toast.LENGTH_SHORT).show();
                 }
+
+            } else {
+                reportPin.requestFocus();
+                reportPin.setError("Enter correct pin");
             }
         });
-
-        dialog.show();
-        dialog.getWindow().setAttributes(lp);
-
     }
 
     private void openMemberQrToken(MemberResponse memberResponse, int existingCouponCount) {

@@ -202,6 +202,21 @@
         </com.google.android.material.textfield.TextInputLayout>
 
         <TextView
+            android:id="@+id/changePassword"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_gravity="center"
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="10dp"
+            android:background="@drawable/button_rounded_border"
+            android:fontFamily="@font/poppinsmedium"
+            android:gravity="center"
+            android:text="Change Password"
+            android:textColor="@color/colorPrimary"
+            android:textSize="16sp" />
+
+        <TextView
             android:id="@+id/update"
             android:layout_width="match_parent"
             android:layout_height="50dp"

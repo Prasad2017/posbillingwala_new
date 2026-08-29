@@ -5,12 +5,10 @@ import static com.pos_billingwala.Utils.RequestCodes.directory_path;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -21,7 +19,6 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
-import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
@@ -33,8 +30,6 @@ import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -56,7 +51,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.textfield.TextInputEditText;
 import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.karumi.dexter.Dexter;
@@ -71,6 +66,7 @@ import com.pos_billingwala.Adapter.TwoPrintAdapter;
 import com.pos_billingwala.BuildConfig;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.AppExecutors;
+import com.pos_billingwala.Extra.BottomSheetUi;
 import com.pos_billingwala.Extra.ShopHeaderBuilder;
 import com.pos_billingwala.Extra.Observability;
 import com.pos_billingwala.Extra.LicenceExpiredUi;
@@ -692,21 +688,13 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
             @Override
             public void onClick(View v) {
 
-                final Dialog dialog = new Dialog(activity);
-                dialog.requestWindowFeature(Window.FEATURE_NO_TITLE); // before
-                dialog.setContentView(R.layout.update_discount_dialog);
-                dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
-                dialog.setCancelable(false);
+                View content = LayoutInflater.from(activity).inflate(R.layout.update_discount_dialog, null);
+                BottomSheetDialog sheet = BottomSheetUi.showContent(activity, content, false);
 
-                WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
-                lp.copyFrom(dialog.getWindow().getAttributes());
-                lp.width = WindowManager.LayoutParams.MATCH_PARENT;
-                lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
-
-                TextInputEditText discountPercentageTxt = dialog.findViewById(R.id.discountPercentage);
-                TextView addDiscountPercentageTxt = dialog.findViewById(R.id.addDiscountPercentage);
-                TextView dismissDiscountPercentageTxt = dialog.findViewById(R.id.dismissDiscountPercentage);
-                MaterialSpinner discountTypeSpinner = dialog.findViewById(R.id.discountTypeSpinner);
+                TextInputEditText discountPercentageTxt = content.findViewById(R.id.discountPercentage);
+                TextView addDiscountPercentageTxt = content.findViewById(R.id.addDiscountPercentage);
+                TextView dismissDiscountPercentageTxt = content.findViewById(R.id.dismissDiscountPercentage);
+                MaterialSpinner discountTypeSpinner = content.findViewById(R.id.discountTypeSpinner);
 
                 discountTypeList = getResources().getStringArray(R.array.discount_type);
                 try {
@@ -732,12 +720,7 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
 
                 discountPercentageTxt.setText(productCartResponseList.get(0).getCartDiscount());
 
-                dismissDiscountPercentageTxt.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        dialog.dismiss();
-                    }
-                });
+                dismissDiscountPercentageTxt.setOnClickListener(view -> sheet.dismiss());
 
                 addDiscountPercentageTxt.setOnClickListener(new View.OnClickListener() {
                     @Override
@@ -786,16 +769,12 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                             }
 
                             getCartProductList();
-                            //Dialog Dismiss Part
-                            dialog.dismiss();
+                            sheet.dismiss();
                         } else {
                             Toast.makeText(activity, getString(R.string.toast_please_add_discount_percentage), Toast.LENGTH_SHORT).show();
                         }
                     }
                 });
-
-                dialog.show();
-                dialog.getWindow().setAttributes(lp);
 
             }
         });
@@ -871,29 +850,16 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                 }
                 if (printerSettingResponseList.get(0).getCustomerUse() != null) {
                     if (printerSettingResponseList.get(0).getCustomerUse().equalsIgnoreCase("on")) {
-                        final Dialog dialog = new Dialog(activity);
-                        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE); // before
-                        dialog.setContentView(R.layout.update_customer_dialog);
-                        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-                        dialog.setCancelable(false);
+                        View customerContent = LayoutInflater.from(activity).inflate(R.layout.update_customer_dialog, null);
+                        BottomSheetDialog customerSheet = BottomSheetUi.showContent(activity, customerContent, false);
 
-                        WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
-                        lp.copyFrom(dialog.getWindow().getAttributes());
-                        lp.width = WindowManager.LayoutParams.MATCH_PARENT;
-                        lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
+                        TextView dismissCustomerTxt = customerContent.findViewById(R.id.dismissCustomer);
+                        TextView addCustomerTxt = customerContent.findViewById(R.id.addCustomer);
+                        TextInputEditText customerNameTxt = customerContent.findViewById(R.id.customerName);
+                        TextInputEditText customerMobileTxt = customerContent.findViewById(R.id.customerMobile);
+                        TextInputEditText customerAddressTxt = customerContent.findViewById(R.id.customerAddress);
 
-                        TextView dismissCustomerTxt = dialog.findViewById(R.id.dismissCustomer);
-                        TextView addCustomerTxt = dialog.findViewById(R.id.addCustomer);
-                        TextInputEditText customerNameTxt = dialog.findViewById(R.id.customerName);
-                        TextInputEditText customerMobileTxt = dialog.findViewById(R.id.customerMobile);
-                        TextInputEditText customerAddressTxt = dialog.findViewById(R.id.customerAddress);
-
-                        dismissCustomerTxt.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                dialog.dismiss();
-                            }
-                        });
+                        dismissCustomerTxt.setOnClickListener(v -> customerSheet.dismiss());
                         addCustomerTxt.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
@@ -903,7 +869,7 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                                     String customerMobile = customerMobileTxt.getText().toString();
                                     String customerAddress = customerAddressTxt.getText().toString();
 
-                                    dialog.dismiss();
+                                    customerSheet.dismiss();
 
                                     invoiceNumber = resolveInvoiceNumber();
 
@@ -922,8 +888,6 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                             }
                         });
 
-                        dialog.show();
-                        dialog.getWindow().setAttributes(lp);
                     } else {
                         resolveInvoiceNumber();
                         if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("2-Inch")) {
@@ -945,29 +909,16 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
             }
         } else if (id == R.id.shareInvoiceCardView) {
 
-            final Dialog dialog = new Dialog(activity);
-            dialog.requestWindowFeature(Window.FEATURE_NO_TITLE); // before
-            dialog.setContentView(R.layout.update_customer_dialog);
-            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-            dialog.setCancelable(false);
+            View customerContent = LayoutInflater.from(activity).inflate(R.layout.update_customer_dialog, null);
+            BottomSheetDialog customerSheet = BottomSheetUi.showContent(activity, customerContent, false);
 
-            WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
-            lp.copyFrom(dialog.getWindow().getAttributes());
-            lp.width = WindowManager.LayoutParams.MATCH_PARENT;
-            lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
+            TextView dismissCustomerTxt = customerContent.findViewById(R.id.dismissCustomer);
+            TextView addCustomerTxt = customerContent.findViewById(R.id.addCustomer);
+            TextInputEditText customerNameTxt = customerContent.findViewById(R.id.customerName);
+            TextInputEditText customerMobileTxt = customerContent.findViewById(R.id.customerMobile);
+            TextInputEditText customerAddressTxt = customerContent.findViewById(R.id.customerAddress);
 
-            TextView dismissCustomerTxt = dialog.findViewById(R.id.dismissCustomer);
-            TextView addCustomerTxt = dialog.findViewById(R.id.addCustomer);
-            TextInputEditText customerNameTxt = dialog.findViewById(R.id.customerName);
-            TextInputEditText customerMobileTxt = dialog.findViewById(R.id.customerMobile);
-            TextInputEditText customerAddressTxt = dialog.findViewById(R.id.customerAddress);
-
-            dismissCustomerTxt.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    dialog.dismiss();
-                }
-            });
+            dismissCustomerTxt.setOnClickListener(v -> customerSheet.dismiss());
 
             addCustomerTxt.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -980,7 +931,7 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                                 String customerMobile = customerMobileTxt.getText().toString();
                                 String customerAddress = customerAddressTxt.getText().toString();
 
-                                dialog.dismiss();
+                                customerSheet.dismiss();
 
                                 invoiceNumber = resolveInvoiceNumber();
 
@@ -997,9 +948,6 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                     }
                 }
             });
-
-            dialog.show();
-            dialog.getWindow().setAttributes(lp);
 
         }
     }
@@ -1342,24 +1290,14 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
             Toast.makeText(activity, getString(R.string.toast_cart_is_empty), Toast.LENGTH_SHORT).show();
             return;
         }
-        new MaterialAlertDialogBuilder(this, R.style.ThemeDialog)
-                .setTitle(getString(R.string.ui_clear_cart_confirm_title))
-                .setMessage(getString(R.string.ui_clear_cart_confirm_message))
-                .setCancelable(true)
-                .setPositiveButton("YES", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        dialogInterface.dismiss();
-                        clearCart();
-                    }
-                })
-                .setNegativeButton("NO", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        dialogInterface.dismiss();
-                    }
-                })
-                .show();
+        BottomSheetUi.showConfirm(
+                this,
+                getString(R.string.ui_clear_cart_confirm_title),
+                getString(R.string.ui_clear_cart_confirm_message),
+                "YES",
+                "NO",
+                true,
+                this::clearCart);
     }
 
     private void clearCart() {
@@ -1541,7 +1479,7 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                             posBillingWalaDatabase.getInventoryDetails(productCartResponse.getProductId());
                     if (inventoryList != null && !inventoryList.isEmpty()) {
                         for (InventoryResponse inventoryResponse : inventoryList) {
-                            int saleInventoryQty = Integer.parseInt(productCartResponse.getProductQuantity());
+                            int saleInventoryQty = (int) Float.parseFloat(productCartResponse.getProductQuantity());
                             int oldInventoryQty = Integer.parseInt(inventoryResponse.getProductInventoryQuantity());
                             int afterSaleInventoryQuantity = Integer.parseInt(inventoryResponse.getAfterSaleInventoryQuantity());
                             int totalQty = afterSaleInventoryQuantity - saleInventoryQty;
@@ -1576,6 +1514,9 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                         getRandomString(10),
                         0);
 
+                // Ensure active cart for this table/order is empty after bill save.
+                posBillingWalaDatabase.clearCart(reservedTableNumber, reservedCartOrderStatus);
+
                 if (!invoiceType.equalsIgnoreCase("table_wise")) {
                     needsPaymentMode = !posBillingWalaDatabase.checkPaymentMode(reservedInvoiceNumber).isEmpty();
                 }
@@ -1609,26 +1550,48 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                 if (invoiceType.equalsIgnoreCase("table_wise")) {
                     if (reservedPrintStatus == 1) {
                         automaticSavePDF(reservedCustomerName, reservedCustomerMobile, reservedCustomerAddress, reservedInvoiceNumber);
-                        getCartProductList();
+                        finishAfterInvoiceSaved();
                     } else if (reservedPrintStatus == 0) {
                         Toast.makeText(activity, getString(R.string.toast_invoice_saved), Toast.LENGTH_SHORT).show();
-                        getCartProductList();
-                        onCallBack();
+                        finishAfterInvoiceSaved();
                     }
                 } else if (showPaymentMode) {
+                    clearCartUiState();
                     setPaymentMode(reservedCustomerName, reservedCustomerMobile, reservedCustomerAddress, totalAmt, reservedPrintStatus);
                 } else {
                     if (reservedPrintStatus == 1) {
                         automaticSavePDF(reservedCustomerName, reservedCustomerMobile, reservedCustomerAddress, reservedInvoiceNumber);
-                        getCartProductList();
+                        finishAfterInvoiceSaved();
                     } else if (reservedPrintStatus == 0) {
                         Toast.makeText(activity, getString(R.string.toast_invoice_saved), Toast.LENGTH_SHORT).show();
-                        getCartProductList();
-                        onCallBack();
+                        finishAfterInvoiceSaved();
                     }
                 }
             });
         });
+    }
+
+    private void clearCartUiState() {
+        if (productCartResponseList != null) {
+            productCartResponseList.clear();
+        } else {
+            productCartResponseList = new ArrayList<>();
+        }
+        CreatePos.productCartResponseList = new ArrayList<>();
+        if (cartAdapter != null) {
+            cartAdapter.notifyDataSetChanged();
+        }
+        if (cartLayout != null) {
+            cartLayout.setVisibility(View.GONE);
+        }
+        if (noDataFound != null) {
+            noDataFound.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void finishAfterInvoiceSaved() {
+        clearCartUiState();
+        onCallBack();
     }
 
     public String getRandomString(final int sizeOfRandomString) {
@@ -1766,14 +1729,25 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
         super.onActivityResult(requestCode, resultCode, data);
         try {
             if (requestCode == REQUEST_ENABLE_BT && resultCode == RESULT_OK) {
-                WoosimPrnMng.pairPrinter(activity, activity);
+                // BT just enabled — reconnect saved printer; list only if none saved
+                String addr = "";
+                if (printerSettingResponseList != null && !printerSettingResponseList.isEmpty()
+                        && printerSettingResponseList.get(0).getBluetoothAddress() != null) {
+                    addr = printerSettingResponseList.get(0).getBluetoothAddress();
+                }
+                WoosimPrnMng.connectFromButton(activity, addr, activity);
             } else if (requestCode == REQUEST_CONNECT_DEVICE && resultCode == RESULT_OK && data != null) {
                 String bluetoothAddress = data.getStringExtra(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
                 if (bluetoothAddress != null) {
                     BluetoothPrinterChannel.bill().onDevicePicked(bluetoothAddress);
                 }
             } else if (requestCode == REQUEST_KOT_ENABLE_BT && resultCode == RESULT_OK) {
-                KOTWoosimPrnMng.pairPrinter(activity, activity);
+                String kotAddr = "";
+                if (printerSettingResponseList != null && !printerSettingResponseList.isEmpty()
+                        && printerSettingResponseList.get(0).getBluetoothKOTAddress() != null) {
+                    kotAddr = printerSettingResponseList.get(0).getBluetoothKOTAddress();
+                }
+                KOTWoosimPrnMng.connectFromButton(activity, kotAddr, activity);
             } else if (requestCode == REQUEST_KOT_CONNECT_DEVICE && resultCode == RESULT_OK && data != null) {
                 String bluetoothAddress = data.getStringExtra(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
                 if (bluetoothAddress != null) {
@@ -1818,22 +1792,13 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
     }
 
     public void setPaymentMode(String customerName, String customerMobile, String customerAddress, float totalAmt, int printStatus) {
+        View content = LayoutInflater.from(activity).inflate(R.layout.set_payment_mode_dialog, null);
+        BottomSheetDialog sheet = BottomSheetUi.showContent(activity, content, false);
 
-        final Dialog dialog = new Dialog(activity);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE); // before
-        dialog.setContentView(R.layout.set_payment_mode_dialog);
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
-        dialog.setCancelable(false);
-
-        WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
-        lp.copyFrom(dialog.getWindow().getAttributes());
-        lp.width = WindowManager.LayoutParams.MATCH_PARENT;
-        lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
-
-        TextView continueToReport = dialog.findViewById(R.id.continueToReport);
-        TextView dismissReport = dialog.findViewById(R.id.dismissReport);
-        TextView totalAmount = dialog.findViewById(R.id.totalAmount);
-        RadioGroup paymentGroup = dialog.findViewById(R.id.paymentGroup);
+        TextView continueToReport = content.findViewById(R.id.continueToReport);
+        TextView dismissReport = content.findViewById(R.id.dismissReport);
+        TextView totalAmount = content.findViewById(R.id.totalAmount);
+        RadioGroup paymentGroup = content.findViewById(R.id.paymentGroup);
 
         totalAmount.setText("Total Amount: " + MainActivity.currencyName + totalAmt);
         paymentGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
@@ -1845,45 +1810,31 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
             }
         });
 
-        dismissReport.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                posBillingWalaDatabase.updateInvoicePaymentMode(invoiceNumber, "Cash");
+        dismissReport.setOnClickListener(v -> {
+            posBillingWalaDatabase.updateInvoicePaymentMode(invoiceNumber, "Cash");
+            if (printStatus == 1) {
+                automaticSavePDF(customerName, customerMobile, customerAddress, invoiceNumber);
+            } else {
+                Toast.makeText(activity, getString(R.string.toast_invoice_saved), Toast.LENGTH_SHORT).show();
+            }
+            sheet.dismiss();
+            finishAfterInvoiceSaved();
+        });
+
+        continueToReport.setOnClickListener(v -> {
+            if (!paymentMode.isEmpty()) {
+                posBillingWalaDatabase.updateInvoicePaymentMode(invoiceNumber, paymentMode);
                 if (printStatus == 1) {
                     automaticSavePDF(customerName, customerMobile, customerAddress, invoiceNumber);
-                    getCartProductList();
-                } else if (printStatus == 0) {
-                    Toast.makeText(activity, getString(R.string.toast_invoice_saved), Toast.LENGTH_SHORT).show();
-                    getCartProductList();
-                    onCallBack();
-                }
-                dialog.dismiss();
-            }
-        });
-
-        continueToReport.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (!paymentMode.isEmpty()) {
-                    posBillingWalaDatabase.updateInvoicePaymentMode(invoiceNumber, paymentMode);
-                    if (printStatus == 1) {
-                        automaticSavePDF(customerName, customerMobile, customerAddress, invoiceNumber);
-                        getCartProductList();
-                    } else if (printStatus == 0) {
-                        Toast.makeText(activity, getString(R.string.toast_invoice_saved), Toast.LENGTH_SHORT).show();
-                        getCartProductList();
-                        onCallBack();
-                    }
-                    dialog.dismiss();
                 } else {
-                    Toast.makeText(BluetoothPrint.this, getString(R.string.toast_please_select_payment_mode), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(activity, getString(R.string.toast_invoice_saved), Toast.LENGTH_SHORT).show();
                 }
+                sheet.dismiss();
+                finishAfterInvoiceSaved();
+            } else {
+                Toast.makeText(BluetoothPrint.this, getString(R.string.toast_please_select_payment_mode), Toast.LENGTH_SHORT).show();
             }
         });
-
-        dialog.show();
-        dialog.getWindow().setAttributes(lp);
-
     }
 
 

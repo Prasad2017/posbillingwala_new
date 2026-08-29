@@ -9,10 +9,10 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.posbillingwala.admin.Activity.MainActivity;
+import com.posbillingwala.admin.Extra.BottomSheetUi;
 import com.posbillingwala.admin.Extra.LicenseStatusHelper;
 import com.posbillingwala.admin.Fragment.DealerDetails;
 import com.posbillingwala.admin.Fragment.DealerProfile;
@@ -79,14 +79,11 @@ public class DealerAdapter extends RecyclerView.Adapter<DealerAdapter.MyViewHold
         holder.binding.deleteDealer.setOnClickListener(v -> {
             boolean active = dealerResponse.isActiveDealer();
             String action = active ? "deactivate" : "activate";
-            new AlertDialog.Builder(context)
-                    .setTitle("Confirm")
-                    .setMessage(active
+            BottomSheetUi.showConfirm(context, "Confirm",
+                    active
                             ? "Deactivate this dealer? They will not be able to log in."
-                            : "Reactivate this dealer?")
-                    .setPositiveButton("Yes", (d, w) -> updateStatus(dealerResponse, action, position))
-                    .setNegativeButton("Cancel", null)
-                    .show();
+                            : "Reactivate this dealer?",
+                    "Yes", "Cancel", true, () -> updateStatus(dealerResponse, action, position));
         });
         // Long-press still opens report via item long click below
 

@@ -1,25 +1,21 @@
 package com.pos_billingwala.Adapter;
 
 import android.annotation.SuppressLint;
-import android.app.Dialog;
+import android.app.Activity;
 import android.content.Context;
-import android.content.DialogInterface;
-import android.graphics.drawable.ColorDrawable;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.textfield.TextInputEditText;
 import com.pos_billingwala.Activity.BluetoothPrint;
+import com.pos_billingwala.Extra.BottomSheetUi;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Fragment.CreatePos;
@@ -58,10 +54,10 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.MyViewHolder> 
         posBillingWalaDatabase = new POSBillingWalaDatabase(context);
 
         holder.binding.productName.setText(productCartResponse.getDisplayLineName());
-        holder.binding.productQuantity.setText(productCartResponse.getProductQuantity());
+        float productQuantity = parseQty(productCartResponse.getProductQuantity());
+        holder.binding.productQuantity.setText(formatQty(productQuantity));
 
         float productPrice = Float.parseFloat(productCartResponse.getResolvedLinePrice());
-        float productQuantity = Float.parseFloat(productCartResponse.getProductQuantity());
         if (!CreatePos.companyResponseList.isEmpty()) {
             if (CreatePos.companyResponseList.get(0).getGstStatus() != null) {
                 if (CreatePos.companyResponseList.get(0).getGstStatus().equalsIgnoreCase("On")) {
@@ -75,188 +71,105 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.MyViewHolder> 
                     float totalPerProductGST = (productPrice + (productPrice * ((totalCGST + totalSGST) / 100))) * productQuantity;
                     productPriceUnit = MainActivity.currencyName + " " + String.format(Locale.US, "%.2f", totalPerProductGST);
                 } else {
-                    productPriceUnit = MainActivity.currencyName + " " + (productPrice * productQuantity);
+                    productPriceUnit = MainActivity.currencyName + " " + String.format(Locale.US, "%.2f", productPrice * productQuantity);
                 }
             } else {
-                productPriceUnit = MainActivity.currencyName + " " + (productPrice * productQuantity);
+                productPriceUnit = MainActivity.currencyName + " " + String.format(Locale.US, "%.2f", productPrice * productQuantity);
             }
         } else {
-            productPriceUnit = MainActivity.currencyName + " " + (productPrice * productQuantity);
+            productPriceUnit = MainActivity.currencyName + " " + String.format(Locale.US, "%.2f", productPrice * productQuantity);
         }
 
-        holder.binding.productPrice.setText(MainActivity.currencyName + " " + productPriceUnit);
+        holder.binding.productPrice.setText(productPriceUnit);
 
-        holder.binding.productRemove.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (!holder.binding.productQuantity.getText().toString().isEmpty()) {
-                    float quantity = Float.parseFloat(holder.binding.productQuantity.getText().toString());
-                    float totalQuantity = quantity - 1;
-                    if (totalQuantity > 0) {
-                        updateCart(productCartResponse.getCartId(), String.valueOf(totalQuantity), productCartResponse.getResolvedLinePrice());
-                    } else {
-                        deleteCartProduct(productCartResponse.getCartId());
-                    }
-                } else {
-                    deleteCartProduct(productCartResponse.getCartId());
-                }
+        // Qty bottom sheet only from the quantity number — not − / + / price / row.
+        holder.binding.getRoot().setOnClickListener(null);
+        holder.binding.productName.setOnClickListener(null);
+        holder.binding.productName.setClickable(false);
+
+        holder.binding.productRemove.setOnClickListener(v -> {
+            float quantity = parseQty(holder.binding.productQuantity.getText().toString());
+            float totalQuantity = quantity - 1;
+            if (totalQuantity > 0) {
+                updateCart(productCartResponse.getCartId(), formatQty(totalQuantity), productCartResponse.getResolvedLinePrice());
+            } else {
+                deleteCartProduct(productCartResponse.getCartId());
             }
         });
 
-        holder.binding.productAdd.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (!holder.binding.productQuantity.getText().toString().isEmpty()) {
-                    float quantity = Float.parseFloat(holder.
-                            binding.productQuantity.getText().toString());
-                    float totalQuantity = quantity + 1;
-                    Log.e("totalQuantity", String.valueOf(totalQuantity));
-                    updateCart(productCartResponse.getCartId(), String.valueOf(totalQuantity), productCartResponse.getResolvedLinePrice());
-                } else {
-                    deleteCartProduct(productCartResponse.getCartId());
-                }
-            }
+        holder.binding.productAdd.setOnClickListener(v -> {
+            float quantity = parseQty(holder.binding.productQuantity.getText().toString());
+            float totalQuantity = quantity + 1;
+            updateCart(productCartResponse.getCartId(), formatQty(totalQuantity), productCartResponse.getResolvedLinePrice());
         });
 
-        holder.binding.productDelete.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                new MaterialAlertDialogBuilder(context)
-                        .setTitle(context.getString(R.string.toast_delete_product))
-                        .setMessage(context.getString(R.string.toast_do_you_want_to_delete_from_bill))
-                        .setPositiveButton("YES", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialogInterface, int i) {
-                                dialogInterface.dismiss();
-                                deleteCartProduct(productCartResponse.getCartId());
-                            }
-                        })
-                        .setNegativeButton("NO", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialogInterface, int i) {
-                                dialogInterface.dismiss();
-                            }
-                        })
-                        .show();
+        holder.binding.productDelete.setOnClickListener(v -> BottomSheetUi.showConfirm(
+                context,
+                context.getString(R.string.toast_delete_product),
+                context.getString(R.string.toast_do_you_want_to_delete_from_bill),
+                "YES",
+                "NO",
+                true,
+                () -> deleteCartProduct(productCartResponse.getCartId())));
 
-            }
-        });
+        holder.binding.productQuantity.setOnClickListener(v -> setUpdateQuantity(productCartResponse));
 
-        holder.binding.productQuantity.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                setUpdateQuantity(productCartResponse);
-            }
-        });
-
-        holder.binding.productPrice.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                setUpdateProductPrice(productCartResponse);
-            }
-        });
-
-    }
-
-    public void setUpdateProductPrice(ProductCartResponse productCartResponse) {
-
-        final Dialog dialog = new Dialog(context);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE); // before
-        dialog.setContentView(R.layout.update_quantity_dialog);
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
-        dialog.setCancelable(false);
-
-        WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
-        lp.copyFrom(dialog.getWindow().getAttributes());
-        lp.width = WindowManager.LayoutParams.MATCH_PARENT;
-        lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
-
-        TextView continueToQuantity = dialog.findViewById(R.id.continueToQuantity);
-        TextView dismissQuantity = dialog.findViewById(R.id.dismissQuantity);
-        TextInputEditText quantityTxt = dialog.findViewById(R.id.quantity);
-        TextView detailsTxt = dialog.findViewById(R.id.details);
-        detailsTxt.setText("Enter Amount");
-
-        quantityTxt.setText(productCartResponse.getResolvedLinePrice());
-        quantityTxt.setSelection(quantityTxt.getText().toString().length());
-
-        dismissQuantity.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
-            }
-        });
-
-        continueToQuantity.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (!quantityTxt.getText().toString().isEmpty()) {
-                    float totalQuantity = Float.parseFloat(productCartResponse.getProductQuantity());
-                    updateCart(productCartResponse.getCartId(), String.valueOf(totalQuantity), quantityTxt.getText().toString());
-                    dialog.dismiss();
-                } else {
-                    quantityTxt.setError("Enter Amount");
-                    quantityTxt.requestFocus();
-                }
-            }
-        });
-
-        dialog.show();
-        dialog.getWindow().setAttributes(lp);
+        // Amount must not open the qty bottom sheet (same dialog was reused before).
+        holder.binding.productPrice.setOnClickListener(null);
+        holder.binding.productPrice.setClickable(false);
+        holder.binding.productPrice.setFocusable(false);
 
     }
 
     public void setUpdateQuantity(ProductCartResponse productCartResponse) {
+        Activity activity = (Activity) context;
+        View content = LayoutInflater.from(activity).inflate(R.layout.update_quantity_dialog, null);
+        BottomSheetDialog sheet = BottomSheetUi.showContent(activity, content, false);
 
-        final Dialog dialog = new Dialog(context);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE); // before
-        dialog.setContentView(R.layout.update_quantity_dialog);
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
-        dialog.setCancelable(false);
-
-        WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
-        lp.copyFrom(dialog.getWindow().getAttributes());
-        lp.width = WindowManager.LayoutParams.MATCH_PARENT;
-        lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
-
-        TextView continueToQuantity = dialog.findViewById(R.id.continueToQuantity);
-        TextView dismissQuantity = dialog.findViewById(R.id.dismissQuantity);
-        TextInputEditText quantityTxt = dialog.findViewById(R.id.quantity);
-        TextView detailsTxt = dialog.findViewById(R.id.details);
+        TextView continueToQuantity = content.findViewById(R.id.continueToQuantity);
+        TextView dismissQuantity = content.findViewById(R.id.dismissQuantity);
+        TextInputEditText quantityTxt = content.findViewById(R.id.quantity);
+        TextView detailsTxt = content.findViewById(R.id.details);
         detailsTxt.setText("Enter Quantity");
 
-        quantityTxt.setText(productCartResponse.getProductQuantity());
+        quantityTxt.setText(formatQty(parseQty(productCartResponse.getProductQuantity())));
         quantityTxt.setSelection(quantityTxt.getText().toString().length());
 
-        dismissQuantity.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
-            }
-        });
+        dismissQuantity.setOnClickListener(v -> sheet.dismiss());
 
-        continueToQuantity.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (!quantityTxt.getText().toString().isEmpty()) {
-                    if (Float.parseFloat(quantityTxt.getText().toString()) > 0) {
-                        float totalQuantity = Float.parseFloat(quantityTxt.getText().toString());
-                        updateCart(productCartResponse.getCartId(), String.valueOf(totalQuantity), productCartResponse.getResolvedLinePrice());
-                        dialog.dismiss();
-                    } else {
-                        quantityTxt.setError("Enter Quantity");
-                        quantityTxt.requestFocus();
-                    }
+        continueToQuantity.setOnClickListener(v -> {
+            if (!quantityTxt.getText().toString().isEmpty()) {
+                float entered = parseQty(quantityTxt.getText().toString());
+                if (entered > 0) {
+                    updateCart(productCartResponse.getCartId(), formatQty(entered), productCartResponse.getResolvedLinePrice());
+                    sheet.dismiss();
                 } else {
                     quantityTxt.setError("Enter Quantity");
                     quantityTxt.requestFocus();
                 }
+            } else {
+                quantityTxt.setError("Enter Quantity");
+                quantityTxt.requestFocus();
             }
         });
+    }
 
-        dialog.show();
-        dialog.getWindow().setAttributes(lp);
+    private static float parseQty(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return 0f;
+        }
+        try {
+            return Float.parseFloat(value.trim());
+        } catch (NumberFormatException e) {
+            return 0f;
+        }
+    }
 
+    private static String formatQty(float qty) {
+        if (qty == (long) qty) {
+            return String.valueOf((long) qty);
+        }
+        return String.format(Locale.US, "%.2f", qty);
     }
 
     public void updateCart(String cartId, String productQuantity, String productAmount) {

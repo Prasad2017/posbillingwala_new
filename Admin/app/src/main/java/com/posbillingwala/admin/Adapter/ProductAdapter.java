@@ -1,7 +1,6 @@
 package com.posbillingwala.admin.Adapter;
 
 import android.content.Context;
-import android.content.DialogInterface;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.text.Html;
@@ -13,7 +12,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.posbillingwala.admin.Extra.BottomSheetUi;
 import com.posbillingwala.admin.Activity.MainActivity;
 import com.posbillingwala.admin.Fragment.AllCustomerProductList;
 import com.posbillingwala.admin.Fragment.ManageCustomerProductPortions;
@@ -106,23 +105,8 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.MyViewHo
 
     private void deleteProductDialog(String productId) {
 
-        new MaterialAlertDialogBuilder(context)
-                .setTitle("Are you Sure?")
-                .setMessage("Do you want to delete this product?")
-                .setPositiveButton("YES", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        dialogInterface.dismiss();
-                        deleteProduct(productId);
-                    }
-                })
-                .setNegativeButton("NO", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        dialogInterface.dismiss();
-                    }
-                })
-                .show();
+        BottomSheetUi.showConfirm(context, "Are you Sure?", "Do you want to delete this product?",
+                "YES", "NO", true, () -> deleteProduct(productId));
 
     }
 

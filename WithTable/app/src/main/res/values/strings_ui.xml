@@ -417,6 +417,7 @@
     <string name="toast_printer_offline_connect">Printer offline — connect and try again</string>
     <string name="toast_printer_connecting">Connecting to printer… Tap Print again once connected.</string>
     <string name="toast_printer_not_connected_select">Printer not connected. Select your Bluetooth printer.</string>
+    <string name="toast_printer_not_found_select">Saved printer not found. Select a Bluetooth device.</string>
     <string name="toast_test_print_sent">Test print sent</string>
     <string name="toast_printer_disconnect">Printer Disconnect</string>
     <string name="toast_printing_in_progress">Printing in progress</string>

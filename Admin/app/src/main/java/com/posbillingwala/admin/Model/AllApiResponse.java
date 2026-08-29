@@ -209,6 +209,9 @@ public class AllApiResponse {
     @SerializedName("productCount")
     @Expose
     private String productCount;
+    @SerializedName("portionCount")
+    @Expose
+    private String portionCount;
     @SerializedName("totalLicenses")
     @Expose
     private String totalLicenses;
@@ -684,6 +687,10 @@ public class AllApiResponse {
 
     public String getProductCount() {
         return productCount;
+    }
+
+    public String getPortionCount() {
+        return portionCount;
     }
 
     public String getTotalLicenses() {

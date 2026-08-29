@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/colorBackground">
@@ -30,36 +31,42 @@
                 android:textColor="@color/colorTextHint"
                 android:textSize="11sp" />
 
-            <include
-                android:id="@+id/categoryLayout"
-                layout="@layout/item_report_menu_row"
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp" />
+                android:layout_marginTop="12dp"
+                app:cardBackgroundColor="@color/colorSurface"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/colorBorder"
+                app:strokeWidth="1dp">
 
-            <include
-                android:id="@+id/subcategoryLayout"
-                layout="@layout/item_report_menu_row"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
 
-            <include
-                android:id="@+id/portionLayout"
-                layout="@layout/item_report_menu_row"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                    <include
+                        android:id="@+id/categoryLayout"
+                        layout="@layout/item_grouped_menu_row" />
 
-            <include
-                android:id="@+id/productLayout"
-                layout="@layout/item_report_menu_row"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                    <include
+                        android:id="@+id/subcategoryLayout"
+                        layout="@layout/item_grouped_menu_row" />
 
-            <include
-                android:id="@+id/comboLayout"
-                layout="@layout/item_report_menu_row"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                    <include
+                        android:id="@+id/portionLayout"
+                        layout="@layout/item_grouped_menu_row" />
+
+                    <include
+                        android:id="@+id/productLayout"
+                        layout="@layout/item_grouped_menu_row" />
+
+                    <include
+                        android:id="@+id/comboLayout"
+                        layout="@layout/item_grouped_menu_row" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
     </ScrollView>
 </RelativeLayout>

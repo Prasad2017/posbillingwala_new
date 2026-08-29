@@ -2,6 +2,7 @@ package com.pos_billingwala.Extra;
 
 import android.content.Context;
 import android.os.Build;
+import android.provider.Settings;
 import android.util.Log;
 
 import com.pos_billingwala.BuildConfig;
@@ -144,14 +145,19 @@ public final class ErrorLogReporter {
             String exceptionClass = error.getClass().getName();
             String stack = stackTraceOf(error);
             String category = ObservabilityPublic.categorize(error);
-            String type = mapType(category, context);
+            String type = fatal ? "CRASH" : mapType(category, context);
+            if (!fatal && "fatal_crash".equalsIgnoreCase(context)) {
+                type = "CRASH";
+            }
             String sev = severity != null ? severity : (fatal ? "CRITICAL" : "ERROR");
             String summary = buildAppSummary(type, context, exceptionClass);
 
             ErrorLogPayload p = basePayload(type, sev, category, summary);
             fillOriginals(p, originalMsg, exceptionClass, stack, category);
             p.put("user_action", preferAction(context != null ? context : "Unhandled error"));
-            p.put("what_happened", buildAppWhatHappened(context, originalMsg));
+            p.put("what_happened", fatal
+                    ? buildCrashWhatHappened(exceptionClass, originalMsg, context)
+                    : buildAppWhatHappened(context, originalMsg));
             p.put("fingerprint", fingerprint(type, exceptionClass, originalMsg,
                     Observability.getCurrentScreenName(), 0));
             if (fatal) {
@@ -191,6 +197,36 @@ public final class ErrorLogReporter {
         }
     }
 
+    /**
+     * Android system process-exit (Play Protect / ApplicationExitInfo): NPE, ANR,
+     * native crash, low memory, etc. Always persisted locally then uploaded.
+     */
+    public static void reportProcessExit(String errorType, String category, String exceptionClass,
+                                         String description, String trace, long timestampMs,
+                                         int pid, int reasonCode, int statusCode) {
+        try {
+            String type = errorType != null && !errorType.isEmpty() ? errorType : "CRASH";
+            String clazz = exceptionClass != null && !exceptionClass.isEmpty()
+                    ? exceptionClass : "ProcessExit";
+            String originalMsg = description != null && !description.isEmpty()
+                    ? description
+                    : (friendlyExceptionName(clazz) + " (system process exit, no description)");
+            String stack = trace != null ? trace : "";
+            String cat = category != null ? category : "java_crash";
+            String summary = buildProcessExitSummary(type, clazz, originalMsg);
+
+            ErrorLogPayload p = basePayload(type, "CRITICAL", cat, summary);
+            fillOriginals(p, originalMsg, clazz, stack, cat);
+            p.put("user_action", "App process exited (system crash history)");
+            p.put("what_happened", buildProcessExitWhatHappened(type, clazz, originalMsg, pid, reasonCode, statusCode, timestampMs));
+            p.put("fingerprint", fingerprint(type, clazz, originalMsg, "system_exit", reasonCode));
+            ErrorLogQueue.enqueue(p);
+            addBreadcrumb("SYSTEM_EXIT " + type + " " + clazz);
+        } catch (Throwable t) {
+            Log.e(TAG, "reportProcessExit failed: " + t.getMessage());
+        }
+    }
+
     public static void reportDatabaseError(Throwable error, String operation) {
         try {
             if (error == null) {
@@ -209,6 +245,49 @@ public final class ErrorLogReporter {
             ErrorLogQueue.enqueue(p);
         } catch (Throwable t) {
             Log.e(TAG, "reportDatabaseError failed: " + t.getMessage());
+        }
+    }
+
+    /**
+     * Device health issues: memory, storage, thermal, battery, etc.
+     * Queued offline and synced to {@code reportErrorLog.php}.
+     */
+    public static void reportDeviceIssue(String errorType, String severity, String category,
+                                         String summary, String whatHappened,
+                                         String exceptionClass, String detailCode) {
+        try {
+            String type = errorType != null && !errorType.isEmpty() ? errorType : "DEVICE";
+            String sev = severity != null && !severity.isEmpty() ? severity : "WARNING";
+            String cat = category != null ? category : "device";
+            String sum = summary != null ? summary : "Device issue detected";
+            String clazz = exceptionClass != null && !exceptionClass.isEmpty()
+                    ? exceptionClass : "DeviceIssue";
+            String original = detailCode != null && !detailCode.isEmpty()
+                    ? detailCode
+                    : (whatHappened != null ? truncate(whatHappened, 400) : sum);
+
+            ErrorLogPayload p = basePayload(type, sev, cat, sum);
+            fillOriginals(p, original, clazz, "", cat);
+            p.put("user_action", preferAction("Device health check"));
+            StringBuilder happened = new StringBuilder();
+            happened.append(whatHappened != null ? whatHappened : sum);
+            Context ctx = appContext;
+            if (ctx != null) {
+                String mem = DeviceHealthMonitor.memorySnapshot(ctx);
+                String stor = DeviceHealthMonitor.storageSnapshot(ctx);
+                if (!mem.isEmpty()) {
+                    happened.append("\n").append(mem);
+                }
+                if (!stor.isEmpty()) {
+                    happened.append("\n").append(stor);
+                }
+            }
+            p.put("what_happened", LogSanitizer.sanitize(happened.toString(), 4096));
+            p.put("fingerprint", fingerprint(type, clazz, original, cat, 0));
+            ErrorLogQueue.enqueue(p);
+            addBreadcrumb(type + " " + cat);
+        } catch (Throwable t) {
+            Log.e(TAG, "reportDeviceIssue failed: " + t.getMessage());
         }
     }
 
@@ -270,7 +349,16 @@ public final class ErrorLogReporter {
         String shop = ctx != null ? Common.getSavedUserData(ctx, "shopName") : "";
         String branch = ctx != null ? Common.getSavedUserData(ctx, "branchLabel") : "";
         String userName = ctx != null ? Common.getSavedUserData(ctx, "userName") : "";
-        String deviceName = Build.MANUFACTURER + " " + Build.MODEL;
+        String deviceName = (Build.MANUFACTURER + " " + Build.MODEL + " (Android "
+                + Build.VERSION.RELEASE + "/API " + Build.VERSION.SDK_INT + ")").trim();
+        String deviceId = "";
+        if (ctx != null) {
+            try {
+                String id = Settings.Secure.getString(ctx.getContentResolver(), Settings.Secure.ANDROID_ID);
+                deviceId = id != null ? id : "";
+            } catch (Throwable ignored) {
+            }
+        }
 
         p.put("userId", nullToEmpty(userId));
         p.put("error_type", type);
@@ -282,8 +370,8 @@ public final class ErrorLogReporter {
         p.put("customer_id", nullToEmpty(userId));
         p.put("shop_name", nullToEmpty(shop));
         p.put("branch_label", nullToEmpty(branch));
-        p.put("device_name", deviceName.trim());
-        p.put("device_id", "");
+        p.put("device_name", deviceName);
+        p.put("device_id", deviceId);
         p.put("user_label", nullToEmpty(userName));
         p.put("screen_name", ScreenNames.friendly(
                 Observability.getActivityName(), Observability.getFragmentName()));
@@ -400,7 +488,80 @@ public final class ErrorLogReporter {
         if ("DATABASE".equals(type)) {
             return "Database error while " + (context != null ? context : "saving");
         }
+        if ("CRASH".equals(type) || "ANR".equals(type) || "NATIVE_CRASH".equals(type)
+                || "LOW_MEMORY".equals(type)) {
+            return friendlyExceptionName(simple) + " — app crashed on " + screen;
+        }
         return (simple != null ? simple : "Application error") + " on " + screen;
+    }
+
+    private static String buildCrashWhatHappened(String exceptionClass, String original, String context) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("The app crashed due to a ")
+                .append(friendlyExceptionName(exceptionClass).toLowerCase(Locale.US))
+                .append(" error.");
+        if (context != null && !context.isEmpty()) {
+            sb.append(" Context: ").append(context).append('.');
+        }
+        if (original != null && !original.isEmpty()) {
+            sb.append("\nOriginal: ").append(original);
+        }
+        return sb.toString();
+    }
+
+    private static String buildProcessExitSummary(String type, String exceptionClass, String description) {
+        String name = friendlyExceptionName(exceptionClass);
+        if ("ANR".equals(type)) {
+            return "App not responding (ANR)";
+        }
+        if ("NATIVE_CRASH".equals(type)) {
+            return "Native crash — " + name;
+        }
+        if ("LOW_MEMORY".equals(type)) {
+            return "App killed — low memory / OutOfMemory";
+        }
+        String desc = description != null ? description.trim() : "";
+        String nameLower = name.toLowerCase(Locale.US);
+        String descLower = desc.toLowerCase(Locale.US);
+        if (descLower.contains("null pointer") || descLower.contains("nullpointer")
+                || nameLower.contains("nullpointer") || nameLower.contains("null pointer")) {
+            return "NullPointerException — app crashed repeatedly";
+        }
+        return name + " — app crashed (system crash history)";
+    }
+
+    private static String buildProcessExitWhatHappened(String type, String exceptionClass,
+                                                       String original, int pid, int reasonCode,
+                                                       int statusCode, long timestampMs) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Android recorded a process exit (same source as Play Protect \"View history\").");
+        sb.append("\nType: ").append(type);
+        sb.append("\nException: ").append(friendlyExceptionName(exceptionClass));
+        sb.append("\nReason code: ").append(reasonCode);
+        sb.append("\nStatus: ").append(statusCode);
+        sb.append("\nPID: ").append(pid);
+        if (timestampMs > 0) {
+            sb.append("\nExit time (ms): ").append(timestampMs);
+        }
+        if (original != null && !original.isEmpty()) {
+            sb.append("\nOriginal: ").append(original);
+        }
+        return sb.toString();
+    }
+
+    private static String friendlyExceptionName(String exceptionClass) {
+        if (exceptionClass == null || exceptionClass.isEmpty()) {
+            return "Unknown crash";
+        }
+        int dot = exceptionClass.lastIndexOf('.');
+        String simple = dot >= 0 ? exceptionClass.substring(dot + 1) : exceptionClass;
+        if ("NullPointerException".equals(simple)) {
+            return "Null pointer exception";
+        }
+        if ("OutOfMemoryError".equals(simple)) {
+            return "Out of memory";
+        }
+        return simple;
     }
 
     private static String buildAppWhatHappened(String context, String original) {

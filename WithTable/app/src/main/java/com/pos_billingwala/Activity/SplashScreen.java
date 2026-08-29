@@ -2,7 +2,6 @@ package com.pos_billingwala.Activity;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -17,12 +16,13 @@ import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.view.WindowCompat;
 
 import com.google.android.gms.tasks.Task;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.play.core.appupdate.AppUpdateInfo;
 import com.google.android.play.core.appupdate.AppUpdateManager;
 import com.google.android.play.core.appupdate.AppUpdateManagerFactory;
 import com.google.android.play.core.install.model.UpdateAvailability;
 import com.pos_billingwala.Extra.Common;
+import com.pos_billingwala.Extra.BottomSheetUi;
+import com.pos_billingwala.NetworkToOffline.CloudSyncNav;
 import com.pos_billingwala.NetworkToOffline.OfflineNetworkData;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.ActivitySplashScreenBinding;
@@ -44,6 +44,10 @@ public class SplashScreen extends BaseActivity {
         WindowCompat.setDecorFitsSystemWindows(getWindow(), true);
         getWindow().setStatusBarColor(Color.WHITE);
         getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+        if (getIntent() != null && (getIntent().getBooleanExtra(CloudSyncNav.EXTRA_OPEN, false)
+                || CloudSyncNav.ACTION_OPEN.equals(getIntent().getAction()))) {
+            CloudSyncNav.markPending(this);
+        }
         checkAppUpdates();
 
     }
@@ -62,24 +66,19 @@ public class SplashScreen extends BaseActivity {
             if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE) {
                 if (!(SplashScreen.this.isFinishing())) {
                     String strMessage = "Please update our <b> POS " + getResources().getString(R.string.app_name) + "</b> app to new version to continue. Before update our app please upload your data on server. We ae not responsible for losing your data.";
-                    new MaterialAlertDialogBuilder(SplashScreen.this, R.style.ThemeDialog)
-                            .setIcon(getResources().getDrawable(R.mipmap.ic_launcher))
-                            .setTitle(getString(R.string.toast_new_version_available))
-                            .setCancelable(false)
-                            .setMessage(Html.fromHtml(strMessage))
-                            .setPositiveButton("Update", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialogInterface, int i) {
-                                    Toast.makeText(SplashScreen.this, getString(R.string.toast_data_uploading_on_server), Toast.LENGTH_SHORT).show();
-                                    offlineNetworkData = new OfflineNetworkData(SplashScreen.this, "Update");
-                                }
-                            }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialogInterface, int i) {
-                                    dialogInterface.dismiss();
-                                    moveNext();
-                                }
-                            }).show();
+                    BottomSheetUi.showAction(
+                            SplashScreen.this,
+                            getString(R.string.toast_new_version_available),
+                            Html.fromHtml(strMessage),
+                            "Update",
+                            "Cancel",
+                            R.mipmap.ic_launcher,
+                            false,
+                            () -> {
+                                Toast.makeText(SplashScreen.this, getString(R.string.toast_data_uploading_on_server), Toast.LENGTH_SHORT).show();
+                                offlineNetworkData = new OfflineNetworkData(SplashScreen.this, "Update");
+                            },
+                            this::moveNext);
                 }
             } else {
                 moveNext();
@@ -110,15 +109,18 @@ public class SplashScreen extends BaseActivity {
                 if (Common.getSavedUserData(SplashScreen.this, "firstLogin") != null) {
                     if (Common.getSavedUserData(SplashScreen.this, "firstLogin").equalsIgnoreCase("firstLogin")) {
                         Intent i = new Intent(SplashScreen.this, LoginMPin.class);
+                        CloudSyncNav.copyOpenFlag(getIntent(), i);
                         startActivity(i);
                         finish();
                     } else {
                         Intent i = new Intent(SplashScreen.this, Login.class);
+                        CloudSyncNav.copyOpenFlag(getIntent(), i);
                         startActivity(i);
                         finish();
                     }
                 } else {
                     Intent i = new Intent(SplashScreen.this, Login.class);
+                    CloudSyncNav.copyOpenFlag(getIntent(), i);
                     startActivity(i);
                     finish();
                 }

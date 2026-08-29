@@ -40,6 +40,21 @@
                 android:textSize="11sp" />
 
             <TextView
+                android:id="@+id/typeBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/bg_badge_trial"
+                android:fontFamily="@font/poppinsmedium"
+                android:paddingStart="10dp"
+                android:paddingTop="2dp"
+                android:paddingEnd="10dp"
+                android:paddingBottom="2dp"
+                android:text="APP"
+                android:textColor="@color/statusTrial"
+                android:textSize="11sp" />
+
+            <TextView
                 android:id="@+id/title"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"

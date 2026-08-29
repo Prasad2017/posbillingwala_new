@@ -1,21 +1,19 @@
 package com.posbillingwala.dealer.Adapter;
 
-import android.app.Dialog;
 import android.content.Context;
 import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.textfield.TextInputEditText;
+import com.posbillingwala.dealer.Extra.BottomSheetUi;
 import com.posbillingwala.dealer.Fragment.AddCustomerPortionMaster;
 import com.posbillingwala.dealer.Model.AllApiResponse;
 import com.posbillingwala.dealer.Model.PortionMasterResponse;
@@ -58,48 +56,33 @@ public class PortionMasterAdapter extends RecyclerView.Adapter<PortionMasterAdap
     }
 
     private void updatePortionMasterDialog(PortionMasterResponse item) {
-        final Dialog dialog = new Dialog(context);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        dialog.setContentView(R.layout.update_portion_master_dialog);
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        dialog.setCancelable(false);
+        View dialogView = LayoutInflater.from(context).inflate(R.layout.update_portion_master_dialog, null);
+        BottomSheetDialog sheet = BottomSheetUi.showContent(context, dialogView, false);
+        if (sheet == null) {
+            return;
+        }
 
-        WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
-        lp.copyFrom(dialog.getWindow().getAttributes());
-        lp.width = WindowManager.LayoutParams.MATCH_PARENT;
-        lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
-
-        TextInputEditText nameTxt = dialog.findViewById(R.id.portionMasterName);
+        TextInputEditText nameTxt = dialogView.findViewById(R.id.portionMasterName);
         nameTxt.setText(item.getPortionName());
         if (nameTxt.getText() != null) {
             nameTxt.setSelection(nameTxt.getText().length());
         }
 
-        dialog.findViewById(R.id.dismissPortionMaster).setOnClickListener(v -> dialog.dismiss());
-        dialog.findViewById(R.id.updatePortionMaster).setOnClickListener(v -> {
+        dialogView.findViewById(R.id.dismissPortionMaster).setOnClickListener(v -> sheet.dismiss());
+        dialogView.findViewById(R.id.updatePortionMaster).setOnClickListener(v -> {
             String newName = nameTxt.getText() != null ? nameTxt.getText().toString().trim() : "";
             if (newName.isEmpty()) {
                 Toast.makeText(context, "Please enter portion name", Toast.LENGTH_SHORT).show();
                 return;
             }
-            dialog.dismiss();
+            sheet.dismiss();
             savePortionMaster(item, newName, "0");
         });
-
-        dialog.show();
-        dialog.getWindow().setAttributes(lp);
     }
 
     private void deletePortionMasterDialog(PortionMasterResponse item) {
-        new MaterialAlertDialogBuilder(context)
-                .setTitle("Are you Sure?")
-                .setMessage("Do you want to delete this portion master?")
-                .setPositiveButton("YES", (dialogInterface, i) -> {
-                    dialogInterface.dismiss();
-                    savePortionMaster(item, item.getPortionName() != null ? item.getPortionName() : "", "1");
-                })
-                .setNegativeButton("NO", (dialogInterface, i) -> dialogInterface.dismiss())
-                .show();
+        BottomSheetUi.showConfirm(context, "Are you Sure?", "Do you want to delete this portion master?",
+                "YES", "NO", true, () -> savePortionMaster(item, item.getPortionName() != null ? item.getPortionName() : "", "1"));
     }
 
     private void savePortionMaster(PortionMasterResponse item, String name, String deletedStatus) {
