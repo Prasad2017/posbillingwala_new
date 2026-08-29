@@ -2975,6 +2975,9 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
     }
 
     public void clearCart(String tableNumber, String cartOrderStatus) {
+        if (tableNumber == null || cartOrderStatus == null) {
+            return;
+        }
         SQLiteDatabase db = this.getWritableDatabase();
         db.beginTransaction();
         try {

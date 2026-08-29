@@ -74,7 +74,7 @@ public class DuplicateBluetoothPrint extends BaseActivity implements View.OnClic
     public static RecyclerView threeRecyclerView;
     public static NestedScrollView threeNestedScrollView;
     public static String invoiceRunningStatus, cartOrderStatus;
-    public static RadioButton cashButton, onlineButton, bankButton;
+    public static RadioButton cashButton, onlineButton;
     public static Activity activity;
     public static RecyclerView cartRecyclerView;
     public static List<CompanyResponse> companyResponseList = new ArrayList<>();
@@ -180,7 +180,6 @@ public class DuplicateBluetoothPrint extends BaseActivity implements View.OnClic
 
         cashButton = findViewById(R.id.cash);
         onlineButton = findViewById(R.id.online);
-        bankButton = findViewById(R.id.bank);
 
         cartRecyclerView = findViewById(R.id.cartRecyclerView);
         totalPayableAmountTxt = findViewById(R.id.payableAmount);
@@ -239,21 +238,14 @@ public class DuplicateBluetoothPrint extends BaseActivity implements View.OnClic
                 if (paymentMode.equalsIgnoreCase("Cash")) {
                     cashButton.setChecked(true);
                     onlineButton.setChecked(false);
-                    bankButton.setChecked(false);
                 } else if (paymentMode.equalsIgnoreCase("UPI")) {
                     onlineButton.setChecked(true);
                     cashButton.setChecked(false);
-                    bankButton.setChecked(false);
-                } else if (paymentMode.equalsIgnoreCase("Bank")) {
-                    bankButton.setChecked(true);
-                    cashButton.setChecked(false);
-                    onlineButton.setChecked(false);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
                 cashButton.setChecked(false);
                 onlineButton.setChecked(false);
-                bankButton.setChecked(false);
             }
         }
 

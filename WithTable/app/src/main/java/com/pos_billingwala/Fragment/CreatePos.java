@@ -419,6 +419,10 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
     private void clearCart() {
         final String table = tableNumber;
         final String orderStatus = cartOrderStatus;
+        if (table == null || orderStatus == null) {
+            Toast.makeText(activity, getString(R.string.toast_cart_is_empty), Toast.LENGTH_SHORT).show();
+            return;
+        }
         AppExecutors.get().runDbThenMain(this, () -> {
             posBillingWalaDatabase.clearCart(table, orderStatus);
             productCartResponseList = new ArrayList<>();
@@ -464,6 +468,17 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
         ((MainActivity) activity).lockUnlockDrawer(1);
         getCompanyDetails();
         getPrinterDetails();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Refresh cart when returning from Invoice Preview (print/save/clear).
+        if (binding == null || tableNumber == null || cartOrderStatus == null || posBillingWalaDatabase == null) {
+            return;
+        }
+        getCartCount();
+        refreshCatalogAfterCart();
     }
 
     public void getPrinterDetails() {
@@ -886,6 +901,9 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
     }
 
     private void refreshCatalogAfterCart() {
+        if (binding == null || activity == null) {
+            return;
+        }
         if (!binding.productSearch.getText().toString().isEmpty()) {
             searchHomeProduct(binding.productSearch.getText().toString());
         } else if (showingCombos) {
