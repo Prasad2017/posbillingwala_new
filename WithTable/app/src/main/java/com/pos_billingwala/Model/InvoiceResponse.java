@@ -41,6 +41,12 @@ public class InvoiceResponse {
     @SerializedName("discountType")
     @Expose
     public String discountType;
+    @SerializedName("packingCharge")
+    @Expose
+    public String packingCharge;
+    @SerializedName("packingChargeType")
+    @Expose
+    public String packingChargeType;
     @SerializedName("totalAmount")
     @Expose
     public String totalAmount;
@@ -167,6 +173,22 @@ public class InvoiceResponse {
 
     public void setDiscountType(String discountType) {
         this.discountType = discountType;
+    }
+
+    public String getPackingCharge() {
+        return packingCharge != null ? packingCharge : "0";
+    }
+
+    public void setPackingCharge(String packingCharge) {
+        this.packingCharge = packingCharge;
+    }
+
+    public String getPackingChargeType() {
+        return packingChargeType;
+    }
+
+    public void setPackingChargeType(String packingChargeType) {
+        this.packingChargeType = packingChargeType;
     }
 
     public String getTotalAmount() {

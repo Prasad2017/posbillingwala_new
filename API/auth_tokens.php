@@ -95,7 +95,11 @@ if (!function_exists('auth_token_compute_expires_at')) {
             if ($fromLicence !== null) {
                 return $fromLicence;
             }
-            // Licence missing/expired — do not issue a long-lived token
+            if ($actorType === 'owner') {
+                $ttlDays = $ttlDays !== null ? (int) $ttlDays : (int) AUTH_TOKEN_TTL_DAYS;
+                return date('Y-m-d H:i:s', strtotime('+' . $ttlDays . ' days'));
+            }
+            // POS licence missing/expired — do not issue a long-lived token
             return null;
         }
 
@@ -123,19 +127,22 @@ if (!function_exists('auth_token_from_request')) {
                         return $matches[1];
                     }
                 }
+                if (strcasecmp($name, 'X-Auth-Token') === 0 && trim((string) $value) !== '') {
+                    return trim((string) $value);
+                }
             }
         }
 
-        if (isset($_SERVER['HTTP_AUTHORIZATION']) && $_SERVER['HTTP_AUTHORIZATION'] !== '') {
-            if (preg_match('/Bearer\s+(\S+)/i', $_SERVER['HTTP_AUTHORIZATION'], $matches)) {
-                return $matches[1];
+        foreach (array('HTTP_AUTHORIZATION', 'REDIRECT_HTTP_AUTHORIZATION') as $headerKey) {
+            if (isset($_SERVER[$headerKey]) && $_SERVER[$headerKey] !== '') {
+                if (preg_match('/Bearer\s+(\S+)/i', $_SERVER[$headerKey], $matches)) {
+                    return $matches[1];
+                }
             }
         }
 
-        if (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION']) && $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] !== '') {
-            if (preg_match('/Bearer\s+(\S+)/i', $_SERVER['REDIRECT_HTTP_AUTHORIZATION'], $matches)) {
-                return $matches[1];
-            }
+        if (isset($_SERVER['HTTP_X_AUTH_TOKEN']) && trim((string) $_SERVER['HTTP_X_AUTH_TOKEN']) !== '') {
+            return trim((string) $_SERVER['HTTP_X_AUTH_TOKEN']);
         }
 
         if (isset($_POST['authToken']) && $_POST['authToken'] !== '') {

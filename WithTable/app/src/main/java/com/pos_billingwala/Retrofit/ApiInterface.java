@@ -208,6 +208,8 @@ public interface ApiInterface {
                                      @Field("totalGSTAmount") String totalGSTAmount,
                                      @Field("discount") String discount,
                                      @Field("discountType") String discountType,
+                                     @Field("packingCharge") String packingCharge,
+                                     @Field("packingChargeType") String packingChargeType,
                                      @Field("totalAmount") String totalAmount,
                                      @Field("paymentMode") String paymentMode,
                                      @Field("invoiceDate") String invoiceDate,

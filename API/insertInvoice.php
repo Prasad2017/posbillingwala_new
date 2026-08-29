@@ -70,6 +70,10 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 
   $discountType = $post('discountType', '');
 
+  $packingCharge = $post('packingCharge', '0');
+
+  $packingChargeType = $post('packingChargeType', 'Percentage');
+
   $totalAmount = $post('totalAmount', '0');
 
   $paymentMode = $post('paymentMode');
@@ -123,9 +127,9 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 
 				        $con,
 
-				        'UPDATE `invoice` SET `organization_id`=?, `branch_id`=?, `device_id`=?, `noOfTable`=?, `invoiceType`=?, `invoiceNumber`=?, `customerName`=?, `customerMobile`=?, `customerAddress`=?, `subTotal`=?, `totalGSTAmount`=?, `discount`=?, `discountType`=?, `totalAmount`=?, `paymentMode`=?, `invoiceDate`=?, `invoiceOrderStatus`=?, `invoiceNetworkStatus`=? WHERE `invoiceId`=?',
+				        'UPDATE `invoice` SET `organization_id`=?, `branch_id`=?, `device_id`=?, `noOfTable`=?, `invoiceType`=?, `invoiceNumber`=?, `customerName`=?, `customerMobile`=?, `customerAddress`=?, `subTotal`=?, `totalGSTAmount`=?, `discount`=?, `discountType`=?, `packingCharge`=?, `packingChargeType`=?, `totalAmount`=?, `paymentMode`=?, `invoiceDate`=?, `invoiceOrderStatus`=?, `invoiceNetworkStatus`=? WHERE `invoiceId`=?',
 
-				        'iissssssssssssssssi',
+				        'iissssssssssssssssssi',
 
 				        $orgId,
 
@@ -152,6 +156,10 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 				        $discount,
 
 				        $discountType,
+
+				        $packingCharge,
+
+				        $packingChargeType,
 
 				        $totalAmount,
 
@@ -233,9 +241,9 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 
                      $con,
 
-                     'INSERT INTO `invoice`(`licenseId`, `organization_id`, `branch_id`, `device_id`, `noOfTable`, `invoiceType`, `invoiceNumber`, `customerName`, `customerMobile`, `customerAddress`, `subTotal`, `totalGSTAmount`, `discount`, `discountType`, `totalAmount`, `paymentMode`, `invoiceDate`, `invoiceOrderStatus`, `invoiceNetworkStatus`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+                     'INSERT INTO `invoice`(`licenseId`, `organization_id`, `branch_id`, `device_id`, `noOfTable`, `invoiceType`, `invoiceNumber`, `customerName`, `customerMobile`, `customerAddress`, `subTotal`, `totalGSTAmount`, `discount`, `discountType`, `packingCharge`, `packingChargeType`, `totalAmount`, `paymentMode`, `invoiceDate`, `invoiceOrderStatus`, `invoiceNetworkStatus`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
 
-                     'siissssssssssssssss',
+                     'siissssssssssssssssss',
 
                      $userId,
 
@@ -264,6 +272,10 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
                      $discount,
 
                      $discountType,
+
+                     $packingCharge,
+
+                     $packingChargeType,
 
                      $totalAmount,
 

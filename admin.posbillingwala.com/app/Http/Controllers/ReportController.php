@@ -43,10 +43,22 @@ class ReportController extends Controller
     {
         $this->adminOnly();
         try {
-            $data = AdminMetrics::dealerSales(20, 'month');
+            $status = AdminMetrics::dealerReport();
+            $sales = AdminMetrics::dealerSales(20, 'month');
+            $data = array_merge($status, $sales);
         } catch (\Throwable $e) {
             \Log::error('Dealer report failed: ' . $e->getMessage());
-            $data = ['dealers' => [], 'totalSales' => 0, 'periodLabel' => 'This month'];
+            $data = [
+                'totalDealer' => 0,
+                'activeDealer' => 0,
+                'inactiveDealer' => 0,
+                'totalCustomers' => 0,
+                'activePercent' => 0,
+                'inactivePercent' => 0,
+                'growthBars' => [],
+                'dealers' => [],
+                'totalSales' => 0,
+            ];
         }
         return view('reports.dealers', compact('data'));
     }

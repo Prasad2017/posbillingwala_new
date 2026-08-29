@@ -36,8 +36,19 @@ class CustomerController extends Controller
     }
     public function getAddRecordPage()
     {
-        $dealers = User::where('role_id',2)->where('is_active',1)->orderBy('name','ASC')->get();
-    	return view('customers.add',compact('dealers'));
+        try {
+            $dealers = User::where('role_id', 2)
+                ->where(function ($q) {
+                    $q->where('is_active', 1)->orWhereNull('is_active');
+                })
+                ->orderBy('name', 'ASC')
+                ->get();
+        } catch (\Throwable $e) {
+            \Log::error('customers/add dealers query failed: ' . $e->getMessage());
+            $dealers = User::where('role_id', 2)->orderBy('name', 'ASC')->get();
+        }
+
+        return view('customers.add', compact('dealers'));
     }
 
     public function getEditPage($id)
@@ -46,7 +57,17 @@ class CustomerController extends Controller
     	->select('users.*','licenses.*','licenses.id as licenseId')->first();
     	if($data)
     	{
-            $dealers = User::where('role_id',2)->where('is_active',1)->orderBy('name','ASC')->get();
+            try {
+                $dealers = User::where('role_id', 2)
+                    ->where(function ($q) {
+                        $q->where('is_active', 1)->orWhereNull('is_active');
+                    })
+                    ->orderBy('name', 'ASC')
+                    ->get();
+            } catch (\Throwable $e) {
+                \Log::error('customers/edit dealers query failed: ' . $e->getMessage());
+                $dealers = User::where('role_id', 2)->orderBy('name', 'ASC')->get();
+            }
     		return view('customers.edit',compact('data','dealers'));
     	}
         else
@@ -103,12 +124,13 @@ class CustomerController extends Controller
         $license->fastBilling = $request->fast_billing ?? 1;
         $license->takeAway = $request->take_away ?? 1;
         $license->dineIn = $request->dine_in ?? 0;
+        $license->mess = $request->mess ?? 0;
         $license->save();
 
         return redirect()->back()->with('success','Customer added successfully');
     }
 
-    public function editCustomerRecord(Request $request)
+    public function editCustomerRecord(Request $request, $id = null)
     {
         $validated = $request->validate([
             'dealer_id' => 'required',
@@ -124,42 +146,43 @@ class CustomerController extends Controller
             'shop_image' => 'nullable|mimes:jpg,jpeg,png,gif'
         ]);
 
-        $date = date('Y-m-d');
-        $expiry_date = date('Y-m-d', strtotime($date. ' + '.$request->license_validity.' days'));
-
-        $data = User::where('id',$request->id)->first();
-        if($data)
-        {
-            $data->dealerId = $request->dealer_id;
-            $data->name = $request->name;
-            $data->contact_number = $request->mobile_number;
-            $data->shopName = $request->shop_name;
-            $data->address = $request->shop_address;
-            if($request->hasFile('shop_image')){
-                $image=$request->shop_image;
-                $file_path = $image->store('shop_images');
-                $data->shopImage = $file_path;
-            }
-            $data->save();    
+        $customerId = $id ?: $request->input('id');
+        $data = User::where('id', $customerId)->first();
+        if (!$data) {
+            return redirect()->back()->with('error', 'Customer not found');
         }
 
-        $date = $data->created_at->format('Y-m-d');
-        $expiry_date = date('Y-m-d', strtotime($date. ' + '.$request->license_validity.' days'));
+        $data->dealerId = $request->dealer_id;
+        $data->name = $request->name;
+        $data->contact_number = $request->mobile_number;
+        $data->shopName = $request->shop_name;
+        $data->address = $request->shop_address;
+        if ($request->hasFile('shop_image')) {
+            $image = $request->shop_image;
+            $file_path = $image->store('shop_images');
+            $data->shopImage = $file_path;
+        }
+        $data->save();
 
-        $license = License::where('id',$request->licenseId)->first();
-        if($license)
-        {
+        $date = optional($data->created_at)->format('Y-m-d') ?: date('Y-m-d');
+        $expiry_date = date('Y-m-d', strtotime($date . ' + ' . $request->license_validity . ' days'));
+
+        $license = License::where('id', $request->licenseId)->first();
+        if ($license) {
             $license->licenseValidity = $request->license_validity;
             $license->licenseType = $request->license_type;
             $license->licenseStatus = $request->license_status;
             $license->paymentStatus = $request->payment_status;
             $license->expiryDate = $expiry_date;
             $license->amount = $request->amount;
+            $license->fastBilling = $request->fast_billing ?? $license->fastBilling;
+            $license->takeAway = $request->take_away ?? $license->takeAway;
+            $license->dineIn = $request->dine_in ?? $license->dineIn;
+            $license->mess = $request->mess ?? $license->mess;
             $license->save();
         }
-        
 
-        return redirect()->back()->with('success','Customer updated successfully');
+        return redirect()->back()->with('success', 'Customer updated successfully');
     }
 
     // public function login(Request $request)
@@ -263,9 +286,10 @@ class CustomerController extends Controller
         $license->userType = $request->user_type;
         $license->expiryDate = $expiry_date;
         $license->amount = $request->amount;
-        $license->fastBilling = $request->fast_billing;
-        $license->takeAway = $request->take_away;
-        $license->dineIn = $request->dine_in;
+        $license->fastBilling = $request->fast_billing ?? 1;
+        $license->takeAway = $request->take_away ?? 1;
+        $license->dineIn = $request->dine_in ?? 0;
+        $license->mess = $request->mess ?? 0;
         $license->save();
 
         return redirect('customers/edit/'.$request->id)->with('success','App license key generated successfully');
@@ -307,9 +331,10 @@ class CustomerController extends Controller
             $license->amount = $request->amount;
             $license->userName = $request->name;
             $license->userType = $request->user_type;
-            $license->fastBilling = $request->fast_billing;
-            $license->takeAway = $request->take_away;
-            $license->dineIn = $request->dine_in;
+            $license->fastBilling = $request->fast_billing ?? $license->fastBilling;
+            $license->takeAway = $request->take_away ?? $license->takeAway;
+            $license->dineIn = $request->dine_in ?? $license->dineIn;
+            $license->mess = $request->mess ?? $license->mess;
             $license->save(); 
         }
         return redirect('customers/edit/'.$license->userId)->with('success','App license key updated successfully');

@@ -84,6 +84,14 @@ public interface ApiInterface {
                                                @Field("customerAddress") String customerAddress,
                                                @Field("customerShopName") String customerShopName);
 
+    @FormUrlEncoded
+    @POST("updateLicenseModules.php")
+    Call<AllApiResponse> updateLicenseModules(@Field("licensesId") String licensesId,
+                                              @Field("fastBilling") String fastBilling,
+                                              @Field("takeAway") String takeAway,
+                                              @Field("dineIn") String dineIn,
+                                              @Field("mess") String mess);
+
 
     @FormUrlEncoded
     @POST("insertCustomerCategory.php")

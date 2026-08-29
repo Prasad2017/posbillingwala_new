@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.pos_billingwala.Activity.BluetoothPrint;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.ReportCursorHelper;
 import com.pos_billingwala.Fragment.CreatePos;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.ProductCartResponse;
@@ -96,7 +97,8 @@ public class InvoiceTakAwayAdapter extends RecyclerView.Adapter<InvoiceTakAwayAd
             productCartResponseList.clear();
             productCartResponseList = posBillingWalaDatabase.getCartProductList(tableNumber, "take_away");
             String discountType = "";
-            float totalPerProductAmount = 0f, discountAmount = 0f, totalCGST = 0f, totalSGST = 0f, totalPerProductGST = 0f, totalGST = 0f;
+            String packingChargeType = "";
+            float totalPerProductAmount = 0f, discountAmount = 0f, packingAmount = 0f, totalCGST = 0f, totalSGST = 0f, totalPerProductGST = 0f, totalGST = 0f;
             if (!productCartResponseList.isEmpty()) {
 
                 for (int i = 0; i < productCartResponseList.size(); i++) {
@@ -111,6 +113,7 @@ public class InvoiceTakAwayAdapter extends RecyclerView.Adapter<InvoiceTakAwayAd
                     }
                     discountAmount = Float.parseFloat(productCartResponseList.get(i).getCartDiscount());
                     discountType = productCartResponseList.get(0).getCartDiscountType();
+                    packingChargeType = productCartResponseList.get(0).getCartPackingChargeType();
                     totalPerProductGST = (productPrice * ((totalCGST + totalSGST) / 100));
                     totalGST += (productPrice * ((totalCGST + totalSGST) / 100)) * productQuantity;
 
@@ -129,6 +132,11 @@ public class InvoiceTakAwayAdapter extends RecyclerView.Adapter<InvoiceTakAwayAd
                     discountAmount = subTotalAmt / (100 / discountAmount);
                 }
 
+                packingAmount = ReportCursorHelper.packingRupees(
+                        productCartResponseList.get(0).getCartPackingCharge(),
+                        packingChargeType,
+                        String.valueOf(subTotalAmt));
+
                 float shopCGST = 0f, shopSGST = 0f;
                 if (companyResponseList.get(0).getShopCGST() != null) {
                     shopCGST = subTotalAmt * (Float.parseFloat(companyResponseList.get(0).getShopCGST().trim()) / 100);
@@ -141,7 +149,7 @@ public class InvoiceTakAwayAdapter extends RecyclerView.Adapter<InvoiceTakAwayAd
                 }
                 float totalShopGST = shopCGST + shopSGST;
 
-                float totalAmount = totalPerProductAmount - discountAmount + totalShopGST;
+                float totalAmount = totalPerProductAmount - discountAmount + packingAmount + totalShopGST;
 
                 holder.binding.takeAwayBillAmount.setText(MainActivity.currencyName + " " + String.format(Locale.US, "%.2f", totalAmount));
 

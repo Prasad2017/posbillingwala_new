@@ -43,6 +43,7 @@ if ($customerId === null) {
         $shopName=$user['shopName'];
         
         
+        $json = array();
         $sql_licenses="SELECT * FROM `licenses` LEFT JOIN `companys` ON `companys`.`licenseId` = `licenses`.`id` WHERE `userId`='$id'";
     $check_licenses= mysqli_query($con, $sql_licenses);
     $rowcount_licenses=mysqli_num_rows($check_licenses);

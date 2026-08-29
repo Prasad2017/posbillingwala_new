@@ -34,6 +34,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
             $aadhar_number = $user["aadhar_number"];
             $address = $user["address"];
             $shopName = $user["shopName"];
+            $jsonLicenses = array();
             
             $sql_licenses="SELECT * FROM `licenses` LEFT JOIN `companys` ON `companys`.`licenseId` = `licenses`.`id` WHERE `userId`='$id'";
     $check_licenses= mysqli_query($con, $sql_licenses);
@@ -56,6 +57,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
         $fastBilling=$user_licenses['fastBilling'];
         $takeAway=$user_licenses['takeAway'];
         $dineIn=$user_licenses['dineIn'];
+        $mess = isset($user_licenses['mess']) ? $user_licenses['mess'] : '0';
         
         
         $jsonLicenses[] = array("licenses_id"=>$licenses_id, "companyAddress"=>$companyAddress,
@@ -63,7 +65,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                          "addressLine1"=>$store['addressLine1'], "addressLine2"=>$store['addressLine2'], "addressLine3"=>$store['addressLine3'],
                          "phoneNo1"=>$store['phoneNo1'], "phoneNo2"=>$store['phoneNo2'],
                          "licenseKey"=>$licenseKey, "licenseValidity"=>$licenseValidity, "licenseType"=>$licenseType, "licenseStatus"=>$licenseStatus,
-                         "registrationDate"=>$registrationDate, "expiryDate"=>$expiryDate, "paymentStatus"=>$paymentStatus, "amount"=>$amount, "fastBilling"=>$fastBilling, "takeAway"=>$takeAway, "dineIn"=>$dineIn);
+                         "registrationDate"=>$registrationDate, "expiryDate"=>$expiryDate, "paymentStatus"=>$paymentStatus, "amount"=>$amount, "fastBilling"=>$fastBilling, "takeAway"=>$takeAway, "dineIn"=>$dineIn, "mess"=>$mess);
         
         
 	}

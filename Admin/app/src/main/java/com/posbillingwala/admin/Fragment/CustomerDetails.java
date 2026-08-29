@@ -389,7 +389,7 @@ public class CustomerDetails extends Fragment implements View.OnClickListener {
 
                 // Modules tab
                 binding.recyclerModules.setLayoutManager(new LinearLayoutManager(activity));
-                binding.recyclerModules.setAdapter(new ModuleCardAdapter(licenseResponseList));
+                binding.recyclerModules.setAdapter(new ModuleCardAdapter(activity, licenseResponseList));
             }
 
             @Override

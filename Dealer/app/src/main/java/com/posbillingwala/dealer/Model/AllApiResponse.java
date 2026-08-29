@@ -50,6 +50,27 @@ public class AllApiResponse {
     @SerializedName("portionMasterId")
     @Expose
     private String portionMasterId;
+    @SerializedName("totalCustomer")
+    @Expose
+    private String totalCustomer;
+    @SerializedName("activeCustomer")
+    @Expose
+    private String activeCustomer;
+    @SerializedName("trialCustomer")
+    @Expose
+    private String trialCustomer;
+    @SerializedName("expiredCustomer")
+    @Expose
+    private String expiredCustomer;
+    @SerializedName("activePercent")
+    @Expose
+    private String activePercent;
+    @SerializedName("trialPercent")
+    @Expose
+    private String trialPercent;
+    @SerializedName("expiredPercent")
+    @Expose
+    private String expiredPercent;
 
 
     public String getStatus() {
@@ -162,5 +183,33 @@ public class AllApiResponse {
 
     public void setPortionMasterId(String portionMasterId) {
         this.portionMasterId = portionMasterId;
+    }
+
+    public String getTotalCustomer() {
+        return totalCustomer;
+    }
+
+    public String getActiveCustomer() {
+        return activeCustomer;
+    }
+
+    public String getTrialCustomer() {
+        return trialCustomer;
+    }
+
+    public String getExpiredCustomer() {
+        return expiredCustomer;
+    }
+
+    public String getActivePercent() {
+        return activePercent;
+    }
+
+    public String getTrialPercent() {
+        return trialPercent;
+    }
+
+    public String getExpiredPercent() {
+        return expiredPercent;
     }
 }

@@ -57,6 +57,26 @@ $ok = db_stmt_execute(
     $uid
 );
 
+$hasModules = isset($_POST['fastBilling']) || isset($_POST['takeAway'])
+    || isset($_POST['dineIn']) || isset($_POST['mess']);
+if ($ok && $hasModules) {
+    $fastBilling = isset($_POST['fastBilling']) && (string) $_POST['fastBilling'] === '1' ? 1 : 0;
+    $takeAway = isset($_POST['takeAway']) && (string) $_POST['takeAway'] === '1' ? 1 : 0;
+    $dineIn = isset($_POST['dineIn']) && (string) $_POST['dineIn'] === '1' ? 1 : 0;
+    $mess = isset($_POST['mess']) && (string) $_POST['mess'] === '1' ? 1 : 0;
+    db_stmt_execute(
+        $con,
+        "UPDATE `licenses` SET `fastBilling`=?, `takeAway`=?, `dineIn`=?, `mess`=?
+         WHERE `userId`=? AND `userType`='owner'",
+        'iiiii',
+        $fastBilling,
+        $takeAway,
+        $dineIn,
+        $mess,
+        $uid
+    );
+}
+
 if ($ok) {
     $response['status'] = '1';
     $response['message'] = 'update successful!';

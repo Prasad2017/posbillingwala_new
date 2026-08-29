@@ -55,7 +55,8 @@ class DealerController extends Controller
 			$data = User::where('role_id',2)->withCount('customers')->get();
 			return DataTables::of($data)->make(true);
 		}
-		return view('dealer.all');
+		$metrics = \App\Services\AdminMetrics::dealerReport();
+		return view('dealer.all', compact('metrics'));
 	}
 
 	public function getAddRecordPage()

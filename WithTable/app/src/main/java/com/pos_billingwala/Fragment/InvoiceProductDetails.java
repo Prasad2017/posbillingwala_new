@@ -35,6 +35,7 @@ import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.InvoiceProductAdapter;
 import com.pos_billingwala.BuildConfig;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.ReportCursorHelper;
 import com.pos_billingwala.Extra.ShopHeaderBuilder;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.InvoiceProductResponse;
@@ -364,6 +365,10 @@ public class InvoiceProductDetails extends Fragment implements View.OnClickListe
             float subTotalAmt = totalPerProductAmount + totalGST;
 
             float discountAmt = Float.parseFloat(invoiceResponseList.get(0).getDiscount());
+            float packingAmt = ReportCursorHelper.packingRupees(
+                    invoiceResponseList.get(0).getPackingCharge(),
+                    invoiceResponseList.get(0).getPackingChargeType(),
+                    String.valueOf(subTotalAmt));
             float totalShopGST = Float.parseFloat(invoiceResponseList.get(0).getTotalGSTAmount());
 
             if (discountType != null) {
@@ -378,9 +383,9 @@ public class InvoiceProductDetails extends Fragment implements View.OnClickListe
 
             float totalAmt = 0f;
             if (companyResponseList.get(0).getGstStatus().equalsIgnoreCase("on")) {
-                totalAmt = (subTotalAmt - discountAmt) + totalShopGST;
+                totalAmt = (subTotalAmt - discountAmt) + packingAmt + totalShopGST;
             } else {
-                totalAmt = subTotalAmt - discountAmt;
+                totalAmt = subTotalAmt - discountAmt + packingAmt;
             }
             invoiceSubTotal.setText(MainActivity.currencyName + " " + String.format(Locale.US, "%.2f", subTotalAmt));
 

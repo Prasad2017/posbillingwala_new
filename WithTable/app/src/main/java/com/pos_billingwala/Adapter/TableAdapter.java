@@ -22,6 +22,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.pos_billingwala.Activity.BluetoothPrint;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Extra.BottomSheetUi;
+import com.pos_billingwala.Extra.ReportCursorHelper;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Fragment.CreatePos;
 import com.pos_billingwala.Fragment.InvoiceCompanyTable;
@@ -179,7 +180,8 @@ public class TableAdapter extends RecyclerView.Adapter<TableAdapter.MyViewHolder
             productCartResponseList.clear();
             productCartResponseList = posBillingWalaDatabase.getCartProductList(tableNumber, "table_wise");
             String discountType = "";
-            float totalPerProductAmount = 0f, discountAmount = 0f, totalCGST = 0f, totalSGST = 0f, totalPerProductGST = 0f, totalGST = 0f;
+            String packingChargeType = "";
+            float totalPerProductAmount = 0f, discountAmount = 0f, packingAmount = 0f, totalCGST = 0f, totalSGST = 0f, totalPerProductGST = 0f, totalGST = 0f;
             if (!productCartResponseList.isEmpty()) {
 
                 for (int i = 0; i < productCartResponseList.size(); i++) {
@@ -194,6 +196,8 @@ public class TableAdapter extends RecyclerView.Adapter<TableAdapter.MyViewHolder
                     }
                     discountAmount = Float.parseFloat(productCartResponseList.get(i).getCartDiscount());
                     discountType = productCartResponseList.get(0).getCartDiscountType();
+                    packingAmount = ReportCursorHelper.parseAmount(productCartResponseList.get(0).getCartPackingCharge());
+                    packingChargeType = productCartResponseList.get(0).getCartPackingChargeType();
                     totalPerProductGST = (productPrice * ((totalCGST + totalSGST) / 100));
                     totalGST += (productPrice * ((totalCGST + totalSGST) / 100)) * productQuantity;
 
@@ -213,6 +217,11 @@ public class TableAdapter extends RecyclerView.Adapter<TableAdapter.MyViewHolder
                     discountAmount = subTotalAmt / (100 / discountAmount);
                 }
 
+                packingAmount = ReportCursorHelper.packingRupees(
+                        productCartResponseList.get(0).getCartPackingCharge(),
+                        packingChargeType,
+                        String.valueOf(subTotalAmt));
+
                 float shopCGST = 0f, shopSGST = 0f;
                 if (companyResponseList.get(0).getShopCGST() != null) {
                     shopCGST = subTotalAmt * (Float.parseFloat(companyResponseList.get(0).getShopCGST().trim()) / 100);
@@ -225,7 +234,7 @@ public class TableAdapter extends RecyclerView.Adapter<TableAdapter.MyViewHolder
                 }
                 float totalShopGST = shopCGST + shopSGST;
 
-                float totalAmount = totalPerProductAmount - discountAmount + totalShopGST;
+                float totalAmount = totalPerProductAmount - discountAmount + packingAmount + totalShopGST;
                 totalAmount = (float) Math.ceil(totalAmount);
                 Random rnd = new Random();
                 int color = Color.argb(255, rnd.nextInt(256), rnd.nextInt(256), rnd.nextInt(256));

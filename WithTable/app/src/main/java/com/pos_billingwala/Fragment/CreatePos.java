@@ -45,6 +45,7 @@ import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.AppExecutors;
 import com.pos_billingwala.Extra.BottomSheetUi;
 import com.pos_billingwala.Extra.ListLoader;
+import com.pos_billingwala.Extra.ReportCursorHelper;
 import com.pos_billingwala.Interface.ClickListerInterface;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.PrinterSettingResponse;
@@ -641,7 +642,8 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
             return;
         }
         String discountType = "";
-        float totalPerProductAmount = 0f, discountAmount = 0f, totalCGST = 0f, totalSGST = 0f, totalPerProductGST = 0f, totalGST = 0f;
+        String packingChargeType = "";
+        float totalPerProductAmount = 0f, discountAmount = 0f, packingAmount = 0f, totalCGST = 0f, totalSGST = 0f, totalPerProductGST = 0f, totalGST = 0f;
         if (productCartResponseList == null || productCartResponseList.isEmpty()) {
             binding.totalItems.setText(getString(R.string.ui_total_items_0));
             binding.totalAmount.setText("");
@@ -665,6 +667,8 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
                         }
                         discountAmount = Float.parseFloat(productCartResponseList.get(i).getCartDiscount());
                         discountType = productCartResponseList.get(0).getCartDiscountType();
+                        packingAmount = ReportCursorHelper.parseAmount(productCartResponseList.get(0).getCartPackingCharge());
+                        packingChargeType = productCartResponseList.get(0).getCartPackingChargeType();
                         totalPerProductGST = (productPrice * ((totalCGST + totalSGST) / 100));
                         totalGST += (productPrice * ((totalCGST + totalSGST) / 100)) * productQuantity;
 
@@ -692,6 +696,11 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
             discountAmount = subTotalAmt / (100 / discountAmount);
         }
 
+        packingAmount = ReportCursorHelper.packingRupees(
+                productCartResponseList.get(0).getCartPackingCharge(),
+                packingChargeType,
+                String.valueOf(subTotalAmt));
+
         float shopCGST = 0f, shopSGST = 0f;
         if (!companyResponseList.isEmpty() && companyResponseList.get(0).getShopCGST() != null) {
             shopCGST = subTotalAmt * (Float.parseFloat(companyResponseList.get(0).getShopCGST().trim()) / 100);
@@ -704,7 +713,7 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
         }
         float totalShopGST = shopCGST + shopSGST;
 
-        float totalAmount = totalPerProductAmount - discountAmount + totalShopGST;
+        float totalAmount = totalPerProductAmount - discountAmount + packingAmount + totalShopGST;
         totalAmount = (float) Math.ceil(totalAmount);
         String totalPayableAmount = "Payable Amount<br/><b>" + MainActivity.currencyName + " " + String.format(Locale.US, "%.2f", totalAmount) + "</b>";
         binding.totalAmount.setText(Html.fromHtml(totalPayableAmount));

@@ -9,6 +9,7 @@
     <string name="ui_action">Action</string>
     <string name="ui_add_customer">Add Customer</string>
     <string name="ui_add_discount">Add Discount</string>
+    <string name="ui_add_packing">Add Packing</string>
     <string name="ui_add_expense">Add Expense</string>
     <string name="ui_add_inventory">Add Inventory</string>
     <string name="ui_add_items">Add Items</string>
@@ -62,6 +63,9 @@
     <string name="ui_discount">DISCOUNT</string>
     <string name="ui_discount_detail">DISCOUNT DETAIL</string>
     <string name="ui_discount_type">Discount Type*</string>
+    <string name="ui_packing">PACKING</string>
+    <string name="ui_packing_detail">PACKING DETAIL</string>
+    <string name="ui_packing_type">Packing Type*</string>
     <string name="ui_dismiss">Dismiss</string>
     <string name="ui_do_you_want_replace_old_device_with_new_">Do you want replace old device with new device.</string>
     <string name="ui_duplicate_invoice_print">Duplicate Invoice Print</string>
@@ -367,6 +371,7 @@
     <string name="toast_please_add_a_category_first">Please add a category first</string>
     <string name="toast_please_add_category">Please add category</string>
     <string name="toast_please_add_discount_percentage">Please add discount percentage</string>
+    <string name="toast_please_add_packing_charge">Please add packing charge</string>
     <string name="toast_please_add_expense_amount">Please add expense amount</string>
     <string name="toast_please_add_expense_name">Please add expense name</string>
     <string name="toast_please_add_inventory_qty">Please add inventory qty</string>

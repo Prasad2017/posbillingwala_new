@@ -22,7 +22,8 @@ if ($userId === null) {
 
     if ($userId !== '') {
         $userIdEsc = mysqli_real_escape_string($con, $userId);
-        $sth = "SELECT * FROM `product_subcategories` WHERE `userId`='$userIdEsc'";
+        $sth = "SELECT * FROM `product_subcategories` WHERE `userId`='$userIdEsc'
+                AND (`subcategoryStatus`='active' OR `subcategoryStatus` IS NULL OR `subcategoryStatus`='')";
         if ($categoryId !== '') {
             $categoryIdEsc = mysqli_real_escape_string($con, $categoryId);
             $sth .= " AND `categoryId`='$categoryIdEsc'";

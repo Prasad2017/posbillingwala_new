@@ -53,6 +53,9 @@ public class LicenseResponse {
     @SerializedName("dineIn")
     @Expose
     private String dineIn;
+    @SerializedName("mess")
+    @Expose
+    private String mess;
     @SerializedName("userType")
     @Expose
     private String userType;
@@ -190,6 +193,14 @@ public class LicenseResponse {
 
     public void setDineIn(String dineIn) {
         this.dineIn = dineIn;
+    }
+
+    public String getMess() {
+        return mess;
+    }
+
+    public void setMess(String mess) {
+        this.mess = mess;
     }
 
     public String getUserType() {

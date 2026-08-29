@@ -89,6 +89,13 @@
     $response['contact_number'] = $check['contact_number'];
     $response['passwordRequired'] = $hasPassword ? '1' : '0';
     auth_token_append_response($con, $response, 'owner', $check['id']);
+    if (empty($response['authToken'])) {
+        $issued = auth_token_issue($con, 'owner', $check['id'], null, AUTH_TOKEN_TTL_DAYS, null);
+        if ($issued !== null) {
+            $response['authToken'] = $issued['authToken'];
+            $response['tokenExpiresAt'] = $issued['tokenExpiresAt'];
+        }
+    }
 
     mysqli_close($con);
     echo json_encode($response);

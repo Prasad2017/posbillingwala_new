@@ -27,13 +27,48 @@
             android:textColor="@color/colorPrimary"
             android:textSize="@dimen/text_subtitle" />
 
-        <TextView
-            android:id="@+id/moduleFlags"
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/switchFastBilling"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="8dp"
             android:fontFamily="@font/poppinsregular"
-            android:textColor="@color/colorTextSecondary"
-            android:textSize="@dimen/text_body" />
+            android:text="Fast Billing"
+            android:textColor="@color/colorTextPrimary" />
+
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/switchDineIn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/poppinsregular"
+            android:text="Dine In (Table wise)"
+            android:textColor="@color/colorTextPrimary" />
+
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/switchTakeAway"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/poppinsregular"
+            android:text="Take Away"
+            android:textColor="@color/colorTextPrimary" />
+
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/switchMess"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/poppinsregular"
+            android:text="Mess"
+            android:textColor="@color/colorTextPrimary" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/saveModules"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:layout_marginTop="8dp"
+            android:fontFamily="@font/poppinsmedium"
+            android:text="Save modules"
+            android:textAllCaps="false"
+            app:backgroundTint="@color/colorPrimary"
+            app:cornerRadius="10dp" />
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

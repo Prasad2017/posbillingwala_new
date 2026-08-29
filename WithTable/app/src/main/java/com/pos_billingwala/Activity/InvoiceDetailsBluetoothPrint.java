@@ -47,6 +47,7 @@ import com.pos_billingwala.BuildConfig;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.BottomSheetUi;
 import com.pos_billingwala.Extra.PaymentUpiQrHelper;
+import com.pos_billingwala.Extra.ReportCursorHelper;
 import com.pos_billingwala.Extra.ShopHeaderBuilder;
 import com.pos_billingwala.NetworkToOffline.InvoicePendingSync;
 import com.pos_billingwala.Model.CompanyResponse;
@@ -771,6 +772,10 @@ public class InvoiceDetailsBluetoothPrint extends BaseActivity implements View.O
             float subTotalAmt = totalPerProductAmount + totalGST;
 
             float discountAmt = Float.parseFloat(invoiceResponseList.get(0).getDiscount());
+            float packingAmt = ReportCursorHelper.packingRupees(
+                    invoiceResponseList.get(0).getPackingCharge(),
+                    invoiceResponseList.get(0).getPackingChargeType(),
+                    String.valueOf(subTotalAmt));
             float totalShopGST = Float.parseFloat(invoiceResponseList.get(0).getTotalGSTAmount());
 
             if (discountType != null) {
@@ -784,7 +789,7 @@ public class InvoiceDetailsBluetoothPrint extends BaseActivity implements View.O
             }
 
             float totalAmt = 0f;
-            totalAmt = (subTotalAmt - discountAmt) + totalShopGST;
+            totalAmt = (subTotalAmt - discountAmt) + packingAmt + totalShopGST;
 
             invoiceSubTotal.setText(MainActivity.currencyName + " " + String.format(Locale.US, "%.2f", subTotalAmt));
             invoiceCGST.setText(MainActivity.currencyName + " " + String.format(Locale.US, "%.2f", (totalShopGST / 2)));
