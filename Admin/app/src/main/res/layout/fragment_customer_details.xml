@@ -676,7 +676,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:fontFamily="@font/poppinsregular"
-                    android:text="Modules are set per license when creating or renewing."
+                    android:text="Modules are Yes/No per license — same as the admin web panel. Change and tap Save."
                     android:textColor="@color/colorTextSecondary"
                     android:textSize="13sp" />
 

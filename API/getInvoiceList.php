@@ -45,6 +45,8 @@ if ($_SERVER['REQUEST_METHOD'] == "GET") {
                 $getdata["totalGSTAmount"] = $row['totalGSTAmount'];
                 $getdata["discount"] = $row['discount'];
                 $getdata["discountType"] = $row['discountType'];
+                $getdata["packingCharge"] = isset($row['packingCharge']) ? $row['packingCharge'] : '0';
+                $getdata["packingChargeType"] = isset($row['packingChargeType']) ? $row['packingChargeType'] : 'Percentage';
                 $getdata["totalAmount"] = $row['totalAmount'];
                 $getdata["paymentMode"] = $row['paymentMode'];
                 $getdata["invoiceDate"] = $row['invoiceDate'];

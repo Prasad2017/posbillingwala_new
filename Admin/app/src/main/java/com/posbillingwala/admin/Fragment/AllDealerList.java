@@ -16,9 +16,11 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.github.mikephil.charting.data.PieEntry;
 import com.posbillingwala.admin.Activity.MainActivity;
 import com.posbillingwala.admin.Adapter.DealerAdapter;
 import com.posbillingwala.admin.Extra.DetectConnection;
+import com.posbillingwala.admin.Extra.ReportUiHelper;
 import com.posbillingwala.admin.Model.AllApiResponse;
 import com.posbillingwala.admin.Model.DealerResponse;
 import com.posbillingwala.admin.R;
@@ -26,6 +28,7 @@ import com.posbillingwala.admin.Retrofit.Api;
 import com.posbillingwala.admin.databinding.FragmentAllCustomerListBinding;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import cn.pedant.SweetAlert.SweetAlertDialog;
@@ -77,6 +80,9 @@ public class AllDealerList extends Fragment {
         if (binding.fabAddCustomer != null) {
             binding.fabAddCustomer.setOnClickListener(v ->
                     ((MainActivity) activity).navigateDetail(new AddDealer(), "Add Dealer"));
+        }
+        if (binding.dealerCharts != null) {
+            binding.dealerCharts.setVisibility(View.VISIBLE);
         }
 
         return view;
@@ -133,10 +139,43 @@ public class AllDealerList extends Fragment {
             binding.chipActive.setText("Active (" + active + ")");
             binding.chipExpired.setText("Inactive (" + inactive + ")");
         }
+        bindDealerCharts(all, active, inactive);
         dealerAdapter = new DealerAdapter(activity, filteredDealers);
         binding.recyclerView.setLayoutManager(new LinearLayoutManager(activity));
         binding.recyclerView.setAdapter(dealerAdapter);
         binding.emptyCustomers.setVisibility(filteredDealers.isEmpty() ? View.VISIBLE : View.GONE);
+    }
+
+    private void bindDealerCharts(int total, int active, int inactive) {
+        if (binding.dealerCharts == null) return;
+        int customers = 0;
+        for (DealerResponse d : dealerResponseList) {
+            if (d == null) continue;
+            try {
+                customers += Integer.parseInt(ReportUiHelper.nz(d.getTotalCustomer()));
+            } catch (Exception ignored) {
+            }
+        }
+        ReportUiHelper.bindKpi(binding.kpi1, "Total", String.valueOf(total), "");
+        ReportUiHelper.bindKpi(binding.kpi2, "Active", String.valueOf(active),
+                total > 0 ? Math.round(active * 100f / total) + "%" : "0%");
+        ReportUiHelper.bindKpi(binding.kpi3, "Inactive", String.valueOf(inactive),
+                total > 0 ? Math.round(inactive * 100f / total) + "%" : "0%");
+        ReportUiHelper.bindKpi(binding.kpi4, "Customers", String.valueOf(customers), "");
+        List<PieEntry> entries = new ArrayList<>();
+        entries.add(new PieEntry(active, "Active"));
+        entries.add(new PieEntry(inactive, "Inactive"));
+        ReportUiHelper.setupDonut(binding.chartDonut, entries,
+                Arrays.asList(Color.parseColor("#16A34A"), Color.parseColor("#6B7280")),
+                String.valueOf(total));
+        ReportUiHelper.fillLegend(binding.legendContainer,
+                new String[]{"Active", "Inactive"},
+                new String[]{String.valueOf(active), String.valueOf(inactive)},
+                new String[]{
+                        total > 0 ? String.valueOf(Math.round(active * 100f / total)) : "0",
+                        total > 0 ? String.valueOf(Math.round(inactive * 100f / total)) : "0"
+                },
+                new int[]{Color.parseColor("#16A34A"), Color.parseColor("#6B7280")});
     }
 
     private void getDealerList() {

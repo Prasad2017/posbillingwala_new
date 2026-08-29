@@ -357,6 +357,8 @@ public class UserSynchronizeData {
                         cursor.getString(cursor.getColumnIndex("totalGSTAmount")),
                         cursor.getString(cursor.getColumnIndex("discount")),
                         cursor.getString(cursor.getColumnIndex("discountType")),
+                        columnOrEmpty(cursor, "packingCharge"),
+                        columnOrEmpty(cursor, "packingChargeType"),
                         cursor.getString(cursor.getColumnIndex("totalAmount")),
                         cursor.getString(cursor.getColumnIndex("paymentMode")),
                         cursor.getString(cursor.getColumnIndex("invoiceDate")),
@@ -524,10 +526,13 @@ public class UserSynchronizeData {
     }
 
     public void saveInvoice(String invoiceId, String noOfTable, String invoiceNumber, String customerName, String customerMobile, String customerEmail, String customerAddress, String subTotal, String totalGSTAmount,
-                            String discount, String discountType, String totalAmount, String paymentMode, String invoiceDate, String invoiceType, String invoiceOrderStatus, String invoiceNetworkStatus) {
+                            String discount, String discountType, String packingCharge, String packingChargeType, String totalAmount, String paymentMode, String invoiceDate, String invoiceType, String invoiceOrderStatus, String invoiceNetworkStatus) {
         if (executeCall(Api.getClient(context).saveInvoice(MainActivity.userId,
                 nz(noOfTable), nz(invoiceNumber), nz(customerName), nz(customerMobile), nz(customerEmail), nz(customerAddress),
-                nz(subTotal), nz(totalGSTAmount), nz(discount), nz(discountType), nz(totalAmount), nz(paymentMode),
+                nz(subTotal), nz(totalGSTAmount), nz(discount), nz(discountType),
+                nz(packingCharge).isEmpty() ? "0" : nz(packingCharge),
+                nz(packingChargeType).isEmpty() ? "Percentage" : nz(packingChargeType),
+                nz(totalAmount), nz(paymentMode),
                 nz(invoiceDate), nz(invoiceType), nz(invoiceOrderStatus), nz(invoiceNetworkStatus)))) {
             posBillingWalaDatabase.updateSyncInvoice(invoiceId, NAME_SYNCED_WITH_SERVER);
         }

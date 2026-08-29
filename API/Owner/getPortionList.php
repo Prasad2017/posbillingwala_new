@@ -42,6 +42,7 @@ if ($productId !== '') {
     $types .= 's';
     $params[] = $productId;
 }
+$sql .= " AND (pp.portionStatus='active' OR pp.portionStatus IS NULL OR pp.portionStatus='')";
 $sql .= " ORDER BY pp.portionSortOrder ASC, pp.portionId ASC";
 
 $rows = db_stmt_fetch_all($con, $sql, $types, ...$params);

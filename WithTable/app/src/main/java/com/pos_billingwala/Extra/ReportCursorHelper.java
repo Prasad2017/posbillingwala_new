@@ -37,18 +37,28 @@ public final class ReportCursorHelper {
 
     /** Rupee discount from stored invoice discount + type (Amount vs Percentage). */
     public static float discountRupees(String discountRaw, String discountType, String subTotalRaw) {
-        float disc = parseAmount(discountRaw);
-        if (disc == 0f) {
+        return amountOrPercentRupees(discountRaw, discountType, subTotalRaw);
+    }
+
+    /** Rupee packing charge from stored packing + type (Amount vs Percentage) — same rules as discount. */
+    public static float packingRupees(String packingRaw, String packingType, String subTotalRaw) {
+        return amountOrPercentRupees(packingRaw, packingType, subTotalRaw);
+    }
+
+    /** Convert Amount or Percentage-of-subtotal into rupees. */
+    public static float amountOrPercentRupees(String raw, String type, String subTotalRaw) {
+        float value = parseAmount(raw);
+        if (value == 0f) {
             return 0f;
         }
-        if (discountType != null && discountType.trim().equalsIgnoreCase("Amount")) {
-            return disc;
+        if (type != null && type.trim().equalsIgnoreCase("Amount")) {
+            return value;
         }
         float subAmt = parseAmount(subTotalRaw);
         if (subAmt == 0f) {
             return 0f;
         }
-        return subAmt * disc / 100f;
+        return subAmt * value / 100f;
     }
 
     public static String formatInvoiceDate(String raw) {

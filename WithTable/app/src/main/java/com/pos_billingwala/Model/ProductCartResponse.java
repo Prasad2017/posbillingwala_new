@@ -38,6 +38,12 @@ public class ProductCartResponse {
     @SerializedName("cartDiscountType")
     @Expose
     public String cartDiscountType;
+    @SerializedName("cartPackingCharge")
+    @Expose
+    public String cartPackingCharge;
+    @SerializedName("cartPackingChargeType")
+    @Expose
+    public String cartPackingChargeType;
     @SerializedName("noOfTable")
     @Expose
     public String noOfTable;
@@ -159,6 +165,22 @@ public class ProductCartResponse {
 
     public void setCartDiscountType(String cartDiscountType) {
         this.cartDiscountType = cartDiscountType;
+    }
+
+    public String getCartPackingCharge() {
+        return cartPackingCharge != null ? cartPackingCharge : "0";
+    }
+
+    public void setCartPackingCharge(String cartPackingCharge) {
+        this.cartPackingCharge = cartPackingCharge;
+    }
+
+    public String getCartPackingChargeType() {
+        return cartPackingChargeType;
+    }
+
+    public void setCartPackingChargeType(String cartPackingChargeType) {
+        this.cartPackingChargeType = cartPackingChargeType;
     }
 
     public String getNoOfTable() {

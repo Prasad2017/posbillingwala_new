@@ -19,12 +19,18 @@ import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.initialization.InitializationStatus;
 import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
+import com.github.mikephil.charting.data.PieEntry;
 import com.posbillingwala.dealer.Activity.MainActivity;
 import com.posbillingwala.dealer.Extra.DetectConnection;
+import com.posbillingwala.dealer.Extra.ReportUiHelper;
 import com.posbillingwala.dealer.Model.AllApiResponse;
 import com.posbillingwala.dealer.R;
 import com.posbillingwala.dealer.Retrofit.Api;
 import com.posbillingwala.dealer.databinding.FragmentHomeBinding;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import cn.pedant.SweetAlert.SweetAlertDialog;
 import retrofit2.Call;
@@ -151,12 +157,28 @@ public class Home extends Fragment implements View.OnClickListener {
         call.enqueue(new Callback<AllApiResponse>() {
             @Override
             public void onResponse(Call<AllApiResponse> call, Response<AllApiResponse> response) {
-                if (response.isSuccessful()) {
-                    if (response.body().getStatus().equalsIgnoreCase("true")) {
-                        binding.totalCustomer.setText("" + response.body().getMessage());
-                    } else {
-                        binding.totalCustomer.setText("0");
+                if (response.isSuccessful() && response.body() != null) {
+                    AllApiResponse body = response.body();
+                    String total = ReportUiHelper.nz(body.getTotalCustomer());
+                    if ("0".equals(total) && body.getMessage() != null) {
+                        total = ReportUiHelper.nz(body.getMessage());
                     }
+                    binding.totalCustomer.setText(total);
+                    binding.activeCustomer.setText(ReportUiHelper.nz(body.getActiveCustomer()));
+                    binding.trialCustomer.setText(ReportUiHelper.nz(body.getTrialCustomer()));
+                    binding.expiredCustomer.setText(ReportUiHelper.nz(body.getExpiredCustomer()));
+                    List<PieEntry> entries = new ArrayList<>();
+                    entries.add(new PieEntry(parse(body.getActiveCustomer()), "Active"));
+                    entries.add(new PieEntry(parse(body.getTrialCustomer()), "Trial"));
+                    entries.add(new PieEntry(parse(body.getExpiredCustomer()), "Expired"));
+                    ReportUiHelper.setupDonut(binding.chartDonut, entries,
+                            Arrays.asList(Color.parseColor("#16A34A"), Color.parseColor("#EA580C"), Color.parseColor("#DC2626")),
+                            total);
+                    ReportUiHelper.fillLegend(binding.legendContainer,
+                            new String[]{"Active", "Trial", "Expired"},
+                            new String[]{body.getActiveCustomer(), body.getTrialCustomer(), body.getExpiredCustomer()},
+                            new String[]{body.getActivePercent(), body.getTrialPercent(), body.getExpiredPercent()},
+                            new int[]{Color.parseColor("#16A34A"), Color.parseColor("#EA580C"), Color.parseColor("#DC2626")});
                 }
                 pDialog.dismiss();
             }
@@ -178,6 +200,14 @@ public class Home extends Fragment implements View.OnClickListener {
 
     }
 
+
+    private float parse(String v) {
+        try {
+            return Float.parseFloat(ReportUiHelper.nz(v));
+        } catch (Exception e) {
+            return 0f;
+        }
+    }
 
     @Override
     public void onPause() {

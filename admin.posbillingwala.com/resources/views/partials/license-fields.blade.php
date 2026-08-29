@@ -7,6 +7,7 @@
     $fb = old('fast_billing', isset($license) ? $license->fastBilling : 1);
     $di = old('dine_in', isset($license) ? $license->dineIn : 0);
     $ta = old('take_away', isset($license) ? $license->takeAway : 1);
+    $ms = old('mess', isset($license) ? ($license->mess ?? 0) : 0);
 
     $regularTiers = ['183', '365', '1095', '1825', '10958'];
     $lvStr = (string) $lv;
@@ -107,10 +108,22 @@
     </div>
 </div>
 
-@once
+<div class="col-lg-4">
+    <label class="form-label" for="mess">Mess</label>
+    <div class="input-group pb-input-group">
+        <span class="input-group-text bg-transparent"><i class='bx bx-food-menu'></i></span>
+        <select class="form-select pb-select-search" id="mess" name="mess">
+            <option value="1" @if((string)$ms === '1') selected @endif>Yes</option>
+            <option value="0" @if((string)$ms === '0') selected @endif>No</option>
+        </select>
+    </div>
+</div>
+
 @push('scripts')
 <script>
 (function () {
+    if (window.__pbLicenseFieldsBound) return;
+    window.__pbLicenseFieldsBound = true;
     var regularTiers = ['183', '365', '1095', '1825', '10958'];
 
     window.PB = window.PB || {};
@@ -133,4 +146,3 @@
 })();
 </script>
 @endpush
-@endonce

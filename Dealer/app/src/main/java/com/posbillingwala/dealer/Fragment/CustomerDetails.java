@@ -137,7 +137,12 @@ public class CustomerDetails extends Fragment implements View.OnClickListener {
         pDialog.show();
 
         Call<AllApiResponse> call = Api.getClient().updateCustomerDetails(customerId, binding.customerName.getText().toString(), binding.customerMobileNumber.getText().toString(),
-                binding.customerAddress.getText().toString(), binding.customerShopName.getText().toString());
+                binding.customerAddress.getText().toString(), binding.customerShopName.getText().toString(),
+                MainActivity.userId,
+                binding.fastBilling.isChecked() ? "1" : "0",
+                binding.takeAway.isChecked() ? "1" : "0",
+                binding.dineIn.isChecked() ? "1" : "0",
+                binding.mess.isChecked() ? "1" : "0");
         call.enqueue(new Callback<AllApiResponse>() {
             @Override
             public void onResponse(@NonNull Call<AllApiResponse> call, @NonNull Response<AllApiResponse> response) {
@@ -200,6 +205,7 @@ public class CustomerDetails extends Fragment implements View.OnClickListener {
                         binding.customerShopName.setText(customerResponseList.get(0).getShopName());
 
                         licenseResponseList = customerResponseList.get(0).getLicenseResponseList();
+                        bindOwnerModules(licenseResponseList);
                         if (customerResponseList.get(0).getRoleId().equalsIgnoreCase("2")) {
                             customerType = "Dealer";
                         } else {
@@ -232,6 +238,33 @@ public class CustomerDetails extends Fragment implements View.OnClickListener {
             }
         });
 
+    }
+
+    private void bindOwnerModules(List<LicenseResponse> licenses) {
+        LicenseResponse owner = null;
+        if (licenses != null) {
+            for (LicenseResponse lic : licenses) {
+                if (lic != null && "owner".equalsIgnoreCase(lic.getUserType())) {
+                    owner = lic;
+                    break;
+                }
+            }
+            if (owner == null && !licenses.isEmpty()) {
+                owner = licenses.get(0);
+            }
+        }
+        boolean fb = owner != null && isOn(owner.getFastBilling());
+        boolean di = owner != null && isOn(owner.getDineIn());
+        boolean ta = owner != null && isOn(owner.getTakeAway());
+        boolean ms = owner != null && isOn(owner.getMess());
+        binding.fastBilling.setChecked(fb);
+        binding.dineIn.setChecked(di);
+        binding.takeAway.setChecked(ta);
+        binding.mess.setChecked(ms);
+    }
+
+    private static boolean isOn(String value) {
+        return "1".equals(value) || "true".equalsIgnoreCase(value);
     }
 
 }

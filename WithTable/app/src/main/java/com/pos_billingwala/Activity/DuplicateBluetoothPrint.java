@@ -43,6 +43,7 @@ import com.pos_billingwala.Adapter.DuplicateInvoiceAdapter;
 import com.pos_billingwala.Adapter.DuplicateTwoPrintAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.PaymentUpiQrHelper;
+import com.pos_billingwala.Extra.ReportCursorHelper;
 import com.pos_billingwala.Extra.ShopHeaderBuilder;
 import com.pos_billingwala.Fragment.CreatePos;
 import com.pos_billingwala.Model.CompanyResponse;
@@ -523,6 +524,10 @@ public class DuplicateBluetoothPrint extends BaseActivity implements View.OnClic
             float subTotalAmt = totalPerProductAmount + totalGST;
 
             float discountAmt = Float.parseFloat(invoiceResponseList.get(0).getDiscount());
+            float packingAmt = ReportCursorHelper.packingRupees(
+                    invoiceResponseList.get(0).getPackingCharge(),
+                    invoiceResponseList.get(0).getPackingChargeType(),
+                    String.valueOf(subTotalAmt));
             float totalShopGST = Float.parseFloat(invoiceResponseList.get(0).getTotalGSTAmount());
 
             if (discountType != null) {
@@ -543,9 +548,9 @@ public class DuplicateBluetoothPrint extends BaseActivity implements View.OnClic
 
             float totalAmt = 0f;
             if (companyResponseList.get(0).getGstStatus().equalsIgnoreCase("on")) {
-                totalAmt = (subTotalAmt - discountAmt) + totalShopGST;
+                totalAmt = (subTotalAmt - discountAmt) + packingAmt + totalShopGST;
             } else {
-                totalAmt = subTotalAmt - discountAmt;
+                totalAmt = subTotalAmt - discountAmt + packingAmt;
             }
 
             totalAmt = (int) Math.ceil(totalAmt);

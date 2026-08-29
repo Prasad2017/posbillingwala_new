@@ -68,7 +68,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
     public static final String INVOICE_COMBO_ITEM_TABLE = "invoice_combo_item";
     public static final String INVOICE_PRODUCT_DELETE_QUEUE_TABLE = "invoice_product_delete_queue";
     // Database Version
-    public static final int DATABASE_VERSION = 24;
+    public static final int DATABASE_VERSION = 25;
 
     /** SQL suffix: only rows for the logged-in licence branch. */
     private static String andBranchScope(String tableAlias) {
@@ -202,10 +202,11 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             + "(cartId INTEGER PRIMARY KEY AUTOINCREMENT, userId VARCHAR, productId VARCHAR, productName VARCHAR,"
             + " productOldPrice VARCHAR, productNewPrice VARCHAR, productUnit VARCHAR, productCGST VARCHAR,"
             + " productSGST VARCHAR, productQuantity VARCHAR, cartDiscount VARCHAR, cartDiscountType VARCHAR,"
+            + " cartPackingCharge VARCHAR, cartPackingChargeType VARCHAR,"
             + " noOfTable VARCHAR, cartOrderStatus VARCHAR, cartStatus TINYINT,"
             + " portionId VARCHAR, portionName VARCHAR, snapshotProductName VARCHAR, snapshotLinePrice VARCHAR)";
 
-    public final String INVOICE_QUERY = "CREATE TABLE IF NOT EXISTS " + INVOICE_TABLE + "(invoiceId INTEGER PRIMARY KEY AUTOINCREMENT, userId VARCHAR, noOfTable VARCHAR, invoiceNumber VARCHAR, customerName VARCHAR, customerMobile VARCHAR, customerEmail VARCHAR, " + "customerAddress VARCHAR, invoiceDate VARCHAR, subTotal VARCHAR, totalGSTAmount, discount VARCHAR, discountType VARCHAR, totalAmount VARCHAR, paymentMode VARCHAR, invoiceOrderStatus VARCHAR, invoiceType VARCHAR, invoiceNetworkStatus VARCHAR, invoiceStatus TINYINT)";
+    public final String INVOICE_QUERY = "CREATE TABLE IF NOT EXISTS " + INVOICE_TABLE + "(invoiceId INTEGER PRIMARY KEY AUTOINCREMENT, userId VARCHAR, noOfTable VARCHAR, invoiceNumber VARCHAR, customerName VARCHAR, customerMobile VARCHAR, customerEmail VARCHAR, " + "customerAddress VARCHAR, invoiceDate VARCHAR, subTotal VARCHAR, totalGSTAmount, discount VARCHAR, discountType VARCHAR, packingCharge VARCHAR, packingChargeType VARCHAR, totalAmount VARCHAR, paymentMode VARCHAR, invoiceOrderStatus VARCHAR, invoiceType VARCHAR, invoiceNetworkStatus VARCHAR, invoiceStatus TINYINT)";
 
     public final String INVOICE_PRODUCT_QUERY = "CREATE TABLE IF NOT EXISTS " + INVOICE_PRODUCT_TABLE
             + "(invoiceProductId INTEGER PRIMARY KEY AUTOINCREMENT, invoiceNumber VARCHAR, productName VARCHAR,"
@@ -347,6 +348,10 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
     public final String ALTER_INVOICE_ITEM_TYPE_QUERY = "ALTER TABLE " + INVOICE_PRODUCT_TABLE + " ADD COLUMN invoiceItemType VARCHAR DEFAULT 'PRODUCT'";
     public final String ALTER_INVOICE_COMBO_ID_QUERY = "ALTER TABLE " + INVOICE_PRODUCT_TABLE + " ADD COLUMN comboId VARCHAR";
     public final String ALTER_INVOICE_SNAPSHOT_COMBO_COMPONENTS_QUERY = "ALTER TABLE " + INVOICE_PRODUCT_TABLE + " ADD COLUMN snapshotComboComponents VARCHAR";
+    public final String ALTER_CART_PACKING_CHARGE_QUERY = "ALTER TABLE " + CART_PRODUCT_TABLE + " ADD COLUMN cartPackingCharge VARCHAR DEFAULT '0'";
+    public final String ALTER_CART_PACKING_CHARGE_TYPE_QUERY = "ALTER TABLE " + CART_PRODUCT_TABLE + " ADD COLUMN cartPackingChargeType VARCHAR DEFAULT 'Percentage'";
+    public final String ALTER_INVOICE_PACKING_CHARGE_QUERY = "ALTER TABLE " + INVOICE_TABLE + " ADD COLUMN packingCharge VARCHAR DEFAULT '0'";
+    public final String ALTER_INVOICE_PACKING_CHARGE_TYPE_QUERY = "ALTER TABLE " + INVOICE_TABLE + " ADD COLUMN packingChargeType VARCHAR DEFAULT 'Percentage'";
 
     /********************************************** Alter Query  ***********************************************/
 
@@ -477,6 +482,10 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         addColumnIfNotExists(db, INVOICE_PRODUCT_TABLE, "invoiceItemType", ALTER_INVOICE_ITEM_TYPE_QUERY);
         addColumnIfNotExists(db, INVOICE_PRODUCT_TABLE, "comboId", ALTER_INVOICE_COMBO_ID_QUERY);
         addColumnIfNotExists(db, INVOICE_PRODUCT_TABLE, "snapshotComboComponents", ALTER_INVOICE_SNAPSHOT_COMBO_COMPONENTS_QUERY);
+        addColumnIfNotExists(db, CART_PRODUCT_TABLE, "cartPackingCharge", ALTER_CART_PACKING_CHARGE_QUERY);
+        addColumnIfNotExists(db, CART_PRODUCT_TABLE, "cartPackingChargeType", ALTER_CART_PACKING_CHARGE_TYPE_QUERY);
+        addColumnIfNotExists(db, INVOICE_TABLE, "packingCharge", ALTER_INVOICE_PACKING_CHARGE_QUERY);
+        addColumnIfNotExists(db, INVOICE_TABLE, "packingChargeType", ALTER_INVOICE_PACKING_CHARGE_TYPE_QUERY);
         db.execSQL(INVOICE_PRODUCT_DELETE_QUEUE_QUERY);
         ensureUniqueSyncIndexes(db);
     }
@@ -2204,6 +2213,8 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         mapStringColumn(cursor, "cartItemType", item::setCartItemType);
         mapStringColumn(cursor, "comboId", item::setComboId);
         mapStringColumn(cursor, "snapshotComboComponents", item::setSnapshotComboComponents);
+        mapStringColumn(cursor, "cartPackingCharge", item::setCartPackingCharge);
+        mapStringColumn(cursor, "cartPackingChargeType", item::setCartPackingChargeType);
         int openPriceCol = cursor.getColumnIndex("openPrice");
         if (openPriceCol >= 0 && !cursor.isNull(openPriceCol)) {
             item.setOpenPrice(cursor.getString(openPriceCol));
@@ -2220,6 +2231,11 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         mapStringColumn(cursor, "invoiceItemType", item::setInvoiceItemType);
         mapStringColumn(cursor, "comboId", item::setComboId);
         mapStringColumn(cursor, "snapshotComboComponents", item::setSnapshotComboComponents);
+    }
+
+    private void mapInvoicePacking(Cursor cursor, InvoiceResponse item) {
+        mapStringColumn(cursor, "packingCharge", item::setPackingCharge);
+        mapStringColumn(cursor, "packingChargeType", item::setPackingChargeType);
     }
 
     private interface StringColumnConsumer {
@@ -2267,6 +2283,19 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
 
         contentValues.put("cartDiscount", cartDiscount);
         contentValues.put("cartDiscountType", cartDiscountType);
+
+        db.update(CART_PRODUCT_TABLE, contentValues, "cartId=?", new String[]{cartId});
+        db.close();
+
+    }
+
+    public void updateCartPackingCharge(String cartId, String cartPackingCharge, String cartPackingChargeType) {
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+
+        contentValues.put("cartPackingCharge", cartPackingCharge);
+        contentValues.put("cartPackingChargeType", cartPackingChargeType);
 
         db.update(CART_PRODUCT_TABLE, contentValues, "cartId=?", new String[]{cartId});
         db.close();
@@ -2399,6 +2428,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             invoiceResponse.setSubTotal(cursor.getString(cursor.getColumnIndex("subTotal")));
             invoiceResponse.setTotalGSTAmount(cursor.getString(cursor.getColumnIndex("totalGSTAmount")));
             invoiceResponse.setDiscount(cursor.getString(cursor.getColumnIndex("discount")));
+            mapInvoicePacking(cursor, invoiceResponse);
             invoiceResponse.setTotalAmount(cursor.getString(cursor.getColumnIndex("totalAmount")));
             invoiceResponse.setPaymentMode(cursor.getString(cursor.getColumnIndex("paymentMode")));
             invoiceResponse.setInvoiceDate(cursor.getString(cursor.getColumnIndex("invoiceDate")));
@@ -2432,6 +2462,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             invoiceResponse.setSubTotal(cursor.getString(cursor.getColumnIndex("subTotal")));
             invoiceResponse.setTotalGSTAmount(cursor.getString(cursor.getColumnIndex("totalGSTAmount")));
             invoiceResponse.setDiscount(cursor.getString(cursor.getColumnIndex("discount")));
+            mapInvoicePacking(cursor, invoiceResponse);
             invoiceResponse.setTotalAmount(cursor.getString(cursor.getColumnIndex("totalAmount")));
             invoiceResponse.setPaymentMode(cursor.getString(cursor.getColumnIndex("paymentMode")));
             invoiceResponse.setInvoiceDate(cursor.getString(cursor.getColumnIndex("invoiceDate")));
@@ -2481,18 +2512,29 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
     }
 
     public void updateInvoiceHeader(String invoiceNumber, String subTotal, String totalGSTAmount,
-                                    String discount, String discountType, String totalAmount, String paymentMode) {
+                                    String discount, String discountType, String packingCharge,
+                                    String packingChargeType, String totalAmount, String paymentMode) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
         contentValues.put("subTotal", subTotal);
         contentValues.put("totalGSTAmount", totalGSTAmount);
         contentValues.put("discount", discount);
         contentValues.put("discountType", discountType);
+        contentValues.put("packingCharge", packingCharge);
+        contentValues.put("packingChargeType", packingChargeType);
         contentValues.put("totalAmount", totalAmount);
         contentValues.put("paymentMode", paymentMode);
         contentValues.put("invoiceStatus", "0");
         db.update(INVOICE_TABLE, contentValues, "invoiceNumber=?", new String[]{invoiceNumber});
         db.close();
+    }
+
+    /** @deprecated Prefer overload with packingCharge fields. */
+    @Deprecated
+    public void updateInvoiceHeader(String invoiceNumber, String subTotal, String totalGSTAmount,
+                                    String discount, String discountType, String totalAmount, String paymentMode) {
+        updateInvoiceHeader(invoiceNumber, subTotal, totalGSTAmount, discount, discountType,
+                "0", "Percentage", totalAmount, paymentMode);
     }
 
     public void updateInvoiceProductQuantity(String invoiceProductId, String productQuantity) {
@@ -2545,7 +2587,8 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
     }
 
     public boolean saveInvoice(List<ProductCartResponse> productCartResponseList, String noOfTable, String customerName, String customerMobile,
-                               String customerAddress, String invoiceNumber, float subtotal, float totalGSTAmount, float discount, String discountType, float totalAmount,
+                               String customerAddress, String invoiceNumber, float subtotal, float totalGSTAmount, float discount, String discountType,
+                               float packingCharge, String packingChargeType, float totalAmount,
                                String paymentMode, String invoiceDate, String invoiceType, String invoiceNetworkStatus, int invoiceStatus) {
 
         // Idempotent local save: same sync key must not create a second bill
@@ -2565,6 +2608,8 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         contentValues.put("totalGSTAmount", String.valueOf(totalGSTAmount));
         contentValues.put("discount", String.valueOf(discount));
         contentValues.put("discountType", discountType);
+        contentValues.put("packingCharge", String.valueOf(packingCharge));
+        contentValues.put("packingChargeType", packingChargeType != null ? packingChargeType : "Percentage");
         contentValues.put("totalAmount", String.valueOf(totalAmount));
         contentValues.put("paymentMode", paymentMode);
         contentValues.put("invoiceDate", invoiceDate);
@@ -2584,6 +2629,16 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
 
         return true;
 
+    }
+
+    /** @deprecated Prefer overload with packingCharge fields. */
+    @Deprecated
+    public boolean saveInvoice(List<ProductCartResponse> productCartResponseList, String noOfTable, String customerName, String customerMobile,
+                               String customerAddress, String invoiceNumber, float subtotal, float totalGSTAmount, float discount, String discountType, float totalAmount,
+                               String paymentMode, String invoiceDate, String invoiceType, String invoiceNetworkStatus, int invoiceStatus) {
+        return saveInvoice(productCartResponseList, noOfTable, customerName, customerMobile, customerAddress,
+                invoiceNumber, subtotal, totalGSTAmount, discount, discountType, 0f, "Percentage",
+                totalAmount, paymentMode, invoiceDate, invoiceType, invoiceNetworkStatus, invoiceStatus);
     }
 
     public boolean insertInvoiceProduct(List<ProductCartResponse> productCartResponseList, String invoiceNumber) {
@@ -3631,6 +3686,9 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         contentValues.put("totalGSTAmount", invoiceResponse.getTotalGSTAmount());
         contentValues.put("discount", invoiceResponse.getDiscount());
         contentValues.put("discountType", invoiceResponse.getDiscountType());
+        contentValues.put("packingCharge", invoiceResponse.getPackingCharge());
+        contentValues.put("packingChargeType",
+                invoiceResponse.getPackingChargeType() != null ? invoiceResponse.getPackingChargeType() : "Percentage");
         contentValues.put("totalAmount", invoiceResponse.getTotalAmount());
         contentValues.put("paymentMode", invoiceResponse.getPaymentMode());
         contentValues.put("invoiceDate", invoiceResponse.getInvoiceDate());
@@ -3804,6 +3862,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
                 invoiceResponse.setSubTotal(cursor.getString(cursor.getColumnIndex("subTotal")));
                 invoiceResponse.setTotalGSTAmount(cursor.getString(cursor.getColumnIndex("totalGSTAmount")));
                 invoiceResponse.setDiscount(cursor.getString(cursor.getColumnIndex("discount")));
+                mapInvoicePacking(cursor, invoiceResponse);
                 invoiceResponse.setTotalAmount(cursor.getString(cursor.getColumnIndex("totalAmount")));
                 invoiceResponse.setPaymentMode(cursor.getString(cursor.getColumnIndex("paymentMode")));
                 invoiceResponse.setInvoiceDate(cursor.getString(cursor.getColumnIndex("invoiceDate")));
@@ -3845,6 +3904,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             invoiceResponse.setTotalGSTAmount(cursor.getString(cursor.getColumnIndex("totalGSTAmount")));
             invoiceResponse.setDiscount(cursor.getString(cursor.getColumnIndex("discount")));
             invoiceResponse.setDiscountType(cursor.getString(cursor.getColumnIndex("discountType")));
+            mapInvoicePacking(cursor, invoiceResponse);
             invoiceResponse.setTotalAmount(cursor.getString(cursor.getColumnIndex("totalAmount")));
             invoiceResponse.setPaymentMode(cursor.getString(cursor.getColumnIndex("paymentMode")));
             invoiceResponse.setInvoiceDate(cursor.getString(cursor.getColumnIndex("invoiceDate")));
@@ -3884,6 +3944,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             invoiceResponse.setSubTotal(cursor.getString(cursor.getColumnIndex("subTotal")));
             invoiceResponse.setTotalGSTAmount(cursor.getString(cursor.getColumnIndex("totalGSTAmount")));
             invoiceResponse.setDiscount(cursor.getString(cursor.getColumnIndex("discount")));
+            mapInvoicePacking(cursor, invoiceResponse);
             invoiceResponse.setTotalAmount(cursor.getString(cursor.getColumnIndex("totalAmount")));
             invoiceResponse.setPaymentMode(cursor.getString(cursor.getColumnIndex("paymentMode")));
             invoiceResponse.setInvoiceDate(cursor.getString(cursor.getColumnIndex("invoiceDate")));
@@ -3998,6 +4059,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             invoiceResponse.setTotalGSTAmount(cursor.getString(cursor.getColumnIndex("totalGSTAmount")));
             invoiceResponse.setDiscount(cursor.getString(cursor.getColumnIndex("discount")));
             invoiceResponse.setDiscountType(cursor.getString(cursor.getColumnIndex("discountType")));
+            mapInvoicePacking(cursor, invoiceResponse);
             invoiceResponse.setTotalAmount(cursor.getString(cursor.getColumnIndex("totalAmount")));
             invoiceResponse.setPaymentMode(cursor.getString(cursor.getColumnIndex("paymentMode")));
             invoiceResponse.setInvoiceDate(cursor.getString(cursor.getColumnIndex("invoiceDate")));
@@ -4043,6 +4105,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             invoiceResponse.setSubTotal(cursor.getString(cursor.getColumnIndex("subTotal")));
             invoiceResponse.setDiscount(cursor.getString(cursor.getColumnIndex("discount")));
             invoiceResponse.setDiscountType(cursor.getString(cursor.getColumnIndex("discountType")));
+            mapInvoicePacking(cursor, invoiceResponse);
             invoiceResponse.setTotalAmount(cursor.getString(cursor.getColumnIndex("totalAmount")));
             invoiceResponse.setInvoiceDate(cursor.getString(cursor.getColumnIndex("invoiceDate")));
             invoiceResponse.setInvoiceType(cursor.getString(cursor.getColumnIndex("invoiceType")));
@@ -4068,6 +4131,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             invoiceResponse.setSubTotal(cursor.getString(cursor.getColumnIndex("subTotal")));
             invoiceResponse.setDiscount(cursor.getString(cursor.getColumnIndex("discount")));
             invoiceResponse.setDiscountType(cursor.getString(cursor.getColumnIndex("discountType")));
+            mapInvoicePacking(cursor, invoiceResponse);
             invoiceResponse.setTotalAmount(cursor.getString(cursor.getColumnIndex("totalAmount")));
             invoiceResponse.setInvoiceDate(cursor.getString(cursor.getColumnIndex("invoiceDate")));
             invoiceResponse.setInvoiceType(cursor.getString(cursor.getColumnIndex("invoiceType")));
@@ -4405,6 +4469,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             invoiceResponse.setTotalGSTAmount(cursor.getString(cursor.getColumnIndex("totalGSTAmount")));
             invoiceResponse.setDiscount(cursor.getString(cursor.getColumnIndex("discount")));
             invoiceResponse.setDiscountType(cursor.getString(cursor.getColumnIndex("discountType")));
+            mapInvoicePacking(cursor, invoiceResponse);
             invoiceResponse.setTotalAmount(cursor.getString(cursor.getColumnIndex("totalAmount")));
             invoiceResponse.setPaymentMode(cursor.getString(cursor.getColumnIndex("paymentMode")));
             invoiceResponse.setInvoiceDate(cursor.getString(cursor.getColumnIndex("invoiceDate")));
@@ -4439,6 +4504,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             invoiceResponse.setTotalGSTAmount(cursor.getString(cursor.getColumnIndex("totalGSTAmount")));
             invoiceResponse.setDiscount(cursor.getString(cursor.getColumnIndex("discount")));
             invoiceResponse.setDiscountType(cursor.getString(cursor.getColumnIndex("discountType")));
+            mapInvoicePacking(cursor, invoiceResponse);
             invoiceResponse.setTotalAmount(cursor.getString(cursor.getColumnIndex("totalAmount")));
             invoiceResponse.setPaymentMode(cursor.getString(cursor.getColumnIndex("paymentMode")));
             invoiceResponse.setInvoiceDate(cursor.getString(cursor.getColumnIndex("invoiceDate")));
@@ -4487,6 +4553,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             invoiceResponse.setTotalGSTAmount(cursor.getString(cursor.getColumnIndex("totalGSTAmount")));
             invoiceResponse.setDiscount(cursor.getString(cursor.getColumnIndex("discount")));
             invoiceResponse.setDiscountType(cursor.getString(cursor.getColumnIndex("discountType")));
+            mapInvoicePacking(cursor, invoiceResponse);
             invoiceResponse.setTotalAmount(cursor.getString(cursor.getColumnIndex("totalAmount")));
             invoiceResponse.setPaymentMode(cursor.getString(cursor.getColumnIndex("paymentMode")));
             invoiceResponse.setInvoiceDate(cursor.getString(cursor.getColumnIndex("invoiceDate")));
@@ -5966,6 +6033,9 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
                 contentValues.put("totalGSTAmount", invoiceResponse.getTotalGSTAmount());
                 contentValues.put("discount", invoiceResponse.getDiscount());
                 contentValues.put("discountType", invoiceResponse.getDiscountType());
+                contentValues.put("packingCharge", invoiceResponse.getPackingCharge());
+                contentValues.put("packingChargeType",
+                        invoiceResponse.getPackingChargeType() != null ? invoiceResponse.getPackingChargeType() : "Percentage");
                 contentValues.put("totalAmount", invoiceResponse.getTotalAmount());
                 contentValues.put("paymentMode", invoiceResponse.getPaymentMode());
                 contentValues.put("invoiceDate", invoiceResponse.getInvoiceDate());

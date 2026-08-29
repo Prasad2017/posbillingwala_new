@@ -34,6 +34,7 @@ $i=0;
         $aadhar_number=$user['aadhar_number'];
         $address=$user['address'];
         $shopName=$user['shopName'];
+        $json = array();
         
         
         $sql_licenses="SELECT * FROM `licenses` LEFT JOIN `companys` ON `companys`.`licenseId` = `licenses`.`id` WHERE `userId`='$id'";
@@ -60,6 +61,7 @@ $i=0;
         $fastBilling=$user_licenses['fastBilling'];
         $takeAway=$user_licenses['takeAway'];
         $dineIn=$user_licenses['dineIn'];
+        $mess = isset($user_licenses['mess']) ? $user_licenses['mess'] : '0';
         $branch = licence_branch_fields($user_licenses);
         
         
@@ -68,7 +70,7 @@ $i=0;
                          "addressLine1"=>$store['addressLine1'], "addressLine2"=>$store['addressLine2'], "addressLine3"=>$store['addressLine3'],
                          "phoneNo1"=>$store['phoneNo1'], "phoneNo2"=>$store['phoneNo2'],
                          "licenseKey"=>$licenseKey, "licenseValidity"=>$licenseValidity, "licenseType"=>$licenseType, "licenseStatus"=>$licenseStatus,
-                         "registrationDate"=>$registrationDate, "expiryDate"=>$expiryDate, "paymentStatus"=>$paymentStatus, "amount"=>$amount, "fastBilling"=>$fastBilling, "takeAway"=>$takeAway, "dineIn"=>$dineIn,
+                         "registrationDate"=>$registrationDate, "expiryDate"=>$expiryDate, "paymentStatus"=>$paymentStatus, "amount"=>$amount, "fastBilling"=>$fastBilling, "takeAway"=>$takeAway, "dineIn"=>$dineIn, "mess"=>$mess,
                          "userType"=>$branch['userType'], "userName"=>$branch['userName'], "branchLabel"=>$branch['branchLabel']);
         
         

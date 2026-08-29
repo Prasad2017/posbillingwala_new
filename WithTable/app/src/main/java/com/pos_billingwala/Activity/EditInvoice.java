@@ -41,6 +41,8 @@ public class EditInvoice extends BaseActivity {
     private InvoiceResponse invoice;
     private String discountRaw = "0";
     private String discountType = "Percentage";
+    private String packingRaw = "0";
+    private String packingChargeType = "Percentage";
     private String paymentMode = "Cash";
     private float subTotal;
     private float gstAmount;
@@ -75,6 +77,9 @@ public class EditInvoice extends BaseActivity {
         discountRaw = invoice.getDiscount() != null ? invoice.getDiscount() : "0";
         discountType = invoice.getDiscountType() != null && !invoice.getDiscountType().isEmpty()
                 ? invoice.getDiscountType() : "Percentage";
+        packingRaw = invoice.getPackingCharge() != null ? invoice.getPackingCharge() : "0";
+        packingChargeType = invoice.getPackingChargeType() != null && !invoice.getPackingChargeType().isEmpty()
+                ? invoice.getPackingChargeType() : "Percentage";
         paymentMode = invoice.getPaymentMode() != null && !invoice.getPaymentMode().isEmpty()
                 ? invoice.getPaymentMode() : "Cash";
 
@@ -92,6 +97,7 @@ public class EditInvoice extends BaseActivity {
 
         binding.backButton.setOnClickListener(v -> finish());
         binding.discountRow.setOnClickListener(v -> showDiscountDialog());
+        binding.packingRow.setOnClickListener(v -> showPackingDialog());
         binding.paymentRow.setOnClickListener(v -> showPaymentDialog());
         binding.saveButton.setOnClickListener(v -> saveInvoice());
 
@@ -113,7 +119,8 @@ public class EditInvoice extends BaseActivity {
             gstAmount = subTotal * (cgstPct + sgstPct) / 100f;
         }
         float discRupees = ReportCursorHelper.discountRupees(discountRaw, discountType, String.valueOf(subTotal));
-        totalAmount = subTotal - discRupees + gstAmount;
+        float packingRupees = ReportCursorHelper.packingRupees(packingRaw, packingChargeType, String.valueOf(subTotal));
+        totalAmount = subTotal - discRupees + packingRupees + gstAmount;
         if (totalAmount < 0f) {
             totalAmount = 0f;
         }
@@ -125,6 +132,13 @@ public class EditInvoice extends BaseActivity {
         } else {
             binding.discountLabel.setText(getString(R.string.ui_discount) + ": "
                     + String.format(Locale.US, "%.2f", ReportCursorHelper.parseAmount(discountRaw)) + "%");
+        }
+        if (packingChargeType != null && packingChargeType.equalsIgnoreCase("Amount")) {
+            binding.packingLabel.setText(getString(R.string.ui_packing) + ": " + inr + " "
+                    + String.format(Locale.US, "%.2f", ReportCursorHelper.parseAmount(packingRaw)));
+        } else {
+            binding.packingLabel.setText(getString(R.string.ui_packing) + ": "
+                    + String.format(Locale.US, "%.2f", ReportCursorHelper.parseAmount(packingRaw)) + "%");
         }
         binding.paymentLabel.setText(getString(R.string.ui_payment_mode) + ": " + paymentMode);
         binding.subTotalLabel.setText(getString(R.string.ui_sub_total) + ": " + inr + " "
@@ -167,6 +181,44 @@ public class EditInvoice extends BaseActivity {
                 value = "0";
             }
             discountRaw = value;
+            recalculate();
+            sheet.dismiss();
+        });
+    }
+
+    private void showPackingDialog() {
+        View content = LayoutInflater.from(this).inflate(R.layout.update_packing_dialog, null);
+        BottomSheetDialog sheet = BottomSheetUi.showContent(this, content, true);
+
+        TextInputEditText packingInput = content.findViewById(R.id.packingCharge);
+        TextView addPacking = content.findViewById(R.id.addPackingCharge);
+        TextView dismissPacking = content.findViewById(R.id.dismissPackingCharge);
+        MaterialSpinner packingTypeSpinner = content.findViewById(R.id.packingTypeSpinner);
+
+        String[] packingTypeList = getResources().getStringArray(R.array.discount_type);
+        ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_item, packingTypeList);
+        spinnerAdapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
+        packingTypeSpinner.setAdapter(spinnerAdapter);
+        int packingIndex = spinnerAdapter.getPosition(packingChargeType);
+        if (packingIndex >= 0) {
+            packingTypeSpinner.setSelectedIndex(packingIndex);
+        }
+        packingTypeSpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
+            @Override
+            public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
+                packingChargeType = packingTypeList[position];
+            }
+        });
+        packingInput.setText(packingRaw);
+
+        dismissPacking.setOnClickListener(v -> sheet.dismiss());
+        addPacking.setOnClickListener(v -> {
+            String value = packingInput.getText() != null ? packingInput.getText().toString().trim() : "";
+            if (value.isEmpty()) {
+                value = "0";
+            }
+            packingRaw = value;
             recalculate();
             sheet.dismiss();
         });
@@ -228,6 +280,8 @@ public class EditInvoice extends BaseActivity {
                 String.format(Locale.US, "%.2f", gstAmount),
                 discountRaw,
                 discountType,
+                packingRaw,
+                packingChargeType,
                 String.format(Locale.US, "%.2f", totalAmount),
                 paymentMode);
         Toast.makeText(this, getString(R.string.toast_bill_updated), Toast.LENGTH_SHORT).show();

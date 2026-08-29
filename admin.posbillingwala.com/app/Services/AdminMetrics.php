@@ -735,6 +735,51 @@ class AdminMetrics
         return 'bx-wallet';
     }
 
+    public static function dealerReport(): array
+    {
+        $empty = [
+            'totalDealer' => 0,
+            'activeDealer' => 0,
+            'inactiveDealer' => 0,
+            'totalCustomers' => 0,
+            'activePercent' => 0,
+            'inactivePercent' => 0,
+            'growthBars' => [],
+        ];
+
+        try {
+            $total = (int) DB::table('users')->where('role_id', 2)->count();
+            $active = (int) DB::table('users')->where('role_id', 2)->where('is_active', 1)->count();
+            $inactive = max(0, $total - $active);
+            $customers = (int) DB::table('users')->where('role_id', 3)->count();
+            $pct = function ($n) use ($total) {
+                return $total > 0 ? round(($n / $total) * 100, 1) : 0;
+            };
+            $growth = [];
+            for ($i = 6; $i >= 0; $i--) {
+                $d = Carbon::now('Asia/Kolkata')->subDays($i)->toDateString();
+                $c = Schema::hasColumn('users', 'created_at')
+                    ? (int) DB::table('users')->where('role_id', 2)->whereDate('created_at', $d)->count()
+                    : 0;
+                $growth[] = ['label' => Carbon::parse($d)->format('d M'), 'count' => $c];
+            }
+
+            return [
+                'totalDealer' => $total,
+                'activeDealer' => $active,
+                'inactiveDealer' => $inactive,
+                'totalCustomers' => $customers,
+                'activePercent' => $pct($active),
+                'inactivePercent' => $pct($inactive),
+                'growthBars' => $growth,
+            ];
+        } catch (\Throwable $e) {
+            \Log::warning('AdminMetrics dealerReport failed: ' . $e->getMessage());
+
+            return $empty;
+        }
+    }
+
     public static function dealerSales(int $limit = 10, string $period = 'month'): array
     {
         $today = self::today()->toDateString();
