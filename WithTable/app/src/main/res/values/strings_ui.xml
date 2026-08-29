@@ -36,6 +36,15 @@
     <string name="ui_billing_details">Billing Details</string>
     <string name="ui_billing_wise_details">Billing Wise Details</string>
     <string name="ui_cash">Cash</string>
+    <string name="ui_cash_plus_upi">Cash + UPI</string>
+    <string name="ui_cash_plus_upi_mode_wise">Cash + UPI Mode wise</string>
+    <string name="ui_cash_amount">Cash Amount</string>
+    <string name="ui_upi_amount">UPI Amount</string>
+    <string name="ui_total_settlement">Total Settlement (Cash + UPI)</string>
+    <string name="ui_settlement_matched">Settlement amount is matched with Total Bill Amount.</string>
+    <string name="ui_settlement_not_matched">Settlement amount does not match Total Bill Amount.</string>
+    <string name="ui_total_cash">Total Cash</string>
+    <string name="ui_total_upi">Total UPI</string>
     <string name="ui_cash_mode_wise">Cash Mode wise</string>
     <string name="ui_cashier_name">Cashier Name</string>
     <string name="ui_cgst">CGST@</string>
@@ -404,6 +413,7 @@
     <string name="toast_please_select_a_category">Please select a category</string>
     <string name="toast_please_select_mess_days">Please select mess days</string>
     <string name="toast_please_select_payment_mode">Please select payment mode</string>
+    <string name="toast_settlement_must_match">Cash + UPI must equal the bill total, and both amounts must be greater than 0.</string>
     <string name="toast_please_select_printer">Please select printer</string>
     <string name="toast_please_select_printer_from_setting">Please select printer from setting</string>
     <string name="toast_please_select_portion">Please select portion</string>

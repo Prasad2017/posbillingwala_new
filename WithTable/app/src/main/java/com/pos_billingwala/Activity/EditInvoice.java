@@ -19,6 +19,8 @@ import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.pos_billingwala.Adapter.EditInvoiceProductAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.BottomSheetUi;
+import com.pos_billingwala.Extra.PaymentSettlementBinder;
+import com.pos_billingwala.Extra.PaymentSettlementHelper;
 import com.pos_billingwala.Extra.ReportCursorHelper;
 import com.pos_billingwala.NetworkToOffline.InvoicePendingSync;
 import com.pos_billingwala.Model.CompanyResponse;
@@ -44,6 +46,8 @@ public class EditInvoice extends BaseActivity {
     private String packingRaw = "0";
     private String packingChargeType = "Percentage";
     private String paymentMode = "Cash";
+    private String cashAmount = "";
+    private String upiAmount = "";
     private float subTotal;
     private float gstAmount;
     private float totalAmount;
@@ -82,6 +86,8 @@ public class EditInvoice extends BaseActivity {
                 ? invoice.getPackingChargeType() : "Percentage";
         paymentMode = invoice.getPaymentMode() != null && !invoice.getPaymentMode().isEmpty()
                 ? invoice.getPaymentMode() : "Cash";
+        cashAmount = invoice.getCashAmount();
+        upiAmount = invoice.getUpiAmount();
 
         lines.clear();
         lines.addAll(database.getInvoiceProductList(invoice.getInvoiceNumber()));
@@ -140,7 +146,9 @@ public class EditInvoice extends BaseActivity {
             binding.packingLabel.setText(getString(R.string.ui_packing) + ": "
                     + String.format(Locale.US, "%.2f", ReportCursorHelper.parseAmount(packingRaw)) + "%");
         }
-        binding.paymentLabel.setText(getString(R.string.ui_payment_mode) + ": " + paymentMode);
+        binding.paymentLabel.setText(getString(R.string.ui_payment_mode) + ": "
+                + PaymentSettlementHelper.displayLabel(paymentMode, cashAmount, upiAmount,
+                String.format(Locale.US, "%.2f", totalAmount)));
         binding.subTotalLabel.setText(getString(R.string.ui_sub_total) + ": " + inr + " "
                 + String.format(Locale.US, "%.2f", subTotal));
         binding.gstLabel.setText("GST: " + inr + " " + String.format(Locale.US, "%.2f", gstAmount));
@@ -228,39 +236,31 @@ public class EditInvoice extends BaseActivity {
         View content = LayoutInflater.from(this).inflate(R.layout.set_payment_mode_dialog, null);
         BottomSheetDialog sheet = BottomSheetUi.showContent(this, content, true);
 
-        TextView continueToReport = content.findViewById(R.id.continueToReport);
-        TextView dismissReport = content.findViewById(R.id.dismissReport);
-        TextView totalView = content.findViewById(R.id.totalAmount);
-        RadioGroup paymentGroup = content.findViewById(R.id.paymentGroup);
+        PaymentSettlementBinder.bind(content, totalAmount, inrSymbol(), paymentMode,
+                new PaymentSettlementBinder.Callback() {
+                    @Override
+                    public void onConfirmed(String mode, String cash, String upi) {
+                        if (mode == null || mode.isEmpty()) {
+                            Toast.makeText(EditInvoice.this,
+                                    getString(R.string.toast_please_select_payment_mode), Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        paymentMode = mode;
+                        cashAmount = cash;
+                        upiAmount = upi;
+                        recalculate();
+                        sheet.dismiss();
+                    }
 
-        String inr = MainActivity.currencyName != null ? MainActivity.currencyName : "";
-        totalView.setText(getString(R.string.ui_total_amount) + ": " + inr
-                + String.format(Locale.US, "%.2f", totalAmount));
+                    @Override
+                    public void onDismissed() {
+                        sheet.dismiss();
+                    }
+                });
+    }
 
-        if (paymentMode.equalsIgnoreCase(getString(R.string.ui_upi)) || paymentMode.equalsIgnoreCase("UPI")
-                || paymentMode.equalsIgnoreCase("Online")) {
-            paymentGroup.check(R.id.online);
-        } else {
-            paymentGroup.check(R.id.cash);
-        }
-
-        paymentGroup.setOnCheckedChangeListener((group, checkedId) -> {
-            View selected = group.findViewById(checkedId);
-            if (selected instanceof RadioButton) {
-                paymentMode = ((RadioButton) selected).getText().toString();
-            }
-        });
-
-        dismissReport.setOnClickListener(v -> sheet.dismiss());
-        continueToReport.setOnClickListener(v -> {
-            int selectedId = paymentGroup.getCheckedRadioButtonId();
-            RadioButton selected = paymentGroup.findViewById(selectedId);
-            if (selected != null) {
-                paymentMode = selected.getText().toString();
-            }
-            recalculate();
-            sheet.dismiss();
-        });
+    private String inrSymbol() {
+        return MainActivity.currencyName != null ? MainActivity.currencyName : "";
     }
 
     private void saveInvoice() {
@@ -283,7 +283,9 @@ public class EditInvoice extends BaseActivity {
                 packingRaw,
                 packingChargeType,
                 String.format(Locale.US, "%.2f", totalAmount),
-                paymentMode);
+                paymentMode,
+                cashAmount,
+                upiAmount);
         Toast.makeText(this, getString(R.string.toast_bill_updated), Toast.LENGTH_SHORT).show();
         InvoicePendingSync.syncPendingInvoiceChanges(this);
         setResult(RESULT_OK, new Intent());

@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Context;
 import android.os.Handler;
+import android.os.ParcelUuid;
 import android.util.Log;
 
 import com.pos_billingwala.R;
@@ -14,7 +15,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -31,6 +34,10 @@ public class BluetoothPrintService {
 
     private static final String TAG = "BluetoothPrintService";
     private static final UUID SPP_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+    /** Discovery cancel is async; a short wait avoids SDP handshake timeouts. */
+    private static final long DISCOVERY_SETTLE_MS = 400L;
+    /** Stack must release the RFCOMM channel after a failed connect() before retry. */
+    private static final long RETRY_SETTLE_MS = 450L;
 
     public interface ConnectionListener {
         void onConnected(BluetoothDevice device);
@@ -192,11 +199,13 @@ public class BluetoothPrintService {
     private class ConnectThread extends Thread {
 
         private final BluetoothDevice device;
-        private final boolean secure;
+        private final boolean preferSecure;
+        private volatile BluetoothSocket workingSocket;
+        private volatile boolean cancelled;
 
         ConnectThread(BluetoothDevice device, boolean secure) {
             this.device = device;
-            this.secure = secure;
+            this.preferSecure = secure;
             setName("BtConnect-" + safeAddress(device));
         }
 
@@ -209,47 +218,73 @@ public class BluetoothPrintService {
                     Log.w(TAG, "cancelDiscovery failed", e);
                 }
             }
+            sleepQuietly(DISCOVERY_SETTLE_MS);
 
-            BluetoothSocket socket = openSocketWithFallback(device, secure);
-            if (socket == null) {
-                Log.e(TAG, "ConnectThread: could not open socket");
-                notifyConnectionFailed();
+            BluetoothDevice target = resolveDevice(device);
+            ConnectResult result = connectWithStrategies(target);
+            if (cancelled) {
+                closeQuietly(result != null ? result.socket : null);
                 return;
             }
-
-            try {
-                socket.connect();
-            } catch (IOException e) {
-                Log.e(TAG, "ConnectThread: connect IO error, trying fallback channel", e);
-                closeQuietly(socket);
-                socket = openFallbackSocketOnly(device);
-                if (socket == null) {
-                    notifyConnectionFailed();
-                    return;
-                }
-                try {
-                    socket.connect();
-                } catch (IOException e2) {
-                    Log.e(TAG, "ConnectThread: fallback connect failed", e2);
-                    closeQuietly(socket);
-                    notifyConnectionFailed();
-                    return;
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "ConnectThread: unexpected connect error", e);
-                closeQuietly(socket);
+            if (result == null || result.socket == null) {
+                Log.e(TAG, "ConnectThread: all RFCOMM strategies failed");
                 notifyConnectionFailed();
                 return;
             }
 
             synchronized (BluetoothPrintService.this) {
+                if (cancelled || connectThread != this) {
+                    closeQuietly(result.socket);
+                    return;
+                }
                 connectThread = null;
             }
-            connected(socket, device, secure ? "Secure" : "Insecure");
+            connected(result.socket, target, result.socketType);
+        }
+
+        private ConnectResult connectWithStrategies(BluetoothDevice target) {
+            List<SocketStrategy> strategies = buildStrategies(target, preferSecure);
+            for (int i = 0; i < strategies.size(); i++) {
+                if (cancelled || isInterrupted()) {
+                    return null;
+                }
+                SocketStrategy strategy = strategies.get(i);
+                BluetoothSocket socket = strategy.open();
+                if (socket == null) {
+                    continue;
+                }
+                workingSocket = socket;
+                try {
+                    Log.d(TAG, "ConnectThread: trying " + strategy.label);
+                    socket.connect();
+                    if (cancelled) {
+                        closeQuietly(socket);
+                        return null;
+                    }
+                    Log.i(TAG, "ConnectThread: connected via " + strategy.label);
+                    return new ConnectResult(socket, strategy.label);
+                } catch (IOException e) {
+                    Log.w(TAG, "ConnectThread: " + strategy.label + " failed: " + e.getMessage());
+                    closeQuietly(socket);
+                    workingSocket = null;
+                    if (i < strategies.size() - 1) {
+                        sleepQuietly(RETRY_SETTLE_MS);
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, "ConnectThread: unexpected error on " + strategy.label, e);
+                    closeQuietly(socket);
+                    workingSocket = null;
+                    sleepQuietly(RETRY_SETTLE_MS);
+                }
+            }
+            return null;
         }
 
         void cancel() {
-            // socket closed in service cancel
+            cancelled = true;
+            interrupt();
+            closeQuietly(workingSocket);
+            workingSocket = null;
         }
     }
 
@@ -338,42 +373,149 @@ public class BluetoothPrintService {
     // Socket helpers
     // -------------------------------------------------------------------------
 
-    private static BluetoothSocket openSocketWithFallback(BluetoothDevice device, boolean secure) {
+    /**
+     * Thermal printers often fail SDP UUID connect with
+     * "read failed, socket might closed or timeout, read ret: -1".
+     * Channel-1 reflection sockets skip SDP. Insecure is required for most ESC/POS printers.
+     */
+    private List<SocketStrategy> buildStrategies(BluetoothDevice device, boolean preferSecure) {
+        List<SocketStrategy> strategies = new ArrayList<>();
+        if (device == null) {
+            return strategies;
+        }
+
+        SocketStrategy insecureSpp = uuidStrategy(device, SPP_UUID, false, "Insecure-SPP");
+        SocketStrategy secureSpp = uuidStrategy(device, SPP_UUID, true, "Secure-SPP");
+        SocketStrategy insecureCh1 = reflectionStrategy(device, "createInsecureRfcommSocket", 1);
+        SocketStrategy secureCh1 = reflectionStrategy(device, "createRfcommSocket", 1);
+
+        if (preferSecure) {
+            addStrategy(strategies, secureSpp);
+            addStrategy(strategies, insecureSpp);
+            addStrategy(strategies, secureCh1);
+            addStrategy(strategies, insecureCh1);
+        } else {
+            addStrategy(strategies, insecureSpp);
+            addStrategy(strategies, insecureCh1);
+            addStrategy(strategies, secureSpp);
+            addStrategy(strategies, secureCh1);
+        }
+
+        ParcelUuid[] advertised = null;
+        try {
+            advertised = device.getUuids();
+        } catch (Exception e) {
+            Log.w(TAG, "getUuids failed", e);
+        }
+        if (advertised != null) {
+            for (ParcelUuid parcelUuid : advertised) {
+                if (parcelUuid == null || parcelUuid.getUuid() == null) {
+                    continue;
+                }
+                UUID uuid = parcelUuid.getUuid();
+                if (SPP_UUID.equals(uuid)) {
+                    continue;
+                }
+                addStrategy(strategies, uuidStrategy(device, uuid, false, "Insecure-" + uuid));
+                addStrategy(strategies, uuidStrategy(device, uuid, true, "Secure-" + uuid));
+            }
+        }
+
+        addStrategy(strategies, reflectionStrategy(device, "createInsecureRfcommSocket", 2));
+        addStrategy(strategies, reflectionStrategy(device, "createRfcommSocket", 2));
+        return strategies;
+    }
+
+    private static void addStrategy(List<SocketStrategy> list, SocketStrategy strategy) {
+        if (strategy != null) {
+            list.add(strategy);
+        }
+    }
+
+    private static SocketStrategy uuidStrategy(BluetoothDevice device, UUID uuid, boolean secure, String label) {
+        return new SocketStrategy(label, () -> {
+            try {
+                return secure
+                        ? device.createRfcommSocketToServiceRecord(uuid)
+                        : device.createInsecureRfcommSocketToServiceRecord(uuid);
+            } catch (IOException e) {
+                Log.w(TAG, "open " + label + " failed", e);
+                return null;
+            }
+        });
+    }
+
+    private static SocketStrategy reflectionStrategy(BluetoothDevice device, String methodName, int channel) {
+        return new SocketStrategy(methodName + "(ch=" + channel + ")", () ->
+                reflectionSocket(device, methodName, channel));
+    }
+
+    private BluetoothDevice resolveDevice(BluetoothDevice device) {
+        if (device == null || adapter == null) {
+            return device;
+        }
+        try {
+            String address = device.getAddress();
+            if (address != null && !address.isEmpty()) {
+                return adapter.getRemoteDevice(address);
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "resolveDevice failed, using original", e);
+        }
+        return device;
+    }
+
+    private static BluetoothSocket reflectionSocket(BluetoothDevice device, String methodName, int channel) {
         if (device == null) {
             return null;
         }
-        BluetoothSocket socket = null;
         try {
-            socket = secure
-                    ? device.createRfcommSocketToServiceRecord(SPP_UUID)
-                    : device.createInsecureRfcommSocketToServiceRecord(SPP_UUID);
-        } catch (IOException e) {
-            Log.w(TAG, "openSocket primary failed", e);
-        }
-        if (socket == null) {
-            socket = reflectionSocket(device, 1);
-        }
-        return socket;
-    }
-
-    private static BluetoothSocket openFallbackSocketOnly(BluetoothDevice device) {
-        BluetoothSocket socket = reflectionSocket(device, 1);
-        if (socket == null) {
-            socket = reflectionSocket(device, 2);
-        }
-        return socket;
-    }
-
-    private static BluetoothSocket reflectionSocket(BluetoothDevice device, int channel) {
-        if (device == null) {
-            return null;
-        }
-        try {
-            Method method = device.getClass().getMethod("createRfcommSocket", int.class);
+            Method method = device.getClass().getMethod(methodName, int.class);
             return (BluetoothSocket) method.invoke(device, channel);
         } catch (Exception e) {
-            Log.w(TAG, "reflectionSocket ch=" + channel + " failed", e);
+            Log.w(TAG, methodName + " ch=" + channel + " failed", e);
             return null;
+        }
+    }
+
+    private static void sleepQuietly(long ms) {
+        try {
+            Thread.sleep(ms);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    private static final class SocketStrategy {
+        final String label;
+        final SocketOpener opener;
+
+        SocketStrategy(String label, SocketOpener opener) {
+            this.label = label;
+            this.opener = opener;
+        }
+
+        BluetoothSocket open() {
+            try {
+                return opener.open();
+            } catch (Exception e) {
+                Log.w(TAG, "strategy open failed: " + label, e);
+                return null;
+            }
+        }
+    }
+
+    private interface SocketOpener {
+        BluetoothSocket open();
+    }
+
+    private static final class ConnectResult {
+        final BluetoothSocket socket;
+        final String socketType;
+
+        ConnectResult(BluetoothSocket socket, String socketType) {
+            this.socket = socket;
+            this.socketType = socketType;
         }
     }
 

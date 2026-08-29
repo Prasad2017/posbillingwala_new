@@ -45,10 +45,12 @@ import com.pos_billingwala.BuildConfig;
 import com.pos_billingwala.CalenderView.MonthPickerDialog;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ReportCursorHelper;
+import com.pos_billingwala.Extra.PaymentSettlementHelper;
 import com.pos_billingwala.Model.InvoiceResponse;
 import com.pos_billingwala.R;
 import com.pos_billingwala.Utils.ReportToExcel;
 import com.pos_billingwala.Extra.OperationalReportCharts;
+import com.pos_billingwala.Extra.ReportUiHelper;
 import com.pos_billingwala.Model.ReportRankItem;
 import com.pos_billingwala.databinding.FragmentOperationalReportBinding;
 
@@ -216,6 +218,8 @@ public class InvoicePaymentModeWiseReport extends Fragment implements View.OnCli
         col_name.add("Invoice Date");
         col_name.add("Invoice Number");
         col_name.add("Payment Mode");
+        col_name.add("Cash Amount");
+        col_name.add("UPI Amount");
         col_name.add("Invoice Amount ( " + MainActivity.currencyName + " )");
         reportList.add(col_name);
 
@@ -226,13 +230,16 @@ public class InvoicePaymentModeWiseReport extends Fragment implements View.OnCli
                 columnList.add(String.valueOf(i + 1));
                 columnList.add(invoiceResponse.getInvoiceDate());
                 columnList.add(invoiceResponse.getInvoiceNumber());
-                columnList.add(paymentMode);
+                columnList.add(invoiceResponse.getPaymentMode());
+                columnList.add(invoiceResponse.getCashAmount());
+                columnList.add(invoiceResponse.getUpiAmount());
                 columnList.add(invoiceResponse.getTotalAmount());
                 reportList.add(columnList);
             }
         }
 
         List<String> columnList = new ArrayList<>();
+        columnList.add("");
         columnList.add("");
         columnList.add("");
         columnList.add("");
@@ -300,6 +307,7 @@ public class InvoicePaymentModeWiseReport extends Fragment implements View.OnCli
 
         LinearLayout cashModeWiseLayout = view.findViewById(R.id.cashModeWiseLayout);
         LinearLayout onlineModeWiseLayout = view.findViewById(R.id.onlineModeWiseLayout);
+        LinearLayout splitModeWiseLayout = view.findViewById(R.id.splitModeWiseLayout);
         LinearLayout bankModeWiseLayout = view.findViewById(R.id.bankModeWiseLayout);
 
         LinearLayout dayWiseLayout = view.findViewById(R.id.dayWiseLayout);
@@ -331,6 +339,15 @@ public class InvoicePaymentModeWiseReport extends Fragment implements View.OnCli
                 getReportList(paymentMode);
             }
         });
+
+        if (splitModeWiseLayout != null) {
+            splitModeWiseLayout.setOnClickListener(v -> {
+                mypopupWindow.dismiss();
+                paymentMode = PaymentSettlementHelper.MODE_SPLIT;
+                binding.toolbar.heading.setText(paymentMode + " Invoice Reports");
+                getReportList(paymentMode);
+            });
+        }
 
         bankModeWiseLayout.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -494,6 +511,13 @@ public class InvoicePaymentModeWiseReport extends Fragment implements View.OnCli
             OperationalReportCharts.bindListSummary(binding, activity, totalPages, totalAmount,
                     breakdown, getString(R.string.ui_payment_mode),
                     getString(R.string.ui_amount_breakdown), period);
+            String dateFilter = isDateMonthWise ? invoiceDate : "";
+            float cashTotal = posBillingWalaDatabase.getInvoiceTenderCashTotal(dateFilter);
+            float upiTotal = posBillingWalaDatabase.getInvoiceTenderUpiTotal(dateFilter);
+            ReportUiHelper.bindKpi(binding.kpi3, getString(R.string.ui_total_cash),
+                    ReportUiHelper.money(MainActivity.currencyName, cashTotal), "");
+            ReportUiHelper.bindKpi(binding.kpi4, getString(R.string.ui_total_upi),
+                    ReportUiHelper.money(MainActivity.currencyName, upiTotal), "");
             binding.nestedScrollView.setVisibility(View.VISIBLE);
             binding.noDataFound.setVisibility(View.GONE);
             pageNumber = page.size();

@@ -64,6 +64,8 @@ import com.pos_billingwala.BuildConfig;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.AppExecutors;
 import com.pos_billingwala.Extra.BottomSheetUi;
+import com.pos_billingwala.Extra.PaymentSettlementHelper;
+import com.pos_billingwala.Extra.PaymentSettlementBinder;
 import com.pos_billingwala.Extra.PaymentUpiQrHelper;
 import com.pos_billingwala.Extra.ReportCursorHelper;
 import com.pos_billingwala.Extra.ShopHeaderBuilder;
@@ -902,12 +904,15 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
             cashButton.setChecked(false);
             onlineButton.setChecked(false);
         }*/
-        binding.paymentGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(RadioGroup group, int checkedId) {
-                int selectedId = binding.paymentGroup.getCheckedRadioButtonId();
-                RadioButton radioPayButton = findViewById(selectedId);
-                paymentMode = radioPayButton.getText().toString();
+        binding.paymentGroup.setOnCheckedChangeListener((group, checkedId) -> {
+            if (checkedId == R.id.splitCashUpi) {
+                paymentMode = PaymentSettlementHelper.MODE_SPLIT;
+            } else if (checkedId == R.id.online) {
+                paymentMode = PaymentSettlementHelper.MODE_UPI;
+            } else if (checkedId == R.id.cash) {
+                paymentMode = PaymentSettlementHelper.MODE_CASH;
+            } else {
+                paymentMode = "";
             }
         });
 
@@ -1619,6 +1624,12 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                     }
                 }
 
+                String paymentModeForSave = reservedPaymentMode;
+                if (invoiceType.equalsIgnoreCase("table_wise")
+                        && PaymentSettlementHelper.isSplit(paymentModeForSave)) {
+                    paymentModeForSave = "";
+                }
+
                 boolean invoiceSaved = posBillingWalaDatabase.saveInvoice(
                         cartSnapshot,
                         reservedTableNumber,
@@ -1633,7 +1644,7 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                         finalPackingAmtForDb,
                         reservedPackingChargeType != null ? reservedPackingChargeType : "Percentage",
                         totalAmt,
-                        reservedPaymentMode,
+                        paymentModeForSave,
                         reservedInvoiceDate,
                         invoiceType,
                         getRandomString(10),
@@ -1648,7 +1659,9 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                 }
 
                 if (!invoiceType.equalsIgnoreCase("table_wise")) {
-                    needsPaymentMode = !posBillingWalaDatabase.checkPaymentMode(reservedInvoiceNumber).isEmpty();
+                    boolean splitPay = PaymentSettlementHelper.isSplit(reservedPaymentMode);
+                    needsPaymentMode = splitPay
+                            || !posBillingWalaDatabase.checkPaymentMode(reservedInvoiceNumber).isEmpty();
                 }
                 saved = true;
             } catch (Exception e) {
@@ -1928,46 +1941,37 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
         View content = LayoutInflater.from(activity).inflate(R.layout.set_payment_mode_dialog, null);
         BottomSheetDialog sheet = BottomSheetUi.showContent(activity, content, false);
 
-        TextView continueToReport = content.findViewById(R.id.continueToReport);
-        TextView dismissReport = content.findViewById(R.id.dismissReport);
-        TextView totalAmount = content.findViewById(R.id.totalAmount);
-        RadioGroup paymentGroup = content.findViewById(R.id.paymentGroup);
+        PaymentSettlementBinder.bind(content, totalAmt, MainActivity.currencyName, paymentMode,
+                new PaymentSettlementBinder.Callback() {
+                    @Override
+                    public void onConfirmed(String mode, String cashAmount, String upiAmount) {
+                        if (mode == null || mode.isEmpty()) {
+                            Toast.makeText(BluetoothPrint.this,
+                                    getString(R.string.toast_please_select_payment_mode), Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        posBillingWalaDatabase.updateInvoicePaymentMode(invoiceNumber, mode, cashAmount, upiAmount);
+                        if (printStatus == 1) {
+                            automaticSavePDF(customerName, customerMobile, customerAddress, invoiceNumber);
+                        } else {
+                            Toast.makeText(activity, getString(R.string.toast_invoice_saved), Toast.LENGTH_SHORT).show();
+                        }
+                        sheet.dismiss();
+                        finishAfterInvoiceSaved();
+                    }
 
-        totalAmount.setText("Total Amount: " + MainActivity.currencyName + totalAmt);
-        paymentGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(RadioGroup group, int checkedId) {
-                int selectedId = paymentGroup.getCheckedRadioButtonId();
-                RadioButton radioPayButton = group.findViewById(selectedId);
-                paymentMode = radioPayButton.getText().toString();
-            }
-        });
-
-        dismissReport.setOnClickListener(v -> {
-            posBillingWalaDatabase.updateInvoicePaymentMode(invoiceNumber, "Cash");
-            if (printStatus == 1) {
-                automaticSavePDF(customerName, customerMobile, customerAddress, invoiceNumber);
-            } else {
-                Toast.makeText(activity, getString(R.string.toast_invoice_saved), Toast.LENGTH_SHORT).show();
-            }
-            sheet.dismiss();
-            finishAfterInvoiceSaved();
-        });
-
-        continueToReport.setOnClickListener(v -> {
-            if (!paymentMode.isEmpty()) {
-                posBillingWalaDatabase.updateInvoicePaymentMode(invoiceNumber, paymentMode);
-                if (printStatus == 1) {
-                    automaticSavePDF(customerName, customerMobile, customerAddress, invoiceNumber);
-                } else {
-                    Toast.makeText(activity, getString(R.string.toast_invoice_saved), Toast.LENGTH_SHORT).show();
-                }
-                sheet.dismiss();
-                finishAfterInvoiceSaved();
-            } else {
-                Toast.makeText(BluetoothPrint.this, getString(R.string.toast_please_select_payment_mode), Toast.LENGTH_SHORT).show();
-            }
-        });
+                    @Override
+                    public void onDismissed() {
+                        posBillingWalaDatabase.updateInvoicePaymentMode(invoiceNumber, PaymentSettlementHelper.MODE_CASH);
+                        if (printStatus == 1) {
+                            automaticSavePDF(customerName, customerMobile, customerAddress, invoiceNumber);
+                        } else {
+                            Toast.makeText(activity, getString(R.string.toast_invoice_saved), Toast.LENGTH_SHORT).show();
+                        }
+                        sheet.dismiss();
+                        finishAfterInvoiceSaved();
+                    }
+                });
     }
 
 

@@ -160,6 +160,8 @@ public final class InvoicePendingSync {
                     columnOrEmpty(cursor, "packingChargeType").isEmpty() ? "Percentage" : columnOrEmpty(cursor, "packingChargeType"),
                     columnOrEmpty(cursor, "totalAmount"),
                     columnOrEmpty(cursor, "paymentMode"),
+                    columnOrEmpty(cursor, "cashAmount"),
+                    columnOrEmpty(cursor, "upiAmount"),
                     columnOrEmpty(cursor, "invoiceDate"),
                     columnOrEmpty(cursor, "invoiceType"),
                     columnOrEmpty(cursor, "invoiceOrderStatus"),

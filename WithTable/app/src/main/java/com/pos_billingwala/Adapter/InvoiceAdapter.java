@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.pos_billingwala.Activity.InvoiceDetailsBluetoothPrint;
 import com.pos_billingwala.Activity.MainActivity;
+import com.pos_billingwala.Extra.PaymentSettlementHelper;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.InvoiceProductResponse;
@@ -107,7 +108,9 @@ public class InvoiceAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
         String totalAmount = "<b>Total Amount:</b> " + MainActivity.currencyName + " " + invoiceResponse.getTotalAmount();
         holder.binding.totalAmount.setText(Html.fromHtml(totalAmount));
-        String paymentMode = "<b>Payment Mode</b>: " + invoiceResponse.getPaymentMode();
+        String paymentMode = "<b>Payment Mode</b>: " + PaymentSettlementHelper.displayLabel(
+                invoiceResponse.getPaymentMode(), invoiceResponse.getCashAmount(),
+                invoiceResponse.getUpiAmount(), invoiceResponse.getTotalAmount());
         holder.binding.payableMode.setText(Html.fromHtml(paymentMode));
         holder.binding.refundedLabel.setVisibility(invoiceResponse.isRefunded() ? View.VISIBLE : View.GONE);
 

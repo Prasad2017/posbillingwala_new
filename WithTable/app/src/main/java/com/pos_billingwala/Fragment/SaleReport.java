@@ -261,9 +261,11 @@ public class SaleReport extends Fragment implements View.OnClickListener {
         float shownFast = LicenseModules.isEnabled(MainActivity.fastBilling) ? fastBilling : 0f;
         float shownTable = LicenseModules.isEnabled(MainActivity.dineIn) ? tableAmount : 0f;
         float shownTakeAway = LicenseModules.isEnabled(MainActivity.takeAway) ? takeAwayAmount : 0f;
+        float cashTotal = posBillingWalaDatabase.getInvoiceTenderCashTotal(invoiceDate);
+        float upiTotal = posBillingWalaDatabase.getInvoiceTenderUpiTotal(invoiceDate);
         OperationalReportCharts.bindSaleSummary(binding, requireContext(),
                 subAmount, totalGSTAmount, discount, totalAmount,
-                shownFast, shownTable, shownTakeAway, periodLabel);
+                shownFast, shownTable, shownTakeAway, periodLabel, cashTotal, upiTotal);
         binding.nestedScrollView.setVisibility(View.VISIBLE);
         binding.noDataFound.setVisibility(View.GONE);
     }

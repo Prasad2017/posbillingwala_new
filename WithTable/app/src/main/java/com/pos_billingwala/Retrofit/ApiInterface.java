@@ -212,6 +212,8 @@ public interface ApiInterface {
                                      @Field("packingChargeType") String packingChargeType,
                                      @Field("totalAmount") String totalAmount,
                                      @Field("paymentMode") String paymentMode,
+                                     @Field("cashAmount") String cashAmount,
+                                     @Field("upiAmount") String upiAmount,
                                      @Field("invoiceDate") String invoiceDate,
                                      @Field("invoiceType") String invoiceType,
                                      @Field("invoiceOrderStatus") String invoiceOrderStatus,
