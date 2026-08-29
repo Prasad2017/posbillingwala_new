@@ -1,0 +1,3 @@
+/vendor/
+/catalog/storage/uploads/*
+!/catalog/storage/uploads/.gitkeep

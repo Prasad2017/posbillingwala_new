@@ -1,0 +1,12 @@
+{
+    "name": "posbillingwala/api-catalog",
+    "description": "Catalog Excel import/export for POS Billingwala REST API",
+    "require": {
+        "php": ">=7.4",
+        "phpoffice/phpspreadsheet": "^1.29"
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true
+    }
+}
