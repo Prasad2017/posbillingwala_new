@@ -64,6 +64,7 @@ import com.pos_billingwala.BuildConfig;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.AppExecutors;
 import com.pos_billingwala.Extra.BottomSheetUi;
+import com.pos_billingwala.Extra.PaymentUpiQrHelper;
 import com.pos_billingwala.Extra.ShopHeaderBuilder;
 import com.pos_billingwala.Extra.Observability;
 import com.pos_billingwala.Extra.LicenceExpiredUi;
@@ -367,6 +368,7 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
             totalPayableAmountTxt.setText(Html.fromHtml(totalPayableAmount));
             twoTotalAmount.setText(inr + String.format(Locale.US, "%.2f", totalAmount));
             threeTotalAmount.setText(inr + String.format(Locale.US, "%.2f", totalAmount));
+            applyPaymentQr(totalAmount);
 
             cartLayout.setVisibility(View.VISIBLE);
             noDataFound.setVisibility(View.GONE);
@@ -374,6 +376,7 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                 clearCartButton.setVisibility(View.VISIBLE);
             }
         } else {
+            applyPaymentQr(0);
             cartLayout.setVisibility(View.GONE);
             noDataFound.setVisibility(View.VISIBLE);
             if (clearCartButton != null) {
@@ -1676,23 +1679,33 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                 }
             }
 
-            if (companyResponseList.get(0).getPaymentLogo() != null) {
-                String paymentLogo = companyResponseList.get(0).getPaymentLogo();
-                // decode base64 string
-                try {
-                    byte[] bytes = Base64.decode(paymentLogo, Base64.DEFAULT);
-                    // Initialize bitmap
-                    Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-                    twoQRLogo.setImageBitmap(bitmap);
-                    threeQRLogo.setImageBitmap(bitmap);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    twoQRLogo.setVisibility(View.GONE);
-                    threeQRLogo.setVisibility(View.GONE);
-                }
-            }
-
         }
+    }
+
+    /**
+     * Generates amount-based UPI QR from shop UPI ID when printer toggle paymentUse is on.
+     */
+    public static void applyPaymentQr(float payableAmount) {
+        if (twoQRLogo == null || threeQRLogo == null) {
+            return;
+        }
+        boolean paymentOn = printerSettingResponseList != null
+                && !printerSettingResponseList.isEmpty()
+                && printerSettingResponseList.get(0).getPaymentUse() != null
+                && printerSettingResponseList.get(0).getPaymentUse().equalsIgnoreCase("on");
+
+        String upiId = "";
+        String payeeName = "";
+        if (companyResponseList != null && !companyResponseList.isEmpty()) {
+            upiId = companyResponseList.get(0).getPaymentLogo();
+            payeeName = ShopHeaderBuilder.resolveShopName1(companyResponseList.get(0));
+        }
+        String note = invoiceNumber != null ? invoiceNumber : "";
+        boolean applied = paymentOn
+                && PaymentUpiQrHelper.applyQrToViews(upiId, payeeName, payableAmount, note, twoQRLogo, threeQRLogo);
+        int visibility = applied ? View.VISIBLE : View.GONE;
+        twoQRLogo.setVisibility(visibility);
+        threeQRLogo.setVisibility(visibility);
     }
 
     public void getPrinterSettingDetails() {
@@ -1721,24 +1734,14 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                 twoKOTCompanyLogo.setVisibility(View.GONE);
                 threeKOTCompanyLogo.setVisibility(View.GONE);
             }
-            //QR Code Payment
-            if (printerSettingResponseList.get(0).getPaymentUse() != null) {
-                if (printerSettingResponseList.get(0).getPaymentUse().equalsIgnoreCase("on")) {
-                    twoQRLogo.setVisibility(View.VISIBLE);
-                    threeQRLogo.setVisibility(View.VISIBLE);
-                } else {
-                    twoQRLogo.setVisibility(View.GONE);
-                    threeQRLogo.setVisibility(View.GONE);
-                }
-            } else {
-                twoQRLogo.setVisibility(View.GONE);
-                threeQRLogo.setVisibility(View.GONE);
-            }
+            // Payment QR visibility is applied with amount in applyPaymentQr()
+            applyPaymentQr(0);
         } else {
             twoCompanyLogo.setVisibility(View.GONE);
             threeCompanyLogo.setVisibility(View.GONE);
             twoKOTCompanyLogo.setVisibility(View.GONE);
             threeKOTCompanyLogo.setVisibility(View.GONE);
+            applyPaymentQr(0);
         }
     }
 

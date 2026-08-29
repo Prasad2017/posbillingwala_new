@@ -252,9 +252,10 @@
     <string name="shop_section_contact">Contact</string>
     <string name="shop_section_operations">Operations</string>
     <string name="shop_section_tax">Tax &amp; compliance</string>
-    <string name="shop_section_payment">Payment QR</string>
+    <string name="shop_section_payment">Payment UPI</string>
+    <string name="shop_upi_id_hint">UPI ID (e.g. shopname@upi)</string>
     <string name="shop_logo_hint">Shown on printed bills when logo is enabled</string>
-    <string name="shop_qr_hint">Shown on bills when payment QR is enabled</string>
+    <string name="shop_qr_hint">When Payment QR is enabled in printer settings, a QR for the bill amount is generated from this UPI ID</string>
     <string name="master_hint_category">Food groups such as Veg, Non Veg</string>
     <string name="master_hint_subcategory">Starter, Main Course, Beverage</string>
     <string name="master_hint_portions">Half, Full and other sizes</string>

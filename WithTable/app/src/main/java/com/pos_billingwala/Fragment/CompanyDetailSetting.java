@@ -164,8 +164,6 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
 
         binding.addProfile.setOnClickListener(this);
         binding.profilePhoto.setOnClickListener(this);
-        binding.addPaymentQR.setOnClickListener(this);
-        binding.paymentQRPhoto.setOnClickListener(this);
         binding.backToSetting.setOnClickListener(this);
         binding.saveDetails.setOnClickListener(this);
 
@@ -178,9 +176,6 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
         int id = view.getId();
         if (id == R.id.addProfile || id == R.id.profilePhoto) {
             imageName = "profile";
-            selectImage();
-        } else if (id == R.id.addPaymentQR || id == R.id.paymentQRPhoto) {
-            imageName = "paymentQR";
             selectImage();
         } else if (id == R.id.backToSetting) {
             ((MainActivity) activity).navigateBack();
@@ -318,9 +313,6 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
             if (imageName.equalsIgnoreCase("profile")) {
                 companyLogo = encoded;
                 binding.profilePhoto.setImageBitmap(bitmap);
-            } else {
-                paymentLogo = encoded;
-                binding.paymentQRPhoto.setImageBitmap(bitmap);
             }
             imageType = uri.toString();
         } catch (Exception e) {
@@ -336,6 +328,10 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
         } else {
             noOfTable = "0";
         }
+
+        paymentLogo = binding.upiId.getText() != null
+                ? binding.upiId.getText().toString().trim()
+                : "";
 
         if (binding.saveDetails.getText().toString().equalsIgnoreCase("Save Details")) {
             posBillingWalaDatabase.addCompanyDetails(companyLogo,
@@ -491,17 +487,13 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
                 }
             }
 
-            if (companyResponse.getPaymentLogo() != null) {
-                paymentLogo = companyResponse.getPaymentLogo();
-                // decode base64 string
-                try {
-                    byte[] bytes = Base64.decode(paymentLogo, Base64.DEFAULT);
-                    // Initialize bitmap
-                    Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-                    binding.paymentQRPhoto.setImageBitmap(bitmap);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+            if (companyResponse.getPaymentLogo() != null
+                    && com.pos_billingwala.Extra.PaymentUpiQrHelper.isUpiId(companyResponse.getPaymentLogo())) {
+                paymentLogo = companyResponse.getPaymentLogo().trim();
+                binding.upiId.setText(paymentLogo);
+            } else {
+                paymentLogo = "";
+                binding.upiId.setText("");
             }
 
             binding.saveDetails.setText("Update Details");

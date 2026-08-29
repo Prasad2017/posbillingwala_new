@@ -17,6 +17,7 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 
   $foodTypeId = isset($_POST['foodTypeId']) ? $_POST['foodTypeId'] : '';
   $foodTypeCode = isset($_POST['foodTypeCode']) ? $_POST['foodTypeCode'] : '';
+  $categorySortOrder = isset($_POST['categorySortOrder']) ? intval($_POST['categorySortOrder']) : -1;
   if ($foodTypeId == '' && $foodTypeCode != '') {
       $ftRes = mysqli_query($con, "SELECT foodTypeId FROM `food_types` WHERE `foodTypeCode`='$foodTypeCode' LIMIT 1");
       $ftRow = mysqli_fetch_array($ftRes);
@@ -42,7 +43,8 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 				    
 				    $categoryId = $check['categoryId'];
 				    $foodTypeSql = ($foodTypeId != '') ? ", `foodTypeId`='$foodTypeId'" : "";
-				    $sql="UPDATE `categories` SET `categoryName`='$categoryName', `categoryStatus`='$categoryDeletedStatus'$foodTypeSql WHERE `categoryId`='$categoryId'";
+				    $sortSql = ($categorySortOrder >= 0) ? ", `categorySortOrder`='$categorySortOrder'" : "";
+				    $sql="UPDATE `categories` SET `categoryName`='$categoryName', `categoryStatus`='$categoryDeletedStatus'$foodTypeSql$sortSql WHERE `categoryId`='$categoryId'";
 
                  if(mysqli_query($con, $sql)){
 	
@@ -63,7 +65,13 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
                  
                  $foodTypeCol = ($foodTypeId != '') ? ", `foodTypeId`" : "";
                  $foodTypeVal = ($foodTypeId != '') ? ", '$foodTypeId'" : "";
-                 $sql="INSERT INTO `categories`(`userId`, `categoryName`, `categoryNetworkStatus`, `categoryStatus`$foodTypeCol) VALUES ('$userId', '$categoryName', '$categoryNetworkStatus', '$categoryDeletedStatus'$foodTypeVal)";
+                 $nextSort = $categorySortOrder;
+                 if ($nextSort < 0) {
+                     $sortRes = mysqli_query($con, "SELECT IFNULL(MAX(`categorySortOrder`), 0) + 1 AS nextSort FROM `categories` WHERE `userId`='$userId'");
+                     $sortRow = mysqli_fetch_array($sortRes);
+                     $nextSort = isset($sortRow['nextSort']) ? intval($sortRow['nextSort']) : 1;
+                 }
+                 $sql="INSERT INTO `categories`(`userId`, `categoryName`, `categoryNetworkStatus`, `categoryStatus`, `categorySortOrder`$foodTypeCol) VALUES ('$userId', '$categoryName', '$categoryNetworkStatus', '$categoryDeletedStatus', '$nextSort'$foodTypeVal)";
 
                  if(mysqli_query($con,$sql)){
 	

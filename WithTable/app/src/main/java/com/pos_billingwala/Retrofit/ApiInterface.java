@@ -102,7 +102,8 @@ public interface ApiInterface {
                                       @Field("categoryName") String categoryName,
                                       @Field("categoryDeletedStatus") String categoryDeletedStatus,
                                       @Field("categoryNetworkStatus") String categoryNetworkStatus,
-                                      @Field("foodTypeCode") String foodTypeCode);
+                                      @Field("foodTypeCode") String foodTypeCode,
+                                      @Field("categorySortOrder") String categorySortOrder);
 
     @FormUrlEncoded
     @POST("insertSubcategory.php")
@@ -111,7 +112,8 @@ public interface ApiInterface {
                                          @Field("categoryNetworkStatus") String categoryNetworkStatus,
                                          @Field("subcategoryName") String subcategoryName,
                                          @Field("subcategoryDeletedStatus") String subcategoryDeletedStatus,
-                                         @Field("subcategoryNetworkStatus") String subcategoryNetworkStatus);
+                                         @Field("subcategoryNetworkStatus") String subcategoryNetworkStatus,
+                                         @Field("subcategorySortOrder") String subcategorySortOrder);
 
     @FormUrlEncoded
     @POST("insertProduct.php")

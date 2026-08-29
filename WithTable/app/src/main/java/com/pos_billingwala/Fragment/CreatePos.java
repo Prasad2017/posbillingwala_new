@@ -27,10 +27,11 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.bottomsheet.BottomSheetDialog;
-import com.google.android.material.chip.Chip;
 import com.google.android.material.textfield.TextInputEditText;
 import com.pos_billingwala.Activity.BluetoothPrint;
 import com.pos_billingwala.Activity.DuplicateBluetoothPrint;
@@ -38,6 +39,7 @@ import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.HomeCategoryAdapter;
 import com.pos_billingwala.Adapter.HomeComboAdapter;
 import com.pos_billingwala.Adapter.HomeProductAdapter;
+import com.pos_billingwala.Adapter.HomeSubcategoryAdapter;
 import com.pos_billingwala.Model.ComboResponse;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.AppExecutors;
@@ -89,6 +91,9 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
     private List<ComboResponse> comboResponseList = new ArrayList<>();
     private int searchRequestId = 0;
     private int catalogRequestId = 0;
+    private HomeSubcategoryAdapter homeSubcategoryAdapter;
+    private ItemTouchHelper categoryTouchHelper;
+    private ItemTouchHelper subcategoryTouchHelper;
 
     /* When Mic activity close */
     @Override
@@ -206,9 +211,11 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
     }
 
     private void setupSubcategoryFilter(String categoryId) {
-        binding.subcategoryChipGroup.removeAllViews();
-        binding.subcategoryChipGroup.setOnCheckedStateChangeListener(null);
-        binding.subcategoryScrollView.setVisibility(View.GONE);
+        if (binding == null) {
+            return;
+        }
+        binding.subcategoryRecyclerView.setVisibility(View.GONE);
+        homeSubcategoryAdapter = null;
 
         if (categoryId == null || CATEGORY_ALL_ID.equals(categoryId)) {
             selectedSubcategoryId = null;
@@ -223,58 +230,175 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
                 if (!isAdded() || binding == null) {
                     return;
                 }
-                binding.subcategoryChipGroup.removeAllViews();
-                binding.subcategoryChipGroup.setOnCheckedStateChangeListener(null);
                 if (subcategories == null || subcategories.isEmpty()) {
-                    binding.subcategoryScrollView.setVisibility(View.GONE);
+                    binding.subcategoryRecyclerView.setVisibility(View.GONE);
+                    homeSubcategoryAdapter = null;
                     selectedSubcategoryId = null;
                     return;
                 }
 
-                binding.subcategoryScrollView.setVisibility(View.VISIBLE);
+                List<ProductSubcategoryResponse> display = new ArrayList<>();
+                ProductSubcategoryResponse all = new ProductSubcategoryResponse();
+                all.setSubcategoryId(HomeSubcategoryAdapter.ALL_ID);
+                all.setSubcategoryName(getString(R.string.ui_all));
+                display.add(all);
+                display.addAll(subcategories);
 
-                Chip allChip = new Chip(activity);
-                allChip.setText("All");
-                allChip.setCheckable(true);
-                allChip.setChecked(true);
-                allChip.setTag("");
-                binding.subcategoryChipGroup.addView(allChip);
-
-                for (ProductSubcategoryResponse subcategory : subcategories) {
-                    Chip chip = new Chip(activity);
-                    chip.setText(subcategory.getSubcategoryName());
-                    chip.setCheckable(true);
-                    chip.setTag(subcategory.getSubcategoryId());
-                    binding.subcategoryChipGroup.addView(chip);
-                }
-
-                binding.subcategoryChipGroup.setOnCheckedStateChangeListener((group, checkedIds) -> {
-                    if (checkedIds.isEmpty()) {
-                        return;
-                    }
-                    Chip selectedChip = group.findViewById(checkedIds.get(0));
-                    if (selectedChip == null) {
-                        return;
-                    }
-                    Object tag = selectedChip.getTag();
-                    if (tag == null || String.valueOf(tag).isEmpty()) {
+                selectedSubcategoryId = null;
+                homeSubcategoryAdapter = new HomeSubcategoryAdapter(activity, display, subcategoryId -> {
+                    if (subcategoryId == null || subcategoryId.isEmpty()) {
                         selectedSubcategoryId = null;
                     } else {
-                        selectedSubcategoryId = String.valueOf(tag);
+                        selectedSubcategoryId = subcategoryId;
+                    }
+                    if (homeSubcategoryAdapter != null) {
+                        homeSubcategoryAdapter.setSelectedSubcategoryId(
+                                selectedSubcategoryId != null ? selectedSubcategoryId : HomeSubcategoryAdapter.ALL_ID);
                     }
                     getHomeProductList();
                 });
+                homeSubcategoryAdapter.setSelectedSubcategoryId(HomeSubcategoryAdapter.ALL_ID);
+                binding.subcategoryRecyclerView.setLayoutManager(
+                        new LinearLayoutManager(activity, LinearLayoutManager.HORIZONTAL, false));
+                binding.subcategoryRecyclerView.setAdapter(homeSubcategoryAdapter);
+                attachSubcategoryDragHelper();
+                binding.subcategoryRecyclerView.setVisibility(View.VISIBLE);
             });
         });
     }
 
     private void clearSubcategoryFilter() {
         selectedSubcategoryId = null;
+        homeSubcategoryAdapter = null;
         if (binding != null) {
-            binding.subcategoryChipGroup.removeAllViews();
-            binding.subcategoryChipGroup.setOnCheckedStateChangeListener(null);
-            binding.subcategoryScrollView.setVisibility(View.GONE);
+            binding.subcategoryRecyclerView.setAdapter(null);
+            binding.subcategoryRecyclerView.setVisibility(View.GONE);
         }
+    }
+
+    private void attachCategoryDragHelper() {
+        if (binding == null) {
+            return;
+        }
+        if (categoryTouchHelper != null) {
+            categoryTouchHelper.attachToRecyclerView(null);
+        }
+        categoryTouchHelper = new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(
+                ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT, 0) {
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView,
+                                  @NonNull RecyclerView.ViewHolder viewHolder,
+                                  @NonNull RecyclerView.ViewHolder target) {
+                if (homeCategoryAdapter == null) {
+                    return false;
+                }
+                return homeCategoryAdapter.moveItem(viewHolder.getBindingAdapterPosition(),
+                        target.getBindingAdapterPosition());
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+            }
+
+            @Override
+            public boolean isLongPressDragEnabled() {
+                return true;
+            }
+
+            @Override
+            public void clearView(@NonNull RecyclerView recyclerView,
+                                  @NonNull RecyclerView.ViewHolder viewHolder) {
+                super.clearView(recyclerView, viewHolder);
+                persistCategoryOrder();
+            }
+        });
+        categoryTouchHelper.attachToRecyclerView(binding.categoryRecyclerView);
+    }
+
+    private void attachSubcategoryDragHelper() {
+        if (binding == null) {
+            return;
+        }
+        if (subcategoryTouchHelper != null) {
+            subcategoryTouchHelper.attachToRecyclerView(null);
+        }
+        subcategoryTouchHelper = new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(
+                ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT, 0) {
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView,
+                                  @NonNull RecyclerView.ViewHolder viewHolder,
+                                  @NonNull RecyclerView.ViewHolder target) {
+                if (homeSubcategoryAdapter == null) {
+                    return false;
+                }
+                return homeSubcategoryAdapter.moveItem(viewHolder.getBindingAdapterPosition(),
+                        target.getBindingAdapterPosition());
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+            }
+
+            @Override
+            public boolean isLongPressDragEnabled() {
+                return true;
+            }
+
+            @Override
+            public void clearView(@NonNull RecyclerView recyclerView,
+                                  @NonNull RecyclerView.ViewHolder viewHolder) {
+                super.clearView(recyclerView, viewHolder);
+                persistSubcategoryOrder();
+            }
+        });
+        subcategoryTouchHelper.attachToRecyclerView(binding.subcategoryRecyclerView);
+    }
+
+    private void persistCategoryOrder() {
+        if (homeCategoryAdapter == null || posBillingWalaDatabase == null) {
+            return;
+        }
+        List<ProductCategoryResponse> items = homeCategoryAdapter.getItems();
+        if (items == null || items.isEmpty()) {
+            return;
+        }
+        List<String> orderedIds = new ArrayList<>();
+        List<ProductCategoryResponse> syncedList = new ArrayList<>();
+        for (ProductCategoryResponse item : items) {
+            if (item == null || item.getCategoryId() == null) {
+                continue;
+            }
+            if (CATEGORY_ALL_ID.equals(item.getCategoryId())) {
+                continue;
+            }
+            orderedIds.add(item.getCategoryId());
+            syncedList.add(item);
+        }
+        productCategoryResponseList = syncedList;
+        AppExecutors.get().db().execute(() ->
+                posBillingWalaDatabase.updateCategorySortOrders(orderedIds));
+    }
+
+    private void persistSubcategoryOrder() {
+        if (homeSubcategoryAdapter == null || posBillingWalaDatabase == null) {
+            return;
+        }
+        List<ProductSubcategoryResponse> items = homeSubcategoryAdapter.getItems();
+        if (items == null || items.isEmpty()) {
+            return;
+        }
+        List<String> orderedIds = new ArrayList<>();
+        for (ProductSubcategoryResponse item : items) {
+            if (item == null || item.getSubcategoryId() == null) {
+                continue;
+            }
+            if (HomeSubcategoryAdapter.ALL_ID.equals(item.getSubcategoryId())) {
+                continue;
+            }
+            orderedIds.add(item.getSubcategoryId());
+        }
+        AppExecutors.get().db().execute(() ->
+                posBillingWalaDatabase.updateSubcategorySortOrders(orderedIds));
     }
 
     private void selectAllCategory() {
@@ -613,6 +737,7 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
             binding.categoryRecyclerView.setLayoutManager(
                     new LinearLayoutManager(activity, LinearLayoutManager.HORIZONTAL, false));
             binding.categoryRecyclerView.setAdapter(CreatePos.homeCategoryAdapter);
+            attachCategoryDragHelper();
             binding.categoryRecyclerView.setVisibility(View.VISIBLE);
             if (isAllCategory(selectedCategoryId)) {
                 clearSubcategoryFilter();
@@ -968,7 +1093,7 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
         binding.productsTab.setBackgroundResource(R.drawable.button_rounded_border);
         binding.productsTab.setTextColor(activity.getResources().getColor(R.color.black));
         binding.categoryRecyclerView.setVisibility(View.GONE);
-        binding.subcategoryScrollView.setVisibility(View.GONE);
+        clearSubcategoryFilter();
         final String table = tableNumber;
         final String orderStatus = cartOrderStatus;
         final int requestId = ++catalogRequestId;

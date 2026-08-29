@@ -248,9 +248,10 @@
     <string name="shop_section_contact">संपर्क</string>
     <string name="shop_section_operations">कार्ये</string>
     <string name="shop_section_tax">कर आणि अनुपालन</string>
-    <string name="shop_section_payment">पेमेंट QR</string>
+    <string name="shop_section_payment">पेमेंट UPI</string>
+    <string name="shop_upi_id_hint">UPI ID (उदा. shopname@upi)</string>
     <string name="shop_logo_hint">लोगो सक्षम असल्यास प्रिंट केलेल्या बिलावर दिसेल</string>
-    <string name="shop_qr_hint">पेमेंट QR सक्षम असल्यास बिलावर दिसेल</string>
+    <string name="shop_qr_hint">प्रिंटर सेटिंगमध्ये पेमेंट QR सक्षम असल्यास या UPI ID वरून बिल रकमेचा QR तयार होईल</string>
     <string name="master_hint_category">वेज, नॉन वेज सारखे फूड ग्रुप</string>
     <string name="master_hint_subcategory">स्टार्टर, मेन कोर्स, पेय</string>
     <string name="master_hint_portions">हाफ, फुल आणि इतर आकार</string>

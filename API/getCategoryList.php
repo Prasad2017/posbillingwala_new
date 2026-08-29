@@ -19,7 +19,8 @@ $i=0;
         
 	$sth="SELECT c.*, ft.foodTypeCode, ft.foodTypeId AS linkedFoodTypeId FROM `categories` c
 	      LEFT JOIN `food_types` ft ON ft.foodTypeId = c.foodTypeId
-	      WHERE c.`userId`='$userId' GROUP BY c.categoryName";
+	      WHERE c.`userId`='$userId' GROUP BY c.categoryName
+	      ORDER BY IFNULL(c.categorySortOrder, 0) ASC, c.categoryId ASC";
 
     if ($result = mysqli_query($con, $sth))
     {
@@ -38,6 +39,9 @@ $i=0;
            $getdata["categoryDeletedStatus"]='1';
          }
         $getdata["categoryNetworkStatus"]=$row['categoryNetworkStatus'];
+        if (isset($row['categorySortOrder'])) {
+            $getdata["categorySortOrder"] = $row['categorySortOrder'];
+        }
         if (!empty($row['linkedFoodTypeId'])) {
             $getdata["foodTypeId"] = $row['linkedFoodTypeId'];
         }

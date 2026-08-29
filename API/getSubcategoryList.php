@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] == "GET") {
         pos_require_auth($con, $__postedUserId, isset($response) ? $response : array('status'=>'0','message'=>'Unauthorized'));
 
 
-    $sth = "SELECT * FROM `product_subcategories` WHERE `userId`='$userId' ORDER BY `subcategoryId` ASC";
+    $sth = "SELECT * FROM `product_subcategories` WHERE `userId`='$userId' ORDER BY IFNULL(`subcategorySortOrder`, 0) ASC, `subcategoryId` ASC";
 
     if ($result = mysqli_query($con, $sth)) {
         while ($row = mysqli_fetch_assoc($result)) {
@@ -22,6 +22,9 @@ if ($_SERVER['REQUEST_METHOD'] == "GET") {
             $getdata["categoryId"] = $row['categoryId'];
             $getdata["subcategoryName"] = $row['subcategoryName'];
             $getdata["subcategoryNetworkStatus"] = $row['subcategoryNetworkStatus'];
+            if (isset($row['subcategorySortOrder'])) {
+                $getdata["subcategorySortOrder"] = $row['subcategorySortOrder'];
+            }
             if ($row['subcategoryStatus'] == 'active') {
                 $getdata["subcategoryDeletedStatus"] = '0';
             } else {

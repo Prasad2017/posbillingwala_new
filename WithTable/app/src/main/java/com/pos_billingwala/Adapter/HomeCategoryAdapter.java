@@ -9,11 +9,13 @@ import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.pos_billingwala.Fragment.CreatePos;
 import com.pos_billingwala.Interface.ClickListerInterface;
 import com.pos_billingwala.Model.ProductCategoryResponse;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.HomeCategoryListBinding;
 
+import java.util.Collections;
 import java.util.List;
 
 
@@ -33,6 +35,41 @@ public class HomeCategoryAdapter extends RecyclerView.Adapter<HomeCategoryAdapte
     public void setSelectedCategoryId(String selectedCategoryId) {
         this.selectedCategoryId = selectedCategoryId;
         notifyDataSetChanged();
+    }
+
+    public List<ProductCategoryResponse> getItems() {
+        return productCategoryResponseList;
+    }
+
+    public boolean moveItem(int fromPosition, int toPosition) {
+        if (fromPosition < 0 || toPosition < 0
+                || fromPosition >= productCategoryResponseList.size()
+                || toPosition >= productCategoryResponseList.size()) {
+            return false;
+        }
+        // Keep synthetic "All" pinned at index 0
+        if (fromPosition == 0 || toPosition == 0) {
+            return false;
+        }
+        ProductCategoryResponse from = productCategoryResponseList.get(fromPosition);
+        if (CreatePos.CATEGORY_ALL_ID.equals(from.getCategoryId())) {
+            return false;
+        }
+        ProductCategoryResponse to = productCategoryResponseList.get(toPosition);
+        if (CreatePos.CATEGORY_ALL_ID.equals(to.getCategoryId())) {
+            return false;
+        }
+        if (fromPosition < toPosition) {
+            for (int i = fromPosition; i < toPosition; i++) {
+                Collections.swap(productCategoryResponseList, i, i + 1);
+            }
+        } else {
+            for (int i = fromPosition; i > toPosition; i--) {
+                Collections.swap(productCategoryResponseList, i, i - 1);
+            }
+        }
+        notifyItemMoved(fromPosition, toPosition);
+        return true;
     }
 
     @NonNull
