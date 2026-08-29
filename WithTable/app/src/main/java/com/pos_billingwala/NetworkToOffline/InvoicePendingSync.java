@@ -103,8 +103,12 @@ public final class InvoicePendingSync {
             Response<AllApiResponse> response = Api.getClient(context)
                     .deleteInvoiceProduct(MainActivity.userId, invoiceNumber, networkStatus)
                     .execute();
-            return response.isSuccessful() && response.body() != null
+            boolean ok = response.isSuccessful() && response.body() != null
                     && "1".equalsIgnoreCase(response.body().getStatus());
+            if (ok) {
+                CloudSyncTracker.addUploaded(1);
+            }
+            return ok;
         } catch (Exception e) {
             Observability.logNonFatal(e, "invoice_product_delete_sync");
             return false;

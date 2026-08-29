@@ -2,11 +2,17 @@ package com.posbillingwala.dealer.Retrofit;
 
 
 import com.posbillingwala.dealer.Model.AllApiResponse;
+import com.posbillingwala.dealer.Model.CatalogImportHistoryResponse;
+import com.posbillingwala.dealer.Model.CatalogImportPreviewResponse;
 
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.http.Field;
 import retrofit2.http.FormUrlEncoded;
 import retrofit2.http.GET;
+import retrofit2.http.Multipart;
+import retrofit2.http.Part;
 import retrofit2.http.POST;
 import retrofit2.http.Query;
 
@@ -14,8 +20,20 @@ public interface ApiInterface {
 
     @FormUrlEncoded
     @POST("Login.php")
-    Call<AllApiResponse> loginDealer(@Field("userName") String userName,
+    Call<AllApiResponse> loginDealer(@Field("contactNumber") String contactNumber,
                                      @Field("password") String password);
+
+    @FormUrlEncoded
+    @POST("forgotPassword.php")
+    Call<AllApiResponse> forgotPassword(@Field("contactNumber") String contactNumber,
+                                        @Field("aadhaarNumber") String aadhaarNumber,
+                                        @Field("newPassword") String newPassword);
+
+    @FormUrlEncoded
+    @POST("changePassword.php")
+    Call<AllApiResponse> changePassword(@Field("userId") String userId,
+                                        @Field("currentPassword") String currentPassword,
+                                        @Field("newPassword") String newPassword);
 
 
     @GET("getCustomerList.php")
@@ -202,5 +220,19 @@ public interface ApiInterface {
                                                         @Field("dineIn") String dineIn,
                                                         @Field("mess") String mess);
 
+    @Multipart
+    @POST("catalogImportValidate.php")
+    Call<CatalogImportPreviewResponse> catalogImportValidate(@Part("customerId") RequestBody customerId,
+                                                             @Part("importType") RequestBody importType,
+                                                             @Part MultipartBody.Part importFile);
+
+    @FormUrlEncoded
+    @POST("catalogImportConfirm.php")
+    Call<CatalogImportPreviewResponse> catalogImportConfirm(@Field("customerId") String customerId,
+                                                            @Field("importSessionId") String importSessionId);
+
+    @GET("catalogImportHistory.php")
+    Call<CatalogImportHistoryResponse> catalogImportHistory(@Query("customerId") String customerId,
+                                                            @Query("importType") String importType);
 
 }

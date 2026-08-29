@@ -15,7 +15,7 @@ import androidx.fragment.app.Fragment;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentMasterDataBinding;
-import com.pos_billingwala.databinding.ItemReportMenuRowBinding;
+import com.pos_billingwala.databinding.ItemGroupedMenuRowBinding;
 
 public class MasterData extends Fragment implements View.OnClickListener {
 
@@ -64,6 +64,8 @@ public class MasterData extends Fragment implements View.OnClickListener {
                 R.color.green_600, getString(R.string.master_products), getString(R.string.master_hint_products));
         setupRow(binding.comboLayout, R.drawable.ic_report_combo, R.drawable.bg_quick_action_blue,
                 R.color.colorPrimary, getString(R.string.master_combos), getString(R.string.master_hint_combos));
+        showGroupDividers(binding.categoryLayout, binding.subcategoryLayout, binding.portionLayout,
+                binding.productLayout, binding.comboLayout);
 
         binding.categoryLayout.getRoot().setOnClickListener(this);
         binding.subcategoryLayout.getRoot().setOnClickListener(this);
@@ -72,7 +74,7 @@ public class MasterData extends Fragment implements View.OnClickListener {
         binding.comboLayout.getRoot().setOnClickListener(this);
     }
 
-    private void setupRow(ItemReportMenuRowBinding row, int iconRes, int bgRes, int tintColor,
+    private void setupRow(ItemGroupedMenuRowBinding row, int iconRes, int bgRes, int tintColor,
                           String title, String subtitle) {
         row.menuIcon.setBackgroundResource(bgRes);
         row.menuIcon.setImageResource(iconRes);
@@ -80,6 +82,12 @@ public class MasterData extends Fragment implements View.OnClickListener {
         row.menuIcon.setColorFilter(ContextCompat.getColor(requireContext(), tintColor));
         row.menuTitle.setText(title);
         row.menuSubtitle.setText(subtitle);
+    }
+
+    private void showGroupDividers(ItemGroupedMenuRowBinding... rows) {
+        for (int i = 1; i < rows.length; i++) {
+            rows[i].rowDivider.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override

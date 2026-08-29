@@ -2,23 +2,35 @@ package com.pos_billingwala.NetworkToOffline;
 
 import com.pos_billingwala.R;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.graphics.Color;
-import android.os.Handler;
-import android.os.Looper;
+import android.os.Build;
 import android.util.Log;
 import android.widget.Toast;
 
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.work.Constraints;
+import androidx.work.ExistingWorkPolicy;
+import androidx.work.NetworkType;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.OutOfQuotaPolicy;
+import androidx.work.WorkManager;
+
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.Common;
 import com.pos_billingwala.Extra.DetectConnection;
+import com.pos_billingwala.Extra.ErrorLogUploader;
 import com.pos_billingwala.Extra.Observability;
 import com.pos_billingwala.Model.AllApiResponse;
+import com.pos_billingwala.NetworkToOffline.WorkerClass.UserSynchronizeWorker;
 import com.pos_billingwala.Retrofit.Api;
 
-import cn.pedant.SweetAlert.SweetAlertDialog;
 import retrofit2.Call;
 import retrofit2.Response;
 
@@ -29,72 +41,101 @@ public class UserSynchronizeData {
     public static final int NAME_SYNCED_WITH_SERVER = 1;
     public static final int NAME_NOT_SYNCED_WITH_SERVER = 0;
 
-    public static SweetAlertDialog pDialog;
+    public interface ProgressCallback {
+        void onProgress(String title);
+    }
+
     Context context;
     POSBillingWalaDatabase posBillingWalaDatabase;
     Cursor cursor;
+    private ProgressCallback progressCallback;
 
-
+    /** Starts cloud upload in a foreground WorkManager job (survives background / screen off). */
     public UserSynchronizeData(Context context) {
-        this.context = context;
-        posBillingWalaDatabase = new POSBillingWalaDatabase(context);
+        start(context);
+    }
 
-        pDialog = new SweetAlertDialog(context, SweetAlertDialog.PROGRESS_TYPE);
-        pDialog.getProgressHelper().setBarColor(Color.parseColor("#2D7FED"));
-        pDialog.setTitleText("Loading");
-        pDialog.setCancelable(false);
-        pDialog.show();
+    public static void start(Context context) {
+        start(context, true);
+    }
 
-        if (!DetectConnection.checkInternetConnection(context)) {
-            dismissDialogSafely();
+    public static void start(Context context, boolean showToast) {
+        if (context == null) {
+            return;
+        }
+        Context app = context.getApplicationContext();
+        if (!DetectConnection.checkInternetConnection(app)) {
             DetectConnection.noInternetConnection(context);
             return;
         }
-
-        OfflineSyncExecutor.execute(() -> {
-            boolean success = false;
-            try {
-                uploadPendingData();
-                success = true;
-            } catch (Exception e) {
-                Observability.logNonFatal(e, "user_synchronize_upload");
-            }
-            final boolean uploaded = success;
-            new Handler(Looper.getMainLooper()).post(() -> {
-                if (uploaded) {
-                    Toast.makeText(context, context.getString(R.string.toast_offline_data_uploaded_to_server), Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(context, context.getString(R.string.something_went_wrong), Toast.LENGTH_SHORT).show();
-                }
-                dismissDialogSafely();
-            });
-        });
-    }
-
-    private void setProgressTitle(String title) {
-        new Handler(Looper.getMainLooper()).post(() -> {
-            try {
-                if (pDialog != null && pDialog.isShowing()) {
-                    pDialog.setTitleText(title);
-                }
-            } catch (Exception ignored) {
-            }
-        });
-    }
-
-    private void dismissDialogSafely() {
-        try {
-            if (pDialog != null && pDialog.isShowing()) {
-                pDialog.dismiss();
-            }
-        } catch (Exception ignored) {
+        requestNotificationPermission(context);
+        OneTimeWorkRequest request = new OneTimeWorkRequest.Builder(UserSynchronizeWorker.class)
+                .setConstraints(new Constraints.Builder()
+                        .setRequiredNetworkType(NetworkType.CONNECTED)
+                        .build())
+                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+                .build();
+        WorkManager.getInstance(app).enqueueUniqueWork(
+                UserSynchronizeWorker.UNIQUE_NAME, ExistingWorkPolicy.REPLACE, request);
+        Log.i("UserSynchronizeData", "enqueued unique work " + UserSynchronizeWorker.UNIQUE_NAME);
+        if (showToast) {
+            Toast.makeText(context, context.getString(R.string.sync_started_in_background), Toast.LENGTH_LONG).show();
         }
     }
 
+    public static UserSynchronizeData forBackground(Context context, ProgressCallback callback) {
+        UserSynchronizeData sync = new UserSynchronizeData(context, true);
+        sync.progressCallback = callback;
+        return sync;
+    }
+
+    @SuppressWarnings("unused")
+    private UserSynchronizeData(Context context, boolean background) {
+        this.context = context.getApplicationContext();
+        posBillingWalaDatabase = new POSBillingWalaDatabase(this.context);
+        ensureSession(this.context);
+    }
+
+    static void ensureSession(Context context) {
+        if (MainActivity.userId == null || MainActivity.userId.trim().isEmpty()) {
+            MainActivity.userId = Common.getSavedUserData(context, "userId");
+        }
+        if (MainActivity.ownerId == null || MainActivity.ownerId.trim().isEmpty()) {
+            MainActivity.ownerId = Common.getSavedUserData(context, "ownerId");
+        }
+    }
+
+    private static void requestNotificationPermission(Context context) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            return;
+        }
+        if (!(context instanceof Activity)) {
+            return;
+        }
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+                == PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        ActivityCompat.requestPermissions((Activity) context,
+                new String[]{Manifest.permission.POST_NOTIFICATIONS}, 4101);
+    }
+
+    private void setTableProgress(String tableKey, String title) {
+        CloudSyncTracker.setCurrentTable(tableKey, title);
+        CloudSyncTracker.refresh(context);
+        if (progressCallback != null) {
+            progressCallback.onProgress(title);
+        }
+    }
+
+    public void runUpload() {
+        uploadPendingData();
+    }
+
     private void uploadPendingData() {
-        setProgressTitle("Uploading categories...");
+        setTableProgress(CloudSyncTracker.KEY_CATEGORIES, context.getString(R.string.sync_progress_categories));
         cursor = posBillingWalaDatabase.getUnSynchronizeCategory(NAME_NOT_SYNCED_WITH_SERVER);
-        if (cursor.moveToFirst()) {
+        if (cursor != null && cursor.moveToFirst()) {
             do {
                 saveCategory(cursor.getString(cursor.getColumnIndex("categoryId")),
                         cursor.getString(cursor.getColumnIndex("categoryName")),
@@ -104,8 +145,9 @@ public class UserSynchronizeData {
             } while (cursor.moveToNext());
         }
         closeCursor();
+        setTableProgress(CloudSyncTracker.KEY_SUBCATEGORIES, context.getString(R.string.sync_progress_subcategories));
         cursor = posBillingWalaDatabase.getUnSynchronizeSubcategory(NAME_NOT_SYNCED_WITH_SERVER);
-        if (cursor.moveToFirst()) {
+        if (cursor != null && cursor.moveToFirst()) {
             do {
                 saveSubcategory(cursor.getString(cursor.getColumnIndex("subcategoryId")),
                         cursor.getString(cursor.getColumnIndex("categoryId")),
@@ -116,9 +158,9 @@ public class UserSynchronizeData {
             } while (cursor.moveToNext());
         }
         closeCursor();
-        setProgressTitle("Uploading products...");
+        setTableProgress(CloudSyncTracker.KEY_PRODUCTS, context.getString(R.string.sync_progress_products));
         cursor = posBillingWalaDatabase.getUnSynchronizeProduct(NAME_NOT_SYNCED_WITH_SERVER);
-        if (cursor.moveToFirst()) {
+        if (cursor != null && cursor.moveToFirst()) {
             do {
                 saveProduct(cursor.getString(cursor.getColumnIndex("productId")),
                         cursor.getString(cursor.getColumnIndex("categoryId")),
@@ -135,8 +177,9 @@ public class UserSynchronizeData {
             } while (cursor.moveToNext());
         }
         closeCursor();
+        setTableProgress(CloudSyncTracker.KEY_PORTION_MASTER, context.getString(R.string.sync_progress_portion_master));
         cursor = posBillingWalaDatabase.getUnSynchronizePortionMaster(NAME_NOT_SYNCED_WITH_SERVER);
-        if (cursor.moveToFirst()) {
+        if (cursor != null && cursor.moveToFirst()) {
             do {
                 savePortionMaster(cursor.getString(cursor.getColumnIndex("portionMasterId")),
                         cursor.getString(cursor.getColumnIndex("portionName")),
@@ -145,8 +188,9 @@ public class UserSynchronizeData {
             } while (cursor.moveToNext());
         }
         closeCursor();
+        setTableProgress(CloudSyncTracker.KEY_PORTIONS, context.getString(R.string.sync_progress_portions));
         cursor = posBillingWalaDatabase.getUnSynchronizePortion(NAME_NOT_SYNCED_WITH_SERVER);
-        if (cursor.moveToFirst()) {
+        if (cursor != null && cursor.moveToFirst()) {
             do {
                 savePortion(cursor.getString(cursor.getColumnIndex("portionId")),
                         cursor.getString(cursor.getColumnIndex("productId")),
@@ -161,8 +205,9 @@ public class UserSynchronizeData {
             } while (cursor.moveToNext());
         }
         closeCursor();
+        setTableProgress(CloudSyncTracker.KEY_COMBOS, context.getString(R.string.sync_progress_combos));
         cursor = posBillingWalaDatabase.getUnSynchronizeCombo(NAME_NOT_SYNCED_WITH_SERVER);
-        if (cursor.moveToFirst()) {
+        if (cursor != null && cursor.moveToFirst()) {
             do {
                 saveCombo(cursor.getString(cursor.getColumnIndex("comboId")),
                         cursor.getString(cursor.getColumnIndex("comboName")),
@@ -178,8 +223,9 @@ public class UserSynchronizeData {
             } while (cursor.moveToNext());
         }
         closeCursor();
+        setTableProgress(CloudSyncTracker.KEY_COMBO_ITEMS, context.getString(R.string.sync_progress_combo_items));
         cursor = posBillingWalaDatabase.getUnSynchronizeComboItem(NAME_NOT_SYNCED_WITH_SERVER);
-        if (cursor.moveToFirst()) {
+        if (cursor != null && cursor.moveToFirst()) {
             do {
                 saveComboItem(cursor.getString(cursor.getColumnIndex("comboItemId")),
                         columnOrEmpty(cursor, "comboId"),
@@ -195,8 +241,9 @@ public class UserSynchronizeData {
             } while (cursor.moveToNext());
         }
         closeCursor();
+        setTableProgress(CloudSyncTracker.KEY_PRINTER, context.getString(R.string.sync_progress_printer));
         cursor = posBillingWalaDatabase.getUnSynchronizePrinterSetting(NAME_NOT_SYNCED_WITH_SERVER);
-        if (cursor.moveToFirst()) {
+        if (cursor != null && cursor.moveToFirst()) {
             do {
                 savePrinterSetting(cursor.getString(cursor.getColumnIndex("settingId")),
                         cursor.getString(cursor.getColumnIndex("printerName")),
@@ -216,8 +263,9 @@ public class UserSynchronizeData {
             } while (cursor.moveToNext());
         }
         closeCursor();
+        setTableProgress(CloudSyncTracker.KEY_COMPANY, context.getString(R.string.sync_progress_company));
         cursor = posBillingWalaDatabase.getUnSynchronizeCompanyDetails(NAME_NOT_SYNCED_WITH_SERVER);
-        if (cursor.moveToFirst()) {
+        if (cursor != null && cursor.moveToFirst()) {
             do {
                 saveCompanyDetails(cursor.getString(cursor.getColumnIndex("companyId")),
                         cursor.getString(cursor.getColumnIndex("companyLogo")),
@@ -245,10 +293,11 @@ public class UserSynchronizeData {
             } while (cursor.moveToNext());
         }
         closeCursor();
+        setTableProgress(CloudSyncTracker.KEY_INVOICE_DELETES, context.getString(R.string.sync_progress_invoice_deletes));
         InvoicePendingSync.uploadDeletes(context, posBillingWalaDatabase);
-        setProgressTitle("Uploading invoice items...");
+        setTableProgress(CloudSyncTracker.KEY_INVOICE_ITEMS, context.getString(R.string.sync_progress_invoice_items));
         cursor = posBillingWalaDatabase.getUnSynchronizeInvoiceProduct(NAME_NOT_SYNCED_WITH_SERVER);
-        if (cursor.moveToFirst()) {
+        if (cursor != null && cursor.moveToFirst()) {
             do {
                 saveInvoiceProduct(cursor.getString(cursor.getColumnIndex("invoiceProductId")),
                         cursor.getString(cursor.getColumnIndex("invoiceNumber")),
@@ -270,8 +319,9 @@ public class UserSynchronizeData {
             } while (cursor.moveToNext());
         }
         closeCursor();
+        setTableProgress(CloudSyncTracker.KEY_INVOICE_COMBO_ITEMS, context.getString(R.string.sync_progress_invoice_combo_items));
         cursor = posBillingWalaDatabase.getUnSynchronizeInvoiceComboItem(NAME_NOT_SYNCED_WITH_SERVER);
-        if (cursor.moveToFirst()) {
+        if (cursor != null && cursor.moveToFirst()) {
             do {
                 saveInvoiceComboItem(cursor.getString(cursor.getColumnIndex("invoiceComboItemId")),
                         columnOrEmpty(cursor, "invoiceNumber"),
@@ -289,9 +339,9 @@ public class UserSynchronizeData {
             } while (cursor.moveToNext());
         }
         closeCursor();
-        setProgressTitle("Uploading invoices...");
+        setTableProgress(CloudSyncTracker.KEY_INVOICES, context.getString(R.string.sync_progress_invoices));
         cursor = posBillingWalaDatabase.getUnSynchronizeInvoice(NAME_NOT_SYNCED_WITH_SERVER);
-        if (cursor.moveToFirst()) {
+        if (cursor != null && cursor.moveToFirst()) {
             do {
                 saveInvoice(cursor.getString(cursor.getColumnIndex("invoiceId")),
                         cursor.getString(cursor.getColumnIndex("noOfTable")),
@@ -313,8 +363,9 @@ public class UserSynchronizeData {
             } while (cursor.moveToNext());
         }
         closeCursor();
+        setTableProgress(CloudSyncTracker.KEY_MESS_MEMBERS, context.getString(R.string.sync_progress_mess_members));
         cursor = posBillingWalaDatabase.getUnSynchronizeMessMember(NAME_NOT_SYNCED_WITH_SERVER);
-        if (cursor.moveToFirst()) {
+        if (cursor != null && cursor.moveToFirst()) {
             do {
                 saveMessMember(cursor.getString(cursor.getColumnIndex("memberId")),
                         cursor.getString(cursor.getColumnIndex("memberName")),
@@ -326,8 +377,9 @@ public class UserSynchronizeData {
             } while (cursor.moveToNext());
         }
         closeCursor();
+        setTableProgress(CloudSyncTracker.KEY_MESS_PAYMENTS, context.getString(R.string.sync_progress_mess_payments));
         cursor = posBillingWalaDatabase.getUnSynchronizeMessMemberPayment(NAME_NOT_SYNCED_WITH_SERVER);
-        if (cursor.moveToFirst()) {
+        if (cursor != null && cursor.moveToFirst()) {
             do {
                 saveMessMemberPayment(cursor.getString(cursor.getColumnIndex("paymentId")),
                         cursor.getString(cursor.getColumnIndex("memberId")),
@@ -341,8 +393,9 @@ public class UserSynchronizeData {
             } while (cursor.moveToNext());
         }
         closeCursor();
+        setTableProgress(CloudSyncTracker.KEY_MESS_INVOICES, context.getString(R.string.sync_progress_mess_invoices));
         cursor = posBillingWalaDatabase.getUnSynchronizeMessInvoice(NAME_NOT_SYNCED_WITH_SERVER);
-        if (cursor.moveToFirst()) {
+        if (cursor != null && cursor.moveToFirst()) {
             do {
                 saveMessInvoice(cursor.getString(cursor.getColumnIndex("invoiceId")),
                         cursor.getString(cursor.getColumnIndex("memberId")),
@@ -354,8 +407,36 @@ public class UserSynchronizeData {
             } while (cursor.moveToNext());
         }
         closeCursor();
+        setTableProgress(CloudSyncTracker.KEY_MESS_TOKENS, context.getString(R.string.sync_progress_mess_tokens));
+        cursor = posBillingWalaDatabase.getUnSynchronizeMessToken(NAME_NOT_SYNCED_WITH_SERVER);
+        if (cursor != null && cursor.moveToFirst()) {
+            do {
+                saveMessToken(cursor.getString(cursor.getColumnIndex("tokenId")),
+                        cursor.getString(cursor.getColumnIndex("tokenCode")),
+                        cursor.getString(cursor.getColumnIndex("memberId")),
+                        cursor.getString(cursor.getColumnIndex("memberName")),
+                        cursor.getString(cursor.getColumnIndex("memberMobile")),
+                        cursor.getString(cursor.getColumnIndex("memberType")),
+                        cursor.getString(cursor.getColumnIndex("messType")),
+                        cursor.getString(cursor.getColumnIndex("tokenAmount")),
+                        cursor.getString(cursor.getColumnIndex("tokenDate")),
+                        cursor.getString(cursor.getColumnIndex("tokenNetworkStatus")));
+            } while (cursor.moveToNext());
+        }
+        closeCursor();
+        cursor = posBillingWalaDatabase.getUnSynchronizeMessTokenVerify(NAME_NOT_SYNCED_WITH_SERVER);
+        if (cursor != null && cursor.moveToFirst()) {
+            do {
+                verifyMessToken(cursor.getString(cursor.getColumnIndex("tokenId")),
+                        cursor.getString(cursor.getColumnIndex("tokenCode")),
+                        cursor.getString(cursor.getColumnIndex("verifiedDate")),
+                        cursor.getString(cursor.getColumnIndex("verifyNetworkStatus")));
+            } while (cursor.moveToNext());
+        }
+        closeCursor();
+        setTableProgress(CloudSyncTracker.KEY_INVENTORY, context.getString(R.string.sync_progress_inventory));
         cursor = posBillingWalaDatabase.getUnSynchronizeInventory(NAME_NOT_SYNCED_WITH_SERVER);
-        if (cursor.moveToFirst()) {
+        if (cursor != null && cursor.moveToFirst()) {
             do {
                 saveInventory(cursor.getString(cursor.getColumnIndex("inventoryId")),
                         cursor.getString(cursor.getColumnIndex("productId")),
@@ -368,9 +449,9 @@ public class UserSynchronizeData {
             } while (cursor.moveToNext());
         }
         closeCursor();
-        setProgressTitle("Uploading expenses...");
+        setTableProgress(CloudSyncTracker.KEY_EXPENSES, context.getString(R.string.sync_progress_expenses));
         cursor = posBillingWalaDatabase.getUnSynchronizeExpenses(NAME_NOT_SYNCED_WITH_SERVER);
-        if (cursor.moveToFirst()) {
+        if (cursor != null && cursor.moveToFirst()) {
             do {
                 saveExpenses(cursor.getString(cursor.getColumnIndex("expensesId")),
                         cursor.getString(cursor.getColumnIndex("expensesName")),
@@ -381,11 +462,31 @@ public class UserSynchronizeData {
             } while (cursor.moveToNext());
         }
         closeCursor();
+        setTableProgress(CloudSyncTracker.KEY_ERROR_LOGS, context.getString(R.string.sync_progress_error_logs));
+        CloudSyncTracker.addUploaded(ErrorLogUploader.flushPending(context));
+        CloudSyncTracker.refresh(context);
     }
 
     public void saveMessInvoice(String invoiceId, String memberId, String memberName, String messType, String messInvoiceDate, String messInvoiceNetworkStatus, String messInvoiceStatus) {
         if (executeCall(Api.getClient(context).saveMessInvoice(MainActivity.userId, memberName, messType, messInvoiceDate, messInvoiceNetworkStatus, messInvoiceStatus))) {
             posBillingWalaDatabase.updateSyncMessInvoice(invoiceId, NAME_SYNCED_WITH_SERVER);
+        }
+    }
+
+    public void saveMessToken(String tokenId, String tokenCode, String memberId, String memberName, String memberMobile,
+                              String memberType, String messType, String tokenAmount, String tokenDate,
+                              String tokenNetworkStatus) {
+        if (executeCall(Api.getClient(context).saveMessToken(
+                MainActivity.userId, tokenCode, memberId, memberName, memberMobile, memberType,
+                messType, tokenAmount, tokenDate, tokenNetworkStatus))) {
+            posBillingWalaDatabase.updateSyncMessToken(tokenId);
+        }
+    }
+
+    public void verifyMessToken(String tokenId, String tokenCode, String verifiedDate, String verifyNetworkStatus) {
+        if (executeCall(Api.getClient(context).verifyMessToken(
+                MainActivity.userId, tokenCode, verifiedDate, verifyNetworkStatus))) {
+            posBillingWalaDatabase.updateSyncMessTokenVerify(tokenId);
         }
     }
 
@@ -421,8 +522,10 @@ public class UserSynchronizeData {
 
     public void saveInvoice(String invoiceId, String noOfTable, String invoiceNumber, String customerName, String customerMobile, String customerEmail, String customerAddress, String subTotal, String totalGSTAmount,
                             String discount, String discountType, String totalAmount, String paymentMode, String invoiceDate, String invoiceType, String invoiceOrderStatus, String invoiceNetworkStatus) {
-        if (executeCall(Api.getClient(context).saveInvoice(MainActivity.userId, noOfTable, invoiceNumber, customerName, customerMobile, customerEmail, customerAddress, subTotal,
-                totalGSTAmount, discount, discountType, totalAmount, paymentMode, invoiceDate, invoiceType, invoiceOrderStatus, invoiceNetworkStatus))) {
+        if (executeCall(Api.getClient(context).saveInvoice(MainActivity.userId,
+                nz(noOfTable), nz(invoiceNumber), nz(customerName), nz(customerMobile), nz(customerEmail), nz(customerAddress),
+                nz(subTotal), nz(totalGSTAmount), nz(discount), nz(discountType), nz(totalAmount), nz(paymentMode),
+                nz(invoiceDate), nz(invoiceType), nz(invoiceOrderStatus), nz(invoiceNetworkStatus)))) {
             posBillingWalaDatabase.updateSyncInvoice(invoiceId, NAME_SYNCED_WITH_SERVER);
         }
     }
@@ -451,7 +554,10 @@ public class UserSynchronizeData {
     }
 
     public void savePrinterSetting(String settingId, String printerName, String KOTPrinterName, String invoicePrefix, String invoiceTitle, String invoiceTermsCondition, String logoUse, String paymentUse, String customerUse, String productQuantityUpdate, String duplicateBillUse, String bluetoothAddress, String bluetoothKOTAddress, String printerFeedLines, String KotPrinterFeedLines) {
-        if (executeCall(Api.getClient(context).savePrinterSetting(MainActivity.userId, printerName, KOTPrinterName, invoicePrefix, invoiceTitle, invoiceTermsCondition, logoUse, paymentUse, customerUse, productQuantityUpdate, duplicateBillUse, bluetoothAddress, bluetoothKOTAddress, printerFeedLines, KotPrinterFeedLines))) {
+        if (executeCall(Api.getClient(context).savePrinterSetting(MainActivity.userId,
+                nz(printerName), nz(KOTPrinterName), nz(invoicePrefix), nz(invoiceTitle), nz(invoiceTermsCondition),
+                nz(logoUse), nz(paymentUse), nz(customerUse), nz(productQuantityUpdate), nz(duplicateBillUse),
+                nz(bluetoothAddress), nz(bluetoothKOTAddress), nz(printerFeedLines), nz(KotPrinterFeedLines)))) {
             posBillingWalaDatabase.updateSynchronizePrinterSetting(settingId, NAME_SYNCED_WITH_SERVER);
         }
     }
@@ -532,6 +638,9 @@ public class UserSynchronizeData {
             Response<AllApiResponse> response = call.execute();
             boolean ok = response.isSuccessful() && response.body() != null
                     && "1".equalsIgnoreCase(response.body().getStatus());
+            if (ok) {
+                CloudSyncTracker.addUploaded(1);
+            }
             if (!ok) {
                 String status = response.body() != null ? response.body().getStatus() : "null_body";
                 String msg = response.body() != null ? response.body().getMessage() : "";
@@ -569,6 +678,11 @@ public class UserSynchronizeData {
             return "";
         }
         String value = cursor.getString(idx);
+        return value != null ? value : "";
+    }
+
+    /** Retrofit omits null @Field values — always send "" so PHP 8 never sees missing keys. */
+    private static String nz(String value) {
         return value != null ? value : "";
     }
 

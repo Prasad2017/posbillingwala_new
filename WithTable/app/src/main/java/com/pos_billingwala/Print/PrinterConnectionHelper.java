@@ -45,7 +45,7 @@ public final class PrinterConnectionHelper {
                 showToast(activity, R.string.toast_printer_connecting);
                 return false;
             }
-            BluetoothPrinterChannel.bill().connect(activity, savedAddress, activity, true);
+            BluetoothPrinterChannel.bill().connect(activity, savedAddress, activity, false);
             return isBillPrinterReady();
         } catch (Exception e) {
             showToast(activity, R.string.connect_fail);
@@ -62,7 +62,7 @@ public final class PrinterConnectionHelper {
                 showToast(activity, R.string.toast_printer_connecting);
                 return false;
             }
-            BluetoothPrinterChannel.kot().connect(activity, savedAddress, activity, true);
+            BluetoothPrinterChannel.kot().connect(activity, savedAddress, activity, false);
             return isKotPrinterReady();
         } catch (Exception e) {
             showToast(activity, R.string.connect_fail);

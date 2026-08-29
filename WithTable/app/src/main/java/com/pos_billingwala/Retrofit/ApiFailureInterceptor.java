@@ -8,6 +8,8 @@ import java.net.ConnectException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.net.ssl.SSLException;
 
@@ -28,6 +30,9 @@ public final class ApiFailureInterceptor implements Interceptor {
 
     /** Max bytes read from request/response bodies for failure logs. */
     private static final long MAX_BODY_BYTES = 20480L;
+    /** Avoid flooding Admin when an endpoint keeps returning status=0. */
+    private static final long BUSINESS_FAIL_COOLDOWN_MS = 5 * 60 * 1000L;
+    private static final ConcurrentHashMap<String, Long> lastBusinessFailAt = new ConcurrentHashMap<>();
 
     @Override
     public Response intercept(Chain chain) throws IOException {
@@ -60,6 +65,24 @@ public final class ApiFailureInterceptor implements Interceptor {
                         durationMs,
                         null
                 );
+            } else {
+                // HTTP 200 but business payload failed (status=0 / false) — still log for Admin.
+                String responseSnapshot = snapshotResponseBody(response);
+                if (isBusinessFailure(responseSnapshot) && shouldLogBusinessFailure(apiName)) {
+                    String reason = "Business failure — HTTP " + response.code()
+                            + " with status=0 | " + extractServerMessage(responseSnapshot);
+                    Observability.logApiFailure(
+                            request.method(),
+                            safeUrl,
+                            apiName,
+                            response.code(),
+                            reason,
+                            requestSnapshot,
+                            responseSnapshot,
+                            durationMs,
+                            null
+                    );
+                }
             }
             return response;
         } catch (IOException e) {
@@ -223,5 +246,38 @@ public final class ApiFailureInterceptor implements Interceptor {
             return "";
         }
         return ApiLogSanitizer.sanitize(url.toString());
+    }
+
+    /** Detect POS-style JSON failures: "status":"0" / "false" / false. */
+    private static boolean isBusinessFailure(String body) {
+        if (body == null || body.isEmpty()) {
+            return false;
+        }
+        String lower = body.toLowerCase(Locale.US);
+        return lower.contains("\"status\":\"0\"")
+                || lower.contains("\"status\": \"0\"")
+                || lower.contains("\"status\":\"false\"")
+                || lower.contains("\"status\": \"false\"")
+                || lower.contains("\"status\":false")
+                || lower.contains("\"status\": false")
+                || lower.contains("\"success\":\"false\"")
+                || lower.contains("\"success\": \"false\"")
+                || lower.contains("\"success\":false");
+    }
+
+    private static boolean shouldLogBusinessFailure(String apiName) {
+        String key = apiName != null && !apiName.isEmpty() ? apiName : "unknown";
+        // Never treat ingest / auth soft failures as reportable loops.
+        String k = key.toLowerCase(Locale.US);
+        if (k.contains("reporterrorlog") || k.contains("login") || k.contains("check_licence")) {
+            return false;
+        }
+        long now = System.currentTimeMillis();
+        Long prev = lastBusinessFailAt.get(key);
+        if (prev != null && now - prev < BUSINESS_FAIL_COOLDOWN_MS) {
+            return false;
+        }
+        lastBusinessFailAt.put(key, now);
+        return true;
     }
 }

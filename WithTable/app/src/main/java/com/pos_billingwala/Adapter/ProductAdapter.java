@@ -1,27 +1,24 @@
 package com.pos_billingwala.Adapter;
 
 import android.annotation.SuppressLint;
-import android.app.Dialog;
+import android.app.Activity;
 import android.content.Context;
-import android.content.DialogInterface;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.textfield.TextInputEditText;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.BottomSheetUi;
 import com.pos_billingwala.Fragment.ManageProductPortions;
 import com.pos_billingwala.Fragment.ProductMaster;
 import com.pos_billingwala.Fragment.UpdateProduct;
@@ -197,22 +194,15 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.MyViewHo
     }
 
     private void updatePortion(ProductPortionResponse item) {
-        final Dialog dialog = new Dialog(context);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        dialog.setContentView(R.layout.update_portion_dialog);
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
-        dialog.setCancelable(false);
+        Activity activity = (Activity) context;
+        View content = LayoutInflater.from(activity).inflate(R.layout.update_portion_dialog, null);
+        BottomSheetDialog sheet = BottomSheetUi.showContent(activity, content, false);
 
-        WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
-        lp.copyFrom(dialog.getWindow().getAttributes());
-        lp.width = WindowManager.LayoutParams.MATCH_PARENT;
-        lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
-
-        TextInputEditText portionNameTxt = dialog.findViewById(R.id.portionName);
-        TextInputEditText portionPriceTxt = dialog.findViewById(R.id.portionPrice);
-        TextInputEditText portionSortOrderTxt = dialog.findViewById(R.id.portionSortOrder);
-        TextView updatePortionTxt = dialog.findViewById(R.id.updatePortion);
-        TextView dismissPortionTxt = dialog.findViewById(R.id.dismissPortion);
+        TextInputEditText portionNameTxt = content.findViewById(R.id.portionName);
+        TextInputEditText portionPriceTxt = content.findViewById(R.id.portionPrice);
+        TextInputEditText portionSortOrderTxt = content.findViewById(R.id.portionSortOrder);
+        TextView updatePortionTxt = content.findViewById(R.id.updatePortion);
+        TextView dismissPortionTxt = content.findViewById(R.id.dismissPortion);
 
         portionNameTxt.setText(item.getPortionName());
         portionPriceTxt.setText(item.getPortionPrice());
@@ -220,7 +210,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.MyViewHo
         portionNameTxt.setEnabled(false);
         portionNameTxt.setFocusable(false);
 
-        dismissPortionTxt.setOnClickListener(v -> dialog.dismiss());
+        dismissPortionTxt.setOnClickListener(v -> sheet.dismiss());
 
         updatePortionTxt.setOnClickListener(v -> {
             String price = portionPriceTxt.getText().toString().trim();
@@ -230,14 +220,11 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.MyViewHo
                 return;
             }
             int sortOrder = parseSortOrder(portionSortOrderTxt.getText().toString(), item.getPortionSortOrder());
-            dialog.dismiss();
+            sheet.dismiss();
             posBillingWalaDatabase.updateProductPortionPriceAndSort(item.getPortionId(), price, sortOrder);
             Toast.makeText(context, context.getString(R.string.toast_portion_updated), Toast.LENGTH_SHORT).show();
             ProductMaster.getProductList();
         });
-
-        dialog.show();
-        dialog.getWindow().setAttributes(lp);
     }
 
     private int parseSortOrder(String input, String fallback) {
@@ -257,18 +244,19 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.MyViewHo
     }
 
     private void deletePortion(String portionId) {
-        new MaterialAlertDialogBuilder(context)
-                .setTitle(context.getString(R.string.toast_are_you_sure))
-                .setMessage(context.getString(R.string.toast_do_you_want_to_delete_this_portion))
-                .setPositiveButton("YES", (dialogInterface, i) -> {
-                    dialogInterface.dismiss();
+        BottomSheetUi.showConfirm(
+                context,
+                context.getString(R.string.toast_are_you_sure),
+                context.getString(R.string.toast_do_you_want_to_delete_this_portion),
+                "YES",
+                "NO",
+                true,
+                () -> {
                     posBillingWalaDatabase.deleteProductPortion(portionId);
                     Toast.makeText(context, context.getString(R.string.toast_portion_deleted),
                             Toast.LENGTH_SHORT).show();
                     ProductMaster.getProductList();
-                })
-                .setNegativeButton("NO", (dialogInterface, i) -> dialogInterface.dismiss())
-                .show();
+                });
     }
 
     private static String formatPortionPriceSummary(List<ProductPortionResponse> portions, String currency) {
@@ -326,26 +314,18 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.MyViewHo
 
     public void deleteProductDialog(String productId) {
 
-        new MaterialAlertDialogBuilder(context)
-                .setTitle(context.getString(R.string.toast_are_you_sure))
-                .setMessage(context.getString(R.string.toast_do_you_want_to_delete_this_product))
-                .setPositiveButton("YES", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        dialogInterface.dismiss();
-                        posBillingWalaDatabase.deleteProduct(productId);
-                        Toast.makeText(context, context.getString(R.string.toast_product_delete_successfully), Toast.LENGTH_SHORT).show();
-                        ProductMaster.getProductList();
-                    }
-                })
-                .setNegativeButton("NO", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        dialogInterface.dismiss();
-                    }
-                })
-                .show();
-
+        BottomSheetUi.showConfirm(
+                context,
+                context.getString(R.string.toast_are_you_sure),
+                context.getString(R.string.toast_do_you_want_to_delete_this_product),
+                "YES",
+                "NO",
+                true,
+                () -> {
+                    posBillingWalaDatabase.deleteProduct(productId);
+                    Toast.makeText(context, context.getString(R.string.toast_product_delete_successfully), Toast.LENGTH_SHORT).show();
+                    ProductMaster.getProductList();
+                });
     }
 
     @Override

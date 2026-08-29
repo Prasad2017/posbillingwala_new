@@ -9,7 +9,6 @@ import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
@@ -51,7 +50,6 @@ import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.initialization.InitializationStatus;
 import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.MultiplePermissionsReport;
 import com.karumi.dexter.PermissionToken;
@@ -62,14 +60,17 @@ import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.BuildConfig;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.AppExecutors;
+import com.pos_billingwala.Extra.BottomSheetUi;
 import com.pos_billingwala.Extra.BusinessHours;
 import com.pos_billingwala.Extra.Common;
 import com.pos_billingwala.Extra.LicenceExpiredUi;
 import com.pos_billingwala.Extra.LicenseModules;
 import com.pos_billingwala.Extra.LicenseValidator;
 import com.pos_billingwala.Extra.DetectConnection;
+import com.pos_billingwala.Extra.ErrorLogQueue;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.PrinterSettingResponse;
+import com.pos_billingwala.NetworkToOffline.CloudSyncNav;
 import com.pos_billingwala.NetworkToOffline.NetworkDataFetcher;
 import com.pos_billingwala.NetworkToOffline.Receiver.LicenceKeyReceiver;
 import com.pos_billingwala.NetworkToOffline.Receiver.OfflineToNetworkReceiver;
@@ -126,6 +127,9 @@ public class Home extends Fragment implements View.OnClickListener {
         @Override
         public void onReceive(Context context, Intent intent) {
             updateOnlineStatusUi();
+            if (DetectConnection.checkInternetConnection(context)) {
+                ErrorLogQueue.flushAsync();
+            }
         }
     };
     List<PrinterSettingResponse> printerSettingResponseList = new ArrayList<>();
@@ -486,7 +490,7 @@ public class Home extends Fragment implements View.OnClickListener {
         } else if (id == R.id.fetchDataLayout) {
             confirmFetchData();
         } else if (id == R.id.synchronizeLayout) {
-            confirmSynchronizeData();
+            CloudSyncNav.openFromUi(activity);
         } else if (id == R.id.totalSalesCardView) {
             if (LicenseModules.isEnabled(MainActivity.totalSaleData)) {
                 ((MainActivity) activity).loadFragment(new SalesOverview(), true);
@@ -501,58 +505,38 @@ public class Home extends Fragment implements View.OnClickListener {
 
     public void confirmFetchData() {
 
-        new MaterialAlertDialogBuilder(activity, R.style.ThemeDialog)
-                .setTitle(getString(R.string.toast_do_you_want_to_confirm_to_fetch_from_clo))
-                .setMessage(getString(R.string.toast_local_data_will_be_replaced_with_cloud_d))
-                .setCancelable(false)
-                .setPositiveButton("YES", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        dialogInterface.dismiss();
-                        if (DetectConnection.checkInternetConnection(activity)) {
-                            NetworkDataFetcher.resetAndFetchAllData(activity, posBillingWalaDatabase);
-                        } else {
-                            DetectConnection.noInternetConnection(activity);
-                        }
+        BottomSheetUi.showConfirm(
+                activity,
+                getString(R.string.toast_do_you_want_to_confirm_to_fetch_from_clo),
+                getString(R.string.toast_local_data_will_be_replaced_with_cloud_d),
+                "YES",
+                "NO",
+                false,
+                () -> {
+                    if (DetectConnection.checkInternetConnection(activity)) {
+                        NetworkDataFetcher.resetAndFetchAllData(activity, posBillingWalaDatabase);
+                    } else {
+                        DetectConnection.noInternetConnection(activity);
                     }
-                })
-                .setNegativeButton("NO", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        dialogInterface.dismiss();
-                    }
-                })
-                .show();
-
+                });
     }
 
     public void confirmSynchronizeData() {
 
-        new MaterialAlertDialogBuilder(activity, R.style.ThemeDialog)
-                .setTitle(getString(R.string.toast_do_you_want_to_confirm_to_send_on_cloud))
-                .setMessage(getString(R.string.toast_your_offline_data_will_be_send_to_the_cl))
-                .setCancelable(false)
-                .setPositiveButton("YES", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        dialogInterface.dismiss();
-                        if (DetectConnection.checkInternetConnection(activity)) {
-                            Toast.makeText(activity, getString(R.string.toast_offline_data_uploading_to_server), Toast.LENGTH_SHORT).show();
-                            UserSynchronizeData userSynchronizeData = new UserSynchronizeData(activity);
-                        } else {
-                            DetectConnection.noInternetConnection(activity);
-                        }
-
+        BottomSheetUi.showConfirm(
+                activity,
+                getString(R.string.toast_do_you_want_to_confirm_to_send_on_cloud),
+                getString(R.string.toast_your_offline_data_will_be_send_to_the_cl),
+                "YES",
+                "NO",
+                false,
+                () -> {
+                    if (DetectConnection.checkInternetConnection(activity)) {
+                        UserSynchronizeData.start(activity);
+                    } else {
+                        DetectConnection.noInternetConnection(activity);
                     }
-                })
-                .setNegativeButton("NO", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        dialogInterface.dismiss();
-                    }
-                })
-                .show();
-
+                });
     }
 
     public String getRandomString(final int sizeOfRandomString) {
@@ -764,6 +748,7 @@ public class Home extends Fragment implements View.OnClickListener {
         Dexter.withContext(activity)
                 .withPermissions(
                         Manifest.permission.CAMERA,
+                        Manifest.permission.POST_NOTIFICATIONS,
                         Manifest.permission.ACCESS_FINE_LOCATION,
                         Manifest.permission.BLUETOOTH_SCAN,
                         Manifest.permission.BLUETOOTH_ADVERTISE,
@@ -790,6 +775,7 @@ public class Home extends Fragment implements View.OnClickListener {
         Dexter.withContext(activity)
                 .withPermissions(
                         Manifest.permission.CAMERA,
+                        Manifest.permission.POST_NOTIFICATIONS,
                         Manifest.permission.READ_EXTERNAL_STORAGE,
                         Manifest.permission.WRITE_EXTERNAL_STORAGE,
                         Manifest.permission.ACCESS_FINE_LOCATION,
@@ -817,25 +803,14 @@ public class Home extends Fragment implements View.OnClickListener {
 
     public void showSettingsDialog() {
 
-        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(activity);
-        builder.setTitle(getString(R.string.toast_need_permissions));
-        builder.setMessage(getString(R.string.toast_this_app_needs_permission_to_use_this_fe));
-        builder.setPositiveButton("GOTO SETTINGS", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.cancel();
-                openSettings();
-            }
-
-        });
-        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.cancel();
-            }
-        });
-        builder.show();
-
+        BottomSheetUi.showConfirm(
+                activity,
+                getString(R.string.toast_need_permissions),
+                getString(R.string.toast_this_app_needs_permission_to_use_this_fe),
+                "GOTO SETTINGS",
+                "Cancel",
+                true,
+                this::openSettings);
     }
 
     // navigating user to app settings

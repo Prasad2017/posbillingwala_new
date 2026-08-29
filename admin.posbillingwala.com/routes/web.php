@@ -11,7 +11,7 @@ use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\SubcategoryController;
 use App\Http\Controllers\PortionController;
 use App\Http\Controllers\PortionMasterController;
-use App\Http\Controllers\ProductImportController;
+use App\Http\Controllers\CatalogImportExportController;
 use App\Http\Controllers\SalesController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\DeviceController;
@@ -36,14 +36,18 @@ Route::get('/', function () {
 });
 
 Route::get('customer/login', function () {
-    return view('customers.login');
+    return redirect('login')->with('info', 'Customer web login is not available. Please use the POS mobile app.');
 });
 
 Route::get('dealer/login', function () {
-    return view('dealer.login');
+    return redirect('login');
 });
-Route::post('dealer/login', [DealerController::class, 'login'])->name('dealer.login');
-Route::post('customer/login', [CustomerController::class, 'login'])->name('customer.login');
+Route::post('dealer/login', function () {
+    return redirect('login');
+});
+Route::post('customer/login', function () {
+    return redirect('login')->with('info', 'Customer web login is not available. Please use the POS mobile app.');
+});
 
 Auth::routes();
 Route::get('/home', [HomeController::class, 'index'])->name('home');
@@ -101,9 +105,43 @@ Route::group(['prefix' => 'portion-masters', 'middleware' => ['auth']], function
 });
 
 Route::group(['prefix' => 'product-import', 'middleware' => ['auth']], function(){
-	Route::get('/',[ProductImportController::class, 'index']);
-	Route::post('upload',[ProductImportController::class, 'import']);
+	Route::get('/', function () {
+		return redirect()->route('catalog-import-export.index', ['type' => 'products']);
+	});
+	Route::post('upload', function () {
+		return redirect()->route('catalog-import-export.index', ['type' => 'products'])
+			->with('info', 'Direct import is deprecated. Use Validate & Preview on the catalog import page.');
+	});
 });
+
+Route::group(['prefix' => 'product-export', 'middleware' => ['auth']], function(){
+	Route::get('/', function () {
+		return redirect()->route('catalog-import-export.index', ['type' => 'products']);
+	});
+	Route::post('download', [CatalogImportExportController::class, 'export']);
+});
+
+Route::group(['prefix' => 'catalog-import-export', 'middleware' => ['auth'], 'as' => 'catalog-import-export.'], function () {
+	Route::get('/', [CatalogImportExportController::class, 'index'])->name('index');
+	Route::post('validate', [CatalogImportExportController::class, 'validateUpload'])->name('validate');
+	Route::post('confirm', [CatalogImportExportController::class, 'confirm'])->name('confirm');
+	Route::post('export', [CatalogImportExportController::class, 'export'])->name('export');
+	Route::post('template', [CatalogImportExportController::class, 'template'])->name('template');
+	Route::get('error-excel', [CatalogImportExportController::class, 'errorExcel'])->name('error-excel');
+	Route::get('history', [CatalogImportExportController::class, 'history'])->name('history');
+});
+
+Route::get('import-export', function () {
+	return view('import-export.hub');
+})->middleware('auth');
+
+Route::get('catalog/import-export', function (\Illuminate\Http\Request $request) {
+	return redirect()->route('catalog-import-export.index', $request->query());
+})->middleware('auth');
+
+Route::get('customers/all_license', function (\Illuminate\Http\Request $request) {
+	return redirect('customers/all-license' . ($request->getQueryString() ? '?' . $request->getQueryString() : ''));
+})->middleware('auth');
 
 Route::group(['prefix' => 'customers', 'middleware' => ['auth']], function(){
 	Route::get('all',[CustomerController::class, 'getAllCustomers']);
@@ -177,6 +215,8 @@ Route::middleware(['auth'])->group(function () {
 	Route::post('settings/logo', [SettingsController::class, 'updateLogo']);
 	Route::get('settings/favicon', [SettingsController::class, 'favicon']);
 	Route::post('settings/favicon', [SettingsController::class, 'updateFavicon']);
+
+	Route::get('users', [\App\Http\Controllers\UsersController::class, 'hub']);
 
 	Route::get('website', [WebsiteContentController::class, 'hub']);
 	Route::get('website/privacy', [WebsiteContentController::class, 'privacy']);

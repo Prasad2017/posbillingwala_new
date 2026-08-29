@@ -58,6 +58,10 @@
             android:layout_marginTop="10dp"
             android:orientation="vertical">
 
+            <include
+                android:id="@+id/catalogImportExportBar"
+                layout="@layout/include_catalog_import_export_bar" />
+
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

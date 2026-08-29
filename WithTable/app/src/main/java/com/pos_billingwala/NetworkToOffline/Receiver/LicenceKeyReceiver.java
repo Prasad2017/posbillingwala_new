@@ -127,10 +127,8 @@ public class LicenceKeyReceiver extends BroadcastReceiver {
                                 }
 
                                 Intent intent = new Intent(context, Login.class);
-                                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                                 intent.putExtra(LicenceExpiredUi.EXTRA_SHOW_LICENCE_EXPIRED, true);
-                                context.startActivity(intent);
-                                ((MainActivity) context).finish();
+                                openLoginAndFinish(context, intent);
 
                             }
 
@@ -146,12 +144,10 @@ public class LicenceKeyReceiver extends BroadcastReceiver {
                         }
 
                         Intent intent = new Intent(context, Login.class);
-                        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                         if (LicenceExpiredUi.isExpiredMessage(response.body().getMessage())) {
                             intent.putExtra(LicenceExpiredUi.EXTRA_SHOW_LICENCE_EXPIRED, true);
                         }
-                        context.startActivity(intent);
-                        ((MainActivity) context).finish();
+                        openLoginAndFinish(context, intent);
 
                     }
                 }
@@ -165,6 +161,16 @@ public class LicenceKeyReceiver extends BroadcastReceiver {
 
         });
 
+    }
+
+    private static void openLoginAndFinish(Context context, Intent intent) {
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                | Intent.FLAG_ACTIVITY_CLEAR_TOP
+                | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        context.startActivity(intent);
+        if (context instanceof MainActivity) {
+            ((MainActivity) context).finish();
+        }
     }
 
     @SuppressLint("UnsafeProtectedBroadcastReceiver")

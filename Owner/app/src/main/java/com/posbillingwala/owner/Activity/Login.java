@@ -1,13 +1,11 @@
 package com.posbillingwala.owner.Activity;
 
 import android.annotation.SuppressLint;
-import android.app.Dialog;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.SpannableString;
@@ -16,9 +14,8 @@ import android.text.TextPaint;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -32,8 +29,10 @@ import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.initialization.InitializationStatus;
 import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.snackbar.Snackbar;
 import com.posbillingwala.owner.Extra.AuthTokens;
+import com.posbillingwala.owner.Extra.BottomSheetUi;
 import com.posbillingwala.owner.Extra.Common;
 import com.posbillingwala.owner.Model.LoginResponse;
 import com.posbillingwala.owner.R;
@@ -87,7 +86,7 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
         ClickableSpan clickableSpan1 = new ClickableSpan() {
             @Override
             public void onClick(View widget) {
-                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.posbillingwala.com/PlayStore/privacy_policy.html"));
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://posbillingwala.com/PlayStore/privacy_policy.html"));
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 try {
                     startActivity(intent);
@@ -106,7 +105,7 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
         ClickableSpan clickableSpan2 = new ClickableSpan() {
             @Override
             public void onClick(View widget) {
-                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.posbillingwala.com/PlayStore/privacy_policy.html"));
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://posbillingwala.com/PlayStore/privacy_policy.html"));
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 try {
                     startActivity(intent);
@@ -208,35 +207,27 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
     }
 
     public void signUp() {
-        final Dialog dialog = new Dialog(Login.this);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        dialog.setContentView(R.layout.new_user_dialog);
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
-        dialog.setCancelable(true);
+        View dialogView = LayoutInflater.from(Login.this).inflate(R.layout.new_user_dialog, null);
+        BottomSheetDialog sheet = BottomSheetUi.showContent(Login.this, dialogView, true);
+        if (sheet == null) {
+            return;
+        }
 
-        WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
-        lp.copyFrom(dialog.getWindow().getAttributes());
-        lp.width = WindowManager.LayoutParams.MATCH_PARENT;
-        lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
-
-        TextView contactUser = dialog.findViewById(R.id.contactUser);
-        TextView supportMessage = dialog.findViewById(R.id.supportMessage);
+        TextView contactUser = dialogView.findViewById(R.id.contactUser);
+        TextView supportMessage = dialogView.findViewById(R.id.supportMessage);
         if (supportMessage != null) {
             supportMessage.setText(getString(R.string.new_user_support_team, getString(R.string.support_phone_display)));
         }
         contactUser.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                dialog.dismiss();
+                sheet.dismiss();
                 Intent intent = new Intent(Intent.ACTION_DIAL);
                 intent.setData(Uri.parse("tel:" + getString(R.string.support_phone_dial)));
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(intent);
             }
         });
-
-        dialog.show();
-        dialog.getWindow().setAttributes(lp);
     }
 
     public void loginCheck() {

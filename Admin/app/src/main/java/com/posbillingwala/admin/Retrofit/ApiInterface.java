@@ -2,11 +2,17 @@ package com.posbillingwala.admin.Retrofit;
 
 
 import com.posbillingwala.admin.Model.AllApiResponse;
+import com.posbillingwala.admin.Model.CatalogImportHistoryResponse;
+import com.posbillingwala.admin.Model.CatalogImportPreviewResponse;
 
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.http.Field;
 import retrofit2.http.FormUrlEncoded;
 import retrofit2.http.GET;
+import retrofit2.http.Multipart;
+import retrofit2.http.Part;
 import retrofit2.http.POST;
 import retrofit2.http.Query;
 
@@ -345,5 +351,20 @@ public interface ApiInterface {
     @POST("updateWebsiteContactStatus.php")
     Call<AllApiResponse> updateWebsiteContactStatus(@Field("contactId") String contactId,
                                                     @Field("status") String status);
+
+    @Multipart
+    @POST("catalogImportValidate.php")
+    Call<CatalogImportPreviewResponse> catalogImportValidate(@Part("customerId") RequestBody customerId,
+                                                             @Part("importType") RequestBody importType,
+                                                             @Part MultipartBody.Part importFile);
+
+    @FormUrlEncoded
+    @POST("catalogImportConfirm.php")
+    Call<CatalogImportPreviewResponse> catalogImportConfirm(@Field("customerId") String customerId,
+                                                            @Field("importSessionId") String importSessionId);
+
+    @GET("catalogImportHistory.php")
+    Call<CatalogImportHistoryResponse> catalogImportHistory(@Query("customerId") String customerId,
+                                                            @Query("importType") String importType);
 
 }

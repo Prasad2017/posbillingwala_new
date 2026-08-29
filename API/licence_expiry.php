@@ -510,6 +510,66 @@ if (!function_exists('licence_enforce_expiry')) {
     }
 }
 
+if (!function_exists('licence_cron_sync_expiry')) {
+    /**
+     * Batch sync for cron: mark past-due licences as expire and refresh
+     * remaining days for still-valid non-suspended rows.
+     * Does not change suspended / revoked licences.
+     *
+     * @param mysqli $con
+     * @return array{expiredCount:int, refreshedCount:int, today:string}
+     */
+    function licence_cron_sync_expiry($con)
+    {
+        $today = licence_today();
+        $expiredCount = 0;
+        $refreshedCount = 0;
+
+        $expireSql = "UPDATE `licenses`
+            SET `licenseValidity`='0', `licenseStatus`='expire'
+            WHERE (
+                `expiryDate` IS NULL
+                OR `expiryDate` = ''
+                OR `expiryDate` = '0000-00-00'
+                OR `expiryDate` < ?
+            )
+            AND LOWER(IFNULL(`licenseStatus`,'')) NOT IN ('expire','expired','suspended','revoked')";
+
+        $stmt = mysqli_prepare($con, $expireSql);
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, 's', $today);
+            if (mysqli_stmt_execute($stmt)) {
+                $expiredCount = (int) mysqli_stmt_affected_rows($stmt);
+            }
+            mysqli_stmt_close($stmt);
+        }
+
+        $refreshSql = "UPDATE `licenses`
+            SET `licenseValidity`=CAST(DATEDIFF(`expiryDate`, ?) AS CHAR),
+                `licenseStatus`='active'
+            WHERE `expiryDate` IS NOT NULL
+              AND `expiryDate` != ''
+              AND `expiryDate` != '0000-00-00'
+              AND `expiryDate` >= ?
+              AND LOWER(IFNULL(`licenseStatus`,'')) NOT IN ('expire','expired','suspended','revoked')";
+
+        $stmt = mysqli_prepare($con, $refreshSql);
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, 'ss', $today, $today);
+            if (mysqli_stmt_execute($stmt)) {
+                $refreshedCount = (int) mysqli_stmt_affected_rows($stmt);
+            }
+            mysqli_stmt_close($stmt);
+        }
+
+        return array(
+            'expiredCount' => $expiredCount,
+            'refreshedCount' => $refreshedCount,
+            'today' => $today,
+        );
+    }
+}
+
 if (!function_exists('licence_load_by_id')) {
     /**
      * @param mysqli $con

@@ -13,6 +13,81 @@ class AdminMetrics
         return Carbon::now('Asia/Kolkata')->startOfDay();
     }
 
+    public static function resolveDashboardDate(?string $input): Carbon
+    {
+        $today = self::today();
+
+        if ($input === null || trim($input) === '') {
+            return $today;
+        }
+
+        try {
+            $date = Carbon::parse($input, 'Asia/Kolkata')->startOfDay();
+        } catch (\Throwable $e) {
+            return $today;
+        }
+
+        if ($date->isFuture()) {
+            return $today;
+        }
+
+        return $date;
+    }
+
+    public static function parseDashboardFilters(?array $input = null): array
+    {
+        $input = $input ?? [];
+        $payment = strtolower(trim((string) ($input['payment'] ?? '')));
+        if (!in_array($payment, ['cash', 'online'], true)) {
+            $payment = '';
+        }
+
+        return [
+            'dealer_id' => max(0, (int) ($input['dealer_id'] ?? 0)),
+            'customer_id' => max(0, (int) ($input['customer_id'] ?? 0)),
+            'payment' => $payment,
+        ];
+    }
+
+    private static function invoiceFilterSql(array $filters): array
+    {
+        $sql = '';
+        $params = [];
+
+        if (($filters['dealer_id'] ?? 0) > 0) {
+            $sql .= ' AND u.dealerId = ?';
+            $params[] = (int) $filters['dealer_id'];
+        }
+        if (($filters['customer_id'] ?? 0) > 0) {
+            $sql .= ' AND u.id = ?';
+            $params[] = (int) $filters['customer_id'];
+        }
+        if (($filters['payment'] ?? '') === 'cash') {
+            $sql .= " AND (LOWER(TRIM(COALESCE(i.paymentMode, ''))) IN ('', 'cash'))";
+        } elseif (($filters['payment'] ?? '') === 'online') {
+            $sql .= " AND (LOWER(TRIM(COALESCE(i.paymentMode, ''))) NOT IN ('', 'cash'))";
+        }
+
+        return ['sql' => $sql, 'params' => $params];
+    }
+
+    public static function normalizePaymentLabel(?string $mode): string
+    {
+        $mode = trim((string) $mode);
+        if ($mode === '') {
+            return 'Cash';
+        }
+
+        return $mode;
+    }
+
+    public static function paymentBucket(?string $mode): string
+    {
+        $normalized = strtolower(trim((string) $mode));
+
+        return ($normalized === '' || $normalized === 'cash') ? 'Cash' : 'Online';
+    }
+
     public static function rupee($amount): string
     {
         return '₹ ' . number_format((float) $amount, 2);
@@ -430,16 +505,17 @@ class AdminMetrics
         }
     }
 
-    public static function salesRow(string $from, string $to): array
+    public static function salesRow(string $from, string $to, array $filters = []): array
     {
         try {
+            $filter = self::invoiceFilterSql($filters);
             $row = DB::selectOne(
                 "SELECT COALESCE(SUM(i.totalAmount),0) AS total, COUNT(*) AS bills
                  FROM invoice i
                  INNER JOIN licenses l ON l.id = i.licenseId
                  INNER JOIN users u ON u.id = l.userId AND u.role_id='3'
-                 WHERE DATE(i.invoiceDate) >= ? AND DATE(i.invoiceDate) <= ?",
-                [$from, $to]
+                 WHERE DATE(i.invoiceDate) >= ? AND DATE(i.invoiceDate) <= ?" . $filter['sql'],
+                array_merge([$from, $to], $filter['params'])
             );
 
             return [
@@ -455,16 +531,208 @@ class AdminMetrics
 
     public static function salesByDay(string $from, string $to): array
     {
-        return DB::select(
-            "SELECT DATE(i.invoiceDate) AS d, COALESCE(SUM(i.totalAmount),0) AS total
-             FROM invoice i
-             INNER JOIN licenses l ON l.id = i.licenseId
-             INNER JOIN users u ON u.id = l.userId AND u.role_id='3'
-             WHERE DATE(i.invoiceDate) >= ? AND DATE(i.invoiceDate) <= ?
-             GROUP BY DATE(i.invoiceDate)
-             ORDER BY d ASC",
-            [$from, $to]
-        );
+        try {
+            return DB::select(
+                "SELECT DATE(i.invoiceDate) AS d, COALESCE(SUM(i.totalAmount),0) AS total
+                 FROM invoice i
+                 INNER JOIN licenses l ON l.id = i.licenseId
+                 INNER JOIN users u ON u.id = l.userId AND u.role_id='3'
+                 WHERE DATE(i.invoiceDate) >= ? AND DATE(i.invoiceDate) <= ?
+                 GROUP BY DATE(i.invoiceDate)
+                 ORDER BY d ASC",
+                [$from, $to]
+            );
+        } catch (\Throwable $e) {
+            \Log::warning('AdminMetrics salesByDay failed: ' . $e->getMessage());
+
+            return [];
+        }
+    }
+
+    public static function salesByHour(string $date, array $filters = []): array
+    {
+        try {
+            $filter = self::invoiceFilterSql($filters);
+            $rows = DB::select(
+                "SELECT HOUR(i.invoiceDate) AS h, COALESCE(SUM(i.totalAmount),0) AS total
+                 FROM invoice i
+                 INNER JOIN licenses l ON l.id = i.licenseId
+                 INNER JOIN users u ON u.id = l.userId AND u.role_id='3'
+                 WHERE DATE(i.invoiceDate) = ?" . $filter['sql'] . "
+                 GROUP BY HOUR(i.invoiceDate)
+                 ORDER BY h ASC",
+                array_merge([$date], $filter['params'])
+            );
+            $map = [];
+            foreach ($rows as $row) {
+                $map[(int) $row->h] = round((float) $row->total, 2);
+            }
+            $hours = [];
+            for ($h = 0; $h < 24; $h++) {
+                $hours[] = [
+                    'label' => str_pad((string) $h, 2, '0', STR_PAD_LEFT) . ':00',
+                    'total' => $map[$h] ?? 0.0,
+                ];
+            }
+
+            return $hours;
+        } catch (\Throwable $e) {
+            \Log::warning('AdminMetrics salesByHour failed: ' . $e->getMessage());
+
+            return array_map(function ($h) {
+                return ['label' => str_pad((string) $h, 2, '0', STR_PAD_LEFT) . ':00', 'total' => 0.0];
+            }, range(0, 23));
+        }
+    }
+
+    public static function itemsSoldCount(string $from, string $to, array $filters = []): int
+    {
+        try {
+            $filter = self::invoiceFilterSql($filters);
+            $row = DB::selectOne(
+                "SELECT COALESCE(SUM(fp.productQuantity),0) AS qty
+                 FROM invoice_final_product fp
+                 INNER JOIN invoice i ON i.invoiceNumber = fp.invoiceNumber
+                 INNER JOIN licenses l ON l.id = i.licenseId
+                 INNER JOIN users u ON u.id = l.userId AND u.role_id='3'
+                 WHERE DATE(i.invoiceDate) >= ? AND DATE(i.invoiceDate) <= ?" . $filter['sql'],
+                array_merge([$from, $to], $filter['params'])
+            );
+
+            return (int) round((float) ($row->qty ?? 0));
+        } catch (\Throwable $e) {
+            \Log::warning('AdminMetrics itemsSoldCount failed: ' . $e->getMessage());
+
+            return 0;
+        }
+    }
+
+    public static function paymentSummary(string $from, string $to, array $filters = []): array
+    {
+        try {
+            $filter = self::invoiceFilterSql($filters);
+            $rows = DB::select(
+                "SELECT COALESCE(NULLIF(TRIM(i.paymentMode), ''), 'Cash') AS mode,
+                        COALESCE(SUM(i.totalAmount),0) AS total,
+                        COUNT(*) AS bills
+                 FROM invoice i
+                 INNER JOIN licenses l ON l.id = i.licenseId
+                 INNER JOIN users u ON u.id = l.userId AND u.role_id='3'
+                 WHERE DATE(i.invoiceDate) >= ? AND DATE(i.invoiceDate) <= ?" . $filter['sql'] . "
+                 GROUP BY COALESCE(NULLIF(TRIM(i.paymentMode), ''), 'Cash')
+                 ORDER BY total DESC",
+                array_merge([$from, $to], $filter['params'])
+            );
+            $grand = 0.0;
+            foreach ($rows as $row) {
+                $grand += (float) $row->total;
+            }
+            $list = [];
+            foreach ($rows as $row) {
+                $total = round((float) $row->total, 2);
+                $list[] = [
+                    'mode' => (string) $row->mode,
+                    'total' => $total,
+                    'bills' => (int) $row->bills,
+                    'percent' => $grand > 0 ? round(($total / $grand) * 100, 1) : 0,
+                ];
+            }
+
+            return ['items' => $list, 'grandTotal' => round($grand, 2)];
+        } catch (\Throwable $e) {
+            \Log::warning('AdminMetrics paymentSummary failed: ' . $e->getMessage());
+
+            return ['items' => [], 'grandTotal' => 0.0];
+        }
+    }
+
+    public static function paymentSummaryFromInvoices(array $invoices): array
+    {
+        $map = [];
+        $grand = 0.0;
+        foreach ($invoices as $inv) {
+            $mode = self::normalizePaymentLabel($inv->paymentMode ?? '');
+            if (!isset($map[$mode])) {
+                $map[$mode] = ['total' => 0.0, 'bills' => 0];
+            }
+            $amount = round((float) ($inv->totalAmount ?? 0), 2);
+            $map[$mode]['total'] += $amount;
+            $map[$mode]['bills']++;
+            $grand += $amount;
+        }
+        $list = [];
+        foreach ($map as $mode => $row) {
+            $total = round((float) $row['total'], 2);
+            $list[] = [
+                'mode' => $mode,
+                'total' => $total,
+                'bills' => (int) $row['bills'],
+                'percent' => $grand > 0 ? round(($total / $grand) * 100, 1) : 0,
+            ];
+        }
+        usort($list, function ($a, $b) {
+            return $b['total'] <=> $a['total'];
+        });
+
+        return ['items' => $list, 'grandTotal' => round($grand, 2)];
+    }
+
+    public static function topSellingCategories(string $from, string $to, int $limit = 5, array $filters = []): array
+    {
+        $limit = max(1, min(10, $limit));
+        try {
+            $filter = self::invoiceFilterSql($filters);
+            $rows = DB::select(
+                "SELECT COALESCE(NULLIF(TRIM(c.categoryName), ''), 'Others') AS categoryName,
+                        COALESCE(SUM(fp.productQuantity * fp.productPrice),0) AS total
+                 FROM invoice_final_product fp
+                 INNER JOIN invoice i ON i.invoiceNumber = fp.invoiceNumber
+                 INNER JOIN licenses l ON l.id = i.licenseId
+                 INNER JOIN users u ON u.id = l.userId AND u.role_id='3'
+                 LEFT JOIN products p ON TRIM(p.productName) = TRIM(fp.productName) AND p.userId = u.id
+                 LEFT JOIN categories c ON c.categoryId = p.categoryId
+                 WHERE DATE(i.invoiceDate) >= ? AND DATE(i.invoiceDate) <= ?" . $filter['sql'] . "
+                 GROUP BY COALESCE(NULLIF(TRIM(c.categoryName), ''), 'Others')
+                 ORDER BY total DESC
+                 LIMIT {$limit}",
+                array_merge([$from, $to], $filter['params'])
+            );
+            $grand = 0.0;
+            foreach ($rows as $row) {
+                $grand += (float) $row->total;
+            }
+            $list = [];
+            foreach ($rows as $row) {
+                $total = round((float) $row->total, 2);
+                $list[] = [
+                    'name' => (string) $row->categoryName,
+                    'total' => $total,
+                    'percent' => $grand > 0 ? round(($total / $grand) * 100, 1) : 0,
+                ];
+            }
+
+            return $list;
+        } catch (\Throwable $e) {
+            \Log::warning('AdminMetrics topSellingCategories failed: ' . $e->getMessage());
+
+            return [];
+        }
+    }
+
+    public static function paymentIcon(string $mode): string
+    {
+        $m = strtolower(trim($mode));
+        if (str_contains($m, 'cash')) {
+            return 'bx-money';
+        }
+        if (str_contains($m, 'upi') || str_contains($m, 'gpay') || str_contains($m, 'phonepe')) {
+            return 'bx-mobile';
+        }
+        if (str_contains($m, 'card') || str_contains($m, 'credit') || str_contains($m, 'debit')) {
+            return 'bx-credit-card';
+        }
+
+        return 'bx-wallet';
     }
 
     public static function dealerSales(int $limit = 10, string $period = 'month'): array
@@ -523,18 +791,24 @@ class AdminMetrics
         return ['dealers' => $list, 'totalSales' => round($grand, 2)];
     }
 
-    public static function recentCustomers(int $limit = 5): array
+    public static function recentCustomers(int $limit = 5, int $dealerId = 0): array
     {
-        $today = self::today()->toDateString();
-        return DB::select(
-            "SELECT u.id, u.name, u.shopName, u.address, u.contact_number, u.created_at,
-                    l.licenseStatus, l.licenseType, l.expiryDate, l.licenseKey
-             FROM users u
-             LEFT JOIN licenses l ON l.userId = u.id AND l.userType = 'owner'
-             WHERE u.role_id = 3
-             ORDER BY u.id DESC
-             LIMIT " . (int) $limit
-        );
+        $limit = max(1, min(50, $limit));
+        $sql = "SELECT u.id, u.name, u.shopName, u.address, u.contact_number, u.created_at,
+                       d.name AS dealerName,
+                       l.licenseStatus, l.licenseType, l.expiryDate, l.licenseKey
+                FROM users u
+                LEFT JOIN users d ON d.id = u.dealerId
+                LEFT JOIN licenses l ON l.userId = u.id AND l.userType = 'owner'
+                WHERE u.role_id = 3";
+        $params = [];
+        if ($dealerId > 0) {
+            $sql .= ' AND u.dealerId = ?';
+            $params[] = $dealerId;
+        }
+        $sql .= ' ORDER BY u.id DESC LIMIT ' . $limit;
+
+        return DB::select($sql, $params);
     }
 
     public static function licenseDisplayStatus($license): string
@@ -557,32 +831,50 @@ class AdminMetrics
 
     public static function salesDashboard(): array
     {
-        $today = self::today()->toDateString();
-        $yesterday = self::today()->copy()->subDay()->toDateString();
-        $weekStart = self::today()->copy()->subDays(6)->toDateString();
-        $cur = self::salesRow($today, $today);
-        $prev = self::salesRow($yesterday, $yesterday);
-        $avg = $cur['bills'] > 0 ? round($cur['total'] / $cur['bills'], 2) : 0;
-        $pAvg = $prev['bills'] > 0 ? $prev['total'] / $prev['bills'] : 0;
+        try {
+            $today = self::today()->toDateString();
+            $yesterday = self::today()->copy()->subDay()->toDateString();
+            $weekStart = self::today()->copy()->subDays(6)->toDateString();
+            $cur = self::salesRow($today, $today);
+            $prev = self::salesRow($yesterday, $yesterday);
+            $avg = $cur['bills'] > 0 ? round($cur['total'] / $cur['bills'], 2) : 0;
+            $pAvg = $prev['bills'] > 0 ? $prev['total'] / $prev['bills'] : 0;
 
-        $trend = [];
-        foreach (self::salesByDay($weekStart, $today) as $row) {
-            $trend[] = ['date' => $row->d, 'total' => round((float) $row->total, 2)];
+            $trend = [];
+            foreach (self::salesByDay($weekStart, $today) as $row) {
+                $trend[] = ['date' => $row->d, 'total' => round((float) $row->total, 2)];
+            }
+
+            return [
+                'periodLabel' => 'Today, ' . Carbon::now('Asia/Kolkata')->format('d M Y'),
+                'totalSales' => $cur['total'],
+                'netSales' => $cur['total'],
+                'totalInvoices' => $cur['bills'],
+                'avgBill' => $avg,
+                'totalSalesTrend' => self::signedPct($cur['total'], $prev['total']),
+                'netSalesTrend' => self::signedPct($cur['total'], $prev['total']),
+                'invoicesTrend' => self::signedPct($cur['bills'], $prev['bills']),
+                'avgBillTrend' => self::signedPct($avg, $pAvg),
+                'salesTrend' => $trend,
+                'recentInvoices' => self::recentInvoices(8),
+            ];
+        } catch (\Throwable $e) {
+            \Log::error('AdminMetrics salesDashboard failed: ' . $e->getMessage());
+
+            return [
+                'periodLabel' => 'Today, ' . date('d M Y'),
+                'totalSales' => 0,
+                'netSales' => 0,
+                'totalInvoices' => 0,
+                'avgBill' => 0,
+                'totalSalesTrend' => '↑ 0.0%',
+                'netSalesTrend' => '↑ 0.0%',
+                'invoicesTrend' => '↑ 0.0%',
+                'avgBillTrend' => '↑ 0.0%',
+                'salesTrend' => [],
+                'recentInvoices' => [],
+            ];
         }
-
-        return [
-            'periodLabel' => 'Today, ' . Carbon::now('Asia/Kolkata')->format('d M Y'),
-            'totalSales' => $cur['total'],
-            'netSales' => $cur['total'],
-            'totalInvoices' => $cur['bills'],
-            'avgBill' => $avg,
-            'totalSalesTrend' => self::signedPct($cur['total'], $prev['total']),
-            'netSalesTrend' => self::signedPct($cur['total'], $prev['total']),
-            'invoicesTrend' => self::signedPct($cur['bills'], $prev['bills']),
-            'avgBillTrend' => self::signedPct($avg, $pAvg),
-            'salesTrend' => $trend,
-            'recentInvoices' => self::recentInvoices(8),
-        ];
     }
 
     public static function salesOverview(?string $month = null): array
@@ -634,22 +926,46 @@ class AdminMetrics
         ];
     }
 
-    public static function recentInvoices(int $limit = 50, string $q = ''): array
+    public static function recentInvoices(int $limit = 50, string $q = '', ?string $date = null, array $filters = []): array
     {
         $limit = max(1, min(200, $limit));
+        $filter = self::invoiceFilterSql($filters);
         $sql = "SELECT i.invoiceId, i.invoiceNumber, i.invoiceDate, i.totalAmount, i.paymentMode,
-                       u.id AS customerId, u.name AS customerName, u.shopName
+                       u.id AS customerId, u.name AS customerName, u.shopName,
+                       l.licenseKey, l.userName AS branchName, l.userType AS licenseUserType,
+                       d.id AS dealerId, d.name AS dealerName
                 FROM invoice i
                 INNER JOIN licenses l ON l.id=i.licenseId
-                INNER JOIN users u ON u.id=l.userId AND u.role_id='3'";
+                INNER JOIN users u ON u.id=l.userId AND u.role_id='3'
+                LEFT JOIN users d ON d.id=u.dealerId AND d.role_id='2'";
         $params = [];
+        $where = [];
+
         if ($q !== '') {
-            $sql .= " WHERE i.invoiceNumber LIKE ? OR u.name LIKE ? OR u.shopName LIKE ?";
+            $where[] = "(i.invoiceNumber LIKE ? OR u.name LIKE ? OR u.shopName LIKE ?
+                OR l.licenseKey LIKE ? OR l.userName LIKE ? OR d.name LIKE ?)";
             $like = '%' . $q . '%';
-            $params = [$like, $like, $like];
+            $params = array_merge($params, [$like, $like, $like, $like, $like, $like]);
         }
+        if ($date !== null && $date !== '') {
+            $where[] = 'DATE(i.invoiceDate) = ?';
+            $params[] = $date;
+        }
+        if ($where) {
+            $sql .= ' WHERE ' . implode(' AND ', $where) . $filter['sql'];
+        } elseif ($filter['sql'] !== '') {
+            $sql .= ' WHERE 1=1' . $filter['sql'];
+        }
+        $params = array_merge($params, $filter['params']);
         $sql .= " ORDER BY i.invoiceId DESC LIMIT {$limit}";
-        return DB::select($sql, $params);
+
+        try {
+            return DB::select($sql, $params);
+        } catch (\Throwable $e) {
+            \Log::warning('AdminMetrics recentInvoices failed: ' . $e->getMessage());
+
+            return [];
+        }
     }
 
     public static function customerReport(): array

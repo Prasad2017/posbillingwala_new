@@ -1,7 +1,17 @@
 $(function() {
 	"use strict";
-	new PerfectScrollbar(".header-message-list"), new PerfectScrollbar(".header-notifications-list"),
 
+	function initPerfectScrollbar(selector) {
+		var el = document.querySelector(selector);
+		if (!el || typeof PerfectScrollbar !== "function") {
+			return;
+		}
+		try {
+			new PerfectScrollbar(el);
+		} catch (e) {}
+	}
+	initPerfectScrollbar(".header-message-list");
+	initPerfectScrollbar(".header-notifications-list");
 
 	    $(".mobile-search-icon").on("click", function() {
 			$(".search-bar").addClass("full-search-bar")
@@ -12,11 +22,11 @@ $(function() {
 		}),
 
 		$(".mobile-toggle-menu").on("click", function() {
-			$(".wrapper").addClass("toggled")
+			$(".wrapper").toggleClass("toggled")
 		}),
 		
 		
-		$(".toggle-icon").click(function() {
+		$(".toggle-icon, .sidebar-collapse-btn").click(function() {
 			$(".wrapper").hasClass("toggled") ? ($(".wrapper").removeClass("toggled"), $(".sidebar-wrapper").unbind("hover")) : ($(".wrapper").addClass("toggled"), $(".sidebar-wrapper").hover(function() {
 				$(".wrapper").addClass("sidebar-hovered")
 			}, function() {
@@ -41,27 +51,69 @@ $(function() {
 			})
 		}),
 		$(function() {
-			var path = window.location.pathname.replace(/\/+$/, "") || "/";
-			var $link = $(".metismenu li a").filter(function() {
-				var href = this.pathname.replace(/\/+$/, "") || "/";
-				return href === path;
-			}).first();
-			if (!$link.length) {
+			var $menu = $("#menu");
+			if (!$menu.length) {
 				return;
 			}
-			$link.addClass("mm-active");
-			var $parent = $link.parent("li").addClass("mm-active");
-			while ($parent.length) {
-				var $ul = $parent.parent("ul");
-				if (!$ul.length || $ul.hasClass("metismenu")) {
-					break;
+
+			$menu.find("> li > ul").addClass("mm-collapse");
+
+			var path = window.location.pathname.replace(/\/+$/, "") || "/";
+			var $current = $menu.find("li.pb-nav-current").first();
+
+			if (!$current.length) {
+				var $matches = $menu.find("li a[href]").filter(function() {
+					var href = this.getAttribute("href");
+					if (!href || href.indexOf("javascript:") === 0) {
+						return false;
+					}
+					try {
+						var linkPath = new URL(this.href, window.location.origin).pathname.replace(/\/+$/, "") || "/";
+						return linkPath === path;
+					} catch (e) {
+						return false;
+					}
+				});
+
+				var $link = $matches.filter(function() {
+					return $(this).parent("li").parent("ul").is($menu);
+				}).first();
+				if (!$link.length) {
+					$link = $matches.first();
 				}
-				$ul.addClass("mm-show");
-				$parent = $ul.parent("li").addClass("mm-active");
+				if ($link.length) {
+					$current = $link.closest("li").addClass("pb-nav-current");
+				}
 			}
-		}),
-		$(function() {
-			$("#menu").metisMenu()
+
+			if ($current.length) {
+				var $ul = $current.parent("ul");
+				while ($ul.length && !$ul.is($menu)) {
+					$ul.addClass("mm-show mm-collapse");
+					$ul.parent("li").addClass("mm-active");
+					$ul = $ul.parent("li").parent("ul");
+				}
+			}
+
+			$menu.off("click.pbNav").on("click.pbNav", "> li > a.has-arrow", function (e) {
+				e.preventDefault();
+				e.stopImmediatePropagation();
+				var $li = $(this).closest("li");
+				var $submenu = $li.children("ul");
+				if (!$submenu.length) {
+					return;
+				}
+				var willOpen = !$submenu.hasClass("mm-show");
+				$menu.children("li").not($li).removeClass("mm-active").children("ul").removeClass("mm-show");
+				$li.toggleClass("mm-active", willOpen);
+				$submenu.toggleClass("mm-show", willOpen);
+			});
+
+			$menu.off("click.pbNavLink").on("click.pbNavLink", "a[href]:not(.has-arrow)", function () {
+				if (window.innerWidth < 1025) {
+					$(".wrapper").removeClass("toggled");
+				}
+			});
 		}), $(".chat-toggle-btn").on("click", function() {
 			$(".chat-wrapper").toggleClass("chat-toggled")
 		}), $(".chat-toggle-btn-mobile").on("click", function() {

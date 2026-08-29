@@ -3,9 +3,7 @@ package com.pos_billingwala.Fragment;
 import android.content.Intent;
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.Dialog;
 import android.content.Context;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -14,8 +12,6 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
@@ -26,8 +22,10 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.textfield.TextInputEditText;
 import com.pos_billingwala.Activity.MainActivity;
+import com.pos_billingwala.Extra.BottomSheetUi;
 import com.pos_billingwala.Adapter.MessInvoiceAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ListLoader;
@@ -143,56 +141,33 @@ public class InvoiceMess extends Fragment implements View.OnClickListener {
 
 
     public void setMemberListPassword(ImageView imageView) {
+        View content = LayoutInflater.from(activity).inflate(R.layout.report_password_dialog, null);
+        BottomSheetDialog sheet = BottomSheetUi.showContent(activity, content, false);
 
-        final Dialog dialog = new Dialog(activity);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE); // before
-        dialog.setContentView(R.layout.report_password_dialog);
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
-        dialog.setCancelable(false);
-
-        WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
-        lp.copyFrom(dialog.getWindow().getAttributes());
-        lp.width = WindowManager.LayoutParams.MATCH_PARENT;
-        lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
-
-        TextView continueToReport = dialog.findViewById(R.id.continueToReport);
-        TextView dismissReport = dialog.findViewById(R.id.dismissReport);
-        TextInputEditText reportPin = dialog.findViewById(R.id.reportPin);
-        TextView detailsTxt = dialog.findViewById(R.id.details);
+        TextView continueToReport = content.findViewById(R.id.continueToReport);
+        TextView dismissReport = content.findViewById(R.id.dismissReport);
+        TextInputEditText reportPin = content.findViewById(R.id.reportPin);
+        TextView detailsTxt = content.findViewById(R.id.details);
         detailsTxt.setText("Member List Password");
 
-        dismissReport.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
+        dismissReport.setOnClickListener(v -> sheet.dismiss());
+
+        continueToReport.setOnClickListener(v -> {
+            String pin;
+            if (MainActivity.reportPin != null) {
+                pin = MainActivity.reportPin;
+            } else {
+                pin = "9082";
+            }
+
+            if (reportPin.getText().toString().equalsIgnoreCase(pin)) {
+                sheet.dismiss();
+                ((MainActivity) activity).loadFragment(new MessMemberList(), true);
+            } else {
+                reportPin.requestFocus();
+                reportPin.setError("Enter correct pin");
             }
         });
-
-        continueToReport.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                String pin;
-                if (MainActivity.reportPin != null) {
-                    pin = MainActivity.reportPin;
-                } else {
-                    pin = "9082";
-                }
-
-                if (reportPin.getText().toString().equalsIgnoreCase(pin)) {
-                    dialog.dismiss();
-                    ((MainActivity) activity).loadFragment(new MessMemberList(), true);
-                } else {
-                    reportPin.requestFocus();
-                    reportPin.setError("Enter correct pin");
-                }
-            }
-        });
-
-        dialog.show();
-        dialog.getWindow().setAttributes(lp);
-
-
     }
 
     public void setPopUpWindow() {

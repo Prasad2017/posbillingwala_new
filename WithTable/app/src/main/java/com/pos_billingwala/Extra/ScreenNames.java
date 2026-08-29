@@ -34,6 +34,7 @@ public final class ScreenNames {
         MAP.put("EditInvoice", "Edit Bill");
         MAP.put("ReportsHub", "Reports");
         MAP.put("UserSetting", "Settings");
+        MAP.put("CloudSyncStatus", "Cloud Sync");
         MAP.put("PrinterSetting", "Printer Settings");
         MAP.put("Report", "Reports");
         MAP.put("SplashScreen", "Splash");

@@ -32,6 +32,7 @@
     <string name="developed_by">Developed by Cana Tech Solutions Private Limited</string>
 
     <string name="reports_hub">Reports Hub</string>
+    <string name="reports_menu">Reports</string>
     <string name="sales_dashboard">Sales Dashboard</string>
     <string name="sales_overview">Sales Overview</string>
     <string name="sales_trend">Sales trend &amp; KPIs</string>

@@ -1,24 +1,21 @@
 package com.pos_billingwala.Adapter;
 
 import android.annotation.SuppressLint;
-import android.app.Dialog;
+import android.app.Activity;
 import android.content.Context;
-import android.content.DialogInterface;
-import android.graphics.drawable.ColorDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.textfield.TextInputEditText;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.BottomSheetUi;
 import com.pos_billingwala.Fragment.AddCategory;
 import com.pos_billingwala.Model.ProductCategoryResponse;
 import com.pos_billingwala.R;
@@ -70,80 +67,53 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.MyView
     }
 
     public void updateCategory(ProductCategoryResponse productCategoryResponse) {
+        Activity activity = (Activity) context;
+        View content = LayoutInflater.from(activity).inflate(R.layout.update_category_dialog, null);
+        BottomSheetDialog sheet = BottomSheetUi.showContent(activity, content, false);
 
-        final Dialog dialog = new Dialog(context);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE); // before
-        dialog.setContentView(R.layout.update_category_dialog);
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
-        dialog.setCancelable(false);
-
-        WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
-        lp.copyFrom(dialog.getWindow().getAttributes());
-        lp.width = WindowManager.LayoutParams.MATCH_PARENT;
-        lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
-
-        TextInputEditText categoryNameTxt = dialog.findViewById(R.id.categoryName);
-        TextView updateCategoryTxt = dialog.findViewById(R.id.updateCategory);
-        TextView dismissCategoryTxt = dialog.findViewById(R.id.dismissCategory);
+        TextInputEditText categoryNameTxt = content.findViewById(R.id.categoryName);
+        TextView updateCategoryTxt = content.findViewById(R.id.updateCategory);
+        TextView dismissCategoryTxt = content.findViewById(R.id.dismissCategory);
 
         categoryNameTxt.setText(productCategoryResponse.getCategoryName());
         categoryNameTxt.setSelection(categoryNameTxt.getText().toString().length());
 
-        dismissCategoryTxt.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
-            }
-        });
+        dismissCategoryTxt.setOnClickListener(v -> sheet.dismiss());
 
-        updateCategoryTxt.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
-                long foodTypeId = 0;
-                try {
-                    if (productCategoryResponse.getFoodTypeId() != null
-                            && !productCategoryResponse.getFoodTypeId().trim().isEmpty()) {
-                        foodTypeId = Long.parseLong(productCategoryResponse.getFoodTypeId());
-                    }
-                } catch (NumberFormatException ignored) {
+        updateCategoryTxt.setOnClickListener(v -> {
+            sheet.dismiss();
+            long foodTypeId = 0;
+            try {
+                if (productCategoryResponse.getFoodTypeId() != null
+                        && !productCategoryResponse.getFoodTypeId().trim().isEmpty()) {
+                    foodTypeId = Long.parseLong(productCategoryResponse.getFoodTypeId());
                 }
-                posBillingWalaDatabase.updateCategory(
-                        productCategoryResponse.getCategoryId(),
-                        categoryNameTxt.getText().toString(),
-                        0,
-                        foodTypeId);
-                Toast.makeText(context, context.getString(R.string.toast_category_updated), Toast.LENGTH_SHORT).show();
-                AddCategory.getHomeProductCategoryList();
+            } catch (NumberFormatException ignored) {
             }
+            posBillingWalaDatabase.updateCategory(
+                    productCategoryResponse.getCategoryId(),
+                    categoryNameTxt.getText().toString(),
+                    0,
+                    foodTypeId);
+            Toast.makeText(context, context.getString(R.string.toast_category_updated), Toast.LENGTH_SHORT).show();
+            AddCategory.getHomeProductCategoryList();
         });
-
-        dialog.show();
-        dialog.getWindow().setAttributes(lp);
-
     }
 
     public void deleteCategory(String categoryId) {
 
-        new MaterialAlertDialogBuilder(context)
-                .setTitle(context.getString(R.string.toast_are_you_sure))
-                .setMessage(context.getString(R.string.toast_do_you_want_to_delete_this_category))
-                .setPositiveButton("YES", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        dialogInterface.dismiss();
-                        posBillingWalaDatabase.deleteCategory(categoryId);
-                        Toast.makeText(context, context.getString(R.string.toast_category_deleted), Toast.LENGTH_SHORT).show();
-                        AddCategory.getHomeProductCategoryList();
-                    }
-                })
-                .setNegativeButton("NO", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        dialogInterface.dismiss();
-                    }
-                })
-                .show();
+        BottomSheetUi.showConfirm(
+                context,
+                context.getString(R.string.toast_are_you_sure),
+                context.getString(R.string.toast_do_you_want_to_delete_this_category),
+                "YES",
+                "NO",
+                true,
+                () -> {
+                    posBillingWalaDatabase.deleteCategory(categoryId);
+                    Toast.makeText(context, context.getString(R.string.toast_category_deleted), Toast.LENGTH_SHORT).show();
+                    AddCategory.getHomeProductCategoryList();
+                });
     }
 
     @Override

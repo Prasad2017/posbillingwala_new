@@ -1,22 +1,25 @@
 @extends('layouts.app')
+@section('page_title', 'Sales Overview')
 @section('content')
 <div class="page-wrapper">
     <div class="page-content">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <div>
-                <h5 class="dash-hello mb-0">Sales Overview</h5>
-                <p class="text-secondary mb-0">{{ $data['periodLabel'] }}</p>
+        <div class="pb-page-header mb-3">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                <div>
+                    <h4 class="dash-hello mb-1">Sales Overview</h4>
+                    <p class="text-secondary mb-0">{{ $data['periodLabel'] }}</p>
+                </div>
+                <form class="d-flex gap-2" method="get">
+                    <input type="month" name="month" value="{{ $data['month'] }}" class="form-control pb-field">
+                    <button class="btn btn-primary btn-sm">Go</button>
+                </form>
             </div>
-            <form class="d-flex gap-2" method="get">
-                <input type="month" name="month" value="{{ $data['month'] }}" class="form-control">
-                <button class="btn btn-primary">Go</button>
-            </form>
         </div>
         <div class="row g-3 mb-3">
-            <div class="col-md-3 col-6"><div class="kpi-card kpi-blue"><span class="kpi-label">Total Sales</span><span class="kpi-value">{{ \App\Services\AdminMetrics::rupee($data['totalSales']) }}</span><span class="kpi-trend">{{ $data['totalSalesTrend'] }}</span></div></div>
-            <div class="col-md-3 col-6"><div class="kpi-card kpi-green"><span class="kpi-label">Net Sales</span><span class="kpi-value">{{ \App\Services\AdminMetrics::rupee($data['netSales']) }}</span><span class="kpi-trend">{{ $data['netSalesTrend'] }}</span></div></div>
-            <div class="col-md-3 col-6"><div class="kpi-card kpi-orange"><span class="kpi-label">Invoices</span><span class="kpi-value">{{ number_format($data['totalInvoices']) }}</span><span class="kpi-trend">{{ $data['invoicesTrend'] }}</span></div></div>
-            <div class="col-md-3 col-6"><div class="kpi-card kpi-purple"><span class="kpi-label">Avg Bill</span><span class="kpi-value">{{ \App\Services\AdminMetrics::rupee($data['avgBill']) }}</span><span class="kpi-trend">{{ $data['avgBillTrend'] }}</span></div></div>
+            <div class="col-md-3 col-6"><div class="kpi-card kpi-blue"><span class="kpi-icon blue"><i class='bx bx-rupee'></i></span><span class="kpi-label">Total Sales</span><span class="kpi-value">{{ \App\Services\AdminMetrics::rupee($data['totalSales']) }}</span><span class="kpi-trend up">{{ $data['totalSalesTrend'] }}</span></div></div>
+            <div class="col-md-3 col-6"><div class="kpi-card kpi-green"><span class="kpi-icon green"><i class='bx bx-trending-up'></i></span><span class="kpi-label">Net Sales</span><span class="kpi-value">{{ \App\Services\AdminMetrics::rupee($data['netSales']) }}</span><span class="kpi-trend up">{{ $data['netSalesTrend'] }}</span></div></div>
+            <div class="col-md-3 col-6"><div class="kpi-card kpi-orange"><span class="kpi-icon orange"><i class='bx bx-receipt'></i></span><span class="kpi-label">Invoices</span><span class="kpi-value">{{ number_format($data['totalInvoices']) }}</span><span class="kpi-trend up">{{ $data['invoicesTrend'] }}</span></div></div>
+            <div class="col-md-3 col-6"><div class="kpi-card kpi-purple"><span class="kpi-icon purple"><i class='bx bx-calculator'></i></span><span class="kpi-label">Avg Bill</span><span class="kpi-value">{{ \App\Services\AdminMetrics::rupee($data['avgBill']) }}</span><span class="kpi-trend up">{{ $data['avgBillTrend'] }}</span></div></div>
         </div>
         <div class="row g-3 mb-3">
             <div class="col-lg-8">
@@ -40,9 +43,11 @@
         </div>
         <div class="card">
             <div class="card-body">
-                <h6 class="section-title">Top customers</h6>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="section-title mb-0">Top customers</h6>
+                </div>
                 <div class="table-responsive">
-                    <table class="table">
+                    <table class="table pb-transactions-table">
                         <thead><tr><th>Customer</th><th>Shop</th><th>Sales</th></tr></thead>
                         <tbody>
                         @forelse($data['topCustomers'] as $c)

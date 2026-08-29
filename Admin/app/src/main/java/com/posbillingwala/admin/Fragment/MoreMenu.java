@@ -7,11 +7,11 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.posbillingwala.admin.Activity.MainActivity;
+import com.posbillingwala.admin.Extra.BottomSheetUi;
 import com.posbillingwala.admin.R;
 import com.posbillingwala.admin.databinding.FragmentMoreMenuBinding;
 import com.posbillingwala.admin.databinding.ItemMoreMenuRowBinding;
@@ -49,15 +49,11 @@ public class MoreMenu extends Fragment {
         binding.menuProductImport.getRoot().setOnClickListener(v ->
                 ((MainActivity) activity).loadFragment(new ProductExport(), true));
         binding.menuCrashInfo.getRoot().setOnClickListener(v ->
-                ((MainActivity) activity).loadFragment(new CrashLogsList(), true));
+                ((MainActivity) activity).loadFragment(new CrashErrorLogList(), true));
         binding.menuSettings.getRoot().setOnClickListener(v -> {
             if (activity instanceof MainActivity) {
-                new AlertDialog.Builder(activity)
-                        .setTitle("Logout")
-                        .setMessage("Are you sure you want to logout?")
-                        .setPositiveButton("Logout", (d, w) -> ((MainActivity) activity).performLogout())
-                        .setNegativeButton("Cancel", null)
-                        .show();
+                BottomSheetUi.showConfirm(activity, "Logout", "Are you sure you want to logout?",
+                        "Logout", "Cancel", true, () -> ((MainActivity) activity).performLogout());
             }
         });
 

@@ -2,17 +2,13 @@ package com.posbillingwala.dealer.Adapter;
 
 import android.annotation.SuppressLint;
 import android.app.DatePickerDialog;
-import android.app.Dialog;
 import android.content.Context;
 import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.DatePicker;
 import android.widget.ImageView;
@@ -23,9 +19,11 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.jaredrummler.materialspinner.MaterialSpinner;
 
 import com.posbillingwala.dealer.Activity.MainActivity;
+import com.posbillingwala.dealer.Extra.BottomSheetUi;
 import com.posbillingwala.dealer.Extra.LicenceValidityTiers;
 import com.posbillingwala.dealer.Fragment.CustomerDetails;
 import com.posbillingwala.dealer.Model.AllApiResponse;
@@ -143,20 +141,15 @@ public class LicenseAdapter extends RecyclerView.Adapter<LicenseAdapter.MyViewHo
     }
 
     private void getLicenseValidity(MyViewHolder holder) {
-        Dialog dialog = new Dialog(context);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        dialog.setContentView(R.layout.dynamic_status_dropdown);
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        dialog.setCancelable(false);
+        View dialogView = LayoutInflater.from(context).inflate(R.layout.dynamic_status_dropdown, null);
+        BottomSheetDialog sheet = BottomSheetUi.showContent(context, dialogView, false);
+        if (sheet == null) {
+            return;
+        }
 
-        WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
-        lp.copyFrom(dialog.getWindow().getAttributes());
-        lp.width = WindowManager.LayoutParams.MATCH_PARENT;
-        lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
-
-        ImageView closeDialog = dialog.findViewById(R.id.closeDialog);
-        MaterialSpinner licenseValiditySpinner = dialog.findViewById(R.id.licenseValidity);
-        TextView txtSubmit = dialog.findViewById(R.id.submit);
+        ImageView closeDialog = dialogView.findViewById(R.id.closeDialog);
+        MaterialSpinner licenseValiditySpinner = dialogView.findViewById(R.id.licenseValidity);
+        TextView txtSubmit = dialogView.findViewById(R.id.submit);
 
         try {
             licenseValidityList = context.getResources().getStringArray(R.array.license_validity);
@@ -172,12 +165,7 @@ public class LicenseAdapter extends RecyclerView.Adapter<LicenseAdapter.MyViewHo
             e.printStackTrace();
         }
 
-        closeDialog.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
-            }
-        });
+        closeDialog.setOnClickListener(v -> sheet.dismiss());
 
         licenseValiditySpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
             @Override
@@ -206,15 +194,12 @@ public class LicenseAdapter extends RecyclerView.Adapter<LicenseAdapter.MyViewHo
                         holder.binding.licenseType.setText("Demo");
                     }
                     holder.binding.licenseValidity.setText(LicenceValidityTiers.displayLabel(licenseValidity));
-                    dialog.dismiss();
+                    sheet.dismiss();
                 } else {
                     Toast.makeText(context, "Please select validity", Toast.LENGTH_SHORT).show();
                 }
             }
         });
-
-        dialog.show();
-        dialog.getWindow().setAttributes(lp);
     }
 
     private void updateCustomerLicenceDetails(LicenseResponse licenseResponse, String licenseValidity, String licenseType, String amount, String registrationDate, String licenseKeyStatus) {

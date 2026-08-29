@@ -8,8 +8,9 @@ import android.content.Context;
  */
 public final class KOTWoosimPrnMng {
 
-    public static final int REQUEST_ENABLE_BT = 4;
-    public static final int REQUEST_CONNECT_DEVICE = 6;
+    /** Must match activities that handle KOT BT enable / device pick results. */
+    public static final int REQUEST_ENABLE_BT = 8;
+    public static final int REQUEST_CONNECT_DEVICE = 10;
 
     public static final int MESSAGE_DEVICE_NAME = BluetoothPrintCallbacks.MESSAGE_DEVICE_NAME;
     public static final int MESSAGE_TOAST = BluetoothPrintCallbacks.MESSAGE_TOAST;
@@ -20,9 +21,22 @@ public final class KOTWoosimPrnMng {
     private KOTWoosimPrnMng() {
     }
 
+    /** Quiet reconnect — never opens device list. */
     public static void connect(Context context, String deviceAddr, Activity host) {
-        BluetoothPrinterChannel.kot().connect(context, deviceAddr, host,
-                deviceAddr == null || deviceAddr.trim().isEmpty());
+        BluetoothPrinterChannel.kot().connect(context, deviceAddr, host, false);
+    }
+
+    /**
+     * Connect button: reconnect to saved MAC, or open Bluetooth device list once
+     * if the address is empty / printer is not paired.
+     */
+    public static void connectFromButton(Context context, String deviceAddr, Activity host) {
+        String addr = deviceAddr != null ? deviceAddr.trim() : "";
+        if (addr.isEmpty()) {
+            BluetoothPrinterChannel.kot().openDevicePicker(host);
+        } else {
+            BluetoothPrinterChannel.kot().connect(context, addr, host, true);
+        }
     }
 
     public KOTWoosimPrnMng(Context context, String deviceAddr, Context host) {

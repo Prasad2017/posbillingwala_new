@@ -63,8 +63,15 @@ class AdminTables
                 $table->string('user_id', 40)->default('');
                 $table->integer('occurrences')->default(1);
                 $table->mediumText('stack_trace')->nullable();
+                $table->string('source_fingerprint', 64)->nullable();
                 $table->dateTime('created_at')->useCurrent();
                 $table->dateTime('updated_at')->useCurrent();
+                $table->index('source_fingerprint', 'idx_crash_fp');
+            });
+        } elseif (!Schema::hasColumn('admin_crash_logs', 'source_fingerprint')) {
+            Schema::table('admin_crash_logs', function (Blueprint $table) {
+                $table->string('source_fingerprint', 64)->nullable()->after('stack_trace');
+                $table->index('source_fingerprint', 'idx_crash_fp');
             });
         }
 

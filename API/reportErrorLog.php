@@ -1,12 +1,16 @@
 <?php
 /**
- * POS: report a crash / API / printer / DB / network error for Admin inbox.
- * Never blocks POS — always returns quickly. Upserts by fingerprint.
+ * POS: report a crash / ANR / API / printer / DB / network / device (memory, storage,
+ * thermal, battery) error for Admin inbox.
+ * Always inserts a new row so Admin can inspect every occurrence.
+ * Auth is best-effort — crash logs must still save if the session expired.
  */
 include_once('config.php');
-require_once __DIR__ . '/pos_auth_guard.php';
+require_once __DIR__ . '/auth_tokens.php';
 require_once __DIR__ . '/db_prepared.php';
 require_once __DIR__ . '/log_sanitizer.php';
+require_once __DIR__ . '/error_logs_ensure.php';
+require_once __DIR__ . '/Admin/admin_tables.php';
 
 header('Content-Type: application/json; charset=utf-8');
 $response = array('status' => '0', 'message' => 'Failed');
@@ -17,8 +21,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 mysqli_query($con, 'set names utf8');
+error_logs_ensure($con);
 $postedUserId = isset($_POST['userId']) ? $_POST['userId'] : '';
-pos_require_auth($con, $postedUserId, array('status' => '0', 'message' => 'Unauthorized'));
 
 date_default_timezone_set('Asia/Kolkata');
 $now = date('Y-m-d H:i:s');
@@ -27,6 +31,8 @@ $fingerprint = isset($_POST['fingerprint']) ? trim($_POST['fingerprint']) : '';
 if ($fingerprint === '' || strlen($fingerprint) > 64) {
     $fingerprint = hash('sha256', microtime(true) . mt_rand() . $postedUserId);
 }
+// One DB row per event so Admin can inspect every log, not only the last grouped one.
+$fingerprint = hash('sha256', $fingerprint . '|' . $now . '|' . uniqid('', true));
 
 $maxBody = 20480;
 
@@ -90,6 +96,15 @@ if ($fields['app_type'] === '') {
 if ($fields['customer_id'] === '' && $postedUserId !== '') {
     $fields['customer_id'] = (string) $postedUserId;
 }
+$licenceId = null;
+try {
+    $licenceId = auth_pos_licence_id_from_request($con, (string) $postedUserId);
+} catch (Throwable $e) {
+    $licenceId = null;
+}
+if ($licenceId !== null && $licenceId !== '' && $fields['customer_id'] === '') {
+    $fields['customer_id'] = (string) $licenceId;
+}
 if ($fields['summary'] === '') {
     $parts = array();
     if ($fields['error_type'] !== '') {
@@ -113,63 +128,7 @@ if ($fields['response_body'] === '' && $fields['original_api_response'] !== '') 
     $fields['response_body'] = $fields['original_api_response'];
 }
 
-$existing = db_stmt_fetch_one(
-    $con,
-    'SELECT id, occurrence_count FROM `error_logs` WHERE `fingerprint`=? LIMIT 1',
-    's',
-    $fingerprint
-);
-
-if ($existing !== null) {
-    $ok = db_stmt_execute(
-        $con,
-        'UPDATE `error_logs` SET
-            `occurrence_count` = `occurrence_count` + 1,
-            `last_seen_at` = ?,
-            `severity` = ?,
-            `summary` = ?,
-            `user_action` = ?,
-            `what_happened` = ?,
-            `user_flow` = ?,
-            `breadcrumbs` = ?,
-            `request_body` = ?,
-            `response_body` = ?,
-            `original_error_message` = ?,
-            `original_exception_class` = ?,
-            `original_stack_trace` = ?,
-            `original_error_code` = ?,
-            `original_api_response` = ?,
-            `http_status` = ?,
-            `request_duration_ms` = ?,
-            `request_size` = ?,
-            `response_size` = ?
-         WHERE `fingerprint` = ?',
-        'ssssssssssssssiiiis',
-        $now,
-        $fields['severity'],
-        $fields['summary'],
-        $fields['user_action'],
-        $fields['what_happened'],
-        $fields['user_flow'],
-        $fields['breadcrumbs'],
-        $fields['request_body'],
-        $fields['response_body'],
-        $fields['original_error_message'],
-        $fields['original_exception_class'],
-        $fields['original_stack_trace'],
-        $fields['original_error_code'],
-        $fields['original_api_response'],
-        $fields['http_status'] !== null ? (int) $fields['http_status'] : 0,
-        $fields['request_duration_ms'] !== null ? (int) $fields['request_duration_ms'] : 0,
-        $fields['request_size'] !== null ? (int) $fields['request_size'] : 0,
-        $fields['response_size'] !== null ? (int) $fields['response_size'] : 0,
-        $fingerprint
-    );
-    $response['status'] = $ok ? '1' : '0';
-    $response['message'] = $ok ? 'updated' : 'update failed';
-    $response['id'] = (string) $existing['id'];
-    $response['occurrence_count'] = (string) ((int) $existing['occurrence_count'] + 1);
-} else {
+try {
     $insertId = db_stmt_insert_id(
         $con,
         'INSERT INTO `error_logs` (
@@ -197,7 +156,7 @@ if ($existing !== null) {
             ?, ?, ?,
             ?, ?
          )',
-        'ssssssssssssssssssssssssissiiiisssssssss',
+        'ssssssssssssssssssssssssissiiisssssssss',
         $fingerprint,
         $now,
         $now,
@@ -247,7 +206,95 @@ if ($existing !== null) {
         $response['status'] = '0';
         $response['message'] = 'insert failed';
     }
+} catch (Throwable $e) {
+    $response['status'] = '0';
+    $response['message'] = 'insert failed';
+}
+
+if ($response['status'] === '1') {
+    error_log_mirror_to_admin_crash($con, $fingerprint, $fields, $now);
 }
 
 echo json_encode($response);
+
+function error_log_mirror_to_admin_crash($con, $fingerprint, $fields, $now)
+{
+    try {
+        admin_ensure_support_crash_tables($con);
+        $title = $fields['summary'] !== '' ? $fields['summary'] : $fields['original_exception_class'];
+        if ($title === '') {
+            $title = $fields['error_type'];
+        }
+        if (strlen($title) > 255) {
+            $title = substr($title, 0, 252) . '...';
+        }
+        $appName = 'POS App';
+        $appType = strtoupper($fields['app_type']);
+        if ($appType === 'DEALER') {
+            $appName = 'Dealer App';
+        } elseif ($appType === 'ADMIN') {
+            $appName = 'Admin App';
+        } elseif ($appType === 'OWNER' || $appType === 'USER') {
+            $appName = 'User App';
+        }
+        $existing = db_stmt_fetch_one(
+            $con,
+            'SELECT id, occurrences FROM `admin_crash_logs` WHERE `source_fingerprint`=? LIMIT 1',
+            's',
+            $fingerprint
+        );
+        $stack = $fields['original_stack_trace'];
+        if ($stack === '' && $fields['original_error_message'] !== '') {
+            $stack = $fields['original_error_message'];
+        }
+        if ($existing !== null) {
+            db_stmt_execute(
+                $con,
+                'UPDATE `admin_crash_logs` SET
+                    `occurrences` = `occurrences` + 1,
+                    `error_title` = ?,
+                    `error_class` = ?,
+                    `device_name` = ?,
+                    `app_version` = ?,
+                    `user_name` = ?,
+                    `stack_trace` = ?,
+                    `updated_at` = ?
+                 WHERE `source_fingerprint` = ?',
+                'ssssssss',
+                $title,
+                $fields['original_exception_class'],
+                $fields['device_name'],
+                $fields['app_version'],
+                $fields['user_label'] !== '' ? $fields['user_label'] : $fields['shop_name'],
+                $stack,
+                $now,
+                $fingerprint
+            );
+        } else {
+            db_stmt_insert_id(
+                $con,
+                'INSERT INTO `admin_crash_logs` (
+                    `error_title`, `error_class`, `app_name`, `status`,
+                    `device_name`, `android_version`, `app_version`,
+                    `user_name`, `user_id`, `occurrences`, `stack_trace`, `source_fingerprint`,
+                    `created_at`, `updated_at`
+                 ) VALUES (?, ?, ?, \'New\', ?, \'\', ?, ?, ?, 1, ?, ?, ?, ?)',
+                'sssssssssss',
+                $title,
+                $fields['original_exception_class'],
+                $appName,
+                $fields['device_name'],
+                $fields['app_version'],
+                $fields['user_label'] !== '' ? $fields['user_label'] : $fields['shop_name'],
+                $fields['customer_id'],
+                $stack,
+                $fingerprint,
+                $now,
+                $now
+            );
+        }
+    } catch (Throwable $e) {
+        // Never fail POS ingest because the crash-list mirror failed.
+    }
+}
 ?>

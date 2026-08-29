@@ -1,24 +1,21 @@
 package com.pos_billingwala.Adapter;
 
 import android.annotation.SuppressLint;
-import android.app.Dialog;
+import android.app.Activity;
 import android.content.Context;
-import android.content.DialogInterface;
-import android.graphics.drawable.ColorDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.textfield.TextInputEditText;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.BottomSheetUi;
 import com.pos_billingwala.Fragment.AddSubcategory;
 import com.pos_billingwala.Model.ProductSubcategoryResponse;
 import com.pos_billingwala.R;
@@ -57,25 +54,18 @@ public class SubcategoryAdapter extends RecyclerView.Adapter<SubcategoryAdapter.
     }
 
     private void updateSubcategory(ProductSubcategoryResponse item) {
-        final Dialog dialog = new Dialog(context);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        dialog.setContentView(R.layout.update_subcategory_dialog);
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
-        dialog.setCancelable(false);
+        Activity activity = (Activity) context;
+        View content = LayoutInflater.from(activity).inflate(R.layout.update_subcategory_dialog, null);
+        BottomSheetDialog sheet = BottomSheetUi.showContent(activity, content, false);
 
-        WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
-        lp.copyFrom(dialog.getWindow().getAttributes());
-        lp.width = WindowManager.LayoutParams.MATCH_PARENT;
-        lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
-
-        TextInputEditText subcategoryNameTxt = dialog.findViewById(R.id.subcategoryName);
-        TextView updateSubcategoryTxt = dialog.findViewById(R.id.updateSubcategory);
-        TextView dismissSubcategoryTxt = dialog.findViewById(R.id.dismissSubcategory);
+        TextInputEditText subcategoryNameTxt = content.findViewById(R.id.subcategoryName);
+        TextView updateSubcategoryTxt = content.findViewById(R.id.updateSubcategory);
+        TextView dismissSubcategoryTxt = content.findViewById(R.id.dismissSubcategory);
 
         subcategoryNameTxt.setText(item.getSubcategoryName());
         subcategoryNameTxt.setSelection(subcategoryNameTxt.getText().toString().length());
 
-        dismissSubcategoryTxt.setOnClickListener(v -> dialog.dismiss());
+        dismissSubcategoryTxt.setOnClickListener(v -> sheet.dismiss());
 
         updateSubcategoryTxt.setOnClickListener(v -> {
             String newName = subcategoryNameTxt.getText().toString().trim();
@@ -89,36 +79,26 @@ public class SubcategoryAdapter extends RecyclerView.Adapter<SubcategoryAdapter.
                 Toast.makeText(context, context.getString(R.string.toast_subcategory_already_exists_in_this_categ), Toast.LENGTH_SHORT).show();
                 return;
             }
-            dialog.dismiss();
+            sheet.dismiss();
             posBillingWalaDatabase.updateProductSubcategory(item.getSubcategoryId(), newName, 0);
             Toast.makeText(context, context.getString(R.string.toast_subcategory_updated), Toast.LENGTH_SHORT).show();
             AddSubcategory.getSubcategoryList();
         });
-
-        dialog.show();
-        dialog.getWindow().setAttributes(lp);
     }
 
     private void deleteSubcategory(String subcategoryId) {
-        new MaterialAlertDialogBuilder(context)
-                .setTitle(context.getString(R.string.toast_are_you_sure))
-                .setMessage(context.getString(R.string.toast_do_you_want_to_delete_this_subcategory))
-                .setPositiveButton("YES", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        dialogInterface.dismiss();
-                        posBillingWalaDatabase.deleteProductSubcategory(subcategoryId);
-                        Toast.makeText(context, context.getString(R.string.toast_subcategory_deleted), Toast.LENGTH_SHORT).show();
-                        AddSubcategory.getSubcategoryList();
-                    }
-                })
-                .setNegativeButton("NO", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        dialogInterface.dismiss();
-                    }
-                })
-                .show();
+        BottomSheetUi.showConfirm(
+                context,
+                context.getString(R.string.toast_are_you_sure),
+                context.getString(R.string.toast_do_you_want_to_delete_this_subcategory),
+                "YES",
+                "NO",
+                true,
+                () -> {
+                    posBillingWalaDatabase.deleteProductSubcategory(subcategoryId);
+                    Toast.makeText(context, context.getString(R.string.toast_subcategory_deleted), Toast.LENGTH_SHORT).show();
+                    AddSubcategory.getSubcategoryList();
+                });
     }
 
     @Override

@@ -15,6 +15,8 @@
     <string name="new_user">New User? <u><font fgcolor='#df0052'>Signup Here</font></u></string>
     <string name="support_phone_display">+91 89831 49299</string>
     <string name="support_phone_dial">+918983149299</string>
+    <string name="forgot_password">Forgot Password?</string>
+    <string name="forgot_password_support">Need help? Call support: %1$s</string>
     <string name="new_user_support_team">Do you want to test or use our POS offline/online application, enter you registered licence key in login page and access the application. If you are new user please contact our support team (%1$s) and get your licence key to access our POS application.</string>
 
     <string name="in_app_snack_bar_message">Update almost finished!</string>

@@ -9,7 +9,7 @@
                 <p class="text-secondary mb-0">POS crashes reported to admin</p>
             </div>
             <div class="d-flex gap-2">
-                <a href="{{ url('crashes/errors') }}" class="btn btn-outline-primary btn-sm">API errors ({{ $errorCount }})</a>
+                <a href="{{ url('crashes/errors') }}" class="btn btn-outline-primary btn-sm">Crash &amp; errors ({{ $errorCount }})</a>
                 <a href="{{ url('crashes/analytics') }}" class="btn btn-primary btn-sm">Analytics</a>
             </div>
         </div>

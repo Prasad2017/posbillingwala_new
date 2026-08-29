@@ -434,12 +434,18 @@ public class OfflineToNetworkReceiver extends BroadcastReceiver {
     public void saveInvoice(String invoiceId, String noOfTable, String invoiceNumber, String customerName, String customerMobile, String customerEmail, String customerAddress, String subTotal, String totalGSTAmount,
                             String discount, String discountType, String totalAmount, String paymentMode, String invoiceDate, String invoiceType, String invoiceOrderStatus, String invoiceNetworkStatus) {
 
-        Call<AllApiResponse> call = Api.getClient(context).saveInvoice(MainActivity.userId, noOfTable, invoiceNumber, customerName, customerMobile, customerEmail, customerAddress, subTotal,
-                totalGSTAmount, discount, discountType, totalAmount, paymentMode, invoiceDate, invoiceType, invoiceOrderStatus, invoiceNetworkStatus);
+        Call<AllApiResponse> call = Api.getClient(context).saveInvoice(MainActivity.userId,
+                nz(noOfTable), nz(invoiceNumber), nz(customerName), nz(customerMobile), nz(customerEmail), nz(customerAddress),
+                nz(subTotal), nz(totalGSTAmount), nz(discount), nz(discountType), nz(totalAmount), nz(paymentMode),
+                nz(invoiceDate), nz(invoiceType), nz(invoiceOrderStatus), nz(invoiceNetworkStatus));
         if (executeCall(call)) {
             posBillingWalaDatabase.updateSyncInvoice(invoiceId, NAME_SYNCED_WITH_SERVER);
         }
 }
+
+    private static String nz(String value) {
+        return value != null ? value : "";
+    }
 
     public void saveCompanyDetails(String companyId, String companyLogo, String companyName, String cashierName, String companyMobile, String companyAddress,
                                    String shopName1, String shopName2, String addressLine1, String addressLine2, String addressLine3, String phoneNo1, String phoneNo2,
@@ -471,7 +477,10 @@ public class OfflineToNetworkReceiver extends BroadcastReceiver {
 
     public void savePrinterSetting(String settingId, String printerName, String KOTPrinterName, String invoicePrefix, String invoiceTitle, String invoiceTermsCondition, String logoUse, String paymentUse, String customerUse, String productQuantityUpdate, String duplicateBillUse, String bluetoothAddress, String bluetoothKOTAddress, String printerFeedLines, String KotPrinterFeedLines) {
 
-        Call<AllApiResponse> call = Api.getClient(context).savePrinterSetting(MainActivity.userId, printerName, KOTPrinterName, invoicePrefix, invoiceTitle, invoiceTermsCondition, logoUse, paymentUse, customerUse, productQuantityUpdate, duplicateBillUse, bluetoothAddress, bluetoothKOTAddress, printerFeedLines, KotPrinterFeedLines);
+        Call<AllApiResponse> call = Api.getClient(context).savePrinterSetting(MainActivity.userId,
+                nz(printerName), nz(KOTPrinterName), nz(invoicePrefix), nz(invoiceTitle), nz(invoiceTermsCondition),
+                nz(logoUse), nz(paymentUse), nz(customerUse), nz(productQuantityUpdate), nz(duplicateBillUse),
+                nz(bluetoothAddress), nz(bluetoothKOTAddress), nz(printerFeedLines), nz(KotPrinterFeedLines));
         if (executeCall(call)) {
             posBillingWalaDatabase.updateSynchronizePrinterSetting(settingId, NAME_SYNCED_WITH_SERVER);
         }

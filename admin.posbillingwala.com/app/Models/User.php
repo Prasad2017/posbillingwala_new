@@ -24,6 +24,9 @@ class User extends Authenticatable
         'contact_number',
         'address',
         'shopName',
+        'aadhar_number',
+        'dealerId',
+        'role_id',
     ];
 
     /**

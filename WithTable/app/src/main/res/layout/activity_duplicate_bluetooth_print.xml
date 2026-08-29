@@ -797,7 +797,7 @@
                         android:padding="5dp">
 
                         <TextView
-                            android:layout_width="match_parent"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_gravity="center"
                             android:layout_weight="1"
@@ -811,20 +811,18 @@
                             android:textSize="15dp" />
 
                         <TextView
-                            android:layout_width="90dp"
+                            android:layout_width="110dp"
                             android:layout_height="wrap_content"
                             android:layout_gravity="center"
                             android:fontFamily="@font/poppinsmedium"
                             android:gravity="center"
-                            android:paddingStart="5dp"
-                            android:paddingEnd="5dp"
                             android:singleLine="true"
                             android:text="@string/ui_quantity"
                             android:textColor="@color/black"
                             android:textSize="15dp" />
 
                         <TextView
-                            android:layout_width="match_parent"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_gravity="center"
                             android:layout_weight="1"
@@ -836,6 +834,10 @@
                             android:text="@string/ui_unit_price"
                             android:textColor="@color/black"
                             android:textSize="15dp" />
+
+                        <View
+                            android:layout_width="28dp"
+                            android:layout_height="1dp" />
 
                     </LinearLayout>
 

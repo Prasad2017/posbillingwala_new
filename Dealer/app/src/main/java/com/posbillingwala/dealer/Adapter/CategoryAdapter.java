@@ -10,7 +10,8 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.posbillingwala.dealer.Extra.BottomSheetUi;
 import com.posbillingwala.dealer.Fragment.AddCustomerProductCategory;
 import com.posbillingwala.dealer.Model.AllApiResponse;
 import com.posbillingwala.dealer.Model.ProductCategoryResponse;
@@ -60,35 +61,25 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.MyView
     }
 
     private void deleteCategoryDialog(String categoryId) {
-        new MaterialAlertDialogBuilder(context)
-                .setTitle("Are you Sure?")
-                .setMessage("Do you want to delete this category?")
-                .setPositiveButton("YES", (dialogInterface, i) -> {
-                    dialogInterface.dismiss();
-                    deleteCategory(categoryId);
-                })
-                .setNegativeButton("NO", (dialogInterface, i) -> dialogInterface.dismiss())
-                .show();
+        BottomSheetUi.showConfirm(context, "Are you Sure?", "Do you want to delete this category?",
+                "YES", "NO", true, () -> deleteCategory(categoryId));
     }
 
     private void updateCategoryDialog(String categoryId, String categoryName) {
         UpdateCategoryDialogBinding dialogBinding = UpdateCategoryDialogBinding.inflate(LayoutInflater.from(context));
-        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(context);
-        builder.setView(dialogBinding.getRoot());
-
-        android.app.AlertDialog dialog = builder.create();
-        dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        BottomSheetDialog sheet = BottomSheetUi.showContent(context, dialogBinding.getRoot(), false);
+        if (sheet == null) {
+            return;
+        }
 
         dialogBinding.categoryName.setText(categoryName);
         dialogBinding.categoryName.setSelection(dialogBinding.categoryName.getText().toString().length());
 
-        dialogBinding.dismissCategory.setOnClickListener(v -> dialog.dismiss());
+        dialogBinding.dismissCategory.setOnClickListener(v -> sheet.dismiss());
         dialogBinding.updateCategory.setOnClickListener(v -> {
-            dialog.dismiss();
+            sheet.dismiss();
             updateCategory(categoryId, dialogBinding.categoryName.getText().toString());
         });
-
-        dialog.show();
     }
 
     private void updateCategory(String categoryId, String categoryName) {

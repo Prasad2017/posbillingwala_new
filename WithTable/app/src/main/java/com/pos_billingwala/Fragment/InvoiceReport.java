@@ -386,6 +386,21 @@ public class InvoiceReport extends Fragment implements View.OnClickListener {
 
     }
 
+    private void dismissLoader() {
+        try {
+            if (pDialog != null && pDialog.isShowing()) {
+                pDialog.dismiss();
+            }
+        } catch (Exception ignored) {
+        }
+        pDialog = null;
+    }
+
+    @Override
+    public void onDestroyView() {
+        dismissLoader();
+        super.onDestroyView();
+    }
 
     @Override
     public void onStart() {
@@ -492,12 +507,10 @@ public class InvoiceReport extends Fragment implements View.OnClickListener {
 
         @Override
         protected void onPostExecute(List<InvoiceResponse> page) {
+            dismissLoader();
             if (!isAdded()) {
                 isLoading = false;
                 return;
-            }
-            if (pDialog != null && pDialog.isShowing()) {
-                pDialog.dismiss();
             }
             totalPages = count;
             bindReportPage(page, totalAmount);

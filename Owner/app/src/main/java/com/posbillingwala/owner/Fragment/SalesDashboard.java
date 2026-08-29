@@ -14,8 +14,8 @@ import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.posbillingwala.owner.Activity.MainActivity;
+import com.posbillingwala.owner.Extra.BottomSheetUi;
 import com.posbillingwala.owner.Extra.DetectConnection;
 import com.posbillingwala.owner.Extra.ReportUiHelper;
 import com.posbillingwala.owner.Model.AllApiResponse;
@@ -116,13 +116,18 @@ public class SalesDashboard extends Fragment {
             labels.add(b.getBranchLabel() != null ? b.getBranchLabel() : b.getShopName1());
             ids.add(b.getBranchId());
         }
-        new MaterialAlertDialogBuilder(activity)
-                .setTitle(R.string.select_branch)
-                .setItems(labels.toArray(new String[0]), (dialog, which) -> {
-                    selectedBranchId = ids.get(which);
+        int selectedIndex = 0;
+        for (int i = 0; i < ids.size(); i++) {
+            if (ids.get(i).equals(selectedBranchId)) {
+                selectedIndex = i;
+                break;
+            }
+        }
+        BottomSheetUi.showSingleChoice(activity, getString(R.string.select_branch),
+                labels.toArray(new String[0]), selectedIndex, false, index -> {
+                    selectedBranchId = ids.get(index);
                     loadDashboard();
-                })
-                .show();
+                });
     }
 
     private void loadDashboard() {

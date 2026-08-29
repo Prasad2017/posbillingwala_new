@@ -1,13 +1,11 @@
 package com.pos_billingwala.Activity;
 
 import android.annotation.SuppressLint;
-import android.app.Dialog;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -18,8 +16,8 @@ import android.text.TextPaint;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
-import android.view.Window;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -27,6 +25,8 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
@@ -36,7 +36,9 @@ import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.initialization.InitializationStatus;
 import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
 import com.pos_billingwala.Extra.AuthTokens;
+import com.pos_billingwala.Extra.BottomSheetUi;
 import com.pos_billingwala.Extra.Common;
+import com.pos_billingwala.NetworkToOffline.CloudSyncNav;
 import com.pos_billingwala.Extra.LicenceExpiredUi;
 import com.pos_billingwala.Extra.LicenceScopeGuard;
 import com.pos_billingwala.Extra.LicenseModules;
@@ -100,6 +102,7 @@ public class Login extends BaseActivity implements View.OnClickListener {
         File file = new File("data/data/" + getPackageName() + "/shared_prefs/" + Common.SHARED_PREF + ".xml");
         if (file.exists()) {
             Intent intent = new Intent(Login.this, MainActivity.class);
+            CloudSyncNav.copyOpenFlag(getIntent(), intent);
             startActivity(intent);
             finish();
             return;
@@ -114,62 +117,7 @@ public class Login extends BaseActivity implements View.OnClickListener {
         m_androidId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
         manufacturerModel = android.os.Build.MANUFACTURER + " " + android.os.Build.MODEL;
 
-        String privacyPolicy = "By providing licence key, I hereby agree and accept the Terms of service and Privacy Policy in use of the POS Billingwala app.";
-        SpannableString spannableString = new SpannableString(privacyPolicy);
-
-        // creating clickable span to be implemented as a link
-        ClickableSpan clickableSpan1 = new ClickableSpan() {
-            public void onClick(@NonNull View widget) {
-
-                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.posbillingwala.com/PlayStore/privacy_policy.html"));
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                try {
-                    startActivity(intent);
-                } catch (ActivityNotFoundException ex) {
-                    // Chrome browser presumably not installed so allow user to choose instead
-                    intent.setPackage(null);
-                    startActivity(intent);
-                }
-
-            }
-
-            @Override
-            public void updateDrawState(final TextPaint textPaint) {
-                textPaint.setColor(getResources().getColor(R.color.colorPrimaryDark));
-            }
-
-        };
-
-        // creating clickable span to be implemented as a link
-        ClickableSpan clickableSpan2 = new ClickableSpan() {
-            @Override
-            public void onClick(@NonNull View widget) {
-
-                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.posbillingwala.com/PlayStore/privacy_policy.html"));
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                try {
-                    startActivity(intent);
-                } catch (Exception ex) {
-                    // Chrome browser presumably not installed so allow user to choose instead
-                    intent.setPackage(null);
-                    startActivity(intent);
-                }
-
-            }
-
-            @Override
-            public void updateDrawState(final TextPaint textPaint) {
-                textPaint.setColor(getResources().getColor(R.color.colorPrimaryDark));
-            }
-
-        };
-
-        // setting the part of string to be act as a link
-        spannableString.setSpan(clickableSpan1, 56, 72, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        spannableString.setSpan(clickableSpan2, 77, 91, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-
-        binding.privacyPolicy.setText(spannableString);
-        binding.privacyPolicy.setMovementMethod(LinkMovementMethod.getInstance());
+        setupPrivacyPolicyLinks();
 
         binding.newUser.setText(Html.fromHtml(getString(R.string.new_user), Html.FROM_HTML_MODE_LEGACY));
 
@@ -179,6 +127,54 @@ public class Login extends BaseActivity implements View.OnClickListener {
 
         initAds();
 
+    }
+
+    private void setupPrivacyPolicyLinks() {
+        String privacyPolicy = getString(R.string.login_security_notice);
+        String termsLabel = getString(R.string.terms_of_service);
+        String privacyLabel = getString(R.string.privacy_policy_label);
+        SpannableString spannableString = new SpannableString(privacyPolicy);
+
+        int termsStart = privacyPolicy.indexOf(termsLabel);
+        if (termsStart >= 0) {
+            spannableString.setSpan(createPolicyLinkSpan(), termsStart,
+                    termsStart + termsLabel.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+
+        int privacyStart = privacyPolicy.indexOf(privacyLabel);
+        if (privacyStart >= 0) {
+            spannableString.setSpan(createPolicyLinkSpan(), privacyStart,
+                    privacyStart + privacyLabel.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+
+        binding.privacyPolicy.setText(spannableString);
+        binding.privacyPolicy.setMovementMethod(LinkMovementMethod.getInstance());
+    }
+
+    private ClickableSpan createPolicyLinkSpan() {
+        return new ClickableSpan() {
+            @Override
+            public void onClick(@NonNull View widget) {
+                openWebPage("http://posbillingwala.com/PlayStore/privacy_policy.html");
+            }
+
+            @Override
+            public void updateDrawState(@NonNull TextPaint textPaint) {
+                textPaint.setColor(getResources().getColor(R.color.colorPrimary));
+                textPaint.setUnderlineText(true);
+            }
+        };
+    }
+
+    private void openWebPage(String url) {
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        try {
+            startActivity(intent);
+        } catch (ActivityNotFoundException ex) {
+            intent.setPackage(null);
+            startActivity(intent);
+        }
     }
 
     public void initAds() {
@@ -279,33 +275,20 @@ public class Login extends BaseActivity implements View.OnClickListener {
                         LicenceExpiredUi.showForServerMessage(Login.this, response.body().getMessage());
                     } else if (response.body().getStatus().equalsIgnoreCase("3")) {
                         pDialog.dismiss();
-                        final Dialog dialog = new Dialog(Login.this);
-                        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE); // before
-                        dialog.setContentView(R.layout.login_device_dialog);
-                        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
-                        dialog.setCancelable(false);
-                        TextView message = dialog.findViewById(R.id.message);
-                        TextView txtYes = dialog.findViewById(R.id.yes);
-                        TextView txtNo = dialog.findViewById(R.id.no);
+                        View content = LayoutInflater.from(Login.this).inflate(R.layout.login_device_dialog, null);
+                        BottomSheetDialog sheet = BottomSheetUi.showContent(Login.this, content, false);
+                        TextView message = content.findViewById(R.id.message);
+                        TextView txtYes = content.findViewById(R.id.yes);
+                        TextView txtNo = content.findViewById(R.id.no);
 
                         message.setText(getString(R.string.licence_msg_device_already_registered));
 
-                        txtYes.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                dialog.dismiss();
-                                updateLicenceKey();
-                            }
+                        txtYes.setOnClickListener(v -> {
+                            sheet.dismiss();
+                            updateLicenceKey();
                         });
 
-                        txtNo.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                dialog.dismiss();
-                            }
-                        });
-
-                        dialog.show();
+                        txtNo.setOnClickListener(v -> sheet.dismiss());
 
                     } else if (response.body().getStatus().equalsIgnoreCase("2")) {
                         pDialog.dismiss();
@@ -445,8 +428,12 @@ public class Login extends BaseActivity implements View.OnClickListener {
                                 LicenseSession.saveFromLogin(Login.this, response.body());
                                 AuthTokens.saveFromLogin(Login.this, response.body());
                                 LicenceScopeGuard.onLoginSuccess(Login.this, response.body());
+                                Observability.setUserContext(
+                                        response.body().getLicenceId(),
+                                        response.body().getLicenceKey());
 
                                 Intent intent = new Intent(Login.this, MainActivity.class);
+                                CloudSyncNav.copyOpenFlag(getIntent(), intent);
                                 startActivity(intent);
                                 finishAffinity();
 

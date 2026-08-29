@@ -1,13 +1,11 @@
 package com.posbillingwala.dealer.Activity;
 
 import android.annotation.SuppressLint;
-import android.app.Dialog;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -20,13 +18,17 @@ import android.text.method.PasswordTransformationMethod;
 import android.text.style.ClickableSpan;
 import android.util.Log;
 import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.textfield.TextInputEditText;
+
+import com.posbillingwala.dealer.Extra.BottomSheetUi;
 
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
@@ -79,20 +81,20 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
             AuthTokens.clear(this);
         }
 
-        binding.userName.setSelection(binding.userName.getText().toString().length());
+        binding.mobileNumber.setSelection(binding.mobileNumber.getText().toString().length());
         binding.password.setSelection(binding.password.getText().toString().length());
 
         m_androidId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
         manufacturerModel = android.os.Build.MANUFACTURER + " " + android.os.Build.MODEL;
 
-        String privacyPolicy = "By providing licence key, I hereby agree and accept the Terms of service and Privacy Policy in use of the POS Billingwala app.";
+        String privacyPolicy = "By providing mobile number and password, I hereby agree and accept the Terms of service and Privacy Policy in use of the POS Billingwala Dealer app.";
         SpannableString spannableString = new SpannableString(privacyPolicy);
 
         // creating clickable span to be implemented as a link
         ClickableSpan clickableSpan1 = new ClickableSpan() {
             public void onClick(View widget) {
 
-                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.posbillingwala.com/PlayStore/privacy_policy.html"));
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://posbillingwala.com/PlayStore/privacy_policy.html"));
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 try {
                     startActivity(intent);
@@ -116,7 +118,7 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
             @Override
             public void onClick(View widget) {
 
-                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.posbillingwala.com/PlayStore/privacy_policy.html"));
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://posbillingwala.com/PlayStore/privacy_policy.html"));
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 try {
                     startActivity(intent);
@@ -136,8 +138,8 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
         };
 
         // setting the part of string to be act as a link
-        spannableString.setSpan(clickableSpan1, 56, 72, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        spannableString.setSpan(clickableSpan2, 77, 91, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        spannableString.setSpan(clickableSpan1, 64, 80, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        spannableString.setSpan(clickableSpan2, 85, 99, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 
         binding.privacyPolicy.setText(spannableString);
         binding.privacyPolicy.setMovementMethod(LinkMovementMethod.getInstance());
@@ -148,6 +150,7 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
 
         binding.ivPassShow.setOnClickListener(this);
         binding.loginCheck.setOnClickListener(this);
+        binding.forgotPassword.setOnClickListener(this);
         binding.newUser.setOnClickListener(this);
 
     }
@@ -246,21 +249,29 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
             }
             binding.password.setSelection(binding.password.getText().toString().length());
         } else if (id == R.id.loginCheck) {
-            if (!binding.userName.getText().toString().isEmpty()) {
-                if (!binding.password.getText().toString().isEmpty()) {
-                    loginDealer();
-                } else {
-                    binding.password.setError("Please enter password");
-                }
-            } else {
-                binding.userName.setError("Please enter username");
+            String mobile = binding.mobileNumber.getText().toString().trim();
+            String password = binding.password.getText().toString();
+            if (mobile.isEmpty()) {
+                binding.mobileNumber.setError("Please enter mobile number");
+                return;
             }
+            if (mobile.length() != 10) {
+                Toast.makeText(this, "Enter valid 10 digit mobile number", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (password.isEmpty()) {
+                binding.password.setError("Please enter password");
+                return;
+            }
+            loginDealer(mobile, password);
+        } else if (id == R.id.forgotPassword) {
+            showForgotPasswordDialog();
         } else if (id == R.id.newUser) {
             signUp();
         }
     }
 
-    private void loginDealer() {
+    private void loginDealer(String mobile, String password) {
 
         SweetAlertDialog pDialog = new SweetAlertDialog(Login.this, SweetAlertDialog.PROGRESS_TYPE);
         pDialog.getProgressHelper().setBarColor(Color.parseColor("#2D7FED"));
@@ -268,12 +279,13 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
         pDialog.setCancelable(false);
         pDialog.show();
 
-        Call<AllApiResponse> call = Api.getClient().loginDealer(binding.userName.getText().toString(), binding.password.getText().toString());
+        Call<AllApiResponse> call = Api.getClient().loginDealer(mobile, password);
         call.enqueue(new Callback<AllApiResponse>() {
             @Override
             public void onResponse(Call<AllApiResponse> call, Response<AllApiResponse> response) {
-                if (response.isSuccessful()) {
-                    if (response.body().getStatus().equalsIgnoreCase("true")) {
+                if (response.isSuccessful() && response.body() != null) {
+                    if ("true".equalsIgnoreCase(response.body().getStatus())
+                            || "1".equalsIgnoreCase(response.body().getStatus())) {
 
                         pref = getSharedPreferences("user", Context.MODE_PRIVATE);
                         editor = pref.edit();
@@ -288,8 +300,13 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
                         finishAffinity();
 
                     } else {
-                        Toast.makeText(Login.this, response.body().getMessage(), Toast.LENGTH_SHORT).show();
+                        String message = response.body().getMessage();
+                        Toast.makeText(Login.this,
+                                message != null ? message : "Login failed",
+                                Toast.LENGTH_SHORT).show();
                     }
+                } else {
+                    Toast.makeText(Login.this, "Login failed. Please try again.", Toast.LENGTH_SHORT).show();
                 }
                 pDialog.dismiss();
             }
@@ -312,41 +329,117 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
 
     }
 
+    private void showForgotPasswordDialog() {
+        View sheetView = getLayoutInflater().inflate(R.layout.bottom_sheet_forgot_password, null);
+        BottomSheetDialog sheet = new BottomSheetDialog(this);
+        sheet.setContentView(sheetView);
+
+        TextInputEditText mobileField = sheetView.findViewById(R.id.forgotMobileNumber);
+        TextInputEditText aadhaarField = sheetView.findViewById(R.id.forgotAadhaarNumber);
+        TextInputEditText newPassField = sheetView.findViewById(R.id.forgotNewPassword);
+        TextInputEditText confirmField = sheetView.findViewById(R.id.forgotConfirmPassword);
+        TextView contactSupport = sheetView.findViewById(R.id.contactSupport);
+
+        if (binding.mobileNumber.getText() != null && binding.mobileNumber.getText().length() == 10) {
+            mobileField.setText(binding.mobileNumber.getText().toString());
+        }
+
+        contactSupport.setText(getString(R.string.forgot_password_support, getString(R.string.support_phone_display)));
+        contactSupport.setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_DIAL);
+            intent.setData(Uri.parse("tel:" + getString(R.string.support_phone_dial)));
+            startActivity(intent);
+        });
+
+        sheetView.findViewById(R.id.closeForgotSheet).setOnClickListener(v -> sheet.dismiss());
+        sheetView.findViewById(R.id.btnForgotCancel).setOnClickListener(v -> sheet.dismiss());
+        sheetView.findViewById(R.id.btnForgotReset).setOnClickListener(v -> {
+            String mobile = mobileField.getText() != null ? mobileField.getText().toString().trim() : "";
+            String aadhaar = aadhaarField.getText() != null ? aadhaarField.getText().toString().trim() : "";
+            String newPass = newPassField.getText() != null ? newPassField.getText().toString() : "";
+            String confirm = confirmField.getText() != null ? confirmField.getText().toString() : "";
+
+            if (mobile.length() != 10) {
+                Toast.makeText(this, "Enter valid 10 digit mobile number", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (aadhaar.length() != 12) {
+                Toast.makeText(this, "Enter valid 12 digit Aadhaar number", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (newPass.length() < 6) {
+                Toast.makeText(this, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (!newPass.equals(confirm)) {
+                Toast.makeText(this, "Passwords do not match", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            submitForgotPassword(sheet, mobile, aadhaar, newPass);
+        });
+
+        sheet.setOnShowListener(d -> {
+            View bottomSheet = sheet.findViewById(com.google.android.material.R.id.design_bottom_sheet);
+            if (bottomSheet != null) {
+                BottomSheetBehavior.from(bottomSheet).setState(BottomSheetBehavior.STATE_EXPANDED);
+            }
+        });
+
+        sheet.show();
+        BottomSheetUi.applyFullWidth(sheet);
+    }
+
+    private void submitForgotPassword(BottomSheetDialog sheet, String mobile, String aadhaar, String newPassword) {
+        SweetAlertDialog pDialog = new SweetAlertDialog(this, SweetAlertDialog.PROGRESS_TYPE);
+        pDialog.getProgressHelper().setBarColor(Color.parseColor("#2D7FED"));
+        pDialog.setTitleText("Resetting...");
+        pDialog.setCancelable(false);
+        pDialog.show();
+
+        Api.getClient().forgotPassword(mobile, aadhaar, newPassword).enqueue(new Callback<AllApiResponse>() {
+            @Override
+            public void onResponse(Call<AllApiResponse> call, Response<AllApiResponse> response) {
+                pDialog.dismiss();
+                if (response.isSuccessful() && response.body() != null
+                        && "1".equalsIgnoreCase(response.body().getStatus())) {
+                    sheet.dismiss();
+                    Toast.makeText(Login.this, response.body().getMessage(), Toast.LENGTH_LONG).show();
+                } else {
+                    String msg = response.body() != null ? response.body().getMessage() : "Unable to reset password";
+                    Toast.makeText(Login.this, msg, Toast.LENGTH_LONG).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<AllApiResponse> call, Throwable t) {
+                pDialog.dismiss();
+                Toast.makeText(Login.this, "Network error. Please try again.", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
     private void signUp() {
+        View sheetView = getLayoutInflater().inflate(R.layout.bottom_sheet_new_user, null);
+        BottomSheetDialog sheet = new BottomSheetDialog(this);
+        sheet.setContentView(sheetView);
 
-        final Dialog dialog = new Dialog(Login.this);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE); // before
-        dialog.setContentView(R.layout.new_user_dialog);
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
-        dialog.setCancelable(true);
-
-        WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
-        lp.copyFrom(dialog.getWindow().getAttributes());
-        lp.width = WindowManager.LayoutParams.MATCH_PARENT;
-        lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
-
-        TextView contactUser = dialog.findViewById(R.id.contactUser);
-        TextView supportMessage = dialog.findViewById(R.id.supportMessage);
+        TextView contactUser = sheetView.findViewById(R.id.contactUser);
+        TextView supportMessage = sheetView.findViewById(R.id.supportMessage);
         if (supportMessage != null) {
             supportMessage.setText(getString(R.string.new_user_support_team, getString(R.string.support_phone_display)));
         }
 
-        contactUser.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                dialog.dismiss();
-                Intent intent = new Intent(Intent.ACTION_DIAL);
-                intent.setData(Uri.parse("tel:" + getString(R.string.support_phone_dial)));
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(intent);
-
-            }
+        sheetView.findViewById(R.id.closeNewUserSheet).setOnClickListener(v -> sheet.dismiss());
+        contactUser.setOnClickListener(v -> {
+            sheet.dismiss();
+            Intent intent = new Intent(Intent.ACTION_DIAL);
+            intent.setData(Uri.parse("tel:" + getString(R.string.support_phone_dial)));
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
         });
 
-        dialog.show();
-        dialog.getWindow().setAttributes(lp);
-
+        sheet.show();
+        BottomSheetUi.applyFullWidth(sheet);
     }
 
     @Override

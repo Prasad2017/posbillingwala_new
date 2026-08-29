@@ -2,6 +2,7 @@ package com.posbillingwala.admin.Fragment;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.text.InputType;
@@ -26,6 +27,7 @@ import com.posbillingwala.admin.Model.AllApiResponse;
 import com.posbillingwala.admin.Model.PortionMasterResponse;
 import com.posbillingwala.admin.R;
 import com.posbillingwala.admin.Retrofit.Api;
+import com.posbillingwala.admin.Utils.CatalogImportExportHelper;
 import com.posbillingwala.admin.databinding.FragmentAddCustomerPortionMasterBinding;
 
 import java.util.ArrayList;
@@ -52,6 +54,7 @@ public class AddCustomerPortionMaster extends Fragment implements View.OnClickLi
     String returnTo;
     String productId;
     String productName;
+    CatalogImportExportHelper catalogImportExportHelper;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -67,6 +70,12 @@ public class AddCustomerPortionMaster extends Fragment implements View.OnClickLi
             returnTo = bundle.getString("returnTo");
             productId = bundle.getString("productId");
             productName = bundle.getString("productName");
+        }
+
+        if (customerId != null) {
+            catalogImportExportHelper = new CatalogImportExportHelper(
+                    this, customerId, "portions", "Portions", AddCustomerPortionMaster::getPortionMasterList);
+            catalogImportExportHelper.bindBar(binding.catalogImportExportBar.getRoot());
         }
 
         binding.portionMasterName.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
@@ -89,6 +98,14 @@ public class AddCustomerPortionMaster extends Fragment implements View.OnClickLi
         binding.addPortionMaster.setOnClickListener(this);
 
         return view;
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (catalogImportExportHelper != null) {
+            catalogImportExportHelper.handleActivityResult(requestCode, resultCode, data);
+        }
     }
 
     private void navigateBack() {

@@ -1,28 +1,25 @@
 package com.posbillingwala.admin.Adapter;
 
 import android.annotation.SuppressLint;
-import android.app.Dialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.posbillingwala.admin.Activity.MainActivity;
+import com.posbillingwala.admin.Extra.BottomSheetUi;
 import com.posbillingwala.admin.Extra.LicenceValidityTiers;
 import com.posbillingwala.admin.Extra.LicenseStatusHelper;
 import com.posbillingwala.admin.Fragment.CustomerDetails;
@@ -140,12 +137,8 @@ public class LicenseAdapter extends RecyclerView.Adapter<LicenseAdapter.MyViewHo
             String confirmMsg = "suspend".equals(action)
                     ? "Are you sure you want to suspend this license?\n" + licenseResponse.getLicenseKey()
                     : "Reactivate this license?\n" + licenseResponse.getLicenseKey();
-            new AlertDialog.Builder(context)
-                    .setTitle("Confirm")
-                    .setMessage(confirmMsg)
-                    .setPositiveButton("Yes", (d, w) -> updateLicenseStatus(licenseResponse, action))
-                    .setNegativeButton("Cancel", null)
-                    .show();
+            BottomSheetUi.showConfirm(context, "Confirm", confirmMsg,
+                    "Yes", "Cancel", true, () -> updateLicenseStatus(licenseResponse, action));
         });
 
         holder.binding.updateLicence.setOnClickListener(v -> {
@@ -160,33 +153,24 @@ public class LicenseAdapter extends RecyclerView.Adapter<LicenseAdapter.MyViewHo
             String amount = holder.binding.amount.getText().toString();
             String currentPlan = LicenceValidityTiers.displayLabel(licenseResponse.getLicenseValidity());
             String newPlan = LicenceValidityTiers.displayLabel(licenseValidity);
-            new AlertDialog.Builder(context)
-                    .setTitle("Confirm Upgrade / Renew")
-                    .setMessage("License Key: " + licenseResponse.getLicenseKey()
+            BottomSheetUi.showConfirm(context, "Confirm Upgrade / Renew",
+                    "License Key: " + licenseResponse.getLicenseKey()
                             + "\n\nCurrent: " + currentPlan + " (" + licenseResponse.getLicenseType() + ")"
                             + "\nNew: " + newPlan + " (" + licenseType + ")"
-                            + "\n\nSame license key will be kept.")
-                    .setPositiveButton("Confirm", (d, w) -> updateCustomerLicenceDetails(
+                            + "\n\nSame license key will be kept.",
+                    "Confirm", "Cancel", true, () -> updateCustomerLicenceDetails(
                             licenseResponse, licenseValidity, licenseType, amount,
-                            holder.binding.registrationDate.getText().toString()))
-                    .setNegativeButton("Cancel", null)
-                    .show();
+                            holder.binding.registrationDate.getText().toString()));
         });
     }
 
     private void getLicenseValidity(MyViewHolder holder) {
 
-        final Dialog dialog = new Dialog(context);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         DynamicStatusDropdownBinding dialogBinding = DynamicStatusDropdownBinding.inflate(LayoutInflater.from(context));
-        dialog.setContentView(dialogBinding.getRoot());
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        dialog.setCancelable(false);
-
-        WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
-        lp.copyFrom(dialog.getWindow().getAttributes());
-        lp.width = WindowManager.LayoutParams.MATCH_PARENT;
-        lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
+        BottomSheetDialog sheet = BottomSheetUi.showContent(context, dialogBinding.getRoot(), false);
+        if (sheet == null) {
+            return;
+        }
 
         try {
             licenseValidityList = context.getResources().getStringArray(R.array.license_validity);
@@ -202,7 +186,7 @@ public class LicenseAdapter extends RecyclerView.Adapter<LicenseAdapter.MyViewHo
             e.printStackTrace();
         }
 
-        dialogBinding.closeDialog.setOnClickListener(v -> dialog.dismiss());
+        dialogBinding.closeDialog.setOnClickListener(v -> sheet.dismiss());
 
         dialogBinding.licenseValidity.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
             @Override
@@ -228,14 +212,11 @@ public class LicenseAdapter extends RecyclerView.Adapter<LicenseAdapter.MyViewHo
                     holder.binding.licenseTYpe.setText("Demo");
                 }
                 holder.binding.licenseValidity.setText(LicenceValidityTiers.displayLabel(licenseValidity));
-                dialog.dismiss();
+                sheet.dismiss();
             } else {
                 Toast.makeText(context, "Please select validity", Toast.LENGTH_SHORT).show();
             }
         });
-
-        dialog.show();
-        dialog.getWindow().setAttributes(lp);
     }
 
     private void updateLicenseStatus(LicenseResponse licenseResponse, String action) {

@@ -14,6 +14,9 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.SpinnerAdapter;
 
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.FragmentActivity;
+
 import com.pos_billingwala.R;
 
 import java.util.ArrayList;
@@ -100,7 +103,10 @@ public class SearchableSpinner extends androidx.appcompat.widget.AppCompatSpinne
                 }
                 // Change end.
 
-                _searchableListDialog.show(scanForActivity(_context).getFragmentManager(), "TAG");
+                FragmentActivity fragmentActivity = scanForFragmentActivity(_context);
+                if (fragmentActivity != null) {
+                    _searchableListDialog.show(fragmentActivity.getSupportFragmentManager(), "TAG");
+                }
             }
         }
         return true;
@@ -153,13 +159,18 @@ public class SearchableSpinner extends androidx.appcompat.widget.AppCompatSpinne
     }
 
     private Activity scanForActivity(Context cont) {
-        if (cont == null)
-            return null;
-        else if (cont instanceof Activity)
-            return (Activity) cont;
-        else if (cont instanceof ContextWrapper)
-            return scanForActivity(((ContextWrapper) cont).getBaseContext());
+        FragmentActivity fragmentActivity = scanForFragmentActivity(cont);
+        return fragmentActivity != null ? fragmentActivity : null;
+    }
 
+    private FragmentActivity scanForFragmentActivity(Context cont) {
+        if (cont == null) {
+            return null;
+        } else if (cont instanceof FragmentActivity) {
+            return (FragmentActivity) cont;
+        } else if (cont instanceof ContextWrapper) {
+            return scanForFragmentActivity(((ContextWrapper) cont).getBaseContext());
+        }
         return null;
     }
 

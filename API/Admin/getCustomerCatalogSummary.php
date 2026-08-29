@@ -12,7 +12,8 @@ $response = array(
     'status' => 'false',
     'categoryCount' => '0',
     'subcategoryCount' => '0',
-    'productCount' => '0'
+    'productCount' => '0',
+    'portionCount' => '0'
 );
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
@@ -56,11 +57,19 @@ $productCount = (string) db_stmt_scalar_int(
     $uid
 );
 
+$portionCount = (string) db_stmt_scalar_int(
+    $con,
+    "SELECT COUNT(*) AS c FROM `portion_master` WHERE `userId`=? AND `portionMasterStatus` IN ('active','inactive')",
+    'i',
+    $uid
+);
+
 $response = array(
     'status' => 'true',
     'categoryCount' => $categoryCount !== '' ? $categoryCount : '0',
     'subcategoryCount' => $subcategoryCount !== '' ? $subcategoryCount : '0',
-    'productCount' => $productCount !== '' ? $productCount : '0'
+    'productCount' => $productCount !== '' ? $productCount : '0',
+    'portionCount' => $portionCount !== '' ? $portionCount : '0'
 );
 
 mysqli_close($con);

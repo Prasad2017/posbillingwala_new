@@ -1,22 +1,20 @@
 package com.posbillingwala.owner.Adapter;
 
-import android.app.Dialog;
 import android.content.Context;
 import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.textfield.TextInputEditText;
+import com.posbillingwala.owner.Extra.BottomSheetUi;
 import com.posbillingwala.owner.Activity.MainActivity;
 import com.posbillingwala.owner.Fragment.AddCustomerProductCategory;
 import com.posbillingwala.owner.Fragment.AddCustomerSubcategory;
@@ -73,45 +71,30 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.MyView
     }
 
     public void deleteCategoryDialog(String categoryId) {
-        new MaterialAlertDialogBuilder(context)
-                .setTitle("Are you Sure?")
-                .setMessage("Do you want to delete this category?")
-                .setPositiveButton("YES", (dialogInterface, i) -> {
-                    dialogInterface.dismiss();
-                    deleteCategory(categoryId);
-                })
-                .setNegativeButton("NO", (dialogInterface, i) -> dialogInterface.dismiss())
-                .show();
+        BottomSheetUi.showConfirm(context, "Are you Sure?", "Do you want to delete this category?",
+                "YES", "NO", true, () -> deleteCategory(categoryId));
     }
 
     public void updateCategoryDialog(String categoryId, String categoryName) {
-        final Dialog dialog = new Dialog(context);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        dialog.setContentView(R.layout.update_category_dialog);
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        dialog.setCancelable(false);
+        View dialogView = LayoutInflater.from(context).inflate(R.layout.update_category_dialog, null);
+        BottomSheetDialog sheet = BottomSheetUi.showContent(context, dialogView, false);
+        if (sheet == null) {
+            return;
+        }
 
-        WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
-        lp.copyFrom(dialog.getWindow().getAttributes());
-        lp.width = WindowManager.LayoutParams.MATCH_PARENT;
-        lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
-
-        TextInputEditText categoryNameTxt = dialog.findViewById(R.id.categoryName);
-        TextView updateCategoryTxt = dialog.findViewById(R.id.updateCategory);
-        TextView dismissCategoryTxt = dialog.findViewById(R.id.dismissCategory);
+        TextInputEditText categoryNameTxt = dialogView.findViewById(R.id.categoryName);
+        TextView updateCategoryTxt = dialogView.findViewById(R.id.updateCategory);
+        TextView dismissCategoryTxt = dialogView.findViewById(R.id.dismissCategory);
 
         categoryNameTxt.setText(categoryName);
         categoryNameTxt.setSelection(categoryNameTxt.getText().toString().length());
 
-        dismissCategoryTxt.setOnClickListener(v -> dialog.dismiss());
+        dismissCategoryTxt.setOnClickListener(v -> sheet.dismiss());
 
         updateCategoryTxt.setOnClickListener(v -> {
-            dialog.dismiss();
+            sheet.dismiss();
             updateCategory(categoryId, categoryNameTxt.getText().toString());
         });
-
-        dialog.show();
-        dialog.getWindow().setAttributes(lp);
     }
 
     public void updateCategory(String categoryId, String categoryName) {

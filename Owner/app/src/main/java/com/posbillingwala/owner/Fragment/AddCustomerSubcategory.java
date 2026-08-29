@@ -2,6 +2,7 @@ package com.posbillingwala.owner.Fragment;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.text.InputType;
@@ -26,6 +27,7 @@ import com.posbillingwala.owner.Model.AllApiResponse;
 import com.posbillingwala.owner.Model.ProductSubcategoryResponse;
 import com.posbillingwala.owner.R;
 import com.posbillingwala.owner.Retrofit.Api;
+import com.posbillingwala.owner.Utils.CatalogImportExportHelper;
 import com.posbillingwala.owner.databinding.FragmentAddCustomerSubcategoryBinding;
 
 import java.util.List;
@@ -47,6 +49,7 @@ public class AddCustomerSubcategory extends Fragment implements View.OnClickList
     public static TextView noDataFound;
 
     FragmentAddCustomerSubcategoryBinding binding;
+    CatalogImportExportHelper catalogImportExportHelper;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -66,6 +69,10 @@ public class AddCustomerSubcategory extends Fragment implements View.OnClickList
         subcategoryRecyclerview = binding.subcategoryRecyclerview;
         subcategoryListCardView = binding.subcategoryListCardView;
         noDataFound = binding.noDataFound;
+
+        catalogImportExportHelper = new CatalogImportExportHelper(
+                this, MainActivity.userId, "subcategories", "Sub Categories", AddCustomerSubcategory::getSubcategoryList);
+        catalogImportExportHelper.bindBar(binding.catalogImportExportBar.getRoot());
 
         binding.backToHome.setOnClickListener(v -> {
             ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
@@ -173,6 +180,14 @@ public class AddCustomerSubcategory extends Fragment implements View.OnClickList
             sb.append(allowed.charAt(random.nextInt(allowed.length())));
         }
         return sb.toString();
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (catalogImportExportHelper != null) {
+            catalogImportExportHelper.handleActivityResult(requestCode, resultCode, data);
+        }
     }
 
     @Override

@@ -104,28 +104,21 @@ public final class BluetoothPrinterChannel {
     }
 
     /**
-     * User tapped Print or opened device picker.
+     * Connect to a printer address.
      *
-     * @param openPickerWhenEmpty show {@link DeviceListActivity} when no saved address
+     * @param allowDevicePicker when true (Connect button only): open the Bluetooth
+     *                          device list if the address is empty or the saved MAC
+     *                          is not in the paired list. Never opens the list on
+     *                          connection failure / auto-reconnect.
      */
-    public void connect(Context context, String address, Activity activity, boolean openPickerWhenEmpty) {
+    public void connect(Context context, String address, Activity activity, boolean allowDevicePicker) {
         try {
             if (context == null) {
                 return;
             }
             appContext = context.getApplicationContext();
             hostActivity = activity != null ? activity : (context instanceof Activity ? (Activity) context : hostActivity);
-            userInitiatedSession = true;
-
-            String addr = normalize(address);
-            if (!addr.isEmpty()) {
-                savedAddress = addr;
-            }
-
-            if (isReady() && !savedAddress.isEmpty()
-                    && savedAddress.equalsIgnoreCase(getConnectedAddress())) {
-                return;
-            }
+            userInitiatedSession = allowDevicePicker;
 
             Activity btActivity = hostActivity;
             if (btActivity == null) {
@@ -133,25 +126,43 @@ public final class BluetoothPrinterChannel {
                 return;
             }
 
-            if (!checkBluetoothEnabled(btActivity, true)) {
+            if (!checkBluetoothEnabled(btActivity, allowDevicePicker)) {
                 return;
             }
 
-            if (savedAddress.isEmpty()) {
-                if (openPickerWhenEmpty) {
-                    showToast(btActivity, R.string.toast_printer_not_connected_select);
+            String addr = normalize(address);
+            if (!addr.isEmpty()) {
+                savedAddress = addr;
+            } else {
+                addr = normalize(savedAddress);
+            }
+
+            if (addr.isEmpty()) {
+                // Connect with no saved printer → device list once (no toast)
+                if (allowDevicePicker) {
                     openDevicePicker(btActivity);
                 }
                 return;
             }
 
-            if (isConnecting()) {
-                showToast(btActivity, R.string.toast_printer_connecting);
+            if (isReady() && addr.equalsIgnoreCase(getConnectedAddress())) {
+                if (allowDevicePicker) {
+                    showToast(btActivity, btActivity.getString(R.string.connected) + " " + addr);
+                }
                 return;
             }
 
-            showToast(btActivity, R.string.toast_printer_connecting);
-            connectInternal(savedAddress, true);
+            if (isConnecting()) {
+                if (allowDevicePicker) {
+                    showToast(btActivity, R.string.toast_printer_connecting);
+                }
+                return;
+            }
+
+            if (allowDevicePicker) {
+                showToast(btActivity, R.string.toast_printer_connecting);
+            }
+            connectInternal(addr, allowDevicePicker);
         } catch (Exception e) {
             Log.e(TAG, channelName + ": connect failed", e);
             showToast(appContext, R.string.connect_fail);
@@ -282,7 +293,9 @@ public final class BluetoothPrinterChannel {
                 device = adapter.getRemoteDevice(address);
             } catch (IllegalArgumentException e) {
                 Log.e(TAG, channelName + ": invalid address " + address, e);
-                showToast(appContext, R.string.connect_fail);
+                if (fromUser) {
+                    showToast(appContext, R.string.connect_fail);
+                }
                 return;
             }
 
@@ -306,8 +319,10 @@ public final class BluetoothPrinterChannel {
                 public void onConnectionFailed() {
                     if (userInitiatedSession) {
                         showToast(appContext, R.string.connect_fail);
+                        cancelReconnect();
+                    } else {
+                        scheduleReconnect();
                     }
-                    scheduleReconnect();
                 }
 
                 @Override
@@ -391,7 +406,7 @@ public final class BluetoothPrinterChannel {
         return address != null ? address.trim() : "";
     }
 
-    private static boolean checkBluetoothEnabled(Activity activity, boolean fromUser) {
+    private boolean checkBluetoothEnabled(Activity activity, boolean fromUser) {
         try {
             if (activity == null) {
                 return false;
@@ -407,8 +422,12 @@ public final class BluetoothPrinterChannel {
             if (fromUser) {
                 Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                 if (ActivityCompat.checkSelfPermission(activity, Manifest.permission.BLUETOOTH_CONNECT)
-                        == PackageManager.PERMISSION_GRANTED) {
-                    activity.startActivityForResult(enableIntent, WoosimPrnMng.REQUEST_ENABLE_BT);
+                        == PackageManager.PERMISSION_GRANTED
+                        || android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.S) {
+                    int enableReq = "kot".equals(channelName)
+                            ? KOTWoosimPrnMng.REQUEST_ENABLE_BT
+                            : WoosimPrnMng.REQUEST_ENABLE_BT;
+                    activity.startActivityForResult(enableIntent, enableReq);
                 }
             }
             return false;

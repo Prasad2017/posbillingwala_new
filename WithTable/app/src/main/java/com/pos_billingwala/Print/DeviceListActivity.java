@@ -8,14 +8,20 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -26,7 +32,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
- * Paired / discovered Bluetooth device picker. Never crashes on null device names.
+ * Paired / discovered Bluetooth device picker as a bottom sheet.
  */
 @SuppressLint("MissingPermission")
 public class DeviceListActivity extends Activity {
@@ -40,6 +46,10 @@ public class DeviceListActivity extends Activity {
     private ArrayAdapter<String> discoveredAdapter;
     private BluetoothService btService;
     private boolean receiverRegistered;
+    private ProgressBar scanProgress;
+    private TextView sheetTitle;
+    private TextView scanButton;
+    private View titleNewDevices;
 
     private final BroadcastReceiver discoveryReceiver = new BroadcastReceiver() {
         @Override
@@ -58,10 +68,12 @@ public class DeviceListActivity extends Activity {
                     if (name == null || name.trim().isEmpty()) {
                         name = "Unknown device";
                     }
-                    discoveredAdapter.add(name + "\n" + device.getAddress());
+                    String row = name + "\n" + device.getAddress();
+                    if (discoveredAdapter.getPosition(row) < 0) {
+                        discoveredAdapter.add(row);
+                    }
                 } else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
-                    setProgressBarIndeterminateVisibility(false);
-                    setTitle(R.string.select_device);
+                    setScanningUi(false);
                     if (discoveredAdapter.getCount() == 0) {
                         discoveredAdapter.add(getString(R.string.none_found));
                     }
@@ -77,9 +89,9 @@ public class DeviceListActivity extends Activity {
             if (btService != null) {
                 btService.cancelDiscovery();
             }
-            TextView row = (TextView) view;
-            String info = row.getText().toString();
-            if (info == null || !MAC_PATTERN.matcher(info).find()) {
+            Object item = parent.getItemAtPosition(position);
+            String info = item != null ? item.toString() : "";
+            if (info.isEmpty() || !MAC_PATTERN.matcher(info).find()) {
                 Toast.makeText(this, R.string.connect_fail, Toast.LENGTH_SHORT).show();
                 return;
             }
@@ -98,18 +110,20 @@ public class DeviceListActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         try {
-            requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
             setContentView(R.layout.device_list);
+            applyBottomSheetWindow();
             setResult(RESULT_CANCELED);
 
-            Button scanButton = findViewById(R.id.button_scan);
-            scanButton.setOnClickListener(v -> {
-                doDiscovery();
-                v.setVisibility(View.GONE);
-            });
+            sheetTitle = findViewById(R.id.sheetTitle);
+            scanProgress = findViewById(R.id.scanProgress);
+            scanButton = findViewById(R.id.button_scan);
+            titleNewDevices = findViewById(R.id.title_new_devices);
 
-            pairedAdapter = new ArrayAdapter<>(this, R.layout.device_name);
-            discoveredAdapter = new ArrayAdapter<>(this, R.layout.device_name);
+            findViewById(R.id.closeDeviceSheet).setOnClickListener(v -> finish());
+            scanButton.setOnClickListener(v -> doDiscovery());
+
+            pairedAdapter = new ArrayAdapter<>(this, R.layout.device_name, android.R.id.text1);
+            discoveredAdapter = new ArrayAdapter<>(this, R.layout.device_name, android.R.id.text1);
 
             ListView pairedList = findViewById(R.id.paired_devices);
             pairedList.setAdapter(pairedAdapter);
@@ -142,6 +156,7 @@ public class DeviceListActivity extends Activity {
             } else {
                 pairedAdapter.add(getString(R.string.none_paired));
             }
+            sizeListView(pairedList, pairedAdapter.getCount());
         } catch (Exception e) {
             Log.e(TAG, "onCreate failed", e);
             Toast.makeText(this, R.string.connect_fail, Toast.LENGTH_SHORT).show();
@@ -169,21 +184,73 @@ public class DeviceListActivity extends Activity {
         super.onDestroy();
     }
 
+    private void applyBottomSheetWindow() {
+        Window window = getWindow();
+        if (window == null) {
+            return;
+        }
+        window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        window.setGravity(Gravity.BOTTOM);
+        DisplayMetrics metrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(metrics);
+        WindowManager.LayoutParams params = window.getAttributes();
+        params.width = WindowManager.LayoutParams.MATCH_PARENT;
+        params.height = WindowManager.LayoutParams.WRAP_CONTENT;
+        params.gravity = Gravity.BOTTOM;
+        window.setAttributes(params);
+        View root = findViewById(android.R.id.content);
+        if (root != null) {
+            ViewGroup.LayoutParams lp = root.getLayoutParams();
+            if (lp != null) {
+                lp.width = ViewGroup.LayoutParams.MATCH_PARENT;
+                lp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                root.setLayoutParams(lp);
+            }
+        }
+    }
+
     private void doDiscovery() {
         try {
             if (btService == null) {
                 return;
             }
-            setProgressBarIndeterminateVisibility(true);
-            setTitle(R.string.scanning);
-            findViewById(R.id.title_new_devices).setVisibility(View.VISIBLE);
+            setScanningUi(true);
+            titleNewDevices.setVisibility(View.VISIBLE);
+            discoveredAdapter.clear();
             if (btService.isDiscovering()) {
                 btService.cancelDiscovery();
             }
             btService.startDiscovery();
         } catch (Exception e) {
             Log.e(TAG, "doDiscovery failed", e);
+            setScanningUi(false);
             Toast.makeText(this, R.string.connect_fail, Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private void setScanningUi(boolean scanning) {
+        if (scanProgress != null) {
+            scanProgress.setVisibility(scanning ? View.VISIBLE : View.GONE);
+        }
+        if (sheetTitle != null) {
+            sheetTitle.setText(scanning ? R.string.scanning : R.string.select_device);
+        }
+        if (scanButton != null) {
+            scanButton.setEnabled(!scanning);
+            scanButton.setAlpha(scanning ? 0.5f : 1f);
+        }
+    }
+
+    private void sizeListView(ListView listView, int count) {
+        if (listView == null || count <= 0) {
+            return;
+        }
+        // Cap visible paired rows so the sheet stays bottom-sized
+        int maxRows = Math.min(count, 5);
+        float density = getResources().getDisplayMetrics().density;
+        int rowHeight = (int) (56 * density);
+        ViewGroup.LayoutParams params = listView.getLayoutParams();
+        params.height = rowHeight * maxRows;
+        listView.setLayoutParams(params);
     }
 }

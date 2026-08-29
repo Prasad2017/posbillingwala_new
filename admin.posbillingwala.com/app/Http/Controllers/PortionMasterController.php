@@ -17,15 +17,18 @@ class PortionMasterController extends Controller
     public function getAll(Request $request)
     {
         if ($request->ajax()) {
-            $data = PortionMaster::query()->whereIn('portionMasterStatus', ['active', 'inactive', 'deactive']);
+            $data = PortionMaster::query()
+                ->leftJoin('users', 'users.id', '=', 'portion_master.userId')
+                ->whereIn('portion_master.portionMasterStatus', ['active', 'inactive', 'deactive'])
+                ->select('portion_master.*', 'users.name as customerName', 'users.shopName');
 
             if ($request->customer_id) {
-                $data = $data->where('userId', $request->customer_id);
+                $data = $data->where('portion_master.userId', $request->customer_id);
             } elseif (Auth::user()->role_id == 3) {
-                $data = $data->where('userId', Auth::user()->id);
+                $data = $data->where('portion_master.userId', Auth::user()->id);
             } elseif (Auth::user()->role_id == 2) {
                 $customerIds = User::where('dealerId', Auth::id())->where('role_id', 3)->pluck('id');
-                $data = $data->whereIn('userId', $customerIds);
+                $data = $data->whereIn('portion_master.userId', $customerIds);
             }
 
             $data = $data->orderBy('portionName');

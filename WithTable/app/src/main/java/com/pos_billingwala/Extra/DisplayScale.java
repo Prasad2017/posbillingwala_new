@@ -15,8 +15,8 @@ import androidx.annotation.Nullable;
  */
 public final class DisplayScale {
 
-    /** 0.85 = compact POS UI. Change to 1.0f for full stable-device size. */
-    public static final float UI_SCALE = 0.85f;
+    /** 0.95 = slightly compact POS UI (dp text scales via densityDpi). */
+    public static final float UI_SCALE = 0.95f;
 
     public static final float LOCKED_FONT_SCALE = 1.0f;
 
@@ -62,11 +62,11 @@ public final class DisplayScale {
     @NonNull
     public static Resources adjustResources(@NonNull Context context, @NonNull Resources base) {
         Configuration config = new Configuration(base.getConfiguration());
-        if (isLocked(config)) {
-            DisplayMetrics metrics = base.getDisplayMetrics();
-            if (Math.abs(metrics.density - getTargetDensityDpi() / (float) DisplayMetrics.DENSITY_DEFAULT) < 0.01f) {
-                return base;
-            }
+        DisplayMetrics metrics = base.getDisplayMetrics();
+        boolean densityOk = Math.abs(metrics.density
+                - getTargetDensityDpi() / (float) DisplayMetrics.DENSITY_DEFAULT) < 0.01f;
+        if (isLocked(config) && densityOk && AppLanguage.configHasSavedLocale(context, config)) {
+            return base;
         }
         applyLock(config);
         AppLanguage.preserveLocaleOnConfig(context, config);

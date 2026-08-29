@@ -1,18 +1,15 @@
 package com.pos_billingwala.Adapter;
 
 import android.annotation.SuppressLint;
-import android.app.Dialog;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
@@ -21,8 +18,10 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.pos_billingwala.Activity.BluetoothPrint;
 import com.pos_billingwala.Activity.MainActivity;
+import com.pos_billingwala.Extra.BottomSheetUi;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Fragment.CreatePos;
 import com.pos_billingwala.Fragment.InvoiceCompanyTable;
@@ -126,22 +125,14 @@ public class TableAdapter extends RecyclerView.Adapter<TableAdapter.MyViewHolder
     }
 
     public void setPaymentMode(String tableNumber, String invoiceNumber, InvoiceResponse invoiceResponse) {
+        Activity activity = (Activity) context;
+        View content = LayoutInflater.from(activity).inflate(R.layout.set_payment_mode_dialog, null);
+        BottomSheetDialog sheet = BottomSheetUi.showContent(activity, content, false);
 
-        final Dialog dialog = new Dialog(context);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE); // before
-        dialog.setContentView(R.layout.set_payment_mode_dialog);
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
-        dialog.setCancelable(false);
-
-        WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
-        lp.copyFrom(dialog.getWindow().getAttributes());
-        lp.width = WindowManager.LayoutParams.MATCH_PARENT;
-        lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
-
-        TextView continueToReport = dialog.findViewById(R.id.continueToReport);
-        TextView dismissReport = dialog.findViewById(R.id.dismissReport);
-        TextView totalAmount = dialog.findViewById(R.id.totalAmount);
-        RadioGroup paymentGroup = dialog.findViewById(R.id.paymentGroup);
+        TextView continueToReport = content.findViewById(R.id.continueToReport);
+        TextView dismissReport = content.findViewById(R.id.dismissReport);
+        TextView totalAmount = content.findViewById(R.id.totalAmount);
+        RadioGroup paymentGroup = content.findViewById(R.id.paymentGroup);
 
         totalAmount.setText("Total Amount: " + MainActivity.currencyName + invoiceResponse.getTotalAmount());
         paymentGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
@@ -153,29 +144,17 @@ public class TableAdapter extends RecyclerView.Adapter<TableAdapter.MyViewHolder
             }
         });
 
-        dismissReport.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
+        dismissReport.setOnClickListener(v -> sheet.dismiss());
+
+        continueToReport.setOnClickListener(v -> {
+            if (!paymentMode.isEmpty()) {
+                sheet.dismiss();
+                posBillingWalaDatabase.updateInvoiceTablePaymentMode(invoiceNumber, tableNumber, paymentMode);
+                InvoiceCompanyTable.getCompanyDetails();
+            } else {
+                Toast.makeText(context, context.getString(R.string.toast_please_select_payment_mode), Toast.LENGTH_SHORT).show();
             }
         });
-
-        continueToReport.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (!paymentMode.isEmpty()) {
-                    dialog.dismiss();
-                    posBillingWalaDatabase.updateInvoiceTablePaymentMode(invoiceNumber, tableNumber, paymentMode);
-                    InvoiceCompanyTable.getCompanyDetails();
-                } else {
-                    Toast.makeText(context, context.getString(R.string.toast_please_select_payment_mode), Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
-
-        dialog.show();
-        dialog.getWindow().setAttributes(lp);
-
     }
 
 

@@ -2,9 +2,7 @@ package com.posbillingwala.dealer.Fragment;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.Dialog;
 import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.text.Html;
 import android.util.Log;
@@ -12,7 +10,6 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
 import android.widget.ArrayAdapter;
 import android.widget.CompoundButton;
 import android.widget.TextView;
@@ -21,9 +18,11 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.jaredrummler.materialspinner.MaterialSpinner;
 
 import com.posbillingwala.dealer.Activity.MainActivity;
+import com.posbillingwala.dealer.Extra.BottomSheetUi;
 import com.posbillingwala.dealer.Extra.DetectConnection;
 import com.posbillingwala.dealer.Extra.LicenceValidityTiers;
 import com.posbillingwala.dealer.Model.AllApiResponse;
@@ -204,14 +203,14 @@ public class NewLicenceRegistration extends Fragment implements View.OnClickList
                 if (response.isSuccessful()) {
                     if (response.body().getStatus().equalsIgnoreCase("true")) {
 
-                        final Dialog dialog = new Dialog(getActivity());
-                        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE); // before
-                        dialog.setContentView(R.layout.confirmation_dialog);
-                        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
-                        dialog.setCancelable(false);
+                        View dialogView = LayoutInflater.from(getActivity()).inflate(R.layout.confirmation_dialog, null);
+                        BottomSheetDialog sheet = BottomSheetUi.showContent(getActivity(), dialogView, false);
+                        if (sheet == null) {
+                            return;
+                        }
 
-                        TextView txtYes = dialog.findViewById(R.id.yes);
-                        TextView txtMessage = dialog.findViewById(R.id.message);
+                        TextView txtYes = dialogView.findViewById(R.id.yes);
+                        TextView txtMessage = dialogView.findViewById(R.id.message);
 
                         String message = "Licence Registration completed successfully with license key </br><b><font color='#ff0000'>" + licenseKey + "</font</b>";
                         txtMessage.setText(Html.fromHtml(message));
@@ -219,13 +218,11 @@ public class NewLicenceRegistration extends Fragment implements View.OnClickList
                         txtYes.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
-                                dialog.dismiss();
+                                sheet.dismiss();
                                 ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
                                 ((MainActivity) activity).loadFragment(new Home(), false);
                             }
                         });
-
-                        dialog.show();
 
                     } else {
                         Toast.makeText(activity, "" + response.body().getMessage(), Toast.LENGTH_SHORT).show();

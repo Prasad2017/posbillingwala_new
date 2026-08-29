@@ -9,7 +9,6 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -17,6 +16,7 @@ import androidx.core.content.ContextCompat;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.BottomSheetUi;
 import com.pos_billingwala.Extra.MessTokenQrHelper;
 import com.pos_billingwala.Model.MessTokenResponse;
 import com.pos_billingwala.R;
@@ -182,12 +182,16 @@ public class MessTokenScanActivity extends BaseActivity implements View.OnClickL
         binding.scanResultText.setText(message);
         binding.scanResultText.setTextColor(getColor(success ? R.color.colorPrimary : android.R.color.holo_red_dark));
 
-        new AlertDialog.Builder(this)
-                .setTitle(success ? "Token Verified" : "Verification Failed")
-                .setMessage(message)
-                .setPositiveButton("OK", null)
-                .setNeutralButton("Scan Again", (d, w) -> startScanner())
-                .show();
+        BottomSheetUi.showAction(
+                this,
+                success ? "Token Verified" : "Verification Failed",
+                message,
+                "OK",
+                "Scan Again",
+                0,
+                true,
+                null,
+                this::startScanner);
     }
 
     private String getRandomString(final int sizeOfRandomString) {

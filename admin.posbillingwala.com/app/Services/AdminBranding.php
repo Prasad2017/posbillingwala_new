@@ -42,7 +42,12 @@ class AdminBranding
 
     private static function assetWithVersion(string $relativePath, string $absolutePath): string
     {
-        return asset($relativePath) . '?v=' . filemtime($absolutePath);
+        $version = @filemtime($absolutePath);
+        if ($version === false) {
+            $version = time();
+        }
+
+        return asset($relativePath) . '?v=' . $version;
     }
 
     public static function logoUrl(): string

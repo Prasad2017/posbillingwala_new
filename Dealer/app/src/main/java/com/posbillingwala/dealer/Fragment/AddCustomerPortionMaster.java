@@ -2,6 +2,7 @@ package com.posbillingwala.dealer.Fragment;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.text.InputType;
@@ -22,11 +23,11 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.posbillingwala.dealer.Activity.MainActivity;
 import com.posbillingwala.dealer.Adapter.PortionMasterAdapter;
 import com.posbillingwala.dealer.Extra.DetectConnection;
-import com.posbillingwala.dealer.Extra.SimpleDividerItemDecoration;
 import com.posbillingwala.dealer.Model.AllApiResponse;
 import com.posbillingwala.dealer.Model.PortionMasterResponse;
 import com.posbillingwala.dealer.R;
 import com.posbillingwala.dealer.Retrofit.Api;
+import com.posbillingwala.dealer.Utils.CatalogImportExportHelper;
 import com.posbillingwala.dealer.databinding.FragmentAddCustomerPortionMasterBinding;
 
 import java.util.ArrayList;
@@ -47,50 +48,18 @@ public class AddCustomerPortionMaster extends Fragment implements View.OnClickLi
     public static CardView portionMasterListCardView;
     public static TextView noDataFound;
 
+    View view;
     FragmentAddCustomerPortionMasterBinding binding;
+
     String returnTo;
     String productId;
     String productName;
-
-    public static void getPortionMasterList() {
-        if (activity == null || customerId == null) {
-            return;
-        }
-        Call<AllApiResponse> call = Api.getClient().getPortionMasterList(customerId);
-        call.enqueue(new Callback<AllApiResponse>() {
-            @Override
-            public void onResponse(Call<AllApiResponse> call, Response<AllApiResponse> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    List<PortionMasterResponse> list = response.body().getPortionMasterResponseList();
-                    if (list == null) {
-                        list = new ArrayList<>();
-                    }
-                    if (!list.isEmpty()) {
-                        PortionMasterAdapter adapter = new PortionMasterAdapter(activity, list);
-                        portionMasterRecyclerview.setLayoutManager(new GridLayoutManager(activity, 1));
-                        portionMasterRecyclerview.setAdapter(adapter);
-                        if (portionMasterRecyclerview.getItemDecorationCount() == 0) {
-                            portionMasterRecyclerview.addItemDecoration(new SimpleDividerItemDecoration(activity));
-                        }
-                        portionMasterListCardView.setVisibility(View.VISIBLE);
-                        noDataFound.setVisibility(View.GONE);
-                    } else {
-                        portionMasterListCardView.setVisibility(View.GONE);
-                        noDataFound.setVisibility(View.VISIBLE);
-                    }
-                }
-            }
-
-            @Override
-            public void onFailure(Call<AllApiResponse> call, Throwable t) {
-                Log.e("portionMasterList", "" + t.getMessage());
-            }
-        });
-    }
+    CatalogImportExportHelper catalogImportExportHelper;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentAddCustomerPortionMasterBinding.inflate(inflater, container, false);
+        view = binding.getRoot();
 
         activity = getActivity();
         MainActivity.title.setText("Portion Master");
@@ -103,6 +72,12 @@ public class AddCustomerPortionMaster extends Fragment implements View.OnClickLi
             productName = bundle.getString("productName");
         }
 
+        if (customerId != null) {
+            catalogImportExportHelper = new CatalogImportExportHelper(
+                    this, customerId, "portions", "Portions", AddCustomerPortionMaster::getPortionMasterList);
+            catalogImportExportHelper.bindBar(binding.catalogImportExportBar.getRoot());
+        }
+
         binding.portionMasterName.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
         portionMasterRecyclerview = binding.portionMasterRecyclerview;
         portionMasterListCardView = binding.portionMasterListCardView;
@@ -110,48 +85,57 @@ public class AddCustomerPortionMaster extends Fragment implements View.OnClickLi
 
         MainActivity.back.setOnClickListener(v -> navigateBack());
 
-        binding.getRoot().setFocusableInTouchMode(true);
-        binding.getRoot().requestFocus();
-        binding.getRoot().setOnKeyListener((v, keyCode, event) -> {
+        view.setFocusableInTouchMode(true);
+        view.requestFocus();
+        view.setOnKeyListener((v, keyCode, event) -> {
             if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
-                navigateBack();
+                MainActivity.back.performClick();
                 return true;
             }
             return false;
         });
 
         binding.addPortionMaster.setOnClickListener(this);
-        return binding.getRoot();
+
+        return view;
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (catalogImportExportHelper != null) {
+            catalogImportExportHelper.handleActivityResult(requestCode, resultCode, data);
+        }
     }
 
     private void navigateBack() {
         ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
         if ("productPortions".equals(returnTo)) {
             ManageCustomerProductPortions fragment = new ManageCustomerProductPortions();
-            Bundle bundle = new Bundle();
-            bundle.putString("customerId", customerId);
-            bundle.putString("productId", productId);
-            bundle.putString("productName", productName);
-            fragment.setArguments(bundle);
+            Bundle backBundle = new Bundle();
+            backBundle.putString("customerId", customerId);
+            backBundle.putString("productId", productId);
+            backBundle.putString("productName", productName);
+            fragment.setArguments(backBundle);
             ((MainActivity) activity).loadFragment(fragment, true);
         } else if ("addProduct".equals(returnTo)) {
             AddCustomerProduct fragment = new AddCustomerProduct();
-            Bundle bundle = new Bundle();
-            bundle.putString("customerId", customerId);
-            fragment.setArguments(bundle);
+            Bundle backBundle = new Bundle();
+            backBundle.putString("customerId", customerId);
+            fragment.setArguments(backBundle);
             ((MainActivity) activity).loadFragment(fragment, true);
         } else if ("updateProduct".equals(returnTo)) {
             UpdateProduct fragment = new UpdateProduct();
-            Bundle bundle = new Bundle();
-            bundle.putString("customerId", customerId);
-            bundle.putString("productId", productId);
-            fragment.setArguments(bundle);
+            Bundle backBundle = new Bundle();
+            backBundle.putString("customerId", customerId);
+            backBundle.putString("productId", productId);
+            fragment.setArguments(backBundle);
             ((MainActivity) activity).loadFragment(fragment, true);
         } else {
             AddCustomerProductCategory fragment = new AddCustomerProductCategory();
-            Bundle bundle = new Bundle();
-            bundle.putString("customerId", customerId);
-            fragment.setArguments(bundle);
+            Bundle backBundle = new Bundle();
+            backBundle.putString("customerId", customerId);
+            fragment.setArguments(backBundle);
             ((MainActivity) activity).loadFragment(fragment, true);
         }
     }
@@ -159,16 +143,15 @@ public class AddCustomerPortionMaster extends Fragment implements View.OnClickLi
     @Override
     public void onClick(View view) {
         if (view.getId() == R.id.addPortionMaster) {
-            String name = binding.portionMasterName.getText().toString().trim();
-            if (name.isEmpty()) {
+            if (binding.portionMasterName.getText().toString().trim().length() == 0) {
                 Toast.makeText(activity, "Please enter portion name", Toast.LENGTH_SHORT).show();
                 return;
             }
-            addPortionMaster(name);
+            addPortionMaster();
         }
     }
 
-    private void addPortionMaster(String name) {
+    private void addPortionMaster() {
         SweetAlertDialog pDialog = new SweetAlertDialog(activity, SweetAlertDialog.PROGRESS_TYPE);
         pDialog.getProgressHelper().setBarColor(Color.parseColor("#2D7FED"));
         pDialog.setTitleText("Loading");
@@ -176,7 +159,10 @@ public class AddCustomerPortionMaster extends Fragment implements View.OnClickLi
         pDialog.show();
 
         Call<AllApiResponse> call = Api.getClient().savePortionMaster(
-                customerId, name, getRandomString(10), "0");
+                customerId,
+                binding.portionMasterName.getText().toString().trim(),
+                getRandomString(10),
+                "0");
         call.enqueue(new Callback<AllApiResponse>() {
             @Override
             public void onResponse(Call<AllApiResponse> call, Response<AllApiResponse> response) {
@@ -194,6 +180,44 @@ public class AddCustomerPortionMaster extends Fragment implements View.OnClickLi
             public void onFailure(Call<AllApiResponse> call, Throwable t) {
                 pDialog.dismiss();
                 Log.e("portionMasterError", "" + t.getMessage());
+            }
+        });
+    }
+
+    public static void getPortionMasterList() {
+        SweetAlertDialog pDialog = new SweetAlertDialog(activity, SweetAlertDialog.PROGRESS_TYPE);
+        pDialog.getProgressHelper().setBarColor(Color.parseColor("#2D7FED"));
+        pDialog.setTitleText("Loading");
+        pDialog.setCancelable(false);
+        pDialog.show();
+
+        Call<AllApiResponse> call = Api.getClient().getPortionMasterList(customerId);
+        call.enqueue(new Callback<AllApiResponse>() {
+            @Override
+            public void onResponse(Call<AllApiResponse> call, Response<AllApiResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    List<PortionMasterResponse> list = response.body().getPortionMasterResponseList();
+                    if (list == null) {
+                        list = new ArrayList<>();
+                    }
+                    if (!list.isEmpty()) {
+                        PortionMasterAdapter adapter = new PortionMasterAdapter(activity, list);
+                        portionMasterRecyclerview.setLayoutManager(new GridLayoutManager(activity, 1));
+                        portionMasterRecyclerview.setAdapter(adapter);
+                        portionMasterListCardView.setVisibility(View.VISIBLE);
+                        noDataFound.setVisibility(View.GONE);
+                    } else {
+                        portionMasterListCardView.setVisibility(View.GONE);
+                        noDataFound.setVisibility(View.VISIBLE);
+                    }
+                }
+                pDialog.dismiss();
+            }
+
+            @Override
+            public void onFailure(Call<AllApiResponse> call, Throwable t) {
+                pDialog.dismiss();
+                Log.e("portionMasterList", "" + t.getMessage());
             }
         });
     }

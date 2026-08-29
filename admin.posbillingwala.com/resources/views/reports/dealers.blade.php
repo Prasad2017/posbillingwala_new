@@ -1,4 +1,5 @@
 @extends('layouts.app')
+@section('page_title', 'Dealer Reports')
 @section('content')
 @php
   $dealerLabels = collect($data['dealers'])->pluck('dealerName')->values();
@@ -8,8 +9,13 @@
 @endphp
 <div class="page-wrapper">
     <div class="page-content">
-        <h5 class="dash-hello mb-1">Dealer Reports</h5>
-        <p class="text-secondary mb-3">This month sales · {{ \App\Services\AdminMetrics::rupee($data['totalSales']) }}</p>
+        @include('layouts.page-header', [
+            'title' => 'Dealer Reports',
+            'subtitle' => 'This month sales · ' . \App\Services\AdminMetrics::rupee($data['totalSales']),
+            'actionUrl' => url('reports'),
+            'actionLabel' => 'Reports Hub',
+            'actionIcon' => 'bx-grid-alt',
+        ])
         <div class="row g-3">
             <div class="col-lg-5">
                 <div class="card h-100"><div class="card-body">
@@ -26,7 +32,7 @@
             <div class="col-lg-7">
                 <div class="card h-100"><div class="card-body table-responsive">
                     <h6 class="section-title">Dealer performance</h6>
-                    <table class="table">
+                    <table class="table pb-transactions-table">
                         <thead><tr><th>Dealer</th><th>Customers</th><th>Active licenses</th><th>Sales</th></tr></thead>
                         <tbody>
                         @forelse($data['dealers'] as $d)

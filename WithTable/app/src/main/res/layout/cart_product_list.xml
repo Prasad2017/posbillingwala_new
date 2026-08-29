@@ -10,10 +10,8 @@
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingStart="12dp"
-        android:paddingTop="10dp"
-        android:paddingEnd="12dp"
-        android:paddingBottom="10dp">
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp">
 
         <TextView
             android:id="@+id/productName"
@@ -21,53 +19,86 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:ellipsize="end"
+            android:gravity="start|center_vertical"
             android:maxLines="2"
+            android:paddingStart="5dp"
+            android:paddingEnd="5dp"
             android:textColor="@color/colorTextPrimary"
             android:textSize="14sp" />
 
-        <ImageView
-            android:id="@+id/productRemove"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:contentDescription="@null"
-            android:padding="2dp"
-            android:src="@drawable/remove"
-            app:tint="@color/colorTextSecondary" />
-
-        <TextView
-            android:id="@+id/productQuantity"
-            android:layout_width="40dp"
+        <LinearLayout
+            android:layout_width="110dp"
             android:layout_height="wrap_content"
+            android:clickable="false"
+            android:focusable="false"
             android:gravity="center"
-            android:textColor="@color/colorTextPrimary"
-            android:textSize="14sp"
-            android:textStyle="bold" />
+            android:orientation="horizontal">
 
-        <ImageView
-            android:id="@+id/productAdd"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:contentDescription="@null"
-            android:padding="2dp"
-            android:src="@drawable/increase"
-            app:tint="@color/colorTextSecondary" />
+            <TextView
+                android:id="@+id/productRemove"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:background="@drawable/bg_cart_qty_btn"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:text="−"
+                android:textColor="@color/colorPrimary"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/productQuantity"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:layout_marginStart="6dp"
+                android:layout_marginEnd="6dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:minWidth="28dp"
+                android:textColor="@color/colorTextPrimary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/productAdd"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:background="@drawable/bg_cart_qty_btn"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:text="+"
+                android:textColor="@color/colorPrimary"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+        </LinearLayout>
 
         <TextView
             android:id="@+id/productPrice"
-            android:layout_width="72dp"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:gravity="end"
+            android:layout_weight="1"
+            android:clickable="false"
+            android:focusable="false"
+            android:gravity="center"
+            android:maxLines="1"
+            android:paddingStart="5dp"
+            android:paddingEnd="5dp"
             android:textColor="@color/colorPrimary"
             android:textSize="13sp"
             android:textStyle="bold" />
 
         <ImageView
             android:id="@+id/productDelete"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_marginStart="4dp"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
             android:contentDescription="@null"
-            android:padding="2dp"
+            android:padding="4dp"
             android:src="@drawable/ic_delete"
             app:tint="@color/statusExpired" />
     </LinearLayout>

@@ -85,6 +85,22 @@ public class CustomerDetails extends Fragment implements View.OnClickListener {
 
         binding.updateCustomer.setOnClickListener(this);
 
+        binding.openImportExport.setOnClickListener(v -> {
+            ProductExport export = new ProductExport();
+            Bundle b = new Bundle();
+            b.putString("customerId", customerId);
+            export.setArguments(b);
+            ((MainActivity) activity).loadFragment(export, true);
+        });
+
+        binding.openCatalog.setOnClickListener(v -> {
+            AddCustomerProductCategory category = new AddCustomerProductCategory();
+            Bundle b = new Bundle();
+            b.putString("customerId", customerId);
+            category.setArguments(b);
+            ((MainActivity) activity).loadFragment(category, true);
+        });
+
         return view;
 
     }

@@ -1,20 +1,16 @@
 package com.posbillingwala.admin.Adapter;
 
-import android.app.Dialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.posbillingwala.admin.Extra.BottomSheetUi;
 import com.posbillingwala.admin.Fragment.AddCustomerPortionMaster;
 import com.posbillingwala.admin.Model.AllApiResponse;
 import com.posbillingwala.admin.Model.PortionMasterResponse;
@@ -58,24 +54,18 @@ public class PortionMasterAdapter extends RecyclerView.Adapter<PortionMasterAdap
     }
 
     private void updatePortionMasterDialog(PortionMasterResponse item) {
-        final Dialog dialog = new Dialog(context);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         UpdatePortionMasterDialogBinding dialogBinding = UpdatePortionMasterDialogBinding.inflate(LayoutInflater.from(context));
-        dialog.setContentView(dialogBinding.getRoot());
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        dialog.setCancelable(false);
-
-        WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
-        lp.copyFrom(dialog.getWindow().getAttributes());
-        lp.width = WindowManager.LayoutParams.MATCH_PARENT;
-        lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
+        BottomSheetDialog sheet = BottomSheetUi.showContent(context, dialogBinding.getRoot(), false);
+        if (sheet == null) {
+            return;
+        }
 
         dialogBinding.portionMasterName.setText(item.getPortionName());
         if (dialogBinding.portionMasterName.getText() != null) {
             dialogBinding.portionMasterName.setSelection(dialogBinding.portionMasterName.getText().length());
         }
 
-        dialogBinding.dismissPortionMaster.setOnClickListener(v -> dialog.dismiss());
+        dialogBinding.dismissPortionMaster.setOnClickListener(v -> sheet.dismiss());
         dialogBinding.updatePortionMaster.setOnClickListener(v -> {
             String newName = dialogBinding.portionMasterName.getText() != null
                     ? dialogBinding.portionMasterName.getText().toString().trim() : "";
@@ -83,28 +73,17 @@ public class PortionMasterAdapter extends RecyclerView.Adapter<PortionMasterAdap
                 Toast.makeText(context, "Please enter portion name", Toast.LENGTH_SHORT).show();
                 return;
             }
-            dialog.dismiss();
+            sheet.dismiss();
             savePortionMaster(item.getPortionMasterNetworkStatus(), newName, "0");
         });
-
-        dialog.show();
-        dialog.getWindow().setAttributes(lp);
     }
 
     private void deletePortionMasterDialog(PortionMasterResponse item) {
-        new MaterialAlertDialogBuilder(context)
-                .setTitle("Are you Sure?")
-                .setMessage("Do you want to delete this portion master?")
-                .setPositiveButton("YES", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        dialogInterface.dismiss();
-                        String name = item.getPortionName() != null ? item.getPortionName() : "";
-                        savePortionMaster(item.getPortionMasterNetworkStatus(), name, "1");
-                    }
-                })
-                .setNegativeButton("NO", (dialogInterface, i) -> dialogInterface.dismiss())
-                .show();
+        BottomSheetUi.showConfirm(context, "Are you Sure?", "Do you want to delete this portion master?",
+                "YES", "NO", true, () -> {
+                    String name = item.getPortionName() != null ? item.getPortionName() : "";
+                    savePortionMaster(item.getPortionMasterNetworkStatus(), name, "1");
+                });
     }
 
     private void savePortionMaster(String networkStatus, String portionName, String deletedStatus) {

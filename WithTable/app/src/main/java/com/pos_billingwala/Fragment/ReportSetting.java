@@ -136,7 +136,8 @@ public class ReportSetting extends Fragment implements View.OnClickListener {
                         unsynced + " unsynced bill(s). Upload to cloud first — clear blocked to protect data.",
                         Toast.LENGTH_LONG).show();
                 if (DetectConnection.checkInternetConnection(activity)) {
-                    new UserSynchronizeData(activity);
+                    ((MainActivity) activity).openCloudSyncStatus();
+                    UserSynchronizeData.start(activity, false);
                 } else {
                     DetectConnection.noInternetConnection(activity);
                 }

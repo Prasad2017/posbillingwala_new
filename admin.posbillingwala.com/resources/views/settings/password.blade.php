@@ -1,17 +1,16 @@
 @extends('layouts.app')
+@section('page_title', 'Change Password')
 @section('content')
 <div class="page-wrapper">
     <div class="page-content">
-        <div class="d-flex align-items-center justify-content-between mb-3">
-            <div>
-                <h5 class="dash-hello mb-1">Change Password</h5>
-                <p class="text-secondary mb-0">Use at least 8 characters</p>
-            </div>
-            <a href="{{ url('settings') }}" class="btn btn-outline-primary btn-sm">Back to Settings</a>
-        </div>
-        @if(session('success'))
-            <div class="alert alert-success">{{ session('success') }}</div>
-        @endif
+        @include('layouts.flash')
+        @include('layouts.page-header', [
+            'title' => 'Change Password',
+            'subtitle' => 'Web admin password — separate from the Dealer mobile app API.',
+            'actionUrl' => url('settings'),
+            'actionLabel' => 'Settings Hub',
+            'actionIcon' => 'bx-grid-alt',
+        ])
         <div class="card"><div class="card-body">
             <form method="post" action="{{ url('settings/password') }}">
                 @csrf

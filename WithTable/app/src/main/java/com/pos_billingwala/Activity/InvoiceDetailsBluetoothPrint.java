@@ -45,8 +45,8 @@ import com.pos_billingwala.Adapter.ThreeInvoicePrintAdapter;
 import com.pos_billingwala.Adapter.TwoInvoicePrintAdapter;
 import com.pos_billingwala.BuildConfig;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.BottomSheetUi;
 import com.pos_billingwala.Extra.ShopHeaderBuilder;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.pos_billingwala.NetworkToOffline.InvoicePendingSync;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.InvoiceProductResponse;
@@ -305,18 +305,19 @@ public class InvoiceDetailsBluetoothPrint extends BaseActivity implements View.O
         if (invoiceResponseList.isEmpty() || invoiceResponseList.get(0).isRefunded()) {
             return;
         }
-        new MaterialAlertDialogBuilder(activity, R.style.ThemeDialog)
-                .setTitle(getString(R.string.refund_confirm_title))
-                .setMessage(getString(R.string.refund_confirm_message))
-                .setPositiveButton(getString(R.string.refund_bill), (dialog, which) -> {
-                    dialog.dismiss();
+        BottomSheetUi.showConfirm(
+                activity,
+                getString(R.string.refund_confirm_title),
+                getString(R.string.refund_confirm_message),
+                getString(R.string.refund_bill),
+                getString(R.string.cancel),
+                true,
+                () -> {
                     posBillingWalaDatabase.refundInvoice(invoiceResponseList.get(0).getInvoiceNumber());
                     Toast.makeText(activity, getString(R.string.refund_success), Toast.LENGTH_SHORT).show();
                     InvoicePendingSync.syncPendingInvoiceChanges(activity);
                     getInvoiceDetails();
-                })
-                .setNegativeButton(getString(R.string.cancel), (dialog, which) -> dialog.dismiss())
-                .show();
+                });
     }
 
     public void createPdf() {

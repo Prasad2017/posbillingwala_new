@@ -78,7 +78,7 @@ class CrashController extends Controller
     {
         $this->adminOnly();
         $logs = Schema::hasTable('error_logs')
-            ? ErrorLog::orderByDesc('last_seen_at')->limit(200)->get()
+            ? ErrorLog::orderByDesc('last_seen_at')->limit(500)->get()
             : collect();
         return view('crashes.errors', compact('logs'));
     }

@@ -891,7 +891,8 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         } else {
             values.put("portionMasterNetworkStatus", generateLocalNetworkKey());
         }
-        values.put("portionMasterStatus", 1);
+        values.put("portionMasterStatus",
+                (networkStatus == null || networkStatus.trim().isEmpty()) ? 0 : 1);
         return db.insert(PORTION_MASTER_TABLE, null, values);
     }
 
@@ -1099,8 +1100,11 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put("subcategoryName", subcategoryName);
-        values.put("subcategoryStatus", subcategoryStatus);
+        values.put("subcategoryStatus", 0);
         db.update(PRODUCT_SUBCATEGORY_TABLE, values, "subcategoryId=?", new String[]{subcategoryId});
+        ContentValues productDirty = new ContentValues();
+        productDirty.put("productStatus", 0);
+        db.update(PRODUCT_TABLE, productDirty, "subcategoryId=?", new String[]{subcategoryId});
         db.close();
     }
 
@@ -1110,6 +1114,9 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         values.put("subcategoryDeletedStatus", "1");
         values.put("subcategoryStatus", 0);
         db.update(PRODUCT_SUBCATEGORY_TABLE, values, "subcategoryId=?", new String[]{subcategoryId});
+        ContentValues productDirty = new ContentValues();
+        productDirty.put("productStatus", 0);
+        db.update(PRODUCT_TABLE, productDirty, "subcategoryId=?", new String[]{subcategoryId});
         db.close();
     }
 
@@ -1247,10 +1254,11 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put("portionName", portionName);
-        values.put("portionMasterStatus", portionMasterStatus);
+        values.put("portionMasterStatus", 0);
         db.update(PORTION_MASTER_TABLE, values, "portionMasterId=?", new String[]{portionMasterId});
         ContentValues linkValues = new ContentValues();
         linkValues.put("portionName", portionName);
+        linkValues.put("portionStatus", 0);
         db.update(PRODUCT_PORTION_TABLE, linkValues, "portionMasterId=?", new String[]{portionMasterId});
         db.close();
     }
@@ -1261,6 +1269,9 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         values.put("portionMasterDeletedStatus", "1");
         values.put("portionMasterStatus", 0);
         db.update(PORTION_MASTER_TABLE, values, "portionMasterId=?", new String[]{portionMasterId});
+        ContentValues linkValues = new ContentValues();
+        linkValues.put("portionStatus", 0);
+        db.update(PRODUCT_PORTION_TABLE, linkValues, "portionMasterId=?", new String[]{portionMasterId});
         db.close();
     }
 
@@ -1431,10 +1442,28 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
                 values.put("portionStatus", portionStatus);
                 db.update(PRODUCT_PORTION_TABLE, values, "portionId=?", new String[]{existing.getPortionId()});
                 db.close();
+                if (portionStatus == 0) {
+                    markProductUnsynced(productId);
+                }
                 return true;
             }
         }
         if (portionNetworkStatusExists(portionNetworkStatus)) {
+            if (portionStatus == 0) {
+                SQLiteDatabase db = this.getWritableDatabase();
+                ContentValues values = new ContentValues();
+                values.put("portionName", portionName);
+                values.put("portionPrice", portionPrice);
+                values.put("portionSortOrder", portionSortOrder);
+                values.put("portionDeletedStatus", deleted);
+                values.put("portionStatus", 0);
+                putOptionalColumn(values, "portionMasterId", portionMasterId);
+                db.update(PRODUCT_PORTION_TABLE, values, "portionNetworkStatus=?",
+                        new String[]{portionNetworkStatus});
+                db.close();
+                markProductUnsynced(productId);
+                return true;
+            }
             return false;
         }
         SQLiteDatabase db = this.getWritableDatabase();
@@ -1448,8 +1477,18 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         values.put("portionNetworkStatus", portionNetworkStatus);
         values.put("portionStatus", portionStatus);
         long rowId = db.insertWithOnConflict(PRODUCT_PORTION_TABLE, null, values, SQLiteDatabase.CONFLICT_IGNORE);
+        if (rowId == -1 && portionMasterId != null && !portionMasterId.trim().isEmpty()) {
+            values.remove("productId");
+            values.remove("portionNetworkStatus");
+            values.put("portionStatus", 0);
+            db.update(PRODUCT_PORTION_TABLE, values, "productId=? AND portionMasterId=? AND portionDeletedStatus='0'",
+                    new String[]{productId, portionMasterId});
+        }
         db.close();
-        return rowId != -1;
+        if (portionStatus == 0) {
+            markProductUnsynced(productId);
+        }
+        return true;
     }
 
     /**
@@ -1512,7 +1551,9 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         values.put("portionSortOrder", portionSortOrder);
         values.put("portionStatus", 0);
         db.update(PRODUCT_PORTION_TABLE, values, "portionId=?", new String[]{portionId});
+        String productId = productIdForPortion(db, portionId);
         db.close();
+        markProductUnsynced(productId);
     }
 
     public void updateProductPortionPriceAndSort(String portionId, String portionPrice, int portionSortOrder) {
@@ -1522,7 +1563,9 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         values.put("portionSortOrder", portionSortOrder);
         values.put("portionStatus", 0);
         db.update(PRODUCT_PORTION_TABLE, values, "portionId=?", new String[]{portionId});
+        String productId = productIdForPortion(db, portionId);
         db.close();
+        markProductUnsynced(productId);
     }
 
     public void deleteProductPortion(String portionId) {
@@ -1531,6 +1574,39 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         values.put("portionDeletedStatus", "1");
         values.put("portionStatus", 0);
         db.update(PRODUCT_PORTION_TABLE, values, "portionId=?", new String[]{portionId});
+        String productId = productIdForPortion(db, portionId);
+        db.close();
+        markProductUnsynced(productId);
+    }
+
+    private String productIdForPortion(SQLiteDatabase db, String portionId) {
+        if (portionId == null || portionId.trim().isEmpty()) {
+            return null;
+        }
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery("SELECT productId FROM " + PRODUCT_PORTION_TABLE + " WHERE portionId = ? LIMIT 1",
+                    new String[]{portionId});
+            if (cursor.moveToFirst()) {
+                return cursor.getString(0);
+            }
+        } catch (Exception ignored) {
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return null;
+    }
+
+    public void markProductUnsynced(String productId) {
+        if (productId == null || productId.trim().isEmpty()) {
+            return;
+        }
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("productStatus", 0);
+        db.update(PRODUCT_TABLE, values, "productId=?", new String[]{productId});
         db.close();
     }
 
@@ -1905,7 +1981,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         contentValues.put("printerFeedLines", printerFeedLines);
         contentValues.put("KotPrinterFeedLines", KotPrinterFeedLines);
         contentValues.put("invoiceTermsCondition", invoiceTermsCondition);
-        contentValues.put("settingStatus", settingStatus);
+        contentValues.put("settingStatus", 0);
 
         db.update(PRINTER_SETTING_TABLE, contentValues, "settingId=?", new String[]{settingId});
         db.close();
@@ -2065,6 +2141,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         ContentValues contentValues = new ContentValues();
 
         contentValues.put("paymentMode", paymentMode);
+        contentValues.put("invoiceStatus", "0");
 
         db.update(INVOICE_TABLE, contentValues, "invoiceNumber=?", new String[]{invoiceNumber});
 
@@ -2077,6 +2154,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
 
         contentValues.put("paymentMode", paymentMode);
         contentValues.put("noOfTable", tableNumber);
+        contentValues.put("invoiceStatus", "0");
 
         db.update(INVOICE_TABLE, contentValues, "invoiceNumber=?", new String[]{invoiceNumber});
 
@@ -2136,6 +2214,11 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             db.delete(INVOICE_COMBO_ITEM_TABLE, "invoiceProductNetworkStatus=?", new String[]{networkStatus});
         }
         db.delete(INVOICE_PRODUCT_TABLE, "invoiceProductId=?", new String[]{invoiceProductId});
+        if (invoiceNumber != null && !invoiceNumber.trim().isEmpty()) {
+            ContentValues invoiceDirty = new ContentValues();
+            invoiceDirty.put("invoiceStatus", "0");
+            db.update(INVOICE_TABLE, invoiceDirty, "invoiceNumber=?", new String[]{invoiceNumber});
+        }
         db.close();
     }
 
@@ -2233,7 +2316,12 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             } else {
                 updateInventoryQuantity(productCartResponse.getProductId());
             }
-            updateCartStatus(productCartResponse.getCartId());
+            // Remove billed lines from cart on the same DB (do not close mid-insert).
+            String cartId = productCartResponse.getCartId();
+            if (cartId != null && !cartId.trim().isEmpty()) {
+                db.delete(CART_COMBO_ITEM_TABLE, "cartId = ?", new String[]{cartId});
+                db.delete(CART_PRODUCT_TABLE, "cartId = ?", new String[]{cartId});
+            }
 
         }
 
@@ -2246,8 +2334,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
 
-        contentValues.put("inventoryNetworkStatus", getRandomString(10));
-        contentValues.put("inventoryStatus", 1);
+        contentValues.put("inventoryStatus", 0);
 
         db.update(INVENTORY_TABLE, contentValues, "productId=?", new String[]{productId});
 
@@ -2265,14 +2352,8 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
     }
 
     public void updateCartStatus(String cartId) {
-
-        SQLiteDatabase db = this.getWritableDatabase();
-        ContentValues contentValues = new ContentValues();
-
-        contentValues.put("cartOrderStatus", "completed");
-
-        db.update(CART_PRODUCT_TABLE, contentValues, "cartId=?", new String[]{cartId});
-        // db.close();
+        // After billing, remove the line from the active cart (and any combo components).
+        deleteCartProduct(cartId);
     }
 
     public void updateCompanyDetails(String companyLogo, String companyId, String companyName, String cashierName, String companyMobile, String companyAddress, String currencyName, String tableStatus, String noOfTable, String countryName,
@@ -2289,6 +2370,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         ContentValues contentValues = putCompanyContentValues(companyLogo, shopName1, shopName2, cashierName, phoneNo1, phoneNo2,
                 addressLine1, addressLine2, addressLine3, currencyName, tableStatus, noOfTable, countryName,
                 stateName, gstStatus, gstNumber, shopCGST != null ? shopCGST.trim() : "", shopSGST != null ? shopSGST.trim() : "", panNumber, companyFssis, companyStatus, paymentLogo);
+        contentValues.put("companyStatus", 0);
         db.update(COMPANY_TABLE, contentValues, "companyId=?", new String[]{companyId});
         db.close();
     }
@@ -2318,12 +2400,16 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         ContentValues contentValues = new ContentValues();
 
         contentValues.put("categoryName", categoryName);
-        contentValues.put("categoryStatus", categoryStatus);
+        contentValues.put("categoryStatus", 0);
         if (foodTypeId > 0) {
             contentValues.put("foodTypeId", foodTypeId);
         }
 
         db.update(PRODUCT_CATEGORY_TABLE, contentValues, "categoryId=?", new String[]{categoryId});
+        ContentValues productDirty = new ContentValues();
+        productDirty.put("categoryName", categoryName);
+        productDirty.put("productStatus", 0);
+        db.update(PRODUCT_TABLE, productDirty, "categoryId=?", new String[]{categoryId});
         db.close();
 
     }
@@ -2359,7 +2445,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         contentValues.put("productCGST", productCGST);
         contentValues.put("productSGST", productSGST);
         contentValues.put("productWithGSTPrice", String.valueOf(productWithGSTPrice));
-        contentValues.put("productStatus", productStatus);
+        contentValues.put("productStatus", 0);
         putOptionalColumn(contentValues, "subcategoryId", subcategoryId);
 
         db.update(PRODUCT_TABLE, contentValues, "productId=?", new String[]{productId});
@@ -2875,6 +2961,9 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         contentValues.put("categoryDeletedStatus", "1");
         contentValues.put("categoryStatus", "0");
         db.update(PRODUCT_CATEGORY_TABLE, contentValues, "categoryId = ?", new String[]{categoryId});
+        ContentValues productDirty = new ContentValues();
+        productDirty.put("productStatus", 0);
+        db.update(PRODUCT_TABLE, productDirty, "categoryId=?", new String[]{categoryId});
         db.close();
     }
 
@@ -2909,6 +2998,14 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         contentValues.put("productDeletedStatus", "1");
         contentValues.put("productStatus", "0");
         db.update(PRODUCT_TABLE, contentValues, "productId = ?", new String[]{productId});
+        ContentValues portionDirty = new ContentValues();
+        portionDirty.put("portionStatus", 0);
+        db.update(PRODUCT_PORTION_TABLE, portionDirty, "productId=?", new String[]{productId});
+        ContentValues comboItemDirty = new ContentValues();
+        comboItemDirty.put("comboItemStatus", 0);
+        db.update(COMBO_ITEM_TABLE, comboItemDirty, "productId=?", new String[]{productId});
+        db.execSQL("UPDATE " + COMBO_TABLE + " SET comboStatus = 0 WHERE comboId IN (SELECT comboId FROM "
+                + COMBO_ITEM_TABLE + " WHERE productId=?)", new String[]{productId});
         db.close();
         /*db.delete(PRODUCT_TABLE, "productId = ?", new String[]{productId});
         db.close();*/
@@ -2985,6 +3082,52 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         String sql = "SELECT * FROM " + PRODUCT_TABLE + " WHERE productStatus = '" + status + "' ";
         Cursor cursor = db.rawQuery(sql, null);
         return cursor;
+    }
+
+    /** Counts rows waiting to upload. Uses COUNT(*) so the sync screen cannot miss pending edits. */
+    public int countUnsyncedRows(String table, String statusColumn) {
+        if (table == null || statusColumn == null) {
+            return 0;
+        }
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT COUNT(*) FROM " + table
+                            + " WHERE " + statusColumn + " = 0 OR " + statusColumn + " = '0'",
+                    null);
+            if (cursor.moveToFirst()) {
+                return cursor.getInt(0);
+            }
+            return 0;
+        } catch (Exception e) {
+            return 0;
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
+    public int countAllRows(String table) {
+        if (table == null) {
+            return 0;
+        }
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery("SELECT COUNT(*) FROM " + table, null);
+            if (cursor.moveToFirst()) {
+                return cursor.getInt(0);
+            }
+            return 0;
+        } catch (Exception e) {
+            return 0;
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
     }
 
     public void updateSyncProduct(String productId, int productStatus) {
@@ -3774,7 +3917,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         contentValues.put("productInventoryQuantity", productQuantity);
         contentValues.put("afterSaleInventoryQuantity", afterSaleInventoryQuantity);
         contentValues.put("saleInventoryQuantity", saleInventoryQuantity);
-        contentValues.put("inventoryStatus", String.valueOf(inventoryStatus));
+        contentValues.put("inventoryStatus", "0");
 
         db.update(INVENTORY_TABLE, contentValues, "productId=?", new String[]{productId});
         db.close();
@@ -4139,7 +4282,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         contentValues.put("memberMobileNumber", memberMobileNumber);
         contentValues.put("memberAlternetMobileNumber", memberAlternetMobileNumber);
         contentValues.put("memberAddress", memberAddress);
-        contentValues.put("memberStatus", memberStatus);
+        contentValues.put("memberStatus", 0);
 
         db.update(MEMBER_TABLE, contentValues, "memberId=?", new String[]{memberId});
         db.close();
@@ -4442,6 +4585,28 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
                 new String[]{String.valueOf(status)});
     }
 
+    public int countPendingMessTokens() {
+        int tokens = countUnsyncedRows(MESS_TOKEN_TABLE, "tokenStatus");
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT COUNT(*) FROM " + MESS_TOKEN_TABLE
+                            + " WHERE tokenState = 'verified' AND (verifyStatus = 0 OR verifyStatus = '0')",
+                    null);
+            if (cursor.moveToFirst()) {
+                return tokens + cursor.getInt(0);
+            }
+            return tokens;
+        } catch (Exception e) {
+            return tokens;
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
     public void addMessToken(MessTokenResponse messTokenResponse) {
         if (messTokenResponse == null || messTokenResponse.getTokenCode() == null) {
             return;
@@ -4713,6 +4878,8 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         putOptionalColumn(values, "comboNetworkStatus", combo.getComboNetworkStatus());
         if (combo.getComboStatus() != null && !combo.getComboStatus().trim().isEmpty()) {
             values.put("comboStatus", combo.getComboStatus());
+        } else {
+            values.put("comboStatus", 0);
         }
         int sort = 0;
         try {
@@ -4735,7 +4902,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         combo.setComboCGST(comboCGST);
         combo.setComboSGST(comboSGST);
         combo.setComboActiveStatus(comboActiveStatus);
-        combo.setComboStatus(String.valueOf(comboStatus));
+        combo.setComboStatus("0");
         ComboResponse existing = getComboDetail(comboId);
         if (existing != null) {
             combo.setComboDeletedStatus(existing.getComboDeletedStatus());
@@ -4762,6 +4929,10 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         values.put("comboActiveStatus", "0");
         values.put("comboStatus", 0);
         db.update(COMBO_TABLE, values, "comboId=?", new String[]{comboId});
+        ContentValues items = new ContentValues();
+        items.put("comboItemDeletedStatus", "1");
+        items.put("comboItemStatus", 0);
+        db.update(COMBO_ITEM_TABLE, items, "comboId=?", new String[]{comboId});
         db.close();
     }
 

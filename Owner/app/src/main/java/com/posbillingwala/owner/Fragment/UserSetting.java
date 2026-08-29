@@ -2,12 +2,10 @@ package com.posbillingwala.owner.Fragment;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.Dialog;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -15,8 +13,6 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -28,11 +24,12 @@ import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.MobileAds;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.textfield.TextInputEditText;
 import com.posbillingwala.owner.Activity.Login;
 import com.posbillingwala.owner.Activity.MainActivity;
 import com.posbillingwala.owner.Extra.AuthTokens;
+import com.posbillingwala.owner.Extra.BottomSheetUi;
 import com.posbillingwala.owner.Model.AllApiResponse;
 import com.posbillingwala.owner.R;
 import com.posbillingwala.owner.Retrofit.Api;
@@ -189,21 +186,21 @@ public class UserSetting extends Fragment implements View.OnClickListener {
     }
 
     public void openReportsHub() {
-        final Dialog dialog = new Dialog(activity);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        dialog.setContentView(R.layout.report_password_dialog);
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        dialog.setCancelable(false);
+        View dialogView = LayoutInflater.from(activity).inflate(R.layout.report_password_dialog, null);
+        BottomSheetDialog sheet = BottomSheetUi.showContent(activity, dialogView, false);
+        if (sheet == null) {
+            return;
+        }
 
-        TextView continueToReport = dialog.findViewById(R.id.continueToReport);
-        TextView dismissReport = dialog.findViewById(R.id.dismissReport);
-        TextInputEditText reportPin = dialog.findViewById(R.id.reportPin);
+        TextView continueToReport = dialogView.findViewById(R.id.continueToReport);
+        TextView dismissReport = dialogView.findViewById(R.id.dismissReport);
+        TextInputEditText reportPin = dialogView.findViewById(R.id.reportPin);
 
-        dismissReport.setOnClickListener(v -> dialog.dismiss());
+        dismissReport.setOnClickListener(v -> sheet.dismiss());
         continueToReport.setOnClickListener(v -> {
             String pin = MainActivity.reportPin != null ? MainActivity.reportPin : "9082";
             if (reportPin.getText().toString().equalsIgnoreCase(pin)) {
-                dialog.dismiss();
+                sheet.dismiss();
                 ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
                 ((MainActivity) activity).loadFragment(new ReportsHub(), true);
             } else {
@@ -211,41 +208,32 @@ public class UserSetting extends Fragment implements View.OnClickListener {
                 reportPin.setError("Enter correct pin");
             }
         });
-        dialog.show();
     }
 
     public void setReportPassword() {
-        final Dialog dialog = new Dialog(activity);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        dialog.setContentView(R.layout.report_password_dialog);
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        dialog.setCancelable(false);
+        View dialogView = LayoutInflater.from(activity).inflate(R.layout.report_password_dialog, null);
+        BottomSheetDialog sheet = BottomSheetUi.showContent(activity, dialogView, false);
+        if (sheet == null) {
+            return;
+        }
 
-        WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
-        lp.copyFrom(dialog.getWindow().getAttributes());
-        lp.width = WindowManager.LayoutParams.MATCH_PARENT;
-        lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
-
-        TextView continueToReport = dialog.findViewById(R.id.continueToReport);
-        TextView dismissReport = dialog.findViewById(R.id.dismissReport);
-        TextInputEditText reportPin = dialog.findViewById(R.id.reportPin);
+        TextView continueToReport = dialogView.findViewById(R.id.continueToReport);
+        TextView dismissReport = dialogView.findViewById(R.id.dismissReport);
+        TextInputEditText reportPin = dialogView.findViewById(R.id.reportPin);
 
         reportPin.setText(MainActivity.reportPin);
 
-        dismissReport.setOnClickListener(v -> dialog.dismiss());
+        dismissReport.setOnClickListener(v -> sheet.dismiss());
 
         continueToReport.setOnClickListener(v -> {
             if (!reportPin.getText().toString().isEmpty()) {
-                dialog.dismiss();
+                sheet.dismiss();
                 updateReportPin(reportPin.getText().toString());
             } else {
                 reportPin.requestFocus();
                 reportPin.setError("Enter report pin");
             }
         });
-
-        dialog.show();
-        dialog.getWindow().setAttributes(lp);
     }
 
     public void updateReportPin(String reportPin) {
@@ -281,13 +269,8 @@ public class UserSetting extends Fragment implements View.OnClickListener {
     }
 
     public void logout() {
-        new MaterialAlertDialogBuilder(activity)
-                .setTitle("Logout")
-                .setMessage("Do you want to logout from application?")
-                .setCancelable(false)
-                .setPositiveButton("YES", (dialogInterface, i) -> {
-                    dialogInterface.dismiss();
-
+        BottomSheetUi.showConfirm(activity, "Logout", "Do you want to logout from application?",
+                "YES", "NO", false, () -> {
                     AuthTokens.clear(activity);
 
                     File file1 = new File("data/data/" + activity.getPackageName() + "/shared_prefs/user.xml");
@@ -299,9 +282,7 @@ public class UserSetting extends Fragment implements View.OnClickListener {
                     intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                     startActivity(intent);
                     activity.finish();
-                })
-                .setNegativeButton("NO", (dialogInterface, i) -> dialogInterface.dismiss())
-                .show();
+                });
     }
 
     @Override

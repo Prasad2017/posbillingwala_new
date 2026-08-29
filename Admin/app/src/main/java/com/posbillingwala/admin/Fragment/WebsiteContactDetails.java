@@ -47,8 +47,9 @@ public class WebsiteContactDetails extends Fragment {
                 AllApiResponse b = response.body();
                 String subject = ReportUiHelper.nz(b.getSubject());
                 if (subject.isEmpty()) subject = "Website enquiry";
+                final String replySubject = subject;
                 StringBuilder sb = new StringBuilder();
-                sb.append(b.getName()).append("\n")
+                sb.append(ReportUiHelper.nz(b.getUserName())).append("\n")
                         .append(ReportUiHelper.nz(b.getEmail())).append("\n")
                         .append(b.getStatus()).append("  ·  ")
                         .append(ReportUiHelper.nz(b.getCreatedAt())).append("\n\n")
@@ -59,7 +60,7 @@ public class WebsiteContactDetails extends Fragment {
                 reply.setOnClickListener(v -> {
                     Intent intent = new Intent(Intent.ACTION_SENDTO);
                     intent.setData(Uri.parse("mailto:" + Uri.encode(ReportUiHelper.nz(b.getEmail()))));
-                    intent.putExtra(Intent.EXTRA_SUBJECT, "Re: " + subject);
+                    intent.putExtra(Intent.EXTRA_SUBJECT, "Re: " + replySubject);
                     startActivity(Intent.createChooser(intent, "Send email"));
                 });
             }

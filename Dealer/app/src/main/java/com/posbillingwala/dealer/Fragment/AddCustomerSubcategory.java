@@ -3,6 +3,7 @@ package com.posbillingwala.dealer.Fragment;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.text.InputType;
@@ -23,7 +24,6 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.jaredrummler.materialspinner.MaterialSpinner;
-
 import com.posbillingwala.dealer.Activity.MainActivity;
 import com.posbillingwala.dealer.Adapter.SubcategoryAdapter;
 import com.posbillingwala.dealer.Extra.DetectConnection;
@@ -32,6 +32,7 @@ import com.posbillingwala.dealer.Model.ProductCategoryResponse;
 import com.posbillingwala.dealer.Model.ProductSubcategoryResponse;
 import com.posbillingwala.dealer.R;
 import com.posbillingwala.dealer.Retrofit.Api;
+import com.posbillingwala.dealer.Utils.CatalogImportExportHelper;
 import com.posbillingwala.dealer.databinding.FragmentAddCustomerSubcategoryBinding;
 
 import java.util.List;
@@ -52,12 +53,16 @@ public class AddCustomerSubcategory extends Fragment implements View.OnClickList
     public static CardView subcategoryListCardView;
     public static TextView noDataFound;
 
+    View view;
     FragmentAddCustomerSubcategoryBinding binding;
+
     String[] categoryIdList, categoryNameList;
+    CatalogImportExportHelper catalogImportExportHelper;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentAddCustomerSubcategoryBinding.inflate(inflater, container, false);
+        view = binding.getRoot();
 
         activity = getActivity();
         MainActivity.title.setText("Subcategories");
@@ -68,6 +73,12 @@ public class AddCustomerSubcategory extends Fragment implements View.OnClickList
             if (bundle.containsKey("categoryId")) {
                 categoryId = bundle.getString("categoryId");
             }
+        }
+
+        if (customerId != null) {
+            catalogImportExportHelper = new CatalogImportExportHelper(
+                    this, customerId, "subcategories", "Sub Categories", AddCustomerSubcategory::getSubcategoryList);
+            catalogImportExportHelper.bindBar(binding.catalogImportExportBar.getRoot());
         }
 
         binding.subcategoryName.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
@@ -81,9 +92,9 @@ public class AddCustomerSubcategory extends Fragment implements View.OnClickList
             ((MainActivity) activity).loadFragment(new AllCustomerList(), true);
         });
 
-        binding.getRoot().setFocusableInTouchMode(true);
-        binding.getRoot().requestFocus();
-        binding.getRoot().setOnKeyListener((v, keyCode, event) -> {
+        view.setFocusableInTouchMode(true);
+        view.requestFocus();
+        view.setOnKeyListener((v, keyCode, event) -> {
             if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
                 MainActivity.back.performClick();
                 return true;
@@ -111,7 +122,15 @@ public class AddCustomerSubcategory extends Fragment implements View.OnClickList
 
         binding.addSubcategory.setOnClickListener(this);
 
-        return binding.getRoot();
+        return view;
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (catalogImportExportHelper != null) {
+            catalogImportExportHelper.handleActivityResult(requestCode, resultCode, data);
+        }
     }
 
     @Override

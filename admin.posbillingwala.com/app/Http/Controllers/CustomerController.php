@@ -206,9 +206,27 @@ class CustomerController extends Controller
 
     public function getLicenseList(Request $request)
     {
-        $data = License::where('userId',$request->userId);
-        return DataTables::of($data)->make(true);
+        if ($request->ajax()) {
+            $data = License::join('users', 'users.id', '=', 'licenses.userId')
+                ->select('licenses.*', 'users.name as customerName', 'users.shopName');
 
+            $customerFilter = $request->userId ?: $request->customer_id;
+            if ($customerFilter) {
+                $data = $data->where('licenses.userId', $customerFilter);
+            } elseif (Auth::user()->role_id == 2) {
+                $data = $data->where('users.dealerId', Auth::id());
+            }
+
+            return DataTables::of($data)->make(true);
+        }
+
+        $customers = User::where('is_active', 1)->where('role_id', 3);
+        if (Auth::user()->role_id == 2) {
+            $customers = $customers->where('dealerId', Auth::id());
+        }
+        $customers = $customers->orderBy('name')->get();
+
+        return view('customers.licenses', compact('customers'));
     }
 
     public function addLicensePage($id)
@@ -243,7 +261,6 @@ class CustomerController extends Controller
         $license->paymentStatus = $request->payment_status;
         $license->userName = $request->name;
         $license->userType = $request->user_type;
-        $license->branchName = $request->branch_name;
         $license->expiryDate = $expiry_date;
         $license->amount = $request->amount;
         $license->fastBilling = $request->fast_billing;

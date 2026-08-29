@@ -1,24 +1,21 @@
 package com.pos_billingwala.Adapter;
 
 import android.annotation.SuppressLint;
-import android.app.Dialog;
+import android.app.Activity;
 import android.content.Context;
-import android.content.DialogInterface;
-import android.graphics.drawable.ColorDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.textfield.TextInputEditText;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.BottomSheetUi;
 import com.pos_billingwala.Fragment.AddPortionMaster;
 import com.pos_billingwala.Model.PortionMasterResponse;
 import com.pos_billingwala.R;
@@ -57,25 +54,18 @@ public class PortionMasterAdapter extends RecyclerView.Adapter<PortionMasterAdap
     }
 
     private void updatePortionMaster(PortionMasterResponse item) {
-        final Dialog dialog = new Dialog(context);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        dialog.setContentView(R.layout.update_portion_master_dialog);
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
-        dialog.setCancelable(false);
+        Activity activity = (Activity) context;
+        View content = LayoutInflater.from(activity).inflate(R.layout.update_portion_master_dialog, null);
+        BottomSheetDialog sheet = BottomSheetUi.showContent(activity, content, false);
 
-        WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
-        lp.copyFrom(dialog.getWindow().getAttributes());
-        lp.width = WindowManager.LayoutParams.MATCH_PARENT;
-        lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
-
-        TextInputEditText nameTxt = dialog.findViewById(R.id.portionMasterName);
-        TextView updateTxt = dialog.findViewById(R.id.updatePortionMaster);
-        TextView dismissTxt = dialog.findViewById(R.id.dismissPortionMaster);
+        TextInputEditText nameTxt = content.findViewById(R.id.portionMasterName);
+        TextView updateTxt = content.findViewById(R.id.updatePortionMaster);
+        TextView dismissTxt = content.findViewById(R.id.dismissPortionMaster);
 
         nameTxt.setText(item.getPortionName());
         nameTxt.setSelection(nameTxt.getText().length());
 
-        dismissTxt.setOnClickListener(v -> dialog.dismiss());
+        dismissTxt.setOnClickListener(v -> sheet.dismiss());
 
         updateTxt.setOnClickListener(v -> {
             String newName = nameTxt.getText().toString().trim();
@@ -89,14 +79,11 @@ public class PortionMasterAdapter extends RecyclerView.Adapter<PortionMasterAdap
                 Toast.makeText(context, context.getString(R.string.toast_portion_name_already_exists), Toast.LENGTH_SHORT).show();
                 return;
             }
-            dialog.dismiss();
+            sheet.dismiss();
             posBillingWalaDatabase.updatePortionMaster(item.getPortionMasterId(), newName, 0);
             Toast.makeText(context, context.getString(R.string.toast_portion_updated), Toast.LENGTH_SHORT).show();
             AddPortionMaster.getPortionMasterList();
         });
-
-        dialog.show();
-        dialog.getWindow().setAttributes(lp);
     }
 
     private void deletePortionMaster(PortionMasterResponse item) {
@@ -108,20 +95,18 @@ public class PortionMasterAdapter extends RecyclerView.Adapter<PortionMasterAdap
             return;
         }
 
-        new MaterialAlertDialogBuilder(context)
-                .setTitle(context.getString(R.string.toast_are_you_sure))
-                .setMessage(context.getString(R.string.toast_do_you_want_to_delete_this_portion_maste))
-                .setPositiveButton("YES", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        dialogInterface.dismiss();
-                        posBillingWalaDatabase.deletePortionMaster(item.getPortionMasterId());
-                        Toast.makeText(context, context.getString(R.string.toast_portion_deleted), Toast.LENGTH_SHORT).show();
-                        AddPortionMaster.getPortionMasterList();
-                    }
-                })
-                .setNegativeButton("NO", (dialogInterface, i) -> dialogInterface.dismiss())
-                .show();
+        BottomSheetUi.showConfirm(
+                context,
+                context.getString(R.string.toast_are_you_sure),
+                context.getString(R.string.toast_do_you_want_to_delete_this_portion_maste),
+                "YES",
+                "NO",
+                true,
+                () -> {
+                    posBillingWalaDatabase.deletePortionMaster(item.getPortionMasterId());
+                    Toast.makeText(context, context.getString(R.string.toast_portion_deleted), Toast.LENGTH_SHORT).show();
+                    AddPortionMaster.getPortionMasterList();
+                });
     }
 
     @Override

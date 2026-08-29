@@ -15,14 +15,6 @@ $response = array(
 admin_require_auth($con, $response);
 admin_ensure_support_crash_tables($con);
 
-$count = (int) db_stmt_scalar_int($con, "SELECT COUNT(*) AS c FROM admin_crash_logs", '');
-if ($count === 0) {
-    mysqli_query($con, "INSERT INTO admin_crash_logs (error_title, error_class, app_name, status, device_name, android_version, app_version, user_name, user_id, occurrences, stack_trace) VALUES
-    ('NullPointerException','com.app.pos.SaleActivity','POS App','New','Samsung Galaxy M14','13','2.4.1','Rajesh Sharma','101',12,'java.lang.NullPointerException\\nat SaleActivity.onCreate'),
-    ('IllegalStateException','com.app.dealer.HomeFragment','Dealer App','Investigating','Redmi Note 11','12','1.8.0','Amit Dealer','55',5,'java.lang.IllegalStateException\\nat HomeFragment.bind'),
-    ('OutOfMemoryError','com.app.user.BillPreview','User App','Resolved','Pixel 6a','14','3.1.0','Guest','0',3,'java.lang.OutOfMemoryError\\nat BillPreview.render')");
-}
-
 $total = (string) db_stmt_scalar_int($con, "SELECT COUNT(*) AS c FROM admin_crash_logs", '');
 $affected = (string) db_stmt_scalar_int($con, "SELECT COUNT(DISTINCT user_id) AS c FROM admin_crash_logs", '');
 $resolved = (string) db_stmt_scalar_int($con, "SELECT COUNT(*) AS c FROM admin_crash_logs WHERE LOWER(status)='resolved'", '');

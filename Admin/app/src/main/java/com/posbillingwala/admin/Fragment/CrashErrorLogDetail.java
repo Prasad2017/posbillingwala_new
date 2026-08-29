@@ -126,6 +126,11 @@ public class CrashErrorLogDetail extends Fragment {
                     firstNonEmpty(d.getOriginalApiResponse(), d.getResponseBody()), d.getResponseSize()), false);
         }
 
+        boolean isCrash = isCrashType(d.getErrorType(), d.getOriginalExceptionClass(), d.getErrorCategory());
+        if (isCrash) {
+            addSection(container, inflater, "Crash (Play Protect / system history)", buildCrash(d), true);
+        }
+
         boolean isPrinter = "PRINTER".equalsIgnoreCase(nz(d.getErrorType()))
                 || (d.getPrinterType() != null && !d.getPrinterType().isEmpty());
         if (isPrinter) {
@@ -191,6 +196,26 @@ public class CrashErrorLogDetail extends Fragment {
                 + "\nURL: " + nz(d.getApiUrl())
                 + "\nHTTP Status: " + nz(d.getHttpStatus())
                 + "\nDuration: " + (duration.equals("-") ? "-" : duration + " ms");
+    }
+
+    private String buildCrash(ErrorLogDetail d) {
+        return "Type: " + nz(d.getErrorType())
+                + "\nException: " + nz(d.getOriginalExceptionClass())
+                + "\nCategory: " + nz(d.getErrorCategory())
+                + "\nOccurrences: " + nz(d.getOccurrenceCount())
+                + "\n\nOriginal message:\n" + nz(d.getOriginalErrorMessage())
+                + "\n\nWhat happened:\n" + nz(d.getWhatHappened());
+    }
+
+    private static boolean isCrashType(String errorType, String exceptionClass, String category) {
+        String type = errorType != null ? errorType.toUpperCase() : "";
+        String clazz = exceptionClass != null ? exceptionClass.toLowerCase() : "";
+        String cat = category != null ? category.toLowerCase() : "";
+        return type.equals("CRASH") || type.equals("ANR") || type.equals("NATIVE_CRASH")
+                || type.equals("LOW_MEMORY")
+                || clazz.contains("nullpointer") || clazz.contains("outofmemory")
+                || cat.equals("npe") || cat.equals("oom") || cat.equals("java_crash")
+                || cat.equals("native_crash") || cat.equals("anr");
     }
 
     private String buildPrinter(ErrorLogDetail d) {
