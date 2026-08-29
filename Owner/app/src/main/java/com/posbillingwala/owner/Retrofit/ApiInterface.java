@@ -66,6 +66,22 @@ public interface ApiInterface {
     Call<AllApiResponse> updateCategory(@Field("categoryId") String categoryId,
                                         @Field("categoryName") String categoryName);
 
+    @FormUrlEncoded
+    @POST("updateSubcategory.php")
+    Call<AllApiResponse> updateSubcategory(@Field("userId") String userId,
+                                           @Field("subcategoryId") String subcategoryId,
+                                           @Field("subcategoryName") String subcategoryName);
+
+    @FormUrlEncoded
+    @POST("deleteSubcategory.php")
+    Call<AllApiResponse> deleteSubcategory(@Field("userId") String userId,
+                                           @Field("subcategoryId") String subcategoryId);
+
+    @FormUrlEncoded
+    @POST("deleteProductPortion.php")
+    Call<AllApiResponse> deleteProductPortion(@Field("userId") String userId,
+                                              @Field("portionId") String portionId);
+
     @GET("getCustomerProductList.php")
     Call<AllApiResponse> getProductList(@Query("userId") String userId);
 

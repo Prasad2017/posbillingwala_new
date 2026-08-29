@@ -3,24 +3,21 @@ package com.posbillingwala.owner.Adapter;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Color;
-import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CheckBox;
-import android.widget.CompoundButton;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.posbillingwala.owner.Activity.MainActivity;
+import com.posbillingwala.owner.Extra.ReportUiHelper;
 import com.posbillingwala.owner.Fragment.UserProfile;
 import com.posbillingwala.owner.Model.AllApiResponse;
 import com.posbillingwala.owner.Model.LicenseResponse;
-import com.posbillingwala.owner.R;
 import com.posbillingwala.owner.Retrofit.Api;
+import com.posbillingwala.owner.databinding.LicenseListBinding;
 
 import java.util.List;
 
@@ -29,14 +26,10 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-import com.posbillingwala.owner.databinding.LicenseListBinding;  // Import the generated binding class
-
 public class LicenseAdapter extends RecyclerView.Adapter<LicenseAdapter.MyViewHolder> {
 
     private final Context context;
     private final List<LicenseResponse> licenseResponseList;
-    private String totalSaleData = "0";
-    private String todaySaleData = "0";
 
     public LicenseAdapter(Context context, List<LicenseResponse> licenseResponseList) {
         this.context = context;
@@ -56,54 +49,56 @@ public class LicenseAdapter extends RecyclerView.Adapter<LicenseAdapter.MyViewHo
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
         LicenseResponse licenseResponse = licenseResponseList.get(position);
 
-        String shopAddress = "<b><font color='#ff0000'>Shop Address:</font></b> " + licenseResponse.getCompanyAddress();
+        StringBuilder header = new StringBuilder();
         if (licenseResponse.getShopName1() != null && !licenseResponse.getShopName1().trim().isEmpty()) {
-            shopAddress = "<b><font color='#ff0000'>Shop:</font></b> " + licenseResponse.getShopName1().trim()
-                    + "<br/>" + shopAddress;
+            header.append(licenseResponse.getShopName1().trim());
+        }
+        String branch = licenseResponse.getBranchLabel();
+        if (branch != null && !branch.trim().isEmpty()) {
+            if (header.length() > 0) {
+                header.append(" · ");
+            }
+            header.append(branch.trim());
+        }
+        if (licenseResponse.getCompanyAddress() != null && !licenseResponse.getCompanyAddress().trim().isEmpty()) {
+            if (header.length() > 0) {
+                header.append("\n");
+            }
+            header.append(licenseResponse.getCompanyAddress().trim());
         }
         if (licenseResponse.getPhoneNo1() != null && !licenseResponse.getPhoneNo1().trim().isEmpty()) {
-            shopAddress += "<br/><b>Phone:</b> " + licenseResponse.getPhoneNo1().trim();
+            header.append("\n").append(licenseResponse.getPhoneNo1().trim());
             if (licenseResponse.getPhoneNo2() != null && !licenseResponse.getPhoneNo2().trim().isEmpty()) {
-                shopAddress += ", " + licenseResponse.getPhoneNo2().trim();
+                header.append(", ").append(licenseResponse.getPhoneNo2().trim());
             }
         }
-        holder.binding.shopAddress.setText(Html.fromHtml(shopAddress));
+        holder.binding.shopAddress.setText(header.length() > 0 ? header.toString() : "Outlet");
         holder.binding.licenseKey.setText(licenseResponse.getLicenseKey());
         holder.binding.licenseKey.setTextIsSelectable(true);
         holder.binding.licenseValidity.setText(licenseResponse.getLicenseValidity() + " Days");
         holder.binding.licenseType.setText(licenseResponse.getLicenseType());
-        holder.binding.registrationDate.setText(licenseResponse.getRegistrationDate().substring(0, 10));
+        String registration = licenseResponse.getRegistrationDate();
+        holder.binding.registrationDate.setText(registration != null && registration.length() >= 10
+                ? registration.substring(0, 10) : (registration != null ? registration : "-"));
         holder.binding.expiryDate.setText(licenseResponse.getExpiryDate());
-        holder.binding.amount.setText(MainActivity.currency + " " + licenseResponse.getAmount());
+        holder.binding.amount.setText(ReportUiHelper.money(licenseResponse.getAmount()));
+        holder.binding.licenseDivider.setVisibility(
+                position == licenseResponseList.size() - 1 ? View.GONE : View.VISIBLE);
 
-        if (licenseResponse.getTotalSaleData().equalsIgnoreCase("1")) {
-            holder.binding.totalSaleData.setChecked(true);
-            totalSaleData = "1";
-        } else {
-            holder.binding.totalSaleData.setChecked(false);
-            totalSaleData = "0";
-        }
+        holder.binding.totalSaleData.setOnCheckedChangeListener(null);
+        holder.binding.todaySaleData.setOnCheckedChangeListener(null);
 
-        if (licenseResponse.getTodaySaleData().equalsIgnoreCase("1")) {
-            holder.binding.todaySaleData.setChecked(true);
-            todaySaleData = "1";
-        } else {
-            holder.binding.todaySaleData.setChecked(false);
-            todaySaleData = "0";
-        }
+        holder.binding.totalSaleData.setChecked("1".equalsIgnoreCase(licenseResponse.getTotalSaleData()));
+        holder.binding.todaySaleData.setChecked("1".equalsIgnoreCase(licenseResponse.getTodaySaleData()));
 
-        holder.binding.totalSaleData.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            totalSaleData = isChecked ? "1" : "0";
+        holder.binding.updateSaleData.setOnClickListener(v -> {
+            String total = holder.binding.totalSaleData.isChecked() ? "1" : "0";
+            String today = holder.binding.todaySaleData.isChecked() ? "1" : "0";
+            updateSaleData(licenseResponse, total, today);
         });
-
-        holder.binding.todaySaleData.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            todaySaleData = isChecked ? "1" : "0";
-        });
-
-        holder.binding.updateSaleData.setOnClickListener(v -> updateSaleData(licenseResponse));
     }
 
-    public void updateSaleData(LicenseResponse licenseResponse) {
+    public void updateSaleData(LicenseResponse licenseResponse, String totalSaleData, String todaySaleData) {
         SweetAlertDialog pDialog = new SweetAlertDialog(context, SweetAlertDialog.PROGRESS_TYPE);
         pDialog.getProgressHelper().setBarColor(Color.parseColor("#2D7FED"));
         pDialog.setTitleText("Loading");

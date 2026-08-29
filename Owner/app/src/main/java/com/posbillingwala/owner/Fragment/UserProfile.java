@@ -19,8 +19,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.textfield.TextInputEditText;
 import com.posbillingwala.owner.Activity.MainActivity;
 import com.posbillingwala.owner.Adapter.LicenseAdapter;
+import com.posbillingwala.owner.Extra.Common;
 import com.posbillingwala.owner.Extra.DetectConnection;
-import com.posbillingwala.owner.Extra.SimpleDividerItemDecoration;
 import com.posbillingwala.owner.Model.AllApiResponse;
 import com.posbillingwala.owner.Model.CustomerResponse;
 import com.posbillingwala.owner.Model.LicenseResponse;
@@ -64,8 +64,8 @@ public class UserProfile extends Fragment {
             return false;
         });
 
-        // Set up click listeners
-        binding.backToSetting.setOnClickListener(v -> {
+        binding.toolbar.toolbarTitle.setText(getString(R.string.profile_title));
+        binding.toolbar.backButton.setOnClickListener(v -> {
             ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
             ((MainActivity) activity).loadFragment(new UserSetting(), true);
         });
@@ -155,8 +155,9 @@ public class UserProfile extends Fragment {
             @Override
             public void onResponse(@NonNull Call<AllApiResponse> call, @NonNull Response<AllApiResponse> response) {
                 pDialog.dismiss();
-                if (response.isSuccessful()) {
-                    customerResponseList = response.body().getCustomerResponseList();
+                if (response.isSuccessful() && response.body() != null) {
+                    List<CustomerResponse> list = response.body().getCustomerResponseList();
+                    customerResponseList = list != null ? list : new ArrayList<>();
                     if (!customerResponseList.isEmpty()) {
                         CustomerResponse customerResponse = customerResponseList.get(0);
 
@@ -164,16 +165,20 @@ public class UserProfile extends Fragment {
                         binding.customerMobileNumber.setText(customerResponse.getContactNumber());
                         binding.customerAddress.setText(customerResponse.getAddress());
                         binding.customerShopName.setText(customerResponse.getShopName());
+                        Common.saveUserData(activity, "shopName",
+                                customerResponse.getShopName() != null ? customerResponse.getShopName() : "");
+                        Common.saveUserData(activity, "customerName",
+                                customerResponse.getName() != null ? customerResponse.getName() : "");
 
-                        licenseResponseList = customerResponse.getLicenseResponseList();
+                        List<LicenseResponse> licenses = customerResponse.getLicenseResponseList();
+                        licenseResponseList = licenses != null ? licenses : new ArrayList<>();
 
-                        if (!licenseResponseList.isEmpty()) {
-                            LicenseAdapter licenseAdapter = new LicenseAdapter(activity, licenseResponseList);
-                            binding.recyclerView.setLayoutManager(new LinearLayoutManager(activity));
-                            binding.recyclerView.addItemDecoration(new SimpleDividerItemDecoration(activity));
-                            binding.recyclerView.setAdapter(licenseAdapter);
-                            binding.recyclerView.setHasFixedSize(true);
-                        }
+                        MainActivity.setOutletCounts(licenseResponseList.size());
+                        binding.outletSectionTitle.setText(getString(R.string.profile_outlet_count, licenseResponseList.size()));
+                        LicenseAdapter licenseAdapter = new LicenseAdapter(activity, licenseResponseList);
+                        binding.recyclerView.setLayoutManager(new LinearLayoutManager(activity));
+                        binding.recyclerView.setAdapter(licenseAdapter);
+                        binding.recyclerView.setHasFixedSize(true);
                     }
                 }
             }

@@ -4,13 +4,16 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/colorBackground"
     android:orientation="vertical"
     tools:context=".Fragment.ManageCustomerProductPortions">
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
-        android:layout_height="50dp">
+        android:layout_height="56dp"
+        android:background="@color/colorPrimary"
+        app:elevation="4dp">
 
         <RelativeLayout
             android:layout_width="match_parent"
@@ -18,11 +21,13 @@
 
             <ImageView
                 android:id="@+id/backToHome"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
+                android:layout_width="@dimen/touch_min"
+                android:layout_height="@dimen/touch_min"
                 android:layout_alignParentStart="true"
-                android:layout_centerInParent="true"
-                android:layout_marginStart="15dp"
+                android:layout_centerVertical="true"
+                android:layout_marginStart="@dimen/spacing_sm"
+                android:contentDescription="@null"
+                android:padding="@dimen/spacing_sm"
                 android:src="@drawable/ic_back"
                 app:tint="@color/white" />
 
@@ -31,193 +36,222 @@
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
                 android:fontFamily="@font/poppinsmedium"
-                android:text="Product Portions"
+                android:text="@string/manage_portions"
                 android:textColor="@color/white"
-                android:textSize="17sp" />
-
+                android:textSize="@dimen/text_title" />
         </RelativeLayout>
-
     </com.google.android.material.appbar.AppBarLayout>
 
-    <androidx.core.widget.NestedScrollView
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
-        <LinearLayout
+        <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:fillViewport="true"
+            android:padding="@dimen/spacing_lg">
 
-            <androidx.cardview.widget.CardView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="5dp"
-                app:cardCornerRadius="5dp">
+                android:orientation="vertical">
 
-                <TextView
-                    android:id="@+id/productInfo"
+                <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:fontFamily="@font/poppinsmedium"
-                    android:gravity="center"
-                    android:padding="12dp"
-                    android:textColor="@color/black" />
+                    app:cardBackgroundColor="@color/colorSurface"
+                    app:cardCornerRadius="@dimen/radius_lg"
+                    app:cardElevation="@dimen/card_elevation"
+                    app:strokeColor="@color/colorBorder"
+                    app:strokeWidth="1dp">
 
-            </androidx.cardview.widget.CardView>
+                    <TextView
+                        android:id="@+id/productInfo"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/poppinsmedium"
+                        android:padding="@dimen/spacing_lg"
+                        android:textColor="@color/colorTextPrimary"
+                        android:textSize="@dimen/text_subtitle" />
+                </com.google.android.material.card.MaterialCardView>
 
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="5dp"
-                app:cardBackgroundColor="#ecfffa"
-                app:cardCornerRadius="5dp">
-
-                <LinearLayout
+                <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:paddingBottom="10dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:layout_marginTop="12dp"
-                        android:fontFamily="@font/poppinsbold"
-                        android:text="PORTION DETAIL"
-                        android:textColor="@color/textcolor" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="15dp"
-                        android:layout_marginTop="10dp"
-                        android:fontFamily="@font/poppinsregular"
-                        android:text="Select Portion Master"
-                        android:textColor="@color/textcolor" />
+                    android:layout_marginTop="@dimen/spacing_lg"
+                    app:cardBackgroundColor="@color/colorSurface"
+                    app:cardCornerRadius="@dimen/radius_lg"
+                    app:cardElevation="@dimen/card_elevation"
+                    app:strokeColor="@color/colorBorder"
+                    app:strokeWidth="1dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
-                        android:layout_height="48dp"
-                        android:layout_marginStart="15dp"
-                        android:layout_marginTop="5dp"
-                        android:layout_marginEnd="15dp"
-                        android:background="@drawable/button_rounded_border"
-                        android:orientation="horizontal">
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="@dimen/spacing_lg">
 
-                        <com.jaredrummler.materialspinner.MaterialSpinner
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/poppinsbold"
+                            android:letterSpacing="0.06"
+                            android:text="@string/portion_master_detail"
+                            android:textAllCaps="true"
+                            android:textColor="@color/colorTextSecondary"
+                            android:textSize="@dimen/text_caption" />
+
+                        <com.posbillingwala.owner.Extra.SearchableDropdownView
                             android:id="@+id/portionMasterSpinner"
                             android:layout_width="match_parent"
-                            android:layout_height="45dp"
-                            android:layout_gravity="center"
-                            android:layout_margin="5dp"
-                            android:fontFamily="@font/poppinsregular"
-                            android:gravity="center|start"
-                            android:paddingStart="10dp"
-                            android:textColor="@color/black"
-                            android:textSize="15sp"
-                            app:ms_hint="Select Portion Master" />
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/spacing_md"
+                            app:sdd_dialog_title="Portion Master"
+                            app:sdd_hint="Select Portion Master" />
 
+                        <TextView
+                            android:id="@+id/managePortionMasterLink"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="end"
+                            android:layout_marginTop="@dimen/spacing_sm"
+                            android:fontFamily="@font/poppinsmedium"
+                            android:text="Manage Portion Master"
+                            android:textColor="@color/colorPrimary"
+                            android:textSize="@dimen/text_caption" />
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/spacing_md"
+                            app:boxCornerRadiusBottomEnd="@dimen/radius_sm"
+                            app:boxCornerRadiusBottomStart="@dimen/radius_sm"
+                            app:boxCornerRadiusTopEnd="@dimen/radius_sm"
+                            app:boxCornerRadiusTopStart="@dimen/radius_sm"
+                            app:boxStrokeColor="@color/colorBorder">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/portionPrice"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/poppinsregular"
+                                android:hint="Portion Price"
+                                android:inputType="numberDecimal"
+                                android:singleLine="true"
+                                android:textColor="@color/colorTextPrimary" />
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/spacing_md"
+                            app:boxCornerRadiusBottomEnd="@dimen/radius_sm"
+                            app:boxCornerRadiusBottomStart="@dimen/radius_sm"
+                            app:boxCornerRadiusTopEnd="@dimen/radius_sm"
+                            app:boxCornerRadiusTopStart="@dimen/radius_sm"
+                            app:boxStrokeColor="@color/colorBorder">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/portionSortOrder"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/poppinsregular"
+                                android:hint="Sort Order"
+                                android:inputType="number"
+                                android:singleLine="true"
+                                android:text="0"
+                                android:textColor="@color/colorTextPrimary" />
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <TextView
+                            android:id="@+id/addPortion"
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/button_height"
+                            android:layout_marginTop="@dimen/spacing_xl"
+                            android:background="@drawable/bg_button_primary"
+                            android:fontFamily="@font/poppinsmedium"
+                            android:gravity="center"
+                            android:text="@string/add_portion"
+                            android:textColor="@color/white"
+                            android:textSize="@dimen/text_button" />
                     </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
 
-                    <TextView
-                        android:id="@+id/managePortionMasterLink"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="end"
-                        android:layout_marginEnd="15dp"
-                        android:layout_marginTop="4dp"
-                        android:fontFamily="@font/poppinsmedium"
-                        android:text="Manage Portion Master"
-                        android:textColor="@color/colorPrimary"
-                        android:textSize="13sp" />
-
-                    <com.google.android.material.textfield.TextInputLayout
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="15dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginEnd="15dp">
-
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/portionPrice"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:fontFamily="@font/poppinsregular"
-                            android:hint="Portion Price"
-                            android:inputType="numberDecimal"
-                            android:singleLine="true" />
-
-                    </com.google.android.material.textfield.TextInputLayout>
-
-                    <com.google.android.material.textfield.TextInputLayout
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="15dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginEnd="15dp">
-
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/portionSortOrder"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:fontFamily="@font/poppinsregular"
-                            android:hint="Sort Order"
-                            android:inputType="number"
-                            android:singleLine="true"
-                            android:text="0" />
-
-                    </com.google.android.material.textfield.TextInputLayout>
-
-                    <TextView
-                        android:id="@+id/addPortion"
-                        android:layout_width="match_parent"
-                        android:layout_height="40dp"
-                        android:layout_marginTop="20dp"
-                        android:background="@color/colorPrimary"
-                        android:fontFamily="@font/poppinsmedium"
-                        android:gravity="center"
-                        android:text="Add Portion"
-                        android:textAllCaps="true"
-                        android:textColor="@color/white" />
-
-                </LinearLayout>
-
-            </androidx.cardview.widget.CardView>
-
-            <androidx.cardview.widget.CardView
-                android:id="@+id/portionListCardView"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="5dp"
-                android:visibility="gone"
-                app:cardCornerRadius="5dp">
-
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/portionRecyclerview"
+                <LinearLayout
+                    android:id="@+id/portionListCardView"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:nestedScrollingEnabled="false"
-                    android:padding="5dp" />
+                    android:layout_marginTop="@dimen/spacing_xl"
+                    android:orientation="vertical"
+                    android:visibility="gone">
 
-            </androidx.cardview.widget.CardView>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/poppinsbold"
+                        android:letterSpacing="0.06"
+                        android:text="@string/manage_portions"
+                        android:textAllCaps="true"
+                        android:textColor="@color/colorTextSecondary"
+                        android:textSize="@dimen/text_caption" />
 
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_md"
+                        app:cardBackgroundColor="@color/colorSurface"
+                        app:cardCornerRadius="@dimen/radius_lg"
+                        app:cardElevation="@dimen/card_elevation"
+                        app:strokeColor="@color/colorBorder"
+                        app:strokeWidth="1dp">
+
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/portionRecyclerview"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:nestedScrollingEnabled="false"
+                            android:overScrollMode="never"
+                            android:paddingTop="@dimen/spacing_xs"
+                            android:paddingBottom="@dimen/spacing_xs" />
+                    </com.google.android.material.card.MaterialCardView>
+                </LinearLayout>
+            </LinearLayout>
+        </androidx.core.widget.NestedScrollView>
+
+        <LinearLayout
+            android:id="@+id/noDataFound"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="@dimen/spacing_xl"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:background="@drawable/bg_avatar_placeholder"
+                android:fontFamily="@font/poppinsbold"
+                android:gravity="center"
+                android:text="P"
+                android:textColor="@color/colorPrimary"
+                android:textSize="22sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_md"
+                android:fontFamily="@font/poppinsmedium"
+                android:gravity="center"
+                android:text="No portions found.\nAdd a portion for this product."
+                android:textColor="@color/colorTextSecondary"
+                android:textSize="@dimen/text_subtitle" />
         </LinearLayout>
-
-    </androidx.core.widget.NestedScrollView>
-
-    <TextView
-        android:id="@+id/noDataFound"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_marginTop="80dp"
-        android:fontFamily="@font/poppinsmedium"
-        android:gravity="center"
-        android:text="No portions found"
-        android:textColor="@color/black"
-        android:visibility="gone" />
-
+    </FrameLayout>
 </LinearLayout>

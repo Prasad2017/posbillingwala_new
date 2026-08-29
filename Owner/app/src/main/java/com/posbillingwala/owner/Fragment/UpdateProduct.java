@@ -2,7 +2,6 @@ package com.posbillingwala.owner.Fragment;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.text.InputType;
@@ -11,14 +10,11 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.InputMethodManager;
-import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
-import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.posbillingwala.owner.Activity.MainActivity;
 import com.posbillingwala.owner.Extra.DetectConnection;
 import com.posbillingwala.owner.Extra.ProductPortionSectionHelper;
@@ -93,42 +89,21 @@ public class UpdateProduct extends Fragment {
     }
 
     public void setupSpinners() {
-        binding.categorySpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
-            @Override
-            public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
-                categoryId = categoryIdList[position];
-                categoryName = categoryNameList[position];
-                if (categorySpinnerReady) {
-                    loadSubcategoriesForCategory(categoryId, null);
-                }
+        binding.categorySpinner.setOnItemSelectedListener((position, item) -> {
+            categoryId = categoryIdList[position];
+            categoryName = categoryNameList[position];
+            if (categorySpinnerReady) {
+                loadSubcategoriesForCategory(categoryId, null);
             }
         });
 
-        binding.subcategorySpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
-            @Override
-            public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
-                if (subcategoryIdList != null && position >= 0 && position < subcategoryIdList.length) {
-                    subcategoryId = subcategoryIdList[position];
-                }
+        binding.subcategorySpinner.setOnItemSelectedListener((position, item) -> {
+            if (subcategoryIdList != null && position >= 0 && position < subcategoryIdList.length) {
+                subcategoryId = subcategoryIdList[position];
             }
         });
 
-        binding.unitSpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
-            @Override
-            public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
-                unitName = unitNameList[position];
-            }
-        });
-
-        binding.categorySpinner.setOnTouchListener((v, event) -> {
-            hideKeyboard();
-            return false;
-        });
-
-        binding.unitSpinner.setOnTouchListener((v, event) -> {
-            hideKeyboard();
-            return false;
-        });
+        binding.unitSpinner.setOnItemSelectedListener((position, item) -> unitName = unitNameList[position]);
     }
 
     public void setupOnClickListeners() {
@@ -213,13 +188,6 @@ public class UpdateProduct extends Fragment {
         });
     }
 
-    public void hideKeyboard() {
-        InputMethodManager imm = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
-        if (imm != null && activity.getCurrentFocus() != null) {
-            imm.hideSoftInputFromWindow(activity.getCurrentFocus().getWindowToken(), 0);
-        }
-    }
-
     @Override
     public void onStart() {
         super.onStart();
@@ -260,11 +228,9 @@ public class UpdateProduct extends Fragment {
 
                         unitNameList = activity.getResources().getStringArray(R.array.product_unit);
                         try {
-                            ArrayAdapter<String> adapter = new ArrayAdapter<>(activity, android.R.layout.simple_spinner_item, unitNameList);
-                            adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
-                            binding.unitSpinner.setAdapter(adapter);
+                            binding.unitSpinner.setItems(unitNameList);
                             if (unitName != null) {
-                                int unitIndex = adapter.getPosition(unitName);
+                                int unitIndex = binding.unitSpinner.indexOf(unitName);
                                 if (unitIndex >= 0) {
                                     binding.unitSpinner.setSelectedIndex(unitIndex);
                                 }
@@ -304,11 +270,9 @@ public class UpdateProduct extends Fragment {
                             categoryNameList[i] = productCategoryResponseList.get(i).getCategoryName();
                         }
                         try {
-                            ArrayAdapter<String> adapter = new ArrayAdapter<>(activity, android.R.layout.simple_spinner_item, categoryNameList);
-                            adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
-                            binding.categorySpinner.setAdapter(adapter);
+                            binding.categorySpinner.setItems(categoryNameList);
                             if (categoryName != null) {
-                                int categoryIndex = adapter.getPosition(categoryName);
+                                int categoryIndex = binding.categorySpinner.indexOf(categoryName);
                                 if (categoryIndex >= 0) {
                                     binding.categorySpinner.setSelectedIndex(categoryIndex);
                                 }
@@ -349,9 +313,7 @@ public class UpdateProduct extends Fragment {
                         subcategoryIdList = new String[]{""};
                         subcategoryNameList = new String[]{"None"};
                     }
-                    ArrayAdapter<String> adapter = new ArrayAdapter<>(activity, android.R.layout.simple_spinner_item, subcategoryNameList);
-                    adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
-                    binding.subcategorySpinner.setAdapter(adapter);
+                    binding.subcategorySpinner.setItems(subcategoryNameList);
                     int selection = 0;
                     if (preselectId != null && preselectId.length() > 0) {
                         for (int i = 1; i < subcategoryIdList.length; i++) {

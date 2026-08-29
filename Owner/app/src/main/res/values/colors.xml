@@ -89,6 +89,7 @@
     <color name="colorBackground">#F7F9FC</color>
     <color name="colorSurface">#FFFFFF</color>
     <color name="colorBorder">#E5E7EB</color>
+    <color name="colorInputFill">#F9FAFB</color>
     <color name="colorTextPrimary">#1F2937</color>
     <color name="colorTextSecondary">#6B7280</color>
     <color name="colorTextHint">#9CA3AF</color>

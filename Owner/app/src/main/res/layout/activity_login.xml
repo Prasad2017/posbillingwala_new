@@ -1,170 +1,224 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:ads="http://schemas.android.com/apk/res-auto"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
+    android:background="@color/colorBackground"
+    android:fillViewport="true"
+    android:fitsSystemWindows="true"
     tools:context=".Activity.Login">
 
-    <LinearLayout
-        android:id="@+id/loginLayout"
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:layout_height="wrap_content">
 
         <ImageView
             android:layout_width="match_parent"
-            android:layout_height="160dp"
-            android:layout_gravity="center"
-            android:layout_marginTop="24dp"
-            android:adjustViewBounds="true"
-            android:contentDescription="@string/app_name"
-            android:paddingStart="24dp"
-            android:paddingEnd="24dp"
-            android:scaleType="fitCenter"
-            android:src="@drawable/app_logo" />
-
-        <androidx.appcompat.widget.AppCompatTextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginTop="24dp"
-            android:fontFamily="@font/poppinsblack"
-            android:gravity="center"
-            android:paddingStart="15dp"
-            android:paddingEnd="15dp"
-            android:text="@string/sign_in_msg"
-            android:textColor="@color/black"
-            android:textSize="25sp" />
-
-        <androidx.appcompat.widget.AppCompatTextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginStart="20dp"
-            android:layout_marginTop="25dp"
-            android:layout_marginEnd="20dp"
-            android:fontFamily="@font/poppinsregular"
-            android:gravity="center"
-            android:paddingStart="15dp"
-            android:paddingEnd="15dp"
-            android:text="@string/mobile_number_msg"
-            android:textColor="#9aa1a5"
-            android:textSize="14sp" />
+            android:layout_height="220dp"
+            android:layout_gravity="bottom"
+            android:contentDescription="@null"
+            android:scaleType="fitXY"
+            android:src="@drawable/bg_splash_wave" />
 
         <LinearLayout
+            android:id="@+id/loginLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="20dp"
-            android:layout_marginTop="30dp"
-            android:layout_marginEnd="20dp"
-            android:background="@drawable/button_rounded_border"
-            android:backgroundTint="@color/grey"
-            android:orientation="horizontal"
-            android:padding="5dp">
+            android:orientation="vertical"
+            android:paddingBottom="@dimen/spacing_xl">
 
-            <RelativeLayout
+            <ImageView
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="130dp"
+                android:layout_gravity="center"
+                android:layout_marginTop="@dimen/spacing_xl"
+                android:adjustViewBounds="true"
+                android:contentDescription="@string/app_name"
+                android:paddingStart="@dimen/spacing_xl"
+                android:paddingEnd="@dimen/spacing_xl"
+                android:scaleType="fitCenter"
+                android:src="@drawable/app_logo" />
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/mobileNumber"
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/spacing_xl"
+                android:layout_marginTop="@dimen/spacing_lg"
+                android:layout_marginEnd="@dimen/spacing_xl"
+                android:fontFamily="@font/poppinsblack"
+                android:gravity="center"
+                android:text="@string/welcome_back"
+                android:textColor="@color/colorPrimary"
+                android:textSize="26sp" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/spacing_xl"
+                android:layout_marginTop="@dimen/spacing_sm"
+                android:layout_marginEnd="@dimen/spacing_xl"
+                android:fontFamily="@font/poppinsregular"
+                android:gravity="center"
+                android:text="@string/login_subtitle"
+                android:textColor="@color/colorTextSecondary"
+                android:textSize="14sp" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/spacing_lg"
+                android:layout_marginTop="@dimen/spacing_xl"
+                android:layout_marginEnd="@dimen/spacing_lg"
+                app:cardBackgroundColor="@color/colorSurface"
+                app:cardCornerRadius="@dimen/radius_lg"
+                app:cardElevation="@dimen/card_elevation_raised"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="50dp"
-                    android:layout_centerVertical="true"
-                    android:layout_gravity="center"
-                    android:layout_marginStart="5dp"
-                    android:layout_marginEnd="5dp"
-                    android:background="@null"
-                    android:digits="0123456789"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/spacing_xl">
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/poppinsmedium"
+                        android:text="@string/mobile_number_label"
+                        android:textColor="@color/colorPrimary"
+                        android:textSize="14sp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/input_height"
+                        android:layout_marginTop="@dimen/spacing_sm"
+                        android:background="@drawable/bg_input"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingStart="@dimen/spacing_md"
+                        android:paddingEnd="@dimen/spacing_md">
+
+                        <ImageView
+                            android:layout_width="@dimen/icon_md"
+                            android:layout_height="@dimen/icon_md"
+                            android:contentDescription="@null"
+                            android:src="@drawable/ic_phone"
+                            app:tint="@color/colorPrimary" />
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/mobileNumber"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_marginStart="@dimen/spacing_sm"
+                            android:layout_weight="1"
+                            android:background="@null"
+                            android:digits="0123456789"
+                            android:fontFamily="@font/poppinsregular"
+                            android:hint="@string/enter_mobile_hint"
+                            android:imeOptions="actionDone"
+                            android:inputType="number"
+                            android:maxLength="10"
+                            android:maxLines="1"
+                            android:textColor="@color/colorTextPrimary"
+                            android:textColorHint="@color/colorTextHint"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/forgotmobileNumber"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="end"
+                        android:layout_marginTop="@dimen/spacing_sm"
+                        android:fontFamily="@font/poppinsregular"
+                        android:padding="@dimen/spacing_xs"
+                        android:text="@string/forgot_mobile_number"
+                        android:textColor="@color/colorPrimary"
+                        android:textSize="13sp" />
+
+                    <LinearLayout
+                        android:id="@+id/loginCheck"
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/button_height"
+                        android:layout_marginTop="@dimen/spacing_lg"
+                        android:background="@drawable/bg_button_primary"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:layout_width="@dimen/icon_md"
+                            android:layout_height="@dimen/icon_md"
+                            android:contentDescription="@null"
+                            android:src="@drawable/ic_shield"
+                            app:tint="@color/white" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="@dimen/spacing_sm"
+                            android:fontFamily="@font/poppinsbold"
+                            android:text="@string/ui_login"
+                            android:textColor="@color/white"
+                            android:textSize="16sp" />
+                    </LinearLayout>
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/newUser"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_marginTop="@dimen/spacing_lg"
+                        android:fontFamily="@font/poppinsregular"
+                        android:gravity="center"
+                        android:padding="@dimen/spacing_xs"
+                        android:text="@string/new_user"
+                        android:textColor="@color/colorTextSecondary"
+                        android:textSize="14sp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/spacing_lg"
+                android:layout_marginTop="@dimen/spacing_lg"
+                android:layout_marginEnd="@dimen/spacing_lg"
+                android:background="@drawable/bg_security_banner"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="@dimen/spacing_md">
+
+                <ImageView
+                    android:layout_width="@dimen/icon_md"
+                    android:layout_height="@dimen/icon_md"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_shield" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/privacyPolicy"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/spacing_sm"
+                    android:layout_weight="1"
                     android:fontFamily="@font/poppinsregular"
-                    android:gravity="center|start"
-                    android:hint="Enter Mobile Number"
-                    android:inputType="numberDecimal"
-                    android:maxLength="10"
-                    android:paddingStart="10dp"
-                    android:paddingEnd="10dp"
-                    android:textAllCaps="true"
-                    android:textColor="@color/black"
-                    android:textSize="15sp" />
+                    android:lineSpacingExtra="2dp"
+                    android:textColor="@color/colorTextSecondary"
+                    android:textSize="12sp" />
+            </LinearLayout>
 
-            </RelativeLayout>
-
+            <com.google.android.gms.ads.AdView
+                android:id="@+id/ad_view"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_xl"
+                android:layout_marginBottom="@dimen/spacing_sm"
+                ads:adSize="SMART_BANNER"
+                ads:adUnitId="ca-app-pub-2325627373654257/9884986774" />
         </LinearLayout>
-
-        <androidx.appcompat.widget.AppCompatTextView
-            android:id="@+id/forgotmobileNumber"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center|end"
-            android:layout_marginStart="20dp"
-            android:layout_marginTop="10dp"
-            android:layout_marginEnd="20dp"
-            android:fontFamily="@font/poppinsregular"
-            android:gravity="center"
-            android:paddingStart="15dp"
-            android:paddingEnd="15dp"
-            android:text="Forgot Mobile Number?"
-            android:textColor="@color/colorPrimary"
-            android:textSize="14sp" />
-
-        <androidx.appcompat.widget.AppCompatTextView
-            android:id="@+id/loginCheck"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:layout_gravity="center"
-            android:layout_marginStart="20dp"
-            android:layout_marginTop="30dp"
-            android:layout_marginEnd="20dp"
-            android:background="@drawable/button_rounded_border"
-            android:backgroundTint="@color/colorPrimary"
-            android:fontFamily="@font/poppinsbold"
-            android:gravity="center"
-            android:padding="5dp"
-            android:text="Login"
-            android:textColor="@color/white"
-            android:textSize="20sp" />
-
-        <androidx.appcompat.widget.AppCompatTextView
-            android:id="@+id/newUser"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center|end"
-            android:layout_marginStart="20dp"
-            android:layout_marginTop="10dp"
-            android:layout_marginEnd="20dp"
-            android:fontFamily="@font/poppinsregular"
-            android:gravity="center"
-            android:paddingStart="15dp"
-            android:paddingEnd="15dp"
-            android:text="@string/new_user"
-            android:textColor="@color/colorPrimary"
-            android:textSize="15sp" />
-
-        <androidx.appcompat.widget.AppCompatTextView
-            android:id="@+id/privacyPolicy"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginStart="20dp"
-            android:layout_marginTop="25dp"
-            android:layout_marginEnd="20dp"
-            android:fontFamily="@font/poppinslight"
-            android:gravity="center"
-            android:padding="15dp"
-            android:textColor="#9aa1a5"
-            android:textSize="13sp" />
-
-        <com.google.android.gms.ads.AdView
-            android:id="@+id/ad_view"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:layout_marginBottom="20dp"
-            ads:adSize="SMART_BANNER"
-            ads:adUnitId="ca-app-pub-2325627373654257/9884986774" />
-
-    </LinearLayout>
-
+    </FrameLayout>
 </androidx.core.widget.NestedScrollView>

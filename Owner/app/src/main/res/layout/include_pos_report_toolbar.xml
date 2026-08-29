@@ -3,7 +3,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/appBarLayout"
     android:layout_width="match_parent"
-    android:layout_height="50dp">
+    android:layout_height="56dp"
+    android:background="@color/colorPrimary"
+    app:elevation="4dp">
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -27,6 +29,7 @@
             android:layout_centerVertical="true"
             android:layout_marginStart="15dp"
             android:layout_toEndOf="@id/backButton"
+            android:fontFamily="@font/poppinsmedium"
             android:gravity="center_vertical"
             android:textColor="@color/white"
             android:textSize="17sp" />

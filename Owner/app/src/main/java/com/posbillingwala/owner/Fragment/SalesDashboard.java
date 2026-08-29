@@ -44,16 +44,18 @@ public class SalesDashboard extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentSalesDashboardBinding.inflate(inflater, container, false);
         activity = getActivity();
-        if (MainActivity.branchCount <= 1) {
+        if (getArguments() != null && getArguments().getString("branchId") != null
+                && !getArguments().getString("branchId").trim().isEmpty()) {
+            selectedBranchId = getArguments().getString("branchId");
+        } else if (MainActivity.branchCount <= 1) {
             selectedBranchId = "all";
         }
 
         binding.toolbar.toolbarTitle.setText(getString(R.string.sales_dashboard));
         binding.toolbar.backButton.setOnClickListener(v -> navigateBack());
-        binding.viewAllBills.setOnClickListener(v ->
-                ((MainActivity) activity).loadFragment(new InvoiceStoreWise(), true));
+        binding.viewAllBills.setOnClickListener(v -> openStoreWise());
         binding.dateChip.setOnClickListener(v -> {
-            if (MainActivity.branchCount > 1) {
+            if (branchOptions.size() > 1) {
                 showBranchPicker();
             }
         });
@@ -75,11 +77,19 @@ public class SalesDashboard extends Fragment {
         ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
     }
 
+    private void openStoreWise() {
+        InvoiceStoreWise fragment = new InvoiceStoreWise();
+        Bundle args = new Bundle();
+        args.putString("saleDate", "todaySale");
+        fragment.setArguments(args);
+        ((MainActivity) activity).loadFragment(fragment, true);
+    }
+
     @Override
     public void onStart() {
         super.onStart();
         if (DetectConnection.checkInternetConnection(activity)) {
-            if (MainActivity.branchCount > 1 && branchOptions.isEmpty()) {
+            if (branchOptions.isEmpty()) {
                 preloadBranches();
             } else {
                 loadDashboard();
@@ -96,6 +106,9 @@ public class SalesDashboard extends Fragment {
                 branchOptions.clear();
                 if (response.body() != null && response.body().getBranchComparisonList() != null) {
                     branchOptions.addAll(response.body().getBranchComparisonList());
+                }
+                if (!branchOptions.isEmpty()) {
+                    MainActivity.setOutletCounts(branchOptions.size());
                 }
                 loadDashboard();
             }
@@ -130,6 +143,27 @@ public class SalesDashboard extends Fragment {
                 });
     }
 
+    private String scopeLabel(String periodLabel) {
+        String period = periodLabel != null ? periodLabel : getString(R.string.ui_today);
+        if (branchOptions.size() <= 1) {
+            return period;
+        }
+        String branchName = getString(R.string.all_branches);
+        if (!"all".equals(selectedBranchId)) {
+            for (BranchComparisonResponse b : branchOptions) {
+                if (selectedBranchId.equals(b.getBranchId())) {
+                    if (b.getBranchLabel() != null && !b.getBranchLabel().isEmpty()) {
+                        branchName = b.getBranchLabel();
+                    } else if (b.getShopName1() != null) {
+                        branchName = b.getShopName1();
+                    }
+                    break;
+                }
+            }
+        }
+        return period + " · " + branchName;
+    }
+
     private void loadDashboard() {
         SweetAlertDialog loader = new SweetAlertDialog(activity, SweetAlertDialog.PROGRESS_TYPE);
         loader.getProgressHelper().setBarColor(Color.parseColor("#4862b7"));
@@ -146,7 +180,7 @@ public class SalesDashboard extends Fragment {
                         AllApiResponse body = response.body();
                         if (!"true".equalsIgnoreCase(body.getStatus())) return;
 
-                        binding.dateChip.setText(body.getPeriodLabel());
+                        binding.dateChip.setText(scopeLabel(body.getPeriodLabel()));
                         ReportUiHelper.bindKpi(binding.kpi1, getString(R.string.total_sales),
                                 ReportUiHelper.money(body.getTotalSales()), body.getTotalSalesTrend());
                         ReportUiHelper.bindKpi(binding.kpi2, getString(R.string.net_sales),

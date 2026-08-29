@@ -9,17 +9,12 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
-import com.jaredrummler.materialspinner.MaterialSpinner;
 
 import com.posbillingwala.owner.Activity.MainActivity;
 import com.posbillingwala.owner.Adapter.PortionAdapter;
@@ -45,10 +40,11 @@ public class ManageCustomerProductPortions extends Fragment implements View.OnCl
 
     public static Activity activity;
     public static RecyclerView portionRecyclerview;
-    public static CardView portionListCardView;
-    public static TextView noDataFound;
+    public static View portionListCardView;
+    public static View noDataFound;
 
     FragmentManageCustomerProductPortionsBinding binding;
+    public static Runnable refreshPortions;
 
     String productId;
     String productName;
@@ -74,6 +70,8 @@ public class ManageCustomerProductPortions extends Fragment implements View.OnCl
         portionListCardView = binding.portionListCardView;
         noDataFound = binding.noDataFound;
 
+        refreshPortions = this::getPortionList;
+
         binding.backToHome.setOnClickListener(v -> {
             ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
             ((MainActivity) activity).loadFragment(new AllCustomerProductList(), true);
@@ -89,13 +87,10 @@ public class ManageCustomerProductPortions extends Fragment implements View.OnCl
             return false;
         });
 
-        binding.portionMasterSpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
-            @Override
-            public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
-                if (portionMasterIdList != null && position >= 0 && position < portionMasterIdList.length) {
-                    selectedPortionMasterId = portionMasterIdList[position];
-                    selectedPortionName = portionMasterNameList[position];
-                }
+        binding.portionMasterSpinner.setOnItemSelectedListener((position, item) -> {
+            if (portionMasterIdList != null && position >= 0 && position < portionMasterIdList.length) {
+                selectedPortionMasterId = portionMasterIdList[position];
+                selectedPortionName = portionMasterNameList[position];
             }
         });
 
@@ -214,9 +209,8 @@ public class ManageCustomerProductPortions extends Fragment implements View.OnCl
                             portionMasterIdList[i] = list.get(i).getPortionMasterId();
                             portionMasterNameList[i] = list.get(i).getPortionName();
                         }
-                        ArrayAdapter<String> adapter = new ArrayAdapter<>(activity, android.R.layout.simple_spinner_item, portionMasterNameList);
-                        adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
-                        binding.portionMasterSpinner.setAdapter(adapter);
+                        binding.portionMasterSpinner.setItems(portionMasterNameList);
+                        binding.portionMasterSpinner.setSelectedIndex(0);
                         selectedPortionMasterId = portionMasterIdList[0];
                         selectedPortionName = portionMasterNameList[0];
                     }

@@ -5,23 +5,25 @@ import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.InputType;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.textfield.TextInputEditText;
 import com.posbillingwala.owner.Activity.MainActivity;
 import com.posbillingwala.owner.Adapter.SubcategoryAdapter;
+import com.posbillingwala.owner.Extra.CatalogListSearch;
 import com.posbillingwala.owner.Extra.DetectConnection;
 import com.posbillingwala.owner.Model.AllApiResponse;
 import com.posbillingwala.owner.Model.ProductSubcategoryResponse;
@@ -30,6 +32,7 @@ import com.posbillingwala.owner.Retrofit.Api;
 import com.posbillingwala.owner.Utils.CatalogImportExportHelper;
 import com.posbillingwala.owner.databinding.FragmentAddCustomerSubcategoryBinding;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -45,8 +48,11 @@ public class AddCustomerSubcategory extends Fragment implements View.OnClickList
     public static String categoryId;
     public static String categoryName;
     public static RecyclerView subcategoryRecyclerview;
-    public static CardView subcategoryListCardView;
-    public static TextView noDataFound;
+    public static View subcategoryListCardView;
+    public static View noDataFound;
+    public static View listNoResults;
+    public static TextInputEditText searchSubcategory;
+    public static List<ProductSubcategoryResponse> subcategoryResponseList = new ArrayList<>();
 
     FragmentAddCustomerSubcategoryBinding binding;
     CatalogImportExportHelper catalogImportExportHelper;
@@ -63,16 +69,37 @@ public class AddCustomerSubcategory extends Fragment implements View.OnClickList
             categoryName = bundle.getString("categoryName");
         }
 
-        binding.categoryInfo.setText("Category: " + categoryName);
+        binding.categoryInfo.setText(categoryName != null && !categoryName.isEmpty()
+                ? "Category: " + categoryName
+                : "All categories");
         binding.subcategoryName.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
 
         subcategoryRecyclerview = binding.subcategoryRecyclerview;
+        subcategoryRecyclerview.setLayoutManager(new GridLayoutManager(activity, 1));
         subcategoryListCardView = binding.subcategoryListCardView;
         noDataFound = binding.noDataFound;
+        listNoResults = binding.listNoResults;
+        searchSubcategory = binding.listSearch.listSearchInput;
 
         catalogImportExportHelper = new CatalogImportExportHelper(
                 this, MainActivity.userId, "subcategories", "Sub Categories", AddCustomerSubcategory::getSubcategoryList);
         catalogImportExportHelper.bindBar(binding.catalogImportExportBar.getRoot());
+
+        binding.listSearch.listSearchInput.setHint(R.string.ui_search_subcategory);
+        binding.listSearch.listSearchInput.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                applySubcategorySearch();
+            }
+        });
 
         binding.backToHome.setOnClickListener(v -> {
             ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
@@ -151,12 +178,11 @@ public class AddCustomerSubcategory extends Fragment implements View.OnClickList
             public void onResponse(@NonNull Call<AllApiResponse> call, @NonNull Response<AllApiResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     List<ProductSubcategoryResponse> list = response.body().getSubcategoryResponseList();
-                    if (list != null && !list.isEmpty()) {
-                        SubcategoryAdapter adapter = new SubcategoryAdapter(activity, list);
-                        subcategoryRecyclerview.setLayoutManager(new GridLayoutManager(activity, 1));
-                        subcategoryRecyclerview.setAdapter(adapter);
+                    subcategoryResponseList = list != null ? list : new ArrayList<>();
+                    if (!subcategoryResponseList.isEmpty()) {
                         subcategoryListCardView.setVisibility(View.VISIBLE);
                         noDataFound.setVisibility(View.GONE);
+                        applySubcategorySearch();
                     } else {
                         subcategoryListCardView.setVisibility(View.GONE);
                         noDataFound.setVisibility(View.VISIBLE);
@@ -170,6 +196,21 @@ public class AddCustomerSubcategory extends Fragment implements View.OnClickList
                 pDialog.dismiss();
             }
         });
+    }
+
+    public static void applySubcategorySearch() {
+        if (activity == null || subcategoryRecyclerview == null || subcategoryResponseList == null) {
+            return;
+        }
+        String query = CatalogListSearch.currentQuery(searchSubcategory);
+        List<ProductSubcategoryResponse> filtered = new ArrayList<>();
+        for (ProductSubcategoryResponse item : subcategoryResponseList) {
+            if (item != null && CatalogListSearch.matches(query, item.getSubcategoryName())) {
+                filtered.add(item);
+            }
+        }
+        subcategoryRecyclerview.setAdapter(new SubcategoryAdapter(activity, filtered));
+        CatalogListSearch.showFilterEmpty(subcategoryRecyclerview, listNoResults, !filtered.isEmpty());
     }
 
     private String getRandomString(final int sizeOfRandomString) {

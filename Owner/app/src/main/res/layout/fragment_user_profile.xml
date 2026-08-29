@@ -1,257 +1,187 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:ads="http://schemas.android.com/apk/res-auto"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".Fragment.AboutUs">
+    android:background="@color/colorBackground"
+    tools:context=".Fragment.UserProfile">
 
-    <com.google.android.material.appbar.AppBarLayout
-        android:id="@+id/appBarLayout"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:layout_alignParentTop="true">
-
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <ImageView
-                android:id="@+id/backToSetting"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
-                android:layout_alignParentStart="true"
-                android:layout_centerInParent="true"
-                android:layout_gravity="center"
-                android:layout_marginStart="15dp"
-                android:src="@drawable/ic_back"
-                app:tint="@color/white" />
-
-            <androidx.appcompat.widget.AppCompatTextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:layout_gravity="center"
-                android:layout_marginStart="15dp"
-                android:layout_toEndOf="@+id/backToSetting"
-                android:fontFamily="@font/poppinsmedium"
-                android:gravity="center"
-                android:paddingStart="5dp"
-                android:paddingEnd="5dp"
-                android:text="Profile"
-                android:textColor="@color/white"
-                android:textSize="17sp" />
-
-        </RelativeLayout>
-
-    </com.google.android.material.appbar.AppBarLayout>
+    <include
+        android:id="@+id/toolbar"
+        layout="@layout/include_pos_report_toolbar" />
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/appBarLayout">
+        android:layout_below="@id/toolbar"
+        android:clipToPadding="false"
+        android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:padding="@dimen/spacing_lg"
+            android:paddingBottom="@dimen/spacing_xl">
 
-            <androidx.cardview.widget.CardView
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_margin="10dp"
-                android:elevation="7dp"
-                ads:cardCornerRadius="10dp"
-                ads:cardElevation="7dp">
+                android:layout_height="wrap_content"
+                app:cardBackgroundColor="@color/colorSurface"
+                app:cardCornerRadius="@dimen/radius_md"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/colorBorder"
+                app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical">
+                    android:orientation="vertical"
+                    android:padding="@dimen/spacing_lg">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_gravity="center|start"
-                        android:layout_marginStart="15dp"
-                        android:layout_marginTop="20dp"
-                        android:layout_marginEnd="15dp"
                         android:fontFamily="@font/poppinsmedium"
-                        android:gravity="center"
-                        android:paddingStart="10dp"
-                        android:paddingEnd="10dp"
-                        android:text="Customer Name"
+                        android:text="@string/profile_customer_name"
                         android:textColor="@color/colorPrimary"
-                        android:textSize="15sp" />
+                        android:textSize="14sp" />
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/customerName"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:layout_marginStart="15dp"
-                        android:layout_marginEnd="15dp"
-                        android:background="@drawable/button_rounded_border"
+                        android:layout_height="@dimen/input_height"
+                        android:layout_marginTop="@dimen/spacing_sm"
+                        android:background="@drawable/bg_input"
                         android:fontFamily="@font/poppinsregular"
-                        android:gravity="center|start"
-                        android:padding="10dp"
+                        android:gravity="center_vertical"
+                        android:paddingStart="@dimen/spacing_md"
+                        android:paddingEnd="@dimen/spacing_md"
                         android:singleLine="true"
-                        android:textColor="@color/black"
-                        android:textSize="15sp" />
+                        android:textColor="@color/colorTextPrimary"
+                        android:textSize="14sp" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_gravity="center|start"
-                        android:layout_marginStart="15dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginEnd="15dp"
+                        android:layout_marginTop="@dimen/spacing_md"
                         android:fontFamily="@font/poppinsmedium"
-                        android:gravity="center"
-                        android:paddingStart="10dp"
-                        android:paddingEnd="10dp"
-                        android:text="Customer Mobile Number"
+                        android:text="@string/profile_customer_mobile"
                         android:textColor="@color/colorPrimary"
-                        android:textSize="15sp" />
+                        android:textSize="14sp" />
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/customerMobileNumber"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:layout_marginStart="15dp"
-                        android:layout_marginEnd="15dp"
-                        android:background="@drawable/button_rounded_border"
+                        android:layout_height="@dimen/input_height"
+                        android:layout_marginTop="@dimen/spacing_sm"
+                        android:background="@drawable/bg_input"
                         android:fontFamily="@font/poppinsregular"
-                        android:gravity="center|start"
-                        android:padding="10dp"
+                        android:gravity="center_vertical"
+                        android:inputType="phone"
+                        android:paddingStart="@dimen/spacing_md"
+                        android:paddingEnd="@dimen/spacing_md"
                         android:singleLine="true"
-                        android:textColor="@color/black"
-                        android:textSize="15sp" />
+                        android:textColor="@color/colorTextPrimary"
+                        android:textSize="14sp" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_gravity="center|start"
-                        android:layout_marginStart="15dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginEnd="15dp"
+                        android:layout_marginTop="@dimen/spacing_md"
                         android:fontFamily="@font/poppinsmedium"
-                        android:gravity="center"
-                        android:paddingStart="10dp"
-                        android:paddingEnd="10dp"
-                        android:text="Customer Address"
+                        android:text="@string/profile_customer_address"
                         android:textColor="@color/colorPrimary"
-                        android:textSize="15sp" />
+                        android:textSize="14sp" />
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/customerAddress"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:layout_marginStart="15dp"
-                        android:layout_marginEnd="15dp"
-                        android:background="@drawable/button_rounded_border"
+                        android:layout_marginTop="@dimen/spacing_sm"
+                        android:background="@drawable/bg_input"
                         android:digits="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789,`\n "
                         android:fontFamily="@font/poppinsregular"
-                        android:gravity="center|start"
+                        android:gravity="top|start"
                         android:inputType="textMultiLine"
-                        android:padding="10dp"
-                        android:textColor="@color/black"
-                        android:textSize="15sp" />
+                        android:minHeight="88dp"
+                        android:padding="@dimen/spacing_md"
+                        android:textColor="@color/colorTextPrimary"
+                        android:textSize="14sp" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_gravity="center|start"
-                        android:layout_marginStart="15dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginEnd="15dp"
+                        android:layout_marginTop="@dimen/spacing_md"
                         android:fontFamily="@font/poppinsmedium"
-                        android:gravity="center"
-                        android:paddingStart="10dp"
-                        android:paddingEnd="10dp"
-                        android:text="Shop Name"
+                        android:text="@string/profile_shop_name"
                         android:textColor="@color/colorPrimary"
-                        android:textSize="15sp" />
+                        android:textSize="14sp" />
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/customerShopName"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:layout_marginStart="15dp"
-                        android:layout_marginEnd="15dp"
-                        android:background="@drawable/button_rounded_border"
+                        android:layout_height="@dimen/input_height"
+                        android:layout_marginTop="@dimen/spacing_sm"
+                        android:background="@drawable/bg_input"
                         android:fontFamily="@font/poppinsregular"
-                        android:gravity="center|start"
-                        android:padding="10dp"
+                        android:gravity="center_vertical"
+                        android:paddingStart="@dimen/spacing_md"
+                        android:paddingEnd="@dimen/spacing_md"
                         android:singleLine="true"
-                        android:textColor="@color/black"
-                        android:textSize="15sp" />
+                        android:textColor="@color/colorTextPrimary"
+                        android:textSize="14sp" />
 
                     <TextView
                         android:id="@+id/updateCustomer"
                         android:layout_width="match_parent"
-                        android:layout_height="50dp"
-                        android:layout_gravity="center"
-                        android:layout_marginTop="30dp"
-                        android:background="@color/colorPrimary"
-                        android:fontFamily="@font/poppinsmedium"
+                        android:layout_height="@dimen/button_height"
+                        android:layout_marginTop="@dimen/spacing_lg"
+                        android:background="@drawable/bg_button_primary"
+                        android:fontFamily="@font/poppinsbold"
                         android:gravity="center"
-                        android:padding="5dp"
-                        android:text="UPDATE"
+                        android:text="@string/profile_update"
                         android:textColor="@color/white"
-                        android:textSize="20sp" />
-
+                        android:textSize="16sp" />
                 </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
-            </androidx.cardview.widget.CardView>
-
-            <androidx.cardview.widget.CardView
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_margin="10dp"
-                android:elevation="7dp"
-                ads:cardCornerRadius="10dp"
-                ads:cardElevation="7dp">
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_lg"
+                app:cardBackgroundColor="@color/colorSurface"
+                app:cardCornerRadius="@dimen/radius_md"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/colorBorder"
+                app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical">
+                    android:orientation="vertical"
+                    android:padding="@dimen/spacing_lg">
 
                     <TextView
-                        android:layout_width="wrap_content"
+                        android:id="@+id/outletSectionTitle"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:layout_marginStart="10dp"
-                        android:layout_marginTop="20dp"
-                        android:layout_marginEnd="10dp"
-                        android:fontFamily="@font/poppinsmedium"
+                        android:fontFamily="@font/poppinsbold"
                         android:gravity="center"
-                        android:paddingStart="10dp"
-                        android:paddingEnd="10dp"
-                        android:text="***** Outlet Details *****"
+                        android:text="@string/profile_outlet_details"
                         android:textAllCaps="true"
-                        android:textColor="@color/error_stroke_color"
-                        android:textSize="15sp" />
+                        android:textColor="@color/colorTextPrimary"
+                        android:textSize="@dimen/text_subtitle" />
 
                     <androidx.recyclerview.widget.RecyclerView
                         android:id="@+id/recyclerView"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginBottom="30dp"
-                        android:padding="10dp" />
-
+                        android:layout_marginTop="@dimen/spacing_sm"
+                        android:nestedScrollingEnabled="false" />
                 </LinearLayout>
-
-            </androidx.cardview.widget.CardView>
-
+            </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
-
     </androidx.core.widget.NestedScrollView>
-
 </RelativeLayout>

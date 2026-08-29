@@ -127,7 +127,9 @@ public class OrderInvoice extends Fragment {
             public void onResponse(Call<AllApiResponse> call, Response<AllApiResponse> response) {
                 if (response.isSuccessful()) {
                     invoiceResponseList.clear();
-                    invoiceResponseList = response.body().getInvoiceResponseList();
+                    List<InvoiceResponse> invoices = response.body() != null
+                            ? response.body().getInvoiceResponseList() : null;
+                    invoiceResponseList = invoices != null ? invoices : new ArrayList<>();
                     if (!invoiceResponseList.isEmpty()) {
 
                         adapter = new InvoiceAdapter(activity, invoiceResponseList);

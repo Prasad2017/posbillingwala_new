@@ -12,6 +12,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.posbillingwala.owner.Activity.MainActivity;
+import com.posbillingwala.owner.Extra.ReportUiHelper;
 import com.posbillingwala.owner.Fragment.OrderInvoice;
 import com.posbillingwala.owner.Model.LicenseResponse;
 import com.posbillingwala.owner.databinding.StoreDataListBinding;
@@ -73,10 +74,13 @@ public class StoreAdapter extends RecyclerView.Adapter<StoreAdapter.MyViewHolder
                 "<b>Status:</b> " + status + " · Exp: " + expiry;
 
         holder.binding.shopAddress.setText(Html.fromHtml(storeDetails));
-        if (saleDate.equalsIgnoreCase("totalSale")) {
-            holder.binding.totalSale.setText(licenseResponse.getCurrencyName() + " " + licenseResponse.getTotalSale());
-        } else if (saleDate.equalsIgnoreCase("todaySale")) {
-            holder.binding.totalSale.setText(licenseResponse.getCurrencyName() + " " + licenseResponse.getTodaySale());
+        String currency = licenseResponse.getCurrencyName();
+        if ("totalSale".equalsIgnoreCase(saleDate)) {
+            holder.binding.totalSale.setText(ReportUiHelper.money(
+                    currency, licenseResponse.getTotalSale()));
+        } else {
+            holder.binding.totalSale.setText(ReportUiHelper.money(
+                    currency, licenseResponse.getTodaySale()));
         }
 
         holder.binding.linearLayout.setOnClickListener(new View.OnClickListener() {

@@ -51,11 +51,14 @@ public class InvoiceStoreWise extends Fragment {
         Bundle bundle = getArguments();
         if (bundle != null) {
             saleDate = bundle.getString("saleDate");
-            if (saleDate.equalsIgnoreCase("totalSale")) {
-                binding.heading.setText("Total Sale — All Stores");
-            } else {
-                binding.heading.setText("Today Sale — All Stores");
-            }
+        }
+        if (saleDate == null || saleDate.isEmpty()) {
+            saleDate = "totalSale";
+        }
+        if (saleDate.equalsIgnoreCase("totalSale")) {
+            binding.heading.setText("Total Sale — All Stores");
+        } else {
+            binding.heading.setText("Today Sale — All Stores");
         }
 
         view.setFocusableInTouchMode(true);
@@ -109,15 +112,22 @@ public class InvoiceStoreWise extends Fragment {
                 if (response.isSuccessful()) {
                     licenseResponseList = response.body().getLicenseResponseList();
                     if (licenseResponseList != null && !licenseResponseList.isEmpty()) {
+                        MainActivity.setOutletCounts(licenseResponseList.size());
                         String storeCount = response.body().getStoreCount();
-                        if (storeCount != null && !storeCount.isEmpty() && !"0".equals(storeCount)) {
-                            binding.heading.setText(binding.heading.getText() + " (" + storeCount + ")");
+                        if (storeCount == null || storeCount.isEmpty()) {
+                            storeCount = String.valueOf(licenseResponseList.size());
+                        }
+                        CharSequence current = binding.heading.getText();
+                        if (current != null && !current.toString().contains("(")) {
+                            binding.heading.setText(current + " (" + storeCount + ")");
                         }
 
                         StoreAdapter adapter = new StoreAdapter(activity, licenseResponseList, saleDate);
                         binding.recyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
                         binding.recyclerView.setAdapter(adapter);
-                        binding.recyclerView.addItemDecoration(new SimpleDividerItemDecoration(activity));
+                        if (binding.recyclerView.getItemDecorationCount() == 0) {
+                            binding.recyclerView.addItemDecoration(new SimpleDividerItemDecoration(activity));
+                        }
                         binding.recyclerView.setHasFixedSize(true);
 
                         binding.linearLayout.setVisibility(View.VISIBLE);

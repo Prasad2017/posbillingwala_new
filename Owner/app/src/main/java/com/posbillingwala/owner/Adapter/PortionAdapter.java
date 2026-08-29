@@ -1,17 +1,27 @@
 package com.posbillingwala.owner.Adapter;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.view.LayoutInflater;
-import android.view.ViewGroup;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.posbillingwala.owner.Activity.MainActivity;
+import com.posbillingwala.owner.Extra.BottomSheetUi;
+import com.posbillingwala.owner.Fragment.ManageCustomerProductPortions;
+import com.posbillingwala.owner.Model.AllApiResponse;
 import com.posbillingwala.owner.Model.ProductPortionResponse;
+import com.posbillingwala.owner.Retrofit.Api;
 import com.posbillingwala.owner.databinding.PortionListBinding;
 
 import java.util.List;
+
+import cn.pedant.SweetAlert.SweetAlertDialog;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class PortionAdapter extends RecyclerView.Adapter<PortionAdapter.MyViewHolder> {
 
@@ -25,7 +35,7 @@ public class PortionAdapter extends RecyclerView.Adapter<PortionAdapter.MyViewHo
 
     @NonNull
     @Override
-    public MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public MyViewHolder onCreateViewHolder(@NonNull android.view.ViewGroup parent, int viewType) {
         PortionListBinding binding = PortionListBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false);
         return new MyViewHolder(binding);
     }
@@ -36,7 +46,39 @@ public class PortionAdapter extends RecyclerView.Adapter<PortionAdapter.MyViewHo
         holder.binding.srNo.setText(String.valueOf(position + 1));
         holder.binding.portionName.setText(item.getPortionName());
         holder.binding.portionPrice.setText(MainActivity.currency + " " + item.getPortionPrice());
-        holder.binding.portionRemove.setVisibility(android.view.View.GONE);
+        holder.binding.portionRemove.setVisibility(android.view.View.VISIBLE);
+        holder.binding.portionRemove.setOnClickListener(v ->
+                BottomSheetUi.showConfirm(context, "Are you Sure?", "Do you want to delete this portion?",
+                        "YES", "NO", true, () -> deletePortion(item.getPortionId())));
+    }
+
+    private void deletePortion(String portionId) {
+        SweetAlertDialog pDialog = new SweetAlertDialog(context, SweetAlertDialog.PROGRESS_TYPE);
+        pDialog.getProgressHelper().setBarColor(Color.parseColor("#2D7FED"));
+        pDialog.setTitleText("Loading");
+        pDialog.setCancelable(false);
+        pDialog.show();
+
+        Api.getClient().deleteProductPortion(MainActivity.userId, portionId)
+                .enqueue(new Callback<AllApiResponse>() {
+                    @Override
+                    public void onResponse(@NonNull Call<AllApiResponse> call, @NonNull Response<AllApiResponse> response) {
+                        pDialog.dismiss();
+                        if (response.body() != null) {
+                            Toast.makeText(context, response.body().getMessage(), Toast.LENGTH_SHORT).show();
+                            if ("1".equalsIgnoreCase(response.body().getStatus())
+                                    && ManageCustomerProductPortions.refreshPortions != null) {
+                                ManageCustomerProductPortions.refreshPortions.run();
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(@NonNull Call<AllApiResponse> call, @NonNull Throwable t) {
+                        pDialog.dismiss();
+                        Toast.makeText(context, t.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
     @Override

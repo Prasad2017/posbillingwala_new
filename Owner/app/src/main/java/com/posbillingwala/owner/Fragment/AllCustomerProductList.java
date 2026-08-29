@@ -5,6 +5,8 @@ import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -14,11 +16,13 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.textfield.TextInputEditText;
 import com.posbillingwala.owner.Activity.MainActivity;
 import com.posbillingwala.owner.Adapter.ProductAdapter;
+import com.posbillingwala.owner.Extra.CatalogListSearch;
 import com.posbillingwala.owner.Extra.DetectConnection;
 import com.posbillingwala.owner.Model.AllApiResponse;
 import com.posbillingwala.owner.Model.ProductResponse;
@@ -42,7 +46,11 @@ public class AllCustomerProductList extends Fragment implements View.OnClickList
     public static RecyclerView productRecyclerView;
     public static List<ProductResponse> productResponseList = new ArrayList<>();
     public static ProductAdapter productAdapter;
-    public static TextView noDataFound;
+    public static View noDataFound;
+    public static View productListContent;
+    public static View listNoResults;
+    public static TextView productCountText;
+    public static TextInputEditText searchProduct;
     View view;
     FragmentAllCustomerProductListBinding binding;
     CatalogImportExportHelper catalogImportExportHelper;
@@ -60,19 +68,21 @@ public class AllCustomerProductList extends Fragment implements View.OnClickList
             @Override
             public void onResponse(Call<AllApiResponse> call, Response<AllApiResponse> response) {
                 if (response.isSuccessful()) {
-                    productResponseList = response.body().getProductResponseList();
+                    productResponseList = response.body() != null
+                            && response.body().getProductResponseList() != null
+                            ? response.body().getProductResponseList()
+                            : new ArrayList<>();
                     if (!productResponseList.isEmpty()) {
-
-                        productAdapter = new ProductAdapter(activity, productResponseList);
-                        productRecyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
-                        productRecyclerView.setAdapter(productAdapter);
-                        productAdapter.notifyDataSetChanged();
-                        productAdapter.notifyItemInserted(productResponseList.size() - 1);
-                        productRecyclerView.setVisibility(View.VISIBLE);
+                        if (productListContent != null) {
+                            productListContent.setVisibility(View.VISIBLE);
+                        }
                         noDataFound.setVisibility(View.GONE);
-
+                        applyProductSearch();
                     } else {
                         productRecyclerView.setVisibility(View.GONE);
+                        if (productListContent != null) {
+                            productListContent.setVisibility(View.GONE);
+                        }
                         noDataFound.setVisibility(View.VISIBLE);
                     }
 
@@ -95,16 +105,31 @@ public class AllCustomerProductList extends Fragment implements View.OnClickList
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         binding = FragmentAllCustomerProductListBinding.inflate(inflater, container, false);
-        View view = binding.getRoot();
+        view = binding.getRoot();
 
         activity = getActivity();
-
 
         initViews();
 
         catalogImportExportHelper = new CatalogImportExportHelper(
                 this, MainActivity.userId, "products", "Products", AllCustomerProductList::getProductList);
         catalogImportExportHelper.bindBar(binding.catalogImportExportBar.getRoot());
+
+        binding.listSearch.listSearchInput.setHint(R.string.ui_search_product);
+        binding.listSearch.listSearchInput.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                applyProductSearch();
+            }
+        });
 
         view.setFocusableInTouchMode(true);
         view.requestFocus();
@@ -123,7 +148,8 @@ public class AllCustomerProductList extends Fragment implements View.OnClickList
         });
 
         binding.backToHome.setOnClickListener(this);
-
+        binding.addProduct.setOnClickListener(this);
+        binding.addProductEmpty.setOnClickListener(this);
 
         return view;
     }
@@ -133,12 +159,46 @@ public class AllCustomerProductList extends Fragment implements View.OnClickList
         if (view.getId() == R.id.backToHome) {
             ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
             ((MainActivity) activity).loadFragment(new UserSetting(), true);
+        } else if (view.getId() == R.id.addProduct || view.getId() == R.id.addProductEmpty) {
+            ((MainActivity) activity).loadFragment(new AddCustomerProduct(), true);
         }
     }
 
     public void initViews() {
-        productRecyclerView = view.findViewById(R.id.productRecyclerView);
-        noDataFound = view.findViewById(R.id.noDataFound);
+        productRecyclerView = binding.productRecyclerView;
+        productRecyclerView.setLayoutManager(new LinearLayoutManager(activity));
+        noDataFound = binding.noDataFound;
+        productListContent = binding.linearLayout;
+        productCountText = binding.productCountText;
+        listNoResults = binding.listNoResults;
+        searchProduct = binding.listSearch.listSearchInput;
+    }
+
+    public static void applyProductSearch() {
+        if (activity == null || productRecyclerView == null || productResponseList == null) {
+            return;
+        }
+        String query = CatalogListSearch.currentQuery(searchProduct);
+        List<ProductResponse> filtered = new ArrayList<>();
+        for (ProductResponse item : productResponseList) {
+            if (item == null) {
+                continue;
+            }
+            if (CatalogListSearch.matches(query,
+                    item.getProductName(),
+                    item.getCategoryName(),
+                    item.getSubcategoryName(),
+                    item.getProductCode(),
+                    item.getProductPrice())) {
+                filtered.add(item);
+            }
+        }
+        productAdapter = new ProductAdapter(activity, filtered);
+        productRecyclerView.setAdapter(productAdapter);
+        CatalogListSearch.showFilterEmpty(productRecyclerView, listNoResults, !filtered.isEmpty());
+        if (productCountText != null) {
+            productCountText.setText(filtered.size() + " Products");
+        }
     }
 
     @Override

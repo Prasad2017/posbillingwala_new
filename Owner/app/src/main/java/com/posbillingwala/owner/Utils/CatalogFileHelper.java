@@ -11,6 +11,7 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.concurrent.TimeUnit;
 
+import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -36,10 +37,18 @@ public final class CatalogFileHelper {
                         .writeTimeout(5, TimeUnit.MINUTES)
                         .build();
 
-                Request.Builder requestBuilder = new Request.Builder().url(url).get();
                 String token = Common.getSavedUserData(context, "authToken");
                 if (token != null && !token.isEmpty()) {
+                    HttpUrl parsed = HttpUrl.parse(url);
+                    if (parsed != null && parsed.queryParameter("authToken") == null) {
+                        url = parsed.newBuilder().setQueryParameter("authToken", token).build().toString();
+                    }
+                }
+
+                Request.Builder requestBuilder = new Request.Builder().url(url).get();
+                if (token != null && !token.isEmpty()) {
                     requestBuilder.header("Authorization", "Bearer " + token);
+                    requestBuilder.header("X-Auth-Token", token);
                 }
 
                 Response response = client.newCall(requestBuilder.build()).execute();

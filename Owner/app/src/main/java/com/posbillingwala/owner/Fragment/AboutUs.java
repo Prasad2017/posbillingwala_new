@@ -16,6 +16,7 @@ import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.initialization.InitializationStatus;
 import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
 import com.posbillingwala.owner.Activity.MainActivity;
+import com.posbillingwala.owner.R;
 import com.posbillingwala.owner.databinding.FragmentAboutUsBinding;
 
 public class AboutUs extends Fragment {
@@ -50,13 +51,10 @@ public class AboutUs extends Fragment {
 
         initAds();
 
-        // Setting up click listeners
-        binding.backToSetting.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
-                ((MainActivity) activity).loadFragment(new UserSetting(), true);
-            }
+        binding.toolbar.toolbarTitle.setText(getString(R.string.setting_about));
+        binding.toolbar.backButton.setOnClickListener(view1 -> {
+            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
+            ((MainActivity) activity).loadFragment(new UserSetting(), true);
         });
 
         return view;

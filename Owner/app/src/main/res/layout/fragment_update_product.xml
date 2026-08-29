@@ -4,13 +4,16 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/colorBackground"
     tools:context=".Fragment.UpdateProduct">
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:layout_alignParentTop="true">
+        android:layout_height="56dp"
+        android:layout_alignParentTop="true"
+        android:background="@color/colorPrimary"
+        app:elevation="4dp">
 
         <RelativeLayout
             android:layout_width="match_parent"
@@ -18,12 +21,13 @@
 
             <ImageView
                 android:id="@+id/backToHome"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
+                android:layout_width="@dimen/touch_min"
+                android:layout_height="@dimen/touch_min"
                 android:layout_alignParentStart="true"
-                android:layout_centerInParent="true"
-                android:layout_gravity="center"
-                android:layout_marginStart="15dp"
+                android:layout_centerVertical="true"
+                android:layout_marginStart="@dimen/spacing_sm"
+                android:contentDescription="@null"
+                android:padding="@dimen/spacing_sm"
                 android:src="@drawable/ic_back"
                 app:tint="@color/white" />
 
@@ -31,16 +35,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
-                android:layout_gravity="center"
-                android:layout_marginStart="15dp"
-                android:layout_toEndOf="@+id/backToHome"
                 android:fontFamily="@font/poppinsmedium"
-                android:gravity="center"
-                android:paddingStart="5dp"
-                android:paddingEnd="5dp"
                 android:text="Update Product"
                 android:textColor="@color/white"
-                android:textSize="17sp" />
+                android:textSize="@dimen/text_title" />
 
         </RelativeLayout>
 
@@ -49,7 +47,7 @@
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@+id/updateProduct"
+        android:layout_above="@+id/updateProductFooter"
         android:layout_below="@+id/appBarLayout">
 
         <LinearLayout
@@ -69,26 +67,13 @@
                 android:text="Product Category*"
                 android:textColor="@color/textcolor" />
 
-            <LinearLayout
+            <com.posbillingwala.owner.Extra.SearchableDropdownView
+                android:id="@+id/categorySpinner"
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:background="@drawable/button_rounded_border"
-                android:orientation="horizontal">
-
-                <com.jaredrummler.materialspinner.MaterialSpinner
-                    android:id="@+id/categorySpinner"
-                    android:layout_width="match_parent"
-                    android:layout_height="45dp"
-                    android:layout_gravity="center"
-                    android:layout_margin="5dp"
-                    android:fontFamily="@font/poppinsregular"
-                    android:gravity="center|start"
-                    android:paddingStart="10dp"
-                    android:textColor="@color/black"
-                    android:textSize="15sp"
-                    app:ms_hint="Select Product Category" />
-
-            </LinearLayout>
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_sm"
+                app:sdd_dialog_title="Product Category"
+                app:sdd_hint="Select Product Category" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -100,26 +85,13 @@
                 android:text="Subcategory (optional)"
                 android:textColor="@color/textcolor" />
 
-            <LinearLayout
+            <com.posbillingwala.owner.Extra.SearchableDropdownView
+                android:id="@+id/subcategorySpinner"
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:background="@drawable/button_rounded_border"
-                android:orientation="horizontal">
-
-                <com.jaredrummler.materialspinner.MaterialSpinner
-                    android:id="@+id/subcategorySpinner"
-                    android:layout_width="match_parent"
-                    android:layout_height="45dp"
-                    android:layout_gravity="center"
-                    android:layout_margin="5dp"
-                    android:fontFamily="@font/poppinsregular"
-                    android:gravity="center|start"
-                    android:paddingStart="10dp"
-                    android:textColor="@color/black"
-                    android:textSize="15sp"
-                    app:ms_hint="Select Subcategory" />
-
-            </LinearLayout>
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_sm"
+                app:sdd_dialog_title="Subcategory"
+                app:sdd_hint="Select Subcategory" />
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/productCodeLayout"
@@ -236,26 +208,13 @@
                 android:text="Product Unit*"
                 android:textColor="@color/textcolor" />
 
-            <LinearLayout
+            <com.posbillingwala.owner.Extra.SearchableDropdownView
+                android:id="@+id/unitSpinner"
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:background="@drawable/button_rounded_border"
-                android:orientation="horizontal">
-
-                <com.jaredrummler.materialspinner.MaterialSpinner
-                    android:id="@+id/unitSpinner"
-                    android:layout_width="match_parent"
-                    android:layout_height="45dp"
-                    android:layout_gravity="center"
-                    android:layout_margin="5dp"
-                    android:fontFamily="@font/poppinsregular"
-                    android:gravity="center|start"
-                    android:paddingStart="10dp"
-                    android:textColor="@color/black"
-                    android:textSize="15sp"
-                    app:ms_hint="Select Product Unit" />
-
-            </LinearLayout>
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_sm"
+                app:sdd_dialog_title="Product Unit"
+                app:sdd_hint="Select Product Unit" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -342,18 +301,25 @@
 
     </androidx.core.widget.NestedScrollView>
 
-    <TextView
-        android:id="@+id/updateProduct"
+    <LinearLayout
+        android:id="@+id/updateProductFooter"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
+        android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:layout_gravity="center"
-        android:background="@color/colorPrimary"
-        android:fontFamily="@font/poppinsmedium"
-        android:gravity="center"
-        android:text="Update Product"
-        android:textAllCaps="true"
-        android:textColor="@color/white"
-        android:textSize="17sp" />
+        android:background="@color/colorSurface"
+        android:elevation="8dp"
+        android:padding="@dimen/spacing_lg">
+
+        <TextView
+            android:id="@+id/updateProduct"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/button_height"
+            android:background="@drawable/bg_button_primary"
+            android:fontFamily="@font/poppinsmedium"
+            android:gravity="center"
+            android:text="Update Product"
+            android:textColor="@color/white"
+            android:textSize="@dimen/text_button" />
+    </LinearLayout>
 
 </RelativeLayout>
