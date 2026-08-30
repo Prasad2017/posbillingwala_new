@@ -25,6 +25,7 @@ import com.pos_billingwala.Print.BluetoothPrinterChannel;
 import com.pos_billingwala.Print.DeviceListActivity;
 import com.pos_billingwala.Print.KOTWoosimPrnMng;
 import com.pos_billingwala.Print.WoosimPrnMng;
+import com.pos_billingwala.Extra.TabletFormUi;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.ActivityCompanyPrinterSettingBinding;
 
@@ -182,6 +183,17 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
         binding.backToSetting.setOnClickListener(this);
         binding.saveSetting.setOnClickListener(this);
 
+        applyTabletPrinterForm();
+    }
+
+    private void applyTabletPrinterForm() {
+        android.widget.LinearLayout container = binding.printerFormContainer;
+        if (container.getChildCount() < 4) {
+            return;
+        }
+        View[] left = {container.getChildAt(0), container.getChildAt(1)};
+        View[] right = {container.getChildAt(2), container.getChildAt(3)};
+        TabletFormUi.applyTwoColumnCards(this, container, left, right);
     }
 
     @Override

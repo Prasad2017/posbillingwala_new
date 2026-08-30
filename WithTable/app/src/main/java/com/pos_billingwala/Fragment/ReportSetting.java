@@ -16,6 +16,7 @@ import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.DetectConnection;
 import com.pos_billingwala.Extra.LicenseModules;
+import com.pos_billingwala.Extra.TabletFormUi;
 import com.pos_billingwala.NetworkToOffline.UserSynchronizeData;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentReportSettingBinding;
@@ -76,6 +77,7 @@ public class ReportSetting extends Fragment implements View.OnClickListener {
         binding.refundWiseReportLayout.setOnClickListener(this);
 
         applyModuleVisibility();
+        TabletFormUi.applyTwoColumnMenu(activity, binding.reportSettingMenu);
     }
 
     private void applyModuleVisibility() {

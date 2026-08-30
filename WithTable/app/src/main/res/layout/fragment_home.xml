@@ -113,6 +113,12 @@
                 android:textSize="@dimen/text_body" />
 
             <!-- Sales -->
+            <LinearLayout
+                android:id="@+id/homeSalesBlock"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -271,7 +277,15 @@
                 </androidx.cardview.widget.CardView>
             </LinearLayout>
 
+            </LinearLayout>
+
             <!-- Catalog -->
+            <LinearLayout
+                android:id="@+id/homeCatalogBlock"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -440,6 +454,8 @@
                             android:textSize="@dimen/text_caption" />
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
+            </LinearLayout>
+
             </LinearLayout>
 
             <!-- Start Billing -->

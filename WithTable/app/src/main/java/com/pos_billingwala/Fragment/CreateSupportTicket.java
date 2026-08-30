@@ -6,8 +6,8 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -31,21 +31,21 @@ public class CreateSupportTicket extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         activity = getActivity();
-        ScrollView scroll = new ScrollView(activity);
         LinearLayout root = SupportUiHelper.form(activity);
         SupportUiHelper.addScreenHeader(activity, root, getString(R.string.support_create_ticket),
                 () -> ((MainActivity) activity).navigateBack());
         SupportUiHelper.notice(activity, root, getString(R.string.support_online_only_notice));
-        android.widget.EditText category = SupportUiHelper.field(activity, root, getString(R.string.support_category), "Billing");
-        android.widget.EditText subject = SupportUiHelper.field(activity, root, getString(R.string.support_subject), "");
-        android.widget.EditText desc = SupportUiHelper.field(activity, root, getString(R.string.support_description), "");
+        EditText category = SupportUiHelper.field(activity, root, getString(R.string.support_category), "Billing");
+        EditText subject = SupportUiHelper.field(activity, root, getString(R.string.support_subject), "");
+        SupportUiHelper.applyFieldPairRow(activity, root, category, subject);
+        EditText desc = SupportUiHelper.field(activity, root, getString(R.string.support_description), "");
         desc.setMinLines(4);
-        SupportUiHelper.primary(activity, root, getString(R.string.support_submit)).setOnClickListener(v -> submit(category, subject, desc));
-        scroll.addView(root);
-        return scroll;
+        SupportUiHelper.primary(activity, root, getString(R.string.support_submit))
+                .setOnClickListener(v -> submit(category, subject, desc));
+        return SupportUiHelper.wrapScreen(activity, root);
     }
 
-    private void submit(android.widget.EditText category, android.widget.EditText subject, android.widget.EditText desc) {
+    private void submit(EditText category, EditText subject, EditText desc) {
         if (!DetectConnection.checkInternetConnection(activity)) {
             DetectConnection.noInternetConnection(activity);
             return;

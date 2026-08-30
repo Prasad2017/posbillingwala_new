@@ -49,6 +49,7 @@ import com.pos_billingwala.Extra.BottomSheetUi;
 import com.pos_billingwala.Extra.PaymentUpiQrHelper;
 import com.pos_billingwala.Extra.ReportCursorHelper;
 import com.pos_billingwala.Extra.ShopHeaderBuilder;
+import com.pos_billingwala.Extra.TabletPrintUi;
 import com.pos_billingwala.NetworkToOffline.InvoicePendingSync;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.InvoiceProductResponse;
@@ -263,6 +264,9 @@ public class InvoiceDetailsBluetoothPrint extends BaseActivity implements View.O
         binding.shareInvoiceCardView.setOnClickListener(this);
         binding.editInvoiceButton.setOnClickListener(this);
         binding.refundInvoiceButton.setOnClickListener(this);
+
+        TabletPrintUi.applyLandscape(this);
+        TabletPrintUi.applyReceiptPreviewTablet(invoiceNestedScrollView, 400);
 
     }
 

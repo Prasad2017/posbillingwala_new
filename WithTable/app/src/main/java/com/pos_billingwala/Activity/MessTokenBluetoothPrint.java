@@ -32,6 +32,7 @@ import com.karumi.dexter.listener.multi.MultiplePermissionsListener;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ShopHeaderBuilder;
 import com.pos_billingwala.Extra.MessTokenQrHelper;
+import com.pos_billingwala.Extra.TabletPrintUi;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.PrinterSettingResponse;
 import com.pos_billingwala.Print.BluetoothPrintService;
@@ -111,6 +112,9 @@ public class MessTokenBluetoothPrint extends BaseActivity implements View.OnClic
         twoTokenCode = findViewById(R.id.twoTokenCode);
         twoNestedScrollView = findViewById(R.id.twoNestedScrollView);
         binding.printInvoiceCardView.setOnClickListener(this);
+
+        TabletPrintUi.applyLandscape(this);
+        TabletPrintUi.applyReceiptPreviewTablet(twoNestedScrollView, 320);
     }
 
     @Override

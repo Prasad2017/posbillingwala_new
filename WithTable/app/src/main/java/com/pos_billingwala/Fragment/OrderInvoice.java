@@ -12,12 +12,14 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.InvoiceAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ListLoader;
+import com.pos_billingwala.Extra.TabletUi;
 import com.pos_billingwala.Extra.ReportCursorHelper;
 import com.pos_billingwala.Model.InvoiceResponse;
 import com.pos_billingwala.R;
@@ -146,7 +148,12 @@ public class OrderInvoice extends Fragment implements View.OnClickListener {
                 if (page != null && !page.isEmpty()) {
                     invoiceResponseList.addAll(page);
                     adapter = new InvoiceAdapter(activity, invoiceResponseList);
-                    binding.recyclerView.setLayoutManager(new LinearLayoutManager(activity));
+                    if (TabletUi.isTablet(activity)) {
+                        binding.recyclerView.setLayoutManager(new GridLayoutManager(activity,
+                                TabletUi.gridColumnCount(activity)));
+                    } else {
+                        binding.recyclerView.setLayoutManager(new LinearLayoutManager(activity));
+                    }
                     binding.recyclerView.setAdapter(adapter);
                     binding.nestedScrollView.setVisibility(View.VISIBLE);
                     binding.noDataFound.setVisibility(View.GONE);

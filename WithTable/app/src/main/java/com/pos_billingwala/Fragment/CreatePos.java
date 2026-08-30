@@ -1,5 +1,6 @@
 package com.pos_billingwala.Fragment;
 
+import com.pos_billingwala.Extra.PopupUi;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
@@ -36,6 +37,7 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.pos_billingwala.Activity.BluetoothPrint;
 import com.pos_billingwala.Activity.DuplicateBluetoothPrint;
 import com.pos_billingwala.Activity.MainActivity;
+import com.pos_billingwala.Adapter.CartAdapter;
 import com.pos_billingwala.Adapter.HomeCategoryAdapter;
 import com.pos_billingwala.Adapter.HomeComboAdapter;
 import com.pos_billingwala.Adapter.HomeProductAdapter;
@@ -83,8 +85,10 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
     public static HomeProductAdapter homeProductAdapter;
     public static HomeComboAdapter homeComboAdapter;
     public static FragmentCreatePosBinding binding;
+    private static CreatePos activeInstance;
     View view;
     POSBillingWalaDatabase posBillingWalaDatabase;
+    private CartAdapter cartAdapter;
     PopupWindow mypopupWindow;
     private final Handler productSearchHandler = new Handler(Looper.getMainLooper());
     private Runnable pendingProductSearch;
@@ -201,6 +205,10 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
         binding.menuIcon.setOnClickListener(this);
         binding.productsTab.setOnClickListener(this);
         binding.combosTab.setOnClickListener(this);
+        if (binding.payButton != null) {
+            binding.payButton.setOnClickListener(this);
+        }
+        setupTabletCartPanel();
 
         binding.productRecyclerView.setHasFixedSize(true);
         binding.productRecyclerView.setItemViewCacheSize(24);
@@ -505,16 +513,8 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
             binding.productSearch.setText("");
             binding.productSearch.clearFocus();
             selectAllCategory();
-        } else if (id == R.id.cartLayout) {
-            if (!productCartResponseList.isEmpty()) {
-                Intent intent = new Intent(activity, BluetoothPrint.class);
-                intent.putExtra("invoiceRunningStatus", "printBill");
-                intent.putExtra("tableNumber", tableNumber);
-                intent.putExtra("cartOrderStatus", cartOrderStatus);
-                startActivity(intent);
-            } else {
-                Toast.makeText(activity, getString(R.string.toast_add_product_into_cart), Toast.LENGTH_SHORT).show();
-            }
+        } else if (id == R.id.cartLayout || id == R.id.payButton) {
+            openPaymentScreen();
         } else if (id == R.id.clearCart) {
             confirmClearCart();
         } else if (id == R.id.menuIcon) {
@@ -524,6 +524,53 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
         } else if (id == R.id.combosTab) {
             showComboCatalog();
         }
+    }
+
+    private void openPaymentScreen() {
+        if (!productCartResponseList.isEmpty()) {
+            Intent intent = new Intent(activity, BluetoothPrint.class);
+            intent.putExtra("invoiceRunningStatus", "printBill");
+            intent.putExtra("tableNumber", tableNumber);
+            intent.putExtra("cartOrderStatus", cartOrderStatus);
+            startActivity(intent);
+        } else {
+            Toast.makeText(activity, getString(R.string.toast_add_product_into_cart), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void setupTabletCartPanel() {
+        if (binding.cartRecyclerView == null) {
+            return;
+        }
+        binding.cartRecyclerView.setLayoutManager(new LinearLayoutManager(activity));
+        binding.cartRecyclerView.setHasFixedSize(false);
+        binding.cartRecyclerView.setItemViewCacheSize(12);
+    }
+
+    private void bindTabletCartList() {
+        if (binding == null || binding.cartRecyclerView == null) {
+            return;
+        }
+        boolean empty = productCartResponseList == null || productCartResponseList.isEmpty();
+        if (binding.cartEmptyState != null) {
+            binding.cartEmptyState.setVisibility(empty ? View.VISIBLE : View.GONE);
+        }
+        binding.cartRecyclerView.setVisibility(empty ? View.GONE : View.VISIBLE);
+        if (empty) {
+            cartAdapter = null;
+            binding.cartRecyclerView.setAdapter(null);
+            return;
+        }
+        cartAdapter = new CartAdapter(activity, productCartResponseList);
+        binding.cartRecyclerView.setAdapter(cartAdapter);
+    }
+
+    /** Called from {@link CartAdapter} after inline cart edits on the tablet panel. */
+    public static void refreshCartUiAfterLocalEdit() {
+        if (activeInstance == null || binding == null || binding.cartRecyclerView == null) {
+            return;
+        }
+        activeInstance.getCartCount();
     }
 
     private void confirmClearCart() {
@@ -562,7 +609,7 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
 
         LayoutInflater inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         view = inflater.inflate(R.layout.share_dialog, null);
-        mypopupWindow = new PopupWindow(view, RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT, true);
+        mypopupWindow = PopupUi.create(activity, view);
 
         LinearLayout saveInvoiceLayout = view.findViewById(R.id.saveInvoiceLayout);
         LinearLayout duplicateInvoicePrintLayout = view.findViewById(R.id.duplicateInvoicePrintLayout);
@@ -590,6 +637,7 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
     @Override
     public void onStart() {
         super.onStart();
+        activeInstance = this;
         ((MainActivity) activity).lockUnlockDrawer(1);
         getCompanyDetails();
         getPrinterDetails();
@@ -648,6 +696,7 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
             binding.totalItems.setText(getString(R.string.ui_total_items_0));
             binding.totalAmount.setText("");
             binding.clearCart.setVisibility(View.GONE);
+            bindTabletCartList();
             return;
         }
         binding.clearCart.setVisibility(View.VISIBLE);
@@ -717,6 +766,7 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
         totalAmount = (float) Math.ceil(totalAmount);
         String totalPayableAmount = "Payable Amount<br/><b>" + MainActivity.currencyName + " " + String.format(Locale.US, "%.2f", totalAmount) + "</b>";
         binding.totalAmount.setText(Html.fromHtml(totalPayableAmount));
+        bindTabletCartList();
     }
 
     public void getHomeProductCategoryList() {
@@ -1203,12 +1253,21 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
     }
 
     @Override
+    public void onStop() {
+        if (activeInstance == this) {
+            activeInstance = null;
+        }
+        super.onStop();
+    }
+
+    @Override
     public void onDestroyView() {
         if (pendingProductSearch != null) {
             productSearchHandler.removeCallbacks(pendingProductSearch);
         }
         searchRequestId++;
         catalogRequestId++;
+        cartAdapter = null;
         hideCatalogLoader();
         super.onDestroyView();
     }

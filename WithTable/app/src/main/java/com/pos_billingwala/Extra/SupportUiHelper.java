@@ -4,15 +4,20 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.Typeface;
 import android.util.TypedValue;
+import android.view.Gravity;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import androidx.core.content.ContextCompat;
 
 import com.pos_billingwala.R;
+
+import java.util.List;
 
 public final class SupportUiHelper {
 
@@ -21,12 +26,40 @@ public final class SupportUiHelper {
     public static LinearLayout form(Activity activity) {
         LinearLayout root = new LinearLayout(activity);
         root.setOrientation(LinearLayout.VERTICAL);
-        int pad = dp(activity, 16);
+        int pad = dp(activity, TabletUi.isTablet(activity) ? TabletUi.horizontalInsetDp(activity) : 16);
         root.setPadding(pad, pad, pad, pad);
         root.setLayoutParams(new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT));
         return root;
+    }
+
+    /** Centers form content on tablet with responsive max width. */
+    public static ScrollView wrapScreen(Activity activity, LinearLayout form) {
+        ScrollView scroll = new ScrollView(activity);
+        scroll.setFillViewport(true);
+        scroll.setLayoutParams(new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT));
+
+        if (TabletUi.isTablet(activity)) {
+            LinearLayout outer = new LinearLayout(activity);
+            outer.setOrientation(LinearLayout.VERTICAL);
+            outer.setGravity(Gravity.CENTER_HORIZONTAL);
+            outer.setLayoutParams(new ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT));
+
+            LinearLayout.LayoutParams formLp = new LinearLayout.LayoutParams(
+                    TabletUi.contentMaxWidthPx(activity),
+                    ViewGroup.LayoutParams.WRAP_CONTENT);
+            form.setLayoutParams(formLp);
+            outer.addView(form);
+            scroll.addView(outer);
+        } else {
+            scroll.addView(form);
+        }
+        return scroll;
     }
 
     public static TextView notice(Activity activity, LinearLayout root, String text) {
@@ -107,6 +140,196 @@ public final class SupportUiHelper {
         lp.bottomMargin = dp(activity, 8);
         bar.setLayoutParams(lp);
         root.addView(bar, 0);
+    }
+
+    /** Places category and subject fields side-by-side on tablet. */
+    public static void applyFieldPairRow(Activity activity, LinearLayout root,
+                                         EditText firstField, EditText secondField) {
+        if (!TabletUi.isTablet(activity) || firstField == null || secondField == null) {
+            return;
+        }
+        int firstLabelIdx = root.indexOfChild(firstField) - 1;
+        int secondLabelIdx = root.indexOfChild(secondField) - 1;
+        if (firstLabelIdx < 0 || secondLabelIdx < 0) {
+            return;
+        }
+
+        View firstLabel = root.getChildAt(firstLabelIdx);
+        View secondLabel = root.getChildAt(secondLabelIdx);
+
+        root.removeView(secondField);
+        root.removeView(secondLabel);
+        root.removeView(firstField);
+        root.removeView(firstLabel);
+
+        int insertAt = Math.min(firstLabelIdx, secondLabelIdx);
+        LinearLayout row = newSideBySideColumns(activity, firstLabel, firstField, secondLabel, secondField);
+        root.addView(row, insertAt);
+    }
+
+    /** Places two action buttons in one row on tablet. */
+    public static void applySideBySideButtons(Activity activity, LinearLayout root, View left, View right) {
+        if (!TabletUi.isTablet(activity) || left == null || right == null) {
+            return;
+        }
+        root.removeView(left);
+        root.removeView(right);
+
+        int gap = dp(activity, 8);
+        LinearLayout row = new LinearLayout(activity);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setBaselineAligned(false);
+        LinearLayout.LayoutParams rowLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        rowLp.topMargin = gap;
+        row.setLayoutParams(rowLp);
+
+        LinearLayout.LayoutParams leftLp = new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        leftLp.setMarginEnd(gap / 2);
+        left.setLayoutParams(leftLp);
+
+        LinearLayout.LayoutParams rightLp = new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        rightLp.setMarginStart(gap / 2);
+        right.setLayoutParams(rightLp);
+
+        row.addView(left);
+        row.addView(right);
+        root.addView(row);
+    }
+
+    public static LinearLayout createTicketListContainer(Activity activity) {
+        LinearLayout container = new LinearLayout(activity);
+        container.setOrientation(LinearLayout.VERTICAL);
+        container.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        return container;
+    }
+
+    public static void clearTicketList(LinearLayout container) {
+        if (container != null) {
+            container.removeAllViews();
+        }
+    }
+
+    /** Adds ticket cards in a responsive grid (1 / 2 / 3 columns). */
+    public static void populateTicketGrid(Activity activity, LinearLayout container, List<TextView> cards) {
+        if (container == null || cards == null) {
+            return;
+        }
+        container.removeAllViews();
+        int columns = TabletUi.gridColumnCount(activity);
+        if (columns <= 1) {
+            for (TextView card : cards) {
+                applyTicketCardMargins(activity, card, dp(activity, 12));
+                container.addView(card);
+            }
+            return;
+        }
+
+        int gap = dp(activity, 12);
+        for (int i = 0; i < cards.size(); i += columns) {
+            LinearLayout row = new LinearLayout(activity);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setBaselineAligned(false);
+            LinearLayout.LayoutParams rowLp = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            if (i > 0) {
+                rowLp.topMargin = gap;
+            }
+            row.setLayoutParams(rowLp);
+
+            for (int col = 0; col < columns; col++) {
+                int index = i + col;
+                if (index >= cards.size()) {
+                    break;
+                }
+                TextView card = cards.get(index);
+                LinearLayout.LayoutParams cardLp = new LinearLayout.LayoutParams(
+                        0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+                if (col > 0) {
+                    cardLp.setMarginStart(gap / 2);
+                }
+                if (col < columns - 1) {
+                    cardLp.setMarginEnd(gap / 2);
+                }
+                card.setLayoutParams(cardLp);
+                row.addView(card);
+            }
+            container.addView(row);
+        }
+    }
+
+    public static TextView buildTicketCard(Activity activity, String ticketNo, String status,
+                                           String subject, String createdAt, Runnable onClick) {
+        TextView tv = new TextView(activity);
+        tv.setBackgroundResource(R.drawable.button_rounded_border);
+        tv.setPadding(dp(activity, 14), dp(activity, 12), dp(activity, 14), dp(activity, 12));
+        tv.setText(ticketNo + "  ·  " + status + "\n" + subject + "\n" + createdAt);
+        tv.setTextColor(ContextCompat.getColor(activity, R.color.black));
+        tv.setOnClickListener(v -> {
+            if (onClick != null) {
+                onClick.run();
+            }
+        });
+        return tv;
+    }
+
+    public static void styleDetailBody(TextView body) {
+        if (body == null) {
+            return;
+        }
+        body.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        body.setLineSpacing(0, 1.15f);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.topMargin = dp(body.getContext(), 8);
+        lp.bottomMargin = dp(body.getContext(), 8);
+        body.setLayoutParams(lp);
+    }
+
+    private static LinearLayout newSideBySideColumns(Activity activity,
+                                                     View leftLabel, View leftField,
+                                                     View rightLabel, View rightField) {
+        int gap = dp(activity, 12);
+        LinearLayout row = new LinearLayout(activity);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setBaselineAligned(false);
+        LinearLayout.LayoutParams rowLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        rowLp.bottomMargin = gap;
+        row.setLayoutParams(rowLp);
+
+        row.addView(newFieldColumn(activity, leftLabel, leftField), newColumnParams(gap, true));
+        row.addView(newFieldColumn(activity, rightLabel, rightField), newColumnParams(gap, false));
+        return row;
+    }
+
+    private static LinearLayout newFieldColumn(Activity activity, View label, View field) {
+        LinearLayout column = new LinearLayout(activity);
+        column.setOrientation(LinearLayout.VERTICAL);
+        column.addView(label);
+        column.addView(field);
+        return column;
+    }
+
+    private static LinearLayout.LayoutParams newColumnParams(int gap, boolean isLeft) {
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        if (isLeft) {
+            lp.setMarginEnd(gap / 2);
+        } else {
+            lp.setMarginStart(gap / 2);
+        }
+        return lp;
+    }
+
+    private static void applyTicketCardMargins(Activity activity, TextView card, int bottomMargin) {
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.bottomMargin = bottomMargin;
+        card.setLayoutParams(lp);
     }
 
     private static int dp(Context context, int value) {

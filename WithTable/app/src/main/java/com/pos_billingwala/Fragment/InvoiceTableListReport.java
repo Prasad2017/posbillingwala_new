@@ -1,5 +1,6 @@
 package com.pos_billingwala.Fragment;
 
+import com.pos_billingwala.Extra.PopupUi;
 import static com.pos_billingwala.Utils.RequestCodes.directory_path;
 
 import android.annotation.SuppressLint;
@@ -46,13 +47,12 @@ import com.pos_billingwala.Extra.ReportCursorHelper;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.InvoiceResponse;
 import com.pos_billingwala.R;
-import com.pos_billingwala.Utils.ReportToExcel;
+import com.pos_billingwala.Utils.ReportToSpreadsheet;
 
 import cn.pedant.SweetAlert.SweetAlertDialog;
 import com.pos_billingwala.databinding.FragmentInvoiceTableListReportBinding;
 
 import java.io.File;
-import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -148,7 +148,7 @@ public class InvoiceTableListReport extends Fragment implements View.OnClickList
 
     public void exportSale() {
 
-        ReportToExcel reportToExcel;
+        ReportToSpreadsheet reportExport;
         List<List<String>> reportList = new ArrayList<>();
 
         List<String> col_name = new ArrayList<>();
@@ -178,8 +178,9 @@ public class InvoiceTableListReport extends Fragment implements View.OnClickList
         reportList.add(columnList);
 
 
-        reportToExcel = new ReportToExcel("Table Wise Sale Invoices", directory_path);
-        reportToExcel.exportReport(reportList, "/Sale/InvoiceSale" + invoiceType + ".xls", new ReportToExcel.ExportListener() {
+        reportExport = new ReportToSpreadsheet("Table Wise Sale Invoices", directory_path);
+        reportExport.exportReport(reportList, "/Sale/InvoiceSale" + invoiceType + ".xls",
+                buildExportSubtitle(), new ReportToSpreadsheet.ExportListener() {
             @Override
             public void onStart() {
 
@@ -200,12 +201,26 @@ public class InvoiceTableListReport extends Fragment implements View.OnClickList
 
     }
 
+    private String buildExportSubtitle() {
+        StringBuilder subtitle = new StringBuilder();
+        if (noOfTable != null && !noOfTable.isEmpty()) {
+            subtitle.append(noOfTable);
+        }
+        if (invoiceDate != null && !invoiceDate.isEmpty()) {
+            if (subtitle.length() > 0) {
+                subtitle.append(" · ");
+            }
+            subtitle.append("Period: ").append(invoiceDate);
+        }
+        return subtitle.length() > 0 ? subtitle.toString() : "All records";
+    }
+
     public void openGeneratedPDF() {
 
         File file = new File(directory_path + "/Sale/InvoiceSale" + invoiceType + ".xls");
         Intent intentShareFile = new Intent(Intent.ACTION_SEND);
         Uri uri = FileProvider.getUriForFile(activity, BuildConfig.APPLICATION_ID + ".provider", file);
-        intentShareFile.setType(URLConnection.guessContentTypeFromName(file.getName()));
+        intentShareFile.setType("application/vnd.ms-excel");
         intentShareFile.putExtra(Intent.EXTRA_STREAM, uri);
         List<ResolveInfo> resInfoList = activity.getPackageManager().queryIntentActivities(intentShareFile, PackageManager.MATCH_DEFAULT_ONLY);
         for (ResolveInfo resolveInfo : resInfoList) {
@@ -220,7 +235,7 @@ public class InvoiceTableListReport extends Fragment implements View.OnClickList
 
         LayoutInflater inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         view = inflater.inflate(R.layout.table_sale_wise_dialog, null);
-        PopupWindow mypopupWindow = new PopupWindow(view, RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT, true);
+        PopupWindow mypopupWindow = PopupUi.create(activity, view);
 
         LinearLayout dayWiseLayout = view.findViewById(R.id.dayWiseLayout);
         LinearLayout monthWiseLayout = view.findViewById(R.id.monthWiseLayout);

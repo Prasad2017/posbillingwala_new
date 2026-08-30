@@ -51,6 +51,7 @@ import com.pos_billingwala.Print.DeviceListActivity;
 import com.pos_billingwala.Print.PrintImage;
 import com.pos_billingwala.Print.PrinterConnectionHelper;
 import com.pos_billingwala.Print.WoosimPrnMng;
+import com.pos_billingwala.Extra.TabletPrintUi;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.ActivityProductListBluetoothPrintBinding;
 
@@ -247,6 +248,8 @@ public class ProductListBluetoothPrint extends BaseActivity implements View.OnCl
 
         binding.printProductCardView.setOnClickListener(this);
         binding.shareProductCardView.setOnClickListener(this);
+
+        TabletPrintUi.applyLandscape(this);
 
     }
 

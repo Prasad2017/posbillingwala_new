@@ -12,7 +12,7 @@ android {
     defaultConfig {
         vectorDrawables.useSupportLibrary = true
         applicationId "com.pos_billingwala"
-        minSdk 26
+        minSdk 24
         targetSdk 37
         versionCode 72
         versionName "2.0.56"
@@ -103,8 +103,6 @@ dependencies {
     //Google ads SDK
     implementation 'com.google.android.gms:play-services-ads:25.4.0'
     implementation 'androidx.work:work-runtime:2.11.2'
-    //Excel
-    implementation 'org.apache.poi:poi:5.5.1'
     //Mess QR token scan + generate
     implementation 'com.google.zxing:core:3.5.4'
     implementation 'com.journeyapps:zxing-android-embedded:4.3.0'

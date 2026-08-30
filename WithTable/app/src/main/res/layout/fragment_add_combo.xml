@@ -47,10 +47,17 @@
         android:layout_below="@id/appBarLayout">
 
         <LinearLayout
+            android:id="@+id/comboFormContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="10dp">
+
+            <LinearLayout
+                android:id="@+id/comboDetailsSection"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
 
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
@@ -211,6 +218,14 @@
                     android:checked="true" />
             </LinearLayout>
 
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/comboItemsSection"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -239,6 +254,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:nestedScrollingEnabled="false" />
+            </LinearLayout>
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 

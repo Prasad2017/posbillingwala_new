@@ -16,6 +16,7 @@ import androidx.fragment.app.Fragment;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Model.MemberResponse;
+import com.pos_billingwala.Extra.TabletFormUi;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentUpdateMessMemberBinding;
 
@@ -68,6 +69,8 @@ public class UpdateMessMember extends Fragment implements View.OnClickListener {
 
         binding.backToMess.setOnClickListener(this);
         binding.updateMember.setOnClickListener(this);
+
+        TabletFormUi.applyTwoColumnFields(activity, binding.messFormContainer);
 
         return view;
 

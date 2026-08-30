@@ -1,5 +1,6 @@
 package com.pos_billingwala.Fragment;
 
+import com.pos_billingwala.Extra.PopupUi;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
@@ -18,6 +19,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -26,6 +28,7 @@ import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.MemberAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ListLoader;
+import com.pos_billingwala.Extra.TabletUi;
 import com.pos_billingwala.Model.MemberResponse;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentMessMemberListBinding;
@@ -124,7 +127,11 @@ public class MessMemberList extends Fragment implements View.OnClickListener {
 
     public void initViews() {
         recyclerView = view.findViewById(R.id.recyclerView);
-        recyclerView.setLayoutManager(new LinearLayoutManager(activity));
+        if (TabletUi.isTablet(activity)) {
+            recyclerView.setLayoutManager(new GridLayoutManager(activity, TabletUi.gridColumnCount(activity)));
+        } else {
+            recyclerView.setLayoutManager(new LinearLayoutManager(activity));
+        }
         linearLayout = view.findViewById(R.id.linearLayout);
         textInputEditText = view.findViewById(R.id.searchMessMember);
         noDataFound = view.findViewById(R.id.noDataFound);
@@ -175,7 +182,7 @@ public class MessMemberList extends Fragment implements View.OnClickListener {
 
         LayoutInflater inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         view = inflater.inflate(R.layout.add_member_dialog, null);
-        mypopupWindow = new PopupWindow(view, RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT, true);
+        mypopupWindow = PopupUi.create(activity, view);
 
         LinearLayout addMemberLayout = view.findViewById(R.id.addMemberLayout);
 

@@ -22,6 +22,7 @@ import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.PortionAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ListLoader;
+import com.pos_billingwala.Extra.MasterListTabletUi;
 import com.pos_billingwala.Model.PortionMasterResponse;
 import com.pos_billingwala.Model.ProductPortionResponse;
 import com.pos_billingwala.Model.ProductResponse;
@@ -63,7 +64,8 @@ public class ManageProductPortions extends Fragment implements View.OnClickListe
             }
             if (!portionResponseList.isEmpty()) {
                 portionAdapter = new PortionAdapter(activity, selectedProductId, portionResponseList);
-                portionRecyclerview.setLayoutManager(new GridLayoutManager(activity, 1));
+                portionRecyclerview.setLayoutManager(new GridLayoutManager(activity,
+                        MasterListTabletUi.listColumnCount(activity)));
                 portionRecyclerview.setAdapter(portionAdapter);
 
                 portionListCardView.setVisibility(View.VISIBLE);
@@ -95,6 +97,9 @@ public class ManageProductPortions extends Fragment implements View.OnClickListe
         loadProductInfo();
         setupPortionMasterSpinner();
         suggestNextSortOrder();
+
+        MasterListTabletUi.applyFormListSplitBelowHeader(activity, binding.portionPageContainer,
+                binding.productInfoCard, binding.portionFormCard, binding.portionListCardView);
 
         view.setFocusableInTouchMode(true);
         view.requestFocus();

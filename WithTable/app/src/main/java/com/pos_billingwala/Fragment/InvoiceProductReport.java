@@ -1,5 +1,6 @@
 package com.pos_billingwala.Fragment;
 
+import com.pos_billingwala.Extra.PopupUi;
 import static com.pos_billingwala.Utils.RequestCodes.directory_path;
 
 import android.Manifest;
@@ -260,7 +261,7 @@ public class InvoiceProductReport extends Fragment implements View.OnClickListen
 
         LayoutInflater inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         view = inflater.inflate(R.layout.product_wise_dialog, null);
-        PopupWindow mypopupWindow = new PopupWindow(view, RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT, true);
+        PopupWindow mypopupWindow = PopupUi.create(activity, view);
 
         LinearLayout topSaleProductLayout = view.findViewById(R.id.topSaleProductLayout);
         LinearLayout lessSaleProductLayout = view.findViewById(R.id.lessSaleProductLayout);

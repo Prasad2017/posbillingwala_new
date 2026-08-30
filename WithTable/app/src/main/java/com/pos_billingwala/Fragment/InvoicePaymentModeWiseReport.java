@@ -1,5 +1,6 @@
 package com.pos_billingwala.Fragment;
 
+import com.pos_billingwala.Extra.PopupUi;
 import static com.pos_billingwala.Utils.RequestCodes.directory_path;
 
 import android.Manifest;
@@ -48,14 +49,13 @@ import com.pos_billingwala.Extra.ReportCursorHelper;
 import com.pos_billingwala.Extra.PaymentSettlementHelper;
 import com.pos_billingwala.Model.InvoiceResponse;
 import com.pos_billingwala.R;
-import com.pos_billingwala.Utils.ReportToExcel;
+import com.pos_billingwala.Utils.ReportToSpreadsheet;
 import com.pos_billingwala.Extra.OperationalReportCharts;
 import com.pos_billingwala.Extra.ReportUiHelper;
 import com.pos_billingwala.Model.ReportRankItem;
 import com.pos_billingwala.databinding.FragmentOperationalReportBinding;
 
 import java.io.File;
-import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -210,7 +210,7 @@ public class InvoicePaymentModeWiseReport extends Fragment implements View.OnCli
 
     public void exportSale() {
 
-        ReportToExcel reportToExcel;
+        ReportToSpreadsheet reportExport;
         List<List<String>> reportList = new ArrayList<>();
 
         List<String> col_name = new ArrayList<>();
@@ -247,8 +247,9 @@ public class InvoicePaymentModeWiseReport extends Fragment implements View.OnCli
         columnList.add(binding.totalAmount.getText().toString());
         reportList.add(columnList);
 
-        reportToExcel = new ReportToExcel("Sale Invoices", directory_path);
-        reportToExcel.exportReport(reportList, "/Sale/InvoicePaymentSale" + paymentMode + ".xls", new ReportToExcel.ExportListener() {
+        reportExport = new ReportToSpreadsheet("Sale Invoices", directory_path);
+        reportExport.exportReport(reportList, "/Sale/InvoicePaymentSale" + paymentMode + ".xls",
+                buildExportSubtitle(), new ReportToSpreadsheet.ExportListener() {
             @Override
             public void onStart() {
 
@@ -266,6 +267,14 @@ public class InvoicePaymentModeWiseReport extends Fragment implements View.OnCli
             }
         });
 
+    }
+
+    private String buildExportSubtitle() {
+        StringBuilder subtitle = new StringBuilder("Payment mode: ").append(paymentMode);
+        if (invoiceDate != null && !invoiceDate.isEmpty()) {
+            subtitle.append(" · Period: ").append(invoiceDate);
+        }
+        return subtitle.toString();
     }
 
     public void openGeneratedReport(String FilePath) {
@@ -288,7 +297,7 @@ public class InvoicePaymentModeWiseReport extends Fragment implements View.OnCli
         File file = new File(directory_path + "/Sale/InvoicePaymentSale" + paymentMode + ".xls");
         Intent intentShareFile = new Intent(Intent.ACTION_SEND);
         Uri uri = FileProvider.getUriForFile(activity, BuildConfig.APPLICATION_ID + ".provider", file);
-        intentShareFile.setType(URLConnection.guessContentTypeFromName(file.getName()));
+        intentShareFile.setType("application/vnd.ms-excel");
         intentShareFile.putExtra(Intent.EXTRA_STREAM, uri);
         List<ResolveInfo> resInfoList = activity.getPackageManager().queryIntentActivities(intentShareFile, PackageManager.MATCH_DEFAULT_ONLY);
         for (ResolveInfo resolveInfo : resInfoList) {
@@ -303,7 +312,7 @@ public class InvoicePaymentModeWiseReport extends Fragment implements View.OnCli
 
         LayoutInflater inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         view = inflater.inflate(R.layout.payment_mode_sale_wise_dialog, null);
-        PopupWindow mypopupWindow = new PopupWindow(view, RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT, true);
+        PopupWindow mypopupWindow = PopupUi.create(activity, view);
 
         LinearLayout cashModeWiseLayout = view.findViewById(R.id.cashModeWiseLayout);
         LinearLayout onlineModeWiseLayout = view.findViewById(R.id.onlineModeWiseLayout);

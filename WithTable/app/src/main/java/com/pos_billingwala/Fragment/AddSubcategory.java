@@ -20,6 +20,7 @@ import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.SubcategoryAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ListLoader;
+import com.pos_billingwala.Extra.MasterListTabletUi;
 import com.pos_billingwala.Model.ProductCategoryResponse;
 import com.pos_billingwala.Model.ProductSubcategoryResponse;
 import com.pos_billingwala.R;
@@ -57,7 +58,8 @@ public class AddSubcategory extends Fragment implements View.OnClickListener {
             }
             if (!subcategoryResponseList.isEmpty()) {
                 subcategoryAdapter = new SubcategoryAdapter(activity, subcategoryResponseList);
-                subcategoryRecyclerview.setLayoutManager(new GridLayoutManager(activity, 1));
+                subcategoryRecyclerview.setLayoutManager(new GridLayoutManager(activity,
+                        MasterListTabletUi.listColumnCount(activity)));
                 subcategoryRecyclerview.setAdapter(subcategoryAdapter);
 
                 subcategoryListCardView.setVisibility(View.VISIBLE);
@@ -81,6 +83,9 @@ public class AddSubcategory extends Fragment implements View.OnClickListener {
         posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
 
         initViews();
+
+        MasterListTabletUi.applyFormListSplit(activity, binding.subcategoryMasterContainer,
+                binding.subcategoryFormCard, binding.subcategoryListCardView);
 
         binding.subcategoryName.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
 

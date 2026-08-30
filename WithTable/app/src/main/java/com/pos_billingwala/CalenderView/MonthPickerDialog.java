@@ -14,6 +14,8 @@ import android.widget.DatePicker.OnDateChangedListener;
 import androidx.annotation.IntRange;
 import androidx.appcompat.app.AlertDialog;
 
+import com.pos_billingwala.Extra.DialogUi;
+import com.pos_billingwala.Extra.TabletUi;
 import com.pos_billingwala.R;
 
 import java.util.Calendar;
@@ -86,27 +88,24 @@ public class MonthPickerDialog extends AlertDialog implements OnClickListener, O
 
     @Override
     public void show() {
-
         if (view != null) {
             if (this.getContext().getResources().getConfiguration().orientation ==
-                    Configuration.ORIENTATION_LANDSCAPE) {
+                    Configuration.ORIENTATION_LANDSCAPE && !TabletUi.isTablet(getContext())) {
                 WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
                 if (getWindow() != null) {
                     lp.copyFrom(getWindow().getAttributes());
                     lp.width = (int) (this.getContext().getResources().getDisplayMetrics().widthPixels * 0.94);
                     lp.height = (int) (this.getContext().getResources().getDisplayMetrics().heightPixels * 0.94);
-                    // show the dialog as per super implementation
                     super.show();
-                    // now dialog attached to window so apply the size
                     getWindow().setLayout(lp.width, lp.height);
                 }
-
                 return;
-            } else {
+            } else if (!TabletUi.isTablet(getContext())) {
                 dismiss();
             }
         }
         super.show();
+        DialogUi.applyTabletWindow(this);
     }
 
     @Override

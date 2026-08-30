@@ -26,13 +26,14 @@
 </RelativeLayout>
     </com.google.android.material.appbar.AppBarLayout>
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@id/appBarLayout"
-        android:gravity="center"
-        android:orientation="vertical"
-        android:padding="24dp">
+        <LinearLayout
+            android:id="@+id/messScanContainer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@id/appBarLayout"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="24dp">
 
         <TextView
             android:layout_width="match_parent"

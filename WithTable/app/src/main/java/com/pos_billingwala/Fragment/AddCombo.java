@@ -18,6 +18,7 @@ import com.pos_billingwala.Adapter.ComboItemDraftAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ComboItemPicker;
 import com.pos_billingwala.Extra.ComboValidator;
+import com.pos_billingwala.Extra.MasterListTabletUi;
 import com.pos_billingwala.Model.ComboItemDraft;
 import com.pos_billingwala.Model.ComboItemResponse;
 import com.pos_billingwala.Model.ComboResponse;
@@ -71,6 +72,9 @@ public class AddCombo extends Fragment implements View.OnClickListener {
         binding.backToCombo.setOnClickListener(this);
         binding.addComboItem.setOnClickListener(this);
         binding.saveCombo.setOnClickListener(this);
+
+        MasterListTabletUi.applyFormListSplit(activity, binding.comboFormContainer,
+                binding.comboDetailsSection, binding.comboItemsSection);
 
         if (editingComboId != null) {
             binding.comboFormTitle.setText(getString(R.string.ui_update_combo));

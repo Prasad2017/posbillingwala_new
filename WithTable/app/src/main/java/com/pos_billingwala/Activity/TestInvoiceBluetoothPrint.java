@@ -34,6 +34,7 @@ import com.pos_billingwala.Adapter.TwoPrintAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.PaymentUpiQrHelper;
 import com.pos_billingwala.Extra.ShopHeaderBuilder;
+import com.pos_billingwala.Extra.TabletPrintUi;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.PrinterSettingResponse;
 import com.pos_billingwala.Model.ProductCartResponse;
@@ -112,6 +113,9 @@ public class TestInvoiceBluetoothPrint extends BaseActivity implements View.OnCl
         if (!hasPermissions(this, PERMISSIONS)) {
             ActivityCompat.requestPermissions(this, PERMISSIONS, PERMISSION_ALL);
         }
+
+        TabletPrintUi.applyLandscape(this);
+        TabletPrintUi.applyCenteredForm(this, binding.previewFormContainer);
     }
 
     @Override

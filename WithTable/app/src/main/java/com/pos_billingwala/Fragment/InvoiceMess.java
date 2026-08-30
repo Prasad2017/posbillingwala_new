@@ -1,5 +1,6 @@
 package com.pos_billingwala.Fragment;
 
+import com.pos_billingwala.Extra.PopupUi;
 import android.content.Intent;
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -174,7 +175,7 @@ public class InvoiceMess extends Fragment implements View.OnClickListener {
 
         LayoutInflater inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         view = inflater.inflate(R.layout.mess_menu_dialog, null);
-        mypopupWindow = new PopupWindow(view, RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT, true);
+        mypopupWindow = PopupUi.create(activity, view);
 
         LinearLayout memberListLayout = view.findViewById(R.id.memberListLayout);
         LinearLayout scanVerifyLayout = view.findViewById(R.id.scanVerifyLayout);

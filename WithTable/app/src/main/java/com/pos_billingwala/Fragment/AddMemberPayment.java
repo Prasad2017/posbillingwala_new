@@ -21,6 +21,7 @@ import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Model.MemberResponse;
+import com.pos_billingwala.Extra.TabletFormUi;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentAddMemberPaymentBinding;
 
@@ -105,6 +106,8 @@ public class AddMemberPayment extends Fragment implements View.OnClickListener {
 
         binding.addPayment.setOnClickListener(this);
         binding.backToMess.setOnClickListener(this);
+
+        TabletFormUi.applyTwoColumnFields(activity, binding.messFormContainer);
 
         return view;
 

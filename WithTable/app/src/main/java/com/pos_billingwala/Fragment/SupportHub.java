@@ -5,8 +5,8 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -22,17 +22,16 @@ public class SupportHub extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         activity = getActivity();
-        ScrollView scroll = new ScrollView(activity);
         LinearLayout root = SupportUiHelper.form(activity);
         SupportUiHelper.addScreenHeader(activity, root, getString(R.string.setting_support),
                 () -> ((MainActivity) activity).navigateBack());
         SupportUiHelper.notice(activity, root, getString(R.string.support_online_only_notice));
-        SupportUiHelper.primary(activity, root, getString(R.string.support_create_ticket))
-                .setOnClickListener(v -> openIfOnline(new CreateSupportTicket()));
-        SupportUiHelper.primary(activity, root, getString(R.string.support_my_tickets))
-                .setOnClickListener(v -> openIfOnline(new MySupportTickets()));
-        scroll.addView(root);
-        return scroll;
+        Button create = SupportUiHelper.primary(activity, root, getString(R.string.support_create_ticket));
+        create.setOnClickListener(v -> openIfOnline(new CreateSupportTicket()));
+        Button myTickets = SupportUiHelper.primary(activity, root, getString(R.string.support_my_tickets));
+        myTickets.setOnClickListener(v -> openIfOnline(new MySupportTickets()));
+        SupportUiHelper.applySideBySideButtons(activity, root, create, myTickets);
+        return SupportUiHelper.wrapScreen(activity, root);
     }
 
     private void openIfOnline(Fragment target) {

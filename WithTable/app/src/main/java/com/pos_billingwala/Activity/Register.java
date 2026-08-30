@@ -13,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.pos_billingwala.Model.AllApiResponse;
+import com.pos_billingwala.Extra.TabletFormUi;
 import com.pos_billingwala.R;
 import com.pos_billingwala.Retrofit.Api;
 import com.pos_billingwala.databinding.ActivityRegisterBinding;
@@ -33,6 +34,7 @@ public class Register extends BaseActivity implements View.OnClickListener {
         super.onCreate(savedInstanceState);
         binding = ActivityRegisterBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        TabletFormUi.applyCenteredPanel(binding.registerLayout);
         binding.backToLogin.setOnClickListener(this);
         binding.alreadyLogin.setOnClickListener(this);
         binding.submitSignup.setOnClickListener(this);

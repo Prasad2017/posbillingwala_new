@@ -2,6 +2,7 @@ package com.pos_billingwala.Activity;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,6 +24,8 @@ import com.pos_billingwala.Extra.CartItemType;
 import com.pos_billingwala.Extra.EditBillProductPicker;
 import com.pos_billingwala.Extra.PaymentSettlementBinder;
 import com.pos_billingwala.Extra.PaymentSettlementHelper;
+import com.pos_billingwala.Extra.TabletFormUi;
+import com.pos_billingwala.Extra.TabletUi;
 import com.pos_billingwala.Extra.ReportCursorHelper;
 import com.pos_billingwala.NetworkToOffline.InvoicePendingSync;
 import com.pos_billingwala.Model.CompanyResponse;
@@ -64,6 +67,10 @@ public class EditInvoice extends BaseActivity {
         super.onCreate(savedInstanceState);
         binding = ActivityEditInvoiceBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
+        if (TabletUi.isTablet(this)) {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+        }
 
         database = new POSBillingWalaDatabase(this);
         companyList = database.getCompanyDetails();
@@ -114,6 +121,8 @@ public class EditInvoice extends BaseActivity {
         binding.paymentRow.setOnClickListener(v -> showPaymentDialog());
         binding.saveButton.setOnClickListener(v -> saveInvoice(false));
         binding.printButton.setOnClickListener(v -> saveInvoice(true));
+
+        TabletFormUi.applyEditBillSplit(this, binding.recyclerView, binding.bottomPanel, 360);
 
         recalculate();
     }

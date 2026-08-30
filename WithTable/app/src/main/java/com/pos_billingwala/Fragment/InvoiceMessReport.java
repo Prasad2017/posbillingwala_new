@@ -1,5 +1,6 @@
 package com.pos_billingwala.Fragment;
 
+import com.pos_billingwala.Extra.PopupUi;
 import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.content.Context;
@@ -107,7 +108,7 @@ public class InvoiceMessReport extends Fragment implements View.OnClickListener 
 
         LayoutInflater inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         view = inflater.inflate(R.layout.sale_wise_dialog, null);
-        PopupWindow mypopupWindow = new PopupWindow(view, RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT, true);
+        PopupWindow mypopupWindow = PopupUi.create(activity, view);
 
         LinearLayout dayWiseLayout = view.findViewById(R.id.dayWiseLayout);
         LinearLayout monthWiseLayout = view.findViewById(R.id.monthWiseLayout);

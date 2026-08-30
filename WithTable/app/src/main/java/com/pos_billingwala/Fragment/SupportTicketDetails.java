@@ -5,8 +5,8 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -32,7 +32,7 @@ public class SupportTicketDetails extends Fragment {
     TextView body;
     TextView statusBanner;
     android.widget.EditText reply;
-    android.widget.Button sendBtn;
+    Button sendBtn;
     String ticketId;
     boolean closed;
 
@@ -40,7 +40,6 @@ public class SupportTicketDetails extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         activity = getActivity();
         ticketId = getArguments() != null ? getArguments().getString("ticketId", "") : "";
-        ScrollView scroll = new ScrollView(activity);
         root = SupportUiHelper.form(activity);
         SupportUiHelper.addScreenHeader(activity, root, getString(R.string.support_ticket_details),
                 () -> ((MainActivity) activity).navigateBack());
@@ -50,14 +49,15 @@ public class SupportTicketDetails extends Fragment {
         root.addView(statusBanner);
         body = new TextView(activity);
         body.setText(R.string.support_loading);
+        SupportUiHelper.styleDetailBody(body);
         root.addView(body);
         reply = SupportUiHelper.field(activity, root, getString(R.string.support_reply), "");
         sendBtn = SupportUiHelper.primary(activity, root, getString(R.string.support_send_reply));
         sendBtn.setOnClickListener(v -> sendReply());
-        SupportUiHelper.primary(activity, root, getString(R.string.support_refresh))
-                .setOnClickListener(v -> loadDetails());
-        scroll.addView(root);
-        return scroll;
+        Button refreshBtn = SupportUiHelper.primary(activity, root, getString(R.string.support_refresh));
+        refreshBtn.setOnClickListener(v -> loadDetails());
+        SupportUiHelper.applySideBySideButtons(activity, root, sendBtn, refreshBtn);
+        return SupportUiHelper.wrapScreen(activity, root);
     }
 
     @Override

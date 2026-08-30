@@ -18,6 +18,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -29,6 +30,7 @@ import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.AppExecutors;
 import com.pos_billingwala.Extra.ListLoader;
 import com.pos_billingwala.Extra.SimpleDividerItemDecoration;
+import com.pos_billingwala.Extra.TabletUi;
 import com.pos_billingwala.Model.ProductResponse;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentProductMasterBinding;
@@ -168,7 +170,8 @@ public class ProductMaster extends Fragment implements View.OnClickListener {
 
     public void initViews() {
         productRecyclerView = view.findViewById(R.id.productRecyclerView);
-        productRecyclerView.setLayoutManager(new LinearLayoutManager(activity));
+        int productColumns = TabletUi.gridColumnCount(activity);
+        productRecyclerView.setLayoutManager(new GridLayoutManager(activity, productColumns));
         if (productRecyclerView.getItemDecorationCount() == 0) {
             productRecyclerView.addItemDecoration(new SimpleDividerItemDecoration(activity));
         }
