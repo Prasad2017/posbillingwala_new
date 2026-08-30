@@ -8,7 +8,32 @@ require_once __DIR__ . '/auth_tokens.php';
 
 require_once __DIR__ . '/branch_scope.php';
 
-
+/**
+ * Live server is missing split-payment columns until p21 is applied.
+ * Add them on first write so POS cloud sync does not stay pending.
+ */
+function invoice_ensure_cash_upi_columns($con)
+{
+    static $ensured = false;
+    if ($ensured || $con === null) {
+        return;
+    }
+    $cash = @mysqli_query($con, "SHOW COLUMNS FROM `invoice` LIKE 'cashAmount'");
+    if ($cash && mysqli_num_rows($cash) === 0) {
+        @mysqli_query($con, "ALTER TABLE `invoice` ADD COLUMN `cashAmount` VARCHAR(50) NOT NULL DEFAULT '0' AFTER `paymentMode`");
+    }
+    if ($cash) {
+        mysqli_free_result($cash);
+    }
+    $upi = @mysqli_query($con, "SHOW COLUMNS FROM `invoice` LIKE 'upiAmount'");
+    if ($upi && mysqli_num_rows($upi) === 0) {
+        @mysqli_query($con, "ALTER TABLE `invoice` ADD COLUMN `upiAmount` VARCHAR(50) NOT NULL DEFAULT '0' AFTER `cashAmount`");
+    }
+    if ($upi) {
+        mysqli_free_result($upi);
+    }
+    $ensured = true;
+}
 
 $response = array();
 
@@ -60,6 +85,8 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 
   $customerMobile = $post('customerMobile');
 
+  $customerEmail = $post('customerEmail');
+
   $customerAddress = $post('customerAddress');
 
   $subTotal = $post('subTotal', '0');
@@ -68,11 +95,17 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 
   $discount = $post('discount', '0');
 
-  $discountType = $post('discountType', '');
+  $discountType = trim($post('discountType', ''));
+  if ($discountType !== 'Percentage' && $discountType !== 'Amount') {
+      $discountType = 'Amount';
+  }
 
   $packingCharge = $post('packingCharge', '0');
 
-  $packingChargeType = $post('packingChargeType', 'Percentage');
+  $packingChargeType = trim($post('packingChargeType', 'Percentage'));
+  if ($packingChargeType !== 'Percentage' && $packingChargeType !== 'Amount') {
+      $packingChargeType = 'Percentage';
+  }
 
   $totalAmount = $post('totalAmount', '0');
 
@@ -105,6 +138,10 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 
     
 
+		    try {
+
+		    invoice_ensure_cash_upi_columns($con);
+
 		    $check = db_stmt_fetch_one(
 
 		        $con,
@@ -131,9 +168,9 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 
 				        $con,
 
-				        'UPDATE `invoice` SET `organization_id`=?, `branch_id`=?, `device_id`=?, `noOfTable`=?, `invoiceType`=?, `invoiceNumber`=?, `customerName`=?, `customerMobile`=?, `customerAddress`=?, `subTotal`=?, `totalGSTAmount`=?, `discount`=?, `discountType`=?, `packingCharge`=?, `packingChargeType`=?, `totalAmount`=?, `paymentMode`=?, `cashAmount`=?, `upiAmount`=?, `invoiceDate`=?, `invoiceOrderStatus`=?, `invoiceNetworkStatus`=? WHERE `invoiceId`=?',
+				        'UPDATE `invoice` SET `organization_id`=?, `branch_id`=?, `device_id`=?, `noOfTable`=?, `invoiceType`=?, `invoiceNumber`=?, `customerName`=?, `customerMobile`=?, `customerEmail`=?, `customerAddress`=?, `subTotal`=?, `totalGSTAmount`=?, `discount`=?, `discountType`=?, `packingCharge`=?, `packingChargeType`=?, `totalAmount`=?, `paymentMode`=?, `cashAmount`=?, `upiAmount`=?, `invoiceDate`=?, `invoiceOrderStatus`=?, `invoiceNetworkStatus`=? WHERE `invoiceId`=?',
 
-				        'iissssssssssssssssssssi',
+				        'iisssssssssssssssssssssi',
 
 				        $orgId,
 
@@ -150,6 +187,8 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 				        $customerName,
 
 				        $customerMobile,
+
+				        $customerEmail,
 
 				        $customerAddress,
 
@@ -249,9 +288,9 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 
                      $con,
 
-                     'INSERT INTO `invoice`(`licenseId`, `organization_id`, `branch_id`, `device_id`, `noOfTable`, `invoiceType`, `invoiceNumber`, `customerName`, `customerMobile`, `customerAddress`, `subTotal`, `totalGSTAmount`, `discount`, `discountType`, `packingCharge`, `packingChargeType`, `totalAmount`, `paymentMode`, `cashAmount`, `upiAmount`, `invoiceDate`, `invoiceOrderStatus`, `invoiceNetworkStatus`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+                     'INSERT INTO `invoice`(`licenseId`, `organization_id`, `branch_id`, `device_id`, `noOfTable`, `invoiceType`, `invoiceNumber`, `customerName`, `customerMobile`, `customerEmail`, `customerAddress`, `subTotal`, `totalGSTAmount`, `discount`, `discountType`, `packingCharge`, `packingChargeType`, `totalAmount`, `paymentMode`, `cashAmount`, `upiAmount`, `invoiceDate`, `invoiceOrderStatus`, `invoiceNetworkStatus`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
 
-                     'siissssssssssssssssssss',
+                     'siisssssssssssssssssssss',
 
                      $userId,
 
@@ -270,6 +309,8 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
                      $customerName,
 
                      $customerMobile,
+
+                     $customerEmail,
 
                      $customerAddress,
 
@@ -330,6 +371,12 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 
 
                 }
+
+		    } catch (Throwable $e) {
+		        error_log('insertInvoice.php: ' . $e->getMessage());
+		        $response['status'] = '0';
+		        $response['message'] = 'insert failed: ' . $e->getMessage();
+		    }
 
 }
 

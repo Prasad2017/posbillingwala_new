@@ -73,6 +73,8 @@ $i=0;
         $getdata["companyFssis"]=$row['companyFssis'];
         $getdata["companyLogo"]=$row['companyLogo'];
         $getdata["paymentLogo"]=$row['paymentLogo'];
+        $getdata["openingMinutes"]=isset($row['openingMinutes']) ? $row['openingMinutes'] : '';
+        $getdata["closingMinutes"]=isset($row['closingMinutes']) ? $row['closingMinutes'] : '';
        
         header('Content-type: application/json; charset=utf-8');
     

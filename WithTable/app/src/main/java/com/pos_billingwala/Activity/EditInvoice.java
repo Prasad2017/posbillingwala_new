@@ -19,6 +19,8 @@ import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.pos_billingwala.Adapter.EditInvoiceProductAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.BottomSheetUi;
+import com.pos_billingwala.Extra.CartItemType;
+import com.pos_billingwala.Extra.EditBillProductPicker;
 import com.pos_billingwala.Extra.PaymentSettlementBinder;
 import com.pos_billingwala.Extra.PaymentSettlementHelper;
 import com.pos_billingwala.Extra.ReportCursorHelper;
@@ -26,6 +28,8 @@ import com.pos_billingwala.NetworkToOffline.InvoicePendingSync;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.InvoiceProductResponse;
 import com.pos_billingwala.Model.InvoiceResponse;
+import com.pos_billingwala.Model.ProductPortionResponse;
+import com.pos_billingwala.Model.ProductResponse;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.ActivityEditInvoiceBinding;
 
@@ -35,6 +39,8 @@ import java.util.Locale;
 
 @SuppressLint("SetTextI18n")
 public class EditInvoice extends BaseActivity {
+
+    public static final String EXTRA_PRINT_AFTER_SAVE = "printAfterSave";
 
     private ActivityEditInvoiceBinding binding;
     private POSBillingWalaDatabase database;
@@ -102,12 +108,148 @@ public class EditInvoice extends BaseActivity {
         binding.recyclerView.setAdapter(adapter);
 
         binding.backButton.setOnClickListener(v -> finish());
+        binding.addProductButton.setOnClickListener(v -> showAddProductPicker());
         binding.discountRow.setOnClickListener(v -> showDiscountDialog());
         binding.packingRow.setOnClickListener(v -> showPackingDialog());
         binding.paymentRow.setOnClickListener(v -> showPaymentDialog());
-        binding.saveButton.setOnClickListener(v -> saveInvoice());
+        binding.saveButton.setOnClickListener(v -> saveInvoice(false));
+        binding.printButton.setOnClickListener(v -> saveInvoice(true));
 
         recalculate();
+    }
+
+    private void showAddProductPicker() {
+        EditBillProductPicker.show(this, database, this::onProductPicked);
+    }
+
+    private void onProductPicked(ProductResponse product, ProductPortionResponse portion, int quantity) {
+        if (product == null || quantity <= 0) {
+            return;
+        }
+        if (product.isOpenPrice()) {
+            showOpenPriceDialog(product, portion, quantity);
+        } else {
+            addProductLine(product, portion, quantity, resolveLinePrice(product, portion));
+        }
+    }
+
+    private void showOpenPriceDialog(ProductResponse product, ProductPortionResponse portion, int defaultQty) {
+        View content = LayoutInflater.from(this).inflate(R.layout.update_amount_quantity_dialog, null);
+        BottomSheetDialog sheet = BottomSheetUi.showContent(this, content, false);
+
+        TextView continueToQuantity = content.findViewById(R.id.continueToQuantity);
+        TextView dismissQuantity = content.findViewById(R.id.dismissQuantity);
+        TextInputEditText amountTxt = content.findViewById(R.id.amount);
+        TextInputEditText quantityTxt = content.findViewById(R.id.quantity);
+        TextView detailsTxt = content.findViewById(R.id.details);
+        detailsTxt.setText(getString(R.string.ui_open_price));
+        amountTxt.setText(resolveLinePrice(product, portion));
+        quantityTxt.setText(String.valueOf(defaultQty));
+        amountTxt.requestFocus();
+
+        dismissQuantity.setOnClickListener(v -> sheet.dismiss());
+        continueToQuantity.setOnClickListener(v -> {
+            String amountStr = amountTxt.getText() != null ? amountTxt.getText().toString().trim() : "";
+            String qtyStr = quantityTxt.getText() != null ? quantityTxt.getText().toString().trim() : "";
+            if (amountStr.isEmpty()) {
+                amountTxt.setError(getString(R.string.ui_enter_amount));
+                return;
+            }
+            float amount = ReportCursorHelper.parseAmount(amountStr);
+            if (amount <= 0f) {
+                amountTxt.setError(getString(R.string.ui_enter_amount));
+                return;
+            }
+            if (qtyStr.isEmpty()) {
+                quantityTxt.setError(getString(R.string.ui_enter_quantity));
+                return;
+            }
+            float qty = ReportCursorHelper.parseAmount(qtyStr);
+            if (qty <= 0f) {
+                quantityTxt.setError(getString(R.string.ui_enter_quantity));
+                return;
+            }
+            addProductLine(product, portion, qty, String.format(Locale.US, "%.2f", amount));
+            sheet.dismiss();
+        });
+    }
+
+    private void addProductLine(ProductResponse product, ProductPortionResponse portion, float quantity, String linePrice) {
+        int mergeIndex = findMergeIndex(product, portion, linePrice);
+        if (mergeIndex >= 0) {
+            InvoiceProductResponse existing = lines.get(mergeIndex);
+            float newQty = ReportCursorHelper.parseAmount(existing.getProductQuantity()) + quantity;
+            existing.setProductQuantity(formatQty(newQty));
+            adapter.notifyItemChanged(mergeIndex);
+        } else {
+            InvoiceProductResponse line = new InvoiceProductResponse();
+            line.setInvoiceNumber(invoice.getInvoiceNumber());
+            line.setSnapshotProductName(product.getProductName());
+            line.setProductName(product.getProductName());
+            line.setSnapshotLinePrice(linePrice);
+            line.setProductPrice(linePrice);
+            line.setProductUnit(product.getProductUnit() != null ? product.getProductUnit() : "");
+            line.setProductCGST(product.getProductCGST());
+            line.setProductSGST(product.getProductSGST());
+            line.setProductQuantity(formatQty(quantity));
+            line.setProductStatus("completed");
+            line.setInvoiceItemType(CartItemType.PRODUCT);
+            line.setSourceProductId(product.getProductId());
+            if (portion != null) {
+                line.setPortionId(portion.getPortionId());
+                line.setPortionName(portion.getPortionName());
+            }
+            lines.add(line);
+            adapter.notifyItemInserted(lines.size() - 1);
+        }
+        recalculate();
+    }
+
+    private int findMergeIndex(ProductResponse product, ProductPortionResponse portion, String linePrice) {
+        String productName = product.getProductName() != null ? product.getProductName().trim() : "";
+        String portionId = portion != null ? portion.getPortionId() : null;
+        float targetPrice = ReportCursorHelper.parseAmount(linePrice);
+        for (int i = 0; i < lines.size(); i++) {
+            InvoiceProductResponse line = lines.get(i);
+            if (CartItemType.isCombo(line.getInvoiceItemType())) {
+                continue;
+            }
+            String base = line.getSnapshotProductName();
+            if (base == null || base.trim().isEmpty()) {
+                base = line.getProductName();
+            }
+            if (base == null || !productName.equalsIgnoreCase(base.trim())) {
+                continue;
+            }
+            if (!sameOptionalId(portionId, line.getPortionId())) {
+                continue;
+            }
+            if (Math.abs(ReportCursorHelper.parseAmount(line.getResolvedLinePrice()) - targetPrice) > 0.001f) {
+                continue;
+            }
+            return i;
+        }
+        return -1;
+    }
+
+    private static boolean sameOptionalId(String left, String right) {
+        String a = left != null ? left.trim() : "";
+        String b = right != null ? right.trim() : "";
+        return a.equals(b);
+    }
+
+    private static String resolveLinePrice(ProductResponse product, ProductPortionResponse portion) {
+        if (portion != null && portion.getPortionPrice() != null && !portion.getPortionPrice().trim().isEmpty()) {
+            return portion.getPortionPrice();
+        }
+        return product.getProductPrice() != null ? product.getProductPrice() : "0";
+    }
+
+    private static String formatQty(float qty) {
+        if (qty == (long) qty) {
+            return String.valueOf((long) qty);
+        }
+        return String.format(Locale.US, "%.2f", qty);
     }
 
     private void recalculate() {
@@ -263,7 +405,7 @@ public class EditInvoice extends BaseActivity {
         return MainActivity.currencyName != null ? MainActivity.currencyName : "";
     }
 
-    private void saveInvoice() {
+    private void saveInvoice(boolean printAfterSave) {
         if (lines.isEmpty()) {
             Toast.makeText(this, getString(R.string.toast_keep_one_item), Toast.LENGTH_SHORT).show();
             return;
@@ -272,7 +414,12 @@ public class EditInvoice extends BaseActivity {
             database.deleteInvoiceProduct(deletedId);
         }
         for (InvoiceProductResponse line : lines) {
-            database.updateInvoiceProductQuantity(line.getInvoiceProductId(), line.getProductQuantity());
+            String lineId = line.getInvoiceProductId();
+            if (lineId != null && !lineId.trim().isEmpty()) {
+                database.updateInvoiceProductQuantity(lineId, line.getProductQuantity());
+            } else {
+                database.insertLocalInvoiceProductLine(line, line.getSourceProductId());
+            }
         }
         database.updateInvoiceHeader(
                 invoice.getInvoiceNumber(),
@@ -288,7 +435,9 @@ public class EditInvoice extends BaseActivity {
                 upiAmount);
         Toast.makeText(this, getString(R.string.toast_bill_updated), Toast.LENGTH_SHORT).show();
         InvoicePendingSync.syncPendingInvoiceChanges(this);
-        setResult(RESULT_OK, new Intent());
+        Intent result = new Intent();
+        result.putExtra(EXTRA_PRINT_AFTER_SAVE, printAfterSave);
+        setResult(RESULT_OK, result);
         finish();
     }
 }

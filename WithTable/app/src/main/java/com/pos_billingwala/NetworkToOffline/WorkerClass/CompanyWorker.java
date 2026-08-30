@@ -9,6 +9,7 @@ import androidx.work.WorkerParameters;
 
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.BusinessHours;
 import com.pos_billingwala.Model.AllApiResponse;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Retrofit.Api;
@@ -59,6 +60,8 @@ public class CompanyWorker extends Worker {
                                 companyResponse.getCurrencyName(),
                                 companyResponse.getTableStatus(), companyResponse.getNoOfTable(), companyResponse.getCountryName(), companyResponse.getStateName(), companyResponse.getGstStatus(), companyResponse.getGstNumber(),
                                 companyResponse.getShopCGST(), companyResponse.getShopSGST(), companyResponse.getPanNumber(), companyResponse.getCompanyFssis(), 1, companyResponse.getPaymentLogo());
+                        BusinessHours.applyFromServer(context, companyResponse.getOpeningMinutes(),
+                                companyResponse.getClosingMinutes());
                     }
                 }
             }

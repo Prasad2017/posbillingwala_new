@@ -80,6 +80,12 @@ public class CompanyResponse {
     @SerializedName("companyFssis")
     @Expose
     public String companyFssis;
+    @SerializedName("openingMinutes")
+    @Expose
+    public String openingMinutes;
+    @SerializedName("closingMinutes")
+    @Expose
+    public String closingMinutes;
     @SerializedName("companyStatus")
     @Expose
     public String companyStatus;
@@ -291,5 +297,21 @@ public class CompanyResponse {
 
     public void setPaymentLogo(String paymentLogo) {
         this.paymentLogo = paymentLogo;
+    }
+
+    public String getOpeningMinutes() {
+        return openingMinutes;
+    }
+
+    public void setOpeningMinutes(String openingMinutes) {
+        this.openingMinutes = openingMinutes;
+    }
+
+    public String getClosingMinutes() {
+        return closingMinutes;
+    }
+
+    public void setClosingMinutes(String closingMinutes) {
+        this.closingMinutes = closingMinutes;
     }
 }

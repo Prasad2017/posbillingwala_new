@@ -193,7 +193,9 @@ public interface ApiInterface {
                                             @Field("gstNumber") String gstNumber,
                                             @Field("panNumber") String panNumber,
                                             @Field("paymentLogo") String paymentLogo,
-                                            @Field("companyFssis") String companyFssis);
+                                            @Field("companyFssis") String companyFssis,
+                                            @Field("openingMinutes") String openingMinutes,
+                                            @Field("closingMinutes") String closingMinutes);
 
     @FormUrlEncoded
     @POST("insertInvoice.php")

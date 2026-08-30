@@ -169,6 +169,31 @@ SET @sql = (
 );
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
+-- Split settlement: cashAmount + upiAmount (Cash+UPI bills)
+SET @sql = (
+  SELECT IF(
+    (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = 'invoice'
+       AND COLUMN_NAME = 'cashAmount') > 0,
+    'SELECT ''OK: invoice.cashAmount already exists'' AS msg',
+    'ALTER TABLE `invoice` ADD COLUMN `cashAmount` VARCHAR(50) NOT NULL DEFAULT ''0'' AFTER `paymentMode`'
+  )
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = (
+  SELECT IF(
+    (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = 'invoice'
+       AND COLUMN_NAME = 'upiAmount') > 0,
+    'SELECT ''OK: invoice.upiAmount already exists'' AS msg',
+    'ALTER TABLE `invoice` ADD COLUMN `upiAmount` VARCHAR(50) NOT NULL DEFAULT ''0'' AFTER `cashAmount`'
+  )
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
 -- =============================================================================
 -- STEP 3 of 9 — Product portions (Half / Full / Kg prices)
 -- =============================================================================
@@ -917,6 +942,31 @@ WHERE (`phoneNo1` IS NULL OR TRIM(`phoneNo1`) = '')
   AND `companyMobile` IS NOT NULL
   AND TRIM(`companyMobile`) <> '';
 
+-- Shop opening / closing minutes (POS business hours)
+SET @sql = (
+  SELECT IF(
+    (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = 'companys'
+       AND COLUMN_NAME = 'openingMinutes') > 0,
+    'SELECT ''OK: companys.openingMinutes already exists'' AS msg',
+    'ALTER TABLE `companys` ADD COLUMN `openingMinutes` VARCHAR(8) NULL DEFAULT NULL'
+  )
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = (
+  SELECT IF(
+    (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = 'companys'
+       AND COLUMN_NAME = 'closingMinutes') > 0,
+    'SELECT ''OK: companys.closingMinutes already exists'' AS msg',
+    'ALTER TABLE `companys` ADD COLUMN `closingMinutes` VARCHAR(8) NULL DEFAULT NULL'
+  )
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
 -- =============================================================================
 -- P11 — Crash & Error Logs (POS → Admin inbox)
 -- =============================================================================
@@ -1185,6 +1235,10 @@ SELECT
    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'companys' AND COLUMN_NAME = 'addressLine1') AS companys_addressLine1_ok,
   (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'companys' AND COLUMN_NAME = 'phoneNo1') AS companys_phoneNo1_ok,
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'companys' AND COLUMN_NAME = 'openingMinutes') AS companys_openingMinutes_ok,
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'companys' AND COLUMN_NAME = 'closingMinutes') AS companys_closingMinutes_ok,
   (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES
    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'error_logs') AS error_logs_ok;
 

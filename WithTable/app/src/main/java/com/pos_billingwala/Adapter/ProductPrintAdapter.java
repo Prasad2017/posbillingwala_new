@@ -2,6 +2,7 @@ package com.pos_billingwala.Adapter;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 
@@ -9,7 +10,6 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.pos_billingwala.Activity.MainActivity;
-import com.pos_billingwala.Model.ProductResponse;
 import com.pos_billingwala.databinding.ProductPrintListBinding;
 
 import java.util.ArrayList;
@@ -17,12 +17,26 @@ import java.util.List;
 
 public class ProductPrintAdapter extends RecyclerView.Adapter<ProductPrintAdapter.MyViewHolder> {
 
-    public List<ProductResponse> productResponseList = new ArrayList<>();
+    public static class ProductPrintRow {
+        public final String productCode;
+        public final String productName;
+        public final String portionName;
+        public final String price;
+
+        public ProductPrintRow(String productCode, String productName, String portionName, String price) {
+            this.productCode = productCode;
+            this.productName = productName;
+            this.portionName = portionName;
+            this.price = price;
+        }
+    }
+
+    public List<ProductPrintRow> productPrintRows = new ArrayList<>();
     Context context;
 
-    public ProductPrintAdapter(Context context, List<ProductResponse> productResponseList) {
+    public ProductPrintAdapter(Context context, List<ProductPrintRow> productPrintRows) {
         this.context = context;
-        this.productResponseList = productResponseList;
+        this.productPrintRows = productPrintRows != null ? productPrintRows : new ArrayList<>();
     }
 
     @NonNull
@@ -34,18 +48,18 @@ public class ProductPrintAdapter extends RecyclerView.Adapter<ProductPrintAdapte
     @SuppressLint("SetTextI18n")
     @Override
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
+        ProductPrintRow row = productPrintRows.get(position);
 
-        ProductResponse productResponse = productResponseList.get(position);
-
-        holder.binding.productCode.setText(!productResponse.getProductCode().equals("") ? productResponse.getProductCode() : "-");
-        holder.binding.productName.setText(productResponse.getProductName());
-        holder.binding.productPrice.setText(MainActivity.currencyName + " " + productResponse.getProductPrice());
-
+        holder.binding.productCode.setText(!TextUtils.isEmpty(row.productCode) ? row.productCode : "-");
+        holder.binding.productName.setText(!TextUtils.isEmpty(row.productName) ? row.productName : "-");
+        holder.binding.productPortion.setText(!TextUtils.isEmpty(row.portionName) ? row.portionName : "-");
+        String price = !TextUtils.isEmpty(row.price) ? row.price : "0.00";
+        holder.binding.productPrice.setText(MainActivity.currencyName + " " + price);
     }
 
     @Override
     public int getItemCount() {
-        return productResponseList.size();
+        return productPrintRows.size();
     }
 
     public class MyViewHolder extends RecyclerView.ViewHolder {

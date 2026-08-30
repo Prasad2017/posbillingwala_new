@@ -13,7 +13,7 @@ android {
         versionCode 2
         versionName "1.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        buildConfigField "String", "API_BASE_URL", "\"http://posbillingwala.com/androidApp/Admin/\""
+        buildConfigField "String", "API_BASE_URL", "\"https://posbillingwala.com/androidApp/Admin/\""
         // true = allow screenshots/recording on every screen. Set false for production.
         buildConfigField "boolean", "ALLOW_SCREENSHOT", "true"
     }

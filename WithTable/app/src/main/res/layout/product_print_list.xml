@@ -12,43 +12,54 @@
 
         <TextView
             android:id="@+id/productCode"
-            android:layout_width="70dp"
+            android:layout_width="50dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:fontFamily="@font/poppinsregular"
             android:gravity="center|start"
-            android:paddingStart="5dp"
-            android:paddingEnd="5dp"
-            android:singleLine="true"
+            android:paddingStart="2dp"
+            android:paddingEnd="2dp"
             android:textColor="@color/black"
-            android:textSize="15dp" />
+            android:textSize="13dp" />
 
         <TextView
             android:id="@+id/productName"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_weight="1.4"
+            android:background="@null"
+            android:fontFamily="@font/poppinsregular"
+            android:gravity="center|start"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
+            android:textColor="@color/black"
+            android:textSize="13dp" />
+
+        <TextView
+            android:id="@+id/productPortion"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_weight="1"
             android:background="@null"
             android:fontFamily="@font/poppinsregular"
             android:gravity="center|start"
-            android:paddingStart="5dp"
-            android:paddingEnd="5dp"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
             android:textColor="@color/black"
-            android:textSize="15dp" />
-
+            android:textSize="13dp" />
 
         <TextView
             android:id="@+id/productPrice"
-            android:layout_width="80dp"
+            android:layout_width="72dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:background="@null"
             android:fontFamily="@font/poppinsregular"
             android:gravity="center|end"
-            android:singleLine="true"
             android:textColor="@color/black"
-            android:textSize="15dp" />
+            android:textSize="13dp" />
 
     </LinearLayout>
 

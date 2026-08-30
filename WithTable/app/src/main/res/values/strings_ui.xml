@@ -188,6 +188,7 @@
     <string name="ui_product_list">Product List</string>
     <string name="ui_product_menu">Product Menu</string>
     <string name="ui_product_name">Product Name</string>
+    <string name="ui_portion">Portion</string>
     <string name="ui_product_preview">Product Preview</string>
     <string name="ui_product_price">Product Price*</string>
     <string name="ui_product_price_2">Product Price</string>

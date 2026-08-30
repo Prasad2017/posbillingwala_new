@@ -17,10 +17,10 @@ android {
         versionCode 72
         versionName "2.0.56"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
-        buildConfigField "String", "API_BASE_URL", "\"http://posbillingwala.com/androidApp/\""
-        buildConfigField "String", "MEDIA_BASE_URL", "\"http://posbillingwala.com/storage/app/\""
+        buildConfigField "String", "API_BASE_URL", "\"https://posbillingwala.com/androidApp/\""
+        buildConfigField "String", "MEDIA_BASE_URL", "\"https://posbillingwala.com/storage/app/\""
         // true = allow screenshots/recording on every screen (activities + fragments). Set false for production.
-        buildConfigField "boolean", "ALLOW_SCREENSHOT", "false"
+        buildConfigField "boolean", "ALLOW_SCREENSHOT", "true"
     }
 
     buildFeatures {

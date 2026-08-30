@@ -41,6 +41,7 @@ import com.karumi.dexter.listener.PermissionRequest;
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.BusinessHours;
 import com.pos_billingwala.Extra.LicenseModules;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.R;
@@ -362,6 +363,7 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
         }
 
         getCompanyDetails();
+        BusinessHours.persistToCompany(activity, false);
 
     }
 

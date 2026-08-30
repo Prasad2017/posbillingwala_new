@@ -13,7 +13,7 @@ android {
         versionName "1.0.10"
         multiDexEnabled true
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
-        buildConfigField "String", "API_BASE_URL", "\"http://posbillingwala.com/androidApp/Dealer/\""
+        buildConfigField "String", "API_BASE_URL", "\"https://posbillingwala.com/androidApp/Dealer/\""
         // true = allow screenshots/recording on every screen. Set false for production.
         buildConfigField "boolean", "ALLOW_SCREENSHOT", "true"
     }

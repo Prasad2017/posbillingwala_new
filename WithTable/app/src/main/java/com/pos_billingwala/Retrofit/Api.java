@@ -51,7 +51,10 @@ public class Api {
                     .callTimeout(180, TimeUnit.SECONDS)
                     .cache(cache)
                     .retryOnConnectionFailure(true)
-                    .connectionSpecs(Arrays.asList(ConnectionSpec.CLEARTEXT))
+                    .connectionSpecs(Arrays.asList(
+                            ConnectionSpec.MODERN_TLS,
+                            ConnectionSpec.COMPATIBLE_TLS,
+                            ConnectionSpec.CLEARTEXT))
                     .addInterceptor(new ApiFailureInterceptor())
                     .addInterceptor(chain -> {
                         Request original = chain.request();

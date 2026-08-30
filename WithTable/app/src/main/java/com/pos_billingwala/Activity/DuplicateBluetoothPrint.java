@@ -52,8 +52,10 @@ import com.pos_billingwala.Model.InvoiceProductResponse;
 import com.pos_billingwala.Model.InvoiceResponse;
 import com.pos_billingwala.Model.PrinterSettingResponse;
 import com.pos_billingwala.Print.BluetoothPrintService;
+import com.pos_billingwala.Print.BluetoothPrinterChannel;
 import com.pos_billingwala.Print.DeviceListActivity;
 import com.pos_billingwala.Print.PrintImage;
+import com.pos_billingwala.Print.PrinterConnectionHelper;
 import com.pos_billingwala.Print.WoosimPrnMng;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.ActivityDuplicateBluetoothPrintBinding;
@@ -281,6 +283,9 @@ public class DuplicateBluetoothPrint extends BaseActivity implements View.OnClic
                     && paymentMode != null && !paymentMode.trim().isEmpty();
             if (paymentSelected) {
                 if (!printerSettingResponseList.isEmpty()) {
+                    if (!PrinterConnectionHelper.ensureBillPrinter(activity, savedBillPrinterAddress())) {
+                        return;
+                    }
                     progressDialog = new ProgressDialog(activity);
                     progressDialog.setMessage(getString(R.string.toast_printing_in_progress));
 
@@ -342,8 +347,7 @@ public class DuplicateBluetoothPrint extends BaseActivity implements View.OnClic
             checkAndFeedPaper(5);
 
         } else {
-            //Printer not connected and send request for connecting printer
-            new WoosimPrnMng(activity, "", DuplicateBluetoothPrint.this);
+            WoosimPrnMng.connectFromButton(activity, savedBillPrinterAddress(), DuplicateBluetoothPrint.this);
         }
 
     }
@@ -429,8 +433,7 @@ public class DuplicateBluetoothPrint extends BaseActivity implements View.OnClic
                 mService.write(normalText);
             }
         } else {
-            //Printer not connected and send request for connecting printer
-            new WoosimPrnMng(activity, "", DuplicateBluetoothPrint.this);
+            WoosimPrnMng.connectFromButton(activity, savedBillPrinterAddress(), DuplicateBluetoothPrint.this);
         }
 
     }
@@ -696,6 +699,14 @@ public class DuplicateBluetoothPrint extends BaseActivity implements View.OnClic
         }
     }
 
+    private String savedBillPrinterAddress() {
+        if (printerSettingResponseList == null || printerSettingResponseList.isEmpty()) {
+            return "";
+        }
+        String addr = printerSettingResponseList.get(0).getBluetoothAddress();
+        return addr != null ? addr : "";
+    }
+
     public void getPrinterSettingDetails() {
         printerSettingResponseList = posBillingWalaDatabase.getPrinterSettingDetails();
         if (!printerSettingResponseList.isEmpty()) {
@@ -742,13 +753,15 @@ public class DuplicateBluetoothPrint extends BaseActivity implements View.OnClic
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_ENABLE_BT && resultCode == RESULT_OK) {
-            //bluetooth enabled and request for showing available bluetooth devices
-            new WoosimPrnMng(activity, "", DuplicateBluetoothPrint.this);
-        } else if (requestCode == REQUEST_CONNECT_DEVICE && resultCode == RESULT_OK) {
-            //bluetooth device selected and request pairing with device
-            String bluetoothAddress = data.getExtras()
-                    .getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
-            new WoosimPrnMng(activity, bluetoothAddress, DuplicateBluetoothPrint.this);
+            WoosimPrnMng.connectFromButton(activity, savedBillPrinterAddress(), DuplicateBluetoothPrint.this);
+        } else if (requestCode == REQUEST_CONNECT_DEVICE && resultCode == RESULT_OK && data != null && data.getExtras() != null) {
+            String bluetoothAddress = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
+            if (bluetoothAddress != null) {
+                BluetoothPrinterChannel.bill().onDevicePicked(bluetoothAddress);
+                if (!printerSettingResponseList.isEmpty()) {
+                    printerSettingResponseList.get(0).setBluetoothAddress(bluetoothAddress);
+                }
+            }
         }
     }
 

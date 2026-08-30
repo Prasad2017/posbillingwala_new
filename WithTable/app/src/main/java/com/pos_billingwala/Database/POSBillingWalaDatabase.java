@@ -69,7 +69,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
     public static final String INVOICE_COMBO_ITEM_TABLE = "invoice_combo_item";
     public static final String INVOICE_PRODUCT_DELETE_QUEUE_TABLE = "invoice_product_delete_queue";
     // Database Version
-    public static final int DATABASE_VERSION = 25;
+    public static final int DATABASE_VERSION = 26;
 
     /** SQL suffix: only rows for the logged-in licence branch. */
     private static String andBranchScope(String tableAlias) {
@@ -218,7 +218,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
 
     public final String PRINTER_SETTING_QUERY = "CREATE TABLE IF NOT EXISTS " + PRINTER_SETTING_TABLE + "(settingId INTEGER PRIMARY KEY AUTOINCREMENT, printerName VARCHAR, invoicePrefix VARCHAR, invoiceTitle VARCHAR, invoiceTermsCondition VARCHAR, logoUse VARCHAR, paymentUse VARCHAR, customerUse VARCHAR, productQuantityUpdate VARCHAR, duplicateBillUse VARCHAR, bluetoothAddress VARCHAR, bluetoothKOTAddress VARCHAR, KOTPrinterName VARCHAR, printerFeedLines VARCHAR, KotPrinterFeedLines VARCHAR, settingStatus TINYINT)";
 
-    public final String COMPANY_QUERY = "CREATE TABLE IF NOT EXISTS " + COMPANY_TABLE + "(companyId INTEGER PRIMARY KEY AUTOINCREMENT, companyName VARCHAR, cashierName VARCHAR, companyMobile VARCHAR, " + "companyAddress VARCHAR, shopName1 VARCHAR, shopName2 VARCHAR, addressLine1 VARCHAR, addressLine2 VARCHAR, addressLine3 VARCHAR, phoneNo1 VARCHAR, phoneNo2 VARCHAR, currencyName VARCHAR, countryName VARCHAR, stateName VARCHAR, tableStatus VARCHAR, noOfTable VARCHAR,gstStatus VARCHAR, gstNumber VARCHAR, shopCGST VARCHAR, shopSGST VARCHAR, panNumber VARCHAR, companyFssis VARCHAR, companyLogo VARCHAR, paymentLogo VARCHAR, companyStatus TINYINT)";
+    public final String COMPANY_QUERY = "CREATE TABLE IF NOT EXISTS " + COMPANY_TABLE + "(companyId INTEGER PRIMARY KEY AUTOINCREMENT, companyName VARCHAR, cashierName VARCHAR, companyMobile VARCHAR, " + "companyAddress VARCHAR, shopName1 VARCHAR, shopName2 VARCHAR, addressLine1 VARCHAR, addressLine2 VARCHAR, addressLine3 VARCHAR, phoneNo1 VARCHAR, phoneNo2 VARCHAR, currencyName VARCHAR, countryName VARCHAR, stateName VARCHAR, tableStatus VARCHAR, noOfTable VARCHAR,gstStatus VARCHAR, gstNumber VARCHAR, shopCGST VARCHAR, shopSGST VARCHAR, panNumber VARCHAR, companyFssis VARCHAR, companyLogo VARCHAR, paymentLogo VARCHAR, openingMinutes VARCHAR, closingMinutes VARCHAR, companyStatus TINYINT)";
 
     public final String INVENTORY_QUERY = "CREATE TABLE IF NOT EXISTS " + INVENTORY_TABLE + "(inventoryId INTEGER PRIMARY KEY AUTOINCREMENT, productId VARCHAR, productInventoryQuantity VARCHAR, afterSaleInventoryQuantity VARCHAR, saleInventoryQuantity VARCHAR, inventoryDate VARCHAR, inventoryNetworkStatus VARCHAR, inventoryStatus TINYINT)";
 
@@ -303,6 +303,8 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
     public final String ALTER_COMPANY_ADDRESS_LINE_3_QUERY = "ALTER TABLE " + COMPANY_TABLE + " ADD COLUMN addressLine3 VARCHAR";
     public final String ALTER_COMPANY_PHONE_NO_1_QUERY = "ALTER TABLE " + COMPANY_TABLE + " ADD COLUMN phoneNo1 VARCHAR";
     public final String ALTER_COMPANY_PHONE_NO_2_QUERY = "ALTER TABLE " + COMPANY_TABLE + " ADD COLUMN phoneNo2 VARCHAR";
+    public final String ALTER_COMPANY_OPENING_MINUTES_QUERY = "ALTER TABLE " + COMPANY_TABLE + " ADD COLUMN openingMinutes VARCHAR";
+    public final String ALTER_COMPANY_CLOSING_MINUTES_QUERY = "ALTER TABLE " + COMPANY_TABLE + " ADD COLUMN closingMinutes VARCHAR";
     public final String ALTER_INVENTORY_QUERY = "ALTER TABLE " + INVENTORY_TABLE + " ADD COLUMN saleInventoryQuantity VARCHAR";
     public final String ALTER_PRODUCT_QUERY = "ALTER TABLE " + PRODUCT_TABLE + " ADD COLUMN productCode VARCHAR";
     public final String ALTER_CATEGORY_DELETED_QUERY = "ALTER TABLE " + PRODUCT_CATEGORY_TABLE + " ADD COLUMN categoryDeletedStatus VARCHAR";
@@ -424,6 +426,8 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         addColumnIfNotExists(db, COMPANY_TABLE, "addressLine3", ALTER_COMPANY_ADDRESS_LINE_3_QUERY);
         addColumnIfNotExists(db, COMPANY_TABLE, "phoneNo1", ALTER_COMPANY_PHONE_NO_1_QUERY);
         addColumnIfNotExists(db, COMPANY_TABLE, "phoneNo2", ALTER_COMPANY_PHONE_NO_2_QUERY);
+        addColumnIfNotExists(db, COMPANY_TABLE, "openingMinutes", ALTER_COMPANY_OPENING_MINUTES_QUERY);
+        addColumnIfNotExists(db, COMPANY_TABLE, "closingMinutes", ALTER_COMPANY_CLOSING_MINUTES_QUERY);
         migrateCompanyStructuredFields(db);
         addColumnIfNotExists(db, INVENTORY_TABLE, "saleInventoryQuantity", ALTER_INVENTORY_QUERY);
         addColumnIfNotExists(db, PRODUCT_TABLE, "productCode", ALTER_PRODUCT_QUERY);
@@ -2394,6 +2398,18 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         return contentValues;
     }
 
+    public void updateCompanyBusinessHours(String openingMinutes, String closingMinutes, boolean markUnsynced) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put("openingMinutes", openingMinutes != null ? openingMinutes.trim() : "");
+        contentValues.put("closingMinutes", closingMinutes != null ? closingMinutes.trim() : "");
+        if (markUnsynced) {
+            contentValues.put("companyStatus", 0);
+        }
+        db.update(COMPANY_TABLE, contentValues, null, null);
+        db.close();
+    }
+
     private static String joinAddressLines(String line1, String line2, String line3) {
         StringBuilder composed = new StringBuilder();
         appendAddressPart(composed, line1);
@@ -3368,6 +3384,14 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             companyResponse.setCompanyFssis(cursor.getString(cursor.getColumnIndex("companyFssis")));
             companyResponse.setCompanyLogo(cursor.getString(cursor.getColumnIndex("companyLogo")));
             companyResponse.setPaymentLogo(cursor.getString(cursor.getColumnIndex("paymentLogo")));
+            int openingIdx = cursor.getColumnIndex("openingMinutes");
+            if (openingIdx >= 0) {
+                companyResponse.setOpeningMinutes(cursor.getString(openingIdx));
+            }
+            int closingIdx = cursor.getColumnIndex("closingMinutes");
+            if (closingIdx >= 0) {
+                companyResponse.setClosingMinutes(cursor.getString(closingIdx));
+            }
             companyResponse.setCompanyStatus(cursor.getString(cursor.getColumnIndex("companyStatus")));
             companyResponseList.add(companyResponse);
         }
@@ -3804,6 +3828,54 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
 
         return rowId != -1;
 
+    }
+
+    public boolean insertLocalInvoiceProductLine(InvoiceProductResponse line, String sourceProductId) {
+        if (line == null) {
+            return false;
+        }
+        if (line.getInvoiceProductNetworkStatus() == null || line.getInvoiceProductNetworkStatus().trim().isEmpty()) {
+            line.setInvoiceProductNetworkStatus(getRandomString(10));
+        }
+        if (invoiceProductNetworkStatusExists(line.getInvoiceProductNetworkStatus())) {
+            return false;
+        }
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        String snapshotBaseName = line.getSnapshotProductName();
+        if (snapshotBaseName == null || snapshotBaseName.trim().isEmpty()) {
+            snapshotBaseName = line.getProductName();
+        }
+        String linePrice = line.getResolvedLinePrice();
+
+        contentValues.put("invoiceNumber", line.getInvoiceNumber());
+        contentValues.put("productName", line.getDisplayLineName());
+        contentValues.put("productPrice", linePrice);
+        contentValues.put("productUnit", line.getProductUnit() != null ? line.getProductUnit() : "");
+        contentValues.put("productCGST", line.getProductCGST());
+        contentValues.put("productSGST", line.getProductSGST());
+        contentValues.put("productQuantity", line.getProductQuantity());
+        contentValues.put("productStatus", line.getProductStatus() != null ? line.getProductStatus() : "completed");
+        contentValues.put("invoiceProductNetworkStatus", line.getInvoiceProductNetworkStatus());
+        contentValues.put("invoiceProductStatus", 0);
+        contentValues.put("snapshotProductName", snapshotBaseName);
+        contentValues.put("snapshotLinePrice", linePrice);
+        putOptionalColumn(contentValues, "portionId", line.getPortionId());
+        putOptionalColumn(contentValues, "portionName", line.getPortionName());
+        contentValues.put("invoiceItemType", CartItemType.normalize(line.getInvoiceItemType()));
+        putOptionalColumn(contentValues, "comboId", line.getComboId());
+        putOptionalColumn(contentValues, "snapshotComboComponents", line.getSnapshotComboComponents());
+        BranchSession.applyScope(contentValues);
+
+        long rowId = db.insert(INVOICE_PRODUCT_TABLE, null, contentValues);
+        if (rowId != -1 && sourceProductId != null && !sourceProductId.trim().isEmpty()) {
+            ContentValues inventory = new ContentValues();
+            inventory.put("inventoryStatus", 0);
+            db.update(INVENTORY_TABLE, inventory, "productId=?", new String[]{sourceProductId});
+        }
+        db.close();
+        return rowId != -1;
     }
 
     public int getInvoicePaymentModeCount(String invoiceDate, String paymentMode) {

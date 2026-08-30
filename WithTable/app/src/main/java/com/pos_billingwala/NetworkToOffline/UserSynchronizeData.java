@@ -23,6 +23,7 @@ import androidx.work.WorkManager;
 
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.BusinessHours;
 import com.pos_billingwala.Extra.Common;
 import com.pos_billingwala.Extra.DetectConnection;
 import com.pos_billingwala.Extra.ErrorLogUploader;
@@ -292,7 +293,9 @@ public class UserSynchronizeData {
                         cursor.getString(cursor.getColumnIndex("gstNumber")),
                         cursor.getString(cursor.getColumnIndex("panNumber")),
                         cursor.getString(cursor.getColumnIndex("paymentLogo")),
-                        cursor.getString(cursor.getColumnIndex("companyFssis")));
+                        cursor.getString(cursor.getColumnIndex("companyFssis")),
+                        columnOrEmpty(cursor, "openingMinutes"),
+                        columnOrEmpty(cursor, "closingMinutes"));
             } while (cursor.moveToNext());
         }
         closeCursor();
@@ -531,7 +534,8 @@ public class UserSynchronizeData {
                             String discount, String discountType, String packingCharge, String packingChargeType, String totalAmount, String paymentMode, String cashAmount, String upiAmount, String invoiceDate, String invoiceType, String invoiceOrderStatus, String invoiceNetworkStatus) {
         if (executeCall(Api.getClient(context).saveInvoice(MainActivity.userId,
                 nz(noOfTable), nz(invoiceNumber), nz(customerName), nz(customerMobile), nz(customerEmail), nz(customerAddress),
-                nz(subTotal), nz(totalGSTAmount), nz(discount), nz(discountType),
+                nz(subTotal), nz(totalGSTAmount), nz(discount),
+                nz(discountType).isEmpty() ? "Amount" : nz(discountType),
                 nz(packingCharge).isEmpty() ? "0" : nz(packingCharge),
                 nz(packingChargeType).isEmpty() ? "Percentage" : nz(packingChargeType),
                 nz(totalAmount), nz(paymentMode), nz(cashAmount), nz(upiAmount),
@@ -543,7 +547,8 @@ public class UserSynchronizeData {
     public void saveCompanyDetails(String companyId, String companyLogo, String companyName, String cashierName, String companyMobile, String companyAddress,
                                    String shopName1, String shopName2, String addressLine1, String addressLine2, String addressLine3, String phoneNo1, String phoneNo2,
                                    String currencyName, String tableStatus, String noOfTable,
-                                   String countryName, String stateName, String gstStatus, String gstNumber, String panNumber, String paymentLogo, String companyFssis) {
+                                   String countryName, String stateName, String gstStatus, String gstNumber, String panNumber, String paymentLogo, String companyFssis,
+                                   String openingMinutes, String closingMinutes) {
         if (shopName1 == null || shopName1.trim().isEmpty()) {
             shopName1 = companyName;
         }
@@ -558,7 +563,9 @@ public class UserSynchronizeData {
         if (executeCall(Api.getClient(context).saveCompanyDetails(MainActivity.userId, companyLogo, companyName, cashierName, companyMobile, companyAddress,
                 shopName1, shopName2, addressLine1, addressLine2, addressLine3, phoneNo1, phoneNo2,
                 currencyName, tableStatus, noOfTable, countryName, stateName,
-                gstStatus, gstNumber, panNumber, paymentLogo, companyFssis))) {
+                gstStatus, gstNumber, panNumber, paymentLogo, companyFssis,
+                BusinessHours.openingForUpload(context, openingMinutes),
+                BusinessHours.closingForUpload(context, closingMinutes)))) {
             posBillingWalaDatabase.updateSynchronizeCompanyDetails(companyId, NAME_SYNCED_WITH_SERVER);
         }
     }
