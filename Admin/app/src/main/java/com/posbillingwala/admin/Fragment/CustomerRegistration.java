@@ -162,6 +162,14 @@ public class CustomerRegistration extends Fragment implements View.OnClickListen
                         if (serverKey == null || serverKey.isEmpty()) {
                             serverKey = "(see customer details)";
                         }
+                        String mpin = response.body().getMpin();
+                        if (mpin == null || mpin.isEmpty()) {
+                            mpin = "9082";
+                        }
+                        String reportPin = response.body().getReportPin();
+                        if (reportPin == null || reportPin.isEmpty()) {
+                            reportPin = "9082";
+                        }
 
                         View dialogView = LayoutInflater.from(getActivity()).inflate(R.layout.confirmation_dialog, null);
                         BottomSheetDialog sheet = BottomSheetUi.showContent(getActivity(), dialogView, false);
@@ -173,7 +181,9 @@ public class CustomerRegistration extends Fragment implements View.OnClickListen
                         TextView txtMessage = dialogView.findViewById(R.id.message);
 
                         String message = "Registration completed. License key (give to customer):</br><b><font color='#ff0000'>"
-                                + serverKey + "</font></b></br>Device status: NOT ACTIVATED";
+                                + serverKey + "</font></b></br>PB-PIN (daily login): <b><font color='#ff0000'>"
+                                + mpin + "</font></b></br>Report PIN: <b><font color='#ff0000'>"
+                                + reportPin + "</font></b></br>Device status: NOT ACTIVATED";
                         txtMessage.setText(Html.fromHtml(message));
 
                         txtYes.setOnClickListener(new View.OnClickListener() {

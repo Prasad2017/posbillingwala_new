@@ -9,6 +9,7 @@ import android.view.View;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.snackbar.Snackbar;
@@ -45,6 +46,13 @@ public class Register extends BaseActivity implements View.OnClickListener {
             Intent intent = new Intent(Intent.ACTION_DIAL);
             intent.setData(Uri.parse("tel:" + getString(R.string.support_phone_dial)));
             startActivity(intent);
+        });
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                finish();
+            }
         });
     }
 
@@ -93,7 +101,7 @@ public class Register extends BaseActivity implements View.OnClickListener {
 
                 AllApiResponse body = response.body();
                 if ("1".equalsIgnoreCase(body.getStatus())) {
-                    showSuccessAndReturn(body.getLicenceKey());
+                    showSuccessAndReturn(body);
                 } else {
                     String message = body.getMessage();
                     if (message == null || message.trim().isEmpty()) {
@@ -116,10 +124,20 @@ public class Register extends BaseActivity implements View.OnClickListener {
         });
     }
 
-    private void showSuccessAndReturn(String licenceKey) {
+    private void showSuccessAndReturn(AllApiResponse body) {
+        String licenceKey = body.getLicenceKey();
+        String mpin = body.getMpin();
+        if (mpin == null || mpin.trim().isEmpty()) {
+            mpin = "9082";
+        }
+        String reportPin = body.getReportPin();
+        if (reportPin == null || reportPin.trim().isEmpty()) {
+            reportPin = "9082";
+        }
+
         SweetAlertDialog successDialog = new SweetAlertDialog(this, SweetAlertDialog.SUCCESS_TYPE);
         successDialog.setTitleText(getString(R.string.trial_success_title));
-        successDialog.setContentText(getString(R.string.trial_success_message, licenceKey));
+        successDialog.setContentText(getString(R.string.trial_success_message, licenceKey, mpin, reportPin));
         successDialog.setConfirmText(getString(R.string.trial_success_button));
         successDialog.setCancelable(false);
         successDialog.setConfirmClickListener(sDialog -> {
@@ -133,9 +151,4 @@ public class Register extends BaseActivity implements View.OnClickListener {
         successDialog.show();
     }
 
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        finish();
-    }
 }

@@ -81,6 +81,10 @@ public interface ApiInterface {
     @GET("getCompanyList.php")
     Call<AllApiResponse> getCompanyList(@Query("userId") String userId);
 
+    @GET("getHomeSalesOverview.php")
+    Call<AllApiResponse> getHomeSalesOverview(@Query("userId") String userId,
+                                                @Query("period") String period);
+
     @GET("getCompanyPrinterSetting.php")
     Call<AllApiResponse> getCompanyPrinterSetting(@Query("userId") String userId);
 

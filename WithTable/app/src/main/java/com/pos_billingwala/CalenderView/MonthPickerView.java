@@ -15,6 +15,8 @@ import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import androidx.core.content.ContextCompat;
+
 import com.pos_billingwala.R;
 
 import java.text.DateFormatSymbols;
@@ -106,7 +108,7 @@ public class MonthPickerView extends FrameLayout {
 
         if (monthFontColorNormal == 0) {
 
-            monthFontColorNormal = getResources().getColor(R.color.fontBlackEnable);
+            monthFontColorNormal = ContextCompat.getColor(getContext(), R.color.fontBlackEnable);
 
            /* if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 monthFontColorNormal = android.R.attr.textColor;
@@ -125,24 +127,24 @@ public class MonthPickerView extends FrameLayout {
         }
 
         if (monthFontColorSelected == 0) {
-            monthFontColorSelected = getResources().getColor(R.color.fontWhiteEnable);
+            monthFontColorSelected = ContextCompat.getColor(getContext(), R.color.fontWhiteEnable);
         }
 
         if (monthFontColorDisabled == 0) {
-            monthFontColorDisabled = getResources().getColor(R.color.fontBlackDisable);
+            monthFontColorDisabled = ContextCompat.getColor(getContext(), R.color.fontBlackDisable);
 
         }
         if (_headerFontColorNormal == 0) {
-            _headerFontColorNormal = getResources().getColor(R.color.fontWhiteDisable);
+            _headerFontColorNormal = ContextCompat.getColor(getContext(), R.color.fontWhiteDisable);
         }
         if (_headerFontColorSelected == 0) {
-            _headerFontColorSelected = getResources().getColor(R.color.fontWhiteEnable);
+            _headerFontColorSelected = ContextCompat.getColor(getContext(), R.color.fontWhiteEnable);
         }
         if (headerTitleColor == 0) {
-            headerTitleColor = getResources().getColor(R.color.fontWhiteEnable);
+            headerTitleColor = ContextCompat.getColor(getContext(), R.color.fontWhiteEnable);
         }
         if (monthBgColor == 0) {
-            monthBgColor = getResources().getColor(R.color.fontWhiteEnable);
+            monthBgColor = ContextCompat.getColor(getContext(), R.color.fontWhiteEnable);
         }
 
         if (headerBgColor == 0) {

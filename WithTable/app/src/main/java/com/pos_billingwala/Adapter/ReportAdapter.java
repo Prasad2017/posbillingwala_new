@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Extra.ReportCursorHelper;
+import com.pos_billingwala.Extra.RowDividerUi;
 import com.pos_billingwala.Model.InvoiceResponse;
 import com.pos_billingwala.R;
 
@@ -112,6 +113,7 @@ public class ReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
             e.printStackTrace();
         }
 
+        RowDividerUi.bindLastItem(holder.itemView.findViewById(R.id.rowDivider), position, getItemCount());
     }
 
     @Override

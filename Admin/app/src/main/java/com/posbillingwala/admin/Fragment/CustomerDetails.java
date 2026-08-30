@@ -333,6 +333,11 @@ public class CustomerDetails extends Fragment implements View.OnClickListener {
                 bindInfoRow(binding.rowMobile, "Mobile Number", safe(customer.getContactNumber()));
                 bindInfoRow(binding.rowEmail, "Email", safe(customer.getEmail()));
                 bindInfoRow(binding.rowAddress, "Address", safe(customer.getAddress()));
+                String reportPin = customer.getReportPin();
+                if (reportPin == null || reportPin.trim().isEmpty()) {
+                    reportPin = "9082";
+                }
+                bindInfoRow(binding.rowReportPin, "Report PIN", reportPin);
                 String dealerLine = customer.getDealerName() != null && !customer.getDealerName().trim().isEmpty()
                         ? "  ·  Dealer: " + customer.getDealerName() : "";
                 binding.headerOwnerLine.setText("Owner: " + safe(customer.getName())

@@ -11,6 +11,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
@@ -73,6 +74,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         checkUpdateApp();
 
+        setupBackPressHandler();
     }
 
     @Override
@@ -171,29 +173,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     }
 
-    @Override
-    public void onBackPressed() {
-        // double press to exit
-        if (back.getVisibility() == View.GONE) {
-            if (doubleBackToExitPressedOnce) {
-                super.onBackPressed();
-                return;
-            }
-        } else {
-            super.onBackPressed();
-            return;
-        }
-        this.doubleBackToExitPressedOnce = true;
-        Toast.makeText(this, "Press back once more to exit", Toast.LENGTH_SHORT).show();
-
-        new Handler().postDelayed(new Runnable() {
-
+    private void setupBackPressHandler() {
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
-            public void run() {
-                doubleBackToExitPressedOnce = false;
-            }
-        }, 2000);
+            public void handleOnBackPressed() {
+                if (back.getVisibility() == View.GONE) {
+                    if (doubleBackToExitPressedOnce) {
+                        finish();
+                        return;
+                    }
+                    doubleBackToExitPressedOnce = true;
+                    Toast.makeText(MainActivity.this, "Press back once more to exit", Toast.LENGTH_SHORT).show();
+                    new Handler().postDelayed(() -> doubleBackToExitPressedOnce = false, 2000);
+                    return;
+                }
 
+                setEnabled(false);
+                getOnBackPressedDispatcher().onBackPressed();
+            }
+        });
     }
 
     public void lockUnlockDrawer(int lockMode) {

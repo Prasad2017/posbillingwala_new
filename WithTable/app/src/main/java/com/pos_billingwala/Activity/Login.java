@@ -21,10 +21,12 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 
@@ -129,6 +131,12 @@ public class Login extends BaseActivity implements View.OnClickListener {
 
         initAds();
 
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                finish();
+            }
+        });
     }
 
     private void setupPrivacyPolicyLinks() {
@@ -162,7 +170,7 @@ public class Login extends BaseActivity implements View.OnClickListener {
 
             @Override
             public void updateDrawState(@NonNull TextPaint textPaint) {
-                textPaint.setColor(getResources().getColor(R.color.colorPrimary));
+                textPaint.setColor(ContextCompat.getColor(Login.this, R.color.colorPrimary));
                 textPaint.setUnderlineText(true);
             }
         };
@@ -480,12 +488,6 @@ public class Login extends BaseActivity implements View.OnClickListener {
 
         });
 
-    }
-
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        finish();
     }
 
 }

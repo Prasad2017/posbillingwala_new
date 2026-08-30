@@ -30,13 +30,17 @@
                 android:id="@+id/comboFormTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:layout_toEndOf="@+id/backToCombo"
+                android:layout_centerVertical="true"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="15dp"
+                android:layout_toEndOf="@id/backToCombo"
+                android:ellipsize="end"
                 android:fontFamily="@font/poppinsmedium"
-                android:gravity="center"
+                android:maxLines="1"
                 android:text="@string/ui_add_combo"
                 android:textColor="@color/white"
-                android:textSize="17dp" />
+                android:textSize="16sp" />
+
         </RelativeLayout>
     </com.google.android.material.appbar.AppBarLayout>
 

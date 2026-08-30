@@ -38,19 +38,13 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.appcompat.widget.PopupMenu;
 import androidx.cardview.widget.CardView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
-import com.google.android.gms.ads.AdListener;
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.AdView;
-import com.google.android.gms.ads.LoadAdError;
-import com.google.android.gms.ads.MobileAds;
-import com.google.android.gms.ads.initialization.InitializationStatus;
-import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.MultiplePermissionsReport;
 import com.karumi.dexter.PermissionToken;
@@ -64,14 +58,18 @@ import com.pos_billingwala.Extra.AppExecutors;
 import com.pos_billingwala.Extra.BottomSheetUi;
 import com.pos_billingwala.Extra.BusinessHours;
 import com.pos_billingwala.Extra.Common;
+import com.pos_billingwala.Extra.LocalSalesAnalytics;
 import com.pos_billingwala.Extra.LicenceExpiredUi;
 import com.pos_billingwala.Extra.LicenseModules;
 import com.pos_billingwala.Extra.LicenseValidator;
 import com.pos_billingwala.Extra.DetectConnection;
 import com.pos_billingwala.Extra.ErrorLogQueue;
 import com.pos_billingwala.Extra.TabletUi;
+import com.pos_billingwala.Model.AllApiResponse;
 import com.pos_billingwala.Model.CompanyResponse;
+import com.pos_billingwala.Model.LocalSalesSnapshot;
 import com.pos_billingwala.Model.PrinterSettingResponse;
+import com.pos_billingwala.Retrofit.Api;
 import com.pos_billingwala.NetworkToOffline.CloudSyncNav;
 import com.pos_billingwala.NetworkToOffline.NetworkDataFetcher;
 import com.pos_billingwala.NetworkToOffline.Receiver.LicenceKeyReceiver;
@@ -85,6 +83,7 @@ import com.pos_billingwala.databinding.FragmentHomeBinding;
 import com.squareup.picasso.Picasso;
 
 import java.io.File;
+import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -95,9 +94,15 @@ import java.util.Locale;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
+import retrofit2.Call;
+import retrofit2.Response;
+
 
 @SuppressLint("SetTextI18n, Range, StaticFieldLeak, NonConstantResourceId")
 public class Home extends Fragment implements View.OnClickListener {
+
+    private static final int SALES_FILTER_TODAY = 0;
+    private static final int SALES_FILTER_MONTH = 1;
 
     public static Activity activity;
     public static View fastBilling, tableBilling, takeAwayBilling, messBilling;
@@ -119,8 +124,6 @@ public class Home extends Fragment implements View.OnClickListener {
                 }
             }
     );
-    //AdView
-    public AdView adView;
     View view;
     POSBillingWalaDatabase posBillingWalaDatabase;
     LicenceKeyReceiver licenceKeyReceiver;
@@ -137,10 +140,12 @@ public class Home extends Fragment implements View.OnClickListener {
     List<PrinterSettingResponse> printerSettingResponseList = new ArrayList<>();
     FragmentHomeBinding binding;
 
+    private int salesPeriodFilter = SALES_FILTER_TODAY;
+
     BluetoothAdapter bluetoothAdapter;
     private final Handler homeClockHandler = new Handler(Looper.getMainLooper());
     private final SimpleDateFormat homeDateTimeFormat =
-            new SimpleDateFormat("EEE, dd MMM yyyy  hh:mm:ss a", Locale.getDefault());
+            new SimpleDateFormat("EEE, dd MMM yyyy • hh:mm:ss a", Locale.getDefault());
     private int lastGreetingHour = -1;
     private Bitmap cachedStoreLogo;
     private String cachedStoreLogoRaw;
@@ -281,6 +286,9 @@ public class Home extends Fragment implements View.OnClickListener {
             public void onRefresh() {
                 if (DetectConnection.checkInternetConnection(activity)) {
                     LicenceKeyReceiver.getLicenceKeyData(activity, true);
+                    fetchHomeSalesFromCloud(true);
+                } else {
+                    getTotalCount();
                 }
                 binding.swipeRefreshLayout.setRefreshing(false);
             }
@@ -290,7 +298,6 @@ public class Home extends Fragment implements View.OnClickListener {
         applyTabletHomeLayout();
         binding.swipeRefreshLayout.setColorSchemeResources(R.color.colorPrimary);
         setValidationUI();
-        initAds();
 
         return view;
 
@@ -365,8 +372,11 @@ public class Home extends Fragment implements View.OnClickListener {
         binding.hideShowTodaySale.setOnClickListener(this);
         binding.fetchDataLayout.setOnClickListener(this);
         binding.synchronizeLayout.setOnClickListener(this);
+        binding.catalogViewAll.setOnClickListener(this);
+        binding.salesPeriodFilter.setOnClickListener(this);
         totalSalesCardView.setOnClickListener(this);
         todaySalesCardView.setOnClickListener(this);
+        applySalesPeriodLabels(salesPeriodFilter);
 
     }
 
@@ -440,72 +450,6 @@ public class Home extends Fragment implements View.OnClickListener {
         to.addView(tile);
     }
 
-    public void initAds() {
-        if (activity == null) {
-            return;
-        }
-        View adHost = view != null ? view.findViewById(R.id.ad_view) : null;
-        if (!DetectConnection.checkInternetConnection(activity)) {
-            if (adHost != null) {
-                adHost.setVisibility(View.GONE);
-            }
-            return;
-        }
-
-        // Initialize the Mobile Ads SDK.
-        MobileAds.initialize(activity, new OnInitializationCompleteListener() {
-            @Override
-            public void onInitializationComplete(@NonNull InitializationStatus initializationStatus) {
-                // on below line displaying a log that admob ads has been initialized.
-                Log.i("Admob", "Admob Initialized." + initializationStatus);
-            }
-        });
-
-        adView = view.findViewById(R.id.ad_view);
-        // Create an ad request.
-        AdRequest adRequest = new AdRequest.Builder().build();
-        // Start loading the ad in the background.
-        adView.loadAd(adRequest);
-        adView.setAdListener(new AdListener() {
-            @Override
-            public void onAdClicked() {
-                super.onAdClicked();
-            }
-
-            @Override
-            public void onAdClosed() {
-                super.onAdClosed();
-            }
-
-            @Override
-            public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
-                super.onAdFailedToLoad(loadAdError);
-                Log.e("loadAdError", String.valueOf(loadAdError));
-            }
-
-            @Override
-            public void onAdImpression() {
-                super.onAdImpression();
-            }
-
-            @Override
-            public void onAdLoaded() {
-                super.onAdLoaded();
-            }
-
-            @Override
-            public void onAdOpened() {
-                super.onAdOpened();
-            }
-
-            @Override
-            public void onAdSwipeGestureClicked() {
-                super.onAdSwipeGestureClicked();
-            }
-        });
-
-    }
-
     @Override
     public void onClick(View view) {
         int id = view.getId();
@@ -546,6 +490,10 @@ public class Home extends Fragment implements View.OnClickListener {
             ((MainActivity) activity).loadFragment(new ProductMaster(), true);
         } else if (id == R.id.comboCardView) {
             ((MainActivity) activity).loadFragment(new ComboMaster(), true);
+        } else if (id == R.id.catalogViewAll) {
+            ((MainActivity) activity).loadFragment(new ProductMaster(), true);
+        } else if (id == R.id.salesPeriodFilter) {
+            showSalesPeriodMenu();
         } else if (id == R.id.hideShowTotalSale) {
             if (binding.totalSale.getTransformationMethod().equals(PasswordTransformationMethod.getInstance())) {
                 binding.hideShowTotalSale.setImageResource(R.drawable.ic_hide);
@@ -685,10 +633,15 @@ public class Home extends Fragment implements View.OnClickListener {
         if (activity == null || posBillingWalaDatabase == null) {
             return;
         }
+        final int filter = salesPeriodFilter;
+        final String trendVsYesterday = getString(R.string.home_vs_yesterday);
+        final String trendVsLastMonth = getString(R.string.home_vs_last_month);
         AppExecutors.get().db().execute(() -> {
             Date c = Calendar.getInstance().getTime();
             SimpleDateFormat todayDF = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+            SimpleDateFormat monthDF = new SimpleDateFormat("yyyy-MM", Locale.getDefault());
             String todayDate = todayDF.format(c);
+            String monthPrefix = monthDF.format(c);
 
             String currencyName = MainActivity.currencyName;
             String totalSubcategory = "0";
@@ -696,6 +649,8 @@ public class Home extends Fragment implements View.OnClickListener {
             String totalCombo = "0";
             String totalSaleText = MainActivity.currencyName + " 0.00";
             String todaySaleText = MainActivity.currencyName + " 0.00";
+            String totalSalesTrendText = "";
+            String todaySalesTrendText = "";
 
             SQLiteDatabase database = null;
             Cursor cursor = null;
@@ -735,10 +690,17 @@ public class Home extends Fragment implements View.OnClickListener {
                 }
                 cursor.close();
 
-                cursor = database.rawQuery("SELECT SUM(totalAmount) as totalAmount FROM " + POSBillingWalaDatabase.INVOICE_TABLE
-                        + " WHERE " + POSBillingWalaDatabase.notRefundedClause(), null);
+                if (filter == SALES_FILTER_MONTH) {
+                    cursor = database.rawQuery("SELECT SUM(totalAmount) as totalAmount FROM " + POSBillingWalaDatabase.INVOICE_TABLE
+                            + " WHERE invoiceDate LIKE ? AND " + POSBillingWalaDatabase.notRefundedClause(),
+                            new String[]{monthPrefix + "%"});
+                } else {
+                    cursor = database.rawQuery("SELECT SUM(totalAmount) as totalAmount FROM " + POSBillingWalaDatabase.INVOICE_TABLE
+                            + " WHERE " + POSBillingWalaDatabase.notRefundedClause(), null);
+                }
                 if (cursor.moveToNext()) {
-                    totalSaleText = currencyName + " " + formatCompactAmount(cursor.getString(cursor.getColumnIndex("totalAmount")));
+                    float totalSaleAmount = parseAmountSafe(cursor.getString(cursor.getColumnIndex("totalAmount")));
+                    totalSaleText = formatDisplayAmount(currencyName, totalSaleAmount);
                 }
                 cursor.close();
 
@@ -746,7 +708,24 @@ public class Home extends Fragment implements View.OnClickListener {
                         + " WHERE invoiceDate LIKE ? AND " + POSBillingWalaDatabase.notRefundedClause(),
                         new String[]{"%" + todayDate + "%"});
                 if (cursor.moveToNext()) {
-                    todaySaleText = currencyName + " " + formatCompactAmount(cursor.getString(cursor.getColumnIndex("totalAmount")));
+                    float todaySaleAmount = parseAmountSafe(cursor.getString(cursor.getColumnIndex("totalAmount")));
+                    todaySaleText = formatDisplayAmount(currencyName, todaySaleAmount);
+                }
+                cursor.close();
+
+                LocalSalesAnalytics analytics = new LocalSalesAnalytics(activity);
+                LocalSalesSnapshot monthSnapshot = analytics.loadMonthlyOverview();
+                LocalSalesSnapshot todaySnapshot = analytics.loadTodayDashboard();
+                totalSalesTrendText = formatTrendLine(
+                        trendVsLastMonth,
+                        monthSnapshot.getTotalSalesTrend());
+                todaySalesTrendText = formatTrendLine(
+                        trendVsYesterday,
+                        todaySnapshot.getTotalSalesTrend());
+                if (filter == SALES_FILTER_TODAY) {
+                    totalSalesTrendText = formatTrendLine(
+                            trendVsYesterday,
+                            todaySnapshot.getTotalSalesTrend());
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -771,6 +750,8 @@ public class Home extends Fragment implements View.OnClickListener {
             final String finalCombo = totalCombo != null ? totalCombo : "0";
             final String finalTotalSale = totalSaleText;
             final String finalTodaySale = todaySaleText;
+            final String finalTotalSalesTrend = totalSalesTrendText;
+            final String finalTodaySalesTrend = todaySalesTrendText;
 
             AppExecutors.get().main(() -> {
                 if (!isAdded() || binding == null) {
@@ -783,26 +764,173 @@ public class Home extends Fragment implements View.OnClickListener {
                 binding.totalCombo.setText(finalCombo);
                 binding.totalSale.setText(finalTotalSale);
                 binding.todaySaleAmount.setText(finalTodaySale);
+                applyTrendText(binding.totalSalesTrend, finalTotalSalesTrend);
+                applyTrendText(binding.todaySalesTrend, finalTodaySalesTrend);
+                applySalesPeriodLabels(filter);
+                if (DetectConnection.checkInternetConnection(activity)) {
+                    fetchHomeSalesFromCloud(false);
+                }
             });
         });
     }
 
-    private String formatCompactAmount(String amountRaw) {
-        float totalAmt = 0f;
-        try {
-            if (amountRaw != null) {
-                totalAmt = Float.parseFloat(amountRaw);
+    private void fetchHomeSalesFromCloud(boolean forceRefresh) {
+        if (activity == null || !DetectConnection.checkInternetConnection(activity)) {
+            return;
+        }
+        if (MainActivity.userId == null || MainActivity.userId.trim().isEmpty()) {
+            return;
+        }
+        final int filter = salesPeriodFilter;
+        final String period = filter == SALES_FILTER_MONTH ? "month" : "today";
+        final String trendVsYesterday = getString(R.string.home_vs_yesterday);
+        final String trendVsLastMonth = getString(R.string.home_vs_last_month);
+        AppExecutors.get().io().execute(() -> {
+            try {
+                Call<AllApiResponse> call = Api.getClient(activity)
+                        .getHomeSalesOverview(MainActivity.userId, period);
+                Response<AllApiResponse> response = call.execute();
+                if (!response.isSuccessful() || response.body() == null) {
+                    return;
+                }
+                AllApiResponse body = response.body();
+                if (body.status == null
+                        || (!"true".equalsIgnoreCase(body.status) && !"1".equals(body.status))) {
+                    return;
+                }
+                final String currency = MainActivity.currencyName != null
+                        ? MainActivity.currencyName : "\u20B9";
+                final String primaryText = formatDisplayAmount(currency,
+                        parseAmountSafe(body.primarySales));
+                final String todayText = formatDisplayAmount(currency,
+                        parseAmountSafe(body.todaySales));
+                final String primaryTrend = formatTrendLine(
+                        filter == SALES_FILTER_MONTH ? trendVsLastMonth : trendVsYesterday,
+                        normalizeTrendRaw(body.primarySalesTrend));
+                final String todayTrend = formatTrendLine(
+                        trendVsYesterday,
+                        normalizeTrendRaw(body.todaySalesTrend));
+                final String subcategory = body.totalSubcategory != null ? body.totalSubcategory : null;
+                final String product = body.totalProduct != null ? body.totalProduct : null;
+                final String combo = body.totalCombo != null ? body.totalCombo : null;
+
+                AppExecutors.get().main(() -> {
+                    if (!isAdded() || binding == null) {
+                        return;
+                    }
+                    binding.totalSale.setText(primaryText);
+                    binding.todaySaleAmount.setText(todayText);
+                    applyTrendText(binding.totalSalesTrend, primaryTrend);
+                    applyTrendText(binding.todaySalesTrend, todayTrend);
+                    if (subcategory != null) {
+                        binding.totalSubcategory.setText(subcategory);
+                    }
+                    if (product != null) {
+                        binding.totalProduct.setText(product);
+                    }
+                    if (combo != null) {
+                        binding.totalCombo.setText(combo);
+                    }
+                    applySalesPeriodLabels(filter);
+                });
+            } catch (Exception e) {
+                Log.e("Home", "fetchHomeSalesFromCloud", e);
+                if (forceRefresh) {
+                    AppExecutors.get().main(() -> getTotalCount());
+                }
             }
+        });
+    }
+
+    private static String normalizeTrendRaw(String trendRaw) {
+        if (trendRaw == null || trendRaw.trim().isEmpty()) {
+            return "0%";
+        }
+        String value = trendRaw.trim();
+        if (value.endsWith("%")) {
+            return value.startsWith("+") || value.startsWith("-") ? value : "+" + value;
+        }
+        try {
+            float pct = Float.parseFloat(value);
+            return String.format(Locale.US, "%+.0f%%", pct);
         } catch (Exception ignored) {
+            return value.contains("%") ? value : value + "%";
         }
-        if (totalAmt >= 10000000) {
-            return String.format(Locale.US, "%.2f", (totalAmt / 10000000)) + "Cr";
-        } else if (totalAmt >= 100000) {
-            return String.format(Locale.US, "%.2f", (totalAmt / 100000)) + "Lac";
-        } else if (totalAmt >= 1000) {
-            return String.format(Locale.US, "%.2f", (totalAmt / 1000)) + "K";
+    }
+
+    private void applySalesPeriodLabels(int filter) {
+        if (binding == null) {
+            return;
         }
-        return String.format(Locale.US, "%.2f", totalAmt);
+        if (binding.totalSalesLabel != null) {
+            binding.totalSalesLabel.setText(getString(filter == SALES_FILTER_MONTH
+                    ? R.string.home_monthly_sales_label
+                    : R.string.home_total_sales_label));
+        }
+        if (binding.todaySalesLabel != null) {
+            binding.todaySalesLabel.setText(getString(R.string.home_today_sales_label));
+        }
+    }
+
+    private static float parseAmountSafe(String raw) {
+        try {
+            if (raw == null || raw.trim().isEmpty()) {
+                return 0f;
+            }
+            return Float.parseFloat(raw.trim());
+        } catch (Exception ignored) {
+            return 0f;
+        }
+    }
+
+    private String formatDisplayAmount(String currency, float amount) {
+        NumberFormat formatter = NumberFormat.getNumberInstance(new Locale("en", "IN"));
+        formatter.setMinimumFractionDigits(2);
+        formatter.setMaximumFractionDigits(2);
+        String prefix = currency != null && !currency.trim().isEmpty() ? currency.trim() : "\u20B9";
+        return prefix + " " + formatter.format(amount);
+    }
+
+    private String formatTrendLine(String template, String trendRaw) {
+        if (trendRaw == null || trendRaw.trim().isEmpty()) {
+            trendRaw = "0%";
+        }
+        String arrow = trendRaw.startsWith("-") ? "\u2193" : "\u2191";
+        String value = trendRaw.startsWith("+") || trendRaw.startsWith("-")
+                ? trendRaw.substring(1) : trendRaw;
+        return String.format(Locale.getDefault(), template, arrow, value);
+    }
+
+    private void applyTrendText(android.widget.TextView view, String text) {
+        if (view == null || activity == null) {
+            return;
+        }
+        view.setText(text);
+        boolean down = text.contains("\u2193");
+        view.setTextColor(ContextCompat.getColor(activity,
+                down ? R.color.statusExpired : R.color.statusActive));
+    }
+
+    private void showSalesPeriodMenu() {
+        if (binding == null || activity == null) {
+            return;
+        }
+        PopupMenu menu = new PopupMenu(activity, binding.salesPeriodFilter);
+        menu.getMenu().add(0, SALES_FILTER_TODAY, 0, R.string.home_filter_today);
+        menu.getMenu().add(0, SALES_FILTER_MONTH, 1, R.string.home_filter_this_month);
+        menu.setOnMenuItemClickListener(item -> {
+            int selected = item.getItemId();
+            if (selected != salesPeriodFilter) {
+                salesPeriodFilter = selected;
+                binding.salesPeriodFilter.setText(getString(selected == SALES_FILTER_MONTH
+                        ? R.string.home_filter_this_month
+                        : R.string.home_filter_today));
+                applySalesPeriodLabels(selected);
+                getTotalCount();
+            }
+            return true;
+        });
+        menu.show();
     }
 
     private boolean permissionsRequestedThisSession;
@@ -941,18 +1069,12 @@ public class Home extends Fragment implements View.OnClickListener {
         super.onPause();
         stopHomeClock();
         AppExecutors.get().removeMainCallbacks(deferredPrinterConnectRunnable);
-        if (adView != null) {
-            adView.pause();
-        }
         unregisterConnectivityReceivers();
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        if (adView != null) {
-            adView.resume();
-        }
         registerConnectivityReceivers();
         updateHomeHeader();
         startHomeClock();
@@ -1005,9 +1127,7 @@ public class Home extends Fragment implements View.OnClickListener {
             } else {
                 binding.homeBusinessHours.setVisibility(View.VISIBLE);
                 binding.homeBusinessHours.setText(hoursLine);
-                boolean open = BusinessHours.isOpenNow(activity);
-                binding.homeBusinessHours.setTextColor(ContextCompat.getColor(activity,
-                        open ? R.color.green_700 : R.color.red_900));
+                binding.homeBusinessHours.setTextColor(ContextCompat.getColor(activity, R.color.white));
             }
         }
 
@@ -1020,15 +1140,17 @@ public class Home extends Fragment implements View.OnClickListener {
 
     private String getGreeting() {
         int hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
+        String greeting;
         if (hour >= 5 && hour < 12) {
-            return getString(R.string.good_morning);
+            greeting = getString(R.string.good_morning);
         } else if (hour >= 12 && hour < 17) {
-            return getString(R.string.good_afternoon);
+            greeting = getString(R.string.good_afternoon);
         } else if (hour >= 17 && hour < 21) {
-            return getString(R.string.good_evening);
+            greeting = getString(R.string.good_evening);
         } else {
-            return getString(R.string.good_night);
+            greeting = getString(R.string.good_night);
         }
+        return greeting + " \uD83D\uDC4B";
     }
 
     private synchronized List<CompanyResponse> getCachedCompanyDetails() {
@@ -1112,9 +1234,6 @@ public class Home extends Fragment implements View.OnClickListener {
         stopHomeClock();
         AppExecutors.get().removeMainCallbacks(deferredPrinterConnectRunnable);
         super.onDestroy();
-        if (adView != null) {
-            adView.destroy();
-        }
     }
 
     public void getLowInventoryList() {

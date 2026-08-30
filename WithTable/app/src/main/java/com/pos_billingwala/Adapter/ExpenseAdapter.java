@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.pos_billingwala.Extra.RowDividerUi;
 import com.pos_billingwala.Model.ExpenseResponse;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.ExpenseListBinding;
@@ -41,6 +42,7 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.MyViewHo
         holder.binding.expensesName.setText(expenseResponse.getExpenseName());
         holder.binding.expensesAmount.setText(context.getString(R.string.inr) + " " + expenseResponse.getExpenseAmount());
 
+        RowDividerUi.bindLastItem(holder.binding.rowDivider, position, getItemCount());
     }
 
     @Override

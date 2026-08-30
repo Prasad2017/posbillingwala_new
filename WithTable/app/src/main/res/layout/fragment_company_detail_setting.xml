@@ -32,14 +32,33 @@
                 android:src="@drawable/ic_back"
                 app:tint="@color/white" />
 
-            <androidx.appcompat.widget.AppCompatTextView
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:fontFamily="@font/poppinsmedium"
-                android:text="@string/setting_shop_details"
-                android:textColor="@color/white"
-                android:textSize="@dimen/text_title" />
+                android:layout_centerVertical="true"
+                android:layout_marginStart="@dimen/spacing_sm"
+                android:layout_marginEnd="@dimen/spacing_sm"
+                android:layout_toEndOf="@id/backToSetting"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/toolbarTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/poppinsbold"
+                    android:text="@string/setting_shop_details"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/text_title" />
+
+                <TextView
+                    android:id="@+id/toolbarSubtitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/poppinsregular"
+                    android:text="@string/shop_details_subtitle"
+                    android:textColor="#CCFFFFFF"
+                    android:textSize="12sp" />
+            </LinearLayout>
         </RelativeLayout>
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -693,15 +712,10 @@
         android:elevation="8dp"
         android:padding="@dimen/spacing_lg">
 
-        <TextView
+        <include
             android:id="@+id/saveDetails"
+            layout="@layout/include_action_button"
             android:layout_width="match_parent"
-            android:layout_height="@dimen/button_height"
-            android:background="@drawable/bg_button_primary"
-            android:fontFamily="@font/poppinsmedium"
-            android:gravity="center"
-            android:text="@string/ui_save_details"
-            android:textColor="@color/white"
-            android:textSize="@dimen/text_button" />
+            android:layout_height="@dimen/button_height" />
     </LinearLayout>
 </LinearLayout>

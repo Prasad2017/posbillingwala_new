@@ -14,6 +14,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.textfield.TextInputEditText;
 import com.posbillingwala.owner.Activity.MainActivity;
 import com.posbillingwala.owner.Extra.BottomSheetUi;
+import com.posbillingwala.owner.Extra.RowDividerUi;
 import com.posbillingwala.owner.Fragment.AddCustomerSubcategory;
 import com.posbillingwala.owner.Model.AllApiResponse;
 import com.posbillingwala.owner.Model.ProductSubcategoryResponse;
@@ -52,6 +53,8 @@ public class SubcategoryAdapter extends RecyclerView.Adapter<SubcategoryAdapter.
         holder.binding.subcategoryName.setText(item.getSubcategoryName());
         holder.binding.subcategoryEdit.setOnClickListener(v -> updateSubcategoryDialog(item));
         holder.binding.subcategoryRemove.setOnClickListener(v -> deleteSubcategoryDialog(item.getSubcategoryId()));
+
+        RowDividerUi.bindLastItem(holder.binding.rowDivider, position, getItemCount());
     }
 
     private void updateSubcategoryDialog(ProductSubcategoryResponse item) {

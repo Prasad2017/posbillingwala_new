@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.posbillingwala.owner.Activity.MainActivity;
 import com.posbillingwala.owner.Extra.ReportUiHelper;
+import com.posbillingwala.owner.Extra.RowDividerUi;
 import com.posbillingwala.owner.Fragment.UserProfile;
 import com.posbillingwala.owner.Model.AllApiResponse;
 import com.posbillingwala.owner.Model.LicenseResponse;
@@ -82,8 +83,7 @@ public class LicenseAdapter extends RecyclerView.Adapter<LicenseAdapter.MyViewHo
                 ? registration.substring(0, 10) : (registration != null ? registration : "-"));
         holder.binding.expiryDate.setText(licenseResponse.getExpiryDate());
         holder.binding.amount.setText(ReportUiHelper.money(licenseResponse.getAmount()));
-        holder.binding.licenseDivider.setVisibility(
-                position == licenseResponseList.size() - 1 ? View.GONE : View.VISIBLE);
+        RowDividerUi.bindLastItem(holder.binding.licenseDivider, position, getItemCount());
 
         holder.binding.totalSaleData.setOnCheckedChangeListener(null);
         holder.binding.todaySaleData.setOnCheckedChangeListener(null);

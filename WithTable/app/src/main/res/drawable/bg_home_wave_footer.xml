@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="360dp"
+    android:height="56dp"
+    android:viewportWidth="360"
+    android:viewportHeight="56">
+    <!-- Reference wave: low left, peaks ~2/3 width, soft dip at right -->
+    <path
+        android:fillColor="@color/colorBackground"
+        android:pathData="M0,30 C72,30 144,28 200,12 C228,6 252,8 276,14 C300,20 324,24 360,22 L360,56 L0,56 Z" />
+</vector>

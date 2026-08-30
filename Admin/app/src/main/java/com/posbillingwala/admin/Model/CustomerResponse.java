@@ -28,6 +28,9 @@ public class CustomerResponse {
     @SerializedName("shopName")
     @Expose
     private String shopName;
+    @SerializedName("reportPin")
+    @Expose
+    private String reportPin;
     @SerializedName("dealerId")
     @Expose
     private String dealerId;
@@ -96,6 +99,14 @@ public class CustomerResponse {
 
     public void setShopName(String shopName) {
         this.shopName = shopName;
+    }
+
+    public String getReportPin() {
+        return reportPin;
+    }
+
+    public void setReportPin(String reportPin) {
+        this.reportPin = reportPin;
     }
 
     public String getDealerId() {

@@ -32,19 +32,34 @@
                 android:src="@drawable/ic_back"
                 app:tint="@color/white" />
 
-            <androidx.appcompat.widget.AppCompatTextView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
+                android:layout_marginStart="@dimen/spacing_sm"
+                android:layout_marginEnd="@dimen/spacing_sm"
                 android:layout_toStartOf="@id/invoicePreview"
                 android:layout_toEndOf="@id/backToSetting"
-                android:ellipsize="end"
-                android:fontFamily="@font/poppinsmedium"
-                android:gravity="center"
-                android:maxLines="1"
-                android:text="@string/setting_printer_details"
-                android:textColor="@color/white"
-                android:textSize="@dimen/text_title" />
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/toolbarTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/poppinsbold"
+                    android:text="@string/setting_printer_details"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/text_title" />
+
+                <TextView
+                    android:id="@+id/toolbarSubtitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/poppinsregular"
+                    android:text="@string/ui_printer_details_subtitle"
+                    android:textColor="#CCFFFFFF"
+                    android:textSize="12sp" />
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/invoicePreview"
@@ -449,15 +464,10 @@
         android:elevation="8dp"
         android:padding="@dimen/spacing_lg">
 
-        <TextView
+        <include
             android:id="@+id/saveSetting"
+            layout="@layout/include_action_button"
             android:layout_width="match_parent"
-            android:layout_height="@dimen/button_height"
-            android:background="@drawable/bg_button_primary"
-            android:fontFamily="@font/poppinsmedium"
-            android:gravity="center"
-            android:text="@string/ui_save_setting"
-            android:textColor="@color/white"
-            android:textSize="@dimen/text_button" />
+            android:layout_height="@dimen/button_height" />
     </LinearLayout>
 </LinearLayout>

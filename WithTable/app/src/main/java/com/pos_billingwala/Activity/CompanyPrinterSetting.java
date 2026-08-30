@@ -10,15 +10,21 @@ import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.CompoundButton;
+import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.activity.OnBackPressedCallback;
+import androidx.annotation.NonNull;
+import androidx.appcompat.widget.SwitchCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.app.ActivityCompat;
 
 import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.ActionButtonUi;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.PrinterSettingResponse;
 import com.pos_billingwala.Print.BluetoothPrinterChannel;
@@ -46,6 +52,7 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
     boolean billSizeChangedByUser;
     boolean kotSizeChangedByUser;
     boolean printerSettingsLoaded;
+    boolean suppressSwitchListener;
     POSBillingWalaDatabase posBillingWalaDatabase;
     List<PrinterSettingResponse> printerSettingResponseList = new ArrayList<>();
     List<CompanyResponse> companyResponseList = new ArrayList<>();
@@ -117,58 +124,33 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
             }
         });
 
-        binding.logoSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    logoUse = "on";
-                } else {
-                    logoUse = "off";
-                }
+        binding.logoSwitch.setOnCheckedChangeListener((button, isChecked) -> {
+            if (!suppressSwitchListener) {
+                logoUse = isChecked ? "on" : "off";
             }
         });
 
-        binding.paymentSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    paymentUse = "on";
-                } else {
-                    paymentUse = "off";
-                }
+        binding.paymentSwitch.setOnCheckedChangeListener((button, isChecked) -> {
+            if (!suppressSwitchListener) {
+                paymentUse = isChecked ? "on" : "off";
             }
         });
 
-        binding.customerSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    customerUse = "on";
-                } else {
-                    customerUse = "off";
-                }
+        binding.customerSwitch.setOnCheckedChangeListener((button, isChecked) -> {
+            if (!suppressSwitchListener) {
+                customerUse = isChecked ? "on" : "off";
             }
         });
 
-        binding.productQuantityUpdate.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
-                if (isChecked) {
-                    productQuantityUpdate = "on";
-                } else {
-                    productQuantityUpdate = "off";
-                }
+        binding.productQuantityUpdate.setOnCheckedChangeListener((button, isChecked) -> {
+            if (!suppressSwitchListener) {
+                productQuantityUpdate = isChecked ? "on" : "off";
             }
         });
 
-        binding.duplicateBillSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
-                if (isChecked) {
-                    duplicateBillUse = "on";
-                } else {
-                    duplicateBillUse = "off";
-                }
+        binding.duplicateBillSwitch.setOnCheckedChangeListener((button, isChecked) -> {
+            if (!suppressSwitchListener) {
+                duplicateBillUse = isChecked ? "on" : "off";
             }
         });
 
@@ -181,9 +163,17 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
         binding.connectKOTPrinter.setOnClickListener(this);
         binding.invoicePreview.setOnClickListener(this);
         binding.backToSetting.setOnClickListener(this);
-        binding.saveSetting.setOnClickListener(this);
+        binding.saveSetting.getRoot().setOnClickListener(this);
+        ActionButtonUi.bind(binding.saveSetting.getRoot(), R.drawable.ic_save, R.string.ui_save_setting);
 
         applyTabletPrinterForm();
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                finish();
+            }
+        });
     }
 
     private void applyTabletPrinterForm() {
@@ -222,7 +212,7 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
 
     public void addCompanyPrinterSetting() {
 
-        if (binding.saveSetting.getText().toString().equalsIgnoreCase("Save Setting")) {
+        if (ActionButtonUi.getLabel(binding.saveSetting.getRoot()).toString().equalsIgnoreCase(getString(R.string.ui_save_setting))) {
             posBillingWalaDatabase.addCompanyPrinterSetting(printerName, KOTPrinterName, binding.invoicePrefix.getText().toString(), binding.invoiceTitle.getText().toString(), logoUse, paymentUse, customerUse, productQuantityUpdate, duplicateBillUse, binding.invoiceTermsCondition.getText().toString(), bluetoothAddress, bluetoothKOTAddress, binding.printerFeedLines.getText().toString().isEmpty() ? "1" : binding.printerFeedLines.getText().toString(), binding.KotPrinterFeedLines.getText().toString().isEmpty() ? "1" : binding.KotPrinterFeedLines.getText().toString(), 0);
             Toast.makeText(activity, getString(R.string.toast_company_setting_saved), Toast.LENGTH_SHORT).show();
         } else {
@@ -245,13 +235,6 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
             getPrinterSettingDetails();
         }
     }
-
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        finish();
-    }
-
 
     public void getCompanyDetails() {
         companyResponseList = posBillingWalaDatabase.getCompanyDetails();
@@ -298,27 +281,25 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
             binding.invoiceTitle.setText(printerSettingResponse.getInvoiceTitle());
             binding.invoiceTermsCondition.setText(printerSettingResponse.getInvoiceTermsCondition());
 
-            binding.saveSetting.setText("Update Setting");
+            ActionButtonUi.bind(binding.saveSetting.getRoot(), R.drawable.ic_save, R.string.ui_update_settings);
         } else {
             binding.invoicePrefix.setText("POS");
             binding.printerFeedLines.setText("1");
             binding.KotPrinterFeedLines.setText("1");
-            binding.saveSetting.setText("Save Setting");
+            ActionButtonUi.bind(binding.saveSetting.getRoot(), R.drawable.ic_save, R.string.ui_save_setting);
         }
 
-        binding.logoSwitch.setChecked(logoUse.equalsIgnoreCase("on"));
-        binding.paymentSwitch.setChecked(paymentUse.equalsIgnoreCase("on"));
-        binding.customerSwitch.setChecked(customerUse.equalsIgnoreCase("on"));
-        binding.productQuantityUpdate.setChecked(productQuantityUpdate.equalsIgnoreCase("on"));
-        binding.duplicateBillSwitch.setChecked(duplicateBillUse.equalsIgnoreCase("on"));
+        setSwitchCheckedSilently(binding.logoSwitch, logoUse.equalsIgnoreCase("on"));
+        setSwitchCheckedSilently(binding.paymentSwitch, paymentUse.equalsIgnoreCase("on"));
+        setSwitchCheckedSilently(binding.customerSwitch, customerUse.equalsIgnoreCase("on"));
+        setSwitchCheckedSilently(binding.productQuantityUpdate, productQuantityUpdate.equalsIgnoreCase("on"));
+        setSwitchCheckedSilently(binding.duplicateBillSwitch, duplicateBillUse.equalsIgnoreCase("on"));
 
         printerList = activity.getResources().getStringArray(R.array.printer_list);
         loadingPrinterSpinners = true;
         try {
-            ArrayAdapter invoiceAdapter = new ArrayAdapter(activity, android.R.layout.simple_spinner_item, printerList);
-            invoiceAdapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
-            ArrayAdapter kotAdapter = new ArrayAdapter(activity, android.R.layout.simple_spinner_item, printerList);
-            kotAdapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
+            ArrayAdapter<String> invoiceAdapter = createPrinterSpinnerAdapter();
+            ArrayAdapter<String> kotAdapter = createPrinterSpinnerAdapter();
             binding.printerSpinner.setAdapter(invoiceAdapter);
             binding.KOTPrinterSpinner.setAdapter(kotAdapter);
             if (printerName != null) {
@@ -339,6 +320,46 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
             loadingPrinterSpinners = false;
         }
 
+    }
+
+    private void setSwitchCheckedSilently(SwitchCompat switchView, boolean checked) {
+        suppressSwitchListener = true;
+        switchView.setChecked(checked);
+        suppressSwitchListener = false;
+    }
+
+    private ArrayAdapter<String> createPrinterSpinnerAdapter() {
+        return new ArrayAdapter<String>(activity, R.layout.item_printer_spinner, printerList) {
+            @NonNull
+            @Override
+            public View getView(int position, View convertView, @NonNull ViewGroup parent) {
+                View row = super.getView(position, convertView, parent);
+                styleSpinnerSelectedView(row, getItem(position));
+                return row;
+            }
+
+            @Override
+            public View getDropDownView(int position, View convertView, @NonNull ViewGroup parent) {
+                View row = getLayoutInflater().inflate(R.layout.item_printer_spinner_dropdown, parent, false);
+                TextView label = row.findViewById(android.R.id.text1);
+                if (label != null) {
+                    label.setText(getItem(position));
+                }
+                return row;
+            }
+        };
+    }
+
+    private void styleSpinnerSelectedView(View row, String value) {
+        if (row == null) {
+            return;
+        }
+        TextView label = row.findViewById(android.R.id.text1);
+        if (label != null) {
+            label.setText(value);
+            label.setTextColor(ContextCompat.getColor(activity, R.color.colorTextPrimary));
+            label.setTypeface(label.getTypeface(), android.graphics.Typeface.BOLD);
+        }
     }
 
     @Override

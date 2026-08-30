@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Fragment.AddMemberPayment;
+import com.pos_billingwala.Extra.RowDividerUi;
 import com.pos_billingwala.Fragment.MessMemberList;
 import com.pos_billingwala.Fragment.UpdateMessMember;
 import com.pos_billingwala.Fragment.UpdateMessPayment;
@@ -118,6 +119,7 @@ public class MemberAdapter extends RecyclerView.Adapter<MemberAdapter.MyViewHold
             }
         });
 
+        RowDividerUi.bindLastItem(holder.binding.rowDivider, position, getItemCount());
     }
 
     public void deleteMember(MemberResponse memberResponse) {

@@ -6,6 +6,8 @@
 include_once('config.php');
 require_once __DIR__ . '/auth_guard.php';
 require_once __DIR__ . '/../db_prepared.php';
+require_once __DIR__ . '/../licence_expiry.php';
+require_once __DIR__ . '/../user_identity.php';
 
 header('Content-Type: application/json; charset=utf-8');
 $response = array('status' => '0', 'message' => 'update failed');
@@ -53,18 +55,24 @@ if ($existing === null) {
 }
 
 if ($dealerAadhaarNumber !== '') {
-    $dup = db_stmt_scalar_int(
-        $con,
-        "SELECT COUNT(*) AS c FROM `users` WHERE aadhar_number=? AND role_id='2' AND id<>?",
-        'si',
-        $dealerAadhaarNumber,
-        $uid
-    );
-    if ($dup > 0) {
+    if (user_dealer_aadhar_taken($con, $dealerAadhaarNumber, $uid)) {
         $response['message'] = 'Aadhaar already registered for another dealer.';
         echo json_encode($response);
         exit;
     }
+}
+
+$dealerMobileDigits = licence_normalize_contact($dealerMobileNumber);
+if (strlen($dealerMobileDigits) < 10) {
+    $response['message'] = 'Please enter a valid 10-digit mobile number.';
+    echo json_encode($response);
+    exit;
+}
+
+if (user_dealer_mobile_taken($con, $dealerMobileDigits, $uid)) {
+    $response['message'] = 'This mobile number is already registered for another dealer.';
+    echo json_encode($response);
+    exit;
 }
 
 $ok = db_stmt_execute(
@@ -74,7 +82,7 @@ $ok = db_stmt_execute(
      WHERE `id`=? AND `role_id`='2'",
     'sssssi',
     $dealerName,
-    $dealerMobileNumber,
+    $dealerMobileDigits,
     $dealerAddress,
     $dealerEmail,
     $dealerAadhaarNumber,

@@ -5,190 +5,329 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white"
+    android:background="@color/colorBackground"
+    android:fillViewport="true"
     android:fitsSystemWindows="true"
     tools:context=".Activity.LoginMPin">
 
-    <LinearLayout
-        android:id="@+id/loginLayout"
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
-
-        <ImageView
-            android:id="@+id/backToPage"
-            android:layout_width="55dp"
-            android:layout_height="55dp"
-            android:layout_gravity="center|start"
-            android:layout_marginStart="20dp"
-            android:layout_marginTop="30dp"
-            android:layout_marginEnd="20dp"
-            android:background="@drawable/circular_border"
-            android:padding="15dp"
-            android:src="@drawable/ic_back"
-            app:tint="@color/white" />
+        android:layout_height="wrap_content">
 
         <ImageView
             android:layout_width="match_parent"
-            android:layout_height="160dp"
-            android:layout_gravity="center"
-            android:layout_marginTop="24dp"
-            android:adjustViewBounds="true"
-            android:contentDescription="@string/app_name"
-            android:paddingStart="24dp"
-            android:paddingEnd="24dp"
-            android:scaleType="fitCenter"
-            android:src="@drawable/app_logo" />
-
-        <androidx.appcompat.widget.AppCompatTextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginTop="24dp"
-            android:fontFamily="@font/poppinsblack"
-            android:gravity="center"
-            android:paddingStart="15dp"
-            android:paddingEnd="15dp"
-            android:text="@string/sign_in_msg"
-            android:textColor="@color/black"
-            android:textSize="25dp" />
-
-        <androidx.appcompat.widget.AppCompatTextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginStart="20dp"
-            android:layout_marginTop="25dp"
-            android:layout_marginEnd="20dp"
-            android:fontFamily="@font/poppinsregular"
-            android:gravity="center"
-            android:paddingStart="15dp"
-            android:paddingEnd="15dp"
-            android:text="@string/mpin_msg"
-            android:textColor="#9aa1a5"
-            android:textSize="14dp" />
+            android:layout_height="220dp"
+            android:layout_gravity="bottom"
+            android:contentDescription="@null"
+            android:scaleType="fitXY"
+            android:src="@drawable/bg_splash_wave" />
 
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:id="@+id/loginLayout"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginStart="20dp"
-            android:layout_marginTop="30dp"
-            android:layout_marginEnd="20dp"
-            android:gravity="center"
-            android:orientation="horizontal"
-            android:padding="5dp">
+            android:orientation="vertical"
+            android:paddingBottom="@dimen/spacing_xl">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/otp1"
-                android:layout_width="65dp"
-                android:layout_height="65dp"
-                android:layout_gravity="center"
-                android:layout_weight="1"
-                android:background="@drawable/unfill_button_rounded_border"
-                android:digits="0123456789"
-                android:fontFamily="@font/poppinsmedium"
-                android:gravity="center"
-                android:inputType="numberDecimal"
-                android:maxLength="1"
-                android:textColor="@color/white"
-                android:textCursorDrawable="@drawable/cursor_with_padding"
-                android:textSize="25sp" />
+            <ImageView
+                android:id="@+id/backToPage"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="@dimen/spacing_lg"
+                android:layout_marginTop="@dimen/spacing_lg"
+                android:background="@drawable/circular_border"
+                android:contentDescription="@string/ui_back"
+                android:padding="12dp"
+                android:src="@drawable/ic_back"
+                app:tint="@color/white" />
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/otp2"
-                android:layout_width="65dp"
-                android:layout_height="65dp"
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="130dp"
                 android:layout_gravity="center"
-                android:layout_marginStart="15dp"
-                android:layout_weight="1"
-                android:background="@drawable/unfill_button_rounded_border"
-                android:digits="0123456789"
-                android:fontFamily="@font/poppinsmedium"
-                android:gravity="center"
-                android:inputType="numberDecimal"
-                android:maxLength="1"
-                android:textColor="@color/white"
-                android:textCursorDrawable="@drawable/cursor_with_padding"
-                android:textSize="25sp" />
+                android:layout_marginTop="@dimen/spacing_md"
+                android:adjustViewBounds="true"
+                android:contentDescription="@string/app_name"
+                android:paddingStart="@dimen/spacing_xl"
+                android:paddingEnd="@dimen/spacing_xl"
+                android:scaleType="fitCenter"
+                android:src="@drawable/app_logo" />
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/otp3"
-                android:layout_width="65dp"
-                android:layout_height="65dp"
-                android:layout_gravity="center"
-                android:layout_marginStart="15dp"
-                android:layout_weight="1"
-                android:background="@drawable/unfill_button_rounded_border"
-                android:digits="0123456789"
-                android:fontFamily="@font/poppinsmedium"
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/spacing_xl"
+                android:layout_marginTop="@dimen/spacing_lg"
+                android:layout_marginEnd="@dimen/spacing_xl"
+                android:fontFamily="@font/poppinsblack"
                 android:gravity="center"
-                android:inputType="numberDecimal"
-                android:maxLength="1"
-                android:textColor="@color/white"
-                android:textCursorDrawable="@drawable/cursor_with_padding"
-                android:textSize="25sp" />
+                android:text="@string/welcome_back"
+                android:textColor="@color/colorTextPrimary"
+                android:textSize="26sp" />
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/otp4"
-                android:layout_width="65dp"
-                android:layout_height="65dp"
-                android:layout_gravity="center"
-                android:layout_marginStart="15dp"
-                android:layout_weight="1"
-                android:background="@drawable/unfill_button_rounded_border"
-                android:digits="0123456789"
-                android:fontFamily="@font/poppinsmedium"
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/loginSubtitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/spacing_xl"
+                android:layout_marginTop="@dimen/spacing_sm"
+                android:layout_marginEnd="@dimen/spacing_xl"
+                android:fontFamily="@font/poppinsregular"
                 android:gravity="center"
-                android:inputType="numberDecimal"
-                android:maxLength="1"
-                android:textColor="@color/white"
-                android:textCursorDrawable="@drawable/cursor_with_padding"
-                android:textSize="25sp" />
+                android:text="@string/login_subtitle"
+                android:textColor="@color/colorTextSecondary"
+                android:textSize="14sp" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/spacing_lg"
+                android:layout_marginTop="@dimen/spacing_xl"
+                android:layout_marginEnd="@dimen/spacing_lg"
+                app:cardBackgroundColor="@color/colorSurface"
+                app:cardCornerRadius="@dimen/radius_lg"
+                app:cardElevation="@dimen/card_elevation_raised"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical"
+                    android:padding="@dimen/spacing_xl">
+
+                    <FrameLayout
+                        android:layout_width="72dp"
+                        android:layout_height="72dp">
+
+                        <ImageView
+                            android:layout_width="72dp"
+                            android:layout_height="72dp"
+                            android:contentDescription="@null"
+                            android:src="@drawable/bg_mpin_icon_circle" />
+
+                        <ImageView
+                            android:layout_width="36dp"
+                            android:layout_height="36dp"
+                            android:layout_gravity="center"
+                            android:contentDescription="@null"
+                            android:src="@drawable/ic_shield" />
+
+                    </FrameLayout>
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_lg"
+                        android:fontFamily="@font/poppinsbold"
+                        android:gravity="center"
+                        android:text="@string/mpin_card_title"
+                        android:textColor="@color/colorTextPrimary"
+                        android:textSize="18sp" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_sm"
+                        android:fontFamily="@font/poppinsregular"
+                        android:gravity="center"
+                        android:lineSpacingExtra="2dp"
+                        android:text="@string/mpin_msg"
+                        android:textColor="@color/colorTextSecondary"
+                        android:textSize="13sp" />
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_xl"
+                        android:gravity="center"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/otp1"
+                            android:layout_width="58dp"
+                            android:layout_height="58dp"
+                            android:background="@drawable/bg_mpin_pin_box_empty"
+                            android:digits="0123456789"
+                            android:fontFamily="@font/poppinsbold"
+                            android:gravity="center"
+                            android:importantForAutofill="no"
+                            android:inputType="numberPassword"
+                            android:maxLength="1"
+                            android:textColor="@color/colorPrimary"
+                            android:textCursorDrawable="@drawable/cursor_with_padding"
+                            android:textSize="22sp" />
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/otp2"
+                            android:layout_width="58dp"
+                            android:layout_height="58dp"
+                            android:layout_marginStart="12dp"
+                            android:background="@drawable/bg_mpin_pin_box_empty"
+                            android:digits="0123456789"
+                            android:fontFamily="@font/poppinsbold"
+                            android:gravity="center"
+                            android:importantForAutofill="no"
+                            android:inputType="numberPassword"
+                            android:maxLength="1"
+                            android:textColor="@color/colorPrimary"
+                            android:textCursorDrawable="@drawable/cursor_with_padding"
+                            android:textSize="22sp" />
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/otp3"
+                            android:layout_width="58dp"
+                            android:layout_height="58dp"
+                            android:layout_marginStart="12dp"
+                            android:background="@drawable/bg_mpin_pin_box_empty"
+                            android:digits="0123456789"
+                            android:fontFamily="@font/poppinsbold"
+                            android:gravity="center"
+                            android:importantForAutofill="no"
+                            android:inputType="numberPassword"
+                            android:maxLength="1"
+                            android:textColor="@color/colorPrimary"
+                            android:textCursorDrawable="@drawable/cursor_with_padding"
+                            android:textSize="22sp" />
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/otp4"
+                            android:layout_width="58dp"
+                            android:layout_height="58dp"
+                            android:layout_marginStart="12dp"
+                            android:background="@drawable/bg_mpin_pin_box_empty"
+                            android:digits="0123456789"
+                            android:fontFamily="@font/poppinsbold"
+                            android:gravity="center"
+                            android:importantForAutofill="no"
+                            android:inputType="numberPassword"
+                            android:maxLength="1"
+                            android:textColor="@color/colorPrimary"
+                            android:textCursorDrawable="@drawable/cursor_with_padding"
+                            android:textSize="22sp" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_lg"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:layout_width="@dimen/icon_sm"
+                            android:layout_height="@dimen/icon_sm"
+                            android:contentDescription="@null"
+                            android:src="@drawable/ic_shield"
+                            app:tint="@color/colorPrimary" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="@dimen/spacing_xs"
+                            android:fontFamily="@font/poppinsregular"
+                            android:text="@string/mpin_data_safe"
+                            android:textColor="@color/colorTextSecondary"
+                            android:textSize="12sp" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/loginMpin"
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/button_height"
+                        android:layout_marginTop="@dimen/spacing_lg"
+                        android:background="@drawable/bg_login_gradient_button"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center"
+                        android:orientation="horizontal"
+                        android:paddingStart="@dimen/spacing_lg"
+                        android:paddingEnd="@dimen/spacing_lg">
+
+                        <ImageView
+                            android:layout_width="@dimen/icon_md"
+                            android:layout_height="@dimen/icon_md"
+                            android:contentDescription="@null"
+                            android:src="@drawable/ic_lock"
+                            app:tint="@color/white" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="@dimen/spacing_sm"
+                            android:layout_marginEnd="@dimen/spacing_sm"
+                            android:layout_weight="1"
+                            android:fontFamily="@font/poppinsbold"
+                            android:gravity="center"
+                            android:text="@string/ui_pbpin_login"
+                            android:textColor="@color/white"
+                            android:textSize="16sp" />
+
+                        <ImageView
+                            android:layout_width="@dimen/icon_md"
+                            android:layout_height="@dimen/icon_md"
+                            android:contentDescription="@null"
+                            android:src="@drawable/ic_arrow_forward" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_md"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:layout_width="@dimen/icon_sm"
+                            android:layout_height="@dimen/icon_sm"
+                            android:contentDescription="@null"
+                            android:src="@drawable/ic_shield"
+                            app:tint="@color/colorPrimary" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="@dimen/spacing_xs"
+                            android:fontFamily="@font/poppinsmedium"
+                            android:text="@string/mpin_secure_login"
+                            android:textColor="@color/colorPrimary"
+                            android:textSize="12sp" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/privacyPolicy"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/spacing_xl"
+                android:layout_marginTop="@dimen/spacing_lg"
+                android:layout_marginEnd="@dimen/spacing_xl"
+                android:fontFamily="@font/poppinsregular"
+                android:gravity="center"
+                android:lineSpacingExtra="2dp"
+                android:padding="@dimen/spacing_sm"
+                android:textColor="@color/colorTextSecondary"
+                android:textSize="12sp" />
+
+            <com.google.android.gms.ads.AdView
+                android:id="@+id/ad_view"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_xl"
+                android:layout_marginBottom="@dimen/spacing_sm"
+                ads:adSize="SMART_BANNER"
+                ads:adUnitId="ca-app-pub-2325627373654257/8547020221" />
 
         </LinearLayout>
 
-        <androidx.appcompat.widget.AppCompatTextView
-            android:id="@+id/loginMpin"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:layout_gravity="center"
-            android:layout_marginStart="20dp"
-            android:layout_marginTop="30dp"
-            android:layout_marginEnd="20dp"
-            android:background="@drawable/button_rounded_border"
-            android:backgroundTint="@color/colorPrimary"
-            android:fontFamily="@font/poppinsbold"
-            android:gravity="center"
-            android:padding="5dp"
-            android:text="@string/ui_pbpin_login"
-            android:textColor="@color/white"
-            android:textSize="20dp" />
-
-        <androidx.appcompat.widget.AppCompatTextView
-            android:id="@+id/privacyPolicy"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginStart="20dp"
-            android:layout_marginTop="25dp"
-            android:layout_marginEnd="20dp"
-            android:fontFamily="@font/poppinslight"
-            android:gravity="center"
-            android:padding="15dp"
-            android:textColor="#9aa1a5"
-            android:textSize="13dp" />
-
-        <com.google.android.gms.ads.AdView
-            android:id="@+id/ad_view"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="40dp"
-            android:layout_marginBottom="20dp"
-            ads:adSize="SMART_BANNER"
-            ads:adUnitId="ca-app-pub-2325627373654257/8547020221" />
-
-
-    </LinearLayout>
+    </FrameLayout>
 
 </androidx.core.widget.NestedScrollView>

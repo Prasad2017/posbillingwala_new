@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\License;
+use App\Support\LicenceDefaults;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Auth;
 use DataTables;
 
@@ -57,6 +59,8 @@ class CustomerController extends Controller
     	->select('users.*','licenses.*','licenses.id as licenseId')->first();
     	if($data)
     	{
+            $data->mpin = $data->mpin ?: LicenceDefaults::defaultMpin();
+            $data->reportPin = $data->reportPin ?? LicenceDefaults::defaultReportPin();
             try {
                 $dealers = User::where('role_id', 2)
                     ->where(function ($q) {
@@ -82,7 +86,13 @@ class CustomerController extends Controller
     	$validated = $request->validate([
             'dealer_id' => 'required',
     		'name' => 'required',
-    		'mobile_number' => 'required|digits:10',
+    		'mobile_number' => [
+                'required',
+                'digits:10',
+                Rule::unique('users', 'contact_number')->where(function ($query) {
+                    return $query->where('role_id', 3);
+                }),
+            ],
     		'shop_name' => 'required',
     		'shop_address' => 'required',
     		'license_validity' => 'required',
@@ -125,17 +135,33 @@ class CustomerController extends Controller
         $license->takeAway = $request->take_away ?? 1;
         $license->dineIn = $request->dine_in ?? 0;
         $license->mess = $request->mess ?? 0;
+        $license->mpin = LicenceDefaults::defaultMpin();
         $license->save();
 
-        return redirect()->back()->with('success','Customer added successfully');
+        return redirect('customers/edit/' . $data->id)->with([
+            'success' => 'Customer registered successfully. Share the credentials below with the customer.',
+            'registration_credentials' => [
+                'licenseKey' => $license->licenseKey,
+                'mpin' => LicenceDefaults::defaultMpin(),
+                'reportPin' => LicenceDefaults::defaultReportPin(),
+            ],
+        ]);
     }
 
     public function editCustomerRecord(Request $request, $id = null)
     {
+        $customerId = $id ?: $request->input('id');
+
         $validated = $request->validate([
             'dealer_id' => 'required',
             'name' => 'required',
-            'mobile_number' => 'required|digits:10',
+            'mobile_number' => [
+                'required',
+                'digits:10',
+                Rule::unique('users', 'contact_number')->ignore($customerId)->where(function ($query) {
+                    return $query->where('role_id', 3);
+                }),
+            ],
             'shop_name' => 'required',
             'shop_address' => 'required',
             'license_validity' => 'required',
@@ -146,7 +172,6 @@ class CustomerController extends Controller
             'shop_image' => 'nullable|mimes:jpg,jpeg,png,gif'
         ]);
 
-        $customerId = $id ?: $request->input('id');
         $data = User::where('id', $customerId)->first();
         if (!$data) {
             return redirect()->back()->with('error', 'Customer not found');
@@ -290,9 +315,17 @@ class CustomerController extends Controller
         $license->takeAway = $request->take_away ?? 1;
         $license->dineIn = $request->dine_in ?? 0;
         $license->mess = $request->mess ?? 0;
+        $license->mpin = LicenceDefaults::defaultMpin();
         $license->save();
 
-        return redirect('customers/edit/'.$request->id)->with('success','App license key generated successfully');
+        return redirect('customers/edit/'.$request->id)->with([
+            'success' => 'App license key generated successfully.',
+            'registration_credentials' => [
+                'licenseKey' => $license->licenseKey,
+                'mpin' => LicenceDefaults::defaultMpin(),
+                'reportPin' => LicenceDefaults::defaultReportPin(),
+            ],
+        ]);
     }
 
     public function editLicensePage($id)

@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.posbillingwala.owner.Activity.MainActivity;
 import com.posbillingwala.owner.Extra.BottomSheetUi;
+import com.posbillingwala.owner.Extra.RowDividerUi;
 import com.posbillingwala.owner.Fragment.ManageCustomerProductPortions;
 import com.posbillingwala.owner.Model.AllApiResponse;
 import com.posbillingwala.owner.Model.ProductPortionResponse;
@@ -50,6 +51,8 @@ public class PortionAdapter extends RecyclerView.Adapter<PortionAdapter.MyViewHo
         holder.binding.portionRemove.setOnClickListener(v ->
                 BottomSheetUi.showConfirm(context, "Are you Sure?", "Do you want to delete this portion?",
                         "YES", "NO", true, () -> deletePortion(item.getPortionId())));
+
+        RowDividerUi.bindLastItem(holder.binding.rowDivider, position, getItemCount());
     }
 
     private void deletePortion(String portionId) {

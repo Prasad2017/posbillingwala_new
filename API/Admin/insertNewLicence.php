@@ -54,12 +54,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     $branchLabel = $branchName !== '' ? $branchName : $shopName;
     $expiryDate = date('Y-m-d', strtotime($date . ' +' . $licenseValidity . ' day'));
+    $defaultMpin = licence_default_mpin();
 
     $ok = db_stmt_execute(
         $con,
-        'INSERT INTO `licenses`(`userId`, `licenseKey`, `licenseValidity`, `licenseType`, `licenseStatus`, `expiryDate`, `paymentStatus`, `amount`, `userType`, `userName`, `fastBilling`, `takeAway`, `dineIn`, `mess`)
-         VALUES (?, ?, ?, ?, \'active\', ?, ?, ?, \'franchise\', ?, ?, ?, ?, ?)',
-        'isssssssiiii',
+        'INSERT INTO `licenses`(`userId`, `licenseKey`, `licenseValidity`, `licenseType`, `licenseStatus`, `expiryDate`, `paymentStatus`, `amount`, `userType`, `userName`, `mpin`, `fastBilling`, `takeAway`, `dineIn`, `mess`)
+         VALUES (?, ?, ?, ?, \'active\', ?, ?, ?, \'franchise\', ?, ?, ?, ?, ?, ?)',
+        'issssssssiiii',
         $customerId,
         $licenseKey,
         $licenseValidity,
@@ -68,6 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $paymentStatus,
         $amount,
         $branchLabel,
+        $defaultMpin,
         (int) $fastBilling,
         (int) $takeAway,
         (int) $dineIn,
@@ -78,6 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $response['status'] = 'true';
         $response['message'] = 'Franchise branch registered. Same customer account — new licence key issued.';
         $response['licenseKey'] = $licenseKey;
+        $response['mpin'] = $defaultMpin;
         $response['expiryDate'] = $expiryDate;
         $response['branchLabel'] = licence_branch_label('franchise', $branchLabel);
     } else {

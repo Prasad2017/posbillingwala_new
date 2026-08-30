@@ -11,6 +11,8 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.core.content.ContextCompat;
+
 import com.google.android.material.textfield.TextInputEditText;
 import com.pos_billingwala.Adapter.ComboProductPickAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
@@ -74,7 +76,7 @@ public final class ComboItemPicker {
                     radioButton.setId(View.generateViewId());
                     radioButton.setTag(i);
                     radioButton.setText(portion.getPortionName());
-                    radioButton.setTextColor(activity.getResources().getColor(R.color.black));
+                    radioButton.setTextColor(ContextCompat.getColor(activity, R.color.black));
                     radioButton.setPadding(24, 16, 24, 16);
                     portionGroup.addView(radioButton);
                     if (i == 0) {

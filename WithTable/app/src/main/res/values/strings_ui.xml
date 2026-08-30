@@ -245,8 +245,17 @@
     <string name="ui_sales_invoice_prefix">Sales Invoice Prefix</string>
     <string name="ui_sales_invoice_title">Sales Invoice Title</string>
     <string name="ui_save_details">Save Details</string>
+    <string name="ui_update_details">Update Details</string>
     <string name="ui_save_invoice">Save Invoice</string>
-    <string name="ui_save_setting">Save Setting</string>
+    <string name="ui_save_setting">Save Settings</string>
+    <string name="ui_update_settings">Update Settings</string>
+    <string name="ui_printer_details_subtitle">Manage printer &amp; invoice settings</string>
+    <string name="ui_select_connect_invoice_printer">Select and connect invoice printer</string>
+    <string name="ui_select_connect_kot_printer">Select and connect KOT printer</string>
+    <string name="ui_invoice_prefix_hint">Prefix used for invoice number</string>
+    <string name="ui_invoice_terms_hint">Displayed at the bottom of the invoice</string>
+    <string name="ui_print_feed_lines_hint">For invoice printer</string>
+    <string name="ui_kot_feed_lines_hint">For KOT printer</string>
     <string name="ui_scan">Scan</string>
     <string name="ui_scan_amp_verify_token">Scan &amp; Verify Token</string>
     <string name="ui_scan_mess_token">Scan Mess Token</string>
@@ -509,4 +518,16 @@
     <string name="ui_cart_empty_hint">Tap products to add them to the cart</string>
     <string name="ui_pay_now">Pay now</string>
     <string name="ui_select_bill_hint">Select a bill to view details</string>
+    <string name="ui_invoice_preview_subtitle">Review your order before billing</string>
+    <string name="ui_view_items">View Items</string>
+    <string name="ui_view_cart">View Cart</string>
+    <string name="ui_payable_amount">Payable Amount</string>
+    <string name="ui_bill_summary">Bill Summary</string>
+    <string name="ui_packing_charges">Packing Charges</string>
+    <string name="ui_print_bill_upper">PRINT BILL</string>
+    <string name="ui_total_items_label">Total Items</string>
+    <string name="ui_discount_percent">DISCOUNT (%)</string>
+    <string name="ui_packing_upper">PACKING</string>
+    <string name="ui_sub_total_upper">SUB TOTAL</string>
+    <string name="ui_total">Total</string>
 </resources>

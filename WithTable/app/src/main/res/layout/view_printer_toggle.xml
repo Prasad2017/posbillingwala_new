@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/toggleTrack"
+    android:layout_width="48dp"
+    android:layout_height="26dp"
+    android:background="@drawable/bg_printer_toggle_track_off"
+    android:padding="2dp">
+
+    <View
+        android:id="@+id/toggleThumb"
+        android:layout_width="22dp"
+        android:layout_height="22dp"
+        android:layout_gravity="start|center_vertical"
+        android:background="@drawable/bg_printer_toggle_thumb" />
+
+</FrameLayout>

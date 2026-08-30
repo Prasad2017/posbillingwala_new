@@ -47,6 +47,12 @@ public class AllApiResponse {
     @SerializedName("licenseKey")
     @Expose
     private String licenseKey;
+    @SerializedName("mpin")
+    @Expose
+    private String mpin;
+    @SerializedName("reportPin")
+    @Expose
+    private String reportPin;
     @SerializedName("userId")
     @Expose
     private String userId;
@@ -395,6 +401,22 @@ public class AllApiResponse {
 
     public void setLicenseKey(String licenseKey) {
         this.licenseKey = licenseKey;
+    }
+
+    public String getMpin() {
+        return mpin;
+    }
+
+    public void setMpin(String mpin) {
+        this.mpin = mpin;
+    }
+
+    public String getReportPin() {
+        return reportPin;
+    }
+
+    public void setReportPin(String reportPin) {
+        this.reportPin = reportPin;
     }
 
     public String getUserId() {

@@ -17,6 +17,7 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.BottomSheetUi;
+import com.pos_billingwala.Extra.RowDividerUi;
 import com.pos_billingwala.Fragment.ManageProductPortions;
 import com.pos_billingwala.Model.ProductPortionResponse;
 import com.pos_billingwala.R;
@@ -55,6 +56,7 @@ public class PortionAdapter extends RecyclerView.Adapter<PortionAdapter.MyViewHo
 
         holder.binding.portionEdit.setOnClickListener(v -> updatePortion(item));
         holder.binding.portionRemove.setOnClickListener(v -> deletePortion(item.getPortionId()));
+        RowDividerUi.bindLastItem(holder.binding.rowDivider, position, getItemCount());
     }
 
     private void updatePortion(ProductPortionResponse item) {

@@ -92,6 +92,13 @@ public class LicenseAdapter extends RecyclerView.Adapter<LicenseAdapter.MyViewHo
             holder.binding.deviceInfo.setText("Device: NOT ACTIVATED");
         }
 
+        String mpin = licenseResponse.getMpin();
+        if (mpin == null || mpin.trim().isEmpty()) {
+            mpin = "9082";
+        }
+        holder.binding.pinInfo.setVisibility(View.VISIBLE);
+        holder.binding.pinInfo.setText("PB-PIN: " + mpin);
+
         String branchLabel = licenseResponse.getBranchLabel();
         if (branchLabel == null || branchLabel.isEmpty()) {
             branchLabel = "owner".equalsIgnoreCase(licenseResponse.getUserType()) ? "Main Store" : "Franchise Branch";

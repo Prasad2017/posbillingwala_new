@@ -42,6 +42,13 @@
 									<input type="text" class="form-control border-start-0" id="inputEmailAddress1" readonly placeholder="App License Key" name="license_key"/>
 								</div>
 							</div>
+							<div class="col-lg-4">
+								<label class="form-label">PB-PIN (auto on register)</label>
+								<div class="input-group">
+									<span class="input-group-text bg-transparent"><i class='bx bx-lock-alt'></i></span>
+									<input type="text" class="form-control border-start-0" value="9082" readonly>
+								</div>
+							</div>
 							@include('partials.license-fields')
 							<div class="col-12">
 								<button type="submit" class="btn btn-primary px-5">Add</button>

@@ -26,23 +26,41 @@
                 android:layout_marginStart="15dp"
                 android:src="@drawable/ic_back"
                 app:tint="@color/white" />
-
-            <androidx.appcompat.widget.AppCompatTextView
-                android:id="@+id/heading"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:layout_gravity="center"
-                android:layout_marginStart="15dp"
-                android:layout_toStartOf="@id/shareInvoice"
+                android:layout_centerVertical="true"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="8dp"
                 android:layout_toEndOf="@+id/backToSetting"
-                android:fontFamily="@font/poppinsmedium"
-                android:gravity="center|start"
-                android:paddingStart="5dp"
-                android:paddingEnd="5dp"
-                android:text="@string/ui_invoice_reports"
-                android:textColor="@color/white"
-                android:textSize="17dp" />
+            android:layout_toStartOf="@+id/shareInvoice"
+                android:orientation="vertical">
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/toolbarTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:maxLines="1"
+                    android:text="@string/ui_invoice_payment_mode_report"
+                    android:textColor="@color/white"
+                    android:textSize="16sp" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/toolbarSubtitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:fontFamily="@font/poppinsregular"
+                    android:maxLines="1"
+                    android:textColor="#CCFFFFFF"
+                    android:textSize="11sp"
+                    android:visibility="gone" />
+
+            </LinearLayout>
+
+
 
             <ImageView
                 android:id="@+id/menuIcon"

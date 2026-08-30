@@ -27,6 +27,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -128,13 +129,19 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
             tableNumber = bundle.getString("tableNumber");
             cartOrderStatus = bundle.getString("cartOrderStatus");
             if (cartOrderStatus.equalsIgnoreCase("table_wise")) {
-                binding.posHeading.setText("Bill: Table No." + tableNumber);
+                binding.posHeading.setText(getString(R.string.ui_table_wise_pos));
+                binding.posSubtitle.setText("Table No. " + tableNumber);
+                binding.posSubtitle.setVisibility(View.VISIBLE);
                 binding.menuIcon.setVisibility(View.GONE);
             } else if (cartOrderStatus.equalsIgnoreCase("take_away")) {
-                binding.posHeading.setText("Take Away No. " + tableNumber);
+                binding.posHeading.setText(getString(R.string.take_away));
+                binding.posSubtitle.setText(getString(R.string.ui_take_away_no) + " " + tableNumber);
+                binding.posSubtitle.setVisibility(View.VISIBLE);
                 binding.menuIcon.setVisibility(View.GONE);
             } else {
-                binding.posHeading.setText("Fast Billing");
+                binding.posHeading.setText(getString(R.string.fast_billing));
+                binding.posSubtitle.setText(getString(R.string.ui_product_menu));
+                binding.posSubtitle.setVisibility(View.VISIBLE);
                 binding.menuIcon.setVisibility(View.VISIBLE);
             }
         }
@@ -205,6 +212,9 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
         binding.menuIcon.setOnClickListener(this);
         binding.productsTab.setOnClickListener(this);
         binding.combosTab.setOnClickListener(this);
+        if (binding.viewCartButton != null) {
+            binding.viewCartButton.setOnClickListener(this);
+        }
         if (binding.payButton != null) {
             binding.payButton.setOnClickListener(this);
         }
@@ -513,7 +523,8 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
             binding.productSearch.setText("");
             binding.productSearch.clearFocus();
             selectAllCategory();
-        } else if (id == R.id.cartLayout || id == R.id.payButton) {
+        } else if (id == R.id.cartLayout || id == R.id.payButton
+                || id == R.id.viewCartButton) {
             openPaymentScreen();
         } else if (id == R.id.clearCart) {
             confirmClearCart();
@@ -693,13 +704,19 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
         String packingChargeType = "";
         float totalPerProductAmount = 0f, discountAmount = 0f, packingAmount = 0f, totalCGST = 0f, totalSGST = 0f, totalPerProductGST = 0f, totalGST = 0f;
         if (productCartResponseList == null || productCartResponseList.isEmpty()) {
-            binding.totalItems.setText(getString(R.string.ui_total_items_0));
-            binding.totalAmount.setText("");
+            binding.totalAmount.setText(MainActivity.currencyName + " 0.00");
             binding.clearCart.setVisibility(View.GONE);
+            if (binding.cartBadge != null) {
+                binding.cartBadge.setVisibility(View.GONE);
+            }
             bindTabletCartList();
             return;
         }
         binding.clearCart.setVisibility(View.VISIBLE);
+        if (binding.cartBadge != null) {
+            binding.cartBadge.setVisibility(View.VISIBLE);
+            binding.cartBadge.setText(String.valueOf(sumCartQuantities()));
+        }
 
         for (int i = 0; i < productCartResponseList.size(); i++) {
 
@@ -734,7 +751,6 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
         }
 
         float subTotalAmt = totalPerProductAmount - totalGST;
-        binding.totalItems.setText("Total Items: " + productCartResponseList.size());
         if (discountType != null) {
             if (discountType.equalsIgnoreCase("Amount")) {
                 discountAmount = discountAmount;
@@ -764,8 +780,8 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
 
         float totalAmount = totalPerProductAmount - discountAmount + packingAmount + totalShopGST;
         totalAmount = (float) Math.ceil(totalAmount);
-        String totalPayableAmount = "Payable Amount<br/><b>" + MainActivity.currencyName + " " + String.format(Locale.US, "%.2f", totalAmount) + "</b>";
-        binding.totalAmount.setText(Html.fromHtml(totalPayableAmount));
+        binding.totalAmount.setText(MainActivity.currencyName + " "
+                + String.format(Locale.US, "%.2f", totalAmount));
         bindTabletCartList();
     }
 
@@ -950,7 +966,7 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
                 tabs.get(t).setBackgroundResource(selected
                         ? R.drawable.bg_portion_tab_selected
                         : R.drawable.bg_portion_tab);
-                tabs.get(t).setTextColor(activity.getResources().getColor(
+                tabs.get(t).setTextColor(ContextCompat.getColor(activity,
                         selected ? R.color.white : R.color.colorPrimary));
             }
         };
@@ -1043,6 +1059,17 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
         }
     }
 
+    private int sumCartQuantities() {
+        if (productCartResponseList == null || productCartResponseList.isEmpty()) {
+            return 0;
+        }
+        int total = 0;
+        for (ProductCartResponse item : productCartResponseList) {
+            total += parseCartQuantity(item.getProductQuantity());
+        }
+        return total;
+    }
+
     private void handleProductSelection(ProductResponse productResponse, ProductPortionResponse portion) {
         final String portionId = portion != null ? portion.getPortionId() : null;
         final String table = tableNumber;
@@ -1130,9 +1157,9 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
     private void showProductCatalog() {
         showingCombos = false;
         binding.productsTab.setBackgroundResource(R.drawable.fill_button_rounded_border);
-        binding.productsTab.setTextColor(activity.getResources().getColor(R.color.white));
+        binding.productsTab.setTextColor(ContextCompat.getColor(activity, R.color.white));
         binding.combosTab.setBackgroundResource(R.drawable.button_rounded_border);
-        binding.combosTab.setTextColor(activity.getResources().getColor(R.color.black));
+        binding.combosTab.setTextColor(ContextCompat.getColor(activity, R.color.colorPrimary));
         binding.categoryRecyclerView.setVisibility(View.VISIBLE);
         if (!binding.productSearch.getText().toString().isEmpty()) {
             searchHomeProduct(binding.productSearch.getText().toString());
@@ -1148,9 +1175,9 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
     private void showComboCatalog(boolean showLoader) {
         showingCombos = true;
         binding.combosTab.setBackgroundResource(R.drawable.fill_button_rounded_border);
-        binding.combosTab.setTextColor(activity.getResources().getColor(R.color.white));
+        binding.combosTab.setTextColor(ContextCompat.getColor(activity, R.color.white));
         binding.productsTab.setBackgroundResource(R.drawable.button_rounded_border);
-        binding.productsTab.setTextColor(activity.getResources().getColor(R.color.black));
+        binding.productsTab.setTextColor(ContextCompat.getColor(activity, R.color.colorPrimary));
         binding.categoryRecyclerView.setVisibility(View.GONE);
         clearSubcategoryFilter();
         final String table = tableNumber;

@@ -31,6 +31,9 @@ public class CustomerResponse {
     @SerializedName("shopName")
     @Expose
     private String shopName;
+    @SerializedName("reportPin")
+    @Expose
+    private String reportPin;
     @SerializedName("licensesResponse")
     @Expose
     private List<LicenseResponse> licenseResponseList;
@@ -90,6 +93,14 @@ public class CustomerResponse {
 
     public void setShopName(String shopName) {
         this.shopName = shopName;
+    }
+
+    public String getReportPin() {
+        return reportPin;
+    }
+
+    public void setReportPin(String reportPin) {
+        this.reportPin = reportPin;
     }
 
     public List<LicenseResponse> getLicenseResponseList() {

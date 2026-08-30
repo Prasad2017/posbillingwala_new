@@ -19,6 +19,12 @@ public class AllApiResponse {
     @SerializedName("licenceId")
     @Expose
     public String licenceId;
+    @SerializedName("mpin")
+    @Expose
+    public String mpin;
+    @SerializedName("reportPin")
+    @Expose
+    public String reportPin;
     @SerializedName("trialDays")
     @Expose
     public String trialDays;
@@ -110,6 +116,39 @@ public class AllApiResponse {
     @SerializedName("appName")
     @Expose
     private String appName;
+    @SerializedName("period")
+    @Expose
+    public String period;
+    @SerializedName("primarySalesLabel")
+    @Expose
+    public String primarySalesLabel;
+    @SerializedName("primarySales")
+    @Expose
+    public String primarySales;
+    @SerializedName("todaySales")
+    @Expose
+    public String todaySales;
+    @SerializedName("monthSales")
+    @Expose
+    public String monthSales;
+    @SerializedName("allTimeSales")
+    @Expose
+    public String allTimeSales;
+    @SerializedName("primarySalesTrend")
+    @Expose
+    public String primarySalesTrend;
+    @SerializedName("todaySalesTrend")
+    @Expose
+    public String todaySalesTrend;
+    @SerializedName("totalSubcategory")
+    @Expose
+    public String totalSubcategory;
+    @SerializedName("totalProduct")
+    @Expose
+    public String totalProduct;
+    @SerializedName("totalCombo")
+    @Expose
+    public String totalCombo;
 
 
     public String getStatus() {
@@ -142,6 +181,22 @@ public class AllApiResponse {
 
     public void setLicenceId(String licenceId) {
         this.licenceId = licenceId;
+    }
+
+    public String getMpin() {
+        return mpin;
+    }
+
+    public void setMpin(String mpin) {
+        this.mpin = mpin;
+    }
+
+    public String getReportPin() {
+        return reportPin;
+    }
+
+    public void setReportPin(String reportPin) {
+        this.reportPin = reportPin;
     }
 
     public String getTrialDays() {

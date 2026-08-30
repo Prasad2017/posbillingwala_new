@@ -204,6 +204,13 @@ public class CustomerDetails extends Fragment implements View.OnClickListener {
                         binding.customerAddress.setText(customerResponseList.get(0).getAddress());
                         binding.customerShopName.setText(customerResponseList.get(0).getShopName());
 
+                        String reportPin = customerResponseList.get(0).getReportPin();
+                        if (reportPin == null || reportPin.trim().isEmpty()) {
+                            reportPin = "9082";
+                        }
+                        binding.customerReportPin.setVisibility(View.VISIBLE);
+                        binding.customerReportPin.setText("Report PIN: " + reportPin);
+
                         licenseResponseList = customerResponseList.get(0).getLicenseResponseList();
                         bindOwnerModules(licenseResponseList);
                         if (customerResponseList.get(0).getRoleId().equalsIgnoreCase("2")) {

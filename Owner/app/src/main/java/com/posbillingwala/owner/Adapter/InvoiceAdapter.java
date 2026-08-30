@@ -10,6 +10,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.posbillingwala.owner.Activity.MainActivity;
+import com.posbillingwala.owner.Extra.RowDividerUi;
 import com.posbillingwala.owner.Fragment.InvoiceProductDetails;
 import com.posbillingwala.owner.Model.InvoiceResponse;
 import com.posbillingwala.owner.databinding.InvoiceListBinding;
@@ -86,6 +87,8 @@ public class InvoiceAdapter extends RecyclerView.Adapter<InvoiceAdapter.MyViewHo
             invoiceProductDetails.setArguments(bundle);
             ((MainActivity) context).loadFragment(invoiceProductDetails, true);
         });
+
+        RowDividerUi.bindLastItem(holder.binding.rowDivider, position, getItemCount());
     }
 
     @Override

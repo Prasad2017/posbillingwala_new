@@ -220,7 +220,8 @@ public final class ReportUiHelper {
         }
         LayoutInflater inflater = LayoutInflater.from(ctx);
         String currency = MainActivity.currencyName;
-        for (ReportRankItem item : items) {
+        for (int i = 0; i < items.size(); i++) {
+            ReportRankItem item = items.get(i);
             ItemReportRankRowBinding row = ItemReportRankRowBinding.inflate(inflater, container, false);
             String title = item.displayName();
             row.rankInitials.setText(initials(title));
@@ -231,6 +232,7 @@ public final class ReportUiHelper {
             row.rankValue.setText(moneyValue
                     ? money(currency, item.getTotalSales() != null ? item.getTotalSales() : item.getAmount())
                     : item.displayValue());
+            RowDividerUi.bindLastItem(row.rowDivider, i, items.size());
             container.addView(row.getRoot());
         }
     }

@@ -16,6 +16,7 @@ import android.text.TextPaint;
 import android.text.TextWatcher;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
+import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,8 +24,10 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
@@ -96,6 +99,8 @@ public class LoginMPin extends BaseActivity implements View.OnClickListener {
 
         TabletFormUi.applyCenteredPanel(binding.loginLayout);
 
+        styleLoginSubtitle();
+
         m_androidId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
         manufacturerModel = android.os.Build.MANUFACTURER + " " + android.os.Build.MODEL;
 
@@ -125,7 +130,7 @@ public class LoginMPin extends BaseActivity implements View.OnClickListener {
 
             @Override
             public void updateDrawState(final TextPaint textPaint) {
-                textPaint.setColor(getResources().getColor(R.color.colorPrimaryDark));
+                textPaint.setColor(ContextCompat.getColor(LoginMPin.this, R.color.colorPrimaryDark));
             }
 
         };
@@ -149,7 +154,7 @@ public class LoginMPin extends BaseActivity implements View.OnClickListener {
 
             @Override
             public void updateDrawState(final TextPaint textPaint) {
-                textPaint.setColor(getResources().getColor(R.color.colorPrimaryDark));
+                textPaint.setColor(ContextCompat.getColor(LoginMPin.this, R.color.colorPrimaryDark));
             }
 
         };
@@ -178,10 +183,10 @@ public class LoginMPin extends BaseActivity implements View.OnClickListener {
             public void afterTextChanged(Editable s) {
                 if (s.toString().length() == 1) {
                     binding.otp2.requestFocus();
-                    binding.otp1.setBackgroundDrawable(getDrawable(R.drawable.fill_button_rounded_border));
+                    binding.otp1.setBackground(getDrawable(R.drawable.bg_mpin_pin_box_filled));
                 } else {
                     binding.otp1.requestFocus();
-                    binding.otp1.setBackgroundDrawable(getDrawable(R.drawable.unfill_button_rounded_border));
+                    binding.otp1.setBackground(getDrawable(R.drawable.bg_mpin_pin_box_empty));
                 }
             }
         });
@@ -200,10 +205,10 @@ public class LoginMPin extends BaseActivity implements View.OnClickListener {
             public void afterTextChanged(Editable s) {
                 if (s.toString().length() == 1) {
                     binding.otp3.requestFocus();
-                    binding.otp2.setBackgroundDrawable(getDrawable(R.drawable.fill_button_rounded_border));
+                    binding.otp2.setBackground(getDrawable(R.drawable.bg_mpin_pin_box_filled));
                 } else {
                     binding.otp1.requestFocus();
-                    binding.otp2.setBackgroundDrawable(getDrawable(R.drawable.unfill_button_rounded_border));
+                    binding.otp2.setBackground(getDrawable(R.drawable.bg_mpin_pin_box_empty));
                 }
             }
         });
@@ -222,10 +227,10 @@ public class LoginMPin extends BaseActivity implements View.OnClickListener {
             public void afterTextChanged(Editable s) {
                 if (s.toString().length() == 1) {
                     binding.otp4.requestFocus();
-                    binding.otp3.setBackgroundDrawable(getDrawable(R.drawable.fill_button_rounded_border));
+                    binding.otp3.setBackground(getDrawable(R.drawable.bg_mpin_pin_box_filled));
                 } else {
                     binding.otp2.requestFocus();
-                    binding.otp3.setBackgroundDrawable(getDrawable(R.drawable.unfill_button_rounded_border));
+                    binding.otp3.setBackground(getDrawable(R.drawable.bg_mpin_pin_box_empty));
                 }
             }
         });
@@ -245,11 +250,11 @@ public class LoginMPin extends BaseActivity implements View.OnClickListener {
                 if (s.toString().length() == 1) {
 
                     binding.otp4.requestFocus();
-                    binding.otp4.setBackgroundDrawable(getDrawable(R.drawable.fill_button_rounded_border));
+                    binding.otp4.setBackground(getDrawable(R.drawable.bg_mpin_pin_box_filled));
 
                 } else {
                     binding.otp3.requestFocus();
-                    binding.otp4.setBackgroundDrawable(getDrawable(R.drawable.unfill_button_rounded_border));
+                    binding.otp4.setBackground(getDrawable(R.drawable.bg_mpin_pin_box_empty));
                 }
 
                 hideKeyboard(binding.otp4);
@@ -260,11 +265,31 @@ public class LoginMPin extends BaseActivity implements View.OnClickListener {
         binding.backToPage.setOnClickListener(this);
         binding.loginMpin.setOnClickListener(this);
 
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                finish();
+            }
+        });
     }
 
     protected void hideKeyboard(View view) {
         InputMethodManager in = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         in.hideSoftInputFromWindow(view.getWindowToken(), 0);
+    }
+
+    private void styleLoginSubtitle() {
+        String subtitle = getString(R.string.login_subtitle);
+        String brand = "POS Billingwala";
+        int start = subtitle.indexOf(brand);
+        if (start < 0) {
+            binding.loginSubtitle.setText(subtitle);
+            return;
+        }
+        SpannableString spannable = new SpannableString(subtitle);
+        spannable.setSpan(new ForegroundColorSpan(ContextCompat.getColor(this, R.color.colorPrimary)),
+                start, start + brand.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        binding.loginSubtitle.setText(spannable);
     }
 
     public void initAds() {
@@ -549,9 +574,4 @@ public class LoginMPin extends BaseActivity implements View.OnClickListener {
 
     }
 
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        finish();
-    }
 }

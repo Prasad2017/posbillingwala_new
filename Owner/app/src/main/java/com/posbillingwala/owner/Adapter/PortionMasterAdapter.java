@@ -14,6 +14,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.textfield.TextInputEditText;
 import com.posbillingwala.owner.Activity.MainActivity;
 import com.posbillingwala.owner.Extra.BottomSheetUi;
+import com.posbillingwala.owner.Extra.RowDividerUi;
 import com.posbillingwala.owner.Fragment.AddCustomerPortionMaster;
 import com.posbillingwala.owner.Model.AllApiResponse;
 import com.posbillingwala.owner.Model.PortionMasterResponse;
@@ -54,6 +55,8 @@ public class PortionMasterAdapter extends RecyclerView.Adapter<PortionMasterAdap
         holder.binding.portionMasterRemove.setOnClickListener(v ->
                 BottomSheetUi.showConfirm(context, "Are you Sure?", "Do you want to delete this portion?",
                         "YES", "NO", true, () -> savePortionMaster(item, item.getPortionName(), "1")));
+
+        RowDividerUi.bindLastItem(holder.binding.rowDivider, position, getItemCount());
     }
 
     private void updateDialog(PortionMasterResponse item) {

@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.swiperefreshlayout.widget.SwipeRefreshLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:ads="http://schemas.android.com/apk/res-auto"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/swipeRefreshLayout"
@@ -20,97 +19,131 @@
             android:id="@+id/linearLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingStart="@dimen/spacing_lg"
-            android:paddingTop="@dimen/spacing_md"
-            android:paddingEnd="@dimen/spacing_lg">
+            android:orientation="vertical">
 
-            <!-- Header -->
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/colorPrimary"
+                android:clipChildren="false"
+                android:clipToPadding="false">
+
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:layout_gravity="bottom"
+                    android:contentDescription="@null"
+                    android:scaleType="fitXY"
+                    android:src="@drawable/bg_home_wave_footer" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingStart="@dimen/spacing_lg"
+                    android:paddingTop="@dimen/spacing_md"
+                    android:paddingEnd="@dimen/spacing_lg"
+                    android:paddingBottom="40dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <FrameLayout
+                            android:id="@+id/userPhotoContainer"
+                            android:layout_width="52dp"
+                            android:layout_height="52dp">
+
+                            <de.hdodenhof.circleimageview.CircleImageView
+                                android:id="@+id/userPhoto"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:src="@drawable/app_logo"
+                                app:civ_border_color="@color/white"
+                                app:civ_border_width="2dp" />
+
+                            <View
+                                android:id="@+id/networkStatusDot"
+                                android:layout_width="14dp"
+                                android:layout_height="14dp"
+                                android:layout_gravity="top|end"
+                                android:background="@drawable/status_dot"
+                                android:contentDescription="@string/status_online" />
+                        </FrameLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="@dimen/spacing_md"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <androidx.appcompat.widget.AppCompatTextView
+                                android:id="@+id/shopName"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/poppinsbold"
+                                android:text="@string/good_morning"
+                                android:textColor="@color/white"
+                                android:textSize="20sp" />
+
+                            <androidx.appcompat.widget.AppCompatTextView
+                                android:id="@+id/homeDateTime"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/poppinsregular"
+                                android:textColor="#E6FFFFFF"
+                                android:textSize="12sp"
+                                tools:text="Sun, 30 Aug 2026 • 08:46:25 PM" />
+
+                            <androidx.appcompat.widget.AppCompatTextView
+                                android:id="@+id/homeBusinessHours"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:fontFamily="@font/poppinsmedium"
+                                android:textColor="#E6FFFFFF"
+                                android:textSize="11sp"
+                                android:visibility="gone"
+                                tools:text="Shop Open  9:00 AM – 10:00 PM"
+                                tools:visibility="visible" />
+                        </LinearLayout>
+
+                        <ImageView
+                            android:id="@+id/userSettingIcon"
+                            android:layout_width="44dp"
+                            android:layout_height="44dp"
+                            android:background="@drawable/bg_home_settings_btn"
+                            android:contentDescription="@string/user_setting_title"
+                            android:padding="10dp"
+                            android:src="@drawable/ic_settings"
+                            app:tint="@color/colorPrimary" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:fontFamily="@font/poppinsregular"
+                        android:text="@string/home_whats_happening"
+                        android:textColor="#CCFFFFFF"
+                        android:textSize="13sp" />
+
+                </LinearLayout>
+
+            </FrameLayout>
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <FrameLayout
-                    android:id="@+id/userPhotoContainer"
-                    android:layout_width="52dp"
-                    android:layout_height="52dp">
-
-                    <de.hdodenhof.circleimageview.CircleImageView
-                        android:id="@+id/userPhoto"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:src="@drawable/app_logo"
-                        app:civ_border_color="@color/colorBorder"
-                        app:civ_border_width="1dp" />
-
-                    <View
-                        android:id="@+id/networkStatusDot"
-                        android:layout_width="14dp"
-                        android:layout_height="14dp"
-                        android:layout_gravity="top|end"
-                        android:background="@drawable/status_dot"
-                        android:contentDescription="@string/status_online" />
-                </FrameLayout>
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="@dimen/spacing_md"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/shopName"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:fontFamily="@font/poppinsbold"
-                        android:text="@string/good_morning"
-                        android:textColor="@color/colorTextPrimary"
-                        android:textSize="@dimen/text_heading" />
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/homeDateTime"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:fontFamily="@font/poppinsregular"
-                        android:textColor="@color/colorTextSecondary"
-                        android:textSize="@dimen/text_caption"
-                        tools:text="Fri, 28 Aug 2026  01:48:00 PM" />
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/homeBusinessHours"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:fontFamily="@font/poppinsmedium"
-                        android:textColor="@color/colorTextSecondary"
-                        android:textSize="@dimen/text_caption"
-                        android:visibility="gone"
-                        tools:text="Shop Open  9:00 AM – 10:00 PM"
-                        tools:visibility="visible" />
-                </LinearLayout>
-
-                <ImageView
-                    android:id="@+id/userSettingIcon"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:background="@drawable/bg_icon_circle"
-                    android:contentDescription="@string/user_setting_title"
-                    android:padding="8dp"
-                    android:src="@drawable/ic_settings"
-                    app:tint="@color/colorTextPrimary" />
-            </LinearLayout>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:fontFamily="@font/poppinsregular"
-                android:text="@string/home_whats_happening"
-                android:textColor="@color/colorTextSecondary"
-                android:textSize="@dimen/text_body" />
+                android:layout_marginTop="-6dp"
+                android:orientation="vertical"
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:paddingStart="@dimen/spacing_lg"
+                android:paddingEnd="@dimen/spacing_lg">
 
             <!-- Sales -->
             <LinearLayout
@@ -119,19 +152,48 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
-            <TextView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/spacing_xl"
-                android:fontFamily="@font/poppinsbold"
-                android:text="@string/home_section_sales"
-                android:textColor="@color/colorTextPrimary"
-                android:textSize="@dimen/text_title" />
+                android:layout_marginTop="@dimen/spacing_lg"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:fontFamily="@font/poppinsbold"
+                    android:text="@string/home_section_sales"
+                    android:textColor="@color/colorTextPrimary"
+                    android:textSize="@dimen/text_title" />
+
+                <TextView
+                    android:id="@+id/salesPeriodFilter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_home_filter_chip"
+                    android:clickable="true"
+                    android:drawableEnd="@drawable/ic_dropdown_arrow"
+                    android:drawablePadding="4dp"
+                    android:focusable="true"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:gravity="center"
+                    android:paddingStart="12dp"
+                    android:paddingTop="6dp"
+                    android:paddingEnd="10dp"
+                    android:paddingBottom="6dp"
+                    android:text="@string/home_filter_today"
+                    android:textColor="@color/colorPrimary"
+                    android:textSize="12sp" />
+
+            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/spacing_sm"
+                android:baselineAligned="false"
                 android:orientation="horizontal">
 
                 <androidx.cardview.widget.CardView
@@ -146,8 +208,9 @@
 
                     <LinearLayout
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="match_parent"
                         android:background="@drawable/bg_kpi_card_green"
+                        android:minHeight="@dimen/home_sales_card_min_height"
                         android:orientation="vertical"
                         android:padding="@dimen/spacing_md">
 
@@ -181,10 +244,20 @@
                         </LinearLayout>
 
                         <androidx.appcompat.widget.AppCompatTextView
-                            android:id="@+id/totalSale"
+                            android:id="@+id/totalSalesLabel"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="@dimen/spacing_sm"
+                            android:fontFamily="@font/poppinsmedium"
+                            android:text="@string/home_total_sales_label"
+                            android:textColor="@color/colorTextSecondary"
+                            android:textSize="@dimen/text_caption" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/totalSale"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
                             android:ellipsize="end"
                             android:fontFamily="@font/poppinsbold"
                             android:inputType="textPassword"
@@ -194,14 +267,14 @@
                             android:textSize="18sp" />
 
                         <TextView
+                            android:id="@+id/totalSalesTrend"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
+                            android:layout_marginTop="4dp"
                             android:fontFamily="@font/poppinsmedium"
-                            android:lineSpacingExtra="0dp"
-                            android:text="@string/home_total_sales"
-                            android:textColor="@color/colorTextSecondary"
-                            android:textSize="@dimen/text_caption" />
+                            android:textColor="@color/statusActive"
+                            android:textSize="11sp"
+                            tools:text="vs Last Month ↑ 18%" />
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
 
@@ -217,8 +290,9 @@
 
                     <LinearLayout
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="match_parent"
                         android:background="@drawable/bg_kpi_card_blue"
+                        android:minHeight="@dimen/home_sales_card_min_height"
                         android:orientation="vertical"
                         android:padding="@dimen/spacing_md">
 
@@ -252,10 +326,20 @@
                         </LinearLayout>
 
                         <androidx.appcompat.widget.AppCompatTextView
-                            android:id="@+id/todaySaleAmount"
+                            android:id="@+id/todaySalesLabel"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="@dimen/spacing_sm"
+                            android:fontFamily="@font/poppinsmedium"
+                            android:text="@string/home_today_sales_label"
+                            android:textColor="@color/colorTextSecondary"
+                            android:textSize="@dimen/text_caption" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/todaySaleAmount"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
                             android:ellipsize="end"
                             android:fontFamily="@font/poppinsbold"
                             android:inputType="textPassword"
@@ -265,14 +349,14 @@
                             android:textSize="18sp" />
 
                         <TextView
+                            android:id="@+id/todaySalesTrend"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
+                            android:layout_marginTop="4dp"
                             android:fontFamily="@font/poppinsmedium"
-                            android:lineSpacingExtra="0dp"
-                            android:text="@string/home_today_sales"
-                            android:textColor="@color/colorTextSecondary"
-                            android:textSize="@dimen/text_caption" />
+                            android:textColor="@color/statusActive"
+                            android:textSize="11sp"
+                            tools:text="vs Yesterday ↑ 12%" />
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
             </LinearLayout>
@@ -286,76 +370,121 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
-            <TextView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/spacing_xl"
-                android:fontFamily="@font/poppinsbold"
-                android:text="@string/home_section_catalog"
-                android:textColor="@color/colorTextPrimary"
-                android:textSize="@dimen/text_title" />
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:fontFamily="@font/poppinsbold"
+                    android:text="@string/home_section_catalog"
+                    android:textColor="@color/colorTextPrimary"
+                    android:textSize="@dimen/text_title" />
+
+                <TextView
+                    android:id="@+id/catalogViewAll"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:padding="4dp"
+                    android:text="@string/home_view_all"
+                    android:textColor="@color/colorTextSecondary"
+                    android:textSize="13sp" />
+
+            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/spacing_sm"
+                android:baselineAligned="false"
+                android:clipChildren="false"
+                android:clipToPadding="false"
                 android:orientation="horizontal">
 
                 <androidx.cardview.widget.CardView
                     android:id="@+id/subcategoryCardView"
                     android:layout_width="0dp"
-                    android:layout_height="match_parent"
+                    android:layout_height="@dimen/home_catalog_card_height"
                     android:layout_marginEnd="4dp"
                     android:layout_weight="1"
                     app:cardBackgroundColor="@android:color/transparent"
                     app:cardCornerRadius="@dimen/radius_md"
                     app:cardElevation="0dp">
 
-                    <LinearLayout
+                    <FrameLayout
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:background="@drawable/bg_kpi_card_blue"
-                        android:gravity="center_horizontal"
-                        android:orientation="vertical"
-                        android:paddingStart="8dp"
-                        android:paddingTop="@dimen/spacing_md"
-                        android:paddingEnd="8dp"
-                        android:paddingBottom="@dimen/spacing_md">
+                        android:layout_height="match_parent"
+                        android:clipChildren="false"
+                        android:clipToPadding="false">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/bg_kpi_card_blue"
+                            android:gravity="center_horizontal"
+                            android:orientation="vertical"
+                            android:paddingStart="8dp"
+                            android:paddingTop="@dimen/spacing_md"
+                            android:paddingEnd="8dp"
+                            android:paddingBottom="28dp">
+
+                            <ImageView
+                                android:layout_width="28dp"
+                                android:layout_height="28dp"
+                                android:background="@drawable/bg_kpi_icon_blue"
+                                android:contentDescription="@null"
+                                android:padding="6dp"
+                                android:src="@drawable/ic_category"
+                                app:tint="@color/colorPrimary" />
+
+                            <androidx.appcompat.widget.AppCompatTextView
+                                android:id="@+id/totalSubcategory"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="@dimen/spacing_sm"
+                                android:fontFamily="@font/poppinsbold"
+                                android:text="0"
+                                android:textColor="@color/colorTextPrimary"
+                                android:textSize="18sp" />
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_weight="1"
+                                android:ellipsize="end"
+                                android:fontFamily="@font/poppinsmedium"
+                                android:gravity="bottom|center_horizontal"
+                                android:maxLines="2"
+                                android:text="@string/home_total_subcategory"
+                                android:textColor="@color/colorTextSecondary"
+                                android:textSize="@dimen/text_caption" />
+                        </LinearLayout>
 
                         <ImageView
                             android:layout_width="28dp"
                             android:layout_height="28dp"
-                            android:background="@drawable/bg_kpi_icon_blue"
+                            android:layout_gravity="bottom|end"
+                            android:layout_marginEnd="-6dp"
+                            android:layout_marginBottom="-6dp"
+                            android:background="@drawable/bg_support_icon_circle_blue"
                             android:contentDescription="@null"
+                            android:elevation="4dp"
                             android:padding="6dp"
-                            android:src="@drawable/ic_category"
+                            android:src="@drawable/ic_chevron_right"
                             app:tint="@color/colorPrimary" />
-
-                        <androidx.appcompat.widget.AppCompatTextView
-                            android:id="@+id/totalSubcategory"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="@dimen/spacing_sm"
-                            android:fontFamily="@font/poppinsbold"
-                            android:text="0"
-                            android:textColor="@color/colorTextPrimary"
-                            android:textSize="18sp" />
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:fontFamily="@font/poppinsmedium"
-                            android:gravity="center"
-                            android:text="@string/home_total_subcategory"
-                            android:textColor="@color/colorTextSecondary"
-                            android:textSize="@dimen/text_caption" />
-                    </LinearLayout>
+                    </FrameLayout>
                 </androidx.cardview.widget.CardView>
 
                 <androidx.cardview.widget.CardView
                     android:id="@+id/productCardView"
                     android:layout_width="0dp"
-                    android:layout_height="match_parent"
+                    android:layout_height="@dimen/home_catalog_card_height"
                     android:layout_marginStart="4dp"
                     android:layout_marginEnd="4dp"
                     android:layout_weight="1"
@@ -363,96 +492,142 @@
                     app:cardCornerRadius="@dimen/radius_md"
                     app:cardElevation="0dp">
 
-                    <LinearLayout
+                    <FrameLayout
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:background="@drawable/bg_kpi_card_green"
-                        android:gravity="center_horizontal"
-                        android:orientation="vertical"
-                        android:paddingStart="8dp"
-                        android:paddingTop="@dimen/spacing_md"
-                        android:paddingEnd="8dp"
-                        android:paddingBottom="@dimen/spacing_md">
+                        android:layout_height="match_parent"
+                        android:clipChildren="false"
+                        android:clipToPadding="false">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/bg_kpi_card_green"
+                            android:gravity="center_horizontal"
+                            android:orientation="vertical"
+                            android:paddingStart="8dp"
+                            android:paddingTop="@dimen/spacing_md"
+                            android:paddingEnd="8dp"
+                            android:paddingBottom="28dp">
+
+                            <ImageView
+                                android:layout_width="28dp"
+                                android:layout_height="28dp"
+                                android:background="@drawable/bg_kpi_icon_green"
+                                android:contentDescription="@null"
+                                android:padding="6dp"
+                                android:src="@drawable/ic_report_product"
+                                app:tint="@color/statusActive" />
+
+                            <androidx.appcompat.widget.AppCompatTextView
+                                android:id="@+id/totalProduct"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="@dimen/spacing_sm"
+                                android:fontFamily="@font/poppinsbold"
+                                android:text="0"
+                                android:textColor="@color/colorTextPrimary"
+                                android:textSize="18sp" />
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_weight="1"
+                                android:ellipsize="end"
+                                android:fontFamily="@font/poppinsmedium"
+                                android:gravity="bottom|center_horizontal"
+                                android:maxLines="2"
+                                android:text="@string/home_total_products"
+                                android:textColor="@color/colorTextSecondary"
+                                android:textSize="@dimen/text_caption" />
+                        </LinearLayout>
 
                         <ImageView
                             android:layout_width="28dp"
                             android:layout_height="28dp"
-                            android:background="@drawable/bg_kpi_icon_green"
+                            android:layout_gravity="bottom|end"
+                            android:layout_marginEnd="-6dp"
+                            android:layout_marginBottom="-6dp"
+                            android:background="@drawable/bg_support_icon_circle_green"
                             android:contentDescription="@null"
+                            android:elevation="4dp"
                             android:padding="6dp"
-                            android:src="@drawable/ic_report_product"
+                            android:src="@drawable/ic_chevron_right"
                             app:tint="@color/statusActive" />
-
-                        <androidx.appcompat.widget.AppCompatTextView
-                            android:id="@+id/totalProduct"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="@dimen/spacing_sm"
-                            android:fontFamily="@font/poppinsbold"
-                            android:text="0"
-                            android:textColor="@color/colorTextPrimary"
-                            android:textSize="18sp" />
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:fontFamily="@font/poppinsmedium"
-                            android:gravity="center"
-                            android:text="@string/home_total_products"
-                            android:textColor="@color/colorTextSecondary"
-                            android:textSize="@dimen/text_caption" />
-                    </LinearLayout>
+                    </FrameLayout>
                 </androidx.cardview.widget.CardView>
 
                 <androidx.cardview.widget.CardView
                     android:id="@+id/comboCardView"
                     android:layout_width="0dp"
-                    android:layout_height="match_parent"
+                    android:layout_height="@dimen/home_catalog_card_height"
                     android:layout_marginStart="4dp"
                     android:layout_weight="1"
                     app:cardBackgroundColor="@android:color/transparent"
                     app:cardCornerRadius="@dimen/radius_md"
                     app:cardElevation="0dp">
 
-                    <LinearLayout
+                    <FrameLayout
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:background="@drawable/bg_kpi_card_orange"
-                        android:gravity="center_horizontal"
-                        android:orientation="vertical"
-                        android:paddingStart="8dp"
-                        android:paddingTop="@dimen/spacing_md"
-                        android:paddingEnd="8dp"
-                        android:paddingBottom="@dimen/spacing_md">
+                        android:layout_height="match_parent"
+                        android:clipChildren="false"
+                        android:clipToPadding="false">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/bg_kpi_card_orange"
+                            android:gravity="center_horizontal"
+                            android:orientation="vertical"
+                            android:paddingStart="8dp"
+                            android:paddingTop="@dimen/spacing_md"
+                            android:paddingEnd="8dp"
+                            android:paddingBottom="28dp">
+
+                            <ImageView
+                                android:layout_width="28dp"
+                                android:layout_height="28dp"
+                                android:background="@drawable/bg_kpi_icon_orange"
+                                android:contentDescription="@null"
+                                android:padding="6dp"
+                                android:src="@drawable/ic_report_combo"
+                                app:tint="@color/statusTrial" />
+
+                            <androidx.appcompat.widget.AppCompatTextView
+                                android:id="@+id/totalCombo"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="@dimen/spacing_sm"
+                                android:fontFamily="@font/poppinsbold"
+                                android:text="0"
+                                android:textColor="@color/colorTextPrimary"
+                                android:textSize="18sp" />
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_weight="1"
+                                android:ellipsize="end"
+                                android:fontFamily="@font/poppinsmedium"
+                                android:gravity="bottom|center_horizontal"
+                                android:maxLines="2"
+                                android:text="@string/home_total_combos"
+                                android:textColor="@color/colorTextSecondary"
+                                android:textSize="@dimen/text_caption" />
+                        </LinearLayout>
 
                         <ImageView
                             android:layout_width="28dp"
                             android:layout_height="28dp"
+                            android:layout_gravity="bottom|end"
+                            android:layout_marginEnd="-6dp"
+                            android:layout_marginBottom="-6dp"
                             android:background="@drawable/bg_kpi_icon_orange"
                             android:contentDescription="@null"
+                            android:elevation="4dp"
                             android:padding="6dp"
-                            android:src="@drawable/ic_report_combo"
+                            android:src="@drawable/ic_chevron_right"
                             app:tint="@color/statusTrial" />
-
-                        <androidx.appcompat.widget.AppCompatTextView
-                            android:id="@+id/totalCombo"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="@dimen/spacing_sm"
-                            android:fontFamily="@font/poppinsbold"
-                            android:text="0"
-                            android:textColor="@color/colorTextPrimary"
-                            android:textSize="18sp" />
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:fontFamily="@font/poppinsmedium"
-                            android:gravity="center"
-                            android:text="@string/home_total_combos"
-                            android:textColor="@color/colorTextSecondary"
-                            android:textSize="@dimen/text_caption" />
-                    </LinearLayout>
+                    </FrameLayout>
                 </androidx.cardview.widget.CardView>
             </LinearLayout>
 
@@ -473,97 +648,142 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/spacing_sm"
+                android:baselineAligned="false"
                 android:orientation="horizontal">
 
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/fastBilling"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="@dimen/home_billing_card_height"
                     android:layout_marginEnd="6dp"
                     android:layout_weight="1"
                     android:clickable="true"
                     android:focusable="true"
-                    android:minHeight="96dp"
-                    app:cardBackgroundColor="@color/colorSurface"
+                    app:cardBackgroundColor="@android:color/transparent"
                     app:cardCornerRadius="@dimen/radius_md"
                     app:cardElevation="0dp"
                     app:rippleColor="@color/colorPrimaryLight"
-                    app:strokeColor="@color/colorBorder"
-                    app:strokeWidth="1dp">
+                    app:strokeWidth="0dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:gravity="center"
-                        android:orientation="vertical"
-                        android:padding="@dimen/spacing_md">
+                        android:background="@drawable/bg_kpi_card_blue"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="12dp">
 
                         <ImageView
                             android:layout_width="40dp"
                             android:layout_height="40dp"
-                            android:background="@drawable/bg_quick_action_blue"
+                            android:background="@drawable/bg_kpi_icon_blue"
                             android:contentDescription="@null"
                             android:padding="8dp"
                             android:src="@drawable/ic_receipt"
                             app:tint="@color/colorPrimary" />
 
-                        <TextView
-                            android:layout_width="match_parent"
+                        <LinearLayout
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="@dimen/spacing_xs"
-                            android:ellipsize="end"
-                            android:fontFamily="@font/poppinsmedium"
-                            android:gravity="center"
-                            android:maxLines="2"
-                            android:text="@string/fast_billing"
-                            android:textColor="@color/colorTextPrimary"
-                            android:textSize="@dimen/text_caption" />
+                            android:layout_marginStart="10dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/poppinsbold"
+                                android:text="@string/fast_billing"
+                                android:textColor="@color/colorTextPrimary"
+                                android:textSize="13sp" />
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/poppinsregular"
+                                android:maxLines="2"
+                                android:ellipsize="end"
+                                android:text="@string/home_billing_fast_sub"
+                                android:textColor="@color/colorTextSecondary"
+                                android:textSize="11sp" />
+                        </LinearLayout>
+
+                        <ImageView
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
+                            android:background="@drawable/bg_support_icon_circle_blue"
+                            android:contentDescription="@null"
+                            android:padding="6dp"
+                            android:src="@drawable/ic_chevron_right"
+                            app:tint="@color/colorPrimary" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/tableBilling"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="@dimen/home_billing_card_height"
                     android:layout_marginStart="6dp"
                     android:layout_weight="1"
                     android:clickable="true"
                     android:focusable="true"
-                    android:minHeight="96dp"
-                    app:cardBackgroundColor="@color/colorSurface"
+                    app:cardBackgroundColor="@android:color/transparent"
                     app:cardCornerRadius="@dimen/radius_md"
                     app:cardElevation="0dp"
                     app:rippleColor="@color/colorPrimaryLight"
-                    app:strokeColor="@color/colorBorder"
-                    app:strokeWidth="1dp">
+                    app:strokeWidth="0dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:gravity="center"
-                        android:orientation="vertical"
-                        android:padding="@dimen/spacing_md">
+                        android:background="@drawable/bg_kpi_card_green"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="12dp">
 
                         <ImageView
                             android:layout_width="40dp"
                             android:layout_height="40dp"
-                            android:background="@drawable/bg_quick_action_green"
+                            android:background="@drawable/bg_kpi_icon_green"
                             android:contentDescription="@null"
                             android:padding="8dp"
                             android:src="@drawable/ic_table"
                             app:tint="@color/statusActive" />
 
-                        <TextView
-                            android:layout_width="match_parent"
+                        <LinearLayout
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="@dimen/spacing_xs"
-                            android:ellipsize="end"
-                            android:fontFamily="@font/poppinsmedium"
-                            android:gravity="center"
-                            android:maxLines="2"
-                            android:text="@string/dine_in"
-                            android:textColor="@color/colorTextPrimary"
-                            android:textSize="@dimen/text_caption" />
+                            android:layout_marginStart="10dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/poppinsbold"
+                                android:text="@string/dine_in"
+                                android:textColor="@color/colorTextPrimary"
+                                android:textSize="13sp" />
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/poppinsregular"
+                                android:maxLines="2"
+                                android:ellipsize="end"
+                                android:text="@string/home_billing_dinein_sub"
+                                android:textColor="@color/colorTextSecondary"
+                                android:textSize="11sp" />
+                        </LinearLayout>
+
+                        <ImageView
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
+                            android:background="@drawable/bg_support_icon_circle_green"
+                            android:contentDescription="@null"
+                            android:padding="6dp"
+                            android:src="@drawable/ic_chevron_right"
+                            app:tint="@color/statusActive" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
@@ -573,160 +793,223 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/spacing_sm"
+                android:baselineAligned="false"
                 android:orientation="horizontal">
 
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/takeAwayBilling"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="@dimen/home_billing_card_height"
                     android:layout_marginEnd="6dp"
                     android:layout_weight="1"
                     android:clickable="true"
                     android:focusable="true"
-                    android:minHeight="96dp"
-                    app:cardBackgroundColor="@color/colorSurface"
+                    app:cardBackgroundColor="@android:color/transparent"
                     app:cardCornerRadius="@dimen/radius_md"
                     app:cardElevation="0dp"
                     app:rippleColor="@color/colorPrimaryLight"
-                    app:strokeColor="@color/colorBorder"
-                    app:strokeWidth="1dp">
+                    app:strokeWidth="0dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:gravity="center"
-                        android:orientation="vertical"
-                        android:padding="@dimen/spacing_md">
+                        android:background="@drawable/bg_kpi_card_orange"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="12dp">
 
                         <ImageView
                             android:layout_width="40dp"
                             android:layout_height="40dp"
-                            android:background="@drawable/bg_quick_action_orange"
+                            android:background="@drawable/bg_kpi_icon_orange"
                             android:contentDescription="@null"
                             android:padding="8dp"
                             android:src="@drawable/ic_takeaway"
                             app:tint="@color/statusTrial" />
 
-                        <TextView
-                            android:layout_width="match_parent"
+                        <LinearLayout
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="@dimen/spacing_xs"
-                            android:ellipsize="end"
-                            android:fontFamily="@font/poppinsmedium"
-                            android:gravity="center"
-                            android:maxLines="2"
-                            android:text="@string/take_away"
-                            android:textColor="@color/colorTextPrimary"
-                            android:textSize="@dimen/text_caption" />
+                            android:layout_marginStart="10dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/poppinsbold"
+                                android:text="@string/take_away"
+                                android:textColor="@color/colorTextPrimary"
+                                android:textSize="13sp" />
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/poppinsregular"
+                                android:maxLines="2"
+                                android:ellipsize="end"
+                                android:text="@string/home_billing_takeaway_sub"
+                                android:textColor="@color/colorTextSecondary"
+                                android:textSize="11sp" />
+                        </LinearLayout>
+
+                        <ImageView
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
+                            android:background="@drawable/bg_kpi_icon_orange"
+                            android:contentDescription="@null"
+                            android:padding="6dp"
+                            android:src="@drawable/ic_chevron_right"
+                            app:tint="@color/statusTrial" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/messBilling"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="@dimen/home_billing_card_height"
                     android:layout_marginStart="6dp"
                     android:layout_weight="1"
                     android:clickable="true"
                     android:focusable="true"
-                    android:minHeight="96dp"
-                    app:cardBackgroundColor="@color/colorSurface"
+                    app:cardBackgroundColor="@android:color/transparent"
                     app:cardCornerRadius="@dimen/radius_md"
                     app:cardElevation="0dp"
                     app:rippleColor="@color/colorPrimaryLight"
-                    app:strokeColor="@color/colorBorder"
-                    app:strokeWidth="1dp">
+                    app:strokeWidth="0dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:gravity="center"
-                        android:orientation="vertical"
-                        android:padding="@dimen/spacing_md">
+                        android:background="@drawable/bg_kpi_card_purple"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="12dp">
 
                         <ImageView
                             android:layout_width="40dp"
                             android:layout_height="40dp"
-                            android:background="@drawable/bg_quick_action_purple"
+                            android:background="@drawable/bg_kpi_icon_purple"
                             android:contentDescription="@null"
                             android:padding="8dp"
                             android:src="@drawable/ic_report_mess"
                             app:tint="@color/deepPurple" />
 
-                        <TextView
-                            android:layout_width="match_parent"
+                        <LinearLayout
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="@dimen/spacing_xs"
-                            android:ellipsize="end"
-                            android:fontFamily="@font/poppinsmedium"
-                            android:gravity="center"
-                            android:maxLines="2"
-                            android:text="@string/mess"
-                            android:textColor="@color/colorTextPrimary"
-                            android:textSize="@dimen/text_caption" />
+                            android:layout_marginStart="10dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/poppinsbold"
+                                android:text="@string/mess"
+                                android:textColor="@color/colorTextPrimary"
+                                android:textSize="13sp" />
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/poppinsregular"
+                                android:maxLines="2"
+                                android:ellipsize="end"
+                                android:text="@string/home_billing_mess_sub"
+                                android:textColor="@color/colorTextSecondary"
+                                android:textSize="11sp" />
+                        </LinearLayout>
+
+                        <ImageView
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
+                            android:background="@drawable/bg_kpi_icon_purple"
+                            android:contentDescription="@null"
+                            android:padding="6dp"
+                            android:src="@drawable/ic_chevron_right"
+                            app:tint="@color/deepPurple" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
 
             <!-- Sync -->
             <LinearLayout
+                android:id="@+id/fetchDataLayout"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="@dimen/spacing_lg"
+                android:background="@drawable/bg_button_outline"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:visibility="gone">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_cloud_download"
+                    app:tint="@color/colorPrimary" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:text="@string/home_fetch_data"
+                    android:textColor="@color/colorPrimary"
+                    android:textSize="@dimen/text_body" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/synchronizeLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/spacing_lg"
-                android:orientation="horizontal">
+                android:background="@drawable/bg_button_primary"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="16dp"
+                android:paddingTop="14dp"
+                android:paddingEnd="16dp"
+                android:paddingBottom="14dp">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_cloud_upload"
+                    app:tint="@color/white" />
 
                 <LinearLayout
-                    android:id="@+id/fetchDataLayout"
                     android:layout_width="0dp"
-                    android:layout_height="48dp"
-                    android:layout_marginEnd="6dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
                     android:layout_weight="1"
-                    android:background="@drawable/bg_button_outline"
-                    android:gravity="center"
-                    android:orientation="horizontal"
-                    android:visibility="gone">
-
-                    <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:src="@drawable/ic_cloud_download"
-                        app:tint="@color/colorPrimary" />
+                    android:orientation="vertical">
 
                     <TextView
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="6dp"
-                        android:fontFamily="@font/poppinsmedium"
-                        android:text="@string/home_fetch_data"
-                        android:textColor="@color/colorPrimary"
-                        android:textSize="@dimen/text_body" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/synchronizeLayout"
-                    android:layout_width="0dp"
-                    android:layout_height="48dp"
-                    android:layout_marginStart="6dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_button_primary"
-                    android:gravity="center"
-                    android:orientation="horizontal">
-
-                    <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:src="@drawable/ic_cloud_upload"
-                        app:tint="@color/white" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="6dp"
-                        android:fontFamily="@font/poppinsmedium"
+                        android:fontFamily="@font/poppinsbold"
                         android:text="@string/home_synchronize"
                         android:textColor="@color/white"
-                        android:textSize="@dimen/text_body" />
+                        android:textSize="15sp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/poppinsregular"
+                        android:text="@string/home_sync_subtitle"
+                        android:textColor="#CCFFFFFF"
+                        android:textSize="12sp" />
                 </LinearLayout>
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_chevron_right"
+                    app:tint="@color/white" />
             </LinearLayout>
 
             <!-- Low inventory (hidden until populated) -->
@@ -820,14 +1103,7 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <com.google.android.gms.ads.AdView
-                android:id="@+id/ad_view"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/spacing_xl"
-                android:layout_marginBottom="@dimen/spacing_sm"
-                ads:adSize="SMART_BANNER"
-                ads:adUnitId="ca-app-pub-2325627373654257/6815283571" />
+            </LinearLayout>
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>

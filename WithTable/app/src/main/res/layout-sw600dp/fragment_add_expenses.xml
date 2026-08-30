@@ -26,21 +26,7 @@
                 android:layout_marginStart="15dp"
                 android:src="@drawable/ic_back"
                 app:tint="@color/white" />
-
-            <androidx.appcompat.widget.AppCompatTextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:layout_gravity="center"
-                android:layout_marginStart="15dp"
-                android:layout_toEndOf="@+id/backToExpenses"
-                android:fontFamily="@font/poppinsmedium"
-                android:gravity="center"
-                android:paddingStart="5dp"
-                android:paddingEnd="5dp"
-                android:text="@string/ui_add_expense"
-                android:textColor="@color/white"
-                android:textSize="17dp" />
+
 </RelativeLayout>
 
     </com.google.android.material.appbar.AppBarLayout>

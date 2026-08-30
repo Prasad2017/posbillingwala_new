@@ -30,15 +30,40 @@
                 android:padding="@dimen/spacing_sm"
                 android:src="@drawable/ic_back"
                 app:tint="@color/white" />
-
-            <androidx.appcompat.widget.AppCompatTextView
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:fontFamily="@font/poppinsmedium"
-                android:text="@string/category_list"
-                android:textColor="@color/white"
-                android:textSize="@dimen/text_title" />
+                android:layout_centerVertical="true"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="8dp"
+                android:layout_toEndOf="@+id/backToHome"
+                android:orientation="vertical">
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/toolbarTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:maxLines="1"
+                    android:text="@string/category_list"
+                    android:textColor="@color/white"
+                    android:textSize="16sp" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/toolbarSubtitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:fontFamily="@font/poppinsregular"
+                    android:maxLines="1"
+                    android:textColor="#CCFFFFFF"
+                    android:textSize="11sp"
+                    android:visibility="gone" />
+
+            </LinearLayout>
+
+
         </RelativeLayout>
     </com.google.android.material.appbar.AppBarLayout>
 

@@ -69,7 +69,7 @@
     <string name="trial_error_default">नोंदणी पूर्ण होऊ शकली नाही. कृपया पुन्हा प्रयत्न करा.</string>
     <string name="trial_error_dialog_title">काहीतरी चुकले</string>
     <string name="trial_success_title">POS Billingwala मध्ये स्वागत आहे!</string>
-    <string name="trial_success_message">तुमची मोफत अ‍ॅप लायसन्स की:\n\n%1$s\n\nही सुरक्षित ठेवा — लॉगिनसाठी आवश्यक आहे.\n\nसुरू ठेवा टॅप करून अ‍ॅप उघडा व बिलिंग सुरू करा.</string>
+    <string name="trial_success_message">तुमची मोफत अ‍ॅप लायसन्स की:\n\n%1$s\n\nPB-PIN (दैनिक लॉगिन): %2$s\nरिपोर्ट PIN: %3$s\n\nहे सुरक्षित ठेवा — लॉगिनसाठी आवश्यक आहेत.\n\nसुरू ठेवा टॅप करून अ‍ॅप उघडा व बिलिंग सुरू करा.</string>
     <string name="trial_success_button">लॉगिनवर सुरू ठेवा</string>
 
     <string name="in_app_snack_bar_message">अपडेट जवळजवळ पूर्ण!</string>
@@ -240,9 +240,9 @@
     <string name="setting_hint_share">अ‍ॅप इतर दुकानांसोबत शेअर करा</string>
     <string name="setting_hint_logout">या डिव्हाइसवरून साइन आउट करा</string>
     <string name="printer_section_printers">प्रिंटर</string>
-    <string name="printer_section_invoice">इनव्हॉइस</string>
+    <string name="printer_section_invoice">इनव्हॉइस सेटिंग</string>
     <string name="printer_section_bill">बिल पर्याय</string>
-    <string name="printer_section_terms">अटी</string>
+    <string name="printer_section_terms">अटी व शर्ती</string>
     <string name="shop_section_branding">ब्रँडिंग</string>
     <string name="shop_section_identity">दुकान ओळख</string>
     <string name="shop_section_contact">संपर्क</string>
@@ -267,6 +267,11 @@
     <string name="home_fetch_data">डेटा घ्या</string>
     <string name="home_synchronize">सिंक करा</string>
     <string name="home_low_inventory">कमी स्टॉक</string>
+    <string name="home_monthly_sales_label">मासिक विक्री</string>
+    <string name="home_total_sales_label">एकूण विक्री</string>
+    <string name="home_today_sales_label">आजची विक्री</string>
+    <string name="home_filter_today">आज</string>
+    <string name="home_filter_this_month">या महिन्यात</string>
     <string name="home_section_sales">विक्री आढावा</string>
     <string name="home_section_catalog">कॅटलॉग</string>
     <string name="home_section_billing">बिलिंग सुरू करा</string>

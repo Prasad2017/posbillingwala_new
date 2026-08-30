@@ -26,6 +26,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -176,6 +177,12 @@ public class DuplicateBluetoothPrint extends BaseActivity implements View.OnClic
             ActivityCompat.requestPermissions(this, PERMISSIONS, PERMISSION_ALL);
         }
 
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                finish();
+            }
+        });
     }
 
     public void initViews() {
@@ -794,13 +801,6 @@ public class DuplicateBluetoothPrint extends BaseActivity implements View.OnClic
                     }
                 }).check();
 
-    }
-
-    @Override
-    public void onBackPressed() {
-        // Return to the caller (invoice list / POS). Do not start a new MainActivity,
-        // which was incorrectly opening Fast Billing.
-        finish();
     }
 
 }

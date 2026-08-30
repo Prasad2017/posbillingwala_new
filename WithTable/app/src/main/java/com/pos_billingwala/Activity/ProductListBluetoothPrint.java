@@ -26,6 +26,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 import androidx.core.app.ActivityCompat;
@@ -233,6 +234,12 @@ public class ProductListBluetoothPrint extends BaseActivity implements View.OnCl
             ActivityCompat.requestPermissions(this, PERMISSIONS, PERMISSION_ALL);
         }
 
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                finish();
+            }
+        });
     }
 
     public void initViews() {
@@ -461,12 +468,6 @@ public class ProductListBluetoothPrint extends BaseActivity implements View.OnCl
         requestPermission();
         getPrinterSettingDetails();
         getProductList();
-    }
-
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        finish();
     }
 
     public void requestPermission() {

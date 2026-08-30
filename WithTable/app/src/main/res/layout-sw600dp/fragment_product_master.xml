@@ -30,6 +30,40 @@
                 android:padding="@dimen/spacing_sm"
                 android:src="@drawable/ic_back"
                 app:tint="@color/white" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="8dp"
+                android:layout_toEndOf="@+id/backToHome"
+            android:layout_toStartOf="@+id/printProductCardView"
+                android:orientation="vertical">
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/toolbarTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:maxLines="1"
+                    android:text="@string/ui_product_list"
+                    android:textColor="@color/white"
+                    android:textSize="16sp" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/toolbarSubtitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:fontFamily="@font/poppinsregular"
+                    android:maxLines="1"
+                    android:textColor="#CCFFFFFF"
+                    android:textSize="11sp"
+                    android:visibility="gone" />
+
+            </LinearLayout>
+
 
             <LinearLayout
                 android:id="@+id/toolbarActions"
@@ -75,17 +109,6 @@
                     android:textSize="@dimen/text_body" />
             </LinearLayout>
 
-            <androidx.appcompat.widget.AppCompatTextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_centerVertical="true"
-                android:layout_toStartOf="@id/toolbarActions"
-                android:layout_toEndOf="@id/backToHome"
-                android:fontFamily="@font/poppinsmedium"
-                android:gravity="center"
-                android:text="@string/ui_product_list"
-                android:textColor="@color/white"
-                android:textSize="@dimen/text_title" />
         </RelativeLayout>
     </com.google.android.material.appbar.AppBarLayout>
 

@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.pos_billingwala.Extra.RowDividerUi;
 import com.pos_billingwala.Model.InventoryResponse;
 import com.pos_billingwala.databinding.InventoryListBinding;
 
@@ -41,6 +42,7 @@ public class InventoryAdapter extends RecyclerView.Adapter<InventoryAdapter.MyVi
         holder.binding.afterSaleInventoryQty.setText(inventoryResponse.getAfterSaleInventoryQuantity());
         holder.binding.saleInventoryQty.setText(inventoryResponse.getSaleInventoryQuantity());
 
+        RowDividerUi.bindLastItem(holder.binding.rowDivider, position, getItemCount());
     }
 
     @Override

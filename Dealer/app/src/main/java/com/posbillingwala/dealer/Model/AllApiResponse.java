@@ -188,6 +188,15 @@ public class AllApiResponse {
     @SerializedName("activeBranchesTrendLabel")
     @Expose
     private String activeBranchesTrendLabel;
+    @SerializedName("licenseKey")
+    @Expose
+    private String licenseKey;
+    @SerializedName("mpin")
+    @Expose
+    private String mpin;
+    @SerializedName("reportPin")
+    @Expose
+    private String reportPin;
 
 
     public String getStatus() {
@@ -375,4 +384,10 @@ public class AllApiResponse {
     public String getTodaySalesTrendLabel() { return todaySalesTrendLabel; }
     public String getCustomersAddedTrendLabel() { return customersAddedTrendLabel; }
     public String getActiveBranchesTrendLabel() { return activeBranchesTrendLabel; }
+
+    public String getLicenseKey() { return licenseKey; }
+
+    public String getMpin() { return mpin; }
+
+    public String getReportPin() { return reportPin; }
 }

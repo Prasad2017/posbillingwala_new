@@ -58,7 +58,13 @@ class SettingsController extends Controller
         }
 
         if ($roleId === 2) {
-            $rules['contact_number'] = 'required|digits:10';
+            $rules['contact_number'] = [
+                'required',
+                'digits:10',
+                Rule::unique('users', 'contact_number')->ignore($user->id)->where(function ($query) {
+                    return $query->where('role_id', 2);
+                }),
+            ];
             if ($this->usersHasColumn('address')) {
                 $rules['address'] = 'required|string|max:500';
             }
@@ -66,7 +72,9 @@ class SettingsController extends Controller
                 $rules['aadhar_number'] = [
                     'required',
                     'digits:12',
-                    Rule::unique('users', 'aadhar_number')->ignore($user->id),
+                    Rule::unique('users', 'aadhar_number')->ignore($user->id)->where(function ($query) {
+                        return $query->where('role_id', 2);
+                    }),
                 ];
             }
         }

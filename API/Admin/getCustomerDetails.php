@@ -36,7 +36,7 @@ $uid = (int) $customerId;
 $user = db_stmt_fetch_one(
     $con,
     "SELECT u.id, u.name, u.email, u.contact_number, u.aadhar_number, u.address, u.shopName,
-            u.dealerId, u.is_active, u.created_at, d.name AS dealerName
+            u.dealerId, u.is_active, u.created_at, u.reportPin, d.name AS dealerName
      FROM `users` u
      LEFT JOIN `users` d ON d.id = u.dealerId AND d.role_id = '2'
      WHERE u.id = ? AND u.role_id = '3'
@@ -123,6 +123,9 @@ foreach ($licenseRows as $row) {
         'phoneNo1' => $store['phoneNo1'],
         'phoneNo2' => $store['phoneNo2'],
         'licenseKey' => isset($row['licenseKey']) ? (string) $row['licenseKey'] : '',
+        'mpin' => isset($row['mpin']) && trim((string) $row['mpin']) !== ''
+            ? (string) $row['mpin']
+            : licence_default_mpin(),
         'licenseValidity' => $validity,
         'licenseType' => $type,
         'licenseStatus' => isset($row['licenseStatus']) ? (string) $row['licenseStatus'] : '',
@@ -157,6 +160,9 @@ $response = array(
             'aadhar_number' => isset($user['aadhar_number']) ? (string) $user['aadhar_number'] : '',
             'address' => isset($user['address']) ? (string) $user['address'] : '',
             'shopName' => isset($user['shopName']) ? (string) $user['shopName'] : '',
+            'reportPin' => isset($user['reportPin']) && (string) $user['reportPin'] !== ''
+                ? (string) $user['reportPin']
+                : licence_default_report_pin(),
             'dealerId' => isset($user['dealerId']) ? (string) $user['dealerId'] : '',
             'dealerName' => isset($user['dealerName']) ? (string) $user['dealerName'] : '',
             'is_active' => isset($user['is_active']) ? (string) $user['is_active'] : '1',

@@ -256,6 +256,10 @@
                         <include
                             android:id="@+id/rowAddress"
                             layout="@layout/item_info_row" />
+
+                        <include
+                            android:id="@+id/rowReportPin"
+                            layout="@layout/item_info_row" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 

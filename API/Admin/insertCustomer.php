@@ -2,6 +2,7 @@
 include_once('config.php');
 include_once(__DIR__ . '/../licence_expiry.php');
 require_once __DIR__ . '/../db_prepared.php';
+require_once __DIR__ . '/../user_identity.php';
 require_once __DIR__ . '/auth_guard.php';
 
 $response = array();
@@ -35,6 +36,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         exit;
     }
 
+    $contact_number = licence_normalize_contact($contact_number);
+    if (strlen($contact_number) < 10) {
+        $response['status'] = 'false';
+        $response['message'] = 'Please enter a valid 10-digit mobile number.';
+        header('Content-type: application/json; charset=utf-8');
+        echo json_encode($response);
+        exit;
+    }
+
+    if (user_customer_mobile_taken($con, $contact_number)) {
+        $response['status'] = 'false';
+        $response['message'] = 'This mobile number is already registered for another customer.';
+        header('Content-type: application/json; charset=utf-8');
+        echo json_encode($response);
+        exit;
+    }
+
     $licenseValidity = licence_apply_trial_validity($licenseType, $licenseValidity);
     $licenseKey = licence_generate_unique_key($con);
     if ($licenseKey === null) {
@@ -49,6 +67,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $paymentStatus = ($licenseType === 'Demo' || $licenseType === 'Trial') ? '' : 'cash';
     // Paid direct sale: active but device not bound yet
     $licenseStatus = 'active';
+    $defaultMpin = licence_default_mpin();
+    $defaultReportPin = licence_default_report_pin();
 
     $okUser = db_stmt_execute(
         $con,
@@ -64,9 +84,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $customerId = mysqli_insert_id($con);
         $okLic = db_stmt_execute(
             $con,
-            'INSERT INTO `licenses`(`userId`, `licenseKey`, `licenseValidity`, `licenseType`, `licenseStatus`, `expiryDate`, `paymentStatus`, `amount`, `userType`, `userName`, `fastBilling`, `takeAway`, `dineIn`, `mess`)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, \'owner\', ?, ?, ?, ?, ?)',
-            'issssssssiiii',
+            'INSERT INTO `licenses`(`userId`, `licenseKey`, `licenseValidity`, `licenseType`, `licenseStatus`, `expiryDate`, `paymentStatus`, `amount`, `userType`, `userName`, `mpin`, `fastBilling`, `takeAway`, `dineIn`, `mess`)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, \'owner\', ?, ?, ?, ?, ?, ?)',
+            'isssssssssiiii',
             $customerId,
             $licenseKey,
             $licenseValidity,
@@ -76,6 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $paymentStatus,
             $amount,
             $name,
+            $defaultMpin,
             (int) $fastBilling,
             (int) $takeAway,
             (int) $dineIn,
@@ -86,6 +107,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $response['status'] = 'true';
             $response['message'] = 'registration successful!';
             $response['licenseKey'] = $licenseKey;
+            $response['mpin'] = $defaultMpin;
+            $response['reportPin'] = $defaultReportPin;
             $response['customerId'] = (string) $customerId;
             $response['expiryDate'] = $expiryDate;
             $response['licenseStatus'] = $licenseStatus;

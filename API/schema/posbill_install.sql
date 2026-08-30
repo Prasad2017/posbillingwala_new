@@ -152,7 +152,7 @@ CREATE TABLE `users` (
   `shopImage` text DEFAULT NULL,
   `dealerId` int(10) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `contact_number` (`contact_number`)
+  UNIQUE KEY `users_role_contact` (`role_id`,`contact_number`(20))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `licenses` (
