@@ -34,6 +34,9 @@ $i=0;
         $aadhar_number=$user['aadhar_number'];
         $address=$user['address'];
         $shopName=$user['shopName'];
+        $reportPin = isset($user['reportPin']) && (string) $user['reportPin'] !== ''
+            ? (string) $user['reportPin']
+            : licence_default_report_pin();
         $json = array();
         
         
@@ -62,6 +65,9 @@ $i=0;
         $takeAway=$user_licenses['takeAway'];
         $dineIn=$user_licenses['dineIn'];
         $mess = isset($user_licenses['mess']) ? $user_licenses['mess'] : '0';
+        $mpin = isset($user_licenses['mpin']) && trim((string) $user_licenses['mpin']) !== ''
+            ? (string) $user_licenses['mpin']
+            : licence_default_mpin();
         $branch = licence_branch_fields($user_licenses);
         
         
@@ -69,7 +75,7 @@ $i=0;
                          "shopName1"=>$store['shopName1'], "shopName2"=>$store['shopName2'],
                          "addressLine1"=>$store['addressLine1'], "addressLine2"=>$store['addressLine2'], "addressLine3"=>$store['addressLine3'],
                          "phoneNo1"=>$store['phoneNo1'], "phoneNo2"=>$store['phoneNo2'],
-                         "licenseKey"=>$licenseKey, "licenseValidity"=>$licenseValidity, "licenseType"=>$licenseType, "licenseStatus"=>$licenseStatus,
+                         "licenseKey"=>$licenseKey, "mpin"=>$mpin, "licenseValidity"=>$licenseValidity, "licenseType"=>$licenseType, "licenseStatus"=>$licenseStatus,
                          "registrationDate"=>$registrationDate, "expiryDate"=>$expiryDate, "paymentStatus"=>$paymentStatus, "amount"=>$amount, "fastBilling"=>$fastBilling, "takeAway"=>$takeAway, "dineIn"=>$dineIn, "mess"=>$mess,
                          "userType"=>$branch['userType'], "userName"=>$branch['userName'], "branchLabel"=>$branch['branchLabel']);
         
@@ -78,7 +84,7 @@ $i=0;
       
         }
         
-        $json1[] = array("id"=>$id, "role_id" => $role_id, "name"=>$name, "email"=>$email, "contact_number"=>$contact_number, "aadhar_number"=>$aadhar_number, "address"=>$address, "shopName"=>$shopName, "licensesResponse"=>$json);
+        $json1[] = array("id"=>$id, "role_id" => $role_id, "name"=>$name, "email"=>$email, "contact_number"=>$contact_number, "aadhar_number"=>$aadhar_number, "address"=>$address, "shopName"=>$shopName, "reportPin"=>$reportPin, "licensesResponse"=>$json);
         
           $json2 = array("customerResponse"=>$json1);
             

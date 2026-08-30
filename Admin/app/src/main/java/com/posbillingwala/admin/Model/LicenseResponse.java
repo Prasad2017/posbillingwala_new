@@ -23,6 +23,9 @@ public class LicenseResponse {
     @SerializedName("licenseKey")
     @Expose
     private String licenseKey;
+    @SerializedName("mpin")
+    @Expose
+    private String mpin;
     @SerializedName("licenseValidity")
     @Expose
     private String licenseValidity;
@@ -128,6 +131,14 @@ public class LicenseResponse {
 
     public void setLicenseKey(String licenseKey) {
         this.licenseKey = licenseKey;
+    }
+
+    public String getMpin() {
+        return mpin;
+    }
+
+    public void setMpin(String mpin) {
+        this.mpin = mpin;
     }
 
     public String getLicenseValidity() {

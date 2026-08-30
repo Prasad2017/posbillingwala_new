@@ -16,6 +16,22 @@ if (!function_exists('licence_lifetime_days')) {
     }
 }
 
+if (!function_exists('licence_default_mpin')) {
+    /** Default PB-PIN assigned when a customer licence is created. */
+    function licence_default_mpin()
+    {
+        return '9082';
+    }
+}
+
+if (!function_exists('licence_default_report_pin')) {
+    /** Default report PIN for new customer accounts (matches users.reportPin DB default). */
+    function licence_default_report_pin()
+    {
+        return '9082';
+    }
+}
+
 if (!function_exists('licence_normalize_validity_days')) {
     /**
      * P4-3: Map UI / posted validity labels to day counts.
@@ -822,6 +838,122 @@ if (!function_exists('licence_store_sales')) {
     }
 }
 
+if (!function_exists('licence_sales_trend_pct')) {
+    function licence_sales_trend_pct($current, $previous)
+    {
+        $c = (float) $current;
+        $p = (float) $previous;
+        if ($p == 0.0) {
+            return $c > 0.0 ? '+100' : '0';
+        }
+        return (string) round((($c - $p) / $p) * 100.0, 0);
+    }
+}
+
+if (!function_exists('licence_home_sales_overview')) {
+    /**
+     * POS home dashboard aggregates for one licence/branch.
+     *
+     * @param mysqli $con
+     * @param string|int $licenseId
+     * @param string $period today|month
+     * @return array
+     */
+    function licence_home_sales_overview($con, $licenseId, $period = 'today')
+    {
+        require_once __DIR__ . '/db_prepared.php';
+
+        $period = strtolower(trim((string) $period));
+        if ($period !== 'month') {
+            $period = 'today';
+        }
+
+        $today = licence_today();
+        $yesterday = date('Y-m-d', strtotime('-1 day'));
+        $monthPrefix = date('Y-m');
+        $prevMonthPrefix = date('Y-m', strtotime('-1 month'));
+
+        $allTimeSales = db_stmt_scalar_string(
+            $con,
+            'SELECT COALESCE(SUM(`totalAmount`), 0) FROM `invoice` WHERE `licenseId` = ?' . invoice_and_not_refunded(''),
+            's',
+            (string) $licenseId
+        );
+        $todaySales = db_stmt_scalar_string(
+            $con,
+            'SELECT COALESCE(SUM(`totalAmount`), 0) FROM `invoice` WHERE `licenseId` = ? AND `invoiceDate` LIKE CONCAT(\'%\', ?, \'%\')' . invoice_and_not_refunded(''),
+            'ss',
+            (string) $licenseId,
+            (string) $today
+        );
+        $yesterdaySales = db_stmt_scalar_string(
+            $con,
+            'SELECT COALESCE(SUM(`totalAmount`), 0) FROM `invoice` WHERE `licenseId` = ? AND `invoiceDate` LIKE CONCAT(\'%\', ?, \'%\')' . invoice_and_not_refunded(''),
+            'ss',
+            (string) $licenseId,
+            (string) $yesterday
+        );
+        $monthSales = db_stmt_scalar_string(
+            $con,
+            'SELECT COALESCE(SUM(`totalAmount`), 0) FROM `invoice` WHERE `licenseId` = ? AND `invoiceDate` LIKE CONCAT(?, \'%\')' . invoice_and_not_refunded(''),
+            'ss',
+            (string) $licenseId,
+            (string) $monthPrefix
+        );
+        $prevMonthSales = db_stmt_scalar_string(
+            $con,
+            'SELECT COALESCE(SUM(`totalAmount`), 0) FROM `invoice` WHERE `licenseId` = ? AND `invoiceDate` LIKE CONCAT(?, \'%\')' . invoice_and_not_refunded(''),
+            'ss',
+            (string) $licenseId,
+            (string) $prevMonthPrefix
+        );
+
+        $totalSubcategory = db_stmt_scalar_string(
+            $con,
+            'SELECT COUNT(*) FROM `product_subcategories` WHERE `userId` = ? AND IFNULL(`subcategoryDeletedStatus`, \'0\') = \'0\'',
+            's',
+            (string) $licenseId
+        );
+        $totalProduct = db_stmt_scalar_string(
+            $con,
+            'SELECT COUNT(*) FROM `products` WHERE `userId` = ? AND IFNULL(`categoryName`, \'\') <> \'\' AND IFNULL(`productDeletedStatus`, \'0\') = \'0\'',
+            's',
+            (string) $licenseId
+        );
+        $totalCombo = db_stmt_scalar_string(
+            $con,
+            'SELECT COUNT(*) FROM `combos` WHERE `userId` = ? AND IFNULL(`comboDeletedStatus`, \'0\') = \'0\'',
+            's',
+            (string) $licenseId
+        );
+
+        $allTimeSales = ($allTimeSales !== null && $allTimeSales !== '') ? (string) round((float) $allTimeSales, 2) : '0';
+        $todaySales = ($todaySales !== null && $todaySales !== '') ? (string) round((float) $todaySales, 2) : '0';
+        $monthSales = ($monthSales !== null && $monthSales !== '') ? (string) round((float) $monthSales, 2) : '0';
+
+        $primarySales = $period === 'month' ? $monthSales : $allTimeSales;
+        $primarySalesLabel = $period === 'month' ? 'monthly_sales' : 'total_sales';
+        $primarySalesTrend = $period === 'month'
+            ? licence_sales_trend_pct($monthSales, $prevMonthSales)
+            : licence_sales_trend_pct($todaySales, $yesterdaySales);
+        $todaySalesTrend = licence_sales_trend_pct($todaySales, $yesterdaySales);
+
+        return array(
+            'period' => $period,
+            'primarySalesLabel' => $primarySalesLabel,
+            'primarySales' => $primarySales,
+            'todaySales' => $todaySales,
+            'monthSales' => $monthSales,
+            'allTimeSales' => $allTimeSales,
+            'primarySalesTrend' => $primarySalesTrend,
+            'todaySalesTrend' => $todaySalesTrend,
+            'totalSubcategory' => ($totalSubcategory !== null && $totalSubcategory !== '') ? (string) $totalSubcategory : '0',
+            'totalProduct' => ($totalProduct !== null && $totalProduct !== '') ? (string) $totalProduct : '0',
+            'totalCombo' => ($totalCombo !== null && $totalCombo !== '') ? (string) $totalCombo : '0',
+        );
+    }
+}
+
 if (!function_exists('licence_normalize_contact')) {
     /**
      * Strip non-digits; keep last 10 digits for Indian mobile numbers.
@@ -944,8 +1076,9 @@ if (!function_exists('licence_register_trial_customer')) {
             return $response;
         }
 
-        if (licence_contact_has_trial($con, $contactDigits)) {
-            $response['message'] = 'This mobile number is already registered. Please log in with your licence key, or call +91 89831 49299 for help.';
+        require_once __DIR__ . '/user_identity.php';
+        if (user_customer_mobile_taken($con, $contactDigits)) {
+            $response['message'] = 'This mobile number is already registered for a customer. Please log in with your licence key, or call +91 89831 49299 for help.';
             return $response;
         }
 
@@ -960,7 +1093,7 @@ if (!function_exists('licence_register_trial_customer')) {
         $today = licence_today();
         $expiryDate = date('Y-m-d', strtotime($today . ' +' . (int) $licenseValidity . ' day'));
         $contactStored = $contactDigits;
-        $mpin = '';
+        $mpin = licence_default_mpin();
 
         $customerId = db_stmt_insert_id(
             $con,
@@ -1003,6 +1136,8 @@ if (!function_exists('licence_register_trial_customer')) {
         $response['message'] = 'Your free account is ready! Log in with your licence key to start using the app.';
         $response['licenceKey'] = $licenseKey;
         $response['licenceId'] = (string) $licenceId;
+        $response['mpin'] = $mpin;
+        $response['reportPin'] = licence_default_report_pin();
         return $response;
     }
 }

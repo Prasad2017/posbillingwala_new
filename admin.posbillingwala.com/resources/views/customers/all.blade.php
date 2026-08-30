@@ -21,6 +21,7 @@
                                 <th>Mobile Number</th>
                                 <th>Shop Name</th>
                                 <th>App License Key</th>
+                                <th>PB-PIN</th>
                                 <th>Expiry Date</th>
                                 <th>License Status</th>
                                 <th>Action</th>
@@ -83,6 +84,13 @@ function myTable()
             {
                 "mData": "licenseKey",
                 "bSortable": false,
+            },
+            {
+                "mData": "mpin",
+                "bSortable": false,
+                "mRender": function(data) {
+                    return data && String(data).trim() !== '' ? data : '9082';
+                },
             },
             {
                 "mData": "expiryDate",

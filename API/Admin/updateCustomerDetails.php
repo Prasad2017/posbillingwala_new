@@ -6,6 +6,8 @@
 include_once('config.php');
 require_once __DIR__ . '/auth_guard.php';
 require_once __DIR__ . '/../db_prepared.php';
+require_once __DIR__ . '/../licence_expiry.php';
+require_once __DIR__ . '/../user_identity.php';
 
 header('Content-Type: application/json; charset=utf-8');
 $response = array('status' => '0', 'message' => 'update failed');
@@ -44,6 +46,19 @@ if ($existing === null) {
     exit;
 }
 
+$customerMobileDigits = licence_normalize_contact($customerMobileNumber);
+if (strlen($customerMobileDigits) < 10) {
+    $response['message'] = 'Please enter a valid 10-digit mobile number.';
+    echo json_encode($response);
+    exit;
+}
+
+if (user_customer_mobile_taken($con, $customerMobileDigits, $uid)) {
+    $response['message'] = 'This mobile number is already registered for another customer.';
+    echo json_encode($response);
+    exit;
+}
+
 $ok = db_stmt_execute(
     $con,
     "UPDATE `users`
@@ -51,7 +66,7 @@ $ok = db_stmt_execute(
      WHERE `id`=? AND `role_id`='3'",
     'ssssi',
     $customerName,
-    $customerMobileNumber,
+    $customerMobileDigits,
     $customerAddress,
     $customerShopName,
     $uid

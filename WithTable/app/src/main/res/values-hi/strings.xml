@@ -69,7 +69,7 @@
     <string name="trial_error_default">रजिस्ट्रेशन पूरा नहीं हो सका। कृपया फिर कोशिश करें।</string>
     <string name="trial_error_dialog_title">कुछ गलत हुआ</string>
     <string name="trial_success_title">POS Billingwala में आपका स्वागत है!</string>
-    <string name="trial_success_message">आपकी मुफ़्त ऐप लाइसेंस कुंजी:\n\n%1$s\n\nइसे सुरक्षित रखें — लॉगिन के लिए ज़रूरी है।\n\nजारी रखें पर टैप कर ऐप खोलें और बिलिंग शुरू करें।</string>
+    <string name="trial_success_message">आपकी मुफ़्त ऐप लाइसेंस कुंजी:\n\n%1$s\n\nPB-PIN (दैनिक लॉगिन): %2$s\nरिपोर्ट PIN: %3$s\n\nइन्हें सुरक्षित रखें — लॉगिन के लिए ज़रूरी हैं।\n\nजारी रखें पर टैप कर ऐप खोलें और बिलिंग शुरू करें।</string>
     <string name="trial_success_button">लॉगिन पर जारी रखें</string>
 
     <string name="in_app_snack_bar_message">अपडेट लगभग पूरा!</string>
@@ -240,9 +240,9 @@
     <string name="setting_hint_share">ऐप अन्य दुकानों के साथ शेयर करें</string>
     <string name="setting_hint_logout">इस डिवाइस से साइन आउट करें</string>
     <string name="printer_section_printers">प्रिंटर</string>
-    <string name="printer_section_invoice">इनवॉइस</string>
+    <string name="printer_section_invoice">इनवॉइस सेटिंग</string>
     <string name="printer_section_bill">बिल विकल्प</string>
-    <string name="printer_section_terms">नियम</string>
+    <string name="printer_section_terms">नियम और शर्तें</string>
     <string name="shop_section_branding">ब्रांडिंग</string>
     <string name="shop_section_identity">दुकान पहचान</string>
     <string name="shop_section_contact">संपर्क</string>
@@ -267,6 +267,11 @@
     <string name="home_fetch_data">डेटा लें</string>
     <string name="home_synchronize">सिंक करें</string>
     <string name="home_low_inventory">कम स्टॉक</string>
+    <string name="home_monthly_sales_label">मासिक बिक्री</string>
+    <string name="home_total_sales_label">कुल बिक्री</string>
+    <string name="home_today_sales_label">आज की बिक्री</string>
+    <string name="home_filter_today">आज</string>
+    <string name="home_filter_this_month">इस महीने</string>
     <string name="home_section_sales">बिक्री सारांश</string>
     <string name="home_section_catalog">कैटलॉग</string>
     <string name="home_section_billing">बिलिंग शुरू करें</string>

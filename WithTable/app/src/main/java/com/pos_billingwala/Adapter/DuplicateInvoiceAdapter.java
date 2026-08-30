@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.pos_billingwala.Extra.RowDividerUi;
 import com.pos_billingwala.Model.InvoiceProductResponse;
 import com.pos_billingwala.databinding.DuplicateInvoiceListBinding;
 
@@ -42,6 +43,7 @@ public class DuplicateInvoiceAdapter extends RecyclerView.Adapter<DuplicateInvoi
         holder.binding.productName.setText(invoiceProductResponse.getDisplayLineName());
         holder.binding.productQuantity.setText(invoiceProductResponse.getProductQuantity());
         holder.binding.productPrice.setText(String.format(Locale.US, "%.2f", productPrice));
+        RowDividerUi.bindLastItem(holder.binding.rowDivider, position, getItemCount());
     }
 
     @Override

@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.textfield.TextInputEditText;
 import com.posbillingwala.owner.Extra.BottomSheetUi;
+import com.posbillingwala.owner.Extra.RowDividerUi;
 import com.posbillingwala.owner.Activity.MainActivity;
 import com.posbillingwala.owner.Fragment.AddCustomerProductCategory;
 import com.posbillingwala.owner.Fragment.AddCustomerSubcategory;
@@ -68,6 +69,8 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.MyView
         holder.binding.categoryEdit.setOnClickListener(v -> updateCategoryDialog(productCategoryResponse.getCategoryId(), productCategoryResponse.getCategoryName()));
 
         holder.binding.categoryRemove.setOnClickListener(v -> deleteCategoryDialog(productCategoryResponse.getCategoryId()));
+
+        RowDividerUi.bindLastItem(holder.binding.rowDivider, position, getItemCount());
     }
 
     public void deleteCategoryDialog(String categoryId) {

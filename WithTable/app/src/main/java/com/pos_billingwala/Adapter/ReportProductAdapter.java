@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.pos_billingwala.Extra.RowDividerUi;
 import com.pos_billingwala.Model.InvoiceProductResponse;
 import com.pos_billingwala.databinding.ReportProductInvoiceListBinding;
 
@@ -41,6 +42,7 @@ public class ReportProductAdapter extends RecyclerView.Adapter<ReportProductAdap
         holder.binding.productQuantity.setText(invoiceProductResponse.getProductQuantity());
 
 
+        RowDividerUi.bindLastItem(holder.binding.rowDivider, position, getItemCount());
     }
 
     @Override

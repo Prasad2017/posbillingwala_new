@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Extra.ReportCursorHelper;
+import com.pos_billingwala.Extra.RowDividerUi;
 import com.pos_billingwala.Fragment.InvoiceTableListReport;
 import com.pos_billingwala.Model.InvoiceResponse;
 import com.pos_billingwala.databinding.InvoiceTableReportListBinding;
@@ -59,6 +60,7 @@ public class InvoiceTakeAwayReportAdapter extends RecyclerView.Adapter<InvoiceTa
             }
         });
 
+        RowDividerUi.bindLastItem(holder.binding.rowDivider, position, getItemCount());
     }
 
     @Override

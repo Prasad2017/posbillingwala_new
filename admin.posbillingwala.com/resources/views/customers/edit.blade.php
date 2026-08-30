@@ -104,6 +104,20 @@
 									<input type="text" class="form-control border-start-0" id="inputEmailAddress1" value="{{$data->licenseKey}}" readonly placeholder="App License Key" name="license_key"/>
 								</div>
 							</div>
+							<div class="col-lg-4">
+								<label class="form-label">PB-PIN (daily login)</label>
+								<div class="input-group pb-input-group">
+									<span class="input-group-text bg-transparent"><i class='bx bx-lock-alt'></i></span>
+									<input type="text" class="form-control border-start-0" value="{{ $data->mpin ?: '9082' }}" readonly>
+								</div>
+							</div>
+							<div class="col-lg-4">
+								<label class="form-label">Report PIN</label>
+								<div class="input-group pb-input-group">
+									<span class="input-group-text bg-transparent"><i class='bx bx-lock-alt'></i></span>
+									<input type="text" class="form-control border-start-0" value="{{ $data->reportPin ?? '9082' }}" readonly>
+								</div>
+							</div>
 							@include('partials.license-fields', ['license' => $data])
 							<div class="col-lg-4">
 								<label for="inputEmailAddress18" class="form-label">Shop Image Preview</label><br>
@@ -139,6 +153,7 @@
 								<thead>
 									<tr>
 										<th>App License Key</th>
+										<th>PB-PIN</th>
 										<th>User Name</th>
 										<th>User Type</th>
 										<th>License Type</th>
@@ -187,6 +202,13 @@ function myTable()
             {
                 "mData": "licenseKey",
                 "bSortable": false,
+            },
+            {
+                "mData": "mpin",
+                "bSortable": false,
+                "mRender": function(data) {
+                    return data && String(data).trim() !== '' ? data : '9082';
+                },
             },
             {
                 "mData": "userName",

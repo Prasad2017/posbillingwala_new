@@ -25,6 +25,8 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.activity.OnBackPressedCallback;
+import androidx.core.content.ContextCompat;
 
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.posbillingwala.admin.Extra.AuthTokens;
@@ -100,7 +102,7 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
 
             @Override
             public void updateDrawState(final TextPaint textPaint) {
-                textPaint.setColor(getResources().getColor(R.color.colorPrimaryDark));
+                textPaint.setColor(ContextCompat.getColor(Login.this, R.color.colorPrimaryDark));
             }
 
         };
@@ -124,7 +126,7 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
 
             @Override
             public void updateDrawState(final TextPaint textPaint) {
-                textPaint.setColor(getResources().getColor(R.color.colorPrimaryDark));
+                textPaint.setColor(ContextCompat.getColor(Login.this, R.color.colorPrimaryDark));
             }
 
         };
@@ -255,11 +257,12 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
             }
         });
 
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                finish();
+            }
+        });
     }
 
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        finish();
-    }
 }

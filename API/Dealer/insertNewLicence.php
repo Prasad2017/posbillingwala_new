@@ -43,12 +43,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     $branchLabel = $branchName !== '' ? $branchName : $shopName;
     $expiryDate = date('Y-m-d', strtotime($date . ' +' . $licenseValidity . ' day'));
+    $defaultMpin = licence_default_mpin();
 
-    $sql = "INSERT INTO `licenses`(`userId`, `licenseKey`, `licenseValidity`, `licenseType`, `licenseStatus`, `expiryDate`, `paymentStatus`, `amount`, `userType`, `userName`, `fastBilling`, `takeAway`, `dineIn`, `mess`)
-            VALUES ('$customerId', '$licenseKey', '$licenseValidity', '$licenseType', 'active', '$expiryDate', '$paymentStatus', '$amount', 'franchise', '$branchLabel', '$fastBilling', '$takeAway', '$dineIn', '$mess')";
+    $sql = "INSERT INTO `licenses`(`userId`, `licenseKey`, `licenseValidity`, `licenseType`, `licenseStatus`, `expiryDate`, `paymentStatus`, `amount`, `userType`, `userName`, `mpin`, `fastBilling`, `takeAway`, `dineIn`, `mess`)
+            VALUES ('$customerId', '$licenseKey', '$licenseValidity', '$licenseType', 'active', '$expiryDate', '$paymentStatus', '$amount', 'franchise', '$branchLabel', '$defaultMpin', '$fastBilling', '$takeAway', '$dineIn', '$mess')";
     if (mysqli_query($con, $sql)) {
         $response['status'] = 'true';
         $response['message'] = 'Franchise branch registered. Same customer account — new licence key issued.';
+        $response['licenseKey'] = $licenseKey;
+        $response['mpin'] = $defaultMpin;
         $response['branchLabel'] = licence_branch_label('franchise', $branchLabel);
     } else {
         $response['status'] = 'false';

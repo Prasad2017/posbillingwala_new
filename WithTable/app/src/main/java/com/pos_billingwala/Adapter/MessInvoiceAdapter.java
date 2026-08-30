@@ -23,6 +23,7 @@ import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Activity.MessTokenBluetoothPrint;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.BottomSheetUi;
+import com.pos_billingwala.Extra.RowDividerUi;
 import com.pos_billingwala.Extra.MessTokenQrHelper;
 import com.pos_billingwala.Model.MemberResponse;
 import com.pos_billingwala.Model.MessInvoiceResponse;
@@ -129,6 +130,7 @@ public class MessInvoiceAdapter extends RecyclerView.Adapter<MessInvoiceAdapter.
             }
         });
 
+        RowDividerUi.bindLastItem(holder.binding.rowDivider, position, getItemCount());
     }
 
     public void setBillPrintPassword(MemberResponse memberResponse, boolean issueQrToken) {

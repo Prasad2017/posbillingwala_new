@@ -39,4 +39,9 @@
     <dimen name="text_heading">20sp</dimen>
     <dimen name="text_display">24sp</dimen>
     <dimen name="text_button">15sp</dimen>
+
+    <dimen name="home_sales_card_min_height">118dp</dimen>
+    <dimen name="home_catalog_card_height">124dp</dimen>
+    <dimen name="home_billing_card_height">88dp</dimen>
+    <dimen name="home_card_arrow_overlap">6dp</dimen>
 </resources>

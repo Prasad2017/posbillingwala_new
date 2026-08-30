@@ -7,6 +7,7 @@ use App\Models\User;
 use Hash;
 use DataTables;
 use Auth;
+use Illuminate\Validation\Rule;
 
 class DealerController extends Controller
 {
@@ -67,8 +68,20 @@ class DealerController extends Controller
 	{
 		$validated = $request->validate([
 			'name' => 'required',
-			'contact_number' => 'required|digits:10',
-			'aadhar_number' => 'required|digits:12|unique:users',
+			'contact_number' => [
+				'required',
+				'digits:10',
+				Rule::unique('users', 'contact_number')->where(function ($query) {
+					return $query->where('role_id', 2);
+				}),
+			],
+			'aadhar_number' => [
+				'required',
+				'digits:12',
+				Rule::unique('users', 'aadhar_number')->where(function ($query) {
+					return $query->where('role_id', 2);
+				}),
+			],
 			'password' => 'required|string|min:8|confirmed',
 			'address' => 'required'
 		]);
@@ -110,21 +123,29 @@ class DealerController extends Controller
 	{
 		$validated = $request->validate([
 			'name' => 'required',
-			'contact_number' => 'required|digits:10',
-			'aadhar_number' => 'required|digits:12',
+			'contact_number' => [
+				'required',
+				'digits:10',
+				Rule::unique('users', 'contact_number')->ignore($request->id)->where(function ($query) {
+					return $query->where('role_id', 2);
+				}),
+			],
+			'aadhar_number' => [
+				'required',
+				'digits:12',
+				Rule::unique('users', 'aadhar_number')->ignore($request->id)->where(function ($query) {
+					return $query->where('role_id', 2);
+				}),
+			],
 			'password' => 'nullable|string|min:8|confirmed',
 			'address' => 'required'
 		]);
 
 
 		$user = User::find($request->id);
-		if($user)
+		if(!$user)
 		{
-			$check_user = User::where('id','!=',$request->id)->where('aadhar_number',$request->aadhar_number)->first();
-			if($check_user)
-			{
-				return redirect()->back()->withInput($request->input())->withErrors(['aadhar_number'=>'Aadhar number already taken by another dealer']);
-			}
+			return redirect()->back()->with('error','Dealer not found');
 		}
 
 		$user->name = $request->name??null;

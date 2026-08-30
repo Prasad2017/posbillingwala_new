@@ -31,6 +31,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -194,6 +195,12 @@ public class InvoiceDetailsBluetoothPrint extends BaseActivity implements View.O
             ActivityCompat.requestPermissions(this, PERMISSIONS, PERMISSION_ALL);
         }
 
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                finish();
+            }
+        });
     }
 
     public void initViews() {
@@ -577,12 +584,6 @@ public class InvoiceDetailsBluetoothPrint extends BaseActivity implements View.O
         getCompanyDetails();
         getPrinterSettingDetails();
         getInvoiceDetails();
-    }
-
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        finish();
     }
 
     public void getInvoiceDetails() {

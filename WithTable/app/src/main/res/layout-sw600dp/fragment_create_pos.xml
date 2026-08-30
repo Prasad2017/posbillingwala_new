@@ -37,21 +37,15 @@
 
             </androidx.cardview.widget.CardView>
 
-            <androidx.appcompat.widget.AppCompatTextView
-                android:id="@+id/posHeading"
+            <include
+                layout="@layout/include_header_title_block_pos"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:layout_gravity="center"
-                android:layout_toStartOf="@+id/titleBarActions"
-                android:layout_toEndOf="@+id/homeCardView"
-                android:fontFamily="@font/poppinsmedium"
-                android:gravity="center|start"
-                android:paddingStart="15dp"
-                android:paddingEnd="8dp"
-                android:text="@string/ui_product_menu"
-                android:textColor="@color/white"
-                android:textSize="17dp" />
+                android:layout_centerVertical="true"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="8dp"
+                android:layout_toStartOf="@id/titleBarActions"
+                android:layout_toEndOf="@id/homeCardView" />
 
             <LinearLayout
                 android:id="@+id/titleBarActions"
@@ -300,14 +294,13 @@
                 android:padding="12dp">
 
                 <TextView
-                    android:id="@+id/totalItems"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:fontFamily="@font/poppinsregular"
                     android:gravity="center"
-                    android:text="@string/ui_total_items_0"
-                    android:textColor="@color/white"
-                    android:textSize="14dp" />
+                    android:text="@string/ui_payable_amount"
+                    android:textColor="@color/colorPrimaryLight"
+                    android:textSize="13dp" />
 
                 <TextView
                     android:id="@+id/totalAmount"

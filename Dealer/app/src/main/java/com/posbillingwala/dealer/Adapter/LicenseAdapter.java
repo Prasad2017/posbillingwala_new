@@ -95,6 +95,13 @@ public class LicenseAdapter extends RecyclerView.Adapter<LicenseAdapter.MyViewHo
         holder.binding.shopAddress.setText(Html.fromHtml(shopAddress));
         holder.binding.licenseType.setText(licenseType);
 
+        String mpin = licenseResponse.getMpin();
+        if (mpin == null || mpin.trim().isEmpty()) {
+            mpin = "9082";
+        }
+        holder.binding.pinInfo.setVisibility(View.VISIBLE);
+        holder.binding.pinInfo.setText("PB-PIN: " + mpin);
+
         holder.binding.licenseValidity.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

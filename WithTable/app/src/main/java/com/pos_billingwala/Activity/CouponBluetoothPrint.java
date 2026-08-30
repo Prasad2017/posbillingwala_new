@@ -23,6 +23,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.widget.NestedScrollView;
@@ -143,6 +144,12 @@ public class CouponBluetoothPrint extends BaseActivity implements View.OnClickLi
             ActivityCompat.requestPermissions(this, PERMISSIONS, PERMISSION_ALL);
         }
 
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                onCallBack();
+            }
+        });
     }
 
     public void initViews() {
@@ -502,11 +509,6 @@ public class CouponBluetoothPrint extends BaseActivity implements View.OnClickLi
             String address = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
             new WoosimPrnMng(activity, address, CouponBluetoothPrint.this);
         }
-    }
-
-    @Override
-    public void onBackPressed() {
-        onCallBack();
     }
 
     public void onCallBack() {

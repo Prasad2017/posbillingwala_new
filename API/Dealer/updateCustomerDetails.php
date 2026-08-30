@@ -2,6 +2,8 @@
 include_once('config.php');
 require_once __DIR__ . '/auth_guard.php';
 require_once __DIR__ . '/../db_prepared.php';
+require_once __DIR__ . '/../licence_expiry.php';
+require_once __DIR__ . '/../user_identity.php';
 
 header('Content-Type: application/json; charset=utf-8');
 $response = array('status' => '0', 'message' => 'update failed');
@@ -28,6 +30,19 @@ if ($customerId <= 0 || $customerName === '' || $customerMobileNumber === '') {
     exit;
 }
 
+$customerMobileDigits = licence_normalize_contact($customerMobileNumber);
+if (strlen($customerMobileDigits) < 10) {
+    $response['message'] = 'Please enter a valid 10-digit mobile number.';
+    echo json_encode($response);
+    exit;
+}
+
+if (user_customer_mobile_taken($con, $customerMobileDigits, $customerId)) {
+    $response['message'] = 'This mobile number is already registered for another customer.';
+    echo json_encode($response);
+    exit;
+}
+
 if ($dealerId > 0) {
     $ok = db_stmt_execute(
         $con,
@@ -35,7 +50,7 @@ if ($dealerId > 0) {
          WHERE `id`=? AND `role_id`='3' AND `dealerId`=?",
         'ssssii',
         $customerName,
-        $customerMobileNumber,
+        $customerMobileDigits,
         $customerAddress,
         $customerShopName,
         $customerId,
@@ -48,7 +63,7 @@ if ($dealerId > 0) {
          WHERE `id`=? AND `role_id`='3'",
         'ssssi',
         $customerName,
-        $customerMobileNumber,
+        $customerMobileDigits,
         $customerAddress,
         $customerShopName,
         $customerId

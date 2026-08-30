@@ -16,6 +16,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.textfield.TextInputEditText;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.BottomSheetUi;
+import com.pos_billingwala.Extra.RowDividerUi;
 import com.pos_billingwala.Fragment.AddPortionMaster;
 import com.pos_billingwala.Model.PortionMasterResponse;
 import com.pos_billingwala.R;
@@ -51,6 +52,7 @@ public class PortionMasterAdapter extends RecyclerView.Adapter<PortionMasterAdap
 
         holder.binding.portionMasterEdit.setOnClickListener(v -> updatePortionMaster(item));
         holder.binding.portionMasterRemove.setOnClickListener(v -> deletePortionMaster(item));
+        RowDividerUi.bindLastItem(holder.binding.rowDivider, position, getItemCount());
     }
 
     private void updatePortionMaster(PortionMasterResponse item) {

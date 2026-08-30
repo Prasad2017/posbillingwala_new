@@ -1,8 +1,10 @@
 package com.pos_billingwala.Fragment;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -27,7 +29,6 @@ import com.pos_billingwala.databinding.FragmentAboutUsBinding;
 public class AboutUs extends Fragment implements View.OnClickListener {
 
     public static Activity activity;
-    //AdView
     public AdView adView;
     View view;
     FragmentAboutUsBinding binding;
@@ -36,24 +37,19 @@ public class AboutUs extends Fragment implements View.OnClickListener {
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         binding = FragmentAboutUsBinding.inflate(inflater, container, false);
-        view = binding.getRoot(); //Root xml or viewGroup will be a part of converted view over here
+        view = binding.getRoot();
 
         activity = getActivity();
 
-
         view.setFocusableInTouchMode(true);
         view.requestFocus();
-        view.setOnKeyListener(new View.OnKeyListener() {
-            @Override
-            public boolean onKey(View v, int keyCode, KeyEvent event) {
-
-                if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
-                    Log.i("tag", "onKey Back listener is working!!!");
-                    ((MainActivity) activity).navigateBack();
-                    return true;
-                }
-                return false;
+        view.setOnKeyListener((v, keyCode, event) -> {
+            if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
+                Log.i("tag", "onKey Back listener is working!!!");
+                ((MainActivity) activity).navigateBack();
+                return true;
             }
+            return false;
         });
 
         try {
@@ -64,11 +60,15 @@ public class AboutUs extends Fragment implements View.OnClickListener {
         }
 
         String supportPhone = getString(R.string.support_phone_display);
-        binding.technicalSupport.setText(getString(R.string.technical_support_91_8983149299_91_9130188584, supportPhone));
+        binding.technicalSupport.setText(
+                getString(R.string.technical_support_91_8983149299_91_9130188584, supportPhone));
 
         initAds();
 
         binding.backToSetting.setOnClickListener(this);
+        binding.websiteRow.setOnClickListener(this);
+        binding.emailRow.setOnClickListener(this);
+        binding.phoneRow.setOnClickListener(this);
 
         TabletFormUi.applyAboutLayout(activity, binding.aboutContentContainer);
 
@@ -76,27 +76,38 @@ public class AboutUs extends Fragment implements View.OnClickListener {
     }
 
     public void initAds() {
-
         adView = view.findViewById(R.id.ad_view);
-        // Initialize the Mobile Ads SDK.
         MobileAds.initialize(activity, new OnInitializationCompleteListener() {
             @Override
             public void onInitializationComplete(InitializationStatus initializationStatus) {
                 Log.e("initializationStatus", "" + initializationStatus);
             }
         });
-        // Create an ad request.
         AdRequest adRequest = new AdRequest.Builder().build();
-        // Start loading the ad in the background.
         adView.loadAd(adRequest);
-
     }
 
     @Override
     public void onClick(View view) {
-        if (view.getId() == R.id.backToSetting) {
+        int id = view.getId();
+        if (id == R.id.backToSetting) {
             ((MainActivity) activity).navigateBack();
+        } else if (id == R.id.websiteRow) {
+            openUrl("https://www.posbillingwala.com");
+        } else if (id == R.id.emailRow) {
+            Intent intent = new Intent(Intent.ACTION_SENDTO);
+            intent.setData(Uri.parse("mailto:" + getString(R.string.about_email)));
+            startActivity(Intent.createChooser(intent, getString(R.string.about_label_email)));
+        } else if (id == R.id.phoneRow) {
+            Intent intent = new Intent(Intent.ACTION_DIAL);
+            intent.setData(Uri.parse("tel:" + getString(R.string.support_phone_dial)));
+            startActivity(intent);
         }
+    }
+
+    private void openUrl(String url) {
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+        startActivity(intent);
     }
 
     @Override
@@ -128,5 +139,4 @@ public class AboutUs extends Fragment implements View.OnClickListener {
             adView.destroy();
         }
     }
-
 }

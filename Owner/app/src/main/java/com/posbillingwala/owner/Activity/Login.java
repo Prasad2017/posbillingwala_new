@@ -21,6 +21,8 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.activity.OnBackPressedCallback;
+import androidx.core.content.ContextCompat;
 
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
@@ -100,7 +102,7 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
 
             @Override
             public void updateDrawState(TextPaint textPaint) {
-                textPaint.setColor(getResources().getColor(R.color.colorPrimaryDark));
+                textPaint.setColor(ContextCompat.getColor(Login.this, R.color.colorPrimaryDark));
             }
         };
 
@@ -119,7 +121,7 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
 
             @Override
             public void updateDrawState(TextPaint textPaint) {
-                textPaint.setColor(getResources().getColor(R.color.colorPrimaryDark));
+                textPaint.setColor(ContextCompat.getColor(Login.this, R.color.colorPrimaryDark));
             }
         };
 
@@ -135,6 +137,12 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
         binding.forgotmobileNumber.setOnClickListener(this);
         binding.newUser.setOnClickListener(this);
 
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                finish();
+            }
+        });
     }
 
     public void initAds() {
@@ -289,13 +297,7 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
     }
 
     @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        finish();
-    }
-
-    @Override
-    public void onPause() {
+    protected void onPause() {
         super.onPause();
         if (adView != null) {
             adView.pause();

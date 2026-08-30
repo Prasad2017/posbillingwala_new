@@ -17,6 +17,7 @@ import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ReportCursorHelper;
 import com.pos_billingwala.Fragment.CreatePos;
 import com.pos_billingwala.Model.CompanyResponse;
+import com.pos_billingwala.Extra.RowDividerUi;
 import com.pos_billingwala.Model.ProductCartResponse;
 import com.pos_billingwala.databinding.TakeAwayListBinding;
 
@@ -84,6 +85,7 @@ public class InvoiceTakAwayAdapter extends RecyclerView.Adapter<InvoiceTakAwayAd
             }
         });
 
+        RowDividerUi.bindLastItem(holder.binding.rowDivider, position, getItemCount());
     }
 
     @SuppressLint("SetTextI18n")
@@ -156,7 +158,6 @@ public class InvoiceTakAwayAdapter extends RecyclerView.Adapter<InvoiceTakAwayAd
             }
 
         }
-
     }
 
     @Override

@@ -9,6 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.pos_billingwala.Activity.MainActivity;
+import com.pos_billingwala.Extra.RowDividerUi;
 import com.pos_billingwala.Model.MemberResponse;
 import com.pos_billingwala.databinding.InvoiceMessPaymentReportListBinding;
 
@@ -44,6 +45,7 @@ public class InvoiceMessMemberPaymentAdapter extends RecyclerView.Adapter<Invoic
         holder.binding.messAmount.setText(memberResponse.getPaymentMessAmount());
         holder.binding.paidAmount.setText(MainActivity.currencyName + " " + memberResponse.getPaymentPaidAmount());
 
+        RowDividerUi.bindLastItem(holder.binding.rowDivider, position, getItemCount());
     }
 
     @Override

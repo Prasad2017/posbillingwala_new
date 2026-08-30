@@ -16,6 +16,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.textfield.TextInputEditText;
 import com.pos_billingwala.Activity.BluetoothPrint;
 import com.pos_billingwala.Extra.AppExecutors;
+import com.pos_billingwala.Extra.RowDividerUi;
 import com.pos_billingwala.Extra.BottomSheetUi;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
@@ -58,30 +59,26 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.MyViewHolder> 
         holder.binding.productQuantity.setText(formatQty(productQuantity));
 
         float productPrice = Float.parseFloat(productCartResponse.getResolvedLinePrice());
+        float unitPrice = productPrice;
         if (!CreatePos.companyResponseList.isEmpty()) {
-            if (CreatePos.companyResponseList.get(0).getGstStatus() != null) {
-                if (CreatePos.companyResponseList.get(0).getGstStatus().equalsIgnoreCase("On")) {
-                    float totalCGST = 0f, totalSGST = 0f;
-                    if (!productCartResponse.getProductCGST().equalsIgnoreCase("")) {
-                        totalCGST += Float.parseFloat(productCartResponse.getProductCGST());
-                    }
-                    if (!productCartResponse.getProductSGST().equalsIgnoreCase("")) {
-                        totalSGST += Float.parseFloat(productCartResponse.getProductSGST());
-                    }
-                    float totalPerProductGST = (productPrice + (productPrice * ((totalCGST + totalSGST) / 100))) * productQuantity;
-                    productPriceUnit = MainActivity.currencyName + " " + String.format(Locale.US, "%.2f", totalPerProductGST);
-                } else {
-                    productPriceUnit = MainActivity.currencyName + " " + String.format(Locale.US, "%.2f", productPrice * productQuantity);
+            if (CreatePos.companyResponseList.get(0).getGstStatus() != null
+                    && CreatePos.companyResponseList.get(0).getGstStatus().equalsIgnoreCase("On")) {
+                float totalCGST = 0f, totalSGST = 0f;
+                if (!productCartResponse.getProductCGST().equalsIgnoreCase("")) {
+                    totalCGST += Float.parseFloat(productCartResponse.getProductCGST());
                 }
-            } else {
-                productPriceUnit = MainActivity.currencyName + " " + String.format(Locale.US, "%.2f", productPrice * productQuantity);
+                if (!productCartResponse.getProductSGST().equalsIgnoreCase("")) {
+                    totalSGST += Float.parseFloat(productCartResponse.getProductSGST());
+                }
+                unitPrice = productPrice + (productPrice * ((totalCGST + totalSGST) / 100));
             }
-        } else {
-            productPriceUnit = MainActivity.currencyName + " " + String.format(Locale.US, "%.2f", productPrice * productQuantity);
         }
+        productPriceUnit = MainActivity.currencyName + " " + String.format(Locale.US, "%.2f", unitPrice);
 
         holder.binding.productPrice.setText(productPriceUnit);
-        holder.binding.productPrice.setVisibility(View.GONE);
+        holder.binding.productPrice.setVisibility(View.VISIBLE);
+        holder.binding.productIcon.setVisibility(View.GONE);
+        holder.binding.productLineTotal.setVisibility(View.GONE);
 
         // Qty bottom sheet only from the quantity number — not − / + / row.
         holder.binding.getRoot().setOnClickListener(null);
@@ -150,6 +147,8 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.MyViewHolder> 
         holder.binding.productPrice.setOnClickListener(null);
         holder.binding.productPrice.setClickable(false);
         holder.binding.productPrice.setFocusable(false);
+
+        RowDividerUi.bindLastItem(holder.binding.rowDivider, position, getItemCount());
     }
 
     public void setUpdateQuantity(ProductCartResponse productCartResponse) {

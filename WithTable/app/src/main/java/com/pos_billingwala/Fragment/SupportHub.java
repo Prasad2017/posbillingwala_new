@@ -1,37 +1,38 @@
 package com.pos_billingwala.Fragment;
 
 import android.app.Activity;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Extra.DetectConnection;
-import com.pos_billingwala.Extra.SupportUiHelper;
+import com.pos_billingwala.Extra.TabletFormUi;
 import com.pos_billingwala.R;
+import com.pos_billingwala.databinding.FragmentSupportHubBinding;
 
 public class SupportHub extends Fragment {
     Activity activity;
+    FragmentSupportHubBinding binding;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         activity = getActivity();
-        LinearLayout root = SupportUiHelper.form(activity);
-        SupportUiHelper.addScreenHeader(activity, root, getString(R.string.setting_support),
-                () -> ((MainActivity) activity).navigateBack());
-        SupportUiHelper.notice(activity, root, getString(R.string.support_online_only_notice));
-        Button create = SupportUiHelper.primary(activity, root, getString(R.string.support_create_ticket));
-        create.setOnClickListener(v -> openIfOnline(new CreateSupportTicket()));
-        Button myTickets = SupportUiHelper.primary(activity, root, getString(R.string.support_my_tickets));
-        myTickets.setOnClickListener(v -> openIfOnline(new MySupportTickets()));
-        SupportUiHelper.applySideBySideButtons(activity, root, create, myTickets);
-        return SupportUiHelper.wrapScreen(activity, root);
+        binding = FragmentSupportHubBinding.inflate(inflater, container, false);
+
+        binding.backButton.setOnClickListener(v -> ((MainActivity) activity).navigateBack());
+        binding.createTicketRow.setOnClickListener(v -> openIfOnline(new CreateSupportTicket()));
+        binding.myTicketsRow.setOnClickListener(v -> openIfOnline(new MySupportTickets()));
+        binding.getRoot().findViewById(R.id.supportCallButton).setOnClickListener(v -> dialSupport());
+
+        TabletFormUi.applyCenteredPanel(binding.supportContent);
+        return binding.getRoot();
     }
 
     private void openIfOnline(Fragment target) {
@@ -40,6 +41,12 @@ public class SupportHub extends Fragment {
             return;
         }
         ((MainActivity) activity).loadFragment(target, true);
+    }
+
+    private void dialSupport() {
+        Intent intent = new Intent(Intent.ACTION_DIAL);
+        intent.setData(Uri.parse("tel:" + getString(R.string.support_phone_dial)));
+        startActivity(intent);
     }
 
     @Override

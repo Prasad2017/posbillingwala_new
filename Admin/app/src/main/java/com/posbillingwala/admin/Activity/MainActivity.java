@@ -30,6 +30,8 @@ import android.widget.Toast;
 
 
 
+import androidx.activity.OnBackPressedCallback;
+
 import androidx.appcompat.app.AppCompatActivity;
 
 import androidx.appcompat.app.AppCompatDelegate;
@@ -235,6 +237,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         navigateRoot(new Home(), "Dashboard", NAV_DASHBOARD);
 
+        setupBackPressHandler();
     }
 
 
@@ -755,51 +758,36 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
 
-    @Override
+    private void setupBackPressHandler() {
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                    drawerLayout.closeDrawer(GravityCompat.START);
+                    return;
+                }
 
-    public void onBackPressed() {
+                if (back.getVisibility() == View.VISIBLE) {
+                    setEnabled(false);
+                    getOnBackPressedDispatcher().onBackPressed();
+                    if (getSupportFragmentManager().getBackStackEntryCount() == 0) {
+                        lockUnlockDrawer(DRAWER_UNLOCKED);
+                        highlightNavItem(selectedNavId);
+                    }
+                    return;
+                }
 
-        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                if (doubleBackToExitPressedOnce) {
+                    finish();
+                    return;
+                }
 
-            drawerLayout.closeDrawer(GravityCompat.START);
-
-            return;
-
-        }
-
-        if (back.getVisibility() == View.VISIBLE) {
-
-            super.onBackPressed();
-
-            if (getSupportFragmentManager().getBackStackEntryCount() == 0) {
-
-                lockUnlockDrawer(DRAWER_UNLOCKED);
-
-                highlightNavItem(selectedNavId);
-
+                doubleBackToExitPressedOnce = true;
+                Toast.makeText(MainActivity.this, "Press back once more to exit", Toast.LENGTH_SHORT).show();
+                new Handler(Looper.getMainLooper()).postDelayed(() -> doubleBackToExitPressedOnce = false, 2000);
             }
-
-            return;
-
-        }
-
-        if (doubleBackToExitPressedOnce) {
-
-            super.onBackPressed();
-
-            return;
-
-        }
-
-        doubleBackToExitPressedOnce = true;
-
-        Toast.makeText(this, "Press back once more to exit", Toast.LENGTH_SHORT).show();
-
-        new Handler(Looper.getMainLooper()).postDelayed(() -> doubleBackToExitPressedOnce = false, 2000);
-
+        });
     }
-
-
 
     public void lockUnlockDrawer(int lockMode) {
 

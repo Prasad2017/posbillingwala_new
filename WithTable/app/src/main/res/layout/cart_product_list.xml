@@ -9,25 +9,28 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
+        android:minHeight="52dp"
         android:orientation="horizontal"
+        android:paddingStart="8dp"
         android:paddingTop="8dp"
+        android:paddingEnd="8dp"
         android:paddingBottom="8dp">
 
         <TextView
             android:id="@+id/productName"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_weight="1.6"
             android:ellipsize="end"
+            android:fontFamily="@font/poppinsregular"
             android:gravity="start|center_vertical"
             android:maxLines="2"
-            android:paddingStart="5dp"
-            android:paddingEnd="5dp"
+            android:paddingEnd="6dp"
             android:textColor="@color/colorTextPrimary"
             android:textSize="14sp" />
 
         <LinearLayout
-            android:layout_width="110dp"
+            android:layout_width="100dp"
             android:layout_height="wrap_content"
             android:clickable="false"
             android:focusable="false"
@@ -52,16 +55,16 @@
                 android:id="@+id/productQuantity"
                 android:layout_width="wrap_content"
                 android:layout_height="36dp"
-                android:layout_marginStart="6dp"
-                android:layout_marginEnd="6dp"
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="4dp"
                 android:clickable="true"
                 android:focusable="true"
+                android:fontFamily="@font/poppinsmedium"
                 android:gravity="center"
                 android:includeFontPadding="false"
-                android:minWidth="28dp"
+                android:minWidth="24dp"
                 android:textColor="@color/colorTextPrimary"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+                android:textSize="14sp" />
 
             <TextView
                 android:id="@+id/productAdd"
@@ -82,16 +85,23 @@
             android:id="@+id/productPrice"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:clickable="true"
-            android:focusable="true"
+            android:layout_weight="0.9"
+            android:fontFamily="@font/poppinsregular"
             android:gravity="center"
             android:maxLines="1"
-            android:paddingStart="5dp"
-            android:paddingEnd="5dp"
-            android:textColor="@color/colorPrimary"
-            android:textSize="13sp"
-            android:textStyle="bold" />
+            android:paddingStart="2dp"
+            android:paddingEnd="2dp"
+            android:textColor="@color/colorTextSecondary"
+            android:textSize="13sp" />
+
+        <TextView
+            android:id="@+id/productLineTotal"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.9"
+            android:gravity="center"
+            android:maxLines="1"
+            android:visibility="gone" />
 
         <ImageView
             android:id="@+id/productDelete"
@@ -101,9 +111,16 @@
             android:padding="4dp"
             android:src="@drawable/ic_delete"
             app:tint="@color/statusExpired" />
+
+        <ImageView
+            android:id="@+id/productIcon"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone" />
     </LinearLayout>
 
     <View
+        android:id="@+id/rowDivider"
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:background="@color/colorBorder" />

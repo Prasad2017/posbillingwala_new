@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_support_notice_card"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:padding="16dp">
+
+    <FrameLayout
+        android:layout_width="48dp"
+        android:layout_height="48dp">
+
+        <ImageView
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/bg_support_icon_circle_blue"
+            android:contentDescription="@null"
+            android:padding="12dp"
+            android:src="@drawable/ic_wifi_online"
+            app:tint="@color/colorPrimary" />
+
+        <ImageView
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_gravity="bottom|end"
+            android:background="@drawable/bg_support_status_open"
+            android:contentDescription="@null"
+            android:padding="2dp"
+            android:src="@drawable/ic_check"
+            app:tint="@color/statusActive" />
+
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/noticeTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/poppinsbold"
+            android:text="@string/support_here_to_help"
+            android:textColor="@color/colorTextPrimary"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/noticeBody"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:fontFamily="@font/poppinsregular"
+            android:lineSpacingExtra="2dp"
+            android:text="@string/support_online_only_notice"
+            android:textColor="@color/colorTextSecondary"
+            android:textSize="12sp" />
+
+    </LinearLayout>
+
+</LinearLayout>

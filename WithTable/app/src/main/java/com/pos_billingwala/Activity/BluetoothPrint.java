@@ -43,6 +43,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
@@ -261,13 +262,10 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                 }
             }
 
+            String rawDiscount = productCartResponseList.get(0).getCartDiscount();
             for (ProductCartResponse productCartResponse : productCartResponseList) {
-                discountTxt.setText("Discount(%)\n" + productCartResponse.getCartDiscount());
-                discountAmount = Float.parseFloat(productCartResponseList.get(0).getCartDiscount());
+                discountAmount = Float.parseFloat(rawDiscount);
                 discountType = productCartResponse.getCartDiscountType();
-                if (packingTxt != null) {
-                    packingTxt.setText("Packing\n" + productCartResponse.getCartPackingCharge());
-                }
                 packingAmount = ReportCursorHelper.parseAmount(productCartResponseList.get(0).getCartPackingCharge());
                 packingChargeType = productCartResponse.getCartPackingChargeType();
 
@@ -346,7 +344,7 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
 
             totalShopGST = shopCGST + shopSGST;
 
-            subTotalTxt.setText("Sub Total\n" + inr + String.format(Locale.US, "%.2f", subTotalAmt));
+            subTotalTxt.setText(inr + String.format(Locale.US, "%.2f", subTotalAmt));
             twoSubTotal.setText(inr + String.format(Locale.US, "%.2f", subTotalAmt));
             threeSubTotal.setText(inr + String.format(Locale.US, "%.2f", subTotalAmt));
 
@@ -364,6 +362,11 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
 
             twoDiscount.setText(inr + String.format(Locale.US, "%.2f", discountAmount));
             threeDiscount.setText(inr + String.format(Locale.US, "%.2f", discountAmount));
+            if (discountType != null && discountType.equalsIgnoreCase("Amount")) {
+                discountTxt.setText(inr + String.format(Locale.US, "%.2f", discountAmount));
+            } else {
+                discountTxt.setText(rawDiscount + "%");
+            }
 
             packingAmount = ReportCursorHelper.packingRupees(
                     productCartResponseList.get(0).getCartPackingCharge(),
@@ -390,6 +393,9 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
             if (threePacking != null) {
                 threePacking.setText(inr + String.format(Locale.US, "%.2f", packingAmount));
             }
+            if (packingTxt != null) {
+                packingTxt.setText(inr + String.format(Locale.US, "%.2f", packingAmount));
+            }
 
             if (!companyResponseList.isEmpty()
                     && companyResponseList.get(0).getGstStatus() != null
@@ -400,10 +406,10 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
             }
 
             float totalAmount = (float) Math.ceil(totalAmt);
-            String totalPayableAmount = "Payable Amount<br/><b>" + inr
-                    + String.format(Locale.US, "%.2f", totalAmount) + "</b>";
-            totalAmountTxt.setText("Total Amount\n" + inr + String.format(Locale.US, "%.2f", totalAmt));
-            totalPayableAmountTxt.setText(Html.fromHtml(totalPayableAmount));
+            if (totalAmountTxt != null) {
+                totalAmountTxt.setText(inr + String.format(Locale.US, "%.2f", totalAmount));
+            }
+            totalPayableAmountTxt.setText(inr + String.format(Locale.US, "%.2f", totalAmount));
             twoTotalAmount.setText(inr + String.format(Locale.US, "%.2f", totalAmount));
             threeTotalAmount.setText(inr + String.format(Locale.US, "%.2f", totalAmount));
             applyPaymentQr(totalAmount);
@@ -658,6 +664,12 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
             ActivityCompat.requestPermissions(this, PERMISSIONS, PERMISSION_ALL);
         }
 
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                onCallBack();
+            }
+        });
     }
 
     public void initViews() {
@@ -669,6 +681,12 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
         binding.menuIcon.setOnClickListener(this);
         binding.clearCart.setOnClickListener(this);
         binding.printInvoiceCardView.setOnClickListener(this);
+        if (binding.backButton != null) {
+            binding.backButton.setOnClickListener(this);
+        }
+        if (binding.backCardView != null) {
+            binding.backCardView.setOnClickListener(this);
+        }
 
         cashButton = findViewById(R.id.cash);
         onlineButton = findViewById(R.id.online);
@@ -784,7 +802,7 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                     public void onClick(View v) {
                         if (!discountPercentageTxt.getText().toString().isEmpty()) {
                             //Calculation Part
-                            discountTxt.setText("Discount(%)\n" + discountPercentageTxt.getText().toString());
+                            discountTxt.setText(discountPercentageTxt.getText().toString() + "%");
                             float discountAmount = Float.parseFloat(discountPercentageTxt.getText().toString());
                             float subTotalAmt = 0f;
                             float shopCGST = 0f, shopSGST = 0f;
@@ -816,9 +834,10 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                             }
 
                             String format = String.format(Locale.US, "%.2f", totalAmt);
-                            String totalPayableAmount = "Payable Amount<br/><b>" + inr + format + "</b>";
-                            totalAmountTxt.setText("Total Amount\n" + inr + format);
-                            totalPayableAmountTxt.setText(Html.fromHtml(totalPayableAmount));
+                            if (totalAmountTxt != null) {
+                                totalAmountTxt.setText("Total Amount\n" + inr + format);
+                            }
+                            totalPayableAmountTxt.setText(inr + format);
                             if (!productCartResponseList.isEmpty()) {
                                 for (ProductCartResponse productCartResponse : productCartResponseList) {
                                     posBillingWalaDatabase.updateCartDiscount(productCartResponse.getCartId(), discountPercentageTxt.getText().toString(), discountType);
@@ -884,7 +903,7 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                                     Toast.LENGTH_SHORT).show();
                             return;
                         }
-                        packingTxt.setText("Packing\n" + value);
+                        packingTxt.setText(inr + value);
                         for (ProductCartResponse productCartResponse : productCartResponseList) {
                             posBillingWalaDatabase.updateCartPackingCharge(
                                     productCartResponse.getCartId(), value, packingChargeType);
@@ -935,6 +954,8 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
         int id = view.getId();
         if (id == R.id.menuIcon) {
             setPopUpWindow();
+        } else if (id == R.id.backButton || id == R.id.backCardView) {
+            onCallBack();
         } else if (id == R.id.clearCart) {
             confirmClearCart();
         } else if (id == R.id.kotPrint) {
@@ -1429,6 +1450,21 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
 
     }
 
+    private float parseDisplayedNumber(TextView view) {
+        if (view == null || view.getText() == null) {
+            return 0f;
+        }
+        String raw = view.getText().toString();
+        if (inr != null) {
+            raw = raw.replace(inr, "");
+        }
+        raw = raw.replace("%", "").replace(",", "").trim();
+        if (raw.isEmpty()) {
+            return 0f;
+        }
+        return Float.parseFloat(raw);
+    }
+
     private void confirmClearCart() {
         if (productCartResponseList == null || productCartResponseList.isEmpty()) {
             Toast.makeText(activity, getString(R.string.toast_cart_is_empty), Toast.LENGTH_SHORT).show();
@@ -1564,14 +1600,9 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
         final float discountAmtInput;
         final float packingAmtInput;
         try {
-            subTotalAmt = Float.parseFloat(subTotalTxt.getText().toString().replace("Sub Total\n" + inr, ""));
-            discountAmtInput = Float.parseFloat(discountTxt.getText().toString().replace("Discount(%)\n", ""));
-            String packingRaw = packingTxt != null && packingTxt.getText() != null
-                    ? packingTxt.getText().toString().replace("Packing\n", "").trim() : "0";
-            if (packingRaw.isEmpty()) {
-                packingRaw = "0";
-            }
-            packingAmtInput = Float.parseFloat(packingRaw);
+            subTotalAmt = parseDisplayedNumber(subTotalTxt);
+            discountAmtInput = parseDisplayedNumber(discountTxt);
+            packingAmtInput = packingTxt != null ? parseDisplayedNumber(packingTxt) : 0f;
         } catch (Exception e) {
             Toast.makeText(activity, getString(R.string.toast_invalid_bill_amounts), Toast.LENGTH_SHORT).show();
             return;
@@ -1956,11 +1987,6 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
         if (!isFinishing()) {
             finish();
         }
-    }
-
-    @Override
-    public void onBackPressed() {
-        onCallBack();
     }
 
     public void requestPermission() {

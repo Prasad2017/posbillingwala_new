@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Extra.BottomSheetUi;
+import com.pos_billingwala.Extra.RowDividerUi;
 import com.pos_billingwala.Extra.ReportCursorHelper;
 import com.pos_billingwala.Model.InvoiceProductResponse;
 import com.pos_billingwala.R;
@@ -58,12 +59,16 @@ public class EditInvoiceProductAdapter extends RecyclerView.Adapter<EditInvoiceP
         float qty = ReportCursorHelper.parseAmount(line.getProductQuantity());
         holder.binding.productPrice.setText(MainActivity.currencyName + " "
                 + String.format(Locale.US, "%.2f", price * qty));
+        holder.binding.productIcon.setVisibility(android.view.View.GONE);
+        holder.binding.productLineTotal.setVisibility(android.view.View.GONE);
 
         holder.binding.productRemove.setOnClickListener(v -> changeQty(holder.getBindingAdapterPosition(), -1));
         holder.binding.productAdd.setOnClickListener(v -> changeQty(holder.getBindingAdapterPosition(), 1));
         holder.binding.productDelete.setOnClickListener(v -> confirmDelete(holder.getBindingAdapterPosition()));
         holder.binding.productQuantity.setOnClickListener(null);
         holder.binding.productPrice.setOnClickListener(null);
+
+        RowDividerUi.bindLastItem(holder.binding.rowDivider, position, getItemCount());
     }
 
     private void changeQty(int position, int delta) {

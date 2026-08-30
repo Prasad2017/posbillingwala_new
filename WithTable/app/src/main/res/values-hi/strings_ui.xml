@@ -240,6 +240,14 @@
     <string name="ui_save_details">विवरण सहेजें</string>
     <string name="ui_save_invoice">इनवॉइस सहेजें</string>
     <string name="ui_save_setting">सेटिंग सहेजें</string>
+    <string name="ui_update_settings">सेटिंग अपडेट करें</string>
+    <string name="ui_printer_details_subtitle">प्रिंटर और इनवॉइस सेटिंग प्रबंधित करें</string>
+    <string name="ui_select_connect_invoice_printer">इनवॉइस प्रिंटर चुनें और कनेक्ट करें</string>
+    <string name="ui_select_connect_kot_printer">KOT प्रिंटर चुनें और कनेक्ट करें</string>
+    <string name="ui_invoice_prefix_hint">इनवॉइस नंबर के लिए उपसर्ग</string>
+    <string name="ui_invoice_terms_hint">इनवॉइस के नीचे दिखाया जाता है</string>
+    <string name="ui_print_feed_lines_hint">इनवॉइस प्रिंटर के लिए</string>
+    <string name="ui_kot_feed_lines_hint">KOT प्रिंटर के लिए</string>
     <string name="ui_scan">स्कैन</string>
     <string name="ui_scan_amp_verify_token">स्कैन करें और टोकन सत्यापित करें</string>
     <string name="ui_scan_mess_token">मेस टोकन स्कैन करें</string>

@@ -199,6 +199,15 @@ public class CustomerRegistration extends Fragment implements View.OnClickListen
                 if (response.isSuccessful()) {
                     if (response.body().getStatus().equalsIgnoreCase("true")) {
 
+                        String mpin = response.body().getMpin();
+                        if (mpin == null || mpin.isEmpty()) {
+                            mpin = "9082";
+                        }
+                        String reportPin = response.body().getReportPin();
+                        if (reportPin == null || reportPin.isEmpty()) {
+                            reportPin = "9082";
+                        }
+
                         View dialogView = LayoutInflater.from(getActivity()).inflate(R.layout.confirmation_dialog, null);
                         BottomSheetDialog sheet = BottomSheetUi.showContent(getActivity(), dialogView, false);
                         if (sheet == null) {
@@ -208,7 +217,7 @@ public class CustomerRegistration extends Fragment implements View.OnClickListen
                         TextView txtYes = dialogView.findViewById(R.id.yes);
                         TextView txtMessage = dialogView.findViewById(R.id.message);
 
-                        String message = "Registration completed successfully with license key </br><b><font color='#ff0000'>" + licenseKey + "</font</b>";
+                        String message = "Registration completed successfully.</br><b>License key:</b> <font color='#ff0000'>" + licenseKey + "</font></br><b>PB-PIN (daily login):</b> <font color='#ff0000'>" + mpin + "</font></br><b>Report PIN:</b> <font color='#ff0000'>" + reportPin + "</font>";
                         txtMessage.setText(Html.fromHtml(message));
                         txtMessage.setTextIsSelectable(true);
 

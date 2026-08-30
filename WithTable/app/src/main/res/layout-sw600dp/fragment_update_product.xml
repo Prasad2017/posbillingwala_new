@@ -30,15 +30,7 @@
                 android:padding="@dimen/spacing_sm"
                 android:src="@drawable/ic_back"
                 app:tint="@color/white" />
-
-            <androidx.appcompat.widget.AppCompatTextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:fontFamily="@font/poppinsmedium"
-                android:text="@string/ui_update_product"
-                android:textColor="@color/white"
-                android:textSize="@dimen/text_title" />
+
         </RelativeLayout>
     </com.google.android.material.appbar.AppBarLayout>
 

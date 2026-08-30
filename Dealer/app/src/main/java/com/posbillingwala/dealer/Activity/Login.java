@@ -24,6 +24,8 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.activity.OnBackPressedCallback;
+import androidx.core.content.ContextCompat;
 
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
@@ -116,7 +118,7 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
 
             @Override
             public void updateDrawState(final TextPaint textPaint) {
-                textPaint.setColor(getResources().getColor(R.color.colorPrimaryDark));
+                textPaint.setColor(ContextCompat.getColor(Login.this, R.color.colorPrimaryDark));
             }
 
         };
@@ -140,7 +142,7 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
 
             @Override
             public void updateDrawState(final TextPaint textPaint) {
-                textPaint.setColor(getResources().getColor(R.color.colorPrimaryDark));
+                textPaint.setColor(ContextCompat.getColor(Login.this, R.color.colorPrimaryDark));
             }
 
         };
@@ -161,6 +163,12 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
         binding.forgotPassword.setOnClickListener(this);
         binding.newUser.setOnClickListener(this);
 
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                finish();
+            }
+        });
     }
 
     private void checkUpdateApp() {
@@ -458,13 +466,7 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
     }
 
     @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        finish();
-    }
-
-    @Override
-    public void onPause() {
+    protected void onPause() {
         super.onPause();
         if (adView != null) {
             adView.pause();

@@ -16,6 +16,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.textfield.TextInputEditText;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.BottomSheetUi;
+import com.pos_billingwala.Extra.RowDividerUi;
 import com.pos_billingwala.Fragment.AddCategory;
 import com.pos_billingwala.Model.ProductCategoryResponse;
 import com.pos_billingwala.R;
@@ -64,6 +65,7 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.MyView
             }
         });
 
+        RowDividerUi.bindLastItem(holder.binding.rowDivider, position, getItemCount());
     }
 
     public void updateCategory(ProductCategoryResponse productCategoryResponse) {

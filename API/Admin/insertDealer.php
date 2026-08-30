@@ -1,6 +1,8 @@
 <?php
 include_once('config.php');
 require_once __DIR__ . '/../db_prepared.php';
+require_once __DIR__ . '/../licence_expiry.php';
+require_once __DIR__ . '/../user_identity.php';
 require_once __DIR__ . '/auth_guard.php';
 
 /**
@@ -34,18 +36,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 
     if ($aadhaar !== '') {
-        $exists = db_stmt_scalar_int(
-            $con,
-            'SELECT COUNT(*) AS c FROM `users` WHERE `aadhar_number`=? AND `role_id`=\'2\'',
-            's',
-            $aadhaar
-        );
-        if ($exists > 0) {
+        if (user_dealer_aadhar_taken($con, $aadhaar)) {
             $response['message'] = 'Aadhaar already registered for another dealer.';
             header('Content-type: application/json; charset=utf-8');
             echo json_encode($response);
             exit;
         }
+    }
+
+    $contactDigits = licence_normalize_contact($contact);
+    if (strlen($contactDigits) < 10) {
+        $response['message'] = 'Please enter a valid 10-digit mobile number.';
+        header('Content-type: application/json; charset=utf-8');
+        echo json_encode($response);
+        exit;
+    }
+
+    if (user_dealer_mobile_taken($con, $contactDigits)) {
+        $response['message'] = 'This mobile number is already registered for another dealer.';
+        header('Content-type: application/json; charset=utf-8');
+        echo json_encode($response);
+        exit;
     }
 
     $hash = $password !== '' ? password_hash($password, PASSWORD_BCRYPT) : password_hash(bin2hex(random_bytes(8)), PASSWORD_BCRYPT);
@@ -56,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
          VALUES (\'2\', ?, ?, ?, ?, ?, ?, \'1\')',
         'ssssss',
         $name,
-        $contact,
+        $contactDigits,
         $address,
         $email,
         $aadhaar,

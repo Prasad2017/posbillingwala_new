@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Fragment.InvoiceMessMemberPaymentReport;
+import com.pos_billingwala.Extra.RowDividerUi;
 import com.pos_billingwala.Model.MemberResponse;
 import com.pos_billingwala.databinding.InvoiceMessMemberListBinding;
 
@@ -56,6 +57,7 @@ public class InvoiceMessListAdapter extends RecyclerView.Adapter<InvoiceMessList
         });
 
 
+        RowDividerUi.bindLastItem(holder.binding.rowDivider, position, getItemCount());
     }
 
     @Override

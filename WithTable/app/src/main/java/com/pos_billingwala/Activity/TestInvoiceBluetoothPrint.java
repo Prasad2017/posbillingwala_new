@@ -20,6 +20,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.core.app.ActivityCompat;
 import androidx.core.widget.NestedScrollView;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -116,6 +117,13 @@ public class TestInvoiceBluetoothPrint extends BaseActivity implements View.OnCl
 
         TabletPrintUi.applyLandscape(this);
         TabletPrintUi.applyCenteredForm(this, binding.previewFormContainer);
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                finish();
+            }
+        });
     }
 
     @Override
@@ -545,12 +553,6 @@ public class TestInvoiceBluetoothPrint extends BaseActivity implements View.OnCl
                 }
             }
         }
-    }
-
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        finish();
     }
 
     @Override

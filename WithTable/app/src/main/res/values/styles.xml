@@ -156,4 +156,26 @@
         <item name="android:textSize">@dimen/text_subtitle</item>
     </style>
 
+    <style name="PrinterSpinner" parent="Widget.AppCompat.Spinner">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">48dp</item>
+        <item name="android:background">@drawable/bg_printer_dropdown_with_arrow</item>
+        <item name="android:popupBackground">@drawable/bg_printer_spinner_popup</item>
+        <item name="android:dropDownVerticalOffset">4dp</item>
+        <item name="android:dropDownWidth">match_parent</item>
+        <item name="android:spinnerMode">dropdown</item>
+    </style>
+
+    <style name="PrinterSwitch" parent="Widget.AppCompat.CompoundButton.Switch">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minHeight">26dp</item>
+        <item name="switchMinWidth">44dp</item>
+        <item name="android:thumbTint">@color/white</item>
+        <item name="trackTint">@color/printer_switch_track_tint</item>
+        <item name="android:showText">false</item>
+        <item name="android:textOff">@null</item>
+        <item name="android:textOn">@null</item>
+    </style>
+
 </resources>

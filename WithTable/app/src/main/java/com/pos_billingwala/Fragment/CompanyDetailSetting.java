@@ -26,7 +26,6 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.CompoundButton;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
@@ -43,11 +42,13 @@ import com.karumi.dexter.listener.PermissionRequest;
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.ActionButtonUi;
 import com.pos_billingwala.Extra.BottomSheetUi;
 import com.pos_billingwala.Extra.BusinessHours;
 import com.pos_billingwala.Extra.LicenseModules;
 import com.pos_billingwala.Extra.TabletUi;
 import com.pos_billingwala.Model.CompanyResponse;
+import com.pos_billingwala.Model.PrinterSettingResponse;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentCompanyDetailSettingBinding;
 
@@ -66,10 +67,14 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
     public static Uri imageUri;
     public static boolean isClicked;
     public static String[] currencyList;
+    public static String[] stateList;
+    public static String selectedState;
+    public static String printerSettingId;
     public static POSBillingWalaDatabase posBillingWalaDatabase;
     public static List<CompanyResponse> companyResponseList = new ArrayList<>();
     public static FragmentCompanyDetailSettingBinding binding;
     View view;
+    boolean suppressSwitchListener;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
@@ -107,34 +112,31 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
 
         binding.shopName1.setText(MainActivity.shopName);
         binding.cashierName.setText(MainActivity.userName);
+        binding.countryName.setText("India");
 
-
-        binding.gstSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-
-                if (isChecked) {
-                    gstStatus = "on";
-                    binding.shopGSTLayout.setVisibility(View.VISIBLE);
-                } else {
-                    gstStatus = "off";
-                    binding.shopGSTLayout.setVisibility(View.GONE);
-                }
-
+        binding.gstSwitch.setOnCheckedChangeListener((button, isChecked) -> {
+            if (suppressSwitchListener) {
+                return;
+            }
+            if (isChecked) {
+                gstStatus = "on";
+                binding.shopGSTLayout.setVisibility(View.VISIBLE);
+            } else {
+                gstStatus = "off";
+                binding.shopGSTLayout.setVisibility(View.GONE);
             }
         });
 
-
-        binding.tableSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    tableStatus = "on";
-                    binding.noOfTableLayout.setVisibility(View.VISIBLE);
-                } else {
-                    tableStatus = "off";
-                    binding.noOfTableLayout.setVisibility(View.GONE);
-                }
+        binding.tableSwitch.setOnCheckedChangeListener((button, isChecked) -> {
+            if (suppressSwitchListener) {
+                return;
+            }
+            if (isChecked) {
+                tableStatus = "on";
+                binding.noOfTableLayout.setVisibility(View.VISIBLE);
+            } else {
+                tableStatus = "off";
+                binding.noOfTableLayout.setVisibility(View.GONE);
             }
         });
 
@@ -170,7 +172,8 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
         binding.addProfile.setOnClickListener(this);
         binding.profilePhoto.setOnClickListener(this);
         binding.backToSetting.setOnClickListener(this);
-        binding.saveDetails.setOnClickListener(this);
+        binding.saveDetails.getRoot().setOnClickListener(this);
+        ActionButtonUi.bind(binding.saveDetails.getRoot(), R.drawable.ic_save, R.string.ui_save_details);
 
         applyTabletFormLayout();
 
@@ -219,9 +222,9 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
         addFormCard(leftColumn, branding, 0);
         addFormCard(leftColumn, identity, gap);
         addFormCard(leftColumn, contact, gap);
+        addFormCard(leftColumn, payment, gap);
         addFormCard(rightColumn, operations, 0);
         addFormCard(rightColumn, tax, gap);
-        addFormCard(rightColumn, payment, gap);
 
         row.addView(leftColumn);
         row.addView(rightColumn);
@@ -396,7 +399,7 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
                 ? binding.upiId.getText().toString().trim()
                 : "";
 
-        if (binding.saveDetails.getText().toString().equalsIgnoreCase("Save Details")) {
+        if (ActionButtonUi.getLabel(binding.saveDetails.getRoot()).toString().equalsIgnoreCase(getString(R.string.ui_save_details))) {
             posBillingWalaDatabase.addCompanyDetails(companyLogo,
                     binding.shopName1.getText().toString().trim(),
                     binding.shopName2.getText().toString().trim(),
@@ -424,9 +427,15 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
             Toast.makeText(activity, getString(R.string.toast_company_details_updated), Toast.LENGTH_SHORT).show();
         }
 
+        saveInvoiceTerms();
+
         getCompanyDetails();
         BusinessHours.persistToCompany(activity, false);
 
+    }
+
+    private void saveInvoiceTerms() {
+        // Invoice terms are edited on the printer settings screen in the current layout.
     }
 
     @Override
@@ -523,8 +532,11 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
             binding.addressLine1.setText(address1 != null ? address1 : "");
             binding.addressLine2.setText(address2 != null ? address2 : "");
             binding.addressLine3.setText(address3 != null ? address3 : "");
-            binding.countryName.setText(companyResponse.getCountryName());
-            binding.stateName.setText(companyResponse.getStateName());
+            String country = companyResponse.getCountryName();
+            binding.countryName.setText(country == null || country.trim().isEmpty() ? "India" : country);
+            String state = companyResponse.getStateName();
+            binding.stateName.setText(state != null ? state : "");
+            selectedState = state;
             gstStatus = companyResponse.getGstStatus();
 
             binding.gstNumber.setText(companyResponse.getGstNumber());
@@ -560,13 +572,14 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
                 binding.upiId.setText("");
             }
 
-            binding.saveDetails.setText("Update Details");
+            ActionButtonUi.bind(binding.saveDetails.getRoot(), R.drawable.ic_save, R.string.ui_update_details);
 
         } else {
-            binding.saveDetails.setText("Save Details");
+            ActionButtonUi.bind(binding.saveDetails.getRoot(), R.drawable.ic_save, R.string.ui_save_details);
         }
 
         currencyList = activity.getResources().getStringArray(R.array.currency_list);
+        stateList = activity.getResources().getStringArray(R.array.indian_states);
         try {
             final ArrayAdapter adapter = new ArrayAdapter(activity, android.R.layout.simple_spinner_item, currencyList);
             adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
@@ -582,30 +595,38 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
         }
 
         if (gstStatus.equalsIgnoreCase("off")) {
-            binding.gstSwitch.setChecked(false);
+            setSwitchCheckedSilently(binding.gstSwitch, false);
             binding.shopGSTLayout.setVisibility(View.GONE);
         } else {
-            binding.gstSwitch.setChecked(true);
+            setSwitchCheckedSilently(binding.gstSwitch, true);
             binding.shopGSTLayout.setVisibility(View.VISIBLE);
         }
 
         if (LicenseModules.isEnabled(MainActivity.dineIn)) {
             binding.tableSectionLayout.setVisibility(View.VISIBLE);
-            binding.tableSwitch.setVisibility(View.VISIBLE);
             if (tableStatus.equalsIgnoreCase("off")) {
-                binding.tableSwitch.setChecked(false);
+                setSwitchCheckedSilently(binding.tableSwitch, false);
                 binding.noOfTableLayout.setVisibility(View.GONE);
             } else {
-                binding.tableSwitch.setChecked(true);
+                setSwitchCheckedSilently(binding.tableSwitch, true);
                 binding.noOfTableLayout.setVisibility(View.VISIBLE);
             }
         } else {
             binding.tableSectionLayout.setVisibility(View.GONE);
-            binding.tableSwitch.setVisibility(View.GONE);
-            binding.tableSwitch.setChecked(false);
+            setSwitchCheckedSilently(binding.tableSwitch, false);
             binding.noOfTableLayout.setVisibility(View.GONE);
         }
 
+    }
+
+    private void setSwitchCheckedSilently(androidx.appcompat.widget.SwitchCompat switchView, boolean checked) {
+        suppressSwitchListener = true;
+        switchView.setChecked(checked);
+        suppressSwitchListener = false;
+    }
+
+    private void loadInvoiceTerms() {
+        // Invoice terms are edited on the printer settings screen in the current layout.
     }
 
 

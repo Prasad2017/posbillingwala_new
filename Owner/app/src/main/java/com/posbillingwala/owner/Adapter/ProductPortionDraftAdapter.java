@@ -9,6 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.posbillingwala.owner.Activity.MainActivity;
+import com.posbillingwala.owner.Extra.RowDividerUi;
 import com.posbillingwala.owner.Model.ProductPortionDraft;
 import com.posbillingwala.owner.databinding.PortionListBinding;
 
@@ -50,6 +51,8 @@ public class ProductPortionDraftAdapter extends RecyclerView.Adapter<ProductPort
                 listener.onRemove(pos);
             }
         });
+
+        RowDividerUi.bindLastItem(holder.binding.rowDivider, position, getItemCount());
     }
 
     @Override

@@ -1,6 +1,7 @@
 <?php
 include_once('config.php');
 include_once(__DIR__ . '/../licence_expiry.php');
+require_once __DIR__ . '/../user_identity.php';
 require_once __DIR__ . '/auth_guard.php';
 
 $response = array();
@@ -40,6 +41,31 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
     } else {
         $roleId = '3';
     }
+
+    $contact_number = licence_normalize_contact($contact_number);
+    if (strlen($contact_number) < 10) {
+        $response["status"] = 'false';
+        $response["message"] = "Please enter a valid 10-digit mobile number.";
+        header('Content-type: application/json; charset=utf-8');
+        echo json_encode($response);
+        exit;
+    }
+
+    if ($roleId === '3' && user_customer_mobile_taken($con, $contact_number)) {
+        $response["status"] = 'false';
+        $response["message"] = "This mobile number is already registered for another customer.";
+        header('Content-type: application/json; charset=utf-8');
+        echo json_encode($response);
+        exit;
+    }
+
+    if ($roleId === '2' && user_dealer_mobile_taken($con, $contact_number)) {
+        $response["status"] = 'false';
+        $response["message"] = "This mobile number is already registered for another dealer.";
+        header('Content-type: application/json; charset=utf-8');
+        echo json_encode($response);
+        exit;
+    }
     
     $sql="INSERT INTO `users`(`name`, `contact_number`, `address`, `is_active`, `shopName`, `dealerId`, `role_id`) 
           VALUES ('$name', '$contact_number', '$address', '1', '$shopName', '$dealerId', '$roleId')";
@@ -51,13 +77,19 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 				    
 				    $expiryDate = date('Y-m-d', strtotime($date .' +'.$licenseValidity.' day'));
 				    
-				    $sth="INSERT INTO `licenses`(`userId`, `licenseKey`, `licenseValidity`, `licenseType`, `licenseStatus`, `expiryDate`, `paymentStatus`, `amount`, `userType`, `userName`, `fastBilling`, `takeAway`, `dineIn`, `mess`)
-				          VALUES ('$customerId', '$licenseKey', '$licenseValidity', '$licenseType', 'active', '$expiryDate', '$paymentStatus', '$amount', 'owner', '$name', '$fastBilling', '$takeAway', '$dineIn', '$mess')";
+				    $defaultMpin = licence_default_mpin();
+				    $defaultReportPin = licence_default_report_pin();
+				    
+				    $sth="INSERT INTO `licenses`(`userId`, `licenseKey`, `licenseValidity`, `licenseType`, `licenseStatus`, `expiryDate`, `paymentStatus`, `amount`, `userType`, `userName`, `mpin`, `fastBilling`, `takeAway`, `dineIn`, `mess`)
+				          VALUES ('$customerId', '$licenseKey', '$licenseValidity', '$licenseType', 'active', '$expiryDate', '$paymentStatus', '$amount', 'owner', '$name', '$defaultMpin', '$fastBilling', '$takeAway', '$dineIn', '$mess')";
 
                  if(mysqli_query($con, $sth)){
 	
                        $response["status"] = 'true';
                        $response["message"] = "registration successful!";
+                       $response["licenseKey"] = $licenseKey;
+                       $response["mpin"] = $defaultMpin;
+                       $response["reportPin"] = $defaultReportPin;
   
                    }
                    else{
