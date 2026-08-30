@@ -4,21 +4,18 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class WebsiteClient extends Model
+class WebsitePricingPlan extends Model
 {
-    protected $table = 'website_clients';
+    protected $table = 'website_pricing_plans';
 
     public $timestamps = false;
 
     protected $fillable = [
-        'business_name',
-        'subtitle',
-        'city',
-        'business_category',
+        'plan_type',
+        'validity_label',
+        'price',
+        'gst_note',
         'description',
-        'logo_path',
-        'photo_path',
-        'cta_url',
         'sort_order',
         'is_published',
         'created_at',
@@ -28,5 +25,6 @@ class WebsiteClient extends Model
     protected $casts = [
         'is_published' => 'boolean',
         'sort_order' => 'integer',
+        'price' => 'float',
     ];
 }

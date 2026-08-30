@@ -11,7 +11,8 @@ import android.widget.RelativeLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.widget.NestedScrollView;
+
+import com.pos_billingwala.R;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -273,32 +274,37 @@ public final class TabletFormUi {
                 || cartSection == null || paymentSection == null) {
             return;
         }
-        View scrollChild = cartLayout.getChildAt(0);
-        if (!(scrollChild instanceof NestedScrollView)) {
+        View footer = cartLayout.findViewById(R.id.cartAmountLayout);
+        if (footer == null) {
             return;
         }
-        NestedScrollView scrollView = (NestedScrollView) scrollChild;
-        View containerView = scrollView.getChildAt(0);
-        if (!(containerView instanceof LinearLayout)) {
+        ViewGroup.LayoutParams cartParams = cartSection.getLayoutParams();
+        ViewGroup.LayoutParams paymentParams = paymentSection.getLayoutParams();
+        if (!(cartParams instanceof RelativeLayout.LayoutParams)
+                || !(paymentParams instanceof RelativeLayout.LayoutParams)) {
             return;
         }
-        LinearLayout container = (LinearLayout) containerView;
-        container.removeView(cartSection);
-        container.removeView(paymentSection);
+
+        cartLayout.removeView(cartSection);
+        cartLayout.removeView(paymentSection);
 
         float density = activity.getResources().getDisplayMetrics().density;
         int gap = (int) (12 * density);
 
         LinearLayout row = new LinearLayout(activity);
+        row.setId(View.generateViewId());
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setBaselineAligned(false);
-        row.setLayoutParams(new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        RelativeLayout.LayoutParams rowParams = new RelativeLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        rowParams.addRule(RelativeLayout.ABOVE, R.id.cartAmountLayout);
+        rowParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+        row.setLayoutParams(rowParams);
 
         LinearLayout left = new LinearLayout(activity);
         left.setOrientation(LinearLayout.VERTICAL);
         LinearLayout.LayoutParams leftParams = new LinearLayout.LayoutParams(
-                0, ViewGroup.LayoutParams.WRAP_CONTENT, 0.58f);
+                0, ViewGroup.LayoutParams.MATCH_PARENT, 0.58f);
         leftParams.setMarginEnd(gap);
         left.setLayoutParams(leftParams);
 
@@ -307,12 +313,20 @@ public final class TabletFormUi {
         right.setLayoutParams(new LinearLayout.LayoutParams(
                 0, ViewGroup.LayoutParams.WRAP_CONTENT, 0.42f));
 
+        RelativeLayout.LayoutParams cartLp = new RelativeLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        cartSection.setLayoutParams(cartLp);
+
+        LinearLayout.LayoutParams paymentLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        paymentSection.setLayoutParams(paymentLp);
+
         addSection(left, cartSection, 0);
         addSection(right, paymentSection, 0);
 
         row.addView(left);
         row.addView(right);
-        container.addView(row);
+        cartLayout.addView(row);
     }
 
     /** Edit bill: line items left, totals/actions in a right sidebar. */

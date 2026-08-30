@@ -1180,6 +1180,83 @@ SET `subcategorySortOrder` = `subcategoryId`
 WHERE IFNULL(`subcategorySortOrder`, 0) = 0;
 
 -- =============================================================================
+-- p23: Website catalog CMS (dealers, pricing, products, settings)
+-- =============================================================================
+
+SET @db := DATABASE();
+
+SET @sql := IF(
+    (SELECT COUNT(*) FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = @db AND TABLE_NAME = 'website_clients' AND COLUMN_NAME = 'city') = 0,
+    'ALTER TABLE `website_clients` ADD COLUMN `city` varchar(120) NOT NULL DEFAULT '''' AFTER `subtitle`',
+    'SELECT ''OK: website_clients.city exists'' AS msg'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql := IF(
+    (SELECT COUNT(*) FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = @db AND TABLE_NAME = 'website_clients' AND COLUMN_NAME = 'business_category') = 0,
+    'ALTER TABLE `website_clients` ADD COLUMN `business_category` varchar(120) NOT NULL DEFAULT '''' AFTER `city`',
+    'SELECT ''OK: website_clients.business_category exists'' AS msg'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+CREATE TABLE IF NOT EXISTS `website_dealers` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `area` varchar(120) NOT NULL,
+  `dealer_name` varchar(255) NOT NULL,
+  `contact_person` varchar(255) NOT NULL DEFAULT '',
+  `role_title` varchar(255) NOT NULL DEFAULT '',
+  `mobile` varchar(32) NOT NULL DEFAULT '',
+  `whatsapp` varchar(32) NOT NULL DEFAULT '',
+  `address` text,
+  `map_url` varchar(500) NOT NULL DEFAULT '',
+  `dealer_type` varchar(32) NOT NULL DEFAULT 'authorized_dealer',
+  `sort_order` int unsigned NOT NULL DEFAULT 0,
+  `is_published` tinyint unsigned NOT NULL DEFAULT 1,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `website_pricing_plans` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `plan_type` varchar(32) NOT NULL,
+  `validity_label` varchar(64) NOT NULL,
+  `price` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `gst_note` varchar(120) NOT NULL DEFAULT 'GST included',
+  `description` varchar(500) NOT NULL DEFAULT '',
+  `sort_order` int unsigned NOT NULL DEFAULT 0,
+  `is_published` tinyint unsigned NOT NULL DEFAULT 1,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `website_products` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  `category` varchar(64) NOT NULL,
+  `description` text,
+  `icon` varchar(16) NOT NULL DEFAULT '',
+  `sort_order` int unsigned NOT NULL DEFAULT 0,
+  `is_published` tinyint unsigned NOT NULL DEFAULT 1,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `website_settings` (
+  `setting_key` varchar(80) NOT NULL,
+  `setting_value` text,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`setting_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- p23 sample data (settings, products, pricing, dealers, CMS pages, demo clients):
+-- Run the full file API/migrations/p23_website_catalog.sql on the server (includes seed section).
+
+-- =============================================================================
 -- DONE — verify upgrade + existing data still present
 -- =============================================================================
 
@@ -1240,7 +1317,13 @@ SELECT
   (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'companys' AND COLUMN_NAME = 'closingMinutes') AS companys_closingMinutes_ok,
   (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES
-   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'error_logs') AS error_logs_ok;
+   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'error_logs') AS error_logs_ok,
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES
+   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'website_dealers') AS website_dealers_ok,
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES
+   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'website_pricing_plans') AS website_pricing_ok,
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'website_clients' AND COLUMN_NAME = 'city') AS website_clients_city_ok;
 
 -- Business data still there (compare to first SELECT — counts must match)
 SELECT

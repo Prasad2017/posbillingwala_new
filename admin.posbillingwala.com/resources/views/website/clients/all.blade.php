@@ -27,7 +27,8 @@
                                 <th>#</th>
                                 <th>Logo</th>
                                 <th>Business</th>
-                                <th>Subtitle</th>
+                                <th>City</th>
+                                <th>Category</th>
                                 <th>Order</th>
                                 <th>Status</th>
                                 <th>Action</th>
@@ -46,7 +47,8 @@
                                     @endif
                                 </td>
                                 <td>{{ $client->business_name }}</td>
-                                <td>{{ $client->subtitle ?: '—' }}</td>
+                                <td>{{ $client->city ?: '—' }}</td>
+                                <td>{{ $client->business_category ?: '—' }}</td>
                                 <td>{{ $client->sort_order }}</td>
                                 <td>
                                     @if($client->is_published)
@@ -62,7 +64,7 @@
                                 </td>
                             </tr>
                             @empty
-                            <tr><td colspan="7" class="text-center text-muted py-4">No clients yet. Add your first customer showcase.</td></tr>
+                            <tr><td colspan="8" class="text-center text-muted py-4">No clients yet. Add your first customer showcase.</td></tr>
                             @endforelse
                         </tbody>
                     </table>

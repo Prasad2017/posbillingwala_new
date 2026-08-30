@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Trusted POS Billingwala customers — restaurants, retail, and shops across India.">
+  <link rel="icon" href="assets/images/app_logo.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/site.css">
+  <title>Trusted Customers — POS Billingwala</title>
+</head>
+<body data-pbw-page="customers">
+  <div class="page-bg" aria-hidden="true"></div>
+  <div id="pbw-header"></div>
+  <main>
+    <section class="page-hero"><div class="container reveal">
+      <p class="page-kicker">Social proof</p>
+      <h1>Our Trusted Customers</h1>
+      <p class="page-hero-lead">Business logos, names, cities, and categories — shown with customer permission and managed from admin panel.</p>
+    </div></section>
+    <section class="page-section"><div class="container">
+      <div class="filter-bar reveal">
+        <label for="clientCategoryFilter">Filter by category</label>
+        <select id="clientCategoryFilter">
+          <option value="">All categories</option>
+          <option value="Restaurant">Restaurant</option>
+          <option value="Retail">Retail</option>
+          <option value="Mess">Mess</option>
+          <option value="Hotel">Hotel</option>
+          <option value="Bakery">Bakery</option>
+          <option value="Cafe">Café</option>
+        </select>
+      </div>
+      <div id="clientsRoot" class="clients-grid"><p class="clients-empty">Loading customers…</p></div>
+    </div></section>
+    <section class="section section-muted" id="testimonials" hidden><div class="container">
+      <div class="section-head center reveal"><span class="eyebrow">Testimonials</span><h2>What owners say</h2></div>
+      <div id="testimonialsRoot" class="testimonials-grid"></div>
+    </div></section>
+  </main>
+  <div id="pbw-footer"></div>
+  <script src="assets/js/site-config.js"></script>
+  <script src="assets/js/site-layout.js"></script>
+  <script src="assets/js/site.js"></script>
+  <script src="assets/js/site-content.js"></script>
+</body>
+</html>

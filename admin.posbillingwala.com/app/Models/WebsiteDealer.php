@@ -4,21 +4,22 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class WebsiteClient extends Model
+class WebsiteDealer extends Model
 {
-    protected $table = 'website_clients';
+    protected $table = 'website_dealers';
 
     public $timestamps = false;
 
     protected $fillable = [
-        'business_name',
-        'subtitle',
-        'city',
-        'business_category',
-        'description',
-        'logo_path',
-        'photo_path',
-        'cta_url',
+        'area',
+        'dealer_name',
+        'contact_person',
+        'role_title',
+        'mobile',
+        'whatsapp',
+        'address',
+        'map_url',
+        'dealer_type',
         'sort_order',
         'is_published',
         'created_at',

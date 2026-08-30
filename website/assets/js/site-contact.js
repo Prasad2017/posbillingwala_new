@@ -4,7 +4,9 @@
 
   var feedback = document.getElementById("contactFeedback");
   var submitBtn = document.getElementById("contactSubmit");
-  var apiBase = (window.PBW_WEBSITE_API || "/adminpanel/api/website").replace(/\/$/, "");
+  var apiBase = (window.PBW_WEBSITE_API ||
+    (window.PBW_WEBSITE_API_CANDIDATES && window.PBW_WEBSITE_API_CANDIDATES[0]) ||
+    "https://admin.posbillingwala.com/api/website").replace(/\/$/, "");
 
   function showFeedback(text, isError) {
     if (!feedback) return;

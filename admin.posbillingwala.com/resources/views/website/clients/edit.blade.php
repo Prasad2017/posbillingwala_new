@@ -9,7 +9,7 @@
                     <div class="card-body p-5">
                         <div class="card-title d-flex align-items-center">
                             <div><i class="bx bx-store me-1 font-22 text-primary"></i></div>
-                            <h5 class="mb-0 text-primary">Edit Client Showcase</h5>
+                            <h5 class="mb-0 text-primary">Edit Trusted Customer</h5>
                         </div>
                         <hr>
                         <form class="row g-3" method="POST" action="{{ url('website/clients/edit/'.$client->id) }}" enctype="multipart/form-data">
@@ -20,11 +20,19 @@
                                 @error('business_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
                             <div class="col-md-6">
+                                <label class="form-label">City</label>
+                                <input type="text" class="form-control" name="city" value="{{ old('city', $client->city) }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Business category</label>
+                                <input type="text" class="form-control" name="business_category" value="{{ old('business_category', $client->business_category) }}">
+                            </div>
+                            <div class="col-md-6">
                                 <label class="form-label">Subtitle</label>
                                 <input type="text" class="form-control" name="subtitle" value="{{ old('subtitle', $client->subtitle) }}">
                             </div>
                             <div class="col-12">
-                                <label class="form-label">How they use the app</label>
+                                <label class="form-label">Short story</label>
                                 <textarea class="form-control" name="description" rows="3">{{ old('description', $client->description) }}</textarea>
                             </div>
                             <div class="col-md-6">

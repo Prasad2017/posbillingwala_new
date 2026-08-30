@@ -6,6 +6,9 @@ use App\Models\WebsiteClient;
 use App\Models\WebsiteContactMessage;
 use App\Models\WebsitePage;
 use App\Models\WebsiteTestimonial;
+use App\Models\WebsiteDealer;
+use App\Models\WebsitePricingPlan;
+use App\Models\WebsiteProduct;
 use App\Services\AdminTables;
 use App\Services\WebsiteMedia;
 use Auth;
@@ -130,12 +133,16 @@ class WebsiteContentController extends Controller
     {
         $this->adminOnly();
         $this->seedDefaults();
+        app(\App\Http\Controllers\WebsiteCatalogController::class)->seedDefaults();
 
         return view('website.hub', [
             'clientCount' => WebsiteClient::count(),
             'testimonialCount' => WebsiteTestimonial::count(),
             'contactCount' => WebsiteContactMessage::count(),
             'newContactCount' => WebsiteContactMessage::where('status', 'New')->count(),
+            'dealerCount' => WebsiteDealer::count(),
+            'pricingCount' => WebsitePricingPlan::count(),
+            'productCount' => WebsiteProduct::count(),
         ]);
     }
 
@@ -212,6 +219,8 @@ class WebsiteContentController extends Controller
         $validated = $request->validate([
             'business_name' => 'required|string|max:255',
             'subtitle' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:120',
+            'business_category' => 'nullable|string|max:120',
             'description' => 'nullable|string',
             'cta_url' => 'nullable|url|max:500',
             'sort_order' => 'nullable|integer|min:0|max:9999',
@@ -223,6 +232,8 @@ class WebsiteContentController extends Controller
         $client = new WebsiteClient();
         $client->business_name = $validated['business_name'];
         $client->subtitle = $validated['subtitle'] ?? '';
+        $client->city = $validated['city'] ?? '';
+        $client->business_category = $validated['business_category'] ?? '';
         $client->description = $validated['description'] ?? '';
         $client->cta_url = $validated['cta_url'] ?? '';
         $client->sort_order = (int) ($validated['sort_order'] ?? 0);
@@ -259,6 +270,8 @@ class WebsiteContentController extends Controller
         $validated = $request->validate([
             'business_name' => 'required|string|max:255',
             'subtitle' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:120',
+            'business_category' => 'nullable|string|max:120',
             'description' => 'nullable|string',
             'cta_url' => 'nullable|url|max:500',
             'sort_order' => 'nullable|integer|min:0|max:9999',
@@ -269,6 +282,8 @@ class WebsiteContentController extends Controller
 
         $client->business_name = $validated['business_name'];
         $client->subtitle = $validated['subtitle'] ?? '';
+        $client->city = $validated['city'] ?? '';
+        $client->business_category = $validated['business_category'] ?? '';
         $client->description = $validated['description'] ?? '';
         $client->cta_url = $validated['cta_url'] ?? '';
         $client->sort_order = (int) ($validated['sort_order'] ?? 0);

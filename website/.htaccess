@@ -7,7 +7,7 @@ RewriteEngine On
 </IfModule>
 # php -- END cPanel-generated handler, do not edit
 
-# Clean login URL → Laravel admin (no rewrite loop)
-RewriteRule ^login/?$ /adminpanel/login [L,R=302]
-RewriteRule ^dealer/login/?$ /adminpanel/dealer/login [L,R=302]
-RewriteRule ^customer/login/?$ /adminpanel/customer/login [L,R=302]
+# Clean login URL → admin subdomain (no /adminpanel/ folder on main site)
+RewriteRule ^login/?$ https://admin.posbillingwala.com/login [L,R=302]
+RewriteRule ^dealer/login/?$ https://admin.posbillingwala.com/dealer/login [L,R=302]
+RewriteRule ^customer/login/?$ https://admin.posbillingwala.com/customer/login [L,R=302]

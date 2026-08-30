@@ -9,9 +9,9 @@
                     <div class="card-body p-5">
                         <div class="card-title d-flex align-items-center">
                             <div><i class="bx bx-store me-1 font-22 text-primary"></i></div>
-                            <h5 class="mb-0 text-primary">Add Client Showcase</h5>
+                            <h5 class="mb-0 text-primary">Add Trusted Customer</h5>
                         </div>
-                        <p class="text-muted small">Shown on the website homepage — business logo/name and how they use POS Billingwala.</p>
+                        <p class="text-muted small">Shown on website — logo, business name, city, category (with customer permission).</p>
                         <hr>
                         <form class="row g-3" method="POST" action="{{ url('website/clients/add') }}" enctype="multipart/form-data">
                             @csrf
@@ -21,15 +21,23 @@
                                 @error('business_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Subtitle (owner / location)</label>
-                                <input type="text" class="form-control" name="subtitle" value="{{ old('subtitle') }}" placeholder="e.g. Velu · Pune">
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label">How they use the app</label>
-                                <textarea class="form-control" name="description" rows="3" placeholder="Short story for the website">{{ old('description') }}</textarea>
+                                <label class="form-label">City</label>
+                                <input type="text" class="form-control" name="city" value="{{ old('city') }}" placeholder="e.g. Pune">
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Logo (square, optional)</label>
+                                <label class="form-label">Business category</label>
+                                <input type="text" class="form-control" name="business_category" value="{{ old('business_category') }}" placeholder="Restaurant / Retail / Mess / Hotel">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Subtitle (owner name, optional)</label>
+                                <input type="text" class="form-control" name="subtitle" value="{{ old('subtitle') }}" placeholder="e.g. Hotel Shree · Owner">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Short story (optional)</label>
+                                <textarea class="form-control" name="description" rows="3">{{ old('description') }}</textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Logo</label>
                                 <input type="file" class="form-control" name="logo" accept="image/*">
                             </div>
                             <div class="col-md-6">
@@ -38,7 +46,7 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Button link (optional)</label>
-                                <input type="url" class="form-control" name="cta_url" value="{{ old('cta_url') }}" placeholder="https://play.google.com/...">
+                                <input type="url" class="form-control" name="cta_url" value="{{ old('cta_url') }}">
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label">Sort order</label>
@@ -47,11 +55,11 @@
                             <div class="col-md-3 d-flex align-items-end">
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" name="is_published" value="1" id="pub" checked>
-                                    <label class="form-check-label" for="pub">Published on website</label>
+                                    <label class="form-check-label" for="pub">Published</label>
                                 </div>
                             </div>
                             <div class="col-12">
-                                <button type="submit" class="btn btn-primary px-5">Add client</button>
+                                <button type="submit" class="btn btn-primary px-5">Add customer</button>
                                 <a href="{{ url('website/clients') }}" class="btn btn-outline-secondary ms-2">Cancel</a>
                             </div>
                         </form>
