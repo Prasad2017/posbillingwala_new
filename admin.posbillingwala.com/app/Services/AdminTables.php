@@ -95,6 +95,8 @@ class AdminTables
                 $table->increments('id');
                 $table->string('business_name', 255);
                 $table->string('subtitle', 255)->default('');
+                $table->string('city', 120)->default('');
+                $table->string('business_category', 120)->default('');
                 $table->text('description')->nullable();
                 $table->string('logo_path', 500)->default('');
                 $table->string('photo_path', 500)->default('');
@@ -103,6 +105,11 @@ class AdminTables
                 $table->unsignedTinyInteger('is_published')->default(1);
                 $table->dateTime('created_at')->useCurrent();
                 $table->dateTime('updated_at')->useCurrent();
+            });
+        } elseif (!Schema::hasColumn('website_clients', 'city')) {
+            Schema::table('website_clients', function (Blueprint $table) {
+                $table->string('city', 120)->default('')->after('subtitle');
+                $table->string('business_category', 120)->default('')->after('city');
             });
         }
 
@@ -131,6 +138,62 @@ class AdminTables
                 $table->string('status', 32)->default('New');
                 $table->string('source_ip', 64)->default('');
                 $table->dateTime('created_at')->useCurrent();
+                $table->dateTime('updated_at')->useCurrent();
+            });
+        }
+
+        if (!Schema::hasTable('website_dealers')) {
+            Schema::create('website_dealers', function (Blueprint $table) {
+                $table->increments('id');
+                $table->string('area', 120);
+                $table->string('dealer_name', 255);
+                $table->string('contact_person', 255)->default('');
+                $table->string('role_title', 255)->default('');
+                $table->string('mobile', 32)->default('');
+                $table->string('whatsapp', 32)->default('');
+                $table->text('address')->nullable();
+                $table->string('map_url', 500)->default('');
+                $table->string('dealer_type', 32)->default('authorized_dealer');
+                $table->unsignedInteger('sort_order')->default(0);
+                $table->unsignedTinyInteger('is_published')->default(1);
+                $table->dateTime('created_at')->useCurrent();
+                $table->dateTime('updated_at')->useCurrent();
+            });
+        }
+
+        if (!Schema::hasTable('website_pricing_plans')) {
+            Schema::create('website_pricing_plans', function (Blueprint $table) {
+                $table->increments('id');
+                $table->string('plan_type', 32);
+                $table->string('validity_label', 64);
+                $table->decimal('price', 10, 2)->default(0);
+                $table->string('gst_note', 120)->default('GST included');
+                $table->string('description', 500)->default('');
+                $table->unsignedInteger('sort_order')->default(0);
+                $table->unsignedTinyInteger('is_published')->default(1);
+                $table->dateTime('created_at')->useCurrent();
+                $table->dateTime('updated_at')->useCurrent();
+            });
+        }
+
+        if (!Schema::hasTable('website_products')) {
+            Schema::create('website_products', function (Blueprint $table) {
+                $table->increments('id');
+                $table->string('name', 255);
+                $table->string('category', 64);
+                $table->text('description')->nullable();
+                $table->string('icon', 16)->default('');
+                $table->unsignedInteger('sort_order')->default(0);
+                $table->unsignedTinyInteger('is_published')->default(1);
+                $table->dateTime('created_at')->useCurrent();
+                $table->dateTime('updated_at')->useCurrent();
+            });
+        }
+
+        if (!Schema::hasTable('website_settings')) {
+            Schema::create('website_settings', function (Blueprint $table) {
+                $table->string('setting_key', 80)->primary();
+                $table->text('setting_value')->nullable();
                 $table->dateTime('updated_at')->useCurrent();
             });
         }
