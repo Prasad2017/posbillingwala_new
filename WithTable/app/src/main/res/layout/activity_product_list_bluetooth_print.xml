@@ -61,47 +61,58 @@
                 android:padding="5dp">
 
                 <TextView
-                    android:layout_width="70dp"
+                    android:layout_width="50dp"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:fontFamily="@font/poppinsbold"
                     android:gravity="center"
-                    android:paddingStart="5dp"
-                    android:paddingEnd="5dp"
-                    android:singleLine="true"
+                    android:paddingStart="2dp"
+                    android:paddingEnd="2dp"
                     android:text="@string/ui_code"
                     android:textAllCaps="true"
                     android:textColor="@color/black"
-                    android:textSize="15dp" />
+                    android:textSize="12dp" />
 
                 <TextView
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_weight="1.4"
+                    android:fontFamily="@font/poppinsbold"
+                    android:gravity="center"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="4dp"
+                    android:text="@string/ui_product_name"
+                    android:textAllCaps="true"
+                    android:textColor="@color/black"
+                    android:textSize="12dp" />
+
+                <TextView
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:layout_weight="1"
                     android:fontFamily="@font/poppinsbold"
                     android:gravity="center"
-                    android:paddingStart="5dp"
-                    android:paddingEnd="5dp"
-                    android:singleLine="true"
-                    android:text="@string/ui_product_name"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="4dp"
+                    android:text="@string/ui_portion"
                     android:textAllCaps="true"
                     android:textColor="@color/black"
-                    android:textSize="15dp" />
+                    android:textSize="12dp" />
 
                 <TextView
-                    android:layout_width="80dp"
+                    android:layout_width="72dp"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:fontFamily="@font/poppinsbold"
                     android:gravity="center"
-                    android:paddingStart="5dp"
-                    android:paddingEnd="5dp"
-                    android:singleLine="true"
+                    android:paddingStart="2dp"
+                    android:paddingEnd="2dp"
                     android:text="@string/ui_price"
                     android:textAllCaps="true"
                     android:textColor="@color/black"
-                    android:textSize="15dp" />
+                    android:textSize="12dp" />
 
             </LinearLayout>
 
@@ -142,47 +153,58 @@
                 android:padding="5dp">
 
                 <TextView
-                    android:layout_width="70dp"
+                    android:layout_width="50dp"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:fontFamily="@font/poppinsbold"
                     android:gravity="center"
-                    android:paddingStart="5dp"
-                    android:paddingEnd="5dp"
-                    android:singleLine="true"
+                    android:paddingStart="2dp"
+                    android:paddingEnd="2dp"
                     android:text="@string/ui_code"
                     android:textAllCaps="true"
                     android:textColor="@color/black"
-                    android:textSize="15dp" />
+                    android:textSize="12dp" />
 
                 <TextView
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_weight="1.4"
+                    android:fontFamily="@font/poppinsbold"
+                    android:gravity="center"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="4dp"
+                    android:text="@string/ui_product_name"
+                    android:textAllCaps="true"
+                    android:textColor="@color/black"
+                    android:textSize="12dp" />
+
+                <TextView
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:layout_weight="1"
                     android:fontFamily="@font/poppinsbold"
                     android:gravity="center"
-                    android:paddingStart="5dp"
-                    android:paddingEnd="5dp"
-                    android:singleLine="true"
-                    android:text="@string/ui_product_name"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="4dp"
+                    android:text="@string/ui_portion"
                     android:textAllCaps="true"
                     android:textColor="@color/black"
-                    android:textSize="15dp" />
+                    android:textSize="12dp" />
 
                 <TextView
-                    android:layout_width="80dp"
+                    android:layout_width="72dp"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:fontFamily="@font/poppinsbold"
                     android:gravity="center"
-                    android:paddingStart="5dp"
-                    android:paddingEnd="5dp"
-                    android:singleLine="true"
+                    android:paddingStart="2dp"
+                    android:paddingEnd="2dp"
                     android:text="@string/ui_price"
                     android:textAllCaps="true"
                     android:textColor="@color/black"
-                    android:textSize="15dp" />
+                    android:textSize="12dp" />
 
             </LinearLayout>
 
@@ -234,44 +256,54 @@
                         android:padding="5dp">
 
                         <TextView
-                            android:layout_width="70dp"
+                            android:layout_width="50dp"
                             android:layout_height="wrap_content"
                             android:layout_gravity="center"
                             android:fontFamily="@font/poppinsbold"
                             android:gravity="center"
-                            android:paddingStart="5dp"
-                            android:paddingEnd="5dp"
-                            android:singleLine="true"
+                            android:paddingStart="2dp"
+                            android:paddingEnd="2dp"
                             android:text="@string/ui_code"
                             android:textColor="@color/black"
-                            android:textSize="15dp" />
+                            android:textSize="13dp" />
 
                         <TextView
-                            android:layout_width="match_parent"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_weight="1.4"
+                            android:fontFamily="@font/poppinsmedium"
+                            android:gravity="center"
+                            android:paddingStart="4dp"
+                            android:paddingEnd="4dp"
+                            android:text="@string/ui_product_name"
+                            android:textColor="@color/black"
+                            android:textSize="13dp" />
+
+                        <TextView
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_gravity="center"
                             android:layout_weight="1"
                             android:fontFamily="@font/poppinsmedium"
                             android:gravity="center"
-                            android:paddingStart="5dp"
-                            android:paddingEnd="5dp"
-                            android:singleLine="true"
-                            android:text="@string/ui_product_name"
+                            android:paddingStart="4dp"
+                            android:paddingEnd="4dp"
+                            android:text="@string/ui_portion"
                             android:textColor="@color/black"
-                            android:textSize="15dp" />
+                            android:textSize="13dp" />
 
                         <TextView
-                            android:layout_width="80dp"
+                            android:layout_width="72dp"
                             android:layout_height="wrap_content"
                             android:layout_gravity="center"
                             android:fontFamily="@font/poppinsmedium"
                             android:gravity="center"
-                            android:paddingStart="5dp"
-                            android:paddingEnd="5dp"
-                            android:singleLine="true"
+                            android:paddingStart="2dp"
+                            android:paddingEnd="2dp"
                             android:text="@string/ui_price"
                             android:textColor="@color/black"
-                            android:textSize="15dp" />
+                            android:textSize="13dp" />
 
                     </LinearLayout>
 

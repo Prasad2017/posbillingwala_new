@@ -183,6 +183,7 @@
     <string name="ui_product_list">उत्पाद सूची</string>
     <string name="ui_product_menu">उत्पाद मेनू</string>
     <string name="ui_product_name">उत्पाद का नाम</string>
+    <string name="ui_portion">पोर्शन</string>
     <string name="ui_product_preview">उत्पाद पूर्वावलोकन</string>
     <string name="ui_product_price">उत्पाद की कीमत*</string>
     <string name="ui_product_price_2">उत्पाद की कीमत</string>

@@ -62,6 +62,8 @@ public class InvoiceProductResponse {
     @SerializedName("snapshotComboComponents")
     @Expose
     public String snapshotComboComponents;
+    /** Local-only: catalogue id for inventory dirty-flag when this line is newly inserted. */
+    public String sourceProductId;
 
 
     public String getInvoiceProductId() {
@@ -214,6 +216,14 @@ public class InvoiceProductResponse {
 
     public void setSnapshotComboComponents(String snapshotComboComponents) {
         this.snapshotComboComponents = snapshotComboComponents;
+    }
+
+    public String getSourceProductId() {
+        return sourceProductId;
+    }
+
+    public void setSourceProductId(String sourceProductId) {
+        this.sourceProductId = sourceProductId;
     }
 
     public String getDisplayLineName() {

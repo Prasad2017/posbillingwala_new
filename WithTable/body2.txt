@@ -1,0 +1,1 @@
+{"status":"0","message":"Licence expired, device mismatch, or user disabled"}

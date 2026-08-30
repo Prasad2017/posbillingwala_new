@@ -2,6 +2,32 @@
 include_once('config.php');
 require_once __DIR__ . '/branch_scope.php';
 
+/**
+ * Live server may be missing multi-branch scope columns until p7 is applied.
+ */
+function expenses_ensure_scope_columns($con)
+{
+    static $ensured = false;
+    if ($ensured || $con === null) {
+        return;
+    }
+    $columns = array(
+        'organization_id' => "ALTER TABLE `expenses` ADD COLUMN `organization_id` INT NULL DEFAULT NULL AFTER `userId`",
+        'branch_id' => "ALTER TABLE `expenses` ADD COLUMN `branch_id` INT NULL DEFAULT NULL AFTER `organization_id`",
+        'device_id' => "ALTER TABLE `expenses` ADD COLUMN `device_id` VARCHAR(255) NULL DEFAULT NULL AFTER `branch_id`",
+    );
+    foreach ($columns as $name => $ddl) {
+        $col = @mysqli_query($con, "SHOW COLUMNS FROM `expenses` LIKE '" . $name . "'");
+        if ($col && mysqli_num_rows($col) === 0) {
+            @mysqli_query($con, $ddl);
+        }
+        if ($col) {
+            mysqli_free_result($col);
+        }
+    }
+    $ensured = true;
+}
+
 $response = array();
 if($_SERVER['REQUEST_METHOD']=='POST'){
     mysqli_query($con, 'set names utf8');
@@ -18,10 +44,12 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
   $branchId = $ctx['triplet']['branch_id'];
   $deviceId = $ctx['triplet']['device_id'];
 
-  $expensesName = $_POST['expensesName'];
-  $expensesAmount = $_POST['expensesAmount'];
-  $expensesDate = $_POST['expensesDate'];
-  $expensesNetworkStatus = $_POST['expensesNetworkStatus'];
+  expenses_ensure_scope_columns($con);
+
+  $expensesName = isset($_POST['expensesName']) ? $_POST['expensesName'] : '';
+  $expensesAmount = isset($_POST['expensesAmount']) ? $_POST['expensesAmount'] : '0';
+  $expensesDate = isset($_POST['expensesDate']) ? $_POST['expensesDate'] : date('Y-m-d');
+  $expensesNetworkStatus = isset($_POST['expensesNetworkStatus']) ? $_POST['expensesNetworkStatus'] : '';
 
 	date_default_timezone_set('Asia/Kolkata');
 

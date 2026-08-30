@@ -43,10 +43,13 @@ import com.pos_billingwala.Adapter.ProductPrintAdapter;
 import com.pos_billingwala.BuildConfig;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Model.PrinterSettingResponse;
+import com.pos_billingwala.Model.ProductPortionResponse;
 import com.pos_billingwala.Model.ProductResponse;
 import com.pos_billingwala.Print.BluetoothPrintService;
+import com.pos_billingwala.Print.BluetoothPrinterChannel;
 import com.pos_billingwala.Print.DeviceListActivity;
 import com.pos_billingwala.Print.PrintImage;
+import com.pos_billingwala.Print.PrinterConnectionHelper;
 import com.pos_billingwala.Print.WoosimPrnMng;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.ActivityProductListBluetoothPrintBinding;
@@ -115,15 +118,16 @@ public class ProductListBluetoothPrint extends BaseActivity implements View.OnCl
         productResponseList = posBillingWalaDatabase.getAllProductList("", "");
         if (!productResponseList.isEmpty()) {
 
-            ProductPrintAdapter productAdapter = new ProductPrintAdapter(activity, productResponseList);
+            List<ProductPrintAdapter.ProductPrintRow> printRows = buildProductPrintRows(productResponseList);
+            ProductPrintAdapter productAdapter = new ProductPrintAdapter(activity, printRows);
             productRecyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
             productRecyclerView.setAdapter(productAdapter);
             //2 inch Printer
             twoRecyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
-            twoRecyclerView.setAdapter(productAdapter);
+            twoRecyclerView.setAdapter(new ProductPrintAdapter(activity, printRows));
             //3 inch Printer
             threeRecyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
-            threeRecyclerView.setAdapter(productAdapter);
+            threeRecyclerView.setAdapter(new ProductPrintAdapter(activity, printRows));
 
             productLayout.setVisibility(View.VISIBLE);
             noDataFound.setVisibility(View.GONE);
@@ -133,6 +137,32 @@ public class ProductListBluetoothPrint extends BaseActivity implements View.OnCl
             noDataFound.setVisibility(View.VISIBLE);
         }
 
+    }
+
+    static List<ProductPrintAdapter.ProductPrintRow> buildProductPrintRows(List<ProductResponse> products) {
+        List<ProductPrintAdapter.ProductPrintRow> rows = new ArrayList<>();
+        if (products == null) {
+            return rows;
+        }
+        for (ProductResponse product : products) {
+            if (product == null) {
+                continue;
+            }
+            String code = product.getProductCode() != null ? product.getProductCode() : "";
+            String name = product.getProductName() != null ? product.getProductName() : "";
+            List<ProductPortionResponse> portions = posBillingWalaDatabase.getProductPortionList(product.getProductId());
+            if (portions == null || portions.isEmpty()) {
+                rows.add(new ProductPrintAdapter.ProductPrintRow(code, name, "-", product.getProductPrice()));
+                continue;
+            }
+            for (ProductPortionResponse portion : portions) {
+                String portionName = portion != null && portion.getPortionName() != null
+                        ? portion.getPortionName() : "-";
+                String portionPrice = portion != null ? portion.getPortionPrice() : "";
+                rows.add(new ProductPrintAdapter.ProductPrintRow(code, name, portionName, portionPrice));
+            }
+        }
+        return rows;
     }
 
     public void createPdf() {
@@ -225,6 +255,9 @@ public class ProductListBluetoothPrint extends BaseActivity implements View.OnCl
         int id = view.getId();
         if (id == R.id.printProductCardView) {
             if (!printerSettingResponseList.isEmpty()) {
+                if (!PrinterConnectionHelper.ensureBillPrinter(activity, savedBillPrinterAddress())) {
+                    return;
+                }
                 progressDialog = new ProgressDialog(activity);
                 progressDialog.setMessage(getString(R.string.toast_printing_in_progress));
                 if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("2-Inch")) {
@@ -276,8 +309,7 @@ public class ProductListBluetoothPrint extends BaseActivity implements View.OnCl
 
             checkAndFeedPaper(5);
         } else {
-            //Printer not connected and send request for connecting printer
-            new WoosimPrnMng(activity, "", ProductListBluetoothPrint.this);
+            WoosimPrnMng.connectFromButton(activity, savedBillPrinterAddress(), ProductListBluetoothPrint.this);
         }
 
     }
@@ -353,6 +385,14 @@ public class ProductListBluetoothPrint extends BaseActivity implements View.OnCl
         return bm;
     }
 
+    private String savedBillPrinterAddress() {
+        if (printerSettingResponseList == null || printerSettingResponseList.isEmpty()) {
+            return "";
+        }
+        String addr = printerSettingResponseList.get(0).getBluetoothAddress();
+        return addr != null ? addr : "";
+    }
+
     public void getPrinterSettingDetails() {
         printerSettingResponseList = posBillingWalaDatabase.getPrinterSettingDetails();
         if (!printerSettingResponseList.isEmpty()) {
@@ -378,8 +418,7 @@ public class ProductListBluetoothPrint extends BaseActivity implements View.OnCl
                 mService.write(normalText);
             }
         } else {
-            //Printer not connected and send request for connecting printer
-            new WoosimPrnMng(activity, "", ProductListBluetoothPrint.this);
+            WoosimPrnMng.connectFromButton(activity, savedBillPrinterAddress(), ProductListBluetoothPrint.this);
         }
 
     }
@@ -401,12 +440,15 @@ public class ProductListBluetoothPrint extends BaseActivity implements View.OnCl
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_ENABLE_BT && resultCode == RESULT_OK) {
-            //bluetooth enabled and request for showing available bluetooth devices
-            new WoosimPrnMng(activity, "", ProductListBluetoothPrint.this);
-        } else if (requestCode == REQUEST_CONNECT_DEVICE && resultCode == RESULT_OK) {
-            //bluetooth device selected and request pairing with device
+            WoosimPrnMng.connectFromButton(activity, savedBillPrinterAddress(), ProductListBluetoothPrint.this);
+        } else if (requestCode == REQUEST_CONNECT_DEVICE && resultCode == RESULT_OK && data != null && data.getExtras() != null) {
             String bluetoothAddress = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
-            new WoosimPrnMng(activity, bluetoothAddress, ProductListBluetoothPrint.this);
+            if (bluetoothAddress != null) {
+                BluetoothPrinterChannel.bill().onDevicePicked(bluetoothAddress);
+                if (!printerSettingResponseList.isEmpty()) {
+                    printerSettingResponseList.get(0).setBluetoothAddress(bluetoothAddress);
+                }
+            }
         }
     }
 

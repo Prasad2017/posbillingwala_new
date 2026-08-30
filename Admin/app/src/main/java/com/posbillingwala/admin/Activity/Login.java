@@ -86,7 +86,7 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
         ClickableSpan clickableSpan1 = new ClickableSpan() {
             public void onClick(View widget) {
 
-                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://posbillingwala.com/PlayStore/privacy_policy.html"));
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://posbillingwala.com/PlayStore/privacy_policy.html"));
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 try {
                     startActivity(intent);
@@ -110,7 +110,7 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
             @Override
             public void onClick(View widget) {
 
-                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://posbillingwala.com/PlayStore/privacy_policy.html"));
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://posbillingwala.com/PlayStore/privacy_policy.html"));
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 try {
                     startActivity(intent);

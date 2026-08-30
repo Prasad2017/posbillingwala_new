@@ -641,6 +641,9 @@ public class UserSetting extends Fragment implements View.OnClickListener {
                     BusinessHours.save(activity, openingMinutes[0], closingMinutes[0]);
                     refreshBusinessHoursLabel();
                     Toast.makeText(activity, R.string.business_hours_saved, Toast.LENGTH_SHORT).show();
+                    if (DetectConnection.checkInternetConnection(activity)) {
+                        UserSynchronizeData.start(activity);
+                    }
                 },
                 null);
     }

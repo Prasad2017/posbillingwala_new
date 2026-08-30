@@ -670,7 +670,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             Intent intent = new Intent(Intent.ACTION_VIEW,
 
-                    Uri.parse("http://posbillingwala.com/about.html"));
+                    Uri.parse("https://posbillingwala.com/about.html"));
 
             startActivity(intent);
 

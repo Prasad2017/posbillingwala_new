@@ -145,3 +145,39 @@ if (!function_exists('company_display_address_oneline')) {
         return implode(', ', $parts);
     }
 }
+
+if (!function_exists('companys_has_column')) {
+    function companys_has_column($con, $columnName)
+    {
+        static $cache = array();
+        $key = (string)$columnName;
+        if (array_key_exists($key, $cache)) {
+            return $cache[$key];
+        }
+        $escaped = mysqli_real_escape_string($con, $key);
+        $result = mysqli_query($con, "SHOW COLUMNS FROM `companys` LIKE '" . $escaped . "'");
+        $cache[$key] = ($result && mysqli_num_rows($result) > 0);
+        return $cache[$key];
+    }
+}
+
+/**
+ * @return string|null normalized minutes 0–1439, or null if unset/invalid
+ */
+if (!function_exists('company_normalize_minutes')) {
+    function company_normalize_minutes($value)
+    {
+        $raw = company_trim($value);
+        if ($raw === '') {
+            return null;
+        }
+        if (!is_numeric($raw)) {
+            return null;
+        }
+        $minutes = intval($raw, 10);
+        if ($minutes < 0 || $minutes > 1439) {
+            return null;
+        }
+        return (string)$minutes;
+    }
+}

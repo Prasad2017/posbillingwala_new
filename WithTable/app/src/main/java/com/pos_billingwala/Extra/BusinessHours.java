@@ -2,12 +2,13 @@ package com.pos_billingwala.Extra;
 
 import android.content.Context;
 
+import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.R;
 
 import java.util.Calendar;
 import java.util.Locale;
 
-/** Local shop opening / closing hours (offline, per device). */
+/** Shop opening / closing hours — device prefs plus company row for server sync. */
 public final class BusinessHours {
 
     public static final String KEY_OPEN = "businessOpeningMinutes";
@@ -29,8 +30,48 @@ public final class BusinessHours {
     }
 
     public static void save(Context context, int openMinutes, int closeMinutes) {
-        Common.saveUserData(context, KEY_OPEN, String.valueOf(openMinutes));
-        Common.saveUserData(context, KEY_CLOSE, String.valueOf(closeMinutes));
+        savePrefs(context, openMinutes, closeMinutes);
+        persistToCompany(context, true);
+    }
+
+    public static void persistToCompany(Context context, boolean markUnsynced) {
+        if (context == null || !isConfigured(context)) {
+            return;
+        }
+        try {
+            POSBillingWalaDatabase database = new POSBillingWalaDatabase(context);
+            database.updateCompanyBusinessHours(
+                    String.valueOf(openingMinutes(context)),
+                    String.valueOf(closingMinutes(context)),
+                    markUnsynced);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /** Apply hours from getCompanyList so they match other shop details after cloud pull. */
+    public static void applyFromServer(Context context, String openingRaw, String closingRaw) {
+        if (context == null) {
+            return;
+        }
+        int open = parseMinutes(openingRaw);
+        int close = parseMinutes(closingRaw);
+        if (open >= 0 && close >= 0) {
+            savePrefs(context, open, close);
+            persistToCompany(context, false);
+            return;
+        }
+        if (isConfigured(context)) {
+            persistToCompany(context, true);
+        }
+    }
+
+    public static String openingForUpload(Context context, String dbValue) {
+        return firstValidMinutes(dbValue, context, KEY_OPEN);
+    }
+
+    public static String closingForUpload(Context context, String dbValue) {
+        return firstValidMinutes(dbValue, context, KEY_CLOSE);
     }
 
     public static String formatMinutes(int minutes) {
@@ -82,15 +123,39 @@ public final class BusinessHours {
         return current >= open || current < close;
     }
 
-    private static int minutesOrEmpty(Context context, String key) {
-        String raw = Common.getSavedUserData(context, key);
+    private static void savePrefs(Context context, int openMinutes, int closeMinutes) {
+        Common.saveUserData(context, KEY_OPEN, String.valueOf(openMinutes));
+        Common.saveUserData(context, KEY_CLOSE, String.valueOf(closeMinutes));
+    }
+
+    private static String firstValidMinutes(String dbValue, Context context, String prefKey) {
+        int fromDb = parseMinutes(dbValue);
+        if (fromDb >= 0) {
+            return String.valueOf(fromDb);
+        }
+        int fromPref = minutesOrEmpty(context, prefKey);
+        if (fromPref >= 0) {
+            return String.valueOf(fromPref);
+        }
+        return "";
+    }
+
+    private static int parseMinutes(String raw) {
         if (raw == null || raw.trim().isEmpty()) {
             return -1;
         }
         try {
-            return Integer.parseInt(raw.trim());
+            int minutes = Integer.parseInt(raw.trim());
+            if (minutes < 0 || minutes > 1439) {
+                return -1;
+            }
+            return minutes;
         } catch (NumberFormatException e) {
             return -1;
         }
+    }
+
+    private static int minutesOrEmpty(Context context, String key) {
+        return parseMinutes(Common.getSavedUserData(context, key));
     }
 }

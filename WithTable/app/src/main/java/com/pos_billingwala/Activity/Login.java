@@ -155,7 +155,7 @@ public class Login extends BaseActivity implements View.OnClickListener {
         return new ClickableSpan() {
             @Override
             public void onClick(@NonNull View widget) {
-                openWebPage("http://posbillingwala.com/PlayStore/privacy_policy.html");
+                openWebPage("https://posbillingwala.com/PlayStore/privacy_policy.html");
             }
 
             @Override

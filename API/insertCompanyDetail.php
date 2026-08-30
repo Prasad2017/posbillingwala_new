@@ -1,6 +1,7 @@
 <?php
 include_once('config.php');
 require_once __DIR__ . '/pos_auth_guard.php';
+require_once __DIR__ . '/company_store_fields.php';
 
 
 $response = array();
@@ -35,6 +36,14 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
   $companyFssis = isset($_POST['companyFssis']) ? $_POST['companyFssis'] : '';
   $companyLogo = isset($_POST['companyLogo']) ? $_POST['companyLogo'] : '';
   $paymentLogo = isset($_POST['paymentLogo']) ? $_POST['paymentLogo'] : '';
+  $openingMinutes = company_normalize_minutes(isset($_POST['openingMinutes']) ? $_POST['openingMinutes'] : '');
+  $closingMinutes = company_normalize_minutes(isset($_POST['closingMinutes']) ? $_POST['closingMinutes'] : '');
+  $hasBusinessHoursColumns = companys_has_column($con, 'openingMinutes') && companys_has_column($con, 'closingMinutes');
+  $hoursSqlFragment = '';
+  if ($hasBusinessHoursColumns && $openingMinutes !== null && $closingMinutes !== null) {
+      $hoursSqlFragment = ", `openingMinutes`='" . mysqli_real_escape_string($con, $openingMinutes)
+          . "', `closingMinutes`='" . mysqli_real_escape_string($con, $closingMinutes) . "'";
+  }
 
   // Backward-compatible mapping when older clients omit structured fields
   if ($shopName1 === '' && $companyName !== '') {
@@ -76,7 +85,7 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 				    
 				    $companyId = $check['companyId'];
 				    $sql="UPDATE `companys` SET `companyLogo`='$companyLogo', `paymentLogo`='$paymentLogo', `companyName`='$companyName', `cashierName`='$cashierName', `companyMobile`='$companyMobile', `companyAddress`='$companyAddress', `shopName1`='$shopName1', `shopName2`='$shopName2', `addressLine1`='$addressLine1', `addressLine2`='$addressLine2', `addressLine3`='$addressLine3', `phoneNo1`='$phoneNo1', `phoneNo2`='$phoneNo2', `currencyName`='$currencyName', `countryName`='$countryName', `stateName`='$stateName',
-				          `tableStatus`='$tableStatus', `noOfTable`='$noOfTable', `gstStatus`='$gstStatus', `gstNumber`='$gstNumber', `shopCGST`='$shopCGST', `shopSGST`='$shopSGST', `panNumber`='$panNumber', `companyFssis`='$companyFssis' WHERE `companyId`='$companyId'";
+				          `tableStatus`='$tableStatus', `noOfTable`='$noOfTable', `gstStatus`='$gstStatus', `gstNumber`='$gstNumber', `shopCGST`='$shopCGST', `shopSGST`='$shopSGST', `panNumber`='$panNumber', `companyFssis`='$companyFssis'" . $hoursSqlFragment . " WHERE `companyId`='$companyId'";
 
                  if(mysqli_query($con, $sql)){
 	
@@ -94,8 +103,16 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 				    
 				} else {
 
-                 $sql="INSERT INTO `companys`(`licenseId`, `companyLogo`, `companyName`, `cashierName`, `companyMobile`, `companyAddress`, `shopName1`, `shopName2`, `addressLine1`, `addressLine2`, `addressLine3`, `phoneNo1`, `phoneNo2`, `currencyName`, `tableStatus`, `noOfTable`, `countryName`, `stateName`, `gstStatus`, `gstNumber`, `shopCGST`, `shopSGST`, `panNumber`, `companyFssis`, `paymentLogo`, `companyStatus`) 
-                       VALUES ('$userId', '$companyLogo', '$companyName', '$cashierName', '$companyMobile', '$companyAddress', '$shopName1', '$shopName2', '$addressLine1', '$addressLine2', '$addressLine3', '$phoneNo1', '$phoneNo2', '$currencyName', '$tableStatus', '$noOfTable', '$countryName', '$stateName', '$gstStatus', '$gstNumber', '$shopCGST', '$shopSGST', '$panNumber', '$companyFssis', '$paymentLogo', 'active')";
+                 $hoursInsertCols = '';
+                 $hoursInsertVals = '';
+                 if ($hasBusinessHoursColumns && $openingMinutes !== null && $closingMinutes !== null) {
+                     $hoursInsertCols = ", `openingMinutes`, `closingMinutes`";
+                     $hoursInsertVals = ", '" . mysqli_real_escape_string($con, $openingMinutes)
+                         . "', '" . mysqli_real_escape_string($con, $closingMinutes) . "'";
+                 }
+
+                 $sql="INSERT INTO `companys`(`licenseId`, `companyLogo`, `companyName`, `cashierName`, `companyMobile`, `companyAddress`, `shopName1`, `shopName2`, `addressLine1`, `addressLine2`, `addressLine3`, `phoneNo1`, `phoneNo2`, `currencyName`, `tableStatus`, `noOfTable`, `countryName`, `stateName`, `gstStatus`, `gstNumber`, `shopCGST`, `shopSGST`, `panNumber`, `companyFssis`, `paymentLogo`, `companyStatus`" . $hoursInsertCols . ") 
+                       VALUES ('$userId', '$companyLogo', '$companyName', '$cashierName', '$companyMobile', '$companyAddress', '$shopName1', '$shopName2', '$addressLine1', '$addressLine2', '$addressLine3', '$phoneNo1', '$phoneNo2', '$currencyName', '$tableStatus', '$noOfTable', '$countryName', '$stateName', '$gstStatus', '$gstNumber', '$shopCGST', '$shopSGST', '$panNumber', '$companyFssis', '$paymentLogo', 'active'" . $hoursInsertVals . ")";
 
                  if(mysqli_query($con,$sql)){
 	

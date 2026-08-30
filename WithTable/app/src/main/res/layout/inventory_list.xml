@@ -8,6 +8,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
+        android:minWidth="600dp"
         android:orientation="horizontal"
         android:paddingStart="12dp"
         android:paddingTop="10dp"
@@ -16,45 +17,48 @@
 
         <TextView
             android:id="@+id/srNo"
-            android:layout_width="36dp"
+            android:layout_width="48dp"
             android:layout_height="wrap_content"
             android:gravity="center"
+            android:maxLines="1"
             android:textColor="@color/colorTextHint"
             android:textSize="12sp"
             android:textStyle="bold" />
 
         <TextView
             android:id="@+id/productName"
-            android:layout_width="0dp"
+            android:layout_width="200dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:ellipsize="end"
-            android:maxLines="2"
+            android:maxLines="1"
             android:textColor="@color/colorTextPrimary"
             android:textSize="13sp"
             android:textStyle="bold" />
 
         <TextView
             android:id="@+id/inventoryQty"
-            android:layout_width="56dp"
+            android:layout_width="88dp"
             android:layout_height="wrap_content"
             android:gravity="center"
+            android:maxLines="1"
             android:textColor="@color/colorTextSecondary"
             android:textSize="12sp" />
 
         <TextView
             android:id="@+id/afterSaleInventoryQty"
-            android:layout_width="56dp"
+            android:layout_width="110dp"
             android:layout_height="wrap_content"
             android:gravity="center"
+            android:maxLines="1"
             android:textColor="@color/colorTextSecondary"
             android:textSize="12sp" />
 
         <TextView
             android:id="@+id/saleInventoryQty"
-            android:layout_width="56dp"
+            android:layout_width="80dp"
             android:layout_height="wrap_content"
             android:gravity="end"
+            android:maxLines="1"
             android:textColor="@color/colorPrimary"
             android:textSize="12sp"
             android:textStyle="bold" />

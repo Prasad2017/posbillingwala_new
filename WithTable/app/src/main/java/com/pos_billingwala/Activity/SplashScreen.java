@@ -20,6 +20,7 @@ import com.google.android.play.core.appupdate.AppUpdateInfo;
 import com.google.android.play.core.appupdate.AppUpdateManager;
 import com.google.android.play.core.appupdate.AppUpdateManagerFactory;
 import com.google.android.play.core.install.model.UpdateAvailability;
+import com.pos_billingwala.BuildConfig;
 import com.pos_billingwala.Extra.Common;
 import com.pos_billingwala.Extra.BottomSheetUi;
 import com.pos_billingwala.NetworkToOffline.CloudSyncNav;
@@ -48,7 +49,11 @@ public class SplashScreen extends BaseActivity {
                 || CloudSyncNav.ACTION_OPEN.equals(getIntent().getAction()))) {
             CloudSyncNav.markPending(this);
         }
-        checkAppUpdates();
+        if (BuildConfig.DEBUG) {
+            moveNext();
+        } else {
+            checkAppUpdates();
+        }
 
     }
 
