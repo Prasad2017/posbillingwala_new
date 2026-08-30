@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.MessTokenQrHelper;
+import com.pos_billingwala.Extra.TabletPrintUi;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.ActivityMessWalkInTokenBinding;
 
@@ -31,6 +32,7 @@ public class MessWalkInTokenActivity extends BaseActivity implements View.OnClic
 
         binding.messTypeHint.setText("Meal: " + MessTokenQrHelper.resolveMessType());
         binding.issueTokenCardView.setOnClickListener(this);
+        TabletPrintUi.applyWalkInFormTablet(this, binding.walkInFormContainer);
     }
 
     @Override

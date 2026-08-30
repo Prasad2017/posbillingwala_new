@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.Gravity;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -310,9 +311,18 @@ public final class BottomSheetUi {
         if (sheet.getWindow() == null) {
             return;
         }
+        Context ctx = sheet.getContext();
         WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
         lp.copyFrom(sheet.getWindow().getAttributes());
-        lp.width = WindowManager.LayoutParams.MATCH_PARENT;
+        if (TabletUi.isTablet(ctx)) {
+            int horizontalInset = TabletUi.dpToPx(ctx, TabletUi.horizontalInsetDp(ctx));
+            int maxWidth = TabletUi.dpToPx(ctx, TabletUi.bottomSheetMaxWidthDp(ctx));
+            int screenWidth = ctx.getResources().getDisplayMetrics().widthPixels;
+            lp.width = Math.min(maxWidth, screenWidth - horizontalInset * 2);
+            lp.gravity = Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM;
+        } else {
+            lp.width = WindowManager.LayoutParams.MATCH_PARENT;
+        }
         lp.height = WindowManager.LayoutParams.MATCH_PARENT;
         sheet.getWindow().setAttributes(lp);
     }

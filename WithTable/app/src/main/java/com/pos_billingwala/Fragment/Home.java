@@ -32,6 +32,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -68,6 +69,7 @@ import com.pos_billingwala.Extra.LicenseModules;
 import com.pos_billingwala.Extra.LicenseValidator;
 import com.pos_billingwala.Extra.DetectConnection;
 import com.pos_billingwala.Extra.ErrorLogQueue;
+import com.pos_billingwala.Extra.TabletUi;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.PrinterSettingResponse;
 import com.pos_billingwala.NetworkToOffline.CloudSyncNav;
@@ -240,13 +242,15 @@ public class Home extends Fragment implements View.OnClickListener {
         boolean showDineIn = LicenseModules.isEnabled(MainActivity.dineIn);
         boolean showTakeAway = LicenseModules.isEnabled(MainActivity.takeAway);
         boolean showMess = LicenseModules.isEnabled(MainActivity.mess);
+        boolean tablet = activity != null && TabletUi.isTablet(activity);
 
         LicenseModules.setVisible(fastBilling, showFast);
         LicenseModules.setVisible(tableBilling, showDineIn);
         LicenseModules.setVisible(takeAwayBilling, showTakeAway);
         LicenseModules.setVisible(messBilling, showMess);
-        LicenseModules.setVisible(posBillingRow1, showFast || showDineIn);
-        LicenseModules.setVisible(posBillingRow2, showTakeAway || showMess);
+        LicenseModules.setVisible(posBillingRow1,
+                showFast || showDineIn || (tablet && (showTakeAway || showMess)));
+        LicenseModules.setVisible(posBillingRow2, !tablet && (showTakeAway || showMess));
 
         LicenseModules.setVisible(totalSalesCardView, LicenseModules.isEnabled(MainActivity.totalSaleData));
         LicenseModules.setVisible(todaySalesCardView, LicenseModules.isEnabled(MainActivity.todaySaleData));
@@ -283,6 +287,7 @@ public class Home extends Fragment implements View.OnClickListener {
         });
 
         initViews();
+        applyTabletHomeLayout();
         binding.swipeRefreshLayout.setColorSchemeResources(R.color.colorPrimary);
         setValidationUI();
         initAds();
@@ -363,6 +368,76 @@ public class Home extends Fragment implements View.OnClickListener {
         totalSalesCardView.setOnClickListener(this);
         todaySalesCardView.setOnClickListener(this);
 
+    }
+
+    /** On tablet, show all billing mode tiles in one landscape-friendly row. */
+    private void applyTabletHomeLayout() {
+        if (activity == null || !TabletUi.isTablet(activity)) {
+            return;
+        }
+        LinearLayout row1 = binding.posBillingRow1;
+        LinearLayout row2 = binding.posBillingRow2;
+        if (row1 != null && row2 != null) {
+            float density = activity.getResources().getDisplayMetrics().density;
+            int gap = (int) (6 * density);
+            moveBillingTileToRow(binding.takeAwayBilling, row2, row1, gap);
+            moveBillingTileToRow(binding.messBilling, row2, row1, gap);
+            row2.setVisibility(View.GONE);
+        }
+        applyTabletHomeStatsLayout();
+    }
+
+    /** Place sales KPIs and catalog counts side-by-side on tablet. */
+    private void applyTabletHomeStatsLayout() {
+        LinearLayout salesBlock = binding.homeSalesBlock;
+        LinearLayout catalogBlock = binding.homeCatalogBlock;
+        if (salesBlock == null || catalogBlock == null) {
+            return;
+        }
+        ViewGroup parent = (ViewGroup) salesBlock.getParent();
+        if (parent == null || catalogBlock.getParent() != parent) {
+            return;
+        }
+        int salesIndex = parent.indexOfChild(salesBlock);
+        int catalogIndex = parent.indexOfChild(catalogBlock);
+        if (salesIndex < 0 || catalogIndex < 0 || catalogIndex != salesIndex + 1) {
+            return;
+        }
+        parent.removeView(salesBlock);
+        parent.removeView(catalogBlock);
+
+        float density = activity.getResources().getDisplayMetrics().density;
+        int gap = (int) (12 * density);
+
+        LinearLayout statsRow = new LinearLayout(activity);
+        statsRow.setOrientation(LinearLayout.HORIZONTAL);
+        statsRow.setBaselineAligned(false);
+        LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        rowParams.topMargin = gap;
+        statsRow.setLayoutParams(rowParams);
+
+        LinearLayout.LayoutParams blockParams = new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        salesBlock.setLayoutParams(blockParams);
+        catalogBlock.setLayoutParams(blockParams);
+        catalogBlock.setPadding(gap, 0, 0, 0);
+
+        statsRow.addView(salesBlock);
+        statsRow.addView(catalogBlock);
+        parent.addView(statsRow, salesIndex);
+    }
+
+    private static void moveBillingTileToRow(View tile, ViewGroup from, LinearLayout to, int gapPx) {
+        if (tile == null || from == null || to == null || tile.getParent() != from) {
+            return;
+        }
+        from.removeView(tile);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        params.setMarginStart(gapPx);
+        tile.setLayoutParams(params);
+        to.addView(tile);
     }
 
     public void initAds() {

@@ -15,6 +15,7 @@ import androidx.fragment.app.Fragment;
 
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.TabletFormUi;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentAddExpensesBinding;
 
@@ -63,6 +64,8 @@ public class AddExpenses extends Fragment implements View.OnClickListener {
 
         binding.addExpenses.setOnClickListener(this);
         binding.backToExpenses.setOnClickListener(this);
+
+        TabletFormUi.applyTwoColumnFields(activity, binding.expenseFormContainer);
 
         return view;
     }

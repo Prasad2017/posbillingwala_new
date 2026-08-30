@@ -1,5 +1,6 @@
 package com.pos_billingwala.Fragment;
 
+import com.pos_billingwala.Extra.PopupUi;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.DatePickerDialog;
@@ -96,8 +97,7 @@ public class InvoiceRefundReport extends Fragment implements View.OnClickListene
     private void showPeriodMenu() {
         LayoutInflater inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         View popupView = inflater.inflate(R.layout.sale_wise_dialog, null);
-        PopupWindow popupWindow = new PopupWindow(popupView,
-                RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT, true);
+        PopupWindow popupWindow = PopupUi.create(activity, popupView);
 
         Calendar calender = Calendar.getInstance();
         mYear = calender.get(Calendar.YEAR);

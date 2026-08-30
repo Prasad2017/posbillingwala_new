@@ -1,5 +1,6 @@
 package com.pos_billingwala.Fragment;
 
+import com.pos_billingwala.Extra.PopupUi;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -130,7 +131,7 @@ public class InvoiceCompanyTable extends Fragment implements View.OnClickListene
 
         LayoutInflater inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         view = inflater.inflate(R.layout.share_dialog, null);
-        mypopupWindow = new PopupWindow(view, RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT, true);
+        mypopupWindow = PopupUi.create(activity, view);
 
         LinearLayout saveInvoiceLayout = view.findViewById(R.id.saveInvoiceLayout);
         LinearLayout duplicateInvoicePrintLayout = view.findViewById(R.id.duplicateInvoicePrintLayout);

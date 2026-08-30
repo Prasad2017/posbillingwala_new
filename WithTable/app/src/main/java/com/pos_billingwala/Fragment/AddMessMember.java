@@ -20,6 +20,7 @@ import androidx.fragment.app.Fragment;
 import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.TabletFormUi;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentAddMessMemberBinding;
 
@@ -90,6 +91,8 @@ public class AddMessMember extends Fragment implements View.OnClickListener {
 
         binding.backToMess.setOnClickListener(this);
         binding.addMember.setOnClickListener(this);
+
+        TabletFormUi.applyTwoColumnFields(activity, binding.messFormContainer);
 
         return view;
 

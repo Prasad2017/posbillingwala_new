@@ -1,62 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/relativeLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white"
     android:fitsSystemWindows="true"
+    android:background="@android:color/white"
     tools:context=".Activity.SplashScreen">
 
-    <ImageView
-        android:layout_width="match_parent"
-        android:layout_height="180dp"
-        android:layout_alignParentBottom="true"
-        android:contentDescription="@null"
-        android:importantForAccessibility="no"
-        android:scaleType="fitXY"
-        android:src="@drawable/bg_splash_wave" />
-
+    <!-- Full Splash Image -->
     <ImageView
         android:id="@+id/logoIcon"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:layout_marginBottom="48dp"
+        android:layout_height="match_parent"
         android:adjustViewBounds="true"
-        android:contentDescription="@string/app_name"
-        android:paddingStart="@dimen/spacing_md"
-        android:paddingEnd="@dimen/spacing_md"
-        android:scaleType="fitCenter"
-        android:src="@drawable/splash_branding" />
+        android:scaleType="fitXY"
+        android:src="@drawable/splash_branding"
+        android:contentDescription="@string/app_name" />
 
+    <!-- Bottom Loading Section -->
     <LinearLayout
         android:id="@+id/loadingContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:gravity="center_horizontal"
+        android:layout_gravity="bottom|center_horizontal"
         android:orientation="vertical"
+        android:gravity="center"
         android:paddingStart="@dimen/spacing_xl"
         android:paddingEnd="@dimen/spacing_xl"
-        android:paddingBottom="48dp">
+        android:paddingBottom="40dp">
 
         <ProgressBar
             android:id="@+id/splashProgress"
             style="?android:attr/progressBarStyle"
             android:layout_width="42dp"
             android:layout_height="42dp"
+            android:layout_marginBottom="150dp"
             android:indeterminate="true"
-            android:indeterminateTint="@color/colorPrimary" />
+            android:indeterminateTint="@color/colorTextPrimary" />
 
-        <TextView
-            android:id="@+id/splashLoadingText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/spacing_md"
-            android:fontFamily="@font/poppinsmedium"
-            android:text="@string/splash_loading"
-            android:textColor="@color/colorPrimary"
-            android:textSize="@dimen/text_body" />
     </LinearLayout>
-</RelativeLayout>
+
+</FrameLayout>

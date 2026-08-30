@@ -1,5 +1,6 @@
 package com.pos_billingwala.Activity;
 
+import com.pos_billingwala.Extra.PopupUi;
 import static com.pos_billingwala.Utils.RequestCodes.directory_path;
 
 import android.Manifest;
@@ -10,6 +11,7 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.database.Cursor;
@@ -69,6 +71,8 @@ import com.pos_billingwala.Extra.PaymentSettlementBinder;
 import com.pos_billingwala.Extra.PaymentUpiQrHelper;
 import com.pos_billingwala.Extra.ReportCursorHelper;
 import com.pos_billingwala.Extra.ShopHeaderBuilder;
+import com.pos_billingwala.Extra.TabletFormUi;
+import com.pos_billingwala.Extra.TabletUi;
 import com.pos_billingwala.Extra.Observability;
 import com.pos_billingwala.Extra.LicenceExpiredUi;
 import com.pos_billingwala.Extra.LicenseSession;
@@ -618,6 +622,10 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
         View view = binding.getRoot(); //Root xml or viewGroup will be a part of converted view over here
         setContentView(view); //view is set by view binding
 
+        if (TabletUi.isTablet(this)) {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+        }
+
         activity = BluetoothPrint.this;
         posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
         // Fresh checkout session — do not reuse a previous bill's reserved number
@@ -915,6 +923,10 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                 paymentMode = "";
             }
         });
+
+        TabletFormUi.applyCartPaymentSplit(activity, cartLayout,
+                findViewById(R.id.linearLayout),
+                findViewById(R.id.paymentDetailLayout));
 
     }
 
@@ -1380,7 +1392,7 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
 
         LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         view = inflater.inflate(R.layout.share_dialog, null);
-        mypopupWindow = new PopupWindow(view, RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT, true);
+        mypopupWindow = PopupUi.create(activity, view);
 
         LinearLayout saveInvoiceLayout = view.findViewById(R.id.saveInvoiceLayout);
         LinearLayout shareInvoiceLayout = view.findViewById(R.id.shareInvoiceLayout);

@@ -25,6 +25,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.pos_billingwala.Extra.TabletUi;
 import com.pos_billingwala.R;
 import com.zj.btsdk.BluetoothService;
 
@@ -194,9 +195,16 @@ public class DeviceListActivity extends Activity {
         DisplayMetrics metrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(metrics);
         WindowManager.LayoutParams params = window.getAttributes();
-        params.width = WindowManager.LayoutParams.MATCH_PARENT;
+        if (TabletUi.isTablet(this)) {
+            int horizontalInset = TabletUi.dpToPx(this, TabletUi.horizontalInsetDp(this));
+            int maxWidth = TabletUi.dpToPx(this, TabletUi.bottomSheetMaxWidthDp(this));
+            params.width = Math.min(maxWidth, metrics.widthPixels - horizontalInset * 2);
+            params.gravity = Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM;
+        } else {
+            params.width = WindowManager.LayoutParams.MATCH_PARENT;
+            params.gravity = Gravity.BOTTOM;
+        }
         params.height = WindowManager.LayoutParams.WRAP_CONTENT;
-        params.gravity = Gravity.BOTTOM;
         window.setAttributes(params);
         View root = findViewById(android.R.id.content);
         if (root != null) {

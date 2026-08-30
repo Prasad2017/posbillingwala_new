@@ -8,6 +8,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.pos_billingwala.Activity.MainActivity;
@@ -25,6 +26,12 @@ public class ReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
     Context context;
     List<InvoiceResponse> invoiceResponseList;
     private final boolean showDiscountAmount;
+    private OnInvoiceClickListener invoiceClickListener;
+    private int selectedPosition = RecyclerView.NO_POSITION;
+
+    public interface OnInvoiceClickListener {
+        void onInvoiceClick(InvoiceResponse invoice, int position);
+    }
 
     public ReportAdapter(Context context, List<InvoiceResponse> invoiceResponseList) {
         this(context, invoiceResponseList, false);
@@ -34,6 +41,25 @@ public class ReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
         this.context = context;
         this.invoiceResponseList = invoiceResponseList;
         this.showDiscountAmount = showDiscountAmount;
+    }
+
+    public void setOnInvoiceClickListener(OnInvoiceClickListener listener) {
+        this.invoiceClickListener = listener;
+    }
+
+    public void setSelectedPosition(int position) {
+        int previous = selectedPosition;
+        selectedPosition = position;
+        if (previous != RecyclerView.NO_POSITION && previous < getItemCount()) {
+            notifyItemChanged(previous);
+        }
+        if (selectedPosition != RecyclerView.NO_POSITION && selectedPosition < getItemCount()) {
+            notifyItemChanged(selectedPosition);
+        }
+    }
+
+    public int getSelectedPosition() {
+        return selectedPosition;
     }
 
     @NonNull
@@ -72,6 +98,16 @@ public class ReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
                     invoiceResponse.getDiscountType(), invoiceResponse.getSubTotal())
                     : ReportCursorHelper.parseAmount(invoiceResponse.getTotalAmount());
             holder.invoiceAmount.setText(MainActivity.currencyName + " " + String.format(Locale.US, "%.2f", amount));
+            if (position == selectedPosition) {
+                holder.itemView.setBackgroundColor(ContextCompat.getColor(context, R.color.colorPrimaryLight));
+            } else {
+                holder.itemView.setBackgroundColor(ContextCompat.getColor(context, android.R.color.transparent));
+            }
+            holder.itemView.setOnClickListener(v -> {
+                if (invoiceClickListener != null) {
+                    invoiceClickListener.onInvoiceClick(invoiceResponse, position);
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -37,6 +37,7 @@ import com.pos_billingwala.BuildConfig;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ReportCursorHelper;
 import com.pos_billingwala.Extra.ShopHeaderBuilder;
+import com.pos_billingwala.Extra.TabletFormUi;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.InvoiceProductResponse;
 import com.pos_billingwala.Model.InvoiceResponse;
@@ -98,6 +99,7 @@ public class InvoiceProductDetails extends Fragment implements View.OnClickListe
         }
 
         initViews();
+        TabletFormUi.applyCenteredReceiptPreview(binding.twoNestedScrollView, 380);
         posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
 
         view.setFocusableInTouchMode(true);

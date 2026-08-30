@@ -24,8 +24,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.CompoundButton;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -41,8 +43,10 @@ import com.karumi.dexter.listener.PermissionRequest;
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.BottomSheetUi;
 import com.pos_billingwala.Extra.BusinessHours;
 import com.pos_billingwala.Extra.LicenseModules;
+import com.pos_billingwala.Extra.TabletUi;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentCompanyDetailSettingBinding;
@@ -168,9 +172,72 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
         binding.backToSetting.setOnClickListener(this);
         binding.saveDetails.setOnClickListener(this);
 
+        applyTabletFormLayout();
+
         return view;
     }
 
+    /** On tablet, show shop form sections in two columns. */
+    private void applyTabletFormLayout() {
+        if (activity == null || !TabletUi.isTablet(activity)) {
+            return;
+        }
+        LinearLayout container = binding.shopFormContainer;
+        if (container == null) {
+            return;
+        }
+        View branding = binding.shopBrandingCard;
+        View identity = binding.shopIdentityCard;
+        View contact = binding.shopContactCard;
+        View operations = binding.shopOperationsCard;
+        View tax = binding.shopTaxCard;
+        View payment = binding.shopPaymentCard;
+
+        container.removeAllViews();
+
+        float density = activity.getResources().getDisplayMetrics().density;
+        int gap = (int) (12 * density);
+
+        LinearLayout row = new LinearLayout(activity);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setBaselineAligned(false);
+        row.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        LinearLayout leftColumn = new LinearLayout(activity);
+        leftColumn.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout.LayoutParams leftParams = new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        leftParams.setMarginEnd(gap);
+        leftColumn.setLayoutParams(leftParams);
+
+        LinearLayout rightColumn = new LinearLayout(activity);
+        rightColumn.setOrientation(LinearLayout.VERTICAL);
+        rightColumn.setLayoutParams(new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+
+        addFormCard(leftColumn, branding, 0);
+        addFormCard(leftColumn, identity, gap);
+        addFormCard(leftColumn, contact, gap);
+        addFormCard(rightColumn, operations, 0);
+        addFormCard(rightColumn, tax, gap);
+        addFormCard(rightColumn, payment, gap);
+
+        row.addView(leftColumn);
+        row.addView(rightColumn);
+        container.addView(row);
+    }
+
+    private static void addFormCard(LinearLayout column, View card, int topMarginPx) {
+        if (card == null || column == null) {
+            return;
+        }
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.topMargin = topMarginPx;
+        card.setLayoutParams(params);
+        column.addView(card);
+    }
 
     @Override
     public void onClick(View view) {
@@ -212,11 +279,6 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
         dialog.setContentView(dialogView);
         dialog.setCancelable(false);
 
-        WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
-        lp.copyFrom(dialog.getWindow().getAttributes());
-        lp.width = WindowManager.LayoutParams.MATCH_PARENT;
-        lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
-
         ((dialogView.findViewById(R.id.cameraLayout))).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -241,7 +303,7 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
         });
 
         dialog.show();
-        dialog.getWindow().setAttributes(lp);
+        BottomSheetUi.applyFullWidth(dialog);
 
     }
 

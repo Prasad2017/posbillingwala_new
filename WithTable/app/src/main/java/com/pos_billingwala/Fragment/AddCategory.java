@@ -20,6 +20,7 @@ import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.CategoryAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ListLoader;
+import com.pos_billingwala.Extra.MasterListTabletUi;
 import com.pos_billingwala.Model.ProductCategoryResponse;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentAddCategoryBinding;
@@ -54,7 +55,8 @@ public class AddCategory extends Fragment implements View.OnClickListener {
             if (!productCategoryResponseList.isEmpty()) {
 
                 categoryAdapter = new CategoryAdapter(activity, productCategoryResponseList);
-                categoryRecyclerview.setLayoutManager(new GridLayoutManager(activity, 1));
+                categoryRecyclerview.setLayoutManager(new GridLayoutManager(activity,
+                        MasterListTabletUi.listColumnCount(activity)));
                 categoryRecyclerview.setAdapter(categoryAdapter);
 
                 categoryListCardView.setVisibility(View.VISIBLE);
@@ -82,6 +84,9 @@ public class AddCategory extends Fragment implements View.OnClickListener {
 
 
         initViews();
+
+        MasterListTabletUi.applyFormListSplit(activity, binding.categoryMasterContainer,
+                binding.categoryFormCard, binding.categoryListCardView);
 
         binding.categoryName.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
 

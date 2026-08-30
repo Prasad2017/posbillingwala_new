@@ -18,6 +18,7 @@ import com.google.zxing.integration.android.IntentResult;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.BottomSheetUi;
 import com.pos_billingwala.Extra.MessTokenQrHelper;
+import com.pos_billingwala.Extra.TabletPrintUi;
 import com.pos_billingwala.Model.MessTokenResponse;
 import com.pos_billingwala.R;
 import com.pos_billingwala.Retrofit.Api;
@@ -47,6 +48,7 @@ public class MessTokenScanActivity extends BaseActivity implements View.OnClickL
         setContentView(binding.getRoot());
         database = new POSBillingWalaDatabase(this);
         binding.startScanCardView.setOnClickListener(this);
+        TabletPrintUi.applyCenteredForm(this, binding.messScanContainer);
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.pos_billingwala.Fragment;
 
+import com.pos_billingwala.Extra.PopupUi;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
@@ -26,6 +27,7 @@ import com.pos_billingwala.Adapter.InvoiceTakAwayAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.AppExecutors;
 import com.pos_billingwala.Extra.ListLoader;
+import com.pos_billingwala.Extra.TabletUi;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.ProductCartResponse;
 import com.pos_billingwala.R;
@@ -95,7 +97,7 @@ public class InvoiceTakeAway extends Fragment implements View.OnClickListener {
 
         LayoutInflater inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         view = inflater.inflate(R.layout.share_dialog, null);
-        mypopupWindow = new PopupWindow(view, RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT, true);
+        mypopupWindow = PopupUi.create(activity, view);
 
         LinearLayout saveInvoiceLayout = view.findViewById(R.id.saveInvoiceLayout);
         TextView saveInvoiceTxt = view.findViewById(R.id.saveInvoice);
@@ -187,7 +189,8 @@ public class InvoiceTakeAway extends Fragment implements View.OnClickListener {
                 }
                 if (productTakeAwayResponseList != null && !productTakeAwayResponseList.isEmpty()) {
                     invoiceTakAwayAdapter = new InvoiceTakAwayAdapter(activity, productTakeAwayResponseList);
-                    binding.recyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
+                    int span = TabletUi.gridColumnCount(activity);
+                    binding.recyclerView.setLayoutManager(new GridLayoutManager(activity, span));
                     binding.recyclerView.setAdapter(invoiceTakAwayAdapter);
                     invoiceTakAwayAdapter.notifyDataSetChanged();
                     binding.takeAwayOrderLayout.setVisibility(View.VISIBLE);

@@ -44,6 +44,7 @@ import com.pos_billingwala.Extra.LicenceScopeGuard;
 import com.pos_billingwala.Extra.LicenseModules;
 import com.pos_billingwala.Extra.LicenseSession;
 import com.pos_billingwala.Extra.Observability;
+import com.pos_billingwala.Extra.TabletFormUi;
 import com.pos_billingwala.Model.LoginResponse;
 import com.pos_billingwala.R;
 import com.pos_billingwala.Retrofit.Api;
@@ -99,6 +100,7 @@ public class Login extends BaseActivity implements View.OnClickListener {
         binding = ActivityLoginBinding.inflate(getLayoutInflater());
         View view = binding.getRoot(); //Root xml or viewGroup will be a part of converted view over here
         setContentView(view); //view is set by view binding
+        TabletFormUi.applyCenteredPanel(binding.loginLayout);
         File file = new File("data/data/" + getPackageName() + "/shared_prefs/" + Common.SHARED_PREF + ".xml");
         if (file.exists()) {
             Intent intent = new Intent(Login.this, MainActivity.class);

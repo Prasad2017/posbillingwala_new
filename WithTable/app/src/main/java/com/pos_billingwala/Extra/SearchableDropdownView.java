@@ -17,6 +17,7 @@ import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.pos_billingwala.Extra.BottomSheetUi;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.textfield.TextInputEditText;
@@ -218,6 +219,7 @@ public class SearchableDropdownView extends FrameLayout {
             if (bottomSheet != null) {
                 BottomSheetBehavior.from(bottomSheet).setSkipCollapsed(true);
             }
+            BottomSheetUi.applyFullWidth(dialog);
             searchInput.requestFocus();
         });
         dialog.setOnDismissListener(d -> activeDialog = null);

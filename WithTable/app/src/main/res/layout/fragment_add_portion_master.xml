@@ -56,11 +56,13 @@
             android:paddingBottom="@dimen/spacing_xxl">
 
             <LinearLayout
+                android:id="@+id/portionMasterContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
                 <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/portionMasterFormCard"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     app:cardBackgroundColor="@color/colorSurface"

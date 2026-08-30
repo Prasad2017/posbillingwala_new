@@ -6,12 +6,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.pos_billingwala.Activity.MainActivity;
@@ -22,6 +20,7 @@ import com.pos_billingwala.Model.SupportTicketItem;
 import com.pos_billingwala.R;
 import com.pos_billingwala.Retrofit.Api;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import retrofit2.Call;
@@ -30,20 +29,21 @@ import retrofit2.Response;
 
 public class MySupportTickets extends Fragment {
     LinearLayout list;
+    LinearLayout ticketListContainer;
     Activity activity;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         activity = getActivity();
-        ScrollView scroll = new ScrollView(activity);
         list = SupportUiHelper.form(activity);
         SupportUiHelper.addScreenHeader(activity, list, getString(R.string.support_my_tickets),
                 () -> ((MainActivity) activity).navigateBack());
         SupportUiHelper.notice(activity, list, getString(R.string.support_online_only_notice));
         SupportUiHelper.primary(activity, list, getString(R.string.support_refresh))
                 .setOnClickListener(v -> loadTickets());
-        scroll.addView(list);
-        return scroll;
+        ticketListContainer = SupportUiHelper.createTicketListContainer(activity);
+        list.addView(ticketListContainer);
+        return SupportUiHelper.wrapScreen(activity, list);
     }
 
     @Override
@@ -58,42 +58,36 @@ public class MySupportTickets extends Fragment {
             DetectConnection.noInternetConnection(activity);
             return;
         }
-        while (list.getChildCount() > 3) {
-            list.removeViewAt(3);
-        }
+        SupportUiHelper.clearTicketList(ticketListContainer);
         TextView loading = new TextView(activity);
         loading.setText(R.string.support_loading);
-        list.addView(loading);
+        ticketListContainer.addView(loading);
 
         Api.getClient(activity).getSupportTickets(MainActivity.userId, "all").enqueue(new Callback<AllApiResponse>() {
             @Override
             public void onResponse(Call<AllApiResponse> call, Response<AllApiResponse> response) {
-                if (!isAdded() || list == null) return;
-                if (list.getChildCount() > 3) {
-                    list.removeViewAt(list.getChildCount() - 1);
-                }
+                if (!isAdded() || ticketListContainer == null) return;
+                SupportUiHelper.clearTicketList(ticketListContainer);
                 List<SupportTicketItem> tickets = response.body() != null ? response.body().getTickets() : null;
                 if (tickets == null || tickets.isEmpty()) {
                     TextView empty = new TextView(activity);
                     empty.setText(R.string.support_no_tickets);
-                    list.addView(empty);
+                    ticketListContainer.addView(empty);
                     return;
                 }
+                List<TextView> cards = new ArrayList<>(tickets.size());
                 for (SupportTicketItem t : tickets) {
-                    TextView tv = new TextView(activity);
-                    tv.setBackgroundResource(R.drawable.button_rounded_border);
-                    tv.setPadding(28, 24, 28, 24);
                     String status = t.getStatus() != null ? t.getStatus() : "";
-                    tv.setText(t.getTicketNo() + "  ·  " + status + "\n" + t.getSubject()
-                            + "\n" + nz(t.getCreatedAt()));
-                    tv.setTextColor(ContextCompat.getColor(activity, R.color.black));
-                    LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                    lp.bottomMargin = 12;
-                    tv.setLayoutParams(lp);
-                    tv.setOnClickListener(v -> openDetails(t.getId()));
-                    list.addView(tv);
+                    TextView tv = SupportUiHelper.buildTicketCard(
+                            activity,
+                            t.getTicketNo(),
+                            status,
+                            t.getSubject(),
+                            nz(t.getCreatedAt()),
+                            () -> openDetails(t.getId()));
+                    cards.add(tv);
                 }
+                SupportUiHelper.populateTicketGrid(activity, ticketListContainer, cards);
             }
 
             @Override

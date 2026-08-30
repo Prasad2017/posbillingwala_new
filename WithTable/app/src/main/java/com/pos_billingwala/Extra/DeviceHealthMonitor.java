@@ -282,6 +282,45 @@ public final class DeviceHealthMonitor {
         }
     }
 
+    /** POS devices with ≤2 GB RAM — used for CursorWindow and heap tuning. */
+    public static boolean isLowRamDevice(Context context) {
+        return getTotalRamMb(context) > 0 && getTotalRamMb(context) <= 2048;
+    }
+
+    /** Total device RAM in MB (0 if unknown). */
+    public static long getTotalRamMb(Context context) {
+        Context ctx = context != null ? context : appContext;
+        if (ctx == null) {
+            return 0;
+        }
+        try {
+            ActivityManager am = (ActivityManager) ctx.getSystemService(Context.ACTIVITY_SERVICE);
+            if (am == null) {
+                return 0;
+            }
+            ActivityManager.MemoryInfo mi = new ActivityManager.MemoryInfo();
+            am.getMemoryInfo(mi);
+            return mi.totalMem / (1024 * 1024);
+        } catch (Throwable t) {
+            return 0;
+        }
+    }
+
+    /**
+     * Safe SQLite CursorWindow size for this device.
+     * 2 GB POS hardware keeps the default 2 MB; larger devices get a modest bump (not 50 MB).
+     */
+    public static int recommendedCursorWindowBytes(Context context) {
+        long totalMb = getTotalRamMb(context);
+        if (totalMb <= 2048) {
+            return 2 * 1024 * 1024;
+        }
+        if (totalMb <= 3072) {
+            return 4 * 1024 * 1024;
+        }
+        return 8 * 1024 * 1024;
+    }
+
     private static boolean allow(AtomicLong lastAt) {
         long now = System.currentTimeMillis();
         long prev = lastAt.get();

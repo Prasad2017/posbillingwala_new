@@ -287,6 +287,7 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.MyViewHolder> 
         final String amount = productAmount;
         AppExecutors.get().db().execute(() -> posBillingWalaDatabase.updateCart(id, qty, amount));
         BluetoothPrint.refreshCartUiAfterLocalEdit();
+        CreatePos.refreshCartUiAfterLocalEdit();
     }
 
     public void deleteCartProduct(int position, String cartId) {
@@ -299,6 +300,7 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.MyViewHolder> 
         AppExecutors.get().db().execute(() -> posBillingWalaDatabase.deleteCartProduct(id));
         Toast.makeText(context, context.getString(R.string.toast_product_deleted_from_cart), Toast.LENGTH_SHORT).show();
         BluetoothPrint.refreshCartUiAfterLocalEdit();
+        CreatePos.refreshCartUiAfterLocalEdit();
     }
 
     @Override

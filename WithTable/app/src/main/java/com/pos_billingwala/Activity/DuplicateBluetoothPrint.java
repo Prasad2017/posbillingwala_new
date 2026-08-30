@@ -46,6 +46,7 @@ import com.pos_billingwala.Extra.PaymentSettlementHelper;
 import com.pos_billingwala.Extra.PaymentUpiQrHelper;
 import com.pos_billingwala.Extra.ReportCursorHelper;
 import com.pos_billingwala.Extra.ShopHeaderBuilder;
+import com.pos_billingwala.Extra.TabletPrintUi;
 import com.pos_billingwala.Fragment.CreatePos;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.InvoiceProductResponse;
@@ -272,6 +273,9 @@ public class DuplicateBluetoothPrint extends BaseActivity implements View.OnClic
             }
         });
 
+        TabletPrintUi.applyCheckoutTablet(activity, cartLayout,
+                findViewById(R.id.linearLayout),
+                findViewById(R.id.paymentDetailLayout));
 
     }
 

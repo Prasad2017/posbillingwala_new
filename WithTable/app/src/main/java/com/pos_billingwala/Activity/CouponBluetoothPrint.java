@@ -34,6 +34,7 @@ import com.karumi.dexter.listener.PermissionRequest;
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ShopHeaderBuilder;
+import com.pos_billingwala.Extra.TabletPrintUi;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.MessInvoiceResponse;
 import com.pos_billingwala.Model.PrinterSettingResponse;
@@ -178,6 +179,9 @@ public class CouponBluetoothPrint extends BaseActivity implements View.OnClickLi
         //***************** 3 Inch Printer End ******************//
 
         binding.printInvoiceCardView.setOnClickListener(this);
+
+        TabletPrintUi.applyLandscape(this);
+        TabletPrintUi.applyReceiptPreviewTablet(nestedScrollView, 360);
 
     }
 

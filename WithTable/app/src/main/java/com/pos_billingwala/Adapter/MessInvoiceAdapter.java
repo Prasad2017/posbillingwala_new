@@ -1,5 +1,6 @@
 package com.pos_billingwala.Adapter;
 
+import com.pos_billingwala.Extra.PopupUi;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
@@ -88,7 +89,7 @@ public class MessInvoiceAdapter extends RecyclerView.Adapter<MessInvoiceAdapter.
 
                 LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
                 view = inflater.inflate(R.layout.pending_amount_dialog, null);
-                mypopupWindow = new PopupWindow(view, RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT, true);
+                mypopupWindow = PopupUi.create(context, view);
 
                 try {
                     pendingAmount = Float.parseFloat(memberResponse.getPaymentMessAmount()) - Float.parseFloat(memberResponse.getPaymentPaidAmount());

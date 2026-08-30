@@ -1,5 +1,6 @@
 package com.pos_billingwala.Fragment;
 
+import com.pos_billingwala.Extra.PopupUi;
 import static com.pos_billingwala.Utils.RequestCodes.directory_path;
 
 import android.Manifest;
@@ -11,10 +12,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -48,12 +46,11 @@ import com.pos_billingwala.Extra.ReportCursorHelper;
 import com.pos_billingwala.Model.InvoiceResponse;
 import com.pos_billingwala.Model.ReportRankItem;
 import com.pos_billingwala.R;
-import com.pos_billingwala.Utils.ReportToExcel;
+import com.pos_billingwala.Utils.ReportToSpreadsheet;
 import com.pos_billingwala.Extra.OperationalReportCharts;
 import com.pos_billingwala.databinding.FragmentOperationalReportBinding;
 
 import java.io.File;
-import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -182,34 +179,9 @@ public class InvoiceReport extends Fragment implements View.OnClickListener {
         }
     }
 
-    public Bitmap convertLayout(NestedScrollView nestedScrollView) {
-
-        nestedScrollView.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
-                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
-        nestedScrollView.layout(0, 0, nestedScrollView.getMeasuredWidth(), nestedScrollView.getMeasuredHeight());
-
-        nestedScrollView.setDrawingCacheEnabled(true);
-        nestedScrollView.buildDrawingCache();
-
-        Bitmap bitmap = Bitmap.createBitmap(nestedScrollView.getWidth(),
-                nestedScrollView.getHeight(), Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(bitmap);
-        Drawable background = nestedScrollView.getBackground();
-        if (background != null) {
-            background.draw(canvas);
-        } else {
-            canvas.drawColor(Color.WHITE);
-        }
-        nestedScrollView.draw(canvas);
-        nestedScrollView.buildDrawingCache();
-
-        return bitmap;
-
-    }
-
     public void exportSale() {
 
-        ReportToExcel reportToExcel;
+        ReportToSpreadsheet reportExport;
         List<List<String>> reportList = new ArrayList<>();
 
         List<String> col_name = new ArrayList<>();
@@ -238,8 +210,9 @@ public class InvoiceReport extends Fragment implements View.OnClickListener {
         columnList.add(binding.totalAmount.getText().toString());
         reportList.add(columnList);
 
-        reportToExcel = new ReportToExcel("Sale Invoices", directory_path);
-        reportToExcel.exportReport(reportList, "/Sale/InvoiceSale.xls", new ReportToExcel.ExportListener() {
+        reportExport = new ReportToSpreadsheet("Sale Invoices", directory_path);
+        reportExport.exportReport(reportList, "/Sale/InvoiceSale.xls", buildExportSubtitle(),
+                new ReportToSpreadsheet.ExportListener() {
             @Override
             public void onStart() {
 
@@ -274,12 +247,19 @@ public class InvoiceReport extends Fragment implements View.OnClickListener {
         }
     }
 
+    private String buildExportSubtitle() {
+        if (invoiceDate != null && !invoiceDate.isEmpty()) {
+            return "Period: " + invoiceDate;
+        }
+        return "All records";
+    }
+
     public void openGeneratedPDF() {
 
         File file = new File(directory_path + "/Sale/InvoiceSale.xls");
         Intent intentShareFile = new Intent(Intent.ACTION_SEND);
         Uri uri = FileProvider.getUriForFile(activity, BuildConfig.APPLICATION_ID + ".provider", file);
-        intentShareFile.setType(URLConnection.guessContentTypeFromName(file.getName()));
+        intentShareFile.setType("application/vnd.ms-excel");
         intentShareFile.putExtra(Intent.EXTRA_STREAM, uri);
         List<ResolveInfo> resInfoList = activity.getPackageManager().queryIntentActivities(intentShareFile, PackageManager.MATCH_DEFAULT_ONLY);
         for (ResolveInfo resolveInfo : resInfoList) {
@@ -294,7 +274,7 @@ public class InvoiceReport extends Fragment implements View.OnClickListener {
 
         LayoutInflater inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         view = inflater.inflate(R.layout.sale_wise_dialog, null);
-        PopupWindow mypopupWindow = new PopupWindow(view, RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT, true);
+        PopupWindow mypopupWindow = PopupUi.create(activity, view);
 
         LinearLayout dayWiseLayout = view.findViewById(R.id.dayWiseLayout);
         LinearLayout monthWiseLayout = view.findViewById(R.id.monthWiseLayout);

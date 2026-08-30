@@ -20,6 +20,7 @@ import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.PortionMasterAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ListLoader;
+import com.pos_billingwala.Extra.MasterListTabletUi;
 import com.pos_billingwala.Model.PortionMasterResponse;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentAddPortionMasterBinding;
@@ -50,7 +51,8 @@ public class AddPortionMaster extends Fragment implements View.OnClickListener {
             portionMasterResponseList = posBillingWalaDatabase.getPortionMasterList();
             if (!portionMasterResponseList.isEmpty()) {
                 portionMasterAdapter = new PortionMasterAdapter(activity, portionMasterResponseList);
-                portionMasterRecyclerview.setLayoutManager(new GridLayoutManager(activity, 1));
+                portionMasterRecyclerview.setLayoutManager(new GridLayoutManager(activity,
+                        MasterListTabletUi.listColumnCount(activity)));
                 portionMasterRecyclerview.setAdapter(portionMasterAdapter);
 
                 portionMasterListCardView.setVisibility(View.VISIBLE);
@@ -74,6 +76,9 @@ public class AddPortionMaster extends Fragment implements View.OnClickListener {
         posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
 
         initViews();
+
+        MasterListTabletUi.applyFormListSplit(activity, binding.portionMasterContainer,
+                binding.portionMasterFormCard, binding.portionMasterListCardView);
 
         binding.portionMasterName.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
 

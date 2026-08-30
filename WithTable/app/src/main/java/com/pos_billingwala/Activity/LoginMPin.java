@@ -37,6 +37,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.pos_billingwala.Extra.AuthTokens;
 import com.pos_billingwala.Extra.BottomSheetUi;
 import com.pos_billingwala.Extra.Common;
+import com.pos_billingwala.Extra.TabletFormUi;
 import com.pos_billingwala.NetworkToOffline.CloudSyncNav;
 import com.pos_billingwala.Extra.LicenceExpiredUi;
 import com.pos_billingwala.Extra.LicenceScopeGuard;
@@ -90,7 +91,10 @@ public class LoginMPin extends BaseActivity implements View.OnClickListener {
             CloudSyncNav.copyOpenFlag(getIntent(), intent);
             startActivity(intent);
             finish();
+            return;
         }
+
+        TabletFormUi.applyCenteredPanel(binding.loginLayout);
 
         m_androidId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
         manufacturerModel = android.os.Build.MANUFACTURER + " " + android.os.Build.MODEL;
