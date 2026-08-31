@@ -200,27 +200,13 @@
                 </com.google.android.material.textfield.TextInputLayout>
             </LinearLayout>
 
-            <LinearLayout
+            <com.pos_billingwala.Extra.PosSwitchRowView
+                android:id="@+id/comboActiveSwitch"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:fontFamily="@font/poppinsregular"
-                    android:text="@string/ui_combo_active"
-                    android:textColor="@color/black" />
-
-                <androidx.appcompat.widget.SwitchCompat
-                    android:id="@+id/comboActiveSwitch"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="true" />
-            </LinearLayout>
+                app:psr_checked="true"
+                app:psr_label="@string/ui_combo_active" />
 
             </LinearLayout>
 

@@ -25,7 +25,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
@@ -34,7 +33,6 @@ import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.bottomsheet.BottomSheetDialog;
-import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.MultiplePermissionsReport;
 import com.karumi.dexter.PermissionToken;
@@ -46,6 +44,7 @@ import com.pos_billingwala.Extra.ActionButtonUi;
 import com.pos_billingwala.Extra.BottomSheetUi;
 import com.pos_billingwala.Extra.BusinessHours;
 import com.pos_billingwala.Extra.LicenseModules;
+import com.pos_billingwala.Extra.PosSwitchRowView;
 import com.pos_billingwala.Extra.TabletUi;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.PrinterSettingResponse;
@@ -140,9 +139,8 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
             }
         });
 
-        binding.currencySpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
-            @Override
-            public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
+        binding.currencyDropdown.setOnItemSelectedListener((position, label) -> {
+            if (currencyList != null && position >= 0 && position < currencyList.length) {
                 currencyName = currencyList[position];
             }
         });
@@ -581,13 +579,13 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
         currencyList = activity.getResources().getStringArray(R.array.currency_list);
         stateList = activity.getResources().getStringArray(R.array.indian_states);
         try {
-            final ArrayAdapter adapter = new ArrayAdapter(activity, android.R.layout.simple_spinner_item, currencyList);
-            adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
-            binding.currencySpinner.setAdapter(adapter);
+            binding.currencyDropdown.setItems(currencyList);
             if (currencyName != null) {
-                int currencyIndex = adapter.getPosition(currencyName);
-                if (currencyIndex >= 0) {
-                    binding.currencySpinner.setSelectedIndex(currencyIndex);
+                for (int i = 0; i < currencyList.length; i++) {
+                    if (currencyName.equals(currencyList[i])) {
+                        binding.currencyDropdown.setSelectedIndex(i);
+                        break;
+                    }
                 }
             }
         } catch (Exception e) {
@@ -619,7 +617,7 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
 
     }
 
-    private void setSwitchCheckedSilently(androidx.appcompat.widget.SwitchCompat switchView, boolean checked) {
+    private void setSwitchCheckedSilently(PosSwitchRowView switchView, boolean checked) {
         suppressSwitchListener = true;
         switchView.setChecked(checked);
         suppressSwitchListener = false;

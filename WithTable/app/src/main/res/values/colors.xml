@@ -97,5 +97,12 @@
     <color name="statusExpired">#DC2626</color>
     <color name="statusTrial">#F59E0B</color>
     <color name="colorInputFill">#F9FAFB</color>
+    <color name="dropdownSelectedBg">#EAF8EF</color>
+    <color name="dropdownSelectedText">#159447</color>
+    <color name="dropdown_border">#C4B5FD</color>
+    <color name="dropdown_selected_bg">#F3F0FF</color>
+    <color name="dropdown_icon_bg">#EDE9FE</color>
+    <color name="switch_state_on">#20A446</color>
+    <color name="switch_state_off">#9CA3AF</color>
 
 </resources>

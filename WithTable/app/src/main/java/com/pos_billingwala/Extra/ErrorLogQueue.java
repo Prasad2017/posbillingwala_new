@@ -5,17 +5,22 @@ import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Offline-first pending queue for error logs. Never blocks the caller thread.
+ * Offline-first pending queue for error logs.
+ * Fatal crashes use {@link #enqueueSync} (atomic disk write + fsync).
  */
 public final class ErrorLogQueue {
 
@@ -40,10 +45,11 @@ public final class ErrorLogQueue {
     public static void init(Context context) {
         if (context != null) {
             appContext = context.getApplicationContext();
+            restorePendingFromArchive(appContext);
+            cleanupStaleTempFiles(appContext);
         }
     }
 
-    /** Enqueue asynchronously — safe to call from UI or crash path after writing. */
     public static void enqueue(ErrorLogPayload payload) {
         if (payload == null) {
             return;
@@ -62,16 +68,21 @@ public final class ErrorLogQueue {
         });
     }
 
-    /** Synchronous disk write for fatal crashes (before process exit). */
-    public static void enqueueSync(ErrorLogPayload payload) {
+    /**
+     * Synchronous durable write for fatal crashes — must complete before process exit.
+     * @return true if the payload was written to disk
+     */
+    public static boolean enqueueSync(ErrorLogPayload payload) {
         Context ctx = appContext;
         if (ctx == null || payload == null) {
-            return;
+            return false;
         }
         try {
             writePayload(ctx, payload);
+            return true;
         } catch (Throwable t) {
             Log.e(TAG, "enqueueSync failed: " + t.getMessage());
+            return false;
         }
     }
 
@@ -94,6 +105,43 @@ public final class ErrorLogQueue {
             return 0;
         }
         return listPending(ctx).size();
+    }
+
+    /** Copy any archive files missing from the live queue (recovery after partial crash write). */
+    public static void restorePendingFromArchive(Context ctx) {
+        if (ctx == null) {
+            return;
+        }
+        try {
+            File queue = queueDir(ctx);
+            File archive = archiveDir(ctx);
+            File[] archived = archive.listFiles((d, name) -> name != null && name.endsWith(".json"));
+            if (archived == null || archived.length == 0) {
+                return;
+            }
+            Set<String> queuedNames = new HashSet<>();
+            File[] pending = queue.listFiles((d, name) -> name != null && name.endsWith(".json"));
+            if (pending != null) {
+                for (File f : pending) {
+                    queuedNames.add(f.getName());
+                }
+            }
+            int restored = 0;
+            for (File src : archived) {
+                if (queuedNames.contains(src.getName())) {
+                    continue;
+                }
+                File dest = new File(queue, src.getName());
+                if (copyFile(src, dest)) {
+                    restored++;
+                }
+            }
+            if (restored > 0) {
+                Log.i(TAG, "Restored " + restored + " error log(s) from archive");
+            }
+        } catch (Throwable t) {
+            Log.w(TAG, "restorePendingFromArchive: " + t.getMessage());
+        }
     }
 
     static List<File> listPending(Context ctx) {
@@ -147,17 +195,34 @@ public final class ErrorLogQueue {
         trimIfNeeded(dir, MAX_PENDING_FILES);
         String name = "err_" + System.currentTimeMillis() + "_" + (int) (Math.random() * 100000) + ".json";
         byte[] bytes = payload.toJson().getBytes(StandardCharsets.UTF_8);
-        writeSynced(new File(dir, name), bytes);
+        File dest = new File(dir, name);
+        writeAtomic(dest, bytes);
         try {
             File archive = new File(archiveDir(ctx), name);
-            writeSynced(archive, bytes);
+            writeAtomic(archive, bytes);
             trimIfNeeded(archiveDir(ctx), MAX_ARCHIVE_FILES);
         } catch (Throwable t) {
             Log.w(TAG, "archive copy failed: " + t.getMessage());
         }
     }
 
-    /** Durably flush so a fatal crash cannot lose the file before process death. */
+    /** Write to .tmp first, fsync, then atomic rename — avoids corrupt half-files on crash. */
+    private static void writeAtomic(File dest, byte[] bytes) throws Exception {
+        File dir = dest.getParentFile();
+        if (dir != null && !dir.exists()) {
+            //noinspection ResultOfMethodCallIgnored
+            dir.mkdirs();
+        }
+        File tmp = new File(dir, dest.getName() + ".tmp");
+        writeSynced(tmp, bytes);
+        if (tmp.renameTo(dest)) {
+            return;
+        }
+        copyFile(tmp, dest);
+        //noinspection ResultOfMethodCallIgnored
+        tmp.delete();
+    }
+
     private static void writeSynced(File file, byte[] bytes) throws Exception {
         FileOutputStream fos = new FileOutputStream(file);
         try {
@@ -169,6 +234,57 @@ public final class ErrorLogQueue {
                 fos.close();
             } catch (Exception ignored) {
             }
+        }
+    }
+
+    private static boolean copyFile(File src, File dest) {
+        if (src == null || dest == null || !src.exists()) {
+            return false;
+        }
+        FileInputStream in = null;
+        FileOutputStream out = null;
+        try {
+            in = new FileInputStream(src);
+            out = new FileOutputStream(dest);
+            FileChannel inCh = in.getChannel();
+            FileChannel outCh = out.getChannel();
+            inCh.transferTo(0, inCh.size(), outCh);
+            out.getFD().sync();
+            return true;
+        } catch (Exception e) {
+            return false;
+        } finally {
+            try {
+                if (in != null) {
+                    in.close();
+                }
+            } catch (Exception ignored) {
+            }
+            try {
+                if (out != null) {
+                    out.close();
+                }
+            } catch (Exception ignored) {
+            }
+        }
+    }
+
+    private static void cleanupStaleTempFiles(Context ctx) {
+        try {
+            long cutoff = System.currentTimeMillis() - (24L * 60 * 60 * 1000);
+            for (File dir : new File[]{queueDir(ctx), archiveDir(ctx)}) {
+                File[] tmpFiles = dir.listFiles((d, name) -> name != null && name.endsWith(".tmp"));
+                if (tmpFiles == null) {
+                    continue;
+                }
+                for (File tmp : tmpFiles) {
+                    if (tmp.lastModified() < cutoff) {
+                        //noinspection ResultOfMethodCallIgnored
+                        tmp.delete();
+                    }
+                }
+            }
+        } catch (Throwable ignored) {
         }
     }
 

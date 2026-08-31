@@ -33,15 +33,13 @@
                 android:textColor="@color/colorTextHint"
                 android:textSize="11sp" />
 
-            <com.google.android.material.card.MaterialCardView
+            <com.pos_billingwala.Extra.PosCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                app:cardBackgroundColor="@color/colorSurface"
                 app:cardCornerRadius="12dp"
-                app:cardElevation="0dp"
-                app:strokeColor="@color/colorBorder"
-                app:strokeWidth="1dp">
+
+>
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -60,7 +58,7 @@
                         android:id="@+id/portionLayout"
                         layout="@layout/item_grouped_menu_row" />
                 </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+            </com.pos_billingwala.Extra.PosCardView>
         </LinearLayout>
 
         <LinearLayout
@@ -79,15 +77,13 @@
                 android:textColor="@color/colorTextHint"
                 android:textSize="11sp" />
 
-            <com.google.android.material.card.MaterialCardView
+            <com.pos_billingwala.Extra.PosCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                app:cardBackgroundColor="@color/colorSurface"
                 app:cardCornerRadius="12dp"
-                app:cardElevation="0dp"
-                app:strokeColor="@color/colorBorder"
-                app:strokeWidth="1dp">
+
+>
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -102,7 +98,7 @@
                         android:id="@+id/comboLayout"
                         layout="@layout/item_grouped_menu_row" />
                 </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+            </com.pos_billingwala.Extra.PosCardView>
         </LinearLayout>
     </LinearLayout>
 </RelativeLayout>

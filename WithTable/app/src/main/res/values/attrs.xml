@@ -23,6 +23,13 @@
     <declare-styleable name="SearchableDropdownView">
         <attr name="sdd_hint" format="string" />
         <attr name="sdd_dialog_title" format="string" />
+        <attr name="sdd_show_label" format="boolean" />
+        <attr name="sdd_show_icon" format="boolean" />
+    </declare-styleable>
+
+    <declare-styleable name="PosSwitchRowView">
+        <attr name="psr_label" format="string" />
+        <attr name="psr_checked" format="boolean" />
     </declare-styleable>
 
 </resources>

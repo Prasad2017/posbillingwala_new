@@ -10,26 +10,20 @@ import com.pos_billingwala.BuildConfig;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.security.MessageDigest;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
- * Builds rich Admin error payloads from real device/SDK/API exceptions.
- * Preserves original_* fields; generates a separate human-readable summary.
+ * Builds Admin error payloads for API failures, fatal crashes, ANRs, and low-memory kills only.
  */
 public final class ErrorLogReporter {
 
     private static final String TAG = "POS_ERR_REP";
-    private static final int MAX_ACTIONS = 10;
-    private static final int MAX_BREADCRUMBS = 20;
-
-    private static final ArrayDeque<String> userActions = new ArrayDeque<>();
-    private static final ArrayDeque<String> breadcrumbs = new ArrayDeque<>();
+    private static final Pattern ANR_REASON = Pattern.compile(
+            "Reason:\\s*(.+?)(?:\\n|$)", Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
 
     private static volatile Context appContext;
-    private static volatile String lastUserAction = "";
 
     private ErrorLogReporter() {
     }
@@ -41,35 +35,12 @@ public final class ErrorLogReporter {
         }
     }
 
-    public static void recordUserAction(String action) {
-        if (action == null || action.trim().isEmpty()) {
-            return;
-        }
-        String a = action.trim();
-        lastUserAction = a;
-        synchronized (userActions) {
-            userActions.addLast(a);
-            while (userActions.size() > MAX_ACTIONS) {
-                userActions.removeFirst();
-            }
-        }
-        addBreadcrumb(a);
-    }
-
+    /** No-op — breadcrumbs removed from server logs. */
     public static void addBreadcrumb(String step) {
-        if (step == null || step.trim().isEmpty()) {
-            return;
-        }
-        synchronized (breadcrumbs) {
-            breadcrumbs.addLast(step.trim());
-            while (breadcrumbs.size() > MAX_BREADCRUMBS) {
-                breadcrumbs.removeFirst();
-            }
-        }
     }
 
-    public static String getLastUserAction() {
-        return lastUserAction != null ? lastUserAction : "";
+    /** No-op — user actions removed from server logs. */
+    public static void recordUserAction(String action) {
     }
 
     public static void reportApiError(
@@ -89,15 +60,14 @@ public final class ErrorLogReporter {
             }
             String safeRequest = LogSanitizer.sanitize(requestBody);
             String safeResponse = LogSanitizer.sanitize(responseBody);
+            String safeUrl = LogSanitizer.sanitize(url, 1024);
             String originalMsg;
             String exceptionClass = "";
-            String stack = "";
             String errorCode;
 
             if (networkError != null) {
                 originalMsg = preserveOriginalMessage(networkError);
                 exceptionClass = networkError.getClass().getName();
-                stack = stackTraceOf(networkError);
                 errorCode = classifyNetworkCode(networkError);
             } else if (statusCode > 0) {
                 originalMsg = buildHttpOriginalMessage(statusCode, networkReason, safeResponse);
@@ -112,9 +82,9 @@ public final class ErrorLogReporter {
             String severity = severityForHttpOrNetwork(statusCode, networkError);
             String summary = buildApiSummary(statusCode, apiName, method);
 
-            ErrorLogPayload p = basePayload("API", severity, category, summary);
+            ErrorLogPayload p = baseUserDevicePayload("API", severity, category, summary);
             p.put("api_method", method != null ? method : "");
-            p.put("api_url", LogSanitizer.sanitize(url, 1024));
+            p.put("api_url", safeUrl);
             p.putInt("http_status", statusCode > 0 ? statusCode : null);
             p.put("request_body", safeRequest);
             p.put("response_body", safeResponse);
@@ -123,20 +93,18 @@ public final class ErrorLogReporter {
             p.putInt("request_duration_ms", (int) Math.min(durationMs, Integer.MAX_VALUE));
             p.put("original_error_message", LogSanitizer.sanitize(originalMsg));
             p.put("original_exception_class", exceptionClass);
-            p.put("original_stack_trace", LogSanitizer.sanitize(stack));
             p.put("original_error_code", errorCode);
             p.put("original_api_response", safeResponse);
-            p.put("user_action", preferAction("API call: " + (apiName != null ? apiName : "request")));
-            p.put("what_happened", buildApiWhatHappened(method, apiName, statusCode, originalMsg));
-            p.put("fingerprint", fingerprint("API", exceptionClass, originalMsg, url, statusCode));
+            p.put("what_happened", buildApiWhatHappened(method, apiName, statusCode, safeUrl, originalMsg));
+            p.put("fingerprint", fingerprint("API", exceptionClass, originalMsg, safeUrl, statusCode));
             ErrorLogQueue.enqueue(p);
-            addBreadcrumb("API " + (statusCode > 0 ? statusCode : errorCode) + " " + (apiName != null ? apiName : ""));
         } catch (Throwable t) {
             Log.e(TAG, "reportApiError failed: " + t.getMessage());
         }
     }
 
-    public static void reportAppError(Throwable error, String context, String severity, boolean fatal) {
+    /** Fatal uncaught crash — device info, user details, and stack trace only. */
+    public static void reportFatalCrash(Throwable error) {
         try {
             if (error == null) {
                 return;
@@ -145,158 +113,51 @@ public final class ErrorLogReporter {
             String exceptionClass = error.getClass().getName();
             String stack = stackTraceOf(error);
             String category = ObservabilityPublic.categorize(error);
-            String type = fatal ? "CRASH" : mapType(category, context);
-            if (!fatal && "fatal_crash".equalsIgnoreCase(context)) {
-                type = "CRASH";
+            String summary = buildCrashSummary(exceptionClass);
+
+            ErrorLogPayload p = baseUserDevicePayload("CRASH", "CRITICAL", category, summary);
+            fillCrashFields(p, originalMsg, exceptionClass, stack, category);
+            p.put("what_happened", buildCrashWhatHappened(exceptionClass, originalMsg, stack));
+            p.put("fingerprint", fingerprint("CRASH", exceptionClass, originalMsg, "fatal", 0));
+            boolean saved = ErrorLogQueue.enqueueSync(p);
+            Context ctx = appContext;
+            if (saved && ctx != null) {
+                int uploaded = ErrorLogUploader.flushPendingSync(ctx, 4000L);
+                ErrorLogFlushScheduler.schedule(ctx);
+                Log.i(TAG, "Fatal crash saved=" + saved + " uploaded=" + uploaded);
             }
-            String sev = severity != null ? severity : (fatal ? "CRITICAL" : "ERROR");
-            String summary = buildAppSummary(type, context, exceptionClass);
-
-            ErrorLogPayload p = basePayload(type, sev, category, summary);
-            fillOriginals(p, originalMsg, exceptionClass, stack, category);
-            p.put("user_action", preferAction(context != null ? context : "Unhandled error"));
-            p.put("what_happened", fatal
-                    ? buildCrashWhatHappened(exceptionClass, originalMsg, context)
-                    : buildAppWhatHappened(context, originalMsg));
-            p.put("fingerprint", fingerprint(type, exceptionClass, originalMsg,
-                    Observability.getCurrentScreenName(), 0));
-            if (fatal) {
-                ErrorLogQueue.enqueueSync(p);
-            } else {
-                ErrorLogQueue.enqueue(p);
-            }
-            addBreadcrumb((fatal ? "FATAL " : "ERROR ") + exceptionClass);
         } catch (Throwable t) {
-            Log.e(TAG, "reportAppError failed: " + t.getMessage());
-        }
-    }
-
-    public static void reportPrinterError(Throwable error, String printerType, String printerModel,
-                                          String connection, String printOperation) {
-        try {
-            String originalMsg = error != null ? preserveOriginalMessage(error) : "Printer error (no exception message)";
-            String exceptionClass = error != null ? error.getClass().getName() : "PrinterError";
-            String stack = error != null ? stackTraceOf(error) : "";
-            String summary = "Printer connection failed while " +
-                    (printOperation != null && !printOperation.isEmpty() ? printOperation : "printing");
-
-            ErrorLogPayload p = basePayload("PRINTER", "ERROR", "printer", summary);
-            fillOriginals(p, originalMsg, exceptionClass, stack, "printer");
-            p.put("printer_type", nullToEmpty(printerType));
-            p.put("printer_model", nullToEmpty(printerModel));
-            p.put("printer_connection", nullToEmpty(connection));
-            p.put("print_operation", nullToEmpty(printOperation));
-            p.put("user_action", preferAction("User tapped \"Print Bill\""));
-            p.put("what_happened", "Print command was started. Printer connection/operation failed.\n"
-                    + "Original: " + originalMsg);
-            p.put("fingerprint", fingerprint("PRINTER", exceptionClass, originalMsg, printOperation, 0));
-            ErrorLogQueue.enqueue(p);
-            addBreadcrumb("Printer error: " + exceptionClass);
-        } catch (Throwable t) {
-            Log.e(TAG, "reportPrinterError failed: " + t.getMessage());
+            Log.e(TAG, "reportFatalCrash failed: " + t.getMessage());
         }
     }
 
     /**
-     * Android system process-exit (Play Protect / ApplicationExitInfo): NPE, ANR,
-     * native crash, low memory, etc. Always persisted locally then uploaded.
+     * System process exit from ApplicationExitInfo: Java crash, native crash, ANR, or low memory only.
      */
-    public static void reportProcessExit(String errorType, String category, String exceptionClass,
-                                         String description, String trace, long timestampMs,
-                                         int pid, int reasonCode, int statusCode) {
-        reportProcessExit(errorType, category, exceptionClass, description, trace,
-                timestampMs, pid, reasonCode, statusCode, "CRITICAL");
-    }
-
     public static void reportProcessExit(String errorType, String category, String exceptionClass,
                                          String description, String trace, long timestampMs,
                                          int pid, int reasonCode, int statusCode, String severity) {
         try {
-            String type = errorType != null && !errorType.isEmpty() ? errorType : "CRASH";
+            String type = normalizeProcessExitType(errorType, reasonCode);
+            if (type == null) {
+                return;
+            }
             String clazz = exceptionClass != null && !exceptionClass.isEmpty()
                     ? exceptionClass : "ProcessExit";
-            String originalMsg = description != null && !description.isEmpty()
-                    ? description
-                    : (friendlyExceptionName(clazz) + " (system process exit, no description)");
             String stack = trace != null ? trace : "";
-            String cat = category != null ? category : "java_crash";
+            String originalMsg = buildProcessExitOriginal(type, description, stack, clazz);
+            String cat = category != null ? category : type.toLowerCase(Locale.US);
             String summary = buildProcessExitSummary(type, clazz, originalMsg);
             String sev = severity != null && !severity.isEmpty() ? severity : "CRITICAL";
 
-            ErrorLogPayload p = basePayload(type, sev, cat, summary);
-            fillOriginals(p, originalMsg, clazz, stack, cat);
-            p.put("user_action", "App process exited (system crash history)");
+            ErrorLogPayload p = baseUserDevicePayload(type, sev, cat, summary);
+            fillCrashFields(p, originalMsg, clazz, stack, cat);
             p.put("what_happened", buildProcessExitWhatHappened(type, clazz, originalMsg, pid,
                     reasonCode, statusCode, timestampMs, stack));
             p.put("fingerprint", fingerprint(type, clazz, originalMsg, "system_exit", reasonCode));
             ErrorLogQueue.enqueue(p);
-            addBreadcrumb("SYSTEM_EXIT " + type + " " + clazz);
         } catch (Throwable t) {
             Log.e(TAG, "reportProcessExit failed: " + t.getMessage());
-        }
-    }
-
-    public static void reportDatabaseError(Throwable error, String operation) {
-        try {
-            if (error == null) {
-                return;
-            }
-            String originalMsg = preserveOriginalMessage(error);
-            String exceptionClass = error.getClass().getName();
-            String stack = stackTraceOf(error);
-            String summary = "Database error while " + (operation != null ? operation : "saving data");
-
-            ErrorLogPayload p = basePayload("DATABASE", "ERROR", "database", summary);
-            fillOriginals(p, originalMsg, exceptionClass, stack, "database");
-            p.put("user_action", preferAction(operation != null ? operation : "Database operation"));
-            p.put("what_happened", "Local database operation failed.\nOriginal: " + originalMsg);
-            p.put("fingerprint", fingerprint("DATABASE", exceptionClass, originalMsg, operation, 0));
-            ErrorLogQueue.enqueue(p);
-        } catch (Throwable t) {
-            Log.e(TAG, "reportDatabaseError failed: " + t.getMessage());
-        }
-    }
-
-    /**
-     * Device health issues: memory, storage, thermal, battery, etc.
-     * Queued offline and synced to {@code reportErrorLog.php}.
-     */
-    public static void reportDeviceIssue(String errorType, String severity, String category,
-                                         String summary, String whatHappened,
-                                         String exceptionClass, String detailCode) {
-        try {
-            String type = errorType != null && !errorType.isEmpty() ? errorType : "DEVICE";
-            String sev = severity != null && !severity.isEmpty() ? severity : "WARNING";
-            String cat = category != null ? category : "device";
-            String sum = summary != null ? summary : "Device issue detected";
-            String clazz = exceptionClass != null && !exceptionClass.isEmpty()
-                    ? exceptionClass : "DeviceIssue";
-            String original = detailCode != null && !detailCode.isEmpty()
-                    ? detailCode
-                    : (whatHappened != null ? truncate(whatHappened, 400) : sum);
-
-            ErrorLogPayload p = basePayload(type, sev, cat, sum);
-            fillOriginals(p, original, clazz, "", cat);
-            p.put("user_action", preferAction("Device health check"));
-            StringBuilder happened = new StringBuilder();
-            happened.append(whatHappened != null ? whatHappened : sum);
-            Context ctx = appContext;
-            if (ctx != null) {
-                String mem = DeviceHealthMonitor.memorySnapshot(ctx);
-                String stor = DeviceHealthMonitor.storageSnapshot(ctx);
-                if (!mem.isEmpty()) {
-                    happened.append("\n").append(mem);
-                }
-                if (!stor.isEmpty()) {
-                    happened.append("\n").append(stor);
-                }
-            }
-            p.put("what_happened", LogSanitizer.sanitize(happened.toString(), 4096));
-            p.put("fingerprint", fingerprint(type, clazz, original, cat, 0));
-            ErrorLogQueue.enqueue(p);
-            addBreadcrumb(type + " " + cat);
-        } catch (Throwable t) {
-            Log.e(TAG, "reportDeviceIssue failed: " + t.getMessage());
         }
     }
 
@@ -316,7 +177,6 @@ public final class ErrorLogReporter {
             if (msg != null && !msg.trim().isEmpty() && !LogSanitizer.isGenericMessage(msg)) {
                 sb.append(msg.trim());
             } else if (msg != null && !msg.trim().isEmpty()) {
-                // Keep generic only if that is literally what the SDK returned; still attach class.
                 sb.append(current.getClass().getSimpleName()).append(": ").append(msg.trim());
             } else {
                 sb.append(current.getClass().getName()).append(" (no message)");
@@ -344,14 +204,57 @@ public final class ErrorLogReporter {
         }
     }
 
-    private static void fillOriginals(ErrorLogPayload p, String msg, String clazz, String stack, String code) {
+    /** Extract ANR reason from system description or trace dump. */
+    public static String extractAnrReason(String description, String trace) {
+        String fromTrace = extractAnrReasonFromText(trace);
+        if (!fromTrace.isEmpty()) {
+            return fromTrace;
+        }
+        String fromDesc = extractAnrReasonFromText(description);
+        if (!fromDesc.isEmpty()) {
+            return fromDesc;
+        }
+        if (description != null && !description.trim().isEmpty()) {
+            return description.trim();
+        }
+        return "Application Not Responding — reason not available in trace";
+    }
+
+    private static String extractAnrReasonFromText(String text) {
+        if (text == null || text.isEmpty()) {
+            return "";
+        }
+        Matcher m = ANR_REASON.matcher(text);
+        if (m.find()) {
+            String reason = m.group(1).trim();
+            if (!reason.isEmpty()) {
+                return reason.length() > 512 ? reason.substring(0, 512) + "…" : reason;
+            }
+        }
+        String lower = text.toLowerCase(Locale.US);
+        if (lower.contains("input dispatching timed out")) {
+            return "Input dispatching timed out — main thread blocked";
+        }
+        if (lower.contains("executing service")) {
+            return "Service execution timed out";
+        }
+        if (lower.contains("broadcast of intent")) {
+            return "Broadcast receiver timed out";
+        }
+        if (lower.contains("content provider")) {
+            return "Content provider query timed out";
+        }
+        return "";
+    }
+
+    private static void fillCrashFields(ErrorLogPayload p, String msg, String clazz, String stack, String code) {
         p.put("original_error_message", LogSanitizer.sanitize(msg));
         p.put("original_exception_class", clazz != null ? clazz : "");
         p.put("original_stack_trace", LogSanitizer.sanitize(stack));
         p.put("original_error_code", code != null ? code : "");
     }
 
-    private static ErrorLogPayload basePayload(String type, String severity, String category, String summary) {
+    private static ErrorLogPayload baseUserDevicePayload(String type, String severity, String category, String summary) {
         Context ctx = appContext;
         ErrorLogPayload p = new ErrorLogPayload();
         String userId = ctx != null ? Common.getSavedUserData(ctx, "userId") : "";
@@ -382,59 +285,32 @@ public final class ErrorLogReporter {
         p.put("device_name", deviceName);
         p.put("device_id", deviceId);
         p.put("user_label", nullToEmpty(userName));
-        p.put("screen_name", ScreenNames.friendly(
-                Observability.getActivityName(), Observability.getFragmentName()));
-        p.put("activity_name", Observability.getActivityName());
-        p.put("fragment_name", Observability.getFragmentName());
-        p.put("user_flow", buildUserFlow());
-        p.put("breadcrumbs", buildBreadcrumbsJson());
         return p;
     }
 
-    private static String preferAction(String fallback) {
-        if (lastUserAction != null && !lastUserAction.isEmpty()) {
-            return lastUserAction;
+    private static String normalizeProcessExitType(String errorType, int reasonCode) {
+        if (errorType == null || errorType.isEmpty()) {
+            return null;
         }
-        return fallback != null ? fallback : "";
+        switch (errorType) {
+            case "CRASH":
+            case "NATIVE_CRASH":
+            case "ANR":
+            case "LOW_MEMORY":
+                return errorType;
+            default:
+                return null;
+        }
     }
 
-    private static String buildUserFlow() {
-        List<String> steps;
-        synchronized (breadcrumbs) {
-            steps = new ArrayList<>(breadcrumbs);
+    private static String buildProcessExitOriginal(String type, String description, String trace, String clazz) {
+        if ("ANR".equals(type)) {
+            return extractAnrReason(description, trace);
         }
-        if (steps.isEmpty()) {
-            synchronized (userActions) {
-                steps = new ArrayList<>(userActions);
-            }
+        if (description != null && !description.trim().isEmpty()) {
+            return description.trim();
         }
-        if (steps.isEmpty()) {
-            return Observability.getCurrentScreenName();
-        }
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < steps.size(); i++) {
-            if (i > 0) {
-                sb.append("\n    ↓\n");
-            }
-            sb.append(steps.get(i));
-        }
-        return sb.toString();
-    }
-
-    private static String buildBreadcrumbsJson() {
-        List<String> steps;
-        synchronized (breadcrumbs) {
-            steps = new ArrayList<>(breadcrumbs);
-        }
-        StringBuilder sb = new StringBuilder("[");
-        for (int i = 0; i < steps.size(); i++) {
-            if (i > 0) {
-                sb.append(',');
-            }
-            sb.append('"').append(steps.get(i).replace("\"", "'")).append('"');
-        }
-        sb.append(']');
-        return sb.toString();
+        return friendlyExceptionName(clazz) + " (system process exit)";
     }
 
     private static String buildApiSummary(int statusCode, String apiName, String method) {
@@ -454,20 +330,26 @@ public final class ErrorLogReporter {
         return apiName != null && !apiName.isEmpty() ? apiName : "request";
     }
 
-    private static String buildApiWhatHappened(String method, String apiName, int statusCode, String original) {
+    private static String buildApiWhatHappened(String method, String apiName, int statusCode,
+                                               String url, String original) {
         StringBuilder sb = new StringBuilder();
-        sb.append("API request started");
-        if (apiName != null) {
-            sb.append(" (").append(apiName).append(')');
+        sb.append("API failure");
+        if (method != null && !method.isEmpty()) {
+            sb.append("\nMethod: ").append(method);
         }
-        sb.append('.');
+        if (url != null && !url.isEmpty()) {
+            sb.append("\nURL: ").append(url);
+        }
+        if (apiName != null && !apiName.isEmpty()) {
+            sb.append("\nEndpoint: ").append(apiName);
+        }
         if (statusCode > 0) {
-            sb.append(" HTTP ").append(statusCode).append(" received.");
+            sb.append("\nHTTP status: ").append(statusCode);
         } else {
-            sb.append(" Network failure.");
+            sb.append("\nNetwork failure");
         }
         if (original != null && !original.isEmpty()) {
-            sb.append("\nOriginal: ").append(original);
+            sb.append("\nReason: ").append(original);
         }
         return sb.toString();
     }
@@ -484,36 +366,30 @@ public final class ErrorLogReporter {
         return sb.toString();
     }
 
-    private static String buildAppSummary(String type, String context, String exceptionClass) {
+    private static String buildCrashSummary(String exceptionClass) {
         String simple = exceptionClass;
         int dot = exceptionClass != null ? exceptionClass.lastIndexOf('.') : -1;
         if (dot >= 0) {
             simple = exceptionClass.substring(dot + 1);
         }
-        String screen = ScreenNames.friendly(Observability.getActivityName(), Observability.getFragmentName());
-        if ("PRINTER".equals(type)) {
-            return "Printer error on " + screen;
-        }
-        if ("DATABASE".equals(type)) {
-            return "Database error while " + (context != null ? context : "saving");
-        }
-        if ("CRASH".equals(type) || "ANR".equals(type) || "NATIVE_CRASH".equals(type)
-                || "LOW_MEMORY".equals(type)) {
-            return friendlyExceptionName(simple) + " — app crashed on " + screen;
-        }
-        return (simple != null ? simple : "Application error") + " on " + screen;
+        return friendlyExceptionName(simple) + " — app crashed";
     }
 
-    private static String buildCrashWhatHappened(String exceptionClass, String original, String context) {
+    private static String buildCrashWhatHappened(String exceptionClass, String original, String stack) {
         StringBuilder sb = new StringBuilder();
-        sb.append("The app crashed due to a ")
-                .append(friendlyExceptionName(exceptionClass).toLowerCase(Locale.US))
-                .append(" error.");
-        if (context != null && !context.isEmpty()) {
-            sb.append(" Context: ").append(context).append('.');
-        }
+        sb.append("Fatal crash: ").append(friendlyExceptionName(exceptionClass));
         if (original != null && !original.isEmpty()) {
-            sb.append("\nOriginal: ").append(original);
+            sb.append("\nMessage: ").append(original);
+        }
+        Context ctx = appContext;
+        if (ctx != null) {
+            String mem = DeviceHealthMonitor.memorySnapshot(ctx);
+            if (!mem.isEmpty()) {
+                sb.append("\nDevice memory: ").append(mem);
+            }
+        }
+        if (stack != null && !stack.isEmpty()) {
+            sb.append("\n\nStack trace:\n").append(LogSanitizer.sanitize(stack, 8192));
         }
         return sb.toString();
     }
@@ -521,45 +397,55 @@ public final class ErrorLogReporter {
     private static String buildProcessExitSummary(String type, String exceptionClass, String description) {
         String name = friendlyExceptionName(exceptionClass);
         if ("ANR".equals(type)) {
+            String reason = description != null ? description.trim() : "";
+            if (!reason.isEmpty()) {
+                return "ANR — " + (reason.length() > 120 ? reason.substring(0, 120) + "…" : reason);
+            }
             return "App not responding (ANR)";
         }
         if ("NATIVE_CRASH".equals(type)) {
             return "Native crash — " + name;
         }
         if ("LOW_MEMORY".equals(type)) {
-            return "App reclaimed by OS Low Memory Killer (not a Java OOM)";
+            return "App killed by OS — low memory";
         }
-        String desc = description != null ? description.trim() : "";
-        String nameLower = name.toLowerCase(Locale.US);
-        String descLower = desc.toLowerCase(Locale.US);
-        if (descLower.contains("null pointer") || descLower.contains("nullpointer")
-                || nameLower.contains("nullpointer") || nameLower.contains("null pointer")) {
-            return "NullPointerException — app crashed repeatedly";
-        }
-        return name + " — app crashed (system crash history)";
+        return name + " — app crashed";
     }
 
     private static String buildProcessExitWhatHappened(String type, String exceptionClass,
                                                        String original, int pid, int reasonCode,
                                                        int statusCode, long timestampMs,
-                                                       String extrasOrTrace) {
+                                                       String trace) {
         StringBuilder sb = new StringBuilder();
-        sb.append("Android recorded a process exit (same source as Play Protect \"View history\").");
+        sb.append("System process exit");
         sb.append("\nType: ").append(type);
         sb.append("\nException: ").append(friendlyExceptionName(exceptionClass));
+        if ("ANR".equals(type)) {
+            sb.append("\nANR reason: ").append(original != null ? original : "unknown");
+        } else if ("LOW_MEMORY".equals(type)) {
+            sb.append("\nCause: OS Low Memory Killer reclaimed this process");
+            Context ctx = appContext;
+            if (ctx != null) {
+                String mem = DeviceHealthMonitor.memorySnapshot(ctx);
+                if (!mem.isEmpty()) {
+                    sb.append("\nDevice memory: ").append(mem);
+                }
+            }
+        } else if (original != null && !original.isEmpty()) {
+            sb.append("\nMessage: ").append(original);
+        }
         sb.append("\nReason code: ").append(reasonCode);
         sb.append("\nStatus: ").append(statusCode);
         sb.append("\nPID: ").append(pid);
         if (timestampMs > 0) {
             sb.append("\nExit time (ms): ").append(timestampMs);
         }
-        if (original != null && !original.isEmpty()) {
-            sb.append("\nOriginal: ").append(original);
-        }
-        if (extrasOrTrace != null && !extrasOrTrace.isEmpty()) {
-            // Prefer the short extras header (importance/pss) over a huge ANR dump.
-            String head = extrasOrTrace.length() > 800 ? extrasOrTrace.substring(0, 800) : extrasOrTrace;
-            sb.append("\nDetails:\n").append(head.trim());
+        if (trace != null && !trace.isEmpty() && !"ANR".equals(type)) {
+            String head = trace.length() > 8192 ? trace.substring(0, 8192) + "…" : trace;
+            sb.append("\n\nTrace:\n").append(head.trim());
+        } else if ("ANR".equals(type) && trace != null && !trace.isEmpty()) {
+            String anrHead = trace.length() > 4096 ? trace.substring(0, 4096) + "…" : trace;
+            sb.append("\n\nANR trace (excerpt):\n").append(anrHead.trim());
         }
         return sb.toString();
     }
@@ -580,33 +466,6 @@ public final class ErrorLogReporter {
             return "System low-memory kill (LMK)";
         }
         return simple;
-    }
-
-    private static String buildAppWhatHappened(String context, String original) {
-        StringBuilder sb = new StringBuilder();
-        if (context != null && !context.isEmpty()) {
-            sb.append("Context: ").append(context).append(". ");
-        }
-        sb.append("Application encountered an exception.");
-        if (original != null && !original.isEmpty()) {
-            sb.append("\nOriginal: ").append(original);
-        }
-        return sb.toString();
-    }
-
-    private static String mapType(String category, String context) {
-        String c = (category != null ? category : "").toLowerCase(Locale.US);
-        String ctx = (context != null ? context : "").toLowerCase(Locale.US);
-        if (c.contains("database") || c.contains("sqlite") || ctx.contains("db") || ctx.contains("invoice_db")) {
-            return "DATABASE";
-        }
-        if (c.contains("printer") || ctx.contains("print") || ctx.contains("bluetooth")) {
-            return "PRINTER";
-        }
-        if (c.contains("no_network") || c.contains("timeout") || c.contains("connection") || c.equals("api")) {
-            return "NETWORK";
-        }
-        return "APPLICATION";
     }
 
     private static String classifyHttpOrNetwork(int statusCode, Throwable networkError) {
@@ -685,7 +544,6 @@ public final class ErrorLogReporter {
         return s != null ? s : "";
     }
 
-    /** Tiny bridge so ErrorLogReporter can reuse Observability categorization without cycles. */
     static final class ObservabilityPublic {
         static String categorize(Throwable error) {
             return Observability.categorizeErrorPublic(error);

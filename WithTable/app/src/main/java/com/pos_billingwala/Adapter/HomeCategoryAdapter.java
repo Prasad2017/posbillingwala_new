@@ -89,9 +89,7 @@ public class HomeCategoryAdapter extends RecyclerView.Adapter<HomeCategoryAdapte
                 && selectedCategoryId.equals(productCategoryResponse.getCategoryId());
         int bg = ContextCompat.getColor(context, selected ? R.color.colorPrimary : R.color.white);
         int text = ContextCompat.getColor(context, selected ? R.color.white : R.color.colorTextPrimary);
-        int stroke = ContextCompat.getColor(context, selected ? R.color.colorPrimary : R.color.colorBorder);
         holder.binding.categoryCardView.setCardBackgroundColor(bg);
-        holder.binding.categoryCardView.setStrokeColor(stroke);
         holder.binding.categoryName.setTextColor(text);
 
         holder.binding.categoryCardView.setOnClickListener(new View.OnClickListener() {

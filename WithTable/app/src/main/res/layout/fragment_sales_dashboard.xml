@@ -85,15 +85,13 @@
                     android:layout_weight="1" />
             </LinearLayout>
 
-            <com.google.android.material.card.MaterialCardView
+            <com.pos_billingwala.Extra.PosCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                app:cardBackgroundColor="@color/colorSurface"
                 app:cardCornerRadius="12dp"
-                app:cardElevation="0dp"
-                app:strokeColor="@color/colorBorder"
-                app:strokeWidth="1dp">
+
+>
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -125,17 +123,15 @@
                             android:minWidth="320dp" />
                     </HorizontalScrollView>
                 </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+            </com.pos_billingwala.Extra.PosCardView>
 
-            <com.google.android.material.card.MaterialCardView
+            <com.pos_billingwala.Extra.PosCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                app:cardBackgroundColor="@color/colorSurface"
                 app:cardCornerRadius="12dp"
-                app:cardElevation="0dp"
-                app:strokeColor="@color/colorBorder"
-                app:strokeWidth="1dp">
+
+>
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -174,7 +170,7 @@
                         android:layout_marginTop="8dp"
                         android:orientation="vertical" />
                 </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+            </com.pos_billingwala.Extra.PosCardView>
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 </RelativeLayout>

@@ -13,14 +13,12 @@
         android:layout_weight="1"
         android:orientation="vertical">
 
-        <com.google.android.material.card.MaterialCardView
+        <com.pos_billingwala.Extra.PosCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardBackgroundColor="@color/colorSurface"
             app:cardCornerRadius="@dimen/radius_lg"
-            app:cardElevation="@dimen/card_elevation"
-            app:strokeColor="@color/colorBorder"
-            app:strokeWidth="1dp">
+
+>
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -62,7 +60,7 @@
                         app:sdd_hint="@string/ui_subcategory_optional" />
                 </LinearLayout>
             </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
+        </com.pos_billingwala.Extra.PosCardView>
 
         <include
             android:id="@+id/productPortionSectionInclude"
@@ -78,14 +76,12 @@
         android:layout_weight="1"
         android:orientation="vertical">
 
-        <com.google.android.material.card.MaterialCardView
+        <com.pos_billingwala.Extra.PosCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardBackgroundColor="@color/colorSurface"
             app:cardCornerRadius="@dimen/radius_lg"
-            app:cardElevation="@dimen/card_elevation"
-            app:strokeColor="@color/colorBorder"
-            app:strokeWidth="1dp">
+
+>
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -172,14 +168,12 @@
                     </com.google.android.material.textfield.TextInputLayout>
                 </LinearLayout>
 
-                <androidx.appcompat.widget.SwitchCompat
+                <com.pos_billingwala.Extra.PosSwitchRowView
                     android:id="@+id/openPriceSwitch"
-                    style="@style/PosSwitchRow"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/spacing_md"
-                    android:checked="false"
-                    android:text="@string/ui_open_price"
-                    android:textOff="Off"
-                    android:textOn="On" />
+                    app:psr_label="@string/ui_open_price" />
 
                 <TextView
                     android:layout_width="match_parent"
@@ -239,17 +233,15 @@
                         app:sdd_hint="@string/ui_product_unit" />
                 </LinearLayout>
             </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
+        </com.pos_billingwala.Extra.PosCardView>
 
-        <com.google.android.material.card.MaterialCardView
+        <com.pos_billingwala.Extra.PosCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/spacing_lg"
-            app:cardBackgroundColor="@color/colorSurface"
             app:cardCornerRadius="@dimen/radius_lg"
-            app:cardElevation="@dimen/card_elevation"
-            app:strokeColor="@color/colorBorder"
-            app:strokeWidth="1dp">
+
+>
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -335,6 +327,6 @@
                     </com.google.android.material.textfield.TextInputLayout>
                 </LinearLayout>
             </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
+        </com.pos_billingwala.Extra.PosCardView>
     </LinearLayout>
 </LinearLayout>

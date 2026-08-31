@@ -6,7 +6,6 @@ import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
@@ -16,7 +15,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.textfield.TextInputEditText;
-import com.jaredrummler.materialspinner.MaterialSpinner;
+import com.pos_billingwala.Extra.SearchableDropdownView;
 import com.pos_billingwala.Adapter.EditInvoiceProductAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.BottomSheetUi;
@@ -314,23 +313,20 @@ public class EditInvoice extends BaseActivity {
         TextInputEditText discountInput = content.findViewById(R.id.discountPercentage);
         TextView addDiscount = content.findViewById(R.id.addDiscountPercentage);
         TextView dismissDiscount = content.findViewById(R.id.dismissDiscountPercentage);
-        MaterialSpinner discountTypeSpinner = content.findViewById(R.id.discountTypeSpinner);
+        SearchableDropdownView discountTypeSpinner = content.findViewById(R.id.discountTypeSpinner);
 
         String[] discountTypeList = getResources().getStringArray(R.array.discount_type);
-        ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_item, discountTypeList);
-        spinnerAdapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
-        discountTypeSpinner.setAdapter(spinnerAdapter);
-        int discountIndex = spinnerAdapter.getPosition(discountType);
-        if (discountIndex >= 0) {
-            discountTypeSpinner.setSelectedIndex(discountIndex);
-        }
-        discountTypeSpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
-            @Override
-            public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
-                discountType = discountTypeList[position];
+        discountTypeSpinner.setItems(discountTypeList);
+        if (discountType != null) {
+            for (int i = 0; i < discountTypeList.length; i++) {
+                if (discountType.equals(discountTypeList[i])) {
+                    discountTypeSpinner.setSelectedIndex(i);
+                    break;
+                }
             }
-        });
+        }
+        discountTypeSpinner.setOnItemSelectedListener((position, label) ->
+                discountType = discountTypeList[position]);
         discountInput.setText(discountRaw);
 
         dismissDiscount.setOnClickListener(v -> sheet.dismiss());
@@ -352,23 +348,20 @@ public class EditInvoice extends BaseActivity {
         TextInputEditText packingInput = content.findViewById(R.id.packingCharge);
         TextView addPacking = content.findViewById(R.id.addPackingCharge);
         TextView dismissPacking = content.findViewById(R.id.dismissPackingCharge);
-        MaterialSpinner packingTypeSpinner = content.findViewById(R.id.packingTypeSpinner);
+        SearchableDropdownView packingTypeSpinner = content.findViewById(R.id.packingTypeSpinner);
 
         String[] packingTypeList = getResources().getStringArray(R.array.discount_type);
-        ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_item, packingTypeList);
-        spinnerAdapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
-        packingTypeSpinner.setAdapter(spinnerAdapter);
-        int packingIndex = spinnerAdapter.getPosition(packingChargeType);
-        if (packingIndex >= 0) {
-            packingTypeSpinner.setSelectedIndex(packingIndex);
-        }
-        packingTypeSpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
-            @Override
-            public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
-                packingChargeType = packingTypeList[position];
+        packingTypeSpinner.setItems(packingTypeList);
+        if (packingChargeType != null) {
+            for (int i = 0; i < packingTypeList.length; i++) {
+                if (packingChargeType.equals(packingTypeList[i])) {
+                    packingTypeSpinner.setSelectedIndex(i);
+                    break;
+                }
             }
-        });
+        }
+        packingTypeSpinner.setOnItemSelectedListener((position, label) ->
+                packingChargeType = packingTypeList[position]);
         packingInput.setText(packingRaw);
 
         dismissPacking.setOnClickListener(v -> sheet.dismiss());

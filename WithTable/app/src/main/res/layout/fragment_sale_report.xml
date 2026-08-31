@@ -101,7 +101,7 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
 
-                <androidx.cardview.widget.CardView
+                <com.pos_billingwala.Extra.PosCardView
                     android:id="@+id/totalSubAmountCardView"
                     android:layout_width="match_parent"
                     android:layout_height="150dp"
@@ -109,7 +109,7 @@
                     android:layout_marginTop="20dp"
                     android:layout_marginEnd="10dp"
                     android:layout_weight="1"
-                    app:cardBackgroundColor="#ecfffa"
+
                     app:cardCornerRadius="15dp"
                     app:cardUseCompatPadding="true">
 
@@ -150,7 +150,7 @@
 
                     </LinearLayout>
 
-                </androidx.cardview.widget.CardView>
+                </com.pos_billingwala.Extra.PosCardView>
 
                 <androidx.appcompat.widget.AppCompatTextView
                     android:layout_width="30dp"
@@ -162,7 +162,7 @@
                     android:textColor="@color/black"
                     android:textSize="20dp" />
 
-                <androidx.cardview.widget.CardView
+                <com.pos_billingwala.Extra.PosCardView
                     android:id="@+id/totalGSTCardView"
                     android:layout_width="match_parent"
                     android:layout_height="150dp"
@@ -170,7 +170,7 @@
                     android:layout_marginTop="20dp"
                     android:layout_marginEnd="10dp"
                     android:layout_weight="1"
-                    app:cardBackgroundColor="#ecfffa"
+
                     app:cardCornerRadius="15dp"
                     app:cardUseCompatPadding="true">
 
@@ -211,7 +211,7 @@
 
                     </LinearLayout>
 
-                </androidx.cardview.widget.CardView>
+                </com.pos_billingwala.Extra.PosCardView>
 
             </LinearLayout>
 
@@ -231,7 +231,7 @@
                     android:textColor="@color/black"
                     android:textSize="20dp" />
 
-                <androidx.cardview.widget.CardView
+                <com.pos_billingwala.Extra.PosCardView
                     android:id="@+id/totalDiscountCardView"
                     android:layout_width="match_parent"
                     android:layout_height="150dp"
@@ -239,7 +239,7 @@
                     android:layout_marginTop="20dp"
                     android:layout_marginEnd="10dp"
                     android:layout_weight="1"
-                    app:cardBackgroundColor="#ecfffa"
+
                     app:cardCornerRadius="15dp"
                     app:cardUseCompatPadding="true">
 
@@ -280,7 +280,7 @@
 
                     </LinearLayout>
 
-                </androidx.cardview.widget.CardView>
+                </com.pos_billingwala.Extra.PosCardView>
 
                 <androidx.appcompat.widget.AppCompatTextView
                     android:layout_width="30dp"
@@ -292,7 +292,7 @@
                     android:textColor="@color/black"
                     android:textSize="20dp" />
 
-                <androidx.cardview.widget.CardView
+                <com.pos_billingwala.Extra.PosCardView
                     android:id="@+id/totalAmountCardView"
                     android:layout_width="match_parent"
                     android:layout_height="150dp"
@@ -300,7 +300,7 @@
                     android:layout_marginTop="20dp"
                     android:layout_marginEnd="10dp"
                     android:layout_weight="1"
-                    app:cardBackgroundColor="#ecfffa"
+
                     app:cardCornerRadius="15dp"
                     app:cardUseCompatPadding="true">
 
@@ -341,7 +341,7 @@
 
                     </LinearLayout>
 
-                </androidx.cardview.widget.CardView>
+                </com.pos_billingwala.Extra.PosCardView>
 
             </LinearLayout>
 
@@ -370,7 +370,7 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
 
-                <androidx.cardview.widget.CardView
+                <com.pos_billingwala.Extra.PosCardView
                     android:id="@+id/totalFastBillingAmountCardView"
                     android:layout_width="match_parent"
                     android:layout_height="150dp"
@@ -378,7 +378,7 @@
                     android:layout_marginTop="20dp"
                     android:layout_marginEnd="10dp"
                     android:layout_weight="1"
-                    app:cardBackgroundColor="#ecfffa"
+
                     app:cardCornerRadius="15dp"
                     app:cardUseCompatPadding="true">
 
@@ -419,9 +419,9 @@
 
                     </LinearLayout>
 
-                </androidx.cardview.widget.CardView>
+                </com.pos_billingwala.Extra.PosCardView>
 
-                <androidx.cardview.widget.CardView
+                <com.pos_billingwala.Extra.PosCardView
                     android:id="@+id/totalTableAmountCardView"
                     android:layout_width="match_parent"
                     android:layout_height="150dp"
@@ -429,7 +429,7 @@
                     android:layout_marginTop="20dp"
                     android:layout_marginEnd="10dp"
                     android:layout_weight="1"
-                    app:cardBackgroundColor="#ecfffa"
+
                     app:cardCornerRadius="15dp"
                     app:cardUseCompatPadding="true">
 
@@ -470,7 +470,7 @@
 
                     </LinearLayout>
 
-                </androidx.cardview.widget.CardView>
+                </com.pos_billingwala.Extra.PosCardView>
 
             </LinearLayout>
 
@@ -479,7 +479,7 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
 
-                <androidx.cardview.widget.CardView
+                <com.pos_billingwala.Extra.PosCardView
                     android:id="@+id/totalTakeAwayAmountCardView"
                     android:layout_width="match_parent"
                     android:layout_height="150dp"
@@ -488,7 +488,7 @@
                     android:layout_marginEnd="10dp"
                     android:layout_marginBottom="40dp"
                     android:layout_weight="1"
-                    app:cardBackgroundColor="#ecfffa"
+
                     app:cardCornerRadius="15dp"
                     app:cardUseCompatPadding="true">
 
@@ -529,7 +529,7 @@
 
                     </LinearLayout>
 
-                </androidx.cardview.widget.CardView>
+                </com.pos_billingwala.Extra.PosCardView>
 
             </LinearLayout>
 

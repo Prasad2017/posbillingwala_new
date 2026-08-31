@@ -69,6 +69,8 @@ public class AboutUs extends Fragment implements View.OnClickListener {
         binding.websiteRow.setOnClickListener(this);
         binding.emailRow.setOnClickListener(this);
         binding.phoneRow.setOnClickListener(this);
+        binding.googlePlayBadge.setOnClickListener(this);
+        binding.headerMenuIcon.setOnClickListener(this);
 
         TabletFormUi.applyAboutLayout(activity, binding.aboutContentContainer);
 
@@ -102,7 +104,15 @@ public class AboutUs extends Fragment implements View.OnClickListener {
             Intent intent = new Intent(Intent.ACTION_DIAL);
             intent.setData(Uri.parse("tel:" + getString(R.string.support_phone_dial)));
             startActivity(intent);
+        } else if (id == R.id.googlePlayBadge || id == R.id.headerMenuIcon) {
+            openPlayStore();
         }
+    }
+
+    private void openPlayStore() {
+        Intent intent = new Intent(Intent.ACTION_VIEW,
+                Uri.parse("https://play.google.com/store/apps/details?id=" + activity.getPackageName()));
+        startActivity(intent);
     }
 
     private void openUrl(String url) {

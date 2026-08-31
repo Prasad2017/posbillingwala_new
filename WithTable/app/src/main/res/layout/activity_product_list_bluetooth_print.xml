@@ -332,7 +332,7 @@
             android:layout_alignParentBottom="true"
             android:background="@color/colorPrimary">
 
-            <androidx.cardview.widget.CardView
+            <com.pos_billingwala.Extra.PosCardView
                 android:id="@+id/printProductCardView"
                 android:layout_width="45dp"
                 android:layout_height="45dp"
@@ -350,9 +350,9 @@
                     android:layout_gravity="center"
                     android:src="@drawable/ic_print" />
 
-            </androidx.cardview.widget.CardView>
+            </com.pos_billingwala.Extra.PosCardView>
 
-            <androidx.cardview.widget.CardView
+            <com.pos_billingwala.Extra.PosCardView
                 android:id="@+id/shareProductCardView"
                 android:layout_width="45dp"
                 android:layout_height="45dp"
@@ -370,7 +370,7 @@
                     android:layout_gravity="center"
                     android:src="@drawable/ic_share" />
 
-            </androidx.cardview.widget.CardView>
+            </com.pos_billingwala.Extra.PosCardView>
 
         </RelativeLayout>
 

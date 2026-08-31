@@ -24,6 +24,7 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <!-- Photo/video access via system pickers only (Play policy for targetSdk 33+).
@@ -180,6 +181,16 @@
 
         <!-- Connectivity receivers are registered dynamically from Home only
              (manifest CONNECTIVITY_CHANGE is ineffective on API 24+ and caused dual upload). -->
+
+        <receiver
+            android:name=".Extra.ErrorLogBootReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
 
         <service
             android:name="androidx.work.impl.foreground.SystemForegroundService"

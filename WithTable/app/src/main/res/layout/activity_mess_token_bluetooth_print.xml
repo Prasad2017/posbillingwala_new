@@ -113,13 +113,12 @@
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
-    <androidx.cardview.widget.CardView
+    <com.pos_billingwala.Extra.PosCardView
         android:id="@+id/printInvoiceCardView"
         android:layout_width="match_parent"
         android:layout_height="50dp"
         android:layout_alignParentBottom="true"
         android:layout_margin="12dp"
-        app:cardBackgroundColor="#30988C"
         app:cardCornerRadius="10dp">
 
         <TextView
@@ -130,6 +129,6 @@
             android:text="@string/ui_print_qr_token"
             android:textColor="@color/white"
             android:textSize="16dp" />
-    </androidx.cardview.widget.CardView>
+    </com.pos_billingwala.Extra.PosCardView>
 
 </RelativeLayout>

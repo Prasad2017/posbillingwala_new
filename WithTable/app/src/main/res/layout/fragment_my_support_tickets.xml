@@ -119,12 +119,11 @@
                     android:textColor="@color/colorTextPrimary"
                     android:textSize="16sp" />
 
-                <com.jaredrummler.materialspinner.MaterialSpinner
+                <com.pos_billingwala.Extra.SearchableDropdownView
                     android:id="@+id/statusFilter"
-                    android:layout_width="130dp"
+                    android:layout_width="140dp"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/bg_support_field"
-                    android:padding="4dp" />
+                    app:sdd_hint="@string/ui_select_item" />
 
             </LinearLayout>
 

@@ -46,15 +46,13 @@
                         android:textColor="@color/colorTextHint"
                         android:textSize="11sp" />
 
-                    <com.google.android.material.card.MaterialCardView
+                    <com.pos_billingwala.Extra.PosCardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
-                        app:cardBackgroundColor="@color/colorSurface"
                         app:cardCornerRadius="12dp"
-                        app:cardElevation="0dp"
-                        app:strokeColor="@color/colorBorder"
-                        app:strokeWidth="1dp">
+
+>
 
                         <LinearLayout
                             android:layout_width="match_parent"
@@ -73,7 +71,7 @@
                                 android:id="@+id/masterDataLayout"
                                 layout="@layout/item_grouped_menu_row" />
                         </LinearLayout>
-                    </com.google.android.material.card.MaterialCardView>
+                    </com.pos_billingwala.Extra.PosCardView>
 
                     <TextView
                         android:layout_width="match_parent"
@@ -85,15 +83,13 @@
                         android:textColor="@color/colorTextHint"
                         android:textSize="11sp" />
 
-                    <com.google.android.material.card.MaterialCardView
+                    <com.pos_billingwala.Extra.PosCardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
-                        app:cardBackgroundColor="@color/colorSurface"
                         app:cardCornerRadius="12dp"
-                        app:cardElevation="0dp"
-                        app:strokeColor="@color/colorBorder"
-                        app:strokeWidth="1dp">
+
+>
 
                         <LinearLayout
                             android:layout_width="match_parent"
@@ -120,7 +116,7 @@
                                 android:id="@+id/expenseManagementLayout"
                                 layout="@layout/item_grouped_menu_row" />
                         </LinearLayout>
-                    </com.google.android.material.card.MaterialCardView>
+                    </com.pos_billingwala.Extra.PosCardView>
                 </LinearLayout>
 
                 <!-- Cloud + account -->
@@ -140,15 +136,13 @@
                         android:textColor="@color/colorTextHint"
                         android:textSize="11sp" />
 
-                    <com.google.android.material.card.MaterialCardView
+                    <com.pos_billingwala.Extra.PosCardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
-                        app:cardBackgroundColor="@color/colorSurface"
                         app:cardCornerRadius="12dp"
-                        app:cardElevation="0dp"
-                        app:strokeColor="@color/colorBorder"
-                        app:strokeWidth="1dp">
+
+>
 
                         <LinearLayout
                             android:layout_width="match_parent"
@@ -175,7 +169,7 @@
                                 android:id="@+id/synchronizeLayout"
                                 layout="@layout/item_grouped_menu_row" />
                         </LinearLayout>
-                    </com.google.android.material.card.MaterialCardView>
+                    </com.pos_billingwala.Extra.PosCardView>
 
                     <TextView
                         android:layout_width="match_parent"
@@ -187,15 +181,13 @@
                         android:textColor="@color/colorTextHint"
                         android:textSize="11sp" />
 
-                    <com.google.android.material.card.MaterialCardView
+                    <com.pos_billingwala.Extra.PosCardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
-                        app:cardBackgroundColor="@color/colorSurface"
                         app:cardCornerRadius="12dp"
-                        app:cardElevation="0dp"
-                        app:strokeColor="@color/colorBorder"
-                        app:strokeWidth="1dp">
+
+>
 
                         <LinearLayout
                             android:layout_width="match_parent"
@@ -222,7 +214,7 @@
                                 android:id="@+id/logoutLayout"
                                 layout="@layout/item_grouped_menu_row" />
                         </LinearLayout>
-                    </com.google.android.material.card.MaterialCardView>
+                    </com.pos_billingwala.Extra.PosCardView>
                 </LinearLayout>
             </LinearLayout>
 

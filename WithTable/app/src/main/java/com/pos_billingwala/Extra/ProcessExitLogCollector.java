@@ -17,10 +17,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Harvests Android's process-exit history — the same source Play Protect uses for
- * "crashed repeatedly due to a null pointer exception". Captures Java crashes, native
- * crashes, ANRs, low-memory kills, and signaled deaths that the in-process handler
- * can miss, then saves + uploads them like every other error log.
+ * Harvests Android's process-exit history for Java crashes, native crashes, ANRs,
+ * and low-memory kills, then saves + uploads them.
  */
 public final class ProcessExitLogCollector {
 
@@ -94,6 +92,9 @@ public final class ProcessExitLogCollector {
                 if (!shouldSave(info, description, trace)) {
                     continue;
                 }
+                if (info.getReason() == ApplicationExitInfo.REASON_ANR) {
+                    description = ErrorLogReporter.extractAnrReason(description, trace);
+                }
                 String extras = buildExtras(info);
                 ErrorLogReporter.reportProcessExit(
                         reasonType(info),
@@ -115,25 +116,16 @@ public final class ProcessExitLogCollector {
             if (saved > 0) {
                 Log.i(TAG, "Saved " + saved + " system process-exit log(s)");
                 ErrorLogQueue.flushAsync();
+                ErrorLogFlushScheduler.schedule(context);
             }
         }
 
         private static boolean shouldSave(ApplicationExitInfo info, String description, String trace) {
             int reason = info.getReason();
-            if (reason == ApplicationExitInfo.REASON_CRASH
+            return reason == ApplicationExitInfo.REASON_CRASH
                     || reason == ApplicationExitInfo.REASON_CRASH_NATIVE
                     || reason == ApplicationExitInfo.REASON_ANR
-                    || reason == ApplicationExitInfo.REASON_LOW_MEMORY
-                    || reason == ApplicationExitInfo.REASON_SIGNALED
-                    || reason == ApplicationExitInfo.REASON_INITIALIZATION_FAILURE
-                    || reason == ApplicationExitInfo.REASON_EXCESSIVE_RESOURCE_USAGE) {
-                return true;
-            }
-            if (reason == ApplicationExitInfo.REASON_OTHER) {
-                String text = (description + "\n" + trace).toLowerCase(Locale.US);
-                return text.contains("exception") || text.contains("fatal") || text.contains("anr");
-            }
-            return false;
+                    || reason == ApplicationExitInfo.REASON_LOW_MEMORY;
         }
 
         private static String reasonType(ApplicationExitInfo info) {

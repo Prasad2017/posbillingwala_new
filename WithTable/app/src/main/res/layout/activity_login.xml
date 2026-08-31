@@ -65,16 +65,15 @@
                 android:textColor="@color/colorTextSecondary"
                 android:textSize="14sp" />
 
-            <com.google.android.material.card.MaterialCardView
+            <com.pos_billingwala.Extra.PosCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/spacing_lg"
                 android:layout_marginTop="@dimen/spacing_xl"
                 android:layout_marginEnd="@dimen/spacing_lg"
-                app:cardBackgroundColor="@color/colorSurface"
                 app:cardCornerRadius="@dimen/radius_lg"
-                app:cardElevation="@dimen/card_elevation_raised"
-                app:strokeWidth="0dp">
+
+>
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -183,7 +182,7 @@
 
                 </LinearLayout>
 
-            </com.google.android.material.card.MaterialCardView>
+            </com.pos_billingwala.Extra.PosCardView>
 
             <LinearLayout
                 android:layout_width="match_parent"

@@ -18,7 +18,6 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.DatePicker;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
@@ -35,7 +34,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import com.github.dewinjm.monthyearpicker.MonthYearPickerDialog;
 import com.github.dewinjm.monthyearpicker.MonthYearPickerDialogFragment;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
-import com.jaredrummler.materialspinner.MaterialSpinner;
+import com.pos_billingwala.Extra.SearchableDropdownView;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.ReportDetailTableAdapter;
 import com.pos_billingwala.BuildConfig;
@@ -347,7 +346,7 @@ public class InvoiceTableListReport extends Fragment implements View.OnClickList
 
         TextView dismissTable = content.findViewById(R.id.dismissTable);
         TextView selectTable = content.findViewById(R.id.selectTable);
-        MaterialSpinner tableSpinner = content.findViewById(R.id.tableSpinner);
+        SearchableDropdownView tableSpinner = content.findViewById(R.id.tableSpinner);
 
         dismissTable.setOnClickListener(v -> sheet.dismiss());
 
@@ -361,9 +360,7 @@ public class InvoiceTableListReport extends Fragment implements View.OnClickList
                 }
 
                 try {
-                    final ArrayAdapter adapter = new ArrayAdapter(activity, android.R.layout.simple_spinner_item, tableList);
-                    adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
-                    tableSpinner.setAdapter(adapter);
+                    tableSpinner.setItems(tableList);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -371,14 +368,11 @@ public class InvoiceTableListReport extends Fragment implements View.OnClickList
 
         }
 
-        tableSpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(MaterialSpinner view, int position, long id, Object item) {
-                noOfTable = tableList[position];
-                binding.toolbar.heading.setText(getString(R.string.ui_report_of, noOfTable != null ? noOfTable : ""));
-        binding.toolbar.shareInvoice.setVisibility(android.view.View.VISIBLE);
-        binding.listTitle.setText(getString(R.string.ui_invoice_detail_list));
-            }
+        tableSpinner.setOnItemSelectedListener((position, label) -> {
+            noOfTable = tableList[position];
+            binding.toolbar.heading.setText(getString(R.string.ui_report_of, noOfTable != null ? noOfTable : ""));
+            binding.toolbar.shareInvoice.setVisibility(android.view.View.VISIBLE);
+            binding.listTitle.setText(getString(R.string.ui_invoice_detail_list));
         });
 
         selectTable.setOnClickListener(v -> {

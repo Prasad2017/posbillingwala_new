@@ -4,35 +4,78 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:parentTag="android.widget.FrameLayout">
 
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/dropdownInputLayout"
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColorHint="@color/colorTextHint"
-        app:boxCornerRadiusBottomEnd="@dimen/radius_sm"
-        app:boxCornerRadiusBottomStart="@dimen/radius_sm"
-        app:boxCornerRadiusTopEnd="@dimen/radius_sm"
-        app:boxCornerRadiusTopStart="@dimen/radius_sm"
-        app:boxStrokeColor="@color/colorBorder"
-        app:endIconDrawable="@drawable/ic_dropdown_arrow"
-        app:endIconMode="custom"
-        app:endIconTint="@color/colorTextSecondary"
-        app:hintTextColor="@color/colorTextHint">
+        android:orientation="vertical">
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/dropdownValue"
-            android:layout_width="match_parent"
+        <TextView
+            android:id="@+id/dropdownLabel"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:cursorVisible="false"
-            android:focusable="false"
-            android:fontFamily="@font/poppinsregular"
-            android:inputType="none"
-            android:longClickable="false"
-            android:paddingStart="@dimen/spacing_lg"
-            android:paddingEnd="@dimen/spacing_md"
+            android:layout_marginBottom="8dp"
+            android:fontFamily="@font/poppinsmedium"
             android:textColor="@color/colorTextPrimary"
-            android:textIsSelectable="false"
-            android:textSize="@dimen/text_body" />
-    </com.google.android.material.textfield.TextInputLayout>
+            android:textSize="14sp"
+            android:visibility="gone"
+            tools:text="Select Payment Method"
+            tools:visibility="visible" />
+
+        <LinearLayout
+            android:id="@+id/dropdownTrigger"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/input_height"
+            android:background="@drawable/bg_dropdown"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp">
+
+            <FrameLayout
+                android:id="@+id/dropdownLeadingIconContainer"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:background="@drawable/bg_dropdown_leading_icon"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <ImageView
+                    android:id="@+id/dropdownLeadingIcon"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_layers"
+                    app:tint="@color/colorPrimary" />
+
+            </FrameLayout>
+
+            <TextView
+                android:id="@+id/dropdownValue"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="0dp"
+                android:layout_marginEnd="8dp"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:fontFamily="@font/poppinsregular"
+                android:maxLines="1"
+                android:textColor="@color/colorTextPrimary"
+                android:textSize="15sp"
+                tools:text="Cash" />
+
+            <ImageView
+                android:id="@+id/dropdownArrow"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_dropdown_arrow"
+                app:tint="@color/colorPrimary" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
 </merge>

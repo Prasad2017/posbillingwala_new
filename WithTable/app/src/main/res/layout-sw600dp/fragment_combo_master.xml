@@ -92,14 +92,12 @@
         android:padding="@dimen/spacing_lg"
         android:visibility="gone">
 
-        <com.google.android.material.card.MaterialCardView
+        <com.pos_billingwala.Extra.PosCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardBackgroundColor="@color/colorSurface"
             app:cardCornerRadius="@dimen/radius_lg"
-            app:cardElevation="@dimen/card_elevation"
-            app:strokeColor="@color/colorBorder"
-            app:strokeWidth="1dp">
+
+>
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/searchLayout"
@@ -130,18 +128,16 @@
                     android:textColor="@color/colorTextPrimary"
                     android:textSize="@dimen/text_body" />
             </com.google.android.material.textfield.TextInputLayout>
-        </com.google.android.material.card.MaterialCardView>
+        </com.pos_billingwala.Extra.PosCardView>
 
-        <com.google.android.material.card.MaterialCardView
+        <com.pos_billingwala.Extra.PosCardView
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_marginTop="@dimen/spacing_md"
             android:layout_weight="1"
-            app:cardBackgroundColor="@color/colorSurface"
             app:cardCornerRadius="@dimen/radius_lg"
-            app:cardElevation="@dimen/card_elevation"
-            app:strokeColor="@color/colorBorder"
-            app:strokeWidth="1dp">
+
+>
 
             <com.pos_billingwala.Extra.AutoFitGridRecyclerView
                 android:id="@+id/comboRecyclerView"
@@ -151,7 +147,7 @@
                 android:columnWidth="220dp"
                 android:nestedScrollingEnabled="true"
                 android:padding="@dimen/spacing_sm" />
-        </com.google.android.material.card.MaterialCardView>
+        </com.pos_billingwala.Extra.PosCardView>
     </LinearLayout>
 
     <TextView

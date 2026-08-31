@@ -7,13 +7,11 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
-import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Model.InventoryResponse;
@@ -68,12 +66,7 @@ public class AddInventory extends Fragment implements View.OnClickListener {
             }
         });
 
-        binding.productSpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(MaterialSpinner view, int position, long id, Object item) {
-                productId = productIdList[position];
-            }
-        });
+        binding.productSpinner.setOnItemSelectedListener((position, label) -> productId = productIdList[position]);
 
         binding.backToInventory.setOnClickListener(this);
         binding.addInventory.setOnClickListener(this);
@@ -158,9 +151,7 @@ public class AddInventory extends Fragment implements View.OnClickListener {
             }
 
             try {
-                final ArrayAdapter adapter = new ArrayAdapter(activity, android.R.layout.simple_spinner_item, productNameList);
-                adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
-                binding.productSpinner.setAdapter(adapter);
+                binding.productSpinner.setItems(productNameList);
             } catch (Exception e) {
                 e.printStackTrace();
             }
