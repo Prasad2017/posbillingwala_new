@@ -87,16 +87,14 @@
                 android:baselineAligned="false"
                 android:orientation="horizontal">
 
-                <com.google.android.material.card.MaterialCardView
+                <com.pos_billingwala.Extra.PosCardView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="8dp"
                     android:layout_weight="1"
-                    app:cardBackgroundColor="@color/colorSurface"
                     app:cardCornerRadius="12dp"
-                    app:cardElevation="0dp"
-                    app:strokeColor="@color/colorBorder"
-                    app:strokeWidth="1dp">
+
+>
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -118,18 +116,16 @@
                             android:layout_height="240dp"
                             android:layout_marginTop="8dp" />
                     </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
+                </com.pos_billingwala.Extra.PosCardView>
 
-                <com.google.android.material.card.MaterialCardView
+                <com.pos_billingwala.Extra.PosCardView
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_marginStart="8dp"
                     android:layout_weight="0.45"
-                    app:cardBackgroundColor="@color/colorSurface"
                     app:cardCornerRadius="12dp"
-                    app:cardElevation="0dp"
-                    app:strokeColor="@color/colorBorder"
-                    app:strokeWidth="1dp">
+
+>
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -152,7 +148,7 @@
                             android:layout_marginTop="8dp"
                             android:orientation="vertical" />
                     </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
+                </com.pos_billingwala.Extra.PosCardView>
             </LinearLayout>
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>

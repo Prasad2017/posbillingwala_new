@@ -3,13 +3,20 @@ package com.pos_billingwala.Extra;
 import android.content.Context;
 import android.util.Log;
 
+import com.pos_billingwala.BuildConfig;
 import com.pos_billingwala.Model.AllApiResponse;
-import com.pos_billingwala.Retrofit.Api;
+import com.pos_billingwala.Retrofit.ApiInterface;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
+import okhttp3.ConnectionSpec;
+import okhttp3.OkHttpClient;
 import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 /**
  * Uploads pending error logs. Failures are swallowed — never affects POS.
@@ -19,6 +26,9 @@ public final class ErrorLogUploader {
 
     private static final String TAG = "POS_ERR_UPLOAD";
     public static final String INGEST_PATH = "reportErrorLog.php";
+
+    /** Short timeout used during fatal-crash upload before process exit. */
+    private static final long CRASH_UPLOAD_TIMEOUT_MS = 4000L;
 
     private ErrorLogUploader() {
     }
@@ -51,7 +61,7 @@ public final class ErrorLogUploader {
                     ErrorLogQueue.deleteFile(file);
                     continue;
                 }
-                int result = uploadOne(context, payload);
+                int result = uploadOne(context, payload, false, CRASH_UPLOAD_TIMEOUT_MS);
                 if (result == 1) {
                     ErrorLogQueue.deleteFile(file);
                     uploaded++;
@@ -67,8 +77,55 @@ public final class ErrorLogUploader {
         return uploaded;
     }
 
+    /**
+     * Best-effort synchronous upload on the crash thread before the process dies.
+     * Uses short network timeouts so the default handler is not blocked for long.
+     */
+    public static int flushPendingSync(Context context, long maxWaitMs) {
+        if (context == null || maxWaitMs <= 0) {
+            return 0;
+        }
+        long deadline = System.currentTimeMillis() + maxWaitMs;
+        int uploaded = 0;
+        while (System.currentTimeMillis() < deadline) {
+            if (!ErrorLogQueue.tryBeginFlush()) {
+                sleepQuiet(40);
+                continue;
+            }
+            try {
+                List<File> pending = ErrorLogQueue.listPending(context);
+                if (pending.isEmpty()) {
+                    break;
+                }
+                long remaining = deadline - System.currentTimeMillis();
+                if (remaining <= 0) {
+                    break;
+                }
+                File file = pending.get(0);
+                ErrorLogPayload payload = ErrorLogQueue.readFile(file);
+                if (payload == null) {
+                    ErrorLogQueue.deleteFile(file);
+                    continue;
+                }
+                int result = uploadOne(context, payload, true, Math.min(remaining, CRASH_UPLOAD_TIMEOUT_MS));
+                if (result == 1) {
+                    ErrorLogQueue.deleteFile(file);
+                    uploaded++;
+                } else {
+                    break;
+                }
+            } catch (Throwable t) {
+                Log.w(TAG, "flushPendingSync: " + t.getMessage());
+                break;
+            } finally {
+                ErrorLogQueue.endFlush();
+            }
+        }
+        return uploaded;
+    }
+
     /** @return 1 saved, 0 keep+continue, -1 network down (stop queue) */
-    private static int uploadOne(Context context, ErrorLogPayload p) {
+    private static int uploadOne(Context context, ErrorLogPayload p, boolean fast, long timeoutMs) {
         try {
             String userId = p.get("userId");
             if (userId.isEmpty()) {
@@ -77,7 +134,11 @@ public final class ErrorLogUploader {
             if (userId.isEmpty()) {
                 userId = Common.getSavedUserData(context, "ownerId");
             }
-            Response<AllApiResponse> response = Api.getClient(context).reportErrorLog(
+            Retrofit client = fast ? fastClient(context, timeoutMs) : null;
+            ApiInterface api = client != null
+                    ? client.create(ApiInterface.class)
+                    : com.pos_billingwala.Retrofit.Api.getClient(context);
+            Response<AllApiResponse> response = api.reportErrorLog(
                     userId,
                     p.get("fingerprint"),
                     p.get("error_type"),
@@ -126,6 +187,34 @@ public final class ErrorLogUploader {
         } catch (Throwable t) {
             Log.w(TAG, "uploadOne failed (will retry): " + t.getMessage());
             return 0;
+        }
+    }
+
+    private static Retrofit fastClient(Context context, long timeoutMs) {
+        long seconds = Math.max(1L, Math.min(10L, timeoutMs / 1000L));
+        OkHttpClient client = new OkHttpClient.Builder()
+                .connectTimeout(seconds, TimeUnit.SECONDS)
+                .writeTimeout(seconds, TimeUnit.SECONDS)
+                .readTimeout(seconds, TimeUnit.SECONDS)
+                .callTimeout(seconds + 1L, TimeUnit.SECONDS)
+                .retryOnConnectionFailure(false)
+                .connectionSpecs(Arrays.asList(
+                        ConnectionSpec.MODERN_TLS,
+                        ConnectionSpec.COMPATIBLE_TLS,
+                        ConnectionSpec.CLEARTEXT))
+                .build();
+        return new Retrofit.Builder()
+                .baseUrl(BuildConfig.API_BASE_URL)
+                .client(client)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+    }
+
+    private static void sleepQuiet(long ms) {
+        try {
+            Thread.sleep(ms);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 }

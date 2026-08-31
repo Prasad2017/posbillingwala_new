@@ -999,7 +999,7 @@
                 android:textColor="@color/white"
                 android:textSize="15dp" />
 
-            <androidx.cardview.widget.CardView
+            <com.pos_billingwala.Extra.PosCardView
                 android:id="@+id/printInvoiceCardView"
                 android:layout_width="45dp"
                 android:layout_height="45dp"
@@ -1017,9 +1017,9 @@
                     android:layout_gravity="center"
                     android:src="@drawable/ic_print" />
 
-            </androidx.cardview.widget.CardView>
+            </com.pos_billingwala.Extra.PosCardView>
 
-            <androidx.cardview.widget.CardView
+            <com.pos_billingwala.Extra.PosCardView
                 android:id="@+id/shareInvoiceCardView"
                 android:layout_width="45dp"
                 android:layout_height="45dp"
@@ -1037,7 +1037,7 @@
                     android:layout_gravity="center"
                     android:src="@drawable/ic_share" />
 
-            </androidx.cardview.widget.CardView>
+            </com.pos_billingwala.Extra.PosCardView>
 
         </RelativeLayout>
 

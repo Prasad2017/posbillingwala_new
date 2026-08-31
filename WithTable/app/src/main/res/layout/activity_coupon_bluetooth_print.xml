@@ -405,14 +405,13 @@
 
     </androidx.core.widget.NestedScrollView>
 
-    <androidx.cardview.widget.CardView
+    <com.pos_billingwala.Extra.PosCardView
         android:id="@+id/printInvoiceCardView"
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:layout_alignParentBottom="true"
         android:layout_centerInParent="true"
         android:layout_margin="10dp"
-        app:cardBackgroundColor="@color/colorPrimary"
         app:cardCornerRadius="10dp">
 
         <LinearLayout
@@ -442,6 +441,6 @@
 
         </LinearLayout>
 
-    </androidx.cardview.widget.CardView>
+    </com.pos_billingwala.Extra.PosCardView>
 
 </RelativeLayout>

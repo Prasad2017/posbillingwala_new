@@ -7,17 +7,13 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.InputMethodManager;
-import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
-import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Model.MemberResponse;
@@ -78,29 +74,15 @@ public class AddMemberPayment extends Fragment implements View.OnClickListener {
 
         messDaysList = activity.getResources().getStringArray(R.array.mess_days);
         try {
-            final ArrayAdapter adapter = new ArrayAdapter(activity, android.R.layout.simple_spinner_item, messDaysList);
-            adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
-            binding.messDaySpinner.setAdapter(adapter);
+            binding.messDaySpinner.setItems(messDaysList);
         } catch (Exception e) {
             e.printStackTrace();
         }
-        binding.messDaySpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(MaterialSpinner view, int position, long id, Object item) {
-                try {
-                    messDays = messDaysList[position];
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-
-        binding.messDaySpinner.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                InputMethodManager imm = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
-                imm.hideSoftInputFromWindow(activity.getCurrentFocus().getWindowToken(), 0);
-                return false;
+        binding.messDaySpinner.setOnItemSelectedListener((position, label) -> {
+            try {
+                messDays = messDaysList[position];
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         });
 

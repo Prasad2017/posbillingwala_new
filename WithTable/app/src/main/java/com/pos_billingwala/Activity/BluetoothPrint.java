@@ -53,7 +53,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.textfield.TextInputEditText;
-import com.jaredrummler.materialspinner.MaterialSpinner;
+import com.pos_billingwala.Extra.SearchableDropdownView;
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.MultiplePermissionsReport;
 import com.karumi.dexter.PermissionToken;
@@ -769,29 +769,25 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                 TextInputEditText discountPercentageTxt = content.findViewById(R.id.discountPercentage);
                 TextView addDiscountPercentageTxt = content.findViewById(R.id.addDiscountPercentage);
                 TextView dismissDiscountPercentageTxt = content.findViewById(R.id.dismissDiscountPercentage);
-                MaterialSpinner discountTypeSpinner = content.findViewById(R.id.discountTypeSpinner);
+                SearchableDropdownView discountTypeSpinner = content.findViewById(R.id.discountTypeSpinner);
 
                 discountTypeList = getResources().getStringArray(R.array.discount_type);
                 try {
-                    ArrayAdapter adapter = new ArrayAdapter(BluetoothPrint.this, android.R.layout.simple_spinner_item, discountTypeList);
-                    adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
-                    discountTypeSpinner.setAdapter(adapter);
+                    discountTypeSpinner.setItems(discountTypeList);
                     if (discountType != null) {
-                        int discountIndex = adapter.getPosition(discountType);
-                        if (discountIndex >= 0) {
-                            discountTypeSpinner.setSelectedIndex(discountIndex);
+                        for (int i = 0; i < discountTypeList.length; i++) {
+                            if (discountType.equals(discountTypeList[i])) {
+                                discountTypeSpinner.setSelectedIndex(i);
+                                break;
+                            }
                         }
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
 
-                discountTypeSpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
-                    @Override
-                    public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
-                        discountType = discountTypeList[position];
-                    }
-                });
+                discountTypeSpinner.setOnItemSelectedListener((position, label) ->
+                        discountType = discountTypeList[position]);
 
                 discountPercentageTxt.setText(productCartResponseList.get(0).getCartDiscount());
 
@@ -868,30 +864,25 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                     TextInputEditText packingChargeInput = content.findViewById(R.id.packingCharge);
                     TextView addPacking = content.findViewById(R.id.addPackingCharge);
                     TextView dismissPacking = content.findViewById(R.id.dismissPackingCharge);
-                    MaterialSpinner packingTypeSpinner = content.findViewById(R.id.packingTypeSpinner);
+                    SearchableDropdownView packingTypeSpinner = content.findViewById(R.id.packingTypeSpinner);
 
                     String[] packingTypeList = getResources().getStringArray(R.array.discount_type);
                     try {
-                        ArrayAdapter adapter = new ArrayAdapter(BluetoothPrint.this,
-                                android.R.layout.simple_spinner_item, packingTypeList);
-                        adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
-                        packingTypeSpinner.setAdapter(adapter);
+                        packingTypeSpinner.setItems(packingTypeList);
                         if (packingChargeType != null) {
-                            int packingIndex = adapter.getPosition(packingChargeType);
-                            if (packingIndex >= 0) {
-                                packingTypeSpinner.setSelectedIndex(packingIndex);
+                            for (int i = 0; i < packingTypeList.length; i++) {
+                                if (packingChargeType.equals(packingTypeList[i])) {
+                                    packingTypeSpinner.setSelectedIndex(i);
+                                    break;
+                                }
                             }
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
 
-                    packingTypeSpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
-                        @Override
-                        public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
-                            packingChargeType = packingTypeList[position];
-                        }
-                    });
+                    packingTypeSpinner.setOnItemSelectedListener((position, label) ->
+                            packingChargeType = packingTypeList[position]);
 
                     packingChargeInput.setText(productCartResponseList.get(0).getCartPackingCharge());
                     dismissPacking.setOnClickListener(view -> sheet.dismiss());

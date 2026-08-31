@@ -89,14 +89,14 @@
         android:orientation="vertical"
         android:padding="12dp">
 
-        <com.google.android.material.card.MaterialCardView
+        <com.pos_billingwala.Extra.PosCardView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            app:cardBackgroundColor="@color/colorBackground"
+
             app:cardCornerRadius="12dp"
-            app:cardElevation="0dp"
-            app:strokeColor="@color/colorBorder"
-            app:strokeWidth="1dp">
+
+
+>
 
             <HorizontalScrollView
                 android:layout_width="match_parent"
@@ -185,7 +185,7 @@
                         android:overScrollMode="never" />
                 </LinearLayout>
             </HorizontalScrollView>
-        </com.google.android.material.card.MaterialCardView>
+        </com.pos_billingwala.Extra.PosCardView>
     </LinearLayout>
 
     <TextView

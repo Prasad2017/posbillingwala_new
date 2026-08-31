@@ -2,27 +2,19 @@ package com.pos_billingwala.Extra;
 
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.text.Editable;
 import android.text.TextUtils;
-import android.text.TextWatcher;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.inputmethod.InputMethodManager;
+import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
+import androidx.core.content.ContextCompat;
 
-import com.pos_billingwala.Extra.BottomSheetUi;
-import com.google.android.material.bottomsheet.BottomSheetBehavior;
-import com.google.android.material.bottomsheet.BottomSheetDialog;
-import com.google.android.material.textfield.TextInputEditText;
-import com.google.android.material.textfield.TextInputLayout;
-import com.pos_billingwala.Adapter.SearchableDropdownAdapter;
 import com.pos_billingwala.R;
 
 import java.util.ArrayList;
@@ -35,13 +27,38 @@ public class SearchableDropdownView extends FrameLayout {
         void onItemSelected(int position, String label);
     }
 
-    private TextInputLayout dropdownInputLayout;
-    private TextInputEditText dropdownValue;
+    private static final int[] ITEM_ICON_BACKGROUNDS = {
+            R.drawable.bg_dropdown_icon_green,
+            R.drawable.bg_dropdown_icon_blue,
+            R.drawable.bg_dropdown_icon_orange,
+            R.drawable.bg_dropdown_icon_pink
+    };
+
+    private static final int[] ITEM_ICONS = {
+            R.drawable.ic_receipt,
+            R.drawable.ic_store,
+            R.drawable.ic_accounting,
+            R.drawable.ic_layers
+    };
+
+    private static final int[] ITEM_ICON_TINTS = {
+            R.color.statusActive,
+            R.color.colorPrimary,
+            R.color.statusTrial,
+            R.color.deepPurple
+    };
+
+    private TextView dropdownLabel;
+    private View dropdownTrigger;
+    private FrameLayout dropdownLeadingIconContainer;
+    private ImageView dropdownLeadingIcon;
+    private TextView dropdownValue;
     private final List<String> items = new ArrayList<>();
     private int selectedIndex = -1;
     private OnItemSelectedListener listener;
-    private String dialogTitle;
-    private BottomSheetDialog activeDialog;
+    private String placeholder;
+    private boolean showIcons;
+    private CustomSearchDropdown activeDropdown;
 
     public SearchableDropdownView(@NonNull Context context) {
         super(context);
@@ -60,45 +77,80 @@ public class SearchableDropdownView extends FrameLayout {
 
     private void init(Context context, AttributeSet attrs) {
         LayoutInflater.from(context).inflate(R.layout.view_searchable_dropdown, this, true);
-        dropdownInputLayout = findViewById(R.id.dropdownInputLayout);
+        dropdownLabel = findViewById(R.id.dropdownLabel);
+        dropdownTrigger = findViewById(R.id.dropdownTrigger);
+        dropdownLeadingIconContainer = findViewById(R.id.dropdownLeadingIconContainer);
+        dropdownLeadingIcon = findViewById(R.id.dropdownLeadingIcon);
         dropdownValue = findViewById(R.id.dropdownValue);
 
+        boolean showLabel = false;
+        showIcons = false;
         if (attrs != null) {
             TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.SearchableDropdownView);
             String hint = typedArray.getString(R.styleable.SearchableDropdownView_sdd_hint);
-            dialogTitle = typedArray.getString(R.styleable.SearchableDropdownView_sdd_dialog_title);
+            showLabel = typedArray.getBoolean(R.styleable.SearchableDropdownView_sdd_show_label, false);
+            showIcons = typedArray.getBoolean(R.styleable.SearchableDropdownView_sdd_show_icon, false);
             typedArray.recycle();
-            if (!TextUtils.isEmpty(hint)) {
-                dropdownInputLayout.setHint(hint);
+
+            placeholder = !TextUtils.isEmpty(hint)
+                    ? hint
+                    : context.getString(R.string.ui_select_item);
+
+            if (showLabel && !TextUtils.isEmpty(hint)) {
+                dropdownLabel.setText(hint);
+                dropdownLabel.setVisibility(VISIBLE);
             }
         }
 
-        if (TextUtils.isEmpty(dialogTitle)) {
-            dialogTitle = dropdownInputLayout.getHint() != null
-                    ? dropdownInputLayout.getHint().toString()
-                    : getContext().getString(R.string.ui_select_item);
+        if (TextUtils.isEmpty(placeholder)) {
+            placeholder = context.getString(R.string.ui_select_item);
         }
 
         View.OnClickListener openPickerListener = v -> {
             if (isEnabled() && !items.isEmpty()) {
-                showPickerDialog();
+                showPicker();
             }
         };
+        dropdownTrigger.setOnClickListener(openPickerListener);
         setOnClickListener(openPickerListener);
-        dropdownInputLayout.setOnClickListener(openPickerListener);
-        dropdownValue.setOnClickListener(openPickerListener);
-        dropdownInputLayout.setEndIconOnClickListener(openPickerListener);
+        applyIconVisibility();
+        updateSelectedDisplay();
+    }
+
+    public void setShowIcons(boolean showIcons) {
+        this.showIcons = showIcons;
+        applyIconVisibility();
+        updateSelectedDisplay();
+    }
+
+    public boolean isShowIcons() {
+        return showIcons;
+    }
+
+    private void applyIconVisibility() {
+        dropdownLeadingIconContainer.setVisibility(showIcons ? VISIBLE : GONE);
+        ViewGroup.MarginLayoutParams valueParams =
+                (ViewGroup.MarginLayoutParams) dropdownValue.getLayoutParams();
+        valueParams.setMarginStart(showIcons ? TabletUi.dpToPx(getContext(), 12) : 0);
+        dropdownValue.setLayoutParams(valueParams);
     }
 
     public void setHint(CharSequence hint) {
-        dropdownInputLayout.setHint(hint);
-        if (TextUtils.isEmpty(dialogTitle) || dialogTitle.equals(getContext().getString(R.string.ui_select_item))) {
-            dialogTitle = hint != null ? hint.toString() : dialogTitle;
-        }
+        placeholder = hint != null ? hint.toString() : getContext().getString(R.string.ui_select_item);
+        updateSelectedDisplay();
     }
 
     public void setDialogTitle(CharSequence title) {
-        dialogTitle = title != null ? title.toString() : dialogTitle;
+        // Kept for API compatibility.
+    }
+
+    public void setShowLabel(boolean showLabel) {
+        if (showLabel && !TextUtils.isEmpty(placeholder)) {
+            dropdownLabel.setText(placeholder);
+            dropdownLabel.setVisibility(VISIBLE);
+        } else {
+            dropdownLabel.setVisibility(GONE);
+        }
     }
 
     public void setItems(List<String> labels) {
@@ -148,87 +200,72 @@ public class SearchableDropdownView extends FrameLayout {
     @Override
     public void setEnabled(boolean enabled) {
         super.setEnabled(enabled);
-        dropdownInputLayout.setEnabled(enabled);
-        dropdownValue.setEnabled(enabled);
-        dropdownInputLayout.setAlpha(enabled ? 1f : 0.6f);
+        dropdownTrigger.setEnabled(enabled);
+        dropdownTrigger.setAlpha(enabled ? 1f : 0.6f);
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        dismissPicker();
+        super.onDetachedFromWindow();
     }
 
     private void updateSelectedDisplay() {
         if (selectedIndex >= 0 && selectedIndex < items.size()) {
             dropdownValue.setText(items.get(selectedIndex));
+            dropdownValue.setTextColor(ContextCompat.getColor(getContext(), R.color.colorTextPrimary));
+            if (showIcons) {
+                applyLeadingIcon(selectedIndex);
+            }
         } else {
-            dropdownValue.setText("");
+            dropdownValue.setText(placeholder);
+            dropdownValue.setTextColor(ContextCompat.getColor(getContext(), R.color.colorTextHint));
+            if (showIcons) {
+                dropdownLeadingIconContainer.setBackground(
+                        ContextCompat.getDrawable(getContext(), R.drawable.bg_dropdown_leading_icon));
+                dropdownLeadingIcon.setImageResource(R.drawable.ic_layers);
+                dropdownLeadingIcon.setColorFilter(ContextCompat.getColor(getContext(), R.color.colorPrimary));
+            }
         }
     }
 
-    private void showPickerDialog() {
-        if (activeDialog != null && activeDialog.isShowing()) {
-            return;
+    private void applyLeadingIcon(int index) {
+        int styleIndex = index % ITEM_ICON_BACKGROUNDS.length;
+        dropdownLeadingIconContainer.setBackground(
+                ContextCompat.getDrawable(getContext(), ITEM_ICON_BACKGROUNDS[styleIndex]));
+        dropdownLeadingIcon.setImageResource(ITEM_ICONS[styleIndex]);
+        dropdownLeadingIcon.setColorFilter(ContextCompat.getColor(getContext(), ITEM_ICON_TINTS[styleIndex]));
+    }
+
+    private void showPicker() {
+        dismissPicker();
+
+        CustomSearchDropdown dropdown = new CustomSearchDropdown(getContext(), dropdownTrigger);
+        dropdown.setShowIcons(showIcons);
+        dropdown.setItems(items);
+        String selected = getSelectedLabel();
+        if (!TextUtils.isEmpty(selected)) {
+            dropdown.setSelectedItem(selected);
         }
+        dropdown.setOnItemSelectedListener((item, position) -> selectItem(position, item, true));
+        activeDropdown = dropdown;
+        dropdown.show();
+    }
 
-        InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-        if (imm != null) {
-            imm.hideSoftInputFromWindow(getRootView().getWindowToken(), 0);
+    private void dismissPicker() {
+        if (activeDropdown != null) {
+            activeDropdown.dismiss();
+            activeDropdown = null;
         }
-
-        BottomSheetDialog dialog = new BottomSheetDialog(getContext());
-        View sheetView = LayoutInflater.from(getContext())
-                .inflate(R.layout.bottom_sheet_searchable_dropdown, null, false);
-        dialog.setContentView(sheetView);
-        activeDialog = dialog;
-
-        TextView sheetTitle = sheetView.findViewById(R.id.sheetTitle);
-        TextInputEditText searchInput = sheetView.findViewById(R.id.searchInput);
-        TextView noResultsText = sheetView.findViewById(R.id.noResultsText);
-        RecyclerView optionsList = sheetView.findViewById(R.id.optionsList);
-
-        sheetTitle.setText(dialogTitle);
-        optionsList.setLayoutManager(new LinearLayoutManager(getContext()));
-
-        SearchableDropdownAdapter adapter = new SearchableDropdownAdapter(items, (originalIndex, label) -> {
-            selectItem(originalIndex, label, true);
-            dialog.dismiss();
-        });
-        optionsList.setAdapter(adapter);
-
-        Runnable refreshEmptyState = () -> {
-            boolean hasResults = adapter.getFilteredCount() > 0;
-            noResultsText.setVisibility(hasResults ? View.GONE : View.VISIBLE);
-            optionsList.setVisibility(hasResults ? View.VISIBLE : View.GONE);
-        };
-        refreshEmptyState.run();
-
-        searchInput.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                adapter.filter(s != null ? s.toString() : "");
-                refreshEmptyState.run();
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-            }
-        });
-
-        dialog.setOnShowListener(d -> {
-            View bottomSheet = dialog.findViewById(com.google.android.material.R.id.design_bottom_sheet);
-            if (bottomSheet != null) {
-                BottomSheetBehavior.from(bottomSheet).setSkipCollapsed(true);
-            }
-            BottomSheetUi.applyFullWidth(dialog);
-            searchInput.requestFocus();
-        });
-        dialog.setOnDismissListener(d -> activeDialog = null);
-        dialog.show();
     }
 
     private void selectItem(int index, String label, boolean notifyListener) {
         selectedIndex = index;
         dropdownValue.setText(label);
+        dropdownValue.setTextColor(ContextCompat.getColor(getContext(), R.color.colorTextPrimary));
+        if (showIcons) {
+            applyLeadingIcon(index);
+        }
         if (notifyListener && listener != null) {
             listener.onItemSelected(index, label);
         }

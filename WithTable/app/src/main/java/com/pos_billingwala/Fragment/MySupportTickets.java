@@ -7,14 +7,12 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
-import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.SupportTicketAdapter;
 import com.pos_billingwala.Extra.ActionButtonUi;
@@ -63,16 +61,10 @@ public class MySupportTickets extends Fragment implements SupportTicketAdapter.L
 
     private void setupStatusFilter() {
         String[] labels = getResources().getStringArray(R.array.support_status_filters);
-        ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(
-                activity, android.R.layout.simple_spinner_item, labels);
-        spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        binding.statusFilter.setAdapter(spinnerAdapter);
-        binding.statusFilter.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
-            @Override
-            public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
-                statusFilter = statusFilterValue(position);
-                loadTickets();
-            }
+        binding.statusFilter.setItems(labels);
+        binding.statusFilter.setOnItemSelectedListener((position, label) -> {
+            statusFilter = statusFilterValue(position);
+            loadTickets();
         });
     }
 

@@ -82,7 +82,7 @@ public final class TabletFormUi {
         }
     }
 
-    /** Splits MaterialCardView (or similar) sections into two balanced columns. */
+    /** Splits CardView sections into two balanced columns. */
     public static void applyTwoColumnCards(@Nullable Activity activity, @Nullable LinearLayout container,
                                            @NonNull View[] leftCards, @NonNull View[] rightCards) {
         if (activity == null || !TabletUi.isTablet(activity) || container == null) {

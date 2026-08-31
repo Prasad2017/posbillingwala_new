@@ -35,14 +35,12 @@
             android:textColor="@color/colorTextSecondary"
             android:visibility="gone" />
 
-        <com.google.android.material.card.MaterialCardView
+        <com.pos_billingwala.Extra.PosCardView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            app:cardBackgroundColor="@color/colorBackground"
             app:cardCornerRadius="12dp"
-            app:cardElevation="0dp"
-            app:strokeColor="@color/colorBorder"
-            app:strokeWidth="1dp">
+
+>
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recyclerView"
@@ -50,6 +48,6 @@
                 android:layout_height="match_parent"
                 android:clipToPadding="false"
                 android:overScrollMode="never" />
-        </com.google.android.material.card.MaterialCardView>
+        </com.pos_billingwala.Extra.PosCardView>
     </LinearLayout>
 </RelativeLayout>

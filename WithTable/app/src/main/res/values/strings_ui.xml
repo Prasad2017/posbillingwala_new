@@ -484,6 +484,7 @@
     <string name="ui_update_combo">Update Combo</string>
     <string name="ui_search_combo">Search combo by name or code</string>
     <string name="ui_search">Search</string>
+    <string name="ui_search_dropdown">Search…</string>
     <string name="ui_portion_count_badge">%1$d Portions configured</string>
     <string name="ui_products_count">%1$d Products</string>
     <string name="ui_product_portions_none">Not configured</string>
@@ -491,6 +492,8 @@
     <string name="ui_product_portion_pricing">Portion pricing</string>
     <string name="ui_no_results_found">No results found</string>
     <string name="ui_select_item">Select Item</string>
+    <string name="ui_switch_on">ON</string>
+    <string name="ui_switch_off">OFF</string>
     <string name="ui_no_combo_found">No combo found\nPlease add a combo</string>
     <string name="ui_combo_select_product">Please select a product</string>
     <string name="ui_combo_portion_mismatch">Portion does not belong to this product</string>

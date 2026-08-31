@@ -27,13 +27,12 @@
                 android:textSize="14sp"
                 android:textStyle="bold" />
 
-            <androidx.cardview.widget.CardView
+            <com.pos_billingwala.Extra.PosCardView
                 android:id="@+id/invoiceCardView"
                 android:layout_width="30dp"
                 android:layout_height="30dp"
                 android:layout_alignParentEnd="true"
                 android:layout_centerVertical="true"
-                app:cardBackgroundColor="@color/darkBlue"
                 app:cardCornerRadius="5dp"
                 app:cardUseCompatPadding="true">
 
@@ -46,7 +45,7 @@
                     android:padding="3dp"
                     android:src="@drawable/ic_print"
                     app:tint="@color/white" />
-            </androidx.cardview.widget.CardView>
+            </com.pos_billingwala.Extra.PosCardView>
         </RelativeLayout>
 
         <TextView

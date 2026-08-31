@@ -10,19 +10,12 @@ import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
-import androidx.annotation.NonNull;
-import androidx.appcompat.widget.SwitchCompat;
-import androidx.core.content.ContextCompat;
+import com.pos_billingwala.Extra.PosSwitchRowView;
 import androidx.core.app.ActivityCompat;
 
-import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ActionButtonUi;
 import com.pos_billingwala.Model.CompanyResponse;
@@ -48,7 +41,7 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
     String printerName = "2-Inch", KOTPrinterName = "2-Inch", settingId, logoUse = "off", paymentUse = "off", customerUse = "off", productQuantityUpdate = "off", duplicateBillUse = "off";
     /** Paper size last used when a bill/KOT printer was successfully picked or loaded. */
     String lastConnectedPrinterName = "2-Inch", lastConnectedKOTPrinterName = "2-Inch";
-    boolean loadingPrinterSpinners;
+    boolean loadingDropdowns;
     boolean billSizeChangedByUser;
     boolean kotSizeChangedByUser;
     boolean printerSettingsLoaded;
@@ -101,27 +94,21 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
         binding.printerFeedLines.setSelection(binding.printerFeedLines.getText().toString().length());
         binding.KotPrinterFeedLines.setSelection(binding.KotPrinterFeedLines.getText().toString().length());
 
-        binding.printerSpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
-            @Override
-            public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
-                if (loadingPrinterSpinners || printerList == null || position < 0 || position >= printerList.length) {
-                    return;
-                }
-                printerName = printerList[position];
-                billSizeChangedByUser = lastConnectedPrinterName == null
-                        || !lastConnectedPrinterName.equalsIgnoreCase(printerName);
+        binding.printerDropdown.setOnItemSelectedListener((position, label) -> {
+            if (loadingDropdowns || printerList == null || position < 0 || position >= printerList.length) {
+                return;
             }
+            printerName = printerList[position];
+            billSizeChangedByUser = lastConnectedPrinterName == null
+                    || !lastConnectedPrinterName.equalsIgnoreCase(printerName);
         });
-        binding.KOTPrinterSpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
-            @Override
-            public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
-                if (loadingPrinterSpinners || printerList == null || position < 0 || position >= printerList.length) {
-                    return;
-                }
-                KOTPrinterName = printerList[position];
-                kotSizeChangedByUser = lastConnectedKOTPrinterName == null
-                        || !lastConnectedKOTPrinterName.equalsIgnoreCase(KOTPrinterName);
+        binding.kotPrinterDropdown.setOnItemSelectedListener((position, label) -> {
+            if (loadingDropdowns || printerList == null || position < 0 || position >= printerList.length) {
+                return;
             }
+            KOTPrinterName = printerList[position];
+            kotSizeChangedByUser = lastConnectedKOTPrinterName == null
+                    || !lastConnectedKOTPrinterName.equalsIgnoreCase(KOTPrinterName);
         });
 
         binding.logoSwitch.setOnCheckedChangeListener((button, isChecked) -> {
@@ -296,70 +283,38 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
         setSwitchCheckedSilently(binding.duplicateBillSwitch, duplicateBillUse.equalsIgnoreCase("on"));
 
         printerList = activity.getResources().getStringArray(R.array.printer_list);
-        loadingPrinterSpinners = true;
+        loadingDropdowns = true;
         try {
-            ArrayAdapter<String> invoiceAdapter = createPrinterSpinnerAdapter();
-            ArrayAdapter<String> kotAdapter = createPrinterSpinnerAdapter();
-            binding.printerSpinner.setAdapter(invoiceAdapter);
-            binding.KOTPrinterSpinner.setAdapter(kotAdapter);
+            binding.printerDropdown.setItems(printerList);
+            binding.kotPrinterDropdown.setItems(printerList);
             if (printerName != null) {
-                int printerIndex = invoiceAdapter.getPosition(printerName);
-                if (printerIndex >= 0) {
-                    binding.printerSpinner.setSelectedIndex(printerIndex);
+                for (int i = 0; i < printerList.length; i++) {
+                    if (printerName.equals(printerList[i])) {
+                        binding.printerDropdown.setSelectedIndex(i);
+                        break;
+                    }
                 }
             }
             if (KOTPrinterName != null) {
-                int kotIndex = kotAdapter.getPosition(KOTPrinterName);
-                if (kotIndex >= 0) {
-                    binding.KOTPrinterSpinner.setSelectedIndex(kotIndex);
+                for (int i = 0; i < printerList.length; i++) {
+                    if (KOTPrinterName.equals(printerList[i])) {
+                        binding.kotPrinterDropdown.setSelectedIndex(i);
+                        break;
+                    }
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            loadingPrinterSpinners = false;
+            loadingDropdowns = false;
         }
 
     }
 
-    private void setSwitchCheckedSilently(SwitchCompat switchView, boolean checked) {
+    private void setSwitchCheckedSilently(PosSwitchRowView switchView, boolean checked) {
         suppressSwitchListener = true;
         switchView.setChecked(checked);
         suppressSwitchListener = false;
-    }
-
-    private ArrayAdapter<String> createPrinterSpinnerAdapter() {
-        return new ArrayAdapter<String>(activity, R.layout.item_printer_spinner, printerList) {
-            @NonNull
-            @Override
-            public View getView(int position, View convertView, @NonNull ViewGroup parent) {
-                View row = super.getView(position, convertView, parent);
-                styleSpinnerSelectedView(row, getItem(position));
-                return row;
-            }
-
-            @Override
-            public View getDropDownView(int position, View convertView, @NonNull ViewGroup parent) {
-                View row = getLayoutInflater().inflate(R.layout.item_printer_spinner_dropdown, parent, false);
-                TextView label = row.findViewById(android.R.id.text1);
-                if (label != null) {
-                    label.setText(getItem(position));
-                }
-                return row;
-            }
-        };
-    }
-
-    private void styleSpinnerSelectedView(View row, String value) {
-        if (row == null) {
-            return;
-        }
-        TextView label = row.findViewById(android.R.id.text1);
-        if (label != null) {
-            label.setText(value);
-            label.setTextColor(ContextCompat.getColor(activity, R.color.colorTextPrimary));
-            label.setTypeface(label.getTypeface(), android.graphics.Typeface.BOLD);
-        }
     }
 
     @Override

@@ -196,15 +196,14 @@
                 android:baselineAligned="false"
                 android:orientation="horizontal">
 
-                <androidx.cardview.widget.CardView
+                <com.pos_billingwala.Extra.PosCardView
                     android:id="@+id/totalSalesCardView"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_marginEnd="6dp"
                     android:layout_weight="1"
-                    app:cardBackgroundColor="@android:color/transparent"
                     app:cardCornerRadius="@dimen/radius_md"
-                    app:cardElevation="0dp">
+>
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -276,17 +275,16 @@
                             android:textSize="11sp"
                             tools:text="vs Last Month ↑ 18%" />
                     </LinearLayout>
-                </androidx.cardview.widget.CardView>
+                </com.pos_billingwala.Extra.PosCardView>
 
-                <androidx.cardview.widget.CardView
+                <com.pos_billingwala.Extra.PosCardView
                     android:id="@+id/todaySalesCardView"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_marginStart="6dp"
                     android:layout_weight="1"
-                    app:cardBackgroundColor="@android:color/transparent"
                     app:cardCornerRadius="@dimen/radius_md"
-                    app:cardElevation="0dp">
+>
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -358,7 +356,7 @@
                             android:textSize="11sp"
                             tools:text="vs Yesterday ↑ 12%" />
                     </LinearLayout>
-                </androidx.cardview.widget.CardView>
+                </com.pos_billingwala.Extra.PosCardView>
             </LinearLayout>
 
             </LinearLayout>
@@ -407,15 +405,14 @@
                 android:clipToPadding="false"
                 android:orientation="horizontal">
 
-                <androidx.cardview.widget.CardView
+                <com.pos_billingwala.Extra.PosCardView
                     android:id="@+id/subcategoryCardView"
                     android:layout_width="0dp"
                     android:layout_height="@dimen/home_catalog_card_height"
                     android:layout_marginEnd="4dp"
                     android:layout_weight="1"
-                    app:cardBackgroundColor="@android:color/transparent"
                     app:cardCornerRadius="@dimen/radius_md"
-                    app:cardElevation="0dp">
+>
 
                     <FrameLayout
                         android:layout_width="match_parent"
@@ -479,18 +476,17 @@
                             android:src="@drawable/ic_chevron_right"
                             app:tint="@color/colorPrimary" />
                     </FrameLayout>
-                </androidx.cardview.widget.CardView>
+                </com.pos_billingwala.Extra.PosCardView>
 
-                <androidx.cardview.widget.CardView
+                <com.pos_billingwala.Extra.PosCardView
                     android:id="@+id/productCardView"
                     android:layout_width="0dp"
                     android:layout_height="@dimen/home_catalog_card_height"
                     android:layout_marginStart="4dp"
                     android:layout_marginEnd="4dp"
                     android:layout_weight="1"
-                    app:cardBackgroundColor="@android:color/transparent"
                     app:cardCornerRadius="@dimen/radius_md"
-                    app:cardElevation="0dp">
+>
 
                     <FrameLayout
                         android:layout_width="match_parent"
@@ -554,17 +550,16 @@
                             android:src="@drawable/ic_chevron_right"
                             app:tint="@color/statusActive" />
                     </FrameLayout>
-                </androidx.cardview.widget.CardView>
+                </com.pos_billingwala.Extra.PosCardView>
 
-                <androidx.cardview.widget.CardView
+                <com.pos_billingwala.Extra.PosCardView
                     android:id="@+id/comboCardView"
                     android:layout_width="0dp"
                     android:layout_height="@dimen/home_catalog_card_height"
                     android:layout_marginStart="4dp"
                     android:layout_weight="1"
-                    app:cardBackgroundColor="@android:color/transparent"
                     app:cardCornerRadius="@dimen/radius_md"
-                    app:cardElevation="0dp">
+>
 
                     <FrameLayout
                         android:layout_width="match_parent"
@@ -628,7 +623,7 @@
                             android:src="@drawable/ic_chevron_right"
                             app:tint="@color/statusTrial" />
                     </FrameLayout>
-                </androidx.cardview.widget.CardView>
+                </com.pos_billingwala.Extra.PosCardView>
             </LinearLayout>
 
             </LinearLayout>
@@ -651,7 +646,7 @@
                 android:baselineAligned="false"
                 android:orientation="horizontal">
 
-                <com.google.android.material.card.MaterialCardView
+                <com.pos_billingwala.Extra.PosCardView
                     android:id="@+id/fastBilling"
                     android:layout_width="0dp"
                     android:layout_height="@dimen/home_billing_card_height"
@@ -659,11 +654,10 @@
                     android:layout_weight="1"
                     android:clickable="true"
                     android:focusable="true"
-                    app:cardBackgroundColor="@android:color/transparent"
                     app:cardCornerRadius="@dimen/radius_md"
-                    app:cardElevation="0dp"
+
                     app:rippleColor="@color/colorPrimaryLight"
-                    app:strokeWidth="0dp">
+>
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -717,9 +711,9 @@
                             android:src="@drawable/ic_chevron_right"
                             app:tint="@color/colorPrimary" />
                     </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
+                </com.pos_billingwala.Extra.PosCardView>
 
-                <com.google.android.material.card.MaterialCardView
+                <com.pos_billingwala.Extra.PosCardView
                     android:id="@+id/tableBilling"
                     android:layout_width="0dp"
                     android:layout_height="@dimen/home_billing_card_height"
@@ -727,11 +721,10 @@
                     android:layout_weight="1"
                     android:clickable="true"
                     android:focusable="true"
-                    app:cardBackgroundColor="@android:color/transparent"
                     app:cardCornerRadius="@dimen/radius_md"
-                    app:cardElevation="0dp"
+
                     app:rippleColor="@color/colorPrimaryLight"
-                    app:strokeWidth="0dp">
+>
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -785,7 +778,7 @@
                             android:src="@drawable/ic_chevron_right"
                             app:tint="@color/statusActive" />
                     </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
+                </com.pos_billingwala.Extra.PosCardView>
             </LinearLayout>
 
             <LinearLayout
@@ -796,7 +789,7 @@
                 android:baselineAligned="false"
                 android:orientation="horizontal">
 
-                <com.google.android.material.card.MaterialCardView
+                <com.pos_billingwala.Extra.PosCardView
                     android:id="@+id/takeAwayBilling"
                     android:layout_width="0dp"
                     android:layout_height="@dimen/home_billing_card_height"
@@ -804,11 +797,10 @@
                     android:layout_weight="1"
                     android:clickable="true"
                     android:focusable="true"
-                    app:cardBackgroundColor="@android:color/transparent"
                     app:cardCornerRadius="@dimen/radius_md"
-                    app:cardElevation="0dp"
+
                     app:rippleColor="@color/colorPrimaryLight"
-                    app:strokeWidth="0dp">
+>
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -862,9 +854,9 @@
                             android:src="@drawable/ic_chevron_right"
                             app:tint="@color/statusTrial" />
                     </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
+                </com.pos_billingwala.Extra.PosCardView>
 
-                <com.google.android.material.card.MaterialCardView
+                <com.pos_billingwala.Extra.PosCardView
                     android:id="@+id/messBilling"
                     android:layout_width="0dp"
                     android:layout_height="@dimen/home_billing_card_height"
@@ -872,11 +864,10 @@
                     android:layout_weight="1"
                     android:clickable="true"
                     android:focusable="true"
-                    app:cardBackgroundColor="@android:color/transparent"
                     app:cardCornerRadius="@dimen/radius_md"
-                    app:cardElevation="0dp"
+
                     app:rippleColor="@color/colorPrimaryLight"
-                    app:strokeWidth="0dp">
+>
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -930,7 +921,7 @@
                             android:src="@drawable/ic_chevron_right"
                             app:tint="@color/deepPurple" />
                     </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
+                </com.pos_billingwala.Extra.PosCardView>
             </LinearLayout>
 
             <!-- Sync -->
@@ -1013,15 +1004,14 @@
             </LinearLayout>
 
             <!-- Low inventory (hidden until populated) -->
-            <androidx.cardview.widget.CardView
+            <com.pos_billingwala.Extra.PosCardView
                 android:id="@+id/inventoryCardView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/spacing_lg"
                 android:visibility="gone"
-                app:cardBackgroundColor="@color/colorSurface"
                 app:cardCornerRadius="@dimen/radius_md"
-                app:cardElevation="0dp">
+>
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -1101,7 +1091,7 @@
                         android:nestedScrollingEnabled="false"
                         android:paddingTop="4dp" />
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
+            </com.pos_billingwala.Extra.PosCardView>
 
             </LinearLayout>
 

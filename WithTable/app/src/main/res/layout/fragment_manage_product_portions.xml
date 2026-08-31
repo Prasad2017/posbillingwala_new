@@ -25,7 +25,7 @@
                 android:layout_marginStart="15dp"
                 android:src="@drawable/ic_back"
                 app:tint="@color/white" />
-
+
 </RelativeLayout>
 
     </com.google.android.material.appbar.AppBarLayout>
@@ -40,13 +40,13 @@
             android:layout_height="match_parent"
             android:orientation="vertical">
 
-            <androidx.cardview.widget.CardView
+            <com.pos_billingwala.Extra.PosCardView
                 android:id="@+id/productInfoCard"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_margin="5dp"
                 app:cardCornerRadius="5dp"
-                app:cardElevation="7dp">
+>
 
                 <TextView
                     android:id="@+id/productInfo"
@@ -58,17 +58,17 @@
                     android:textColor="@color/black"
                     android:textSize="14dp" />
 
-            </androidx.cardview.widget.CardView>
+            </com.pos_billingwala.Extra.PosCardView>
 
-            <androidx.cardview.widget.CardView
+            <com.pos_billingwala.Extra.PosCardView
                 android:id="@+id/portionFormCard"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_margin="5dp"
                 android:elevation="7dp"
-                app:cardBackgroundColor="#ecfffa"
+
                 app:cardCornerRadius="5dp"
-                app:cardElevation="7dp">
+>
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -120,27 +120,12 @@
                             android:textColor="@color/textcolor"
                             android:textSize="14dp" />
 
-                        <LinearLayout
+                        <com.pos_billingwala.Extra.SearchableDropdownView
+                            android:id="@+id/portionMasterSpinner"
                             android:layout_width="match_parent"
-                            android:layout_height="48dp"
+                            android:layout_height="wrap_content"
                             android:layout_marginTop="5dp"
-                            android:background="@drawable/button_rounded_border"
-                            android:orientation="horizontal">
-
-                            <com.jaredrummler.materialspinner.MaterialSpinner
-                                android:id="@+id/portionMasterSpinner"
-                                android:layout_width="match_parent"
-                                android:layout_height="45dp"
-                                android:layout_gravity="center"
-                                android:layout_margin="5dp"
-                                android:fontFamily="@font/poppinsregular"
-                                android:gravity="center|start"
-                                android:paddingStart="10dp"
-                                android:textColor="@color/black"
-                                android:textSize="15dp"
-                                app:ms_hint="@string/select_portion_master" />
-
-                        </LinearLayout>
+                            app:sdd_hint="@string/select_portion_master" />
 
                     </LinearLayout>
 
@@ -204,15 +189,15 @@
 
                 </LinearLayout>
 
-            </androidx.cardview.widget.CardView>
+            </com.pos_billingwala.Extra.PosCardView>
 
-            <androidx.cardview.widget.CardView
+            <com.pos_billingwala.Extra.PosCardView
                 android:id="@+id/portionListCardView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_margin="5dp"
                 app:cardCornerRadius="5dp"
-                app:cardElevation="7dp">
+>
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -290,7 +275,7 @@
 
                 </LinearLayout>
 
-            </androidx.cardview.widget.CardView>
+            </com.pos_billingwala.Extra.PosCardView>
 
         </LinearLayout>
 

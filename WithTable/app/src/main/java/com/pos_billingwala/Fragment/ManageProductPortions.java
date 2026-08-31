@@ -7,7 +7,6 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -17,7 +16,6 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.PortionAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
@@ -172,17 +170,11 @@ public class ManageProductPortions extends Fragment implements View.OnClickListe
             portionMasterNameList[i] = portionMasterList.get(i).getPortionName();
         }
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(activity, android.R.layout.simple_spinner_item, portionMasterNameList);
-        adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
-        binding.portionMasterSpinner.setAdapter(adapter);
-
+        binding.portionMasterSpinner.setItems(portionMasterNameList);
         selectedPortionMasterId = portionMasterIdList[0];
-        binding.portionMasterSpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
-            @Override
-            public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
-                selectedPortionMasterId = portionMasterIdList[position];
-            }
-        });
+        binding.portionMasterSpinner.setSelectedIndex(0);
+        binding.portionMasterSpinner.setOnItemSelectedListener((position, label) ->
+                selectedPortionMasterId = portionMasterIdList[position]);
     }
 
     private void suggestNextSortOrder() {

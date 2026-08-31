@@ -44,13 +44,12 @@
             android:textColor="@color/black"
             android:textSize="15dp" />
 
-        <androidx.cardview.widget.CardView
+        <com.pos_billingwala.Extra.PosCardView
             android:id="@+id/startScanCardView"
             xmlns:app="http://schemas.android.com/apk/res-auto"
             android:layout_width="match_parent"
             android:layout_height="50dp"
             android:layout_marginTop="24dp"
-            app:cardBackgroundColor="#30988C"
             app:cardCornerRadius="10dp">
 
             <TextView
@@ -61,7 +60,7 @@
                 android:text="@string/ui_start_qr_scanner"
                 android:textColor="@color/white"
                 android:textSize="16dp" />
-        </androidx.cardview.widget.CardView>
+        </com.pos_billingwala.Extra.PosCardView>
 
         <TextView
             android:id="@+id/scanResultText"

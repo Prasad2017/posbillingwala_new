@@ -2,16 +2,12 @@ package com.pos_billingwala.Fragment;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.InputMethodManager;
-import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -77,21 +73,11 @@ public class UpdateMessPayment extends Fragment implements View.OnClickListener 
 
         messDaysList = activity.getResources().getStringArray(R.array.mess_days);
         try {
-            final ArrayAdapter adapter = new ArrayAdapter(activity, android.R.layout.simple_spinner_item, messDaysList);
-            adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
-            binding.messDaySpinner.setAdapter(adapter);
+            binding.messDaySpinner.setItems(messDaysList);
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        binding.messDaySpinner.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                InputMethodManager imm = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
-                imm.hideSoftInputFromWindow(activity.getCurrentFocus().getWindowToken(), 0);
-                return false;
-            }
-        });
+        binding.messDaySpinner.setOnItemSelectedListener((position, label) -> messDays = messDaysList[position]);
 
         binding.backToMess.setOnClickListener(this);
         binding.updatePayment.setOnClickListener(this);
@@ -177,8 +163,10 @@ public class UpdateMessPayment extends Fragment implements View.OnClickListener 
             if (memberResponseList.get(0).getMessTotalDays() != null) {
                 if (memberResponseList.get(0).getMessTotalDays().equalsIgnoreCase("One Time")) {
                     binding.messDaySpinner.setSelectedIndex(0);
+                    messDays = messDaysList[0];
                 } else {
                     binding.messDaySpinner.setSelectedIndex(1);
+                    messDays = messDaysList[1];
                 }
             }
 

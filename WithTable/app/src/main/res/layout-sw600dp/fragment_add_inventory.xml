@@ -48,14 +48,12 @@
             android:orientation="vertical"
             android:padding="@dimen/spacing_lg">
 
-            <com.google.android.material.card.MaterialCardView
+            <com.pos_billingwala.Extra.PosCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardBackgroundColor="@color/colorSurface"
                 app:cardCornerRadius="@dimen/radius_lg"
-                app:cardElevation="@dimen/card_elevation"
-                app:strokeColor="@color/colorBorder"
-                app:strokeWidth="1dp">
+
+>
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -81,26 +79,12 @@
                             android:textColor="@color/colorTextSecondary"
                             android:textSize="@dimen/text_caption" />
 
-                        <LinearLayout
+                        <com.pos_billingwala.Extra.SearchableDropdownView
+                            android:id="@+id/productSpinner"
                             android:layout_width="match_parent"
-                            android:layout_height="48dp"
+                            android:layout_height="wrap_content"
                             android:layout_marginTop="@dimen/spacing_sm"
-                            android:background="@drawable/button_rounded_border"
-                            android:orientation="horizontal">
-
-                            <com.jaredrummler.materialspinner.MaterialSpinner
-                                android:id="@+id/productSpinner"
-                                android:layout_width="match_parent"
-                                android:layout_height="45dp"
-                                android:layout_gravity="center"
-                                android:layout_margin="5dp"
-                                android:fontFamily="@font/poppinsregular"
-                                android:gravity="center|start"
-                                android:paddingStart="10dp"
-                                android:textColor="@color/black"
-                                android:textSize="15dp"
-                                app:ms_hint="Select Product" />
-                        </LinearLayout>
+                            app:sdd_hint="@string/ui_select_item" />
                     </LinearLayout>
 
                     <com.google.android.material.textfield.TextInputLayout
@@ -131,7 +115,7 @@
                             android:textSize="@dimen/text_body" />
                     </com.google.android.material.textfield.TextInputLayout>
                 </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+            </com.pos_billingwala.Extra.PosCardView>
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 

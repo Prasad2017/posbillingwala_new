@@ -8,13 +8,11 @@ import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
-import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Extra.ActionButtonUi;
 import com.pos_billingwala.Extra.DetectConnection;
@@ -54,16 +52,8 @@ public class CreateSupportTicket extends Fragment {
 
     private void setupCategorySpinner() {
         String[] categories = getResources().getStringArray(R.array.support_categories);
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                activity, android.R.layout.simple_spinner_item, categories);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        binding.categorySpinner.setAdapter(adapter);
-        binding.categorySpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
-            @Override
-            public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
-                selectedCategory = item;
-            }
-        });
+        binding.categorySpinner.setItems(categories);
+        binding.categorySpinner.setOnItemSelectedListener((position, label) -> selectedCategory = label);
     }
 
     private void setupCharCounter() {
