@@ -2,9 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="description" content="POS Billingwala software — Android POS, Owner, and Dealer apps with offline billing and thermal print.">
   <link rel="icon" href="assets/images/app_logo.png" type="image/png">
+  <link rel="apple-touch-icon" href="assets/images/pos_billingwala_logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
@@ -16,26 +17,63 @@
   <div id="pbw-header"></div>
   <main>
     <section class="page-hero"><div class="container reveal">
+      <div class="page-hero-icon"><span data-pbw-icon="code" data-pbw-tone="blue" data-pbw-size="26"></span></div>
       <p class="page-kicker">Software</p>
       <h1>POS Billing Software for mobile &amp; tablet</h1>
       <p class="page-hero-lead">Offline-first Android billing with owner dashboards, dealer licensing, Bluetooth thermal print, and browser-based web admin.</p>
     </div></section>
     <section class="section"><div class="container">
-      <div class="apps-grid apps-grid--three">
-        <article class="app-card reveal"><div class="app-badge app-badge--pos">POS</div><h3>Counter app</h3><p>Billing, tables, takeaway, combos, mess tokens, expenses, and Bluetooth printing.</p></article>
-        <article class="app-card reveal"><div class="app-badge app-badge--owner">Owner</div><h3>Owner app</h3><p>Invoices, sales reports, multi-branch views, and catalog management.</p></article>
-        <article class="app-card reveal"><div class="app-badge app-badge--dealer">Dealer</div><h3>Dealer app</h3><p>Onboard customers, issue licences, renew subscriptions, and set up menus.</p></article>
+      <div class="tab-bar reveal" data-tabs role="tablist">
+        <button type="button" data-tab="pos" class="is-active" aria-selected="true"><span data-pbw-icon="smartphone" data-pbw-tone="blue" data-pbw-sm></span> POS App</button>
+        <button type="button" data-tab="owner" aria-selected="false"><span data-pbw-icon="receipt-text" data-pbw-tone="green" data-pbw-sm></span> Owner App</button>
+        <button type="button" data-tab="dealer" aria-selected="false"><span data-pbw-icon="store" data-pbw-tone="orange" data-pbw-sm></span> Dealer App</button>
+      </div>
+      <div class="software-tab-panel tab-panel is-active reveal" data-tab-panel="pos">
+        <article class="app-card">
+          <div class="app-badge app-badge--pos">POS</div>
+          <h3>Counter billing app</h3>
+          <p>Daily billing for restaurants, retail, mess, and takeaway — with tables, portions, combos, and Bluetooth print.</p>
+          <ul class="software-feature-list">
+            <li><span data-pbw-icon="check" data-pbw-tone="green" data-pbw-sm></span> Offline-first SQLite billing</li>
+            <li><span data-pbw-icon="check" data-pbw-tone="green" data-pbw-sm></span> Table, takeaway &amp; mess modes</li>
+            <li><span data-pbw-icon="check" data-pbw-tone="green" data-pbw-sm></span> Bluetooth thermal printing</li>
+          </ul>
+        </article>
+      </div>
+      <div class="software-tab-panel tab-panel reveal" data-tab-panel="owner" hidden>
+        <article class="app-card">
+          <div class="app-badge app-badge--owner">Owner</div>
+          <h3>Business owner dashboard</h3>
+          <p>Track invoices, sales reports, multi-branch views, and catalog management from your phone.</p>
+          <ul class="software-feature-list">
+            <li><span data-pbw-icon="check" data-pbw-tone="green" data-pbw-sm></span> Sales &amp; invoice reports</li>
+            <li><span data-pbw-icon="check" data-pbw-tone="green" data-pbw-sm></span> Product &amp; category control</li>
+            <li><span data-pbw-icon="check" data-pbw-tone="green" data-pbw-sm></span> Multi-branch overview</li>
+          </ul>
+        </article>
+      </div>
+      <div class="software-tab-panel tab-panel reveal" data-tab-panel="dealer" hidden>
+        <article class="app-card">
+          <div class="app-badge app-badge--dealer">Dealer</div>
+          <h3>Dealer &amp; licence management</h3>
+          <p>Onboard customers, issue licences, renew subscriptions, and configure menus for clients.</p>
+          <ul class="software-feature-list">
+            <li><span data-pbw-icon="check" data-pbw-tone="green" data-pbw-sm></span> Customer onboarding</li>
+            <li><span data-pbw-icon="check" data-pbw-tone="green" data-pbw-sm></span> Licence issue &amp; renewal</li>
+            <li><span data-pbw-icon="check" data-pbw-tone="green" data-pbw-sm></span> Menu setup assistance</li>
+          </ul>
+        </article>
       </div>
     </div></section>
     <section class="section section-muted"><div class="container">
       <div class="section-head center reveal"><span class="eyebrow">Features</span><h2>Built for how Indian businesses run</h2></div>
       <div class="feature-grid">
-        <article class="feature-card reveal"><h3>Offline-first sync</h3><p>SQLite on device, background sync when online.</p></article>
-        <article class="feature-card reveal"><h3>Portion master</h3><p>Half, full, kg — flexible pricing per item.</p></article>
-        <article class="feature-card reveal"><h3>Combo items</h3><p>Bundle products with fixed sell prices.</p></article>
-        <article class="feature-card reveal"><h3>Mess QR tokens</h3><p>Generate, print, and verify walk-in tokens.</p></article>
-        <article class="feature-card reveal"><h3>Licensing</h3><p>Trial, tiered validity, and same-key renewals.</p></article>
-        <article class="feature-card reveal"><h3>Multilingual print</h3><p>English, Hindi, Marathi receipt support.</p></article>
+        <article class="feature-card reveal"><span data-pbw-icon="wifi" data-pbw-tone="blue" data-pbw-sm></span><div class="feature-card-body"><h3>Offline-first sync</h3><p>SQLite on device, background sync when online.</p></div></article>
+        <article class="feature-card reveal"><span data-pbw-icon="layers" data-pbw-tone="purple" data-pbw-sm></span><div class="feature-card-body"><h3>Portion master</h3><p>Half, full, kg — flexible pricing per item.</p></div></article>
+        <article class="feature-card reveal"><span data-pbw-icon="package" data-pbw-tone="orange" data-pbw-sm></span><div class="feature-card-body"><h3>Combo items</h3><p>Bundle products with fixed sell prices.</p></div></article>
+        <article class="feature-card reveal"><span data-pbw-icon="qrcode" data-pbw-tone="cyan" data-pbw-sm></span><div class="feature-card-body"><h3>Mess QR tokens</h3><p>Generate, print, and verify walk-in tokens.</p></div></article>
+        <article class="feature-card reveal"><span data-pbw-icon="key" data-pbw-tone="green" data-pbw-sm></span><div class="feature-card-body"><h3>Licensing</h3><p>Trial, tiered validity, and same-key renewals.</p></div></article>
+        <article class="feature-card reveal"><span data-pbw-icon="languages" data-pbw-tone="pink" data-pbw-sm></span><div class="feature-card-body"><h3>Multilingual print</h3><p>English, Hindi, Marathi receipt support.</p></div></article>
       </div>
       <p class="center reveal" style="margin-top:2rem;text-align:center;">
         <a class="btn btn-primary" href="download.html">Download App</a>
@@ -45,8 +83,10 @@
   </main>
   <div id="pbw-footer"></div>
   <script src="assets/js/site-config.js"></script>
+  <script src="assets/js/site-icons.js"></script>
   <script src="assets/js/site-layout.js"></script>
   <script src="assets/js/site.js"></script>
+  <script src="assets/js/site-tabs.js"></script>
   <script src="assets/js/site-content.js"></script>
 </body>
 </html>

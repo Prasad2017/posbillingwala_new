@@ -7,7 +7,7 @@ class AdminBranding
     private const DIR = 'assets/branding';
     private const LOGO = 'admin-logo';
     private const FAVICON = 'admin-favicon';
-    private const DEFAULT_LOGO = 'assets/images/app_logo.png';
+    private const DEFAULT_LOGO = 'assets/images/pos_billingwala_logo.png';
     private const DEFAULT_FAVICON = 'assets/images/app_logo.png';
 
     private static function extensions(): array
@@ -42,12 +42,12 @@ class AdminBranding
 
     private static function assetWithVersion(string $relativePath, string $absolutePath): string
     {
-        $version = @filemtime($absolutePath);
-        if ($version === false) {
-            $version = time();
+        $path = ltrim($relativePath, '/');
+        if (str_starts_with($path, 'assets/')) {
+            $path = substr($path, 7);
         }
 
-        return asset($relativePath) . '?v=' . $version;
+        return admin_asset($path);
     }
 
     public static function logoUrl(): string
@@ -57,7 +57,7 @@ class AdminBranding
             return self::assetWithVersion(self::DIR . '/' . basename($file), $file);
         }
 
-        return asset(self::DEFAULT_LOGO);
+        return admin_asset('images/pos_billingwala_logo.png');
     }
 
     public static function faviconUrl(): string
@@ -67,7 +67,7 @@ class AdminBranding
             return self::assetWithVersion(self::DIR . '/' . basename($file), $file);
         }
 
-        return asset(self::DEFAULT_FAVICON);
+        return admin_asset('images/app_logo.png');
     }
 
     public static function hasCustomLogo(): bool

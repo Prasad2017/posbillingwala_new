@@ -23,6 +23,8 @@ website/
   assets/
     css/site.css
     js/site-layout.js   Shared nav & footer
+    js/site-icons.js    SVG icon system
+    js/site-tabs.js     Tab & filter pill components
     js/site.js          Nav scroll & animations
     js/site-content.js  CMS data from admin API
     js/site-contact.js  Contact form

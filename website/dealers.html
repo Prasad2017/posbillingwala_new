@@ -2,9 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="description" content="Find your local POS Billingwala dealer — area-wise sales, installation, and support contacts.">
   <link rel="icon" href="assets/images/app_logo.png" type="image/png">
+  <link rel="apple-touch-icon" href="assets/images/pos_billingwala_logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
@@ -16,12 +17,14 @@
   <div id="pbw-header"></div>
   <main>
     <section class="page-hero"><div class="container reveal">
+      <div class="page-hero-icon"><span data-pbw-icon="map-pin" data-pbw-tone="orange" data-pbw-size="26"></span></div>
       <p class="page-kicker">Dealer network</p>
       <h1>Find Your Local Dealer</h1>
       <p class="page-hero-lead">Area-wise authorized dealers and head office contacts for sales, installation, training, and renewal support.</p>
     </div></section>
     <section class="page-section"><div class="container">
       <div class="filter-bar reveal">
+        <span data-pbw-icon="search" data-pbw-tone="blue" data-pbw-sm></span>
         <label for="dealerSearch">Search area</label>
         <input type="search" id="dealerSearch" placeholder="Pune, Satara, Mumbai, Karnataka…" autocomplete="off">
       </div>
@@ -30,8 +33,10 @@
   </main>
   <div id="pbw-footer"></div>
   <script src="assets/js/site-config.js"></script>
+  <script src="assets/js/site-icons.js"></script>
   <script src="assets/js/site-layout.js"></script>
   <script src="assets/js/site.js"></script>
+  <script src="assets/js/site-tabs.js"></script>
   <script src="assets/js/site-content.js"></script>
 </body>
 </html>
