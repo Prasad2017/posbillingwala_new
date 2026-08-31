@@ -251,19 +251,65 @@
       accessories: "Accessories",
     };
 
-    var html = "";
-    Object.keys(labels).forEach(function (key) {
-      if (!groups[key].length) return;
-      html +=
-        '<div class="catalog-group reveal"><h3 class="catalog-group-title">' +
+    var tones = {
+      software: "blue",
+      hardware: "purple",
+      consumables: "orange",
+      accessories: "green",
+    };
+
+    var activeKeys = Object.keys(labels).filter(function (key) {
+      return groups[key].length;
+    });
+
+    if (!activeKeys.length) {
+      root.innerHTML = '<p class="empty-note">Products will appear here once added in the admin panel.</p>';
+      return;
+    }
+
+    var iconFn = window.PBW_ICONS && window.PBW_ICONS.iconBox ? window.PBW_ICONS.iconBox : null;
+    var catIconFn = window.PBW_ICONS && window.PBW_ICONS.categoryIcon ? window.PBW_ICONS.categoryIcon : null;
+
+    var tabsHtml =
+      '<div class="tab-bar reveal" data-tabs role="tablist">';
+    activeKeys.forEach(function (key, i) {
+      var iconName = catIconFn ? catIconFn(key) : "box";
+      var iconHtml =
+        window.PBW_ICONS && window.PBW_ICONS.icon
+          ? window.PBW_ICONS.icon(iconName, { size: 16 })
+          : "";
+      tabsHtml +=
+        '<button type="button" data-tab="' +
+        key +
+        '"' +
+        (i === 0 ? ' class="is-active" aria-selected="true"' : ' aria-selected="false"') +
+        ">" +
+        iconHtml +
         labels[key] +
-        "</h3><div class=\"catalog-grid\">";
-      html += groups[key]
+        "</button>";
+    });
+    tabsHtml += "</div>";
+
+    var panelsHtml = "";
+    activeKeys.forEach(function (key, i) {
+      panelsHtml +=
+        '<div class="tab-panel' +
+        (i === 0 ? " is-active" : "") +
+        '" data-tab-panel="' +
+        key +
+        '"' +
+        (i === 0 ? "" : " hidden") +
+        '><div class="catalog-grid">';
+      panelsHtml += groups[key]
         .map(function (p) {
+          var iconName = catIconFn ? catIconFn(p.category) : "box";
+          var iconHtml = iconFn
+            ? iconFn(iconName, tones[p.category] || "blue", { size: 22 })
+            : escapeHtml(p.icon || "📦");
           return (
-            '<article class="catalog-card">' +
+            '<article class="catalog-card reveal">' +
             '<div class="catalog-icon">' +
-            escapeHtml(p.icon || "📦") +
+            iconHtml +
             "</div>" +
             "<h4>" +
             escapeHtml(p.name) +
@@ -275,11 +321,12 @@
           );
         })
         .join("");
-      html += "</div></div>";
+      panelsHtml += "</div></div>";
     });
 
-    root.innerHTML = html;
+    root.innerHTML = tabsHtml + panelsHtml;
     observeReveal(root);
+    if (window.PBW_TABS) window.PBW_TABS.init();
   }
 
   function renderPricing(plans, rootId) {
@@ -292,6 +339,32 @@
     }
 
     var full = rootId === "pricingRoot";
+
+    if (!full) {
+      root.innerHTML =
+        '<div class="pricing-cards reveal">' +
+        plans
+          .map(function (plan) {
+            return (
+              '<article class="pricing-card">' +
+              '<span class="pricing-card-badge">' +
+              escapeHtml(plan.plan_type === "renewal" ? "Renewal" : "Subscription") +
+              "</span>" +
+              '<p class="pricing-card-price">' +
+              formatPrice(plan.price) +
+              "</p>" +
+              '<p class="pricing-card-meta">' +
+              escapeHtml(plan.validity_label) +
+              (plan.gst_note ? " · " + escapeHtml(plan.gst_note) : "") +
+              "</p></article>"
+            );
+          })
+          .join("") +
+        "</div>";
+      observeReveal(root);
+      return;
+    }
+
     var rows = plans
       .map(function (plan) {
         return (

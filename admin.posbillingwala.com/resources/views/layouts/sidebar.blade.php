@@ -36,7 +36,7 @@
 <div class="sidebar-wrapper" data-simplebar="true">
     <div class="sidebar-header">
         <div class="d-flex align-items-center gap-2">
-            <img src="{{ $adminLogoUrl ?? asset('assets/images/app_logo.png') }}" class="logo-icon" alt="POS Billingwala">
+            <img src="{{ $adminLogoUrl ?? admin_asset('images/pos_billingwala_logo.png') }}" class="logo-icon" alt="POS Billingwala">
         </div>
         <div class="toggle-icon ms-auto"><i class='bx bx-chevrons-left'></i></div>
     </div>

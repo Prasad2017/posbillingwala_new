@@ -4,7 +4,7 @@
     $compact = $compact ?? false;
     $actionUrl = $actionUrl ?? null;
     $actionLabel = $actionLabel ?? null;
-    $icon = $icon ?? asset('assets/images/empty-state.svg');
+    $icon = $icon ?? admin_asset('images/empty-state.svg');
 @endphp
 <div class="pb-empty-state{{ $compact ? ' pb-empty-state--compact' : '' }}">
     <img src="{{ $icon }}" alt="" class="pb-empty-image" loading="lazy">

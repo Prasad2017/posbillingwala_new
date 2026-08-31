@@ -222,7 +222,28 @@ Import creates missing categories and adds/updates products by name (same logic 
 | Excel import fails | Run `composer install` in `adminpanel/` |
 | Blank categories/subcategories | Run DB migration for `food_types`, `product_subcategories`, `product_portions` |
 | CSS/JS 404 on website | Confirm `assets/` uploaded; paths are relative to domain root |
+| Admin login unstyled (no CSS/logo) | See **Admin assets** below |
 | Admin routes 404 | Enable `mod_rewrite`; check `adminpanel/.htaccess` |
+
+### Admin assets (unstyled login / broken logo)
+
+If the admin login page shows plain HTML with no styling:
+
+1. Deploy latest `admin.posbillingwala.com/` code (includes `app/helpers.php`, `public/assets` link).
+2. On the server, from the admin folder run:
+   ```bash
+   php artisan admin:link-assets
+   php artisan config:clear
+   php artisan view:clear
+   ```
+3. In `.env` set:
+   ```env
+   APP_URL=https://admin.posbillingwala.com
+   ASSET_URL=
+   ```
+   Remove old values like `ASSET_URL=http://posbillingwala.com/adminpanel` — they break CSS on the admin subdomain.
+4. Confirm in browser: `https://admin.posbillingwala.com/assets/css/bootstrap.min.css` loads (not HTML).
+5. Enable **HTTPS** for the admin subdomain (Safari/iOS works best with HTTPS).
 
 ---
 

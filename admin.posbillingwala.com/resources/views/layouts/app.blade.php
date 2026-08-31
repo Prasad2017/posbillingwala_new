@@ -4,33 +4,34 @@
 <head>
     <!-- Required meta tags -->
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <!--favicon-->
-    <link rel="icon" href="{{ $adminFaviconUrl ?? asset('assets/images/app_logo.png') }}" type="image/png" />
+    <link rel="icon" href="{{ $adminFaviconUrl ?? admin_asset('images/app_logo.png') }}" type="image/png" />
     <!--plugins-->
-    <link href="{{asset('assets/plugins/simplebar/css/simplebar.css')}}" rel="stylesheet" />
-    <link href="{{asset('assets/plugins/perfect-scrollbar/css/perfect-scrollbar.css')}}" rel="stylesheet" />
-    <link href="{{asset('assets/plugins/metismenu/css/metisMenu.min.css')}}" rel="stylesheet" />
-    <link href="{{asset('assets/plugins/datatable/css/dataTables.bootstrap5.min.css')}}" rel="stylesheet" />
-    <link href="{{asset('assets/plugins/Drag-And-Drop/dist/imageuploadify.min.css')}}" rel="stylesheet" />
-    <link href="{{asset('assets/plugins/select2/css/select2.min.css')}}" rel="stylesheet" />
-    <link href="{{asset('assets/plugins/select2/css/select2-bootstrap4.css')}}" rel="stylesheet" />
+    <link href="{{admin_asset('plugins/simplebar/css/simplebar.css')}}" rel="stylesheet" />
+    <link href="{{admin_asset('plugins/perfect-scrollbar/css/perfect-scrollbar.css')}}" rel="stylesheet" />
+    <link href="{{admin_asset('plugins/metismenu/css/metisMenu.min.css')}}" rel="stylesheet" />
+    <link href="{{admin_asset('plugins/datatable/css/dataTables.bootstrap5.min.css')}}" rel="stylesheet" />
+    <link href="{{admin_asset('plugins/Drag-And-Drop/dist/imageuploadify.min.css')}}" rel="stylesheet" />
+    <link href="{{admin_asset('plugins/select2/css/select2.min.css')}}" rel="stylesheet" />
+    <link href="{{admin_asset('plugins/select2/css/select2-bootstrap4.css')}}" rel="stylesheet" />
     <!-- loader-->
-    <link href="{{asset('assets/css/pace.min.css')}}" rel="stylesheet" />
-    <script src="{{asset('assets/js/pace.min.js')}}"></script>
+    <link href="{{admin_asset('css/pace.min.css')}}" rel="stylesheet" />
+    <script src="{{admin_asset('js/pace.min.js')}}"></script>
     <!-- Bootstrap CSS -->
-    <link href="{{asset('assets/css/bootstrap.min.css')}}" rel="stylesheet">
-    <link href="{{asset('assets/css/bootstrap-extended.css')}}" rel="stylesheet">
+    <link href="{{admin_asset('css/bootstrap.min.css')}}" rel="stylesheet">
+    <link href="{{admin_asset('css/bootstrap-extended.css')}}" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Syne:wght@600;700&display=swap" rel="stylesheet">
-    <link href="{{asset('assets/css/app.css')}}" rel="stylesheet">
-    <link href="{{asset('assets/css/icons.css')}}" rel="stylesheet">
+    <link href="{{admin_asset('css/app.css')}}" rel="stylesheet">
+    <link href="{{admin_asset('css/icons.css')}}" rel="stylesheet">
     <!-- Theme Style CSS -->
-    <link rel="stylesheet" href="{{asset('assets/css/dark-theme.css')}}" />
-    <link rel="stylesheet" href="{{asset('assets/css/semi-dark.css')}}" />
-    <link rel="stylesheet" href="{{asset('assets/css/header-colors.css')}}" />
-    <link rel="stylesheet" href="{{asset('assets/css/pos-brand.css')}}?v={{ is_file(base_path('assets/css/pos-brand.css')) ? filemtime(base_path('assets/css/pos-brand.css')) : time() }}" />
+    <link rel="stylesheet" href="{{admin_asset('css/dark-theme.css')}}" />
+    <link rel="stylesheet" href="{{admin_asset('css/semi-dark.css')}}" />
+    <link rel="stylesheet" href="{{admin_asset('css/header-colors.css')}}" />
+    <link rel="stylesheet" href="{{ admin_asset('css/pos-brand.css') }}" />
+    <link rel="stylesheet" href="{{ admin_asset('css/pos-responsive.css') }}" />
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
-    <script src="{{asset('assets/plugins/chartjs/js/Chart.min.js')}}"></script>
+    <script src="{{admin_asset('plugins/chartjs/js/Chart.min.js')}}"></script>
     <script>
     window.PB = {
         colors: ['#2563eb', '#16a34a', '#ea580c', '#7c3aed', '#0b1f33', '#149687', '#dc2626'],
@@ -126,7 +127,7 @@
         var title = opts.title || 'No data found';
         var subtitle = opts.subtitle || 'There is nothing to show here at the moment.';
         var compact = opts.compact ? ' pb-empty-state--compact' : '';
-        var img = opts.image || @json(asset('assets/images/empty-state.svg'));
+        var img = opts.image || @json(admin_asset('images/empty-state.svg'));
         var action = '';
         if (opts.actionUrl && opts.actionLabel) {
             action = '<a href="' + opts.actionUrl + '" class="btn btn-primary btn-sm pb-empty-action">' + opts.actionLabel + '</a>';
@@ -211,20 +212,20 @@
     <!--end wrapper-->
    
     <!-- Bootstrap JS -->
-    <script src="{{asset('assets/js/bootstrap.bundle.min.js')}}"></script>
+    <script src="{{admin_asset('js/bootstrap.bundle.min.js')}}"></script>
     <!--plugins-->
-    <script src="{{asset('assets/js/jquery.min.js')}}"></script>
-    <script src="{{asset('assets/plugins/simplebar/js/simplebar.min.js')}}"></script>
-    <script src="{{asset('assets/plugins/metismenu/js/metisMenu.min.js')}}"></script>
-    <script src="{{asset('assets/plugins/perfect-scrollbar/js/perfect-scrollbar.js')}}"></script>
-    <script src="{{asset('assets/plugins/datatable/js/jquery.dataTables.min.js')}}"></script>
-    <script src="{{asset('assets/plugins/datatable/js/dataTables.bootstrap5.min.js')}}"></script>
+    <script src="{{admin_asset('js/jquery.min.js')}}"></script>
+    <script src="{{admin_asset('plugins/simplebar/js/simplebar.min.js')}}"></script>
+    <script src="{{admin_asset('plugins/metismenu/js/metisMenu.min.js')}}"></script>
+    <script src="{{admin_asset('plugins/perfect-scrollbar/js/perfect-scrollbar.js')}}"></script>
+    <script src="{{admin_asset('plugins/datatable/js/jquery.dataTables.min.js')}}"></script>
+    <script src="{{admin_asset('plugins/datatable/js/dataTables.bootstrap5.min.js')}}"></script>
     <script>
         $(function () {
             if (!$.fn.dataTable) {
                 return;
             }
-            var emptyImg = @json(asset('assets/images/empty-state.svg'));
+            var emptyImg = @json(admin_asset('images/empty-state.svg'));
             $.extend(true, $.fn.dataTable.defaults, {
                 language: {
                     emptyTable: '',
@@ -264,8 +265,8 @@
         } );
     </script>
     <!--app JS-->
-    <script src="{{asset('assets/plugins/select2/js/select2.min.js')}}"></script>
-    <script src="{{asset('assets/js/app.js')}}?v={{ is_file(base_path('assets/js/app.js')) ? filemtime(base_path('assets/js/app.js')) : time() }}"></script>
+    <script src="{{admin_asset('plugins/select2/js/select2.min.js')}}"></script>
+    <script src="{{ admin_asset('js/app.js') }}"></script>
     <script>
         $(function () {
             PB.initForms();

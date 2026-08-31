@@ -79,4 +79,17 @@
       el.classList.add("is-visible");
     });
   }
+
+  if (window.PBW_ICONS) {
+    document.querySelectorAll("[data-pbw-icon]").forEach(function (el) {
+      var name = el.getAttribute("data-pbw-icon");
+      var tone = el.getAttribute("data-pbw-tone") || "blue";
+      var size = parseInt(el.getAttribute("data-pbw-size") || "22", 10);
+      var sm = el.hasAttribute("data-pbw-sm");
+      el.outerHTML = window.PBW_ICONS.iconBox(name, tone, {
+        size: size,
+        className: sm ? "icon-box--sm" : "",
+      });
+    });
+  }
 })();

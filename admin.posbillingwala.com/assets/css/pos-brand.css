@@ -1,18 +1,19 @@
 /* POS Billingwala — Blue & White Admin Theme */
 :root {
-  --pb-blue: #2563eb;
-  --pb-blue-dark: #1d4ed8;
-  --pb-blue-darker: #1e3a8a;
-  --pb-blue-light: #dbeafe;
-  --pb-blue-soft: #eff6ff;
-  --pb-blue-muted: #93c5fd;
+  --pb-blue: #0066ff;
+  --pb-blue-dark: #0052cc;
+  --pb-blue-darker: #003d99;
+  --pb-blue-light: #e6f0ff;
+  --pb-blue-soft: #f0f7ff;
+  --pb-blue-muted: #66a3ff;
+  --pb-orange: #ff8800;
   --pb-white: #ffffff;
-  --pb-bg: #f0f5ff;
+  --pb-bg: #f4f8ff;
   --pb-ink: #1e3a5f;
   --pb-ink-soft: #64748b;
   --pb-line: #dbeafe;
-  --pb-shadow: 0 4px 24px rgba(37, 99, 235, 0.08);
-  --pb-shadow-lg: 0 12px 40px rgba(37, 99, 235, 0.12);
+  --pb-shadow: 0 4px 24px rgba(0, 102, 255, 0.08);
+  --pb-shadow-lg: 0 12px 40px rgba(0, 102, 255, 0.12);
   --pb-radius: 14px;
   --pb-sidebar-bg: #ffffff;
   --pb-sidebar-border: #e8eef7;
@@ -51,13 +52,15 @@ body {
 
 .sidebar-header .logo-icon {
   width: auto;
-  height: 44px;
-  max-width: 148px;
-  border-radius: 0;
+  height: 42px;
+  max-width: min(100%, 196px);
+  border-radius: 6px;
   object-fit: contain;
+  object-position: left center;
   box-shadow: none;
   border: 0;
   flex-shrink: 0;
+  filter: drop-shadow(0 2px 6px rgba(0, 102, 255, 0.1));
 }
 
 .sidebar-tagline {
@@ -289,6 +292,13 @@ body {
   .wrapper.toggled:not(.sidebar-hovered) .sidebar-wrapper .sidebar-header > .d-flex {
     justify-content: center;
     width: 100%;
+  }
+
+  .wrapper.toggled:not(.sidebar-hovered) .sidebar-header .logo-icon {
+    max-width: 52px;
+    height: 36px;
+    object-fit: cover;
+    object-position: left center;
   }
 
   .wrapper.toggled:not(.sidebar-hovered) .sidebar-wrapper .metismenu .parent-icon {
@@ -1184,9 +1194,9 @@ body.bg-login {
 }
 
 .pb-login-logo {
-  width: min(100%, 300px);
+  width: min(100%, 420px);
   height: auto;
-  max-height: 88px;
+  max-height: 140px;
   object-fit: contain;
   filter: drop-shadow(0 8px 18px rgba(15, 23, 42, 0.12));
 }
