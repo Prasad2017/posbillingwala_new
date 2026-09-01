@@ -5,7 +5,7 @@
         <div class="d-flex align-items-center justify-content-between mb-3">
             <div>
                 <h5 class="dash-hello mb-1">Logo Update</h5>
-                <p class="text-secondary mb-0">Shown in sidebar, header, and login page</p>
+                <p class="text-secondary mb-0">Shown in admin panel, public website header/footer, and login page</p>
             </div>
             <a href="{{ url('settings') }}" class="btn btn-outline-primary btn-sm">Back to Settings</a>
         </div>

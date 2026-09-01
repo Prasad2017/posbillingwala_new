@@ -19,11 +19,11 @@
         @if(Auth::user()->role_id == 1)
         <a class="hub-row" href="{{ url('settings/logo') }}">
             <span class="hub-icon kpi-icon purple"><i class='bx bx-image'></i></span>
-            <div><h6>Logo Update</h6><p>Change sidebar and login logo</p></div>
+            <div><h6>Logo Update</h6><p>Admin panel, website header/footer, and login page</p></div>
         </a>
         <a class="hub-row" href="{{ url('settings/favicon') }}">
             <span class="hub-icon kpi-icon orange"><i class='bx bx-star'></i></span>
-            <div><h6>Favicon Update</h6><p>Change browser tab icon</p></div>
+            <div><h6>Favicon Update</h6><p>Browser tab icon for admin panel and public website</p></div>
         </a>
         @endif
     </div>

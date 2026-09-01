@@ -148,7 +148,7 @@ class SettingsController extends Controller
 
         AdminBranding::saveLogo($request->file('logo'));
 
-        return redirect('settings/logo')->with('success', 'Admin logo updated successfully');
+        return redirect('settings/logo')->with('success', 'Logo updated — visible in admin panel and public website');
     }
 
     public function favicon()
@@ -170,7 +170,7 @@ class SettingsController extends Controller
 
         AdminBranding::saveFavicon($request->file('favicon'));
 
-        return redirect('settings/favicon')->with('success', 'Favicon updated successfully');
+        return redirect('settings/favicon')->with('success', 'Favicon updated — visible in admin panel and public website');
     }
 
     private function usersHasColumn(string $column): bool

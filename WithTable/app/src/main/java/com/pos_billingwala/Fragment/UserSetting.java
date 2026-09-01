@@ -220,13 +220,8 @@ public class UserSetting extends Fragment implements View.OnClickListener {
                 startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + activity.getPackageName())));
             }
         });
-        binding.shareAppLayout.getRoot().setOnClickListener(v -> {
-            Intent shareIntent = new Intent(Intent.ACTION_SEND);
-            shareIntent.setType("text/*");
-            shareIntent.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.app_name));
-            shareIntent.putExtra(Intent.EXTRA_TEXT, appUrl + " Download POSBillingwala APP using " + appLink + getActivity().getPackageName());
-            startActivity(Intent.createChooser(shareIntent, "Share Using"));
-        });
+        binding.shareAppLayout.getRoot().setOnClickListener(v ->
+                ((MainActivity) activity).loadFragment(new ShareApp(), true));
         binding.logoutLayout.getRoot().setOnClickListener(v -> {
             if (DetectConnection.checkInternetConnection(activity)) {
                 logout();

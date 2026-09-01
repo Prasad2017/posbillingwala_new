@@ -309,7 +309,9 @@
     <string name="home_fetch_data">Fetch Data</string>
     <string name="home_synchronize">Synchronize Data</string>
     <string name="home_sync_subtitle">Keep your data up to date</string>
-    <string name="home_view_all">View All</string>
+    <string name="home_last_synced">Last synced: %1$s</string>
+    <string name="home_never_synced">Not synced yet</string>
+    <string name="home_view_all">View All  &gt;</string>
     <string name="home_filter_today">Today</string>
     <string name="home_filter_this_month">This Month</string>
     <string name="home_vs_yesterday">vs Yesterday %1$s %2$s</string>
@@ -403,6 +405,8 @@
     <string name="closing_time">Closing Time</string>
     <string name="shop_open">Shop Open</string>
     <string name="shop_closed">Shop Closed</string>
+    <string name="shop_closes">Closes %1$s</string>
+    <string name="shop_opens">Opens %1$s</string>
     <string name="business_hours_saved">Business hours saved</string>
     <string name="business_hours_not_set">Not set</string>
 
@@ -419,5 +423,41 @@
     <string name="toast_keep_one_item">Keep at least one item</string>
     <string name="toast_bill_updated">Bill updated</string>
     <string name="toast_bill_not_found">Bill not found</string>
+
+    <string name="share_app_subtitle">Invite your friends and grow together</string>
+    <string name="share_header_line1">Invite your friends and</string>
+    <string name="share_header_line2">grow together</string>
+    <string name="share_growth_badge_chip">👥 More Users, More Growth ↗</string>
+    <string name="share_link_card_title">🔗 Share App Link</string>
+    <string name="share_qr_desc_short">Scan to download the app instantly.</string>
+    <string name="share_promo_title">Share the app you love 💙</string>
+    <string name="share_promo_desc">Help your friends run their business smarter with PosBillingWala.</string>
+    <string name="share_growth_badge">More Users, More Growth</string>
+    <string name="share_growth_badge_line1">More Users</string>
+    <string name="share_growth_badge_line2">More Growth</string>
+    <string name="share_link_title">Share App Link</string>
+    <string name="share_link_friendly_hint">Tap the copy icon above to copy the link anytime.</string>
+    <string name="share_copy">Copy</string>
+    <string name="share_copy_link">Copy App Link</string>
+    <string name="share_show_qr_full">Show QR Code</string>
+    <string name="share_link_copied">Link copied to clipboard</string>
+    <string name="share_qr_title">Invite with QR Code</string>
+    <string name="share_qr_desc">Others can scan this QR code to download the app instantly.</string>
+    <string name="share_show_qr">Show QR Code</string>
+    <string name="share_benefits_title">Why share PosBillingWala?</string>
+    <string name="share_benefit_grow_title">Grow Together</string>
+    <string name="share_benefit_grow_desc">Help friends grow their business.</string>
+    <string name="share_benefit_billing_title">Easy Billing</string>
+    <string name="share_benefit_billing_desc">Simple, fast &amp; accurate billing.</string>
+    <string name="share_benefit_time_title">Save Time</string>
+    <string name="share_benefit_time_desc">Manage business in less time.</string>
+    <string name="share_benefit_free_title">Always Free</string>
+    <string name="share_benefit_free_desc">100% free to use forever.</string>
+    <string name="share_now">Share Now</string>
+    <string name="share_now_friendly_msg">Know someone who runs a shop? Share PosBillingWala with them — it\'s 100% free and helps them bill faster! 🚀</string>
+    <string name="share_qr_dialog_title">Scan to Download</string>
+    <string name="share_qr_dialog_subtitle">Point your camera at this QR code to get PosBillingWala on Play Store.</string>
+    <string name="share_qr_dialog_close">Close</string>
+    <string name="share_app_message">Hey! 👋\n\nI\'m using PosBillingWala to run my business smarter — fast billing, sales reports, and inventory, all in one app!\n\n✅ Simple &amp; accurate billing\n✅ Sales &amp; product reports\n✅ 100% FREE to use\n\nTry it for your shop too:\n%1$s\n\nLet\'s grow together! 💙</string>
 
 </resources>

@@ -31,8 +31,16 @@
             <label class="form-check-label" for="planPub">Published</label>
         </div>
     </div>
+    <div class="col-md-3 d-flex align-items-end">
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="is_featured" value="1" id="planFeatured" @if(old('is_featured', $plan ? $plan->is_featured : false)) checked @endif>
+            <label class="form-check-label" for="planFeatured">Featured on website</label>
+        </div>
+    </div>
     <div class="col-12">
-        <label class="form-label">Description</label>
-        <input type="text" class="form-control" name="description" value="{{ old('description', $plan->description ?? '') }}">
+        <label class="form-label">Description (features)</label>
+        <textarea class="form-control" name="description" rows="10" placeholder="One feature per line — shown as bullet points on the website pricing card.&#10;&#10;Example:&#10;GST billing &amp; invoices&#10;Inventory management&#10;Bluetooth printing&#10;Sales reports&#10;Phone support">{{ old('description', $plan->description ?? '') }}</textarea>
+        <div class="form-text">Enter one feature per line. All lines are shown as checkmarks on each pricing card.</div>
+        <div class="form-text text-primary">Check <strong>Featured on website</strong> to highlight this plan (purple card) on the pricing page. Only one plan should be featured.</div>
     </div>
 </div>

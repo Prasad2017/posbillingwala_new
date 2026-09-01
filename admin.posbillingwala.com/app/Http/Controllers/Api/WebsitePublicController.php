@@ -11,6 +11,7 @@ use App\Models\WebsiteDealer;
 use App\Models\WebsitePricingPlan;
 use App\Models\WebsiteProduct;
 use App\Models\WebsiteSetting;
+use App\Services\AdminBranding;
 use App\Services\AdminTables;
 use App\Services\WebsiteMedia;
 use Illuminate\Http\Request;
@@ -153,6 +154,7 @@ class WebsitePublicController extends Controller
                     'price' => (float) $plan->price,
                     'gst_note' => $plan->gst_note,
                     'description' => $plan->description,
+                    'is_featured' => (bool) $plan->is_featured,
                 ];
             });
 
@@ -182,7 +184,10 @@ class WebsitePublicController extends Controller
     {
         return response()->json([
             'success' => true,
-            'settings' => WebsiteSetting::allMap(),
+            'settings' => array_merge(WebsiteSetting::allMap(), [
+                'logo_url' => AdminBranding::publicLogoUrl(),
+                'favicon_url' => AdminBranding::publicFaviconUrl(),
+            ]),
         ]);
     }
 }

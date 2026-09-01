@@ -16,7 +16,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        require_once app_path('helpers.php');
     }
 
     /**
@@ -26,7 +26,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        admin_sync_public_assets();
+        \admin_sync_public_assets();
         $this->configureRequestUrls();
 
         View::composer('*', function ($view) {
@@ -34,8 +34,8 @@ class AppServiceProvider extends ServiceProvider
                 $view->with('adminLogoUrl', AdminBranding::logoUrl());
                 $view->with('adminFaviconUrl', AdminBranding::faviconUrl());
             } catch (\Throwable $e) {
-                $view->with('adminLogoUrl', admin_asset('images/pos_billingwala_logo.png'));
-                $view->with('adminFaviconUrl', admin_asset('images/app_logo.png'));
+                $view->with('adminLogoUrl', \admin_asset('images/pos_billingwala_logo.png'));
+                $view->with('adminFaviconUrl', \admin_asset('images/app_logo.png'));
             }
         });
     }

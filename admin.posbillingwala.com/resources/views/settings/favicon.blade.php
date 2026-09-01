@@ -5,7 +5,7 @@
         <div class="d-flex align-items-center justify-content-between mb-3">
             <div>
                 <h5 class="dash-hello mb-1">Favicon Update</h5>
-                <p class="text-secondary mb-0">Browser tab icon for the admin panel</p>
+                <p class="text-secondary mb-0">Browser tab icon for admin panel and public website</p>
             </div>
             <a href="{{ url('settings') }}" class="btn btn-outline-primary btn-sm">Back to Settings</a>
         </div>

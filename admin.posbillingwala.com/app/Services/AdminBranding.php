@@ -47,7 +47,7 @@ class AdminBranding
             $path = substr($path, 7);
         }
 
-        return admin_asset($path);
+        return \admin_asset($path);
     }
 
     public static function logoUrl(): string
@@ -57,7 +57,7 @@ class AdminBranding
             return self::assetWithVersion(self::DIR . '/' . basename($file), $file);
         }
 
-        return admin_asset('images/pos_billingwala_logo.png');
+        return \admin_asset('images/pos_billingwala_logo.png');
     }
 
     public static function faviconUrl(): string
@@ -67,7 +67,19 @@ class AdminBranding
             return self::assetWithVersion(self::DIR . '/' . basename($file), $file);
         }
 
-        return admin_asset('images/app_logo.png');
+        return \admin_asset('images/app_logo.png');
+    }
+
+    /** Absolute URL for public website (cross-domain). */
+    public static function publicLogoUrl(): string
+    {
+        return url(self::logoUrl());
+    }
+
+    /** Absolute URL for public website (cross-domain). */
+    public static function publicFaviconUrl(): string
+    {
+        return url(self::faviconUrl());
     }
 
     public static function hasCustomLogo(): bool

@@ -105,4 +105,10 @@
     <color name="switch_state_on">#20A446</color>
     <color name="switch_state_off">#9CA3AF</color>
 
+    <color name="page_bg">#F7F9FC</color>
+    <color name="text_primary">#1F2937</color>
+    <color name="text_secondary">#6B7280</color>
+    <color name="share_accent_yellow">#FFD21F</color>
+    <color name="share_green">#16A34A</color>
+
 </resources>

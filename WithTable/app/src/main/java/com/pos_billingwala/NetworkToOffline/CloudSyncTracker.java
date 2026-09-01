@@ -8,6 +8,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.Common;
 import com.pos_billingwala.Extra.ErrorLogQueue;
 import com.pos_billingwala.R;
 
@@ -19,6 +20,7 @@ import java.util.List;
  */
 public final class CloudSyncTracker {
 
+    public static final String KEY_LAST_CLOUD_SYNC_MS = "lastCloudSyncMs";
     public static final String KEY_CATEGORIES = "categories";
     public static final String KEY_SUBCATEGORIES = "subcategories";
     public static final String KEY_PRODUCTS = "products";
@@ -87,6 +89,11 @@ public final class CloudSyncTracker {
         lastSuccess = success;
         currentKey = "";
         currentTitle = "";
+    }
+
+    public static void recordSuccessfulSync(@NonNull Context context) {
+        Common.saveUserData(context.getApplicationContext(), KEY_LAST_CLOUD_SYNC_MS,
+                String.valueOf(System.currentTimeMillis()));
     }
 
     public static void invalidateSticky() {

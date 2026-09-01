@@ -171,8 +171,13 @@ class AdminTables
                 $table->string('description', 500)->default('');
                 $table->unsignedInteger('sort_order')->default(0);
                 $table->unsignedTinyInteger('is_published')->default(1);
+                $table->unsignedTinyInteger('is_featured')->default(0);
                 $table->dateTime('created_at')->useCurrent();
                 $table->dateTime('updated_at')->useCurrent();
+            });
+        } elseif (!Schema::hasColumn('website_pricing_plans', 'is_featured')) {
+            Schema::table('website_pricing_plans', function (Blueprint $table) {
+                $table->unsignedTinyInteger('is_featured')->default(0)->after('is_published');
             });
         }
 

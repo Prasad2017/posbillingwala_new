@@ -135,19 +135,69 @@
                             app:sdd_dialog_title="@string/ui_invoice_printer_name"
                             app:sdd_hint="@string/ui_invoice_printer_name" />
 
-                        <TextView
-                            android:id="@+id/connectPrinter"
+                        <LinearLayout
                             android:layout_width="wrap_content"
-                            android:layout_height="36dp"
+                            android:layout_height="wrap_content"
                             android:layout_marginStart="@dimen/spacing_sm"
-                            android:background="@drawable/bg_button_primary"
-                            android:fontFamily="@font/poppinsmedium"
-                            android:gravity="center"
-                            android:paddingStart="@dimen/spacing_md"
-                            android:paddingEnd="@dimen/spacing_md"
-                            android:text="@string/ui_connect"
-                            android:textColor="@color/white"
-                            android:textSize="@dimen/text_caption" />
+                            android:gravity="end"
+                            android:orientation="vertical">
+
+                            <LinearLayout
+                                android:id="@+id/invoiceConnectedStatus"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal"
+                                android:visibility="gone"
+                                tools:visibility="visible">
+
+                                <View
+                                    android:layout_width="8dp"
+                                    android:layout_height="8dp"
+                                    android:background="@drawable/bg_status_dot_green" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="6dp"
+                                    android:fontFamily="@font/poppinsmedium"
+                                    android:text="@string/ui_printer_connected"
+                                    android:textColor="@color/statusActive"
+                                    android:textSize="@dimen/text_caption" />
+                            </LinearLayout>
+
+                            <TextView
+                                android:id="@+id/connectPrinter"
+                                android:layout_width="wrap_content"
+                                android:layout_height="36dp"
+                                android:layout_marginTop="@dimen/spacing_xs"
+                                android:background="@drawable/bg_button_primary"
+                                android:fontFamily="@font/poppinsmedium"
+                                android:gravity="center"
+                                android:minWidth="96dp"
+                                android:paddingStart="@dimen/spacing_md"
+                                android:paddingEnd="@dimen/spacing_md"
+                                android:text="@string/ui_connect"
+                                android:textColor="@color/white"
+                                android:textSize="@dimen/text_caption" />
+
+                            <TextView
+                                android:id="@+id/disconnectPrinter"
+                                android:layout_width="wrap_content"
+                                android:layout_height="36dp"
+                                android:layout_marginTop="@dimen/spacing_xs"
+                                android:background="@drawable/bg_button_disconnect"
+                                android:fontFamily="@font/poppinsmedium"
+                                android:gravity="center"
+                                android:minWidth="96dp"
+                                android:paddingStart="@dimen/spacing_md"
+                                android:paddingEnd="@dimen/spacing_md"
+                                android:text="@string/ui_disconnect"
+                                android:textColor="@color/red_900"
+                                android:textSize="@dimen/text_caption"
+                                android:visibility="gone"
+                                tools:visibility="visible" />
+                        </LinearLayout>
                     </LinearLayout>
 
                     <LinearLayout
@@ -156,7 +206,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/spacing_md"
                         android:orientation="vertical"
-                        android:visibility="gone">
+                        android:visibility="visible">
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -181,19 +231,69 @@
                                 app:sdd_dialog_title="@string/ui_kot_print_printer_name"
                                 app:sdd_hint="@string/ui_kot_print_printer_name" />
 
-                            <TextView
-                                android:id="@+id/connectKOTPrinter"
+                            <LinearLayout
                                 android:layout_width="wrap_content"
-                                android:layout_height="36dp"
+                                android:layout_height="wrap_content"
                                 android:layout_marginStart="@dimen/spacing_sm"
-                                android:background="@drawable/bg_button_primary"
-                                android:fontFamily="@font/poppinsmedium"
-                                android:gravity="center"
-                                android:paddingStart="@dimen/spacing_md"
-                                android:paddingEnd="@dimen/spacing_md"
-                                android:text="@string/ui_connect"
-                                android:textColor="@color/white"
-                                android:textSize="@dimen/text_caption" />
+                                android:gravity="end"
+                                android:orientation="vertical">
+
+                                <LinearLayout
+                                    android:id="@+id/kotConnectedStatus"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:gravity="center_vertical"
+                                    android:orientation="horizontal"
+                                    android:visibility="gone"
+                                    tools:visibility="visible">
+
+                                    <View
+                                        android:layout_width="8dp"
+                                        android:layout_height="8dp"
+                                        android:background="@drawable/bg_status_dot_green" />
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginStart="6dp"
+                                        android:fontFamily="@font/poppinsmedium"
+                                        android:text="@string/ui_printer_connected"
+                                        android:textColor="@color/statusActive"
+                                        android:textSize="@dimen/text_caption" />
+                                </LinearLayout>
+
+                                <TextView
+                                    android:id="@+id/connectKOTPrinter"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="36dp"
+                                    android:layout_marginTop="@dimen/spacing_xs"
+                                    android:background="@drawable/bg_button_primary"
+                                    android:fontFamily="@font/poppinsmedium"
+                                    android:gravity="center"
+                                    android:minWidth="96dp"
+                                    android:paddingStart="@dimen/spacing_md"
+                                    android:paddingEnd="@dimen/spacing_md"
+                                    android:text="@string/ui_connect"
+                                    android:textColor="@color/white"
+                                    android:textSize="@dimen/text_caption" />
+
+                                <TextView
+                                    android:id="@+id/disconnectKOTPrinter"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="36dp"
+                                    android:layout_marginTop="@dimen/spacing_xs"
+                                    android:background="@drawable/bg_button_disconnect"
+                                    android:fontFamily="@font/poppinsmedium"
+                                    android:gravity="center"
+                                    android:minWidth="96dp"
+                                    android:paddingStart="@dimen/spacing_md"
+                                    android:paddingEnd="@dimen/spacing_md"
+                                    android:text="@string/ui_disconnect"
+                                    android:textColor="@color/red_900"
+                                    android:textSize="@dimen/text_caption"
+                                    android:visibility="gone"
+                                    tools:visibility="visible" />
+                            </LinearLayout>
                         </LinearLayout>
                     </LinearLayout>
                 </LinearLayout>

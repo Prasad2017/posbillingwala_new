@@ -1,0 +1,233 @@
+/* POS Billingwala Admin — responsive layout only (same theme/colors on all devices) */
+
+@media screen and (max-width: 1024px) {
+  body.pb-sidebar-open {
+    overflow: hidden;
+  }
+
+  .sidebar-wrapper {
+    z-index: 12 !important;
+    width: 280px !important;
+    max-width: min(280px, 86vw) !important;
+  }
+
+  .wrapper.toggled .sidebar-wrapper {
+    box-shadow: 8px 0 32px rgba(15, 23, 42, 0.18) !important;
+  }
+
+  .sidebar-footer,
+  .sidebar-header > .toggle-icon {
+    display: none !important;
+  }
+
+  .wrapper.toggled .sidebar-header .logo-icon,
+  .wrapper.toggled:not(.sidebar-hovered) .sidebar-header .logo-icon {
+    max-width: min(100%, 196px) !important;
+    width: auto !important;
+    height: 42px !important;
+    object-fit: contain !important;
+    object-position: left center !important;
+  }
+
+  .sidebar-header .logo-icon {
+    max-width: min(100%, 180px);
+    height: 38px;
+  }
+
+  .page-content {
+    padding: 1rem 0.85rem 1.5rem !important;
+  }
+
+  .page-breadcrumb {
+    padding: 0.75rem 0.85rem !important;
+  }
+
+  .page-breadcrumb .breadcrumb-title {
+    font-size: 1rem;
+  }
+
+  .pb-page-title {
+    font-size: 0.95rem;
+    max-width: 42vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mobile-toggle-menu {
+    min-width: 44px;
+    min-height: 44px;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .topbar.pb-topbar,
+  .pb-topbar .user-box {
+    min-height: 56px;
+    height: auto !important;
+  }
+
+  .pb-topbar .navbar {
+    padding-left: 0.65rem;
+    padding-right: 0.65rem;
+  }
+
+  .table-responsive,
+  .dataTables_wrapper,
+  .page-content .card-body.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .dataTables_wrapper .dataTables_length,
+  .dataTables_wrapper .dataTables_filter {
+    margin-bottom: 0.75rem;
+  }
+
+  .dataTables_wrapper .dataTables_filter input {
+    width: 100% !important;
+    max-width: 100%;
+  }
+
+  .table-actions-row {
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+
+  .table-actions-row .btn,
+  .table-actions-row .btn-group {
+    width: 100%;
+  }
+
+  .table-actions-row .btn-group .btn {
+    flex: 1 1 auto;
+  }
+
+  .pb-dash-row {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 0.5rem;
+  }
+
+  .pb-dash-amount {
+    align-self: flex-end;
+  }
+
+  .select2-container {
+    max-width: 100% !important;
+  }
+
+  .modal-dialog {
+    margin: 0.75rem;
+    max-width: calc(100% - 1.5rem);
+  }
+
+  .card-body {
+    padding: 1rem;
+  }
+
+  .page-content .row > [class*="col-xl-"],
+  .page-content .row > [class*="col-lg-"] {
+    margin-bottom: 0.5rem;
+  }
+
+  .welcome-card .d-flex.flex-wrap {
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+
+  .pb-date-filter {
+    width: 100%;
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .pb-date-filter .pb-date-chip,
+  .pb-date-filter .btn {
+    width: 100%;
+  }
+
+  .pb-date-filter select,
+  .pb-date-filter .select2-container {
+    width: 100% !important;
+  }
+}
+
+@media screen and (max-width: 767px) {
+  .pb-page-title {
+    max-width: 36vw;
+    font-size: 0.88rem;
+  }
+
+  .pb-login-page {
+    padding: 1.25rem max(0.85rem, env(safe-area-inset-left));
+  }
+
+  .pb-login-logo {
+    max-height: 110px;
+    width: 100%;
+  }
+
+  .pb-login-card-inner {
+    padding: 1.5rem 1.15rem;
+  }
+
+  .pb-role-switch {
+    grid-template-columns: 1fr;
+  }
+
+  .page-breadcrumb .breadcrumb {
+    flex-wrap: wrap;
+  }
+
+  .btn-group {
+    flex-wrap: wrap;
+  }
+
+  .dataTables_wrapper .dataTables_paginate {
+    margin-top: 0.75rem;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .pagination {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .pb-topbar .user-box .user-info {
+    display: none !important;
+  }
+
+  .pb-notif-btn {
+    width: 38px;
+    height: 38px;
+  }
+
+  .pb-user-avatar {
+    width: 34px;
+    height: 34px;
+    font-size: 0.85rem;
+  }
+
+  .dash-hello,
+  .pb-page-header .dash-hello {
+    font-size: 1.15rem;
+  }
+
+  .kpi-value {
+    font-size: 1.35rem;
+  }
+
+  .page-breadcrumb .breadcrumb-title {
+    font-size: 0.92rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-wrapper,
+  .overlay {
+    transition: none !important;
+  }
+}
