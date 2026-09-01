@@ -71,6 +71,7 @@ import com.pos_billingwala.Model.LocalSalesSnapshot;
 import com.pos_billingwala.Model.PrinterSettingResponse;
 import com.pos_billingwala.Retrofit.Api;
 import com.pos_billingwala.NetworkToOffline.CloudSyncNav;
+import com.pos_billingwala.NetworkToOffline.CloudSyncTracker;
 import com.pos_billingwala.NetworkToOffline.NetworkDataFetcher;
 import com.pos_billingwala.NetworkToOffline.Receiver.LicenceKeyReceiver;
 import com.pos_billingwala.NetworkToOffline.Receiver.OfflineToNetworkReceiver;
@@ -145,7 +146,9 @@ public class Home extends Fragment implements View.OnClickListener {
     BluetoothAdapter bluetoothAdapter;
     private final Handler homeClockHandler = new Handler(Looper.getMainLooper());
     private final SimpleDateFormat homeDateTimeFormat =
-            new SimpleDateFormat("EEE, dd MMM yyyy • hh:mm:ss a", Locale.getDefault());
+            new SimpleDateFormat("EEE, dd MMM yyyy | hh:mm:ss a", Locale.getDefault());
+    private final SimpleDateFormat homeSyncTimeFormat =
+            new SimpleDateFormat("dd MMM yyyy • hh:mm a", Locale.getDefault());
     private int lastGreetingHour = -1;
     private Bitmap cachedStoreLogo;
     private String cachedStoreLogoRaw;
@@ -1086,8 +1089,13 @@ public class Home extends Fragment implements View.OnClickListener {
             return;
         }
         lastGreetingHour = -1;
-        binding.shopName.setText(getGreeting());
+        binding.homeGreeting.setText(getGreeting());
+        String shop = MainActivity.shopName != null ? MainActivity.shopName.trim() : "";
+        binding.homeShopName.setText(shop);
+        binding.homeShopName.setVisibility(shop.isEmpty() ? View.GONE : View.VISIBLE);
         updateHomeDateTime();
+        updateHomeStatusPill();
+        updateSyncSubtitle();
         updateOnlineStatusUi();
         loadHomeStoreImage();
     }
@@ -1120,21 +1128,47 @@ public class Home extends Fragment implements View.OnClickListener {
         }
         Date now = new Date();
         binding.homeDateTime.setText(homeDateTimeFormat.format(now));
-        if (binding.homeBusinessHours != null) {
-            String hoursLine = BusinessHours.homeStatusLine(activity);
-            if (hoursLine.isEmpty()) {
-                binding.homeBusinessHours.setVisibility(View.GONE);
-            } else {
-                binding.homeBusinessHours.setVisibility(View.VISIBLE);
-                binding.homeBusinessHours.setText(hoursLine);
-                binding.homeBusinessHours.setTextColor(ContextCompat.getColor(activity, R.color.white));
-            }
-        }
 
         int hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
-        if (hour != lastGreetingHour && binding.shopName != null) {
+        if (hour != lastGreetingHour && binding.homeGreeting != null) {
             lastGreetingHour = hour;
-            binding.shopName.setText(getGreeting());
+            binding.homeGreeting.setText(getGreeting());
+        }
+    }
+
+    private void updateHomeStatusPill() {
+        if (binding == null || binding.homeStatusPill == null || activity == null) {
+            return;
+        }
+        if (!BusinessHours.isConfigured(activity)) {
+            binding.homeStatusPill.setVisibility(View.GONE);
+            return;
+        }
+        binding.homeStatusPill.setVisibility(View.VISIBLE);
+        binding.homeStatusOpen.setText(BusinessHours.homeOpenLabel(activity));
+        binding.homeStatusCloseTime.setText(BusinessHours.homeNextHoursLabel(activity));
+        boolean open = BusinessHours.isOpenNow(activity);
+        int dotColor = ContextCompat.getColor(activity, open ? R.color.statusActive : R.color.statusExpired);
+        if (binding.homeStatusDot.getBackground() != null) {
+            binding.homeStatusDot.getBackground().mutate().setTint(dotColor);
+        }
+    }
+
+    private void updateSyncSubtitle() {
+        if (binding == null || binding.homeSyncSubtitle == null || activity == null) {
+            return;
+        }
+        String raw = Common.getSavedUserData(activity, CloudSyncTracker.KEY_LAST_CLOUD_SYNC_MS);
+        if (raw == null || raw.trim().isEmpty()) {
+            binding.homeSyncSubtitle.setText(getString(R.string.home_never_synced));
+            return;
+        }
+        try {
+            long ms = Long.parseLong(raw.trim());
+            binding.homeSyncSubtitle.setText(getString(
+                    R.string.home_last_synced, homeSyncTimeFormat.format(new Date(ms))));
+        } catch (NumberFormatException e) {
+            binding.homeSyncSubtitle.setText(getString(R.string.home_never_synced));
         }
     }
 
@@ -1150,7 +1184,21 @@ public class Home extends Fragment implements View.OnClickListener {
         } else {
             greeting = getString(R.string.good_night);
         }
+        String firstName = firstNameFromUser();
+        if (!firstName.isEmpty()) {
+            return greeting + ", " + firstName + " \uD83D\uDC4B";
+        }
         return greeting + " \uD83D\uDC4B";
+    }
+
+    private String firstNameFromUser() {
+        String name = MainActivity.userName;
+        if (name == null || name.trim().isEmpty()) {
+            return "";
+        }
+        String trimmed = name.trim();
+        int space = trimmed.indexOf(' ');
+        return space > 0 ? trimmed.substring(0, space) : trimmed;
     }
 
     private synchronized List<CompanyResponse> getCachedCompanyDetails() {

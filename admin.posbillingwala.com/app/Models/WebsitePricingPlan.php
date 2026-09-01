@@ -18,12 +18,14 @@ class WebsitePricingPlan extends Model
         'description',
         'sort_order',
         'is_published',
+        'is_featured',
         'created_at',
         'updated_at',
     ];
 
     protected $casts = [
         'is_published' => 'boolean',
+        'is_featured' => 'boolean',
         'sort_order' => 'integer',
         'price' => 'float',
     ];

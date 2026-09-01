@@ -9,6 +9,7 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
+import android.text.TextUtils;
 import android.view.View;
 import android.widget.Toast;
 
@@ -147,7 +148,9 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
         }
 
         binding.connectPrinter.setOnClickListener(this);
+        binding.disconnectPrinter.setOnClickListener(this);
         binding.connectKOTPrinter.setOnClickListener(this);
+        binding.disconnectKOTPrinter.setOnClickListener(this);
         binding.invoicePreview.setOnClickListener(this);
         binding.backToSetting.setOnClickListener(this);
         binding.saveSetting.getRoot().setOnClickListener(this);
@@ -180,8 +183,12 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
             finish();
         } else if (id == R.id.connectPrinter) {
             WoosimPrnMng.connectFromButton(activity, bluetoothAddress, CompanyPrinterSetting.this, billSizeChangedByUser);
+        } else if (id == R.id.disconnectPrinter) {
+            disconnectInvoicePrinter();
         } else if (id == R.id.connectKOTPrinter) {
             KOTWoosimPrnMng.connectFromButton(activity, bluetoothKOTAddress, CompanyPrinterSetting.this, kotSizeChangedByUser);
+        } else if (id == R.id.disconnectKOTPrinter) {
+            disconnectKotPrinter();
         } else if (id == R.id.invoicePreview) {
             startActivity(new Intent(activity, TestInvoiceBluetoothPrint.class));
         } else if (id == R.id.saveSetting) {
@@ -221,24 +228,20 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
             printerSettingsLoaded = true;
             getPrinterSettingDetails();
         }
+        autoConnectSavedPrinters();
+        updatePrinterConnectionUi();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        updatePrinterConnectionUi();
     }
 
     public void getCompanyDetails() {
         companyResponseList = posBillingWalaDatabase.getCompanyDetails();
-
-        if (!companyResponseList.isEmpty()) {
-            CompanyResponse companyResponse = companyResponseList.get(0);
-
-            String tableStatus = companyResponse.getTableStatus() != null ? companyResponse.getTableStatus() : "";
-            String noTable = companyResponse.getNoOfTable();
-            if (tableStatus.equalsIgnoreCase("off")) {
-                binding.KOTPrinterLayout.setVisibility(View.GONE);
-            } else {
-                binding.KOTPrinterLayout.setVisibility(View.VISIBLE);
-            }
-
-        }
-
+        binding.KOTPrinterLayout.setVisibility(View.VISIBLE);
+        binding.KotPrinterFeedLinesLayout.setVisibility(View.VISIBLE);
     }
 
 
@@ -309,6 +312,66 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
             loadingDropdowns = false;
         }
 
+        updatePrinterConnectionUi();
+    }
+
+    private void autoConnectSavedPrinters() {
+        if (!TextUtils.isEmpty(bluetoothAddress)) {
+            WoosimPrnMng.connect(activity, bluetoothAddress, CompanyPrinterSetting.this);
+        }
+        if (!TextUtils.isEmpty(bluetoothKOTAddress)) {
+            KOTWoosimPrnMng.connect(activity, bluetoothKOTAddress, CompanyPrinterSetting.this);
+        }
+    }
+
+    private void updatePrinterConnectionUi() {
+        boolean invoiceConnected = isInvoicePrinterConnected();
+        boolean kotConnected = isKotPrinterConnected();
+
+        binding.invoiceConnectedStatus.setVisibility(invoiceConnected ? View.VISIBLE : View.GONE);
+        binding.connectPrinter.setVisibility(invoiceConnected ? View.GONE : View.VISIBLE);
+        binding.disconnectPrinter.setVisibility(invoiceConnected ? View.VISIBLE : View.GONE);
+
+        binding.kotConnectedStatus.setVisibility(kotConnected ? View.VISIBLE : View.GONE);
+        binding.connectKOTPrinter.setVisibility(kotConnected ? View.GONE : View.VISIBLE);
+        binding.disconnectKOTPrinter.setVisibility(kotConnected ? View.VISIBLE : View.GONE);
+    }
+
+    private boolean isInvoicePrinterConnected() {
+        return !TextUtils.isEmpty(bluetoothAddress) && BluetoothPrinterChannel.bill().isReady();
+    }
+
+    private boolean isKotPrinterConnected() {
+        return !TextUtils.isEmpty(bluetoothKOTAddress) && BluetoothPrinterChannel.kot().isReady();
+    }
+
+    private void disconnectInvoicePrinter() {
+        bluetoothAddress = "";
+        BluetoothPrinterChannel.bill().disconnect(activity);
+        persistConnectionState();
+        updatePrinterConnectionUi();
+    }
+
+    private void disconnectKotPrinter() {
+        bluetoothKOTAddress = "";
+        BluetoothPrinterChannel.kot().disconnect(activity);
+        persistConnectionState();
+        updatePrinterConnectionUi();
+    }
+
+    private void persistConnectionState() {
+        if (settingId == null || settingId.isEmpty()) {
+            return;
+        }
+        posBillingWalaDatabase.updateCompanyPrinterSetting(settingId, printerName, KOTPrinterName,
+                binding.invoicePrefix.getText().toString(), binding.invoiceTitle.getText().toString(),
+                logoUse, paymentUse, customerUse, productQuantityUpdate, duplicateBillUse,
+                binding.invoiceTermsCondition.getText().toString(),
+                bluetoothAddress != null ? bluetoothAddress : "",
+                bluetoothKOTAddress != null ? bluetoothKOTAddress : "",
+                binding.printerFeedLines.getText().toString().isEmpty() ? "1" : binding.printerFeedLines.getText().toString(),
+                binding.KotPrinterFeedLines.getText().toString().isEmpty() ? "1" : binding.KotPrinterFeedLines.getText().toString(),
+                0);
     }
 
     private void setSwitchCheckedSilently(PosSwitchRowView switchView, boolean checked) {
@@ -327,6 +390,8 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
             lastConnectedPrinterName = printerName;
             billSizeChangedByUser = false;
             BluetoothPrinterChannel.bill().onDevicePicked(bluetoothAddress);
+            persistConnectionState();
+            binding.getRoot().postDelayed(this::updatePrinterConnectionUi, 800);
         } else if (requestCode == REQUEST_KOT_ENABLE_BT && resultCode == RESULT_OK) {
             KOTWoosimPrnMng.connectFromButton(activity, bluetoothKOTAddress, CompanyPrinterSetting.this, kotSizeChangedByUser);
         } else if (requestCode == REQUEST_KOT_CONNECT_DEVICE && resultCode == RESULT_OK) {
@@ -334,6 +399,8 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
             lastConnectedKOTPrinterName = KOTPrinterName;
             kotSizeChangedByUser = false;
             BluetoothPrinterChannel.kot().onDevicePicked(bluetoothKOTAddress);
+            persistConnectionState();
+            binding.getRoot().postDelayed(this::updatePrinterConnectionUi, 800);
         }
     }
 

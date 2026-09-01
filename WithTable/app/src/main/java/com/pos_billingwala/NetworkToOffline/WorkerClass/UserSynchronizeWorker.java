@@ -67,6 +67,9 @@ public class UserSynchronizeWorker extends Worker {
         }
 
         CloudSyncTracker.endRun(success);
+        if (success) {
+            CloudSyncTracker.recordSuccessfulSync(context);
+        }
         CloudSyncTracker.Snapshot snapshot = CloudSyncTracker.refresh(context);
         SyncNotification.showComplete(context, success, snapshot.uploadedThisRun, snapshot.pendingTotal);
         return success ? Result.success() : Result.retry();

@@ -29,6 +29,11 @@ class WebsiteContentController extends Controller
         }
     }
 
+    public function seedWebsitePages(): void
+    {
+        $this->seedDefaults();
+    }
+
     private function seedDefaults(): void
     {
         if (!WebsitePage::where('slug', 'privacy')->exists()) {

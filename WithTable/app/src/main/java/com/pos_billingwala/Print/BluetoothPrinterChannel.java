@@ -294,6 +294,13 @@ public final class BluetoothPrinterChannel {
         }
     }
 
+    public void disconnect(Context context) {
+        savedAddress = "";
+        userInitiatedSession = false;
+        cancelReconnect();
+        release(context);
+    }
+
     public boolean ensureBluetoothOn(Activity activity, boolean fromUser) {
         return checkBluetoothEnabled(activity, fromUser);
     }

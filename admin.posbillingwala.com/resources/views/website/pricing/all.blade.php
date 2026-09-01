@@ -20,7 +20,7 @@
         <div class="card"><div class="card-body">
             <div class="table-responsive">
                 <table class="table table-striped table-bordered mb-0">
-                    <thead><tr><th>#</th><th>Type</th><th>Validity</th><th>Price (₹)</th><th>GST</th><th>Order</th><th>Status</th><th>Action</th></tr></thead>
+                    <thead><tr><th>#</th><th>Type</th><th>Validity</th><th>Price (₹)</th><th>GST</th><th>Order</th><th>Featured</th><th>Status</th><th>Action</th></tr></thead>
                     <tbody>
                         @forelse($plans as $plan)
                         <tr>
@@ -30,6 +30,7 @@
                             <td>{{ number_format($plan->price, 2) }}</td>
                             <td>{{ $plan->gst_note }}</td>
                             <td>{{ $plan->sort_order }}</td>
+                            <td>@if($plan->is_featured)<span class="badge bg-primary">Featured</span>@else<span class="text-muted">—</span>@endif</td>
                             <td>@if($plan->is_published)<span class="badge bg-success">Published</span>@else<span class="badge bg-secondary">Hidden</span>@endif</td>
                             <td>
                                 <a href="{{ url('website/pricing/edit/'.$plan->id) }}" class="btn btn-sm btn-outline-primary">Edit</a>
@@ -38,7 +39,7 @@
                             </td>
                         </tr>
                         @empty
-                        <tr><td colspan="8" class="text-center text-muted py-4">No pricing plans yet.</td></tr>
+                        <tr><td colspan="9" class="text-center text-muted py-4">No pricing plans yet.</td></tr>
                         @endforelse
                     </tbody>
                 </table>

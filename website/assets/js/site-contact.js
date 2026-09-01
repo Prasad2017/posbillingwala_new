@@ -4,6 +4,14 @@
 
   var feedback = document.getElementById("contactFeedback");
   var submitBtn = document.getElementById("contactSubmit");
+  var subjectField = document.getElementById("contactSubject");
+  if (subjectField) {
+    try {
+      var params = new URLSearchParams(window.location.search);
+      var subject = params.get("subject");
+      if (subject) subjectField.value = subject;
+    } catch (e) {}
+  }
   var apiBase = (window.PBW_WEBSITE_API ||
     (window.PBW_WEBSITE_API_CANDIDATES && window.PBW_WEBSITE_API_CANDIDATES[0]) ||
     "https://admin.posbillingwala.com/api/website").replace(/\/$/, "");

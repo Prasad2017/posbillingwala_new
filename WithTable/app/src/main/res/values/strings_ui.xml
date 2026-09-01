@@ -52,6 +52,8 @@
     <string name="ui_change_app_login_pbpin_अँपच_पन_टकबदल">Change App Login PB-PIN (अँपचा पिन टाका/बदला)</string>
     <string name="ui_code">Code</string>
     <string name="ui_connect">Connect</string>
+    <string name="ui_disconnect">Disconnect</string>
+    <string name="ui_printer_connected">Printer Connected</string>
     <string name="ui_continue">Continue</string>
     <string name="ui_country_name">Country Name</string>
     <string name="ui_coupon_preview">Coupon Preview</string>

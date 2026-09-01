@@ -81,8 +81,7 @@
     root.innerHTML =
       '<p class="empty-note api-error">' +
       escapeHtml(label || "Content") +
-      " could not load from admin. " +
-      "Open Admin → Website Content once, deploy latest admin code, and run p23_website_catalog.sql if needed. " +
+      " could not load from Admin API. Please check that the public website API is online and CORS allows this website origin." +
       (lastApiError ? "<br><small>" + escapeHtml(lastApiError) + "</small>" : "") +
       "</p>";
   }
@@ -251,6 +250,13 @@
       accessories: "Accessories",
     };
 
+    var categoryIntros = {
+      software: "Android billing app and software licences for restaurants, retail and grocery businesses.",
+      hardware: "Thermal printers, POS machines, cash drawers and billing counter hardware.",
+      consumables: "Billing rolls, labels and daily-use supplies for your printer.",
+      accessories: "Cables, stands and add-ons for a complete billing setup.",
+    };
+
     var tones = {
       software: "blue",
       hardware: "purple",
@@ -299,7 +305,9 @@
         key +
         '"' +
         (i === 0 ? "" : " hidden") +
-        '><div class="catalog-grid">';
+        '><p class="catalog-category-intro reveal">' +
+        escapeHtml(categoryIntros[key] || "") +
+        '</p><div class="catalog-grid">';
       panelsHtml += groups[key]
         .map(function (p) {
           var iconName = catIconFn ? catIconFn(p.category) : "box";
@@ -317,7 +325,7 @@
             "<p>" +
             escapeHtml(p.description || "") +
             "</p>" +
-            '<a class="text-link" href="contact.html">Contact dealer →</a></article>'
+            '<a class="btn btn-primary btn-buy" href="contact.html">Buy Now</a></article>'
           );
         })
         .join("");
@@ -338,64 +346,55 @@
       return;
     }
 
-    var full = rootId === "pricingRoot";
-
-    if (!full) {
-      root.innerHTML =
-        '<div class="pricing-cards reveal">' +
-        plans
-          .map(function (plan) {
-            return (
-              '<article class="pricing-card">' +
-              '<span class="pricing-card-badge">' +
-              escapeHtml(plan.plan_type === "renewal" ? "Renewal" : "Subscription") +
-              "</span>" +
-              '<p class="pricing-card-price">' +
-              formatPrice(plan.price) +
-              "</p>" +
-              '<p class="pricing-card-meta">' +
-              escapeHtml(plan.validity_label) +
-              (plan.gst_note ? " · " + escapeHtml(plan.gst_note) : "") +
-              "</p></article>"
-            );
-          })
-          .join("") +
-        "</div>";
-      observeReveal(root);
-      return;
-    }
-
-    var rows = plans
-      .map(function (plan) {
-        return (
-          "<tr>" +
-          "<td>" +
-          escapeHtml(plan.plan_type === "renewal" ? "Renewal" : "Subscription") +
-          "</td>" +
-          "<td>" +
-          escapeHtml(plan.validity_label) +
-          "</td>" +
-          "<td><strong>" +
-          formatPrice(plan.price) +
-          "</strong></td>" +
-          "<td>" +
-          escapeHtml(plan.gst_note || "") +
-          "</td>" +
-          (full ? '<td class="muted">' + escapeHtml(plan.description || "") + "</td>" : "") +
-          "</tr>"
-        );
-      })
-      .join("");
+    var featuredIndex = Math.min(1, plans.length - 1);
+    var hasFeatured = plans.some(function (plan) {
+      return plan.is_featured;
+    });
 
     root.innerHTML =
-      '<div class="table-wrap reveal"><table class="pricing-table">' +
-      "<thead><tr><th>Plan</th><th>Validity</th><th>Price</th><th>GST</th>" +
-      (full ? "<th>Notes</th>" : "") +
-      "</tr></thead><tbody>" +
-      rows +
-      "</tbody></table></div>" +
-      (full
-        ? '<p class="pricing-note reveal">Prices may vary by dealer or region. Contact your <a href="dealers.html">local dealer</a> for exact quote.</p>'
+      '<div class="pricing-scroll-wrap reveal"><div class="pricing-cards">' +
+      plans
+        .map(function (plan, i) {
+          var featured =
+            plan.is_featured || (!hasFeatured && i === featuredIndex && plans.length > 1);
+          var features = plan.description
+            ? plan.description.split(/\n|•/).filter(Boolean)
+            : [
+                "Android POS billing app",
+                "Offline billing support",
+                "Bluetooth printing",
+                "Sales reports",
+                "Customer support",
+              ];
+          return (
+            '<article class="pricing-card' +
+            (featured ? " pricing-card--featured" : "") +
+            '">' +
+            (featured ? '<span class="pricing-card-popular">POPULAR</span>' : "") +
+            '<span class="pricing-card-badge">' +
+            escapeHtml(plan.plan_type === "renewal" ? "Renewal" : plan.validity_label || "Plan") +
+            "</span>" +
+            '<p class="pricing-card-price">' +
+            formatPrice(plan.price) +
+            "</p>" +
+            '<p class="pricing-card-meta">' +
+            escapeHtml(plan.validity_label) +
+            (plan.gst_note ? " · " + escapeHtml(plan.gst_note) : "") +
+            "</p>" +
+            '<ul class="pricing-card-features">' +
+            features
+              .map(function (f) {
+                return "<li>" + escapeHtml(String(f).trim()) + "</li>";
+              })
+              .join("") +
+            "</ul>" +
+            '<a class="btn btn-primary btn-buy" href="contact.html">Buy Now</a></article>'
+          );
+        })
+        .join("") +
+      '</div><p class="pricing-scroll-hint">← Swipe to see all plans →</p></div>' +
+      (rootId === "pricingRoot"
+        ? '<p class="pricing-note reveal container">Prices may vary by dealer or region. Contact your <a href="dealers.html">local dealer</a> for exact quote.</p>'
         : "");
     observeReveal(root);
   }
@@ -420,7 +419,9 @@
       return;
     }
 
-    root.innerHTML = dealers
+    root.innerHTML =
+      '<div class="dealers-grid">' +
+      dealers
       .map(function (dealer) {
         var badge =
           dealer.dealer_type === "head_office"
@@ -470,7 +471,8 @@
           "</article>"
         );
       })
-      .join("");
+      .join("") +
+      "</div>";
 
     observeReveal(root);
   }
@@ -495,8 +497,30 @@
     });
   }
 
+  function applyBranding(settings) {
+    if (!settings) return;
+
+    if (settings.logo_url) {
+      document.querySelectorAll(".brand-logo").forEach(function (img) {
+        img.src = settings.logo_url;
+      });
+    }
+
+    if (settings.favicon_url) {
+      var iconLink = document.querySelector('link[rel="icon"]');
+      if (iconLink) iconLink.href = settings.favicon_url;
+
+      var appleLink = document.querySelector('link[rel="apple-touch-icon"]');
+      if (appleLink) {
+        appleLink.href = settings.logo_url || settings.favicon_url;
+      }
+    }
+  }
+
   function applySettings(settings) {
     if (!settings) return;
+
+    applyBranding(settings);
 
     if (settings.brand_tagline) {
       var taglineEl = document.getElementById("footerTagline");
@@ -512,27 +536,64 @@
       });
     }
 
-    var legalParts = [];
     if (settings.legal_company_name) {
-      legalParts.push("<strong>" + escapeHtml(settings.legal_company_name) + "</strong>");
       var companyEl = document.getElementById("footerCompany");
       if (companyEl) companyEl.textContent = settings.legal_company_name;
+      var copyrightCo = document.getElementById("footerCopyrightCompany");
+      if (copyrightCo) copyrightCo.textContent = settings.legal_company_name;
     }
-    if (settings.gstin) legalParts.push("GSTIN: " + escapeHtml(settings.gstin));
-    if (settings.office_address) legalParts.push(escapeHtml(settings.office_address));
-    if (settings.support_phone) {
-      legalParts.push('Support: <a href="tel:' + escapeHtml(settings.support_phone) + '">' + escapeHtml(settings.support_phone) + "</a>");
-    }
-    if (settings.business_hours) legalParts.push(escapeHtml(settings.business_hours));
 
-    var legalEl = document.getElementById("footerLegal");
-    if (legalEl && legalParts.length) {
-      legalEl.innerHTML = legalParts.join("<br>");
+    var gstEl = document.getElementById("footerGstin");
+    if (gstEl) gstEl.textContent = settings.gstin || "—";
+
+    var addressEl = document.getElementById("footerAddress");
+    if (addressEl) addressEl.textContent = settings.office_address || "—";
+
+    var contactEl = document.getElementById("footerContact");
+    if (contactEl) {
+      var contactParts = [];
+      if (settings.support_phone) {
+        contactParts.push(
+          '<a href="tel:' +
+            escapeHtml(settings.support_phone) +
+            '">' +
+            escapeHtml(settings.support_phone) +
+            "</a>"
+        );
+      }
+      if (settings.support_email) {
+        contactParts.push(
+          '<a href="mailto:' +
+            escapeHtml(settings.support_email) +
+            '">' +
+            escapeHtml(settings.support_email) +
+            "</a>"
+        );
+      }
+      contactEl.innerHTML = contactParts.length ? contactParts.join("<br>") : "—";
     }
+
+    var navPhone = document.getElementById("navPhone");
+    if (navPhone && settings.support_phone) {
+      navPhone.href = "tel:" + String(settings.support_phone).replace(/[^0-9+]/g, "");
+      var navPhoneText = navPhone.querySelector(".nav-phone-text");
+      if (navPhoneText) navPhoneText.textContent = "+91 " + String(settings.support_phone).replace(/[^0-9]/g, "").replace(/^(91)/, "").replace(/(\d{5})(\d{5})$/, "$1 $2");
+    }
+
+    var contactCompany = document.getElementById("contactCompany");
+    if (contactCompany && settings.legal_company_name) contactCompany.textContent = settings.legal_company_name;
+
+    var contactGstin = document.getElementById("contactGstin");
+    if (contactGstin) contactGstin.textContent = settings.gstin || "—";
+
+    var contactAddress = document.getElementById("contactAddress");
+    if (contactAddress && settings.office_address) contactAddress.textContent = settings.office_address;
 
     var contactPhone = document.getElementById("contactPhone");
     if (contactPhone && settings.support_phone) {
-      contactPhone.innerHTML = '<a href="tel:' + escapeHtml(settings.support_phone) + '">' + escapeHtml(settings.support_phone) + "</a>";
+      var phoneDigits = String(settings.support_phone).replace(/[^0-9]/g, "").replace(/^(91)/, "");
+      var phoneDisplay = "+91 " + phoneDigits.replace(/(\d{5})(\d{5})$/, "$1 $2");
+      contactPhone.innerHTML = '<a href="tel:' + escapeHtml(settings.support_phone) + '">' + escapeHtml(phoneDisplay) + "</a>";
     }
     var contactEmail = document.getElementById("contactEmailDisplay");
     if (contactEmail && settings.support_email) {
@@ -541,14 +602,22 @@
     var contactHours = document.getElementById("contactHours");
     if (contactHours && settings.business_hours) contactHours.textContent = settings.business_hours;
 
+    var contactMap = document.getElementById("contactMap");
+    if (contactMap && settings.office_address) {
+      contactMap.src =
+        "https://maps.google.com/maps?q=" +
+        encodeURIComponent(settings.office_address) +
+        "&output=embed";
+    }
+
     var appVersion = document.getElementById("appVersion");
     if (appVersion && settings.app_latest_version) appVersion.textContent = "Latest version: " + settings.app_latest_version;
 
-    var apkLink = document.getElementById("apkDownloadLink");
-    if (apkLink && settings.apk_download_url) {
-      apkLink.href = settings.apk_download_url;
-      apkLink.hidden = false;
-    }
+    try {
+      document.dispatchEvent(
+        new CustomEvent("pbw:settings-loaded", { detail: settings })
+      );
+    } catch (e) {}
   }
 
   function renderCmsPage(page, titleId, bodyId, updatedId, defaultTitle) {
@@ -577,11 +646,36 @@
     }
   }
 
+
+  function updateHomeStats() {
+    var cards = [
+      { id: "homeStatCustomers", label: "Published Customers" },
+      { id: "homeStatProducts", label: "Published Products" },
+      { id: "homeStatPlans", label: "Active Plans" },
+      { id: "homeStatDealers", label: "Dealer Areas" }
+    ];
+    if (!document.getElementById("homeStatCustomers")) return;
+    var state = { customers: null, products: null, plans: null, dealers: null };
+    function paint() {
+      var vals = [state.customers, state.products, state.plans, state.dealers];
+      cards.forEach(function (c, i) {
+        var el = document.getElementById(c.id);
+        if (el && typeof vals[i] === "number") el.textContent = vals[i].toLocaleString("en-IN");
+      });
+    }
+    fetchJson("/clients").then(function(d){ state.customers = Array.isArray(d.clients) ? d.clients.length : 0; paint(); }).catch(function(){});
+    fetchJson("/products").then(function(d){ state.products = Array.isArray(d.products) ? d.products.length : 0; paint(); }).catch(function(){});
+    fetchJson("/pricing").then(function(d){ state.plans = Array.isArray(d.plans) ? d.plans.length : 0; paint(); }).catch(function(){});
+    fetchJson("/dealers").then(function(d){ state.dealers = Array.isArray(d.dealers) ? d.dealers.length : 0; paint(); }).catch(function(){});
+  }
+
   fetchJson("/settings")
     .then(function (data) {
       if (data.success) applySettings(data.settings);
     })
-    .catch(function () {});
+    .catch(function () {
+      showLoadError("footerLegal", "Website settings");
+    });
 
   if (document.getElementById("clientsRoot")) {
     fetchJson("/clients")
@@ -591,7 +685,9 @@
       .catch(function () {
         showLoadError("clientsRoot", "Customers");
       });
+  }
 
+  if (document.getElementById("testimonialsRoot")) {
     fetchJson("/testimonials")
       .then(function (data) {
         if (data.success) renderTestimonials(data.testimonials);
@@ -640,6 +736,8 @@
     { slug: "support", titleId: "supportTitle", bodyId: "supportBody", updatedId: "supportUpdated", defaultTitle: "Customer Support" },
     { slug: "company", titleId: "companyTitle", bodyId: "companyBody", updatedId: "companyUpdated", defaultTitle: "Company Model" },
   ];
+
+  updateHomeStats();
 
   cmsPages.forEach(function (cfg) {
     if (!document.getElementById(cfg.bodyId)) return;

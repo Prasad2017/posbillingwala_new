@@ -106,6 +106,27 @@ public final class BusinessHours {
                 + "  " + range;
     }
 
+    /** Label for the open/closed half of the home status pill. */
+    public static String homeOpenLabel(Context context) {
+        if (!isConfigured(context)) {
+            return "";
+        }
+        return isOpenNow(context)
+                ? context.getString(R.string.shop_open)
+                : context.getString(R.string.shop_closed);
+    }
+
+    /** Next transition time for the home status pill (closes or opens). */
+    public static String homeNextHoursLabel(Context context) {
+        if (!isConfigured(context)) {
+            return "";
+        }
+        if (isOpenNow(context)) {
+            return context.getString(R.string.shop_closes, formatMinutes(closingMinutes(context)));
+        }
+        return context.getString(R.string.shop_opens, formatMinutes(openingMinutes(context)));
+    }
+
     public static boolean isOpenNow(Context context) {
         if (!isConfigured(context)) {
             return true;

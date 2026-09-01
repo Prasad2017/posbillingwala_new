@@ -12,7 +12,7 @@ class LinkPublicAssets extends Command
 
     public function handle(): int
     {
-        if (admin_sync_public_assets()) {
+        if (\admin_sync_public_assets()) {
             $this->info('public/assets is ready.');
 
             return self::SUCCESS;

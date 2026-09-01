@@ -80,7 +80,68 @@
     });
   }
 
-  if (window.PBW_ICONS) {
+  var GLYPH_MAP = {
+    "▤": "receipt-text",
+    "□": "box",
+    "↗": "trending-up",
+    "♙": "users",
+    "▣": "smartphone",
+    "₹": "indian-rupee",
+    "⚡": "zap",
+    "✓": "check",
+    "◉": "wifi-off",
+    "♧": "users",
+    "⌁": "wifi-off",
+    "⬇": "download",
+    "☎": "phone",
+    "✉": "mail",
+    "⚙": "settings",
+    "💬": "message-circle",
+    "☁": "cloud-sync",
+    "◎": "languages",
+    "↻": "refresh",
+    "🍽️": "utensils",
+    "🛒": "shopping-bag",
+    "🥦": "store",
+    "👕": "shirt",
+    "🍛": "utensils",
+    "🏨": "building",
+    "💰": "tag",
+    "🧹": "sparkles",
+    "🔗": "layers",
+    "📐": "monitor",
+    "🧰": "package",
+    "🔌": "cpu",
+    "🖨️": "printer",
+    "🖥️": "monitor",
+    "📱": "smartphone",
+    "📲": "smartphone",
+  };
+
+  var CHIP_MAP = {
+    "Offline Billing": "wifi-off",
+    "Bluetooth Printing": "bluetooth",
+    "GST Billing": "indian-rupee",
+    "Sales Reports": "bar-chart",
+    "Customer Management": "users",
+    "Data Sync": "cloud-sync",
+    Multilingual: "languages",
+  };
+
+  var TONES = ["purple", "blue", "green", "orange", "cyan", "pink"];
+
+  function iconNameFor(el) {
+    var explicit = el.getAttribute("data-icon") || el.getAttribute("data-pbw-icon");
+    if (explicit) return explicit;
+    var text = (el.textContent || "").trim();
+    if (GLYPH_MAP[text]) return GLYPH_MAP[text];
+    if (/^0[1-3]$/.test(text)) return null;
+    return null;
+  }
+
+  function hydrateModernIcons() {
+    if (!window.PBW_ICONS) return;
+
     document.querySelectorAll("[data-pbw-icon]").forEach(function (el) {
       var name = el.getAttribute("data-pbw-icon");
       var tone = el.getAttribute("data-pbw-tone") || "blue";
@@ -91,5 +152,80 @@
         className: sm ? "icon-box--sm" : "",
       });
     });
+
+    document
+      .querySelectorAll(
+        ".feature-icon, .bento-icon, .stat-icon, .page-hero-icon, .support-channel-icon, .hv2-pills i, [data-icon]:not(.btn-inline-icon):not(.nav-phone-icon)"
+      )
+      .forEach(function (el, i) {
+        var name = iconNameFor(el);
+        if (!name) return;
+        var tone = el.getAttribute("data-pbw-tone") || TONES[i % TONES.length];
+        var inPill = el.closest && el.closest(".hv2-pills");
+        var size = el.classList.contains("page-hero-icon")
+          ? 28
+          : el.classList.contains("stat-icon")
+          ? 20
+          : inPill
+          ? 18
+          : el.classList.contains("support-channel-icon")
+          ? 20
+          : 22;
+        el.className = (el.className + " icon-box icon-box--" + tone).trim();
+        el.innerHTML = window.PBW_ICONS.icon(name, { size: size });
+      });
+
+    document.querySelectorAll(".btn-inline-icon[data-icon], .nav-phone-icon[data-icon]").forEach(function (el) {
+      el.innerHTML = window.PBW_ICONS.icon(el.getAttribute("data-icon"), { size: 16 });
+    });
+
+    document.querySelectorAll(".chip").forEach(function (chip, i) {
+      var raw = chip.textContent.trim();
+      var matched = null;
+      var label = raw;
+      Object.keys(CHIP_MAP).forEach(function (key) {
+        if (raw.indexOf(key) !== -1) {
+          matched = CHIP_MAP[key];
+          label = key;
+        }
+      });
+      if (!matched) {
+        var glyph = raw.charAt(0);
+        if (GLYPH_MAP[glyph]) {
+          matched = GLYPH_MAP[glyph];
+          label = raw.slice(glyph.length).trim();
+        }
+      }
+      if (!matched) return;
+      var tone = TONES[i % TONES.length];
+      chip.innerHTML =
+        '<span class="chip-icon icon-box icon-box--' +
+        tone +
+        ' icon-box--sm">' +
+        window.PBW_ICONS.icon(matched, { size: 14 }) +
+        "</span><span>" +
+        label +
+        "</span>";
+      chip.classList.add("chip--modern");
+    });
+
+    document.querySelectorAll(".btn").forEach(function (btn) {
+      if (btn.querySelector(".pbw-icon") || btn.querySelector("[data-icon]")) return;
+      var text = btn.textContent.trim();
+      if (text.charAt(0) === "⬇") {
+        btn.innerHTML =
+          window.PBW_ICONS.icon("download", { size: 16, className: "btn-icon" }) +
+          "<span>" +
+          text.slice(1).trim() +
+          "</span>";
+        btn.classList.add("btn--with-icon");
+      }
+    });
+
+    document.querySelectorAll(".check-list li").forEach(function (li) {
+      li.classList.add("check-list--modern");
+    });
   }
+
+  hydrateModernIcons();
 })();

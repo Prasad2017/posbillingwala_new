@@ -21,124 +21,162 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <FrameLayout
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@color/colorPrimary"
-                android:clipChildren="false"
-                android:clipToPadding="false">
-
-                <ImageView
-                    android:layout_width="match_parent"
-                    android:layout_height="52dp"
-                    android:layout_gravity="bottom"
-                    android:contentDescription="@null"
-                    android:scaleType="fitXY"
-                    android:src="@drawable/bg_home_wave_footer" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:paddingStart="@dimen/spacing_lg"
-                    android:paddingTop="@dimen/spacing_md"
-                    android:paddingEnd="@dimen/spacing_lg"
-                    android:paddingBottom="40dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <FrameLayout
-                            android:id="@+id/userPhotoContainer"
-                            android:layout_width="52dp"
-                            android:layout_height="52dp">
-
-                            <de.hdodenhof.circleimageview.CircleImageView
-                                android:id="@+id/userPhoto"
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:src="@drawable/app_logo"
-                                app:civ_border_color="@color/white"
-                                app:civ_border_width="2dp" />
-
-                            <View
-                                android:id="@+id/networkStatusDot"
-                                android:layout_width="14dp"
-                                android:layout_height="14dp"
-                                android:layout_gravity="top|end"
-                                android:background="@drawable/status_dot"
-                                android:contentDescription="@string/status_online" />
-                        </FrameLayout>
+                android:background="@drawable/bg_home_header_card"
+                android:orientation="vertical"
+                android:paddingStart="@dimen/spacing_lg"
+                android:paddingTop="@dimen/spacing_md"
+                android:paddingEnd="@dimen/spacing_lg"
+                android:paddingBottom="@dimen/spacing_lg">
 
                         <LinearLayout
-                            android:layout_width="0dp"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="@dimen/spacing_md"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
 
-                            <androidx.appcompat.widget.AppCompatTextView
-                                android:id="@+id/shopName"
-                                android:layout_width="match_parent"
+                            <FrameLayout
+                                android:id="@+id/userPhotoContainer"
+                                android:layout_width="52dp"
+                                android:layout_height="52dp">
+
+                                <de.hdodenhof.circleimageview.CircleImageView
+                                    android:id="@+id/userPhoto"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:src="@drawable/app_logo"
+                                    app:civ_border_color="@color/white"
+                                    app:civ_border_width="2dp" />
+
+                                <View
+                                    android:id="@+id/networkStatusDot"
+                                    android:layout_width="14dp"
+                                    android:layout_height="14dp"
+                                    android:layout_gravity="top|end"
+                                    android:background="@drawable/status_dot"
+                                    android:contentDescription="@string/status_online" />
+                            </FrameLayout>
+
+                            <LinearLayout
+                                android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:fontFamily="@font/poppinsbold"
-                                android:text="@string/good_morning"
+                                android:layout_marginStart="@dimen/spacing_md"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <androidx.appcompat.widget.AppCompatTextView
+                                    android:id="@+id/homeGreeting"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:fontFamily="@font/poppinsbold"
+                                    android:text="@string/good_morning"
+                                    android:textColor="@color/white"
+                                    android:textSize="18sp"
+                                    tools:text="Good Night, Shiva 👋" />
+
+                                <androidx.appcompat.widget.AppCompatTextView
+                                    android:id="@+id/homeShopName"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="2dp"
+                                    android:ellipsize="end"
+                                    android:fontFamily="@font/poppinsmedium"
+                                    android:maxLines="1"
+                                    android:textColor="#CCFFFFFF"
+                                    android:textSize="12sp"
+                                    tools:text="SHIVA TRADING CO" />
+                            </LinearLayout>
+
+                            <ImageView
+                                android:id="@+id/userSettingIcon"
+                                android:layout_width="44dp"
+                                android:layout_height="44dp"
+                                android:background="@drawable/bg_home_settings_btn"
+                                android:contentDescription="@string/user_setting_title"
+                                android:padding="10dp"
+                                android:src="@drawable/ic_settings"
+                                app:tint="@color/colorPrimary" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/homeStatusPill"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/spacing_sm"
+                            android:background="@drawable/bg_home_status_pill"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingStart="12dp"
+                            android:paddingTop="6dp"
+                            android:paddingEnd="12dp"
+                            android:paddingBottom="6dp"
+                            android:visibility="gone"
+                            tools:visibility="visible">
+
+                            <View
+                                android:id="@+id/homeStatusDot"
+                                android:layout_width="8dp"
+                                android:layout_height="8dp"
+                                android:background="@drawable/status_dot" />
+
+                            <TextView
+                                android:id="@+id/homeStatusOpen"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="6dp"
+                                android:fontFamily="@font/poppinsmedium"
                                 android:textColor="@color/white"
-                                android:textSize="20sp" />
+                                android:textSize="11sp"
+                                tools:text="Shop Open" />
+
+                            <View
+                                android:layout_width="1dp"
+                                android:layout_height="12dp"
+                                android:layout_marginStart="10dp"
+                                android:layout_marginEnd="10dp"
+                                android:background="#66FFFFFF" />
+
+                            <TextView
+                                android:id="@+id/homeStatusCloseTime"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/poppinsregular"
+                                android:textColor="#E6FFFFFF"
+                                android:textSize="11sp"
+                                tools:text="Closes 12:00 PM" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/spacing_md"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <ImageView
+                                android:layout_width="14dp"
+                                android:layout_height="14dp"
+                                android:contentDescription="@null"
+                                android:src="@drawable/ic_calendar"
+                                app:tint="#CCFFFFFF" />
 
                             <androidx.appcompat.widget.AppCompatTextView
                                 android:id="@+id/homeDateTime"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
+                                android:layout_marginStart="6dp"
                                 android:fontFamily="@font/poppinsregular"
                                 android:textColor="#E6FFFFFF"
                                 android:textSize="12sp"
-                                tools:text="Sun, 30 Aug 2026 • 08:46:25 PM" />
-
-                            <androidx.appcompat.widget.AppCompatTextView
-                                android:id="@+id/homeBusinessHours"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:fontFamily="@font/poppinsmedium"
-                                android:textColor="#E6FFFFFF"
-                                android:textSize="11sp"
-                                android:visibility="gone"
-                                tools:text="Shop Open  9:00 AM – 10:00 PM"
-                                tools:visibility="visible" />
+                                tools:text="Mon, 31 Aug 2026 | 11:30:14 PM" />
                         </LinearLayout>
-
-                        <ImageView
-                            android:id="@+id/userSettingIcon"
-                            android:layout_width="44dp"
-                            android:layout_height="44dp"
-                            android:background="@drawable/bg_home_settings_btn"
-                            android:contentDescription="@string/user_setting_title"
-                            android:padding="10dp"
-                            android:src="@drawable/ic_settings"
-                            app:tint="@color/colorPrimary" />
-                    </LinearLayout>
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:fontFamily="@font/poppinsregular"
-                        android:text="@string/home_whats_happening"
-                        android:textColor="#CCFFFFFF"
-                        android:textSize="13sp" />
-
-                </LinearLayout>
-
-            </FrameLayout>
+            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="-6dp"
                 android:orientation="vertical"
                 android:clipChildren="false"
                 android:clipToPadding="false"
@@ -205,13 +243,17 @@
                     app:cardCornerRadius="@dimen/radius_md"
 >
 
-                    <LinearLayout
+                    <FrameLayout
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:background="@drawable/bg_kpi_card_green"
-                        android:minHeight="@dimen/home_sales_card_min_height"
-                        android:orientation="vertical"
-                        android:padding="@dimen/spacing_md">
+                        android:layout_height="match_parent">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/bg_kpi_card_green"
+                            android:minHeight="@dimen/home_sales_card_min_height"
+                            android:orientation="vertical"
+                            android:padding="@dimen/spacing_md">
 
                         <LinearLayout
                             android:layout_width="match_parent"
@@ -274,7 +316,17 @@
                             android:textColor="@color/statusActive"
                             android:textSize="11sp"
                             tools:text="vs Last Month ↑ 18%" />
-                    </LinearLayout>
+                        </LinearLayout>
+
+                        <ImageView
+                            android:layout_width="match_parent"
+                            android:layout_height="36dp"
+                            android:layout_gravity="bottom"
+                            android:alpha="0.55"
+                            android:contentDescription="@null"
+                            android:scaleType="fitXY"
+                            android:src="@drawable/bg_kpi_wave_green" />
+                    </FrameLayout>
                 </com.pos_billingwala.Extra.PosCardView>
 
                 <com.pos_billingwala.Extra.PosCardView
@@ -286,76 +338,90 @@
                     app:cardCornerRadius="@dimen/radius_md"
 >
 
-                    <LinearLayout
+                    <FrameLayout
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:background="@drawable/bg_kpi_card_blue"
-                        android:minHeight="@dimen/home_sales_card_min_height"
-                        android:orientation="vertical"
-                        android:padding="@dimen/spacing_md">
+                        android:layout_height="match_parent">
 
                         <LinearLayout
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
+                            android:layout_height="match_parent"
+                            android:background="@drawable/bg_kpi_card_blue"
+                            android:minHeight="@dimen/home_sales_card_min_height"
+                            android:orientation="vertical"
+                            android:padding="@dimen/spacing_md">
 
-                            <ImageView
-                                android:layout_width="28dp"
-                                android:layout_height="28dp"
-                                android:background="@drawable/bg_kpi_icon_blue"
-                                android:contentDescription="@null"
-                                android:padding="6dp"
-                                android:src="@drawable/ic_report_dashboard"
-                                app:tint="@color/colorPrimary" />
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal">
 
-                            <View
-                                android:layout_width="0dp"
-                                android:layout_height="1dp"
-                                android:layout_weight="1" />
+                                <ImageView
+                                    android:layout_width="28dp"
+                                    android:layout_height="28dp"
+                                    android:background="@drawable/bg_kpi_icon_blue"
+                                    android:contentDescription="@null"
+                                    android:padding="6dp"
+                                    android:src="@drawable/ic_report_dashboard"
+                                    app:tint="@color/colorPrimary" />
 
-                            <ImageView
-                                android:id="@+id/hideShowTodaySale"
-                                android:layout_width="22dp"
-                                android:layout_height="22dp"
-                                android:contentDescription="@null"
-                                android:src="@drawable/ic_show"
-                                app:tint="@color/colorTextSecondary" />
+                                <View
+                                    android:layout_width="0dp"
+                                    android:layout_height="1dp"
+                                    android:layout_weight="1" />
+
+                                <ImageView
+                                    android:id="@+id/hideShowTodaySale"
+                                    android:layout_width="22dp"
+                                    android:layout_height="22dp"
+                                    android:contentDescription="@null"
+                                    android:src="@drawable/ic_show"
+                                    app:tint="@color/colorTextSecondary" />
+                            </LinearLayout>
+
+                            <androidx.appcompat.widget.AppCompatTextView
+                                android:id="@+id/todaySalesLabel"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="@dimen/spacing_sm"
+                                android:fontFamily="@font/poppinsmedium"
+                                android:text="@string/home_today_sales_label"
+                                android:textColor="@color/colorTextSecondary"
+                                android:textSize="@dimen/text_caption" />
+
+                            <androidx.appcompat.widget.AppCompatTextView
+                                android:id="@+id/todaySaleAmount"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:ellipsize="end"
+                                android:fontFamily="@font/poppinsbold"
+                                android:inputType="textPassword"
+                                android:maxLines="1"
+                                android:text="0"
+                                android:textColor="@color/colorTextPrimary"
+                                android:textSize="18sp" />
+
+                            <TextView
+                                android:id="@+id/todaySalesTrend"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:fontFamily="@font/poppinsmedium"
+                                android:textColor="@color/statusActive"
+                                android:textSize="11sp"
+                                tools:text="vs Yesterday ↑ 12%" />
                         </LinearLayout>
 
-                        <androidx.appcompat.widget.AppCompatTextView
-                            android:id="@+id/todaySalesLabel"
+                        <ImageView
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="@dimen/spacing_sm"
-                            android:fontFamily="@font/poppinsmedium"
-                            android:text="@string/home_today_sales_label"
-                            android:textColor="@color/colorTextSecondary"
-                            android:textSize="@dimen/text_caption" />
-
-                        <androidx.appcompat.widget.AppCompatTextView
-                            android:id="@+id/todaySaleAmount"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
-                            android:ellipsize="end"
-                            android:fontFamily="@font/poppinsbold"
-                            android:inputType="textPassword"
-                            android:maxLines="1"
-                            android:text="0"
-                            android:textColor="@color/colorTextPrimary"
-                            android:textSize="18sp" />
-
-                        <TextView
-                            android:id="@+id/todaySalesTrend"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:fontFamily="@font/poppinsmedium"
-                            android:textColor="@color/statusActive"
-                            android:textSize="11sp"
-                            tools:text="vs Yesterday ↑ 12%" />
-                    </LinearLayout>
+                            android:layout_height="36dp"
+                            android:layout_gravity="bottom"
+                            android:alpha="0.55"
+                            android:contentDescription="@null"
+                            android:scaleType="fitXY"
+                            android:src="@drawable/bg_kpi_wave_blue" />
+                    </FrameLayout>
                 </com.pos_billingwala.Extra.PosCardView>
             </LinearLayout>
 
@@ -391,7 +457,7 @@
                     android:fontFamily="@font/poppinsmedium"
                     android:padding="4dp"
                     android:text="@string/home_view_all"
-                    android:textColor="@color/colorTextSecondary"
+                    android:textColor="@color/colorPrimary"
                     android:textSize="13sp" />
 
             </LinearLayout>
@@ -956,7 +1022,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/spacing_lg"
-                android:background="@drawable/bg_button_primary"
+                android:background="@drawable/bg_home_sync_card"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
                 android:paddingStart="16dp"
@@ -965,11 +1031,13 @@
                 android:paddingBottom="14dp">
 
                 <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/bg_support_icon_circle_blue"
                     android:contentDescription="@null"
+                    android:padding="8dp"
                     android:src="@drawable/ic_cloud_upload"
-                    app:tint="@color/white" />
+                    app:tint="@color/colorPrimary" />
 
                 <LinearLayout
                     android:layout_width="0dp"
@@ -983,15 +1051,16 @@
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/poppinsbold"
                         android:text="@string/home_synchronize"
-                        android:textColor="@color/white"
+                        android:textColor="@color/colorPrimary"
                         android:textSize="15sp" />
 
                     <TextView
+                        android:id="@+id/homeSyncSubtitle"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/poppinsregular"
                         android:text="@string/home_sync_subtitle"
-                        android:textColor="#CCFFFFFF"
+                        android:textColor="@color/colorTextSecondary"
                         android:textSize="12sp" />
                 </LinearLayout>
 
@@ -1000,7 +1069,7 @@
                     android:layout_height="20dp"
                     android:contentDescription="@null"
                     android:src="@drawable/ic_chevron_right"
-                    app:tint="@color/white" />
+                    app:tint="@color/colorPrimary" />
             </LinearLayout>
 
             <!-- Low inventory (hidden until populated) -->

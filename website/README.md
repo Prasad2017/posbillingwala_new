@@ -49,14 +49,45 @@ website/
 | `/contact.html` | Contact / demo form |
 | `/login` | Redirects to `admin.posbillingwala.com/login` |
 
-## Local preview
+## Local preview (recommended)
+
+From project root on Windows:
+
+```powershell
+.\scripts\start-local.ps1
+```
+
+This opens:
+
+| URL | What |
+|-----|------|
+| http://127.0.0.1:8080 | Marketing website |
+| http://127.0.0.1:8000/login | Admin panel |
+| http://127.0.0.1:8000/website | Website CMS |
+
+**Requirements:** Node.js (website). PHP 8+ via Laragon/XAMPP/WAMP (admin panel).
+
+On localhost the website auto-connects to admin API on port 8000. The website does not use mock/demo data. Dynamic content is loaded only from the public Admin API.
+
+Manual start:
+
+```bash
+# Terminal 1 — admin
+cd admin.posbillingwala.com
+php artisan serve --host=127.0.0.1 --port=8000
+
+# Terminal 2 — website (Node — no Python needed)
+node scripts/serve-website.js 8080
+```
+
+## Local preview (simple)
 
 ```bash
 cd website
 python -m http.server 8080
 ```
 
-CMS pages show fallback content offline; live data loads when admin API is reachable.
+CMS pages show an API loading/error state when the Admin API is unavailable; no fallback/mock content is used.
 
 ## Dynamic content (admin panel)
 
@@ -116,7 +147,7 @@ Website CMS tables are also in:
 - `API/migrations/p23_website_catalog.sql` — **schema + sample data** (run once on admin DB)
 - Included in `API/migrations/server_upgrade_all.sql` (p23 schema only; run `p23_website_catalog.sql` for sample data)
 
-**Sample data in p23 includes:** company settings, 8 products, 4 pricing plans, 10 area dealers (Pune head office + Santosh Dixit contact), CMS pages (terms, refund, support, company), 3 demo customers.
+The public website does not embed this sample data; production content is read from the Admin API.
 
 Or auto-create + seed: open **Admin → Website Content** once (Laravel).
 
