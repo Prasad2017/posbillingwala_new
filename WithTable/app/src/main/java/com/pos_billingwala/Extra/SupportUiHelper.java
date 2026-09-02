@@ -3,7 +3,6 @@ package com.pos_billingwala.Extra;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Typeface;
-import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,7 +25,7 @@ public final class SupportUiHelper {
     public static LinearLayout form(Activity activity) {
         LinearLayout root = new LinearLayout(activity);
         root.setOrientation(LinearLayout.VERTICAL);
-        int pad = dp(activity, TabletUi.isTablet(activity) ? TabletUi.horizontalInsetDp(activity) : 16);
+        int pad = dp(activity, ResponsiveUi.isWideLayout(activity) ? TabletUi.horizontalInsetDp(activity) : 16);
         root.setPadding(pad, pad, pad, pad);
         root.setLayoutParams(new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -42,7 +41,7 @@ public final class SupportUiHelper {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
 
-        if (TabletUi.isTablet(activity)) {
+        if (ResponsiveUi.isWideLayout(activity)) {
             LinearLayout outer = new LinearLayout(activity);
             outer.setOrientation(LinearLayout.VERTICAL);
             outer.setGravity(Gravity.CENTER_HORIZONTAL);
@@ -66,7 +65,7 @@ public final class SupportUiHelper {
         TextView tv = new TextView(activity);
         tv.setText(text);
         tv.setTextColor(ContextCompat.getColor(activity, R.color.light_black));
-        tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+        UiStyle.applyTextSize(tv, R.dimen.text_row_compact);
         tv.setPadding(dp(activity, 12), dp(activity, 12), dp(activity, 12), dp(activity, 12));
         tv.setBackgroundResource(R.drawable.button_rounded_border);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
@@ -81,7 +80,7 @@ public final class SupportUiHelper {
         TextView lbl = new TextView(activity);
         lbl.setText(label);
         lbl.setTypeface(Typeface.DEFAULT_BOLD);
-        lbl.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        UiStyle.applyTextSize(lbl, R.dimen.text_body);
         lbl.setTextColor(ContextCompat.getColor(activity, R.color.black));
         LinearLayout.LayoutParams ll = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -122,7 +121,7 @@ public final class SupportUiHelper {
         bar.setPadding(0, 0, 0, dp(activity, 8));
         TextView back = new TextView(activity);
         back.setText("←");
-        back.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
+        UiStyle.applyTextSize(back, R.dimen.text_heading);
         back.setTypeface(Typeface.DEFAULT_BOLD);
         back.setPadding(dp(activity, 4), dp(activity, 4), dp(activity, 12), dp(activity, 4));
         back.setOnClickListener(v -> {
@@ -131,7 +130,7 @@ public final class SupportUiHelper {
         TextView heading = new TextView(activity);
         heading.setText(title);
         heading.setTypeface(Typeface.DEFAULT_BOLD);
-        heading.setTextSize(TypedValue.COMPLEX_UNIT_SP, 17);
+        UiStyle.applyTextSize(heading, R.dimen.text_title);
         heading.setTextColor(ContextCompat.getColor(activity, R.color.black));
         bar.addView(back);
         bar.addView(heading);
@@ -145,7 +144,7 @@ public final class SupportUiHelper {
     /** Places category and subject fields side-by-side on tablet. */
     public static void applyFieldPairRow(Activity activity, LinearLayout root,
                                          EditText firstField, EditText secondField) {
-        if (!TabletUi.isTablet(activity) || firstField == null || secondField == null) {
+        if (!ResponsiveUi.isWideLayout(activity) || firstField == null || secondField == null) {
             return;
         }
         int firstLabelIdx = root.indexOfChild(firstField) - 1;
@@ -169,7 +168,7 @@ public final class SupportUiHelper {
 
     /** Places two action buttons in one row on tablet. */
     public static void applySideBySideButtons(Activity activity, LinearLayout root, View left, View right) {
-        if (!TabletUi.isTablet(activity) || left == null || right == null) {
+        if (!ResponsiveUi.isWideLayout(activity) || left == null || right == null) {
             return;
         }
         root.removeView(left);
@@ -280,7 +279,7 @@ public final class SupportUiHelper {
         if (body == null) {
             return;
         }
-        body.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        UiStyle.applyTextSize(body, R.dimen.text_body);
         body.setLineSpacing(0, 1.15f);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);

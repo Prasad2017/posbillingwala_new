@@ -152,7 +152,7 @@ public class InvoiceCompanyTable extends Fragment implements View.OnClickListene
             }
         });
 
-        mypopupWindow.showAsDropDown(binding.menuIcon, 0, -75);
+        PopupUi.showAsToolbarMenu(mypopupWindow, binding.menuIcon);
 
     }
 

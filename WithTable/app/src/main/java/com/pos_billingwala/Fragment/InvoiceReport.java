@@ -43,6 +43,7 @@ import com.pos_billingwala.BuildConfig;
 import com.pos_billingwala.CalenderView.MonthPickerDialog;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ReportCursorHelper;
+import com.pos_billingwala.Extra.ReportUiHelper;
 import com.pos_billingwala.Model.InvoiceResponse;
 import com.pos_billingwala.Model.ReportRankItem;
 import com.pos_billingwala.R;
@@ -111,6 +112,7 @@ public class InvoiceReport extends Fragment implements View.OnClickListener {
         view = binding.getRoot();
 
         activity = getActivity();
+        ReportUiHelper.applyOperationalReportLayout(activity, binding);
         binding.toolbar.heading.setText(getString(R.string.ui_invoice_reports));
         binding.toolbar.shareInvoice.setVisibility(View.VISIBLE);
         binding.listTitle.setText(getString(R.string.ui_invoice_sale));
@@ -362,7 +364,7 @@ public class InvoiceReport extends Fragment implements View.OnClickListener {
             }
         });
 
-        mypopupWindow.showAsDropDown(binding.toolbar.menuIcon, 0, -75);
+        PopupUi.showAsToolbarMenu(mypopupWindow, binding.toolbar.menuIcon);
 
     }
 

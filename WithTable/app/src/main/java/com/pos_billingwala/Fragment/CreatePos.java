@@ -647,7 +647,7 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
             }
         });
 
-        mypopupWindow.showAsDropDown(binding.menuIcon, 0, -75);
+        PopupUi.showAsToolbarMenu(mypopupWindow, binding.menuIcon);
 
     }
 

@@ -19,6 +19,7 @@ import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.InvoiceAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ListLoader;
+import com.pos_billingwala.Extra.ResponsiveUi;
 import com.pos_billingwala.Extra.TabletUi;
 import com.pos_billingwala.Extra.ReportCursorHelper;
 import com.pos_billingwala.Model.InvoiceResponse;
@@ -148,7 +149,7 @@ public class OrderInvoice extends Fragment implements View.OnClickListener {
                 if (page != null && !page.isEmpty()) {
                     invoiceResponseList.addAll(page);
                     adapter = new InvoiceAdapter(activity, invoiceResponseList);
-                    if (TabletUi.isTablet(activity)) {
+                    if (ResponsiveUi.isWideLayout(activity)) {
                         binding.recyclerView.setLayoutManager(new GridLayoutManager(activity,
                                 TabletUi.gridColumnCount(activity)));
                     } else {

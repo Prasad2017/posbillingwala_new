@@ -7,6 +7,7 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -32,6 +33,7 @@ import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Model.ReportRankItem;
 import com.pos_billingwala.R;
+import com.pos_billingwala.databinding.FragmentOperationalReportBinding;
 import com.pos_billingwala.databinding.IncludeReportKpiCardBinding;
 import com.pos_billingwala.databinding.IncludeReportInvoiceDetailHeaderBinding;
 import com.pos_billingwala.databinding.IncludeReportTableHeaderBinding;
@@ -413,5 +415,157 @@ public final class ReportUiHelper {
         chart.setData(new PieData(ds));
         enablePiePinchZoom(chart);
         chart.invalidate();
+    }
+
+    /**
+     * Wide reports: donut + bar charts side-by-side; all KPIs in one row when possible.
+     * Call once after inflating {@code fragment_operational_report}.
+     */
+    public static void applyOperationalReportLayout(Context context, FragmentOperationalReportBinding binding) {
+        if (binding == null) {
+            return;
+        }
+        applyOperationalReportLayout(context, binding.cardDonut, binding.cardBar,
+                rootOf(binding.kpi1), rootOf(binding.kpi2), rootOf(binding.kpi3), rootOf(binding.kpi4));
+    }
+
+    private static View rootOf(IncludeReportKpiCardBinding kpi) {
+        return kpi != null ? kpi.getRoot() : null;
+    }
+
+    public static void applyOperationalReportLayout(Context context, View cardDonut, View cardBar,
+                                                    View kpi1, View kpi2, View kpi3, View kpi4) {
+        if (!ResponsiveUi.isWideLayout(context)) {
+            return;
+        }
+        if (!isAlreadyWideChartRow(cardDonut, cardBar)) {
+            applyWideChartRow(context, cardDonut, cardBar);
+        }
+        if (!isAlreadyWideKpiRow(kpi1, kpi4)) {
+            applyWideKpiRow(context, kpi1, kpi2, kpi3, kpi4);
+        }
+    }
+
+    private static boolean isAlreadyWideChartRow(View cardDonut, View cardBar) {
+        if (cardDonut == null || cardBar == null) {
+            return false;
+        }
+        ViewGroup parent = (ViewGroup) cardDonut.getParent();
+        if (parent == null || cardBar.getParent() != parent || !(parent instanceof LinearLayout)) {
+            return false;
+        }
+        LinearLayout row = (LinearLayout) parent;
+        return row.getOrientation() == LinearLayout.HORIZONTAL
+                && row.indexOfChild(cardBar) == row.indexOfChild(cardDonut) + 1;
+    }
+
+    private static boolean isAlreadyWideKpiRow(View kpi1, View kpi4) {
+        if (kpi1 == null || kpi4 == null) {
+            return false;
+        }
+        ViewGroup parent = (ViewGroup) kpi1.getParent();
+        if (parent == null || kpi4.getParent() != parent || !(parent instanceof LinearLayout)) {
+            return false;
+        }
+        LinearLayout row = (LinearLayout) parent;
+        return row.getOrientation() == LinearLayout.HORIZONTAL
+                && row.indexOfChild(kpi4) == row.indexOfChild(kpi1) + 3;
+    }
+
+    /** Places donut and bar chart cards in one horizontal row. */
+    public static void applyWideChartRow(Context context, View cardDonut, View cardBar) {
+        if (!ResponsiveUi.isWideLayout(context) || cardDonut == null || cardBar == null) {
+            return;
+        }
+        ViewGroup parent = (ViewGroup) cardDonut.getParent();
+        if (parent == null || cardBar.getParent() != parent) {
+            return;
+        }
+        int donutIndex = parent.indexOfChild(cardDonut);
+        int barIndex = parent.indexOfChild(cardBar);
+        if (barIndex != donutIndex + 1) {
+            return;
+        }
+        parent.removeView(cardDonut);
+        parent.removeView(cardBar);
+
+        float density = context.getResources().getDisplayMetrics().density;
+        int gap = (int) (12 * density);
+
+        LinearLayout row = new LinearLayout(context);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setBaselineAligned(false);
+        LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        rowParams.topMargin = (int) (16 * density);
+        row.setLayoutParams(rowParams);
+
+        LinearLayout.LayoutParams leftParams = new LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+        leftParams.setMarginEnd(gap / 2);
+        cardDonut.setLayoutParams(leftParams);
+
+        LinearLayout.LayoutParams rightParams = new LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+        rightParams.setMarginStart(gap / 2);
+        cardBar.setLayoutParams(rightParams);
+
+        row.addView(cardDonut);
+        row.addView(cardBar);
+        parent.addView(row, donutIndex);
+    }
+
+    /** Merges two 2-column KPI rows into a single 4-column row on wide windows. */
+    public static void applyWideKpiRow(Context context, View kpi1, View kpi2, View kpi3, View kpi4) {
+        if (!ResponsiveUi.isWideLayout(context) || kpi1 == null || kpi2 == null
+                || kpi3 == null || kpi4 == null) {
+            return;
+        }
+        ViewGroup parent = (ViewGroup) kpi1.getParent();
+        if (parent == null || kpi2.getParent() != parent || kpi3.getParent() != parent
+                || kpi4.getParent() != parent) {
+            return;
+        }
+        int i1 = parent.indexOfChild(kpi1);
+        int i2 = parent.indexOfChild(kpi2);
+        int i3 = parent.indexOfChild(kpi3);
+        int i4 = parent.indexOfChild(kpi4);
+        if (i2 != i1 + 1 || i4 != i3 + 1 || i3 != i2 + 1) {
+            return;
+        }
+
+        parent.removeView(kpi1);
+        parent.removeView(kpi2);
+        parent.removeView(kpi3);
+        parent.removeView(kpi4);
+
+        float density = context.getResources().getDisplayMetrics().density;
+        int gap = (int) (6 * density);
+
+        LinearLayout row = new LinearLayout(context);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setBaselineAligned(false);
+        LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        rowParams.topMargin = (int) (12 * density);
+        row.setLayoutParams(rowParams);
+
+        addKpiCell(row, kpi1, gap, false);
+        addKpiCell(row, kpi2, gap, true);
+        addKpiCell(row, kpi3, gap, true);
+        addKpiCell(row, kpi4, gap, true);
+        parent.addView(row, i1);
+    }
+
+    private static void addKpiCell(LinearLayout row, View kpi, int gapPx, boolean withStartMargin) {
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+        if (withStartMargin) {
+            params.setMarginStart(gapPx);
+        } else {
+            params.setMarginEnd(gapPx / 2);
+        }
+        kpi.setLayoutParams(params);
+        row.addView(kpi);
     }
 }

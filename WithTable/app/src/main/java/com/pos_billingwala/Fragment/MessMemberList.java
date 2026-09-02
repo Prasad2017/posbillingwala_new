@@ -28,6 +28,7 @@ import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.MemberAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ListLoader;
+import com.pos_billingwala.Extra.ResponsiveUi;
 import com.pos_billingwala.Extra.TabletUi;
 import com.pos_billingwala.Model.MemberResponse;
 import com.pos_billingwala.R;
@@ -127,7 +128,7 @@ public class MessMemberList extends Fragment implements View.OnClickListener {
 
     public void initViews() {
         recyclerView = view.findViewById(R.id.recyclerView);
-        if (TabletUi.isTablet(activity)) {
+        if (ResponsiveUi.isWideLayout(activity)) {
             recyclerView.setLayoutManager(new GridLayoutManager(activity, TabletUi.gridColumnCount(activity)));
         } else {
             recyclerView.setLayoutManager(new LinearLayoutManager(activity));
@@ -198,7 +199,7 @@ public class MessMemberList extends Fragment implements View.OnClickListener {
             }
         });
 
-        mypopupWindow.showAsDropDown(binding.menuIcon, 0, -75);
+        PopupUi.showAsToolbarMenu(mypopupWindow, binding.menuIcon);
 
     }
 

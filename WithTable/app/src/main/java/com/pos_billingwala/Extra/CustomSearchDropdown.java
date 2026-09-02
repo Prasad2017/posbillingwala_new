@@ -144,15 +144,9 @@ public class CustomSearchDropdown {
                 ? getAnchorWidth()
                 : ViewGroup.LayoutParams.MATCH_PARENT;
 
-        popupWindow = new PopupWindow(
-                root,
-                popupWidth,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                true);
-        popupWindow.setOutsideTouchable(true);
-        popupWindow.setElevation(TabletUi.dpToPx(context, 10));
+        popupWindow = PopupUi.create(context, root, popupWidth);
         popupWindow.setBackgroundDrawable(ContextCompat.getDrawable(context, R.drawable.bg_dropdown_popup));
-        popupWindow.showAsDropDown(anchorView, 0, TabletUi.dpToPx(context, 6));
+        PopupUi.showBelowAnchor(popupWindow, anchorView);
 
         if (searchEditText != null) {
             searchEditText.requestFocus();

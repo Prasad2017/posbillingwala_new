@@ -21,7 +21,7 @@ public final class DialogUi {
             return;
         }
         Context ctx = dialog.getContext();
-        if (!TabletUi.isTablet(ctx)) {
+        if (!ResponsiveUi.isWideLayout(ctx)) {
             return;
         }
         Window window = dialog.getWindow();

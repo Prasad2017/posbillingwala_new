@@ -110,7 +110,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="5dp"
-            android:columnWidth="200dp"
+            android:columnWidth="@dimen/product_grid_min_card_width"
             android:nestedScrollingEnabled="true"
             android:padding="5dp" />
 

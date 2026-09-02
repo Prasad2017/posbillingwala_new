@@ -29,6 +29,7 @@ import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.LicenseModules;
 import com.pos_billingwala.Extra.OperationalReportCharts;
 import com.pos_billingwala.Extra.ReportCursorHelper;
+import com.pos_billingwala.Extra.ReportUiHelper;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentOperationalReportBinding;
 
@@ -54,6 +55,7 @@ public class SaleReport extends Fragment implements View.OnClickListener {
                              Bundle savedInstanceState) {
         binding = FragmentOperationalReportBinding.inflate(inflater, container, false);
         activity = getActivity();
+        ReportUiHelper.applyOperationalReportLayout(activity, binding);
         posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
 
         binding.toolbar.heading.setText(getString(R.string.ui_sale_reports));
@@ -140,7 +142,7 @@ public class SaleReport extends Fragment implements View.OnClickListener {
             builder.showYearOnly().setYearRange(1990, 2050).build().show();
         });
 
-        mypopupWindow.showAsDropDown(binding.toolbar.menuIcon, 0, -75);
+        PopupUi.showAsToolbarMenu(mypopupWindow, binding.toolbar.menuIcon);
     }
 
     private String formatDay(int year, int monthOfYear, int dayOfMonth) {

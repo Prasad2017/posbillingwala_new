@@ -44,6 +44,7 @@ public class InvoiceMessMemberReportList extends Fragment implements View.OnClic
         view = binding.getRoot();
 
         activity = getActivity();
+        ReportUiHelper.applyOperationalReportLayout(activity, binding);
         posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
         binding.toolbar.heading.setText(getString(R.string.ui_invoice_member_report));
         binding.toolbar.menuIcon.setVisibility(View.GONE);

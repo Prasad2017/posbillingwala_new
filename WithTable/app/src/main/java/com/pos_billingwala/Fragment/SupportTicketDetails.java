@@ -31,8 +31,10 @@ public class SupportTicketDetails extends Fragment {
     LinearLayout root;
     TextView body;
     TextView statusBanner;
+    TextView replyDisabledNotice;
     android.widget.EditText reply;
     Button sendBtn;
+    Button openNewTicketBtn;
     String ticketId;
     boolean closed;
 
@@ -54,6 +56,12 @@ public class SupportTicketDetails extends Fragment {
         reply = SupportUiHelper.field(activity, root, getString(R.string.support_reply), "");
         sendBtn = SupportUiHelper.primary(activity, root, getString(R.string.support_send_reply));
         sendBtn.setOnClickListener(v -> sendReply());
+        replyDisabledNotice = SupportUiHelper.notice(activity, root, getString(R.string.support_reply_disabled));
+        replyDisabledNotice.setVisibility(View.GONE);
+        openNewTicketBtn = SupportUiHelper.primary(activity, root, getString(R.string.support_open_new_ticket));
+        openNewTicketBtn.setVisibility(View.GONE);
+        openNewTicketBtn.setOnClickListener(v ->
+                ((MainActivity) activity).loadFragment(new CreateSupportTicket(), true));
         Button refreshBtn = SupportUiHelper.primary(activity, root, getString(R.string.support_refresh));
         refreshBtn.setOnClickListener(v -> loadDetails());
         SupportUiHelper.applySideBySideButtons(activity, root, sendBtn, refreshBtn);
@@ -85,6 +93,7 @@ public class SupportTicketDetails extends Fragment {
                 String st = b.getTicketStatus() != null ? b.getTicketStatus() : "";
                 closed = st.equalsIgnoreCase("closed") || st.equalsIgnoreCase("resolved");
                 showStatusBanner(st);
+                applyReplyUi(closed);
                 StringBuilder sb = new StringBuilder();
                 sb.append(b.getTicketNo()).append("\n").append(b.getSubject()).append("\n\n");
                 if (b.getDescription() != null && !b.getDescription().isEmpty()) {
@@ -103,8 +112,6 @@ public class SupportTicketDetails extends Fragment {
                     }
                 }
                 body.setText(sb.toString().trim());
-                reply.setEnabled(!closed);
-                sendBtn.setEnabled(!closed);
             }
 
             @Override
@@ -113,6 +120,33 @@ public class SupportTicketDetails extends Fragment {
                 Toast.makeText(activity, R.string.support_load_failed, Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void applyReplyUi(boolean isClosed) {
+        if (reply == null || sendBtn == null) {
+            return;
+        }
+        if (isClosed) {
+            reply.setVisibility(View.GONE);
+            sendBtn.setVisibility(View.GONE);
+            if (replyDisabledNotice != null) {
+                replyDisabledNotice.setVisibility(View.VISIBLE);
+            }
+            if (openNewTicketBtn != null) {
+                openNewTicketBtn.setVisibility(View.VISIBLE);
+            }
+        } else {
+            reply.setVisibility(View.VISIBLE);
+            sendBtn.setVisibility(View.VISIBLE);
+            reply.setEnabled(true);
+            sendBtn.setEnabled(true);
+            if (replyDisabledNotice != null) {
+                replyDisabledNotice.setVisibility(View.GONE);
+            }
+            if (openNewTicketBtn != null) {
+                openNewTicketBtn.setVisibility(View.GONE);
+            }
+        }
     }
 
     private void showStatusBanner(String status) {

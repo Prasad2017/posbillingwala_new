@@ -45,6 +45,7 @@ public final class ListLoader {
             dialog.setTitleText(title != null && !title.trim().isEmpty() ? title : "Loading");
             dialog.setCancelable(false);
             dialog.show();
+            DialogUi.applyTabletWindow(dialog);
             return dialog;
         } catch (Exception e) {
             e.printStackTrace();

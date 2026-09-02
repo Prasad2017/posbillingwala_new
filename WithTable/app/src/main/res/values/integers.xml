@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer name="product_grid_min_card_width_dp">150</integer>
+    <integer name="product_grid_min_columns">2</integer>
+    <integer name="product_grid_max_columns">6</integer>
+</resources>

@@ -59,6 +59,7 @@ public class InvoiceMessReport extends Fragment implements View.OnClickListener 
         view = binding.getRoot();
 
         activity = getActivity();
+        ReportUiHelper.applyOperationalReportLayout(activity, binding);
         posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
         binding.toolbar.heading.setText(getString(R.string.ui_invoice_mess_report));
         binding.toolbar.shareInvoice.setVisibility(View.GONE);
@@ -196,7 +197,7 @@ public class InvoiceMessReport extends Fragment implements View.OnClickListener 
             }
         });
 
-        mypopupWindow.showAsDropDown(binding.toolbar.menuIcon, 0, -75);
+        PopupUi.showAsToolbarMenu(mypopupWindow, binding.toolbar.menuIcon);
 
     }
 

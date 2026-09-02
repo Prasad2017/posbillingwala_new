@@ -1,7 +1,6 @@
 package com.pos_billingwala.Extra;
 
 import android.app.Activity;
-import android.content.pm.ActivityInfo;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
@@ -10,23 +9,21 @@ import android.widget.RelativeLayout;
 import androidx.annotation.Nullable;
 
 /**
- * Tablet helpers for print preview and checkout activities.
+ * Print preview and checkout layout helpers for wide windows (tablet + landscape phone).
  */
 public final class TabletPrintUi {
 
     private TabletPrintUi() {
     }
 
+    /** No-op: orientation is user-controlled ({@code fullUser} in manifest). */
     public static void applyLandscape(@Nullable Activity activity) {
-        if (activity != null && TabletUi.isTablet(activity)) {
-            activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
-        }
+        // intentionally empty — do not force landscape on any device class
     }
 
     /** Reprint / duplicate bill checkout — cart left, payment right. */
     public static void applyCheckoutTablet(@Nullable Activity activity, @Nullable RelativeLayout cartLayout,
                                            @Nullable View cartSection, @Nullable View paymentSection) {
-        applyLandscape(activity);
         TabletFormUi.applyCartPaymentSplit(activity, cartLayout, cartSection, paymentSection);
     }
 
@@ -39,7 +36,6 @@ public final class TabletPrintUi {
 
     /** Center a short form (mess scan, walk-in token, etc.). */
     public static void applyCenteredForm(@Nullable Activity activity, @Nullable View formRoot) {
-        applyLandscape(activity);
         if (formRoot != null) {
             TabletFormUi.applyCenteredPanel(formRoot);
         }
@@ -47,7 +43,6 @@ public final class TabletPrintUi {
 
     /** Center a short form with explicit max width (dp). */
     public static void applyCenteredForm(@Nullable Activity activity, @Nullable View formRoot, int maxWidthDp) {
-        applyLandscape(activity);
         if (formRoot != null) {
             TabletFormUi.applyCenteredPanel(formRoot, maxWidthDp);
         }
@@ -56,8 +51,7 @@ public final class TabletPrintUi {
     /** Walk-in token: centered form with name and mobile side-by-side. */
     public static void applyWalkInFormTablet(@Nullable Activity activity,
                                              @Nullable LinearLayout formContainer) {
-        applyLandscape(activity);
-        if (activity == null || formContainer == null || !TabletUi.isTablet(activity)
+        if (activity == null || formContainer == null || !ResponsiveUi.isWideLayout(activity)
                 || formContainer.getChildCount() < 6) {
             return;
         }

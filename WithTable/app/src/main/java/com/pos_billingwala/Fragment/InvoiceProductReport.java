@@ -117,6 +117,7 @@ public class InvoiceProductReport extends Fragment implements View.OnClickListen
         nestedScrollView = binding.nestedScrollView;
 
         activity = getActivity();
+        ReportUiHelper.applyOperationalReportLayout(activity, binding);
         posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
 
         if (getArguments() != null) {
@@ -429,7 +430,7 @@ public class InvoiceProductReport extends Fragment implements View.OnClickListen
             }
         });
 
-        mypopupWindow.showAsDropDown(binding.toolbar.menuIcon, 0, -75);
+        PopupUi.showAsToolbarMenu(mypopupWindow, binding.toolbar.menuIcon);
 
     }
 

@@ -16,6 +16,8 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.Build;
@@ -66,7 +68,7 @@ import com.pos_billingwala.Extra.LicenseModules;
 import com.pos_billingwala.Extra.LicenseValidator;
 import com.pos_billingwala.Extra.DetectConnection;
 import com.pos_billingwala.Extra.ErrorLogQueue;
-import com.pos_billingwala.Extra.TabletUi;
+import com.pos_billingwala.Extra.ResponsiveUi;
 import com.pos_billingwala.Model.AllApiResponse;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.LocalSalesSnapshot;
@@ -262,15 +264,15 @@ public class Home extends Fragment implements View.OnClickListener {
         boolean showDineIn = LicenseModules.isEnabled(MainActivity.dineIn);
         boolean showTakeAway = LicenseModules.isEnabled(MainActivity.takeAway);
         boolean showMess = LicenseModules.isEnabled(MainActivity.mess);
-        boolean tablet = activity != null && TabletUi.isTablet(activity);
+        boolean wide = activity != null && ResponsiveUi.isWideLayout(activity);
 
         LicenseModules.setVisible(fastBilling, showFast);
         LicenseModules.setVisible(tableBilling, showDineIn);
         LicenseModules.setVisible(takeAwayBilling, showTakeAway);
         LicenseModules.setVisible(messBilling, showMess);
         LicenseModules.setVisible(posBillingRow1,
-                showFast || showDineIn || (tablet && (showTakeAway || showMess)));
-        LicenseModules.setVisible(posBillingRow2, !tablet && (showTakeAway || showMess));
+                showFast || showDineIn || (wide && (showTakeAway || showMess)));
+        LicenseModules.setVisible(posBillingRow2, !wide && (showTakeAway || showMess));
 
         LicenseModules.setVisible(totalSalesCardView, LicenseModules.isEnabled(MainActivity.totalSaleData));
         LicenseModules.setVisible(todaySalesCardView, LicenseModules.isEnabled(MainActivity.todaySaleData));
@@ -400,7 +402,7 @@ public class Home extends Fragment implements View.OnClickListener {
 
     /** On tablet, show all billing mode tiles in one landscape-friendly row. */
     private void applyTabletHomeLayout() {
-        if (activity == null || !TabletUi.isTablet(activity)) {
+        if (activity == null || !ResponsiveUi.isWideLayout(activity)) {
             return;
         }
         LinearLayout row1 = binding.posBillingRow1;
@@ -1158,6 +1160,7 @@ public class Home extends Fragment implements View.OnClickListener {
         }
         if (!hasPrinterSettingsRow) {
             binding.homePrinterStatusRow.setVisibility(View.GONE);
+            syncHomeStatusPrinterRow();
             return;
         }
         binding.homePrinterStatusRow.setVisibility(View.VISIBLE);
@@ -1167,12 +1170,7 @@ public class Home extends Fragment implements View.OnClickListener {
                 binding.homeBillPrinterStatus,
                 cachedBillPrinterAddress,
                 BluetoothPrinterChannel.bill());
-        applyPrinterChipState(
-                binding.homeKotPrinterChip,
-                binding.homeKotPrinterDot,
-                binding.homeKotPrinterStatus,
-                cachedKotPrinterAddress,
-                BluetoothPrinterChannel.kot());
+        syncHomeStatusPrinterRow();
     }
 
     private void applyPrinterChipState(View chip, View dot, TextView statusView,
@@ -1180,30 +1178,74 @@ public class Home extends Fragment implements View.OnClickListener {
         if (chip == null || dot == null || statusView == null || activity == null) {
             return;
         }
+        chip.setVisibility(View.VISIBLE);
         String address = savedAddress != null ? savedAddress.trim() : "";
         if (address.isEmpty()) {
-            chip.setVisibility(View.VISIBLE);
             statusView.setText(getString(R.string.home_printer_status_not_set));
-            tintStatusDot(dot, ContextCompat.getColor(activity, R.color.yellow_800));
+            applyPrinterPillBackground(chip, PRINTER_STATUS_NOT_SET);
+            tintStatusDot(dot, ContextCompat.getColor(activity, R.color.white));
             return;
         }
-        chip.setVisibility(View.VISIBLE);
         int state = resolvePrinterState(channel);
+        String statusLabel;
         switch (state) {
             case PRINTER_STATUS_CONNECTED:
-                statusView.setText(getString(R.string.home_printer_status_connected));
-                tintStatusDot(dot, ContextCompat.getColor(activity, R.color.statusActive));
+                statusLabel = getString(R.string.home_printer_status_connected);
                 break;
             case PRINTER_STATUS_CONNECTING:
-                statusView.setText(getString(R.string.home_printer_status_connecting));
-                tintStatusDot(dot, ContextCompat.getColor(activity, R.color.statusTrial));
+                statusLabel = getString(R.string.home_printer_status_connecting);
                 break;
             case PRINTER_STATUS_OFFLINE:
             default:
-                statusView.setText(getString(R.string.home_printer_status_offline));
-                tintStatusDot(dot, ContextCompat.getColor(activity, R.color.statusExpired));
+                statusLabel = getString(R.string.home_printer_status_offline);
                 break;
         }
+        statusView.setText(statusLabel);
+        applyPrinterPillBackground(chip, state);
+        tintStatusDot(dot, ContextCompat.getColor(activity, R.color.white));
+    }
+
+    private void applyPrinterPillBackground(View chip, int state) {
+        int colorRes;
+        switch (state) {
+            case PRINTER_STATUS_CONNECTED:
+                colorRes = R.color.statusActive;
+                break;
+            case PRINTER_STATUS_CONNECTING:
+                colorRes = R.color.statusTrial;
+                break;
+            case PRINTER_STATUS_NOT_SET:
+                colorRes = R.color.yellow_800;
+                break;
+            case PRINTER_STATUS_OFFLINE:
+            default:
+                colorRes = R.color.statusExpired;
+                break;
+        }
+        float density = activity.getResources().getDisplayMetrics().density;
+        GradientDrawable background = new GradientDrawable();
+        background.setShape(GradientDrawable.RECTANGLE);
+        background.setCornerRadius(20f * density);
+        background.setColor(ContextCompat.getColor(activity, colorRes));
+        background.setStroke(Math.max(1, Math.round(1f * density)), Color.argb(51, 255, 255, 255));
+        chip.setBackground(background);
+    }
+
+    private static void tintStatusDot(View dot, int color) {
+        if (dot.getBackground() != null) {
+            dot.getBackground().mutate().setTint(color);
+        }
+    }
+
+    private void syncHomeStatusPrinterRow() {
+        if (binding == null || binding.homeStatusPrinterRow == null) {
+            return;
+        }
+        boolean showShop = binding.homeStatusPill != null
+                && binding.homeStatusPill.getVisibility() == View.VISIBLE;
+        boolean showPrinter = binding.homePrinterStatusRow != null
+                && binding.homePrinterStatusRow.getVisibility() == View.VISIBLE;
+        binding.homeStatusPrinterRow.setVisibility(showShop || showPrinter ? View.VISIBLE : View.GONE);
     }
 
     private static int resolvePrinterState(BluetoothPrinterChannel channel) {
@@ -1214,12 +1256,6 @@ public class Home extends Fragment implements View.OnClickListener {
             return PRINTER_STATUS_CONNECTING;
         }
         return PRINTER_STATUS_OFFLINE;
-    }
-
-    private static void tintStatusDot(View dot, int color) {
-        if (dot.getBackground() != null) {
-            dot.getBackground().mutate().setTint(color);
-        }
     }
 
     private void updateOnlineStatusUi() {
@@ -1264,6 +1300,7 @@ public class Home extends Fragment implements View.OnClickListener {
         }
         if (!BusinessHours.isConfigured(activity)) {
             binding.homeStatusPill.setVisibility(View.GONE);
+            syncHomeStatusPrinterRow();
             return;
         }
         binding.homeStatusPill.setVisibility(View.VISIBLE);
@@ -1274,6 +1311,7 @@ public class Home extends Fragment implements View.OnClickListener {
         if (binding.homeStatusDot.getBackground() != null) {
             binding.homeStatusDot.getBackground().mutate().setTint(dotColor);
         }
+        syncHomeStatusPrinterRow();
     }
 
     private void updateSyncSubtitle() {

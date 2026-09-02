@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorBackground"
+    tools:context=".Fragment.AddInventory">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_alignParentTop="true"
+        android:background="@color/colorPrimary"
+        app:elevation="4dp">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <ImageView
+                android:id="@+id/backToInventory"
+                android:layout_width="@dimen/touch_min"
+                android:layout_height="@dimen/touch_min"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
+                android:layout_marginStart="@dimen/spacing_sm"
+                android:contentDescription="@null"
+                android:padding="@dimen/spacing_sm"
+                android:src="@drawable/ic_back"
+                app:tint="@color/white" />
+
+        </RelativeLayout>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@id/addInventory"
+        android:layout_below="@id/appBarLayout"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:padding="@dimen/spacing_lg">
+
+            <com.pos_billingwala.Extra.PosCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="@dimen/radius_lg"
+
+>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:baselineAligned="false"
+                    android:orientation="horizontal"
+                    android:padding="@dimen/spacing_lg">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="@dimen/spacing_md"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/poppinsbold"
+                            android:letterSpacing="0.06"
+                            android:text="@string/ui_product"
+                            android:textAllCaps="true"
+                            android:textColor="@color/colorTextSecondary"
+                            android:textSize="@dimen/text_caption" />
+
+                        <com.pos_billingwala.Extra.SearchableDropdownView
+                            android:id="@+id/productSpinner"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/spacing_sm"
+                            app:sdd_hint="@string/ui_select_item" />
+                    </LinearLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/inventoryAmountLayout"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:textColorHint="@color/colorTextHint"
+                        app:boxCornerRadiusBottomEnd="@dimen/radius_sm"
+                        app:boxCornerRadiusBottomStart="@dimen/radius_sm"
+                        app:boxCornerRadiusTopEnd="@dimen/radius_sm"
+                        app:boxCornerRadiusTopStart="@dimen/radius_sm"
+                        app:boxStrokeColor="@color/colorBorder">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/inventoryQty"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/poppinsregular"
+                            android:hint="@string/ui_inventory_qty"
+                            android:imeOptions="actionDone"
+                            android:inputType="numberDecimal"
+                            android:paddingStart="@dimen/spacing_lg"
+                            android:paddingEnd="@dimen/spacing_md"
+                            android:singleLine="true"
+                            android:textColor="@color/colorTextPrimary"
+                            android:textSize="@dimen/text_body" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
+            </com.pos_billingwala.Extra.PosCardView>
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <TextView
+        android:id="@+id/addInventory"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/button_height"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="@dimen/spacing_lg"
+        android:background="@drawable/bg_button_primary"
+        android:fontFamily="@font/poppinsmedium"
+        android:gravity="center"
+        android:text="@string/ui_add_inventory"
+        android:textColor="@color/white"
+        android:textSize="@dimen/text_button" />
+
+</RelativeLayout>
