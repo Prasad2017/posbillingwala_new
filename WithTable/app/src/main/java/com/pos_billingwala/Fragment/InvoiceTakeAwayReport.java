@@ -67,8 +67,8 @@ public class InvoiceTakeAwayReport extends Fragment implements View.OnClickListe
                              Bundle savedInstanceState) {
         binding = FragmentOperationalReportBinding.inflate(inflater, container, false);
         view = binding.getRoot();
-
         activity = getActivity();
+        ReportUiHelper.applyOperationalReportLayout(activity, binding);
         posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
         binding.toolbar.heading.setText(getString(R.string.ui_invoice_take_away_report));
         binding.toolbar.shareInvoice.setVisibility(View.GONE);
@@ -209,7 +209,7 @@ public class InvoiceTakeAwayReport extends Fragment implements View.OnClickListe
             }
         });
 
-        mypopupWindow.showAsDropDown(binding.toolbar.menuIcon, 0, -75);
+        PopupUi.showAsToolbarMenu(mypopupWindow, binding.toolbar.menuIcon);
 
     }
 

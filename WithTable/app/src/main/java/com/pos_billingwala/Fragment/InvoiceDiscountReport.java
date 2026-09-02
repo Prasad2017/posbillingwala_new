@@ -56,6 +56,7 @@ public class InvoiceDiscountReport extends Fragment implements View.OnClickListe
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentOperationalReportBinding.inflate(inflater, container, false);
         activity = getActivity();
+        ReportUiHelper.applyOperationalReportLayout(activity, binding);
         posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
 
         binding.toolbar.heading.setText(getString(R.string.discount_wise_report));
@@ -137,7 +138,7 @@ public class InvoiceDiscountReport extends Fragment implements View.OnClickListe
             }, mYear, 0).showYearOnly().setYearRange(1990, 2050).build().show();
         });
 
-        popupWindow.showAsDropDown(binding.toolbar.menuIcon, 0, -75);
+        PopupUi.showAsToolbarMenu(popupWindow, binding.toolbar.menuIcon);
     }
 
     private String formatDay(int year, int monthOfYear, int dayOfMonth) {

@@ -196,7 +196,7 @@ public class InvoiceMess extends Fragment implements View.OnClickListener {
             }
         });
 
-        mypopupWindow.showAsDropDown(binding.menuIcon, 0, -75);
+        PopupUi.showAsToolbarMenu(mypopupWindow, binding.menuIcon);
 
     }
 

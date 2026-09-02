@@ -11,7 +11,6 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.database.Cursor;
@@ -73,7 +72,6 @@ import com.pos_billingwala.Extra.PaymentUpiQrHelper;
 import com.pos_billingwala.Extra.ReportCursorHelper;
 import com.pos_billingwala.Extra.ShopHeaderBuilder;
 import com.pos_billingwala.Extra.TabletFormUi;
-import com.pos_billingwala.Extra.TabletUi;
 import com.pos_billingwala.Extra.Observability;
 import com.pos_billingwala.Extra.LicenceExpiredUi;
 import com.pos_billingwala.Extra.LicenseSession;
@@ -630,10 +628,6 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
         binding = ActivityBluetoothPrintBinding.inflate(getLayoutInflater());
         View view = binding.getRoot(); //Root xml or viewGroup will be a part of converted view over here
         setContentView(view); //view is set by view binding
-
-        if (TabletUi.isTablet(this)) {
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
-        }
 
         activity = BluetoothPrint.this;
         posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
@@ -1481,7 +1475,7 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
             shareInvoice();
         });
 
-        mypopupWindow.showAsDropDown(binding.menuIcon, 0, -75);
+        PopupUi.showAsToolbarMenu(mypopupWindow, binding.menuIcon);
 
     }
 

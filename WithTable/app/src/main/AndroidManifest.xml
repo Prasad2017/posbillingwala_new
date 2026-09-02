@@ -104,66 +104,72 @@
         <!-- Activities -->
         <activity
             android:name=".Activity.InvoiceDetailsBluetoothPrint"
-            android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|fontScale|density"
+            android:configChanges="keyboardHidden|fontScale|density"
             android:exported="false" />
         <activity
             android:name=".Activity.EditInvoice"
-            android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|fontScale|density"
+            android:configChanges="keyboardHidden|fontScale|density"
             android:exported="false"
-            android:screenOrientation="fullUser" />
+            android:screenOrientation="fullUser"
+            android:windowSoftInputMode="adjustResize|stateHidden" />
         <activity
             android:name=".Activity.LoginMPin"
-            android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|fontScale|density"
-            android:exported="false" />
+            android:configChanges="keyboardHidden|fontScale|density"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize|stateHidden" />
         <activity
             android:name=".Activity.ProductListBluetoothPrint"
-            android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|fontScale|density"
+            android:configChanges="keyboardHidden|fontScale|density"
             android:exported="false" />
         <activity
             android:name=".Activity.CompanyPrinterSetting"
-            android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|fontScale|density"
+            android:configChanges="keyboardHidden|fontScale|density"
             android:exported="false" />
         <activity
             android:name=".Activity.TestInvoiceBluetoothPrint"
-            android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|fontScale|density"
+            android:configChanges="keyboardHidden|fontScale|density"
             android:exported="false" />
         <activity
             android:name=".Activity.CouponBluetoothPrint"
-            android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|fontScale|density"
+            android:configChanges="keyboardHidden|fontScale|density"
             android:exported="false" />
         <activity
             android:name=".Activity.MessTokenScanActivity"
-            android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|fontScale|density"
+            android:configChanges="keyboardHidden|fontScale|density"
             android:exported="false" />
         <activity
             android:name=".Activity.MessTokenBluetoothPrint"
-            android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|fontScale|density"
+            android:configChanges="keyboardHidden|fontScale|density"
             android:exported="false" />
         <activity
             android:name=".Activity.DuplicateBluetoothPrint"
-            android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|fontScale|density"
+            android:configChanges="keyboardHidden|fontScale|density"
             android:exported="false" />
         <activity
             android:name=".Activity.BluetoothPrint"
-            android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|fontScale|density"
+            android:configChanges="keyboardHidden|fontScale|density"
             android:exported="false"
-            android:screenOrientation="fullUser" />
+            android:screenOrientation="fullUser"
+            android:windowSoftInputMode="adjustResize|stateHidden" />
         <activity
             android:name=".Activity.Register"
-            android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|fontScale|density"
-            android:exported="false" />
+            android:configChanges="keyboardHidden|fontScale|density"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize|stateHidden" />
         <activity
             android:name=".Activity.Login"
-            android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|fontScale|density"
-            android:exported="false" />
+            android:configChanges="keyboardHidden|fontScale|density"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize|stateHidden" />
         <activity
             android:name=".Activity.MainActivity"
-            android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|fontScale|density"
+            android:configChanges="keyboardHidden|fontScale|density"
             android:exported="false"
-            android:screenOrientation="fullUser" />
+            android:screenOrientation="fullUser"
+            android:windowSoftInputMode="adjustResize|stateHidden" />
         <activity
             android:name=".Activity.SplashScreen"
-            android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|fontScale|density"
+            android:configChanges="keyboardHidden|fontScale|density"
             android:exported="true"
             android:screenOrientation="fullUser">
             <intent-filter>
@@ -174,7 +180,7 @@
 
         <activity
             android:name=".Print.DeviceListActivity"
-            android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|fontScale|density"
+            android:configChanges="keyboardHidden|fontScale|density"
             android:excludeFromRecents="true"
             android:screenOrientation="fullUser"
             android:theme="@style/Theme.Pos.DeviceListBottomSheet" />

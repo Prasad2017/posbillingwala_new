@@ -45,7 +45,7 @@ import com.pos_billingwala.Extra.BottomSheetUi;
 import com.pos_billingwala.Extra.BusinessHours;
 import com.pos_billingwala.Extra.LicenseModules;
 import com.pos_billingwala.Extra.PosSwitchRowView;
-import com.pos_billingwala.Extra.TabletUi;
+import com.pos_billingwala.Extra.ResponsiveUi;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.PrinterSettingResponse;
 import com.pos_billingwala.R;
@@ -180,7 +180,7 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
 
     /** On tablet, show shop form sections in two columns. */
     private void applyTabletFormLayout() {
-        if (activity == null || !TabletUi.isTablet(activity)) {
+        if (activity == null || !ResponsiveUi.isWideLayout(activity)) {
             return;
         }
         LinearLayout container = binding.shopFormContainer;

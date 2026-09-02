@@ -314,7 +314,7 @@ public final class BottomSheetUi {
         Context ctx = sheet.getContext();
         WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
         lp.copyFrom(sheet.getWindow().getAttributes());
-        if (TabletUi.isTablet(ctx)) {
+        if (ResponsiveUi.isWideLayout(ctx)) {
             int horizontalInset = TabletUi.dpToPx(ctx, TabletUi.horizontalInsetDp(ctx));
             int maxWidth = TabletUi.dpToPx(ctx, TabletUi.bottomSheetMaxWidthDp(ctx));
             int screenWidth = ctx.getResources().getDisplayMetrics().widthPixels;
@@ -323,7 +323,7 @@ public final class BottomSheetUi {
         } else {
             lp.width = WindowManager.LayoutParams.MATCH_PARENT;
         }
-        lp.height = WindowManager.LayoutParams.MATCH_PARENT;
+        lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
         sheet.getWindow().setAttributes(lp);
     }
 }

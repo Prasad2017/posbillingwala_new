@@ -46,10 +46,11 @@ public final class TabletUi {
     /** Max width for centered auth / support / settings forms. */
     public static int formPanelMaxWidthDp(@NonNull Context context) {
         int sw = smallestScreenWidthDp(context);
-        if (sw >= EXPANDED_TABLET_SMALLEST_WIDTH_DP) {
+        int ww = ResponsiveUi.windowWidthDp(context);
+        if (sw >= EXPANDED_TABLET_SMALLEST_WIDTH_DP || ww >= 840) {
             return 720;
         }
-        if (sw >= LARGE_TABLET_SMALLEST_WIDTH_DP) {
+        if (sw >= LARGE_TABLET_SMALLEST_WIDTH_DP || ww >= 720) {
             return 640;
         }
         if (sw >= TABLET_SMALLEST_WIDTH_DP) {
@@ -61,10 +62,11 @@ public final class TabletUi {
     /** Max width for bottom sheets and device-picker dialogs on tablet. */
     public static int bottomSheetMaxWidthDp(@NonNull Context context) {
         int sw = smallestScreenWidthDp(context);
-        if (sw >= EXPANDED_TABLET_SMALLEST_WIDTH_DP) {
+        int ww = ResponsiveUi.windowWidthDp(context);
+        if (sw >= EXPANDED_TABLET_SMALLEST_WIDTH_DP || ww >= 840) {
             return 600;
         }
-        if (sw >= LARGE_TABLET_SMALLEST_WIDTH_DP) {
+        if (sw >= LARGE_TABLET_SMALLEST_WIDTH_DP || ww >= 720) {
             return 560;
         }
         if (sw >= TABLET_SMALLEST_WIDTH_DP) {
@@ -75,14 +77,7 @@ public final class TabletUi {
 
     /** Grid columns for product cards, ticket lists, order tiles, etc. */
     public static int gridColumnCount(@NonNull Context context) {
-        int sw = smallestScreenWidthDp(context);
-        if (sw >= EXPANDED_TABLET_SMALLEST_WIDTH_DP) {
-            return 3;
-        }
-        if (sw >= TABLET_SMALLEST_WIDTH_DP) {
-            return 2;
-        }
-        return 1;
+        return ResponsiveUi.gridColumnCount(context);
     }
 
     public static int horizontalInsetDp(@NonNull Context context) {

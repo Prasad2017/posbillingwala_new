@@ -101,148 +101,124 @@
                         </LinearLayout>
 
                         <LinearLayout
-                            android:id="@+id/homeStatusPill"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="@dimen/spacing_sm"
-                            android:background="@drawable/bg_home_status_pill"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal"
-                            android:paddingStart="12dp"
-                            android:paddingTop="6dp"
-                            android:paddingEnd="12dp"
-                            android:paddingBottom="6dp"
-                            android:visibility="gone"
-                            tools:visibility="visible">
-
-                            <View
-                                android:id="@+id/homeStatusDot"
-                                android:layout_width="8dp"
-                                android:layout_height="8dp"
-                                android:background="@drawable/status_dot" />
-
-                            <TextView
-                                android:id="@+id/homeStatusOpen"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="6dp"
-                                android:fontFamily="@font/poppinsmedium"
-                                android:textColor="@color/white"
-                                android:textSize="11sp"
-                                tools:text="Shop Open" />
-
-                            <View
-                                android:layout_width="1dp"
-                                android:layout_height="12dp"
-                                android:layout_marginStart="10dp"
-                                android:layout_marginEnd="10dp"
-                                android:background="#66FFFFFF" />
-
-                            <TextView
-                                android:id="@+id/homeStatusCloseTime"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:fontFamily="@font/poppinsregular"
-                                android:textColor="#E6FFFFFF"
-                                android:textSize="11sp"
-                                tools:text="Closes 12:00 PM" />
-                        </LinearLayout>
-
-                        <LinearLayout
-                            android:id="@+id/homePrinterStatusRow"
+                            android:id="@+id/homeStatusPrinterRow"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="@dimen/spacing_sm"
-                            android:clickable="true"
-                            android:contentDescription="@string/home_printer_status_hint"
-                            android:focusable="true"
-                            android:foreground="?attr/selectableItemBackground"
                             android:gravity="center_vertical"
-                            android:orientation="horizontal"
-                            android:visibility="gone"
-                            tools:visibility="visible">
+                            android:orientation="horizontal">
 
                             <LinearLayout
-                                android:id="@+id/homeBillPrinterChip"
-                                android:layout_width="0dp"
+                                android:id="@+id/homeStatusPill"
+                                android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="1"
                                 android:background="@drawable/bg_home_status_pill"
                                 android:gravity="center_vertical"
                                 android:orientation="horizontal"
-                                android:paddingStart="10dp"
-                                android:paddingTop="5dp"
-                                android:paddingEnd="10dp"
-                                android:paddingBottom="5dp">
+                                android:paddingStart="12dp"
+                                android:paddingTop="6dp"
+                                android:paddingEnd="12dp"
+                                android:paddingBottom="6dp"
+                                android:visibility="gone"
+                                tools:visibility="visible">
 
                                 <View
-                                    android:id="@+id/homeBillPrinterDot"
+                                    android:id="@+id/homeStatusDot"
                                     android:layout_width="8dp"
                                     android:layout_height="8dp"
                                     android:background="@drawable/status_dot" />
 
                                 <TextView
+                                    android:id="@+id/homeStatusOpen"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginStart="6dp"
                                     android:fontFamily="@font/poppinsmedium"
-                                    android:text="@string/home_printer_bill"
                                     android:textColor="@color/white"
-                                    android:textSize="10sp" />
+                                    android:textSize="11sp"
+                                    tools:text="Shop Open" />
+
+                                <View
+                                    android:layout_width="1dp"
+                                    android:layout_height="12dp"
+                                    android:layout_marginStart="10dp"
+                                    android:layout_marginEnd="10dp"
+                                    android:background="#66FFFFFF" />
 
                                 <TextView
-                                    android:id="@+id/homeBillPrinterStatus"
+                                    android:id="@+id/homeStatusCloseTime"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:layout_marginStart="4dp"
-                                    android:ellipsize="end"
                                     android:fontFamily="@font/poppinsregular"
-                                    android:maxLines="1"
                                     android:textColor="#E6FFFFFF"
-                                    android:textSize="10sp"
-                                    tools:text="Connected" />
+                                    android:textSize="11sp"
+                                    tools:text="Closes 12:00 PM" />
                             </LinearLayout>
 
-                            <LinearLayout
-                                android:id="@+id/homeKotPrinterChip"
+                            <View
                                 android:layout_width="0dp"
+                                android:layout_height="0dp"
+                                android:layout_weight="1" />
+
+                            <LinearLayout
+                                android:id="@+id/homePrinterStatusRow"
+                                android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginStart="8dp"
-                                android:layout_weight="1"
-                                android:background="@drawable/bg_home_status_pill"
-                                android:gravity="center_vertical"
+                                android:clickable="true"
+                                android:contentDescription="@string/home_printer_status_hint"
+                                android:focusable="true"
+                                android:foreground="?attr/selectableItemBackground"
+                                android:gravity="center_vertical|end"
                                 android:orientation="horizontal"
-                                android:paddingStart="10dp"
-                                android:paddingTop="5dp"
-                                android:paddingEnd="10dp"
-                                android:paddingBottom="5dp">
+                                android:visibility="gone"
+                                tools:visibility="visible">
 
-                                <View
-                                    android:id="@+id/homeKotPrinterDot"
-                                    android:layout_width="8dp"
-                                    android:layout_height="8dp"
-                                    android:background="@drawable/status_dot" />
-
-                                <TextView
+                                <LinearLayout
+                                    android:id="@+id/homeBillPrinterChip"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:layout_marginStart="6dp"
-                                    android:fontFamily="@font/poppinsmedium"
-                                    android:text="@string/home_printer_kot"
-                                    android:textColor="@color/white"
-                                    android:textSize="10sp" />
+                                    android:background="@drawable/bg_home_status_pill"
+                                    android:gravity="center_vertical"
+                                    android:orientation="horizontal"
+                                    android:paddingStart="12dp"
+                                    android:paddingTop="6dp"
+                                    android:paddingEnd="12dp"
+                                    android:paddingBottom="6dp">
 
-                                <TextView
-                                    android:id="@+id/homeKotPrinterStatus"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginStart="4dp"
-                                    android:ellipsize="end"
-                                    android:fontFamily="@font/poppinsregular"
-                                    android:maxLines="1"
-                                    android:textColor="#E6FFFFFF"
-                                    android:textSize="10sp"
-                                    tools:text="Offline" />
+                                    <View
+                                        android:id="@+id/homeBillPrinterDot"
+                                        android:layout_width="8dp"
+                                        android:layout_height="8dp"
+                                        android:background="@drawable/status_dot" />
+
+                                    <TextView
+                                        android:id="@+id/homeBillPrinterLabel"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginStart="6dp"
+                                        android:fontFamily="@font/poppinsmedium"
+                                        android:text="@string/home_printer_bill"
+                                        android:textColor="@color/white"
+                                        android:textSize="11sp" />
+
+                                    <View
+                                        android:layout_width="1dp"
+                                        android:layout_height="12dp"
+                                        android:layout_marginStart="10dp"
+                                        android:layout_marginEnd="10dp"
+                                        android:background="#66FFFFFF" />
+
+                                    <TextView
+                                        android:id="@+id/homeBillPrinterStatus"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:ellipsize="end"
+                                        android:fontFamily="@font/poppinsregular"
+                                        android:maxLines="1"
+                                        android:textColor="#E6FFFFFF"
+                                        android:textSize="11sp"
+                                        tools:text="Connected" />
+                                </LinearLayout>
                             </LinearLayout>
                         </LinearLayout>
 

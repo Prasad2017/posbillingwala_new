@@ -65,6 +65,7 @@ public class InvoiceExpenseReport extends Fragment implements View.OnClickListen
         view = binding.getRoot();
 
         activity = getActivity();
+        ReportUiHelper.applyOperationalReportLayout(activity, binding);
         posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
         binding.toolbar.heading.setText(getString(R.string.ui_expense_report));
         binding.toolbar.shareInvoice.setVisibility(View.GONE);
@@ -199,7 +200,7 @@ public class InvoiceExpenseReport extends Fragment implements View.OnClickListen
             }
         });
 
-        mypopupWindow.showAsDropDown(binding.toolbar.menuIcon, 0, -75);
+        PopupUi.showAsToolbarMenu(mypopupWindow, binding.toolbar.menuIcon);
 
     }
 

@@ -336,7 +336,7 @@ public class InvoiceTableListReport extends Fragment implements View.OnClickList
             }
         });
 
-        mypopupWindow.showAsDropDown(binding.toolbar.menuIcon, 0, -75);
+        PopupUi.showAsToolbarMenu(mypopupWindow, binding.toolbar.menuIcon);
 
     }
 

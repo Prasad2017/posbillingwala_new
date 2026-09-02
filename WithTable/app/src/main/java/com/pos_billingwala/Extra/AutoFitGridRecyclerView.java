@@ -9,6 +9,8 @@ import android.view.MotionEvent;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.pos_billingwala.Extra.ResponsiveUi;
+
 @SuppressLint("ResourceType")
 public class AutoFitGridRecyclerView extends RecyclerView {
     public GridLayoutManager manager;
@@ -53,8 +55,8 @@ public class AutoFitGridRecyclerView extends RecyclerView {
     protected void onMeasure(int widthSpec, int heightSpec) {
         super.onMeasure(widthSpec, heightSpec);
         if (columnWidth > 0) {
-            //The spanCount will always be at least 1
-            int spanCount = Math.max(1, getMeasuredWidth() / columnWidth);
+        int minCardDp = (int) (columnWidth / getContext().getResources().getDisplayMetrics().density);
+            int spanCount = ResponsiveUi.gridColumnCountForWidthPx(getContext(), getMeasuredWidth(), minCardDp);
             manager.setSpanCount(spanCount);
         }
     }

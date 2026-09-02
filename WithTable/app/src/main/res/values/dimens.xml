@@ -42,8 +42,21 @@
     <dimen name="text_display">24sp</dimen>
     <dimen name="text_button">15sp</dimen>
 
+    <!-- KPI / report cards — same in portrait and landscape -->
+    <dimen name="text_kpi_label">12sp</dimen>
+    <dimen name="text_kpi_value">18sp</dimen>
+    <dimen name="text_kpi_trend">11sp</dimen>
+    <dimen name="text_row_compact">13sp</dimen>
+
     <dimen name="home_sales_card_min_height">118dp</dimen>
     <dimen name="home_catalog_card_height">124dp</dimen>
     <dimen name="home_billing_card_height">88dp</dimen>
     <dimen name="home_card_arrow_overlap">6dp</dimen>
+
+    <!-- Responsive layout -->
+    <dimen name="product_grid_min_card_width">150dp</dimen>
+    <dimen name="dialog_max_width">560dp</dimen>
+    <dimen name="form_panel_max_width">480dp</dimen>
+    <dimen name="pos_side_cart_min_width">280dp</dimen>
+    <dimen name="table_tile_min_width">135dp</dimen>
 </resources>

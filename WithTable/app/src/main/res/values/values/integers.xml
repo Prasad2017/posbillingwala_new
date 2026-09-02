@@ -4,4 +4,9 @@
     <integer name="scanner_rect_height">230</integer>
     <integer name="line_width">4</integer>
     <integer name="line_speed">5</integer>
+
+    <!-- Responsive product grid -->
+    <integer name="product_grid_min_card_width_dp">150</integer>
+    <integer name="product_grid_min_columns">2</integer>
+    <integer name="product_grid_max_columns">6</integer>
 </resources>

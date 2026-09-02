@@ -25,6 +25,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.pos_billingwala.Extra.ResponsiveUi;
 import com.pos_billingwala.Extra.TabletUi;
 import com.pos_billingwala.R;
 import com.zj.btsdk.BluetoothService;
@@ -195,7 +196,7 @@ public class DeviceListActivity extends Activity {
         DisplayMetrics metrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(metrics);
         WindowManager.LayoutParams params = window.getAttributes();
-        if (TabletUi.isTablet(this)) {
+        if (ResponsiveUi.isWideLayout(this)) {
             int horizontalInset = TabletUi.dpToPx(this, TabletUi.horizontalInsetDp(this));
             int maxWidth = TabletUi.dpToPx(this, TabletUi.bottomSheetMaxWidthDp(this));
             params.width = Math.min(maxWidth, metrics.widthPixels - horizontalInset * 2);

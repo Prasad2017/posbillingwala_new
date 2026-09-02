@@ -116,6 +116,7 @@ public class InvoicePaymentModeWiseReport extends Fragment implements View.OnCli
         view = binding.getRoot();
 
         activity = getActivity();
+        ReportUiHelper.applyOperationalReportLayout(activity, binding);
         posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
         binding.toolbar.heading.setText(paymentMode + " Invoice Reports");
         binding.toolbar.shareInvoice.setVisibility(View.VISIBLE);
@@ -443,7 +444,7 @@ public class InvoicePaymentModeWiseReport extends Fragment implements View.OnCli
             }
         });
 
-        mypopupWindow.showAsDropDown(binding.toolbar.menuIcon, 0, -75);
+        PopupUi.showAsToolbarMenu(mypopupWindow, binding.toolbar.menuIcon);
 
     }
 

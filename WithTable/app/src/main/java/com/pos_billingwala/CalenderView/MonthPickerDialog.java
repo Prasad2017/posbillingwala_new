@@ -3,11 +3,9 @@ package com.pos_billingwala.CalenderView;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
-import android.content.res.Configuration;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.DatePicker;
 import android.widget.DatePicker.OnDateChangedListener;
 
@@ -15,7 +13,6 @@ import androidx.annotation.IntRange;
 import androidx.appcompat.app.AlertDialog;
 
 import com.pos_billingwala.Extra.DialogUi;
-import com.pos_billingwala.Extra.TabletUi;
 import com.pos_billingwala.R;
 
 import java.util.Calendar;
@@ -88,22 +85,6 @@ public class MonthPickerDialog extends AlertDialog implements OnClickListener, O
 
     @Override
     public void show() {
-        if (view != null) {
-            if (this.getContext().getResources().getConfiguration().orientation ==
-                    Configuration.ORIENTATION_LANDSCAPE && !TabletUi.isTablet(getContext())) {
-                WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
-                if (getWindow() != null) {
-                    lp.copyFrom(getWindow().getAttributes());
-                    lp.width = (int) (this.getContext().getResources().getDisplayMetrics().widthPixels * 0.94);
-                    lp.height = (int) (this.getContext().getResources().getDisplayMetrics().heightPixels * 0.94);
-                    super.show();
-                    getWindow().setLayout(lp.width, lp.height);
-                }
-                return;
-            } else if (!TabletUi.isTablet(getContext())) {
-                dismiss();
-            }
-        }
         super.show();
         DialogUi.applyTabletWindow(this);
     }

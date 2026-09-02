@@ -3,9 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    app:cardCornerRadius="12dp"
-
->
+    app:cardCornerRadius="@dimen/radius_md">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -21,38 +19,30 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="14dp">
+            android:padding="@dimen/spacing_md">
 
             <TextView
                 android:id="@+id/kpiLabel"
+                style="@style/PosKpiLabel"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:fontFamily="@font/poppinsregular"
-                android:text="Label"
-                android:textColor="@color/colorTextSecondary"
-                android:textSize="12sp" />
+                android:text="Label" />
 
             <TextView
                 android:id="@+id/kpiValue"
+                style="@style/PosKpiValue"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:ellipsize="end"
-                android:fontFamily="@font/poppinsbold"
-                android:maxLines="1"
-                android:text="0"
-                android:textColor="@color/colorTextPrimary"
-                android:textSize="18sp" />
+                android:layout_marginTop="@dimen/spacing_xs"
+                android:text="0" />
 
             <TextView
                 android:id="@+id/kpiTrend"
+                style="@style/PosKpiTrend"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:fontFamily="@font/poppinsmedium"
-                android:text="+0%"
-                android:textColor="@color/statusActive"
-                android:textSize="11sp" />
+                android:text="+0%" />
         </LinearLayout>
     </LinearLayout>
 </com.pos_billingwala.Extra.PosCardView>

@@ -15,7 +15,7 @@ public final class MasterListTabletUi {
 
     public static void applyFormListSplit(Activity activity, LinearLayout container,
                                           View formSection, View listSection) {
-        if (activity == null || !TabletUi.isTablet(activity) || container == null
+        if (activity == null || !ResponsiveUi.isWideLayout(activity) || container == null
                 || formSection == null || listSection == null) {
             return;
         }
@@ -57,7 +57,7 @@ public final class MasterListTabletUi {
     /** Keeps a header (e.g. product info) full width; splits form and list below on tablet. */
     public static void applyFormListSplitBelowHeader(Activity activity, LinearLayout container,
                                                      View header, View formSection, View listSection) {
-        if (activity == null || !TabletUi.isTablet(activity) || container == null
+        if (activity == null || !ResponsiveUi.isWideLayout(activity) || container == null
                 || formSection == null || listSection == null) {
             return;
         }

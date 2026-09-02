@@ -453,8 +453,10 @@
     <string name="toast_test_print_sent">Test print sent</string>
     <string name="toast_printer_connected">Printer connected</string>
     <string name="toast_printer_disconnect">Printer Disconnect</string>
-    <string name="home_printer_bill">Bill</string>
+    <string name="home_printer_bill">Printer</string>
     <string name="home_printer_kot">KOT</string>
+    <string name="home_printer_bill_line">Printer: %1$s</string>
+    <string name="home_printer_kot_line">KOT: %1$s</string>
     <string name="home_printer_status_connected">Connected</string>
     <string name="home_printer_status_connecting">Connecting…</string>
     <string name="home_printer_status_offline">Offline</string>

@@ -2,7 +2,6 @@ package com.pos_billingwala.Activity;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
 import android.database.CursorWindow;
 import android.os.Bundle;
 import android.widget.Toast;
@@ -22,7 +21,6 @@ import com.pos_billingwala.Extra.LicenceScopeGuard;
 import com.pos_billingwala.Extra.LicenseModules;
 import com.pos_billingwala.Extra.Observability;
 import com.pos_billingwala.Extra.DeviceHealthMonitor;
-import com.pos_billingwala.Extra.TabletUi;
 import com.pos_billingwala.Fragment.CreatePos;
 import com.pos_billingwala.Fragment.Home;
 import com.pos_billingwala.Fragment.InvoiceCompanyTable;
@@ -51,9 +49,6 @@ public class MainActivity extends BaseActivity {
             savedInstanceState = null;
         }
         super.onCreate(savedInstanceState);
-        if (TabletUi.isTablet(this)) {
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
-        }
         setContentView(R.layout.activity_main);
 
         try {

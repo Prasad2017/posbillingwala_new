@@ -27,7 +27,7 @@ public final class TabletFormUi {
 
     /** Pairs direct children into two-column rows (e.g. TextInputLayouts). */
     public static void applyTwoColumnFields(@Nullable Activity activity, @Nullable LinearLayout container) {
-        if (activity == null || !TabletUi.isTablet(activity) || container == null) {
+        if (activity == null || !ResponsiveUi.isWideLayout(activity) || container == null) {
             return;
         }
         int count = container.getChildCount();
@@ -85,7 +85,7 @@ public final class TabletFormUi {
     /** Splits CardView sections into two balanced columns. */
     public static void applyTwoColumnCards(@Nullable Activity activity, @Nullable LinearLayout container,
                                            @NonNull View[] leftCards, @NonNull View[] rightCards) {
-        if (activity == null || !TabletUi.isTablet(activity) || container == null) {
+        if (activity == null || !ResponsiveUi.isWideLayout(activity) || container == null) {
             return;
         }
         container.removeAllViews();
@@ -124,7 +124,7 @@ public final class TabletFormUi {
      * Expects clickable rows as horizontal LinearLayouts with ids.
      */
     public static void applyTwoColumnMenu(@Nullable Activity activity, @Nullable LinearLayout container) {
-        if (activity == null || !TabletUi.isTablet(activity) || container == null) {
+        if (activity == null || !ResponsiveUi.isWideLayout(activity) || container == null) {
             return;
         }
 
@@ -191,7 +191,7 @@ public final class TabletFormUi {
 
     /** About screen: brand hero left, contact + disclaimer right; footer stays full width. */
     public static void applyAboutLayout(@Nullable Activity activity, @Nullable LinearLayout container) {
-        if (activity == null || !TabletUi.isTablet(activity) || container == null
+        if (activity == null || !ResponsiveUi.isWideLayout(activity) || container == null
                 || container.getChildCount() < 4) {
             return;
         }
@@ -250,7 +250,7 @@ public final class TabletFormUi {
     /** Centers auth panels on tablet (login, register, MPIN). */
     public static void applyCenteredPanel(@NonNull View panel, int maxWidthDp) {
         Context ctx = panel.getContext();
-        if (!TabletUi.isTablet(ctx) || maxWidthDp == Integer.MAX_VALUE) {
+        if (!ResponsiveUi.isWideLayout(ctx) || maxWidthDp == Integer.MAX_VALUE) {
             return;
         }
         ViewGroup.LayoutParams lp = panel.getLayoutParams();
@@ -270,7 +270,7 @@ public final class TabletFormUi {
     /** Checkout: cart lines left, payment controls right (BluetoothPrint). */
     public static void applyCartPaymentSplit(@Nullable Activity activity, @Nullable RelativeLayout cartLayout,
                                            @Nullable View cartSection, @Nullable View paymentSection) {
-        if (activity == null || !TabletUi.isTablet(activity) || cartLayout == null
+        if (activity == null || !ResponsiveUi.isWideLayout(activity) || cartLayout == null
                 || cartSection == null || paymentSection == null) {
             return;
         }
@@ -311,7 +311,7 @@ public final class TabletFormUi {
         LinearLayout right = new LinearLayout(activity);
         right.setOrientation(LinearLayout.VERTICAL);
         right.setLayoutParams(new LinearLayout.LayoutParams(
-                0, ViewGroup.LayoutParams.WRAP_CONTENT, 0.42f));
+                0, ViewGroup.LayoutParams.MATCH_PARENT, 0.42f));
 
         RelativeLayout.LayoutParams cartLp = new RelativeLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
@@ -332,7 +332,7 @@ public final class TabletFormUi {
     /** Edit bill: line items left, totals/actions in a right sidebar. */
     public static void applyEditBillSplit(@Nullable Activity activity, @NonNull View productList,
                                           @NonNull View sidePanel, int sidePanelWidthDp) {
-        if (activity == null || !TabletUi.isTablet(activity)) {
+        if (activity == null || !ResponsiveUi.isWideLayout(activity)) {
             return;
         }
         float density = activity.getResources().getDisplayMetrics().density;
@@ -364,7 +364,7 @@ public final class TabletFormUi {
     /** Widen and center on-screen receipt preview on tablet. */
     public static void applyCenteredReceiptPreview(@NonNull View receiptScroll, int widthDp) {
         Context ctx = receiptScroll.getContext();
-        if (!TabletUi.isTablet(ctx)) {
+        if (!ResponsiveUi.isWideLayout(ctx)) {
             return;
         }
         int widthPx = (int) (widthDp * ctx.getResources().getDisplayMetrics().density);

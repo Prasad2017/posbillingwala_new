@@ -248,6 +248,8 @@
     <string name="support_you">You</string>
     <string name="support_ticket_open_banner">Status: %1$s — pull refresh to see new admin replies (online only)</string>
     <string name="support_ticket_closed_banner">Status: %1$s — this ticket is closed. Open a new ticket if you need more help.</string>
+    <string name="support_reply_disabled">Reply is disabled. This ticket is closed. Open a new ticket if you need more help.</string>
+    <string name="support_open_new_ticket">Open New Ticket</string>
     <string name="setting_fetch_data">Fetch Data From Cloud</string>
     <string name="setting_update_app">Update App</string>
     <string name="setting_synchronize">Offline Data Synchronize with Cloud</string>

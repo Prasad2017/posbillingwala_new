@@ -109,7 +109,7 @@ public class MessInvoiceAdapter extends RecyclerView.Adapter<MessInvoiceAdapter.
                     }
                 });
 
-                mypopupWindow.showAsDropDown(holder.binding.pendingAmount, 0, -75);
+                PopupUi.showBelowAnchor(mypopupWindow, holder.binding.pendingAmount);
 
             }
         });

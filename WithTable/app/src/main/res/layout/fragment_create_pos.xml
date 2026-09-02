@@ -264,7 +264,7 @@
                 android:id="@+id/productRecyclerView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:columnWidth="150dp"
+                android:columnWidth="@dimen/product_grid_min_card_width"
                 android:nestedScrollingEnabled="true"
                 android:padding="6dp" />
 
