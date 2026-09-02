@@ -438,4 +438,10 @@ public interface ApiInterface {
                                             @Field("ticketId") String ticketId,
                                             @Field("message") String message);
 
+    @FormUrlEncoded
+    @POST("registerFcmToken.php")
+    Call<AllApiResponse> registerFcmToken(@Field("userId") String userId,
+                                          @Field("android_device_id") String androidDeviceId,
+                                          @Field("fcm_token") String fcmToken);
+
 }

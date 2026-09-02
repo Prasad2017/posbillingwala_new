@@ -69,6 +69,8 @@ public class SettingsHub extends Fragment {
         addSection(root, "ADMIN");
         addRow(inflater, root, R.drawable.ic_report_licenses, R.drawable.bg_quick_action_navy, R.color.colorPrimaryDark,
                 "Permissions", "Roles & module access", () -> open(new SettingsProfile.Permissions(), "Permissions"));
+        addRow(inflater, root, R.drawable.ic_notifications, R.drawable.bg_quick_action_blue, R.color.colorPrimary,
+                "Push Notifications", "Send offers & promotions to POS users", () -> open(new SendPushNotification(), "Send Push"));
 
         addSection(root, "ACCOUNT");
         addRow(inflater, root, R.drawable.ic_logout, R.drawable.bg_quick_action_red, R.color.statusExpired,

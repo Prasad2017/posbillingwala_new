@@ -425,6 +425,8 @@
     <string name="toast_please_select_a_category">Please select a category</string>
     <string name="toast_please_select_mess_days">Please select mess days</string>
     <string name="toast_please_select_payment_mode">Please select payment mode</string>
+    <string name="toast_payment_cancelled">Payment cancelled — bill not saved</string>
+    <string name="toast_payment_not_recorded">Payment details were not saved. You can update this invoice later.</string>
     <string name="toast_settlement_must_match">Cash + UPI must equal the bill total, and both amounts must be greater than 0.</string>
     <string name="toast_please_select_printer">Please select printer</string>
     <string name="toast_please_select_printer_from_setting">Please select printer from setting</string>
@@ -451,6 +453,13 @@
     <string name="toast_test_print_sent">Test print sent</string>
     <string name="toast_printer_connected">Printer connected</string>
     <string name="toast_printer_disconnect">Printer Disconnect</string>
+    <string name="home_printer_bill">Bill</string>
+    <string name="home_printer_kot">KOT</string>
+    <string name="home_printer_status_connected">Connected</string>
+    <string name="home_printer_status_connecting">Connecting…</string>
+    <string name="home_printer_status_offline">Offline</string>
+    <string name="home_printer_status_not_set">Not set</string>
+    <string name="home_printer_status_hint">Printer connection status. Tap to open printer settings.</string>
     <string name="toast_printing_in_progress">Printing in progress</string>
     <string name="toast_product_added_into_cart">Product Added into cart</string>
     <string name="toast_product_added_successfully">Product added successfully</string>

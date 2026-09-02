@@ -33,6 +33,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -50,6 +51,7 @@ import com.karumi.dexter.MultiplePermissionsReport;
 import com.karumi.dexter.PermissionToken;
 import com.karumi.dexter.listener.PermissionRequest;
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener;
+import com.pos_billingwala.Activity.CompanyPrinterSetting;
 import com.pos_billingwala.Activity.Login;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.BuildConfig;
@@ -76,6 +78,7 @@ import com.pos_billingwala.NetworkToOffline.NetworkDataFetcher;
 import com.pos_billingwala.NetworkToOffline.Receiver.LicenceKeyReceiver;
 import com.pos_billingwala.NetworkToOffline.Receiver.OfflineToNetworkReceiver;
 import com.pos_billingwala.NetworkToOffline.UserSynchronizeData;
+import com.pos_billingwala.Print.BluetoothPrinterChannel;
 import com.pos_billingwala.Print.KOTWoosimPrnMng;
 import com.pos_billingwala.Print.PrinterConnectionHelper;
 import com.pos_billingwala.Print.WoosimPrnMng;
@@ -140,6 +143,9 @@ public class Home extends Fragment implements View.OnClickListener {
     };
     List<PrinterSettingResponse> printerSettingResponseList = new ArrayList<>();
     FragmentHomeBinding binding;
+    private String cachedBillPrinterAddress = "";
+    private String cachedKotPrinterAddress = "";
+    private boolean hasPrinterSettingsRow;
 
     private int salesPeriodFilter = SALES_FILTER_TODAY;
 
@@ -153,10 +159,16 @@ public class Home extends Fragment implements View.OnClickListener {
     private Bitmap cachedStoreLogo;
     private String cachedStoreLogoRaw;
     private List<CompanyResponse> cachedCompanyDetails;
+    private static final int PRINTER_STATUS_OFFLINE = 0;
+    private static final int PRINTER_STATUS_CONNECTING = 1;
+    private static final int PRINTER_STATUS_CONNECTED = 2;
+    private static final int PRINTER_STATUS_NOT_SET = 3;
+
     private final Runnable homeClockRunnable = new Runnable() {
         @Override
         public void run() {
             updateHomeDateTime();
+            updatePrinterStatusUi();
             homeClockHandler.postDelayed(this, 1000);
         }
     };
@@ -364,6 +376,9 @@ public class Home extends Fragment implements View.OnClickListener {
         todaySalesCardView = view.findViewById(R.id.todaySalesCardView);
 
         binding.userSettingIcon.setOnClickListener(this);
+        if (binding.homePrinterStatusRow != null) {
+            binding.homePrinterStatusRow.setOnClickListener(this);
+        }
         binding.fastBilling.setOnClickListener(this);
         binding.tableBilling.setOnClickListener(this);
         binding.takeAwayBilling.setOnClickListener(this);
@@ -525,6 +540,8 @@ public class Home extends Fragment implements View.OnClickListener {
             if (LicenseModules.isEnabled(MainActivity.todaySaleData)) {
                 ((MainActivity) activity).loadFragment(new SalesDashboard(), true);
             }
+        } else if (id == R.id.homePrinterStatusRow) {
+            startActivity(new Intent(activity, CompanyPrinterSetting.class));
         }
 
     }
@@ -600,12 +617,20 @@ public class Home extends Fragment implements View.OnClickListener {
             printerSettingResponseList = posBillingWalaDatabase.getPrinterSettingDetails();
         }, () -> {
             if (printerSettingResponseList == null || printerSettingResponseList.isEmpty()) {
+                cachedBillPrinterAddress = "";
+                cachedKotPrinterAddress = "";
+                hasPrinterSettingsRow = false;
+                updatePrinterStatusUi();
                 return;
             }
+            hasPrinterSettingsRow = true;
             final String bluetoothAddress = printerSettingResponseList.get(0).getBluetoothAddress() != null
                     ? printerSettingResponseList.get(0).getBluetoothAddress() : "";
             final String bluetoothKOTAddress = printerSettingResponseList.get(0).getBluetoothKOTAddress() != null
                     ? printerSettingResponseList.get(0).getBluetoothKOTAddress() : "";
+            cachedBillPrinterAddress = bluetoothAddress.trim();
+            cachedKotPrinterAddress = bluetoothKOTAddress.trim();
+            updatePrinterStatusUi();
             // Bluetooth enable prompt stays on main; connect off main to avoid Home hitch
             final boolean btOk = enableBluetooth();
             if (!btOk) {
@@ -617,6 +642,8 @@ public class Home extends Fragment implements View.OnClickListener {
                     PrinterConnectionHelper.autoConnectKotPrinter(activity, bluetoothKOTAddress);
                 } catch (Exception e) {
                     Log.e("Home", "getPrinterSettingDetails connect", e);
+                } finally {
+                    AppExecutors.get().main(this::updatePrinterStatusUi);
                 }
             });
         });
@@ -1080,8 +1107,32 @@ public class Home extends Fragment implements View.OnClickListener {
         super.onResume();
         registerConnectivityReceivers();
         updateHomeHeader();
+        refreshPrinterAddressesFromDb();
         startHomeClock();
         setValidationUI();
+    }
+
+    private void refreshPrinterAddressesFromDb() {
+        if (activity == null || posBillingWalaDatabase == null) {
+            return;
+        }
+        AppExecutors.get().runDbThenMain(this, () -> {
+            printerSettingResponseList = posBillingWalaDatabase.getPrinterSettingDetails();
+        }, () -> {
+            if (printerSettingResponseList == null || printerSettingResponseList.isEmpty()) {
+                cachedBillPrinterAddress = "";
+                cachedKotPrinterAddress = "";
+                hasPrinterSettingsRow = false;
+            } else {
+                hasPrinterSettingsRow = true;
+                PrinterSettingResponse settings = printerSettingResponseList.get(0);
+                cachedBillPrinterAddress = settings.getBluetoothAddress() != null
+                        ? settings.getBluetoothAddress().trim() : "";
+                cachedKotPrinterAddress = settings.getBluetoothKOTAddress() != null
+                        ? settings.getBluetoothKOTAddress().trim() : "";
+            }
+            updatePrinterStatusUi();
+        });
     }
 
     private void updateHomeHeader() {
@@ -1095,9 +1146,80 @@ public class Home extends Fragment implements View.OnClickListener {
         binding.homeShopName.setVisibility(shop.isEmpty() ? View.GONE : View.VISIBLE);
         updateHomeDateTime();
         updateHomeStatusPill();
+        updatePrinterStatusUi();
         updateSyncSubtitle();
         updateOnlineStatusUi();
         loadHomeStoreImage();
+    }
+
+    private void updatePrinterStatusUi() {
+        if (binding == null || binding.homePrinterStatusRow == null || activity == null) {
+            return;
+        }
+        if (!hasPrinterSettingsRow) {
+            binding.homePrinterStatusRow.setVisibility(View.GONE);
+            return;
+        }
+        binding.homePrinterStatusRow.setVisibility(View.VISIBLE);
+        applyPrinterChipState(
+                binding.homeBillPrinterChip,
+                binding.homeBillPrinterDot,
+                binding.homeBillPrinterStatus,
+                cachedBillPrinterAddress,
+                BluetoothPrinterChannel.bill());
+        applyPrinterChipState(
+                binding.homeKotPrinterChip,
+                binding.homeKotPrinterDot,
+                binding.homeKotPrinterStatus,
+                cachedKotPrinterAddress,
+                BluetoothPrinterChannel.kot());
+    }
+
+    private void applyPrinterChipState(View chip, View dot, TextView statusView,
+                                       String savedAddress, BluetoothPrinterChannel channel) {
+        if (chip == null || dot == null || statusView == null || activity == null) {
+            return;
+        }
+        String address = savedAddress != null ? savedAddress.trim() : "";
+        if (address.isEmpty()) {
+            chip.setVisibility(View.VISIBLE);
+            statusView.setText(getString(R.string.home_printer_status_not_set));
+            tintStatusDot(dot, ContextCompat.getColor(activity, R.color.yellow_800));
+            return;
+        }
+        chip.setVisibility(View.VISIBLE);
+        int state = resolvePrinterState(channel);
+        switch (state) {
+            case PRINTER_STATUS_CONNECTED:
+                statusView.setText(getString(R.string.home_printer_status_connected));
+                tintStatusDot(dot, ContextCompat.getColor(activity, R.color.statusActive));
+                break;
+            case PRINTER_STATUS_CONNECTING:
+                statusView.setText(getString(R.string.home_printer_status_connecting));
+                tintStatusDot(dot, ContextCompat.getColor(activity, R.color.statusTrial));
+                break;
+            case PRINTER_STATUS_OFFLINE:
+            default:
+                statusView.setText(getString(R.string.home_printer_status_offline));
+                tintStatusDot(dot, ContextCompat.getColor(activity, R.color.statusExpired));
+                break;
+        }
+    }
+
+    private static int resolvePrinterState(BluetoothPrinterChannel channel) {
+        if (channel.isReady()) {
+            return PRINTER_STATUS_CONNECTED;
+        }
+        if (channel.isConnecting()) {
+            return PRINTER_STATUS_CONNECTING;
+        }
+        return PRINTER_STATUS_OFFLINE;
+    }
+
+    private static void tintStatusDot(View dot, int color) {
+        if (dot.getBackground() != null) {
+            dot.getBackground().mutate().setTint(color);
+        }
     }
 
     private void updateOnlineStatusUi() {

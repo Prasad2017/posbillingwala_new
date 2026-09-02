@@ -538,15 +538,21 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
     }
 
     private void openPaymentScreen() {
-        if (!productCartResponseList.isEmpty()) {
-            Intent intent = new Intent(activity, BluetoothPrint.class);
-            intent.putExtra("invoiceRunningStatus", "printBill");
-            intent.putExtra("tableNumber", tableNumber);
-            intent.putExtra("cartOrderStatus", cartOrderStatus);
-            startActivity(intent);
-        } else {
-            Toast.makeText(activity, getString(R.string.toast_add_product_into_cart), Toast.LENGTH_SHORT).show();
-        }
+        final String table = tableNumber;
+        final String orderStatus = cartOrderStatus;
+        AppExecutors.get().runDbThenMain(this, () -> {
+            productCartResponseList = posBillingWalaDatabase.getCartProductList(table, orderStatus);
+        }, () -> {
+            if (productCartResponseList != null && !productCartResponseList.isEmpty()) {
+                Intent intent = new Intent(activity, BluetoothPrint.class);
+                intent.putExtra("invoiceRunningStatus", "printBill");
+                intent.putExtra("tableNumber", tableNumber);
+                intent.putExtra("cartOrderStatus", cartOrderStatus);
+                startActivity(intent);
+            } else {
+                Toast.makeText(activity, getString(R.string.toast_add_product_into_cart), Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void setupTabletCartPanel() {
@@ -840,9 +846,11 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
         getHomeProductList();
     }
 
-    public void setUpdateQuantity(ProductResponse productResponse, ProductPortionResponse portion) {
+    public void setUpdateQuantity(ProductResponse productResponse, ProductPortionResponse portion,
+                                  ProductCartResponse existingLine) {
         View content = LayoutInflater.from(activity).inflate(R.layout.update_amount_quantity_dialog, null);
         BottomSheetDialog sheet = BottomSheetUi.showContent(activity, content, false);
+        sheet.setOnDismissListener(dialog -> getCartCount());
 
         TextView continueToQuantity = content.findViewById(R.id.continueToQuantity);
         TextView dismissQuantity = content.findViewById(R.id.dismissQuantity);
@@ -854,9 +862,9 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
         }
 
         String defaultPrice = resolveLinePrice(productResponse, portion);
-        if (!productCartResponseList.isEmpty()) {
-            amountTxt.setText(productCartResponseList.get(0).getResolvedLinePrice());
-            quantityTxt.setText(productCartResponseList.get(0).getProductQuantity());
+        if (existingLine != null) {
+            amountTxt.setText(existingLine.getResolvedLinePrice());
+            quantityTxt.setText(existingLine.getProductQuantity());
         } else {
             amountTxt.setText(defaultPrice);
             quantityTxt.setText("1");
@@ -906,8 +914,8 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
                 return;
             }
             String chargedPrice = String.format(Locale.US, "%.2f", amount);
-            if (!productCartResponseList.isEmpty()) {
-                updateCart(productCartResponseList.get(0).getCartId(), String.valueOf(totalQuantity), chargedPrice);
+            if (existingLine != null) {
+                updateCart(existingLine.getCartId(), String.valueOf(totalQuantity), chargedPrice);
             } else {
                 addToCart(productResponse, chargedPrice, String.valueOf(totalQuantity), portion);
             }
@@ -1035,7 +1043,6 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
         AppExecutors.get().runDbThenMain(this, () -> {
             List<ProductCartResponse> existing = posBillingWalaDatabase.getCartProductDetails(
                     productResponse.getProductId(), portionId, table, orderStatus);
-            productCartResponseList = existing;
             if (existing != null && !existing.isEmpty()) {
                 int currentQty = parseCartQuantity(existing.get(0).getProductQuantity());
                 posBillingWalaDatabase.updateCart(existing.get(0).getCartId(),
@@ -1074,13 +1081,17 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
         final String portionId = portion != null ? portion.getPortionId() : null;
         final String table = tableNumber;
         final String orderStatus = cartOrderStatus;
+        final ProductCartResponse[] existingLine = new ProductCartResponse[1];
         AppExecutors.get().runDbThenMain(this, () -> {
-            productCartResponseList = posBillingWalaDatabase.getCartProductDetails(
+            List<ProductCartResponse> existing = posBillingWalaDatabase.getCartProductDetails(
                     productResponse.getProductId(), portionId, table, orderStatus);
+            if (existing != null && !existing.isEmpty()) {
+                existingLine[0] = existing.get(0);
+            }
         }, () -> {
             // Price bottom sheet only when product Open Price is on (not off/null).
             if (productResponse.isOpenPrice()) {
-                setUpdateQuantity(productResponse, portion);
+                setUpdateQuantity(productResponse, portion, existingLine[0]);
                 if (binding != null) {
                     if (!binding.productSearch.getText().toString().isEmpty()) {
                         searchHomeProduct(binding.productSearch.getText().toString());
@@ -1088,8 +1099,12 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
                         refreshCatalogAfterCart();
                     }
                 }
+            } else if (existingLine[0] != null) {
+                int quantity = Integer.parseInt(existingLine[0].getProductQuantity());
+                updateCart(existingLine[0].getCartId(), String.valueOf(quantity + 1),
+                        resolveLinePrice(productResponse, portion));
             } else {
-                updateCartDetails(productResponse, portion);
+                addToCart(productResponse, resolveLinePrice(productResponse, portion), "1", portion);
             }
         });
     }

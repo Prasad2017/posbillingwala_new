@@ -160,6 +160,9 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
     /** Resize + dither + BT write — keep off UI to avoid ANR on large bills. */
     private final ExecutorService printBitmapExecutor = Executors.newSingleThreadExecutor();
     private volatile boolean invoiceSaveInProgress = false;
+    /** Cash/UPI split amounts confirmed on the pre-checkout settlement sheet. */
+    private String pendingSplitCash;
+    private String pendingSplitUpi;
     //********************* Bluetooth Printer Start ************************//
     int PERMISSION_ALL = 1;
     String[] PERMISSIONS;
@@ -974,63 +977,97 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                 Toast.makeText(activity, getString(R.string.toast_please_select_printer_from_setting), Toast.LENGTH_SHORT).show();
             }
         } else if (id == R.id.printInvoiceCardView) {
-            if (!requirePaymentModeSelected()) {
+            runAfterPaymentReady(this::startBillPrint);
+        }
+    }
+
+    /**
+     * Ensures payment mode is selected and, for Cash+UPI, split amounts are entered before checkout.
+     */
+    private void runAfterPaymentReady(Runnable action) {
+        if (!requirePaymentModeSelected()) {
+            return;
+        }
+        if (!PaymentSettlementHelper.isSplit(paymentMode)) {
+            pendingSplitCash = null;
+            pendingSplitUpi = null;
+            action.run();
+            return;
+        }
+        float total = parseDisplayedNumber(totalPayableAmountTxt);
+        showSplitSettlementBeforeCheckout(total, action);
+    }
+
+    private void showSplitSettlementBeforeCheckout(float totalAmt, Runnable onConfirmed) {
+        View content = LayoutInflater.from(activity).inflate(R.layout.set_payment_mode_dialog, null);
+        BottomSheetDialog sheet = BottomSheetUi.showContent(activity, content, false);
+
+        PaymentSettlementBinder.bind(content, totalAmt, MainActivity.currencyName, paymentMode,
+                new PaymentSettlementBinder.Callback() {
+                    @Override
+                    public void onConfirmed(String mode, String cashAmount, String upiAmount) {
+                        pendingSplitCash = cashAmount;
+                        pendingSplitUpi = upiAmount;
+                        sheet.dismiss();
+                        onConfirmed.run();
+                    }
+
+                    @Override
+                    public void onDismissed() {
+                        sheet.dismiss();
+                        Toast.makeText(activity, getString(R.string.toast_payment_cancelled),
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    private void startBillPrint() {
+        if (printerSettingResponseList != null && !printerSettingResponseList.isEmpty()) {
+            String billAddress = printerSettingResponseList.get(0).getBluetoothAddress();
+            if (!PrinterConnectionHelper.ensureBillPrinter(activity,
+                    billAddress != null ? billAddress : "")) {
                 return;
             }
-            if (printerSettingResponseList != null && !printerSettingResponseList.isEmpty()) {
-                String billAddress = printerSettingResponseList.get(0).getBluetoothAddress();
-                if (!PrinterConnectionHelper.ensureBillPrinter(activity,
-                        billAddress != null ? billAddress : "")) {
-                    return;
-                }
-                if (printerSettingResponseList.get(0).getCustomerUse() != null) {
-                    if (printerSettingResponseList.get(0).getCustomerUse().equalsIgnoreCase("on")) {
-                        View customerContent = LayoutInflater.from(activity).inflate(R.layout.update_customer_dialog, null);
-                        BottomSheetDialog customerSheet = BottomSheetUi.showContent(activity, customerContent, false);
+            if (printerSettingResponseList.get(0).getCustomerUse() != null) {
+                if (printerSettingResponseList.get(0).getCustomerUse().equalsIgnoreCase("on")) {
+                    View customerContent = LayoutInflater.from(activity).inflate(R.layout.update_customer_dialog, null);
+                    BottomSheetDialog customerSheet = BottomSheetUi.showContent(activity, customerContent, false);
 
-                        TextView dismissCustomerTxt = customerContent.findViewById(R.id.dismissCustomer);
-                        TextView addCustomerTxt = customerContent.findViewById(R.id.addCustomer);
-                        TextInputEditText customerNameTxt = customerContent.findViewById(R.id.customerName);
-                        TextInputEditText customerMobileTxt = customerContent.findViewById(R.id.customerMobile);
-                        TextInputEditText customerAddressTxt = customerContent.findViewById(R.id.customerAddress);
+                    TextView dismissCustomerTxt = customerContent.findViewById(R.id.dismissCustomer);
+                    TextView addCustomerTxt = customerContent.findViewById(R.id.addCustomer);
+                    TextInputEditText customerNameTxt = customerContent.findViewById(R.id.customerName);
+                    TextInputEditText customerMobileTxt = customerContent.findViewById(R.id.customerMobile);
+                    TextInputEditText customerAddressTxt = customerContent.findViewById(R.id.customerAddress);
 
-                        dismissCustomerTxt.setOnClickListener(v -> customerSheet.dismiss());
-                        addCustomerTxt.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                if (!customerNameTxt.getText().toString().isEmpty()) {
+                    dismissCustomerTxt.setOnClickListener(v -> customerSheet.dismiss());
+                    addCustomerTxt.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            if (!customerNameTxt.getText().toString().isEmpty()) {
 
-                                    String customerName = customerNameTxt.getText().toString();
-                                    String customerMobile = customerMobileTxt.getText().toString();
-                                    String customerAddress = customerAddressTxt.getText().toString();
+                                String customerName = customerNameTxt.getText().toString();
+                                String customerMobile = customerMobileTxt.getText().toString();
+                                String customerAddress = customerAddressTxt.getText().toString();
 
-                                    customerSheet.dismiss();
+                                customerSheet.dismiss();
 
-                                    invoiceNumber = resolveInvoiceNumber();
+                                invoiceNumber = resolveInvoiceNumber();
 
-                                    progressDialog = new ProgressDialog(activity);
-                                    progressDialog.setMessage(getString(R.string.toast_printing_in_progress));
+                                progressDialog = new ProgressDialog(activity);
+                                progressDialog.setMessage(getString(R.string.toast_printing_in_progress));
 
-                                    if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("2-Inch")) {
-                                        print2InchBill(customerName, customerMobile, customerAddress);
-                                    } else if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("3-Inch")) {
-                                        print3InchBill(customerName, customerMobile, customerAddress);
-                                    }
-
-                                } else {
-                                    Toast.makeText(activity, getString(R.string.toast_please_fill_customer_name), Toast.LENGTH_SHORT).show();
+                                if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("2-Inch")) {
+                                    print2InchBill(customerName, customerMobile, customerAddress);
+                                } else if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("3-Inch")) {
+                                    print3InchBill(customerName, customerMobile, customerAddress);
                                 }
-                            }
-                        });
 
-                    } else {
-                        resolveInvoiceNumber();
-                        if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("2-Inch")) {
-                            print2InchBill("", "", "");
-                        } else if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("3-Inch")) {
-                            print3InchBill("", "", "");
+                            } else {
+                                Toast.makeText(activity, getString(R.string.toast_please_fill_customer_name), Toast.LENGTH_SHORT).show();
+                            }
                         }
-                    }
+                    });
+
                 } else {
                     resolveInvoiceNumber();
                     if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("2-Inch")) {
@@ -1040,8 +1077,15 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                     }
                 }
             } else {
-                Toast.makeText(activity, getString(R.string.toast_please_select_printer_from_setting), Toast.LENGTH_SHORT).show();
+                resolveInvoiceNumber();
+                if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("2-Inch")) {
+                    print2InchBill("", "", "");
+                } else if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("3-Inch")) {
+                    print3InchBill("", "", "");
+                }
             }
+        } else {
+            Toast.makeText(activity, getString(R.string.toast_please_select_printer_from_setting), Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -1055,9 +1099,10 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
     }
 
     private void shareInvoice() {
-        if (!requirePaymentModeSelected()) {
-            return;
-        }
+        runAfterPaymentReady(() -> shareInvoiceAfterPaymentReady());
+    }
+
+    private void shareInvoiceAfterPaymentReady() {
         View customerContent = LayoutInflater.from(activity).inflate(R.layout.update_customer_dialog, null);
         BottomSheetDialog customerSheet = BottomSheetUi.showContent(activity, customerContent, false);
 
@@ -1421,11 +1466,10 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                 Toast.makeText(activity, getString(R.string.toast_cart_is_empty), Toast.LENGTH_SHORT).show();
                 return;
             }
-            if (!requirePaymentModeSelected()) {
-                return;
-            }
-            invoiceNumber = resolveInvoiceNumber();
-            saveInvoice("", "", "", 0);
+            runAfterPaymentReady(() -> {
+                invoiceNumber = resolveInvoiceNumber();
+                saveInvoice("", "", "", 0);
+            });
         });
 
         shareInvoiceLayout.setOnClickListener(v -> {
@@ -1584,6 +1628,8 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
         final String reservedCustomerName = customerName;
         final String reservedCustomerMobile = customerMobile;
         final String reservedCustomerAddress = customerAddress;
+        final String reservedSplitCash = pendingSplitCash;
+        final String reservedSplitUpi = pendingSplitUpi;
         final List<ProductCartResponse> cartSnapshot = new ArrayList<>(productCartResponseList);
         final CompanyResponse company = companyResponseList.get(0);
 
@@ -1713,6 +1759,12 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                     throw new IllegalStateException("Local invoice save returned false");
                 }
 
+                if (PaymentSettlementHelper.isSplit(paymentModeForSave)
+                        && reservedSplitCash != null && reservedSplitUpi != null) {
+                    posBillingWalaDatabase.updateInvoicePaymentMode(
+                            reservedInvoiceNumber, paymentModeForSave, reservedSplitCash, reservedSplitUpi);
+                }
+
                 // Ensure active cart for this table/order is empty after bill save.
                 if (reservedTableNumber != null && reservedCartOrderStatus != null) {
                     posBillingWalaDatabase.clearCart(reservedTableNumber, reservedCartOrderStatus);
@@ -1720,8 +1772,9 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
 
                 if (!invoiceType.equalsIgnoreCase("table_wise")) {
                     boolean splitPay = PaymentSettlementHelper.isSplit(reservedPaymentMode);
-                    needsPaymentMode = splitPay
-                            || !posBillingWalaDatabase.checkPaymentMode(reservedInvoiceNumber).isEmpty();
+                    boolean splitReady = splitPay && reservedSplitCash != null && reservedSplitUpi != null;
+                    needsPaymentMode = !splitReady && (splitPay
+                            || !posBillingWalaDatabase.checkPaymentMode(reservedInvoiceNumber).isEmpty());
                 }
                 saved = true;
             } catch (Exception e) {
@@ -1738,6 +1791,8 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
 
             runOnUiThread(() -> {
                 invoiceSaveInProgress = false;
+                pendingSplitCash = null;
+                pendingSplitUpi = null;
                 if (isFinishing()) {
                     return;
                 }
@@ -1941,7 +1996,7 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                         && printerSettingResponseList.get(0).getBluetoothAddress() != null) {
                     addr = printerSettingResponseList.get(0).getBluetoothAddress();
                 }
-                WoosimPrnMng.connectFromButton(activity, addr, activity);
+                WoosimPrnMng.connect(activity, addr, activity);
             } else if (requestCode == REQUEST_CONNECT_DEVICE && resultCode == RESULT_OK && data != null) {
                 String bluetoothAddress = data.getStringExtra(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
                 if (bluetoothAddress != null) {
@@ -1956,7 +2011,7 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                         && printerSettingResponseList.get(0).getBluetoothKOTAddress() != null) {
                     kotAddr = printerSettingResponseList.get(0).getBluetoothKOTAddress();
                 }
-                KOTWoosimPrnMng.connectFromButton(activity, kotAddr, activity);
+                KOTWoosimPrnMng.connect(activity, kotAddr, activity);
             } else if (requestCode == REQUEST_KOT_CONNECT_DEVICE && resultCode == RESULT_OK && data != null) {
                 String bluetoothAddress = data.getStringExtra(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
                 if (bluetoothAddress != null) {
@@ -2023,13 +2078,9 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
 
                     @Override
                     public void onDismissed() {
-                        posBillingWalaDatabase.updateInvoicePaymentMode(invoiceNumber, PaymentSettlementHelper.MODE_CASH);
-                        if (printStatus == 1) {
-                            automaticSavePDF(customerName, customerMobile, customerAddress, invoiceNumber);
-                        } else {
-                            Toast.makeText(activity, getString(R.string.toast_invoice_saved), Toast.LENGTH_SHORT).show();
-                        }
                         sheet.dismiss();
+                        Toast.makeText(activity, getString(R.string.toast_payment_not_recorded),
+                                Toast.LENGTH_LONG).show();
                         finishAfterInvoiceSaved();
                     }
                 });

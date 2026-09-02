@@ -6,8 +6,11 @@ import android.content.res.Resources;
 
 import com.pos_billingwala.Extra.AppLanguage;
 import com.pos_billingwala.Extra.DisplayScale;
+import com.pos_billingwala.Extra.FcmTokenManager;
 import com.pos_billingwala.Extra.Observability;
+import com.pos_billingwala.Extra.PushNotificationHelper;
 import com.pos_billingwala.Extra.ScreenshotConfig;
+import com.pos_billingwala.Print.PrinterConnectionHelper;
 
 /**
  * Application entry for production monitoring.
@@ -41,5 +44,14 @@ public class PosBillingWalaApp extends Application implements DisplayScale.Resou
         AppLanguage.applyStored(this);
         Observability.init(this);
         ScreenshotConfig.install(this);
+        PrinterConnectionHelper.initializeApp(this);
+        PushNotificationHelper.ensureChannel(this);
+        FcmTokenManager.registerIfLoggedIn(this);
+    }
+
+    @Override
+    public void onTerminate() {
+        PrinterConnectionHelper.shutdownApp(this);
+        super.onTerminate();
     }
 }

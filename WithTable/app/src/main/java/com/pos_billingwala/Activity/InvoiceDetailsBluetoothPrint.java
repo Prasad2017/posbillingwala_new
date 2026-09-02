@@ -450,25 +450,15 @@ public class InvoiceDetailsBluetoothPrint extends BaseActivity implements View.O
     }
 
     protected void printImage(Bitmap image, int effectivePrintWidth) {
-
-        if (WoosimPrnMng.isPrinterConnected(getApplicationContext(), InvoiceDetailsBluetoothPrint.this)) {
-
-            BluetoothPrintService mService = WoosimPrnMng.getServiceInstance();
-            if (mService == null) {
-                Toast.makeText(activity, getString(R.string.toast_printer_not_connected_select), Toast.LENGTH_SHORT).show();
-                return;
-            }
-            PrintImage PrintImage = new PrintImage(getResizedBitmap(image, effectivePrintWidth));
-            PrintImage.PrepareImage(dither.floyd_steinberg, 128);
-            mService.write(PrintImage.getPrintImageData());
-
-            String feed = printerSettingResponseList.get(0).getPrinterFeedLines();
-            checkAndFeedPaper(feed == null || feed.trim().isEmpty() ? "1" : feed);
-
-        } else {
-            WoosimPrnMng.connectFromButton(activity, savedBillPrinterAddress(), InvoiceDetailsBluetoothPrint.this);
+        PrintImage printImage = new PrintImage(getResizedBitmap(image, effectivePrintWidth));
+        printImage.PrepareImage(dither.floyd_steinberg, 128);
+        if (!PrinterConnectionHelper.safeWriteBill(activity, printImage.getPrintImageData())) {
+            WoosimPrnMng.connect(activity, savedBillPrinterAddress(), InvoiceDetailsBluetoothPrint.this);
+            return;
         }
 
+        String feed = printerSettingResponseList.get(0).getPrinterFeedLines();
+        checkAndFeedPaper(feed == null || feed.trim().isEmpty() ? "1" : feed);
     }
 
     public Bitmap convertLayout(NestedScrollView nestedScrollView, int effectivePrintWidth) {
@@ -547,21 +537,12 @@ public class InvoiceDetailsBluetoothPrint extends BaseActivity implements View.O
             if (lines == null || lines.trim().isEmpty()) {
                 return;
             }
-            if (!WoosimPrnMng.isPrinterConnected(activity, InvoiceDetailsBluetoothPrint.this)) {
-                WoosimPrnMng.connectFromButton(activity, savedBillPrinterAddress(), InvoiceDetailsBluetoothPrint.this);
-                return;
-            }
-            // Bill printer feed — must use WoosimPrnMng, not KOTWoosimPrnMng
-            BluetoothPrintService mService = WoosimPrnMng.getServiceInstance();
-            if (mService == null) {
-                return;
-            }
             int count = Integer.parseInt(lines.trim());
             StringBuilder lineBreaks = new StringBuilder();
             for (int i = 0; i < count; i++) {
                 lineBreaks.append("\n");
             }
-            mService.write(lineBreaks.toString().getBytes());
+            PrinterConnectionHelper.safeWriteBill(activity, lineBreaks.toString().getBytes());
         } catch (Exception ignored) {
         }
     }
@@ -867,7 +848,7 @@ public class InvoiceDetailsBluetoothPrint extends BaseActivity implements View.O
                 printBill();
             }
         } else if (requestCode == REQUEST_ENABLE_BT && resultCode == RESULT_OK) {
-            WoosimPrnMng.connectFromButton(activity, savedBillPrinterAddress(), InvoiceDetailsBluetoothPrint.this);
+            WoosimPrnMng.connect(activity, savedBillPrinterAddress(), InvoiceDetailsBluetoothPrint.this);
         } else if (requestCode == REQUEST_CONNECT_DEVICE && resultCode == RESULT_OK && data != null && data.getExtras() != null) {
             String bluetoothAddress = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
             if (bluetoothAddress != null) {
@@ -877,7 +858,7 @@ public class InvoiceDetailsBluetoothPrint extends BaseActivity implements View.O
                 }
             }
         } else if (requestCode == REQUEST_KOT_ENABLE_BT && resultCode == RESULT_OK) {
-            KOTWoosimPrnMng.connectFromButton(activity, savedKotPrinterAddress(), InvoiceDetailsBluetoothPrint.this);
+            KOTWoosimPrnMng.connect(activity, savedKotPrinterAddress(), InvoiceDetailsBluetoothPrint.this);
         } else if (requestCode == REQUEST_KOT_CONNECT_DEVICE && resultCode == RESULT_OK && data != null && data.getExtras() != null) {
             String bluetoothAddress = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
             if (bluetoothAddress != null) {

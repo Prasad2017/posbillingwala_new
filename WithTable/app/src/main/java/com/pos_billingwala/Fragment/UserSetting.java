@@ -48,6 +48,7 @@ import com.pos_billingwala.Extra.AppLanguage;
 import com.pos_billingwala.Extra.BottomSheetUi;
 import com.pos_billingwala.Extra.BusinessHours;
 import com.pos_billingwala.Extra.AuthTokens;
+import com.pos_billingwala.Extra.FcmTokenManager;
 import com.pos_billingwala.Extra.Common;
 import com.pos_billingwala.Extra.DetectConnection;
 import com.pos_billingwala.Model.AllApiResponse;
@@ -515,6 +516,7 @@ public class UserSetting extends Fragment implements View.OnClickListener {
                         Toast.makeText(activity, response.body().getMessage(), Toast.LENGTH_SHORT).show();
 
                         //To clear data from shared preferences
+                        FcmTokenManager.clearOnLogout(activity);
                         AuthTokens.clear(activity);
                         Common.saveUserData(activity, "userId", "");
                         Common.saveUserData(activity, "ownerId", "");

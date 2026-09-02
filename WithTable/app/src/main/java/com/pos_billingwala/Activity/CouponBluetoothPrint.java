@@ -42,6 +42,7 @@ import com.pos_billingwala.Model.PrinterSettingResponse;
 import com.pos_billingwala.Print.BluetoothPrintService;
 import com.pos_billingwala.Print.DeviceListActivity;
 import com.pos_billingwala.Print.PrintImage;
+import com.pos_billingwala.Print.PrinterConnectionHelper;
 import com.pos_billingwala.Print.WoosimPrnMng;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.ActivityCouponBluetoothPrintBinding;
@@ -239,24 +240,16 @@ public class CouponBluetoothPrint extends BaseActivity implements View.OnClickLi
     }
 
     protected void printImage(Bitmap image, int effectivePrintWidth) {
-
-        if (WoosimPrnMng.isPrinterConnected(getApplicationContext(), CouponBluetoothPrint.this)) {
-
-            BluetoothPrintService mService = null;
-            mService = WoosimPrnMng.getServiceInstance();
-            PrintImage PrintImage = new PrintImage(getResizedBitmap(image, effectivePrintWidth));
-            PrintImage.PrepareImage(com.pos_billingwala.Print.PrintImage.dither.floyd_steinberg, 128);
-            mService.write(PrintImage.getPrintImageData());
-
-            checkAndFeedPaper(printerSettingResponseList.get(0).getKotPrinterFeedLines());
-
-            saveMessInvoice();
-
-        } else {
-            //Printer not connected and send request for connecting printer
-            new WoosimPrnMng(activity, "", CouponBluetoothPrint.this);
+        PrintImage printImage = new PrintImage(getResizedBitmap(image, effectivePrintWidth));
+        printImage.PrepareImage(com.pos_billingwala.Print.PrintImage.dither.floyd_steinberg, 128);
+        if (!PrinterConnectionHelper.safeWriteBill(activity, printImage.getPrintImageData())) {
+            String addr = printerSettingResponseList.isEmpty() ? "" : printerSettingResponseList.get(0).getBluetoothAddress();
+            WoosimPrnMng.connect(activity, addr != null ? addr : "", CouponBluetoothPrint.this);
+            return;
         }
 
+        checkAndFeedPaper(printerSettingResponseList.get(0).getKotPrinterFeedLines());
+        saveMessInvoice();
     }
 
     public void saveMessInvoice() {
@@ -355,22 +348,17 @@ public class CouponBluetoothPrint extends BaseActivity implements View.OnClickLi
     }
 
     public void checkAndFeedPaper(String lines) {
-
-        if (WoosimPrnMng.isPrinterConnected(activity, CouponBluetoothPrint.this)) {
-            BluetoothPrintService mService = null;
-            mService = WoosimPrnMng.getServiceInstance();
+        try {
+            if (lines == null || lines.trim().isEmpty()) {
+                return;
+            }
             StringBuilder lineBreaks = new StringBuilder();
             for (int i = 0; i < Integer.parseInt(lines); i++) {
-                lineBreaks.append("\n"); // Add a newline character for each extra line
+                lineBreaks.append("\n");
             }
-            // Convert to bytes and send to the printer
-            byte[] lineBreakBytes = lineBreaks.toString().getBytes();
-            mService.write(lineBreakBytes);
-        } else {
-            //Printer not connected and send request for connecting printer
-            new WoosimPrnMng(activity, "", CouponBluetoothPrint.this);
+            PrinterConnectionHelper.safeWriteBill(activity, lineBreaks.toString().getBytes());
+        } catch (Exception ignored) {
         }
-
     }
 
     public void hideDialog() {

@@ -100,6 +100,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-analytics'
     implementation 'com.google.firebase:firebase-crashlytics'
     implementation 'com.google.firebase:firebase-perf'
+    implementation 'com.google.firebase:firebase-messaging'
     //Google ads SDK
     implementation 'com.google.android.gms:play-services-ads:25.4.0'
     implementation 'androidx.work:work-runtime:2.11.2'

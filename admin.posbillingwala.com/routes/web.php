@@ -19,6 +19,7 @@ use App\Http\Controllers\CrashController;
 use App\Http\Controllers\SupportController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\WebsiteContentController;
+use App\Http\Controllers\PushNotificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -198,6 +199,8 @@ Route::middleware(['auth'])->group(function () {
 	Route::post('crashes/{id}/status', [CrashController::class, 'updateStatus']);
 
 	Route::get('support', [SupportController::class, 'hub']);
+	Route::get('push-notifications', [PushNotificationController::class, 'index']);
+	Route::post('push-notifications/send', [PushNotificationController::class, 'send']);
 	Route::get('support/faq', [SupportController::class, 'faq']);
 	Route::get('support/tickets', [SupportController::class, 'tickets']);
 	Route::get('support/tickets/create', [SupportController::class, 'create']);

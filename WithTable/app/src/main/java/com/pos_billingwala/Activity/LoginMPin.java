@@ -42,6 +42,7 @@ import com.pos_billingwala.Extra.BottomSheetUi;
 import com.pos_billingwala.Extra.Common;
 import com.pos_billingwala.Extra.TabletFormUi;
 import com.pos_billingwala.NetworkToOffline.CloudSyncNav;
+import com.pos_billingwala.Extra.FcmTokenManager;
 import com.pos_billingwala.Extra.LicenceExpiredUi;
 import com.pos_billingwala.Extra.LicenceScopeGuard;
 import com.pos_billingwala.Extra.LicenseModules;
@@ -422,6 +423,7 @@ public class LoginMPin extends BaseActivity implements View.OnClickListener {
                                 LicenseSession.saveFromLogin(LoginMPin.this, response.body());
                                 AuthTokens.saveFromLogin(LoginMPin.this, response.body());
                                 LicenceScopeGuard.onLoginSuccess(LoginMPin.this, response.body());
+                                FcmTokenManager.registerIfLoggedIn(LoginMPin.this);
                                 Observability.setUserContext(
                                         response.body().getLicenceId(),
                                         response.body().getLicenceKey());
