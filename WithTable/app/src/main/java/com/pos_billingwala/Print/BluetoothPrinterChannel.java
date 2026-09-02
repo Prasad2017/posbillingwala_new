@@ -26,6 +26,7 @@ import com.woosim.printer.WoosimService;
  * <ul>
  *   <li>Stays connected to the same paired address — does not reconnect if already connected.</li>
  *   <li>Auto-reconnects silently when the link drops but the saved address is still set.</li>
+ *   <li>Only disconnects when the user taps Disconnect or the app process ends.</li>
  *   <li>Never throws — failures are surfaced as toasts only when appropriate.</li>
  * </ul>
  */
@@ -34,6 +35,11 @@ public final class BluetoothPrinterChannel {
 
     private static final String TAG = "BtPrinterChannel";
     private static final long RECONNECT_DELAY_MS = 2500L;
+    private static final long RECONNECT_MAX_DELAY_MS = 30000L;
+    /** Max wait for an in-flight connect before giving up on a print write. */
+    private static final long CONNECT_WAIT_MS = 12000L;
+    /** Bill + KOT must not open two RFCOMM sockets to the same MAC at once. */
+    private static final Object GLOBAL_CONNECT_LOCK = new Object();
 
     private static final BluetoothPrinterChannel BILL = new BluetoothPrinterChannel("bill");
     private static final BluetoothPrinterChannel KOT = new BluetoothPrinterChannel("kot");
@@ -49,7 +55,10 @@ public final class BluetoothPrinterChannel {
 
     private String savedAddress = "";
     private boolean userInitiatedSession;
+    /** True after a successful connect; cleared only by explicit disconnect. */
+    private boolean persistentSession;
     private boolean reconnectScheduled;
+    private long reconnectBackoffMs = RECONNECT_DELAY_MS;
 
     private final Runnable reconnectRunnable;
 
@@ -76,27 +85,50 @@ public final class BluetoothPrinterChannel {
         return KOT;
     }
 
+    /** Call once from {@link android.app.Application#onCreate()} for app-scoped sessions. */
+    public static void initializeApp(Context context) {
+        if (context == null) {
+            return;
+        }
+        Context app = context.getApplicationContext();
+        BILL.ensureAppContext(app);
+        KOT.ensureAppContext(app);
+    }
+
+    /** Tear down both channels when the app process is ending. */
+    public static void shutdownApp(Context context) {
+        if (context == null) {
+            return;
+        }
+        Context app = context.getApplicationContext();
+        BILL.shutdownInternal(app);
+        KOT.shutdownInternal(app);
+    }
+
     /** Silent background connect — used from Home / billing screen onStart. */
     public void autoConnect(Context context, String address) {
         try {
             if (context == null) {
                 return;
             }
-            appContext = context.getApplicationContext();
-            if (!(context instanceof Activity)) {
-                return;
+            ensureAppContext(context);
+            if (context instanceof Activity) {
+                hostActivity = (Activity) context;
             }
-            hostActivity = (Activity) context;
             String addr = normalize(address);
             if (addr.isEmpty()) {
                 return;
             }
             savedAddress = addr;
-            userInitiatedSession = false;
             if (isReady() && addr.equalsIgnoreCase(getConnectedAddress())) {
+                persistentSession = true;
                 return;
             }
-            if (!checkBluetoothEnabled(hostActivity, false)) {
+            if (!isBluetoothAdapterEnabled()) {
+                return;
+            }
+            if (shouldDelegateToPeer(addr)) {
+                peerChannel().autoConnect(appContext, addr);
                 return;
             }
             connectInternal(addr, false);
@@ -118,17 +150,24 @@ public final class BluetoothPrinterChannel {
             if (context == null) {
                 return;
             }
-            appContext = context.getApplicationContext();
-            hostActivity = activity != null ? activity : (context instanceof Activity ? (Activity) context : hostActivity);
+            ensureAppContext(context);
+            if (activity != null) {
+                hostActivity = activity;
+            } else if (context instanceof Activity) {
+                hostActivity = (Activity) context;
+            }
             userInitiatedSession = allowDevicePicker;
 
             Activity btActivity = hostActivity;
-            if (btActivity == null) {
+            if (allowDevicePicker && btActivity == null) {
                 showToast(appContext, R.string.connect_fail);
                 return;
             }
 
-            if (!checkBluetoothEnabled(btActivity, allowDevicePicker)) {
+            if (allowDevicePicker && !checkBluetoothEnabled(btActivity, true)) {
+                return;
+            }
+            if (!allowDevicePicker && !isBluetoothAdapterEnabled()) {
                 return;
             }
 
@@ -140,22 +179,36 @@ public final class BluetoothPrinterChannel {
             }
 
             if (addr.isEmpty()) {
-                if (allowDevicePicker) {
+                if (allowDevicePicker && btActivity != null) {
                     openDevicePicker(btActivity);
                 }
                 return;
             }
 
             if (isReady() && addr.equalsIgnoreCase(getConnectedAddress())) {
+                persistentSession = true;
                 if (allowDevicePicker) {
-                    showConnectedToast(btActivity, addr);
+                    showConnectedToast(btActivity != null ? btActivity : appContext, addr);
                 }
                 return;
             }
 
             if (allowDevicePicker) {
-                // Saved printer is not currently connected → let the user pick
-                openDevicePicker(btActivity);
+                // Paired saved printer: try silent connect first instead of forcing re-pick
+                if (!addr.isEmpty() && isPairedAddress(addr)) {
+                    if (shouldDelegateToPeer(addr)) {
+                        peerChannel().connect(context, addr, activity, false);
+                        return;
+                    }
+                    if (isConnecting()) {
+                        return;
+                    }
+                    connectInternal(addr, true);
+                    return;
+                }
+                if (btActivity != null) {
+                    openDevicePicker(btActivity);
+                }
                 return;
             }
 
@@ -201,17 +254,40 @@ public final class BluetoothPrinterChannel {
     }
 
     public boolean isReady() {
-        return printService != null
-                && printService.getState() == BluetoothPrintService.STATE_CONNECTED;
+        BluetoothPrinterChannel owner = connectionOwner();
+        return owner.isInternallyReady();
     }
 
     public boolean isConnecting() {
-        return printService != null
-                && printService.getState() == BluetoothPrintService.STATE_CONNECTING;
+        BluetoothPrinterChannel owner = connectionOwner();
+        return owner.isInternallyConnecting();
     }
 
     public String getConnectedAddress() {
-        return printService != null ? printService.getConnectedDeviceAddress() : "";
+        BluetoothPrinterChannel owner = connectionOwner();
+        return owner.printService != null ? owner.printService.getConnectedDeviceAddress() : "";
+    }
+
+    /**
+     * Blocks the calling thread until connected or timeout. Safe to call from a background executor.
+     */
+    public boolean waitUntilReady(long timeoutMs) {
+        long deadline = System.currentTimeMillis() + timeoutMs;
+        while (System.currentTimeMillis() < deadline) {
+            if (isReady()) {
+                return true;
+            }
+            if (!isConnecting()) {
+                return false;
+            }
+            try {
+                Thread.sleep(200L);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return isReady();
+            }
+        }
+        return isReady();
     }
 
     public String getSavedAddress() {
@@ -245,7 +321,7 @@ public final class BluetoothPrinterChannel {
     }
 
     public BluetoothPrintService getPrintService() {
-        return printService;
+        return connectionOwner().printService;
     }
 
     public boolean write(byte[] data) {
@@ -253,18 +329,25 @@ public final class BluetoothPrinterChannel {
             if (data == null || data.length == 0) {
                 return false;
             }
-            if (!isReady() || printService == null) {
-                scheduleReconnect();
+            BluetoothPrinterChannel owner = connectionOwner();
+            if (!owner.isInternallyReady() || owner.printService == null) {
+                if (!isReady() && isConnecting()) {
+                    waitUntilReady(CONNECT_WAIT_MS);
+                }
+                owner = connectionOwner();
+            }
+            if (!owner.isInternallyReady() || owner.printService == null) {
+                owner.scheduleReconnect();
                 return false;
             }
-            boolean ok = printService.write(data);
+            boolean ok = owner.printService.write(data);
             if (!ok) {
-                scheduleReconnect();
+                owner.scheduleReconnect();
             }
             return ok;
         } catch (Exception e) {
             Log.e(TAG, channelName + ": write failed", e);
-            scheduleReconnect();
+            connectionOwner().scheduleReconnect();
             return false;
         }
     }
@@ -273,6 +356,8 @@ public final class BluetoothPrinterChannel {
         try {
             cancelReconnect();
             userInitiatedSession = false;
+            persistentSession = false;
+            reconnectBackoffMs = RECONNECT_DELAY_MS;
             if (printService != null) {
                 final BluetoothPrintService service = printService;
                 printService = null;
@@ -297,6 +382,8 @@ public final class BluetoothPrinterChannel {
     public void disconnect(Context context) {
         savedAddress = "";
         userInitiatedSession = false;
+        persistentSession = false;
+        reconnectBackoffMs = RECONNECT_DELAY_MS;
         cancelReconnect();
         release(context);
     }
@@ -310,72 +397,93 @@ public final class BluetoothPrinterChannel {
     // -------------------------------------------------------------------------
 
     private void connectInternal(String address, boolean fromUser) {
-        try {
-            if (fromUser) {
-                userInitiatedSession = true;
-            }
-            savedAddress = address;
-
-            BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
-            if (adapter == null) {
-                showToast(appContext, R.string.bluetooth_not_available);
-                return;
-            }
-
-            BluetoothDevice device;
+        synchronized (GLOBAL_CONNECT_LOCK) {
             try {
-                device = adapter.getRemoteDevice(address);
-            } catch (IllegalArgumentException e) {
-                Log.e(TAG, channelName + ": invalid address " + address, e);
+                if (fromUser) {
+                    userInitiatedSession = true;
+                }
+                savedAddress = address;
+
+                if (shouldDelegateToPeer(address)) {
+                    peerChannel().connectInternal(address, fromUser);
+                    return;
+                }
+
+                if (isInternallyReady() && address.equalsIgnoreCase(getConnectedAddress())) {
+                    persistentSession = true;
+                    cancelReconnect();
+                    reconnectBackoffMs = RECONNECT_DELAY_MS;
+                    return;
+                }
+                if (isInternallyConnecting() && address.equalsIgnoreCase(savedAddress)) {
+                    return;
+                }
+
+                BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+                if (adapter == null) {
+                    showToast(appContext, R.string.bluetooth_not_available);
+                    return;
+                }
+
+                BluetoothDevice device;
+                try {
+                    device = adapter.getRemoteDevice(address);
+                } catch (IllegalArgumentException e) {
+                    Log.e(TAG, channelName + ": invalid address " + address, e);
+                    if (fromUser) {
+                        showToast(appContext, R.string.connect_fail);
+                    }
+                    return;
+                }
+
+                ensurePrintService();
+                if (printService == null) {
+                    if (fromUser) {
+                        showToast(appContext, R.string.connect_fail);
+                    }
+                    scheduleReconnect();
+                    return;
+                }
+                if (printService.getState() == BluetoothPrintService.STATE_NONE) {
+                    printService.start();
+                }
+
+                printService.connect(device, false);
+            } catch (Exception e) {
+                Log.e(TAG, channelName + ": connectInternal failed", e);
                 if (fromUser) {
                     showToast(appContext, R.string.connect_fail);
                 }
-                return;
+                scheduleReconnect();
             }
-
-            ensurePrintService();
-            if (printService.getState() == BluetoothPrintService.STATE_NONE) {
-                printService.start();
-            }
-
-            printService.setConnectionListener(new BluetoothPrintService.ConnectionListener() {
-                @Override
-                public void onConnected(BluetoothDevice connectedDevice) {
-                    cancelReconnect();
-                    if (userInitiatedSession && appContext != null) {
-                        String name = connectedDevice != null ? connectedDevice.getName() : "";
-                        String deviceLabel = name != null && !name.isEmpty() ? name : address;
-                        showConnectedToast(appContext, deviceLabel);
-                    }
-                }
-
-                @Override
-                public void onConnectionFailed() {
-                    if (userInitiatedSession) {
-                        showToast(appContext, R.string.connect_fail);
-                        cancelReconnect();
-                    } else {
-                        scheduleReconnect();
-                    }
-                }
-
-                @Override
-                public void onConnectionLost() {
-                    if (userInitiatedSession) {
-                        showToast(appContext, R.string.connect_lost);
-                    }
-                    scheduleReconnect();
-                }
-            });
-
-            printService.connect(device, false);
-        } catch (Exception e) {
-            Log.e(TAG, channelName + ": connectInternal failed", e);
-            if (fromUser) {
-                showToast(appContext, R.string.connect_fail);
-            }
-            scheduleReconnect();
         }
+    }
+
+    private void onServiceConnected(BluetoothDevice connectedDevice) {
+        cancelReconnect();
+        reconnectBackoffMs = RECONNECT_DELAY_MS;
+        persistentSession = true;
+        if (userInitiatedSession && appContext != null) {
+            String name = connectedDevice != null ? connectedDevice.getName() : "";
+            String deviceLabel = name != null && !name.isEmpty()
+                    ? name
+                    : normalize(savedAddress);
+            showConnectedToast(appContext, deviceLabel);
+        }
+    }
+
+    private void onServiceConnectionFailed() {
+        if (userInitiatedSession) {
+            showToast(appContext, R.string.connect_fail);
+        }
+        scheduleReconnect();
+    }
+
+    private void onServiceConnectionLost() {
+        if (userInitiatedSession || persistentSession) {
+            showToast(appContext, R.string.connect_lost);
+        }
+        scheduleReconnect();
     }
 
     private void ensurePrintService() {
@@ -416,6 +524,57 @@ public final class BluetoothPrinterChannel {
         }
         if (printService == null) {
             printService = new BluetoothPrintService(appContext, printHandler);
+            printService.setConnectionListener(new BluetoothPrintService.ConnectionListener() {
+                @Override
+                public void onConnected(BluetoothDevice connectedDevice) {
+                    BluetoothPrinterChannel.this.onServiceConnected(connectedDevice);
+                }
+
+                @Override
+                public void onConnectionFailed() {
+                    BluetoothPrinterChannel.this.onServiceConnectionFailed();
+                }
+
+                @Override
+                public void onConnectionLost() {
+                    BluetoothPrinterChannel.this.onServiceConnectionLost();
+                }
+            });
+        }
+    }
+
+    private void ensureAppContext(Context context) {
+        if (context == null) {
+            return;
+        }
+        appContext = context.getApplicationContext();
+    }
+
+    private void shutdownInternal(Context app) {
+        savedAddress = "";
+        userInitiatedSession = false;
+        persistentSession = false;
+        cancelReconnect();
+        reconnectBackoffMs = RECONNECT_DELAY_MS;
+        if (printService != null) {
+            try {
+                printService.stop();
+            } catch (Exception e) {
+                Log.e(TAG, channelName + ": shutdown stop failed", e);
+            }
+            printService = null;
+        }
+        woosimService = null;
+        printHandler = null;
+    }
+
+    private boolean isBluetoothAdapterEnabled() {
+        try {
+            BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+            return adapter != null && adapter.isEnabled();
+        } catch (Exception e) {
+            Log.e(TAG, channelName + ": isBluetoothAdapterEnabled failed", e);
+            return false;
         }
     }
 
@@ -423,12 +582,59 @@ public final class BluetoothPrinterChannel {
         if (savedAddress == null || savedAddress.trim().isEmpty()) {
             return;
         }
-        if (reconnectScheduled || isReady() || isConnecting()) {
+        BluetoothPrinterChannel owner = connectionOwner();
+        if (owner != this) {
+            owner.scheduleReconnect();
+            return;
+        }
+        if (reconnectScheduled || isInternallyReady() || isInternallyConnecting()) {
             return;
         }
         reconnectScheduled = true;
         mainHandler.removeCallbacks(reconnectRunnable);
-        mainHandler.postDelayed(reconnectRunnable, RECONNECT_DELAY_MS);
+        mainHandler.postDelayed(reconnectRunnable, reconnectBackoffMs);
+        reconnectBackoffMs = Math.min(reconnectBackoffMs * 2, RECONNECT_MAX_DELAY_MS);
+    }
+
+    private BluetoothPrinterChannel peerChannel() {
+        return this == BILL ? KOT : BILL;
+    }
+
+    /** When bill and KOT share one physical printer, use a single RFCOMM socket (bill is primary). */
+    private BluetoothPrinterChannel connectionOwner() {
+        if (!usesSamePrinterAsPeer()) {
+            return this;
+        }
+        if (this == KOT && (BILL.isInternallyReady() || BILL.isInternallyConnecting())) {
+            return BILL;
+        }
+        if (this == BILL && !isInternallyReady() && !isInternallyConnecting()
+                && KOT.isInternallyReady()) {
+            return KOT;
+        }
+        return this;
+    }
+
+    private boolean usesSamePrinterAsPeer() {
+        String peerAddr = peerChannel().getSavedAddress();
+        return savedAddress != null && !savedAddress.isEmpty()
+                && savedAddress.equalsIgnoreCase(peerAddr);
+    }
+
+    private boolean shouldDelegateToPeer(String address) {
+        return this == KOT
+                && address.equalsIgnoreCase(BILL.getSavedAddress())
+                && !address.isEmpty();
+    }
+
+    private boolean isInternallyReady() {
+        return printService != null
+                && printService.getState() == BluetoothPrintService.STATE_CONNECTED;
+    }
+
+    private boolean isInternallyConnecting() {
+        return printService != null
+                && printService.getState() == BluetoothPrintService.STATE_CONNECTING;
     }
 
     private void cancelReconnect() {

@@ -11,7 +11,18 @@ import com.pos_billingwala.R;
  */
 public final class PrinterConnectionHelper {
 
+    private static final long CONNECT_WAIT_MS = 12000L;
+
     private PrinterConnectionHelper() {
+    }
+
+    /** Initialize persistent printer sessions for the app process. */
+    public static void initializeApp(Context context) {
+        BluetoothPrinterChannel.initializeApp(context);
+    }
+
+    public static void shutdownApp(Context context) {
+        BluetoothPrinterChannel.shutdownApp(context);
     }
 
     public static boolean isBillPrinterReady() {
@@ -41,8 +52,20 @@ public final class PrinterConnectionHelper {
             if (isBillPrinterReady()) {
                 return true;
             }
-            WoosimPrnMng.connectFromButton(activity, savedAddress, activity, false);
-            return isBillPrinterReady();
+            String addr = normalize(savedAddress);
+            if (addr.isEmpty()) {
+                showToast(activity, R.string.toast_printer_not_connected_select);
+                return false;
+            }
+            WoosimPrnMng.connect(activity, addr, activity);
+            BluetoothPrinterChannel channel = BluetoothPrinterChannel.bill();
+            if (channel.isReady()) {
+                return true;
+            }
+            if (channel.isConnecting()) {
+                return channel.waitUntilReady(CONNECT_WAIT_MS);
+            }
+            return false;
         } catch (Exception e) {
             showToast(activity, R.string.connect_fail);
             return false;
@@ -54,8 +77,20 @@ public final class PrinterConnectionHelper {
             if (isKotPrinterReady()) {
                 return true;
             }
-            KOTWoosimPrnMng.connectFromButton(activity, savedAddress, activity, false);
-            return isKotPrinterReady();
+            String addr = normalize(savedAddress);
+            if (addr.isEmpty()) {
+                showToast(activity, R.string.toast_printer_not_connected_select);
+                return false;
+            }
+            KOTWoosimPrnMng.connect(activity, addr, activity);
+            BluetoothPrinterChannel channel = BluetoothPrinterChannel.kot();
+            if (channel.isReady()) {
+                return true;
+            }
+            if (channel.isConnecting()) {
+                return channel.waitUntilReady(CONNECT_WAIT_MS);
+            }
+            return false;
         } catch (Exception e) {
             showToast(activity, R.string.connect_fail);
             return false;
@@ -68,7 +103,11 @@ public final class PrinterConnectionHelper {
                 showToast(context, R.string.print_error);
                 return false;
             }
-            if (!BluetoothPrinterChannel.bill().write(data)) {
+            BluetoothPrinterChannel channel = BluetoothPrinterChannel.bill();
+            if (!channel.isReady() && channel.isConnecting()) {
+                channel.waitUntilReady(CONNECT_WAIT_MS);
+            }
+            if (!channel.write(data)) {
                 showToast(context, R.string.toast_printer_not_connected_select);
                 return false;
             }
@@ -85,7 +124,11 @@ public final class PrinterConnectionHelper {
                 showToast(context, R.string.print_error);
                 return false;
             }
-            if (!BluetoothPrinterChannel.kot().write(data)) {
+            BluetoothPrinterChannel channel = BluetoothPrinterChannel.kot();
+            if (!channel.isReady() && channel.isConnecting()) {
+                channel.waitUntilReady(CONNECT_WAIT_MS);
+            }
+            if (!channel.write(data)) {
                 showToast(context, R.string.toast_printer_not_connected_select);
                 return false;
             }
@@ -94,6 +137,10 @@ public final class PrinterConnectionHelper {
             showToast(context, R.string.connect_fail);
             return false;
         }
+    }
+
+    private static String normalize(String address) {
+        return address != null ? address.trim() : "";
     }
 
     private static void showToast(Context context, int messageRes) {

@@ -197,6 +197,14 @@
             android:foregroundServiceType="dataSync"
             tools:node="merge" />
 
+        <service
+            android:name=".Extra.PosFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
         <!-- Meta-data -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"

@@ -266,6 +266,9 @@
                 <li class="{{ $navCurrent('support/faq') ? 'pb-nav-current' : '' }}">
                     <a href="{{ url('support/faq') }}"><i class="sub-icon bx bx-message-rounded-dots"></i><span>FAQs</span></a>
                 </li>
+                <li class="{{ $navCurrent('push-notifications') ? 'pb-nav-current' : '' }}">
+                    <a href="{{ url('push-notifications') }}"><i class="sub-icon bx bx-bell"></i><span>Push Notifications</span></a>
+                </li>
             </ul>
         </li>
         @endif

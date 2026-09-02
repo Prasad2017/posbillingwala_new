@@ -346,21 +346,13 @@ public class DuplicateBluetoothPrint extends BaseActivity implements View.OnClic
     }
 
     protected void printImage(Bitmap image, int effectivePrintWidth) {
-
-        if (WoosimPrnMng.isPrinterConnected(getApplicationContext(), DuplicateBluetoothPrint.this)) {
-
-            BluetoothPrintService mService = null;
-            mService = WoosimPrnMng.getServiceInstance();
-            PrintImage PrintImage = new PrintImage(getResizedBitmap(image, effectivePrintWidth));
-            PrintImage.PrepareImage(com.pos_billingwala.Print.PrintImage.dither.floyd_steinberg, 128);
-            mService.write(PrintImage.getPrintImageData());
-
-            checkAndFeedPaper(5);
-
-        } else {
-            WoosimPrnMng.connectFromButton(activity, savedBillPrinterAddress(), DuplicateBluetoothPrint.this);
+        PrintImage printImage = new PrintImage(getResizedBitmap(image, effectivePrintWidth));
+        printImage.PrepareImage(com.pos_billingwala.Print.PrintImage.dither.floyd_steinberg, 128);
+        if (!PrinterConnectionHelper.safeWriteBill(activity, printImage.getPrintImageData())) {
+            WoosimPrnMng.connect(activity, savedBillPrinterAddress(), DuplicateBluetoothPrint.this);
+            return;
         }
-
+        checkAndFeedPaper(5);
     }
 
     public Bitmap convertLayout(NestedScrollView nestedScrollView) {
@@ -434,19 +426,14 @@ public class DuplicateBluetoothPrint extends BaseActivity implements View.OnClic
     }
 
     public void checkAndFeedPaper(int lines) {
-
-        if (WoosimPrnMng.isPrinterConnected(activity, DuplicateBluetoothPrint.this)) {
-            BluetoothPrintService mService = null;
-            mService = WoosimPrnMng.getServiceInstance();
-            byte[] normalText = {27, 33, 0};
+        try {
+            StringBuilder lineBreaks = new StringBuilder();
             for (int i = 0; i < lines; i++) {
-                String str = " \n";
-                mService.write(normalText);
+                lineBreaks.append("\n");
             }
-        } else {
-            WoosimPrnMng.connectFromButton(activity, savedBillPrinterAddress(), DuplicateBluetoothPrint.this);
+            PrinterConnectionHelper.safeWriteBill(activity, lineBreaks.toString().getBytes());
+        } catch (Exception ignored) {
         }
-
     }
 
     public void hideDialog() {
@@ -764,7 +751,7 @@ public class DuplicateBluetoothPrint extends BaseActivity implements View.OnClic
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_ENABLE_BT && resultCode == RESULT_OK) {
-            WoosimPrnMng.connectFromButton(activity, savedBillPrinterAddress(), DuplicateBluetoothPrint.this);
+            WoosimPrnMng.connect(activity, savedBillPrinterAddress(), DuplicateBluetoothPrint.this);
         } else if (requestCode == REQUEST_CONNECT_DEVICE && resultCode == RESULT_OK && data != null && data.getExtras() != null) {
             String bluetoothAddress = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
             if (bluetoothAddress != null) {

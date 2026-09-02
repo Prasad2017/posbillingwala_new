@@ -340,6 +340,13 @@
     <string name="sync_notification_progress_count">%1$s (%2$d uploaded)</string>
     <string name="sync_notification_complete_count">%d records uploaded to cloud</string>
     <string name="sync_notification_partial">%1$d uploaded, %2$d still pending. Tap to review.</string>
+
+    <string name="push_notification_channel">Alerts &amp; offers</string>
+    <string name="push_notification_channel_desc">Licence expiry reminders and promotional updates from POS Billingwala</string>
+    <string name="push_default_title">POS Billingwala</string>
+    <string name="push_default_body">You have a new notification</string>
+    <string name="push_license_expiring_title">Licence expiring soon</string>
+    <string name="push_license_expiring_body">Your licence expires in %1$s days. Please renew to avoid interruption.</string>
     <string name="sync_tables_section">Tables</string>
     <string name="sync_status_complete">Complete</string>
     <string name="sync_status_pending_count">%d pending</string>

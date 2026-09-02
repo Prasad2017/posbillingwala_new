@@ -35,9 +35,10 @@ import com.pos_billingwala.Extra.MessTokenQrHelper;
 import com.pos_billingwala.Extra.TabletPrintUi;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.PrinterSettingResponse;
-import com.pos_billingwala.Print.BluetoothPrintService;
+import com.pos_billingwala.Print.BluetoothPrinterChannel;
 import com.pos_billingwala.Print.DeviceListActivity;
 import com.pos_billingwala.Print.PrintImage;
+import com.pos_billingwala.Print.PrinterConnectionHelper;
 import com.pos_billingwala.Print.WoosimPrnMng;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.ActivityMessTokenBluetoothPrintBinding;
@@ -165,16 +166,15 @@ public class MessTokenBluetoothPrint extends BaseActivity implements View.OnClic
     }
 
     private void printImage(Bitmap image, int effectivePrintWidth) {
-        if (WoosimPrnMng.isPrinterConnected(getApplicationContext(), MessTokenBluetoothPrint.this)) {
-            BluetoothPrintService mService = WoosimPrnMng.getServiceInstance();
-            PrintImage printImage = new PrintImage(getResizedBitmap(image, effectivePrintWidth));
-            printImage.PrepareImage(com.pos_billingwala.Print.PrintImage.dither.floyd_steinberg, 128);
-            mService.write(printImage.getPrintImageData());
-            checkAndFeedPaper(printerSettingResponseList.get(0).getKotPrinterFeedLines());
-            saveMessTokenIfNeeded();
-        } else {
-            new WoosimPrnMng(this, "", MessTokenBluetoothPrint.this);
+        PrintImage printImage = new PrintImage(getResizedBitmap(image, effectivePrintWidth));
+        printImage.PrepareImage(com.pos_billingwala.Print.PrintImage.dither.floyd_steinberg, 128);
+        if (!PrinterConnectionHelper.safeWriteBill(this, printImage.getPrintImageData())) {
+            String addr = printerSettingResponseList.isEmpty() ? "" : printerSettingResponseList.get(0).getBluetoothAddress();
+            WoosimPrnMng.connect(this, addr != null ? addr : "", MessTokenBluetoothPrint.this);
+            return;
         }
+        checkAndFeedPaper(printerSettingResponseList.get(0).getKotPrinterFeedLines());
+        saveMessTokenIfNeeded();
     }
 
     private void saveMessTokenIfNeeded() {
@@ -294,15 +294,16 @@ public class MessTokenBluetoothPrint extends BaseActivity implements View.OnClic
     }
 
     private void checkAndFeedPaper(String lines) {
-        if (WoosimPrnMng.isPrinterConnected(this, MessTokenBluetoothPrint.this)) {
-            BluetoothPrintService mService = WoosimPrnMng.getServiceInstance();
+        try {
+            if (lines == null || lines.trim().isEmpty()) {
+                return;
+            }
             StringBuilder lineBreaks = new StringBuilder();
             for (int i = 0; i < Integer.parseInt(lines); i++) {
                 lineBreaks.append("\n");
             }
-            mService.write(lineBreaks.toString().getBytes());
-        } else {
-            new WoosimPrnMng(this, "", MessTokenBluetoothPrint.this);
+            PrinterConnectionHelper.safeWriteBill(this, lineBreaks.toString().getBytes());
+        } catch (Exception ignored) {
         }
     }
 
@@ -322,10 +323,13 @@ public class MessTokenBluetoothPrint extends BaseActivity implements View.OnClic
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_ENABLE_BT && resultCode == RESULT_OK) {
-            new WoosimPrnMng(this, "", MessTokenBluetoothPrint.this);
+            String addr = printerSettingResponseList.isEmpty() ? "" : printerSettingResponseList.get(0).getBluetoothAddress();
+            WoosimPrnMng.connect(this, addr != null ? addr : "", MessTokenBluetoothPrint.this);
         } else if (requestCode == REQUEST_CONNECT_DEVICE && resultCode == RESULT_OK && data != null) {
             String address = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
-            new WoosimPrnMng(this, address, MessTokenBluetoothPrint.this);
+            if (address != null) {
+                BluetoothPrinterChannel.bill().onDevicePicked(address);
+            }
         }
     }
 

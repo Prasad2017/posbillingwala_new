@@ -45,8 +45,11 @@
         <item name="cardCornerRadius">20dp</item>
     </style>
 
-    <style name="PosCardView" parent="CardView">
+    <style name="PosCardView" parent="Widget.MaterialComponents.CardView">
         <item name="cardElevation">0dp</item>
+        <item name="strokeColor">@color/colorBorder</item>
+        <item name="strokeWidth">@dimen/card_stroke_width</item>
+        <item name="cardBackgroundColor">@color/colorSurface</item>
     </style>
 
 

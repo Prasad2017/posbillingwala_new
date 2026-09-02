@@ -340,7 +340,7 @@ public class BluetoothPrintService {
                 }
             }
             if (!isInterrupted() && !intentionalDisconnect) {
-                notifyConnectionLost();
+                signalConnectionLostFromWorker();
             }
         }
 
@@ -354,9 +354,11 @@ public class BluetoothPrintService {
                 return true;
             } catch (IOException e) {
                 Log.e(TAG, "ConnectedThread: write failed", e);
+                signalConnectionLostFromWorker();
                 return false;
             } catch (Exception e) {
                 Log.e(TAG, "ConnectedThread: unexpected write error", e);
+                signalConnectionLostFromWorker();
                 return false;
             }
         }
@@ -575,6 +577,18 @@ public class BluetoothPrintService {
             }
         } else {
             postToast(R.string.connect_fail);
+        }
+    }
+
+    /** Avoid re-entering cancelConnectedThread from the connected worker thread. */
+    private void signalConnectionLostFromWorker() {
+        if (intentionalDisconnect) {
+            return;
+        }
+        if (handler != null) {
+            handler.post(this::notifyConnectionLost);
+        } else {
+            notifyConnectionLost();
         }
     }
 

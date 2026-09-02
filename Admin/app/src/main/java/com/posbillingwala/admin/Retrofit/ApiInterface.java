@@ -375,4 +375,13 @@ public interface ApiInterface {
     Call<CatalogImportHistoryResponse> catalogImportHistory(@Query("customerId") String customerId,
                                                             @Query("importType") String importType);
 
+    @FormUrlEncoded
+    @POST("sendPushNotification.php")
+    Call<AllApiResponse> sendPushNotification(@Field("title") String title,
+                                              @Field("message") String message,
+                                              @Field("target") String target,
+                                              @Field("licenseIds") String licenseIds,
+                                              @Field("url") String url,
+                                              @Field("imageUrl") String imageUrl);
+
 }

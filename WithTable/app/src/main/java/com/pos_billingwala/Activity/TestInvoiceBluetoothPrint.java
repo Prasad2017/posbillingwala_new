@@ -44,6 +44,7 @@ import com.pos_billingwala.Print.BluetoothPrintService;
 import com.pos_billingwala.Print.DeviceListActivity;
 import com.pos_billingwala.Print.PrintImage;
 import com.pos_billingwala.Print.PrintImage.dither;
+import com.pos_billingwala.Print.PrinterConnectionHelper;
 import com.pos_billingwala.Print.WoosimPrnMng;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.ActivityTestInvoiceBluetoothPrintBinding;
@@ -395,27 +396,21 @@ public class TestInvoiceBluetoothPrint extends BaseActivity implements View.OnCl
         printBitmapExecutor.execute(() -> {
             String toastMsg = null;
             try {
-                if (WoosimPrnMng.isPrinterConnected(activity, TestInvoiceBluetoothPrint.this)) {
-                    BluetoothPrintService mService = WoosimPrnMng.getServiceInstance();
-                    if (mService == null) {
-                        toastMsg = getString(R.string.toast_printer_not_ready);
-                    } else {
-                        PrintImage printImage = new PrintImage(getResizedBitmap(image, effectivePrintWidth));
-                        printImage.PrepareImage(dither.floyd_steinberg, 128);
-                        mService.write(printImage.getPrintImageData());
-                        String feed = printerSettingResponseList.get(0).getPrinterFeedLines();
-                        checkAndFeedPaper(feed == null || feed.trim().isEmpty() ? "1" : feed);
-                        toastMsg = getString(R.string.toast_test_print_sent);
-                    }
-                } else {
+                PrintImage printImage = new PrintImage(getResizedBitmap(image, effectivePrintWidth));
+                printImage.PrepareImage(dither.floyd_steinberg, 128);
+                if (!PrinterConnectionHelper.safeWriteBill(activity, printImage.getPrintImageData())) {
                     toastMsg = getString(R.string.toast_printer_offline_connect);
                     runOnUiThread(() -> {
                         try {
-                            connectInvoicePrinter();
+                            WoosimPrnMng.connect(activity, savedInvoicePrinterAddress(), activity);
                         } catch (Exception e) {
                             Log.e(TAG, "Connect prompt failed", e);
                         }
                     });
+                } else {
+                    String feed = printerSettingResponseList.get(0).getPrinterFeedLines();
+                    checkAndFeedPaper(feed == null || feed.trim().isEmpty() ? "1" : feed);
+                    toastMsg = getString(R.string.toast_test_print_sent);
                 }
             } catch (Exception e) {
                 Log.e(TAG, "printImage failed", e);
@@ -434,11 +429,7 @@ public class TestInvoiceBluetoothPrint extends BaseActivity implements View.OnCl
 
     private void checkAndFeedPaper(String lines) {
         try {
-            if (!WoosimPrnMng.isPrinterConnected(activity, TestInvoiceBluetoothPrint.this)) {
-                return;
-            }
-            BluetoothPrintService mService = WoosimPrnMng.getServiceInstance();
-            if (mService == null || lines == null || lines.trim().isEmpty()) {
+            if (lines == null || lines.trim().isEmpty()) {
                 return;
             }
             int count = Integer.parseInt(lines.trim());
@@ -446,7 +437,7 @@ public class TestInvoiceBluetoothPrint extends BaseActivity implements View.OnCl
             for (int i = 0; i < count; i++) {
                 lineBreaks.append("\n");
             }
-            mService.write(lineBreaks.toString().getBytes());
+            PrinterConnectionHelper.safeWriteBill(activity, lineBreaks.toString().getBytes());
         } catch (Exception e) {
             Log.e(TAG, "checkAndFeedPaper failed", e);
         }
