@@ -14,8 +14,8 @@ android {
         applicationId "com.pos_billingwala"
         minSdk 24
         targetSdk 37
-        versionCode 73
-        versionName "2.0.57"
+        versionCode 74
+        versionName "2.0.58"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         buildConfigField "String", "API_BASE_URL", "\"https://posbillingwala.com/androidApp/\""
         buildConfigField "String", "MEDIA_BASE_URL", "\"https://posbillingwala.com/storage/app/\""
