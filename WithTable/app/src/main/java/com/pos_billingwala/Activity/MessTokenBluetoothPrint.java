@@ -150,10 +150,20 @@ public class MessTokenBluetoothPrint extends BaseActivity implements View.OnClic
                 Toast.makeText(this, getString(R.string.toast_please_select_printer_from_setting), Toast.LENGTH_SHORT).show();
                 return;
             }
-            progressDialog = new ProgressDialog(this);
-            progressDialog.setMessage(getString(R.string.toast_printing_in_progress));
-            print2InchBill();
+            String addr = printerSettingResponseList.get(0).getBluetoothAddress();
+            PrinterConnectionHelper.ensureBillPrinterAsync(this,
+                    addr != null ? addr : "",
+                    this::runMessTokenPrintAfterPrinterReady);
         }
+    }
+
+    private void runMessTokenPrintAfterPrinterReady() {
+        if (isFinishing() || printerSettingResponseList.isEmpty()) {
+            return;
+        }
+        progressDialog = new ProgressDialog(this);
+        progressDialog.setMessage(getString(R.string.toast_printing_in_progress));
+        print2InchBill();
     }
 
     private void print2InchBill() {
@@ -325,10 +335,19 @@ public class MessTokenBluetoothPrint extends BaseActivity implements View.OnClic
         if (requestCode == REQUEST_ENABLE_BT && resultCode == RESULT_OK) {
             String addr = printerSettingResponseList.isEmpty() ? "" : printerSettingResponseList.get(0).getBluetoothAddress();
             WoosimPrnMng.connect(this, addr != null ? addr : "", MessTokenBluetoothPrint.this);
-        } else if (requestCode == REQUEST_CONNECT_DEVICE && resultCode == RESULT_OK && data != null) {
-            String address = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
-            if (address != null) {
-                BluetoothPrinterChannel.bill().onDevicePicked(address);
+        } else if (requestCode == REQUEST_CONNECT_DEVICE) {
+            if (resultCode == RESULT_OK && data != null && data.getExtras() != null) {
+                String address = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
+                if (address != null) {
+                    if (!printerSettingResponseList.isEmpty()) {
+                        printerSettingResponseList.get(0).setBluetoothAddress(address);
+                    }
+                    PrinterConnectionHelper.onBillDevicePicked(this, address);
+                } else {
+                    PrinterConnectionHelper.cancelPendingDevicePick(true);
+                }
+            } else {
+                PrinterConnectionHelper.cancelPendingDevicePick(true);
             }
         }
     }

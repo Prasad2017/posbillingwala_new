@@ -97,6 +97,10 @@
                     <include
                         android:id="@+id/productExportLayout"
                         layout="@layout/item_grouped_menu_row" />
+
+                    <include
+                        android:id="@+id/pushCatalogLayout"
+                        layout="@layout/item_grouped_menu_row" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

@@ -27,22 +27,17 @@ public final class KOTWoosimPrnMng {
     }
 
     /**
-     * Connect button: if the saved KOT printer is already connected, keep it.
-     * Otherwise open the Bluetooth device list (empty MAC, unpaired, or offline).
+     * Connect button: always open the Bluetooth paired/device list so the user can choose.
      */
     public static void connectFromButton(Context context, String deviceAddr, Activity host) {
-        connectFromButton(context, deviceAddr, host, false);
+        connectFromButton(context, deviceAddr, host, true);
     }
 
     /**
-     * @param forceDeviceList when true (paper size changed), always show a fresh device list.
+     * Connect button always shows the device list ({@code forceDeviceList} kept for call-site compatibility).
      */
     public static void connectFromButton(Context context, String deviceAddr, Activity host, boolean forceDeviceList) {
-        if (forceDeviceList) {
-            BluetoothPrinterChannel.kot().openDevicePicker(host);
-            return;
-        }
-        BluetoothPrinterChannel.kot().connect(context, deviceAddr, host, true);
+        BluetoothPrinterChannel.kot().openDevicePicker(host);
     }
 
     public KOTWoosimPrnMng(Context context, String deviceAddr, Context host) {

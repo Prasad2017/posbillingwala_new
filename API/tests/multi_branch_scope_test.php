@@ -15,7 +15,7 @@ require_once $root . '/licence_expiry.php';
 $passed = 0;
 $failed = 0;
 
-function assert_true(bool $cond, string $label): void
+function assert_true($cond, $label)
 {
     global $passed, $failed;
     if ($cond) {

@@ -2,7 +2,11 @@
 /**
  * P5-2: Incremental mysqli prepared-statement helpers.
  * Use for new hardening; existing endpoints migrate incrementally.
+ *
+ * PHP 7.0+ safe: never throws on prepare/execute failure (matches PHP 7 return-false style).
  */
+
+require_once __DIR__ . '/php_compat.php';
 
 if (!function_exists('db_stmt_bind_params')) {
     /**
@@ -20,7 +24,11 @@ if (!function_exists('db_stmt_bind_params')) {
         foreach ($params as $key => $value) {
             $bind[] = &$params[$key];
         }
-        return call_user_func_array(array($stmt, 'bind_param'), $bind);
+        try {
+            return (bool) call_user_func_array(array($stmt, 'bind_param'), $bind);
+        } catch (Throwable $e) {
+            return false;
+        }
     }
 }
 
@@ -34,22 +42,26 @@ if (!function_exists('db_stmt_fetch_one')) {
      */
     function db_stmt_fetch_one($con, $sql, $types = '', ...$params)
     {
-        $stmt = mysqli_prepare($con, $sql);
-        if (!$stmt) {
-            return null;
-        }
-        if ($types !== '' && !db_stmt_bind_params($stmt, $types, $params)) {
+        try {
+            $stmt = mysqli_prepare($con, $sql);
+            if (!$stmt) {
+                return null;
+            }
+            if ($types !== '' && !db_stmt_bind_params($stmt, $types, $params)) {
+                mysqli_stmt_close($stmt);
+                return null;
+            }
+            if (!mysqli_stmt_execute($stmt)) {
+                mysqli_stmt_close($stmt);
+                return null;
+            }
+            $result = mysqli_stmt_get_result($stmt);
+            $row = ($result !== false) ? mysqli_fetch_assoc($result) : null;
             mysqli_stmt_close($stmt);
+            return ($row !== null && $row !== false) ? $row : null;
+        } catch (Throwable $e) {
             return null;
         }
-        if (!mysqli_stmt_execute($stmt)) {
-            mysqli_stmt_close($stmt);
-            return null;
-        }
-        $result = mysqli_stmt_get_result($stmt);
-        $row = ($result !== false) ? mysqli_fetch_assoc($result) : null;
-        mysqli_stmt_close($stmt);
-        return ($row !== null && $row !== false) ? $row : null;
     }
 }
 
@@ -64,25 +76,29 @@ if (!function_exists('db_stmt_fetch_all')) {
     function db_stmt_fetch_all($con, $sql, $types = '', ...$params)
     {
         $rows = array();
-        $stmt = mysqli_prepare($con, $sql);
-        if (!$stmt) {
-            return $rows;
-        }
-        if ($types !== '' && !db_stmt_bind_params($stmt, $types, $params)) {
-            mysqli_stmt_close($stmt);
-            return $rows;
-        }
-        if (!mysqli_stmt_execute($stmt)) {
-            mysqli_stmt_close($stmt);
-            return $rows;
-        }
-        $result = mysqli_stmt_get_result($stmt);
-        if ($result !== false) {
-            while ($row = mysqli_fetch_assoc($result)) {
-                $rows[] = $row;
+        try {
+            $stmt = mysqli_prepare($con, $sql);
+            if (!$stmt) {
+                return $rows;
             }
+            if ($types !== '' && !db_stmt_bind_params($stmt, $types, $params)) {
+                mysqli_stmt_close($stmt);
+                return $rows;
+            }
+            if (!mysqli_stmt_execute($stmt)) {
+                mysqli_stmt_close($stmt);
+                return $rows;
+            }
+            $result = mysqli_stmt_get_result($stmt);
+            if ($result !== false) {
+                while ($row = mysqli_fetch_assoc($result)) {
+                    $rows[] = $row;
+                }
+            }
+            mysqli_stmt_close($stmt);
+        } catch (Throwable $e) {
+            return $rows;
         }
-        mysqli_stmt_close($stmt);
         return $rows;
     }
 }
@@ -97,17 +113,21 @@ if (!function_exists('db_stmt_execute')) {
      */
     function db_stmt_execute($con, $sql, $types = '', ...$params)
     {
-        $stmt = mysqli_prepare($con, $sql);
-        if (!$stmt) {
-            return false;
-        }
-        if ($types !== '' && !db_stmt_bind_params($stmt, $types, $params)) {
+        try {
+            $stmt = mysqli_prepare($con, $sql);
+            if (!$stmt) {
+                return false;
+            }
+            if ($types !== '' && !db_stmt_bind_params($stmt, $types, $params)) {
+                mysqli_stmt_close($stmt);
+                return false;
+            }
+            $ok = mysqli_stmt_execute($stmt);
             mysqli_stmt_close($stmt);
+            return (bool) $ok;
+        } catch (Throwable $e) {
             return false;
         }
-        $ok = mysqli_stmt_execute($stmt);
-        mysqli_stmt_close($stmt);
-        return (bool) $ok;
     }
 }
 
@@ -121,21 +141,25 @@ if (!function_exists('db_stmt_insert_id')) {
      */
     function db_stmt_insert_id($con, $sql, $types = '', ...$params)
     {
-        $stmt = mysqli_prepare($con, $sql);
-        if (!$stmt) {
-            return false;
-        }
-        if ($types !== '' && !db_stmt_bind_params($stmt, $types, $params)) {
+        try {
+            $stmt = mysqli_prepare($con, $sql);
+            if (!$stmt) {
+                return false;
+            }
+            if ($types !== '' && !db_stmt_bind_params($stmt, $types, $params)) {
+                mysqli_stmt_close($stmt);
+                return false;
+            }
+            if (!mysqli_stmt_execute($stmt)) {
+                mysqli_stmt_close($stmt);
+                return false;
+            }
+            $id = mysqli_insert_id($con);
             mysqli_stmt_close($stmt);
+            return $id;
+        } catch (Throwable $e) {
             return false;
         }
-        if (!mysqli_stmt_execute($stmt)) {
-            mysqli_stmt_close($stmt);
-            return false;
-        }
-        $id = mysqli_insert_id($con);
-        mysqli_stmt_close($stmt);
-        return $id;
     }
 }
 

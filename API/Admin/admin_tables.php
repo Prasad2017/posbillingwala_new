@@ -5,67 +5,80 @@
 require_once __DIR__ . '/../support_helpers.php';
 
 function admin_ensure_support_crash_tables($con) {
-    mysqli_query($con, "CREATE TABLE IF NOT EXISTS `admin_support_tickets` (
-        `id` INT AUTO_INCREMENT PRIMARY KEY,
-        `ticket_no` VARCHAR(40) NOT NULL,
-        `app_name` VARCHAR(40) NOT NULL DEFAULT 'POS App',
-        `category` VARCHAR(80) NOT NULL DEFAULT 'General',
-        `subject` VARCHAR(255) NOT NULL,
-        `description` TEXT,
-        `status` VARCHAR(32) NOT NULL DEFAULT 'Open',
-        `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    require_once __DIR__ . '/../php_compat.php';
+    try {
+        db_safe_query($con, "CREATE TABLE IF NOT EXISTS `admin_support_tickets` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `ticket_no` VARCHAR(40) NOT NULL,
+            `app_name` VARCHAR(40) NOT NULL DEFAULT 'POS App',
+            `category` VARCHAR(80) NOT NULL DEFAULT 'General',
+            `subject` VARCHAR(255) NOT NULL,
+            `description` TEXT,
+            `status` VARCHAR(32) NOT NULL DEFAULT 'Open',
+            `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
-    support_ensure_ticket_columns($con);
+        support_ensure_ticket_columns($con);
 
-    mysqli_query($con, "CREATE TABLE IF NOT EXISTS `admin_support_messages` (
-        `id` INT AUTO_INCREMENT PRIMARY KEY,
-        `ticket_id` INT NOT NULL,
-        `sender` VARCHAR(80) NOT NULL DEFAULT 'Admin',
-        `message` TEXT NOT NULL,
-        `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        INDEX (`ticket_id`)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        db_safe_query($con, "CREATE TABLE IF NOT EXISTS `admin_support_messages` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `ticket_id` INT NOT NULL,
+            `sender` VARCHAR(80) NOT NULL DEFAULT 'Admin',
+            `message` TEXT NOT NULL,
+            `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            INDEX (`ticket_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
-    mysqli_query($con, "CREATE TABLE IF NOT EXISTS `admin_crash_logs` (
-        `id` INT AUTO_INCREMENT PRIMARY KEY,
-        `error_title` VARCHAR(255) NOT NULL,
-        `error_class` VARCHAR(255) DEFAULT '',
-        `app_name` VARCHAR(40) NOT NULL DEFAULT 'POS App',
-        `status` VARCHAR(32) NOT NULL DEFAULT 'New',
-        `device_name` VARCHAR(120) DEFAULT '',
-        `android_version` VARCHAR(40) DEFAULT '',
-        `app_version` VARCHAR(40) DEFAULT '',
-        `user_name` VARCHAR(120) DEFAULT '',
-        `user_id` VARCHAR(40) DEFAULT '',
-        `occurrences` INT NOT NULL DEFAULT 1,
-        `stack_trace` MEDIUMTEXT,
-        `source_fingerprint` VARCHAR(64) DEFAULT NULL,
-        `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        KEY `idx_crash_fp` (`source_fingerprint`)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        db_safe_query($con, "CREATE TABLE IF NOT EXISTS `admin_crash_logs` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `error_title` VARCHAR(255) NOT NULL,
+            `error_class` VARCHAR(255) DEFAULT '',
+            `app_name` VARCHAR(40) NOT NULL DEFAULT 'POS App',
+            `status` VARCHAR(32) NOT NULL DEFAULT 'New',
+            `device_name` VARCHAR(120) DEFAULT '',
+            `android_version` VARCHAR(40) DEFAULT '',
+            `app_version` VARCHAR(40) DEFAULT '',
+            `user_name` VARCHAR(120) DEFAULT '',
+            `user_id` VARCHAR(40) DEFAULT '',
+            `occurrences` INT NOT NULL DEFAULT 1,
+            `stack_trace` MEDIUMTEXT,
+            `source_fingerprint` VARCHAR(64) DEFAULT NULL,
+            `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            KEY `idx_crash_fp` (`source_fingerprint`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
-    $fpCol = mysqli_query($con, "SHOW COLUMNS FROM `admin_crash_logs` LIKE 'source_fingerprint'");
-    if ($fpCol && mysqli_num_rows($fpCol) === 0) {
-        mysqli_query($con, "ALTER TABLE `admin_crash_logs` ADD COLUMN `source_fingerprint` VARCHAR(64) DEFAULT NULL, ADD KEY `idx_crash_fp` (`source_fingerprint`)");
+        $fpCol = db_safe_query($con, "SHOW COLUMNS FROM `admin_crash_logs` LIKE 'source_fingerprint'");
+        if ($fpCol && mysqli_num_rows($fpCol) === 0) {
+            db_safe_query($con, "ALTER TABLE `admin_crash_logs` ADD COLUMN `source_fingerprint` VARCHAR(64) DEFAULT NULL, ADD KEY `idx_crash_fp` (`source_fingerprint`)");
+        }
+        if ($fpCol) {
+            mysqli_free_result($fpCol);
+        }
+    } catch (Throwable $e) {
+        // Ignore schema ensure failures.
     }
 }
 
 function admin_ensure_website_tables($con) {
-    mysqli_query($con, "CREATE TABLE IF NOT EXISTS `website_contact_messages` (
-        `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-        `name` VARCHAR(255) NOT NULL,
-        `email` VARCHAR(255) NOT NULL,
-        `subject` VARCHAR(255) NOT NULL DEFAULT '',
-        `message` TEXT NOT NULL,
-        `status` VARCHAR(32) NOT NULL DEFAULT 'New',
-        `source_ip` VARCHAR(64) NOT NULL DEFAULT '',
-        `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        PRIMARY KEY (`id`)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    require_once __DIR__ . '/../php_compat.php';
+    try {
+        db_safe_query($con, "CREATE TABLE IF NOT EXISTS `website_contact_messages` (
+            `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+            `name` VARCHAR(255) NOT NULL,
+            `email` VARCHAR(255) NOT NULL,
+            `subject` VARCHAR(255) NOT NULL DEFAULT '',
+            `message` TEXT NOT NULL,
+            `status` VARCHAR(32) NOT NULL DEFAULT 'New',
+            `source_ip` VARCHAR(64) NOT NULL DEFAULT '',
+            `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (`id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    } catch (Throwable $e) {
+        // Ignore schema ensure failures.
+    }
 }
 
 function website_format_contact($row) {

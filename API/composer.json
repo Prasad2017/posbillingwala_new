@@ -1,6 +1,6 @@
 {
     "name": "posbillingwala/api-catalog",
-    "description": "Catalog Excel import/export for POS Billingwala REST API",
+    "description": "Catalog Excel import/export only. Core POS/Owner/Dealer/Admin REST APIs require PHP >= 7.0 (no Composer). This package needs PHP >= 7.4 because of PhpSpreadsheet.",
     "require": {
         "php": ">=7.4",
         "phpoffice/phpspreadsheet": "^1.29"

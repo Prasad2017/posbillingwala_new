@@ -1,18 +1,24 @@
 (function () {
   var prodApi = "https://admin.posbillingwala.com/api/website";
+  var sameOriginApi = "";
+  try {
+    if (window.location && window.location.origin && String(window.location.protocol).indexOf("http") === 0) {
+      sameOriginApi = String(window.location.origin).replace(/\/$/, "") + "/api/website";
+    }
+  } catch (e) {}
 
   if (window.PBW_WEBSITE_API && String(window.PBW_WEBSITE_API).indexOf("/adminpanel") !== -1) {
-    window.PBW_WEBSITE_API = prodApi;
+    window.PBW_WEBSITE_API = sameOriginApi || prodApi;
   }
 
   if (
     !window.PBW_WEBSITE_API &&
     (!window.PBW_WEBSITE_API_CANDIDATES || !window.PBW_WEBSITE_API_CANDIDATES.length)
   ) {
-    window.PBW_WEBSITE_API = prodApi;
+    window.PBW_WEBSITE_API = sameOriginApi || prodApi;
   }
 
-  var DEFAULT_CANDIDATES = [prodApi];
+  var DEFAULT_CANDIDATES = sameOriginApi ? [sameOriginApi, prodApi] : [prodApi];
   var resolvedBase = "";
   var lastApiError = "";
 
@@ -81,7 +87,7 @@
     root.innerHTML =
       '<p class="empty-note api-error">' +
       escapeHtml(label || "Content") +
-      " could not load from Admin API. Please check that the public website API is online and CORS allows this website origin." +
+      " could not load from Admin API. Check that /api/website (site proxy) or admin.posbillingwala.com is online, and that the admin SSL certificate is trusted." +
       (lastApiError ? "<br><small>" + escapeHtml(lastApiError) + "</small>" : "") +
       "</p>";
   }

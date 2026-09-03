@@ -18,9 +18,10 @@ try {
     mysqli_query($con, 'set names utf8');
 
     // Ensure optional column without blocking the request if it already exists
-    $col = @mysqli_query($con, "SHOW COLUMNS FROM `company_printer_setting` LIKE 'duplicateBillUse'");
+    require_once __DIR__ . '/php_compat.php';
+    $col = db_safe_query($con, "SHOW COLUMNS FROM `company_printer_setting` LIKE 'duplicateBillUse'");
     if ($col && mysqli_num_rows($col) === 0) {
-        @mysqli_query($con, "ALTER TABLE `company_printer_setting` ADD COLUMN `duplicateBillUse` VARCHAR(10) NULL DEFAULT 'off'");
+        db_safe_query($con, "ALTER TABLE `company_printer_setting` ADD COLUMN `duplicateBillUse` VARCHAR(10) NULL DEFAULT 'off'");
     }
     if ($col) {
         mysqli_free_result($col);

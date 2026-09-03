@@ -361,6 +361,15 @@ public class TestInvoiceBluetoothPrint extends BaseActivity implements View.OnCl
             return;
         }
 
+        PrinterConnectionHelper.ensureBillPrinterAsync(activity, savedInvoicePrinterAddress(),
+                this::runTestPrintAfterPrinterReady);
+    }
+
+    private void runTestPrintAfterPrinterReady() {
+        if (isFinishing() || printerSettingResponseList == null || printerSettingResponseList.isEmpty()) {
+            return;
+        }
+
         progressDialog = new ProgressDialog(activity);
         progressDialog.setMessage(getString(R.string.toast_printing_in_progress));
         progressDialog.setCancelable(false);
@@ -535,13 +544,19 @@ public class TestInvoiceBluetoothPrint extends BaseActivity implements View.OnCl
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_ENABLE_BT && resultCode == RESULT_OK) {
             connectInvoicePrinter();
-        } else if (requestCode == REQUEST_CONNECT_DEVICE && resultCode == RESULT_OK && data != null && data.getExtras() != null) {
-            String bluetoothAddress = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
-            if (bluetoothAddress != null) {
-                BluetoothPrinterChannel.bill().onDevicePicked(bluetoothAddress);
-                if (!printerSettingResponseList.isEmpty()) {
-                    printerSettingResponseList.get(0).setBluetoothAddress(bluetoothAddress);
+        } else if (requestCode == REQUEST_CONNECT_DEVICE) {
+            if (resultCode == RESULT_OK && data != null && data.getExtras() != null) {
+                String bluetoothAddress = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
+                if (bluetoothAddress != null) {
+                    if (!printerSettingResponseList.isEmpty()) {
+                        printerSettingResponseList.get(0).setBluetoothAddress(bluetoothAddress);
+                    }
+                    PrinterConnectionHelper.onBillDevicePicked(activity, bluetoothAddress);
+                } else {
+                    PrinterConnectionHelper.cancelPendingDevicePick(true);
                 }
+            } else {
+                PrinterConnectionHelper.cancelPendingDevicePick(true);
             }
         }
     }

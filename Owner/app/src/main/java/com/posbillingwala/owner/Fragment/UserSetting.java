@@ -102,6 +102,8 @@ public class UserSetting extends Fragment implements View.OnClickListener {
                 R.color.statusTrial, getString(R.string.setting_product), getString(R.string.setting_hint_product));
         setupRow(binding.productExportLayout, R.drawable.ic_cloud_download, R.drawable.bg_quick_action_purple,
                 R.color.deepPurple, getString(R.string.setting_product_export), getString(R.string.setting_hint_export));
+        setupRow(binding.pushCatalogLayout, R.drawable.ic_cloud_upload, R.drawable.bg_quick_action_purple,
+                R.color.deepPurple, getString(R.string.setting_push_catalog), getString(R.string.setting_hint_push_catalog));
         setupRow(binding.reportLayout, R.drawable.ic_report_sales, R.drawable.bg_quick_action_blue,
                 R.color.colorPrimary, getString(R.string.setting_reports), getString(R.string.setting_hint_reports));
         setupRow(binding.invoiceDetailsLayout, R.drawable.ic_report_invoice, R.drawable.bg_quick_action_green,
@@ -113,7 +115,8 @@ public class UserSetting extends Fragment implements View.OnClickListener {
         binding.logoutLayout.menuTitle.setTextColor(ContextCompat.getColor(requireContext(), R.color.statusExpired));
 
         showGroupDividers(binding.profileLayout, binding.reportPinLayout);
-        showGroupDividers(binding.categoryLayout, binding.subcategoryLayout, binding.productLayout, binding.productExportLayout);
+        showGroupDividers(binding.categoryLayout, binding.subcategoryLayout, binding.productLayout,
+                binding.productExportLayout, binding.pushCatalogLayout);
         showGroupDividers(binding.reportLayout, binding.invoiceDetailsLayout);
         showGroupDividers(binding.aboutLayout, binding.logoutLayout);
 
@@ -137,6 +140,10 @@ public class UserSetting extends Fragment implements View.OnClickListener {
         binding.productExportLayout.getRoot().setOnClickListener(v -> {
             ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
             ((MainActivity) activity).loadFragment(new ProductExport(), true);
+        });
+        binding.pushCatalogLayout.getRoot().setOnClickListener(v -> {
+            ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
+            ((MainActivity) activity).loadFragment(new PushCatalogToOutlets(), true);
         });
         binding.reportLayout.getRoot().setOnClickListener(v -> openReportsHub());
         binding.invoiceDetailsLayout.getRoot().setOnClickListener(v -> {

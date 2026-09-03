@@ -12,19 +12,24 @@ function inventory_ensure_scope_columns($con)
     if ($ensured || $con === null) {
         return;
     }
+    require_once __DIR__ . '/php_compat.php';
     $columns = array(
         'organization_id' => "ALTER TABLE `inventory` ADD COLUMN `organization_id` INT NULL DEFAULT NULL AFTER `userId`",
         'branch_id' => "ALTER TABLE `inventory` ADD COLUMN `branch_id` INT NULL DEFAULT NULL AFTER `organization_id`",
         'device_id' => "ALTER TABLE `inventory` ADD COLUMN `device_id` VARCHAR(255) NULL DEFAULT NULL AFTER `branch_id`",
     );
-    foreach ($columns as $name => $ddl) {
-        $col = @mysqli_query($con, "SHOW COLUMNS FROM `inventory` LIKE '" . $name . "'");
-        if ($col && mysqli_num_rows($col) === 0) {
-            @mysqli_query($con, $ddl);
+    try {
+        foreach ($columns as $name => $ddl) {
+            $col = db_safe_query($con, "SHOW COLUMNS FROM `inventory` LIKE '" . $name . "'");
+            if ($col && mysqli_num_rows($col) === 0) {
+                db_safe_query($con, $ddl);
+            }
+            if ($col) {
+                mysqli_free_result($col);
+            }
         }
-        if ($col) {
-            mysqli_free_result($col);
-        }
+    } catch (Throwable $e) {
+        // Ignore schema probe failures — request can still proceed.
     }
     $ensured = true;
 }

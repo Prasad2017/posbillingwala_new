@@ -331,7 +331,9 @@ public final class BluetoothPrinterChannel {
             }
             BluetoothPrinterChannel owner = connectionOwner();
             if (!owner.isInternallyReady() || owner.printService == null) {
-                if (!isReady() && isConnecting()) {
+                // Never sleep on the main thread — that causes focus-window ANRs.
+                if (Looper.myLooper() != Looper.getMainLooper()
+                        && !isReady() && isConnecting()) {
                     waitUntilReady(CONNECT_WAIT_MS);
                 }
                 owner = connectionOwner();
@@ -693,7 +695,7 @@ public final class BluetoothPrinterChannel {
             return;
         }
         try {
-            Toast.makeText(context, context.getString(resId), Toast.LENGTH_SHORT).show();
+            showToast(context, context.getApplicationContext().getString(resId));
         } catch (Exception ignored) {
         }
     }
@@ -702,9 +704,18 @@ public final class BluetoothPrinterChannel {
         if (context == null || message == null || message.trim().isEmpty()) {
             return;
         }
-        try {
-            Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
-        } catch (Exception ignored) {
+        Context app = context.getApplicationContext();
+        Runnable show = () -> {
+            try {
+                Toast.makeText(app, message, Toast.LENGTH_SHORT).show();
+            } catch (Exception ignored) {
+            }
+        };
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            show.run();
+        } else {
+            // Connection callbacks may arrive off the main thread.
+            new Handler(Looper.getMainLooper()).post(show);
         }
     }
 }

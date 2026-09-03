@@ -1,10 +1,14 @@
 <?php
 /**
  * Ensure error_logs exists so POS ingest never fails on a missing table.
+ * PHP 7.0+ safe.
  */
+require_once __DIR__ . '/php_compat.php';
+
 function error_logs_ensure($con)
 {
-    mysqli_query($con, "CREATE TABLE IF NOT EXISTS `error_logs` (
+    try {
+        db_safe_query($con, "CREATE TABLE IF NOT EXISTS `error_logs` (
       `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
       `fingerprint` CHAR(64) NOT NULL,
       `occurrence_count` INT UNSIGNED NOT NULL DEFAULT 1,
@@ -58,5 +62,8 @@ function error_logs_ensure($con)
       KEY `idx_error_logs_type` (`error_type`),
       KEY `idx_error_logs_customer` (`customer_id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    } catch (Throwable $e) {
+        // Ignore — caller handles missing table.
+    }
 }
 ?>
