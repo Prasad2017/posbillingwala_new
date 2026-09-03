@@ -1,129 +1,127 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.pos_billingwala.Extra.PosCardView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="@dimen/spacing_sm"
-    app:cardCornerRadius="@dimen/radius_md">
+    android:orientation="vertical"
+    android:paddingStart="@dimen/spacing_lg"
+    android:paddingTop="@dimen/spacing_md"
+    android:paddingEnd="@dimen/spacing_lg"
+    android:paddingBottom="@dimen/spacing_md">
+
+    <TextView
+        android:id="@+id/comboName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:fontFamily="@font/poppinsmedium"
+        android:maxLines="2"
+        android:textColor="@color/colorTextPrimary"
+        android:textSize="@dimen/text_subtitle" />
+
+    <TextView
+        android:id="@+id/comboCode"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:ellipsize="end"
+        android:fontFamily="@font/poppinsregular"
+        android:maxLines="1"
+        android:textColor="@color/colorTextSecondary"
+        android:textSize="@dimen/text_caption" />
+
+    <TextView
+        android:id="@+id/comboPrice"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/spacing_sm"
+        android:fontFamily="@font/poppinsmedium"
+        android:textColor="@color/colorPrimary"
+        android:textSize="@dimen/text_body" />
+
+    <TextView
+        android:id="@+id/comboGst"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:fontFamily="@font/poppinsregular"
+        android:textColor="@color/colorTextSecondary"
+        android:textSize="@dimen/text_caption" />
+
+    <TextView
+        android:id="@+id/comboItems"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:ellipsize="end"
+        android:fontFamily="@font/poppinsregular"
+        android:maxLines="3"
+        android:textColor="@color/colorTextSecondary"
+        android:textSize="@dimen/text_caption" />
+
+    <TextView
+        android:id="@+id/comboStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:fontFamily="@font/poppinsregular"
+        android:textColor="@color/colorTextSecondary"
+        android:textSize="@dimen/text_caption" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="@dimen/spacing_md">
+        android:layout_marginTop="@dimen/spacing_md"
+        android:gravity="end"
+        android:orientation="horizontal">
 
         <TextView
-            android:id="@+id/comboName"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:ellipsize="end"
+            android:id="@+id/toggleCombo"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginEnd="@dimen/spacing_sm"
+            android:background="@drawable/button_rounded_border"
+            android:backgroundTint="@color/colorPrimary"
             android:fontFamily="@font/poppinsmedium"
-            android:maxLines="2"
-            android:textColor="@color/colorTextPrimary"
-            android:textSize="@dimen/text_subtitle" />
-
-        <TextView
-            android:id="@+id/comboCode"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:ellipsize="end"
-            android:fontFamily="@font/poppinsregular"
+            android:gravity="center"
             android:maxLines="1"
-            android:textColor="@color/colorTextSecondary"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:singleLine="true"
+            android:text="@string/ui_disable_combo"
+            android:textColor="@color/white"
             android:textSize="@dimen/text_caption" />
 
         <TextView
-            android:id="@+id/comboPrice"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/spacing_sm"
+            android:id="@+id/deleteCombo"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginEnd="@dimen/spacing_sm"
+            android:background="@drawable/button_rounded_border"
+            android:backgroundTint="@color/red_900"
             android:fontFamily="@font/poppinsmedium"
-            android:textColor="@color/colorPrimary"
-            android:textSize="@dimen/text_body" />
-
-        <TextView
-            android:id="@+id/comboGst"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:fontFamily="@font/poppinsregular"
-            android:textColor="@color/colorTextSecondary"
+            android:gravity="center"
+            android:maxLines="1"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:singleLine="true"
+            android:text="@string/ui_delete"
+            android:textColor="@color/white"
             android:textSize="@dimen/text_caption" />
 
         <TextView
-            android:id="@+id/comboItems"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:ellipsize="end"
-            android:fontFamily="@font/poppinsregular"
-            android:maxLines="3"
-            android:textColor="@color/colorTextSecondary"
+            android:id="@+id/updateCombo"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:background="@drawable/button_rounded_border"
+            android:backgroundTint="@color/green_700"
+            android:fontFamily="@font/poppinsmedium"
+            android:gravity="center"
+            android:maxLines="1"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:singleLine="true"
+            android:text="@string/ui_update"
+            android:textColor="@color/white"
             android:textSize="@dimen/text_caption" />
-
-        <TextView
-            android:id="@+id/comboStatus"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:fontFamily="@font/poppinsregular"
-            android:textColor="@color/colorTextSecondary"
-            android:textSize="@dimen/text_caption" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/spacing_md"
-            android:gravity="end"
-            android:orientation="horizontal">
-
-            <TextView
-                android:id="@+id/toggleCombo"
-                android:layout_width="wrap_content"
-                android:layout_height="36dp"
-                android:layout_marginEnd="@dimen/spacing_sm"
-                android:background="@drawable/button_rounded_border"
-                android:backgroundTint="@color/colorPrimary"
-                android:fontFamily="@font/poppinsmedium"
-                android:gravity="center"
-                android:minWidth="72dp"
-                android:paddingStart="@dimen/spacing_md"
-                android:paddingEnd="@dimen/spacing_md"
-                android:text="@string/ui_disable_combo"
-                android:textColor="@color/white"
-                android:textSize="@dimen/text_caption" />
-
-            <TextView
-                android:id="@+id/deleteCombo"
-                android:layout_width="wrap_content"
-                android:layout_height="36dp"
-                android:layout_marginEnd="@dimen/spacing_sm"
-                android:background="@drawable/button_rounded_border"
-                android:backgroundTint="@color/red_900"
-                android:fontFamily="@font/poppinsmedium"
-                android:gravity="center"
-                android:minWidth="64dp"
-                android:paddingStart="@dimen/spacing_md"
-                android:paddingEnd="@dimen/spacing_md"
-                android:text="@string/ui_delete"
-                android:textColor="@color/white"
-                android:textSize="@dimen/text_caption" />
-
-            <TextView
-                android:id="@+id/updateCombo"
-                android:layout_width="wrap_content"
-                android:layout_height="36dp"
-                android:background="@drawable/button_rounded_border"
-                android:backgroundTint="@color/green_700"
-                android:fontFamily="@font/poppinsmedium"
-                android:gravity="center"
-                android:minWidth="64dp"
-                android:paddingStart="@dimen/spacing_md"
-                android:paddingEnd="@dimen/spacing_md"
-                android:text="@string/ui_update"
-                android:textColor="@color/white"
-                android:textSize="@dimen/text_caption" />
-        </LinearLayout>
     </LinearLayout>
-</com.pos_billingwala.Extra.PosCardView>
+</LinearLayout>

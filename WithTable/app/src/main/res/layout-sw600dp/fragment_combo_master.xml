@@ -136,18 +136,17 @@
             android:layout_height="0dp"
             android:layout_marginTop="@dimen/spacing_md"
             android:layout_weight="1"
-            app:cardCornerRadius="@dimen/radius_lg"
+            app:cardCornerRadius="@dimen/radius_lg">
 
->
-
-            <com.pos_billingwala.Extra.AutoFitGridRecyclerView
+            <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/comboRecyclerView"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:clipToPadding="false"
-                android:columnWidth="220dp"
                 android:nestedScrollingEnabled="true"
-                android:padding="@dimen/spacing_sm" />
+                android:overScrollMode="never"
+                android:paddingTop="@dimen/spacing_xs"
+                android:paddingBottom="@dimen/spacing_sm" />
         </com.pos_billingwala.Extra.PosCardView>
     </LinearLayout>
 

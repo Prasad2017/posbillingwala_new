@@ -12,12 +12,15 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.GridLayoutManager;
 
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.ComboAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.AppExecutors;
 import com.pos_billingwala.Extra.ListLoader;
+import com.pos_billingwala.Extra.MasterListTabletUi;
+import com.pos_billingwala.Extra.SimpleDividerItemDecoration;
 import com.pos_billingwala.Model.ComboResponse;
 import com.pos_billingwala.databinding.FragmentComboMasterBinding;
 
@@ -81,6 +84,12 @@ public class ComboMaster extends Fragment implements View.OnClickListener {
             }
             return false;
         });
+
+        binding.comboRecyclerView.setLayoutManager(
+                new GridLayoutManager(activity, MasterListTabletUi.listColumnCount(activity)));
+        if (binding.comboRecyclerView.getItemDecorationCount() == 0) {
+            binding.comboRecyclerView.addItemDecoration(new SimpleDividerItemDecoration(activity));
+        }
 
         binding.backToHome.setOnClickListener(this);
         binding.addCombo.setOnClickListener(this);

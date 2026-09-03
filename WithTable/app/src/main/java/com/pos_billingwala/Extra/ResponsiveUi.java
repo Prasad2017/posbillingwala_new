@@ -86,8 +86,15 @@ public final class ResponsiveUi {
         if (widthDp <= 0 || minCardWidthDp <= 0) {
             return Math.max(1, minCols);
         }
-        int cols = Math.max(1, widthDp / minCardWidthDp);
-        return Math.max(minCols, Math.min(maxCols, cols));
+        // How many cards actually fit at the requested min width.
+        int fitted = Math.max(1, widthDp / minCardWidthDp);
+        // Prefer at least minCols only when they fit — never crush cards into
+        // more columns than the available width can hold.
+        int cols = Math.min(fitted, maxCols);
+        if (fitted >= minCols) {
+            cols = Math.max(minCols, cols);
+        }
+        return Math.max(1, Math.min(maxCols, cols));
     }
 
     public static int gridColumnCountForWidthPx(@NonNull Context context, int availableWidthPx,
