@@ -80,9 +80,11 @@
                     android:layout_width="@dimen/touch_min"
                     android:layout_height="@dimen/touch_min"
                     android:layout_marginEnd="@dimen/spacing_sm"
-                    app:cardCornerRadius="@dimen/radius_sm"
-
->
+                    android:clickable="true"
+                    android:contentDescription="@string/ui_print"
+                    android:focusable="true"
+                    app:cardBackgroundColor="@color/white"
+                    app:cardCornerRadius="@dimen/radius_sm">
 
                     <ImageView
                         android:id="@+id/printProduct"
@@ -90,8 +92,9 @@
                         android:layout_height="@dimen/icon_md"
                         android:layout_gravity="center"
                         android:contentDescription="@null"
+                        android:importantForAccessibility="no"
                         android:src="@drawable/ic_print"
-                        app:tint="@color/white" />
+                        app:tint="@color/colorPrimary" />
                 </com.pos_billingwala.Extra.PosCardView>
 
                 <TextView

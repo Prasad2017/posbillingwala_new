@@ -9,8 +9,6 @@
     <string name="login_security_notice">Your data is safe with us. By continuing, you agree to our Terms of Service and Privacy Policy.</string>
     <string name="terms_of_service">Terms of Service</string>
     <string name="privacy_policy_label">Privacy Policy</string>
-    <string name="special_offers">Special Offers</string>
-    <string name="shop_now">Shop Now</string>
     <string name="mobile_number_msg">Enter your shop licence key to verify your account and start billing.</string>
     <string name="mpin_msg">Enter your shop PB-PIN. We\'ll verify your account, so we know you\'re real.</string>
     <string name="mpin_card_title">Enter your Shop PB-PIN</string>
@@ -81,7 +79,7 @@
     <string name="you_appear_to_be_offline">You appear to be offline</string>
     <string name="status_online">Online</string>
     <string name="status_offline">Offline</string>
-    <string name="you_can_t_use_gmail_until_you_re_connected_to_the_internet">You can\'t use Gmail until you\'re connected to the internet</string>
+    <string name="you_can_t_use_gmail_until_you_re_connected_to_the_internet">You can\'t use the app until you\'re connected to the internet</string>
     <string name="retry">Retry</string>
     <string name="hi_pos_billingwala">Hi POS Billingwala</string>
     <string name="good_morning">Good Morning</string>
@@ -151,8 +149,6 @@
     <string name="product_price_optional_with_portions">Portions added — billing uses portion prices. Base product price is optional.</string>
     <string name="developed_by_webus_labs_llp">Developed by Cana Tech Solutions Private Limited</string>
     <string name="mess">Mess</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
 
     <string name="time_set">Set time</string>
     <string name="cancel">Cancel</string>
@@ -238,15 +234,21 @@
     <string name="support_no_tickets">No tickets yet</string>
     <string name="support_load_failed">Could not connect. Check internet.</string>
     <string name="support_reply">Your reply</string>
+    <string name="support_reply_hint">Type your reply...</string>
     <string name="support_send_reply">Send Reply</string>
     <string name="support_reply_sent">Reply sent</string>
     <string name="support_reply_required">Enter a message</string>
     <string name="support_ticket_closed">This ticket is closed</string>
     <string name="support_refresh">Refresh tickets</string>
-    <string name="support_ticket_details">Ticket details</string>
+    <string name="support_ticket_details">Ticket Details</string>
+    <string name="support_how_tickets_work">How support tickets work</string>
+    <string name="support_conversation">Conversation</string>
+    <string name="support_sort_oldest">Oldest first</string>
+    <string name="support_sort_newest">Newest first</string>
+    <string name="support_no_messages">No messages yet</string>
     <string name="support_admin">Support team</string>
     <string name="support_you">You</string>
-    <string name="support_ticket_open_banner">Status: %1$s — pull refresh to see new admin replies (online only)</string>
+    <string name="support_ticket_open_banner">Status: %1$s — this ticket is open. Our support team will reply soon.</string>
     <string name="support_ticket_closed_banner">Status: %1$s — this ticket is closed. Open a new ticket if you need more help.</string>
     <string name="support_reply_disabled">Reply is disabled. This ticket is closed. Open a new ticket if you need more help.</string>
     <string name="support_open_new_ticket">Open New Ticket</string>

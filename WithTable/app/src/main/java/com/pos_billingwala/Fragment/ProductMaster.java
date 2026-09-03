@@ -29,8 +29,8 @@ import com.pos_billingwala.Adapter.ProductAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.AppExecutors;
 import com.pos_billingwala.Extra.ListLoader;
+import com.pos_billingwala.Extra.ResponsiveUi;
 import com.pos_billingwala.Extra.SimpleDividerItemDecoration;
-import com.pos_billingwala.Extra.TabletUi;
 import com.pos_billingwala.Model.ProductResponse;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentProductMasterBinding;
@@ -170,7 +170,15 @@ public class ProductMaster extends Fragment implements View.OnClickListener {
 
     public void initViews() {
         productRecyclerView = view.findViewById(R.id.productRecyclerView);
-        int productColumns = TabletUi.gridColumnCount(activity);
+        // Dense product cards (actions + portions + tax) need wide columns.
+        // POS catalog min-width (150dp) created 6-col crushed grids on tablets.
+        int productColumns = 1;
+        if (ResponsiveUi.isWideLayout(activity)) {
+            int widthDp = ResponsiveUi.windowWidthDp(activity);
+            int heightDp = ResponsiveUi.windowHeightDp(activity);
+            int minCardDp = heightDp > 0 && heightDp < 720 ? 480 : 400;
+            productColumns = Math.max(1, Math.min(2, widthDp / minCardDp));
+        }
         productRecyclerView.setLayoutManager(new GridLayoutManager(activity, productColumns));
         if (productRecyclerView.getItemDecorationCount() == 0) {
             productRecyclerView.addItemDecoration(new SimpleDividerItemDecoration(activity));

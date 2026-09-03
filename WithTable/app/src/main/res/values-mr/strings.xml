@@ -10,8 +10,6 @@
     <string name="login_security_notice">तुमचा डेटा आमच्याकडे सुरक्षित आहे. पुढे जाताना, तुम्ही आमच्या सेवा अटी आणि गोपनीयता धोरणास सहमती देता.</string>
     <string name="terms_of_service">सेवा अटी</string>
     <string name="privacy_policy_label">गोपनीयता धोरण</string>
-    <string name="special_offers">विशेष ऑफर</string>
-    <string name="shop_now">आत्ता खरेदी करा</string>
     <string name="mobile_number_msg">तुमची दुकान लायसन्स की टाका आणि बिलिंग सुरू करा.</string>
     <string name="mpin_msg">तुमचा दुकान PB-PIN टाका. आम्ही तुमचे खाते तपासू.</string>
 
@@ -141,7 +139,6 @@
     <string name="product_price_optional_with_portions">पोर्शन जोडले — बिलिंग पोर्शन किंमतीने. मूळ उत्पादन किंमत पर्यायी.</string>
     <string name="developed_by_webus_labs_llp">विकसित: Cana Tech Solutions Private Limited</string>
     <string name="mess">मेस</string>
-    <string name="hello_blank_fragment">Hello blank fragment</string>
 
     <string name="time_set">वेळ सेट करा</string>
     <string name="cancel">रद्द करा</string>
@@ -212,16 +209,24 @@
     <string name="support_no_tickets">अद्याप तिकीट नाही</string>
     <string name="support_load_failed">कनेक्ट होऊ शकले नाही. इंटरनेट तपासा.</string>
     <string name="support_reply">तुमचे उत्तर</string>
+    <string name="support_reply_hint">तुमचे उत्तर लिहा...</string>
     <string name="support_send_reply">उत्तर पाठवा</string>
     <string name="support_reply_sent">उत्तर पाठवले</string>
     <string name="support_reply_required">संदेश लिहा</string>
     <string name="support_ticket_closed">हे तिकीट बंद आहे</string>
     <string name="support_refresh">तिकीट रिफ्रेश करा</string>
     <string name="support_ticket_details">तिकीट तपशील</string>
+    <string name="support_how_tickets_work">सपोर्ट तिकीट कसे काम करतात</string>
+    <string name="support_conversation">संवाद</string>
+    <string name="support_sort_oldest">जुने आधी</string>
+    <string name="support_sort_newest">नवीन आधी</string>
+    <string name="support_no_messages">अद्याप संदेश नाही</string>
     <string name="support_admin">सपोर्ट टीम</string>
     <string name="support_you">तुम्ही</string>
-    <string name="support_ticket_open_banner">स्थिती: %1$s — नवीन अॅडमिन उत्तरासाठी रिफ्रेश करा (फक्त ऑनलाइन)</string>
-    <string name="support_ticket_closed_banner">स्थिती: %1$s — तिकीट बंद आहे. अधिक मदत हवी असल्यास नवीन तिकीट तयार करा.</string>
+    <string name="support_ticket_open_banner">स्थिती: %1$s — हे तिकीट खुले आहे. आमची सपोर्ट टीम लवकरच उत्तर देईल.</string>
+    <string name="support_ticket_closed_banner">स्थिती: %1$s — हे तिकीट बंद आहे. अधिक मदत हवी असल्यास नवीन तिकीट तयार करा.</string>
+    <string name="support_reply_disabled">उत्तर बंद आहे. हे तिकीट बंद आहे. अधिक मदत हवी असल्यास नवीन तिकीट तयार करा.</string>
+    <string name="support_open_new_ticket">नवीन तिकीट तयार करा</string>
     <string name="setting_fetch_data">क्लाउडमधून डेटा घ्या</string>
     <string name="setting_update_app">अ‍ॅप अपडेट करा</string>
     <string name="setting_synchronize">ऑफलाइन डेटा क्लाउडशी सिंक करा</string>

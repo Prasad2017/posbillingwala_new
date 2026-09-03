@@ -50,8 +50,12 @@ public final class MasterListTabletUi {
         container.addView(row);
     }
 
+    /**
+     * Master list rows include srNo + name + edit/delete. Always 1 column —
+     * even on tablet the list sits in a side panel; 2 columns crush names.
+     */
     public static int listColumnCount(Activity activity) {
-        return activity != null ? TabletUi.gridColumnCount(activity) : 1;
+        return 1;
     }
 
     /** Keeps a header (e.g. product info) full width; splits form and list below on tablet. */

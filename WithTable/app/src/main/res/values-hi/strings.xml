@@ -10,8 +10,6 @@
     <string name="login_security_notice">आपका डेटा हमारे पास सुरक्षित है। जारी रखकर, आप हमारी सेवा की शर्तों और गोपनीयता नीति से सहमत हैं।</string>
     <string name="terms_of_service">सेवा की शर्तें</string>
     <string name="privacy_policy_label">गोपनीयता नीति</string>
-    <string name="special_offers">विशेष ऑफ़र</string>
-    <string name="shop_now">अभी खरीदें</string>
     <string name="mobile_number_msg">अपनी दुकान की लाइसेंस कुंजी दर्ज करें और बिलिंग शुरू करें।</string>
     <string name="mpin_msg">अपना दुकान PB-PIN दर्ज करें। हम आपका खाता सत्यापित करेंगे।</string>
 
@@ -141,7 +139,6 @@
     <string name="product_price_optional_with_portions">पोर्शन जोड़े गए — बिलिंग पोर्शन कीमत से। मूल उत्पाद कीमत वैकल्पिक।</string>
     <string name="developed_by_webus_labs_llp">विकसित: Cana Tech Solutions Private Limited</string>
     <string name="mess">मेस</string>
-    <string name="hello_blank_fragment">Hello blank fragment</string>
 
     <string name="time_set">समय सेट करें</string>
     <string name="cancel">रद्द करें</string>
@@ -212,16 +209,24 @@
     <string name="support_no_tickets">अभी कोई टिकट नहीं</string>
     <string name="support_load_failed">कनेक्ट नहीं हो पाया। इंटरनेट जांचें।</string>
     <string name="support_reply">आपका जवाब</string>
+    <string name="support_reply_hint">अपना जवाब लिखें...</string>
     <string name="support_send_reply">जवाब भेजें</string>
     <string name="support_reply_sent">जवाब भेज दिया</string>
     <string name="support_reply_required">संदेश लिखें</string>
     <string name="support_ticket_closed">यह टिकट बंद है</string>
     <string name="support_refresh">टिकट रिफ्रेश करें</string>
     <string name="support_ticket_details">टिकट विवरण</string>
+    <string name="support_how_tickets_work">सपोर्ट टिकट कैसे काम करते हैं</string>
+    <string name="support_conversation">बातचीत</string>
+    <string name="support_sort_oldest">पहले पुराने</string>
+    <string name="support_sort_newest">पहले नए</string>
+    <string name="support_no_messages">अभी कोई संदेश नहीं</string>
     <string name="support_admin">सपोर्ट टीम</string>
     <string name="support_you">आप</string>
-    <string name="support_ticket_open_banner">स्थिति: %1$s — नए एडमिन जवाब के लिए रिफ्रेश करें (केवल ऑनलाइन)</string>
-    <string name="support_ticket_closed_banner">स्थिति: %1$s — टिकट बंद है। और मदद चाहिए तो नया टिकट बनाएं।</string>
+    <string name="support_ticket_open_banner">स्थिति: %1$s — यह टिकट खुला है। हमारी सपोर्ट टीम जल्द जवाब देगी।</string>
+    <string name="support_ticket_closed_banner">स्थिति: %1$s — यह टिकट बंद है। और मदद चाहिए तो नया टिकट बनाएं।</string>
+    <string name="support_reply_disabled">जवाब बंद है। यह टिकट बंद है। और मदद चाहिए तो नया टिकट बनाएं।</string>
+    <string name="support_open_new_ticket">नया टिकट बनाएं</string>
     <string name="setting_fetch_data">क्लाउड से डेटा लें</string>
     <string name="setting_update_app">ऐप अपडेट करें</string>
     <string name="setting_synchronize">ऑफ़लाइन डेटा क्लाउड से सिंक करें</string>

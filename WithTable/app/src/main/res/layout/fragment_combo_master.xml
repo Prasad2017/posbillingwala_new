@@ -4,13 +4,16 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/colorBackground"
     tools:context=".Fragment.ComboMaster">
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:layout_alignParentTop="true">
+        android:layout_height="56dp"
+        android:layout_alignParentTop="true"
+        android:background="@color/colorPrimary"
+        app:elevation="4dp">
 
         <RelativeLayout
             android:layout_width="match_parent"
@@ -18,19 +21,23 @@
 
             <ImageView
                 android:id="@+id/backToHome"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
+                android:layout_width="@dimen/touch_min"
+                android:layout_height="@dimen/touch_min"
                 android:layout_alignParentStart="true"
                 android:layout_centerVertical="true"
-                android:layout_marginStart="15dp"
+                android:layout_marginStart="@dimen/spacing_sm"
+                android:contentDescription="@null"
+                android:padding="@dimen/spacing_sm"
                 android:src="@drawable/ic_back"
                 app:tint="@color/white" />
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
                 android:layout_marginStart="10dp"
                 android:layout_marginEnd="8dp"
+                android:layout_toStartOf="@+id/addCombo"
                 android:layout_toEndOf="@+id/backToHome"
                 android:orientation="vertical">
 
@@ -55,72 +62,87 @@
                     android:textColor="#CCFFFFFF"
                     android:textSize="11sp"
                     android:visibility="gone" />
-
             </LinearLayout>
-
 
             <TextView
                 android:id="@+id/addCombo"
                 android:layout_width="wrap_content"
-                android:layout_height="35dp"
+                android:layout_height="36dp"
                 android:layout_alignParentEnd="true"
                 android:layout_centerVertical="true"
-                android:layout_marginEnd="15dp"
-                android:background="@drawable/button_rounded_border"
-                android:backgroundTint="@color/white"
-                android:fontFamily="@font/poppinsregular"
+                android:layout_marginEnd="@dimen/spacing_md"
+                android:background="@drawable/bg_card"
+                android:fontFamily="@font/poppinsmedium"
                 android:gravity="center"
-                android:paddingStart="10dp"
-                android:paddingEnd="10dp"
+                android:paddingStart="@dimen/spacing_md"
+                android:paddingEnd="@dimen/spacing_md"
                 android:text="@string/ui_add_combo"
-                android:textColor="@color/black"
-                android:textSize="15dp" />
-
+                android:textColor="@color/colorPrimary"
+                android:textSize="@dimen/text_body" />
         </RelativeLayout>
     </com.google.android.material.appbar.AppBarLayout>
 
     <LinearLayout
         android:id="@+id/linearLayout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/appBarLayout"
+        android:layout_height="match_parent"
+        android:layout_below="@id/appBarLayout"
         android:orientation="vertical"
+        android:padding="@dimen/spacing_lg"
         android:visibility="gone">
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="45dp"
-            android:layout_marginStart="10dp"
-            android:layout_marginTop="20dp"
-            android:layout_marginEnd="10dp"
-            android:background="@drawable/button_rounded_border"
-            android:orientation="horizontal">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/searchCombo"
-                android:layout_width="match_parent"
-                android:layout_height="40dp"
-                android:layout_gravity="center"
-                android:layout_marginStart="10dp"
-                android:layout_marginEnd="10dp"
-                android:background="@null"
-                android:fontFamily="@font/poppinsregular"
-                android:hint="@string/ui_search_combo"
-                android:paddingStart="10dp"
-                android:paddingEnd="10dp"
-                android:singleLine="true"
-                android:textColor="@color/black"
-                android:textSize="14dp" />
-        </LinearLayout>
-
-        <com.pos_billingwala.Extra.AutoFitGridRecyclerView
-            android:id="@+id/comboRecyclerView"
+        <com.pos_billingwala.Extra.PosCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:columnWidth="280dp"
-            android:nestedScrollingEnabled="true"
-            android:padding="5dp" />
+            app:cardCornerRadius="@dimen/radius_lg">
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/searchLayout"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="@dimen/spacing_md"
+                app:boxCornerRadiusBottomEnd="@dimen/radius_sm"
+                app:boxCornerRadiusBottomStart="@dimen/radius_sm"
+                app:boxCornerRadiusTopEnd="@dimen/radius_sm"
+                app:boxCornerRadiusTopStart="@dimen/radius_sm"
+                app:boxStrokeColor="@color/colorBorder"
+                app:hintEnabled="false"
+                app:startIconDrawable="@drawable/search"
+                app:startIconTint="@color/colorTextHint">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/searchCombo"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/poppinsregular"
+                    android:hint="@string/ui_search_combo"
+                    android:imeOptions="actionSearch"
+                    android:inputType="text"
+                    android:paddingStart="@dimen/spacing_lg"
+                    android:paddingEnd="@dimen/spacing_md"
+                    android:singleLine="true"
+                    android:textColor="@color/colorTextPrimary"
+                    android:textSize="@dimen/text_body" />
+            </com.google.android.material.textfield.TextInputLayout>
+        </com.pos_billingwala.Extra.PosCardView>
+
+        <com.pos_billingwala.Extra.PosCardView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="@dimen/spacing_md"
+            android:layout_weight="1"
+            app:cardCornerRadius="@dimen/radius_lg">
+
+            <com.pos_billingwala.Extra.AutoFitGridRecyclerView
+                android:id="@+id/comboRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:columnWidth="280dp"
+                android:nestedScrollingEnabled="true"
+                android:padding="@dimen/spacing_sm" />
+        </com.pos_billingwala.Extra.PosCardView>
     </LinearLayout>
 
     <TextView
@@ -130,9 +152,8 @@
         android:layout_centerInParent="true"
         android:fontFamily="@font/poppinsmedium"
         android:gravity="center"
-        android:padding="10dp"
+        android:padding="@dimen/spacing_lg"
         android:text="@string/ui_no_combo_found"
-        android:textColor="@color/black"
-        android:textSize="17dp" />
-
+        android:textColor="@color/colorTextSecondary"
+        android:textSize="@dimen/text_subtitle" />
 </RelativeLayout>

@@ -11,7 +11,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -40,7 +39,7 @@ public class ManageProductPortions extends Fragment implements View.OnClickListe
     public static List<ProductPortionResponse> portionResponseList = new ArrayList<>();
     public static PortionAdapter portionAdapter;
     public static RecyclerView portionRecyclerview;
-    public static CardView portionListCardView;
+    public static View portionListCardView;
     public static TextView noDataFound;
     public static String selectedProductId;
 
@@ -67,9 +66,14 @@ public class ManageProductPortions extends Fragment implements View.OnClickListe
                 portionRecyclerview.setAdapter(portionAdapter);
 
                 portionListCardView.setVisibility(View.VISIBLE);
+                portionRecyclerview.setVisibility(View.VISIBLE);
                 noDataFound.setVisibility(View.GONE);
             } else {
-                portionListCardView.setVisibility(View.GONE);
+                portionListCardView.setVisibility(View.VISIBLE);
+                if (portionRecyclerview != null) {
+                    portionRecyclerview.setAdapter(null);
+                    portionRecyclerview.setVisibility(View.GONE);
+                }
                 noDataFound.setVisibility(View.VISIBLE);
             }
         } finally {
@@ -140,15 +144,25 @@ public class ManageProductPortions extends Fragment implements View.OnClickListe
             return;
         }
         productResponse = details.get(0);
-        String category = productResponse.getCategoryName() != null ? productResponse.getCategoryName() : "-";
-        String header = productResponse.getProductName() + " (" + category + ")\n";
+        String name = productResponse.getProductName() != null ? productResponse.getProductName().trim() : "";
+        String category = productResponse.getCategoryName() != null ? productResponse.getCategoryName().trim() : "";
+        if (category.isEmpty()) {
+            category = "-";
+        }
+        String header = name + " (" + category + ")\n";
         if (posBillingWalaDatabase.hasProductPortions(productId)) {
             binding.productInfo.setText(header
                     + "Selling prices are set per portion below (base product price is unused while portions exist)");
         } else {
+            String price = productResponse.getProductPrice() != null
+                    ? productResponse.getProductPrice().trim() : "";
+            String currency = MainActivity.currencyName != null ? MainActivity.currencyName.trim() : "";
+            String priceLine = price.isEmpty()
+                    ? "Base price: not set"
+                    : "Base price: " + currency + " " + price;
             binding.productInfo.setText(header
                     + "No portions — product price is used for billing. Optionally add portions.\n"
-                    + "Base price: " + MainActivity.currencyName + " " + productResponse.getProductPrice());
+                    + priceLine);
         }
     }
 

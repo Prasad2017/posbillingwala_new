@@ -16,6 +16,7 @@
     <string name="ui_add_member">Add Member</string>
     <string name="ui_add_payment">Add Payment</string>
     <string name="ui_add_product">Add Product</string>
+    <string name="ui_print">Print</string>
     <string name="ui_add_to_cart">Add To Cart</string>
     <string name="ui_address">address</string>
     <string name="ui_after_sale_qty">After Sale Qty</string>
