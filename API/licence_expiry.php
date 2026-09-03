@@ -908,21 +908,23 @@ if (!function_exists('licence_home_sales_overview')) {
             (string) $prevMonthPrefix
         );
 
+        // Server columns differ from on-device SQLite (*DeletedStatus / categoryName).
+        // Use MySQL status columns so queries work on PHP 7.x and 8.x alike.
         $totalSubcategory = db_stmt_scalar_string(
             $con,
-            'SELECT COUNT(*) FROM `product_subcategories` WHERE `userId` = ? AND IFNULL(`subcategoryDeletedStatus`, \'0\') = \'0\'',
+            'SELECT COUNT(*) FROM `product_subcategories` WHERE `userId` = ? AND IFNULL(`subcategoryStatus`, \'active\') = \'active\'',
             's',
             (string) $licenseId
         );
         $totalProduct = db_stmt_scalar_string(
             $con,
-            'SELECT COUNT(*) FROM `products` WHERE `userId` = ? AND IFNULL(`categoryName`, \'\') <> \'\' AND IFNULL(`productDeletedStatus`, \'0\') = \'0\'',
+            'SELECT COUNT(*) FROM `products` WHERE `userId` = ? AND IFNULL(`categoryId`, 0) > 0 AND IFNULL(`productStatus`, \'active\') = \'active\'',
             's',
             (string) $licenseId
         );
         $totalCombo = db_stmt_scalar_string(
             $con,
-            'SELECT COUNT(*) FROM `combos` WHERE `userId` = ? AND IFNULL(`comboDeletedStatus`, \'0\') = \'0\'',
+            'SELECT COUNT(*) FROM `combos` WHERE `userId` = ? AND IFNULL(`comboStatus`, \'active\') = \'active\'',
             's',
             (string) $licenseId
         );

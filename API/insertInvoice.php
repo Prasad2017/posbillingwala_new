@@ -18,19 +18,24 @@ function invoice_ensure_cash_upi_columns($con)
     if ($ensured || $con === null) {
         return;
     }
-    $cash = @mysqli_query($con, "SHOW COLUMNS FROM `invoice` LIKE 'cashAmount'");
-    if ($cash && mysqli_num_rows($cash) === 0) {
-        @mysqli_query($con, "ALTER TABLE `invoice` ADD COLUMN `cashAmount` VARCHAR(50) NOT NULL DEFAULT '0' AFTER `paymentMode`");
-    }
-    if ($cash) {
-        mysqli_free_result($cash);
-    }
-    $upi = @mysqli_query($con, "SHOW COLUMNS FROM `invoice` LIKE 'upiAmount'");
-    if ($upi && mysqli_num_rows($upi) === 0) {
-        @mysqli_query($con, "ALTER TABLE `invoice` ADD COLUMN `upiAmount` VARCHAR(50) NOT NULL DEFAULT '0' AFTER `cashAmount`");
-    }
-    if ($upi) {
-        mysqli_free_result($upi);
+    require_once __DIR__ . '/php_compat.php';
+    try {
+        $cash = db_safe_query($con, "SHOW COLUMNS FROM `invoice` LIKE 'cashAmount'");
+        if ($cash && mysqli_num_rows($cash) === 0) {
+            db_safe_query($con, "ALTER TABLE `invoice` ADD COLUMN `cashAmount` VARCHAR(50) NOT NULL DEFAULT '0' AFTER `paymentMode`");
+        }
+        if ($cash) {
+            mysqli_free_result($cash);
+        }
+        $upi = db_safe_query($con, "SHOW COLUMNS FROM `invoice` LIKE 'upiAmount'");
+        if ($upi && mysqli_num_rows($upi) === 0) {
+            db_safe_query($con, "ALTER TABLE `invoice` ADD COLUMN `upiAmount` VARCHAR(50) NOT NULL DEFAULT '0' AFTER `cashAmount`");
+        }
+        if ($upi) {
+            mysqli_free_result($upi);
+        }
+    } catch (Throwable $e) {
+        // Ignore schema probe failures — request can still proceed.
     }
     $ensured = true;
 }

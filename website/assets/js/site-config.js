@@ -1,6 +1,10 @@
 /**
  * Website → Admin API base URL.
- * Admin runs on subdomain: https://admin.posbillingwala.com (no /adminpanel/ folder).
+ *
+ * Production prefers same-origin `/api/website` (proxied by website/api/website-proxy.php)
+ * so the browser does not need a trusted cert on admin.posbillingwala.com.
+ * Direct admin URL remains as fallback once SSL is fixed.
+ *
  * Override before this script: window.PBW_WEBSITE_API = 'https://admin.posbillingwala.com/api/website';
  */
 (function () {
@@ -34,6 +38,15 @@
     return;
   }
 
-  window.PBW_WEBSITE_API = PROD_API;
-  window.PBW_WEBSITE_API_CANDIDATES = [PROD_API];
+  var sameOriginApi = "";
+  try {
+    if (window.location && window.location.origin && window.location.protocol.indexOf("http") === 0) {
+      sameOriginApi = String(window.location.origin).replace(/\/$/, "") + "/api/website";
+    }
+  } catch (e) {}
+
+  window.PBW_WEBSITE_API = sameOriginApi || PROD_API;
+  window.PBW_WEBSITE_API_CANDIDATES = sameOriginApi
+    ? [sameOriginApi, PROD_API]
+    : [PROD_API];
 })();

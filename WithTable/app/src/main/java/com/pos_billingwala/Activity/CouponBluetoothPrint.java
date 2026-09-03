@@ -197,19 +197,27 @@ public class CouponBluetoothPrint extends BaseActivity implements View.OnClickLi
     public void onClick(View view) {
         if (view.getId() == R.id.printInvoiceCardView) {
             if (!printerSettingResponseList.isEmpty()) {
-
-                progressDialog = new ProgressDialog(activity);
-                progressDialog.setMessage(getString(R.string.toast_printing_in_progress));
-
-                if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("2-Inch")) {
-                    print2InchBill();
-                } else if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("3-Inch")) {
-                    print3InchBill();
-                }
-
+                String addr = printerSettingResponseList.get(0).getBluetoothAddress();
+                PrinterConnectionHelper.ensureBillPrinterAsync(activity,
+                        addr != null ? addr : "",
+                        this::runCouponPrintAfterPrinterReady);
             } else {
                 Toast.makeText(activity, getString(R.string.toast_please_select_printer_from_setting), Toast.LENGTH_SHORT).show();
             }
+        }
+    }
+
+    private void runCouponPrintAfterPrinterReady() {
+        if (isFinishing() || printerSettingResponseList.isEmpty()) {
+            return;
+        }
+        progressDialog = new ProgressDialog(activity);
+        progressDialog.setMessage(getString(R.string.toast_printing_in_progress));
+
+        if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("2-Inch")) {
+            print2InchBill();
+        } else if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("3-Inch")) {
+            print3InchBill();
         }
     }
 
@@ -490,12 +498,23 @@ public class CouponBluetoothPrint extends BaseActivity implements View.OnClickLi
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_ENABLE_BT && resultCode == RESULT_OK) {
-            //bluetooth enabled and request for showing available bluetooth devices
-            new WoosimPrnMng(activity, "", CouponBluetoothPrint.this);
-        } else if (requestCode == REQUEST_CONNECT_DEVICE && resultCode == RESULT_OK) {
-            //bluetooth device selected and request pairing with device
-            String address = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
-            new WoosimPrnMng(activity, address, CouponBluetoothPrint.this);
+            String addr = printerSettingResponseList.isEmpty() ? ""
+                    : printerSettingResponseList.get(0).getBluetoothAddress();
+            WoosimPrnMng.connect(activity, addr != null ? addr : "", CouponBluetoothPrint.this);
+        } else if (requestCode == REQUEST_CONNECT_DEVICE) {
+            if (resultCode == RESULT_OK && data != null && data.getExtras() != null) {
+                String address = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
+                if (address != null) {
+                    if (!printerSettingResponseList.isEmpty()) {
+                        printerSettingResponseList.get(0).setBluetoothAddress(address);
+                    }
+                    PrinterConnectionHelper.onBillDevicePicked(activity, address);
+                } else {
+                    PrinterConnectionHelper.cancelPendingDevicePick(true);
+                }
+            } else {
+                PrinterConnectionHelper.cancelPendingDevicePick(true);
+            }
         }
     }
 

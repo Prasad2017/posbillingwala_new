@@ -4,6 +4,7 @@ package com.posbillingwala.owner.Retrofit;
 import com.posbillingwala.owner.Model.AllApiResponse;
 import com.posbillingwala.owner.Model.CatalogImportHistoryResponse;
 import com.posbillingwala.owner.Model.CatalogImportPreviewResponse;
+import com.posbillingwala.owner.Model.CatalogPushResponse;
 import com.posbillingwala.owner.Model.LoginResponse;
 
 import okhttp3.MultipartBody;
@@ -175,6 +176,13 @@ public interface ApiInterface {
 
     @GET("getStoreWise.php")
     Call<AllApiResponse> getStoreWise(@Query("userId") String userId);
+
+    @FormUrlEncoded
+    @POST("pushCatalogToBranches.php")
+    Call<CatalogPushResponse> pushCatalogToBranches(@Field("userId") String userId,
+                                                    @Field("sourceMode") String sourceMode,
+                                                    @Field("sourceBranchId") String sourceBranchId,
+                                                    @Field("targetBranchIds") String targetBranchIds);
 
     @GET("getInvoiceLicenceIdWise.php")
     Call<AllApiResponse> getInvoiceLicenceIdWiseList(@Query("userId") String userId,

@@ -294,17 +294,8 @@ public class DuplicateBluetoothPrint extends BaseActivity implements View.OnClic
                     && paymentMode != null && !paymentMode.trim().isEmpty();
             if (paymentSelected) {
                 if (!printerSettingResponseList.isEmpty()) {
-                    if (!PrinterConnectionHelper.ensureBillPrinter(activity, savedBillPrinterAddress())) {
-                        return;
-                    }
-                    progressDialog = new ProgressDialog(activity);
-                    progressDialog.setMessage(getString(R.string.toast_printing_in_progress));
-
-                    if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("2-Inch")) {
-                        print2InchBill();
-                    } else if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("3-Inch")) {
-                        print3InchBill();
-                    }
+                    PrinterConnectionHelper.ensureBillPrinterAsync(activity, savedBillPrinterAddress(),
+                            this::runDuplicatePrintAfterPrinterReady);
                 } else {
                     Toast.makeText(activity, getString(R.string.toast_please_select_printer_from_setting), Toast.LENGTH_SHORT).show();
                 }
@@ -312,6 +303,20 @@ public class DuplicateBluetoothPrint extends BaseActivity implements View.OnClic
             } else {
                 Toast.makeText(activity, getString(R.string.toast_please_select_payment_mode), Toast.LENGTH_SHORT).show();
             }
+        }
+    }
+
+    private void runDuplicatePrintAfterPrinterReady() {
+        if (isFinishing() || printerSettingResponseList.isEmpty()) {
+            return;
+        }
+        progressDialog = new ProgressDialog(activity);
+        progressDialog.setMessage(getString(R.string.toast_printing_in_progress));
+
+        if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("2-Inch")) {
+            print2InchBill();
+        } else if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("3-Inch")) {
+            print3InchBill();
         }
     }
 
@@ -752,13 +757,19 @@ public class DuplicateBluetoothPrint extends BaseActivity implements View.OnClic
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_ENABLE_BT && resultCode == RESULT_OK) {
             WoosimPrnMng.connect(activity, savedBillPrinterAddress(), DuplicateBluetoothPrint.this);
-        } else if (requestCode == REQUEST_CONNECT_DEVICE && resultCode == RESULT_OK && data != null && data.getExtras() != null) {
-            String bluetoothAddress = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
-            if (bluetoothAddress != null) {
-                BluetoothPrinterChannel.bill().onDevicePicked(bluetoothAddress);
-                if (!printerSettingResponseList.isEmpty()) {
-                    printerSettingResponseList.get(0).setBluetoothAddress(bluetoothAddress);
+        } else if (requestCode == REQUEST_CONNECT_DEVICE) {
+            if (resultCode == RESULT_OK && data != null && data.getExtras() != null) {
+                String bluetoothAddress = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
+                if (bluetoothAddress != null) {
+                    if (!printerSettingResponseList.isEmpty()) {
+                        printerSettingResponseList.get(0).setBluetoothAddress(bluetoothAddress);
+                    }
+                    PrinterConnectionHelper.onBillDevicePicked(activity, bluetoothAddress);
+                } else {
+                    PrinterConnectionHelper.cancelPendingDevicePick(true);
                 }
+            } else {
+                PrinterConnectionHelper.cancelPendingDevicePick(true);
             }
         }
     }

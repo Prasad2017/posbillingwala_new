@@ -6,6 +6,7 @@ require_once __DIR__ . '/db_prepared.php';
 
 function support_ensure_ticket_columns($con)
 {
+    require_once __DIR__ . '/php_compat.php';
     $columns = array(
         'licence_id' => "ALTER TABLE `admin_support_tickets` ADD COLUMN `licence_id` INT UNSIGNED NULL DEFAULT NULL AFTER `status`",
         'user_id' => "ALTER TABLE `admin_support_tickets` ADD COLUMN `user_id` INT UNSIGNED NULL DEFAULT NULL AFTER `licence_id`",
@@ -13,15 +14,22 @@ function support_ensure_ticket_columns($con)
         'device_name' => "ALTER TABLE `admin_support_tickets` ADD COLUMN `device_name` VARCHAR(120) NULL DEFAULT '' AFTER `shop_name`",
         'device_id' => "ALTER TABLE `admin_support_tickets` ADD COLUMN `device_id` VARCHAR(255) NULL DEFAULT '' AFTER `device_name`",
     );
-    foreach ($columns as $name => $sql) {
-        $chk = mysqli_query(
-            $con,
-            "SELECT COUNT(*) AS c FROM INFORMATION_SCHEMA.COLUMNS
-             WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='admin_support_tickets' AND COLUMN_NAME='" . mysqli_real_escape_string($con, $name) . "'"
-        );
-        if ($chk && ($row = mysqli_fetch_assoc($chk)) && (int) $row['c'] === 0) {
-            mysqli_query($con, $sql);
+    try {
+        foreach ($columns as $name => $sql) {
+            $chk = db_safe_query(
+                $con,
+                "SELECT COUNT(*) AS c FROM INFORMATION_SCHEMA.COLUMNS
+                 WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='admin_support_tickets' AND COLUMN_NAME='" . mysqli_real_escape_string($con, $name) . "'"
+            );
+            if ($chk && ($row = mysqli_fetch_assoc($chk)) && (int) $row['c'] === 0) {
+                db_safe_query($con, $sql);
+            }
+            if ($chk) {
+                mysqli_free_result($chk);
+            }
         }
+    } catch (Throwable $e) {
+        // Ignore schema probe failures.
     }
 }
 

@@ -7,6 +7,10 @@ RewriteEngine On
 </IfModule>
 # php -- END cPanel-generated handler, do not edit
 
+# Same-origin website API proxy → admin.posbillingwala.com/api/website/*
+# Avoids browser SSL/CORS failures when the admin subdomain cert is untrusted.
+RewriteRule ^api/website/?(.*)$ api/website-proxy.php?__path=$1 [QSA,L]
+
 # Clean login URL → admin subdomain (no /adminpanel/ folder on main site)
 RewriteRule ^login/?$ https://admin.posbillingwala.com/login [L,R=302]
 RewriteRule ^dealer/login/?$ https://admin.posbillingwala.com/dealer/login [L,R=302]

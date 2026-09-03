@@ -33,9 +33,15 @@ $licenseId = pos_require_auth($con, $userId, $response);
 
 mysqli_query($con, 'set names utf8');
 
-$overview = licence_home_sales_overview($con, $licenseId, $period);
-$response = array_merge($response, $overview);
-$response['status'] = 'true';
+try {
+    $overview = licence_home_sales_overview($con, $licenseId, $period);
+    $response = array_merge($response, $overview);
+    $response['status'] = 'true';
+} catch (Throwable $e) {
+    http_response_code(200);
+    $response['status'] = '0';
+    $response['message'] = 'Failed to load sales overview';
+}
 
 mysqli_close($con);
 echo json_encode($response);

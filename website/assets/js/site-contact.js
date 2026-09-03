@@ -12,8 +12,15 @@
       if (subject) subjectField.value = subject;
     } catch (e) {}
   }
+  var sameOriginFallback = "";
+  try {
+    if (window.location && window.location.origin && String(window.location.protocol).indexOf("http") === 0) {
+      sameOriginFallback = String(window.location.origin).replace(/\/$/, "") + "/api/website";
+    }
+  } catch (e) {}
   var apiBase = (window.PBW_WEBSITE_API ||
     (window.PBW_WEBSITE_API_CANDIDATES && window.PBW_WEBSITE_API_CANDIDATES[0]) ||
+    sameOriginFallback ||
     "https://admin.posbillingwala.com/api/website").replace(/\/$/, "");
 
   function showFeedback(text, isError) {

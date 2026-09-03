@@ -154,9 +154,17 @@ if (!function_exists('companys_has_column')) {
         if (array_key_exists($key, $cache)) {
             return $cache[$key];
         }
-        $escaped = mysqli_real_escape_string($con, $key);
-        $result = mysqli_query($con, "SHOW COLUMNS FROM `companys` LIKE '" . $escaped . "'");
-        $cache[$key] = ($result && mysqli_num_rows($result) > 0);
+        require_once __DIR__ . '/php_compat.php';
+        try {
+            $escaped = mysqli_real_escape_string($con, $key);
+            $result = db_safe_query($con, "SHOW COLUMNS FROM `companys` LIKE '" . $escaped . "'");
+            $cache[$key] = ($result && mysqli_num_rows($result) > 0);
+            if ($result) {
+                mysqli_free_result($result);
+            }
+        } catch (Throwable $e) {
+            $cache[$key] = false;
+        }
         return $cache[$key];
     }
 }

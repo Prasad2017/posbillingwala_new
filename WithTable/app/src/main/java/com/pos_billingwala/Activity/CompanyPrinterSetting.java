@@ -24,6 +24,7 @@ import com.pos_billingwala.Model.PrinterSettingResponse;
 import com.pos_billingwala.Print.BluetoothPrinterChannel;
 import com.pos_billingwala.Print.DeviceListActivity;
 import com.pos_billingwala.Print.KOTWoosimPrnMng;
+import com.pos_billingwala.Print.PrinterConnectionHelper;
 import com.pos_billingwala.Print.WoosimPrnMng;
 import com.pos_billingwala.Extra.TabletFormUi;
 import com.pos_billingwala.R;
@@ -46,6 +47,7 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
     boolean billSizeChangedByUser;
     boolean kotSizeChangedByUser;
     boolean printerSettingsLoaded;
+    boolean autoConnectAttempted;
     boolean suppressSwitchListener;
     POSBillingWalaDatabase posBillingWalaDatabase;
     List<PrinterSettingResponse> printerSettingResponseList = new ArrayList<>();
@@ -316,12 +318,35 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
     }
 
     private void autoConnectSavedPrinters() {
-        if (!TextUtils.isEmpty(bluetoothAddress)) {
-            WoosimPrnMng.connect(activity, bluetoothAddress, CompanyPrinterSetting.this);
+        // Once per screen visit — re-running on every onStart (device list / BT enable
+        // return) races focus windows with the system pairing dialog and caused ANRs.
+        if (autoConnectAttempted) {
+            return;
         }
-        if (!TextUtils.isEmpty(bluetoothKOTAddress)) {
-            KOTWoosimPrnMng.connect(activity, bluetoothKOTAddress, CompanyPrinterSetting.this);
+        autoConnectAttempted = true;
+        View root = binding != null ? binding.getRoot() : null;
+        if (root == null) {
+            return;
         }
+        root.post(() -> {
+            if (isFinishing()) {
+                return;
+            }
+            if (!TextUtils.isEmpty(bluetoothAddress)
+                    && !BluetoothPrinterChannel.bill().isReady()
+                    && !BluetoothPrinterChannel.bill().isConnecting()) {
+                PrinterConnectionHelper.autoConnectBillPrinter(activity, bluetoothAddress);
+            }
+            boolean sameAsBill = !TextUtils.isEmpty(bluetoothKOTAddress)
+                    && bluetoothKOTAddress.equalsIgnoreCase(bluetoothAddress);
+            if (!sameAsBill
+                    && !TextUtils.isEmpty(bluetoothKOTAddress)
+                    && !BluetoothPrinterChannel.kot().isReady()
+                    && !BluetoothPrinterChannel.kot().isConnecting()) {
+                PrinterConnectionHelper.autoConnectKotPrinter(activity, bluetoothKOTAddress);
+            }
+            root.postDelayed(this::updatePrinterConnectionUi, 800);
+        });
     }
 
     private void updatePrinterConnectionUi() {
@@ -385,22 +410,26 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_ENABLE_BT && resultCode == RESULT_OK) {
             WoosimPrnMng.connectFromButton(activity, bluetoothAddress, CompanyPrinterSetting.this, billSizeChangedByUser);
-        } else if (requestCode == REQUEST_CONNECT_DEVICE && resultCode == RESULT_OK) {
-            bluetoothAddress = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
-            lastConnectedPrinterName = printerName;
-            billSizeChangedByUser = false;
-            BluetoothPrinterChannel.bill().onDevicePicked(bluetoothAddress);
-            persistConnectionState();
-            binding.getRoot().postDelayed(this::updatePrinterConnectionUi, 800);
+        } else if (requestCode == REQUEST_CONNECT_DEVICE) {
+            if (resultCode == RESULT_OK && data != null && data.getExtras() != null) {
+                bluetoothAddress = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
+                lastConnectedPrinterName = printerName;
+                billSizeChangedByUser = false;
+                PrinterConnectionHelper.onBillDevicePicked(activity, bluetoothAddress);
+                persistConnectionState();
+                binding.getRoot().postDelayed(this::updatePrinterConnectionUi, 800);
+            }
         } else if (requestCode == REQUEST_KOT_ENABLE_BT && resultCode == RESULT_OK) {
             KOTWoosimPrnMng.connectFromButton(activity, bluetoothKOTAddress, CompanyPrinterSetting.this, kotSizeChangedByUser);
-        } else if (requestCode == REQUEST_KOT_CONNECT_DEVICE && resultCode == RESULT_OK) {
-            bluetoothKOTAddress = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
-            lastConnectedKOTPrinterName = KOTPrinterName;
-            kotSizeChangedByUser = false;
-            BluetoothPrinterChannel.kot().onDevicePicked(bluetoothKOTAddress);
-            persistConnectionState();
-            binding.getRoot().postDelayed(this::updatePrinterConnectionUi, 800);
+        } else if (requestCode == REQUEST_KOT_CONNECT_DEVICE) {
+            if (resultCode == RESULT_OK && data != null && data.getExtras() != null) {
+                bluetoothKOTAddress = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
+                lastConnectedKOTPrinterName = KOTPrinterName;
+                kotSizeChangedByUser = false;
+                PrinterConnectionHelper.onKotDevicePicked(activity, bluetoothKOTAddress);
+                persistConnectionState();
+                binding.getRoot().postDelayed(this::updatePrinterConnectionUi, 800);
+            }
         }
     }
 

@@ -433,7 +433,7 @@
     <string name="toast_print_layout_failed">प्रिंट लेआउट अयशस्वी</string>
     <string name="toast_printer_not_ready">प्रिंटर तयार नाही</string>
     <string name="toast_printer_offline_connect">प्रिंटर ऑफलाइन — कनेक्ट करून पुन्हा प्रयत्न करा</string>
-    <string name="toast_printer_connecting">प्रिंटरशी कनेक्ट होत आहे… कनेक्ट झाल्यावर पुन्हा Print दाबा.</string>
+    <string name="toast_printer_connecting">प्रिंटरशी कनेक्ट होत आहे…</string>
     <string name="toast_printer_not_connected_select">प्रिंटर कनेक्ट नाही. कृपया Bluetooth प्रिंटर निवडा.</string>
     <string name="toast_printer_not_found_select">सेव्ह केलेला प्रिंटर सापडला नाही. Bluetooth डिव्हाइस निवडा.</string>
     <string name="toast_test_print_sent">टेस्ट प्रिंट पाठवला</string>

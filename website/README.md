@@ -21,7 +21,8 @@ website/
   terms.html          Terms & conditions (CMS)
   refund.html         Refund & renewal policy (CMS)
   assets/
-    css/site.css
+    css/reference-final.css   Site styles
+    images/app-home-screen.png  Real POS app dashboard (home hero)
     js/site-layout.js   Shared nav & footer
     js/site-icons.js    SVG icon system
     js/site-tabs.js     Tab & filter pill components
@@ -108,7 +109,8 @@ Manage under **Settings → Website Content** in the admin panel (admin login on
 | `/website/refund` | Refund & renewal policy |
 | `/website/contacts` | Website contact form enquiries |
 
-Public API base: `https://admin.posbillingwala.com/api/website`
+Public API base (browser): prefer same-origin `https://posbillingwala.com/api/website`
+(proxied by `website/api/website-proxy.php` → `https://admin.posbillingwala.com/api/website`).
 
 | Endpoint | Data |
 |----------|------|
@@ -123,22 +125,36 @@ Public API base: `https://admin.posbillingwala.com/api/website`
 
 Override API base: set `window.PBW_WEBSITE_API` before `site-config.js` loads.
 
-### Website shows no data but admin has data?
+### Website shows “could not load from Admin API” / CORS?
 
-The public site loads content from the **admin subdomain API** (not directly from DB). Check in browser:
+**Root cause we hit in production:** `admin.posbillingwala.com` was serving a **self-signed SSL certificate**. Browsers block `fetch()` to untrusted HTTPS, and the site surfaces that as an Admin API / CORS-style error.
 
-| Test URL | Expected |
-|----------|----------|
-| `https://admin.posbillingwala.com/api/website/dealers` | JSON `{"success":true,"dealers":[...]}` |
-| `https://admin.posbillingwala.com/api/website/pages/privacy` | JSON with privacy HTML |
+**Code fix (already in repo):** marketing site calls same-origin `/api/website/*` via `website-proxy.php` (server-side curl to admin, SSL verify off). Deploy `website/.htaccess`, `website/api/website-proxy.php`, and updated `site-config.js` / `site-content.js`.
+
+**Required server fix for the admin panel itself:** issue a real certificate for `admin.posbillingwala.com` (cPanel → SSL/TLS Status → Run AutoSSL, or Let’s Encrypt). Until then, browsers will warn on every admin login visit even if the public website works through the proxy.
+
+After changing Laravel CORS (`admin.posbillingwala.com/config/cors.php`):
+
+```bash
+php artisan config:clear
+php artisan config:cache
+```
 
 **Fix checklist:**
 
-1. Deploy latest `website/` files (`site-config.js`, `site-content.js`, HTML pages — no `/adminpanel/` references)
-2. Deploy latest `admin.posbillingwala.com` Laravel code (API routes under `/api/website/...`)
-3. Run `API/migrations/p23_website_catalog.sql` on server DB if tables empty
-4. SSH on admin server: `php artisan route:clear && php artisan config:clear`
-5. Hard refresh website (Ctrl+F5)
+1. Deploy latest `website/` files (`site-config.js`, `site-content.js`, `api/website-proxy.php`, `.htaccess`)
+2. Deploy latest `admin.posbillingwala.com` Laravel code (API routes + `config/cors.php`)
+3. Run AutoSSL / Let’s Encrypt for **admin.posbillingwala.com**
+4. Run `API/migrations/p23_website_catalog.sql` on server DB if tables empty
+5. SSH on admin server: `php artisan route:clear && php artisan config:clear`
+6. Hard refresh website (Ctrl+F5)
+
+Quick checks:
+
+| Test URL | Expected |
+|----------|----------|
+| `https://posbillingwala.com/api/website/settings` | JSON `{"success":true,"settings":{...}}` (proxy) |
+| `https://admin.posbillingwala.com/api/website/settings` | Same JSON (direct; needs trusted SSL in browser) |
 
 ## Database migration (production server)
 

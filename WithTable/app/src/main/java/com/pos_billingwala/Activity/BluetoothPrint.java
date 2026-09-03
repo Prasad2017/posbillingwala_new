@@ -158,6 +158,8 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
     /** Resize + dither + BT write — keep off UI to avoid ANR on large bills. */
     private final ExecutorService printBitmapExecutor = Executors.newSingleThreadExecutor();
     private volatile boolean invoiceSaveInProgress = false;
+    /** Prevents double Print while waiting for Bluetooth off the UI thread. */
+    private volatile boolean printerEnsureInFlight = false;
     /** Cash/UPI split amounts confirmed on the pre-checkout settlement sheet. */
     private String pendingSplitCash;
     private String pendingSplitUpi;
@@ -947,31 +949,43 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
         } else if (id == R.id.clearCart) {
             confirmClearCart();
         } else if (id == R.id.kotPrint) {
+            if (printerEnsureInFlight) {
+                return;
+            }
             if (printerSettingResponseList != null && !printerSettingResponseList.isEmpty()) {
                 String kotAddress = printerSettingResponseList.get(0).getBluetoothKOTAddress();
-                if (!PrinterConnectionHelper.ensureKotPrinter(activity,
-                        kotAddress != null ? kotAddress : "")) {
-                    return;
-                }
-
-                progressDialog = new ProgressDialog(activity);
-                progressDialog.setMessage(getString(R.string.toast_printing_in_progress));
-
-                String kotSize = printerSettingResponseList.get(0).getKOTPrinterName();
-                if (kotSize == null || kotSize.trim().isEmpty()) {
-                    kotSize = printerSettingResponseList.get(0).getPrinterName();
-                }
-                if (kotSize != null && kotSize.equalsIgnoreCase("3-Inch")) {
-                    printKOT3InchBill(false);
-                } else {
-                    printKOT2InchBill(false);
-                }
-
+                printerEnsureInFlight = true;
+                // Wait for BT off the UI thread — never block before ProgressDialog.
+                PrinterConnectionHelper.ensureKotPrinterAsync(activity,
+                        kotAddress != null ? kotAddress : "",
+                        () -> {
+                            printerEnsureInFlight = false;
+                            runKotPrintAfterPrinterReady();
+                        },
+                        () -> printerEnsureInFlight = false);
             } else {
                 Toast.makeText(activity, getString(R.string.toast_please_select_printer_from_setting), Toast.LENGTH_SHORT).show();
             }
         } else if (id == R.id.printInvoiceCardView) {
             runAfterPaymentReady(this::startBillPrint);
+        }
+    }
+
+    private void runKotPrintAfterPrinterReady() {
+        if (isFinishing() || printerSettingResponseList == null || printerSettingResponseList.isEmpty()) {
+            return;
+        }
+        progressDialog = new ProgressDialog(activity);
+        progressDialog.setMessage(getString(R.string.toast_printing_in_progress));
+
+        String kotSize = printerSettingResponseList.get(0).getKOTPrinterName();
+        if (kotSize == null || kotSize.trim().isEmpty()) {
+            kotSize = printerSettingResponseList.get(0).getPrinterName();
+        }
+        if (kotSize != null && kotSize.equalsIgnoreCase("3-Inch")) {
+            printKOT3InchBill(false);
+        } else {
+            printKOT2InchBill(false);
         }
     }
 
@@ -1016,60 +1030,66 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
     }
 
     private void startBillPrint() {
-        if (printerSettingResponseList != null && !printerSettingResponseList.isEmpty()) {
-            String billAddress = printerSettingResponseList.get(0).getBluetoothAddress();
-            if (!PrinterConnectionHelper.ensureBillPrinter(activity,
-                    billAddress != null ? billAddress : "")) {
-                return;
-            }
-            if (printerSettingResponseList.get(0).getCustomerUse() != null) {
-                if (printerSettingResponseList.get(0).getCustomerUse().equalsIgnoreCase("on")) {
-                    View customerContent = LayoutInflater.from(activity).inflate(R.layout.update_customer_dialog, null);
-                    BottomSheetDialog customerSheet = BottomSheetUi.showContent(activity, customerContent, false);
+        if (printerEnsureInFlight) {
+            return;
+        }
+        if (printerSettingResponseList == null || printerSettingResponseList.isEmpty()) {
+            Toast.makeText(activity, getString(R.string.toast_please_select_printer_from_setting), Toast.LENGTH_SHORT).show();
+            return;
+        }
+        String billAddress = printerSettingResponseList.get(0).getBluetoothAddress();
+        printerEnsureInFlight = true;
+        // Wait for BT off the UI thread — never block before BottomSheet / ProgressDialog.
+        PrinterConnectionHelper.ensureBillPrinterAsync(activity,
+                billAddress != null ? billAddress : "",
+                () -> {
+                    printerEnsureInFlight = false;
+                    runBillPrintAfterPrinterReady();
+                },
+                () -> printerEnsureInFlight = false);
+    }
 
-                    TextView dismissCustomerTxt = customerContent.findViewById(R.id.dismissCustomer);
-                    TextView addCustomerTxt = customerContent.findViewById(R.id.addCustomer);
-                    TextInputEditText customerNameTxt = customerContent.findViewById(R.id.customerName);
-                    TextInputEditText customerMobileTxt = customerContent.findViewById(R.id.customerMobile);
-                    TextInputEditText customerAddressTxt = customerContent.findViewById(R.id.customerAddress);
+    private void runBillPrintAfterPrinterReady() {
+        if (isFinishing() || printerSettingResponseList == null || printerSettingResponseList.isEmpty()) {
+            return;
+        }
+        if (printerSettingResponseList.get(0).getCustomerUse() != null) {
+            if (printerSettingResponseList.get(0).getCustomerUse().equalsIgnoreCase("on")) {
+                View customerContent = LayoutInflater.from(activity).inflate(R.layout.update_customer_dialog, null);
+                BottomSheetDialog customerSheet = BottomSheetUi.showContent(activity, customerContent, false);
 
-                    dismissCustomerTxt.setOnClickListener(v -> customerSheet.dismiss());
-                    addCustomerTxt.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            if (!customerNameTxt.getText().toString().isEmpty()) {
+                TextView dismissCustomerTxt = customerContent.findViewById(R.id.dismissCustomer);
+                TextView addCustomerTxt = customerContent.findViewById(R.id.addCustomer);
+                TextInputEditText customerNameTxt = customerContent.findViewById(R.id.customerName);
+                TextInputEditText customerMobileTxt = customerContent.findViewById(R.id.customerMobile);
+                TextInputEditText customerAddressTxt = customerContent.findViewById(R.id.customerAddress);
 
-                                String customerName = customerNameTxt.getText().toString();
-                                String customerMobile = customerMobileTxt.getText().toString();
-                                String customerAddress = customerAddressTxt.getText().toString();
+                dismissCustomerTxt.setOnClickListener(v -> customerSheet.dismiss());
+                addCustomerTxt.setOnClickListener(v -> {
+                    if (!customerNameTxt.getText().toString().isEmpty()) {
 
-                                customerSheet.dismiss();
+                        String customerName = customerNameTxt.getText().toString();
+                        String customerMobile = customerMobileTxt.getText().toString();
+                        String customerAddress = customerAddressTxt.getText().toString();
 
-                                invoiceNumber = resolveInvoiceNumber();
+                        customerSheet.dismiss();
 
-                                progressDialog = new ProgressDialog(activity);
-                                progressDialog.setMessage(getString(R.string.toast_printing_in_progress));
+                        invoiceNumber = resolveInvoiceNumber();
 
-                                if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("2-Inch")) {
-                                    print2InchBill(customerName, customerMobile, customerAddress);
-                                } else if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("3-Inch")) {
-                                    print3InchBill(customerName, customerMobile, customerAddress);
-                                }
+                        progressDialog = new ProgressDialog(activity);
+                        progressDialog.setMessage(getString(R.string.toast_printing_in_progress));
 
-                            } else {
-                                Toast.makeText(activity, getString(R.string.toast_please_fill_customer_name), Toast.LENGTH_SHORT).show();
-                            }
+                        if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("2-Inch")) {
+                            print2InchBill(customerName, customerMobile, customerAddress);
+                        } else if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("3-Inch")) {
+                            print3InchBill(customerName, customerMobile, customerAddress);
                         }
-                    });
 
-                } else {
-                    resolveInvoiceNumber();
-                    if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("2-Inch")) {
-                        print2InchBill("", "", "");
-                    } else if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("3-Inch")) {
-                        print3InchBill("", "", "");
+                    } else {
+                        Toast.makeText(activity, getString(R.string.toast_please_fill_customer_name), Toast.LENGTH_SHORT).show();
                     }
-                }
+                });
+
             } else {
                 resolveInvoiceNumber();
                 if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("2-Inch")) {
@@ -1079,7 +1099,12 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                 }
             }
         } else {
-            Toast.makeText(activity, getString(R.string.toast_please_select_printer_from_setting), Toast.LENGTH_SHORT).show();
+            resolveInvoiceNumber();
+            if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("2-Inch")) {
+                print2InchBill("", "", "");
+            } else if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("3-Inch")) {
+                print3InchBill("", "", "");
+            }
         }
     }
 
@@ -1995,13 +2020,19 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                     addr = printerSettingResponseList.get(0).getBluetoothAddress();
                 }
                 WoosimPrnMng.connect(activity, addr, activity);
-            } else if (requestCode == REQUEST_CONNECT_DEVICE && resultCode == RESULT_OK && data != null) {
-                String bluetoothAddress = data.getStringExtra(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
-                if (bluetoothAddress != null) {
-                    BluetoothPrinterChannel.bill().onDevicePicked(bluetoothAddress);
-                    if (printerSettingResponseList != null && !printerSettingResponseList.isEmpty()) {
-                        printerSettingResponseList.get(0).setBluetoothAddress(bluetoothAddress);
+            } else if (requestCode == REQUEST_CONNECT_DEVICE) {
+                if (resultCode == RESULT_OK && data != null) {
+                    String bluetoothAddress = data.getStringExtra(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
+                    if (bluetoothAddress != null) {
+                        if (printerSettingResponseList != null && !printerSettingResponseList.isEmpty()) {
+                            printerSettingResponseList.get(0).setBluetoothAddress(bluetoothAddress);
+                        }
+                        PrinterConnectionHelper.onBillDevicePicked(activity, bluetoothAddress);
+                    } else {
+                        PrinterConnectionHelper.cancelPendingDevicePick(true);
                     }
+                } else {
+                    PrinterConnectionHelper.cancelPendingDevicePick(true);
                 }
             } else if (requestCode == REQUEST_KOT_ENABLE_BT && resultCode == RESULT_OK) {
                 String kotAddr = "";
@@ -2010,13 +2041,19 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                     kotAddr = printerSettingResponseList.get(0).getBluetoothKOTAddress();
                 }
                 KOTWoosimPrnMng.connect(activity, kotAddr, activity);
-            } else if (requestCode == REQUEST_KOT_CONNECT_DEVICE && resultCode == RESULT_OK && data != null) {
-                String bluetoothAddress = data.getStringExtra(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
-                if (bluetoothAddress != null) {
-                    BluetoothPrinterChannel.kot().onDevicePicked(bluetoothAddress);
-                    if (printerSettingResponseList != null && !printerSettingResponseList.isEmpty()) {
-                        printerSettingResponseList.get(0).setBluetoothKOTAddress(bluetoothAddress);
+            } else if (requestCode == REQUEST_KOT_CONNECT_DEVICE) {
+                if (resultCode == RESULT_OK && data != null) {
+                    String bluetoothAddress = data.getStringExtra(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
+                    if (bluetoothAddress != null) {
+                        if (printerSettingResponseList != null && !printerSettingResponseList.isEmpty()) {
+                            printerSettingResponseList.get(0).setBluetoothKOTAddress(bluetoothAddress);
+                        }
+                        PrinterConnectionHelper.onKotDevicePicked(activity, bluetoothAddress);
+                    } else {
+                        PrinterConnectionHelper.cancelPendingDevicePick(false);
                     }
+                } else {
+                    PrinterConnectionHelper.cancelPendingDevicePick(false);
                 }
             }
         } catch (Exception e) {

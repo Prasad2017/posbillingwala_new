@@ -325,7 +325,12 @@ public class InvoiceDetailsBluetoothPrint extends BaseActivity implements View.O
             Toast.makeText(activity, getString(R.string.toast_please_select_printer_from_setting), Toast.LENGTH_SHORT).show();
             return;
         }
-        if (!PrinterConnectionHelper.ensureBillPrinter(activity, savedBillPrinterAddress())) {
+        PrinterConnectionHelper.ensureBillPrinterAsync(activity, savedBillPrinterAddress(),
+                this::runInvoicePrintAfterPrinterReady);
+    }
+
+    private void runInvoicePrintAfterPrinterReady() {
+        if (isFinishing() || printerSettingResponseList.isEmpty()) {
             return;
         }
         progressDialog = new ProgressDialog(activity);
@@ -849,23 +854,35 @@ public class InvoiceDetailsBluetoothPrint extends BaseActivity implements View.O
             }
         } else if (requestCode == REQUEST_ENABLE_BT && resultCode == RESULT_OK) {
             WoosimPrnMng.connect(activity, savedBillPrinterAddress(), InvoiceDetailsBluetoothPrint.this);
-        } else if (requestCode == REQUEST_CONNECT_DEVICE && resultCode == RESULT_OK && data != null && data.getExtras() != null) {
-            String bluetoothAddress = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
-            if (bluetoothAddress != null) {
-                BluetoothPrinterChannel.bill().onDevicePicked(bluetoothAddress);
-                if (!printerSettingResponseList.isEmpty()) {
-                    printerSettingResponseList.get(0).setBluetoothAddress(bluetoothAddress);
+        } else if (requestCode == REQUEST_CONNECT_DEVICE) {
+            if (resultCode == RESULT_OK && data != null && data.getExtras() != null) {
+                String bluetoothAddress = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
+                if (bluetoothAddress != null) {
+                    if (!printerSettingResponseList.isEmpty()) {
+                        printerSettingResponseList.get(0).setBluetoothAddress(bluetoothAddress);
+                    }
+                    PrinterConnectionHelper.onBillDevicePicked(activity, bluetoothAddress);
+                } else {
+                    PrinterConnectionHelper.cancelPendingDevicePick(true);
                 }
+            } else {
+                PrinterConnectionHelper.cancelPendingDevicePick(true);
             }
         } else if (requestCode == REQUEST_KOT_ENABLE_BT && resultCode == RESULT_OK) {
             KOTWoosimPrnMng.connect(activity, savedKotPrinterAddress(), InvoiceDetailsBluetoothPrint.this);
-        } else if (requestCode == REQUEST_KOT_CONNECT_DEVICE && resultCode == RESULT_OK && data != null && data.getExtras() != null) {
-            String bluetoothAddress = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
-            if (bluetoothAddress != null) {
-                BluetoothPrinterChannel.kot().onDevicePicked(bluetoothAddress);
-                if (!printerSettingResponseList.isEmpty()) {
-                    printerSettingResponseList.get(0).setBluetoothKOTAddress(bluetoothAddress);
+        } else if (requestCode == REQUEST_KOT_CONNECT_DEVICE) {
+            if (resultCode == RESULT_OK && data != null && data.getExtras() != null) {
+                String bluetoothAddress = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
+                if (bluetoothAddress != null) {
+                    if (!printerSettingResponseList.isEmpty()) {
+                        printerSettingResponseList.get(0).setBluetoothKOTAddress(bluetoothAddress);
+                    }
+                    PrinterConnectionHelper.onKotDevicePicked(activity, bluetoothAddress);
+                } else {
+                    PrinterConnectionHelper.cancelPendingDevicePick(false);
                 }
+            } else {
+                PrinterConnectionHelper.cancelPendingDevicePick(false);
             }
         }
     }

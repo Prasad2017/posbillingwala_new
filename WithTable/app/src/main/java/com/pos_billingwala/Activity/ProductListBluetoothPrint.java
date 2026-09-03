@@ -265,16 +265,8 @@ public class ProductListBluetoothPrint extends BaseActivity implements View.OnCl
         int id = view.getId();
         if (id == R.id.printProductCardView) {
             if (!printerSettingResponseList.isEmpty()) {
-                if (!PrinterConnectionHelper.ensureBillPrinter(activity, savedBillPrinterAddress())) {
-                    return;
-                }
-                progressDialog = new ProgressDialog(activity);
-                progressDialog.setMessage(getString(R.string.toast_printing_in_progress));
-                if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("2-Inch")) {
-                    print2InchBill(false);
-                } else if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("3-Inch")) {
-                    print3InchBill(false);
-                }
+                PrinterConnectionHelper.ensureBillPrinterAsync(activity, savedBillPrinterAddress(),
+                        this::runProductListPrintAfterPrinterReady);
             } else {
                 Toast.makeText(activity, getString(R.string.toast_please_select_printer_from_setting), Toast.LENGTH_SHORT).show();
             }
@@ -282,6 +274,19 @@ public class ProductListBluetoothPrint extends BaseActivity implements View.OnCl
             createPdf();
         }
 
+    }
+
+    private void runProductListPrintAfterPrinterReady() {
+        if (isFinishing() || printerSettingResponseList.isEmpty()) {
+            return;
+        }
+        progressDialog = new ProgressDialog(activity);
+        progressDialog.setMessage(getString(R.string.toast_printing_in_progress));
+        if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("2-Inch")) {
+            print2InchBill(false);
+        } else if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("3-Inch")) {
+            print3InchBill(false);
+        }
     }
 
     public void print2InchBill(boolean printStatus) {
@@ -440,13 +445,19 @@ public class ProductListBluetoothPrint extends BaseActivity implements View.OnCl
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_ENABLE_BT && resultCode == RESULT_OK) {
             WoosimPrnMng.connect(activity, savedBillPrinterAddress(), ProductListBluetoothPrint.this);
-        } else if (requestCode == REQUEST_CONNECT_DEVICE && resultCode == RESULT_OK && data != null && data.getExtras() != null) {
-            String bluetoothAddress = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
-            if (bluetoothAddress != null) {
-                BluetoothPrinterChannel.bill().onDevicePicked(bluetoothAddress);
-                if (!printerSettingResponseList.isEmpty()) {
-                    printerSettingResponseList.get(0).setBluetoothAddress(bluetoothAddress);
+        } else if (requestCode == REQUEST_CONNECT_DEVICE) {
+            if (resultCode == RESULT_OK && data != null && data.getExtras() != null) {
+                String bluetoothAddress = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
+                if (bluetoothAddress != null) {
+                    if (!printerSettingResponseList.isEmpty()) {
+                        printerSettingResponseList.get(0).setBluetoothAddress(bluetoothAddress);
+                    }
+                    PrinterConnectionHelper.onBillDevicePicked(activity, bluetoothAddress);
+                } else {
+                    PrinterConnectionHelper.cancelPendingDevicePick(true);
                 }
+            } else {
+                PrinterConnectionHelper.cancelPendingDevicePick(true);
             }
         }
     }
