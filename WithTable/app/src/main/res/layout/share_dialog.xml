@@ -15,7 +15,11 @@
             android:layout_marginStart="10dp"
             android:layout_marginTop="10dp"
             android:layout_marginEnd="10dp"
-            android:orientation="horizontal">
+            android:gravity="center_vertical"
+            android:minHeight="44dp"
+            android:orientation="horizontal"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp">
 
             <ImageView
                 android:layout_width="20dp"
@@ -33,7 +37,7 @@
                 android:paddingEnd="10dp"
                 android:text="@string/ui_save_invoice"
                 android:textColor="@color/white"
-                android:textSize="15dp" />
+                android:textSize="15sp" />
 
         </LinearLayout>
 
@@ -42,9 +46,13 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="12dp"
             android:layout_marginEnd="10dp"
+            android:gravity="center_vertical"
+            android:minHeight="44dp"
             android:orientation="horizontal"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
             android:visibility="gone">
 
             <ImageView
@@ -63,7 +71,7 @@
                 android:paddingEnd="10dp"
                 android:text="@string/ui_share_invoice"
                 android:textColor="@color/white"
-                android:textSize="15dp" />
+                android:textSize="15sp" />
 
         </LinearLayout>
 
@@ -71,8 +79,15 @@
             android:id="@+id/duplicateInvoicePrintLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="10dp"
-            android:orientation="horizontal">
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginEnd="10dp"
+            android:layout_marginBottom="10dp"
+            android:gravity="center_vertical"
+            android:minHeight="44dp"
+            android:orientation="horizontal"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp">
 
             <ImageView
                 android:layout_width="20dp"
@@ -90,7 +105,7 @@
                 android:paddingEnd="10dp"
                 android:text="@string/ui_duplicate_invoice_print"
                 android:textColor="@color/white"
-                android:textSize="15dp" />
+                android:textSize="15sp" />
 
         </LinearLayout>
 

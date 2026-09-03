@@ -1449,21 +1449,14 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
         LinearLayout shareInvoiceLayout = view.findViewById(R.id.shareInvoiceLayout);
         LinearLayout duplicateInvoicePrintLayout = view.findViewById(R.id.duplicateInvoicePrintLayout);
 
-        // Print is on the bottom bar; menu has Save + Share.
+        // Print is on the bottom bar; Save Invoice + Share live in the overflow menu.
         duplicateInvoicePrintLayout.setVisibility(View.GONE);
         saveInvoiceLayout.setVisibility(View.VISIBLE);
         shareInvoiceLayout.setVisibility(View.VISIBLE);
 
         saveInvoiceLayout.setOnClickListener(v -> {
             mypopupWindow.dismiss();
-            if (productCartResponseList == null || productCartResponseList.isEmpty()) {
-                Toast.makeText(activity, getString(R.string.toast_cart_is_empty), Toast.LENGTH_SHORT).show();
-                return;
-            }
-            runAfterPaymentReady(() -> {
-                invoiceNumber = resolveInvoiceNumber();
-                saveInvoice("", "", "", 0);
-            });
+            onSaveInvoiceClicked();
         });
 
         shareInvoiceLayout.setOnClickListener(v -> {
@@ -1477,6 +1470,17 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
 
         PopupUi.showAsToolbarMenu(mypopupWindow, binding.menuIcon);
 
+    }
+
+    private void onSaveInvoiceClicked() {
+        if (productCartResponseList == null || productCartResponseList.isEmpty()) {
+            Toast.makeText(activity, getString(R.string.toast_cart_is_empty), Toast.LENGTH_SHORT).show();
+            return;
+        }
+        runAfterPaymentReady(() -> {
+            invoiceNumber = resolveInvoiceNumber();
+            saveInvoice("", "", "", 0);
+        });
     }
 
     private float parseDisplayedNumber(TextView view) {

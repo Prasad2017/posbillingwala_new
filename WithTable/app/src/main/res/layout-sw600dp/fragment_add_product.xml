@@ -30,7 +30,22 @@
                 android:padding="@dimen/spacing_sm"
                 android:src="@drawable/ic_back"
                 app:tint="@color/white" />
-
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/toolbarTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="@dimen/spacing_md"
+                android:layout_toEndOf="@id/backToProduct"
+                android:ellipsize="end"
+                android:fontFamily="@font/poppinsmedium"
+                android:maxLines="1"
+                android:text="@string/ui_add_product"
+                android:textColor="@color/white"
+                android:textSize="16sp" />
+
         </RelativeLayout>
     </com.google.android.material.appbar.AppBarLayout>
 

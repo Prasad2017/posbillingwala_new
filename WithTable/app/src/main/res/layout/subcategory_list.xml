@@ -37,19 +37,19 @@
 
         <ImageView
             android:id="@+id/subcategoryEdit"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
+            android:layout_width="@dimen/touch_min"
+            android:layout_height="@dimen/touch_min"
             android:contentDescription="@null"
-            android:padding="6dp"
+            android:padding="@dimen/spacing_sm"
             android:src="@drawable/ic_edit"
             app:tint="@color/colorPrimary" />
 
         <ImageView
             android:id="@+id/subcategoryRemove"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
+            android:layout_width="@dimen/touch_min"
+            android:layout_height="@dimen/touch_min"
             android:contentDescription="@null"
-            android:padding="6dp"
+            android:padding="@dimen/spacing_sm"
             android:src="@drawable/ic_delete"
             app:tint="@color/statusExpired" />
     </LinearLayout>

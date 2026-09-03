@@ -100,6 +100,9 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
     private HomeSubcategoryAdapter homeSubcategoryAdapter;
     private ItemTouchHelper categoryTouchHelper;
     private ItemTouchHelper subcategoryTouchHelper;
+    /** Prevents double navigation / ignored taps while payment screen is opening. */
+    private boolean paymentScreenOpening = false;
+    private long lastPaymentTapMs = 0L;
 
     /* When Mic activity close */
     @Override
@@ -207,16 +210,24 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
 
         binding.homeCardView.setOnClickListener(this);
         binding.backToCategory.setOnClickListener(this);
-        binding.cartLayout.setOnClickListener(this);
         binding.clearCart.setOnClickListener(this);
         binding.menuIcon.setOnClickListener(this);
         binding.productsTab.setOnClickListener(this);
         binding.combosTab.setOnClickListener(this);
-        if (binding.viewCartButton != null) {
-            binding.viewCartButton.setOnClickListener(this);
-        }
+        // Tablet/land: Pay Now owns the tap. Phone: whole footer (or View Cart) opens payment.
         if (binding.payButton != null) {
+            binding.payButton.setClickable(true);
+            binding.payButton.setFocusable(true);
             binding.payButton.setOnClickListener(this);
+            binding.cartLayout.setClickable(false);
+            binding.cartLayout.setOnClickListener(null);
+        } else {
+            binding.cartLayout.setOnClickListener(this);
+            if (binding.viewCartButton != null) {
+                binding.viewCartButton.setClickable(true);
+                binding.viewCartButton.setFocusable(true);
+                binding.viewCartButton.setOnClickListener(this);
+            }
         }
         setupTabletCartPanel();
 
@@ -523,8 +534,8 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
             binding.productSearch.setText("");
             binding.productSearch.clearFocus();
             selectAllCategory();
-        } else if (id == R.id.cartLayout || id == R.id.payButton
-                || id == R.id.viewCartButton) {
+        } else if (id == R.id.payButton || id == R.id.viewCartButton
+                || id == R.id.cartLayout) {
             openPaymentScreen();
         } else if (id == R.id.clearCart) {
             confirmClearCart();
@@ -538,21 +549,62 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
     }
 
     private void openPaymentScreen() {
+        long now = System.currentTimeMillis();
+        if (paymentScreenOpening || now - lastPaymentTapMs < 600L) {
+            return;
+        }
+        lastPaymentTapMs = now;
+
+        // Fast path: cart already visible on screen — open immediately (no DB wait feel).
+        if (productCartResponseList != null && !productCartResponseList.isEmpty()) {
+            launchPaymentScreen();
+            return;
+        }
+
+        paymentScreenOpening = true;
+        setPaymentControlsEnabled(false);
         final String table = tableNumber;
         final String orderStatus = cartOrderStatus;
         AppExecutors.get().runDbThenMain(this, () -> {
             productCartResponseList = posBillingWalaDatabase.getCartProductList(table, orderStatus);
         }, () -> {
+            paymentScreenOpening = false;
+            setPaymentControlsEnabled(true);
             if (productCartResponseList != null && !productCartResponseList.isEmpty()) {
-                Intent intent = new Intent(activity, BluetoothPrint.class);
-                intent.putExtra("invoiceRunningStatus", "printBill");
-                intent.putExtra("tableNumber", tableNumber);
-                intent.putExtra("cartOrderStatus", cartOrderStatus);
-                startActivity(intent);
+                launchPaymentScreen();
             } else {
                 Toast.makeText(activity, getString(R.string.toast_add_product_into_cart), Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void launchPaymentScreen() {
+        paymentScreenOpening = true;
+        setPaymentControlsEnabled(false);
+        Intent intent = new Intent(activity, BluetoothPrint.class);
+        intent.putExtra("invoiceRunningStatus", "printBill");
+        intent.putExtra("tableNumber", tableNumber);
+        intent.putExtra("cartOrderStatus", cartOrderStatus);
+        startActivity(intent);
+        // Re-enable when user returns; also clear stuck state after a short delay.
+        AppExecutors.get().postMainDelayed(() -> {
+            paymentScreenOpening = false;
+            setPaymentControlsEnabled(true);
+        }, 800L);
+    }
+
+    private void setPaymentControlsEnabled(boolean enabled) {
+        if (binding == null) {
+            return;
+        }
+        if (binding.payButton != null) {
+            binding.payButton.setEnabled(enabled);
+            binding.payButton.setAlpha(enabled ? 1f : 0.7f);
+        }
+        if (binding.viewCartButton != null) {
+            binding.viewCartButton.setEnabled(enabled);
+            binding.viewCartButton.setAlpha(enabled ? 1f : 0.7f);
+        }
     }
 
     private void setupTabletCartPanel() {
@@ -663,6 +715,8 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
     @Override
     public void onResume() {
         super.onResume();
+        paymentScreenOpening = false;
+        setPaymentControlsEnabled(true);
         // Refresh cart when returning from Invoice Preview (print/save/clear).
         if (binding == null || tableNumber == null || cartOrderStatus == null || posBillingWalaDatabase == null) {
             return;
