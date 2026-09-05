@@ -23,6 +23,16 @@ if (!function_exists('mess_common_ensure_schema')) {
             db_safe_query($con, "ALTER TABLE `mess_member` ADD COLUMN `registration_no` VARCHAR(64) NULL AFTER `member_address`");
         }
 
+        // Prefer mobile as registration no when blank (customers enter mobile on QR page).
+        db_safe_query(
+            $con,
+            "UPDATE `mess_member`
+             SET `registration_no` = TRIM(`member_mobile_number`)
+             WHERE (`registration_no` IS NULL OR TRIM(`registration_no`) = '')
+               AND `member_mobile_number` IS NOT NULL
+               AND TRIM(`member_mobile_number`) <> ''"
+        );
+
         db_safe_query(
             $con,
             "CREATE TABLE IF NOT EXISTS `mess_qr` (
@@ -232,6 +242,21 @@ if (!function_exists('mess_normalize_registration')) {
     }
 }
 
+if (!function_exists('mess_normalize_mobile')) {
+    /** Digits only; keep last 10 for Indian mobiles. */
+    function mess_normalize_mobile($raw)
+    {
+        $d = preg_replace('/\D+/', '', (string) $raw);
+        if ($d === null) {
+            return '';
+        }
+        if (strlen($d) > 10) {
+            $d = substr($d, -10);
+        }
+        return $d;
+    }
+}
+
 if (!function_exists('mess_public_qr_url')) {
     function mess_public_qr_url($publicToken)
     {
@@ -338,22 +363,38 @@ if (!function_exists('mess_next_token_number')) {
 }
 
 if (!function_exists('mess_find_member_by_registration')) {
+    /**
+     * Find member by registration_no OR primary/alternate mobile number.
+     * Customers can enter mobile as their "registration" on the public QR page.
+     */
     function mess_find_member_by_registration($con, $userId, $registrationNo, $branchId = null)
     {
         $reg = mess_normalize_registration($registrationNo);
-        if ($reg === '') {
+        $mobile = mess_normalize_mobile($registrationNo);
+        if ($reg === '' && $mobile === '') {
             return null;
         }
 
-        // Compare normalized in PHP after fetch candidates — keep SQL simple/portable
         $rows = db_stmt_fetch_all(
             $con,
-            'SELECT * FROM mess_member WHERE userId = ? AND registration_no IS NOT NULL AND registration_no != \'\'',
+            'SELECT * FROM mess_member WHERE userId = ?',
             'i',
             (int) $userId
         );
         foreach ($rows as $row) {
-            if (mess_normalize_registration($row['registration_no']) !== $reg) {
+            $match = false;
+            if ($reg !== '' && !empty($row['registration_no'])
+                && mess_normalize_registration($row['registration_no']) === $reg) {
+                $match = true;
+            }
+            if (!$match && $mobile !== '') {
+                $m1 = mess_normalize_mobile(isset($row['member_mobile_number']) ? $row['member_mobile_number'] : '');
+                $m2 = mess_normalize_mobile(isset($row['member_altenet_mobile_number']) ? $row['member_altenet_mobile_number'] : '');
+                if (($m1 !== '' && $m1 === $mobile) || ($m2 !== '' && $m2 === $mobile)) {
+                    $match = true;
+                }
+            }
+            if (!$match) {
                 continue;
             }
             if ($branchId !== null && (int) $branchId > 0) {

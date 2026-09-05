@@ -63,16 +63,17 @@ if (strtoupper($qr['status']) !== 'ACTIVE') {
 $userId = (int) $qr['userId'];
 $branchId = isset($qr['branch_id']) ? $qr['branch_id'] : null;
 $reg = mess_normalize_registration($registrationNo);
-if ($reg === '') {
-    $out['message'] = 'Registration number not found.';
+$mobileIn = mess_normalize_mobile($registrationNo);
+if ($reg === '' && $mobileIn === '') {
+    $out['message'] = 'Please enter your mobile number.';
     echo json_encode($out);
     mysqli_close($con);
     exit;
 }
 
-$member = mess_find_member_by_registration($con, $userId, $reg, $branchId);
+$member = mess_find_member_by_registration($con, $userId, $registrationNo, $branchId);
 if ($member === null) {
-    $out['message'] = 'Registration number not found.';
+    $out['message'] = 'Mobile number not found. Please check with the mess counter.';
     mess_audit($con, $userId, 'reg_not_found', $t, $reg, null, null);
     echo json_encode($out);
     mysqli_close($con);
@@ -161,8 +162,24 @@ try {
     $publicId = mess_random_token(16);
     $memberName = isset($member['member_name']) ? (string) $member['member_name'] : '';
     $printDeviceId = isset($qr['print_device_id']) ? (string) $qr['print_device_id'] : '';
-    $storedReg = mess_normalize_registration($member['registration_no']);
-
+    $storedReg = mess_normalize_registration(isset($member['registration_no']) ? $member['registration_no'] : '');
+    if ($storedReg === '') {
+        $storedReg = mess_normalize_mobile(isset($member['member_mobile_number']) ? $member['member_mobile_number'] : '');
+    }
+    if ($storedReg === '') {
+        $storedReg = $mobileIn !== '' ? $mobileIn : $reg;
+    }
+    // Keep member registration_no in sync with mobile when blank.
+    if (mess_normalize_registration(isset($member['registration_no']) ? $member['registration_no'] : '') === ''
+        && $storedReg !== '') {
+        db_stmt_execute(
+            $con,
+            'UPDATE mess_member SET registration_no = ? WHERE id = ?',
+            'si',
+            $storedReg,
+            $memberId
+        );
+    }
     $ok = db_stmt_execute(
         $con,
         'INSERT INTO mess_meal_token

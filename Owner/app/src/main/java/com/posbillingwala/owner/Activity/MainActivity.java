@@ -10,6 +10,7 @@ import androidx.fragment.app.FragmentTransaction;
 
 import com.posbillingwala.owner.Extra.Common;
 import com.posbillingwala.owner.Extra.ScreenshotConfig;
+import com.posbillingwala.owner.Extra.SystemBarsHelper;
 import com.posbillingwala.owner.Fragment.Home;
 import com.posbillingwala.owner.R;
 import com.posbillingwala.owner.Retrofit.Api;
@@ -39,6 +40,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         ScreenshotConfig.apply(this);
+        SystemBarsHelper.applyBelowStatusBar(this);
         Api.bindContext(this);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());

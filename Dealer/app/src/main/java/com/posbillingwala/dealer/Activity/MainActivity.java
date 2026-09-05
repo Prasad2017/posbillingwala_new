@@ -26,6 +26,7 @@ import com.posbillingwala.dealer.Extra.AuthTokens;
 import com.posbillingwala.dealer.Extra.Common;
 import com.posbillingwala.dealer.Extra.FcmTokenManager;
 import com.posbillingwala.dealer.Extra.ScreenshotConfig;
+import com.posbillingwala.dealer.Extra.SystemBarsHelper;
 import com.posbillingwala.dealer.Fragment.AllCustomerList;
 import com.posbillingwala.dealer.Fragment.DealerProfile;
 import com.posbillingwala.dealer.Fragment.Home;
@@ -55,6 +56,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         ScreenshotConfig.apply(this);
+        SystemBarsHelper.applyBelowStatusBar(this);
         Api.bindContext(this);
         setContentView(R.layout.activity_main);
         ScreenshotConfig.apply(this);

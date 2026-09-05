@@ -45,6 +45,7 @@ import com.posbillingwala.dealer.AppUpdate.UpdateManagerConstant;
 import com.posbillingwala.dealer.Extra.AuthTokens;
 import com.posbillingwala.dealer.Extra.Common;
 import com.posbillingwala.dealer.Extra.FcmTokenManager;
+import com.posbillingwala.dealer.Extra.SystemBarsHelper;
 import com.posbillingwala.dealer.Model.AllApiResponse;
 import com.posbillingwala.dealer.R;
 import com.posbillingwala.dealer.Retrofit.Api;
@@ -73,6 +74,7 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
     protected void onCreate(Bundle savedInstanceState) {
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
         super.onCreate(savedInstanceState);
+        SystemBarsHelper.applyBelowStatusBar(this);
         Api.bindContext(this);
         binding = ActivityLoginBinding.inflate(getLayoutInflater());
         View view = binding.getRoot();

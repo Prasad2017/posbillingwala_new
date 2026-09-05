@@ -37,6 +37,7 @@ import com.posbillingwala.owner.Extra.AuthTokens;
 import com.posbillingwala.owner.Extra.BottomSheetUi;
 import com.posbillingwala.owner.Extra.Common;
 import com.posbillingwala.owner.Extra.FcmTokenManager;
+import com.posbillingwala.owner.Extra.SystemBarsHelper;
 import com.posbillingwala.owner.Model.LoginResponse;
 import com.posbillingwala.owner.R;
 import com.posbillingwala.owner.Retrofit.Api;
@@ -68,6 +69,7 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        SystemBarsHelper.applyBelowStatusBar(this);
         Api.bindContext(this);
         binding = ActivityLoginBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());

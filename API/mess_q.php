@@ -111,8 +111,8 @@ button:disabled{opacity:.6}
     </div>
 <?php else: ?>
     <div id="formBox">
-      <label for="reg">Registration Number</label>
-      <input id="reg" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" placeholder="e.g. REG-1025" maxlength="64">
+      <label for="reg">Mobile Number</label>
+      <input id="reg" type="tel" inputmode="numeric" autocomplete="tel" placeholder="e.g. 9325987443" maxlength="15">
       <button id="btn" type="button">GET TOKEN</button>
       <p id="msg" class="msg"></p>
     </div>
@@ -138,7 +138,7 @@ button:disabled{opacity:.6}
     var html = '<div class="check">✓</div>';
     html += '<div>' + (already ? 'TOKEN ALREADY GENERATED' : 'TOKEN GENERATED') + '</div>';
     html += '<div class="token">' + (data.tokenNumber || '') + '</div>';
-    html += '<div class="meta">' + (data.mealSession || '') + '<br>Reg: ' + (data.registrationNo || '') + '</div>';
+    html += '<div class="meta">' + (data.mealSession || '') + '<br>Mobile: ' + (data.registrationNo || '') + '</div>';
     if (already) {
       html += '<p class="msg ok" style="margin-top:12px">You already have today\'s token.</p>';
     } else {
@@ -152,7 +152,7 @@ button:disabled{opacity:.6}
     var v = (reg.value || '').trim();
     if (!v) {
       msg.className = 'msg err';
-      msg.textContent = 'Please enter your Registration Number.';
+      msg.textContent = 'Please enter your mobile number.';
       return;
     }
     busy = true;

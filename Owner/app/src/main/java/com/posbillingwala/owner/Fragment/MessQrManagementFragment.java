@@ -4,10 +4,6 @@ import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -260,76 +256,59 @@ public class MessQrManagementFragment extends Fragment {
                 : "\nPrint device: not linked yet (open QR Management on POS once)";
         qrMeta.setText("Mess: " + mess + "\nBranch: " + branch + printNote);
         qrUrl.setText(qr.qrUrl != null ? qr.qrUrl : "");
-        if (qr.qrUrl != null) {
-            currentBitmap = MessQrBitmapHelper.generateQrBitmap(qr.qrUrl, 768);
+        if (qr.qrUrl != null && activity != null) {
+            currentBitmap = MessQrBitmapHelper.generateBrandedMessQr(activity, qr.qrUrl, 900);
             if (currentBitmap != null) {
                 qrImage.setImageBitmap(currentBitmap);
             }
         }
     }
 
-    private Bitmap buildPoster() {
-        int w = 900;
-        int h = 1200;
-        Bitmap poster = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(poster);
-        canvas.drawColor(Color.WHITE);
-        Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
-        p.setColor(Color.BLACK);
-        p.setTextAlign(Paint.Align.CENTER);
-        p.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
-        p.setTextSize(48);
-        canvas.drawText("BILLINGWALA", w / 2f, 90, p);
-        p.setTextSize(40);
-        canvas.drawText("MESS TOKEN", w / 2f, 150, p);
-        Bitmap qr = currentBitmap != null ? currentBitmap : MessQrBitmapHelper.generateQrBitmap(
-                currentQr != null ? currentQr.qrUrl : "", 640);
-        if (qr != null) {
-            canvas.drawBitmap(qr, (w - qr.getWidth()) / 2f, 220, null);
+    /** QR image only (branded) — no title / caption / URL text. */
+    private Bitmap qrOnlyBitmap() {
+        if (currentBitmap != null) {
+            return currentBitmap;
         }
-        p.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.NORMAL));
-        p.setTextSize(28);
-        canvas.drawText("Scan using your phone camera", w / 2f, 920, p);
-        canvas.drawText("No App Required", w / 2f, 970, p);
-        return poster;
+        if (activity != null && currentQr != null && currentQr.qrUrl != null) {
+            currentBitmap = MessQrBitmapHelper.generateBrandedMessQr(activity, currentQr.qrUrl, 900);
+        }
+        return currentBitmap;
     }
 
     private void shareQr() {
-        if (activity == null || currentQr == null || currentQr.qrUrl == null) {
+        if (activity == null) return;
+        Bitmap only = qrOnlyBitmap();
+        if (only == null) {
             Toast.makeText(activity, "No active QR", Toast.LENGTH_SHORT).show();
             return;
         }
         try {
-            Bitmap poster = buildPoster();
             File dir = new File(activity.getCacheDir(), "share");
             //noinspection ResultOfMethodCallIgnored
             dir.mkdirs();
             File file = new File(dir, "mess_qr.png");
             FileOutputStream fos = new FileOutputStream(file);
-            poster.compress(Bitmap.CompressFormat.PNG, 100, fos);
+            only.compress(Bitmap.CompressFormat.PNG, 100, fos);
             fos.close();
             Uri uri = FileProvider.getUriForFile(activity, activity.getPackageName() + ".provider", file);
             Intent share = new Intent(Intent.ACTION_SEND);
             share.setType("image/png");
             share.putExtra(Intent.EXTRA_STREAM, uri);
-            share.putExtra(Intent.EXTRA_TEXT, currentQr.qrUrl);
             share.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             startActivity(Intent.createChooser(share, "Share QR"));
         } catch (Exception e) {
-            Intent share = new Intent(Intent.ACTION_SEND);
-            share.setType("text/plain");
-            share.putExtra(Intent.EXTRA_TEXT, currentQr.qrUrl);
-            startActivity(Intent.createChooser(share, "Share QR"));
+            Toast.makeText(activity, "Unable to share QR", Toast.LENGTH_SHORT).show();
         }
     }
 
     private void downloadQr() {
-        if (activity == null || currentBitmap == null) {
+        if (activity == null) return;
+        Bitmap only = qrOnlyBitmap();
+        if (only == null) {
             Toast.makeText(activity, "No active QR", Toast.LENGTH_SHORT).show();
             return;
         }
         try {
-            Bitmap poster = buildPoster();
             ContentValues values = new ContentValues();
             values.put(MediaStore.Images.Media.DISPLAY_NAME, "billingwala_mess_qr.png");
             values.put(MediaStore.Images.Media.MIME_TYPE, "image/png");
@@ -338,7 +317,7 @@ public class MessQrManagementFragment extends Fragment {
             if (uri != null) {
                 OutputStream os = activity.getContentResolver().openOutputStream(uri);
                 if (os != null) {
-                    poster.compress(Bitmap.CompressFormat.PNG, 100, os);
+                    only.compress(Bitmap.CompressFormat.PNG, 100, os);
                     os.close();
                 }
                 Toast.makeText(activity, "QR saved to Pictures/Billingwala", Toast.LENGTH_SHORT).show();

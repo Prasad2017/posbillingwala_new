@@ -1,22 +1,14 @@
 package com.pos_billingwala.Fragment;
 
-import com.pos_billingwala.Extra.PopupUi;
-import android.content.Intent;
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.PopupWindow;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -26,23 +18,19 @@ import androidx.fragment.app.Fragment;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.textfield.TextInputEditText;
 import com.pos_billingwala.Activity.MainActivity;
-import com.pos_billingwala.Extra.BottomSheetUi;
-import com.pos_billingwala.Adapter.MessInvoiceAdapter;
+import com.pos_billingwala.Activity.MessMealSessionsActivity;
+import com.pos_billingwala.Activity.MessMealTokenTodayActivity;
+import com.pos_billingwala.Activity.MessQrManagementActivity;
+import com.pos_billingwala.Activity.MessTokenScanActivity;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
-import com.pos_billingwala.Extra.ListLoader;
+import com.pos_billingwala.Extra.BottomSheetUi;
+import com.pos_billingwala.Extra.MessMealTokenPrintWorker;
 import com.pos_billingwala.Model.CompanyResponse;
-import com.pos_billingwala.Model.MemberResponse;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentInvoiceMessBinding;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
-
-import cn.pedant.SweetAlert.SweetAlertDialog;
 
 @SuppressLint("StaticFieldLeak, ClickableViewAccessibility, NonConstantResourceId, NotifyDataSetChanged, SetTextI18n")
 public class InvoiceMess extends Fragment implements View.OnClickListener {
@@ -51,83 +39,37 @@ public class InvoiceMess extends Fragment implements View.OnClickListener {
     View view;
     POSBillingWalaDatabase posBillingWalaDatabase;
     List<CompanyResponse> companyResponseList = new ArrayList<>();
-    List<MemberResponse> memberResponseList = new ArrayList<>();
-    List<MemberResponse> searchMemberResponseList = new ArrayList<>();
-    PopupWindow mypopupWindow;
-    MessInvoiceAdapter messInvoiceAdapter;
     FragmentInvoiceMessBinding binding;
-
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         binding = FragmentInvoiceMessBinding.inflate(inflater, container, false);
-        view = binding.getRoot(); //Root xml or viewGroup will be a part of converted view over here
+        view = binding.getRoot();
 
         activity = getActivity();
-
         posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
 
         view.setFocusableInTouchMode(true);
         view.requestFocus();
-        view.setOnKeyListener(new View.OnKeyListener() {
-            @Override
-            public boolean onKey(View v, int keyCode, KeyEvent event) {
-
-                if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
-                    Log.i("tag", "onKey Back listener is working!!!");
-                    ((MainActivity) activity).navigateBack();
-                    return true;
-                }
-                return false;
+        view.setOnKeyListener((v, keyCode, event) -> {
+            if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
+                Log.i("tag", "onKey Back listener is working!!!");
+                ((MainActivity) activity).navigateBack();
+                return true;
             }
-        });
-
-        binding.searchMessMember.setSelection(binding.searchMessMember.getText().toString().length());
-
-        binding.searchMessMember.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-                searchMessMember(s.toString());
-            }
+            return false;
         });
 
         binding.homeCardView.setOnClickListener(this);
-        binding.menuIcon.setOnClickListener(this);
+        binding.memberListLayout.setOnClickListener(this);
+        binding.scanVerifyLayout.setOnClickListener(this);
+        binding.qrManagementLayout.setOnClickListener(this);
+        binding.todayTokensLayout.setOnClickListener(this);
+        binding.mealSessionsLayout.setOnClickListener(this);
+        binding.walkInTokenLayout.setOnClickListener(this);
 
         return view;
-
-    }
-
-    public void searchMessMember(String memberData) {
-
-        searchMemberResponseList.clear();
-        if (!memberData.isEmpty()) {
-            for (int i = 0; i < memberResponseList.size(); i++)
-                if ((memberResponseList.get(i).getMemberName() + memberResponseList.get(i).getMemberMobileNumber()).toLowerCase().contains(memberData.toLowerCase().trim())) {
-                    searchMemberResponseList.add(memberResponseList.get(i));
-                }
-        } else {
-            Toast.makeText(activity, getString(R.string.toast_no_search_found_all_data_may_be_showing), Toast.LENGTH_SHORT).show();
-            searchMemberResponseList = new ArrayList<>();
-            searchMemberResponseList.addAll(memberResponseList);
-        }
-
-        messInvoiceAdapter = new MessInvoiceAdapter(activity, searchMemberResponseList);
-        binding.recyclerView.setAdapter(messInvoiceAdapter);
-        messInvoiceAdapter.notifyDataSetChanged();
-        // messInvoiceAdapter.notifyItemInserted(searchMemberResponseList.size() - 1);
-
     }
 
     @Override
@@ -135,13 +77,22 @@ public class InvoiceMess extends Fragment implements View.OnClickListener {
         int id = view.getId();
         if (id == R.id.homeCardView) {
             ((MainActivity) activity).navigateBack();
-        } else if (id == R.id.menuIcon) {
-            setPopUpWindow();
+        } else if (id == R.id.memberListLayout) {
+            setMemberListPassword();
+        } else if (id == R.id.scanVerifyLayout) {
+            activity.startActivity(new Intent(activity, MessTokenScanActivity.class));
+        } else if (id == R.id.qrManagementLayout) {
+            activity.startActivity(new Intent(activity, MessQrManagementActivity.class));
+        } else if (id == R.id.todayTokensLayout) {
+            activity.startActivity(new Intent(activity, MessMealTokenTodayActivity.class));
+        } else if (id == R.id.mealSessionsLayout) {
+            activity.startActivity(new Intent(activity, MessMealSessionsActivity.class));
+        } else if (id == R.id.walkInTokenLayout) {
+            ((MainActivity) activity).loadFragment(new CreatePos(), true);
         }
     }
 
-
-    public void setMemberListPassword(ImageView imageView) {
+    public void setMemberListPassword() {
         View content = LayoutInflater.from(activity).inflate(R.layout.report_password_dialog, null);
         BottomSheetDialog sheet = BottomSheetUi.showContent(activity, content, false);
 
@@ -171,112 +122,20 @@ public class InvoiceMess extends Fragment implements View.OnClickListener {
         });
     }
 
-    public void setPopUpWindow() {
-
-        LayoutInflater inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        view = inflater.inflate(R.layout.mess_menu_dialog, null);
-        mypopupWindow = PopupUi.create(activity, view);
-
-        LinearLayout memberListLayout = view.findViewById(R.id.memberListLayout);
-        LinearLayout scanVerifyLayout = view.findViewById(R.id.scanVerifyLayout);
-        LinearLayout qrManagementLayout = view.findViewById(R.id.qrManagementLayout);
-        LinearLayout todayTokensLayout = view.findViewById(R.id.todayTokensLayout);
-        LinearLayout mealSessionsLayout = view.findViewById(R.id.mealSessionsLayout);
-        LinearLayout walkInTokenLayout = view.findViewById(R.id.walkInTokenLayout);
-
-        memberListLayout.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mypopupWindow.dismiss();
-                setMemberListPassword(binding.menuIcon);
-            }
-        });
-
-        scanVerifyLayout.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mypopupWindow.dismiss();
-                activity.startActivity(new Intent(activity, com.pos_billingwala.Activity.MessTokenScanActivity.class));
-            }
-        });
-
-        if (qrManagementLayout != null) {
-            qrManagementLayout.setOnClickListener(v -> {
-                mypopupWindow.dismiss();
-                activity.startActivity(new Intent(activity, com.pos_billingwala.Activity.MessQrManagementActivity.class));
-            });
-        }
-        if (todayTokensLayout != null) {
-            todayTokensLayout.setOnClickListener(v -> {
-                mypopupWindow.dismiss();
-                activity.startActivity(new Intent(activity, com.pos_billingwala.Activity.MessMealTokenTodayActivity.class));
-            });
-        }
-        if (mealSessionsLayout != null) {
-            mealSessionsLayout.setOnClickListener(v -> {
-                mypopupWindow.dismiss();
-                activity.startActivity(new Intent(activity, com.pos_billingwala.Activity.MessMealSessionsActivity.class));
-            });
-        }
-        if (walkInTokenLayout != null) {
-            walkInTokenLayout.setOnClickListener(v -> {
-                mypopupWindow.dismiss();
-                ((MainActivity) activity).loadFragment(new CreatePos(), true);
-            });
-        }
-
-        PopupUi.showAsToolbarMenu(mypopupWindow, binding.menuIcon);
-
-    }
-
     @Override
     public void onStart() {
         super.onStart();
         ((MainActivity) activity).lockUnlockDrawer(1);
         getCompanyDetails();
-        com.pos_billingwala.Extra.MessMealTokenPrintWorker.recoverPendingFromServer(activity);
+        MessMealTokenPrintWorker.recoverPendingFromServer(activity);
     }
 
     public void getCompanyDetails() {
-
         companyResponseList.clear();
         companyResponseList = posBillingWalaDatabase.getCompanyDetails();
-        if (!companyResponseList.isEmpty()) {
-            getMemberList();
-        } else {
+        if (companyResponseList.isEmpty()) {
             Toast.makeText(activity, getString(R.string.toast_please_fill_shop_details), Toast.LENGTH_SHORT).show();
-                        ((MainActivity) activity).loadFragment(new CompanyDetailSetting(), true);
-        }
-
-    }
-
-
-    public void getMemberList() {
-        SweetAlertDialog loader = ListLoader.show(activity);
-        try {
-            Date c = Calendar.getInstance().getTime();
-            System.out.println("Current time => " + c);
-            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM", Locale.getDefault());
-            String paymentDate = df.format(c);
-
-            memberResponseList.clear();
-            memberResponseList = posBillingWalaDatabase.getMemberPaymentList(paymentDate);
-            if (!memberResponseList.isEmpty()) {
-
-                messInvoiceAdapter = new MessInvoiceAdapter(activity, memberResponseList);
-                binding.recyclerView.setAdapter(messInvoiceAdapter);
-                messInvoiceAdapter.notifyDataSetChanged();
-                //  messInvoiceAdapter.notifyItemInserted(memberResponseList.size() - 1);
-
-                binding.messOrderLayout.setVisibility(View.VISIBLE);
-                binding.noDataFound.setVisibility(View.GONE);
-            } else {
-                binding.messOrderLayout.setVisibility(View.GONE);
-                binding.noDataFound.setVisibility(View.VISIBLE);
-            }
-        } finally {
-            ListLoader.dismiss(loader);
+            ((MainActivity) activity).loadFragment(new CompanyDetailSetting(), true);
         }
     }
-
 }

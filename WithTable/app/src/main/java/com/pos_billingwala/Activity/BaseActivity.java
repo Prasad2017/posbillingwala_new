@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.pos_billingwala.Extra.AppLanguage;
 import com.pos_billingwala.Extra.DisplayScale;
 import com.pos_billingwala.Extra.ScreenshotConfig;
+import com.pos_billingwala.Extra.SystemBarsHelper;
 
 /**
  * Applies saved app language and locks UI density on every screen.
@@ -46,6 +47,7 @@ public abstract class BaseActivity extends AppCompatActivity implements DisplayS
         super.onCreate(savedInstanceState);
         ScreenshotConfig.apply(this);
         DisplayScale.refresh(this);
+        SystemBarsHelper.applyBelowStatusBar(this);
     }
 
     @Override

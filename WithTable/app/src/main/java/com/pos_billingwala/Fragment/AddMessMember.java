@@ -126,6 +126,10 @@ public class AddMessMember extends Fragment implements View.OnClickListener {
         if (binding.registrationNo != null && binding.registrationNo.getText() != null) {
             regNo = binding.registrationNo.getText().toString().trim();
         }
+        // Default registration no = customer mobile (used on Mess QR public page).
+        if (regNo.isEmpty() && binding.memberMobileNumber.getText() != null) {
+            regNo = binding.memberMobileNumber.getText().toString().trim();
+        }
         posBillingWalaDatabase.insertMessMemberWithReg(MainActivity.ownerId, binding.memberName.getText().toString(), binding.memberMobileNumber.getText().toString(), binding.memberAlternetMobileNumber.getText().toString(),
                 binding.memberAddress.getText().toString(), regNo, binding.messAmount.getText().toString(), binding.messPaidAmount.getText().toString(), messDays, 0, getRandomString(10));
 

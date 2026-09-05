@@ -61,6 +61,8 @@ import com.posbillingwala.admin.Extra.FcmTokenManager;
 
 import com.posbillingwala.admin.Extra.ScreenshotConfig;
 
+import com.posbillingwala.admin.Extra.SystemBarsHelper;
+
 import com.posbillingwala.admin.Fragment.AddDealer;
 
 import com.posbillingwala.admin.Fragment.AllCustomerList;
@@ -182,6 +184,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
 
         ScreenshotConfig.apply(this);
+
+        SystemBarsHelper.applyBelowStatusBar(this);
 
         Api.bindContext(this);
 

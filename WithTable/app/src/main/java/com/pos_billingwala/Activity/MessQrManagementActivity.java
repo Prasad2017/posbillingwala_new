@@ -1,18 +1,13 @@
 package com.pos_billingwala.Activity;
 
 import android.content.ContentValues;
-import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.Typeface;
+import android.graphics.Matrix;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.provider.Settings;
-import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -20,18 +15,26 @@ import android.widget.Toast;
 
 import androidx.core.content.FileProvider;
 
+import android.content.Intent;
+
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.MessTokenQrHelper;
 import com.pos_billingwala.Model.AllApiResponse;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.MessQrInfo;
+import com.pos_billingwala.Model.PrinterSettingResponse;
+import com.pos_billingwala.Print.PrintImage;
+import com.pos_billingwala.Print.PrinterConnectionHelper;
 import com.pos_billingwala.R;
 import com.pos_billingwala.Retrofit.Api;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -46,6 +49,8 @@ public class MessQrManagementActivity extends BaseActivity {
     private Bitmap currentBitmap;
     private String messLabel = "Mess";
     private String branchLabel = "Main Branch";
+    private final List<PrinterSettingResponse> printerSettingResponseList = new ArrayList<>();
+    private final ExecutorService printExecutor = Executors.newSingleThreadExecutor();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,15 +78,26 @@ public class MessQrManagementActivity extends BaseActivity {
                 messLabel = c.getCompanyName();
             }
         }
+        List<PrinterSettingResponse> printers = db.getPrinterSettingDetails();
+        if (printers != null) {
+            printerSettingResponseList.clear();
+            printerSettingResponseList.addAll(printers);
+        }
 
         btnGenerate.setOnClickListener(v -> generateOrRefresh(false));
         btnRegenerate.setOnClickListener(v -> generateOrRefresh(true));
         btnDeactivate.setOnClickListener(v -> setStatus("INACTIVE"));
         btnShare.setOnClickListener(v -> shareQr());
         btnDownload.setOnClickListener(v -> downloadQr());
-        btnPrintQr.setOnClickListener(v -> printPoster());
+        btnPrintQr.setOnClickListener(v -> printQrOnPrinter());
 
         loadQr();
+    }
+
+    @Override
+    protected void onDestroy() {
+        printExecutor.shutdownNow();
+        super.onDestroy();
     }
 
     private String deviceId() {
@@ -155,75 +171,64 @@ public class MessQrManagementActivity extends BaseActivity {
         qrMeta.setText("Mess: " + mess + "\nBranch: " + branch);
         qrUrl.setText(qr.qrUrl != null ? qr.qrUrl : "");
         if (qr.qrUrl != null) {
-            currentBitmap = MessTokenQrHelper.generateQrBitmap(qr.qrUrl, 768);
+            currentBitmap = MessTokenQrHelper.generateBrandedMessQr(this, qr.qrUrl, 900);
             if (currentBitmap != null) {
                 qrImage.setImageBitmap(currentBitmap);
             }
         }
     }
 
-    private Bitmap buildPoster() {
-        int w = 900;
-        int h = 1200;
-        Bitmap poster = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(poster);
-        canvas.drawColor(Color.WHITE);
-        Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
-        p.setColor(Color.BLACK);
-        p.setTextAlign(Paint.Align.CENTER);
-        p.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
-        p.setTextSize(48);
-        canvas.drawText("BILLINGWALA", w / 2f, 90, p);
-        p.setTextSize(40);
-        canvas.drawText("MESS TOKEN", w / 2f, 150, p);
-        Bitmap qr = currentBitmap != null ? currentBitmap : MessTokenQrHelper.generateQrBitmap(
-                currentQr != null ? currentQr.qrUrl : "", 640);
-        if (qr != null) {
-            canvas.drawBitmap(qr, (w - qr.getWidth()) / 2f, 220, null);
+    /** QR image only (branded) — no title / caption / URL text. */
+    private Bitmap qrOnlyBitmap() {
+        if (currentBitmap != null) {
+            return currentBitmap;
         }
-        p.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.NORMAL));
-        p.setTextSize(28);
-        canvas.drawText("Scan using your phone camera", w / 2f, 920, p);
-        canvas.drawText("No App Required", w / 2f, 970, p);
-        return poster;
+        if (currentQr != null && currentQr.qrUrl != null) {
+            currentBitmap = MessTokenQrHelper.generateBrandedMessQr(this, currentQr.qrUrl, 900);
+        }
+        return currentBitmap;
+    }
+
+    /** Black branded QR for thermal printer contrast. */
+    private Bitmap qrOnlyBitmapForPrint() {
+        if (currentQr == null || currentQr.qrUrl == null) {
+            return null;
+        }
+        return MessTokenQrHelper.generateBrandedMessQrForPrint(this, currentQr.qrUrl, 900);
     }
 
     private void shareQr() {
-        if (currentQr == null || currentQr.qrUrl == null) {
+        Bitmap only = qrOnlyBitmap();
+        if (only == null) {
             Toast.makeText(this, R.string.ui_no_active_qr, Toast.LENGTH_SHORT).show();
             return;
         }
         try {
-            Bitmap poster = buildPoster();
             File dir = new File(getCacheDir(), "share");
             //noinspection ResultOfMethodCallIgnored
             dir.mkdirs();
             File file = new File(dir, "mess_qr.png");
             FileOutputStream fos = new FileOutputStream(file);
-            poster.compress(Bitmap.CompressFormat.PNG, 100, fos);
+            only.compress(Bitmap.CompressFormat.PNG, 100, fos);
             fos.close();
             Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".provider", file);
             Intent share = new Intent(Intent.ACTION_SEND);
             share.setType("image/png");
             share.putExtra(Intent.EXTRA_STREAM, uri);
-            share.putExtra(Intent.EXTRA_TEXT, currentQr.qrUrl);
             share.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             startActivity(Intent.createChooser(share, getString(R.string.ui_share_qr)));
         } catch (Exception e) {
-            Intent share = new Intent(Intent.ACTION_SEND);
-            share.setType("text/plain");
-            share.putExtra(Intent.EXTRA_TEXT, currentQr.qrUrl);
-            startActivity(Intent.createChooser(share, getString(R.string.ui_share_qr)));
+            Toast.makeText(this, "Unable to share QR.", Toast.LENGTH_SHORT).show();
         }
     }
 
     private void downloadQr() {
-        if (currentBitmap == null) {
+        Bitmap only = qrOnlyBitmap();
+        if (only == null) {
             Toast.makeText(this, R.string.ui_no_active_qr, Toast.LENGTH_SHORT).show();
             return;
         }
         try {
-            Bitmap poster = buildPoster();
             ContentValues values = new ContentValues();
             values.put(MediaStore.Images.Media.DISPLAY_NAME, "billingwala_mess_qr.png");
             values.put(MediaStore.Images.Media.MIME_TYPE, "image/png");
@@ -232,7 +237,7 @@ public class MessQrManagementActivity extends BaseActivity {
             if (uri != null) {
                 OutputStream os = getContentResolver().openOutputStream(uri);
                 if (os != null) {
-                    poster.compress(Bitmap.CompressFormat.PNG, 100, os);
+                    only.compress(Bitmap.CompressFormat.PNG, 100, os);
                     os.close();
                 }
                 Toast.makeText(this, R.string.ui_qr_saved, Toast.LENGTH_SHORT).show();
@@ -242,28 +247,86 @@ public class MessQrManagementActivity extends BaseActivity {
         }
     }
 
-    private void printPoster() {
-        if (currentQr == null) {
+    private void printQrOnPrinter() {
+        Bitmap only = qrOnlyBitmapForPrint();
+        if (only == null) {
             Toast.makeText(this, R.string.ui_no_active_qr, Toast.LENGTH_SHORT).show();
             return;
         }
+        if (printerSettingResponseList.isEmpty()) {
+            POSBillingWalaDatabase db = new POSBillingWalaDatabase(this);
+            List<PrinterSettingResponse> printers = db.getPrinterSettingDetails();
+            if (printers != null) {
+                printerSettingResponseList.clear();
+                printerSettingResponseList.addAll(printers);
+            }
+        }
+        if (printerSettingResponseList.isEmpty()) {
+            Toast.makeText(this, getString(R.string.toast_please_select_printer_from_setting), Toast.LENGTH_SHORT).show();
+            return;
+        }
+        String addr = printerSettingResponseList.get(0).getBluetoothAddress();
+        if (addr == null || addr.trim().isEmpty()) {
+            Toast.makeText(this, getString(R.string.toast_please_select_printer_from_setting), Toast.LENGTH_SHORT).show();
+            return;
+        }
+        Toast.makeText(this, getString(R.string.toast_printing_in_progress), Toast.LENGTH_SHORT).show();
+        PrinterConnectionHelper.ensureBillPrinterAsync(this, addr, () -> printExecutor.execute(() -> {
+            boolean ok = writeQrToBillPrinter(only);
+            runOnUiThread(() -> Toast.makeText(MessQrManagementActivity.this,
+                    ok ? "QR printed" : "Unable to print QR. Check printer.",
+                    Toast.LENGTH_SHORT).show());
+        }));
+    }
+
+    private boolean writeQrToBillPrinter(Bitmap qrOnly) {
         try {
-            Bitmap poster = buildPoster();
-            File dir = new File(getCacheDir(), "share");
-            //noinspection ResultOfMethodCallIgnored
-            dir.mkdirs();
-            File file = new File(dir, "mess_qr_print.png");
-            FileOutputStream fos = new FileOutputStream(file);
-            poster.compress(Bitmap.CompressFormat.PNG, 100, fos);
-            fos.close();
-            Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".provider", file);
-            Intent printIntent = new Intent(Intent.ACTION_SEND);
-            printIntent.setType("image/png");
-            printIntent.putExtra(Intent.EXTRA_STREAM, uri);
-            printIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            startActivity(Intent.createChooser(printIntent, getString(R.string.ui_print_qr)));
+            if (printerSettingResponseList.isEmpty()) {
+                return false;
+            }
+            PrinterSettingResponse setting = printerSettingResponseList.get(0);
+            int dots = 48;
+            if (setting.getPrinterName() != null && setting.getPrinterName().equalsIgnoreCase("3-Inch")) {
+                dots = 72;
+            }
+            Bitmap resized = getResizedBitmap(qrOnly, dots);
+            PrintImage printImage = new PrintImage(resized);
+            printImage.PrepareImage(PrintImage.dither.floyd_steinberg, 128);
+            if (!PrinterConnectionHelper.safeWriteBill(this, printImage.getPrintImageData())) {
+                return false;
+            }
+            feedPaper(setting.getPrinterFeedLines());
+            return true;
         } catch (Exception e) {
-            Toast.makeText(this, "Unable to print QR.", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+    }
+
+    private Bitmap getResizedBitmap(Bitmap bm, int effectivePrintWidth) {
+        int reqWidth = Math.round(effectivePrintWidth * 8);
+        int width = bm.getWidth();
+        int height = bm.getHeight();
+        if (width == reqWidth) {
+            return bm;
+        }
+        int newWidth = reqWidth;
+        int newHeight = Math.max(1, reqWidth * height / width);
+        Matrix matrix = new Matrix();
+        matrix.postScale((float) newWidth / width, (float) newHeight / height);
+        return Bitmap.createBitmap(bm, 0, 0, width, height, matrix, false);
+    }
+
+    private void feedPaper(String lines) {
+        try {
+            if (lines == null || lines.trim().isEmpty()) {
+                return;
+            }
+            StringBuilder lineBreaks = new StringBuilder();
+            for (int i = 0; i < Integer.parseInt(lines); i++) {
+                lineBreaks.append("\n");
+            }
+            PrinterConnectionHelper.safeWriteBill(this, lineBreaks.toString().getBytes());
+        } catch (Exception ignored) {
         }
     }
 }

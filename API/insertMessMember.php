@@ -17,7 +17,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $memberStatus = isset($_POST['memberStatus']) ? $_POST['memberStatus'] : 'active';
     $userId = isset($_POST['userId']) ? $_POST['userId'] : '';
     $registrationNo = isset($_POST['registrationNo']) ? mess_normalize_registration($_POST['registrationNo']) : '';
-
+    // Default registration no = customer mobile (used on public Mess QR page).
+    if ($registrationNo === '') {
+        $registrationNo = mess_normalize_registration($memberMobileNumber);
+    }
+    if ($registrationNo === '') {
+        $registrationNo = mess_normalize_mobile($memberMobileNumber);
+    }
     $__postedUserId = isset($_POST['userId']) ? $_POST['userId'] : (isset($userId) ? $userId : '');
     pos_require_auth($con, $__postedUserId, isset($response) ? $response : array('status' => '0', 'message' => 'Unauthorized'));
 
@@ -36,7 +42,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if ($registrationNo === '') {
             $registrationNo = !empty($check['registration_no'])
                 ? mess_normalize_registration($check['registration_no'])
-                : ('REG-' . str_pad((string) $memberId, 4, '0', STR_PAD_LEFT));
+                : mess_normalize_registration($memberMobileNumber);
+        }
+        if ($registrationNo === '') {
+            $registrationNo = mess_normalize_mobile($memberMobileNumber);
+        }
+        if ($registrationNo === '') {
+            $registrationNo = 'REG-' . str_pad((string) $memberId, 4, '0', STR_PAD_LEFT);
         }
         $ok = db_stmt_execute(
             $con,
@@ -72,7 +84,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if ($ok) {
             $memberId = (int) mysqli_insert_id($con);
             if ($registrationNo === '') {
-                $registrationNo = 'REG-' . str_pad((string) $memberId, 4, '0', STR_PAD_LEFT);
+                $registrationNo = mess_normalize_mobile($memberMobileNumber);
+                if ($registrationNo === '') {
+                    $registrationNo = 'REG-' . str_pad((string) $memberId, 4, '0', STR_PAD_LEFT);
+                }
                 db_stmt_execute(
                     $con,
                     'UPDATE mess_member SET registration_no = ? WHERE id = ?',
