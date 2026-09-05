@@ -10,6 +10,12 @@
 # Local DB credentials (copy from db_local.example.php)
 API/db_local.php
 
+# Firebase service account (download from Firebase Console for project pos-billingwala)
+API/firebase-service-account.json
+**/firebase-service-account.json
+pos-billingwala-firebase-adminsdk*.json
+**/pos-billingwala-firebase-adminsdk*.json
+
 # Environment files
 .env
 .env.*

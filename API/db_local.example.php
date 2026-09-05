@@ -15,9 +15,28 @@ $dbName = 'spllmgkn_posbill';
 // Required for API/cron/expireLicenses.php (or set env CRON_SECRET).
 // $cronSecret = 'change-me-to-a-long-random-string';
 
-// Firebase Cloud Messaging (push notifications)
-// Option A — HTTP v1 (recommended): download service account JSON from Firebase Console
-// $fcmServiceAccountPath = '/secure/path/firebase-service-account.json';
-// $fcmProjectId = 'your-firebase-project-id';
-// Option B — legacy server key (deprecated by Google but still works)
+// ---------------------------------------------------------------------------
+// Firebase Cloud Messaging
+// MUST match WithTable/app/google-services.json:
+//   project_id     = pos-billingwala
+//   project_number = 855823167459
+//
+// Setup (recommended HTTP v1):
+//   1. Open Firebase Console → project "pos-billingwala"
+//   2. Project settings → Service accounts → Generate new private key
+//   3. Save JSON as API/firebase-service-account.json on the server
+//   4. Keep $fcmProjectId = 'pos-billingwala'
+//
+// Same project delivers:
+//   - Admin "Send Push" promotional notifications → POS
+//   - Licence expiry reminders → POS
+//   - Mess Common QR token events → POS (silent data push)
+// ---------------------------------------------------------------------------
+$fcmProjectId = 'pos-billingwala';
+$fcmServiceAccountPath = __DIR__ . '/firebase-service-account.json';
+// Web Push VAPID public key (Firebase → Cloud Messaging → Web Push certificates).
+// Used only by browser clients: getToken(messaging, { vapidKey: '...' }).
+// Not required for Android FCM send (service account handles that).
+// $fcmWebPushVapidKey = 'B….';
+// Legacy (optional, deprecated by Google):
 // $fcmServerKey = 'your-fcm-server-key';

@@ -7,6 +7,7 @@ import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -29,11 +30,13 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 /**
- * Admin screen to broadcast promotional push notifications to POS devices.
+ * Broadcast promotional push to POS / Owner / Dealer / Admin / All apps.
  */
 public class SendPushNotification extends Fragment {
 
     private SweetAlertDialog pDialog;
+    private LinearLayout posFilterWrap;
+    private LinearLayout licenseIdsWrap;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -50,14 +53,45 @@ public class SendPushNotification extends Fragment {
         message.setMinLines(3);
         message.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
 
+        Spinner audience = new Spinner(activity);
+        ArrayAdapter<String> audienceAdapter = new ArrayAdapter<>(activity,
+                android.R.layout.simple_spinner_dropdown_item,
+                new String[]{"POS app", "Owner app", "Dealer app", "Admin app", "All apps"});
+        audience.setAdapter(audienceAdapter);
+        addLabeled(root, activity, "App audience", audience);
+
+        posFilterWrap = new LinearLayout(activity);
+        posFilterWrap.setOrientation(LinearLayout.VERTICAL);
+        root.addView(posFilterWrap);
+
         Spinner target = new Spinner(activity);
         ArrayAdapter<String> adapter = new ArrayAdapter<>(activity,
                 android.R.layout.simple_spinner_dropdown_item,
                 new String[]{"Active licences", "All licences", "Specific licence IDs"});
         target.setAdapter(adapter);
-        addLabeled(root, activity, "Audience", target);
+        addLabeled(posFilterWrap, activity, "POS licence filter", target);
 
-        EditText licenseIds = field(activity, root, "Licence IDs (comma separated)", "12,45,78");
+        licenseIdsWrap = new LinearLayout(activity);
+        licenseIdsWrap.setOrientation(LinearLayout.VERTICAL);
+        posFilterWrap.addView(licenseIdsWrap);
+        EditText licenseIds = field(activity, licenseIdsWrap, "Licence IDs (comma separated)", "12,45,78");
+
+        audience.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                boolean showPos = position == 0 || position == 4;
+                posFilterWrap.setVisibility(showPos ? View.VISIBLE : View.GONE);
+            }
+            @Override public void onNothingSelected(AdapterView<?> parent) {}
+        });
+        target.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                licenseIdsWrap.setVisibility(position == 2 ? View.VISIBLE : View.GONE);
+            }
+            @Override public void onNothingSelected(AdapterView<?> parent) {}
+        });
+        licenseIdsWrap.setVisibility(View.GONE);
 
         EditText url = field(activity, root, "Link URL (optional)", "https://posbillingwala.com");
         url.setInputType(InputType.TYPE_TEXT_VARIATION_URI);
@@ -70,20 +104,29 @@ public class SendPushNotification extends Fragment {
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         lp.topMargin = 24;
         send.setLayoutParams(lp);
-        send.setOnClickListener(v -> submit(activity, title, message, target, licenseIds, url));
+        send.setOnClickListener(v -> submit(activity, title, message, audience, target, licenseIds, url));
         root.addView(send);
 
         scroll.addView(root);
         return scroll;
     }
 
-    private void submit(Activity activity, EditText title, EditText message, Spinner target,
-                        EditText licenseIds, EditText url) {
+    private void submit(Activity activity, EditText title, EditText message, Spinner audience,
+                        Spinner target, EditText licenseIds, EditText url) {
         String titleVal = title.getText().toString().trim();
         String msgVal = message.getText().toString().trim();
         if (titleVal.isEmpty() || msgVal.isEmpty()) {
             Toast.makeText(activity, "Title and message are required", Toast.LENGTH_SHORT).show();
             return;
+        }
+
+        String audienceVal = "pos";
+        switch (audience.getSelectedItemPosition()) {
+            case 1: audienceVal = "owner"; break;
+            case 2: audienceVal = "dealer"; break;
+            case 3: audienceVal = "admin"; break;
+            case 4: audienceVal = "all"; break;
+            default: audienceVal = "pos"; break;
         }
 
         String targetVal = "active";
@@ -99,9 +142,10 @@ public class SendPushNotification extends Fragment {
         pDialog.setCancelable(false);
         pDialog.show();
 
-        Call<AllApiResponse> call = Api.getClient(activity).sendPushNotification(
+        Call<AllApiResponse> call = Api.getClient().sendPushNotification(
                 titleVal,
                 msgVal,
+                audienceVal,
                 targetVal,
                 licenseIds.getText().toString().trim(),
                 url.getText().toString().trim(),
@@ -114,7 +158,10 @@ public class SendPushNotification extends Fragment {
                         && "1".equals(response.body().getStatus())) {
                     Toast.makeText(activity, response.body().getMessage(), Toast.LENGTH_LONG).show();
                 } else {
-                    Toast.makeText(activity, "Unable to send notification", Toast.LENGTH_SHORT).show();
+                    String msg = response.body() != null ? response.body().getMessage() : null;
+                    Toast.makeText(activity,
+                            msg != null && !msg.isEmpty() ? msg : "Unable to send notification",
+                            Toast.LENGTH_SHORT).show();
                 }
             }
 

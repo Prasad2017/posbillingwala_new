@@ -24,6 +24,7 @@ import com.posbillingwala.dealer.AppUpdate.UpdateManager;
 import com.posbillingwala.dealer.AppUpdate.UpdateManagerConstant;
 import com.posbillingwala.dealer.Extra.AuthTokens;
 import com.posbillingwala.dealer.Extra.Common;
+import com.posbillingwala.dealer.Extra.FcmTokenManager;
 import com.posbillingwala.dealer.Extra.ScreenshotConfig;
 import com.posbillingwala.dealer.Fragment.AllCustomerList;
 import com.posbillingwala.dealer.Fragment.DealerProfile;
@@ -158,6 +159,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         BottomSheetUi.showConfirm(MainActivity.this, "Logout", "Do you want to logout from application?",
                 "YES", "NO", false, () -> {
+                    FcmTokenManager.clearOnLogout(MainActivity.this);
                     AuthTokens.clear(MainActivity.this);
 
                     File file1 = new File("data/data/" + getPackageName() + "/shared_prefs/user.xml");

@@ -44,6 +44,7 @@ import com.posbillingwala.dealer.AppUpdate.UpdateManager;
 import com.posbillingwala.dealer.AppUpdate.UpdateManagerConstant;
 import com.posbillingwala.dealer.Extra.AuthTokens;
 import com.posbillingwala.dealer.Extra.Common;
+import com.posbillingwala.dealer.Extra.FcmTokenManager;
 import com.posbillingwala.dealer.Model.AllApiResponse;
 import com.posbillingwala.dealer.R;
 import com.posbillingwala.dealer.Retrofit.Api;
@@ -316,6 +317,8 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
                         }
                         Common.saveUserData(Login.this, "contactNumber", mobile);
                         AuthTokens.saveFromLogin(Login.this, response.body());
+
+                        FcmTokenManager.registerIfLoggedIn(Login.this);
 
                         Intent intent = new Intent(Login.this, MainActivity.class);
                         startActivity(intent);

@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "855823167459",
+    "project_id": "pos-billingwala",
+    "storage_bucket": "pos-billingwala.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:855823167459:android:aaaaaaaaaaaaaaaa6c7ad6",
+        "android_client_info": {
+          "package_name": "com.posbillingwala.admin"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "855823167459-9fl7mm2vhkfdp418e3rhdq8i7lvjd1nc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCCsqCFtIhkgR7Z130YY6YNidXFlBgykw8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "855823167459-9fl7mm2vhkfdp418e3rhdq8i7lvjd1nc.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

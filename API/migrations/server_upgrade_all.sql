@@ -1257,6 +1257,116 @@ CREATE TABLE IF NOT EXISTS `website_settings` (
 -- Run the full file API/migrations/p23_website_catalog.sql on the server (includes seed section).
 
 -- =============================================================================
+-- P24 — Mess Common QR + Registration No. + meal session tokens
+-- =============================================================================
+-- Prefer running API/migrations/p24_mess_common_qr.sql (or rely on mess_common_ensure_schema()).
+
+SET @p24_col := (
+  SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'mess_member' AND COLUMN_NAME = 'registration_no'
+);
+SET @p24_sql := IF(@p24_col = 0,
+  'ALTER TABLE `mess_member` ADD COLUMN `registration_no` VARCHAR(64) NULL AFTER `member_address`',
+  'SELECT 1');
+PREPARE p24stmt FROM @p24_sql; EXECUTE p24stmt; DEALLOCATE PREPARE p24stmt;
+
+UPDATE `mess_member`
+SET `registration_no` = CONCAT('REG-', LPAD(`id`, 4, '0'))
+WHERE (`registration_no` IS NULL OR `registration_no` = '');
+
+CREATE TABLE IF NOT EXISTS `mess_qr` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `userId` INT NOT NULL,
+  `organization_id` INT DEFAULT NULL,
+  `branch_id` INT DEFAULT NULL,
+  `public_token` VARCHAR(64) NOT NULL,
+  `status` VARCHAR(16) NOT NULL DEFAULT 'ACTIVE',
+  `print_device_id` VARCHAR(255) DEFAULT NULL,
+  `mess_label` VARCHAR(255) DEFAULT NULL,
+  `branch_label` VARCHAR(255) DEFAULT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `deactivated_at` DATETIME DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_mess_qr_public_token` (`public_token`),
+  KEY `idx_mess_qr_user_status` (`userId`, `status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `mess_meal_session` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `userId` INT NOT NULL,
+  `organization_id` INT DEFAULT NULL,
+  `branch_id` INT DEFAULT NULL,
+  `session_name` VARCHAR(64) NOT NULL,
+  `start_time` TIME NOT NULL,
+  `end_time` TIME NOT NULL,
+  `token_prefix` VARCHAR(8) NOT NULL DEFAULT 'L',
+  `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+  `menu_notes` TEXT NULL,
+  `sort_order` INT NOT NULL DEFAULT 0,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_mess_meal_session_user` (`userId`, `is_active`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `mess_meal_token` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `public_id` VARCHAR(64) NOT NULL,
+  `userId` INT NOT NULL,
+  `organization_id` INT DEFAULT NULL,
+  `branch_id` INT DEFAULT NULL,
+  `qr_id` INT UNSIGNED DEFAULT NULL,
+  `session_id` INT UNSIGNED NOT NULL,
+  `session_name` VARCHAR(64) NOT NULL,
+  `member_id` INT NOT NULL,
+  `registration_no` VARCHAR(64) NOT NULL,
+  `member_name` VARCHAR(255) NOT NULL DEFAULT '',
+  `token_number` VARCHAR(32) NOT NULL,
+  `token_date` DATE NOT NULL,
+  `token_seq` INT UNSIGNED NOT NULL DEFAULT 1,
+  `print_status` VARCHAR(24) NOT NULL DEFAULT 'PRINT_PENDING',
+  `print_device_id` VARCHAR(255) DEFAULT NULL,
+  `printed_at` DATETIME DEFAULT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_mess_meal_token_public` (`public_id`),
+  UNIQUE KEY `uq_mess_meal_token_once` (`userId`, `member_id`, `token_date`, `session_id`),
+  KEY `idx_mess_meal_token_pending` (`userId`, `print_status`, `token_date`),
+  KEY `idx_mess_meal_token_device` (`print_device_id`, `print_status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `mess_meal_token_seq` (
+  `userId` INT NOT NULL,
+  `token_date` DATE NOT NULL,
+  `token_prefix` VARCHAR(8) NOT NULL,
+  `last_seq` INT UNSIGNED NOT NULL DEFAULT 0,
+  PRIMARY KEY (`userId`, `token_date`, `token_prefix`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `mess_token_audit` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `userId` INT DEFAULT NULL,
+  `event_type` VARCHAR(64) NOT NULL,
+  `public_token` VARCHAR(64) DEFAULT NULL,
+  `registration_no` VARCHAR(64) DEFAULT NULL,
+  `token_public_id` VARCHAR(64) DEFAULT NULL,
+  `detail` VARCHAR(255) DEFAULT NULL,
+  `source_ip` VARCHAR(64) DEFAULT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_mess_audit_user_time` (`userId`, `created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `mess_public_rate_limit` (
+  `bucket_key` VARCHAR(128) NOT NULL,
+  `window_start` INT UNSIGNED NOT NULL,
+  `hit_count` INT UNSIGNED NOT NULL DEFAULT 0,
+  PRIMARY KEY (`bucket_key`, `window_start`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =============================================================================
 -- DONE — verify upgrade + existing data still present
 -- =============================================================================
 
@@ -1323,7 +1433,30 @@ SELECT
   (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES
    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'website_pricing_plans') AS website_pricing_ok,
   (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
-   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'website_clients' AND COLUMN_NAME = 'city') AS website_clients_city_ok;
+   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'website_clients' AND COLUMN_NAME = 'city') AS website_clients_city_ok,
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'mess_member' AND COLUMN_NAME = 'registration_no') AS mess_member_reg_ok,
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES
+   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'mess_qr') AS mess_qr_ok,
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES
+   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'mess_meal_session') AS mess_meal_session_ok,
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES
+   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'mess_meal_token') AS mess_meal_token_ok;
+
+-- p25: unified FCM device tokens (Owner / Dealer / Admin)
+CREATE TABLE IF NOT EXISTS `fcm_device_tokens` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `app_type` VARCHAR(16) NOT NULL COMMENT 'owner|dealer|admin',
+  `account_id` INT NOT NULL COMMENT 'users.id',
+  `device_id` VARCHAR(255) NOT NULL DEFAULT '',
+  `fcm_token` TEXT NOT NULL,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_fcm_device` (`app_type`, `account_id`, `device_id`),
+  KEY `idx_fcm_app_type` (`app_type`),
+  KEY `idx_fcm_token_updated` (`updated_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Business data still there (compare to first SELECT — counts must match)
 SELECT

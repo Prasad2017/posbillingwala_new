@@ -7,16 +7,20 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
+import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.pos_billingwala.Model.AllApiResponse;
 import com.pos_billingwala.Retrofit.Api;
+
+import java.util.concurrent.Executors;
 
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
 /**
- * Registers the device FCM token with the server after login.
+ * Registers / clears the device FCM token with the Billingwala server.
+ * Uses the Firebase project from WithTable/app/google-services.json (pos-billingwala).
  */
 public final class FcmTokenManager {
 
@@ -29,13 +33,19 @@ public final class FcmTokenManager {
         Context app = context.getApplicationContext();
         String userId = Common.getSavedUserData(app, "userId");
         if (userId == null || userId.trim().isEmpty()) {
+            Log.d(TAG, "Skip FCM register — not logged in");
             return;
         }
+        PushNotificationHelper.ensureChannel(app);
         FirebaseMessaging.getInstance().getToken()
                 .addOnCompleteListener(task -> {
-                    if (task.isSuccessful() && task.getResult() != null) {
-                        registerToken(app, task.getResult());
+                    if (!task.isSuccessful() || task.getResult() == null) {
+                        Log.w(TAG, "FCM getToken failed", task.getException());
+                        return;
                     }
+                    String token = task.getResult();
+                    Log.d(TAG, "FCM token ready, uploading to server");
+                    registerToken(app, token);
                 });
     }
 
@@ -43,6 +53,9 @@ public final class FcmTokenManager {
         Context app = context.getApplicationContext();
         String userId = Common.getSavedUserData(app, "userId");
         if (userId == null || userId.trim().isEmpty()) {
+            return;
+        }
+        if (token.trim().isEmpty()) {
             return;
         }
 
@@ -55,7 +68,12 @@ public final class FcmTokenManager {
         call.enqueue(new Callback<AllApiResponse>() {
             @Override
             public void onResponse(@NonNull Call<AllApiResponse> call, @NonNull Response<AllApiResponse> response) {
-                // Best-effort — no user-facing error
+                if (response.isSuccessful() && response.body() != null
+                        && "1".equals(response.body().status)) {
+                    Log.d(TAG, "FCM token registered on server");
+                } else {
+                    Log.w(TAG, "FCM token register rejected by server");
+                }
             }
 
             @Override
@@ -65,23 +83,36 @@ public final class FcmTokenManager {
         });
     }
 
+    /**
+     * Clears server-side token for this device, then deletes the local Firebase token
+     * so the next login gets a fresh registration.
+     */
     public static void clearOnLogout(@NonNull Context context) {
         Context app = context.getApplicationContext();
         String userId = Common.getSavedUserData(app, "userId");
-        if (userId == null || userId.trim().isEmpty()) {
-            return;
-        }
         String androidId = Settings.Secure.getString(app.getContentResolver(), Settings.Secure.ANDROID_ID);
-        if (androidId == null || androidId.trim().isEmpty()) {
-            return;
-        }
-        Api.getClient(app).registerFcmToken(userId, androidId, "").enqueue(new Callback<AllApiResponse>() {
-            @Override
-            public void onResponse(@NonNull Call<AllApiResponse> call, @NonNull Response<AllApiResponse> response) {
-            }
 
-            @Override
-            public void onFailure(@NonNull Call<AllApiResponse> call, @NonNull Throwable t) {
+        if (userId != null && !userId.trim().isEmpty()
+                && androidId != null && !androidId.trim().isEmpty()) {
+            Api.getClient(app).registerFcmToken(userId, androidId, "").enqueue(new Callback<AllApiResponse>() {
+                @Override
+                public void onResponse(@NonNull Call<AllApiResponse> call, @NonNull Response<AllApiResponse> response) {
+                    Log.d(TAG, "FCM token cleared on server");
+                }
+
+                @Override
+                public void onFailure(@NonNull Call<AllApiResponse> call, @NonNull Throwable t) {
+                    Log.w(TAG, "FCM clear on server failed", t);
+                }
+            });
+        }
+
+        Executors.newSingleThreadExecutor().execute(() -> {
+            try {
+                Tasks.await(FirebaseMessaging.getInstance().deleteToken());
+                Log.d(TAG, "Local FCM token deleted");
+            } catch (Exception e) {
+                Log.w(TAG, "Local FCM token delete failed", e);
             }
         });
     }
@@ -90,6 +121,6 @@ public final class FcmTokenManager {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
             return;
         }
-        // Permission is requested from Home fragment for sync; push uses same POST_NOTIFICATIONS grant.
+        // POST_NOTIFICATIONS is requested from Home / sync flow.
     }
 }

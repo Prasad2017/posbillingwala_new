@@ -57,6 +57,8 @@ import com.posbillingwala.admin.Extra.BottomSheetUi;
 
 import com.posbillingwala.admin.Extra.Common;
 
+import com.posbillingwala.admin.Extra.FcmTokenManager;
+
 import com.posbillingwala.admin.Extra.ScreenshotConfig;
 
 import com.posbillingwala.admin.Fragment.AddDealer;
@@ -744,6 +746,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     public void performLogout() {
 
+        FcmTokenManager.clearOnLogout(this);
         AuthTokens.clear(this);
 
         Intent intent = new Intent(this, Login.class);

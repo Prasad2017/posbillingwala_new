@@ -31,6 +31,15 @@ public class AllApiResponse {
     @SerializedName("storeCount")
     @Expose
     public String storeCount;
+    @SerializedName("counts")
+    @Expose
+    public java.util.List<MessSessionCount> messSessionCounts;
+    @SerializedName("qr")
+    @Expose
+    public MessQrInfo messQr;
+    @SerializedName("hasQr")
+    @Expose
+    public String hasQr;
     @SerializedName("customerResponse")
     @Expose
     public List<CustomerResponse> customerResponseList;

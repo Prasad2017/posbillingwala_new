@@ -31,6 +31,7 @@ import com.posbillingwala.owner.Activity.Login;
 import com.posbillingwala.owner.Activity.MainActivity;
 import com.posbillingwala.owner.Extra.AuthTokens;
 import com.posbillingwala.owner.Extra.BottomSheetUi;
+import com.posbillingwala.owner.Extra.FcmTokenManager;
 import com.posbillingwala.owner.Model.AllApiResponse;
 import com.posbillingwala.owner.R;
 import com.posbillingwala.owner.Retrofit.Api;
@@ -320,6 +321,7 @@ public class UserSetting extends Fragment implements View.OnClickListener {
     public void logout() {
         BottomSheetUi.showConfirm(activity, "Logout", "Do you want to logout from application?",
                 "YES", "NO", false, () -> {
+                    FcmTokenManager.clearOnLogout(activity);
                     AuthTokens.clear(activity);
 
                     File file1 = new File("data/data/" + activity.getPackageName() + "/shared_prefs/user.xml");

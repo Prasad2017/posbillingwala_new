@@ -411,7 +411,7 @@ public class OfflineToNetworkReceiver extends BroadcastReceiver {
 
     public void saveMessMember(String memberId, String memberName, String memberMobileNumber, String memberAlternetMobileNumber, String memberAddress, String memberNetworkStatus, String memberStatus) {
 
-        Call<AllApiResponse> call = Api.getClient(context).saveMessMember(MainActivity.userId, memberName, memberMobileNumber, memberAlternetMobileNumber, memberAddress, memberNetworkStatus, memberStatus);
+        Call<AllApiResponse> call = Api.getClient(context).saveMessMember(MainActivity.userId, memberName, memberMobileNumber, memberAlternetMobileNumber, memberAddress, memberNetworkStatus, memberStatus, "");
         if (executeCall(call)) {
             posBillingWalaDatabase.updateSyncMessMember(memberId, NAME_SYNCED_WITH_SERVER);
         }

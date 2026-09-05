@@ -3,6 +3,7 @@ package com.pos_billingwala;
 import android.app.Application;
 import android.content.Context;
 import android.content.res.Resources;
+import android.util.Log;
 
 import com.pos_billingwala.Extra.AppLanguage;
 import com.pos_billingwala.Extra.DisplayScale;
@@ -47,6 +48,8 @@ public class PosBillingWalaApp extends Application implements DisplayScale.Resou
         PrinterConnectionHelper.initializeApp(this);
         PushNotificationHelper.ensureChannel(this);
         FcmTokenManager.registerIfLoggedIn(this);
+        // Ensure we keep using the Firebase project from google-services.json (pos-billingwala).
+        Log.d("PosBillingWalaApp", "FCM channel ready; token register if logged in");
     }
 
     @Override

@@ -141,6 +141,12 @@ public class Home extends Fragment {
             }
         });
 
+        binding.messTokenTodayLayout.setOnClickListener(v ->
+                ((MainActivity) activity).loadFragment(new MessTokenTodayFragment(), true));
+
+        binding.messQrManagementLayout.setOnClickListener(v ->
+                ((MainActivity) activity).loadFragment(new MessQrManagementFragment(), true));
+
         binding.storeWiseLayout.setOnClickListener(v -> openStoreWise("totalSale"));
         binding.outletsCard.setOnClickListener(v -> openStoreWise("totalSale"));
 

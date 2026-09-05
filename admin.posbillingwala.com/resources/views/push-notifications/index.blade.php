@@ -10,7 +10,7 @@
                             <div><i class="bx bx-bell me-1 font-22 text-primary"></i></div>
                             <h5 class="mb-0 text-primary">Send Push Notification</h5>
                         </div>
-                        <p class="text-secondary mb-4">Send offers, promotions, or announcements to POS app users who have registered for push notifications.</p>
+                        <p class="text-secondary mb-4">Send offers or announcements to POS, Owner, Dealer, Admin apps (Firebase project <code>pos-billingwala</code>).</p>
                         <hr>
 
                         @if(session('success'))
@@ -35,8 +35,19 @@
                                 @error('message')<div class="text-danger small">{{ $message }}</div>@enderror
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Audience</label>
-                                <select name="target" id="push-target" class="form-select @error('target') is-invalid @enderror" required>
+                                <label class="form-label">App audience</label>
+                                <select name="audience" id="push-audience" class="form-select @error('audience') is-invalid @enderror" required>
+                                    <option value="pos" @selected(old('audience', 'pos') === 'pos')>POS app</option>
+                                    <option value="owner" @selected(old('audience') === 'owner')>Owner app</option>
+                                    <option value="dealer" @selected(old('audience') === 'dealer')>Dealer app</option>
+                                    <option value="admin" @selected(old('audience') === 'admin')>Admin app</option>
+                                    <option value="all" @selected(old('audience') === 'all')>All apps</option>
+                                </select>
+                                @error('audience')<div class="text-danger small">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="col-md-6" id="pos-target-wrap">
+                                <label class="form-label">POS licence filter</label>
+                                <select name="target" id="push-target" class="form-select @error('target') is-invalid @enderror">
                                     <option value="active" @selected(old('target', 'active') === 'active')>Active licences (with FCM token)</option>
                                     <option value="all" @selected(old('target') === 'all')>All licences (with FCM token)</option>
                                     <option value="license_ids" @selected(old('target') === 'license_ids')>Specific licence IDs</option>
@@ -71,9 +82,11 @@
             <div class="col-xl-4">
                 <div class="card">
                     <div class="card-body">
-                        <h6 class="mb-3">Licence expiry reminders</h6>
-                        <p class="text-secondary small mb-2">Automatic push notifications are sent once per day starting 3 days before licence expiry.</p>
-                        <p class="text-secondary small mb-0">Cron: <code>API/cron/notifyExpiringLicenses.php</code> (daily, with <code>X-Cron-Secret</code>).</p>
+                        <h6 class="mb-3">How audiences work</h6>
+                        <p class="text-secondary small mb-2"><strong>POS</strong> uses <code>licenses.fcm_token</code> (licence filter applies).</p>
+                        <p class="text-secondary small mb-2"><strong>Owner / Dealer / Admin</strong> use <code>fcm_device_tokens</code> (logged-in devices).</p>
+                        <p class="text-secondary small mb-2">Licence expiry reminders still go to POS only.</p>
+                        <p class="text-secondary small mb-0">Cron: <code>API/cron/notifyExpiringLicenses.php</code>.</p>
                     </div>
                 </div>
             </div>
@@ -82,11 +95,17 @@
 </div>
 <script>
 (function () {
+    var audience = document.getElementById('push-audience');
+    var posWrap = document.getElementById('pos-target-wrap');
     var sel = document.getElementById('push-target');
     var wrap = document.getElementById('license-ids-wrap');
     function toggle() {
-        wrap.style.display = sel.value === 'license_ids' ? '' : 'none';
+        var a = audience.value;
+        var showPos = (a === 'pos' || a === 'all');
+        posWrap.style.display = showPos ? '' : 'none';
+        wrap.style.display = (showPos && sel.value === 'license_ids') ? '' : 'none';
     }
+    audience.addEventListener('change', toggle);
     sel.addEventListener('change', toggle);
     toggle();
 })();

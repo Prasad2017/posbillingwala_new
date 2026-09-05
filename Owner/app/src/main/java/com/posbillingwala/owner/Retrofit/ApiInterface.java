@@ -214,4 +214,38 @@ public interface ApiInterface {
     Call<CatalogImportHistoryResponse> catalogImportHistory(@Query("customerId") String customerId,
                                                             @Query("importType") String importType);
 
+    @GET("getMessMealTokenToday.php")
+    Call<AllApiResponse> getMessMealTokenToday(@Query("userId") String userId,
+                                               @Query("date") String date);
+
+    @GET("mess_qr_get.php")
+    Call<AllApiResponse> getMessQr(@Query("userId") String userId,
+                                   @Query("licenceId") String licenceId);
+
+    @FormUrlEncoded
+    @POST("mess_qr_generate.php")
+    Call<AllApiResponse> generateMessQr(@Field("userId") String userId,
+                                        @Field("licenceId") String licenceId,
+                                        @Field("messLabel") String messLabel,
+                                        @Field("branchLabel") String branchLabel);
+
+    @FormUrlEncoded
+    @POST("mess_qr_regenerate.php")
+    Call<AllApiResponse> regenerateMessQr(@Field("userId") String userId,
+                                          @Field("licenceId") String licenceId,
+                                          @Field("messLabel") String messLabel,
+                                          @Field("branchLabel") String branchLabel);
+
+    @FormUrlEncoded
+    @POST("mess_qr_set_status.php")
+    Call<AllApiResponse> setMessQrStatus(@Field("userId") String userId,
+                                         @Field("licenceId") String licenceId,
+                                         @Field("status") String status);
+
+    @FormUrlEncoded
+    @POST("registerFcmToken.php")
+    Call<AllApiResponse> registerFcmToken(@Field("userId") String userId,
+                                          @Field("android_device_id") String androidDeviceId,
+                                          @Field("fcm_token") String fcmToken);
+
 }

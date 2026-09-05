@@ -32,6 +32,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.posbillingwala.admin.Extra.AuthTokens;
 import com.posbillingwala.admin.Extra.BottomSheetUi;
 import com.posbillingwala.admin.Extra.Common;
+import com.posbillingwala.admin.Extra.FcmTokenManager;
 import com.posbillingwala.admin.Model.AllApiResponse;
 import com.posbillingwala.admin.R;
 import com.posbillingwala.admin.Retrofit.Api;
@@ -199,6 +200,8 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
                         Common.saveUserData(Login.this, "userId", "" + response.body().getUserId());
                         Common.saveUserData(Login.this, "userEmail", email);
                         AuthTokens.saveFromLogin(Login.this, response.body());
+
+                        FcmTokenManager.registerIfLoggedIn(Login.this);
 
                         Intent intent = new Intent(Login.this, MainActivity.class);
                         startActivity(intent);

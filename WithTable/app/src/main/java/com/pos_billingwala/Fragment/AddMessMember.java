@@ -122,8 +122,12 @@ public class AddMessMember extends Fragment implements View.OnClickListener {
 
     public void addMessMember() {
 
-        posBillingWalaDatabase.insertMessMember(MainActivity.ownerId, binding.memberName.getText().toString(), binding.memberMobileNumber.getText().toString(), binding.memberAlternetMobileNumber.getText().toString(),
-                binding.memberAddress.getText().toString(), binding.messAmount.getText().toString(), binding.messPaidAmount.getText().toString(), messDays, 0, getRandomString(10));
+        String regNo = "";
+        if (binding.registrationNo != null && binding.registrationNo.getText() != null) {
+            regNo = binding.registrationNo.getText().toString().trim();
+        }
+        posBillingWalaDatabase.insertMessMemberWithReg(MainActivity.ownerId, binding.memberName.getText().toString(), binding.memberMobileNumber.getText().toString(), binding.memberAlternetMobileNumber.getText().toString(),
+                binding.memberAddress.getText().toString(), regNo, binding.messAmount.getText().toString(), binding.messPaidAmount.getText().toString(), messDays, 0, getRandomString(10));
 
         Toast.makeText(activity, getString(R.string.toast_member_added_successfully), Toast.LENGTH_SHORT).show();
 

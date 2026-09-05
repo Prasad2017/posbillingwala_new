@@ -30,6 +30,7 @@
     <link rel="stylesheet" href="{{admin_asset('css/header-colors.css')}}" />
     <link rel="stylesheet" href="{{ admin_asset('css/pos-brand.css') }}" />
     <link rel="stylesheet" href="{{ admin_asset('css/pos-responsive.css') }}" />
+    @stack('styles')
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
     <script src="{{admin_asset('plugins/chartjs/js/Chart.min.js')}}"></script>
     <script>

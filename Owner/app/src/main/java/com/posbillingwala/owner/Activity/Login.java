@@ -36,6 +36,7 @@ import com.google.android.material.snackbar.Snackbar;
 import com.posbillingwala.owner.Extra.AuthTokens;
 import com.posbillingwala.owner.Extra.BottomSheetUi;
 import com.posbillingwala.owner.Extra.Common;
+import com.posbillingwala.owner.Extra.FcmTokenManager;
 import com.posbillingwala.owner.Model.LoginResponse;
 import com.posbillingwala.owner.R;
 import com.posbillingwala.owner.Retrofit.Api;
@@ -268,6 +269,8 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
                                     "Login token missing. Update Owner APIs on the server, then login again.",
                                     Snackbar.LENGTH_LONG).show();
                         }
+
+                        FcmTokenManager.registerIfLoggedIn(Login.this);
 
                         Intent intent = new Intent(Login.this, MainActivity.class);
                         startActivity(intent);

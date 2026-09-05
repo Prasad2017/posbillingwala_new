@@ -19,7 +19,7 @@
                 <div class="card border-top border-0 border-4 border-primary">
                     <div class="card-body p-5">
                         <h5 class="text-primary mb-0">Edit {{ $label }}</h5>
-                        <p class="text-muted small mb-3">Basic HTML tags supported: &lt;h2&gt;, &lt;p&gt;, &lt;ul&gt;, &lt;a&gt;, &lt;strong&gt;.</p>
+                        <p class="text-muted small mb-3">Format with bold, italic, colours, headings and lists. No HTML tags required — just type and save.</p>
                         <hr>
                         <form method="POST" action="{{ url($backUrl) }}">
                             @csrf
@@ -27,10 +27,11 @@
                                 <label class="form-label">Page title</label>
                                 <input type="text" class="form-control" name="title" value="{{ old('title', $page->title) }}" required>
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label">Content (HTML)</label>
-                                <textarea class="form-control" name="body_html" rows="18" required>{{ old('body_html', $page->body_html) }}</textarea>
-                            </div>
+                            @include('partials.rich-text-editor', [
+                                'name' => 'body_html',
+                                'value' => old('body_html', $page->body_html),
+                                'label' => 'Page content',
+                            ])
                             <button type="submit" class="btn btn-primary px-5">Save page</button>
                             <a href="{{ url('website') }}" class="btn btn-outline-secondary ms-2">Back</a>
                         </form>

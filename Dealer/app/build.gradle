@@ -1,5 +1,6 @@
 plugins {
     id 'com.android.application'
+    id 'com.google.gms.google-services'
 }
 
 android {
@@ -86,6 +87,10 @@ dependencies {
     implementation 'com.github.dewinjm:monthyear-picker:1.0.2'
     //Circular Imageview
     implementation 'de.hdodenhof:circleimageview:3.1.0'
+    //Firebase SDK (project: pos-billingwala)
+    implementation platform('com.google.firebase:firebase-bom:34.18.0')
+    implementation 'com.google.firebase:firebase-analytics'
+    implementation 'com.google.firebase:firebase-messaging'
     //Google ads SDK
     implementation 'com.google.android.gms:play-services-ads:25.4.0'
     //To update google play store app

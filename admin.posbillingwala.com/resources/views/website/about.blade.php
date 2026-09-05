@@ -23,7 +23,7 @@
                             <div><i class="bx bx-info-circle me-1 font-22 text-primary"></i></div>
                             <h5 class="mb-0 text-primary">Edit About Us Page</h5>
                         </div>
-                        <p class="text-muted small mb-3">Shown at <strong>/about.html</strong> on the public website.</p>
+                        <p class="text-muted small mb-3">Shown at <strong>/about.html</strong> on the public website. Use the toolbar to format — no HTML tags.</p>
                         <hr>
                         <form method="POST" action="{{ url('website/about') }}">
                             @csrf
@@ -32,11 +32,11 @@
                                 <input type="text" class="form-control @error('title') is-invalid @enderror" name="title" value="{{ old('title', $page->title) }}" required>
                                 @error('title')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label">Content (HTML)</label>
-                                <textarea class="form-control @error('body_html') is-invalid @enderror" name="body_html" rows="18" required>{{ old('body_html', $page->body_html) }}</textarea>
-                                @error('body_html')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                            </div>
+                            @include('partials.rich-text-editor', [
+                                'name' => 'body_html',
+                                'value' => old('body_html', $page->body_html),
+                                'label' => 'Page content',
+                            ])
                             <p class="text-muted small">Last updated: {{ optional($page->updated_at)->format('d M Y, h:i A') ?? '—' }}</p>
                             <button type="submit" class="btn btn-primary px-5">Save About Us</button>
                             <a href="{{ url('website') }}" class="btn btn-outline-secondary ms-2">Back</a>

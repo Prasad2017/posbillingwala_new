@@ -81,8 +81,13 @@ public final class PushNotificationHelper {
 
         if ("license_expiring".equals(type)) {
             builder.setCategory(NotificationCompat.CATEGORY_REMINDER);
-        } else {
+            builder.setPriority(NotificationCompat.PRIORITY_HIGH);
+        } else if ("promotional".equals(type) || type == null || type.trim().isEmpty()) {
             builder.setCategory(NotificationCompat.CATEGORY_PROMO);
+            builder.setPriority(NotificationCompat.PRIORITY_DEFAULT);
+        } else {
+            builder.setCategory(NotificationCompat.CATEGORY_MESSAGE);
+            builder.setPriority(NotificationCompat.PRIORITY_DEFAULT);
         }
 
         try {

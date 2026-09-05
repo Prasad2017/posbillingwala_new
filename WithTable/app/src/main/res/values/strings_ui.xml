@@ -547,4 +547,21 @@
     <string name="ui_packing_upper">PACKING</string>
     <string name="ui_sub_total_upper">SUB TOTAL</string>
     <string name="ui_total">Total</string>
+    <string name="ui_mess_token_qr">Mess Token QR</string>
+    <string name="ui_todays_mess_tokens">Today\'s Mess Tokens</string>
+    <string name="ui_meal_sessions">Meal Sessions</string>
+    <string name="ui_generate_qr">Generate QR</string>
+    <string name="ui_share_qr">Share QR</string>
+    <string name="ui_download_qr">Download QR</string>
+    <string name="ui_print_qr">Print QR</string>
+    <string name="ui_regenerate_qr">Regenerate QR</string>
+    <string name="ui_deactivate_qr">Deactivate QR</string>
+    <string name="ui_no_active_qr">No active QR. Tap Generate QR.</string>
+    <string name="ui_qr_generated">QR generated</string>
+    <string name="ui_qr_regenerated">QR regenerated</string>
+    <string name="ui_qr_saved">QR saved to Pictures</string>
+    <string name="ui_retry_print">Retry Print</string>
+    <string name="ui_cancel_token">Cancel Token</string>
+    <string name="ui_registration_no">Registration No.</string>
+    <string name="ui_qr_management">QR Management</string>
 </resources>

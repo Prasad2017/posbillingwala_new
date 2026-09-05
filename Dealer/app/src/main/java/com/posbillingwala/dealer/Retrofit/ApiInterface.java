@@ -253,4 +253,10 @@ public interface ApiInterface {
     Call<CatalogImportHistoryResponse> catalogImportHistory(@Query("customerId") String customerId,
                                                             @Query("importType") String importType);
 
+    @FormUrlEncoded
+    @POST("registerFcmToken.php")
+    Call<AllApiResponse> registerFcmToken(@Field("userId") String userId,
+                                          @Field("android_device_id") String androidDeviceId,
+                                          @Field("fcm_token") String fcmToken);
+
 }

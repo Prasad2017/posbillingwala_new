@@ -1,11 +1,13 @@
 <?php	
 include_once('config.php');
 require_once __DIR__ . '/pos_auth_guard.php';
+require_once __DIR__ . '/mess_common_helpers.php';
 
 $i=0;
    
     $response["memberResponse"] = array();
     mysqli_query($con, 'set names utf8');
+    mess_common_ensure_schema($con);
     
     if ($_SERVER['REQUEST_METHOD'] == "GET") {
         
@@ -33,6 +35,7 @@ $i=0;
         $getdata["memberMobileNumber"]=$row['member_mobile_number'];
         $getdata["memberAltenetMobileNumber"]=$row['member_altenet_mobile_number'];
         $getdata["memberAddress"]=$row['member_address'];
+        $getdata["registrationNo"]= isset($row['registration_no']) ? $row['registration_no'] : '';
         $getdata["memberStatus"]=$row['member_status'];
         $getdata["memberNetworkStatus"]=$row['member_network_status'];
        

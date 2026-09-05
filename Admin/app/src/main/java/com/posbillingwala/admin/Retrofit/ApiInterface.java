@@ -379,9 +379,16 @@ public interface ApiInterface {
     @POST("sendPushNotification.php")
     Call<AllApiResponse> sendPushNotification(@Field("title") String title,
                                               @Field("message") String message,
+                                              @Field("audience") String audience,
                                               @Field("target") String target,
                                               @Field("licenseIds") String licenseIds,
                                               @Field("url") String url,
                                               @Field("imageUrl") String imageUrl);
+
+    @FormUrlEncoded
+    @POST("registerFcmToken.php")
+    Call<AllApiResponse> registerFcmToken(@Field("userId") String userId,
+                                          @Field("android_device_id") String androidDeviceId,
+                                          @Field("fcm_token") String fcmToken);
 
 }

@@ -23,7 +23,7 @@
                             <div><i class="bx bx-file me-1 font-22 text-primary"></i></div>
                             <h5 class="mb-0 text-primary">Edit Privacy Policy</h5>
                         </div>
-                        <p class="text-muted small mb-3">Changes appear on the public website privacy page. You can use basic HTML tags like &lt;h2&gt;, &lt;p&gt;, &lt;a&gt;, &lt;strong&gt;.</p>
+                        <p class="text-muted small mb-3">Changes appear on the public website privacy page. Format text with the toolbar (bold, italic, colours, etc.) — no HTML tags.</p>
                         <hr>
                         <form method="POST" action="{{ url('website/privacy') }}">
                             @csrf
@@ -32,11 +32,11 @@
                                 <input type="text" class="form-control @error('title') is-invalid @enderror" name="title" value="{{ old('title', $page->title) }}" required>
                                 @error('title')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label">Content (HTML)</label>
-                                <textarea class="form-control @error('body_html') is-invalid @enderror" name="body_html" rows="18" required>{{ old('body_html', $page->body_html) }}</textarea>
-                                @error('body_html')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                            </div>
+                            @include('partials.rich-text-editor', [
+                                'name' => 'body_html',
+                                'value' => old('body_html', $page->body_html),
+                                'label' => 'Page content',
+                            ])
                             <p class="text-muted small">Last updated: {{ optional($page->updated_at)->format('d M Y, h:i A') ?? '—' }}</p>
                             <button type="submit" class="btn btn-primary px-5">Save privacy policy</button>
                             <a href="{{ url('website') }}" class="btn btn-outline-secondary ms-2">Back</a>

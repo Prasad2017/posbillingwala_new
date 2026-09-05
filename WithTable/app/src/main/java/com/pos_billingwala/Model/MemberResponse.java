@@ -38,6 +38,9 @@ public class MemberResponse {
     @SerializedName("memberStatus")
     @Expose
     public String memberStatus;
+    @SerializedName("registrationNo")
+    @Expose
+    public String registrationNo;
     @SerializedName("paymentNetworkStatus")
     @Expose
     public String paymentNetworkStatus;
@@ -92,6 +95,14 @@ public class MemberResponse {
 
     public void setMemberStatus(String memberStatus) {
         this.memberStatus = memberStatus;
+    }
+
+    public String getRegistrationNo() {
+        return registrationNo;
+    }
+
+    public void setRegistrationNo(String registrationNo) {
+        this.registrationNo = registrationNo;
     }
 
     public String getMemberAddress() {

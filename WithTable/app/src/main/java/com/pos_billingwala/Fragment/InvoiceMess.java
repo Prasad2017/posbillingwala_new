@@ -179,6 +179,10 @@ public class InvoiceMess extends Fragment implements View.OnClickListener {
 
         LinearLayout memberListLayout = view.findViewById(R.id.memberListLayout);
         LinearLayout scanVerifyLayout = view.findViewById(R.id.scanVerifyLayout);
+        LinearLayout qrManagementLayout = view.findViewById(R.id.qrManagementLayout);
+        LinearLayout todayTokensLayout = view.findViewById(R.id.todayTokensLayout);
+        LinearLayout mealSessionsLayout = view.findViewById(R.id.mealSessionsLayout);
+        LinearLayout walkInTokenLayout = view.findViewById(R.id.walkInTokenLayout);
 
         memberListLayout.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -196,6 +200,31 @@ public class InvoiceMess extends Fragment implements View.OnClickListener {
             }
         });
 
+        if (qrManagementLayout != null) {
+            qrManagementLayout.setOnClickListener(v -> {
+                mypopupWindow.dismiss();
+                activity.startActivity(new Intent(activity, com.pos_billingwala.Activity.MessQrManagementActivity.class));
+            });
+        }
+        if (todayTokensLayout != null) {
+            todayTokensLayout.setOnClickListener(v -> {
+                mypopupWindow.dismiss();
+                activity.startActivity(new Intent(activity, com.pos_billingwala.Activity.MessMealTokenTodayActivity.class));
+            });
+        }
+        if (mealSessionsLayout != null) {
+            mealSessionsLayout.setOnClickListener(v -> {
+                mypopupWindow.dismiss();
+                activity.startActivity(new Intent(activity, com.pos_billingwala.Activity.MessMealSessionsActivity.class));
+            });
+        }
+        if (walkInTokenLayout != null) {
+            walkInTokenLayout.setOnClickListener(v -> {
+                mypopupWindow.dismiss();
+                ((MainActivity) activity).loadFragment(new CreatePos(), true);
+            });
+        }
+
         PopupUi.showAsToolbarMenu(mypopupWindow, binding.menuIcon);
 
     }
@@ -205,6 +234,7 @@ public class InvoiceMess extends Fragment implements View.OnClickListener {
         super.onStart();
         ((MainActivity) activity).lockUnlockDrawer(1);
         getCompanyDetails();
+        com.pos_billingwala.Extra.MessMealTokenPrintWorker.recoverPendingFromServer(activity);
     }
 
     public void getCompanyDetails() {

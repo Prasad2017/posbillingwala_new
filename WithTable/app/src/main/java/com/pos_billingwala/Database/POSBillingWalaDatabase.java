@@ -23,6 +23,7 @@ import com.pos_billingwala.Model.InvoiceProductResponse;
 import com.pos_billingwala.Model.InvoiceResponse;
 import com.pos_billingwala.Model.MemberResponse;
 import com.pos_billingwala.Model.MessInvoiceResponse;
+import com.pos_billingwala.Model.MessMealTokenItem;
 import com.pos_billingwala.Model.MessTokenResponse;
 import com.pos_billingwala.Model.PrinterSettingResponse;
 import com.pos_billingwala.Model.ProductCartResponse;
@@ -63,13 +64,14 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
     public static final String MEMBER_PAYMENT_TABLE = "member_payment";
     public static final String MESS_INVOICE_TABLE = "mess_invoice";
     public static final String MESS_TOKEN_TABLE = "mess_token";
+    public static final String MESS_MEAL_TOKEN_QUEUE_TABLE = "mess_meal_token_queue";
     public static final String COMBO_TABLE = "combo";
     public static final String COMBO_ITEM_TABLE = "combo_item";
     public static final String CART_COMBO_ITEM_TABLE = "cart_combo_item";
     public static final String INVOICE_COMBO_ITEM_TABLE = "invoice_combo_item";
     public static final String INVOICE_PRODUCT_DELETE_QUEUE_TABLE = "invoice_product_delete_queue";
     // Database Version
-    public static final int DATABASE_VERSION = 26;
+    public static final int DATABASE_VERSION = 27;
 
     /** SQL suffix: only rows for the logged-in licence branch. */
     private static String andBranchScope(String tableAlias) {
@@ -224,7 +226,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
 
     public final String EXPENSES_QUERY = "CREATE TABLE IF NOT EXISTS " + EXPENSES_TABLE + "(expensesId INTEGER PRIMARY KEY AUTOINCREMENT, expensesName VARCHAR, expensesAmount VARCHAR, expensesDate VARCHAR, expensesNetworkStatus VARCHAR, expensesStatus TINYINT)";
 
-    public final String MEMBER_QUERY = "CREATE TABLE IF NOT EXISTS " + MEMBER_TABLE + "(memberId INTEGER PRIMARY KEY AUTOINCREMENT, memberName VARCHAR, memberAddress VARCHAR, memberMobileNumber VARCHAR, memberAlternetMobileNumber VARCHAR, memberNetworkStatus VARCHAR, memberStatus TINYINT)";
+    public final String MEMBER_QUERY = "CREATE TABLE IF NOT EXISTS " + MEMBER_TABLE + "(memberId INTEGER PRIMARY KEY AUTOINCREMENT, memberName VARCHAR, memberAddress VARCHAR, memberMobileNumber VARCHAR, memberAlternetMobileNumber VARCHAR, memberNetworkStatus VARCHAR, memberStatus TINYINT, registrationNo VARCHAR)";
     public final String MEMBER_PAYMENT_QUERY = "CREATE TABLE IF NOT EXISTS " + MEMBER_PAYMENT_TABLE + "(paymentId INTEGER PRIMARY KEY AUTOINCREMENT, memberId VARCHAR, memberName VARCHAR, paymentMessAmount VARCHAR, paymentPaidAmount VARCHAR, messTotalDays VARCHAR, paymentDate VARCHAR, paymentNetworkStatus VARCHAR, paymentStatus TINYINT)";
     public final String MESS_INVOICE_QUERY = "CREATE TABLE IF NOT EXISTS " + MESS_INVOICE_TABLE + "(invoiceId INTEGER PRIMARY KEY AUTOINCREMENT, memberId VARCHAR, memberName VARCHAR, messType VARCHAR, messInvoiceDate VARCHAR, messInvoiceNetworkStatus VARCHAR, messInvoiceStatus TINYINT)";
 
@@ -234,6 +236,19 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             + " verifiedDate VARCHAR, tokenNetworkStatus VARCHAR, tokenState VARCHAR DEFAULT 'active',"
             + " tokenStatus TINYINT DEFAULT 0, verifyNetworkStatus VARCHAR, verifyStatus TINYINT DEFAULT 0)";
 
+    public final String MESS_MEAL_TOKEN_QUEUE_QUERY = "CREATE TABLE IF NOT EXISTS " + MESS_MEAL_TOKEN_QUEUE_TABLE
+            + "(id INTEGER PRIMARY KEY AUTOINCREMENT,"
+            + " serverPublicId VARCHAR NOT NULL UNIQUE,"
+            + " tokenNumber VARCHAR,"
+            + " registrationNo VARCHAR,"
+            + " mealSession VARCHAR,"
+            + " tokenDate VARCHAR,"
+            + " memberName VARCHAR,"
+            + " createdAt VARCHAR,"
+            + " printStatus VARCHAR DEFAULT 'RECEIVED',"
+            + " localUpdatedAt VARCHAR)";
+
+    public final String ALTER_MEMBER_REGISTRATION_QUERY = "ALTER TABLE " + MEMBER_TABLE + " ADD COLUMN registrationNo VARCHAR";
     public final String COMBO_QUERY = "CREATE TABLE IF NOT EXISTS " + COMBO_TABLE
             + "(comboId INTEGER PRIMARY KEY AUTOINCREMENT,"
             + " comboName VARCHAR NOT NULL,"
@@ -385,6 +400,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         db.execSQL(MEMBER_PAYMENT_QUERY);
         db.execSQL(MESS_INVOICE_QUERY);
         db.execSQL(MESS_TOKEN_QUERY);
+        db.execSQL(MESS_MEAL_TOKEN_QUEUE_QUERY);
         db.execSQL(COMBO_QUERY);
         db.execSQL(COMBO_ITEM_QUERY);
         db.execSQL(CART_COMBO_ITEM_QUERY);
@@ -479,6 +495,8 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         addColumnIfNotExists(db, EXPENSES_TABLE, "deviceId", ALTER_EXPENSES_DEVICE_QUERY);
         ensureFoodTypeCatalog(db);
         db.execSQL(MESS_TOKEN_QUERY);
+        db.execSQL(MESS_MEAL_TOKEN_QUEUE_QUERY);
+        addColumnIfNotExists(db, MEMBER_TABLE, "registrationNo", ALTER_MEMBER_REGISTRATION_QUERY);
         db.execSQL(COMBO_QUERY);
         db.execSQL(COMBO_ITEM_QUERY);
         db.execSQL(CART_COMBO_ITEM_QUERY);
@@ -4872,6 +4890,28 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
 
     }
 
+    public void insertMessMemberWithReg(String ownerId, String memberName, String
+            memberMobileNumber, String memberAlternetMobileNumber, String memberAddress,
+                                        String registrationNo, String paymentMessAmount, String paymentPaidAmount, String messDays,
+                                        int memberStatus, String memberNetworkStatus) {
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+
+        contentValues.put("memberName", memberName);
+        contentValues.put("memberMobileNumber", memberMobileNumber);
+        contentValues.put("memberAlternetMobileNumber", memberAlternetMobileNumber);
+        contentValues.put("memberAddress", memberAddress);
+        contentValues.put("registrationNo", registrationNo != null ? registrationNo : "");
+        contentValues.put("memberStatus", memberStatus);
+        contentValues.put("memberNetworkStatus", memberNetworkStatus);
+
+        db.insert(MEMBER_TABLE, null, contentValues);
+        db.close();
+
+        getLastInsertedMemberDetails(memberName, paymentMessAmount, paymentPaidAmount, messDays, memberStatus, memberNetworkStatus);
+    }
+
     public void getLastInsertedMemberDetails(String memberName, String
             paymentMessAmount, String paymentPaidAmount, String messDays, int memberStatus, String
                                                      memberNetworkStatus) {
@@ -5148,6 +5188,83 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         db.insert(MESS_TOKEN_TABLE, null, contentValues);
         db.close();
         return true;
+    }
+
+    public synchronized boolean upsertMessMealTokenQueue(String serverPublicId, String tokenNumber,
+                                                         String registrationNo, String mealSession,
+                                                         String tokenDate, String memberName,
+                                                         String createdAt, String printStatus) {
+        if (serverPublicId == null || serverPublicId.trim().isEmpty()) {
+            return false;
+        }
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor existing = db.rawQuery(
+                "SELECT id, printStatus FROM " + MESS_MEAL_TOKEN_QUEUE_TABLE + " WHERE serverPublicId = ? LIMIT 1",
+                new String[]{serverPublicId});
+        ContentValues cv = new ContentValues();
+        cv.put("tokenNumber", tokenNumber);
+        cv.put("registrationNo", registrationNo);
+        cv.put("mealSession", mealSession);
+        cv.put("tokenDate", tokenDate);
+        cv.put("memberName", memberName != null ? memberName : "");
+        cv.put("createdAt", createdAt != null ? createdAt : "");
+        cv.put("localUpdatedAt", String.valueOf(System.currentTimeMillis()));
+        boolean ok;
+        if (existing.moveToFirst()) {
+            String cur = existing.getString(existing.getColumnIndex("printStatus"));
+            if (!"PRINTED".equalsIgnoreCase(cur) && printStatus != null) {
+                cv.put("printStatus", printStatus);
+            }
+            ok = db.update(MESS_MEAL_TOKEN_QUEUE_TABLE, cv, "serverPublicId=?", new String[]{serverPublicId}) > 0;
+        } else {
+            cv.put("serverPublicId", serverPublicId);
+            cv.put("printStatus", printStatus != null ? printStatus : "RECEIVED");
+            ok = db.insert(MESS_MEAL_TOKEN_QUEUE_TABLE, null, cv) > 0;
+        }
+        existing.close();
+        db.close();
+        return ok;
+    }
+
+    public synchronized void updateMessMealTokenQueueStatus(String serverPublicId, String printStatus) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put("printStatus", printStatus);
+        cv.put("localUpdatedAt", String.valueOf(System.currentTimeMillis()));
+        db.update(MESS_MEAL_TOKEN_QUEUE_TABLE, cv, "serverPublicId=?", new String[]{serverPublicId});
+        db.close();
+    }
+
+    public synchronized android.database.Cursor getNextMessMealPrintJob() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.rawQuery(
+                "SELECT * FROM " + MESS_MEAL_TOKEN_QUEUE_TABLE
+                        + " WHERE printStatus IN ('RECEIVED','PRINT_PENDING','PRINT_FAILED') "
+                        + " ORDER BY id ASC LIMIT 1",
+                null);
+    }
+
+    public List<MessMealTokenItem> getMessMealTokenQueueToday(String tokenDate) {
+        List<MessMealTokenItem> list = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor c = db.rawQuery(
+                "SELECT * FROM " + MESS_MEAL_TOKEN_QUEUE_TABLE + " WHERE tokenDate = ? ORDER BY id DESC",
+                new String[]{tokenDate != null ? tokenDate : ""});
+        while (c.moveToNext()) {
+            MessMealTokenItem item = new MessMealTokenItem();
+            item.tokenId = c.getString(c.getColumnIndex("serverPublicId"));
+            item.tokenNumber = c.getString(c.getColumnIndex("tokenNumber"));
+            item.registrationNo = c.getString(c.getColumnIndex("registrationNo"));
+            item.mealSession = c.getString(c.getColumnIndex("mealSession"));
+            item.date = c.getString(c.getColumnIndex("tokenDate"));
+            item.printStatus = c.getString(c.getColumnIndex("printStatus"));
+            item.createdAt = c.getString(c.getColumnIndex("createdAt"));
+            item.memberName = c.getString(c.getColumnIndex("memberName"));
+            list.add(item);
+        }
+        c.close();
+        db.close();
+        return list;
     }
 
     public MessTokenResponse getMessTokenByCode(String tokenCode) {

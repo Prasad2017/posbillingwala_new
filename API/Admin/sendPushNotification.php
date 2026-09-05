@@ -19,10 +19,21 @@ $body = isset($_POST['message']) ? trim((string) $_POST['message']) : '';
 if ($body === '' && isset($_POST['body'])) {
     $body = trim((string) $_POST['body']);
 }
+$audience = isset($_POST['audience']) ? trim((string) $_POST['audience']) : 'pos';
 $target = isset($_POST['target']) ? trim((string) $_POST['target']) : 'active';
 $licenseIds = isset($_POST['licenseIds']) ? trim((string) $_POST['licenseIds']) : '';
 $url = isset($_POST['url']) ? trim((string) $_POST['url']) : '';
 $imageUrl = isset($_POST['imageUrl']) ? trim((string) $_POST['imageUrl']) : '';
+
+// Backward compatible: if audience omitted but target looks like app name
+if ($audience === '' || $audience === 'active' || $audience === 'all' && !isset($_POST['audience'])) {
+    // keep defaults — audience=pos unless explicitly set
+}
+if (isset($_POST['audience'])) {
+    $audience = strtolower(trim((string) $_POST['audience']));
+} else {
+    $audience = 'pos';
+}
 
 $extraData = array();
 if ($url !== '') {
@@ -32,6 +43,6 @@ if ($imageUrl !== '') {
     $extraData['image_url'] = $imageUrl;
 }
 
-$result = fcm_broadcast_promotional($con, $title, $body, $target, $licenseIds, $extraData);
+$result = fcm_broadcast_promotional($con, $title, $body, $target, $licenseIds, $extraData, $audience);
 echo json_encode($result);
 mysqli_close($con);

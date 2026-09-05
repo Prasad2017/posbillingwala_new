@@ -65,6 +65,87 @@
         </LinearLayout>
 
         <LinearLayout
+            android:id="@+id/qrManagementLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_receipt"
+                app:tint="@color/white" />
+
+            <TextView
+                android:id="@+id/qrManagementTxt"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:fontFamily="@font/poppinsmedium"
+                android:gravity="center|start"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:text="@string/ui_qr_management"
+                android:textColor="@color/white"
+                android:textSize="15dp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/todayTokensLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_receipt"
+                app:tint="@color/white" />
+
+            <TextView
+                android:id="@+id/todayTokensTxt"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:fontFamily="@font/poppinsmedium"
+                android:gravity="center|start"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:text="@string/ui_todays_mess_tokens"
+                android:textColor="@color/white"
+                android:textSize="15dp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/mealSessionsLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_receipt"
+                app:tint="@color/white" />
+
+            <TextView
+                android:id="@+id/mealSessionsTxt"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:fontFamily="@font/poppinsmedium"
+                android:gravity="center|start"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:text="@string/ui_meal_sessions"
+                android:textColor="@color/white"
+                android:textSize="15dp" />
+        </LinearLayout>
+
+        <LinearLayout
             android:id="@+id/walkInTokenLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

@@ -332,7 +332,8 @@ public interface ApiInterface {
                                         @Field("memberAltenetMobileNumber") String memberAlternetMobileNumber,
                                         @Field("memberAddress") String memberAddress,
                                         @Field("memberNetworkStatus") String memberNetworkStatus,
-                                        @Field("memberStatus") String memberStatus);
+                                        @Field("memberStatus") String memberStatus,
+                                        @Field("registrationNo") String registrationNo);
 
     @FormUrlEncoded
     @POST("insertMessPayment.php")
@@ -354,6 +355,64 @@ public interface ApiInterface {
                                          @Field("messInvoiceDate") String messInvoiceDate,
                                          @Field("messInvoiceNetworkStatus") String messInvoiceNetworkStatus,
                                          @Field("messInvoiceStatus") String messInvoiceStatus);
+
+    @GET("mess_qr_get.php")
+    Call<AllApiResponse> getMessQr(@Query("userId") String userId);
+
+    @FormUrlEncoded
+    @POST("mess_qr_generate.php")
+    Call<AllApiResponse> generateMessQr(@Field("userId") String userId,
+                                        @Field("android_device_id") String androidDeviceId,
+                                        @Field("messLabel") String messLabel,
+                                        @Field("branchLabel") String branchLabel);
+
+    @FormUrlEncoded
+    @POST("mess_qr_regenerate.php")
+    Call<AllApiResponse> regenerateMessQr(@Field("userId") String userId,
+                                          @Field("android_device_id") String androidDeviceId,
+                                          @Field("messLabel") String messLabel,
+                                          @Field("branchLabel") String branchLabel);
+
+    @FormUrlEncoded
+    @POST("mess_qr_set_status.php")
+    Call<AllApiResponse> setMessQrStatus(@Field("userId") String userId,
+                                         @Field("status") String status,
+                                         @Field("android_device_id") String androidDeviceId);
+
+    @GET("mess_meal_session_list.php")
+    Call<AllApiResponse> getMessMealSessions(@Query("userId") String userId);
+
+    @FormUrlEncoded
+    @POST("mess_meal_session_save.php")
+    Call<AllApiResponse> saveMessMealSession(@Field("userId") String userId,
+                                             @Field("sessionId") String sessionId,
+                                             @Field("sessionName") String sessionName,
+                                             @Field("startTime") String startTime,
+                                             @Field("endTime") String endTime,
+                                             @Field("tokenPrefix") String tokenPrefix,
+                                             @Field("isActive") String isActive,
+                                             @Field("menuNotes") String menuNotes,
+                                             @Field("sortOrder") String sortOrder);
+
+    @GET("mess_meal_token_pending.php")
+    Call<AllApiResponse> getMessMealTokenPending(@Query("userId") String userId,
+                                                 @Query("android_device_id") String androidDeviceId);
+
+    @GET("mess_meal_token_today.php")
+    Call<AllApiResponse> getMessMealTokenToday(@Query("userId") String userId,
+                                               @Query("date") String date);
+
+    @FormUrlEncoded
+    @POST("mess_meal_token_print_ack.php")
+    Call<AllApiResponse> ackMessMealTokenPrint(@Field("userId") String userId,
+                                               @Field("tokenId") String tokenId,
+                                               @Field("result") String result,
+                                               @Field("android_device_id") String androidDeviceId);
+
+    @FormUrlEncoded
+    @POST("mess_meal_token_cancel.php")
+    Call<AllApiResponse> cancelMessMealToken(@Field("userId") String userId,
+                                             @Field("tokenId") String tokenId);
 
     @GET("getMessTokenList.php")
     Call<AllApiResponse> getMessTokenList(@Query("userId") String userId);

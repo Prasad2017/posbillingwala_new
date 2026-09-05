@@ -86,6 +86,31 @@ public class AllApiResponse {
     @Expose
     public List<MessTokenResponse> messTokenResponseList;
 
+    @SerializedName("qr")
+    @Expose
+    public MessQrInfo messQr;
+    @SerializedName("hasQr")
+    @Expose
+    public String hasQr;
+    @SerializedName("sessions")
+    @Expose
+    public List<MessMealSessionItem> messSessions;
+    @SerializedName("tokens")
+    @Expose
+    public List<MessMealTokenItem> messMealTokens;
+    @SerializedName("counts")
+    @Expose
+    public List<MessSessionCount> messSessionCounts;
+    @SerializedName("registrationNo")
+    @Expose
+    public String registrationNo;
+    @SerializedName("qrStatus")
+    @Expose
+    public String qrStatus;
+    @SerializedName("printStatus")
+    @Expose
+    public String printStatus;
+
     @SerializedName("tickets")
     @Expose
     private List<SupportTicketItem> tickets;

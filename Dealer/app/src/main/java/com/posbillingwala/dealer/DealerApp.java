@@ -2,6 +2,8 @@ package com.posbillingwala.dealer;
 
 import android.app.Application;
 
+import com.posbillingwala.dealer.Extra.FcmTokenManager;
+import com.posbillingwala.dealer.Extra.PushNotificationHelper;
 import com.posbillingwala.dealer.Extra.ScreenshotConfig;
 import com.posbillingwala.dealer.Retrofit.Api;
 
@@ -12,5 +14,7 @@ public class DealerApp extends Application {
         super.onCreate();
         ScreenshotConfig.install(this);
         Api.bindContext(this);
+        PushNotificationHelper.ensureChannel(this);
+        FcmTokenManager.registerIfLoggedIn(this);
     }
 }
