@@ -27,7 +27,7 @@
                 android:layout_marginStart="15dp"
                 android:src="@drawable/ic_back"
                 app:tint="@color/white" />
-
+
 
             <com.pos_billingwala.Extra.PosCardView
                 android:id="@+id/printInvoiceCardView"
@@ -486,6 +486,8 @@
                 android:layout_gravity="center"
                 android:layout_margin="10dp" />
 
+            <include layout="@layout/include_print_powered_by" />
+
         </LinearLayout>
 
     </androidx.core.widget.NestedScrollView>
@@ -848,6 +850,8 @@
                 android:layout_height="150dp"
                 android:layout_gravity="center"
                 android:layout_margin="10dp" />
+
+            <include layout="@layout/include_print_powered_by" />
 
         </LinearLayout>
 
@@ -1227,6 +1231,8 @@
                 android:text="@string/ui_thank_visit_again"
                 android:textColor="@color/black"
                 android:textSize="15dp" />
+
+            <include layout="@layout/include_print_powered_by" />
 
         </LinearLayout>
 

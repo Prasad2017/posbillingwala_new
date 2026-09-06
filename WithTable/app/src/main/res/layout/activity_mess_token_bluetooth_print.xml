@@ -110,6 +110,8 @@
                 android:textColor="@color/black"
                 android:textSize="10dp" />
 
+            <include layout="@layout/include_print_powered_by" />
+
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 

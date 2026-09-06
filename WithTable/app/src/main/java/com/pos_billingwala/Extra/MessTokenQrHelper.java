@@ -224,4 +224,54 @@ public final class MessTokenQrHelper {
         }
         return "Meal";
     }
+
+    /**
+     * QR with mess name above in bold CAPITAL letters. No URL text.
+     * Used for share / download / print.
+     */
+    @Nullable
+    public static Bitmap composeMessQrWithTitle(@Nullable Bitmap qrBitmap, @Nullable String messName) {
+        if (qrBitmap == null) {
+            return null;
+        }
+        String title = messName != null ? messName.trim().toUpperCase(java.util.Locale.getDefault()) : "";
+        if (title.isEmpty()) {
+            title = "MESS";
+        }
+
+        int qrW = qrBitmap.getWidth();
+        int qrH = qrBitmap.getHeight();
+        float titleSize = Math.max(28f, qrW * 0.055f);
+        float padTop = titleSize * 0.6f;
+        float padBottom = titleSize * 0.45f;
+        float gap = titleSize * 0.55f;
+
+        Paint titlePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        titlePaint.setColor(Color.BLACK);
+        titlePaint.setTypeface(android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD));
+        titlePaint.setTextAlign(Paint.Align.CENTER);
+        titlePaint.setTextSize(titleSize);
+        titlePaint.setFakeBoldText(true);
+
+        // Shrink text if title is wider than QR.
+        float maxTextWidth = qrW * 0.94f;
+        while (titlePaint.measureText(title) > maxTextWidth && titlePaint.getTextSize() > 16f) {
+            titlePaint.setTextSize(titlePaint.getTextSize() - 1f);
+        }
+
+        Paint.FontMetrics fm = titlePaint.getFontMetrics();
+        float titleHeight = fm.descent - fm.ascent;
+        int outH = Math.round(padTop + titleHeight + gap + qrH + padBottom);
+        int outW = qrW;
+
+        Bitmap out = Bitmap.createBitmap(outW, outH, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(out);
+        canvas.drawColor(Color.WHITE);
+
+        float titleX = outW / 2f;
+        float titleY = padTop - fm.ascent;
+        canvas.drawText(title, titleX, titleY, titlePaint);
+        canvas.drawBitmap(qrBitmap, 0, padTop + titleHeight + gap, null);
+        return out;
+    }
 }

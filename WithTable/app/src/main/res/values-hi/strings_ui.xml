@@ -67,6 +67,8 @@
     <string name="ui_data_management">डेटा प्रबंधन</string>
     <string name="ui_delete_all_invoices_hint">क्लाउड सिंक के बाद सभी स्थानीय इनवॉइस हटाएं</string>
     <string name="ui_designed_by_pos_billingwala">POS Billingwala द्वारा डिज़ाइन किया गया</string>
+    <string name="print_powered_by">Powered by POS Billingwala</string>
+    <string name="print_powered_by_website">www.posbillingwala.com</string>
     <string name="ui_discount">छूट</string>
     <string name="ui_discount_detail">छूट विवरण</string>
     <string name="ui_discount_type">छूट प्रकार*</string>

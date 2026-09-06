@@ -210,7 +210,7 @@ public final class MessMealTokenPrintWorker {
     private static Bitmap buildSlipBitmap(String tokenNumber, String registrationNo,
                                           String mealSession, String tokenDate, String createdAt) {
         int width = 384;
-        int height = 420;
+        int height = 480;
         Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bmp);
         canvas.drawColor(Color.WHITE);
@@ -231,6 +231,11 @@ public final class MessMealTokenPrintWorker {
         big.setTextAlign(Paint.Align.CENTER);
         big.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
         big.setTextSize(40);
+
+        Paint promo = new Paint(Paint.ANTI_ALIAS_FLAG);
+        promo.setColor(Color.BLACK);
+        promo.setTextAlign(Paint.Align.CENTER);
+        promo.setTextSize(16);
 
         float cx = width / 2f;
         float y = 36;
@@ -261,6 +266,10 @@ public final class MessMealTokenPrintWorker {
             y += 28;
         }
         canvas.drawLine(24, y, width - 24, y, body);
+        y += 28;
+        canvas.drawText("Powered by POS Billingwala", cx, y, promo);
+        y += 22;
+        canvas.drawText("www.posbillingwala.com", cx, y, promo);
         return bmp;
     }
 

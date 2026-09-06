@@ -301,11 +301,10 @@ public class Home extends Fragment implements View.OnClickListener {
         binding.swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
+                // Always refresh local catalog counts; sales may also come from cloud.
+                getTotalCount();
                 if (DetectConnection.checkInternetConnection(activity)) {
                     LicenceKeyReceiver.getLicenceKeyData(activity, true);
-                    fetchHomeSalesFromCloud(true);
-                } else {
-                    getTotalCount();
                 }
                 binding.swipeRefreshLayout.setRefreshing(false);
             }
@@ -704,23 +703,16 @@ public class Home extends Fragment implements View.OnClickListener {
                 }
                 cursor.close();
 
-                cursor = database.rawQuery("SELECT COUNT(subcategoryId) as totalSubcategory FROM " + POSBillingWalaDatabase.PRODUCT_SUBCATEGORY_TABLE + " WHERE subcategoryDeletedStatus = '0'", null);
-                if (cursor.moveToNext()) {
-                    totalSubcategory = cursor.getString(cursor.getColumnIndex("totalSubcategory"));
-                }
-                cursor.close();
-
-                cursor = database.rawQuery("SELECT COUNT(productId) as totalProduct FROM " + POSBillingWalaDatabase.PRODUCT_TABLE + " WHERE categoryName !='' AND productDeletedStatus='0'", null);
-                if (cursor.moveToNext()) {
-                    totalProduct = cursor.getString(cursor.getColumnIndex("totalProduct"));
-                }
-                cursor.close();
-
-                cursor = database.rawQuery("SELECT COUNT(comboId) as totalCombo FROM " + POSBillingWalaDatabase.COMBO_TABLE + " WHERE IFNULL(comboDeletedStatus,'0')='0'", null);
-                if (cursor.moveToNext()) {
-                    totalCombo = cursor.getString(cursor.getColumnIndex("totalCombo"));
-                }
-                cursor.close();
+                totalSubcategory = queryCount(database,
+                        "SELECT COUNT(*) FROM " + POSBillingWalaDatabase.PRODUCT_SUBCATEGORY_TABLE
+                                + " WHERE IFNULL(subcategoryDeletedStatus, '0') = '0'");
+                totalProduct = queryCount(database,
+                        "SELECT COUNT(*) FROM " + POSBillingWalaDatabase.PRODUCT_TABLE
+                                + " WHERE IFNULL(categoryName, '') != ''"
+                                + " AND IFNULL(productDeletedStatus, '0') = '0'");
+                totalCombo = queryCount(database,
+                        "SELECT COUNT(*) FROM " + POSBillingWalaDatabase.COMBO_TABLE
+                                + " WHERE IFNULL(comboDeletedStatus, '0') = '0'");
 
                 if (filter == SALES_FILTER_MONTH) {
                     cursor = database.rawQuery("SELECT SUM(totalAmount) as totalAmount FROM " + POSBillingWalaDatabase.INVOICE_TABLE
@@ -842,9 +834,6 @@ public class Home extends Fragment implements View.OnClickListener {
                 final String todayTrend = formatTrendLine(
                         trendVsYesterday,
                         normalizeTrendRaw(body.todaySalesTrend));
-                final String subcategory = body.totalSubcategory != null ? body.totalSubcategory : null;
-                final String product = body.totalProduct != null ? body.totalProduct : null;
-                final String combo = body.totalCombo != null ? body.totalCombo : null;
 
                 AppExecutors.get().main(() -> {
                     if (!isAdded() || binding == null) {
@@ -854,15 +843,7 @@ public class Home extends Fragment implements View.OnClickListener {
                     binding.todaySaleAmount.setText(todayText);
                     applyTrendText(binding.totalSalesTrend, primaryTrend);
                     applyTrendText(binding.todaySalesTrend, todayTrend);
-                    if (subcategory != null) {
-                        binding.totalSubcategory.setText(subcategory);
-                    }
-                    if (product != null) {
-                        binding.totalProduct.setText(product);
-                    }
-                    if (combo != null) {
-                        binding.totalCombo.setText(combo);
-                    }
+                    // Catalog totals stay local (device SQLite) — cloud sales must not overwrite them.
                     applySalesPeriodLabels(filter);
                 });
             } catch (Exception e) {
@@ -872,6 +853,27 @@ public class Home extends Fragment implements View.OnClickListener {
                 }
             }
         });
+    }
+
+    /** Safe COUNT(*) helper — never throws into the caller. */
+    private static String queryCount(SQLiteDatabase database, String sql) {
+        Cursor c = null;
+        try {
+            c = database.rawQuery(sql, null);
+            if (c != null && c.moveToFirst()) {
+                return String.valueOf(c.getInt(0));
+            }
+        } catch (Exception e) {
+            Log.e("Home", "queryCount failed: " + sql, e);
+        } finally {
+            if (c != null) {
+                try {
+                    c.close();
+                } catch (Exception ignored) {
+                }
+            }
+        }
+        return "0";
     }
 
     private static String normalizeTrendRaw(String trendRaw) {

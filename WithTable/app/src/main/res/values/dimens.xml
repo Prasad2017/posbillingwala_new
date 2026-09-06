@@ -49,7 +49,7 @@
     <dimen name="text_row_compact">13sp</dimen>
 
     <dimen name="home_sales_card_min_height">118dp</dimen>
-    <dimen name="home_catalog_card_height">124dp</dimen>
+    <dimen name="home_catalog_card_height">136dp</dimen>
     <dimen name="home_billing_card_height">88dp</dimen>
     <dimen name="home_card_arrow_overlap">6dp</dimen>
 

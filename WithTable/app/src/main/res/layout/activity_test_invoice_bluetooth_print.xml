@@ -187,6 +187,8 @@
                 android:layout_margin="8dp"
                 android:scaleType="fitCenter"
                 android:visibility="gone" />
+
+            <include layout="@layout/include_print_powered_by" />
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
@@ -314,6 +316,8 @@
                 android:layout_margin="10dp"
                 android:scaleType="fitCenter"
                 android:visibility="gone" />
+
+            <include layout="@layout/include_print_powered_by" />
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
@@ -462,6 +466,8 @@
                         android:layout_marginTop="10dp"
                         android:scaleType="fitCenter"
                         android:visibility="gone" />
+
+                    <include layout="@layout/include_print_powered_by" />
                 </LinearLayout>
             </com.pos_billingwala.Extra.PosCardView>
         </LinearLayout>

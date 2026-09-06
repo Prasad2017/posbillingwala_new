@@ -43,8 +43,8 @@ import retrofit2.Response;
 public class MessQrManagementActivity extends BaseActivity {
 
     private ImageView qrImage;
-    private TextView qrStatus, qrMeta, qrUrl;
-    private Button btnGenerate, btnShare, btnDownload, btnPrintQr, btnRegenerate, btnDeactivate;
+    private TextView qrStatus, qrMeta;
+    private Button btnGenerate, btnShare, btnDownload, btnPrintQr, btnDeactivate;
     private MessQrInfo currentQr;
     private Bitmap currentBitmap;
     private String messLabel = "Mess";
@@ -60,12 +60,10 @@ public class MessQrManagementActivity extends BaseActivity {
         qrImage = findViewById(R.id.qrImage);
         qrStatus = findViewById(R.id.qrStatus);
         qrMeta = findViewById(R.id.qrMeta);
-        qrUrl = findViewById(R.id.qrUrl);
         btnGenerate = findViewById(R.id.btnGenerate);
         btnShare = findViewById(R.id.btnShare);
         btnDownload = findViewById(R.id.btnDownload);
         btnPrintQr = findViewById(R.id.btnPrintQr);
-        btnRegenerate = findViewById(R.id.btnRegenerate);
         btnDeactivate = findViewById(R.id.btnDeactivate);
 
         findViewById(R.id.backBtn).setOnClickListener(v -> finish());
@@ -84,8 +82,7 @@ public class MessQrManagementActivity extends BaseActivity {
             printerSettingResponseList.addAll(printers);
         }
 
-        btnGenerate.setOnClickListener(v -> generateOrRefresh(false));
-        btnRegenerate.setOnClickListener(v -> generateOrRefresh(true));
+        btnGenerate.setOnClickListener(v -> generateOrRefresh());
         btnDeactivate.setOnClickListener(v -> setStatus("INACTIVE"));
         btnShare.setOnClickListener(v -> shareQr());
         btnDownload.setOnClickListener(v -> downloadQr());
@@ -124,19 +121,15 @@ public class MessQrManagementActivity extends BaseActivity {
         });
     }
 
-    private void generateOrRefresh(boolean regenerate) {
-        Call<AllApiResponse> call = regenerate
-                ? Api.getClient(this).regenerateMessQr(MainActivity.userId, deviceId(), messLabel, branchLabel)
-                : Api.getClient(this).generateMessQr(MainActivity.userId, deviceId(), messLabel, branchLabel);
-        call.enqueue(new Callback<AllApiResponse>() {
+    private void generateOrRefresh() {
+        Api.getClient(this).generateMessQr(MainActivity.userId, deviceId(), messLabel, branchLabel)
+                .enqueue(new Callback<AllApiResponse>() {
             @Override
             public void onResponse(Call<AllApiResponse> call, Response<AllApiResponse> response) {
                 if (response.isSuccessful() && response.body() != null && "1".equals(response.body().status)
                         && response.body().messQr != null) {
                     bindQr(response.body().messQr);
-                    Toast.makeText(MessQrManagementActivity.this,
-                            regenerate ? R.string.ui_qr_regenerated : R.string.ui_qr_generated,
-                            Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MessQrManagementActivity.this, R.string.ui_qr_generated, Toast.LENGTH_SHORT).show();
                 } else {
                     Toast.makeText(MessQrManagementActivity.this, "Network error. Try again.", Toast.LENGTH_SHORT).show();
                 }
@@ -168,14 +161,32 @@ public class MessQrManagementActivity extends BaseActivity {
         qrStatus.setText("Status: " + (qr.status != null ? qr.status : ""));
         String mess = qr.messLabel != null && !qr.messLabel.isEmpty() ? qr.messLabel : messLabel;
         String branch = qr.branchLabel != null && !qr.branchLabel.isEmpty() ? qr.branchLabel : branchLabel;
+        messLabel = mess;
         qrMeta.setText("Mess: " + mess + "\nBranch: " + branch);
-        qrUrl.setText(qr.qrUrl != null ? qr.qrUrl : "");
         if (qr.qrUrl != null) {
             currentBitmap = MessTokenQrHelper.generateBrandedMessQr(this, qr.qrUrl, 900);
             if (currentBitmap != null) {
                 qrImage.setImageBitmap(currentBitmap);
             }
         }
+    }
+
+    private String resolvedMessName() {
+        if (currentQr != null && currentQr.messLabel != null && !currentQr.messLabel.trim().isEmpty()) {
+            return currentQr.messLabel.trim();
+        }
+        return messLabel != null ? messLabel : "Mess";
+    }
+
+    /** QR image with bold CAPITAL mess name — no URL text. */
+    private Bitmap qrSharePrintBitmap(boolean forPrint) {
+        Bitmap qrOnly;
+        if (forPrint) {
+            qrOnly = qrOnlyBitmapForPrint();
+        } else {
+            qrOnly = qrOnlyBitmap();
+        }
+        return MessTokenQrHelper.composeMessQrWithTitle(qrOnly, resolvedMessName());
     }
 
     /** QR image only (branded) — no title / caption / URL text. */
@@ -198,8 +209,8 @@ public class MessQrManagementActivity extends BaseActivity {
     }
 
     private void shareQr() {
-        Bitmap only = qrOnlyBitmap();
-        if (only == null) {
+        Bitmap composed = qrSharePrintBitmap(false);
+        if (composed == null) {
             Toast.makeText(this, R.string.ui_no_active_qr, Toast.LENGTH_SHORT).show();
             return;
         }
@@ -209,7 +220,7 @@ public class MessQrManagementActivity extends BaseActivity {
             dir.mkdirs();
             File file = new File(dir, "mess_qr.png");
             FileOutputStream fos = new FileOutputStream(file);
-            only.compress(Bitmap.CompressFormat.PNG, 100, fos);
+            composed.compress(Bitmap.CompressFormat.PNG, 100, fos);
             fos.close();
             Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".provider", file);
             Intent share = new Intent(Intent.ACTION_SEND);
@@ -223,8 +234,8 @@ public class MessQrManagementActivity extends BaseActivity {
     }
 
     private void downloadQr() {
-        Bitmap only = qrOnlyBitmap();
-        if (only == null) {
+        Bitmap composed = qrSharePrintBitmap(false);
+        if (composed == null) {
             Toast.makeText(this, R.string.ui_no_active_qr, Toast.LENGTH_SHORT).show();
             return;
         }
@@ -237,7 +248,7 @@ public class MessQrManagementActivity extends BaseActivity {
             if (uri != null) {
                 OutputStream os = getContentResolver().openOutputStream(uri);
                 if (os != null) {
-                    only.compress(Bitmap.CompressFormat.PNG, 100, os);
+                    composed.compress(Bitmap.CompressFormat.PNG, 100, os);
                     os.close();
                 }
                 Toast.makeText(this, R.string.ui_qr_saved, Toast.LENGTH_SHORT).show();
@@ -248,8 +259,8 @@ public class MessQrManagementActivity extends BaseActivity {
     }
 
     private void printQrOnPrinter() {
-        Bitmap only = qrOnlyBitmapForPrint();
-        if (only == null) {
+        Bitmap composed = qrSharePrintBitmap(true);
+        if (composed == null) {
             Toast.makeText(this, R.string.ui_no_active_qr, Toast.LENGTH_SHORT).show();
             return;
         }
@@ -272,7 +283,7 @@ public class MessQrManagementActivity extends BaseActivity {
         }
         Toast.makeText(this, getString(R.string.toast_printing_in_progress), Toast.LENGTH_SHORT).show();
         PrinterConnectionHelper.ensureBillPrinterAsync(this, addr, () -> printExecutor.execute(() -> {
-            boolean ok = writeQrToBillPrinter(only);
+            boolean ok = writeQrToBillPrinter(composed);
             runOnUiThread(() -> Toast.makeText(MessQrManagementActivity.this,
                     ok ? "QR printed" : "Unable to print QR. Check printer.",
                     Toast.LENGTH_SHORT).show());

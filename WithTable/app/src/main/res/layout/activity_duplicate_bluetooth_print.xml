@@ -400,6 +400,8 @@
                 android:layout_gravity="center"
                 android:layout_margin="10dp" />
 
+            <include layout="@layout/include_print_powered_by" />
+
         </LinearLayout>
 
     </androidx.core.widget.NestedScrollView>
@@ -760,6 +762,8 @@
                 android:layout_height="150dp"
                 android:layout_gravity="center"
                 android:layout_margin="10dp" />
+
+            <include layout="@layout/include_print_powered_by" />
 
         </LinearLayout>
 

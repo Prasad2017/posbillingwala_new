@@ -26,7 +26,7 @@
                 android:layout_marginStart="15dp"
                 android:src="@drawable/ic_back"
                 app:tint="@color/white" />
-
+
 
             <ImageView
                 android:id="@+id/shareIcon"
@@ -411,6 +411,8 @@
                 android:text="@string/ui_thank_visit_again"
                 android:textColor="@color/black"
                 android:textSize="15dp" />
+
+            <include layout="@layout/include_print_powered_by" />
 
         </LinearLayout>
 

@@ -4,6 +4,8 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -21,11 +23,12 @@ import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Activity.MessMealSessionsActivity;
 import com.pos_billingwala.Activity.MessMealTokenTodayActivity;
 import com.pos_billingwala.Activity.MessQrManagementActivity;
-import com.pos_billingwala.Activity.MessTokenScanActivity;
+import com.pos_billingwala.Adapter.MessInvoiceAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.BottomSheetUi;
 import com.pos_billingwala.Extra.MessMealTokenPrintWorker;
 import com.pos_billingwala.Model.CompanyResponse;
+import com.pos_billingwala.Model.MemberResponse;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentInvoiceMessBinding;
 
@@ -39,6 +42,9 @@ public class InvoiceMess extends Fragment implements View.OnClickListener {
     View view;
     POSBillingWalaDatabase posBillingWalaDatabase;
     List<CompanyResponse> companyResponseList = new ArrayList<>();
+    List<MemberResponse> memberResponseList = new ArrayList<>();
+    List<MemberResponse> searchMemberResponseList = new ArrayList<>();
+    MessInvoiceAdapter messInvoiceAdapter;
     FragmentInvoiceMessBinding binding;
 
     @Override
@@ -61,14 +67,61 @@ public class InvoiceMess extends Fragment implements View.OnClickListener {
             return false;
         });
 
+        if (binding.searchMessMember.getText() != null) {
+            binding.searchMessMember.setSelection(binding.searchMessMember.getText().toString().length());
+        }
+        binding.searchMessMember.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                searchMessMember(s.toString());
+            }
+        });
+
         binding.homeCardView.setOnClickListener(this);
         binding.memberListLayout.setOnClickListener(this);
-        binding.scanVerifyLayout.setOnClickListener(this);
         binding.qrManagementLayout.setOnClickListener(this);
         binding.todayTokensLayout.setOnClickListener(this);
         binding.mealSessionsLayout.setOnClickListener(this);
 
         return view;
+    }
+
+    public void searchMessMember(String memberData) {
+        searchMemberResponseList.clear();
+        if (!memberData.isEmpty()) {
+            for (int i = 0; i < memberResponseList.size(); i++) {
+                String name = memberResponseList.get(i).getMemberName() != null
+                        ? memberResponseList.get(i).getMemberName() : "";
+                String mobile = memberResponseList.get(i).getMemberMobileNumber() != null
+                        ? memberResponseList.get(i).getMemberMobileNumber() : "";
+                String altMobile = memberResponseList.get(i).getMemberAlternetMobileNumber() != null
+                        ? memberResponseList.get(i).getMemberAlternetMobileNumber() : "";
+                String regNo = memberResponseList.get(i).getRegistrationNo() != null
+                        ? memberResponseList.get(i).getRegistrationNo() : "";
+                if ((name + mobile + altMobile + regNo).toLowerCase().contains(memberData.toLowerCase().trim())) {
+                    searchMemberResponseList.add(memberResponseList.get(i));
+                }
+            }
+        } else {
+            searchMemberResponseList = new ArrayList<>();
+            searchMemberResponseList.addAll(memberResponseList);
+        }
+
+        messInvoiceAdapter = new MessInvoiceAdapter(activity, searchMemberResponseList);
+        binding.recyclerView.setAdapter(messInvoiceAdapter);
+        messInvoiceAdapter.notifyDataSetChanged();
+
+        boolean hasResults = !searchMemberResponseList.isEmpty();
+        binding.recyclerView.setVisibility(hasResults ? View.VISIBLE : View.GONE);
+        binding.noDataFound.setVisibility(hasResults ? View.GONE : View.VISIBLE);
     }
 
     @Override
@@ -78,8 +131,6 @@ public class InvoiceMess extends Fragment implements View.OnClickListener {
             ((MainActivity) activity).navigateBack();
         } else if (id == R.id.memberListLayout) {
             setMemberListPassword();
-        } else if (id == R.id.scanVerifyLayout) {
-            activity.startActivity(new Intent(activity, MessTokenScanActivity.class));
         } else if (id == R.id.qrManagementLayout) {
             activity.startActivity(new Intent(activity, MessQrManagementActivity.class));
         } else if (id == R.id.todayTokensLayout) {
@@ -130,9 +181,20 @@ public class InvoiceMess extends Fragment implements View.OnClickListener {
     public void getCompanyDetails() {
         companyResponseList.clear();
         companyResponseList = posBillingWalaDatabase.getCompanyDetails();
-        if (companyResponseList.isEmpty()) {
+        if (!companyResponseList.isEmpty()) {
+            getMemberList();
+        } else {
             Toast.makeText(activity, getString(R.string.toast_please_fill_shop_details), Toast.LENGTH_SHORT).show();
             ((MainActivity) activity).loadFragment(new CompanyDetailSetting(), true);
         }
+    }
+
+    public void getMemberList() {
+        memberResponseList.clear();
+        memberResponseList = posBillingWalaDatabase.getMemberList();
+        String query = binding.searchMessMember.getText() != null
+                ? binding.searchMessMember.getText().toString() : "";
+        searchMessMember(query);
+        binding.messOrderLayout.setVisibility(View.VISIBLE);
     }
 }

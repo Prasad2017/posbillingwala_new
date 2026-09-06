@@ -84,18 +84,21 @@
 
     </com.google.android.material.appbar.AppBarLayout>
 
-    <ScrollView
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@+id/appBarLayout"
-        android:fillViewport="true">
+        android:orientation="vertical">
 
         <LinearLayout
             android:id="@+id/messMenuGrid"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="12dp">
+            android:paddingStart="12dp"
+            android:paddingTop="8dp"
+            android:paddingEnd="12dp"
+            android:paddingBottom="4dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -105,7 +108,7 @@
                 <com.pos_billingwala.Extra.PosCardView
                     android:id="@+id/memberListLayout"
                     android:layout_width="0dp"
-                    android:layout_height="110dp"
+                    android:layout_height="96dp"
                     android:layout_margin="4dp"
                     android:layout_weight="1"
                     app:cardCornerRadius="12dp"
@@ -117,80 +120,34 @@
                         android:background="@drawable/bg_quick_action_blue"
                         android:gravity="center"
                         android:orientation="vertical"
-                        android:padding="10dp">
+                        android:padding="8dp">
 
                         <ImageView
-                            android:layout_width="36dp"
-                            android:layout_height="36dp"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
                             android:background="@drawable/bg_kpi_icon_blue"
-                            android:padding="8dp"
+                            android:padding="7dp"
                             android:src="@drawable/ic_person"
                             app:tint="@color/colorPrimary" />
 
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
+                            android:layout_marginTop="6dp"
                             android:ellipsize="end"
                             android:fontFamily="@font/poppinsmedium"
                             android:gravity="center"
                             android:maxLines="2"
                             android:text="@string/ui_member_list"
                             android:textColor="@color/black"
-                            android:textSize="13sp" />
+                            android:textSize="12sp" />
                     </LinearLayout>
                 </com.pos_billingwala.Extra.PosCardView>
-
-                <com.pos_billingwala.Extra.PosCardView
-                    android:id="@+id/scanVerifyLayout"
-                    android:layout_width="0dp"
-                    android:layout_height="110dp"
-                    android:layout_margin="4dp"
-                    android:layout_weight="1"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="2dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:background="@drawable/bg_quick_action_green"
-                        android:gravity="center"
-                        android:orientation="vertical"
-                        android:padding="10dp">
-
-                        <ImageView
-                            android:layout_width="36dp"
-                            android:layout_height="36dp"
-                            android:background="@drawable/bg_kpi_icon_blue"
-                            android:padding="8dp"
-                            android:src="@drawable/ic_receipt"
-                            app:tint="@color/green_600" />
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:ellipsize="end"
-                            android:fontFamily="@font/poppinsmedium"
-                            android:gravity="center"
-                            android:maxLines="2"
-                            android:text="@string/ui_scan_amp_verify_token"
-                            android:textColor="@color/black"
-                            android:textSize="13sp" />
-                    </LinearLayout>
-                </com.pos_billingwala.Extra.PosCardView>
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:orientation="horizontal">
 
                 <com.pos_billingwala.Extra.PosCardView
                     android:id="@+id/qrManagementLayout"
                     android:layout_width="0dp"
-                    android:layout_height="110dp"
+                    android:layout_height="96dp"
                     android:layout_margin="4dp"
                     android:layout_weight="1"
                     app:cardCornerRadius="12dp"
@@ -202,34 +159,41 @@
                         android:background="@drawable/bg_quick_action_purple"
                         android:gravity="center"
                         android:orientation="vertical"
-                        android:padding="10dp">
+                        android:padding="8dp">
 
                         <ImageView
-                            android:layout_width="36dp"
-                            android:layout_height="36dp"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
                             android:background="@drawable/bg_kpi_icon_blue"
-                            android:padding="8dp"
+                            android:padding="7dp"
                             android:src="@drawable/ic_receipt"
                             app:tint="@color/deepPurple" />
 
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
+                            android:layout_marginTop="6dp"
                             android:ellipsize="end"
                             android:fontFamily="@font/poppinsmedium"
                             android:gravity="center"
                             android:maxLines="2"
                             android:text="@string/ui_qr_management"
                             android:textColor="@color/black"
-                            android:textSize="13sp" />
+                            android:textSize="12sp" />
                     </LinearLayout>
                 </com.pos_billingwala.Extra.PosCardView>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:orientation="horizontal">
 
                 <com.pos_billingwala.Extra.PosCardView
                     android:id="@+id/todayTokensLayout"
                     android:layout_width="0dp"
-                    android:layout_height="110dp"
+                    android:layout_height="96dp"
                     android:layout_margin="4dp"
                     android:layout_weight="1"
                     app:cardCornerRadius="12dp"
@@ -241,41 +205,34 @@
                         android:background="@drawable/bg_quick_action_orange"
                         android:gravity="center"
                         android:orientation="vertical"
-                        android:padding="10dp">
+                        android:padding="8dp">
 
                         <ImageView
-                            android:layout_width="36dp"
-                            android:layout_height="36dp"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
                             android:background="@drawable/bg_kpi_icon_blue"
-                            android:padding="8dp"
+                            android:padding="7dp"
                             android:src="@drawable/ic_receipt"
                             app:tint="@color/statusTrial" />
 
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
+                            android:layout_marginTop="6dp"
                             android:ellipsize="end"
                             android:fontFamily="@font/poppinsmedium"
                             android:gravity="center"
                             android:maxLines="2"
                             android:text="@string/ui_todays_mess_tokens"
                             android:textColor="@color/black"
-                            android:textSize="13sp" />
+                            android:textSize="12sp" />
                     </LinearLayout>
                 </com.pos_billingwala.Extra.PosCardView>
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:orientation="horizontal">
 
                 <com.pos_billingwala.Extra.PosCardView
                     android:id="@+id/mealSessionsLayout"
                     android:layout_width="0dp"
-                    android:layout_height="110dp"
+                    android:layout_height="96dp"
                     android:layout_margin="4dp"
                     android:layout_weight="1"
                     app:cardCornerRadius="12dp"
@@ -287,64 +244,87 @@
                         android:background="@drawable/bg_quick_action_blue"
                         android:gravity="center"
                         android:orientation="vertical"
-                        android:padding="10dp">
+                        android:padding="8dp">
 
                         <ImageView
-                            android:layout_width="36dp"
-                            android:layout_height="36dp"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
                             android:background="@drawable/bg_kpi_icon_blue"
-                            android:padding="8dp"
+                            android:padding="7dp"
                             android:src="@drawable/ic_receipt"
                             app:tint="@color/colorPrimary" />
 
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
+                            android:layout_marginTop="6dp"
                             android:ellipsize="end"
                             android:fontFamily="@font/poppinsmedium"
                             android:gravity="center"
                             android:maxLines="2"
                             android:text="@string/ui_meal_sessions"
                             android:textColor="@color/black"
-                            android:textSize="13sp" />
+                            android:textSize="12sp" />
                     </LinearLayout>
                 </com.pos_billingwala.Extra.PosCardView>
-
-                <View
-                    android:layout_width="0dp"
-                    android:layout_height="110dp"
-                    android:layout_margin="4dp"
-                    android:layout_weight="1" />
             </LinearLayout>
         </LinearLayout>
-    </ScrollView>
 
-    <!-- Legacy IDs kept hidden so older binding/code paths do not crash -->
-    <LinearLayout
-        android:id="@+id/messOrderLayout"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:orientation="vertical"
-        android:visibility="gone">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/searchMessMember"
+        <LinearLayout
+            android:id="@+id/messOrderLayout"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:visibility="gone" />
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:paddingBottom="8dp">
 
-        <com.pos_billingwala.Extra.AutoFitGridRecyclerView
-            android:id="@+id/recyclerView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:visibility="gone" />
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/searchMessMember"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="4dp"
+                android:background="@drawable/button_rounded_border"
+                android:fontFamily="@font/poppinsregular"
+                android:gravity="center_vertical|start"
+                android:hint="@string/ui_search_mess_member"
+                android:imeOptions="actionSearch"
+                android:inputType="text"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:textColor="@color/black"
+                android:textSize="14sp" />
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_marginTop="8dp"
+                android:layout_weight="1">
+
+                <com.pos_billingwala.Extra.AutoFitGridRecyclerView
+                    android:id="@+id/recyclerView"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:columnWidth="200dp"
+                    android:clipToPadding="false"
+                    android:nestedScrollingEnabled="true"
+                    android:padding="4dp" />
+
+                <TextView
+                    android:id="@+id/noDataFound"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp"
+                    android:text="@string/ui_no_data_found"
+                    android:textColor="@color/black"
+                    android:textSize="16sp"
+                    android:visibility="gone" />
+            </FrameLayout>
+        </LinearLayout>
     </LinearLayout>
-
-    <TextView
-        android:id="@+id/noDataFound"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:visibility="gone" />
 
 </RelativeLayout>
