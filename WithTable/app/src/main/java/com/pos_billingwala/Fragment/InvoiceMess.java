@@ -67,7 +67,6 @@ public class InvoiceMess extends Fragment implements View.OnClickListener {
         binding.qrManagementLayout.setOnClickListener(this);
         binding.todayTokensLayout.setOnClickListener(this);
         binding.mealSessionsLayout.setOnClickListener(this);
-        binding.walkInTokenLayout.setOnClickListener(this);
 
         return view;
     }
@@ -87,8 +86,6 @@ public class InvoiceMess extends Fragment implements View.OnClickListener {
             activity.startActivity(new Intent(activity, MessMealTokenTodayActivity.class));
         } else if (id == R.id.mealSessionsLayout) {
             activity.startActivity(new Intent(activity, MessMealSessionsActivity.class));
-        } else if (id == R.id.walkInTokenLayout) {
-            ((MainActivity) activity).loadFragment(new CreatePos(), true);
         }
     }
 
