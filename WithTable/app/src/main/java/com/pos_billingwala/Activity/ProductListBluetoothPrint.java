@@ -62,6 +62,7 @@ import java.io.IOException;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
+import com.pos_billingwala.Extra.EmptyListUi;
 
 public class ProductListBluetoothPrint extends BaseActivity implements View.OnClickListener {
 
@@ -72,7 +73,7 @@ public class ProductListBluetoothPrint extends BaseActivity implements View.OnCl
     public static NestedScrollView threeNestedScrollView;
     public static RelativeLayout productLayout;
     public static RecyclerView productRecyclerView;
-    public static TextView noDataFound;
+    public static View noDataFound;
     public static CardView shareProductCardView, printProductCardView;
     public static List<ProductResponse> productResponseList = new ArrayList<>();
     public static Activity activity;
@@ -132,11 +133,11 @@ public class ProductListBluetoothPrint extends BaseActivity implements View.OnCl
             threeRecyclerView.setAdapter(new ProductPrintAdapter(activity, printRows));
 
             productLayout.setVisibility(View.VISIBLE);
-            noDataFound.setVisibility(View.GONE);
+            EmptyListUi.bind(noDataFound, true, R.string.empty_sub_products);
 
         } else {
             productLayout.setVisibility(View.GONE);
-            noDataFound.setVisibility(View.VISIBLE);
+            EmptyListUi.bind(noDataFound, false, R.string.empty_sub_products);
         }
 
     }

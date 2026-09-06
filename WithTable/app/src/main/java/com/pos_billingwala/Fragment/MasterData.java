@@ -1,6 +1,7 @@
 package com.pos_billingwala.Fragment;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -13,6 +14,7 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.pos_billingwala.Activity.MainActivity;
+import com.pos_billingwala.Activity.TableMasterActivity;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentMasterDataBinding;
 import com.pos_billingwala.databinding.ItemGroupedMenuRowBinding;
@@ -64,14 +66,17 @@ public class MasterData extends Fragment implements View.OnClickListener {
                 R.color.green_600, getString(R.string.master_products), getString(R.string.master_hint_products));
         setupRow(binding.comboLayout, R.drawable.ic_report_combo, R.drawable.bg_quick_action_blue,
                 R.color.colorPrimary, getString(R.string.master_combos), getString(R.string.master_hint_combos));
+        setupRow(binding.tableMasterLayout, R.drawable.ic_inventory, R.drawable.bg_quick_action_orange,
+                R.color.statusTrial, getString(R.string.master_table_master), getString(R.string.master_hint_table_master));
         showGroupDividers(binding.categoryLayout, binding.subcategoryLayout, binding.portionLayout,
-                binding.productLayout, binding.comboLayout);
+                binding.productLayout, binding.comboLayout, binding.tableMasterLayout);
 
         binding.categoryLayout.getRoot().setOnClickListener(this);
         binding.subcategoryLayout.getRoot().setOnClickListener(this);
         binding.portionLayout.getRoot().setOnClickListener(this);
         binding.productLayout.getRoot().setOnClickListener(this);
         binding.comboLayout.getRoot().setOnClickListener(this);
+        binding.tableMasterLayout.getRoot().setOnClickListener(this);
     }
 
     private void setupRow(ItemGroupedMenuRowBinding row, int iconRes, int bgRes, int tintColor,
@@ -117,6 +122,8 @@ public class MasterData extends Fragment implements View.OnClickListener {
             ComboMaster comboMaster = new ComboMaster();
             comboMaster.setArguments(openedFromMaster());
             ((MainActivity) activity).loadFragment(comboMaster, true);
+        } else if (id == R.id.tableMasterLayout) {
+            startActivity(new Intent(activity, TableMasterActivity.class));
         }
     }
 

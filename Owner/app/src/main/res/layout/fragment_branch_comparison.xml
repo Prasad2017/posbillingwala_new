@@ -37,15 +37,10 @@
         android:layout_height="match_parent"
         android:padding="8dp" />
 
-    <TextView
+    <include
         android:id="@+id/noDataFound"
+        layout="@layout/include_empty_list_state"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fontFamily="@font/poppinsregular"
-        android:gravity="center"
-        android:text="No branch data found"
-        android:textColor="@color/light_black"
-        android:textSize="16sp"
-        android:visibility="gone" />
+        android:layout_height="match_parent" />
 
 </LinearLayout>

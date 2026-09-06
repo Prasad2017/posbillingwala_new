@@ -222,16 +222,11 @@
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
 
-        <TextView
+        <include
             android:id="@+id/emptyCustomers"
+            layout="@layout/include_empty_list_state"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:fontFamily="@font/poppinsregular"
-            android:gravity="center"
-            android:padding="32dp"
-            android:text="No customers found\nNo customers match your search."
-            android:textColor="@color/colorTextSecondary"
-            android:visibility="gone" />
+            android:layout_height="wrap_content" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerView"

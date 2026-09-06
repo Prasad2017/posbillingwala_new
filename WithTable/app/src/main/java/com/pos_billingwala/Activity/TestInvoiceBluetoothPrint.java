@@ -58,13 +58,16 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * Sample invoice preview from Printer Settings — connect printer and test print
+ * Sample invoice / KOT preview from Printer Settings — connect printer and test print
  * without creating a real bill.
  */
 @SuppressLint({"SetTextI18n", "StaticFieldLeak"})
 public class TestInvoiceBluetoothPrint extends BaseActivity implements View.OnClickListener {
 
     private static final String TAG = "TestInvoicePreview";
+    public static final String EXTRA_PREVIEW_MODE = "previewMode";
+    public static final String MODE_INVOICE = "invoice";
+    public static final String MODE_KOT = "kot";
 
     ActivityTestInvoiceBluetoothPrintBinding binding;
     Activity activity;
@@ -77,6 +80,7 @@ public class TestInvoiceBluetoothPrint extends BaseActivity implements View.OnCl
     String currency = "₹ ";
     boolean companyLogoReady = false;
     boolean paymentQrReady = false;
+    boolean kotPreviewMode = false;
     int REQUEST_ENABLE_BT = 4, REQUEST_CONNECT_DEVICE = 6;
     int PERMISSION_ALL = 1;
     String[] PERMISSIONS;
@@ -102,6 +106,11 @@ public class TestInvoiceBluetoothPrint extends BaseActivity implements View.OnCl
 
         activity = this;
         posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
+        kotPreviewMode = MODE_KOT.equalsIgnoreCase(
+                getIntent() != null ? getIntent().getStringExtra(EXTRA_PREVIEW_MODE) : null);
+        binding.toolbarTitle.setText(kotPreviewMode
+                ? getString(R.string.ui_kot_preview)
+                : getString(R.string.ui_invoice_preview));
 
         binding.backToSetting.setOnClickListener(this);
         binding.connectPrinter.setOnClickListener(this);
@@ -204,12 +213,28 @@ public class TestInvoiceBluetoothPrint extends BaseActivity implements View.OnCl
 
         String dateStr = new SimpleDateFormat("dd-MM-yyyy HH:mm", Locale.US).format(new Date());
         StringBuilder invoiceDetails = new StringBuilder();
-        invoiceDetails.append("Bill No: ").append(invoicePrefix).append("-TEST\n");
-        invoiceDetails.append("Date: ").append(dateStr);
-        if (customerOn) {
-            invoiceDetails.append("\nCustomer Name: ").append(getString(R.string.ui_sample_customer_name));
-            invoiceDetails.append("\nCustomer Mobile: ").append(getString(R.string.ui_sample_customer_mobile));
-            invoiceDetails.append("\nCustomer Address: ").append(getString(R.string.ui_sample_customer_address));
+        if (kotPreviewMode) {
+            String kotPrefix = "KOT-";
+            if (!printerSettingResponseList.isEmpty()
+                    && printerSettingResponseList.get(0).getKotPrefix() != null
+                    && !printerSettingResponseList.get(0).getKotPrefix().trim().isEmpty()) {
+                kotPrefix = printerSettingResponseList.get(0).getKotPrefix().trim();
+            }
+            invoiceDetails.append("KOT No: ").append(kotPrefix).append("TEST\n");
+            invoiceDetails.append("Table: T1\n");
+            invoiceDetails.append("Date: ").append(dateStr);
+            // KOT sample skips customer / QR / terms blocks.
+            customerOn = false;
+            qrOn = false;
+            terms = "";
+        } else {
+            invoiceDetails.append("Bill No: ").append(invoicePrefix).append("-TEST\n");
+            invoiceDetails.append("Date: ").append(dateStr);
+            if (customerOn) {
+                invoiceDetails.append("\nCustomer Name: ").append(getString(R.string.ui_sample_customer_name));
+                invoiceDetails.append("\nCustomer Mobile: ").append(getString(R.string.ui_sample_customer_mobile));
+                invoiceDetails.append("\nCustomer Address: ").append(getString(R.string.ui_sample_customer_address));
+            }
         }
         String invoiceDetailsText = invoiceDetails.toString();
 
@@ -220,8 +245,12 @@ public class TestInvoiceBluetoothPrint extends BaseActivity implements View.OnCl
             subTotal += price * qty;
         }
         applyPaymentQr(qrOn, subTotal, shopName, invoicePrefix + "-TEST");
-        String subTotalText = "Sub Total: " + currency + String.format(Locale.US, "%.2f", subTotal);
-        String totalText = "Total: " + currency + String.format(Locale.US, "%.2f", subTotal);
+        String subTotalText = kotPreviewMode
+                ? ""
+                : "Sub Total: " + currency + String.format(Locale.US, "%.2f", subTotal);
+        String totalText = kotPreviewMode
+                ? ""
+                : "Total: " + currency + String.format(Locale.US, "%.2f", subTotal);
 
         binding.previewShopName.setText(shopName);
         binding.previewShopDetails.setText(shopDetails);
@@ -229,6 +258,10 @@ public class TestInvoiceBluetoothPrint extends BaseActivity implements View.OnCl
         binding.previewSubTotal.setText(subTotalText);
         binding.previewTotalAmount.setText(totalText);
         binding.previewTerms.setText(terms);
+        int moneyVisibility = kotPreviewMode ? View.GONE : View.VISIBLE;
+        binding.previewSubTotal.setVisibility(moneyVisibility);
+        binding.previewTotalAmount.setVisibility(moneyVisibility);
+        binding.previewTerms.setVisibility(terms.isEmpty() ? View.GONE : View.VISIBLE);
 
         binding.twoShopName.setText(shopName);
         binding.twoShopDetails.setText(shopDetails);
@@ -236,6 +269,9 @@ public class TestInvoiceBluetoothPrint extends BaseActivity implements View.OnCl
         binding.twoSubTotal.setText(subTotalText);
         binding.twoTotalAmount.setText(totalText);
         binding.twoInvoiceTermsCondition.setText(terms);
+        binding.twoSubTotal.setVisibility(moneyVisibility);
+        binding.twoTotalAmount.setVisibility(moneyVisibility);
+        binding.twoInvoiceTermsCondition.setVisibility(terms.isEmpty() ? View.GONE : View.VISIBLE);
 
         binding.threeShopName.setText(shopName);
         binding.threeShopDetails.setText(shopDetails);
@@ -243,6 +279,9 @@ public class TestInvoiceBluetoothPrint extends BaseActivity implements View.OnCl
         binding.threeSubTotal.setText(subTotalText);
         binding.threeTotalAmount.setText(totalText);
         binding.threeInvoiceTermsCondition.setText(terms);
+        binding.threeSubTotal.setVisibility(moneyVisibility);
+        binding.threeTotalAmount.setVisibility(moneyVisibility);
+        binding.threeInvoiceTermsCondition.setVisibility(terms.isEmpty() ? View.GONE : View.VISIBLE);
     }
 
     private void applyCompanyImages(CompanyResponse company) {

@@ -51,6 +51,8 @@ if ($_SERVER['REQUEST_METHOD'] == "GET") {
                 $getdata["paymentMode"] = $row['paymentMode'];
                 $getdata["cashAmount"] = isset($row['cashAmount']) ? $row['cashAmount'] : '0';
                 $getdata["upiAmount"] = isset($row['upiAmount']) ? $row['upiAmount'] : '0';
+                $getdata["diningSessionId"] = isset($row['diningSessionId']) ? $row['diningSessionId'] : '';
+                $getdata["billPrintStatus"] = isset($row['billPrintStatus']) ? $row['billPrintStatus'] : '';
                 $getdata["invoiceDate"] = $row['invoiceDate'];
                 $getdata["invoiceOrderStatus"] = $row['invoiceOrderStatus'];
                 $getdata["invoiceNetworkStatus"] = $row['invoiceNetworkStatus'];

@@ -27,6 +27,7 @@ import cn.pedant.SweetAlert.SweetAlertDialog;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import com.posbillingwala.admin.Extra.EmptyListUi;
 
 @SuppressLint("SetTextI18n")
 public class DealerCustomersList extends Fragment {
@@ -83,16 +84,14 @@ public class DealerCustomersList extends Fragment {
                 if (list == null) list = new ArrayList<>();
                 binding.recyclerView.setLayoutManager(new LinearLayoutManager(activity));
                 binding.recyclerView.setAdapter(new CustomerAdapter(activity, list));
-                binding.emptyCustomers.setVisibility(list.isEmpty() ? View.VISIBLE : View.GONE);
-                binding.emptyCustomers.setText("No customers for this dealer");
+                EmptyListUi.bind(binding.emptyCustomers, !list.isEmpty(), R.string.empty_sub_dealer_customers);
             }
 
             @Override
             public void onFailure(Call<AllApiResponse> call, Throwable t) {
                 pDialog.dismiss();
                 if (binding != null) {
-                    binding.emptyCustomers.setVisibility(View.VISIBLE);
-                    binding.emptyCustomers.setText("Unable to load customers");
+                    EmptyListUi.bind(binding.emptyCustomers, false, "Unable to load customers");
                 }
             }
         });

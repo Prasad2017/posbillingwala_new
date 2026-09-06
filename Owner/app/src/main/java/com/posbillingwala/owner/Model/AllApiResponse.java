@@ -106,6 +106,24 @@ public class AllApiResponse {
     @SerializedName("recentInvoices")
     @Expose
     private List<InvoiceResponse> recentInvoices;
+    @SerializedName("totalBills")
+    @Expose
+    private String totalBills;
+    @SerializedName("totalAmount")
+    @Expose
+    private String totalAmount;
+    @SerializedName("extraKpiLabel")
+    @Expose
+    private String extraKpiLabel;
+    @SerializedName("extraKpiValue")
+    @Expose
+    private String extraKpiValue;
+    @SerializedName("breakdown")
+    @Expose
+    private List<OwnerReportBreakdownItem> breakdown;
+    @SerializedName("items")
+    @Expose
+    private List<OwnerReportListItem> reportItems;
     @SerializedName("productId")
     @Expose
     public String productId;
@@ -294,5 +312,29 @@ public class AllApiResponse {
 
     public List<InvoiceResponse> getRecentInvoices() {
         return recentInvoices;
+    }
+
+    public String getTotalBills() {
+        return totalBills;
+    }
+
+    public String getTotalAmount() {
+        return totalAmount;
+    }
+
+    public String getExtraKpiLabel() {
+        return extraKpiLabel;
+    }
+
+    public String getExtraKpiValue() {
+        return extraKpiValue;
+    }
+
+    public List<OwnerReportBreakdownItem> getBreakdown() {
+        return breakdown;
+    }
+
+    public List<OwnerReportListItem> getReportItems() {
+        return reportItems;
     }
 }

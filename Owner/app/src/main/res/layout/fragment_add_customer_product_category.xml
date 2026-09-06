@@ -211,35 +211,11 @@
             </LinearLayout>
         </androidx.core.widget.NestedScrollView>
 
-        <LinearLayout
+        <include
             android:id="@+id/noDataFound"
+            layout="@layout/include_empty_list_state"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:gravity="center"
-            android:orientation="vertical"
-            android:padding="@dimen/spacing_xl"
-            android:visibility="gone">
-
-            <TextView
-                android:layout_width="56dp"
-                android:layout_height="56dp"
-                android:background="@drawable/bg_avatar_placeholder"
-                android:fontFamily="@font/poppinsbold"
-                android:gravity="center"
-                android:text="C"
-                android:textColor="@color/colorPrimary"
-                android:textSize="22sp" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/spacing_lg"
-                android:fontFamily="@font/poppinsmedium"
-                android:gravity="center"
-                android:text="@string/ui_no_category_found"
-                android:textColor="@color/colorTextSecondary"
-                android:textSize="@dimen/text_subtitle" />
-        </LinearLayout>
+            android:layout_gravity="center" />
     </FrameLayout>
 </LinearLayout>

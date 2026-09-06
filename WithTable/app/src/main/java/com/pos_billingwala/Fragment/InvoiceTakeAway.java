@@ -13,13 +13,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.pos_billingwala.Activity.DuplicateBluetoothPrint;
 import com.pos_billingwala.Activity.MainActivity;
@@ -27,7 +26,6 @@ import com.pos_billingwala.Adapter.InvoiceTakAwayAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.AppExecutors;
 import com.pos_billingwala.Extra.ListLoader;
-import com.pos_billingwala.Extra.TabletUi;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.ProductCartResponse;
 import com.pos_billingwala.R;
@@ -35,7 +33,6 @@ import com.pos_billingwala.databinding.FragmentInvoiceTakeAwayBinding;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 
 public class InvoiceTakeAway extends Fragment implements View.OnClickListener {
@@ -54,7 +51,7 @@ public class InvoiceTakeAway extends Fragment implements View.OnClickListener {
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         binding = FragmentInvoiceTakeAwayBinding.inflate(inflater, container, false);
-        view = binding.getRoot(); //Root xml or viewGroup will be a part of converted view over here
+        view = binding.getRoot();
 
         activity = getActivity();
 
@@ -62,24 +59,26 @@ public class InvoiceTakeAway extends Fragment implements View.OnClickListener {
 
         view.setFocusableInTouchMode(true);
         view.requestFocus();
-        view.setOnKeyListener(new View.OnKeyListener() {
-            @Override
-            public boolean onKey(View v, int keyCode, KeyEvent event) {
-
-                if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
-                    Log.i("tag", "onKey Back listener is working!!!");
-                    ((MainActivity) activity).navigateBack();
-                    return true;
-                }
-                return false;
+        view.setOnKeyListener((v, keyCode, event) -> {
+            if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
+                Log.i("tag", "onKey Back listener is working!!!");
+                ((MainActivity) activity).navigateBack();
+                return true;
             }
+            return false;
         });
 
         binding.homeCardView.setOnClickListener(this);
         binding.menuIcon.setOnClickListener(this);
+        if (binding.toolbarSubtitle != null) {
+            binding.toolbarSubtitle.setText(R.string.ui_parcel_counter_hint);
+            binding.toolbarSubtitle.setVisibility(View.VISIBLE);
+        }
+        if (binding.btnNewParcel != null) {
+            binding.btnNewParcel.setOnClickListener(v -> openNewParcel());
+        }
 
         return view;
-
     }
 
     @Override
@@ -94,7 +93,6 @@ public class InvoiceTakeAway extends Fragment implements View.OnClickListener {
 
     @SuppressLint("SetTextI18n")
     public void setPopUpWindow() {
-
         LayoutInflater inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         view = inflater.inflate(R.layout.share_dialog, null);
         mypopupWindow = PopupUi.create(activity, view);
@@ -103,40 +101,32 @@ public class InvoiceTakeAway extends Fragment implements View.OnClickListener {
         TextView saveInvoiceTxt = view.findViewById(R.id.saveInvoice);
         LinearLayout duplicateInvoicePrintLayout = view.findViewById(R.id.duplicateInvoicePrintLayout);
 
-        saveInvoiceTxt.setText("Add New Bill");
+        saveInvoiceTxt.setText(getString(R.string.ui_new_parcel));
 
-        saveInvoiceLayout.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                mypopupWindow.dismiss();
-
-                CreatePos createPos = new CreatePos();
-                Bundle bundle = new Bundle();
-                bundle.putString("tableNumber", "TA" + getRandomString(3));
-                bundle.putString("cartOrderStatus", "take_away");
-                createPos.setArguments(bundle);
-                ((MainActivity) activity).loadFragment(createPos, true);
-
-            }
+        saveInvoiceLayout.setOnClickListener(v -> {
+            mypopupWindow.dismiss();
+            openNewParcel();
         });
 
-        duplicateInvoicePrintLayout.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                mypopupWindow.dismiss();
-
-                Intent intent = new Intent(activity, DuplicateBluetoothPrint.class);
-                intent.putExtra("invoiceRunningStatus", "printBill");
-                intent.putExtra("cartOrderStatus", "take_away");
-                activity.startActivity(intent);
-
-            }
+        duplicateInvoicePrintLayout.setOnClickListener(v -> {
+            mypopupWindow.dismiss();
+            Intent intent = new Intent(activity, DuplicateBluetoothPrint.class);
+            intent.putExtra("invoiceRunningStatus", "printBill");
+            intent.putExtra("cartOrderStatus", "take_away");
+            activity.startActivity(intent);
         });
 
         PopupUi.showAsToolbarMenu(mypopupWindow, binding.menuIcon);
+    }
 
+    private void openNewParcel() {
+        String parcelNo = posBillingWalaDatabase.nextTakeAwayParcelNumber();
+        CreatePos createPos = new CreatePos();
+        Bundle bundle = new Bundle();
+        bundle.putString("tableNumber", parcelNo);
+        bundle.putString("cartOrderStatus", "take_away");
+        createPos.setArguments(bundle);
+        ((MainActivity) activity).loadFragment(createPos, true);
     }
 
     @Override
@@ -144,7 +134,6 @@ public class InvoiceTakeAway extends Fragment implements View.OnClickListener {
         super.onStart();
         ((MainActivity) activity).lockUnlockDrawer(1);
         getCompanyDetails();
-
     }
 
     public void getCompanyDetails() {
@@ -162,17 +151,6 @@ public class InvoiceTakeAway extends Fragment implements View.OnClickListener {
         });
     }
 
-    public String getRandomString(final int sizeOfRandomString) {
-
-        String ALLOWED_CHARACTERS = "0123456789";
-
-        final Random random = new Random();
-        final StringBuilder sb = new StringBuilder(sizeOfRandomString);
-        for (int i = 0; i < sizeOfRandomString; ++i)
-            sb.append(ALLOWED_CHARACTERS.charAt(random.nextInt(ALLOWED_CHARACTERS.length())));
-        return sb.toString();
-    }
-
     public void getTakeWayCartList() {
         getTakeWayCartList(null);
     }
@@ -187,21 +165,25 @@ public class InvoiceTakeAway extends Fragment implements View.OnClickListener {
                 if (binding == null) {
                     return;
                 }
-                if (productTakeAwayResponseList != null && !productTakeAwayResponseList.isEmpty()) {
+                boolean hasParcels = productTakeAwayResponseList != null && !productTakeAwayResponseList.isEmpty();
+                if (hasParcels) {
                     invoiceTakAwayAdapter = new InvoiceTakAwayAdapter(activity, productTakeAwayResponseList);
-                    int span = TabletUi.gridColumnCount(activity);
-                    binding.recyclerView.setLayoutManager(new GridLayoutManager(activity, span));
+                    binding.recyclerView.setLayoutManager(new LinearLayoutManager(activity));
                     binding.recyclerView.setAdapter(invoiceTakAwayAdapter);
                     invoiceTakAwayAdapter.notifyDataSetChanged();
                     binding.takeAwayOrderLayout.setVisibility(View.VISIBLE);
+                    if (binding.emptyParcelState != null) {
+                        binding.emptyParcelState.setVisibility(View.GONE);
+                    }
                 } else {
                     binding.takeAwayOrderLayout.setVisibility(View.GONE);
+                    if (binding.emptyParcelState != null) {
+                        binding.emptyParcelState.setVisibility(View.VISIBLE);
+                    }
                 }
             } finally {
                 ListLoader.dismiss(activeLoader);
             }
         });
     }
-
-
 }

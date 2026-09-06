@@ -145,13 +145,14 @@
                 android:layout_marginTop="5dp"
                 android:layout_marginEnd="5dp"
                 android:layout_marginBottom="5dp"
-                android:fontFamily="@font/poppinsregular"
+                android:fontFamily="@font/poppinsbold"
                 android:gravity="center"
                 android:paddingStart="5dp"
                 android:paddingEnd="5dp"
                 android:text="@string/print_powered_by"
                 android:textColor="@color/black"
-                android:textSize="10dp" />
+                android:textSize="14dp"
+                android:textStyle="bold" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -160,13 +161,14 @@
                 android:layout_marginStart="5dp"
                 android:layout_marginEnd="5dp"
                 android:layout_marginBottom="5dp"
-                android:fontFamily="@font/poppinsmedium"
+                android:fontFamily="@font/poppinsbold"
                 android:gravity="center"
                 android:paddingStart="5dp"
                 android:paddingEnd="5dp"
                 android:text="@string/print_powered_by_website"
                 android:textColor="@color/black"
-                android:textSize="10dp" />
+                android:textSize="14dp"
+                android:textStyle="bold" />
 
         </LinearLayout>
 
@@ -284,13 +286,14 @@
                 android:layout_marginTop="5dp"
                 android:layout_marginEnd="5dp"
                 android:layout_marginBottom="5dp"
-                android:fontFamily="@font/poppinsregular"
+                android:fontFamily="@font/poppinsbold"
                 android:gravity="center"
                 android:paddingStart="5dp"
                 android:paddingEnd="5dp"
                 android:text="@string/print_powered_by"
                 android:textColor="@color/colorPrimary"
-                android:textSize="10dp" />
+                android:textSize="14dp"
+                android:textStyle="bold" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -299,13 +302,14 @@
                 android:layout_marginStart="5dp"
                 android:layout_marginEnd="5dp"
                 android:layout_marginBottom="5dp"
-                android:fontFamily="@font/poppinsmedium"
+                android:fontFamily="@font/poppinsbold"
                 android:gravity="center"
                 android:paddingStart="5dp"
                 android:paddingEnd="5dp"
                 android:text="@string/print_powered_by_website"
                 android:textColor="@color/colorPrimary"
-                android:textSize="10dp" />
+                android:textSize="14dp"
+                android:textStyle="bold" />
 
         </LinearLayout>
 
@@ -423,13 +427,14 @@
                 android:layout_marginTop="5dp"
                 android:layout_marginEnd="5dp"
                 android:layout_marginBottom="5dp"
-                android:fontFamily="@font/poppinsregular"
+                android:fontFamily="@font/poppinsbold"
                 android:gravity="center"
                 android:paddingStart="5dp"
                 android:paddingEnd="5dp"
                 android:text="@string/print_powered_by"
                 android:textColor="@color/black"
-                android:textSize="10dp" />
+                android:textSize="14dp"
+                android:textStyle="bold" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -438,13 +443,14 @@
                 android:layout_marginStart="5dp"
                 android:layout_marginEnd="5dp"
                 android:layout_marginBottom="5dp"
-                android:fontFamily="@font/poppinsmedium"
+                android:fontFamily="@font/poppinsbold"
                 android:gravity="center"
                 android:paddingStart="5dp"
                 android:paddingEnd="5dp"
                 android:text="@string/print_powered_by_website"
                 android:textColor="@color/black"
-                android:textSize="10dp" />
+                android:textSize="14dp"
+                android:textStyle="bold" />
 
         </LinearLayout>
 
@@ -457,7 +463,9 @@
         android:layout_alignParentBottom="true"
         android:layout_centerInParent="true"
         android:layout_margin="10dp"
-        app:cardCornerRadius="10dp">
+        app:cardBackgroundColor="@color/colorPrimary"
+        app:cardCornerRadius="10dp"
+        app:strokeWidth="0dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -471,6 +479,7 @@
                 android:layout_width="30dp"
                 android:layout_height="30dp"
                 android:layout_gravity="center"
+                android:contentDescription="@null"
                 android:src="@drawable/ic_print"
                 app:tint="@color/white" />
 

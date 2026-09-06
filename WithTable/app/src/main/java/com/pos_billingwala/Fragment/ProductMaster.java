@@ -38,6 +38,7 @@ import com.pos_billingwala.databinding.FragmentProductMasterBinding;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
+import com.pos_billingwala.Extra.EmptyListUi;
 
 
 public class ProductMaster extends Fragment implements View.OnClickListener {
@@ -95,7 +96,7 @@ public class ProductMaster extends Fragment implements View.OnClickListener {
                             printProductCardView.setVisibility(View.VISIBLE);
                         }
                         if (noDataFound != null) {
-                            noDataFound.setVisibility(View.GONE);
+                            EmptyListUi.bind(noDataFound, true, R.string.empty_sub_products);
                         }
                         updateProductCount(productResponseList.size());
                     } else {
@@ -106,7 +107,7 @@ public class ProductMaster extends Fragment implements View.OnClickListener {
                             printProductCardView.setVisibility(View.GONE);
                         }
                         if (noDataFound != null) {
-                            noDataFound.setVisibility(View.VISIBLE);
+                            EmptyListUi.bind(noDataFound, false, R.string.empty_sub_products);
                         }
                         updateProductCount(0);
                     }
@@ -240,10 +241,10 @@ public class ProductMaster extends Fragment implements View.OnClickListener {
 
             if (searchProductResponseList.isEmpty()) {
                 productRecyclerView.setVisibility(View.GONE);
-                noDataFound.setVisibility(View.VISIBLE);
+                EmptyListUi.bind(noDataFound, false, R.string.empty_sub_products);
                 updateProductCount(0);
             } else {
-                noDataFound.setVisibility(View.GONE);
+                EmptyListUi.bind(noDataFound, true, R.string.empty_sub_products);
                 productRecyclerView.setVisibility(View.VISIBLE);
                 updateProductCount(searchProductResponseList.size());
             }
@@ -254,7 +255,7 @@ public class ProductMaster extends Fragment implements View.OnClickListener {
             searchProductResponseList.addAll(productResponseList);
 
             productRecyclerView.setVisibility(View.VISIBLE);
-            noDataFound.setVisibility(View.GONE);
+            EmptyListUi.bind(noDataFound, true, R.string.empty_sub_products);
             updateProductCount(searchProductResponseList.size());
 
         }

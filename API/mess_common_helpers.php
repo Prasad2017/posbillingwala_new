@@ -479,3 +479,119 @@ if (!function_exists('mess_notify_pos_token_created')) {
         return $result;
     }
 }
+
+if (!function_exists('mess_member_current_month_paid_sum')) {
+    /**
+     * Sum of paymentPaidAmount for the given member in the current calendar month (Asia/Kolkata).
+     * Matches by memberId first, then falls back to memberName for older rows.
+     */
+    function mess_member_current_month_paid_sum($con, $userId, $memberId, $memberName = '')
+    {
+        $ym = date('Y-m');
+        $like = $ym . '%';
+        $uid = (int) $userId;
+        $mid = trim((string) $memberId);
+
+        $paid = 0.0;
+        if ($mid !== '' && $mid !== '0') {
+            $row = db_stmt_fetch_one(
+                $con,
+                'SELECT IFNULL(SUM(CAST(paymentPaidAmount AS DECIMAL(12,2))), 0) AS paid
+                 FROM mess_member_payment
+                 WHERE userId = ? AND CAST(memberId AS CHAR) = ? AND paymentDate LIKE ?',
+                'iss',
+                $uid,
+                $mid,
+                $like
+            );
+            if ($row !== null) {
+                $paid = (float) $row['paid'];
+            }
+        }
+
+        if ($paid <= 0.0001 && $memberName !== null && trim((string) $memberName) !== '') {
+            $row = db_stmt_fetch_one(
+                $con,
+                'SELECT IFNULL(SUM(CAST(paymentPaidAmount AS DECIMAL(12,2))), 0) AS paid
+                 FROM mess_member_payment
+                 WHERE userId = ? AND memberName = ? AND paymentDate LIKE ?',
+                'iss',
+                $uid,
+                trim((string) $memberName),
+                $like
+            );
+            if ($row !== null) {
+                $paid = (float) $row['paid'];
+            }
+        }
+
+        return $paid;
+    }
+}
+
+if (!function_exists('mess_member_has_any_previous_payment')) {
+    /** True if member has any payment row before the current month. */
+    function mess_member_has_any_previous_payment($con, $userId, $memberId, $memberName = '')
+    {
+        $ym = date('Y-m');
+        $uid = (int) $userId;
+        $mid = trim((string) $memberId);
+
+        if ($mid !== '' && $mid !== '0') {
+            $row = db_stmt_fetch_one(
+                $con,
+                'SELECT payment_id FROM mess_member_payment
+                 WHERE userId = ? AND CAST(memberId AS CHAR) = ?
+                   AND IFNULL(paymentDate, \'\') != \'\'
+                   AND substr(paymentDate, 1, 7) < ?
+                 LIMIT 1',
+                'iss',
+                $uid,
+                $mid,
+                $ym
+            );
+            if ($row !== null) {
+                return true;
+            }
+        }
+
+        if ($memberName !== null && trim((string) $memberName) !== '') {
+            $row = db_stmt_fetch_one(
+                $con,
+                'SELECT payment_id FROM mess_member_payment
+                 WHERE userId = ? AND memberName = ?
+                   AND IFNULL(paymentDate, \'\') != \'\'
+                   AND substr(paymentDate, 1, 7) < ?
+                 LIMIT 1',
+                'iss',
+                $uid,
+                trim((string) $memberName),
+                $ym
+            );
+            if ($row !== null) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+}
+
+if (!function_exists('mess_member_require_current_month_payment')) {
+    /**
+     * Returns null when OK to issue token, or an error message string when unpaid this month.
+     */
+    function mess_member_require_current_month_payment($con, $userId, $memberId, $memberName = '')
+    {
+        $paid = mess_member_current_month_paid_sum($con, $userId, $memberId, $memberName);
+        if ($paid > 0.009) {
+            return null;
+        }
+
+        if (mess_member_has_any_previous_payment($con, $userId, $memberId, $memberName)) {
+            return 'You have not paid for this month. Please pay at the mess counter to get today\'s token.';
+        }
+
+        return 'No payment found for this month. Please pay at the mess counter to get a token.';
+    }
+}

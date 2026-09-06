@@ -90,6 +90,17 @@ public final class PushNotificationHelper {
             builder.setPriority(NotificationCompat.PRIORITY_DEFAULT);
         }
 
+        // Persist for Home notification center.
+        String url = data != null ? data.get("url") : null;
+        String dedupe = null;
+        if ("license_expiring".equals(type)) {
+            String days = data != null ? data.get("days_left") : null;
+            dedupe = "fcm_license_expiring:" + (days != null ? days : "") + ":"
+                    + new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
+                    .format(new java.util.Date());
+        }
+        InAppNotificationStore.add(context, type != null ? type : "promotional", title, body, url, dedupe);
+
         try {
             NotificationManagerCompat.from(context).notify(NOTIFICATION_ID.incrementAndGet(), builder.build());
         } catch (SecurityException ignored) {

@@ -38,6 +38,7 @@ import cn.pedant.SweetAlert.SweetAlertDialog;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import com.posbillingwala.owner.Extra.EmptyListUi;
 
 @SuppressLint("SetTextI18n, NonConstantResourceId, UseCompatLoadingForDrawables, StaticFieldLeak")
 public class AllCustomerProductList extends Fragment implements View.OnClickListener {
@@ -76,14 +77,14 @@ public class AllCustomerProductList extends Fragment implements View.OnClickList
                         if (productListContent != null) {
                             productListContent.setVisibility(View.VISIBLE);
                         }
-                        noDataFound.setVisibility(View.GONE);
+                        EmptyListUi.bind(noDataFound, true, R.string.empty_sub_products);
                         applyProductSearch();
                     } else {
                         productRecyclerView.setVisibility(View.GONE);
                         if (productListContent != null) {
                             productListContent.setVisibility(View.GONE);
                         }
-                        noDataFound.setVisibility(View.VISIBLE);
+                        EmptyListUi.bind(noDataFound, false, R.string.empty_sub_products);
                     }
 
                 }

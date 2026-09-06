@@ -34,6 +34,7 @@ import cn.pedant.SweetAlert.SweetAlertDialog;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import com.posbillingwala.admin.Extra.EmptyListUi;
 
 @SuppressLint("SetTextI18n, NonConstantResourceId, UseCompatLoadingForDrawables, StaticFieldLeak")
 public class AllCustomerList extends Fragment {
@@ -152,7 +153,7 @@ public class AllCustomerList extends Fragment {
         customerAdapter = new CustomerAdapter(activity, filteredList);
         binding.recyclerView.setLayoutManager(new LinearLayoutManager(activity));
         binding.recyclerView.setAdapter(customerAdapter);
-        binding.emptyCustomers.setVisibility(filteredList.isEmpty() ? View.VISIBLE : View.GONE);
+        EmptyListUi.bind(binding.emptyCustomers, !filteredList.isEmpty(), R.string.empty_sub_customers);
     }
 
     private String customerStatus(CustomerResponse customer) {
@@ -194,7 +195,7 @@ public class AllCustomerList extends Fragment {
                     customerResponseList = new ArrayList<>(response.body().getCustomerResponseList());
                     applyFilters();
                 } else {
-                    binding.emptyCustomers.setVisibility(View.VISIBLE);
+                    EmptyListUi.bind(binding.emptyCustomers, false, R.string.empty_sub_customers);
                 }
                 pDialog.dismiss();
             }

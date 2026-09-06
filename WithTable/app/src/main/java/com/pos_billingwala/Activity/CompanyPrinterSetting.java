@@ -41,6 +41,7 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
     View view;
     String[] printerList;
     String printerName = "2-Inch", KOTPrinterName = "2-Inch", settingId, logoUse = "off", paymentUse = "off", customerUse = "off", productQuantityUpdate = "off", duplicateBillUse = "off";
+    String kotEnable = "on", kotPrefix = "KOT-", kotCopies = "1", kotAutoPrint = "off";
     /** Paper size last used when a bill/KOT printer was successfully picked or loaded. */
     String lastConnectedPrinterName = "2-Inch", lastConnectedKOTPrinterName = "2-Inch";
     boolean loadingDropdowns;
@@ -143,6 +144,17 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
                 duplicateBillUse = isChecked ? "on" : "off";
             }
         });
+        binding.kotEnableSwitch.setOnCheckedChangeListener((button, isChecked) -> {
+            if (!suppressSwitchListener) {
+                kotEnable = isChecked ? "on" : "off";
+                updateKotSettingsVisibility();
+            }
+        });
+        binding.kotAutoPrintSwitch.setOnCheckedChangeListener((button, isChecked) -> {
+            if (!suppressSwitchListener) {
+                kotAutoPrint = isChecked ? "on" : "off";
+            }
+        });
 
         PERMISSIONS = new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.ACCESS_COARSE_LOCATION};
         if (!hasPermissions(activity, PERMISSIONS)) {
@@ -154,6 +166,7 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
         binding.connectKOTPrinter.setOnClickListener(this);
         binding.disconnectKOTPrinter.setOnClickListener(this);
         binding.invoicePreview.setOnClickListener(this);
+        binding.kotPreview.setOnClickListener(this);
         binding.backToSetting.setOnClickListener(this);
         binding.saveSetting.getRoot().setOnClickListener(this);
         ActionButtonUi.bind(binding.saveSetting.getRoot(), R.drawable.ic_save, R.string.ui_save_setting);
@@ -173,9 +186,22 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
         if (container.getChildCount() < 4) {
             return;
         }
+        View previewCard = container.getChildCount() >= 5 ? container.getChildAt(4) : null;
         View[] left = {container.getChildAt(0), container.getChildAt(1)};
         View[] right = {container.getChildAt(2), container.getChildAt(3)};
+        if (previewCard != null) {
+            container.removeView(previewCard);
+        }
         TabletFormUi.applyTwoColumnCards(this, container, left, right);
+        if (previewCard != null && previewCard.getParent() == null) {
+            float density = getResources().getDisplayMetrics().density;
+            android.widget.LinearLayout.LayoutParams params = new android.widget.LinearLayout.LayoutParams(
+                    android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                    android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+            params.topMargin = (int) (16 * density);
+            previewCard.setLayoutParams(params);
+            container.addView(previewCard);
+        }
     }
 
     @Override
@@ -192,7 +218,15 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
         } else if (id == R.id.disconnectKOTPrinter) {
             disconnectKotPrinter();
         } else if (id == R.id.invoicePreview) {
-            startActivity(new Intent(activity, TestInvoiceBluetoothPrint.class));
+            Intent invoicePreview = new Intent(activity, TestInvoiceBluetoothPrint.class);
+            invoicePreview.putExtra(TestInvoiceBluetoothPrint.EXTRA_PREVIEW_MODE,
+                    TestInvoiceBluetoothPrint.MODE_INVOICE);
+            startActivity(invoicePreview);
+        } else if (id == R.id.kotPreview) {
+            Intent kotPreviewIntent = new Intent(activity, TestInvoiceBluetoothPrint.class);
+            kotPreviewIntent.putExtra(TestInvoiceBluetoothPrint.EXTRA_PREVIEW_MODE,
+                    TestInvoiceBluetoothPrint.MODE_KOT);
+            startActivity(kotPreviewIntent);
         } else if (id == R.id.saveSetting) {
             if (printerName != null) {
                 if (!binding.invoicePrefix.getText().toString().isEmpty()) {
@@ -217,7 +251,30 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
         }
 
         getPrinterSettingDetails();
+        if (settingId == null && !printerSettingResponseList.isEmpty()) {
+            settingId = printerSettingResponseList.get(0).getSettingId();
+        }
+        persistKotSettings();
+    }
 
+    private void persistKotSettings() {
+        if (settingId == null || settingId.trim().isEmpty()) {
+            return;
+        }
+        String prefix = binding.kotPrefix.getText() != null ? binding.kotPrefix.getText().toString().trim() : "KOT-";
+        if (prefix.isEmpty()) {
+            prefix = "KOT-";
+        }
+        String copies = binding.kotCopies.getText() != null ? binding.kotCopies.getText().toString().trim() : "1";
+        if (copies.isEmpty()) {
+            copies = "1";
+        }
+        posBillingWalaDatabase.updateKotSettings(settingId, kotEnable, prefix, copies, kotAutoPrint, "on");
+    }
+
+    private void updateKotSettingsVisibility() {
+        boolean enabled = "on".equalsIgnoreCase(kotEnable);
+        binding.kotDetailsContainer.setVisibility(enabled ? View.VISIBLE : View.GONE);
     }
 
     @Override
@@ -242,8 +299,7 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
 
     public void getCompanyDetails() {
         companyResponseList = posBillingWalaDatabase.getCompanyDetails();
-        binding.KOTPrinterLayout.setVisibility(View.VISIBLE);
-        binding.KotPrinterFeedLinesLayout.setVisibility(View.VISIBLE);
+        updateKotSettingsVisibility();
     }
 
 
@@ -265,6 +321,14 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
             customerUse = printerSettingResponse.getCustomerUse() != null ? printerSettingResponse.getCustomerUse() : "off";
             productQuantityUpdate = printerSettingResponse.getProductQuantityUpdate() != null ? printerSettingResponse.getProductQuantityUpdate() : "off";
             duplicateBillUse = printerSettingResponse.getDuplicateBillUse() != null ? printerSettingResponse.getDuplicateBillUse() : "off";
+            kotEnable = printerSettingResponse.getKotEnable() != null && !printerSettingResponse.getKotEnable().isEmpty()
+                    ? printerSettingResponse.getKotEnable() : "on";
+            kotPrefix = printerSettingResponse.getKotPrefix() != null && !printerSettingResponse.getKotPrefix().isEmpty()
+                    ? printerSettingResponse.getKotPrefix() : "KOT-";
+            kotCopies = printerSettingResponse.getKotCopies() != null && !printerSettingResponse.getKotCopies().isEmpty()
+                    ? printerSettingResponse.getKotCopies() : "1";
+            kotAutoPrint = printerSettingResponse.getKotAutoPrint() != null && !printerSettingResponse.getKotAutoPrint().isEmpty()
+                    ? printerSettingResponse.getKotAutoPrint() : "off";
             bluetoothAddress = printerSettingResponse.getBluetoothAddress() != null ? printerSettingResponse.getBluetoothAddress() : "";
             bluetoothKOTAddress = printerSettingResponse.getBluetoothKOTAddress() != null ? printerSettingResponse.getBluetoothKOTAddress() : "";
             binding.invoicePrefix.setText(printerSettingResponse.getInvoicePrefix().isEmpty() ? "POS" : printerSettingResponse.getInvoicePrefix());
@@ -272,12 +336,16 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
             binding.KotPrinterFeedLines.setText(printerSettingResponse.getKotPrinterFeedLines().isEmpty() ? "1" : printerSettingResponse.getKotPrinterFeedLines());
             binding.invoiceTitle.setText(printerSettingResponse.getInvoiceTitle());
             binding.invoiceTermsCondition.setText(printerSettingResponse.getInvoiceTermsCondition());
+            binding.kotPrefix.setText(kotPrefix);
+            binding.kotCopies.setText(kotCopies);
 
             ActionButtonUi.bind(binding.saveSetting.getRoot(), R.drawable.ic_save, R.string.ui_update_settings);
         } else {
             binding.invoicePrefix.setText("POS");
             binding.printerFeedLines.setText("1");
             binding.KotPrinterFeedLines.setText("1");
+            binding.kotPrefix.setText("KOT-");
+            binding.kotCopies.setText("1");
             ActionButtonUi.bind(binding.saveSetting.getRoot(), R.drawable.ic_save, R.string.ui_save_setting);
         }
 
@@ -286,6 +354,9 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
         setSwitchCheckedSilently(binding.customerSwitch, customerUse.equalsIgnoreCase("on"));
         setSwitchCheckedSilently(binding.productQuantityUpdate, productQuantityUpdate.equalsIgnoreCase("on"));
         setSwitchCheckedSilently(binding.duplicateBillSwitch, duplicateBillUse.equalsIgnoreCase("on"));
+        setSwitchCheckedSilently(binding.kotEnableSwitch, kotEnable.equalsIgnoreCase("on"));
+        setSwitchCheckedSilently(binding.kotAutoPrintSwitch, kotAutoPrint.equalsIgnoreCase("on"));
+        updateKotSettingsVisibility();
 
         printerList = activity.getResources().getStringArray(R.array.printer_list);
         loadingDropdowns = true;

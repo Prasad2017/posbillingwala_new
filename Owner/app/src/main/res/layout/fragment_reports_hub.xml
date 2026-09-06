@@ -57,6 +57,47 @@
             </com.google.android.material.card.MaterialCardView>
 
             <TextView
+                android:id="@+id/ownerReportsLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:letterSpacing="0.08"
+                android:text="@string/owner_branch_reports"
+                android:textAllCaps="true"
+                android:textColor="@color/colorTextHint"
+                android:textSize="11sp" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/ownerReportsCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                app:cardBackgroundColor="@color/colorSurface"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/colorBorder"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <include
+                        android:id="@+id/rowBranchComparison"
+                        layout="@layout/item_grouped_menu_row" />
+
+                    <include
+                        android:id="@+id/rowStoreWiseSales"
+                        layout="@layout/item_grouped_menu_row" />
+
+                    <include
+                        android:id="@+id/rowOrderInvoices"
+                        layout="@layout/item_grouped_menu_row" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
@@ -102,6 +143,14 @@
                         layout="@layout/item_grouped_menu_row" />
 
                     <include
+                        android:id="@+id/rowDiscountReport"
+                        layout="@layout/item_grouped_menu_row" />
+
+                    <include
+                        android:id="@+id/rowRefundReport"
+                        layout="@layout/item_grouped_menu_row" />
+
+                    <include
                         android:id="@+id/rowProductReport"
                         layout="@layout/item_grouped_menu_row" />
 
@@ -121,33 +170,6 @@
                         android:id="@+id/rowMessReport"
                         layout="@layout/item_grouped_menu_row" />
                 </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <TextView
-                android:id="@+id/dataManagementLabel"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:letterSpacing="0.08"
-                android:text="@string/ui_data_management"
-                android:textAllCaps="true"
-                android:textColor="@color/colorTextHint"
-                android:textSize="11sp" />
-
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/dataManagementCard"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                app:cardBackgroundColor="@color/colorSurface"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="0dp"
-                app:strokeColor="@color/colorBorder"
-                app:strokeWidth="1dp">
-
-                <include
-                    android:id="@+id/rowDeleteAllInvoices"
-                    layout="@layout/item_grouped_menu_row" />
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
     </ScrollView>

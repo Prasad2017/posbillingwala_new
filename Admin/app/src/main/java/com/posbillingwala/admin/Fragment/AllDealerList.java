@@ -35,6 +35,7 @@ import cn.pedant.SweetAlert.SweetAlertDialog;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import com.posbillingwala.admin.Extra.EmptyListUi;
 
 public class AllDealerList extends Fragment {
 
@@ -75,7 +76,7 @@ public class AllDealerList extends Fragment {
             highlightDealerChips();
         }
         if (binding.emptyCustomers != null) {
-            binding.emptyCustomers.setText("No dealers found.\nUse + to add a dealer.");
+            EmptyListUi.bind(binding.emptyCustomers, true, R.string.empty_sub_dealers);
         }
         if (binding.fabAddCustomer != null) {
             binding.fabAddCustomer.setOnClickListener(v ->
@@ -143,7 +144,7 @@ public class AllDealerList extends Fragment {
         dealerAdapter = new DealerAdapter(activity, filteredDealers);
         binding.recyclerView.setLayoutManager(new LinearLayoutManager(activity));
         binding.recyclerView.setAdapter(dealerAdapter);
-        binding.emptyCustomers.setVisibility(filteredDealers.isEmpty() ? View.VISIBLE : View.GONE);
+        EmptyListUi.bind(binding.emptyCustomers, !filteredDealers.isEmpty(), R.string.empty_sub_dealers);
     }
 
     private void bindDealerCharts(int total, int active, int inactive) {
@@ -196,7 +197,7 @@ public class AllDealerList extends Fragment {
                     dealerResponseList = new ArrayList<>(response.body().getDealerResponseList());
                     applyFilters();
                 } else {
-                    binding.emptyCustomers.setVisibility(View.VISIBLE);
+                    EmptyListUi.bind(binding.emptyCustomers, false, R.string.empty_sub_dealers);
                 }
                 pDialog.dismiss();
             }

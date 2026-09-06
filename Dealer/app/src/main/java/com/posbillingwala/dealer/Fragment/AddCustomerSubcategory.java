@@ -42,6 +42,7 @@ import cn.pedant.SweetAlert.SweetAlertDialog;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import com.posbillingwala.dealer.Extra.EmptyListUi;
 
 @SuppressLint("SetTextI18n, NonConstantResourceId, StaticFieldLeak")
 public class AddCustomerSubcategory extends Fragment implements View.OnClickListener {
@@ -51,7 +52,7 @@ public class AddCustomerSubcategory extends Fragment implements View.OnClickList
     public static String categoryId;
     public static RecyclerView subcategoryRecyclerview;
     public static CardView subcategoryListCardView;
-    public static TextView noDataFound;
+    public static View noDataFound;
 
     View view;
     FragmentAddCustomerSubcategoryBinding binding;
@@ -85,7 +86,7 @@ public class AddCustomerSubcategory extends Fragment implements View.OnClickList
 
         subcategoryRecyclerview = binding.subcategoryRecyclerview;
         subcategoryListCardView = binding.subcategoryListCardView;
-        noDataFound = binding.noDataFound;
+        noDataFound = binding.noDataFound.getRoot();
 
         MainActivity.back.setOnClickListener(v -> {
             ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
@@ -186,7 +187,7 @@ public class AddCustomerSubcategory extends Fragment implements View.OnClickList
                 } else {
                     Toast.makeText(activity, "Please add a category first", Toast.LENGTH_SHORT).show();
                     subcategoryListCardView.setVisibility(View.GONE);
-                    noDataFound.setVisibility(View.VISIBLE);
+                    EmptyListUi.bind(noDataFound, false, R.string.empty_sub_subcategories);
                 }
             }
 
@@ -252,10 +253,10 @@ public class AddCustomerSubcategory extends Fragment implements View.OnClickList
                         subcategoryRecyclerview.setLayoutManager(new GridLayoutManager(activity, 1));
                         subcategoryRecyclerview.setAdapter(adapter);
                         subcategoryListCardView.setVisibility(View.VISIBLE);
-                        noDataFound.setVisibility(View.GONE);
+                        EmptyListUi.bind(noDataFound, true, R.string.empty_sub_subcategories);
                     } else {
                         subcategoryListCardView.setVisibility(View.GONE);
-                        noDataFound.setVisibility(View.VISIBLE);
+                        EmptyListUi.bind(noDataFound, false, R.string.empty_sub_subcategories);
                     }
                 }
                 pDialog.dismiss();

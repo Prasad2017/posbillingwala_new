@@ -24,5 +24,13 @@
     <string name="category">Category</string>
     <string name="subcategory">Subcategory</string>
     <string name="product">Product</string>
+    <string name="ui_no_data_found">No data found</string>
+    <string name="empty_sub_products">Add products for this customer to build their catalog.</string>
+    <string name="empty_sub_categories">Add categories first for this customer.</string>
+    <string name="empty_sub_subcategories">Add subcategories under a category.</string>
+    <string name="empty_sub_portions">Add portion sizes like Half / Full.</string>
+    <string name="empty_sub_customers">No customers found. Use + to add a customer.</string>
+    <string name="empty_sub_dealers">No dealers found. Use + to add a dealer.</string>
+    <string name="empty_sub_dealer_customers">No customers for this dealer.</string>
 
 </resources>

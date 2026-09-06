@@ -40,6 +40,7 @@ import cn.pedant.SweetAlert.SweetAlertDialog;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import com.posbillingwala.owner.Extra.EmptyListUi;
 
 @SuppressLint("SetTextI18n, NonConstantResourceId, StaticFieldLeak")
 public class AddCustomerSubcategory extends Fragment implements View.OnClickListener {
@@ -77,7 +78,7 @@ public class AddCustomerSubcategory extends Fragment implements View.OnClickList
         subcategoryRecyclerview = binding.subcategoryRecyclerview;
         subcategoryRecyclerview.setLayoutManager(new GridLayoutManager(activity, 1));
         subcategoryListCardView = binding.subcategoryListCardView;
-        noDataFound = binding.noDataFound;
+        noDataFound = binding.noDataFound.getRoot();
         listNoResults = binding.listNoResults;
         searchSubcategory = binding.listSearch.listSearchInput;
 
@@ -181,11 +182,11 @@ public class AddCustomerSubcategory extends Fragment implements View.OnClickList
                     subcategoryResponseList = list != null ? list : new ArrayList<>();
                     if (!subcategoryResponseList.isEmpty()) {
                         subcategoryListCardView.setVisibility(View.VISIBLE);
-                        noDataFound.setVisibility(View.GONE);
+                        EmptyListUi.bind(noDataFound, true, R.string.empty_sub_subcategories);
                         applySubcategorySearch();
                     } else {
                         subcategoryListCardView.setVisibility(View.GONE);
-                        noDataFound.setVisibility(View.VISIBLE);
+                        EmptyListUi.bind(noDataFound, false, R.string.empty_sub_subcategories);
                     }
                 }
                 pDialog.dismiss();

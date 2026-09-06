@@ -65,6 +65,7 @@ import com.pos_billingwala.databinding.ActivityDuplicateBluetoothPrintBinding;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import com.pos_billingwala.Extra.EmptyListUi;
 
 
 @SuppressLint("SetTextI18n, StaticFieldLeak, NonConstantResourceId")
@@ -91,7 +92,7 @@ public class DuplicateBluetoothPrint extends BaseActivity implements View.OnClic
     public static POSBillingWalaDatabase posBillingWalaDatabase;
     public static TextView totalPayableAmountTxt, subTotalTxt, discountTxt, totalAmountTxt;
     public static RelativeLayout cartLayout;
-    public static TextView noDataFound;
+    public static View noDataFound;
     public static String inr, paymentMode;
     ProgressDialog progressDialog;
     ActivityDuplicateBluetoothPrintBinding binding;
@@ -638,12 +639,12 @@ public class DuplicateBluetoothPrint extends BaseActivity implements View.OnClic
             applyPaymentQr(totalAmount);
 
             cartLayout.setVisibility(View.VISIBLE);
-            noDataFound.setVisibility(View.GONE);
+            EmptyListUi.bind(noDataFound, true, R.string.empty_sub_products);
 
         } else {
             applyPaymentQr(0);
             cartLayout.setVisibility(View.GONE);
-            noDataFound.setVisibility(View.VISIBLE);
+            EmptyListUi.bind(noDataFound, false, R.string.empty_sub_products);
         }
 
 

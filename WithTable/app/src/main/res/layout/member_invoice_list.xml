@@ -3,17 +3,16 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:padding="6dp">
 
     <LinearLayout
         android:id="@+id/tableNumberCardView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@drawable/bg_mess_member_card"
         android:orientation="vertical"
-        android:paddingStart="12dp"
-        android:paddingTop="12dp"
-        android:paddingEnd="12dp"
-        android:paddingBottom="10dp">
+        android:padding="12dp">
 
         <RelativeLayout
             android:layout_width="match_parent"
@@ -25,6 +24,7 @@
                 android:layout_height="wrap_content"
                 android:layout_toStartOf="@+id/pendingAmount"
                 android:ellipsize="end"
+                android:fontFamily="@font/poppinsmedium"
                 android:maxLines="1"
                 android:textColor="@color/colorTextPrimary"
                 android:textSize="14sp"
@@ -37,61 +37,110 @@
                 android:layout_alignParentEnd="true"
                 android:layout_centerVertical="true"
                 android:contentDescription="@null"
-                android:src="@drawable/rupee_pending" />
+                android:src="@drawable/rupee_pending"
+                android:visibility="gone" />
         </RelativeLayout>
+
+        <TextView
+            android:id="@+id/memberMobile"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:ellipsize="end"
+            android:fontFamily="@font/poppinsregular"
+            android:maxLines="1"
+            android:textColor="@color/colorTextSecondary"
+            android:textSize="11sp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/pendingAmountTxt"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:fontFamily="@font/poppinsmedium"
+            android:textColor="@color/statusTrial"
+            android:textSize="12sp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/tokenCountTxt"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:fontFamily="@font/poppinsregular"
+            android:textColor="@color/colorTextSecondary"
+            android:textSize="11sp" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:gravity="center"
+            android:layout_marginTop="10dp"
             android:orientation="horizontal">
 
             <LinearLayout
                 android:id="@+id/billPrintLayout"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="12dp"
+                android:layout_width="0dp"
+                android:layout_height="36dp"
+                android:layout_marginEnd="6dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_mess_action_btn"
                 android:gravity="center"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:paddingStart="6dp"
+                android:paddingEnd="6dp">
 
                 <ImageView
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
+                    android:id="@+id/billPrintIcon"
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
                     android:contentDescription="@null"
                     android:src="@drawable/ic_print"
                     app:tint="@color/colorPrimary" />
 
                 <TextView
+                    android:id="@+id/billPrintTxt"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:paddingStart="6dp"
+                    android:ellipsize="end"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:maxLines="1"
+                    android:paddingStart="4dp"
                     android:text="@string/ui_print_coupon"
                     android:textColor="@color/colorPrimary"
-                    android:textSize="12sp" />
+                    android:textSize="11sp" />
             </LinearLayout>
 
             <LinearLayout
                 android:id="@+id/qrTokenLayout"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="0dp"
+                android:layout_height="36dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_mess_action_btn"
                 android:gravity="center"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:paddingStart="6dp"
+                android:paddingEnd="6dp">
 
                 <ImageView
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
+                    android:id="@+id/qrTokenIcon"
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
                     android:contentDescription="@null"
                     android:src="@drawable/ic_print"
                     app:tint="@color/colorPrimary" />
 
                 <TextView
+                    android:id="@+id/qrTokenTxt"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:paddingStart="6dp"
+                    android:ellipsize="end"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:maxLines="1"
+                    android:paddingStart="4dp"
                     android:text="@string/ui_print_qr_token"
                     android:textColor="@color/colorPrimary"
-                    android:textSize="12sp" />
+                    android:textSize="11sp" />
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>
@@ -99,6 +148,6 @@
     <View
         android:id="@+id/rowDivider"
         android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@color/colorBorder" />
+        android:layout_height="0dp"
+        android:visibility="gone" />
 </LinearLayout>

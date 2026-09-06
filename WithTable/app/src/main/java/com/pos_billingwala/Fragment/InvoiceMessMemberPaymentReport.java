@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import cn.pedant.SweetAlert.SweetAlertDialog;
+import com.pos_billingwala.Extra.EmptyListUi;
 
 @SuppressLint("SetTextI18n")
 public class InvoiceMessMemberPaymentReport extends Fragment implements View.OnClickListener {
@@ -112,11 +113,11 @@ public class InvoiceMessMemberPaymentReport extends Fragment implements View.OnC
                 // adapter.notifyItemInserted(memberResponseList.size() - 1);
 
                 binding.linearLayout.setVisibility(View.VISIBLE);
-                binding.noDataFound.setVisibility(View.GONE);
+                EmptyListUi.bind(binding.noDataFound, true, R.string.empty_sub_payment_history);
 
             } else {
                 binding.linearLayout.setVisibility(View.GONE);
-                binding.noDataFound.setVisibility(View.VISIBLE);
+                EmptyListUi.bind(binding.noDataFound, false, R.string.empty_sub_payment_history);
             }
         } finally {
             ListLoader.dismiss(loader);

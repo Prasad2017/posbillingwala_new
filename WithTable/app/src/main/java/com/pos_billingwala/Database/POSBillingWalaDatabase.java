@@ -16,22 +16,29 @@ import com.pos_billingwala.Model.ComboItemDraft;
 import com.pos_billingwala.Model.ComboItemResponse;
 import com.pos_billingwala.Model.ComboResponse;
 import com.pos_billingwala.Model.CompanyResponse;
+import com.pos_billingwala.Model.DiningAreaResponse;
+import com.pos_billingwala.Model.DiningSessionResponse;
 import com.pos_billingwala.Model.ExpenseResponse;
 import com.pos_billingwala.Model.FoodTypeResponse;
 import com.pos_billingwala.Model.InventoryResponse;
 import com.pos_billingwala.Model.InvoiceProductResponse;
 import com.pos_billingwala.Model.InvoiceResponse;
+import com.pos_billingwala.Model.KotResponse;
 import com.pos_billingwala.Model.MemberResponse;
+import com.pos_billingwala.Model.MemberPaymentMonthItem;
 import com.pos_billingwala.Model.MessInvoiceResponse;
 import com.pos_billingwala.Model.MessMealTokenItem;
 import com.pos_billingwala.Model.MessTokenResponse;
+import com.pos_billingwala.Model.PosTableResponse;
 import com.pos_billingwala.Model.PrinterSettingResponse;
 import com.pos_billingwala.Model.ProductCartResponse;
 import com.pos_billingwala.Model.ProductCategoryResponse;
+import com.pos_billingwala.Model.TableTypeResponse;
 import com.pos_billingwala.Model.PortionMasterResponse;
 import com.pos_billingwala.Model.ProductPortionResponse;
 import com.pos_billingwala.Model.ProductResponse;
 import com.pos_billingwala.Model.ProductSubcategoryResponse;
+import com.pos_billingwala.Model.TableStatus;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -70,8 +77,15 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
     public static final String CART_COMBO_ITEM_TABLE = "cart_combo_item";
     public static final String INVOICE_COMBO_ITEM_TABLE = "invoice_combo_item";
     public static final String INVOICE_PRODUCT_DELETE_QUEUE_TABLE = "invoice_product_delete_queue";
+    public static final String DINING_AREA_TABLE = "dining_area";
+    public static final String TABLE_TYPE_TABLE = "table_type";
+    public static final String POS_TABLE_TABLE = "pos_table";
+    public static final String DINING_SESSION_TABLE = "dining_session";
+    public static final String ORDER_ROUND_TABLE = "order_round";
+    public static final String KOT_TABLE = "kot";
+    public static final String KOT_ITEM_TABLE = "kot_item";
     // Database Version
-    public static final int DATABASE_VERSION = 27;
+    public static final int DATABASE_VERSION = 29;
 
     /** SQL suffix: only rows for the logged-in licence branch. */
     private static String andBranchScope(String tableAlias) {
@@ -306,6 +320,120 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             + " invoiceNumber VARCHAR,"
             + " invoiceProductNetworkStatus VARCHAR)";
 
+    public final String DINING_AREA_QUERY = "CREATE TABLE IF NOT EXISTS " + DINING_AREA_TABLE
+            + "(areaId INTEGER PRIMARY KEY AUTOINCREMENT,"
+            + " areaName VARCHAR,"
+            + " areaSortOrder INTEGER DEFAULT 0,"
+            + " areaActive VARCHAR DEFAULT '1',"
+            + " areaNetworkStatus VARCHAR,"
+            + " areaStatus VARCHAR DEFAULT '0',"
+            + " organizationId VARCHAR,"
+            + " branchId VARCHAR,"
+            + " deviceId VARCHAR)";
+
+    public final String TABLE_TYPE_QUERY = "CREATE TABLE IF NOT EXISTS " + TABLE_TYPE_TABLE
+            + "(tableTypeId INTEGER PRIMARY KEY AUTOINCREMENT,"
+            + " tableTypeName VARCHAR,"
+            + " defaultCapacity INTEGER DEFAULT 4,"
+            + " tableTypeActive VARCHAR DEFAULT '1',"
+            + " tableTypeNetworkStatus VARCHAR,"
+            + " tableTypeStatus VARCHAR DEFAULT '0',"
+            + " organizationId VARCHAR,"
+            + " branchId VARCHAR,"
+            + " deviceId VARCHAR)";
+
+    public final String POS_TABLE_QUERY = "CREATE TABLE IF NOT EXISTS " + POS_TABLE_TABLE
+            + "(tableId INTEGER PRIMARY KEY AUTOINCREMENT,"
+            + " tableNumber VARCHAR,"
+            + " tableName VARCHAR,"
+            + " tableTypeId VARCHAR,"
+            + " capacity INTEGER DEFAULT 4,"
+            + " areaId VARCHAR,"
+            + " tableActive VARCHAR DEFAULT '1',"
+            + " positionX VARCHAR,"
+            + " positionY VARCHAR,"
+            + " sortOrder INTEGER DEFAULT 0,"
+            + " statusOverride VARCHAR,"
+            + " posTableNetworkStatus VARCHAR,"
+            + " posTableStatus VARCHAR DEFAULT '0',"
+            + " organizationId VARCHAR,"
+            + " branchId VARCHAR,"
+            + " deviceId VARCHAR)";
+
+    public final String DINING_SESSION_QUERY = "CREATE TABLE IF NOT EXISTS " + DINING_SESSION_TABLE
+            + "(sessionId INTEGER PRIMARY KEY AUTOINCREMENT,"
+            + " primaryTableNumber VARCHAR,"
+            + " joinedTableNumbers VARCHAR,"
+            + " sessionStatus VARCHAR,"
+            + " guestCount INTEGER DEFAULT 0,"
+            + " startedAt VARCHAR,"
+            + " closedAt VARCHAR,"
+            + " customerName VARCHAR,"
+            + " customerMobile VARCHAR,"
+            + " waiterName VARCHAR,"
+            + " unpaidInvoiceNumber VARCHAR,"
+            + " sessionVersion INTEGER DEFAULT 1,"
+            + " organizationId VARCHAR,"
+            + " branchId VARCHAR,"
+            + " deviceId VARCHAR)";
+
+    public final String ORDER_ROUND_QUERY = "CREATE TABLE IF NOT EXISTS " + ORDER_ROUND_TABLE
+            + "(orderRoundId INTEGER PRIMARY KEY AUTOINCREMENT,"
+            + " sessionId VARCHAR,"
+            + " roundNumber INTEGER DEFAULT 1,"
+            + " createdAt VARCHAR,"
+            + " kotId VARCHAR,"
+            + " organizationId VARCHAR,"
+            + " branchId VARCHAR,"
+            + " deviceId VARCHAR)";
+
+    public final String KOT_QUERY = "CREATE TABLE IF NOT EXISTS " + KOT_TABLE
+            + "(kotId INTEGER PRIMARY KEY AUTOINCREMENT,"
+            + " sessionId VARCHAR,"
+            + " orderRoundId VARCHAR,"
+            + " kotNumber VARCHAR,"
+            + " tableNumber VARCHAR,"
+            + " printStatus VARCHAR,"
+            + " createdAt VARCHAR,"
+            + " kitchenName VARCHAR,"
+            + " organizationId VARCHAR,"
+            + " branchId VARCHAR,"
+            + " deviceId VARCHAR)";
+
+    public final String KOT_ITEM_QUERY = "CREATE TABLE IF NOT EXISTS " + KOT_ITEM_TABLE
+            + "(kotItemId INTEGER PRIMARY KEY AUTOINCREMENT,"
+            + " kotId VARCHAR,"
+            + " cartId VARCHAR,"
+            + " productName VARCHAR,"
+            + " productQuantity VARCHAR,"
+            + " portionName VARCHAR,"
+            + " organizationId VARCHAR,"
+            + " branchId VARCHAR,"
+            + " deviceId VARCHAR)";
+
+    public final String ALTER_PRINTER_KOT_ENABLE_QUERY =
+            "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN kotEnable VARCHAR DEFAULT 'on'";
+    public final String ALTER_PRINTER_KOT_PREFIX_QUERY =
+            "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN kotPrefix VARCHAR DEFAULT 'KOT-'";
+    public final String ALTER_PRINTER_KOT_COPIES_QUERY =
+            "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN kotCopies VARCHAR DEFAULT '1'";
+    public final String ALTER_PRINTER_KOT_AUTO_PRINT_QUERY =
+            "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN kotAutoPrint VARCHAR DEFAULT 'off'";
+    public final String ALTER_PRINTER_KOT_PREVIEW_QUERY =
+            "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN kotPreview VARCHAR DEFAULT 'on'";
+    public final String ALTER_CART_SESSION_ID_QUERY =
+            "ALTER TABLE " + CART_PRODUCT_TABLE + " ADD COLUMN diningSessionId VARCHAR";
+    public final String ALTER_CART_ORDER_ROUND_ID_QUERY =
+            "ALTER TABLE " + CART_PRODUCT_TABLE + " ADD COLUMN orderRoundId VARCHAR";
+    public final String ALTER_CART_KOT_PRINTED_QUERY =
+            "ALTER TABLE " + CART_PRODUCT_TABLE + " ADD COLUMN kotPrinted VARCHAR DEFAULT '0'";
+    public final String ALTER_INVOICE_SESSION_ID_QUERY =
+            "ALTER TABLE " + INVOICE_TABLE + " ADD COLUMN diningSessionId VARCHAR";
+    public final String ALTER_DINING_SESSION_PAID_AMOUNT_QUERY =
+            "ALTER TABLE " + DINING_SESSION_TABLE + " ADD COLUMN paidAmount VARCHAR DEFAULT '0'";
+    public final String ALTER_INVOICE_BILL_PRINT_STATUS_QUERY =
+            "ALTER TABLE " + INVOICE_TABLE + " ADD COLUMN billPrintStatus VARCHAR DEFAULT ''";
+
     /**********************************************  QUERY END PART  **********************************************/
 
     /********************************************** Alter Query  **********************************************/
@@ -406,6 +534,13 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         db.execSQL(CART_COMBO_ITEM_QUERY);
         db.execSQL(INVOICE_COMBO_ITEM_QUERY);
         db.execSQL(INVOICE_PRODUCT_DELETE_QUEUE_QUERY);
+        db.execSQL(DINING_AREA_QUERY);
+        db.execSQL(TABLE_TYPE_QUERY);
+        db.execSQL(POS_TABLE_QUERY);
+        db.execSQL(DINING_SESSION_QUERY);
+        db.execSQL(ORDER_ROUND_QUERY);
+        db.execSQL(KOT_QUERY);
+        db.execSQL(KOT_ITEM_QUERY);
         ensureFoodTypeCatalog(db);
     }
 
@@ -515,6 +650,346 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         addColumnIfNotExists(db, INVOICE_TABLE, "upiAmount", ALTER_INVOICE_UPI_AMOUNT_QUERY);
         db.execSQL(INVOICE_PRODUCT_DELETE_QUEUE_QUERY);
         ensureUniqueSyncIndexes(db);
+        ensureDineInSchema(db);
+    }
+
+    /** Additive dine-in / table / KOT schema (safe to re-run). */
+    public void ensureDineInSchema(SQLiteDatabase db) {
+        db.execSQL(DINING_AREA_QUERY);
+        db.execSQL(TABLE_TYPE_QUERY);
+        db.execSQL(POS_TABLE_QUERY);
+        db.execSQL(DINING_SESSION_QUERY);
+        db.execSQL(ORDER_ROUND_QUERY);
+        db.execSQL(KOT_QUERY);
+        db.execSQL(KOT_ITEM_QUERY);
+        addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "kotEnable", ALTER_PRINTER_KOT_ENABLE_QUERY);
+        addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "kotPrefix", ALTER_PRINTER_KOT_PREFIX_QUERY);
+        addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "kotCopies", ALTER_PRINTER_KOT_COPIES_QUERY);
+        addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "kotAutoPrint", ALTER_PRINTER_KOT_AUTO_PRINT_QUERY);
+        addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "kotPreview", ALTER_PRINTER_KOT_PREVIEW_QUERY);
+        addColumnIfNotExists(db, CART_PRODUCT_TABLE, "diningSessionId", ALTER_CART_SESSION_ID_QUERY);
+        addColumnIfNotExists(db, CART_PRODUCT_TABLE, "orderRoundId", ALTER_CART_ORDER_ROUND_ID_QUERY);
+        addColumnIfNotExists(db, CART_PRODUCT_TABLE, "kotPrinted", ALTER_CART_KOT_PRINTED_QUERY);
+        addColumnIfNotExists(db, INVOICE_TABLE, "diningSessionId", ALTER_INVOICE_SESSION_ID_QUERY);
+        addColumnIfNotExists(db, DINING_SESSION_TABLE, "paidAmount", ALTER_DINING_SESSION_PAID_AMOUNT_QUERY);
+        addColumnIfNotExists(db, INVOICE_TABLE, "billPrintStatus", ALTER_INVOICE_BILL_PRINT_STATUS_QUERY);
+        addColumnIfNotExists(db, DINING_AREA_TABLE, "areaNetworkStatus",
+                "ALTER TABLE " + DINING_AREA_TABLE + " ADD COLUMN areaNetworkStatus VARCHAR");
+        addColumnIfNotExists(db, DINING_AREA_TABLE, "areaStatus",
+                "ALTER TABLE " + DINING_AREA_TABLE + " ADD COLUMN areaStatus VARCHAR DEFAULT '0'");
+        addColumnIfNotExists(db, TABLE_TYPE_TABLE, "tableTypeNetworkStatus",
+                "ALTER TABLE " + TABLE_TYPE_TABLE + " ADD COLUMN tableTypeNetworkStatus VARCHAR");
+        addColumnIfNotExists(db, TABLE_TYPE_TABLE, "tableTypeStatus",
+                "ALTER TABLE " + TABLE_TYPE_TABLE + " ADD COLUMN tableTypeStatus VARCHAR DEFAULT '0'");
+        addColumnIfNotExists(db, POS_TABLE_TABLE, "posTableNetworkStatus",
+                "ALTER TABLE " + POS_TABLE_TABLE + " ADD COLUMN posTableNetworkStatus VARCHAR");
+        addColumnIfNotExists(db, POS_TABLE_TABLE, "posTableStatus",
+                "ALTER TABLE " + POS_TABLE_TABLE + " ADD COLUMN posTableStatus VARCHAR DEFAULT '0'");
+        backfillDineInNetworkKeys(db);
+        try {
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_pos_table_number ON " + POS_TABLE_TABLE + "(tableNumber)");
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_dining_session_table ON " + DINING_SESSION_TABLE + "(primaryTableNumber)");
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_dining_session_status ON " + DINING_SESSION_TABLE + "(sessionStatus)");
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_kot_session ON " + KOT_TABLE + "(sessionId)");
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_order_round_session ON " + ORDER_ROUND_TABLE + "(sessionId)");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /** Ensure every master row has a sync key so Table Master uploads can reach the cloud. */
+    private void backfillDineInNetworkKeys(SQLiteDatabase db) {
+        backfillNetworkKeyColumn(db, DINING_AREA_TABLE, "areaId", "areaNetworkStatus", "areaStatus");
+        backfillNetworkKeyColumn(db, TABLE_TYPE_TABLE, "tableTypeId", "tableTypeNetworkStatus", "tableTypeStatus");
+        backfillNetworkKeyColumn(db, POS_TABLE_TABLE, "tableId", "posTableNetworkStatus", "posTableStatus");
+    }
+
+    private void backfillNetworkKeyColumn(SQLiteDatabase db, String table, String idColumn,
+                                          String networkColumn, String statusColumn) {
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT " + idColumn + " FROM " + table
+                            + " WHERE IFNULL(" + networkColumn + ",'') = ''",
+                    null);
+            while (cursor.moveToNext()) {
+                ContentValues values = new ContentValues();
+                values.put(networkColumn, newSyncNetworkKey());
+                values.put(statusColumn, "0");
+                db.update(table, values, idColumn + " = ?", new String[]{cursor.getString(0)});
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
+    private static String newSyncNetworkKey() {
+        String allowed = "0123456789qwertyuiopasdfghjklzxcvbnm";
+        java.util.Random random = new java.util.Random();
+        StringBuilder sb = new StringBuilder(12);
+        for (int i = 0; i < 12; i++) {
+            sb.append(allowed.charAt(random.nextInt(allowed.length())));
+        }
+        return sb.toString();
+    }
+
+    /** Seeds default areas/types/tables from company.noOfTable when empty. */
+    public void ensureDineInMastersSeeded() {
+        SQLiteDatabase db = getWritableDatabase();
+        try {
+            ensureDineInSchema(db);
+            seedDefaultTableTypes(db);
+            seedDefaultDiningAreas(db);
+            seedPosTablesFromCompany(db);
+        } finally {
+            db.close();
+        }
+    }
+
+    private void seedDefaultTableTypes(SQLiteDatabase db) {
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery("SELECT COUNT(*) FROM " + TABLE_TYPE_TABLE + whereBranchScope(null), null);
+            if (cursor.moveToFirst() && cursor.getInt(0) > 0) {
+                return;
+            }
+            insertTableType(db, "2 Seater", 2);
+            insertTableType(db, "4 Seater", 4);
+            insertTableType(db, "6 Seater", 6);
+            insertTableType(db, "8 Seater", 8);
+            insertTableType(db, "Custom", 4);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
+    private void insertTableType(SQLiteDatabase db, String name, int capacity) {
+        ContentValues values = new ContentValues();
+        values.put("tableTypeName", name);
+        values.put("defaultCapacity", capacity);
+        values.put("tableTypeActive", "1");
+        values.put("tableTypeNetworkStatus", newSyncNetworkKey());
+        values.put("tableTypeStatus", "0");
+        BranchSession.applyScope(values);
+        db.insert(TABLE_TYPE_TABLE, null, values);
+    }
+
+    private void seedDefaultDiningAreas(SQLiteDatabase db) {
+        try {
+            // Rename legacy single area if present
+            db.execSQL("UPDATE " + DINING_AREA_TABLE
+                    + " SET areaName = 'Hall' WHERE LOWER(TRIM(areaName)) = 'main hall'");
+
+            boolean addedAny = false;
+            addedAny |= ensureDiningArea(db, "Hall", 0);
+            addedAny |= ensureDiningArea(db, "AC", 1);
+            addedAny |= ensureDiningArea(db, "Non-AC", 2);
+            addedAny |= ensureDiningArea(db, "Garden", 3);
+            if (addedAny) {
+                redistributeTablesAcrossAreasIfNeeded(db);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /** @return true if a new area row was inserted */
+    private boolean ensureDiningArea(SQLiteDatabase db, String areaName, int sortOrder) {
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT areaId FROM " + DINING_AREA_TABLE
+                            + " WHERE LOWER(TRIM(areaName)) = LOWER(TRIM(?))"
+                            + andBranchScope(null)
+                            + " LIMIT 1",
+                    new String[]{areaName});
+            if (cursor.moveToFirst()) {
+                ContentValues update = new ContentValues();
+                update.put("areaSortOrder", sortOrder);
+                update.put("areaActive", "1");
+                db.update(DINING_AREA_TABLE, update, "areaId = ?",
+                        new String[]{cursor.getString(0)});
+                return false;
+            }
+            ContentValues values = new ContentValues();
+            values.put("areaName", areaName);
+            values.put("areaSortOrder", sortOrder);
+            values.put("areaActive", "1");
+            values.put("areaNetworkStatus", newSyncNetworkKey());
+            values.put("areaStatus", "0");
+            BranchSession.applyScope(values);
+            db.insert(DINING_AREA_TABLE, null, values);
+            return true;
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
+    /** If every table is on one area (or none), spread them across Hall/AC/Non-AC/Garden. */
+    private void redistributeTablesAcrossAreasIfNeeded(SQLiteDatabase db) {
+        Cursor areaCursor = null;
+        Cursor distinctCursor = null;
+        Cursor tablesCursor = null;
+        try {
+            java.util.ArrayList<String> areaIds = new java.util.ArrayList<>();
+            areaCursor = db.rawQuery(
+                    "SELECT areaId FROM " + DINING_AREA_TABLE
+                            + " WHERE IFNULL(areaActive,'1') = '1'"
+                            + andBranchScope(null)
+                            + " ORDER BY CAST(IFNULL(areaSortOrder,0) AS INTEGER) ASC, areaId ASC",
+                    null);
+            while (areaCursor.moveToNext()) {
+                areaIds.add(areaCursor.getString(0));
+            }
+            areaCursor.close();
+            areaCursor = null;
+            if (areaIds.size() < 2) {
+                return;
+            }
+
+            distinctCursor = db.rawQuery(
+                    "SELECT COUNT(DISTINCT IFNULL(areaId,'')) FROM " + POS_TABLE_TABLE
+                            + " WHERE IFNULL(tableActive,'1') = '1'"
+                            + andBranchScope(null),
+                    null);
+            int distinctAreas = 0;
+            if (distinctCursor.moveToFirst()) {
+                distinctAreas = distinctCursor.getInt(0);
+            }
+            distinctCursor.close();
+            distinctCursor = null;
+            if (distinctAreas > 1) {
+                return; // already assigned across areas
+            }
+
+            tablesCursor = db.rawQuery(
+                    "SELECT tableId FROM " + POS_TABLE_TABLE
+                            + " WHERE IFNULL(tableActive,'1') = '1'"
+                            + andBranchScope(null)
+                            + " ORDER BY CAST(IFNULL(sortOrder,0) AS INTEGER) ASC, CAST(tableNumber AS INTEGER) ASC",
+                    null);
+            int index = 0;
+            while (tablesCursor.moveToNext()) {
+                String tableId = tablesCursor.getString(0);
+                String areaId = areaIds.get(index % areaIds.size());
+                ContentValues values = new ContentValues();
+                values.put("areaId", areaId);
+                db.update(POS_TABLE_TABLE, values, "tableId = ?", new String[]{tableId});
+                index++;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (areaCursor != null) {
+                areaCursor.close();
+            }
+            if (distinctCursor != null) {
+                distinctCursor.close();
+            }
+            if (tablesCursor != null) {
+                tablesCursor.close();
+            }
+        }
+    }
+
+    private void seedPosTablesFromCompany(SQLiteDatabase db) {
+        Cursor countCursor = null;
+        Cursor companyCursor = null;
+        try {
+            int existingCount = 0;
+            countCursor = db.rawQuery("SELECT COUNT(*) FROM " + POS_TABLE_TABLE + whereBranchScope(null), null);
+            if (countCursor.moveToFirst()) {
+                existingCount = countCursor.getInt(0);
+            }
+            countCursor.close();
+            countCursor = null;
+
+            int noOfTable = 0;
+            companyCursor = db.rawQuery("SELECT noOfTable, tableStatus FROM " + COMPANY_TABLE
+                    + " ORDER BY companyId DESC LIMIT 1", null);
+            if (companyCursor.moveToFirst()) {
+                try {
+                    noOfTable = Integer.parseInt(companyCursor.getString(0));
+                } catch (Exception ignored) {
+                    noOfTable = 0;
+                }
+            }
+            if (noOfTable <= 0) {
+                return;
+            }
+
+            String typeId = null;
+            java.util.ArrayList<String> areaIds = new java.util.ArrayList<>();
+            Cursor area = db.rawQuery("SELECT areaId FROM " + DINING_AREA_TABLE
+                    + " WHERE IFNULL(areaActive,'1') = '1'"
+                    + andBranchScope(null)
+                    + " ORDER BY CAST(IFNULL(areaSortOrder,0) AS INTEGER) ASC, areaId ASC", null);
+            while (area.moveToNext()) {
+                areaIds.add(area.getString(0));
+            }
+            area.close();
+            Cursor type = db.rawQuery("SELECT tableTypeId FROM " + TABLE_TYPE_TABLE + whereBranchScope(null)
+                    + " ORDER BY tableTypeId ASC LIMIT 1", null);
+            if (type.moveToFirst()) {
+                typeId = type.getString(0);
+            }
+            type.close();
+
+            if (existingCount == 0) {
+                for (int i = 1; i <= noOfTable; i++) {
+                    String areaId = areaIds.isEmpty() ? null : areaIds.get((i - 1) % areaIds.size());
+                    insertPosTableRow(db, i, areaId, typeId);
+                }
+                return;
+            }
+
+            // Grow master when company.noOfTable increases
+            for (int i = 1; i <= noOfTable; i++) {
+                Cursor exists = db.rawQuery(
+                        "SELECT 1 FROM " + POS_TABLE_TABLE + " WHERE tableNumber = ?" + andBranchScope(null) + " LIMIT 1",
+                        new String[]{String.valueOf(i)});
+                boolean found = exists.moveToFirst();
+                exists.close();
+                if (!found) {
+                    String areaId = areaIds.isEmpty() ? null : areaIds.get((i - 1) % areaIds.size());
+                    insertPosTableRow(db, i, areaId, typeId);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (countCursor != null) {
+                countCursor.close();
+            }
+            if (companyCursor != null) {
+                companyCursor.close();
+            }
+        }
+    }
+
+    private void insertPosTableRow(SQLiteDatabase db, int tableNo, String areaId, String typeId) {
+        ContentValues values = new ContentValues();
+        values.put("tableNumber", String.valueOf(tableNo));
+        values.put("tableName", "T" + tableNo);
+        values.put("tableTypeId", typeId);
+        values.put("capacity", 4);
+        values.put("areaId", areaId);
+        values.put("tableActive", "1");
+        values.put("sortOrder", tableNo);
+        values.put("posTableNetworkStatus", newSyncNetworkKey());
+        values.put("posTableStatus", "0");
+        BranchSession.applyScope(values);
+        db.insert(POS_TABLE_TABLE, null, values);
     }
 
     /**
@@ -2242,6 +2717,9 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         mapStringColumn(cursor, "snapshotComboComponents", item::setSnapshotComboComponents);
         mapStringColumn(cursor, "cartPackingCharge", item::setCartPackingCharge);
         mapStringColumn(cursor, "cartPackingChargeType", item::setCartPackingChargeType);
+        mapStringColumn(cursor, "diningSessionId", item::setDiningSessionId);
+        mapStringColumn(cursor, "orderRoundId", item::setOrderRoundId);
+        mapStringColumn(cursor, "kotPrinted", item::setKotPrinted);
         int openPriceCol = cursor.getColumnIndex("openPrice");
         if (openPriceCol >= 0 && !cursor.isNull(openPriceCol)) {
             item.setOpenPrice(cursor.getString(openPriceCol));
@@ -2265,6 +2743,8 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         mapStringColumn(cursor, "packingChargeType", item::setPackingChargeType);
         mapStringColumn(cursor, "cashAmount", item::setCashAmount);
         mapStringColumn(cursor, "upiAmount", item::setUpiAmount);
+        mapStringColumn(cursor, "diningSessionId", item::setDiningSessionId);
+        mapStringColumn(cursor, "billPrintStatus", item::setBillPrintStatus);
     }
 
     private interface StringColumnConsumer {
@@ -3448,6 +3928,16 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
                 }
                 printerSettingResponse.setBluetoothAddress(cursor.getString(cursor.getColumnIndex("bluetoothAddress")));
                 printerSettingResponse.setBluetoothKOTAddress(cursor.getString(cursor.getColumnIndex("bluetoothKOTAddress")));
+                int kotEnableIdx = cursor.getColumnIndex("kotEnable");
+                printerSettingResponse.setKotEnable(kotEnableIdx >= 0 ? cursor.getString(kotEnableIdx) : "on");
+                int kotPrefixIdx = cursor.getColumnIndex("kotPrefix");
+                printerSettingResponse.setKotPrefix(kotPrefixIdx >= 0 ? cursor.getString(kotPrefixIdx) : "KOT-");
+                int kotCopiesIdx = cursor.getColumnIndex("kotCopies");
+                printerSettingResponse.setKotCopies(kotCopiesIdx >= 0 ? cursor.getString(kotCopiesIdx) : "1");
+                int kotAutoIdx = cursor.getColumnIndex("kotAutoPrint");
+                printerSettingResponse.setKotAutoPrint(kotAutoIdx >= 0 ? cursor.getString(kotAutoIdx) : "off");
+                int kotPreviewIdx = cursor.getColumnIndex("kotPreview");
+                printerSettingResponse.setKotPreview(kotPreviewIdx >= 0 ? cursor.getString(kotPreviewIdx) : "on");
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -3543,6 +4033,13 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             db.delete(MESS_INVOICE_TABLE, null, null);
             db.delete(INVENTORY_TABLE, null, null);
             db.delete(EXPENSES_TABLE, null, null);
+            db.delete(KOT_ITEM_TABLE, null, null);
+            db.delete(KOT_TABLE, null, null);
+            db.delete(ORDER_ROUND_TABLE, null, null);
+            db.delete(DINING_SESSION_TABLE, null, null);
+            db.delete(POS_TABLE_TABLE, null, null);
+            db.delete(TABLE_TYPE_TABLE, null, null);
+            db.delete(DINING_AREA_TABLE, null, null);
             db.setTransactionSuccessful();
         } finally {
             db.endTransaction();
@@ -3792,6 +4289,12 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         contentValues.put("invoiceNetworkStatus", networkStatus);
         contentValues.put("invoiceType", invoiceResponse.getInvoiceType());
         contentValues.put("invoiceStatus", invoiceResponse.getInvoiceStatus());
+        if (invoiceResponse.getDiningSessionId() != null) {
+            contentValues.put("diningSessionId", invoiceResponse.getDiningSessionId());
+        }
+        if (invoiceResponse.getBillPrintStatus() != null) {
+            contentValues.put("billPrintStatus", invoiceResponse.getBillPrintStatus());
+        }
         putOptionalColumn(contentValues, "organizationId", invoiceResponse.getOrganizationId());
         putOptionalColumn(contentValues, "branchId", invoiceResponse.getBranchId());
         putOptionalColumn(contentValues, "deviceId", invoiceResponse.getDeviceId());
@@ -4587,7 +5090,87 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         db.close();
     }
 
+    /**
+     * Older take-away (parcel) carts sometimes saved with blank id — assign P1, P2… so the list shows a parcel no.
+     */
+    private void ensureTakeAwayNumbersAssigned(String cartOrderStatus) {
+        if (cartOrderStatus == null || !cartOrderStatus.equalsIgnoreCase("take_away")) {
+            return;
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT COUNT(*) FROM " + CART_PRODUCT_TABLE
+                            + " WHERE cartOrderStatus = ?"
+                            + " AND (noOfTable IS NULL OR TRIM(IFNULL(noOfTable,'')) = '')",
+                    new String[]{cartOrderStatus});
+            if (!cursor.moveToFirst() || cursor.getInt(0) <= 0) {
+                return;
+            }
+            cursor.close();
+            cursor = null;
+
+            String taNo = nextUniqueTakeAwayNumber(db);
+            ContentValues values = new ContentValues();
+            values.put("noOfTable", taNo);
+            db.update(CART_PRODUCT_TABLE, values,
+                    "cartOrderStatus = ? AND (noOfTable IS NULL OR TRIM(IFNULL(noOfTable,'')) = '')",
+                    new String[]{cartOrderStatus});
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            db.close();
+        }
+    }
+
+    private String nextUniqueTakeAwayNumber(SQLiteDatabase db) {
+        Cursor c = null;
+        int max = 0;
+        try {
+            c = db.rawQuery(
+                    "SELECT noOfTable FROM " + CART_PRODUCT_TABLE
+                            + " WHERE cartOrderStatus = 'take_away'"
+                            + " AND IFNULL(noOfTable,'') != ''",
+                    null);
+            while (c.moveToNext()) {
+                String raw = c.getString(0);
+                if (raw == null) {
+                    continue;
+                }
+                String digits = raw.replaceAll("[^0-9]", "");
+                if (digits.isEmpty()) {
+                    continue;
+                }
+                try {
+                    max = Math.max(max, Integer.parseInt(digits));
+                } catch (Exception ignored) {
+                }
+            }
+        } finally {
+            if (c != null) {
+                c.close();
+            }
+        }
+        return "P" + (max + 1);
+    }
+
+    /** Next parcel counter id for take-away (P1, P2, …). Not a dine-in table. */
+    public String nextTakeAwayParcelNumber() {
+        SQLiteDatabase db = getWritableDatabase();
+        try {
+            return nextUniqueTakeAwayNumber(db);
+        } finally {
+            db.close();
+        }
+    }
+
     public List<ProductCartResponse> getTakeWayCartList(String cartOrderStatus) {
+
+        ensureTakeAwayNumbersAssigned(cartOrderStatus);
 
         List<ProductCartResponse> productCartResponseList = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
@@ -4812,30 +5395,301 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
 
         List<MemberResponse> memberResponseList = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
+        String currentMonth = new SimpleDateFormat("yyyy-MM", Locale.getDefault()).format(Calendar.getInstance().getTime());
 
-        Cursor cursor = db.rawQuery("SELECT * FROM member LEFT JOIN member_payment ON member_payment.memberId = member.memberId GROUP BY member_payment.memberId", null);
-        MemberResponse memberResponse;
+        Cursor cursor = db.rawQuery(
+                "SELECT member.memberId AS memberId,"
+                        + " member.memberName AS memberName,"
+                        + " member.memberMobileNumber AS memberMobileNumber,"
+                        + " member.memberAlternetMobileNumber AS memberAlternetMobileNumber,"
+                        + " member.memberAddress AS memberAddress,"
+                        + " member.registrationNo AS registrationNo,"
+                        + " member.memberStatus AS memberStatus"
+                        + " FROM member"
+                        + " WHERE IFNULL(member.memberStatus, 0) != 2"
+                        + " ORDER BY member.memberName COLLATE NOCASE ASC",
+                null);
         while (cursor.moveToNext()) {
-            memberResponse = new MemberResponse();
-            memberResponse.setMemberId(cursor.getString(cursor.getColumnIndex("memberId")));
+            MemberResponse memberResponse = new MemberResponse();
             String memberId = cursor.getString(cursor.getColumnIndex("memberId"));
+            memberResponse.setMemberId(memberId);
             memberResponse.setMemberName(cursor.getString(cursor.getColumnIndex("memberName")));
             memberResponse.setMemberMobileNumber(cursor.getString(cursor.getColumnIndex("memberMobileNumber")));
             memberResponse.setMemberAlternetMobileNumber(cursor.getString(cursor.getColumnIndex("memberAlternetMobileNumber")));
             memberResponse.setMemberAddress(cursor.getString(cursor.getColumnIndex("memberAddress")));
-            memberResponse.setMessTotalDays(cursor.getString(cursor.getColumnIndex("messTotalDays")));
-            memberResponse.setPaymentMessAmount(cursor.getString(cursor.getColumnIndex("paymentMessAmount")));
-            memberResponse.setPaymentDate(cursor.getString(cursor.getColumnIndex("paymentDate")));
-            Cursor cursor1 = db.rawQuery("SELECT SUM(paymentPaidAmount) as paymentPaidAmount FROM member_payment WHERE memberId='" + memberId + "'", null);
-            while (cursor1.moveToNext()) {
-                memberResponse.setPaymentPaidAmount(cursor1.getString(cursor1.getColumnIndex("paymentPaidAmount")));
+            try {
+                int regIdx = cursor.getColumnIndex("registrationNo");
+                if (regIdx >= 0) {
+                    memberResponse.setRegistrationNo(cursor.getString(regIdx));
+                }
+            } catch (Exception ignored) {
             }
+            fillMemberPaymentAndTokenSummary(db, memberResponse, memberId, currentMonth);
             memberResponseList.add(memberResponse);
         }
-
+        cursor.close();
         db.close();
         return memberResponseList;
+    }
 
+    /**
+     * Current-month mess package + lifetime paid months + tokens generated this month.
+     * Pending = current month mess amount − current month paid (not lifetime).
+     */
+    private void fillMemberPaymentAndTokenSummary(SQLiteDatabase db, MemberResponse member,
+                                                  String memberId, String currentMonth) {
+        if (memberId == null) {
+            memberId = "";
+        }
+        String mid = memberId;
+
+        // Latest package values for current month (mess amount / days).
+        Cursor monthPkg = db.rawQuery(
+                "SELECT paymentMessAmount, messTotalDays, paymentDate FROM " + MEMBER_PAYMENT_TABLE
+                        + " WHERE memberId = ? AND paymentDate LIKE ?"
+                        + " ORDER BY paymentId DESC LIMIT 1",
+                new String[]{mid, currentMonth + "%"});
+        if (monthPkg.moveToFirst()) {
+            member.setPaymentMessAmount(monthPkg.getString(monthPkg.getColumnIndex("paymentMessAmount")));
+            member.setMessTotalDays(monthPkg.getString(monthPkg.getColumnIndex("messTotalDays")));
+            member.setPaymentDate(monthPkg.getString(monthPkg.getColumnIndex("paymentDate")));
+        } else {
+            // No package for this month — pending is 0; New Payment can create one.
+            Cursor latest = db.rawQuery(
+                    "SELECT messTotalDays FROM " + MEMBER_PAYMENT_TABLE
+                            + " WHERE memberId = ? ORDER BY paymentId DESC LIMIT 1",
+                    new String[]{mid});
+            if (latest.moveToFirst()) {
+                member.setMessTotalDays(latest.getString(latest.getColumnIndex("messTotalDays")));
+            } else {
+                member.setMessTotalDays("");
+            }
+            latest.close();
+            member.setPaymentMessAmount("0");
+            member.setPaymentDate(currentMonth);
+        }
+        monthPkg.close();
+
+        // Paid this month only.
+        Cursor monthPaid = db.rawQuery(
+                "SELECT IFNULL(SUM(CAST(paymentPaidAmount AS REAL)), 0) AS paid"
+                        + " FROM " + MEMBER_PAYMENT_TABLE
+                        + " WHERE memberId = ? AND paymentDate LIKE ?",
+                new String[]{mid, currentMonth + "%"});
+        String paidThisMonth = "0";
+        if (monthPaid.moveToFirst()) {
+            paidThisMonth = monthPaid.getString(0);
+            if (paidThisMonth == null || paidThisMonth.trim().isEmpty()) {
+                paidThisMonth = "0";
+            }
+        }
+        monthPaid.close();
+        member.setPaymentPaidAmount(paidThisMonth);
+
+        // Months paid summary: yyyy-MM (paid amount).
+        StringBuilder months = new StringBuilder();
+        Cursor monthsCur = db.rawQuery(
+                "SELECT substr(paymentDate, 1, 7) AS ym,"
+                        + " IFNULL(SUM(CAST(paymentPaidAmount AS REAL)), 0) AS paid,"
+                        + " IFNULL(MAX(CAST(paymentMessAmount AS REAL)), 0) AS messAmt"
+                        + " FROM " + MEMBER_PAYMENT_TABLE
+                        + " WHERE memberId = ? AND IFNULL(paymentDate, '') != ''"
+                        + " GROUP BY substr(paymentDate, 1, 7)"
+                        + " ORDER BY ym DESC",
+                new String[]{mid});
+        while (monthsCur.moveToNext()) {
+            String ym = monthsCur.getString(0);
+            String paid = monthsCur.getString(1);
+            String messAmt = monthsCur.getString(2);
+            if (ym == null || ym.trim().isEmpty()) {
+                continue;
+            }
+            float paidF = 0f;
+            float messF = 0f;
+            try {
+                paidF = Float.parseFloat(paid != null ? paid : "0");
+            } catch (Exception ignored) {
+            }
+            try {
+                messF = Float.parseFloat(messAmt != null ? messAmt : "0");
+            } catch (Exception ignored) {
+            }
+            float pending = Math.max(0f, messF - paidF);
+            if (months.length() > 0) {
+                months.append("\n");
+            }
+            months.append(ym)
+                    .append("  Paid: ").append(String.format(Locale.US, "%.2f", paidF));
+            if (pending > 0.009f) {
+                months.append("  Pending: ").append(String.format(Locale.US, "%.2f", pending));
+            } else {
+                months.append("  Settled");
+            }
+        }
+        monthsCur.close();
+        member.setPaymentMonthsSummary(months.length() > 0 ? months.toString() : "No payments yet");
+
+        // Tokens this month: mess_invoice coupons + mess_token QR slips.
+        int invoiceTokens = 0;
+        int qrTokens = 0;
+        Cursor inv = db.rawQuery(
+                "SELECT COUNT(*) FROM " + MESS_INVOICE_TABLE
+                        + " WHERE memberId = ? AND messInvoiceDate LIKE ?",
+                new String[]{mid, currentMonth + "%"});
+        if (inv.moveToFirst()) {
+            invoiceTokens = inv.getInt(0);
+        }
+        inv.close();
+        Cursor tok = db.rawQuery(
+                "SELECT COUNT(*) FROM " + MESS_TOKEN_TABLE
+                        + " WHERE memberId = ? AND tokenDate LIKE ?",
+                new String[]{mid, currentMonth + "%"});
+        if (tok.moveToFirst()) {
+            qrTokens = tok.getInt(0);
+        }
+        tok.close();
+        // Prefer coupon count; if QR tokens exist separately, show both.
+        int totalTokens = Math.max(invoiceTokens, qrTokens);
+        if (invoiceTokens > 0 && qrTokens > 0 && invoiceTokens != qrTokens) {
+            totalTokens = invoiceTokens + qrTokens;
+        }
+        member.setTokensGenerated(String.valueOf(totalTokens));
+
+        String today = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                .format(Calendar.getInstance().getTime());
+        int todayCount = 0;
+        Cursor todayInv = db.rawQuery(
+                "SELECT COUNT(*) FROM " + MESS_INVOICE_TABLE
+                        + " WHERE memberId = ? AND messInvoiceDate LIKE ?",
+                new String[]{mid, today + "%"});
+        if (todayInv.moveToFirst()) {
+            todayCount = todayInv.getInt(0);
+        }
+        todayInv.close();
+        // Fallback by member name (legacy coupon rows may key on name).
+        if (todayCount == 0 && member.getMemberName() != null && !member.getMemberName().trim().isEmpty()) {
+            Cursor byName = db.rawQuery(
+                    "SELECT COUNT(*) FROM " + MESS_INVOICE_TABLE
+                            + " WHERE memberName = ? AND messInvoiceDate LIKE ?",
+                    new String[]{member.getMemberName(), today + "%"});
+            if (byName.moveToFirst()) {
+                todayCount = byName.getInt(0);
+            }
+            byName.close();
+        }
+        member.setTodayTokensGenerated(String.valueOf(todayCount));
+    }
+
+    public boolean hasMemberPaymentForMonth(String memberId, String yearMonth) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor c = db.rawQuery(
+                "SELECT 1 FROM " + MEMBER_PAYMENT_TABLE
+                        + " WHERE memberId = ? AND paymentDate LIKE ? LIMIT 1",
+                new String[]{memberId != null ? memberId : "", (yearMonth != null ? yearMonth : "") + "%"});
+        boolean exists = c.moveToFirst();
+        c.close();
+        db.close();
+        return exists;
+    }
+
+    /** Month-wise payment history for a member (table / History screen). */
+    public List<MemberPaymentMonthItem> getMemberPaymentMonthHistory(String memberId) {
+        List<MemberPaymentMonthItem> list = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        String mid = memberId != null ? memberId : "";
+        Cursor monthsCur = db.rawQuery(
+                "SELECT substr(paymentDate, 1, 7) AS ym,"
+                        + " IFNULL(SUM(CAST(paymentPaidAmount AS REAL)), 0) AS paid,"
+                        + " IFNULL(MAX(CAST(paymentMessAmount AS REAL)), 0) AS messAmt"
+                        + " FROM " + MEMBER_PAYMENT_TABLE
+                        + " WHERE memberId = ? AND IFNULL(paymentDate, '') != ''"
+                        + " GROUP BY substr(paymentDate, 1, 7)"
+                        + " ORDER BY ym DESC",
+                new String[]{mid});
+        while (monthsCur.moveToNext()) {
+            String ym = monthsCur.getString(0);
+            if (ym == null || ym.trim().isEmpty()) {
+                continue;
+            }
+            float paidF = 0f;
+            float messF = 0f;
+            try {
+                paidF = Float.parseFloat(monthsCur.getString(1) != null ? monthsCur.getString(1) : "0");
+            } catch (Exception ignored) {
+            }
+            try {
+                messF = Float.parseFloat(monthsCur.getString(2) != null ? monthsCur.getString(2) : "0");
+            } catch (Exception ignored) {
+            }
+            float pending = Math.max(0f, messF - paidF);
+            MemberPaymentMonthItem item = new MemberPaymentMonthItem();
+            item.yearMonth = ym;
+            item.messAmount = String.format(Locale.US, "%.2f", messF);
+            item.paidAmount = String.format(Locale.US, "%.2f", paidF);
+            item.pendingAmount = String.format(Locale.US, "%.2f", pending);
+            item.status = pending > 0.009f ? "Pending" : "Settled";
+            list.add(item);
+        }
+        monthsCur.close();
+        db.close();
+        return list;
+    }
+
+    /** Month-scoped payment package details for New/Pending payment screens. */
+    public List<MemberResponse> getMemberPaymentDetails(String memberId, String paymentDate) {
+        List<MemberResponse> memberResponseList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        String mid = memberId != null ? memberId : "";
+        String month = paymentDate != null ? paymentDate : "";
+
+        Cursor memberCur = db.rawQuery(
+                "SELECT * FROM member WHERE memberId = ? LIMIT 1",
+                new String[]{mid});
+        if (!memberCur.moveToFirst()) {
+            memberCur.close();
+            db.close();
+            return memberResponseList;
+        }
+
+        MemberResponse memberResponse = new MemberResponse();
+        memberResponse.setMemberId(memberCur.getString(memberCur.getColumnIndex("memberId")));
+        memberResponse.setMemberName(memberCur.getString(memberCur.getColumnIndex("memberName")));
+        memberResponse.setMemberMobileNumber(memberCur.getString(memberCur.getColumnIndex("memberMobileNumber")));
+        memberResponse.setMemberAlternetMobileNumber(memberCur.getString(memberCur.getColumnIndex("memberAlternetMobileNumber")));
+        memberResponse.setMemberAddress(memberCur.getString(memberCur.getColumnIndex("memberAddress")));
+        memberCur.close();
+
+        Cursor pkg = db.rawQuery(
+                "SELECT paymentMessAmount, messTotalDays, paymentDate FROM " + MEMBER_PAYMENT_TABLE
+                        + " WHERE memberId = ? AND paymentDate LIKE ?"
+                        + " ORDER BY paymentId DESC LIMIT 1",
+                new String[]{mid, month + "%"});
+        if (pkg.moveToFirst()) {
+            memberResponse.setPaymentMessAmount(pkg.getString(pkg.getColumnIndex("paymentMessAmount")));
+            memberResponse.setMessTotalDays(pkg.getString(pkg.getColumnIndex("messTotalDays")));
+            memberResponse.setPaymentDate(pkg.getString(pkg.getColumnIndex("paymentDate")));
+        } else {
+            memberResponse.setPaymentMessAmount("0");
+            memberResponse.setMessTotalDays("");
+            memberResponse.setPaymentDate("");
+        }
+        pkg.close();
+
+        Cursor paid = db.rawQuery(
+                "SELECT IFNULL(SUM(CAST(paymentPaidAmount AS REAL)), 0) FROM " + MEMBER_PAYMENT_TABLE
+                        + " WHERE memberId = ? AND paymentDate LIKE ?",
+                new String[]{mid, month + "%"});
+        if (paid.moveToFirst()) {
+            memberResponse.setPaymentPaidAmount(paid.getString(0));
+        } else {
+            memberResponse.setPaymentPaidAmount("0");
+        }
+        paid.close();
+
+        // Always return the member profile so New Payment can prefill name/mobile.
+        memberResponseList.add(memberResponse);
+        db.close();
+        return memberResponseList;
     }
 
     public List<MemberResponse> getMemberPaymentList(String paymentDate) {
@@ -4843,12 +5697,26 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         List<MemberResponse> memberResponseList = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
 
-        Cursor cursor = db.rawQuery("SELECT * FROM member LEFT JOIN member_payment ON member_payment.memberId = member.memberId WHERE member_payment.paymentDate LIKE '%" + paymentDate + "%' GROUP BY member_payment.memberId", null);
+        Cursor cursor = db.rawQuery(
+                "SELECT member.memberId AS memberId,"
+                        + " member.memberName AS memberName,"
+                        + " member.memberMobileNumber AS memberMobileNumber,"
+                        + " member.memberAlternetMobileNumber AS memberAlternetMobileNumber,"
+                        + " member.memberAddress AS memberAddress,"
+                        + " member_payment.messTotalDays AS messTotalDays,"
+                        + " member_payment.paymentMessAmount AS paymentMessAmount,"
+                        + " member_payment.paymentDate AS paymentDate"
+                        + " FROM member"
+                        + " INNER JOIN member_payment ON member_payment.memberId = member.memberId"
+                        + " WHERE member_payment.paymentDate LIKE ?"
+                        + " GROUP BY member.memberId"
+                        + " ORDER BY member.memberName COLLATE NOCASE ASC",
+                new String[]{"%" + (paymentDate != null ? paymentDate : "") + "%"});
         MemberResponse memberResponse;
         while (cursor.moveToNext()) {
             memberResponse = new MemberResponse();
-            memberResponse.setMemberId(cursor.getString(cursor.getColumnIndex("memberId")));
             String memberId = cursor.getString(cursor.getColumnIndex("memberId"));
+            memberResponse.setMemberId(memberId);
             memberResponse.setMemberName(cursor.getString(cursor.getColumnIndex("memberName")));
             memberResponse.setMemberMobileNumber(cursor.getString(cursor.getColumnIndex("memberMobileNumber")));
             memberResponse.setMemberAlternetMobileNumber(cursor.getString(cursor.getColumnIndex("memberAlternetMobileNumber")));
@@ -4856,12 +5724,17 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             memberResponse.setMessTotalDays(cursor.getString(cursor.getColumnIndex("messTotalDays")));
             memberResponse.setPaymentMessAmount(cursor.getString(cursor.getColumnIndex("paymentMessAmount")));
             memberResponse.setPaymentDate(cursor.getString(cursor.getColumnIndex("paymentDate")));
-            Cursor cursor1 = db.rawQuery("SELECT SUM(paymentPaidAmount) as paymentPaidAmount FROM member_payment WHERE memberId='" + memberId + "'", null);
-            while (cursor1.moveToNext()) {
+            Cursor cursor1 = db.rawQuery(
+                    "SELECT SUM(paymentPaidAmount) as paymentPaidAmount FROM " + MEMBER_PAYMENT_TABLE
+                            + " WHERE memberId=?",
+                    new String[]{memberId != null ? memberId : ""});
+            if (cursor1.moveToNext()) {
                 memberResponse.setPaymentPaidAmount(cursor1.getString(cursor1.getColumnIndex("paymentPaidAmount")));
             }
+            cursor1.close();
             memberResponseList.add(memberResponse);
         }
+        cursor.close();
 
         db.close();
         return memberResponseList;
@@ -5432,36 +6305,6 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             memberResponse.setMemberMobileNumber(cursor.getString(cursor.getColumnIndex("memberMobileNumber")));
             memberResponse.setMemberAlternetMobileNumber(cursor.getString(cursor.getColumnIndex("memberAlternetMobileNumber")));
             memberResponse.setMemberAddress(cursor.getString(cursor.getColumnIndex("memberAddress")));
-            memberResponseList.add(memberResponse);
-        }
-
-        db.close();
-        return memberResponseList;
-
-    }
-
-
-    public List<MemberResponse> getMemberPaymentDetails(String memberId, String paymentDate) {
-
-        List<MemberResponse> memberResponseList = new ArrayList<>();
-        SQLiteDatabase db = this.getReadableDatabase();
-
-        Cursor cursor = db.rawQuery("SELECT * FROM member LEFT JOIN member_payment ON member_payment.memberId = member.memberId WHERE member_payment.memberId = '" + memberId + "' AND member_payment.paymentDate LIKE '%" + paymentDate + "%' GROUP BY member_payment.memberId", null);
-        MemberResponse memberResponse;
-        while (cursor.moveToNext()) {
-            memberResponse = new MemberResponse();
-            memberResponse.setMemberId(cursor.getString(cursor.getColumnIndex("memberId")));
-            memberResponse.setMemberName(cursor.getString(cursor.getColumnIndex("memberName")));
-            memberResponse.setMemberMobileNumber(cursor.getString(cursor.getColumnIndex("memberMobileNumber")));
-            memberResponse.setMemberAlternetMobileNumber(cursor.getString(cursor.getColumnIndex("memberAlternetMobileNumber")));
-            memberResponse.setMemberAddress(cursor.getString(cursor.getColumnIndex("memberAddress")));
-            memberResponse.setMessTotalDays(cursor.getString(cursor.getColumnIndex("messTotalDays")));
-            memberResponse.setPaymentMessAmount(cursor.getString(cursor.getColumnIndex("paymentMessAmount")));
-            memberResponse.setPaymentDate(cursor.getString(cursor.getColumnIndex("paymentDate")));
-            Cursor cursor1 = db.rawQuery("SELECT SUM(paymentPaidAmount) as paymentPaidAmount FROM member_payment WHERE memberId='" + memberId + "'", null);
-            while (cursor1.moveToNext()) {
-                memberResponse.setPaymentPaidAmount(cursor1.getString(cursor1.getColumnIndex("paymentPaidAmount")));
-            }
             memberResponseList.add(memberResponse);
         }
 
@@ -6460,5 +7303,1649 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             db.endTransaction();
         }
     }
+
+    // region Dine-In / Table Master CRUD
+
+    public List<PosTableResponse> getActivePosTables() {
+        List<PosTableResponse> list = new ArrayList<>();
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT t.*, a.areaName AS areaName, tt.tableTypeName AS tableTypeName "
+                            + "FROM " + POS_TABLE_TABLE + " t "
+                            + "LEFT JOIN " + DINING_AREA_TABLE + " a ON CAST(a.areaId AS TEXT) = CAST(t.areaId AS TEXT) "
+                            + "LEFT JOIN " + TABLE_TYPE_TABLE + " tt ON CAST(tt.tableTypeId AS TEXT) = CAST(t.tableTypeId AS TEXT) "
+                            + "WHERE IFNULL(t.tableActive,'1') = '1'"
+                            + andBranchScope("t")
+                            + " ORDER BY CAST(IFNULL(t.sortOrder,0) AS INTEGER) ASC, CAST(t.tableNumber AS INTEGER) ASC",
+                    null);
+            while (cursor.moveToNext()) {
+                list.add(mapPosTable(cursor));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            db.close();
+        }
+        return list;
+    }
+
+    public List<DiningAreaResponse> getDiningAreas() {
+        List<DiningAreaResponse> list = new ArrayList<>();
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT * FROM " + DINING_AREA_TABLE
+                            + " WHERE IFNULL(areaActive,'1') = '1'"
+                            + andBranchScope(null)
+                            + " ORDER BY CAST(IFNULL(areaSortOrder,0) AS INTEGER) ASC, areaId ASC",
+                    null);
+            while (cursor.moveToNext()) {
+                DiningAreaResponse area = new DiningAreaResponse();
+                area.setAreaId(cursor.getString(cursor.getColumnIndex("areaId")));
+                area.setAreaName(cursor.getString(cursor.getColumnIndex("areaName")));
+                area.setAreaSortOrder(cursor.getString(cursor.getColumnIndex("areaSortOrder")));
+                area.setAreaActive(cursor.getString(cursor.getColumnIndex("areaActive")));
+                try {
+                    area.setAreaNetworkStatus(cursor.getString(cursor.getColumnIndex("areaNetworkStatus")));
+                } catch (Exception ignored) {
+                }
+                list.add(area);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            db.close();
+        }
+        return list;
+    }
+
+    public List<TableTypeResponse> getTableTypes() {
+        List<TableTypeResponse> list = new ArrayList<>();
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT * FROM " + TABLE_TYPE_TABLE
+                            + " WHERE IFNULL(tableTypeActive,'1') = '1'"
+                            + andBranchScope(null)
+                            + " ORDER BY CAST(IFNULL(defaultCapacity,0) AS INTEGER) ASC, tableTypeId ASC",
+                    null);
+            while (cursor.moveToNext()) {
+                TableTypeResponse type = new TableTypeResponse();
+                type.setTableTypeId(cursor.getString(cursor.getColumnIndex("tableTypeId")));
+                type.setTableTypeName(cursor.getString(cursor.getColumnIndex("tableTypeName")));
+                type.setDefaultCapacity(cursor.getString(cursor.getColumnIndex("defaultCapacity")));
+                type.setTableTypeActive(cursor.getString(cursor.getColumnIndex("tableTypeActive")));
+                try {
+                    type.setTableTypeNetworkStatus(cursor.getString(cursor.getColumnIndex("tableTypeNetworkStatus")));
+                } catch (Exception ignored) {
+                }
+                list.add(type);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            db.close();
+        }
+        return list;
+    }
+
+    public long insertDiningArea(String areaName) {
+        if (areaName == null || areaName.trim().isEmpty()) {
+            return -1;
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        try {
+            ContentValues values = new ContentValues();
+            values.put("areaName", areaName.trim());
+            values.put("areaSortOrder", nextAreaSortOrder(db));
+            values.put("areaActive", "1");
+            values.put("areaNetworkStatus", newSyncNetworkKey());
+            values.put("areaStatus", "0");
+            BranchSession.applyScope(values);
+            return db.insert(DINING_AREA_TABLE, null, values);
+        } finally {
+            db.close();
+        }
+    }
+
+    public boolean updateDiningArea(String areaId, String areaName) {
+        if (areaId == null || areaName == null || areaName.trim().isEmpty()) {
+            return false;
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        try {
+            ContentValues values = new ContentValues();
+            values.put("areaName", areaName.trim());
+            values.put("areaStatus", "0");
+            return db.update(DINING_AREA_TABLE, values, "areaId = ?", new String[]{areaId}) > 0;
+        } finally {
+            db.close();
+        }
+    }
+
+    public boolean deactivateDiningArea(String areaId) {
+        if (areaId == null) {
+            return false;
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        try {
+            ContentValues values = new ContentValues();
+            values.put("areaActive", "0");
+            values.put("areaStatus", "0");
+            return db.update(DINING_AREA_TABLE, values, "areaId = ?", new String[]{areaId}) > 0;
+        } finally {
+            db.close();
+        }
+    }
+
+    public long insertTableType(String typeName, int defaultCapacity) {
+        if (typeName == null || typeName.trim().isEmpty()) {
+            return -1;
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        try {
+            ContentValues values = new ContentValues();
+            values.put("tableTypeName", typeName.trim());
+            values.put("defaultCapacity", Math.max(1, defaultCapacity));
+            values.put("tableTypeActive", "1");
+            values.put("tableTypeNetworkStatus", newSyncNetworkKey());
+            values.put("tableTypeStatus", "0");
+            BranchSession.applyScope(values);
+            return db.insert(TABLE_TYPE_TABLE, null, values);
+        } finally {
+            db.close();
+        }
+    }
+
+    public boolean updateTableType(String tableTypeId, String typeName, int defaultCapacity) {
+        if (tableTypeId == null || typeName == null || typeName.trim().isEmpty()) {
+            return false;
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        try {
+            ContentValues values = new ContentValues();
+            values.put("tableTypeName", typeName.trim());
+            values.put("defaultCapacity", Math.max(1, defaultCapacity));
+            values.put("tableTypeStatus", "0");
+            return db.update(TABLE_TYPE_TABLE, values, "tableTypeId = ?", new String[]{tableTypeId}) > 0;
+        } finally {
+            db.close();
+        }
+    }
+
+    public boolean deactivateTableType(String tableTypeId) {
+        if (tableTypeId == null) {
+            return false;
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        try {
+            ContentValues values = new ContentValues();
+            values.put("tableTypeActive", "0");
+            values.put("tableTypeStatus", "0");
+            return db.update(TABLE_TYPE_TABLE, values, "tableTypeId = ?", new String[]{tableTypeId}) > 0;
+        } finally {
+            db.close();
+        }
+    }
+
+    public boolean tableNumberExists(String tableNumber, String excludeTableId) {
+        if (tableNumber == null || tableNumber.trim().isEmpty()) {
+            return false;
+        }
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            if (excludeTableId != null && !excludeTableId.trim().isEmpty()) {
+                cursor = db.rawQuery(
+                        "SELECT 1 FROM " + POS_TABLE_TABLE
+                                + " WHERE tableNumber = ? AND tableId != ?"
+                                + " AND IFNULL(tableActive,'1') = '1'"
+                                + andBranchScope(null) + " LIMIT 1",
+                        new String[]{tableNumber.trim(), excludeTableId.trim()});
+            } else {
+                cursor = db.rawQuery(
+                        "SELECT 1 FROM " + POS_TABLE_TABLE
+                                + " WHERE tableNumber = ?"
+                                + " AND IFNULL(tableActive,'1') = '1'"
+                                + andBranchScope(null) + " LIMIT 1",
+                        new String[]{tableNumber.trim()});
+            }
+            return cursor.moveToFirst();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            db.close();
+        }
+    }
+
+    public int nextSuggestedTableNumber() {
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT MAX(CAST(tableNumber AS INTEGER)) FROM " + POS_TABLE_TABLE
+                            + " WHERE IFNULL(tableActive,'1') = '1'"
+                            + andBranchScope(null),
+                    null);
+            if (cursor.moveToFirst()) {
+                return Math.max(0, cursor.getInt(0)) + 1;
+            }
+            return 1;
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            db.close();
+        }
+    }
+
+    /** Shop Details → No of Table (configured capacity). */
+    public int getConfiguredTableCount() {
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT noOfTable FROM " + COMPANY_TABLE + " ORDER BY companyId DESC LIMIT 1",
+                    null);
+            if (cursor.moveToFirst()) {
+                try {
+                    return Math.max(0, Integer.parseInt(cursor.getString(0).trim()));
+                } catch (Exception ignored) {
+                    return 0;
+                }
+            }
+            return 0;
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            db.close();
+        }
+    }
+
+    public int countActivePosTables() {
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT COUNT(*) FROM " + POS_TABLE_TABLE
+                            + " WHERE IFNULL(tableActive,'1') = '1'"
+                            + andBranchScope(null),
+                    null);
+            if (cursor.moveToFirst()) {
+                return cursor.getInt(0);
+            }
+            return 0;
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            db.close();
+        }
+    }
+
+    public long insertPosTable(String tableNumber, String tableName, String areaId,
+                               String tableTypeId, int capacity) {
+        if (tableNumber == null || tableNumber.trim().isEmpty()) {
+            return -1;
+        }
+        if (tableNumberExists(tableNumber, null)) {
+            return -2;
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        try {
+            ContentValues values = new ContentValues();
+            values.put("tableNumber", tableNumber.trim());
+            values.put("tableName", tableName != null && !tableName.trim().isEmpty()
+                    ? tableName.trim() : ("T" + tableNumber.trim()));
+            values.put("areaId", areaId);
+            values.put("tableTypeId", tableTypeId);
+            values.put("capacity", Math.max(1, capacity));
+            values.put("tableActive", "1");
+            values.put("posTableNetworkStatus", newSyncNetworkKey());
+            values.put("posTableStatus", "0");
+            try {
+                values.put("sortOrder", Integer.parseInt(tableNumber.trim()));
+            } catch (Exception e) {
+                values.put("sortOrder", nextSuggestedTableNumber());
+            }
+            BranchSession.applyScope(values);
+            long id = db.insert(POS_TABLE_TABLE, null, values);
+            return id;
+        } finally {
+            db.close();
+        }
+    }
+
+    public boolean updatePosTable(String tableId, String tableNumber, String tableName,
+                                  String areaId, String tableTypeId, int capacity) {
+        if (tableId == null || tableNumber == null || tableNumber.trim().isEmpty()) {
+            return false;
+        }
+        if (tableNumberExists(tableNumber, tableId)) {
+            return false;
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        try {
+            ContentValues values = new ContentValues();
+            values.put("tableNumber", tableNumber.trim());
+            values.put("tableName", tableName != null && !tableName.trim().isEmpty()
+                    ? tableName.trim() : ("T" + tableNumber.trim()));
+            values.put("areaId", areaId);
+            values.put("tableTypeId", tableTypeId);
+            values.put("capacity", Math.max(1, capacity));
+            values.put("posTableStatus", "0");
+            try {
+                values.put("sortOrder", Integer.parseInt(tableNumber.trim()));
+            } catch (Exception ignored) {
+            }
+            boolean ok = db.update(POS_TABLE_TABLE, values, "tableId = ?", new String[]{tableId}) > 0;
+            return ok;
+        } finally {
+            db.close();
+        }
+    }
+
+    public boolean deactivatePosTable(String tableId) {
+        if (tableId == null) {
+            return false;
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        try {
+            ContentValues values = new ContentValues();
+            values.put("tableActive", "0");
+            values.put("posTableStatus", "0");
+            return db.update(POS_TABLE_TABLE, values, "tableId = ?", new String[]{tableId}) > 0;
+        } finally {
+            db.close();
+        }
+    }
+
+    public Cursor getUnSynchronizeDiningArea(int status) {
+        SQLiteDatabase db = getReadableDatabase();
+        return db.rawQuery(
+                "SELECT * FROM " + DINING_AREA_TABLE + " WHERE areaStatus = '" + status + "'",
+                null);
+    }
+
+    public void updateSyncDiningArea(String areaId, int areaStatus) {
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("areaStatus", String.valueOf(areaStatus));
+        db.update(DINING_AREA_TABLE, values, "areaId=?", new String[]{areaId});
+        db.close();
+    }
+
+    public Cursor getUnSynchronizeTableType(int status) {
+        SQLiteDatabase db = getReadableDatabase();
+        return db.rawQuery(
+                "SELECT * FROM " + TABLE_TYPE_TABLE
+                        + " WHERE tableTypeStatus = '" + status + "'",
+                null);
+    }
+
+    public void updateSyncTableType(String tableTypeId, int tableTypeStatus) {
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("tableTypeStatus", String.valueOf(tableTypeStatus));
+        db.update(TABLE_TYPE_TABLE, values, "tableTypeId=?", new String[]{tableTypeId});
+        db.close();
+    }
+
+    public Cursor getUnSynchronizePosTable(int status) {
+        SQLiteDatabase db = getReadableDatabase();
+        return db.rawQuery(
+                "SELECT t.*, a.areaNetworkStatus AS areaNetworkStatus, tt.tableTypeNetworkStatus AS tableTypeNetworkStatus "
+                        + "FROM " + POS_TABLE_TABLE + " t "
+                        + "LEFT JOIN " + DINING_AREA_TABLE + " a ON CAST(a.areaId AS TEXT) = CAST(t.areaId AS TEXT) "
+                        + "LEFT JOIN " + TABLE_TYPE_TABLE + " tt ON CAST(tt.tableTypeId AS TEXT) = CAST(t.tableTypeId AS TEXT) "
+                        + "WHERE t.posTableStatus = '" + status + "'",
+                null);
+    }
+
+    public void updateSyncPosTable(String tableId, int posTableStatus) {
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("posTableStatus", String.valueOf(posTableStatus));
+        db.update(POS_TABLE_TABLE, values, "tableId=?", new String[]{tableId});
+        db.close();
+    }
+
+    /** Upsert dining area from cloud by areaNetworkStatus. */
+    public void upsertDiningAreaFromCloud(String areaName, String areaSortOrder, String areaActive,
+                                          String areaNetworkStatus) {
+        if (areaNetworkStatus == null || areaNetworkStatus.trim().isEmpty()) {
+            return;
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT areaId FROM " + DINING_AREA_TABLE
+                            + " WHERE areaNetworkStatus = ? LIMIT 1",
+                    new String[]{areaNetworkStatus});
+            ContentValues values = new ContentValues();
+            values.put("areaName", areaName != null ? areaName : "");
+            values.put("areaSortOrder", parseIntSafe(areaSortOrder, 0));
+            values.put("areaActive", areaActive != null && !areaActive.isEmpty() ? areaActive : "1");
+            values.put("areaNetworkStatus", areaNetworkStatus);
+            values.put("areaStatus", "1");
+            BranchSession.applyScope(values);
+            if (cursor.moveToFirst()) {
+                db.update(DINING_AREA_TABLE, values, "areaId = ?", new String[]{cursor.getString(0)});
+            } else {
+                db.insert(DINING_AREA_TABLE, null, values);
+            }
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            db.close();
+        }
+    }
+
+    /** Upsert table type from cloud by tableTypeNetworkStatus. */
+    public void upsertTableTypeFromCloud(String tableTypeName, String defaultCapacity, String tableTypeActive,
+                                         String tableTypeNetworkStatus) {
+        if (tableTypeNetworkStatus == null || tableTypeNetworkStatus.trim().isEmpty()) {
+            return;
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT tableTypeId FROM " + TABLE_TYPE_TABLE
+                            + " WHERE tableTypeNetworkStatus = ? LIMIT 1",
+                    new String[]{tableTypeNetworkStatus});
+            ContentValues values = new ContentValues();
+            values.put("tableTypeName", tableTypeName != null ? tableTypeName : "");
+            values.put("defaultCapacity", parseIntSafe(defaultCapacity, 4));
+            values.put("tableTypeActive", tableTypeActive != null && !tableTypeActive.isEmpty() ? tableTypeActive : "1");
+            values.put("tableTypeNetworkStatus", tableTypeNetworkStatus);
+            values.put("tableTypeStatus", "1");
+            BranchSession.applyScope(values);
+            if (cursor.moveToFirst()) {
+                db.update(TABLE_TYPE_TABLE, values, "tableTypeId = ?", new String[]{cursor.getString(0)});
+            } else {
+                db.insert(TABLE_TYPE_TABLE, null, values);
+            }
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            db.close();
+        }
+    }
+
+    /**
+     * Upsert physical table from cloud. areaId/tableTypeId from API are network-status keys;
+     * resolve to local ids when possible.
+     */
+    public void upsertPosTableFromCloud(String tableNumber, String tableName, String areaNetworkKey,
+                                        String tableTypeNetworkKey, String capacity, String tableActive,
+                                        String positionX, String positionY, String sortOrder,
+                                        String statusOverride, String posTableNetworkStatus) {
+        if (posTableNetworkStatus == null || posTableNetworkStatus.trim().isEmpty()) {
+            if (tableNumber == null || tableNumber.trim().isEmpty()) {
+                return;
+            }
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        Cursor cursor = null;
+        try {
+            String localAreaId = resolveLocalIdByNetworkStatus(db, DINING_AREA_TABLE, "areaId",
+                    "areaNetworkStatus", areaNetworkKey);
+            String localTypeId = resolveLocalIdByNetworkStatus(db, TABLE_TYPE_TABLE, "tableTypeId",
+                    "tableTypeNetworkStatus", tableTypeNetworkKey);
+            if (localAreaId == null && areaNetworkKey != null && !areaNetworkKey.trim().isEmpty()) {
+                localAreaId = areaNetworkKey; // fallback if already a local id
+            }
+            if (localTypeId == null && tableTypeNetworkKey != null && !tableTypeNetworkKey.trim().isEmpty()) {
+                localTypeId = tableTypeNetworkKey;
+            }
+
+            if (posTableNetworkStatus != null && !posTableNetworkStatus.trim().isEmpty()) {
+                cursor = db.rawQuery(
+                        "SELECT tableId FROM " + POS_TABLE_TABLE
+                                + " WHERE posTableNetworkStatus = ? LIMIT 1",
+                        new String[]{posTableNetworkStatus});
+            } else {
+                cursor = db.rawQuery(
+                        "SELECT tableId FROM " + POS_TABLE_TABLE
+                                + " WHERE tableNumber = ?" + andBranchScope(null) + " LIMIT 1",
+                        new String[]{tableNumber.trim()});
+            }
+
+            ContentValues values = new ContentValues();
+            values.put("tableNumber", tableNumber != null ? tableNumber.trim() : "");
+            values.put("tableName", tableName != null && !tableName.trim().isEmpty()
+                    ? tableName.trim() : ("T" + (tableNumber != null ? tableNumber.trim() : "?")));
+            values.put("areaId", localAreaId);
+            values.put("tableTypeId", localTypeId);
+            values.put("capacity", parseIntSafe(capacity, 4));
+            values.put("tableActive", tableActive != null && !tableActive.isEmpty() ? tableActive : "1");
+            values.put("positionX", positionX);
+            values.put("positionY", positionY);
+            values.put("sortOrder", parseIntSafe(sortOrder, 0));
+            values.put("statusOverride", statusOverride);
+            if (posTableNetworkStatus != null && !posTableNetworkStatus.trim().isEmpty()) {
+                values.put("posTableNetworkStatus", posTableNetworkStatus);
+            }
+            values.put("posTableStatus", "1");
+            BranchSession.applyScope(values);
+            if (cursor.moveToFirst()) {
+                db.update(POS_TABLE_TABLE, values, "tableId = ?", new String[]{cursor.getString(0)});
+            } else {
+                if (posTableNetworkStatus == null || posTableNetworkStatus.trim().isEmpty()) {
+                    values.put("posTableNetworkStatus", newSyncNetworkKey());
+                }
+                db.insert(POS_TABLE_TABLE, null, values);
+            }
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            db.close();
+        }
+    }
+
+    private String resolveLocalIdByNetworkStatus(SQLiteDatabase db, String table, String idColumn,
+                                                 String networkColumn, String networkKey) {
+        if (networkKey == null || networkKey.trim().isEmpty()) {
+            return null;
+        }
+        Cursor c = null;
+        try {
+            c = db.rawQuery(
+                    "SELECT " + idColumn + " FROM " + table
+                            + " WHERE " + networkColumn + " = ? LIMIT 1",
+                    new String[]{networkKey.trim()});
+            if (c.moveToFirst()) {
+                return c.getString(0);
+            }
+            // already a local numeric id?
+            c.close();
+            c = db.rawQuery(
+                    "SELECT " + idColumn + " FROM " + table
+                            + " WHERE CAST(" + idColumn + " AS TEXT) = ? LIMIT 1",
+                    new String[]{networkKey.trim()});
+            if (c.moveToFirst()) {
+                return c.getString(0);
+            }
+            return null;
+        } finally {
+            if (c != null) {
+                c.close();
+            }
+        }
+    }
+
+    private static int parseIntSafe(String value, int fallback) {
+        try {
+            if (value == null || value.trim().isEmpty()) {
+                return fallback;
+            }
+            return Integer.parseInt(value.trim());
+        } catch (Exception e) {
+            return fallback;
+        }
+    }
+
+    private int nextAreaSortOrder(SQLiteDatabase db) {
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT MAX(CAST(IFNULL(areaSortOrder,0) AS INTEGER)) FROM " + DINING_AREA_TABLE
+                            + whereBranchScope(null),
+                    null);
+            if (cursor.moveToFirst()) {
+                return cursor.getInt(0) + 1;
+            }
+        } catch (Exception ignored) {
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return 0;
+    }
+
+    private void bumpCompanyNoOfTableIfNeeded(SQLiteDatabase db, String tableNumber) {
+        int num;
+        try {
+            num = Integer.parseInt(tableNumber);
+        } catch (Exception e) {
+            return;
+        }
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT companyId, noOfTable FROM " + COMPANY_TABLE
+                            + " ORDER BY companyId DESC LIMIT 1",
+                    null);
+            if (!cursor.moveToFirst()) {
+                return;
+            }
+            String companyId = cursor.getString(0);
+            int current = 0;
+            try {
+                current = Integer.parseInt(cursor.getString(1));
+            } catch (Exception ignored) {
+            }
+            if (num > current) {
+                ContentValues values = new ContentValues();
+                values.put("noOfTable", String.valueOf(num));
+                values.put("companyStatus", 0);
+                db.update(COMPANY_TABLE, values, "companyId = ?", new String[]{companyId});
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
+    private PosTableResponse mapPosTable(Cursor cursor) {
+        PosTableResponse table = new PosTableResponse();
+        table.setTableId(cursor.getString(cursor.getColumnIndex("tableId")));
+        table.setTableNumber(cursor.getString(cursor.getColumnIndex("tableNumber")));
+        table.setTableName(cursor.getString(cursor.getColumnIndex("tableName")));
+        table.setTableTypeId(cursor.getString(cursor.getColumnIndex("tableTypeId")));
+        table.setCapacity(cursor.getString(cursor.getColumnIndex("capacity")));
+        table.setAreaId(cursor.getString(cursor.getColumnIndex("areaId")));
+        table.setTableActive(cursor.getString(cursor.getColumnIndex("tableActive")));
+        table.setPositionX(cursor.getString(cursor.getColumnIndex("positionX")));
+        table.setPositionY(cursor.getString(cursor.getColumnIndex("positionY")));
+        table.setSortOrder(cursor.getString(cursor.getColumnIndex("sortOrder")));
+        table.setStatusOverride(cursor.getString(cursor.getColumnIndex("statusOverride")));
+        int areaNameIdx = cursor.getColumnIndex("areaName");
+        if (areaNameIdx >= 0) {
+            table.setAreaName(cursor.getString(areaNameIdx));
+        }
+        int typeNameIdx = cursor.getColumnIndex("tableTypeName");
+        if (typeNameIdx >= 0) {
+            table.setTableTypeName(cursor.getString(typeNameIdx));
+        }
+        return table;
+    }
+
+    public DiningSessionResponse getOpenDiningSessionForTable(String tableNumber) {
+        if (tableNumber == null || tableNumber.trim().isEmpty()) {
+            return null;
+        }
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            String tn = tableNumber.trim();
+            cursor = db.rawQuery(
+                    "SELECT * FROM " + DINING_SESSION_TABLE
+                            + " WHERE (primaryTableNumber = ? OR (',' || IFNULL(joinedTableNumbers,'') || ',') LIKE ?)"
+                            + " AND IFNULL(sessionStatus,'') NOT IN ('SETTLED','CLOSED','CANCELLED')"
+                            + andBranchScope(null)
+                            + " ORDER BY sessionId DESC LIMIT 1",
+                    new String[]{tn, "%," + tn + ",%"});
+            if (cursor.moveToFirst()) {
+                return mapDiningSession(cursor);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            db.close();
+        }
+        return null;
+    }
+
+    private DiningSessionResponse mapDiningSession(Cursor cursor) {
+        DiningSessionResponse session = new DiningSessionResponse();
+        session.setSessionId(cursor.getString(cursor.getColumnIndex("sessionId")));
+        session.setPrimaryTableNumber(cursor.getString(cursor.getColumnIndex("primaryTableNumber")));
+        session.setJoinedTableNumbers(cursor.getString(cursor.getColumnIndex("joinedTableNumbers")));
+        session.setSessionStatus(cursor.getString(cursor.getColumnIndex("sessionStatus")));
+        session.setGuestCount(cursor.getString(cursor.getColumnIndex("guestCount")));
+        session.setStartedAt(cursor.getString(cursor.getColumnIndex("startedAt")));
+        session.setClosedAt(cursor.getString(cursor.getColumnIndex("closedAt")));
+        session.setCustomerName(cursor.getString(cursor.getColumnIndex("customerName")));
+        session.setCustomerMobile(cursor.getString(cursor.getColumnIndex("customerMobile")));
+        session.setWaiterName(cursor.getString(cursor.getColumnIndex("waiterName")));
+        session.setUnpaidInvoiceNumber(cursor.getString(cursor.getColumnIndex("unpaidInvoiceNumber")));
+        session.setSessionVersion(cursor.getString(cursor.getColumnIndex("sessionVersion")));
+        int paidIdx = cursor.getColumnIndex("paidAmount");
+        if (paidIdx >= 0) {
+            session.setPaidAmount(cursor.getString(paidIdx));
+        }
+        return session;
+    }
+
+    public DiningSessionResponse createDiningSession(String tableNumber, int guestCount) {
+        SQLiteDatabase db = getWritableDatabase();
+        try {
+            ContentValues values = new ContentValues();
+            values.put("primaryTableNumber", tableNumber);
+            values.put("joinedTableNumbers", "");
+            values.put("sessionStatus", TableStatus.RUNNING);
+            values.put("guestCount", Math.max(0, guestCount));
+            values.put("startedAt", String.valueOf(System.currentTimeMillis()));
+            values.put("sessionVersion", 1);
+            BranchSession.applyScope(values);
+            long id = db.insert(DINING_SESSION_TABLE, null, values);
+            if (id <= 0) {
+                return null;
+            }
+            DiningSessionResponse session = new DiningSessionResponse();
+            session.setSessionId(String.valueOf(id));
+            session.setPrimaryTableNumber(tableNumber);
+            session.setJoinedTableNumbers("");
+            session.setSessionStatus(TableStatus.RUNNING);
+            session.setGuestCount(String.valueOf(Math.max(0, guestCount)));
+            session.setStartedAt(values.getAsString("startedAt"));
+            session.setSessionVersion("1");
+            return session;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        } finally {
+            db.close();
+        }
+    }
+
+    public void updateDiningSessionStatus(String sessionId, String status) {
+        if (sessionId == null || status == null) {
+            return;
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        try {
+            ContentValues values = new ContentValues();
+            values.put("sessionStatus", status);
+            if ("SETTLED".equals(status) || "CLOSED".equals(status) || TableStatus.AVAILABLE.equals(status)) {
+                values.put("closedAt", String.valueOf(System.currentTimeMillis()));
+            }
+            db.update(DINING_SESSION_TABLE, values, "sessionId = ?", new String[]{sessionId});
+            db.execSQL("UPDATE " + DINING_SESSION_TABLE
+                            + " SET sessionVersion = CAST(IFNULL(sessionVersion,1) AS INTEGER) + 1 WHERE sessionId = ?",
+                    new Object[]{sessionId});
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            db.close();
+        }
+    }
+
+    public void closeDiningSession(String sessionId) {
+        if (sessionId == null) {
+            return;
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        try {
+            ContentValues values = new ContentValues();
+            values.put("sessionStatus", "SETTLED");
+            values.put("closedAt", String.valueOf(System.currentTimeMillis()));
+            db.update(DINING_SESSION_TABLE, values, "sessionId = ?", new String[]{sessionId});
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            db.close();
+        }
+    }
+
+    public void updateKotSettings(String settingId, String kotEnable, String kotPrefix,
+                                  String kotCopies, String kotAutoPrint, String kotPreview) {
+        if (settingId == null) {
+            return;
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        try {
+            ContentValues values = new ContentValues();
+            values.put("kotEnable", kotEnable != null ? kotEnable : "on");
+            values.put("kotPrefix", kotPrefix != null ? kotPrefix : "KOT-");
+            values.put("kotCopies", kotCopies != null ? kotCopies : "1");
+            values.put("kotAutoPrint", kotAutoPrint != null ? kotAutoPrint : "off");
+            values.put("kotPreview", kotPreview != null ? kotPreview : "on");
+            values.put("settingStatus", 0);
+            db.update(PRINTER_SETTING_TABLE, values, "settingId = ?", new String[]{settingId});
+        } finally {
+            db.close();
+        }
+    }
+
+    /** Apply KOT fields from cloud download without marking printer settings unsynced. */
+    public void applyKotSettingsFromCloud(String settingId, String kotEnable, String kotPrefix,
+                                          String kotCopies, String kotAutoPrint, String kotPreview) {
+        if (settingId == null) {
+            return;
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        try {
+            ContentValues values = new ContentValues();
+            values.put("kotEnable", kotEnable != null && !kotEnable.trim().isEmpty() ? kotEnable : "on");
+            values.put("kotPrefix", kotPrefix != null && !kotPrefix.trim().isEmpty() ? kotPrefix : "KOT-");
+            values.put("kotCopies", kotCopies != null && !kotCopies.trim().isEmpty() ? kotCopies : "1");
+            values.put("kotAutoPrint", kotAutoPrint != null && !kotAutoPrint.trim().isEmpty() ? kotAutoPrint : "off");
+            values.put("kotPreview", kotPreview != null && !kotPreview.trim().isEmpty() ? kotPreview : "on");
+            db.update(PRINTER_SETTING_TABLE, values, "settingId = ?", new String[]{settingId});
+        } finally {
+            db.close();
+        }
+    }
+
+    public String nextKotNumber(String prefix) {
+        String safePrefix = prefix == null || prefix.trim().isEmpty() ? "KOT-" : prefix;
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT kotNumber FROM " + KOT_TABLE
+                            + " WHERE kotNumber LIKE ?"
+                            + andBranchScope(null)
+                            + " ORDER BY kotId DESC LIMIT 1",
+                    new String[]{safePrefix + "%"});
+            int next = 1;
+            if (cursor.moveToFirst()) {
+                String last = cursor.getString(0);
+                if (last != null && last.startsWith(safePrefix)) {
+                    String numeric = last.substring(safePrefix.length()).replaceAll("[^0-9]", "");
+                    if (!numeric.isEmpty()) {
+                        next = Integer.parseInt(numeric) + 1;
+                    }
+                }
+            }
+            return safePrefix + String.format(Locale.US, "%03d", next);
+        } catch (Exception e) {
+            return safePrefix + "001";
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            db.close();
+        }
+    }
+
+    public List<ProductCartResponse> getUnprintedCartProductList(String tableNumber, String cartOrderStatus) {
+        List<ProductCartResponse> all = getCartProductList(tableNumber, cartOrderStatus);
+        List<ProductCartResponse> unprinted = new ArrayList<>();
+        if (all == null) {
+            return unprinted;
+        }
+        for (ProductCartResponse line : all) {
+            if (line != null && !line.isKotPrinted()) {
+                unprinted.add(line);
+            }
+        }
+        return unprinted;
+    }
+
+    public int nextOrderRoundNumber(String sessionId) {
+        if (sessionId == null || sessionId.trim().isEmpty()) {
+            return 1;
+        }
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT MAX(CAST(IFNULL(roundNumber,0) AS INTEGER)) FROM " + ORDER_ROUND_TABLE
+                            + " WHERE sessionId = ?" + andBranchScope(null),
+                    new String[]{sessionId});
+            if (cursor.moveToFirst()) {
+                return cursor.getInt(0) + 1;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            db.close();
+        }
+        return 1;
+    }
+
+    /**
+     * Creates order round + KOT for unprinted cart lines only. Marks those cart rows so
+     * the next KOT will not include them. Print status starts as PENDING.
+     */
+    public KotResponse createKotForUnprintedItems(String tableNumber, String cartOrderStatus,
+                                                    String sessionId, String kotPrefix) {
+        if (tableNumber == null || sessionId == null) {
+            return null;
+        }
+        List<ProductCartResponse> unprinted = getUnprintedCartProductList(tableNumber, cartOrderStatus);
+        if (unprinted.isEmpty()) {
+            return null;
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        try {
+            int roundNo = 1;
+            Cursor roundCursor = db.rawQuery(
+                    "SELECT MAX(CAST(IFNULL(roundNumber,0) AS INTEGER)) FROM " + ORDER_ROUND_TABLE
+                            + " WHERE sessionId = ?",
+                    new String[]{sessionId});
+            if (roundCursor.moveToFirst()) {
+                roundNo = roundCursor.getInt(0) + 1;
+            }
+            roundCursor.close();
+
+            ContentValues roundValues = new ContentValues();
+            roundValues.put("sessionId", sessionId);
+            roundValues.put("roundNumber", roundNo);
+            roundValues.put("createdAt", String.valueOf(System.currentTimeMillis()));
+            BranchSession.applyScope(roundValues);
+            long roundId = db.insert(ORDER_ROUND_TABLE, null, roundValues);
+            if (roundId <= 0) {
+                return null;
+            }
+
+            String kotNumber = nextKotNumberLocked(db, kotPrefix);
+            ContentValues kotValues = new ContentValues();
+            kotValues.put("sessionId", sessionId);
+            kotValues.put("orderRoundId", String.valueOf(roundId));
+            kotValues.put("kotNumber", kotNumber);
+            kotValues.put("tableNumber", tableNumber);
+            kotValues.put("printStatus", KotResponse.PRINT_PENDING);
+            kotValues.put("createdAt", String.valueOf(System.currentTimeMillis()));
+            kotValues.put("kitchenName", "Main Kitchen");
+            BranchSession.applyScope(kotValues);
+            long kotId = db.insert(KOT_TABLE, null, kotValues);
+            if (kotId <= 0) {
+                return null;
+            }
+
+            ContentValues roundUpdate = new ContentValues();
+            roundUpdate.put("kotId", String.valueOf(kotId));
+            db.update(ORDER_ROUND_TABLE, roundUpdate, "orderRoundId = ?",
+                    new String[]{String.valueOf(roundId)});
+
+            for (ProductCartResponse line : unprinted) {
+                ContentValues itemValues = new ContentValues();
+                itemValues.put("kotId", String.valueOf(kotId));
+                itemValues.put("cartId", line.getCartId());
+                itemValues.put("productName", line.getDisplayLineName());
+                itemValues.put("productQuantity", line.getProductQuantity());
+                itemValues.put("portionName", line.getPortionName());
+                BranchSession.applyScope(itemValues);
+                db.insert(KOT_ITEM_TABLE, null, itemValues);
+
+                ContentValues cartUpdate = new ContentValues();
+                cartUpdate.put("kotPrinted", "1");
+                cartUpdate.put("orderRoundId", String.valueOf(roundId));
+                cartUpdate.put("diningSessionId", sessionId);
+                if (line.getCartId() != null) {
+                    db.update(CART_PRODUCT_TABLE, cartUpdate, "cartId = ?",
+                            new String[]{line.getCartId()});
+                }
+            }
+
+            db.setTransactionSuccessful();
+
+            KotResponse kot = new KotResponse();
+            kot.setKotId(String.valueOf(kotId));
+            kot.setSessionId(sessionId);
+            kot.setOrderRoundId(String.valueOf(roundId));
+            kot.setKotNumber(kotNumber);
+            kot.setTableNumber(tableNumber);
+            kot.setPrintStatus(KotResponse.PRINT_PENDING);
+            kot.setKitchenName("Main Kitchen");
+            return kot;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        } finally {
+            db.endTransaction();
+            db.close();
+        }
+    }
+
+    private String nextKotNumberLocked(SQLiteDatabase db, String prefix) {
+        String safePrefix = prefix == null || prefix.trim().isEmpty() ? "KOT-" : prefix;
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT kotNumber FROM " + KOT_TABLE
+                            + " WHERE kotNumber LIKE ?"
+                            + andBranchScope(null)
+                            + " ORDER BY kotId DESC LIMIT 1",
+                    new String[]{safePrefix + "%"});
+            int next = 1;
+            if (cursor.moveToFirst()) {
+                String last = cursor.getString(0);
+                if (last != null && last.startsWith(safePrefix)) {
+                    String numeric = last.substring(safePrefix.length()).replaceAll("[^0-9]", "");
+                    if (!numeric.isEmpty()) {
+                        next = Integer.parseInt(numeric) + 1;
+                    }
+                }
+            }
+            return safePrefix + String.format(Locale.US, "%03d", next);
+        } catch (Exception e) {
+            return safePrefix + "001";
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
+    public List<ProductCartResponse> getKotItemsAsCartLines(String kotId) {
+        List<ProductCartResponse> list = new ArrayList<>();
+        if (kotId == null) {
+            return list;
+        }
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT * FROM " + KOT_ITEM_TABLE + " WHERE kotId = ? ORDER BY kotItemId ASC",
+                    new String[]{kotId});
+            while (cursor.moveToNext()) {
+                ProductCartResponse line = new ProductCartResponse();
+                line.setCartId(cursor.getString(cursor.getColumnIndex("cartId")));
+                line.setProductName(cursor.getString(cursor.getColumnIndex("productName")));
+                line.setSnapshotProductName(cursor.getString(cursor.getColumnIndex("productName")));
+                line.setProductQuantity(cursor.getString(cursor.getColumnIndex("productQuantity")));
+                line.setPortionName(cursor.getString(cursor.getColumnIndex("portionName")));
+                line.setProductOldPrice("0");
+                line.setProductNewPrice("0");
+                line.setProductCGST("");
+                line.setProductSGST("");
+                list.add(line);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            db.close();
+        }
+        return list;
+    }
+
+    public void updateKotPrintStatus(String kotId, String printStatus) {
+        if (kotId == null || printStatus == null) {
+            return;
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        try {
+            ContentValues values = new ContentValues();
+            values.put("printStatus", printStatus);
+            db.update(KOT_TABLE, values, "kotId = ?", new String[]{kotId});
+        } finally {
+            db.close();
+        }
+    }
+
+    public KotResponse getKotById(String kotId) {
+        if (kotId == null) {
+            return null;
+        }
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery("SELECT * FROM " + KOT_TABLE + " WHERE kotId = ? LIMIT 1",
+                    new String[]{kotId});
+            if (cursor.moveToFirst()) {
+                KotResponse kot = new KotResponse();
+                kot.setKotId(cursor.getString(cursor.getColumnIndex("kotId")));
+                kot.setSessionId(cursor.getString(cursor.getColumnIndex("sessionId")));
+                kot.setOrderRoundId(cursor.getString(cursor.getColumnIndex("orderRoundId")));
+                kot.setKotNumber(cursor.getString(cursor.getColumnIndex("kotNumber")));
+                kot.setTableNumber(cursor.getString(cursor.getColumnIndex("tableNumber")));
+                kot.setPrintStatus(cursor.getString(cursor.getColumnIndex("printStatus")));
+                kot.setCreatedAt(cursor.getString(cursor.getColumnIndex("createdAt")));
+                kot.setKitchenName(cursor.getString(cursor.getColumnIndex("kitchenName")));
+                return kot;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            db.close();
+        }
+        return null;
+    }
+
+    public KotResponse getLatestRetryableKotForTable(String tableNumber) {
+        if (tableNumber == null || tableNumber.trim().isEmpty()) {
+            return null;
+        }
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT * FROM " + KOT_TABLE
+                            + " WHERE tableNumber = ? AND printStatus IN (?,?,?)"
+                            + andBranchScope(null)
+                            + " ORDER BY kotId DESC LIMIT 1",
+                    new String[]{tableNumber.trim(),
+                            KotResponse.PRINT_PENDING,
+                            KotResponse.PRINT_FAILED,
+                            KotResponse.PRINT_PRINTING});
+            if (cursor.moveToFirst()) {
+                KotResponse kot = new KotResponse();
+                kot.setKotId(cursor.getString(cursor.getColumnIndex("kotId")));
+                kot.setSessionId(cursor.getString(cursor.getColumnIndex("sessionId")));
+                kot.setOrderRoundId(cursor.getString(cursor.getColumnIndex("orderRoundId")));
+                kot.setKotNumber(cursor.getString(cursor.getColumnIndex("kotNumber")));
+                kot.setTableNumber(cursor.getString(cursor.getColumnIndex("tableNumber")));
+                kot.setPrintStatus(cursor.getString(cursor.getColumnIndex("printStatus")));
+                kot.setCreatedAt(cursor.getString(cursor.getColumnIndex("createdAt")));
+                kot.setKitchenName(cursor.getString(cursor.getColumnIndex("kitchenName")));
+                return kot;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            db.close();
+        }
+        return null;
+    }
+
+    /** Moves selected cart rows to another table without duplicating. */
+    public boolean moveCartItemsToTable(List<String> cartIds, String toTableNumber) {
+        if (cartIds == null || cartIds.isEmpty() || toTableNumber == null || toTableNumber.trim().isEmpty()) {
+            return false;
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        try {
+            ContentValues values = new ContentValues();
+            values.put("noOfTable", toTableNumber.trim());
+            for (String cartId : cartIds) {
+                if (cartId == null || cartId.trim().isEmpty()) {
+                    continue;
+                }
+                db.update(CART_PRODUCT_TABLE, values, "cartId = ?", new String[]{cartId.trim()});
+            }
+            db.setTransactionSuccessful();
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            db.endTransaction();
+            db.close();
+        }
+    }
+
+    public boolean moveAllCartToTable(String fromTable, String toTable, String cartOrderStatus) {
+        if (fromTable == null || toTable == null || cartOrderStatus == null) {
+            return false;
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        try {
+            ContentValues values = new ContentValues();
+            values.put("noOfTable", toTable.trim());
+            int updated = db.update(CART_PRODUCT_TABLE, values,
+                    "noOfTable = ? AND cartOrderStatus = ?",
+                    new String[]{fromTable.trim(), cartOrderStatus});
+            return updated >= 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            db.close();
+        }
+    }
+
+    public void updateJoinedTableNumbers(String sessionId, String joinedCsv) {
+        if (sessionId == null) {
+            return;
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        try {
+            ContentValues values = new ContentValues();
+            values.put("joinedTableNumbers", joinedCsv != null ? joinedCsv : "");
+            db.update(DINING_SESSION_TABLE, values, "sessionId = ?", new String[]{sessionId});
+            db.execSQL("UPDATE " + DINING_SESSION_TABLE
+                            + " SET sessionVersion = CAST(IFNULL(sessionVersion,1) AS INTEGER) + 1 WHERE sessionId = ?",
+                    new Object[]{sessionId});
+        } finally {
+            db.close();
+        }
+    }
+
+    public void updateSessionPrimaryTable(String sessionId, String primaryTableNumber) {
+        if (sessionId == null || primaryTableNumber == null) {
+            return;
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        try {
+            ContentValues values = new ContentValues();
+            values.put("primaryTableNumber", primaryTableNumber.trim());
+            db.update(DINING_SESSION_TABLE, values, "sessionId = ?", new String[]{sessionId});
+            db.execSQL("UPDATE " + DINING_SESSION_TABLE
+                            + " SET sessionVersion = CAST(IFNULL(sessionVersion,1) AS INTEGER) + 1 WHERE sessionId = ?",
+                    new Object[]{sessionId});
+        } finally {
+            db.close();
+        }
+    }
+
+    public void addSessionPaidAmount(String sessionId, float amountToAdd) {
+        if (sessionId == null || amountToAdd <= 0f) {
+            return;
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery("SELECT IFNULL(paidAmount,'0') FROM " + DINING_SESSION_TABLE
+                    + " WHERE sessionId = ? LIMIT 1", new String[]{sessionId});
+            float current = 0f;
+            if (cursor.moveToFirst()) {
+                try {
+                    current = Float.parseFloat(cursor.getString(0));
+                } catch (Exception ignored) {
+                }
+            }
+            ContentValues values = new ContentValues();
+            values.put("paidAmount", String.valueOf(current + amountToAdd));
+            db.update(DINING_SESSION_TABLE, values, "sessionId = ?", new String[]{sessionId});
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            db.close();
+        }
+    }
+
+    public void setSessionPaidAmount(String sessionId, float amount) {
+        if (sessionId == null) {
+            return;
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        try {
+            ContentValues values = new ContentValues();
+            values.put("paidAmount", String.valueOf(Math.max(0f, amount)));
+            db.update(DINING_SESSION_TABLE, values, "sessionId = ?", new String[]{sessionId});
+        } finally {
+            db.close();
+        }
+    }
+
+    public void updateInvoiceBillPrintStatus(String invoiceNumber, String billPrintStatus) {
+        if (invoiceNumber == null || billPrintStatus == null) {
+            return;
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        try {
+            ContentValues values = new ContentValues();
+            values.put("billPrintStatus", billPrintStatus);
+            db.update(INVOICE_TABLE, values, "invoiceNumber = ?", new String[]{invoiceNumber});
+        } finally {
+            db.close();
+        }
+    }
+
+    public InvoiceResponse getInvoiceByNumber(String invoiceNumber) {
+        if (invoiceNumber == null || invoiceNumber.trim().isEmpty()) {
+            return null;
+        }
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery("SELECT * FROM " + INVOICE_TABLE + " WHERE invoiceNumber = ? LIMIT 1",
+                    new String[]{invoiceNumber.trim()});
+            if (!cursor.moveToFirst()) {
+                return null;
+            }
+            InvoiceResponse invoice = new InvoiceResponse();
+            invoice.setInvoiceId(cursor.getString(cursor.getColumnIndex("invoiceId")));
+            invoice.setNoOfTable(cursor.getString(cursor.getColumnIndex("noOfTable")));
+            invoice.setInvoiceNumber(cursor.getString(cursor.getColumnIndex("invoiceNumber")));
+            invoice.setTotalAmount(cursor.getString(cursor.getColumnIndex("totalAmount")));
+            invoice.setPaymentMode(cursor.getString(cursor.getColumnIndex("paymentMode")));
+            invoice.setInvoiceType(cursor.getString(cursor.getColumnIndex("invoiceType")));
+            int printIdx = cursor.getColumnIndex("billPrintStatus");
+            if (printIdx >= 0) {
+                invoice.setBillPrintStatus(cursor.getString(printIdx));
+            }
+            mapInvoicePacking(cursor, invoice);
+            return invoice;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            db.close();
+        }
+    }
+
+    public InvoiceResponse getLatestFailedPrintInvoiceForTable(String tableNumber) {
+        if (tableNumber == null) {
+            return null;
+        }
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT * FROM " + INVOICE_TABLE
+                            + " WHERE noOfTable = ? AND IFNULL(billPrintStatus,'') = ?"
+                            + andBranchScope(null)
+                            + " ORDER BY invoiceId DESC LIMIT 1",
+                    new String[]{tableNumber.trim(), "FAILED"});
+            if (!cursor.moveToFirst()) {
+                return null;
+            }
+            InvoiceResponse invoice = new InvoiceResponse();
+            invoice.setInvoiceNumber(cursor.getString(cursor.getColumnIndex("invoiceNumber")));
+            invoice.setNoOfTable(cursor.getString(cursor.getColumnIndex("noOfTable")));
+            invoice.setTotalAmount(cursor.getString(cursor.getColumnIndex("totalAmount")));
+            invoice.setPaymentMode(cursor.getString(cursor.getColumnIndex("paymentMode")));
+            invoice.setBillPrintStatus(cursor.getString(cursor.getColumnIndex("billPrintStatus")));
+            return invoice;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            db.close();
+        }
+    }
+
+    /**
+     * Optimistic lock: update status only if sessionVersion matches. Returns false on conflict.
+     */
+    public boolean updateDiningSessionStatusIfVersion(String sessionId, String status, String expectedVersion) {
+        if (sessionId == null || status == null || expectedVersion == null) {
+            return false;
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        try {
+            ContentValues values = new ContentValues();
+            values.put("sessionStatus", status);
+            if ("SETTLED".equals(status) || "CLOSED".equals(status) || TableStatus.AVAILABLE.equals(status)) {
+                values.put("closedAt", String.valueOf(System.currentTimeMillis()));
+            }
+            int rows = db.update(DINING_SESSION_TABLE, values,
+                    "sessionId = ? AND CAST(IFNULL(sessionVersion,1) AS TEXT) = ?",
+                    new String[]{sessionId, expectedVersion});
+            if (rows <= 0) {
+                return false;
+            }
+            db.execSQL("UPDATE " + DINING_SESSION_TABLE
+                            + " SET sessionVersion = CAST(IFNULL(sessionVersion,1) AS INTEGER) + 1 WHERE sessionId = ?",
+                    new Object[]{sessionId});
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            db.close();
+        }
+    }
+
+    public String joinTables(String primaryTable, String secondaryTable, String expectedVersion) {
+        if (expectedVersion != null && !expectedVersion.trim().isEmpty()) {
+            DiningSessionResponse primary = getOpenDiningSessionForTable(primaryTable);
+            if (primary != null && primary.getSessionVersion() != null
+                    && !primary.getSessionVersion().equals(expectedVersion.trim())) {
+                return "Table was modified on another device. Refresh and try again.";
+            }
+        }
+        return joinTables(primaryTable, secondaryTable);
+    }
+
+    public String transferTableSession(String fromTable, String toTable, String expectedVersion) {
+        if (expectedVersion != null && !expectedVersion.trim().isEmpty()) {
+            DiningSessionResponse session = getOpenDiningSessionForTable(fromTable);
+            if (session != null && session.getSessionVersion() != null
+                    && !session.getSessionVersion().equals(expectedVersion.trim())) {
+                return "Table was modified on another device. Refresh and try again.";
+            }
+        }
+        return transferTableSession(fromTable, toTable);
+    }
+
+    /**
+     * Join secondary into primary: move secondary cart to primary, merge sessions, no item duplication.
+     */
+    public String joinTables(String primaryTable, String secondaryTable) {
+        if (primaryTable == null || secondaryTable == null
+                || primaryTable.trim().equals(secondaryTable.trim())) {
+            return "Invalid tables";
+        }
+        String primary = primaryTable.trim();
+        String secondary = secondaryTable.trim();
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        try {
+            // Move cart from secondary → primary
+            ContentValues cartMove = new ContentValues();
+            cartMove.put("noOfTable", primary);
+            db.update(CART_PRODUCT_TABLE, cartMove,
+                    "noOfTable = ? AND cartOrderStatus = ?",
+                    new String[]{secondary, "table_wise"});
+
+            // Move KOTs association for display history
+            ContentValues kotMove = new ContentValues();
+            kotMove.put("tableNumber", primary);
+            db.update(KOT_TABLE, kotMove, "tableNumber = ?", new String[]{secondary});
+
+            DiningSessionResponse primarySession = getOpenDiningSessionForTableLocked(db, primary);
+            DiningSessionResponse secondarySession = getOpenDiningSessionForTableLocked(db, secondary);
+
+            if (primarySession == null) {
+                ContentValues create = new ContentValues();
+                create.put("primaryTableNumber", primary);
+                create.put("joinedTableNumbers", secondary);
+                create.put("sessionStatus", TableStatus.RUNNING);
+                create.put("guestCount", 0);
+                create.put("startedAt", String.valueOf(System.currentTimeMillis()));
+                create.put("sessionVersion", 1);
+                create.put("paidAmount", "0");
+                BranchSession.applyScope(create);
+                long id = db.insert(DINING_SESSION_TABLE, null, create);
+                if (id <= 0) {
+                    return "Failed to create session";
+                }
+                primarySession = new DiningSessionResponse();
+                primarySession.setSessionId(String.valueOf(id));
+                primarySession.setJoinedTableNumbers(secondary);
+            } else {
+                String joined = mergeJoinedCsv(primarySession.getJoinedTableNumbers(), secondary);
+                // Also absorb secondary's joined list
+                if (secondarySession != null) {
+                    joined = mergeJoinedCsv(joined, secondarySession.getJoinedTableNumbers());
+                    // Remove primary from joined if present
+                    joined = removeFromJoinedCsv(joined, primary);
+                }
+                ContentValues upd = new ContentValues();
+                upd.put("joinedTableNumbers", joined);
+                db.update(DINING_SESSION_TABLE, upd, "sessionId = ?",
+                        new String[]{primarySession.getSessionId()});
+            }
+
+            if (secondarySession != null
+                    && (primarySession.getSessionId() == null
+                    || !primarySession.getSessionId().equals(secondarySession.getSessionId()))) {
+                ContentValues close = new ContentValues();
+                close.put("sessionStatus", "CLOSED");
+                close.put("closedAt", String.valueOf(System.currentTimeMillis()));
+                db.update(DINING_SESSION_TABLE, close, "sessionId = ?",
+                        new String[]{secondarySession.getSessionId()});
+            }
+
+            db.setTransactionSuccessful();
+            return null;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "Join failed";
+        } finally {
+            db.endTransaction();
+            db.close();
+        }
+    }
+
+    private DiningSessionResponse getOpenDiningSessionForTableLocked(SQLiteDatabase db, String tableNumber) {
+        Cursor cursor = null;
+        try {
+            String tn = tableNumber.trim();
+            cursor = db.rawQuery(
+                    "SELECT * FROM " + DINING_SESSION_TABLE
+                            + " WHERE (primaryTableNumber = ? OR (',' || IFNULL(joinedTableNumbers,'') || ',') LIKE ?)"
+                            + " AND IFNULL(sessionStatus,'') NOT IN ('SETTLED','CLOSED','CANCELLED')"
+                            + andBranchScope(null)
+                            + " ORDER BY sessionId DESC LIMIT 1",
+                    new String[]{tn, "%," + tn + ",%"});
+            if (cursor.moveToFirst()) {
+                return mapDiningSession(cursor);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return null;
+    }
+
+    private static String mergeJoinedCsv(String existing, String add) {
+        java.util.LinkedHashSet<String> set = new java.util.LinkedHashSet<>();
+        if (existing != null) {
+            for (String p : existing.split(",")) {
+                String t = p.trim();
+                if (!t.isEmpty()) {
+                    set.add(t);
+                }
+            }
+        }
+        if (add != null) {
+            for (String p : add.split(",")) {
+                String t = p.trim();
+                if (!t.isEmpty()) {
+                    set.add(t);
+                }
+            }
+        }
+        StringBuilder sb = new StringBuilder();
+        for (String t : set) {
+            if (sb.length() > 0) {
+                sb.append(',');
+            }
+            sb.append(t);
+        }
+        return sb.toString();
+    }
+
+    private static String removeFromJoinedCsv(String existing, String remove) {
+        if (existing == null || remove == null) {
+            return existing != null ? existing : "";
+        }
+        java.util.LinkedHashSet<String> set = new java.util.LinkedHashSet<>();
+        for (String p : existing.split(",")) {
+            String t = p.trim();
+            if (!t.isEmpty() && !t.equals(remove.trim())) {
+                set.add(t);
+            }
+        }
+        StringBuilder sb = new StringBuilder();
+        for (String t : set) {
+            if (sb.length() > 0) {
+                sb.append(',');
+            }
+            sb.append(t);
+        }
+        return sb.toString();
+    }
+
+    public String splitJoinedTables(String primaryTable) {
+        DiningSessionResponse session = getOpenDiningSessionForTable(primaryTable);
+        if (session == null) {
+            return "No active session";
+        }
+        String joined = session.getJoinedTableNumbers();
+        if (joined == null || joined.trim().isEmpty()) {
+            return "Tables are not joined";
+        }
+        updateJoinedTableNumbers(session.getSessionId(), "");
+        return null;
+    }
+
+    public String transferTableSession(String fromTable, String toTable) {
+        if (fromTable == null || toTable == null || fromTable.trim().equals(toTable.trim())) {
+            return "Invalid tables";
+        }
+        String from = fromTable.trim();
+        String to = toTable.trim();
+        List<ProductCartResponse> targetCart = getCartProductList(to, "table_wise");
+        if (targetCart != null && !targetCart.isEmpty()) {
+            return "Target table already has items";
+        }
+        DiningSessionResponse sourceSession = getOpenDiningSessionForTable(from);
+        DiningSessionResponse targetSession = getOpenDiningSessionForTable(to);
+        if (targetSession != null) {
+            boolean sameSession = sourceSession != null
+                    && sourceSession.getSessionId() != null
+                    && sourceSession.getSessionId().equals(targetSession.getSessionId());
+            if (!sameSession) {
+                return "Target table is occupied";
+            }
+        }
+        if (sourceSession == null) {
+            if (!moveAllCartToTable(from, to, "table_wise")) {
+                return "Transfer failed";
+            }
+            createDiningSession(to, 0);
+            return null;
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        try {
+            ContentValues cartMove = new ContentValues();
+            cartMove.put("noOfTable", to);
+            db.update(CART_PRODUCT_TABLE, cartMove,
+                    "noOfTable = ? AND cartOrderStatus = ?",
+                    new String[]{from, "table_wise"});
+            ContentValues kotMove = new ContentValues();
+            kotMove.put("tableNumber", to);
+            db.update(KOT_TABLE, kotMove, "sessionId = ?", new String[]{sourceSession.getSessionId()});
+
+            ContentValues sess = new ContentValues();
+            sess.put("primaryTableNumber", to);
+            String joined = removeFromJoinedCsv(sourceSession.getJoinedTableNumbers(), to);
+            sess.put("joinedTableNumbers", joined);
+            db.update(DINING_SESSION_TABLE, sess, "sessionId = ?",
+                    new String[]{sourceSession.getSessionId()});
+
+            db.setTransactionSuccessful();
+            return null;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "Transfer failed";
+        } finally {
+            db.endTransaction();
+            db.close();
+        }
+    }
+
+    // endregion
 
 }

@@ -20,6 +20,7 @@ import com.posbillingwala.owner.Extra.DetectConnection;
 import com.posbillingwala.owner.Extra.SimpleDividerItemDecoration;
 import com.posbillingwala.owner.Model.AllApiResponse;
 import com.posbillingwala.owner.Model.LicenseResponse;
+import com.posbillingwala.owner.R;
 import com.posbillingwala.owner.Retrofit.Api;
 import com.posbillingwala.owner.databinding.FragmentInvoiceStoreWiseBinding;
 
@@ -30,6 +31,7 @@ import cn.pedant.SweetAlert.SweetAlertDialog;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import com.posbillingwala.owner.Extra.EmptyListUi;
 
 public class InvoiceStoreWise extends Fragment {
 
@@ -56,9 +58,9 @@ public class InvoiceStoreWise extends Fragment {
             saleDate = "totalSale";
         }
         if (saleDate.equalsIgnoreCase("totalSale")) {
-            binding.heading.setText("Total Sale — All Stores");
+            binding.heading.setText("Total Sale â€” All Stores");
         } else {
-            binding.heading.setText("Today Sale — All Stores");
+            binding.heading.setText("Today Sale â€” All Stores");
         }
 
         view.setFocusableInTouchMode(true);
@@ -131,11 +133,11 @@ public class InvoiceStoreWise extends Fragment {
                         binding.recyclerView.setHasFixedSize(true);
 
                         binding.linearLayout.setVisibility(View.VISIBLE);
-                        binding.noDataFound.setVisibility(View.GONE);
+                        EmptyListUi.bind(binding.noDataFound.getRoot(), true, R.string.empty_sub_sales);
 
                     } else {
                         binding.linearLayout.setVisibility(View.GONE);
-                        binding.noDataFound.setVisibility(View.VISIBLE);
+                        EmptyListUi.bind(binding.noDataFound.getRoot(), false, R.string.empty_sub_sales);
                     }
                 }
                 pDialog.dismiss();

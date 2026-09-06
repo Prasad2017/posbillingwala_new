@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import cn.pedant.SweetAlert.SweetAlertDialog;
+import com.pos_billingwala.Extra.EmptyListUi;
 
 
 public class InvoiceMessMemberReportList extends Fragment implements View.OnClickListener {
@@ -106,10 +107,10 @@ public class InvoiceMessMemberReportList extends Fragment implements View.OnClic
                 // invoiceMessListAdapter.notifyItemInserted(memberResponseList.size() - 1);
 
                 binding.nestedScrollView.setVisibility(View.VISIBLE);
-                binding.noDataFound.setVisibility(View.GONE);
+                EmptyListUi.bind(binding.noDataFound, true, R.string.empty_sub_members);
             } else {
                 binding.nestedScrollView.setVisibility(View.GONE);
-                binding.noDataFound.setVisibility(View.VISIBLE);
+                EmptyListUi.bind(binding.noDataFound, false, R.string.empty_sub_members);
             }
         } finally {
             ListLoader.dismiss(loader);

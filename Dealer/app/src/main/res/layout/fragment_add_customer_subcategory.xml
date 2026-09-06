@@ -132,16 +132,11 @@
 
     </androidx.core.widget.NestedScrollView>
 
-    <TextView
-        android:id="@+id/noDataFound"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_marginTop="80dp"
-        android:fontFamily="@font/poppinsmedium"
-        android:gravity="center"
-        android:text="No subcategories found"
-        android:textColor="@color/black"
-        android:visibility="gone" />
+    <include
+            android:id="@+id/noDataFound"
+            layout="@layout/include_empty_list_state"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center" />
 
 </LinearLayout>

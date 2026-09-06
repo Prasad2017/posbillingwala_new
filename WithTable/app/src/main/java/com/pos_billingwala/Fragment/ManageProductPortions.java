@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Random;
 
 import cn.pedant.SweetAlert.SweetAlertDialog;
+import com.pos_billingwala.Extra.EmptyListUi;
 
 public class ManageProductPortions extends Fragment implements View.OnClickListener {
 
@@ -40,7 +41,7 @@ public class ManageProductPortions extends Fragment implements View.OnClickListe
     public static PortionAdapter portionAdapter;
     public static RecyclerView portionRecyclerview;
     public static View portionListCardView;
-    public static TextView noDataFound;
+    public static View noDataFound;
     public static String selectedProductId;
 
     View view;
@@ -67,14 +68,14 @@ public class ManageProductPortions extends Fragment implements View.OnClickListe
 
                 portionListCardView.setVisibility(View.VISIBLE);
                 portionRecyclerview.setVisibility(View.VISIBLE);
-                noDataFound.setVisibility(View.GONE);
+                EmptyListUi.bind(noDataFound, true, R.string.empty_sub_portions);
             } else {
                 portionListCardView.setVisibility(View.VISIBLE);
                 if (portionRecyclerview != null) {
                     portionRecyclerview.setAdapter(null);
                     portionRecyclerview.setVisibility(View.GONE);
                 }
-                noDataFound.setVisibility(View.VISIBLE);
+                EmptyListUi.bind(noDataFound, false, R.string.empty_sub_portions);
             }
         } finally {
             ListLoader.dismiss(loader);
@@ -161,7 +162,7 @@ public class ManageProductPortions extends Fragment implements View.OnClickListe
                     ? "Base price: not set"
                     : "Base price: " + currency + " " + price;
             binding.productInfo.setText(header
-                    + "No portions — product price is used for billing. Optionally add portions.\n"
+                    + "No portions â€” product price is used for billing. Optionally add portions.\n"
                     + priceLine);
         }
     }

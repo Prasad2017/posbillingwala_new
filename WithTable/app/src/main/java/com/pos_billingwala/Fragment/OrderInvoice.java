@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import cn.pedant.SweetAlert.SweetAlertDialog;
+import com.pos_billingwala.Extra.EmptyListUi;
 
 
 public class OrderInvoice extends Fragment implements View.OnClickListener {
@@ -157,11 +158,11 @@ public class OrderInvoice extends Fragment implements View.OnClickListener {
                     }
                     binding.recyclerView.setAdapter(adapter);
                     binding.nestedScrollView.setVisibility(View.VISIBLE);
-                    binding.noDataFound.setVisibility(View.GONE);
+                    EmptyListUi.bind(binding.noDataFound, true, R.string.empty_sub_invoices);
                     pageNumber = page.size();
                 } else {
                     binding.nestedScrollView.setVisibility(View.GONE);
-                    binding.noDataFound.setVisibility(View.VISIBLE);
+                    EmptyListUi.bind(binding.noDataFound, false, R.string.empty_sub_invoices);
                     pageNumber = 0;
                 }
                 isLoading = false;
@@ -171,7 +172,7 @@ public class OrderInvoice extends Fragment implements View.OnClickListener {
         }
     }
 
-    /** Loads exactly one more page on scroll — never chains all pages. */
+    /** Loads exactly one more page on scroll â€” never chains all pages. */
     private class LoadMoreInvoices extends AsyncTask<Void, Void, List<InvoiceResponse>> {
         @Override
         protected void onPreExecute() {

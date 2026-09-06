@@ -5,7 +5,6 @@ import com.pos_billingwala.R;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Bundle;
-import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,8 +16,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Fragment.AddMemberPayment;
-import com.pos_billingwala.Extra.RowDividerUi;
 import com.pos_billingwala.Fragment.MessMemberList;
+import com.pos_billingwala.Fragment.MessMemberPaymentHistory;
 import com.pos_billingwala.Fragment.UpdateMessMember;
 import com.pos_billingwala.Fragment.UpdateMessPayment;
 import com.pos_billingwala.Model.MemberResponse;
@@ -52,74 +51,97 @@ public class MemberAdapter extends RecyclerView.Adapter<MemberAdapter.MyViewHold
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
 
         MemberResponse memberResponse = memberResponseList.get(position);
-        String memberName = "<b>Member Name: </b>" + memberResponse.getMemberName();
-        holder.binding.memberName.setText(Html.fromHtml(memberName));
-        String memberNumber = "<b>Member Mobile Number: </b>" + memberResponse.getMemberMobileNumber();
-        holder.binding.memberMobileNumber.setText(Html.fromHtml(memberNumber));
-        String memberAddress = "<b>Member Address: </b>" + memberResponse.getMemberAddress();
-        holder.binding.memberAddress.setText(Html.fromHtml(memberAddress));
-        String messAmount = "<b>Mess Amount: </b>" + MainActivity.currencyName + " " + memberResponse.getPaymentMessAmount();
-        holder.binding.memberMessAmount.setText(Html.fromHtml(messAmount));
-        String messPaidAmount = "<b>Paid Amount: </b>" + MainActivity.currencyName + " " + memberResponse.getPaymentPaidAmount();
-        holder.binding.memberPaidAmount.setText(Html.fromHtml(messPaidAmount));
+        String currency = MainActivity.currencyName != null ? MainActivity.currencyName : "₹";
 
-        try {
-            float pendingAmount = Float.parseFloat(memberResponse.getPaymentMessAmount()) - Float.parseFloat(memberResponse.getPaymentPaidAmount());
-            if (pendingAmount > 0) {
-                String messPendingAmount = "<b>Pending Amount: </b>" + MainActivity.currencyName + " " + String.format(Locale.US, "%.2f", pendingAmount);
-                holder.binding.memberPendingAmount.setText(Html.fromHtml(messPendingAmount));
+        holder.binding.memberName.setText(safe(memberResponse.getMemberName()));
+        holder.binding.memberMobileNumber.setText(safe(memberResponse.getMemberMobileNumber()));
 
-                holder.binding.memberPendingAmount.setVisibility(View.VISIBLE);
-                holder.binding.paymentMember.setVisibility(View.VISIBLE);
-            } else {
-                holder.binding.memberPendingAmount.setVisibility(View.GONE);
-                holder.binding.paymentMember.setVisibility(View.GONE);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        String address = safe(memberResponse.getMemberAddress());
+        if (!address.isEmpty()) {
+            holder.binding.memberAddress.setVisibility(View.VISIBLE);
+            holder.binding.memberAddress.setText(address);
+        } else {
+            holder.binding.memberAddress.setVisibility(View.GONE);
         }
 
-        holder.binding.deleteMember.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                deleteMember(memberResponse);
-            }
+        String messAmt = safeAmount(memberResponse.getPaymentMessAmount());
+        String paidAmt = safeAmount(memberResponse.getPaymentPaidAmount());
+        holder.binding.memberMessAmount.setText("This Month Mess: " + currency + " " + messAmt);
+        holder.binding.memberPaidAmount.setText("This Month Paid: " + currency + " " + paidAmt);
+
+        String tokens = memberResponse.getTokensGenerated() != null ? memberResponse.getTokensGenerated() : "0";
+        holder.binding.memberTokensGenerated.setText("Tokens This Month: " + tokens);
+
+        holder.binding.memberMonthsSummary.setVisibility(View.GONE);
+
+        float pendingAmount = 0f;
+        try {
+            pendingAmount = Float.parseFloat(messAmt) - Float.parseFloat(paidAmt);
+        } catch (Exception ignored) {
+        }
+
+        if (pendingAmount > 0.009f) {
+            holder.binding.tableNumberCardView.setBackgroundResource(R.drawable.bg_mess_member_card_pending);
+            holder.binding.memberPendingAmount.setText("Pending Amount: " + currency + " "
+                    + String.format(Locale.US, "%.2f", pendingAmount));
+            holder.binding.memberPendingAmount.setVisibility(View.VISIBLE);
+            holder.binding.paymentMember.setVisibility(View.VISIBLE);
+        } else {
+            holder.binding.tableNumberCardView.setBackgroundResource(R.drawable.bg_mess_member_card);
+            holder.binding.memberPendingAmount.setVisibility(View.GONE);
+            holder.binding.paymentMember.setVisibility(View.GONE);
+        }
+
+        holder.binding.deleteMember.setOnClickListener(v -> deleteMember(memberResponse));
+
+        holder.binding.historyMember.setOnClickListener(v -> {
+            MessMemberPaymentHistory history = new MessMemberPaymentHistory();
+            Bundle bundle = new Bundle();
+            bundle.putString("memberId", memberResponse.getMemberId());
+            bundle.putString("memberName", memberResponse.getMemberName());
+            bundle.putString("memberMobile", memberResponse.getMemberMobileNumber());
+            history.setArguments(bundle);
+            ((MainActivity) context).loadFragment(history, true);
         });
 
-        holder.binding.updateMember.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                UpdateMessMember updateMessMember = new UpdateMessMember();
-                Bundle bundle = new Bundle();
-                bundle.putString("memberId", memberResponse.getMemberId());
-                updateMessMember.setArguments(bundle);
-                ((MainActivity) context).loadFragment(updateMessMember, true);
-            }
+        holder.binding.updateMember.setOnClickListener(v -> {
+            UpdateMessMember updateMessMember = new UpdateMessMember();
+            Bundle bundle = new Bundle();
+            bundle.putString("memberId", memberResponse.getMemberId());
+            updateMessMember.setArguments(bundle);
+            ((MainActivity) context).loadFragment(updateMessMember, true);
         });
 
-        holder.binding.paymentMember.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                UpdateMessPayment updateMessPayment = new UpdateMessPayment();
-                Bundle bundle = new Bundle();
-                bundle.putString("memberId", memberResponse.getMemberId());
-                updateMessPayment.setArguments(bundle);
-                ((MainActivity) context).loadFragment(updateMessPayment, true);
-            }
+        holder.binding.paymentMember.setOnClickListener(v -> {
+            UpdateMessPayment updateMessPayment = new UpdateMessPayment();
+            Bundle bundle = new Bundle();
+            bundle.putString("memberId", memberResponse.getMemberId());
+            updateMessPayment.setArguments(bundle);
+            ((MainActivity) context).loadFragment(updateMessPayment, true);
         });
 
-        holder.binding.paymentNew.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                AddMemberPayment addMemberPayment = new AddMemberPayment();
-                Bundle bundle = new Bundle();
-                bundle.putString("memberId", memberResponse.getMemberId());
-                addMemberPayment.setArguments(bundle);
-                ((MainActivity) context).loadFragment(addMemberPayment, true);
-            }
+        holder.binding.paymentNew.setOnClickListener(v -> {
+            AddMemberPayment addMemberPayment = new AddMemberPayment();
+            Bundle bundle = new Bundle();
+            bundle.putString("memberId", memberResponse.getMemberId());
+            addMemberPayment.setArguments(bundle);
+            ((MainActivity) context).loadFragment(addMemberPayment, true);
         });
+    }
 
-        RowDividerUi.bindLastItem(holder.binding.rowDivider, position, getItemCount());
+    private static String safe(String value) {
+        return value != null ? value : "";
+    }
+
+    private static String safeAmount(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return "0.00";
+        }
+        try {
+            return String.format(Locale.US, "%.2f", Float.parseFloat(value.trim()));
+        } catch (Exception e) {
+            return value;
+        }
     }
 
     public void deleteMember(MemberResponse memberResponse) {

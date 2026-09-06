@@ -29,37 +29,103 @@ public class ReportsHub extends Fragment {
         binding.toolbar.toolbarTitle.setText(getString(R.string.reports_hub));
         binding.toolbar.backButton.setOnClickListener(v -> navigateBack());
 
+        boolean multi = MainActivity.isMultiOutlet();
+        String multiHint = multi ? getString(R.string.owner_multi_branch) : getString(R.string.ui_sale_reports);
+
         setupRow(binding.rowSalesDashboard, R.drawable.ic_report_dashboard, R.drawable.bg_quick_action_blue,
                 R.color.colorPrimary, getString(R.string.sales_dashboard),
-                MainActivity.isMultiOutlet() ? getString(R.string.owner_multi_branch) : getString(R.string.sales_trend));
+                multi ? getString(R.string.owner_multi_branch) : getString(R.string.sales_trend));
         setupRow(binding.rowSalesOverview, R.drawable.ic_report_overview, R.drawable.bg_quick_action_purple,
                 R.color.deepPurple, getString(R.string.sales_overview),
-                MainActivity.isMultiOutlet() ? getString(R.string.owner_multi_branch) : getString(R.string.top_branches));
-        setupRow(binding.rowInvoiceReport, R.drawable.ic_business, R.drawable.bg_quick_action_green,
+                multi ? getString(R.string.owner_multi_branch) : getString(R.string.top_branches));
+
+        setupRow(binding.rowBranchComparison, R.drawable.ic_business, R.drawable.bg_quick_action_green,
                 R.color.green_600, getString(R.string.branch_comparison), getString(R.string.all_branches));
-        setupRow(binding.rowSaleReport, R.drawable.ic_store, R.drawable.bg_quick_action_orange,
+        setupRow(binding.rowStoreWiseSales, R.drawable.ic_store, R.drawable.bg_quick_action_orange,
                 R.color.statusTrial, getString(R.string.store_wise_sales), getString(R.string.total_today_sales));
-        setupRow(binding.rowTableReport, R.drawable.ic_report_invoice, R.drawable.bg_quick_action_blue,
+        setupRow(binding.rowOrderInvoices, R.drawable.ic_report_invoice, R.drawable.bg_quick_action_blue,
                 R.color.colorPrimary, getString(R.string.order_invoices), getString(R.string.invoice_list));
 
-        hideUnusedRows();
+        setupRow(binding.rowInvoiceReport, R.drawable.ic_report_invoice, R.drawable.bg_quick_action_green,
+                R.color.green_600, getString(R.string.ui_invoice_report), getString(R.string.ui_report_detail));
+        setupRow(binding.rowSaleReport, R.drawable.ic_report_sales, R.drawable.bg_quick_action_orange,
+                R.color.statusTrial, getString(R.string.ui_sale_wise_report), multiHint);
+        setupRow(binding.rowTableReport, R.drawable.ic_table, R.drawable.bg_quick_action_blue,
+                R.color.colorPrimary, getString(R.string.ui_invoice_table_report), multiHint);
+        setupRow(binding.rowTakeAwayReport, R.drawable.ic_takeaway, R.drawable.bg_quick_action_purple,
+                R.color.deepPurple, getString(R.string.ui_invoice_take_away_report), multiHint);
+        setupRow(binding.rowPaymentReport, R.drawable.ic_report_payment, R.drawable.bg_quick_action_green,
+                R.color.green_600, getString(R.string.ui_invoice_payment_mode_report), multiHint);
+        setupRow(binding.rowDiscountReport, R.drawable.ic_report_sales, R.drawable.bg_quick_action_orange,
+                R.color.statusTrial, getString(R.string.discount_wise_report), multiHint);
+        setupRow(binding.rowRefundReport, R.drawable.ic_report_sales, R.drawable.bg_quick_action_red,
+                R.color.statusExpired, getString(R.string.refund_wise_report), multiHint);
+        setupRow(binding.rowProductReport, R.drawable.ic_report_product, R.drawable.bg_quick_action_orange,
+                R.color.statusTrial, getString(R.string.ui_product_wise_report), multiHint);
+        setupRow(binding.rowComboReport, R.drawable.ic_report_combo, R.drawable.bg_quick_action_blue,
+                R.color.colorPrimary, getString(R.string.ui_combo_wise_report), multiHint);
+        setupRow(binding.rowExpenseReport, R.drawable.ic_report_expense, R.drawable.bg_quick_action_purple,
+                R.color.deepPurple, getString(R.string.ui_expense_wise_report), multiHint);
+        setupRow(binding.rowMessMemberReport, R.drawable.ic_report_member, R.drawable.bg_quick_action_green,
+                R.color.green_600, getString(R.string.ui_invoice_member_report), multiHint);
+        setupRow(binding.rowMessReport, R.drawable.ic_report_mess, R.drawable.bg_quick_action_orange,
+                R.color.statusTrial, getString(R.string.ui_invoice_mess_report), multiHint);
+
+        if (!multi) {
+            binding.rowBranchComparison.getRoot().setVisibility(View.GONE);
+        }
+
         showGroupDividers(binding.rowSalesDashboard, binding.rowSalesOverview);
-        showGroupDividers(binding.rowInvoiceReport, binding.rowSaleReport, binding.rowTableReport);
+        showGroupDividers(binding.rowBranchComparison, binding.rowStoreWiseSales, binding.rowOrderInvoices);
+        showGroupDividers(
+                binding.rowInvoiceReport,
+                binding.rowSaleReport,
+                binding.rowTableReport,
+                binding.rowTakeAwayReport,
+                binding.rowPaymentReport,
+                binding.rowDiscountReport,
+                binding.rowRefundReport,
+                binding.rowProductReport,
+                binding.rowComboReport,
+                binding.rowExpenseReport,
+                binding.rowMessMemberReport,
+                binding.rowMessReport);
 
         binding.rowSalesDashboard.getRoot().setOnClickListener(v ->
                 ((MainActivity) activity).loadFragment(new SalesDashboard(), true));
         binding.rowSalesOverview.getRoot().setOnClickListener(v ->
                 ((MainActivity) activity).loadFragment(new SalesOverview(), true));
-        binding.rowInvoiceReport.getRoot().setOnClickListener(v ->
+        binding.rowBranchComparison.getRoot().setOnClickListener(v ->
                 ((MainActivity) activity).loadFragment(new BranchComparison(), true));
-        binding.rowSaleReport.getRoot().setOnClickListener(v ->
+        binding.rowStoreWiseSales.getRoot().setOnClickListener(v ->
                 ((MainActivity) activity).loadFragment(new InvoiceStoreWise(), true));
-        binding.rowTableReport.getRoot().setOnClickListener(v ->
+        binding.rowOrderInvoices.getRoot().setOnClickListener(v ->
                 ((MainActivity) activity).loadFragment(new OrderInvoice(), true));
 
-        if (!MainActivity.isMultiOutlet()) {
-            binding.rowInvoiceReport.getRoot().setVisibility(View.GONE);
-        }
+        binding.rowInvoiceReport.getRoot().setOnClickListener(v ->
+                openOperational(OwnerOperationalReport.TYPE_INVOICE));
+        binding.rowSaleReport.getRoot().setOnClickListener(v ->
+                openOperational(OwnerOperationalReport.TYPE_SALE));
+        binding.rowTableReport.getRoot().setOnClickListener(v ->
+                openOperational(OwnerOperationalReport.TYPE_TABLE));
+        binding.rowTakeAwayReport.getRoot().setOnClickListener(v ->
+                openOperational(OwnerOperationalReport.TYPE_TAKEAWAY));
+        binding.rowPaymentReport.getRoot().setOnClickListener(v ->
+                openOperational(OwnerOperationalReport.TYPE_PAYMENT));
+        binding.rowDiscountReport.getRoot().setOnClickListener(v ->
+                openOperational(OwnerOperationalReport.TYPE_DISCOUNT));
+        binding.rowRefundReport.getRoot().setOnClickListener(v ->
+                openOperational(OwnerOperationalReport.TYPE_REFUND));
+        binding.rowProductReport.getRoot().setOnClickListener(v ->
+                openOperational(OwnerOperationalReport.TYPE_PRODUCT));
+        binding.rowComboReport.getRoot().setOnClickListener(v ->
+                openOperational(OwnerOperationalReport.TYPE_COMBO));
+        binding.rowExpenseReport.getRoot().setOnClickListener(v ->
+                openOperational(OwnerOperationalReport.TYPE_EXPENSE));
+        binding.rowMessMemberReport.getRoot().setOnClickListener(v ->
+                openOperational(OwnerOperationalReport.TYPE_MESS_MEMBER));
+        binding.rowMessReport.getRoot().setOnClickListener(v ->
+                openOperational(OwnerOperationalReport.TYPE_MESS));
 
         View root = binding.getRoot();
         root.setFocusableInTouchMode(true);
@@ -74,17 +140,8 @@ public class ReportsHub extends Fragment {
         return root;
     }
 
-    private void hideUnusedRows() {
-        binding.rowTakeAwayReport.getRoot().setVisibility(View.GONE);
-        binding.rowPaymentReport.getRoot().setVisibility(View.GONE);
-        binding.rowProductReport.getRoot().setVisibility(View.GONE);
-        binding.rowComboReport.getRoot().setVisibility(View.GONE);
-        binding.rowExpenseReport.getRoot().setVisibility(View.GONE);
-        binding.rowMessMemberReport.getRoot().setVisibility(View.GONE);
-        binding.rowMessReport.getRoot().setVisibility(View.GONE);
-        binding.rowDeleteAllInvoices.getRoot().setVisibility(View.GONE);
-        binding.dataManagementLabel.setVisibility(View.GONE);
-        binding.dataManagementCard.setVisibility(View.GONE);
+    private void openOperational(String reportType) {
+        ((MainActivity) activity).loadFragment(OwnerOperationalReport.newInstance(reportType), true);
     }
 
     private void setupRow(ItemGroupedMenuRowBinding row, int iconRes, int bgRes, int tintColor,
@@ -98,12 +155,24 @@ public class ReportsHub extends Fragment {
     }
 
     private void showGroupDividers(ItemGroupedMenuRowBinding... rows) {
-        for (int i = 1; i < rows.length; i++) {
-            rows[i].rowDivider.setVisibility(View.VISIBLE);
+        boolean firstVisible = true;
+        for (ItemGroupedMenuRowBinding row : rows) {
+            if (row.getRoot().getVisibility() != View.VISIBLE) {
+                row.rowDivider.setVisibility(View.GONE);
+                continue;
+            }
+            row.rowDivider.setVisibility(firstVisible ? View.GONE : View.VISIBLE);
+            firstVisible = false;
         }
     }
 
     private void navigateBack() {
         ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
     }
 }

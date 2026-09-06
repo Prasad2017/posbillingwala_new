@@ -182,4 +182,60 @@ public class PrinterSettingResponse {
     public void setKotPrinterFeedLines(String kotPrinterFeedLines) {
         KotPrinterFeedLines = kotPrinterFeedLines;
     }
+
+    @SerializedName("kotEnable")
+    @Expose
+    public String kotEnable;
+    @SerializedName("kotPrefix")
+    @Expose
+    public String kotPrefix;
+    @SerializedName("kotCopies")
+    @Expose
+    public String kotCopies;
+    @SerializedName("kotAutoPrint")
+    @Expose
+    public String kotAutoPrint;
+    @SerializedName("kotPreview")
+    @Expose
+    public String kotPreview;
+
+    public String getKotEnable() {
+        return kotEnable;
+    }
+
+    public void setKotEnable(String kotEnable) {
+        this.kotEnable = kotEnable;
+    }
+
+    public String getKotPrefix() {
+        return kotPrefix;
+    }
+
+    public void setKotPrefix(String kotPrefix) {
+        this.kotPrefix = kotPrefix;
+    }
+
+    public String getKotCopies() {
+        return kotCopies;
+    }
+
+    public void setKotCopies(String kotCopies) {
+        this.kotCopies = kotCopies;
+    }
+
+    public String getKotAutoPrint() {
+        return kotAutoPrint;
+    }
+
+    public void setKotAutoPrint(String kotAutoPrint) {
+        this.kotAutoPrint = kotAutoPrint;
+    }
+
+    public String getKotPreview() {
+        return kotPreview;
+    }
+
+    public void setKotPreview(String kotPreview) {
+        this.kotPreview = kotPreview;
+    }
 }

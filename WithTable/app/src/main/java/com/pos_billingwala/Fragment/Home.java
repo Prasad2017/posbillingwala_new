@@ -46,8 +46,11 @@ import androidx.cardview.widget.CardView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.MultiplePermissionsReport;
 import com.karumi.dexter.PermissionToken;
@@ -68,9 +71,11 @@ import com.pos_billingwala.Extra.LicenseModules;
 import com.pos_billingwala.Extra.LicenseValidator;
 import com.pos_billingwala.Extra.DetectConnection;
 import com.pos_billingwala.Extra.ErrorLogQueue;
+import com.pos_billingwala.Extra.InAppNotificationStore;
 import com.pos_billingwala.Extra.ResponsiveUi;
 import com.pos_billingwala.Model.AllApiResponse;
 import com.pos_billingwala.Model.CompanyResponse;
+import com.pos_billingwala.Model.InAppNotification;
 import com.pos_billingwala.Model.LocalSalesSnapshot;
 import com.pos_billingwala.Model.PrinterSettingResponse;
 import com.pos_billingwala.Retrofit.Api;
@@ -161,6 +166,11 @@ public class Home extends Fragment implements View.OnClickListener {
     private Bitmap cachedStoreLogo;
     private String cachedStoreLogoRaw;
     private List<CompanyResponse> cachedCompanyDetails;
+    private final Runnable notificationBadgeListener = () -> {
+        if (activity != null) {
+            activity.runOnUiThread(this::refreshNotificationBadge);
+        }
+    };
     private static final int PRINTER_STATUS_OFFLINE = 0;
     private static final int PRINTER_STATUS_CONNECTING = 1;
     private static final int PRINTER_STATUS_CONNECTED = 2;
@@ -377,6 +387,9 @@ public class Home extends Fragment implements View.OnClickListener {
         todaySalesCardView = view.findViewById(R.id.todaySalesCardView);
 
         binding.userSettingIcon.setOnClickListener(this);
+        if (binding.homeNotificationBtn != null) {
+            binding.homeNotificationBtn.setOnClickListener(this);
+        }
         if (binding.homePrinterStatusRow != null) {
             binding.homePrinterStatusRow.setOnClickListener(this);
         }
@@ -474,6 +487,8 @@ public class Home extends Fragment implements View.OnClickListener {
         int id = view.getId();
         if (id == R.id.userSettingIcon) {
             ((MainActivity) activity).loadFragment(new UserSetting(), true);
+        } else if (id == R.id.homeNotificationBtn) {
+            showHomeNotificationsSheet();
         } else if (id == R.id.fastBilling) {
             if (LicenseModules.isEnabled(MainActivity.fastBilling)) {
                 CreatePos createPos = new CreatePos();
@@ -1104,16 +1119,175 @@ public class Home extends Fragment implements View.OnClickListener {
         stopHomeClock();
         AppExecutors.get().removeMainCallbacks(deferredPrinterConnectRunnable);
         unregisterConnectivityReceivers();
+        InAppNotificationStore.removeListener(notificationBadgeListener);
     }
 
     @Override
     public void onResume() {
         super.onResume();
         registerConnectivityReceivers();
+        InAppNotificationStore.addListener(notificationBadgeListener);
         updateHomeHeader();
         refreshPrinterAddressesFromDb();
         startHomeClock();
         setValidationUI();
+        maybePostLicenceNotifications();
+        refreshNotificationBadge();
+    }
+
+    private void refreshNotificationBadge() {
+        if (binding == null || binding.homeNotificationBadge == null || activity == null) {
+            return;
+        }
+        int unread = InAppNotificationStore.getUnreadCount(activity);
+        if (unread <= 0) {
+            binding.homeNotificationBadge.setVisibility(View.GONE);
+        } else {
+            binding.homeNotificationBadge.setVisibility(View.VISIBLE);
+            binding.homeNotificationBadge.setText(unread > 99 ? "99+" : String.valueOf(unread));
+        }
+    }
+
+    private void maybePostLicenceNotifications() {
+        if (activity == null) {
+            return;
+        }
+        final String expireDate = MainActivity.LicenceKeyExpireDate != null
+                ? MainActivity.LicenceKeyExpireDate : "";
+        if (expireDate.trim().isEmpty()) {
+            return;
+        }
+        AppExecutors.get().io().execute(() -> {
+            try {
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
+                String today = dateFormat.format(Calendar.getInstance().getTime());
+                Date startDate = dateFormat.parse(today);
+                Date endDate = dateFormat.parse(expireDate.trim());
+                if (startDate == null || endDate == null) {
+                    return;
+                }
+                long daysLeft = getUnitBetweenDates(startDate, endDate, TimeUnit.DAYS);
+                if (daysLeft < 0) {
+                    InAppNotificationStore.add(
+                            activity,
+                            "license_expired",
+                            activity.getString(R.string.ui_licence_expired_title),
+                            activity.getString(R.string.ui_licence_expired_body),
+                            null,
+                            "license_expired:" + today
+                    );
+                } else if (daysLeft <= 7) {
+                    InAppNotificationStore.add(
+                            activity,
+                            "license_expiring",
+                            activity.getString(R.string.ui_licence_expiring_title),
+                            activity.getString(R.string.ui_licence_expiring_body, (int) daysLeft),
+                            null,
+                            "license_expiring:" + today
+                    );
+                }
+            } catch (Exception e) {
+                Log.e("Home", "maybePostLicenceNotifications", e);
+            }
+            AppExecutors.get().main(this::refreshNotificationBadge);
+        });
+    }
+
+    private void showHomeNotificationsSheet() {
+        if (activity == null) {
+            return;
+        }
+        View content = LayoutInflater.from(activity).inflate(R.layout.bottom_sheet_home_notifications, null);
+        BottomSheetDialog sheet = BottomSheetUi.showContent(activity, content, true);
+
+        RecyclerView recycler = content.findViewById(R.id.notificationRecycler);
+        TextView empty = content.findViewById(R.id.emptyNotifications);
+        TextView markAll = content.findViewById(R.id.markAllRead);
+
+        List<InAppNotification> items = InAppNotificationStore.getAll(activity);
+        empty.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
+        recycler.setVisibility(items.isEmpty() ? View.GONE : View.VISIBLE);
+        recycler.setLayoutManager(new LinearLayoutManager(activity));
+        recycler.setAdapter(new HomeNotificationAdapter(items, item -> {
+            InAppNotificationStore.markRead(activity, item.id);
+            refreshNotificationBadge();
+            if (item.url != null && !item.url.trim().isEmpty()) {
+                try {
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(item.url.trim()));
+                    activity.startActivity(intent);
+                } catch (Exception ignored) {
+                }
+            }
+            sheet.dismiss();
+        }));
+
+        markAll.setOnClickListener(v -> {
+            InAppNotificationStore.markAllRead(activity);
+            refreshNotificationBadge();
+            sheet.dismiss();
+            showHomeNotificationsSheet();
+        });
+    }
+
+    private static class HomeNotificationAdapter extends RecyclerView.Adapter<HomeNotificationAdapter.VH> {
+        interface Listener {
+            void onClick(InAppNotification item);
+        }
+
+        private final List<InAppNotification> items;
+        private final Listener listener;
+        private final SimpleDateFormat timeFmt =
+                new SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault());
+
+        HomeNotificationAdapter(List<InAppNotification> items, Listener listener) {
+            this.items = items;
+            this.listener = listener;
+        }
+
+        @NonNull
+        @Override
+        public VH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View row = LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.item_home_notification, parent, false);
+            return new VH(row);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull VH holder, int position) {
+            InAppNotification item = items.get(position);
+            holder.title.setText(item.title != null ? item.title : "");
+            holder.body.setText(item.body != null ? item.body : "");
+            holder.time.setText(timeFmt.format(new Date(item.createdAt)));
+            holder.unreadDot.setVisibility(item.read ? View.GONE : View.VISIBLE);
+            holder.title.setTypeface(null, item.read ? android.graphics.Typeface.NORMAL : android.graphics.Typeface.BOLD);
+
+            int tint = R.color.colorPrimary;
+            if ("license_expired".equals(item.type) || "license_expiring".equals(item.type)) {
+                tint = R.color.statusTrial;
+            }
+            holder.icon.setColorFilter(ContextCompat.getColor(holder.itemView.getContext(), tint));
+            holder.itemView.setOnClickListener(v -> listener.onClick(item));
+        }
+
+        @Override
+        public int getItemCount() {
+            return items.size();
+        }
+
+        static class VH extends RecyclerView.ViewHolder {
+            final TextView title, body, time;
+            final View unreadDot;
+            final android.widget.ImageView icon;
+
+            VH(@NonNull View itemView) {
+                super(itemView);
+                title = itemView.findViewById(R.id.notifTitle);
+                body = itemView.findViewById(R.id.notifBody);
+                time = itemView.findViewById(R.id.notifTime);
+                unreadDot = itemView.findViewById(R.id.unreadDot);
+                icon = itemView.findViewById(R.id.notifIcon);
+            }
+        }
     }
 
     private void refreshPrinterAddressesFromDb() {

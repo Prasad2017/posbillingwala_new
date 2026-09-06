@@ -327,6 +327,32 @@
                     android:textSize="18sp" />
 
                 <TextView
+                    android:id="@+id/kotButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:layout_marginTop="10dp"
+                    android:background="@drawable/bg_billing_view_cart_btn"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:gravity="center"
+                    android:text="KOT"
+                    android:textColor="@color/colorPrimary"
+                    android:textSize="14sp"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/holdButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/bg_billing_view_cart_btn"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:gravity="center"
+                    android:text="SAVE"
+                    android:textColor="@color/colorPrimary"
+                    android:textSize="14sp"
+                    android:visibility="gone" />
+
+                <TextView
                     android:id="@+id/payButton"
                     android:layout_width="match_parent"
                     android:layout_height="48dp"

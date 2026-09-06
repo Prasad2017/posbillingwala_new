@@ -9,11 +9,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.PopupWindow;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.bottomsheet.BottomSheetDialog;
@@ -23,7 +23,6 @@ import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Activity.MessTokenBluetoothPrint;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.BottomSheetUi;
-import com.pos_billingwala.Extra.RowDividerUi;
 import com.pos_billingwala.Extra.MessTokenQrHelper;
 import com.pos_billingwala.Model.MemberResponse;
 import com.pos_billingwala.Model.MessInvoiceResponse;
@@ -49,12 +48,12 @@ public class MessInvoiceAdapter extends RecyclerView.Adapter<MessInvoiceAdapter.
     float pendingAmount = 0;
     List<MessInvoiceResponse> messInvoiceResponseList = new ArrayList<>();
     POSBillingWalaDatabase posBillingWalaDatabase;
-    int messDays = 0;
 
 
     public MessInvoiceAdapter(Context context, List<MemberResponse> memberResponseList) {
         this.context = context;
         this.memberResponseList = memberResponseList;
+        this.posBillingWalaDatabase = new POSBillingWalaDatabase(context);
     }
 
     @NonNull
@@ -67,70 +66,145 @@ public class MessInvoiceAdapter extends RecyclerView.Adapter<MessInvoiceAdapter.
     public void onBindViewHolder(@NonNull MessInvoiceAdapter.MyViewHolder holder, int position) {
 
         MemberResponse memberResponse = memberResponseList.get(position);
-        posBillingWalaDatabase = new POSBillingWalaDatabase(context);
 
         holder.binding.memberName.setText(memberResponse.getMemberName());
 
-        try {
-
-            pendingAmount = Float.parseFloat(memberResponse.getPaymentMessAmount()) - Float.parseFloat(memberResponse.getPaymentPaidAmount());
-
-            if (pendingAmount > 0) {
-                holder.binding.pendingAmount.setVisibility(View.VISIBLE);
-            } else {
-                holder.binding.pendingAmount.setVisibility(View.GONE);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        String mobile = memberResponse.getMemberMobileNumber();
+        if (mobile != null && !mobile.trim().isEmpty()) {
+            holder.binding.memberMobile.setVisibility(View.VISIBLE);
+            holder.binding.memberMobile.setText(mobile);
+        } else {
+            holder.binding.memberMobile.setVisibility(View.GONE);
         }
 
-        holder.binding.pendingAmount.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        float messAmt = parseFloatSafe(memberResponse.getPaymentMessAmount());
+        float paidAmt = parseFloatSafe(memberResponse.getPaymentPaidAmount());
+        final float pending = Math.max(0f, messAmt - paidAmt);
 
-                LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                view = inflater.inflate(R.layout.pending_amount_dialog, null);
-                mypopupWindow = PopupUi.create(context, view);
+        boolean hasPending = pending > 0.009f;
+        if (hasPending) {
+            holder.binding.tableNumberCardView.setBackgroundResource(R.drawable.bg_mess_member_card_pending);
+            holder.binding.pendingAmount.setVisibility(View.VISIBLE);
+            holder.binding.pendingAmountTxt.setVisibility(View.VISIBLE);
+            holder.binding.pendingAmountTxt.setText(
+                    context.getString(R.string.ui_mess_pending_amount_label,
+                            MainActivity.currencyName != null ? MainActivity.currencyName : "₹",
+                            String.format(Locale.US, "%.2f", pending)));
+        } else {
+            holder.binding.tableNumberCardView.setBackgroundResource(R.drawable.bg_mess_member_card);
+            holder.binding.pendingAmount.setVisibility(View.GONE);
+            holder.binding.pendingAmountTxt.setVisibility(View.GONE);
+        }
 
-                try {
-                    pendingAmount = Float.parseFloat(memberResponse.getPaymentMessAmount()) - Float.parseFloat(memberResponse.getPaymentPaidAmount());
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+        final int todayTokens = parseIntSafe(memberResponse.getTodayTokensGenerated());
+        int monthTokens = parseIntSafe(memberResponse.getTokensGenerated());
+        int allowedToday = resolveAllowedMessDays(memberResponse);
+        holder.binding.tokenCountTxt.setText(
+                context.getString(R.string.ui_mess_token_count_label, todayTokens, allowedToday, monthTokens));
 
-                TextView pendingAmountLayout = view.findViewById(R.id.pendingAmountLayout);
-                TextView pendingAmountTxt = view.findViewById(R.id.pendingAmount);
-                pendingAmountTxt.setText(MainActivity.currencyName + " " + pendingAmount);
+        final boolean alreadyPrinted = todayTokens >= allowedToday;
+        setPrintEnabled(holder, !alreadyPrinted);
 
-                pendingAmountLayout.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        mypopupWindow.dismiss();
-                    }
-                });
+        holder.binding.pendingAmount.setOnClickListener(v -> {
+            LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            view = inflater.inflate(R.layout.pending_amount_dialog, null);
+            mypopupWindow = PopupUi.create(context, view);
 
-                PopupUi.showBelowAnchor(mypopupWindow, holder.binding.pendingAmount);
+            TextView pendingAmountLayout = view.findViewById(R.id.pendingAmountLayout);
+            TextView pendingAmountTxt = view.findViewById(R.id.pendingAmount);
+            pendingAmountTxt.setText((MainActivity.currencyName != null ? MainActivity.currencyName : "₹")
+                    + " " + String.format(Locale.US, "%.2f", pending));
 
-            }
+            pendingAmountLayout.setOnClickListener(click -> mypopupWindow.dismiss());
+            PopupUi.showBelowAnchor(mypopupWindow, holder.binding.pendingAmount);
         });
 
-        holder.binding.billPrintLayout.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                setBillPrintPassword(memberResponse, false);
-
+        holder.binding.billPrintLayout.setOnClickListener(v -> {
+            if (alreadyPrinted) {
+                Toast.makeText(context, context.getString(R.string.toast_already_coupon_created), Toast.LENGTH_SHORT).show();
+                return;
             }
+            if (!hasPaidCurrentMonth(memberResponse)) {
+                Toast.makeText(context, context.getString(R.string.toast_not_paid_this_month), Toast.LENGTH_LONG).show();
+                return;
+            }
+            setBillPrintPassword(memberResponse, false);
         });
 
-        holder.binding.qrTokenLayout.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                setBillPrintPassword(memberResponse, true);
+        holder.binding.qrTokenLayout.setOnClickListener(v -> {
+            if (alreadyPrinted) {
+                Toast.makeText(context, context.getString(R.string.toast_already_coupon_created), Toast.LENGTH_SHORT).show();
+                return;
             }
+            if (!hasPaidCurrentMonth(memberResponse)) {
+                Toast.makeText(context, context.getString(R.string.toast_not_paid_this_month), Toast.LENGTH_LONG).show();
+                return;
+            }
+            setBillPrintPassword(memberResponse, true);
         });
+    }
 
-        RowDividerUi.bindLastItem(holder.binding.rowDivider, position, getItemCount());
+    /** True when this month has any paid amount (> 0). Previous months alone do not count. */
+    private boolean hasPaidCurrentMonth(MemberResponse memberResponse) {
+        float paid = parseFloatSafe(memberResponse.getPaymentPaidAmount());
+        float mess = parseFloatSafe(memberResponse.getPaymentMessAmount());
+        // Must have this-month package with at least some payment received.
+        return mess > 0.009f && paid > 0.009f;
+    }
+
+    private void setPrintEnabled(MyViewHolder holder, boolean enabled) {
+        holder.binding.billPrintLayout.setEnabled(enabled);
+        holder.binding.qrTokenLayout.setEnabled(enabled);
+        holder.binding.billPrintLayout.setAlpha(enabled ? 1f : 0.45f);
+        holder.binding.qrTokenLayout.setAlpha(enabled ? 1f : 0.45f);
+        holder.binding.billPrintLayout.setBackgroundResource(
+                enabled ? R.drawable.bg_mess_action_btn : R.drawable.bg_mess_action_btn_disabled);
+        holder.binding.qrTokenLayout.setBackgroundResource(
+                enabled ? R.drawable.bg_mess_action_btn : R.drawable.bg_mess_action_btn_disabled);
+
+        int color = ContextCompat.getColor(context, enabled ? R.color.colorPrimary : R.color.colorTextHint);
+        holder.binding.billPrintTxt.setTextColor(color);
+        holder.binding.qrTokenTxt.setTextColor(color);
+        holder.binding.billPrintIcon.setColorFilter(color);
+        holder.binding.qrTokenIcon.setColorFilter(color);
+
+        if (!enabled) {
+            holder.binding.billPrintTxt.setText(R.string.ui_printed_today);
+            holder.binding.qrTokenTxt.setText(R.string.ui_printed_today);
+        } else {
+            holder.binding.billPrintTxt.setText(R.string.ui_print_coupon);
+            holder.binding.qrTokenTxt.setText(R.string.ui_print_qr_token);
+        }
+    }
+
+    private int resolveAllowedMessDays(MemberResponse memberResponse) {
+        String totalDays = memberResponse.getMessTotalDays();
+        if (totalDays != null && totalDays.equalsIgnoreCase("One Time")) {
+            return 1;
+        }
+        return 2;
+    }
+
+    private float parseFloatSafe(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return 0f;
+        }
+        try {
+            return Float.parseFloat(value.trim());
+        } catch (Exception e) {
+            return 0f;
+        }
+    }
+
+    private int parseIntSafe(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return 0;
+        }
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (Exception e) {
+            return 0;
+        }
     }
 
     public void setBillPrintPassword(MemberResponse memberResponse, boolean issueQrToken) {
@@ -151,20 +225,13 @@ public class MessInvoiceAdapter extends RecyclerView.Adapter<MessInvoiceAdapter.
                 sheet.dismiss();
 
                 Date c = Calendar.getInstance().getTime();
-                System.out.println("Current time => " + c);
                 SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
                 String paymentDate = df.format(c);
 
                 messInvoiceResponseList = posBillingWalaDatabase.gerMessInvoiceUserWiseList(memberResponse.getMemberName(), paymentDate);
-
-                if (memberResponse.getMessTotalDays().equalsIgnoreCase("One Time")) {
-                    messDays = 1;
-                } else {
-                    messDays = 2;
-                }
+                int messDays = resolveAllowedMessDays(memberResponse);
 
                 if (messDays > messInvoiceResponseList.size()) {
-
                     if (issueQrToken) {
                         openMemberQrToken(memberResponse, messInvoiceResponseList.size());
                     } else {
@@ -178,9 +245,9 @@ public class MessInvoiceAdapter extends RecyclerView.Adapter<MessInvoiceAdapter.
                         intent.putExtra("messInvoiceResponseList", "" + messInvoiceResponseList.size());
                         context.startActivity(intent);
                     }
-
                 } else {
                     Toast.makeText(context, context.getString(R.string.toast_already_coupon_created), Toast.LENGTH_SHORT).show();
+                    notifyDataSetChanged();
                 }
 
             } else {

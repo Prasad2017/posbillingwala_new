@@ -58,17 +58,11 @@
         android:padding="5dp"
         android:visibility="gone" />
 
-    <TextView
+    <include
         android:id="@+id/noDataFound"
-        android:layout_width="wrap_content"
+        layout="@layout/include_empty_list_state"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:fontFamily="@font/poppinsmedium"
-        android:gravity="center"
-        android:paddingStart="10dp"
-        android:paddingEnd="10dp"
-        android:text="No Invoice Found"
-        android:textColor="@color/black"
-        android:textSize="17sp" />
+        android:layout_centerInParent="true" />
 
 </RelativeLayout>

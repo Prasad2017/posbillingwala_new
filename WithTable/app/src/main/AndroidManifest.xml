@@ -154,6 +154,10 @@
             android:configChanges="keyboardHidden|fontScale|density"
             android:exported="false" />
         <activity
+            android:name=".Activity.TableMasterActivity"
+            android:configChanges="keyboardHidden|fontScale|density"
+            android:exported="false" />
+        <activity
             android:name=".Activity.DuplicateBluetoothPrint"
             android:configChanges="keyboardHidden|fontScale|density"
             android:exported="false" />

@@ -263,6 +263,12 @@ CREATE TABLE `company_printer_setting` (
   `printerFeedLines` varchar(5) NOT NULL,
   `KotPrinterFeedLines` varchar(5) NOT NULL,
   `invoiceTermsCondition` longtext NOT NULL,
+  `duplicateBillUse` varchar(10) DEFAULT 'off',
+  `kotEnable` varchar(10) DEFAULT 'on',
+  `kotPrefix` varchar(32) DEFAULT 'KOT-',
+  `kotCopies` varchar(8) DEFAULT '1',
+  `kotAutoPrint` varchar(10) DEFAULT 'off',
+  `kotPreview` varchar(10) DEFAULT 'on',
   `settingStatus` text NOT NULL,
   PRIMARY KEY (`settingId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
@@ -290,6 +296,10 @@ CREATE TABLE `invoice` (
   `discountType` enum('Percentage','Amount') NOT NULL,
   `totalAmount` float(16,2) NOT NULL,
   `paymentMode` text NOT NULL,
+  `cashAmount` varchar(50) NOT NULL DEFAULT '0',
+  `upiAmount` varchar(50) NOT NULL DEFAULT '0',
+  `diningSessionId` varchar(64) DEFAULT NULL,
+  `billPrintStatus` varchar(32) DEFAULT '',
   `invoiceDate` datetime NOT NULL,
   `invoiceOrderStatus` text NOT NULL,
   `invoiceNetworkStatus` text NOT NULL,

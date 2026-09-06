@@ -77,6 +77,15 @@ public class ProductCartResponse {
     @SerializedName("snapshotComboComponents")
     @Expose
     public String snapshotComboComponents;
+    @SerializedName("diningSessionId")
+    @Expose
+    public String diningSessionId;
+    @SerializedName("orderRoundId")
+    @Expose
+    public String orderRoundId;
+    @SerializedName("kotPrinted")
+    @Expose
+    public String kotPrinted;
 
 
     public String getCartId() {
@@ -273,6 +282,34 @@ public class ProductCartResponse {
 
     public void setSnapshotComboComponents(String snapshotComboComponents) {
         this.snapshotComboComponents = snapshotComboComponents;
+    }
+
+    public String getDiningSessionId() {
+        return diningSessionId;
+    }
+
+    public void setDiningSessionId(String diningSessionId) {
+        this.diningSessionId = diningSessionId;
+    }
+
+    public String getOrderRoundId() {
+        return orderRoundId;
+    }
+
+    public void setOrderRoundId(String orderRoundId) {
+        this.orderRoundId = orderRoundId;
+    }
+
+    public String getKotPrinted() {
+        return kotPrinted;
+    }
+
+    public void setKotPrinted(String kotPrinted) {
+        this.kotPrinted = kotPrinted;
+    }
+
+    public boolean isKotPrinted() {
+        return kotPrinted != null && ("1".equals(kotPrinted.trim()) || "true".equalsIgnoreCase(kotPrinted.trim()));
     }
 
     /** Frozen line label for print / reports (includes portion when set). */

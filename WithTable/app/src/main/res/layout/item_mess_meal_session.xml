@@ -1,64 +1,165 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:layout_marginBottom="12dp"
+    android:background="@drawable/bg_mess_session_card"
     android:orientation="vertical"
-    android:padding="10dp">
+    android:padding="14dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/poppinsmedium"
+        android:text="Session name"
+        android:textColor="@color/colorTextSecondary"
+        android:textSize="11sp" />
 
     <EditText
         android:id="@+id/sessionName"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Session name"
-        android:inputType="textCapWords" />
+        android:layout_height="44dp"
+        android:layout_marginTop="4dp"
+        android:background="@drawable/bg_mess_time_chip"
+        android:fontFamily="@font/poppinsmedium"
+        android:hint="Lunch / Dinner"
+        android:inputType="textCapWords"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:textColor="@color/colorTextPrimary"
+        android:textSize="15sp" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
         android:orientation="horizontal">
 
-        <EditText
-            android:id="@+id/startTime"
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginEnd="6dp"
             android:layout_weight="1"
-            android:hint="Start HH:mm"
-            android:inputType="time" />
+            android:orientation="vertical">
 
-        <EditText
-            android:id="@+id/endTime"
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/poppinsmedium"
+                android:text="Start time"
+                android:textColor="@color/colorTextSecondary"
+                android:textSize="11sp" />
+
+            <TextView
+                android:id="@+id/startTime"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="4dp"
+                android:background="@drawable/bg_mess_time_chip"
+                android:drawablePadding="8dp"
+                android:fontFamily="@font/poppinsmedium"
+                android:gravity="center_vertical"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:text="11:30"
+                android:textColor="@color/colorPrimary"
+                android:textSize="16sp"
+                app:drawableStartCompat="@android:drawable/ic_menu_recent_history"
+                app:drawableTint="@color/colorPrimary" />
+        </LinearLayout>
+
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
             android:layout_weight="1"
-            android:hint="End HH:mm"
-            android:inputType="time" />
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/poppinsmedium"
+                android:text="End time"
+                android:textColor="@color/colorTextSecondary"
+                android:textSize="11sp" />
+
+            <TextView
+                android:id="@+id/endTime"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="4dp"
+                android:background="@drawable/bg_mess_time_chip"
+                android:drawablePadding="8dp"
+                android:fontFamily="@font/poppinsmedium"
+                android:gravity="center_vertical"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:text="15:00"
+                android:textColor="@color/colorPrimary"
+                android:textSize="16sp"
+                app:drawableStartCompat="@android:drawable/ic_menu_recent_history"
+                app:drawableTint="@color/colorPrimary" />
+        </LinearLayout>
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:gravity="center_vertical"
         android:orientation="horizontal">
 
-        <EditText
-            android:id="@+id/tokenPrefix"
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:hint="Prefix"
-            android:inputType="textCapCharacters"
-            android:maxLength="4" />
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/poppinsmedium"
+                android:text="Token prefix"
+                android:textColor="@color/colorTextSecondary"
+                android:textSize="11sp" />
+
+            <EditText
+                android:id="@+id/tokenPrefix"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginTop="4dp"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/bg_mess_time_chip"
+                android:fontFamily="@font/poppinsmedium"
+                android:gravity="center"
+                android:hint="L"
+                android:inputType="textCapCharacters"
+                android:maxLength="4"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:textColor="@color/colorTextPrimary"
+                android:textSize="15sp" />
+        </LinearLayout>
 
         <CheckBox
             android:id="@+id/isActive"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Active" />
+            android:layout_marginTop="16dp"
+            android:fontFamily="@font/poppinsmedium"
+            android:text="Active"
+            android:textColor="@color/colorTextPrimary" />
     </LinearLayout>
 
     <Button
         android:id="@+id/btnSave"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Save Session" />
+        android:layout_height="48dp"
+        android:layout_marginTop="14dp"
+        android:backgroundTint="@color/colorPrimary"
+        android:fontFamily="@font/poppinsmedium"
+        android:text="SAVE SESSION"
+        android:textAllCaps="true"
+        android:textColor="@color/white" />
 </LinearLayout>

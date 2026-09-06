@@ -171,7 +171,12 @@ public interface ApiInterface {
                                             @Field("bluetoothAddress") String bluetoothAddress,
                                             @Field("bluetoothKOTAddress") String bluetoothKOTAddress,
                                             @Field("printerFeedLines") String printerFeedLines,
-                                            @Field("KotPrinterFeedLines") String KotPrinterFeedLines);
+                                            @Field("KotPrinterFeedLines") String KotPrinterFeedLines,
+                                            @Field("kotEnable") String kotEnable,
+                                            @Field("kotPrefix") String kotPrefix,
+                                            @Field("kotCopies") String kotCopies,
+                                            @Field("kotAutoPrint") String kotAutoPrint,
+                                            @Field("kotPreview") String kotPreview);
 
     @FormUrlEncoded
     @POST("insertCompanyDetail.php")
@@ -220,10 +225,74 @@ public interface ApiInterface {
                                      @Field("paymentMode") String paymentMode,
                                      @Field("cashAmount") String cashAmount,
                                      @Field("upiAmount") String upiAmount,
+                                     @Field("diningSessionId") String diningSessionId,
+                                     @Field("billPrintStatus") String billPrintStatus,
                                      @Field("invoiceDate") String invoiceDate,
                                      @Field("invoiceType") String invoiceType,
                                      @Field("invoiceOrderStatus") String invoiceOrderStatus,
                                      @Field("invoiceNetworkStatus") String invoiceNetworkStatus);
+
+    @FormUrlEncoded
+    @POST("insertPosTable.php")
+    Call<AllApiResponse> savePosTable(@Field("userId") String userId,
+                                      @Field("tableNumber") String tableNumber,
+                                      @Field("tableName") String tableName,
+                                      @Field("tableTypeId") String tableTypeId,
+                                      @Field("capacity") String capacity,
+                                      @Field("areaId") String areaId,
+                                      @Field("tableActive") String tableActive,
+                                      @Field("positionX") String positionX,
+                                      @Field("positionY") String positionY,
+                                      @Field("sortOrder") String sortOrder,
+                                      @Field("statusOverride") String statusOverride,
+                                      @Field("posTableNetworkStatus") String posTableNetworkStatus);
+
+    @GET("getPosTableList.php")
+    Call<AllApiResponse> getPosTableList(@Query("userId") String userId);
+
+    @FormUrlEncoded
+    @POST("insertDiningArea.php")
+    Call<AllApiResponse> saveDiningArea(@Field("userId") String userId,
+                                        @Field("areaName") String areaName,
+                                        @Field("areaSortOrder") String areaSortOrder,
+                                        @Field("areaActive") String areaActive,
+                                        @Field("areaNetworkStatus") String areaNetworkStatus);
+
+    @GET("getDiningAreaList.php")
+    Call<AllApiResponse> getDiningAreaList(@Query("userId") String userId);
+
+    @FormUrlEncoded
+    @POST("insertTableType.php")
+    Call<AllApiResponse> saveTableType(@Field("userId") String userId,
+                                       @Field("tableTypeName") String tableTypeName,
+                                       @Field("defaultCapacity") String defaultCapacity,
+                                       @Field("tableTypeActive") String tableTypeActive,
+                                       @Field("tableTypeNetworkStatus") String tableTypeNetworkStatus);
+
+    @GET("getTableTypeList.php")
+    Call<AllApiResponse> getTableTypeList(@Query("userId") String userId);
+
+    @FormUrlEncoded
+    @POST("insertDiningSession.php")
+    Call<AllApiResponse> saveDiningSession(@Field("userId") String userId,
+                                           @Field("localSessionId") String localSessionId,
+                                           @Field("primaryTableNumber") String primaryTableNumber,
+                                           @Field("joinedTableNumbers") String joinedTableNumbers,
+                                           @Field("sessionStatus") String sessionStatus,
+                                           @Field("guestCount") String guestCount,
+                                           @Field("startedAt") String startedAt,
+                                           @Field("closedAt") String closedAt,
+                                           @Field("customerName") String customerName,
+                                           @Field("customerMobile") String customerMobile,
+                                           @Field("waiterName") String waiterName,
+                                           @Field("unpaidInvoiceNumber") String unpaidInvoiceNumber,
+                                           @Field("paidAmount") String paidAmount,
+                                           @Field("sessionVersion") String sessionVersion,
+                                           @Field("sessionNetworkStatus") String sessionNetworkStatus);
+
+    @GET("getDiningSessionList.php")
+    Call<AllApiResponse> getDiningSessionList(@Query("userId") String userId,
+                                              @Query("openOnly") String openOnly);
 
     @FormUrlEncoded
     @POST("insertInvoiceProduct.php")

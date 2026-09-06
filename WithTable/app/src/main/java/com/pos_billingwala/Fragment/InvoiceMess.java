@@ -34,6 +34,7 @@ import com.pos_billingwala.databinding.FragmentInvoiceMessBinding;
 
 import java.util.ArrayList;
 import java.util.List;
+import com.pos_billingwala.Extra.EmptyListUi;
 
 @SuppressLint("StaticFieldLeak, ClickableViewAccessibility, NonConstantResourceId, NotifyDataSetChanged, SetTextI18n")
 public class InvoiceMess extends Fragment implements View.OnClickListener {
@@ -121,7 +122,7 @@ public class InvoiceMess extends Fragment implements View.OnClickListener {
 
         boolean hasResults = !searchMemberResponseList.isEmpty();
         binding.recyclerView.setVisibility(hasResults ? View.VISIBLE : View.GONE);
-        binding.noDataFound.setVisibility(hasResults ? View.GONE : View.VISIBLE);
+        EmptyListUi.bind(binding.noDataFound, hasResults, R.string.empty_sub_mess_invoices);
     }
 
     @Override
@@ -190,11 +191,97 @@ public class InvoiceMess extends Fragment implements View.OnClickListener {
     }
 
     public void getMemberList() {
+        List<MemberResponse> allMembers = posBillingWalaDatabase.getMemberList();
+        // Alert uses full roster (e.g. unpaid tokens); list shows current-month members only.
+        updateMessPaymentAlert(allMembers);
+
         memberResponseList.clear();
-        memberResponseList = posBillingWalaDatabase.getMemberList();
+        for (MemberResponse m : allMembers) {
+            if (hasCurrentMonthPayment(m)) {
+                memberResponseList.add(m);
+            }
+        }
+
         String query = binding.searchMessMember.getText() != null
                 ? binding.searchMessMember.getText().toString() : "";
         searchMessMember(query);
         binding.messOrderLayout.setVisibility(View.VISIBLE);
+    }
+
+    /** Member has a mess payment package (or paid amount) for the current month. */
+    private boolean hasCurrentMonthPayment(MemberResponse m) {
+        if (m == null) {
+            return false;
+        }
+        float mess = parseFloatSafe(m.getPaymentMessAmount());
+        float paid = parseFloatSafe(m.getPaymentPaidAmount());
+        if (mess > 0.009f || paid > 0.009f) {
+            return true;
+        }
+        String memberId = m.getMemberId();
+        if (memberId == null || memberId.trim().isEmpty()) {
+            return false;
+        }
+        String currentMonth = new java.text.SimpleDateFormat("yyyy-MM", java.util.Locale.getDefault())
+                .format(java.util.Calendar.getInstance().getTime());
+        return posBillingWalaDatabase.hasMemberPaymentForMonth(memberId, currentMonth);
+    }
+
+    private void updateMessPaymentAlert(List<MemberResponse> source) {
+        int pendingCount = 0;
+        int unpaidWithTokens = 0;
+        if (source != null) {
+            for (MemberResponse m : source) {
+                float mess = parseFloatSafe(m.getPaymentMessAmount());
+                float paid = parseFloatSafe(m.getPaymentPaidAmount());
+                float pending = Math.max(0f, mess - paid);
+                int tokens = parseIntSafe(m.getTokensGenerated());
+                int todayTokens = parseIntSafe(m.getTodayTokensGenerated());
+
+                if (pending > 0.009f) {
+                    pendingCount++;
+                }
+                boolean unpaid = mess <= 0.009f || paid <= 0.009f;
+                if (unpaid && (tokens > 0 || todayTokens > 0)) {
+                    unpaidWithTokens++;
+                }
+            }
+        }
+
+        if (pendingCount == 0 && unpaidWithTokens == 0) {
+            binding.messAlertBanner.setVisibility(View.GONE);
+            return;
+        }
+
+        binding.messAlertBanner.setVisibility(View.VISIBLE);
+        if (pendingCount > 0 && unpaidWithTokens > 0) {
+            binding.messAlertText.setText(getString(R.string.ui_mess_alert_both, pendingCount, unpaidWithTokens));
+        } else if (pendingCount > 0) {
+            binding.messAlertText.setText(getString(R.string.ui_mess_alert_pending_only, pendingCount));
+        } else {
+            binding.messAlertText.setText(getString(R.string.ui_mess_alert_unpaid_tokens, unpaidWithTokens));
+        }
+    }
+
+    private float parseFloatSafe(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return 0f;
+        }
+        try {
+            return Float.parseFloat(value.trim());
+        } catch (Exception e) {
+            return 0f;
+        }
+    }
+
+    private int parseIntSafe(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return 0;
+        }
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (Exception e) {
+            return 0;
+        }
     }
 }

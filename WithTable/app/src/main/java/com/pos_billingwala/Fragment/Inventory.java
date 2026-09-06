@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import cn.pedant.SweetAlert.SweetAlertDialog;
+import com.pos_billingwala.Extra.EmptyListUi;
 
 
 @SuppressLint("StaticFieldLeak")
@@ -100,11 +101,12 @@ public class Inventory extends Fragment implements View.OnClickListener {
                 adapter.notifyDataSetChanged();
                 //  adapter.notifyItemInserted(inventoryResponseList.size() - 1);
 
-                binding.noDataFound.setVisibility(View.GONE);
+                EmptyListUi.bind(binding.noDataFound, true, R.string.empty_sub_inventory);
                 binding.linearLayout.setVisibility(View.VISIBLE);
 
             } else {
-                binding.noDataFound.setVisibility(View.VISIBLE);
+                EmptyListUi.bind(binding.noDataFound, false, R.string.empty_sub_inventory);
+                binding.linearLayout.setVisibility(View.GONE);
                 binding.addInventory.setVisibility(View.GONE);
             }
         } finally {

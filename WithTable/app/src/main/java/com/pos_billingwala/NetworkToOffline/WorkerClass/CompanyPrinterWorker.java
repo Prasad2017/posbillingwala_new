@@ -42,7 +42,35 @@ public class CompanyPrinterWorker extends Worker {
                 List<PrinterSettingResponse> printerSettingResponseList = response.body().getPrinterSettingResponseList();
                 if (!printerSettingResponseList.isEmpty()) {
                     for (PrinterSettingResponse printerSettingResponse : printerSettingResponseList) {
-                        database.addCompanyPrinterSetting(printerSettingResponse.getPrinterName(), printerSettingResponse.getKOTPrinterName(), printerSettingResponse.getInvoicePrefix(), printerSettingResponse.getInvoiceTitle(), printerSettingResponse.getLogoUse(), printerSettingResponse.getPaymentUse(), printerSettingResponse.getCustomerUse(), printerSettingResponse.getProductQuantityUpdate(), printerSettingResponse.getDuplicateBillUse() != null ? printerSettingResponse.getDuplicateBillUse() : "off", printerSettingResponse.getInvoiceTermsCondition(), printerSettingResponse.getBluetoothAddress(), printerSettingResponse.getBluetoothKOTAddress(), printerSettingResponse.getPrinterFeedLines(), printerSettingResponse.getKotPrinterFeedLines(), 1);
+                        database.addCompanyPrinterSetting(
+                                printerSettingResponse.getPrinterName(),
+                                printerSettingResponse.getKOTPrinterName(),
+                                printerSettingResponse.getInvoicePrefix(),
+                                printerSettingResponse.getInvoiceTitle(),
+                                printerSettingResponse.getLogoUse(),
+                                printerSettingResponse.getPaymentUse(),
+                                printerSettingResponse.getCustomerUse(),
+                                printerSettingResponse.getProductQuantityUpdate(),
+                                printerSettingResponse.getDuplicateBillUse() != null
+                                        ? printerSettingResponse.getDuplicateBillUse() : "off",
+                                printerSettingResponse.getInvoiceTermsCondition(),
+                                printerSettingResponse.getBluetoothAddress(),
+                                printerSettingResponse.getBluetoothKOTAddress(),
+                                printerSettingResponse.getPrinterFeedLines(),
+                                printerSettingResponse.getKotPrinterFeedLines(),
+                                1);
+                        // Apply KOT settings from cloud without flipping sync status again
+                        java.util.List<PrinterSettingResponse> local =
+                                database.getPrinterSettingDetails();
+                        if (local != null && !local.isEmpty()) {
+                            database.applyKotSettingsFromCloud(
+                                    local.get(0).getSettingId(),
+                                    printerSettingResponse.getKotEnable(),
+                                    printerSettingResponse.getKotPrefix(),
+                                    printerSettingResponse.getKotCopies(),
+                                    printerSettingResponse.getKotAutoPrint(),
+                                    printerSettingResponse.getKotPreview());
+                        }
                     }
                 }
             }

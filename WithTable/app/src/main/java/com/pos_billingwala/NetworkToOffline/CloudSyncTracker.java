@@ -41,6 +41,9 @@ public final class CloudSyncTracker {
     public static final String KEY_EXPENSES = "expenses";
     public static final String KEY_MESS_TOKENS = "mess_tokens";
     public static final String KEY_ERROR_LOGS = "error_logs";
+    public static final String KEY_DINING_AREAS = "dining_areas";
+    public static final String KEY_TABLE_TYPES = "table_types";
+    public static final String KEY_POS_TABLES = "pos_tables";
 
     private static final MutableLiveData<Snapshot> LIVE = new MutableLiveData<>();
     private static volatile boolean running;
@@ -220,6 +223,12 @@ public final class CloudSyncTracker {
                     db -> db.countUnsyncedRows(POSBillingWalaDatabase.INVENTORY_TABLE, "inventoryStatus")),
             new TableDef(KEY_EXPENSES, R.string.sync_table_expenses,
                     db -> db.countUnsyncedRows(POSBillingWalaDatabase.EXPENSES_TABLE, "expensesStatus")),
+            new TableDef(KEY_DINING_AREAS, R.string.sync_table_dining_areas,
+                    db -> db.countUnsyncedRows(POSBillingWalaDatabase.DINING_AREA_TABLE, "areaStatus")),
+            new TableDef(KEY_TABLE_TYPES, R.string.sync_table_table_types,
+                    db -> db.countUnsyncedRows(POSBillingWalaDatabase.TABLE_TYPE_TABLE, "tableTypeStatus")),
+            new TableDef(KEY_POS_TABLES, R.string.sync_table_pos_tables,
+                    db -> db.countUnsyncedRows(POSBillingWalaDatabase.POS_TABLE_TABLE, "posTableStatus")),
             new TableDef(KEY_MESS_TOKENS, R.string.sync_table_mess_tokens,
                     POSBillingWalaDatabase::countPendingMessTokens),
             new TableDef(KEY_ERROR_LOGS, R.string.sync_table_error_logs, db -> 0),

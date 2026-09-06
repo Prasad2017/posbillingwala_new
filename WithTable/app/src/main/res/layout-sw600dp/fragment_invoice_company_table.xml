@@ -82,18 +82,84 @@
 
     </com.google.android.material.appbar.AppBarLayout>
 
-    <com.pos_billingwala.Extra.AutoFitGridRecyclerView
-        android:id="@+id/tableRecyclerView"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@+id/appBarLayout"
-        android:layout_marginStart="12dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="12dp"
-        android:layout_marginBottom="8dp"
-        android:columnWidth="118dp"
-        android:nestedScrollingEnabled="true"
-        android:padding="6dp"
-        android:visibility="visible" />
+        android:orientation="vertical"
+        android:paddingTop="8dp">
+
+        <HorizontalScrollView
+            android:id="@+id/areaFilterScroll"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/areaFilterRow"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:paddingBottom="6dp" />
+        </HorizontalScrollView>
+
+        <HorizontalScrollView
+            android:id="@+id/statusLegendScroll"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/statusLegendRow"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="12dp"
+                android:paddingTop="2dp"
+                android:paddingEnd="12dp"
+                android:paddingBottom="6dp" />
+        </HorizontalScrollView>
+
+        <TextView
+            android:id="@+id/longPressHint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/poppinsregular"
+            android:paddingStart="14dp"
+            android:paddingTop="2dp"
+            android:paddingEnd="14dp"
+            android:paddingBottom="6dp"
+            android:text="@string/dine_in_long_press_hint"
+            android:textColor="@color/colorTextHint"
+            android:textSize="11sp" />
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="12dp"
+            android:layout_marginBottom="8dp">
+
+            <com.pos_billingwala.Extra.AutoFitGridRecyclerView
+                android:id="@+id/tableRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:columnWidth="118dp"
+                android:nestedScrollingEnabled="true"
+                android:padding="6dp"
+                android:visibility="visible" />
+
+            <include
+                android:id="@+id/noDataFound"
+                layout="@layout/include_empty_list_state"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center" />
+        </FrameLayout>
+    </LinearLayout>
 
 </RelativeLayout>

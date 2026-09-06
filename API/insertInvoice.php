@@ -19,6 +19,7 @@ function invoice_ensure_cash_upi_columns($con)
         return;
     }
     require_once __DIR__ . '/php_compat.php';
+    require_once __DIR__ . '/dine_in_helpers.php';
     try {
         $cash = db_safe_query($con, "SHOW COLUMNS FROM `invoice` LIKE 'cashAmount'");
         if ($cash && mysqli_num_rows($cash) === 0) {
@@ -34,6 +35,7 @@ function invoice_ensure_cash_upi_columns($con)
         if ($upi) {
             mysqli_free_result($upi);
         }
+        dine_in_ensure_invoice_columns($con);
     } catch (Throwable $e) {
         // Ignore schema probe failures — request can still proceed.
     }
@@ -120,6 +122,10 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 
   $upiAmount = $post('upiAmount', '0');
 
+  $diningSessionId = $post('diningSessionId');
+
+  $billPrintStatus = $post('billPrintStatus');
+
   $invoiceDate = $post('invoiceDate');
 
   $invoiceOrderStatus = $post('invoiceOrderStatus');
@@ -173,9 +179,9 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 
 				        $con,
 
-				        'UPDATE `invoice` SET `organization_id`=?, `branch_id`=?, `device_id`=?, `noOfTable`=?, `invoiceType`=?, `invoiceNumber`=?, `customerName`=?, `customerMobile`=?, `customerEmail`=?, `customerAddress`=?, `subTotal`=?, `totalGSTAmount`=?, `discount`=?, `discountType`=?, `packingCharge`=?, `packingChargeType`=?, `totalAmount`=?, `paymentMode`=?, `cashAmount`=?, `upiAmount`=?, `invoiceDate`=?, `invoiceOrderStatus`=?, `invoiceNetworkStatus`=? WHERE `invoiceId`=?',
+				        'UPDATE `invoice` SET `organization_id`=?, `branch_id`=?, `device_id`=?, `noOfTable`=?, `invoiceType`=?, `invoiceNumber`=?, `customerName`=?, `customerMobile`=?, `customerEmail`=?, `customerAddress`=?, `subTotal`=?, `totalGSTAmount`=?, `discount`=?, `discountType`=?, `packingCharge`=?, `packingChargeType`=?, `totalAmount`=?, `paymentMode`=?, `cashAmount`=?, `upiAmount`=?, `diningSessionId`=?, `billPrintStatus`=?, `invoiceDate`=?, `invoiceOrderStatus`=?, `invoiceNetworkStatus`=? WHERE `invoiceId`=?',
 
-				        'iisssssssssssssssssssssi',
+				        'iisssssssssssssssssssssssi',
 
 				        $orgId,
 
@@ -216,6 +222,10 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 				        $cashAmount,
 
 				        $upiAmount,
+
+				        $diningSessionId,
+
+				        $billPrintStatus,
 
 				        $invoiceDate,
 
@@ -293,9 +303,9 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 
                      $con,
 
-                     'INSERT INTO `invoice`(`licenseId`, `organization_id`, `branch_id`, `device_id`, `noOfTable`, `invoiceType`, `invoiceNumber`, `customerName`, `customerMobile`, `customerEmail`, `customerAddress`, `subTotal`, `totalGSTAmount`, `discount`, `discountType`, `packingCharge`, `packingChargeType`, `totalAmount`, `paymentMode`, `cashAmount`, `upiAmount`, `invoiceDate`, `invoiceOrderStatus`, `invoiceNetworkStatus`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+                     'INSERT INTO `invoice`(`licenseId`, `organization_id`, `branch_id`, `device_id`, `noOfTable`, `invoiceType`, `invoiceNumber`, `customerName`, `customerMobile`, `customerEmail`, `customerAddress`, `subTotal`, `totalGSTAmount`, `discount`, `discountType`, `packingCharge`, `packingChargeType`, `totalAmount`, `paymentMode`, `cashAmount`, `upiAmount`, `diningSessionId`, `billPrintStatus`, `invoiceDate`, `invoiceOrderStatus`, `invoiceNetworkStatus`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
 
-                     'siisssssssssssssssssssss',
+                     'siisssssssssssssssssssssss',
 
                      $userId,
 
@@ -338,6 +348,10 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
                      $cashAmount,
 
                      $upiAmount,
+
+                     $diningSessionId,
+
+                     $billPrintStatus,
 
                      $invoiceDate,
 

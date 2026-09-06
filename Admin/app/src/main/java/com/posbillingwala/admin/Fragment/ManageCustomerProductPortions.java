@@ -38,6 +38,7 @@ import cn.pedant.SweetAlert.SweetAlertDialog;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import com.posbillingwala.admin.Extra.EmptyListUi;
 
 @SuppressLint("SetTextI18n, NonConstantResourceId, StaticFieldLeak")
 public class ManageCustomerProductPortions extends Fragment implements View.OnClickListener {
@@ -45,7 +46,7 @@ public class ManageCustomerProductPortions extends Fragment implements View.OnCl
     public static Activity activity;
     public static RecyclerView portionRecyclerview;
     public static CardView portionListCardView;
-    public static TextView noDataFound;
+    public static View noDataFound;
 
     View view;
     FragmentManageCustomerProductPortionsBinding binding;
@@ -234,11 +235,11 @@ public class ManageCustomerProductPortions extends Fragment implements View.OnCl
                         portionRecyclerview.setLayoutManager(new GridLayoutManager(activity, 1));
                         portionRecyclerview.setAdapter(adapter);
                         portionListCardView.setVisibility(View.VISIBLE);
-                        noDataFound.setVisibility(View.GONE);
+                        EmptyListUi.bind(noDataFound, true, R.string.empty_sub_portions);
                         binding.portionSortOrder.setText(String.valueOf(list.size()));
                     } else {
                         portionListCardView.setVisibility(View.GONE);
-                        noDataFound.setVisibility(View.VISIBLE);
+                        EmptyListUi.bind(noDataFound, false, R.string.empty_sub_portions);
                         binding.portionSortOrder.setText("0");
                     }
                 }

@@ -30,6 +30,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 import com.posbillingwala.owner.databinding.FragmentOrderInvoiceBinding;
+import com.posbillingwala.owner.Extra.EmptyListUi;
 
 public class OrderInvoice extends Fragment {
 
@@ -140,11 +141,11 @@ public class OrderInvoice extends Fragment {
                         adapter.notifyItemInserted(invoiceResponseList.size() - 1);
 
                         binding.recyclerView.setVisibility(View.VISIBLE);
-                        binding.noDataFound.setVisibility(View.GONE);
+                        EmptyListUi.bind(binding.noDataFound.getRoot(), true, R.string.empty_sub_invoices);
 
                     } else {
                         binding.recyclerView.setVisibility(View.GONE);
-                        binding.noDataFound.setVisibility(View.VISIBLE);
+                        EmptyListUi.bind(binding.noDataFound.getRoot(), false, R.string.empty_sub_invoices);
                     }
 
                 }

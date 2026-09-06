@@ -35,6 +35,7 @@ import cn.pedant.SweetAlert.SweetAlertDialog;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import com.posbillingwala.dealer.Extra.EmptyListUi;
 
 @SuppressLint("SetTextI18n, NonConstantResourceId, UseCompatLoadingForDrawables, StaticFieldLeak")
 public class AllCustomerProductList extends Fragment {
@@ -43,7 +44,7 @@ public class AllCustomerProductList extends Fragment {
     public static RecyclerView productRecyclerView;
     public static List<ProductResponse> productResponseList = new ArrayList<>();
     public static ProductAdapter productAdapter;
-    public static TextView noDataFound;
+    public static View noDataFound;
     public static String customerId;
     View view;
     FragmentAllCustomerProductListBinding binding;
@@ -73,11 +74,11 @@ public class AllCustomerProductList extends Fragment {
                         productRecyclerView.setHasFixedSize(true);
 
                         productRecyclerView.setVisibility(View.VISIBLE);
-                        noDataFound.setVisibility(View.GONE);
+                        EmptyListUi.bind(noDataFound, true, R.string.empty_sub_products);
 
                     } else {
                         productRecyclerView.setVisibility(View.GONE);
-                        noDataFound.setVisibility(View.VISIBLE);
+                        EmptyListUi.bind(noDataFound, false, R.string.empty_sub_products);
                     }
 
                 }
@@ -158,7 +159,7 @@ public class AllCustomerProductList extends Fragment {
 
     private void initViews() {
         productRecyclerView = binding.productRecyclerView;
-        noDataFound = binding.noDataFound;
+        noDataFound = binding.noDataFound.getRoot();
     }
 
     public void onStart() {

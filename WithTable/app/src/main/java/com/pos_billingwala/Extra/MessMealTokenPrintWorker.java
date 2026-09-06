@@ -235,7 +235,8 @@ public final class MessMealTokenPrintWorker {
         Paint promo = new Paint(Paint.ANTI_ALIAS_FLAG);
         promo.setColor(Color.BLACK);
         promo.setTextAlign(Paint.Align.CENTER);
-        promo.setTextSize(16);
+        promo.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+        promo.setTextSize(22);
 
         float cx = width / 2f;
         float y = 36;
@@ -268,7 +269,7 @@ public final class MessMealTokenPrintWorker {
         canvas.drawLine(24, y, width - 24, y, body);
         y += 28;
         canvas.drawText("Powered by POS Billingwala", cx, y, promo);
-        y += 22;
+        y += 26;
         canvas.drawText("www.posbillingwala.com", cx, y, promo);
         return bmp;
     }

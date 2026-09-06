@@ -273,6 +273,30 @@ public class InvoiceResponse {
         this.invoiceType = invoiceType;
     }
 
+    @SerializedName("billPrintStatus")
+    @Expose
+    public String billPrintStatus;
+
+    @SerializedName("diningSessionId")
+    @Expose
+    public String diningSessionId;
+
+    public String getBillPrintStatus() {
+        return billPrintStatus;
+    }
+
+    public void setBillPrintStatus(String billPrintStatus) {
+        this.billPrintStatus = billPrintStatus;
+    }
+
+    public String getDiningSessionId() {
+        return diningSessionId;
+    }
+
+    public void setDiningSessionId(String diningSessionId) {
+        this.diningSessionId = diningSessionId;
+    }
+
     public String getOrganizationId() {
         return organizationId;
     }

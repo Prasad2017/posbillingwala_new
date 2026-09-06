@@ -48,6 +48,13 @@ public class MemberResponse {
     @Expose
     public String paymentStatus;
 
+    /** Display-only: month-wise paid / pending lines. */
+    public String paymentMonthsSummary;
+    /** Display-only: tokens generated in current month. */
+    public String tokensGenerated;
+    /** Display-only: tokens printed today (coupons). */
+    public String todayTokensGenerated;
+
 
     public String getMemberId() {
         return memberId;
@@ -159,5 +166,29 @@ public class MemberResponse {
 
     public void setPaymentStatus(String paymentStatus) {
         this.paymentStatus = paymentStatus;
+    }
+
+    public String getPaymentMonthsSummary() {
+        return paymentMonthsSummary;
+    }
+
+    public void setPaymentMonthsSummary(String paymentMonthsSummary) {
+        this.paymentMonthsSummary = paymentMonthsSummary;
+    }
+
+    public String getTokensGenerated() {
+        return tokensGenerated;
+    }
+
+    public void setTokensGenerated(String tokensGenerated) {
+        this.tokensGenerated = tokensGenerated;
+    }
+
+    public String getTodayTokensGenerated() {
+        return todayTokensGenerated;
+    }
+
+    public void setTodayTokensGenerated(String todayTokensGenerated) {
+        this.todayTokensGenerated = todayTokensGenerated;
     }
 }

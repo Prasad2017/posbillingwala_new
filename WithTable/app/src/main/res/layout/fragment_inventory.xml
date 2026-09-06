@@ -59,7 +59,7 @@
 
             </LinearLayout>
 
-
+
 
             <TextView
                 android:id="@+id/addInventory"
@@ -188,17 +188,11 @@
         </com.pos_billingwala.Extra.PosCardView>
     </LinearLayout>
 
-    <TextView
+    <include
         android:id="@+id/noDataFound"
-        android:layout_width="wrap_content"
+        layout="@layout/include_empty_list_state"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:fontFamily="@font/poppinsmedium"
-        android:gravity="center"
-        android:paddingStart="10dp"
-        android:paddingEnd="10dp"
-        android:text="@string/ui_no_inventory_found"
-        android:textColor="@color/black"
-        android:textSize="17dp" />
+        android:layout_centerInParent="true" />
 
 </RelativeLayout>

@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Random;
 
 import cn.pedant.SweetAlert.SweetAlertDialog;
+import com.pos_billingwala.Extra.EmptyListUi;
 
 
 public class AddCategory extends Fragment implements View.OnClickListener {
@@ -60,11 +61,11 @@ public class AddCategory extends Fragment implements View.OnClickListener {
                 categoryRecyclerview.setAdapter(categoryAdapter);
 
                 categoryListCardView.setVisibility(View.VISIBLE);
-                noDataFound.setVisibility(View.GONE);
+                EmptyListUi.bind(noDataFound, true, R.string.empty_sub_categories);
 
             } else {
                 categoryListCardView.setVisibility(View.GONE);
-                noDataFound.setVisibility(View.VISIBLE);
+                EmptyListUi.bind(noDataFound, false, R.string.empty_sub_categories);
             }
         } finally {
             ListLoader.dismiss(loader);

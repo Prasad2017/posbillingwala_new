@@ -22,7 +22,9 @@ import com.pos_billingwala.Extra.ListLoader;
 import com.pos_billingwala.Extra.MasterListTabletUi;
 import com.pos_billingwala.Extra.SimpleDividerItemDecoration;
 import com.pos_billingwala.Model.ComboResponse;
+import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentComboMasterBinding;
+import com.pos_billingwala.Extra.EmptyListUi;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,10 +55,10 @@ public class ComboMaster extends Fragment implements View.OnClickListener {
                         comboAdapter = new ComboAdapter(activity, comboResponseList);
                         binding.comboRecyclerView.setAdapter(comboAdapter);
                         binding.linearLayout.setVisibility(View.VISIBLE);
-                        binding.noDataFound.setVisibility(View.GONE);
+                        EmptyListUi.bind(binding.noDataFound, true, R.string.empty_sub_combos);
                     } else {
                         binding.linearLayout.setVisibility(View.GONE);
-                        binding.noDataFound.setVisibility(View.VISIBLE);
+                        EmptyListUi.bind(binding.noDataFound, false, R.string.empty_sub_combos);
                     }
                 } finally {
                     ListLoader.dismiss(loader);
@@ -126,7 +128,7 @@ public class ComboMaster extends Fragment implements View.OnClickListener {
         }
         comboAdapter = new ComboAdapter(activity, filtered);
         binding.comboRecyclerView.setAdapter(comboAdapter);
-        binding.noDataFound.setVisibility(filtered.isEmpty() ? View.VISIBLE : View.GONE);
+        EmptyListUi.bind(binding.noDataFound, !filtered.isEmpty(), R.string.empty_sub_combos);
         binding.comboRecyclerView.setVisibility(filtered.isEmpty() ? View.GONE : View.VISIBLE);
     }
 

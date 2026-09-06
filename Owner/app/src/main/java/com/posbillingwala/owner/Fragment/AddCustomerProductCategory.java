@@ -39,6 +39,7 @@ import cn.pedant.SweetAlert.SweetAlertDialog;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import com.posbillingwala.owner.Extra.EmptyListUi;
 
 @SuppressLint("SetTextI18n, NonConstantResourceId, UseCompatLoadingForDrawables, StaticFieldLeak")
 public class AddCustomerProductCategory extends Fragment {
@@ -72,11 +73,11 @@ public class AddCustomerProductCategory extends Fragment {
                             : new ArrayList<>();
                     if (!productCategoryResponseList.isEmpty()) {
                         categoryListCardView.setVisibility(View.VISIBLE);
-                        noDataFound.setVisibility(View.GONE);
+                        EmptyListUi.bind(noDataFound, true, R.string.empty_sub_categories);
                         applyCategorySearch();
                     } else {
                         categoryListCardView.setVisibility(View.GONE);
-                        noDataFound.setVisibility(View.VISIBLE);
+                        EmptyListUi.bind(noDataFound, false, R.string.empty_sub_categories);
                     }
                 }
                 pDialog.dismiss();
@@ -167,7 +168,7 @@ public class AddCustomerProductCategory extends Fragment {
         categoryRecyclerview = binding.categoryRecyclerview;
         categoryRecyclerview.setLayoutManager(new GridLayoutManager(activity, 1));
         categoryListCardView = binding.categoryListCardView;
-        noDataFound = binding.noDataFound;
+        noDataFound = binding.noDataFound.getRoot();
         listNoResults = binding.listNoResults;
         searchCategory = binding.listSearch.listSearchInput;
     }

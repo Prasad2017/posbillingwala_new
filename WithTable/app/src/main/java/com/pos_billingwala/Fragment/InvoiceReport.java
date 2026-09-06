@@ -58,6 +58,7 @@ import java.util.List;
 import java.util.Locale;
 
 import cn.pedant.SweetAlert.SweetAlertDialog;
+import com.pos_billingwala.Extra.EmptyListUi;
 
 @SuppressLint("StaticFieldLeak, NonConstantResourceId, NotifyDataSetChanged, SetTextI18n")
 public class InvoiceReport extends Fragment implements View.OnClickListener {
@@ -419,7 +420,7 @@ public class InvoiceReport extends Fragment implements View.OnClickListener {
         pageNumber = 0;
 
         binding.nestedScrollView.setVisibility(View.GONE);
-        binding.noDataFound.setVisibility(View.GONE);
+        EmptyListUi.bind(binding.noDataFound, true, R.string.empty_sub_reports);
 
         pDialog = new SweetAlertDialog(activity, SweetAlertDialog.PROGRESS_TYPE);
         pDialog.getProgressHelper().setBarColor(Color.parseColor("#2D7FED"));
@@ -459,11 +460,11 @@ public class InvoiceReport extends Fragment implements View.OnClickListener {
                     breakdown, getString(R.string.ui_billing_wise_details),
                     getString(R.string.ui_amount_breakdown), period);
             binding.nestedScrollView.setVisibility(View.VISIBLE);
-            binding.noDataFound.setVisibility(View.GONE);
+            EmptyListUi.bind(binding.noDataFound, true, R.string.empty_sub_reports);
             pageNumber = page.size();
         } else {
             binding.nestedScrollView.setVisibility(View.GONE);
-            binding.noDataFound.setVisibility(View.VISIBLE);
+            EmptyListUi.bind(binding.noDataFound, false, R.string.empty_sub_reports);
             pageNumber = 0;
         }
     }
@@ -500,7 +501,7 @@ public class InvoiceReport extends Fragment implements View.OnClickListener {
         }
     }
 
-    /** Loads exactly one more page on scroll — never chains all pages. */
+    /** Loads exactly one more page on scroll â€” never chains all pages. */
     private class getDownloadBills extends AsyncTask<Void, Void, List<InvoiceResponse>> {
         @Override
         protected void onPreExecute() {

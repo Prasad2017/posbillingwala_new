@@ -127,17 +127,12 @@
 
             </LinearLayout>
 
-            <TextView
+            <include
                 android:id="@+id/emptyState"
+                layout="@layout/include_empty_list_state"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:fontFamily="@font/poppinsregular"
-                android:gravity="center"
-                android:text="@string/support_no_tickets"
-                android:textColor="@color/colorTextSecondary"
-                android:textSize="14sp"
-                android:visibility="gone" />
+                android:layout_marginTop="24dp" />
 
             <TextView
                 android:id="@+id/loadingState"

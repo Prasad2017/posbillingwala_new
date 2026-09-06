@@ -132,11 +132,23 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
             tableNumber = bundle.getString("tableNumber");
             cartOrderStatus = bundle.getString("cartOrderStatus");
             if (cartOrderStatus.equalsIgnoreCase("table_wise")) {
-                binding.posHeading.setText(getString(R.string.ui_table_wise_pos));
-                binding.posSubtitle.setText("Table No. " + tableNumber);
+                com.pos_billingwala.Extra.DineInTableHelper.openOrGetSession(
+                        posBillingWalaDatabase, tableNumber, 0);
+                String header = com.pos_billingwala.Extra.DineInTableHelper.dineInHeaderForTable(
+                        posBillingWalaDatabase, tableNumber);
+                binding.posHeading.setText(header);
+                boolean additional = bundle.getBoolean("additionalOrder", false);
+                if (additional) {
+                    binding.posSubtitle.setText("ADDITIONAL ORDER");
+                } else {
+                    binding.posSubtitle.setText(getString(R.string.ui_product_menu));
+                }
                 binding.posSubtitle.setVisibility(View.VISIBLE);
-                binding.menuIcon.setVisibility(View.GONE);
+                binding.menuIcon.setVisibility(View.VISIBLE);
             } else if (cartOrderStatus.equalsIgnoreCase("take_away")) {
+                if (tableNumber == null || tableNumber.trim().isEmpty()) {
+                    tableNumber = posBillingWalaDatabase.nextTakeAwayParcelNumber();
+                }
                 binding.posHeading.setText(getString(R.string.take_away));
                 binding.posSubtitle.setText(getString(R.string.ui_take_away_no) + " " + tableNumber);
                 binding.posSubtitle.setVisibility(View.VISIBLE);
@@ -229,6 +241,16 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
                 binding.viewCartButton.setOnClickListener(this);
             }
         }
+        if (binding.kotButton != null) {
+            binding.kotButton.setOnClickListener(this);
+        }
+        if (binding.holdButton != null) {
+            binding.holdButton.setOnClickListener(this);
+        }
+        if (binding.payButtonPhone != null) {
+            binding.payButtonPhone.setOnClickListener(this);
+        }
+        setupDineInActionBar();
         setupTabletCartPanel();
 
         binding.productRecyclerView.setHasFixedSize(true);
@@ -535,8 +557,12 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
             binding.productSearch.clearFocus();
             selectAllCategory();
         } else if (id == R.id.payButton || id == R.id.viewCartButton
-                || id == R.id.cartLayout) {
+                || id == R.id.cartLayout || id == R.id.payButtonPhone) {
             openPaymentScreen();
+        } else if (id == R.id.kotButton) {
+            onKotClicked();
+        } else if (id == R.id.holdButton) {
+            holdTableBill();
         } else if (id == R.id.clearCart) {
             confirmClearCart();
         } else if (id == R.id.menuIcon) {
@@ -546,6 +572,93 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
         } else if (id == R.id.combosTab) {
             showComboCatalog();
         }
+    }
+
+    private void setupDineInActionBar() {
+        if (binding == null || cartOrderStatus == null
+                || !cartOrderStatus.equalsIgnoreCase("table_wise")) {
+            if (binding != null && binding.dineInActionBar != null) {
+                binding.dineInActionBar.setVisibility(View.GONE);
+            }
+            return;
+        }
+        boolean kotOn = com.pos_billingwala.Extra.DineInTableHelper.isKotEnabled(posBillingWalaDatabase);
+        if (binding.dineInActionBar != null) {
+            binding.dineInActionBar.setVisibility(View.VISIBLE);
+            if (binding.viewCartButton != null) {
+                binding.viewCartButton.setVisibility(View.GONE);
+            }
+            if (binding.kotButton != null) {
+                binding.kotButton.setVisibility(kotOn ? View.VISIBLE : View.GONE);
+            }
+        }
+        if (binding.kotButton != null && binding.dineInActionBar == null) {
+            // Tablet / land layouts
+            binding.kotButton.setVisibility(kotOn ? View.VISIBLE : View.GONE);
+        }
+        if (binding.holdButton != null && binding.dineInActionBar == null) {
+            binding.holdButton.setVisibility(View.VISIBLE);
+        }
+        if (binding.holdButton != null && binding.dineInActionBar != null) {
+            binding.holdButton.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void holdTableBill() {
+        if (tableNumber == null) {
+            navigateFromPos();
+            return;
+        }
+        AppExecutors.get().runDbThenMain(this, () -> {
+            com.pos_billingwala.Extra.DineInTableHelper.openOrGetSession(
+                    posBillingWalaDatabase, tableNumber, 0);
+        }, () -> {
+            Toast.makeText(activity, "Table held — bill saved", Toast.LENGTH_SHORT).show();
+            navigateFromPos();
+        });
+    }
+
+    private void onKotClicked() {
+        if (!com.pos_billingwala.Extra.DineInTableHelper.isKotEnabled(posBillingWalaDatabase)) {
+            Toast.makeText(activity, "KOT is disabled in settings", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        final String table = tableNumber;
+        final java.util.List<com.pos_billingwala.Model.ProductCartResponse>[] unprintedHolder =
+                new java.util.List[]{null};
+        final com.pos_billingwala.Model.KotResponse[] kotHolder =
+                new com.pos_billingwala.Model.KotResponse[]{null};
+        AppExecutors.get().runDbThenMain(this, () -> {
+            unprintedHolder[0] = posBillingWalaDatabase.getUnprintedCartProductList(
+                    table, com.pos_billingwala.Extra.DineInTableHelper.CART_ORDER_TABLE);
+        }, () -> {
+            if (unprintedHolder[0] == null || unprintedHolder[0].isEmpty()) {
+                Toast.makeText(activity, "No new items for KOT", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            boolean preview = com.pos_billingwala.Extra.DineInKotHelper.isPreviewEnabled(posBillingWalaDatabase);
+            boolean autoPrint = com.pos_billingwala.Extra.DineInKotHelper.isAutoPrint(posBillingWalaDatabase);
+            if (!preview && !autoPrint) {
+                AppExecutors.get().runDbThenMain(this, () -> {
+                    kotHolder[0] = com.pos_billingwala.Extra.DineInKotHelper.createKotForTable(
+                            posBillingWalaDatabase, table);
+                }, () -> {
+                    if (kotHolder[0] == null) {
+                        Toast.makeText(activity, "Unable to create KOT", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(activity, kotHolder[0].getKotNumber() + " saved", Toast.LENGTH_SHORT).show();
+                    }
+                });
+                return;
+            }
+            Intent intent = new Intent(activity, BluetoothPrint.class);
+            intent.putExtra("invoiceRunningStatus", "printBill");
+            intent.putExtra("tableNumber", tableNumber);
+            intent.putExtra("cartOrderStatus", cartOrderStatus);
+            intent.putExtra("kotMode", true);
+            intent.putExtra("autoKotPrint", autoPrint);
+            startActivity(intent);
+        });
     }
 
     private void openPaymentScreen() {
@@ -675,6 +788,38 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
     }
 
     public void setPopUpWindow() {
+        if (cartOrderStatus != null && cartOrderStatus.equalsIgnoreCase("table_wise")) {
+            com.pos_billingwala.Extra.DineInOpsUi.showTableActionsMenu(
+                    activity, posBillingWalaDatabase, tableNumber, navigateTo -> {
+                        if (navigateTo == null) {
+                            return;
+                        }
+                        if ("HOLD".equals(navigateTo)) {
+                            navigateFromPos();
+                            return;
+                        }
+                        if (navigateTo.startsWith("PRINT:")) {
+                            openPaymentScreen();
+                            return;
+                        }
+                        // Refresh header / cart after join/move/transfer
+                        if (!navigateTo.equals(tableNumber)) {
+                            tableNumber = navigateTo;
+                            Bundle args = getArguments();
+                            if (args != null) {
+                                args.putString("tableNumber", tableNumber);
+                            }
+                        }
+                        String header = com.pos_billingwala.Extra.DineInTableHelper.dineInHeaderForTable(
+                                posBillingWalaDatabase, tableNumber);
+                        if (binding != null) {
+                            binding.posHeading.setText(header);
+                        }
+                        getCartCount();
+                        refreshCatalogAfterCart();
+                    });
+            return;
+        }
 
         LayoutInflater inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         view = inflater.inflate(R.layout.share_dialog, null);

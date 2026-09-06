@@ -5,6 +5,7 @@
  */
 include_once('config.php');
 require_once __DIR__ . '/pos_auth_guard.php';
+require_once __DIR__ . '/dine_in_helpers.php';
 
 header('Content-Type: application/json; charset=utf-8');
 $response = array('status' => '0', 'message' => 'Failed');
@@ -16,16 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 try {
     mysqli_query($con, 'set names utf8');
-
-    // Ensure optional column without blocking the request if it already exists
-    require_once __DIR__ . '/php_compat.php';
-    $col = db_safe_query($con, "SHOW COLUMNS FROM `company_printer_setting` LIKE 'duplicateBillUse'");
-    if ($col && mysqli_num_rows($col) === 0) {
-        db_safe_query($con, "ALTER TABLE `company_printer_setting` ADD COLUMN `duplicateBillUse` VARCHAR(10) NULL DEFAULT 'off'");
-    }
-    if ($col) {
-        mysqli_free_result($col);
-    }
+    dine_in_ensure_printer_kot_columns($con);
 
     $userId = isset($_POST['userId']) ? trim((string) $_POST['userId']) : '';
     pos_require_auth($con, $userId, array('status' => '0', 'message' => 'Unauthorized'));
@@ -51,6 +43,26 @@ try {
     $bluetoothKOTAddress = $post('bluetoothKOTAddress');
     $printerFeedLines = $post('printerFeedLines', '1');
     $KotPrinterFeedLines = $post('KotPrinterFeedLines', '1');
+    $kotEnable = $post('kotEnable', 'on');
+    if ($kotEnable === '') {
+        $kotEnable = 'on';
+    }
+    $kotPrefix = $post('kotPrefix', 'KOT-');
+    if ($kotPrefix === '') {
+        $kotPrefix = 'KOT-';
+    }
+    $kotCopies = $post('kotCopies', '1');
+    if ($kotCopies === '') {
+        $kotCopies = '1';
+    }
+    $kotAutoPrint = $post('kotAutoPrint', 'off');
+    if ($kotAutoPrint === '') {
+        $kotAutoPrint = 'off';
+    }
+    $kotPreview = $post('kotPreview', 'on');
+    if ($kotPreview === '') {
+        $kotPreview = 'on';
+    }
 
     $sql = "SELECT `settingId` FROM `company_printer_setting` WHERE `licenseId`='" . mysqli_real_escape_string($con, $userId) . "' LIMIT 1";
     $res = mysqli_query($con, $sql);
@@ -75,7 +87,12 @@ try {
             `bluetoothAddress`='" . mysqli_real_escape_string($con, $bluetoothAddress) . "',
             `bluetoothKOTAddress`='" . mysqli_real_escape_string($con, $bluetoothKOTAddress) . "',
             `printerFeedLines`='" . mysqli_real_escape_string($con, $printerFeedLines) . "',
-            `KotPrinterFeedLines`='" . mysqli_real_escape_string($con, $KotPrinterFeedLines) . "'
+            `KotPrinterFeedLines`='" . mysqli_real_escape_string($con, $KotPrinterFeedLines) . "',
+            `kotEnable`='" . mysqli_real_escape_string($con, $kotEnable) . "',
+            `kotPrefix`='" . mysqli_real_escape_string($con, $kotPrefix) . "',
+            `kotCopies`='" . mysqli_real_escape_string($con, $kotCopies) . "',
+            `kotAutoPrint`='" . mysqli_real_escape_string($con, $kotAutoPrint) . "',
+            `kotPreview`='" . mysqli_real_escape_string($con, $kotPreview) . "'
          WHERE `settingId`='" . mysqli_real_escape_string($con, (string) $settingId) . "'";
 
         if (mysqli_query($con, $sql)) {
@@ -85,12 +102,12 @@ try {
             $response['message'] = 'update failed!';
         }
     } else {
-        // Column order matches VALUES (licenseId, KOTPrinterName, printerName, ...)
         $sql = "INSERT INTO `company_printer_setting`(
             `licenseId`, `KOTPrinterName`, `printerName`, `invoicePrefix`, `invoiceTitle`,
             `invoiceTermsCondition`, `logoUse`, `paymentUse`, `customerUse`, `productQuantityUpdate`,
             `duplicateBillUse`, `bluetoothAddress`, `bluetoothKOTAddress`, `printerFeedLines`,
-            `KotPrinterFeedLines`, `settingStatus`
+            `KotPrinterFeedLines`, `kotEnable`, `kotPrefix`, `kotCopies`, `kotAutoPrint`, `kotPreview`,
+            `settingStatus`
          ) VALUES (
             '" . mysqli_real_escape_string($con, $userId) . "',
             '" . mysqli_real_escape_string($con, $KOTPrinterName) . "',
@@ -107,6 +124,11 @@ try {
             '" . mysqli_real_escape_string($con, $bluetoothKOTAddress) . "',
             '" . mysqli_real_escape_string($con, $printerFeedLines) . "',
             '" . mysqli_real_escape_string($con, $KotPrinterFeedLines) . "',
+            '" . mysqli_real_escape_string($con, $kotEnable) . "',
+            '" . mysqli_real_escape_string($con, $kotPrefix) . "',
+            '" . mysqli_real_escape_string($con, $kotCopies) . "',
+            '" . mysqli_real_escape_string($con, $kotAutoPrint) . "',
+            '" . mysqli_real_escape_string($con, $kotPreview) . "',
             'active'
          )";
 

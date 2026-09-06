@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Random;
 
 import cn.pedant.SweetAlert.SweetAlertDialog;
+import com.pos_billingwala.Extra.EmptyListUi;
 
 public class AddPortionMaster extends Fragment implements View.OnClickListener {
 
@@ -56,10 +57,10 @@ public class AddPortionMaster extends Fragment implements View.OnClickListener {
                 portionMasterRecyclerview.setAdapter(portionMasterAdapter);
 
                 portionMasterListCardView.setVisibility(View.VISIBLE);
-                noDataFound.setVisibility(View.GONE);
+                EmptyListUi.bind(noDataFound, true, R.string.empty_sub_portions);
             } else {
                 portionMasterListCardView.setVisibility(View.GONE);
-                noDataFound.setVisibility(View.VISIBLE);
+                EmptyListUi.bind(noDataFound, false, R.string.empty_sub_portions);
             }
         } finally {
             ListLoader.dismiss(loader);

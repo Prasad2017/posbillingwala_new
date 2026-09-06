@@ -42,6 +42,7 @@ import cn.pedant.SweetAlert.SweetAlertDialog;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import com.posbillingwala.admin.Extra.EmptyListUi;
 
 @SuppressLint("SetTextI18n, NonConstantResourceId, UseCompatLoadingForDrawables, StaticFieldLeak")
 public class AddCustomerProductCategory extends Fragment implements View.OnClickListener {
@@ -51,7 +52,7 @@ public class AddCustomerProductCategory extends Fragment implements View.OnClick
     public static CategoryAdapter categoryAdapter;
     public static RecyclerView categoryRecyclerview;
     public static CardView categoryListCardView;
-    public static TextView noDataFound;
+    public static View noDataFound;
     public static String customerId;
     View view;
     FragmentAddCustomerProductCategoryBinding binding;
@@ -84,11 +85,11 @@ public class AddCustomerProductCategory extends Fragment implements View.OnClick
                         categoryRecyclerview.setHasFixedSize(true);
 
                         categoryListCardView.setVisibility(View.VISIBLE);
-                        noDataFound.setVisibility(View.GONE);
+                        EmptyListUi.bind(noDataFound, true, R.string.empty_sub_categories);
 
                     } else {
                         categoryListCardView.setVisibility(View.GONE);
-                        noDataFound.setVisibility(View.VISIBLE);
+                        EmptyListUi.bind(noDataFound, false, R.string.empty_sub_categories);
                     }
                 }
                 pDialog.dismiss();

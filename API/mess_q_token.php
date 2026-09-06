@@ -89,6 +89,23 @@ if ($memberStatus !== '' && $memberStatus !== 'active' && $memberStatus !== '1')
     exit;
 }
 
+$memberIdForPayment = isset($member['id']) ? (string) $member['id'] : '0';
+$memberNameForPayment = isset($member['member_name']) ? (string) $member['member_name'] : '';
+$paymentBlockMsg = mess_member_require_current_month_payment(
+    $con,
+    $userId,
+    $memberIdForPayment,
+    $memberNameForPayment
+);
+if ($paymentBlockMsg !== null) {
+    $out['message'] = $paymentBlockMsg;
+    $out['code'] = 'UNPAID_CURRENT_MONTH';
+    mess_audit($con, $userId, 'token_unpaid_month', $t, $reg, null, date('Y-m'));
+    echo json_encode($out);
+    mysqli_close($con);
+    exit;
+}
+
 $session = mess_resolve_current_session($con, $userId);
 if ($session === null) {
     $out['message'] = 'Token generation is currently closed.';

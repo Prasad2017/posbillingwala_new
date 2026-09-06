@@ -367,6 +367,54 @@
             android:textSize="14sp"
             app:drawableTint="@color/colorPrimary" />
 
+        <LinearLayout
+            android:id="@+id/dineInActionBar"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="end"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/kotButton"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_marginEnd="6dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_billing_view_cart_btn"
+                android:fontFamily="@font/poppinsmedium"
+                android:gravity="center"
+                android:text="KOT"
+                android:textColor="@color/colorPrimary"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/holdButton"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_marginEnd="6dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_billing_view_cart_btn"
+                android:fontFamily="@font/poppinsmedium"
+                android:gravity="center"
+                android:text="SAVE"
+                android:textColor="@color/colorPrimary"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/payButtonPhone"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_pay_now_button"
+                android:fontFamily="@font/poppinsmedium"
+                android:gravity="center"
+                android:text="PAY"
+                android:textColor="@color/colorPrimary"
+                android:textSize="13sp" />
+        </LinearLayout>
+
     </LinearLayout>
 
     <ProgressBar

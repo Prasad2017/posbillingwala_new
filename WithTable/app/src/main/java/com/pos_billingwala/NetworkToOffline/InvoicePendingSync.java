@@ -162,6 +162,8 @@ public final class InvoicePendingSync {
                     columnOrEmpty(cursor, "paymentMode"),
                     columnOrEmpty(cursor, "cashAmount"),
                     columnOrEmpty(cursor, "upiAmount"),
+                    columnOrEmpty(cursor, "diningSessionId"),
+                    columnOrEmpty(cursor, "billPrintStatus"),
                     columnOrEmpty(cursor, "invoiceDate"),
                     columnOrEmpty(cursor, "invoiceType"),
                     columnOrEmpty(cursor, "invoiceOrderStatus"),

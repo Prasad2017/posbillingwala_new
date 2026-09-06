@@ -254,10 +254,12 @@
     <string name="setting_hint_rate">Play Store पर POS Billingwala रेट करें</string>
     <string name="setting_hint_share">ऐप अन्य दुकानों के साथ शेयर करें</string>
     <string name="setting_hint_logout">इस डिवाइस से साइन आउट करें</string>
-    <string name="printer_section_printers">प्रिंटर</string>
+    <string name="printer_section_printers">प्रिंटर सेटिंग</string>
     <string name="printer_section_invoice">इनवॉइस सेटिंग</string>
+    <string name="printer_section_kot">KOT सेटिंग</string>
     <string name="printer_section_bill">बिल विकल्प</string>
     <string name="printer_section_terms">नियम और शर्तें</string>
+    <string name="printer_section_preview">प्रिंट पूर्वावलोकन</string>
     <string name="shop_section_branding">ब्रांडिंग</string>
     <string name="shop_section_identity">दुकान पहचान</string>
     <string name="shop_section_contact">संपर्क</string>

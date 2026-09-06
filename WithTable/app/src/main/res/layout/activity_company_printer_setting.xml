@@ -37,8 +37,7 @@
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
                 android:layout_marginStart="@dimen/spacing_sm"
-                android:layout_marginEnd="@dimen/spacing_sm"
-                android:layout_toStartOf="@id/invoicePreview"
+                android:layout_marginEnd="@dimen/spacing_md"
                 android:layout_toEndOf="@id/backToSetting"
                 android:orientation="vertical">
 
@@ -60,22 +59,6 @@
                     android:textColor="#CCFFFFFF"
                     android:textSize="12sp" />
             </LinearLayout>
-
-            <TextView
-                android:id="@+id/invoicePreview"
-                android:layout_width="wrap_content"
-                android:layout_height="32dp"
-                android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"
-                android:layout_marginEnd="@dimen/spacing_md"
-                android:background="@drawable/bg_toolbar_chip"
-                android:fontFamily="@font/poppinsmedium"
-                android:gravity="center"
-                android:paddingStart="@dimen/spacing_md"
-                android:paddingEnd="@dimen/spacing_md"
-                android:text="@string/ui_invoice_preview"
-                android:textColor="@color/colorPrimary"
-                android:textSize="@dimen/text_caption" />
         </RelativeLayout>
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -94,12 +77,11 @@
             android:orientation="vertical"
             android:paddingBottom="@dimen/spacing_md">
 
+            <!-- 1. Printer Setting -->
             <com.pos_billingwala.Extra.PosCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="@dimen/radius_lg"
-
->
+                app:cardCornerRadius="@dimen/radius_lg">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -107,16 +89,14 @@
                     android:orientation="vertical"
                     android:padding="@dimen/spacing_lg">
 
-                    <TextView
-                        style="@style/PosSectionLabel"
-                        android:text="@string/printer_section_printers" />
+                    <include layout="@layout/include_printer_section_header_printers" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/spacing_md"
                         android:fontFamily="@font/poppinsregular"
-                        android:text="@string/ui_invoice_printer_name"
+                        android:text="@string/ui_bill_printer_name"
                         android:textColor="@color/colorTextSecondary"
                         android:textSize="@dimen/text_body" />
 
@@ -132,8 +112,8 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            app:sdd_dialog_title="@string/ui_invoice_printer_name"
-                            app:sdd_hint="@string/ui_invoice_printer_name" />
+                            app:sdd_dialog_title="@string/ui_bill_printer_name"
+                            app:sdd_hint="@string/ui_bill_printer_name" />
 
                         <LinearLayout
                             android:layout_width="wrap_content"
@@ -200,123 +180,6 @@
                         </LinearLayout>
                     </LinearLayout>
 
-                    <LinearLayout
-                        android:id="@+id/KOTPrinterLayout"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/spacing_md"
-                        android:orientation="vertical"
-                        android:visibility="visible">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:fontFamily="@font/poppinsregular"
-                            android:text="@string/ui_kot_print_printer_name"
-                            android:textColor="@color/colorTextSecondary"
-                            android:textSize="@dimen/text_body" />
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="@dimen/spacing_sm"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
-
-                            <com.pos_billingwala.Extra.SearchableDropdownView
-                                android:id="@+id/kotPrinterDropdown"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                app:sdd_dialog_title="@string/ui_kot_print_printer_name"
-                                app:sdd_hint="@string/ui_kot_print_printer_name" />
-
-                            <LinearLayout
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="@dimen/spacing_sm"
-                                android:gravity="end"
-                                android:orientation="vertical">
-
-                                <LinearLayout
-                                    android:id="@+id/kotConnectedStatus"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:gravity="center_vertical"
-                                    android:orientation="horizontal"
-                                    android:visibility="gone"
-                                    tools:visibility="visible">
-
-                                    <View
-                                        android:layout_width="8dp"
-                                        android:layout_height="8dp"
-                                        android:background="@drawable/bg_status_dot_green" />
-
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:layout_marginStart="6dp"
-                                        android:fontFamily="@font/poppinsmedium"
-                                        android:text="@string/ui_printer_connected"
-                                        android:textColor="@color/statusActive"
-                                        android:textSize="@dimen/text_caption" />
-                                </LinearLayout>
-
-                                <TextView
-                                    android:id="@+id/connectKOTPrinter"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="36dp"
-                                    android:layout_marginTop="@dimen/spacing_xs"
-                                    android:background="@drawable/bg_button_primary"
-                                    android:fontFamily="@font/poppinsmedium"
-                                    android:gravity="center"
-                                    android:minWidth="96dp"
-                                    android:paddingStart="@dimen/spacing_md"
-                                    android:paddingEnd="@dimen/spacing_md"
-                                    android:text="@string/ui_connect"
-                                    android:textColor="@color/white"
-                                    android:textSize="@dimen/text_caption" />
-
-                                <TextView
-                                    android:id="@+id/disconnectKOTPrinter"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="36dp"
-                                    android:layout_marginTop="@dimen/spacing_xs"
-                                    android:background="@drawable/bg_button_disconnect"
-                                    android:fontFamily="@font/poppinsmedium"
-                                    android:gravity="center"
-                                    android:minWidth="96dp"
-                                    android:paddingStart="@dimen/spacing_md"
-                                    android:paddingEnd="@dimen/spacing_md"
-                                    android:text="@string/ui_disconnect"
-                                    android:textColor="@color/red_900"
-                                    android:textSize="@dimen/text_caption"
-                                    android:visibility="gone"
-                                    tools:visibility="visible" />
-                            </LinearLayout>
-                        </LinearLayout>
-                    </LinearLayout>
-                </LinearLayout>
-            </com.pos_billingwala.Extra.PosCardView>
-
-            <com.pos_billingwala.Extra.PosCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/spacing_lg"
-                app:cardCornerRadius="@dimen/radius_lg"
-
->
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="@dimen/spacing_lg">
-
-                    <TextView
-                        style="@style/PosSectionLabel"
-                        android:text="@string/printer_section_invoice" />
-
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/invoicePrefixLayout"
                         style="@style/PosFormTextInput"
@@ -359,37 +222,217 @@
                             android:textColor="@color/colorTextPrimary"
                             android:textSize="@dimen/text_body" />
                     </com.google.android.material.textfield.TextInputLayout>
-
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/KotPrinterFeedLinesLayout"
-                        style="@style/PosFormTextInput"
-                        android:layout_marginTop="@dimen/spacing_md">
-
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/KotPrinterFeedLines"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:digits="0123456789"
-                            android:fontFamily="@font/poppinsregular"
-                            android:hint="@string/ui_kot_print_feed_lines"
-                            android:imeOptions="actionNext"
-                            android:inputType="numberDecimal"
-                            android:paddingStart="@dimen/spacing_lg"
-                            android:paddingEnd="@dimen/spacing_md"
-                            android:singleLine="true"
-                            android:textColor="@color/colorTextPrimary"
-                            android:textSize="@dimen/text_body" />
-                    </com.google.android.material.textfield.TextInputLayout>
                 </LinearLayout>
             </com.pos_billingwala.Extra.PosCardView>
 
+            <!-- 2. KOT Setting -->
             <com.pos_billingwala.Extra.PosCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/spacing_lg"
-                app:cardCornerRadius="@dimen/radius_lg"
+                app:cardCornerRadius="@dimen/radius_lg">
 
->
+                <LinearLayout
+                    android:id="@+id/kotSettingsSection"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/spacing_lg">
+
+                    <include layout="@layout/include_printer_section_header_kot" />
+
+                    <com.pos_billingwala.Extra.PosSwitchRowView
+                        android:id="@+id/kotEnableSwitch"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_sm"
+                        app:psr_label="@string/ui_enable_kot" />
+
+                    <LinearLayout
+                        android:id="@+id/kotDetailsContainer"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <LinearLayout
+                            android:id="@+id/KOTPrinterLayout"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/spacing_md"
+                            android:orientation="vertical"
+                            android:visibility="visible">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/poppinsregular"
+                                android:text="@string/ui_kot_print_printer_name"
+                                android:textColor="@color/colorTextSecondary"
+                                android:textSize="@dimen/text_body" />
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="@dimen/spacing_sm"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal">
+
+                                <com.pos_billingwala.Extra.SearchableDropdownView
+                                    android:id="@+id/kotPrinterDropdown"
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    app:sdd_dialog_title="@string/ui_kot_print_printer_name"
+                                    app:sdd_hint="@string/ui_kot_print_printer_name" />
+
+                                <LinearLayout
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="@dimen/spacing_sm"
+                                    android:gravity="end"
+                                    android:orientation="vertical">
+
+                                    <LinearLayout
+                                        android:id="@+id/kotConnectedStatus"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:gravity="center_vertical"
+                                        android:orientation="horizontal"
+                                        android:visibility="gone"
+                                        tools:visibility="visible">
+
+                                        <View
+                                            android:layout_width="8dp"
+                                            android:layout_height="8dp"
+                                            android:background="@drawable/bg_status_dot_green" />
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:layout_marginStart="6dp"
+                                            android:fontFamily="@font/poppinsmedium"
+                                            android:text="@string/ui_printer_connected"
+                                            android:textColor="@color/statusActive"
+                                            android:textSize="@dimen/text_caption" />
+                                    </LinearLayout>
+
+                                    <TextView
+                                        android:id="@+id/connectKOTPrinter"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="36dp"
+                                        android:layout_marginTop="@dimen/spacing_xs"
+                                        android:background="@drawable/bg_button_primary"
+                                        android:fontFamily="@font/poppinsmedium"
+                                        android:gravity="center"
+                                        android:minWidth="96dp"
+                                        android:paddingStart="@dimen/spacing_md"
+                                        android:paddingEnd="@dimen/spacing_md"
+                                        android:text="@string/ui_connect"
+                                        android:textColor="@color/white"
+                                        android:textSize="@dimen/text_caption" />
+
+                                    <TextView
+                                        android:id="@+id/disconnectKOTPrinter"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="36dp"
+                                        android:layout_marginTop="@dimen/spacing_xs"
+                                        android:background="@drawable/bg_button_disconnect"
+                                        android:fontFamily="@font/poppinsmedium"
+                                        android:gravity="center"
+                                        android:minWidth="96dp"
+                                        android:paddingStart="@dimen/spacing_md"
+                                        android:paddingEnd="@dimen/spacing_md"
+                                        android:text="@string/ui_disconnect"
+                                        android:textColor="@color/red_900"
+                                        android:textSize="@dimen/text_caption"
+                                        android:visibility="gone"
+                                        tools:visibility="visible" />
+                                </LinearLayout>
+                            </LinearLayout>
+                        </LinearLayout>
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/kotPrefixLayout"
+                            style="@style/PosFormTextInput"
+                            android:layout_marginTop="@dimen/spacing_md">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/kotPrefix"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/poppinsregular"
+                                android:hint="@string/ui_kot_prefix"
+                                android:imeOptions="actionNext"
+                                android:inputType="text"
+                                android:maxLines="1"
+                                android:paddingStart="@dimen/spacing_lg"
+                                android:paddingEnd="@dimen/spacing_md"
+                                android:singleLine="true"
+                                android:text="KOT-"
+                                android:textColor="@color/colorTextPrimary"
+                                android:textSize="@dimen/text_body" />
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/kotCopiesLayout"
+                            style="@style/PosFormTextInput"
+                            android:layout_marginTop="@dimen/spacing_sm">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/kotCopies"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:digits="0123456789"
+                                android:fontFamily="@font/poppinsregular"
+                                android:hint="@string/ui_kot_copies"
+                                android:imeOptions="actionNext"
+                                android:inputType="number"
+                                android:maxLines="1"
+                                android:paddingStart="@dimen/spacing_lg"
+                                android:paddingEnd="@dimen/spacing_md"
+                                android:singleLine="true"
+                                android:text="1"
+                                android:textColor="@color/colorTextPrimary"
+                                android:textSize="@dimen/text_body" />
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/KotPrinterFeedLinesLayout"
+                            style="@style/PosFormTextInput"
+                            android:layout_marginTop="@dimen/spacing_sm">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/KotPrinterFeedLines"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:digits="0123456789"
+                                android:fontFamily="@font/poppinsregular"
+                                android:hint="@string/ui_kot_print_feed_lines"
+                                android:imeOptions="actionNext"
+                                android:inputType="numberDecimal"
+                                android:paddingStart="@dimen/spacing_lg"
+                                android:paddingEnd="@dimen/spacing_md"
+                                android:singleLine="true"
+                                android:textColor="@color/colorTextPrimary"
+                                android:textSize="@dimen/text_body" />
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <com.pos_billingwala.Extra.PosSwitchRowView
+                            android:id="@+id/kotAutoPrintSwitch"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/spacing_sm"
+                            app:psr_label="@string/ui_auto_print_kot" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.pos_billingwala.Extra.PosCardView>
+
+            <!-- 3. Bill Options -->
+            <com.pos_billingwala.Extra.PosCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_lg"
+                app:cardCornerRadius="@dimen/radius_lg">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -400,9 +443,7 @@
                     android:paddingEnd="@dimen/spacing_lg"
                     android:paddingBottom="@dimen/spacing_sm">
 
-                    <TextView
-                        style="@style/PosSectionLabel"
-                        android:text="@string/printer_section_bill" />
+                    <include layout="@layout/include_printer_section_header_bill" />
 
                     <com.pos_billingwala.Extra.PosSwitchRowView
                         android:id="@+id/logoSwitch"
@@ -466,13 +507,12 @@
                 </LinearLayout>
             </com.pos_billingwala.Extra.PosCardView>
 
+            <!-- 4. Terms & Conditions -->
             <com.pos_billingwala.Extra.PosCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/spacing_lg"
-                app:cardCornerRadius="@dimen/radius_lg"
-
->
+                app:cardCornerRadius="@dimen/radius_lg">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -480,9 +520,7 @@
                     android:orientation="vertical"
                     android:padding="@dimen/spacing_lg">
 
-                    <TextView
-                        style="@style/PosSectionLabel"
-                        android:text="@string/printer_section_terms" />
+                    <include layout="@layout/include_printer_section_header_terms" />
 
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/invoiceTitleLayout"
@@ -524,6 +562,101 @@
                             android:textColor="@color/colorTextPrimary"
                             android:textSize="@dimen/text_body" />
                     </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
+            </com.pos_billingwala.Extra.PosCardView>
+
+            <!-- 5. Print Preview -->
+            <com.pos_billingwala.Extra.PosCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_lg"
+                app:cardCornerRadius="@dimen/radius_lg">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/spacing_lg">
+
+                    <include layout="@layout/include_printer_section_header_preview" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_sm"
+                        android:fontFamily="@font/poppinsregular"
+                        android:text="@string/ui_print_preview_hint"
+                        android:textColor="@color/colorTextHint"
+                        android:textSize="@dimen/text_caption" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_md"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:id="@+id/invoicePreview"
+                            android:layout_width="0dp"
+                            android:layout_height="48dp"
+                            android:layout_marginEnd="@dimen/spacing_sm"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_mess_action_btn"
+                            android:gravity="center"
+                            android:orientation="horizontal"
+                            android:paddingStart="@dimen/spacing_sm"
+                            android:paddingEnd="@dimen/spacing_sm">
+
+                            <ImageView
+                                android:layout_width="18dp"
+                                android:layout_height="18dp"
+                                android:contentDescription="@null"
+                                android:src="@drawable/ic_receipt"
+                                app:tint="@color/colorPrimary" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="6dp"
+                                android:ellipsize="end"
+                                android:fontFamily="@font/poppinsmedium"
+                                android:maxLines="1"
+                                android:text="@string/ui_invoice_preview"
+                                android:textColor="@color/colorPrimary"
+                                android:textSize="@dimen/text_caption" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/kotPreview"
+                            android:layout_width="0dp"
+                            android:layout_height="48dp"
+                            android:layout_marginStart="@dimen/spacing_sm"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_mess_action_btn"
+                            android:gravity="center"
+                            android:orientation="horizontal"
+                            android:paddingStart="@dimen/spacing_sm"
+                            android:paddingEnd="@dimen/spacing_sm">
+
+                            <ImageView
+                                android:layout_width="18dp"
+                                android:layout_height="18dp"
+                                android:contentDescription="@null"
+                                android:src="@drawable/ic_print"
+                                app:tint="@color/colorPrimary" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="6dp"
+                                android:ellipsize="end"
+                                android:fontFamily="@font/poppinsmedium"
+                                android:maxLines="1"
+                                android:text="@string/ui_kot_preview"
+                                android:textColor="@color/colorPrimary"
+                                android:textSize="@dimen/text_caption" />
+                        </LinearLayout>
+                    </LinearLayout>
                 </LinearLayout>
             </com.pos_billingwala.Extra.PosCardView>
         </LinearLayout>

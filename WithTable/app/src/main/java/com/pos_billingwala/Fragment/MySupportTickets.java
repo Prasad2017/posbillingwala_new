@@ -17,6 +17,7 @@ import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.SupportTicketAdapter;
 import com.pos_billingwala.Extra.ActionButtonUi;
 import com.pos_billingwala.Extra.DetectConnection;
+import com.pos_billingwala.Extra.EmptyListUi;
 import com.pos_billingwala.Extra.TabletFormUi;
 import com.pos_billingwala.Model.AllApiResponse;
 import com.pos_billingwala.Model.SupportTicketItem;
@@ -106,11 +107,11 @@ public class MySupportTickets extends Fragment implements SupportTicketAdapter.L
                                 + " (" + count + ")");
                         if (tickets == null || tickets.isEmpty()) {
                             adapter.setTickets(null);
-                            binding.emptyState.setVisibility(View.VISIBLE);
+                            EmptyListUi.bind(binding.emptyState, false, R.string.empty_sub_support_tickets);
                             binding.ticketRecyclerView.setVisibility(View.GONE);
                             return;
                         }
-                        binding.emptyState.setVisibility(View.GONE);
+                        EmptyListUi.bind(binding.emptyState, true, R.string.empty_sub_support_tickets);
                         binding.ticketRecyclerView.setVisibility(View.VISIBLE);
                         adapter.setTickets(tickets);
                     }
@@ -129,7 +130,7 @@ public class MySupportTickets extends Fragment implements SupportTicketAdapter.L
     private void showLoading(boolean loading) {
         binding.loadingState.setVisibility(loading ? View.VISIBLE : View.GONE);
         if (loading) {
-            binding.emptyState.setVisibility(View.GONE);
+            EmptyListUi.bind(binding.emptyState, true, R.string.empty_sub_support_tickets);
         }
     }
 

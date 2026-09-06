@@ -38,6 +38,7 @@ import cn.pedant.SweetAlert.SweetAlertDialog;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import com.posbillingwala.admin.Extra.EmptyListUi;
 
 @SuppressLint("SetTextI18n, NonConstantResourceId, StaticFieldLeak")
 public class AddCustomerPortionMaster extends Fragment implements View.OnClickListener {
@@ -46,7 +47,7 @@ public class AddCustomerPortionMaster extends Fragment implements View.OnClickLi
     public static String customerId;
     public static RecyclerView portionMasterRecyclerview;
     public static CardView portionMasterListCardView;
-    public static TextView noDataFound;
+    public static View noDataFound;
 
     View view;
     FragmentAddCustomerPortionMasterBinding binding;
@@ -205,10 +206,10 @@ public class AddCustomerPortionMaster extends Fragment implements View.OnClickLi
                         portionMasterRecyclerview.setLayoutManager(new GridLayoutManager(activity, 1));
                         portionMasterRecyclerview.setAdapter(adapter);
                         portionMasterListCardView.setVisibility(View.VISIBLE);
-                        noDataFound.setVisibility(View.GONE);
+                        EmptyListUi.bind(noDataFound, true, R.string.empty_sub_portions);
                     } else {
                         portionMasterListCardView.setVisibility(View.GONE);
-                        noDataFound.setVisibility(View.VISIBLE);
+                        EmptyListUi.bind(noDataFound, false, R.string.empty_sub_portions);
                     }
                 }
                 pDialog.dismiss();

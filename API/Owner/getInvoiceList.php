@@ -54,6 +54,10 @@ if ($userId === null) {
         $getdata["paymentMode"]=$row['paymentMode'];
         $getdata["cashAmount"]=isset($row['cashAmount']) ? $row['cashAmount'] : '0';
         $getdata["upiAmount"]=isset($row['upiAmount']) ? $row['upiAmount'] : '0';
+        $getdata["diningSessionId"]=isset($row['diningSessionId']) ? $row['diningSessionId'] : '';
+        $getdata["billPrintStatus"]=isset($row['billPrintStatus']) ? $row['billPrintStatus'] : '';
+        $getdata["packingCharge"]=isset($row['packingCharge']) ? $row['packingCharge'] : '0';
+        $getdata["packingChargeType"]=isset($row['packingChargeType']) ? $row['packingChargeType'] : 'Percentage';
         $getdata["invoiceDate"]=$row['invoiceDate'];
         $getdata["invoiceOrderStatus"]=$row['invoiceOrderStatus'];
         $getdata["invoiceNetworkStatus"]=$row['invoiceNetworkStatus'];

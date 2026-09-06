@@ -35,6 +35,7 @@ import com.pos_billingwala.databinding.FragmentOperationalReportBinding;
 
 import java.util.Calendar;
 import java.util.Locale;
+import com.pos_billingwala.Extra.EmptyListUi;
 
 @SuppressLint({"Range", "SetTextI18n", "StaticFieldLeak"})
 public class SaleReport extends Fragment implements View.OnClickListener {
@@ -269,6 +270,6 @@ public class SaleReport extends Fragment implements View.OnClickListener {
                 subAmount, totalGSTAmount, discount, totalAmount,
                 shownFast, shownTable, shownTakeAway, periodLabel, cashTotal, upiTotal);
         binding.nestedScrollView.setVisibility(View.VISIBLE);
-        binding.noDataFound.setVisibility(View.GONE);
+        EmptyListUi.bind(binding.noDataFound, true, R.string.empty_sub_sales);
     }
 }

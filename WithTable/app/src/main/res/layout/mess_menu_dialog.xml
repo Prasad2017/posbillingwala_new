@@ -38,33 +38,6 @@
         </LinearLayout>
 
         <LinearLayout
-            android:id="@+id/scanVerifyLayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:orientation="horizontal">
-
-            <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:src="@drawable/ic_receipt"
-                app:tint="@color/white" />
-
-            <TextView
-                android:id="@+id/scanVerifyTxt"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:fontFamily="@font/poppinsmedium"
-                android:gravity="center|start"
-                android:paddingStart="10dp"
-                android:paddingEnd="10dp"
-                android:text="@string/ui_scan_amp_verify_token"
-                android:textColor="@color/white"
-                android:textSize="15dp" />
-        </LinearLayout>
-
-        <LinearLayout
             android:id="@+id/qrManagementLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

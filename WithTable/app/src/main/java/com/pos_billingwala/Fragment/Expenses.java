@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Locale;
 
 import cn.pedant.SweetAlert.SweetAlertDialog;
+import com.pos_billingwala.Extra.EmptyListUi;
 
 
 public class Expenses extends Fragment implements View.OnClickListener {
@@ -106,11 +107,11 @@ public class Expenses extends Fragment implements View.OnClickListener {
                 }
                 binding.totalAmount.setText(activity.getString(R.string.inr) + " " + String.format(Locale.US, "%.2f", totalExpenseAmount));
 
-                binding.noDataFound.setVisibility(View.GONE);
+                EmptyListUi.bind(binding.noDataFound, true, R.string.empty_sub_expenses);
                 binding.nestedScrollView.setVisibility(View.VISIBLE);
 
             } else {
-                binding.noDataFound.setVisibility(View.VISIBLE);
+                EmptyListUi.bind(binding.noDataFound, false, R.string.empty_sub_expenses);
                 binding.nestedScrollView.setVisibility(View.GONE);
             }
         } finally {

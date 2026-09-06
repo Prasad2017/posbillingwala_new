@@ -21,6 +21,7 @@ import com.pos_billingwala.NetworkToOffline.WorkerClass.ComboItemWorker;
 import com.pos_billingwala.NetworkToOffline.WorkerClass.ComboWorker;
 import com.pos_billingwala.NetworkToOffline.WorkerClass.CompanyPrinterWorker;
 import com.pos_billingwala.NetworkToOffline.WorkerClass.CompanyWorker;
+import com.pos_billingwala.NetworkToOffline.WorkerClass.DiningAreaWorker;
 import com.pos_billingwala.NetworkToOffline.WorkerClass.ExpensesWorker;
 import com.pos_billingwala.NetworkToOffline.WorkerClass.FoodTypeWorker;
 import com.pos_billingwala.NetworkToOffline.WorkerClass.InventoryWorker;
@@ -32,8 +33,10 @@ import com.pos_billingwala.NetworkToOffline.WorkerClass.MessMemberPaymentWorker;
 import com.pos_billingwala.NetworkToOffline.WorkerClass.MessMemberWorker;
 import com.pos_billingwala.NetworkToOffline.WorkerClass.PortionMasterWorker;
 import com.pos_billingwala.NetworkToOffline.WorkerClass.PortionWorker;
+import com.pos_billingwala.NetworkToOffline.WorkerClass.PosTableWorker;
 import com.pos_billingwala.NetworkToOffline.WorkerClass.ProductWorker;
 import com.pos_billingwala.NetworkToOffline.WorkerClass.SubcategoryWorker;
+import com.pos_billingwala.NetworkToOffline.WorkerClass.TableTypeWorker;
 import com.pos_billingwala.R;
 
 import java.util.List;
@@ -126,6 +129,9 @@ public class NetworkDataFetcher {
         OneTimeWorkRequest comboItemRequest = tagged(ComboItemWorker.class);
         OneTimeWorkRequest companyRequest = tagged(CompanyWorker.class);
         OneTimeWorkRequest companyPrinterRequest = tagged(CompanyPrinterWorker.class);
+        OneTimeWorkRequest diningAreaRequest = tagged(DiningAreaWorker.class);
+        OneTimeWorkRequest tableTypeRequest = tagged(TableTypeWorker.class);
+        OneTimeWorkRequest posTableRequest = tagged(PosTableWorker.class);
         OneTimeWorkRequest invoiceRequest = tagged(InvoiceWorker.class);
         OneTimeWorkRequest invoiceProductRequest = tagged(InvoiceProductWorker.class);
         OneTimeWorkRequest invoiceComboItemRequest = tagged(InvoiceComboItemWorker.class);
@@ -147,6 +153,9 @@ public class NetworkDataFetcher {
                 .then(comboItemRequest)
                 .then(companyRequest)
                 .then(companyPrinterRequest)
+                .then(diningAreaRequest)
+                .then(tableTypeRequest)
+                .then(posTableRequest)
                 .then(invoiceRequest)
                 .then(invoiceProductRequest)
                 .then(invoiceComboItemRequest)

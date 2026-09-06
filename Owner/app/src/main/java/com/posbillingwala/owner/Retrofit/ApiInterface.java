@@ -199,6 +199,12 @@ public interface ApiInterface {
     Call<AllApiResponse> getSalesOverviewReport(@Query("userId") String userId,
                                                 @Query("branchId") String branchId);
 
+    @GET("getOwnerOperationalReport.php")
+    Call<AllApiResponse> getOwnerOperationalReport(@Query("userId") String userId,
+                                                   @Query("branchId") String branchId,
+                                                   @Query("reportType") String reportType,
+                                                   @Query("date") String date);
+
     @Multipart
     @POST("catalogImportValidate.php")
     Call<CatalogImportPreviewResponse> catalogImportValidate(@Part("customerId") RequestBody customerId,

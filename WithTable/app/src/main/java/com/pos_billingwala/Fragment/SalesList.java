@@ -16,6 +16,7 @@ import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.ReportAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ListLoader;
+import com.pos_billingwala.Extra.EmptyListUi;
 import com.pos_billingwala.Extra.LocalSalesAnalytics;
 import com.pos_billingwala.Extra.ReportCursorHelper;
 import com.pos_billingwala.Extra.ReportUiHelper;
@@ -96,7 +97,7 @@ public class SalesList extends Fragment {
                 binding.salesSummary.setText(getString(R.string.ui_total_bills) + ": " + snapshot.getBillCount()
                         + "  ·  " + getString(R.string.ui_net_sales) + ": "
                         + ReportUiHelper.money(currency, snapshot.getNetSales()));
-                binding.emptySales.setVisibility(invoiceResponseList.isEmpty() ? View.VISIBLE : View.GONE);
+                EmptyListUi.bind(binding.emptySales, !invoiceResponseList.isEmpty(), R.string.empty_sub_sales);
 
                 reportAdapter = new ReportAdapter(activity, invoiceResponseList);
                 if (hasTabletDetailPanel()) {

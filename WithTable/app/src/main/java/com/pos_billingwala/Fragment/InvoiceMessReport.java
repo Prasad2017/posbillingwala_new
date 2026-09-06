@@ -37,6 +37,7 @@ import java.util.Calendar;
 import java.util.List;
 
 import cn.pedant.SweetAlert.SweetAlertDialog;
+import com.pos_billingwala.Extra.EmptyListUi;
 
 
 public class InvoiceMessReport extends Fragment implements View.OnClickListener {
@@ -219,10 +220,10 @@ public class InvoiceMessReport extends Fragment implements View.OnClickListener 
                 binding.kpi3.getRoot().setVisibility(View.GONE);
                 binding.kpi4.getRoot().setVisibility(View.GONE);
                 binding.nestedScrollView.setVisibility(View.VISIBLE);
-                binding.noDataFound.setVisibility(View.GONE);
+                EmptyListUi.bind(binding.noDataFound, true, R.string.empty_sub_mess_invoices);
             } else {
                 binding.nestedScrollView.setVisibility(View.GONE);
-                binding.noDataFound.setVisibility(View.VISIBLE);
+                EmptyListUi.bind(binding.noDataFound, false, R.string.empty_sub_mess_invoices);
             }
         } finally {
             ListLoader.dismiss(loader);
@@ -255,10 +256,10 @@ public class InvoiceMessReport extends Fragment implements View.OnClickListener 
                 binding.kpi3.getRoot().setVisibility(View.GONE);
                 binding.kpi4.getRoot().setVisibility(View.GONE);
                 binding.nestedScrollView.setVisibility(View.VISIBLE);
-                binding.noDataFound.setVisibility(View.GONE);
+                EmptyListUi.bind(binding.noDataFound, true, R.string.empty_sub_mess_invoices);
             } else {
                 binding.nestedScrollView.setVisibility(View.GONE);
-                binding.noDataFound.setVisibility(View.VISIBLE);
+                EmptyListUi.bind(binding.noDataFound, false, R.string.empty_sub_mess_invoices);
             }
         } finally {
             ListLoader.dismiss(loader);

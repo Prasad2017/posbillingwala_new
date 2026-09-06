@@ -121,7 +121,9 @@
         android:layout_height="50dp"
         android:layout_alignParentBottom="true"
         android:layout_margin="12dp"
-        app:cardCornerRadius="10dp">
+        app:cardBackgroundColor="@color/colorPrimary"
+        app:cardCornerRadius="10dp"
+        app:strokeWidth="0dp">
 
         <TextView
             android:layout_width="match_parent"

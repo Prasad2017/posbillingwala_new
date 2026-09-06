@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import cn.pedant.SweetAlert.SweetAlertDialog;
+import com.pos_billingwala.Extra.EmptyListUi;
 
 
 @SuppressLint("StaticFieldLeak, ClickableViewAccessibility, NonConstantResourceId, NotifyDataSetChanged, SetTextI18n")
@@ -47,7 +48,7 @@ public class MessMemberList extends Fragment implements View.OnClickListener {
     public static RecyclerView recyclerView;
     public static LinearLayout linearLayout;
     public static TextInputEditText textInputEditText;
-    public static TextView noDataFound;
+    public static View noDataFound;
     public static POSBillingWalaDatabase posBillingWalaDatabase;
     public static List<MemberResponse> memberResponseList = new ArrayList<>();
     public static List<MemberResponse> searchMemberResponseList = new ArrayList<>();
@@ -66,10 +67,10 @@ public class MessMemberList extends Fragment implements View.OnClickListener {
                 adapter.notifyDataSetChanged();
                 // adapter.notifyItemInserted(memberResponseList.size() - 1);
 
-                noDataFound.setVisibility(View.GONE);
+                EmptyListUi.bind(noDataFound, true, R.string.empty_sub_members);
                 linearLayout.setVisibility(View.VISIBLE);
             } else {
-                noDataFound.setVisibility(View.VISIBLE);
+                EmptyListUi.bind(noDataFound, false, R.string.empty_sub_members);
                 linearLayout.setVisibility(View.GONE);
             }
         } finally {
@@ -162,9 +163,9 @@ public class MessMemberList extends Fragment implements View.OnClickListener {
             adapter.notifyDataSetChanged();
             //  adapter.notifyItemInserted(searchMemberResponseList.size() - 1);
 
-            noDataFound.setVisibility(View.GONE);
+            EmptyListUi.bind(noDataFound, true, R.string.empty_sub_members);
         } else {
-            noDataFound.setVisibility(View.VISIBLE);
+            EmptyListUi.bind(noDataFound, false, R.string.empty_sub_members);
         }
 
     }

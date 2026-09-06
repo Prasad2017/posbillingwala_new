@@ -56,6 +56,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
+import com.pos_billingwala.Extra.EmptyListUi;
 
 @SuppressLint("SetTextI18n")
 public class InvoiceTableListReport extends Fragment implements View.OnClickListener {
@@ -207,7 +208,7 @@ public class InvoiceTableListReport extends Fragment implements View.OnClickList
         }
         if (invoiceDate != null && !invoiceDate.isEmpty()) {
             if (subtitle.length() > 0) {
-                subtitle.append(" · ");
+                subtitle.append(" Â· ");
             }
             subtitle.append("Period: ").append(invoiceDate);
         }
@@ -434,11 +435,11 @@ public class InvoiceTableListReport extends Fragment implements View.OnClickList
             binding.recyclerView.setAdapter(adapter);
             binding.totalAmount.setText(MainActivity.currencyName + " " + String.format(Locale.US, "%.2f", totalAmount));
             binding.nestedScrollView.setVisibility(View.VISIBLE);
-            binding.noDataFound.setVisibility(View.GONE);
+            EmptyListUi.bind(binding.noDataFound, true, R.string.empty_sub_reports);
             pageNumber = page.size();
         } else {
             binding.nestedScrollView.setVisibility(View.GONE);
-            binding.noDataFound.setVisibility(View.VISIBLE);
+            EmptyListUi.bind(binding.noDataFound, false, R.string.empty_sub_reports);
             pageNumber = 0;
         }
     }
@@ -484,7 +485,7 @@ public class InvoiceTableListReport extends Fragment implements View.OnClickList
         }
     }
 
-    /** Loads exactly one more page on scroll — never chains all pages. */
+    /** Loads exactly one more page on scroll â€” never chains all pages. */
     private class getDownloadBills extends AsyncTask<Void, Void, List<InvoiceResponse>> {
         @Override
         protected void onPreExecute() {

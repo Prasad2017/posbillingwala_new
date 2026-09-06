@@ -86,6 +86,16 @@ public class AllApiResponse {
     @Expose
     public List<MessTokenResponse> messTokenResponseList;
 
+    @SerializedName("diningAreaResponse")
+    @Expose
+    public List<DiningAreaResponse> diningAreaResponseList;
+    @SerializedName("tableTypeResponse")
+    @Expose
+    public List<TableTypeResponse> tableTypeResponseList;
+    @SerializedName("posTableResponse")
+    @Expose
+    public List<PosTableResponse> posTableResponseList;
+
     @SerializedName("qr")
     @Expose
     public MessQrInfo messQr;
@@ -382,6 +392,30 @@ public class AllApiResponse {
 
     public void setMessTokenResponseList(List<MessTokenResponse> messTokenResponseList) {
         this.messTokenResponseList = messTokenResponseList;
+    }
+
+    public List<DiningAreaResponse> getDiningAreaResponseList() {
+        return diningAreaResponseList;
+    }
+
+    public void setDiningAreaResponseList(List<DiningAreaResponse> diningAreaResponseList) {
+        this.diningAreaResponseList = diningAreaResponseList;
+    }
+
+    public List<TableTypeResponse> getTableTypeResponseList() {
+        return tableTypeResponseList;
+    }
+
+    public void setTableTypeResponseList(List<TableTypeResponse> tableTypeResponseList) {
+        this.tableTypeResponseList = tableTypeResponseList;
+    }
+
+    public List<PosTableResponse> getPosTableResponseList() {
+        return posTableResponseList;
+    }
+
+    public void setPosTableResponseList(List<PosTableResponse> posTableResponseList) {
+        this.posTableResponseList = posTableResponseList;
     }
 
     public List<SupportTicketItem> getTickets() { return tickets; }

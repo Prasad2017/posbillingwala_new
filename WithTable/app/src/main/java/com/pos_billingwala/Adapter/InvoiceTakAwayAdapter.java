@@ -57,7 +57,11 @@ public class InvoiceTakAwayAdapter extends RecyclerView.Adapter<InvoiceTakAwayAd
 
         int pos = position + 1;
         holder.binding.srNo.setText(String.valueOf(pos));
-        holder.binding.takeAwayNo.setText(productCartResponse.getNoOfTable());
+        String takeAwayNo = productCartResponse.getNoOfTable();
+        if (takeAwayNo == null || takeAwayNo.trim().isEmpty()) {
+            takeAwayNo = "—";
+        }
+        holder.binding.takeAwayNo.setText(takeAwayNo);
 
         getTableAmount(holder, productCartResponse.getNoOfTable());
 

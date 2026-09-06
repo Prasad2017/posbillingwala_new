@@ -44,6 +44,7 @@ import java.util.List;
 import java.util.Locale;
 
 import cn.pedant.SweetAlert.SweetAlertDialog;
+import com.pos_billingwala.Extra.EmptyListUi;
 
 
 @SuppressLint("SetTextI18n")
@@ -224,7 +225,7 @@ public class InvoiceTableReport extends Fragment implements View.OnClickListener
     }
 
     public void getNewInvoiceRecords() {
-        // Unused — paging handled by getDownloadBills (one page per scroll).
+        // Unused â€” paging handled by getDownloadBills (one page per scroll).
     }
 
     public void getInvoiceTableReportList() {
@@ -268,11 +269,11 @@ public class InvoiceTableReport extends Fragment implements View.OnClickListener
                     getString(R.string.ui_amount_breakdown), period);
             ReportUiHelper.setupTableHeader(binding.tableHeader, getString(R.string.ui_table_number));
             binding.nestedScrollView.setVisibility(View.VISIBLE);
-            binding.noDataFound.setVisibility(View.GONE);
+            EmptyListUi.bind(binding.noDataFound, true, R.string.empty_sub_reports);
             pageNumber = page.size();
         } else {
             binding.nestedScrollView.setVisibility(View.GONE);
-            binding.noDataFound.setVisibility(View.VISIBLE);
+            EmptyListUi.bind(binding.noDataFound, false, R.string.empty_sub_reports);
             pageNumber = 0;
         }
     }
@@ -318,7 +319,7 @@ public class InvoiceTableReport extends Fragment implements View.OnClickListener
         }
     }
 
-    /** Loads exactly one more page on scroll — never chains all pages. */
+    /** Loads exactly one more page on scroll â€” never chains all pages. */
     private class getDownloadBills extends AsyncTask<Void, Void, List<InvoiceResponse>> {
         @Override
         protected void onPreExecute() {

@@ -60,7 +60,7 @@
 
             </LinearLayout>
 
-
+
 
             <ImageView
                 android:id="@+id/menuIcon"
@@ -184,16 +184,11 @@
 
     </androidx.core.widget.NestedScrollView>
 
-    <TextView
+    <include
         android:id="@+id/noDataFound"
+        layout="@layout/include_empty_list_state"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_gravity="center"
-        android:fontFamily="@font/poppinsmedium"
-        android:gravity="center"
-        android:text="@string/ui_no_product_list_found_please_add_product"
-        android:textColor="@color/black"
-        android:textSize="20dp"
-        android:visibility="visible" />
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true" />
 
 </RelativeLayout>

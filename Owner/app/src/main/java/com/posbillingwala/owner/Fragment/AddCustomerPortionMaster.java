@@ -35,6 +35,7 @@ import cn.pedant.SweetAlert.SweetAlertDialog;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import com.posbillingwala.owner.Extra.EmptyListUi;
 
 @SuppressLint("SetTextI18n, NonConstantResourceId, StaticFieldLeak")
 public class AddCustomerPortionMaster extends Fragment implements View.OnClickListener {
@@ -61,7 +62,7 @@ public class AddCustomerPortionMaster extends Fragment implements View.OnClickLi
         binding.portionMasterName.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
         portionMasterRecyclerview = binding.portionMasterRecyclerview;
         portionMasterListCardView = binding.portionMasterListCardView;
-        noDataFound = binding.noDataFound;
+        noDataFound = binding.noDataFound.getRoot();
 
         catalogImportExportHelper = new CatalogImportExportHelper(
                 this, MainActivity.userId, "portions", "Portions", AddCustomerPortionMaster::getPortionMasterList);
@@ -158,10 +159,10 @@ public class AddCustomerPortionMaster extends Fragment implements View.OnClickLi
                         portionMasterRecyclerview.setLayoutManager(new GridLayoutManager(activity, 1));
                         portionMasterRecyclerview.setAdapter(adapter);
                         portionMasterListCardView.setVisibility(View.VISIBLE);
-                        noDataFound.setVisibility(View.GONE);
+                        EmptyListUi.bind(noDataFound, true, R.string.empty_sub_portions);
                     } else {
                         portionMasterListCardView.setVisibility(View.GONE);
-                        noDataFound.setVisibility(View.VISIBLE);
+                        EmptyListUi.bind(noDataFound, false, R.string.empty_sub_portions);
                     }
                 }
                 pDialog.dismiss();

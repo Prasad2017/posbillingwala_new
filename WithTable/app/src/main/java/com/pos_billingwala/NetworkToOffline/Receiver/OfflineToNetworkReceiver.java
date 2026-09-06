@@ -175,7 +175,12 @@ public class OfflineToNetworkReceiver extends BroadcastReceiver {
                         cursor.getString(cursor.getColumnIndex("bluetoothAddress")),
                         cursor.getString(cursor.getColumnIndex("bluetoothKOTAddress")),
                         cursor.getString(cursor.getColumnIndex("printerFeedLines")),
-                        cursor.getString(cursor.getColumnIndex("KotPrinterFeedLines")));
+                        cursor.getString(cursor.getColumnIndex("KotPrinterFeedLines")),
+                        columnOrEmpty(cursor, "kotEnable").isEmpty() ? "on" : columnOrEmpty(cursor, "kotEnable"),
+                        columnOrEmpty(cursor, "kotPrefix").isEmpty() ? "KOT-" : columnOrEmpty(cursor, "kotPrefix"),
+                        columnOrEmpty(cursor, "kotCopies").isEmpty() ? "1" : columnOrEmpty(cursor, "kotCopies"),
+                        columnOrEmpty(cursor, "kotAutoPrint").isEmpty() ? "off" : columnOrEmpty(cursor, "kotAutoPrint"),
+                        columnOrEmpty(cursor, "kotPreview").isEmpty() ? "on" : columnOrEmpty(cursor, "kotPreview"));
             } while (cursor.moveToNext());
         }
 
@@ -273,6 +278,8 @@ public class OfflineToNetworkReceiver extends BroadcastReceiver {
                         cursor.getString(cursor.getColumnIndex("paymentMode")),
                         columnOrEmpty(cursor, "cashAmount"),
                         columnOrEmpty(cursor, "upiAmount"),
+                        columnOrEmpty(cursor, "diningSessionId"),
+                        columnOrEmpty(cursor, "billPrintStatus"),
                         cursor.getString(cursor.getColumnIndex("invoiceDate")),
                         cursor.getString(cursor.getColumnIndex("invoiceType")),
                         cursor.getString(cursor.getColumnIndex("invoiceOrderStatus")),
@@ -371,6 +378,51 @@ public class OfflineToNetworkReceiver extends BroadcastReceiver {
                         cursor.getString(cursor.getColumnIndex("expensesStatus")));
             } while (cursor.moveToNext());
         }
+        cursor = posBillingWalaDatabase.getUnSynchronizeDiningArea(NAME_NOT_SYNCED_WITH_SERVER);
+        if (cursor.moveToFirst()) {
+            do {
+                saveDiningArea(cursor.getString(cursor.getColumnIndex("areaId")),
+                        cursor.getString(cursor.getColumnIndex("areaName")),
+                        columnOrEmpty(cursor, "areaSortOrder"),
+                        columnOrEmpty(cursor, "areaActive"),
+                        columnOrEmpty(cursor, "areaNetworkStatus"));
+            } while (cursor.moveToNext());
+        }
+        cursor = posBillingWalaDatabase.getUnSynchronizeTableType(NAME_NOT_SYNCED_WITH_SERVER);
+        if (cursor.moveToFirst()) {
+            do {
+                saveTableType(cursor.getString(cursor.getColumnIndex("tableTypeId")),
+                        cursor.getString(cursor.getColumnIndex("tableTypeName")),
+                        columnOrEmpty(cursor, "defaultCapacity"),
+                        columnOrEmpty(cursor, "tableTypeActive"),
+                        columnOrEmpty(cursor, "tableTypeNetworkStatus"));
+            } while (cursor.moveToNext());
+        }
+        cursor = posBillingWalaDatabase.getUnSynchronizePosTable(NAME_NOT_SYNCED_WITH_SERVER);
+        if (cursor.moveToFirst()) {
+            do {
+                String areaKey = columnOrEmpty(cursor, "areaNetworkStatus");
+                if (areaKey.isEmpty()) {
+                    areaKey = columnOrEmpty(cursor, "areaId");
+                }
+                String typeKey = columnOrEmpty(cursor, "tableTypeNetworkStatus");
+                if (typeKey.isEmpty()) {
+                    typeKey = columnOrEmpty(cursor, "tableTypeId");
+                }
+                savePosTable(cursor.getString(cursor.getColumnIndex("tableId")),
+                        columnOrEmpty(cursor, "tableNumber"),
+                        columnOrEmpty(cursor, "tableName"),
+                        typeKey,
+                        columnOrEmpty(cursor, "capacity"),
+                        areaKey,
+                        columnOrEmpty(cursor, "tableActive"),
+                        columnOrEmpty(cursor, "positionX"),
+                        columnOrEmpty(cursor, "positionY"),
+                        columnOrEmpty(cursor, "sortOrder"),
+                        columnOrEmpty(cursor, "statusOverride"),
+                        columnOrEmpty(cursor, "posTableNetworkStatus"));
+            } while (cursor.moveToNext());
+        }
         posBillingWalaDatabase.close();
     }
 
@@ -425,6 +477,36 @@ public class OfflineToNetworkReceiver extends BroadcastReceiver {
         }
 }
 
+    public void saveDiningArea(String areaId, String areaName, String areaSortOrder, String areaActive,
+                               String areaNetworkStatus) {
+        Call<AllApiResponse> call = Api.getClient(context).saveDiningArea(
+                MainActivity.userId, areaName, areaSortOrder, areaActive, areaNetworkStatus);
+        if (executeCall(call)) {
+            posBillingWalaDatabase.updateSyncDiningArea(areaId, NAME_SYNCED_WITH_SERVER);
+        }
+    }
+
+    public void saveTableType(String tableTypeId, String tableTypeName, String defaultCapacity,
+                              String tableTypeActive, String tableTypeNetworkStatus) {
+        Call<AllApiResponse> call = Api.getClient(context).saveTableType(
+                MainActivity.userId, tableTypeName, defaultCapacity, tableTypeActive, tableTypeNetworkStatus);
+        if (executeCall(call)) {
+            posBillingWalaDatabase.updateSyncTableType(tableTypeId, NAME_SYNCED_WITH_SERVER);
+        }
+    }
+
+    public void savePosTable(String tableId, String tableNumber, String tableName, String tableTypeId,
+                             String capacity, String areaId, String tableActive, String positionX,
+                             String positionY, String sortOrder, String statusOverride,
+                             String posTableNetworkStatus) {
+        Call<AllApiResponse> call = Api.getClient(context).savePosTable(
+                MainActivity.userId, tableNumber, tableName, tableTypeId, capacity, areaId,
+                tableActive, positionX, positionY, sortOrder, statusOverride, posTableNetworkStatus);
+        if (executeCall(call)) {
+            posBillingWalaDatabase.updateSyncPosTable(tableId, NAME_SYNCED_WITH_SERVER);
+        }
+    }
+
     public void saveInventory(String inventoryId, String productId, String productInventoryQuantity, String afterSaleInventoryQuantity, String saleInventoryQuantity, String inventoryDate, String inventoryNetworkStatus, String inventoryStatus) {
 
         Call<AllApiResponse> call = Api.getClient(context).saveInventory(MainActivity.userId, productId, productInventoryQuantity, afterSaleInventoryQuantity, saleInventoryQuantity, inventoryDate, inventoryNetworkStatus);
@@ -442,7 +524,7 @@ public class OfflineToNetworkReceiver extends BroadcastReceiver {
 }
 
     public void saveInvoice(String invoiceId, String noOfTable, String invoiceNumber, String customerName, String customerMobile, String customerEmail, String customerAddress, String subTotal, String totalGSTAmount,
-                            String discount, String discountType, String packingCharge, String packingChargeType, String totalAmount, String paymentMode, String cashAmount, String upiAmount, String invoiceDate, String invoiceType, String invoiceOrderStatus, String invoiceNetworkStatus) {
+                            String discount, String discountType, String packingCharge, String packingChargeType, String totalAmount, String paymentMode, String cashAmount, String upiAmount, String diningSessionId, String billPrintStatus, String invoiceDate, String invoiceType, String invoiceOrderStatus, String invoiceNetworkStatus) {
 
         Call<AllApiResponse> call = Api.getClient(context).saveInvoice(MainActivity.userId,
                 nz(noOfTable), nz(invoiceNumber), nz(customerName), nz(customerMobile), nz(customerEmail), nz(customerAddress),
@@ -451,6 +533,7 @@ public class OfflineToNetworkReceiver extends BroadcastReceiver {
                 nz(packingCharge).isEmpty() ? "0" : nz(packingCharge),
                 nz(packingChargeType).isEmpty() ? "Percentage" : nz(packingChargeType),
                 nz(totalAmount), nz(paymentMode), nz(cashAmount), nz(upiAmount),
+                nz(diningSessionId), nz(billPrintStatus),
                 nz(invoiceDate), nz(invoiceType), nz(invoiceOrderStatus), nz(invoiceNetworkStatus));
         if (executeCall(call)) {
             posBillingWalaDatabase.updateSyncInvoice(invoiceId, NAME_SYNCED_WITH_SERVER);
@@ -492,12 +575,17 @@ public class OfflineToNetworkReceiver extends BroadcastReceiver {
         }
 }
 
-    public void savePrinterSetting(String settingId, String printerName, String KOTPrinterName, String invoicePrefix, String invoiceTitle, String invoiceTermsCondition, String logoUse, String paymentUse, String customerUse, String productQuantityUpdate, String duplicateBillUse, String bluetoothAddress, String bluetoothKOTAddress, String printerFeedLines, String KotPrinterFeedLines) {
+    public void savePrinterSetting(String settingId, String printerName, String KOTPrinterName, String invoicePrefix, String invoiceTitle, String invoiceTermsCondition, String logoUse, String paymentUse, String customerUse, String productQuantityUpdate, String duplicateBillUse, String bluetoothAddress, String bluetoothKOTAddress, String printerFeedLines, String KotPrinterFeedLines, String kotEnable, String kotPrefix, String kotCopies, String kotAutoPrint, String kotPreview) {
 
         Call<AllApiResponse> call = Api.getClient(context).savePrinterSetting(MainActivity.userId,
                 nz(printerName), nz(KOTPrinterName), nz(invoicePrefix), nz(invoiceTitle), nz(invoiceTermsCondition),
                 nz(logoUse), nz(paymentUse), nz(customerUse), nz(productQuantityUpdate), nz(duplicateBillUse),
-                nz(bluetoothAddress), nz(bluetoothKOTAddress), nz(printerFeedLines), nz(KotPrinterFeedLines));
+                nz(bluetoothAddress), nz(bluetoothKOTAddress), nz(printerFeedLines), nz(KotPrinterFeedLines),
+                nz(kotEnable).isEmpty() ? "on" : nz(kotEnable),
+                nz(kotPrefix).isEmpty() ? "KOT-" : nz(kotPrefix),
+                nz(kotCopies).isEmpty() ? "1" : nz(kotCopies),
+                nz(kotAutoPrint).isEmpty() ? "off" : nz(kotAutoPrint),
+                nz(kotPreview).isEmpty() ? "on" : nz(kotPreview));
         if (executeCall(call)) {
             posBillingWalaDatabase.updateSynchronizePrinterSetting(settingId, NAME_SYNCED_WITH_SERVER);
         }

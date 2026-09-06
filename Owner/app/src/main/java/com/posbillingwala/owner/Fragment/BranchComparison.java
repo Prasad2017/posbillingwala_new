@@ -19,6 +19,7 @@ import com.posbillingwala.owner.Adapter.BranchComparisonAdapter;
 import com.posbillingwala.owner.Extra.DetectConnection;
 import com.posbillingwala.owner.Model.AllApiResponse;
 import com.posbillingwala.owner.Model.BranchComparisonResponse;
+import com.posbillingwala.owner.R;
 import com.posbillingwala.owner.Retrofit.Api;
 import com.posbillingwala.owner.databinding.FragmentBranchComparisonBinding;
 
@@ -29,6 +30,7 @@ import cn.pedant.SweetAlert.SweetAlertDialog;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import com.posbillingwala.owner.Extra.EmptyListUi;
 
 public class BranchComparison extends Fragment {
 
@@ -95,10 +97,10 @@ public class BranchComparison extends Fragment {
                     binding.recyclerView.setLayoutManager(new LinearLayoutManager(activity));
                     binding.recyclerView.setAdapter(new BranchComparisonAdapter(branches));
                     binding.recyclerView.setVisibility(View.VISIBLE);
-                    binding.noDataFound.setVisibility(View.GONE);
+                    EmptyListUi.bind(binding.noDataFound.getRoot(), true, R.string.empty_sub_branches);
                 } else {
                     binding.recyclerView.setVisibility(View.GONE);
-                    binding.noDataFound.setVisibility(View.VISIBLE);
+                    EmptyListUi.bind(binding.noDataFound.getRoot(), false, R.string.empty_sub_branches);
                 }
             }
 

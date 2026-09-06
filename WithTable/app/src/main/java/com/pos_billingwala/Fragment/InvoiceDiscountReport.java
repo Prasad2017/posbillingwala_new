@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Locale;
 
 import cn.pedant.SweetAlert.SweetAlertDialog;
+import com.pos_billingwala.Extra.EmptyListUi;
 
 @SuppressLint("SetTextI18n")
 public class InvoiceDiscountReport extends Fragment implements View.OnClickListener {
@@ -167,7 +168,7 @@ public class InvoiceDiscountReport extends Fragment implements View.OnClickListe
 
     private void bindList(String periodLabel) {
         if (invoiceResponseList.isEmpty()) {
-            binding.noDataFound.setVisibility(View.VISIBLE);
+            EmptyListUi.bind(binding.noDataFound, false, R.string.empty_sub_reports);
             binding.nestedScrollView.setVisibility(View.GONE);
             return;
         }
@@ -212,7 +213,7 @@ public class InvoiceDiscountReport extends Fragment implements View.OnClickListe
         OperationalReportCharts.bindListSummary(binding, activity, invoiceResponseList.size(), totalDiscount,
                 breakdown, getString(R.string.discount_wise_report),
                 getString(R.string.ui_amount_breakdown), periodLabel);
-        binding.noDataFound.setVisibility(View.GONE);
+        EmptyListUi.bind(binding.noDataFound, true, R.string.empty_sub_reports);
         binding.nestedScrollView.setVisibility(View.VISIBLE);
     }
 
