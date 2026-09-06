@@ -31,4 +31,7 @@ public class MessMealTokenItem {
     @SerializedName("memberName")
     @Expose
     public String memberName;
+    @SerializedName("memberMobile")
+    @Expose
+    public String memberMobile;
 }

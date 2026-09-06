@@ -5260,6 +5260,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             item.printStatus = c.getString(c.getColumnIndex("printStatus"));
             item.createdAt = c.getString(c.getColumnIndex("createdAt"));
             item.memberName = c.getString(c.getColumnIndex("memberName"));
+            item.memberMobile = item.registrationNo;
             list.add(item);
         }
         c.close();

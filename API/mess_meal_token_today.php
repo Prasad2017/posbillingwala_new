@@ -25,7 +25,13 @@ if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
 
 $rows = db_stmt_fetch_all(
     $con,
-    'SELECT * FROM mess_meal_token WHERE userId = ? AND token_date = ? ORDER BY id DESC',
+    'SELECT t.*,
+            m.member_mobile_number AS member_mobile,
+            m.member_altenet_mobile_number AS member_alt_mobile
+     FROM mess_meal_token t
+     LEFT JOIN mess_member m ON m.id = t.member_id
+     WHERE t.userId = ? AND t.token_date = ?
+     ORDER BY t.id DESC',
     'is',
     (int) $userId,
     $date
@@ -34,6 +40,15 @@ $rows = db_stmt_fetch_all(
 $tokens = array();
 $bySession = array();
 foreach ($rows as $row) {
+    $memberMobile = '';
+    if (!empty($row['member_mobile'])) {
+        $memberMobile = trim((string) $row['member_mobile']);
+    } elseif (!empty($row['member_alt_mobile'])) {
+        $memberMobile = trim((string) $row['member_alt_mobile']);
+    } elseif (!empty($row['registration_no'])) {
+        // Fallback: registration is often stored as mobile for QR flow.
+        $memberMobile = trim((string) $row['registration_no']);
+    }
     $tokens[] = array(
         'tokenId' => $row['public_id'],
         'tokenNumber' => $row['token_number'],
@@ -44,6 +59,7 @@ foreach ($rows as $row) {
         'createdAt' => $row['created_at'],
         'printedAt' => $row['printed_at'],
         'memberName' => $row['member_name'],
+        'memberMobile' => $memberMobile,
     );
 
     $sn = $row['session_name'];

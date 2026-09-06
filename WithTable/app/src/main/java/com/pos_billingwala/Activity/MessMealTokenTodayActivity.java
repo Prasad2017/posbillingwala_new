@@ -118,8 +118,29 @@ public class MessMealTokenTodayActivity extends BaseActivity {
         public void onBindViewHolder(@NonNull VH holder, int position) {
             MessMealTokenItem item = items.get(position);
             holder.tokenLine.setText((item.tokenNumber != null ? item.tokenNumber : "") + "    "
-                    + (item.registrationNo != null ? item.registrationNo : "") + "    "
                     + (item.printStatus != null ? item.printStatus : ""));
+
+            String name = item.memberName != null ? item.memberName.trim() : "";
+            String mobile = item.memberMobile != null ? item.memberMobile.trim() : "";
+            if (mobile.isEmpty() && item.registrationNo != null) {
+                mobile = item.registrationNo.trim();
+            }
+            StringBuilder memberSb = new StringBuilder();
+            if (!name.isEmpty()) {
+                memberSb.append(name);
+            }
+            if (!mobile.isEmpty()) {
+                if (memberSb.length() > 0) {
+                    memberSb.append("  ·  ");
+                }
+                memberSb.append(mobile);
+            }
+            if (memberSb.length() == 0 && item.registrationNo != null) {
+                memberSb.append(item.registrationNo);
+            }
+            holder.memberLine.setText(memberSb.toString());
+            holder.memberLine.setVisibility(memberSb.length() > 0 ? View.VISIBLE : View.GONE);
+
             holder.metaLine.setText((item.mealSession != null ? item.mealSession : "") + "  "
                     + (item.createdAt != null ? item.createdAt : ""));
             boolean canRetry = item.printStatus != null
@@ -154,12 +175,13 @@ public class MessMealTokenTodayActivity extends BaseActivity {
         }
 
         class VH extends RecyclerView.ViewHolder {
-            TextView tokenLine, metaLine;
+            TextView tokenLine, memberLine, metaLine;
             Button btnRetry, btnCancel;
 
             VH(@NonNull View itemView) {
                 super(itemView);
                 tokenLine = itemView.findViewById(R.id.tokenLine);
+                memberLine = itemView.findViewById(R.id.memberLine);
                 metaLine = itemView.findViewById(R.id.metaLine);
                 btnRetry = itemView.findViewById(R.id.btnRetry);
                 btnCancel = itemView.findViewById(R.id.btnCancel);
