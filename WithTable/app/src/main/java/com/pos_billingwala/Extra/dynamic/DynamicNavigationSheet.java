@@ -83,10 +83,10 @@ public final class DynamicNavigationSheet {
             return "Mess";
         }
         if (UiCodes.PRODUCTS.equals(code) || UiCodes.SERVICES.equals(code)) {
-            return activity.getString(R.string.ui_products);
+            return activity.getString(R.string.master_products);
         }
         if (UiCodes.STOCK.equals(code) || UiCodes.INVENTORY.equals(code)) {
-            return activity.getString(R.string.ui_inventory);
+            return activity.getString(R.string.setting_inventory);
         }
         if (UiCodes.REPORTS.equals(code)) {
             return activity.getString(R.string.ui_reports_hub);
