@@ -1,66 +1,97 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# POS Billingwala — Web admin (`admin.posbillingwala.com`)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Laravel 9 web admin for dealers, customers, licences, catalog, sales, devices, crashes, support, push notifications, and the **Website CMS** that powers [posbillingwala.com](https://posbillingwala.com/).
 
-## About Laravel
+Parent overview: [../README.md](../README.md) · Marketing site: [../website/README.md](../website/README.md)
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Stack
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+| Item | Value |
+|------|--------|
+| Framework | Laravel **9.x** (`laravel/framework: ^9.19`) |
+| PHP | **^8.0.2** |
+| Extras | Sanctum, Laravel UI, PhpSpreadsheet, Yajra DataTables, Guzzle |
+| Database | Shared MySQL with Android apps / PHP API |
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Modules
 
-## Learning Laravel
+| Area | Paths (auth required unless noted) |
+|------|-------------------------------------|
+| Auth | `/login` — Admin / Dealer / Customer portals |
+| Dealers | `/dealer/*` CRUD |
+| Customers & licences | `/customers/*`, licence add/edit/delete |
+| Catalog | categories, products, subcategories, portions, portion-masters |
+| Import / export | `/catalog-import-export/*`, `/import-export` |
+| Expenses / inventory / invoices | list + edit (+ invoice download) |
+| Sales | dashboard, overview, invoices |
+| Reports | customers, licenses, dealers, branches, devices |
+| Devices | `/devices` |
+| Crashes | list, analytics, resolve/status |
+| Support + push | tickets, FAQ, `/push-notifications` |
+| Settings | profile, password, logo, favicon, users |
+| **Website CMS** | `/website/*` — settings, products, pricing, dealers, clients, testimonials, about, privacy, terms, refund, support, contacts |
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## Public Website API
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+Used by the marketing site (`routes/api.php`, prefix `website`):
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 2000 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+| Endpoint | Data |
+|----------|------|
+| `GET /api/website/settings` | Company & legal footer |
+| `GET /api/website/products` | Product catalog |
+| `GET /api/website/pricing` | Plans |
+| `GET /api/website/dealers` | Published dealers |
+| `GET /api/website/clients` | Customer showcase |
+| `GET /api/website/testimonials` | Quotes |
+| `GET /api/website/pages/{slug}` | CMS pages |
+| `POST /api/website/contact` | Contact form |
 
-## Laravel Sponsors
+Production browsers usually call same-origin `https://posbillingwala.com/api/website/*` via `website/api/website-proxy.php` → this admin host.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+## Local run
 
-### Premium Partners
+```bash
+cd admin.posbillingwala.com
+composer install
+cp .env.example .env   # if needed
+php artisan key:generate
+php artisan serve --host=127.0.0.1 --port=8000
+```
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+Or from repo root (Windows): `.\scripts\start-local.ps1` — admin on **:8000**, website on **:8080**.
 
-## Contributing
+| URL | Purpose |
+|-----|---------|
+| http://127.0.0.1:8000/login | Web admin login |
+| http://127.0.0.1:8000/website | Website CMS |
+| https://admin.posbillingwala.com/login | Production admin |
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Production deploy
 
-## Code of Conduct
+1. Deploy this folder to the **admin** subdomain (not under `/adminpanel/`).
+2. Set `.env` (`APP_DEBUG=false`, production DB).
+3. `composer install --no-dev`
+4. `php artisan key:generate` (once), then `config:cache` / `route:cache` / `view:cache`
+5. Ensure SSL is valid for `admin.posbillingwala.com` (browsers block untrusted admin API fetches)
+6. Run website CMS migration if needed: `API/migrations/p23_website_catalog.sql`
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+**Full checklist:** [../docs/DEPLOY_WEB.md](../docs/DEPLOY_WEB.md)
 
-## Security Vulnerabilities
+After CORS / config changes:
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bash
+php artisan config:clear
+php artisan config:cache
+php artisan route:clear
+```
 
-## License
+## Related apps
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+| Client | Role |
+|--------|------|
+| `../Admin/` | Android admin (lighter mobile console) |
+| `../Dealer/` | Field dealer app |
+| `../Owner/` | Shop owner multi-branch app |
+| `../WithTable/` | POS billing app |
+| `../website/` | Public marketing site (CMS consumer) |
+| `../API/` | PHP REST used by Android apps |

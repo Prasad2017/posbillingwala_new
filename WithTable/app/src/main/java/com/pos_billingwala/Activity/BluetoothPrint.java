@@ -7,8 +7,6 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.ProgressDialog;
-import android.content.ContentResolver;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -25,7 +23,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.StrictMode;
-import android.provider.MediaStore;
 import android.text.Html;
 import android.util.Base64;
 import android.util.Log;
@@ -173,6 +170,11 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
     /** Cash/UPI split amounts confirmed on the pre-checkout settlement sheet. */
     private String pendingSplitCash;
     private String pendingSplitUpi;
+    /**
+     * True only when the user chose Share from the overflow menu.
+     * Print success must NOT open the system share sheet automatically.
+     */
+    private boolean shareAfterSave;
     //********************* Bluetooth Printer Start ************************//
     int PERMISSION_ALL = 1;
     String[] PERMISSIONS;
@@ -557,14 +559,13 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
 
     public void automaticSavePDF(String customerName, String customerMobile, String customerAddress, String invoiceNumber) {
 
-        String[] separated = invoiceNumber.split("/");
+        String[] separated = invoiceNumber != null ? invoiceNumber.split("/") : new String[0];
         try {
-            invoiceNumber = separated[2];
+            invoiceNumber = separated.length > 2 ? separated[2] : separated[1];
             invoiceNumber = "SalesInvoice_" + invoiceNumber;
         } catch (Exception e) {
             e.printStackTrace();
-            invoiceNumber = separated[1];
-            invoiceNumber = "SalesInvoice_" + invoiceNumber;
+            invoiceNumber = "SalesInvoice_" + System.currentTimeMillis();
         }
 
         createPdf(customerName, customerMobile, customerAddress, invoiceNumber);
@@ -572,71 +573,151 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
     }
 
     public void createPdf(String customerName, String customerMobile, String customerAddress, String invoiceNumber) {
+        if (isFinishing() || isDestroyed()) {
+            return;
+        }
 
         StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
         StrictMode.setVmPolicy(builder.build());
 
-        String BillDetails = getBillDetails(customerName, customerMobile, customerAddress);
-        twoInvoiceDetails.setText(BillDetails);
-        twoShopPrintStatus.setText("**** Original Copy ****");
-        threeShopPrintStatus.setText("**** Original Copy ****");
-        Bitmap bitmap = convertLayout(twoNestedScrollView, 48);
-        if (bitmap != null) {
-            final String fileName = invoiceNumber;
-            printBitmapExecutor.execute(() -> {
-                try {
-                    Bitmap bitmap1 = getResizedBitmap(bitmap, 48);
-                    runOnUiThread(() -> saveImageToMediaStore(bitmap1, fileName));
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            });
+        try {
+            String BillDetails = getBillDetails(customerName, customerMobile, customerAddress);
+            if (twoInvoiceDetails != null) {
+                twoInvoiceDetails.setText(BillDetails);
+            }
+            if (twoShopPrintStatus != null) {
+                twoShopPrintStatus.setText("**** Original Copy ****");
+            }
+            if (threeShopPrintStatus != null) {
+                threeShopPrintStatus.setText("**** Original Copy ****");
+            }
+            if (twoNestedScrollView == null) {
+                Toast.makeText(this, getString(R.string.toast_print_layout_failed_saving_bill), Toast.LENGTH_SHORT).show();
+                finishAfterInvoiceSaved();
+                return;
+            }
+            Bitmap bitmap = convertLayout(twoNestedScrollView, 48);
+            if (bitmap != null) {
+                final String fileName = invoiceNumber;
+                printBitmapExecutor.execute(() -> {
+                    Bitmap resized = null;
+                    try {
+                        resized = getResizedBitmap(bitmap, 48);
+                        // getResizedBitmap may recycle the source when it creates a new bitmap
+                        if (resized != bitmap && bitmap != null && !bitmap.isRecycled()) {
+                            bitmap.recycle();
+                        }
+                        final Bitmap toSave = resized;
+                        runOnUiThread(() -> saveImageToMediaStore(toSave, fileName));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        Observability.logNonFatal(e, "share_invoice_bitmap");
+                        recycleBitmapQuietly(resized);
+                        if (resized != bitmap) {
+                            recycleBitmapQuietly(bitmap);
+                        }
+                        runOnUiThread(() -> {
+                            if (!isFinishing() && !isDestroyed()) {
+                                Toast.makeText(BluetoothPrint.this,
+                                        getString(R.string.toast_failed_to_save_invoice_please_try_again),
+                                        Toast.LENGTH_SHORT).show();
+                                finishAfterInvoiceSaved();
+                            }
+                        });
+                    }
+                });
+            } else {
+                Toast.makeText(this, getString(R.string.toast_print_layout_failed_saving_bill), Toast.LENGTH_SHORT).show();
+                finishAfterInvoiceSaved();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            Observability.logNonFatal(e, "share_invoice_create_pdf");
+            finishAfterInvoiceSaved();
         }
     }
 
     private void saveImageToMediaStore(Bitmap bitmap, String invoiceNumber) {
-
-        // Prepare to insert the image into MediaStore
-        ContentValues values = new ContentValues();
-        values.put(MediaStore.Images.Media.DISPLAY_NAME, invoiceNumber + ".png"); // File name
-        values.put(MediaStore.Images.Media.MIME_TYPE, "image/png"); // MIME type
-        values.put(MediaStore.Images.Media.TITLE, invoiceNumber); // Title
-        values.put(MediaStore.Images.Media.DESCRIPTION, "Invoice Image"); // Description
-        values.put(MediaStore.Images.Media.DATE_ADDED, System.currentTimeMillis() / 1000); // Date added
-        values.put(MediaStore.Images.Media.DATE_MODIFIED, System.currentTimeMillis() / 1000); // Date modified
-
-        ContentResolver contentResolver = activity.getContentResolver();
-        // Uri imageUri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
-        File file = new File(directory_path + "/" + invoiceNumber + ".png");
-        if (file != null) {
+        if (isFinishing() || isDestroyed()) {
+            recycleBitmapQuietly(bitmap);
+            return;
+        }
+        try {
+            File dir = new File(directory_path);
+            if (!dir.exists() && !dir.mkdirs()) {
+                Toast.makeText(this, getString(R.string.toast_failed_to_save_invoice_please_try_again),
+                        Toast.LENGTH_SHORT).show();
+                finishAfterInvoiceSaved();
+                return;
+            }
+            File file = new File(dir, invoiceNumber + ".png");
+            FileOutputStream outputStream = new FileOutputStream(file);
             try {
-                FileOutputStream outputStream = new FileOutputStream(file);
-                bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
+                if (bitmap != null) {
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
+                }
                 outputStream.flush();
-                openGeneratedPDF(invoiceNumber);
-            } catch (IOException e) {
-                e.printStackTrace();
+            } finally {
+                try {
+                    outputStream.close();
+                } catch (IOException ignored) {
+                }
+            }
+            openGeneratedPDF(invoiceNumber);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Observability.logNonFatal(e, "share_invoice_save_file");
+            Toast.makeText(this, getString(R.string.toast_failed_to_save_invoice_please_try_again),
+                    Toast.LENGTH_SHORT).show();
+            finishAfterInvoiceSaved();
+        } finally {
+            recycleBitmapQuietly(bitmap);
+        }
+    }
+
+    private static void recycleBitmapQuietly(Bitmap bitmap) {
+        if (bitmap != null && !bitmap.isRecycled()) {
+            try {
+                bitmap.recycle();
+            } catch (Exception ignored) {
             }
         }
     }
 
-
     public void openGeneratedPDF(String invoiceNumber) {
-
-        File file = new File(directory_path + "/" + invoiceNumber + ".png");
-        Intent intentShareFile = new Intent(Intent.ACTION_SEND);
-        Uri uri = FileProvider.getUriForFile(BluetoothPrint.this, BuildConfig.APPLICATION_ID + ".provider", file);
-        intentShareFile.setType(URLConnection.guessContentTypeFromName(file.getName()));
-        intentShareFile.putExtra(Intent.EXTRA_STREAM, uri);
-        List<ResolveInfo> resInfoList = this.getPackageManager().queryIntentActivities(intentShareFile, PackageManager.MATCH_DEFAULT_ONLY);
-        for (ResolveInfo resolveInfo : resInfoList) {
-            String packageName = resolveInfo.activityInfo.packageName;
-            this.grantUriPermission(packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        if (isFinishing() || isDestroyed()) {
+            return;
         }
-        // intentShareFile.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-
-        startActivity(Intent.createChooser(intentShareFile, "Share Invoice"));
-
+        try {
+            File file = new File(directory_path + "/" + invoiceNumber + ".png");
+            if (!file.exists()) {
+                Toast.makeText(this, getString(R.string.toast_failed_to_save_invoice_please_try_again),
+                        Toast.LENGTH_SHORT).show();
+                finishAfterInvoiceSaved();
+                return;
+            }
+            Intent intentShareFile = new Intent(Intent.ACTION_SEND);
+            Uri uri = FileProvider.getUriForFile(BluetoothPrint.this, BuildConfig.APPLICATION_ID + ".provider", file);
+            intentShareFile.setType(URLConnection.guessContentTypeFromName(file.getName()));
+            intentShareFile.putExtra(Intent.EXTRA_STREAM, uri);
+            intentShareFile.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            List<ResolveInfo> resInfoList = getPackageManager().queryIntentActivities(intentShareFile, PackageManager.MATCH_DEFAULT_ONLY);
+            for (ResolveInfo resolveInfo : resInfoList) {
+                String packageName = resolveInfo.activityInfo.packageName;
+                grantUriPermission(packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            }
+            startActivity(Intent.createChooser(intentShareFile, "Share Invoice"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            Observability.logNonFatal(e, "share_invoice_open_chooser");
+            Toast.makeText(this, getString(R.string.toast_failed_to_save_invoice_please_try_again),
+                    Toast.LENGTH_SHORT).show();
+        } finally {
+            // Share chooser is open (or failed) — return to billing without forcing Back.
+            if (!isFinishing() && !isDestroyed()) {
+                finishAfterInvoiceSaved();
+            }
+        }
     }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -1461,6 +1542,7 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                         String customerAddress = customerAddressTxt.getText().toString();
                         customerSheet.dismiss();
                         invoiceNumber = resolveInvoiceNumber();
+                        shareAfterSave = true;
                         saveInvoice(customerName, customerMobile, customerAddress, 1);
                     } else {
                         Toast.makeText(activity, getString(R.string.toast_please_fill_customer_address), Toast.LENGTH_SHORT).show();
@@ -1795,7 +1877,11 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
         if (raw.isEmpty()) {
             return 0f;
         }
-        return Float.parseFloat(raw);
+        try {
+            return Float.parseFloat(raw);
+        } catch (NumberFormatException e) {
+            return 0f;
+        }
     }
 
     private void confirmClearCart() {
@@ -2134,27 +2220,29 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
 
                 persistedInvoiceNumber = reservedInvoiceNumber;
 
+                // Share Invoice is only via overflow menu — never auto-open after print.
+                final boolean shouldShare = shareAfterSave;
+                shareAfterSave = false;
+
                 if (invoiceType.equalsIgnoreCase("table_wise")) {
                     if (printOkSnapshot != null && !printOkSnapshot) {
-                        Toast.makeText(activity, "Bill settled â€” print failed", Toast.LENGTH_LONG).show();
+                        Toast.makeText(activity, "Bill settled — print failed", Toast.LENGTH_LONG).show();
                         showBillPrintRetrySheet();
                         return;
                     }
-                    if (reservedPrintStatus == 1) {
+                    if (shouldShare) {
                         automaticSavePDF(reservedCustomerName, reservedCustomerMobile, reservedCustomerAddress, reservedInvoiceNumber);
-                        finishAfterInvoiceSaved();
-                    } else if (reservedPrintStatus == 0) {
+                    } else {
                         Toast.makeText(activity, getString(R.string.toast_invoice_saved), Toast.LENGTH_SHORT).show();
                         finishAfterInvoiceSaved();
                     }
                 } else if (showPaymentMode) {
                     clearCartUiState();
-                    setPaymentMode(reservedCustomerName, reservedCustomerMobile, reservedCustomerAddress, totalAmt, reservedPrintStatus);
+                    setPaymentMode(reservedCustomerName, reservedCustomerMobile, reservedCustomerAddress, totalAmt, shouldShare);
                 } else {
-                    if (reservedPrintStatus == 1) {
+                    if (shouldShare) {
                         automaticSavePDF(reservedCustomerName, reservedCustomerMobile, reservedCustomerAddress, reservedInvoiceNumber);
-                        finishAfterInvoiceSaved();
-                    } else if (reservedPrintStatus == 0) {
+                    } else {
                         Toast.makeText(activity, getString(R.string.toast_invoice_saved), Toast.LENGTH_SHORT).show();
                         finishAfterInvoiceSaved();
                     }
@@ -2399,7 +2487,7 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
 
     }
 
-    public void setPaymentMode(String customerName, String customerMobile, String customerAddress, float totalAmt, int printStatus) {
+    public void setPaymentMode(String customerName, String customerMobile, String customerAddress, float totalAmt, boolean shouldShare) {
         View content = LayoutInflater.from(activity).inflate(R.layout.set_payment_mode_dialog, null);
         BottomSheetDialog sheet = BottomSheetUi.showContent(activity, content, false);
 
@@ -2413,13 +2501,13 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                             return;
                         }
                         posBillingWalaDatabase.updateInvoicePaymentMode(invoiceNumber, mode, cashAmount, upiAmount);
-                        if (printStatus == 1) {
+                        sheet.dismiss();
+                        if (shouldShare) {
                             automaticSavePDF(customerName, customerMobile, customerAddress, invoiceNumber);
                         } else {
                             Toast.makeText(activity, getString(R.string.toast_invoice_saved), Toast.LENGTH_SHORT).show();
+                            finishAfterInvoiceSaved();
                         }
-                        sheet.dismiss();
-                        finishAfterInvoiceSaved();
                     }
 
                     @Override

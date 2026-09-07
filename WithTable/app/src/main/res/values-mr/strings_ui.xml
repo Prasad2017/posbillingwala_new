@@ -357,6 +357,7 @@
     <string name="toast_app_update_not_available">अॅप अपडेट उपलब्ध नाही.</string>
     <string name="toast_are_you_sure">तुम्हाला खात्री आहे का?</string>
     <string name="toast_bluetooth_is_not_supported_on_this_devic">या डिव्हाइसवर ब्लूटूथ समर्थित नाही</string>
+    <string name="toast_bluetooth_is_off">ब्लूटूथ बंद आहे. कृपया ब्लूटूथ सुरू करा.</string>
     <string name="toast_bluetooth_permission_denied">ब्लूटूथ परवानगी नाकारली</string>
     <string name="toast_camera_permission_is_required_to_scan_qr">QR कोड स्कॅन करण्यासाठी कॅमेरा परवानगी आवश्यक आहे</string>
     <string name="toast_canceled_by_user">वापरकर्त्याने रद्द केले</string>
@@ -468,7 +469,7 @@
     <string name="toast_printer_not_found_select">सेव्ह केलेला प्रिंटर सापडला नाही. Bluetooth डिव्हाइस निवडा.</string>
     <string name="toast_test_print_sent">टेस्ट प्रिंट पाठवला</string>
     <string name="toast_printer_connected">प्रिंटर कनेक्ट झाला</string>
-    <string name="toast_printer_disconnect">प्रिंटर डिस्कनेक्ट</string>
+    <string name="toast_printer_disconnect">प्रिंटर डिस्कनेक्ट झाले</string>
     <string name="toast_printing_in_progress">प्रिंटिंग सुरू आहे</string>
     <string name="toast_product_added_into_cart">उत्पादन कार्टमध्ये जोडले</string>
     <string name="toast_product_added_successfully">उत्पादन यशस्वीरित्या जोडले</string>

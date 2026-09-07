@@ -191,15 +191,26 @@ public final class PrinterConnectionHelper {
         if (activity.isFinishing()) {
             return;
         }
+
+        BluetoothPrinterChannel channel = bill
+                ? BluetoothPrinterChannel.bill()
+                : BluetoothPrinterChannel.kot();
+
+        // Bluetooth off — prompt enable dialog; never crash or hang on connect.
+        if (!BluetoothPrinterChannel.isBluetoothOn()) {
+            channel.ensureBluetoothOn(activity, true);
+            if (onFailed != null) {
+                onFailed.run();
+            }
+            return;
+        }
+
         boolean ready = bill ? isBillPrinterReady() : isKotPrinterReady();
         if (ready) {
             onReady.run();
             return;
         }
 
-        BluetoothPrinterChannel channel = bill
-                ? BluetoothPrinterChannel.bill()
-                : BluetoothPrinterChannel.kot();
         String addr = normalize(savedAddress);
 
         // No saved MAC, or saved MAC not in paired list → let user choose.
@@ -351,10 +362,17 @@ public final class PrinterConnectionHelper {
                 showToast(context, R.string.print_error);
                 return false;
             }
+            if (!BluetoothPrinterChannel.isBluetoothOn()) {
+                showToast(context, R.string.toast_bluetooth_is_off);
+                if (context instanceof Activity) {
+                    BluetoothPrinterChannel.bill().ensureBluetoothOn((Activity) context, true);
+                }
+                return false;
+            }
             BluetoothPrinterChannel channel = BluetoothPrinterChannel.bill();
             waitOffMainIfConnecting(channel);
             if (!channel.write(data)) {
-                showToast(context, R.string.toast_printer_not_connected_select);
+                showToast(context, R.string.toast_printer_disconnect);
                 return false;
             }
             return true;
@@ -370,10 +388,17 @@ public final class PrinterConnectionHelper {
                 showToast(context, R.string.print_error);
                 return false;
             }
+            if (!BluetoothPrinterChannel.isBluetoothOn()) {
+                showToast(context, R.string.toast_bluetooth_is_off);
+                if (context instanceof Activity) {
+                    BluetoothPrinterChannel.kot().ensureBluetoothOn((Activity) context, true);
+                }
+                return false;
+            }
             BluetoothPrinterChannel channel = BluetoothPrinterChannel.kot();
             waitOffMainIfConnecting(channel);
             if (!channel.write(data)) {
-                showToast(context, R.string.toast_printer_not_connected_select);
+                showToast(context, R.string.toast_printer_disconnect);
                 return false;
             }
             return true;

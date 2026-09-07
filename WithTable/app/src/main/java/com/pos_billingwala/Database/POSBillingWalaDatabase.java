@@ -44,8 +44,10 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Random;
 
 
@@ -8664,6 +8666,235 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         } finally {
             if (cursor != null) {
                 cursor.close();
+            }
+            db.close();
+        }
+    }
+
+    /**
+     * Batch floor load: all table_wise cart lines grouped by table number (one query).
+     */
+    public Map<String, List<ProductCartResponse>> getCartProductsGroupedByTable(String cartOrderStatus) {
+        Map<String, List<ProductCartResponse>> byTable = new HashMap<>();
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT cart_product.*, IFNULL(product.openPrice, 'off') AS openPrice FROM " + CART_PRODUCT_TABLE
+                            + " LEFT JOIN " + PRODUCT_TABLE + " ON product.productId = cart_product.productId"
+                            + " WHERE cart_product.cartOrderStatus = ?",
+                    new String[]{cartOrderStatus != null ? cartOrderStatus : "table_wise"});
+            while (cursor.moveToNext()) {
+                ProductCartResponse productResponse = new ProductCartResponse();
+                productResponse.setCartId(cursor.getString(cursor.getColumnIndex("cartId")));
+                productResponse.setProductId(cursor.getString(cursor.getColumnIndex("productId")));
+                productResponse.setProductName(cursor.getString(cursor.getColumnIndex("productName")));
+                productResponse.setProductOldPrice(cursor.getString(cursor.getColumnIndex("productOldPrice")));
+                productResponse.setProductNewPrice(cursor.getString(cursor.getColumnIndex("productNewPrice")));
+                productResponse.setProductUnit(cursor.getString(cursor.getColumnIndex("productUnit")));
+                productResponse.setProductQuantity(cursor.getString(cursor.getColumnIndex("productQuantity")));
+                productResponse.setProductCGST(cursor.getString(cursor.getColumnIndex("productCGST")));
+                productResponse.setProductSGST(cursor.getString(cursor.getColumnIndex("productSGST")));
+                productResponse.setNoOfTable(cursor.getString(cursor.getColumnIndex("noOfTable")));
+                productResponse.setCartDiscount(cursor.getString(cursor.getColumnIndex("cartDiscount")));
+                productResponse.setCartDiscountType(cursor.getString(cursor.getColumnIndex("cartDiscountType")));
+                productResponse.setCartOrderStatus(cursor.getString(cursor.getColumnIndex("cartOrderStatus")));
+                productResponse.setCartStatus(cursor.getString(cursor.getColumnIndex("cartStatus")));
+                mapCartLineSnapshots(cursor, productResponse);
+                String tableKey = productResponse.getNoOfTable();
+                if (tableKey == null) {
+                    continue;
+                }
+                tableKey = tableKey.trim();
+                List<ProductCartResponse> list = byTable.get(tableKey);
+                if (list == null) {
+                    list = new ArrayList<>();
+                    byTable.put(tableKey, list);
+                }
+                list.add(productResponse);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            db.close();
+        }
+        return byTable;
+    }
+
+    /**
+     * Batch floor load: unpaid invoices (empty paymentMode) keyed by table — first/latest per table.
+     */
+    public Map<String, InvoiceResponse> getUnpaidInvoicesByTable() {
+        Map<String, InvoiceResponse> byTable = new HashMap<>();
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT * FROM " + INVOICE_TABLE
+                            + " WHERE IFNULL(paymentMode,'') = ''"
+                            + andBranchScope(null)
+                            + " ORDER BY invoiceId DESC",
+                    null);
+            while (cursor.moveToNext()) {
+                String tableNumber = cursor.getString(cursor.getColumnIndex("noOfTable"));
+                if (tableNumber == null || tableNumber.trim().isEmpty()) {
+                    continue;
+                }
+                tableNumber = tableNumber.trim();
+                if (byTable.containsKey(tableNumber)) {
+                    continue;
+                }
+                InvoiceResponse invoiceResponse = new InvoiceResponse();
+                invoiceResponse.setInvoiceId(cursor.getString(cursor.getColumnIndex("invoiceId")));
+                invoiceResponse.setNoOfTable(tableNumber);
+                invoiceResponse.setInvoiceNumber(cursor.getString(cursor.getColumnIndex("invoiceNumber")));
+                invoiceResponse.setCustomerName(cursor.getString(cursor.getColumnIndex("customerName")));
+                invoiceResponse.setCustomerMobile(cursor.getString(cursor.getColumnIndex("customerMobile")));
+                invoiceResponse.setCustomerAddress(cursor.getString(cursor.getColumnIndex("customerAddress")));
+                invoiceResponse.setSubTotal(cursor.getString(cursor.getColumnIndex("subTotal")));
+                invoiceResponse.setTotalGSTAmount(cursor.getString(cursor.getColumnIndex("totalGSTAmount")));
+                invoiceResponse.setDiscount(cursor.getString(cursor.getColumnIndex("discount")));
+                mapInvoicePacking(cursor, invoiceResponse);
+                invoiceResponse.setTotalAmount(cursor.getString(cursor.getColumnIndex("totalAmount")));
+                invoiceResponse.setPaymentMode(cursor.getString(cursor.getColumnIndex("paymentMode")));
+                invoiceResponse.setInvoiceDate(cursor.getString(cursor.getColumnIndex("invoiceDate")));
+                invoiceResponse.setInvoiceOrderStatus(cursor.getString(cursor.getColumnIndex("invoiceOrderStatus")));
+                invoiceResponse.setInvoiceNetworkStatus(cursor.getString(cursor.getColumnIndex("invoiceNetworkStatus")));
+                invoiceResponse.setInvoiceType(cursor.getString(cursor.getColumnIndex("invoiceType")));
+                invoiceResponse.setInvoiceStatus(cursor.getString(cursor.getColumnIndex("invoiceStatus")));
+                byTable.put(tableNumber, invoiceResponse);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            db.close();
+        }
+        return byTable;
+    }
+
+    /**
+     * Batch floor load: open dining sessions indexed by primary + joined table numbers.
+     */
+    public Map<String, DiningSessionResponse> getOpenDiningSessionsByTable() {
+        Map<String, DiningSessionResponse> byTable = new HashMap<>();
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT * FROM " + DINING_SESSION_TABLE
+                            + " WHERE IFNULL(sessionStatus,'') NOT IN ('SETTLED','CLOSED','CANCELLED')"
+                            + andBranchScope(null)
+                            + " ORDER BY sessionId DESC",
+                    null);
+            while (cursor.moveToNext()) {
+                DiningSessionResponse session = mapDiningSession(cursor);
+                indexSessionForTable(byTable, session.getPrimaryTableNumber(), session);
+                String joined = session.getJoinedTableNumbers();
+                if (joined != null && !joined.trim().isEmpty()) {
+                    for (String part : joined.split(",")) {
+                        indexSessionForTable(byTable, part, session);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            db.close();
+        }
+        return byTable;
+    }
+
+    private static void indexSessionForTable(Map<String, DiningSessionResponse> byTable,
+                                             String tableNumber,
+                                             DiningSessionResponse session) {
+        if (tableNumber == null || tableNumber.trim().isEmpty() || session == null) {
+            return;
+        }
+        String key = tableNumber.trim();
+        // Keep newest session (query ordered DESC) — first write wins
+        if (!byTable.containsKey(key)) {
+            byTable.put(key, session);
+        }
+    }
+
+    /**
+     * Batch floor load: latest FAILED print invoice per table.
+     */
+    public Map<String, InvoiceResponse> getLatestFailedPrintInvoicesByTable() {
+        Map<String, InvoiceResponse> byTable = new HashMap<>();
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT * FROM " + INVOICE_TABLE
+                            + " WHERE IFNULL(billPrintStatus,'') = ?"
+                            + andBranchScope(null)
+                            + " ORDER BY invoiceId DESC",
+                    new String[]{"FAILED"});
+            while (cursor.moveToNext()) {
+                String tableNumber = cursor.getString(cursor.getColumnIndex("noOfTable"));
+                if (tableNumber == null || tableNumber.trim().isEmpty()) {
+                    continue;
+                }
+                tableNumber = tableNumber.trim();
+                if (byTable.containsKey(tableNumber)) {
+                    continue;
+                }
+                InvoiceResponse invoice = new InvoiceResponse();
+                invoice.setInvoiceNumber(cursor.getString(cursor.getColumnIndex("invoiceNumber")));
+                invoice.setNoOfTable(tableNumber);
+                invoice.setTotalAmount(cursor.getString(cursor.getColumnIndex("totalAmount")));
+                invoice.setPaymentMode(cursor.getString(cursor.getColumnIndex("paymentMode")));
+                invoice.setBillPrintStatus(cursor.getString(cursor.getColumnIndex("billPrintStatus")));
+                byTable.put(tableNumber, invoice);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            db.close();
+        }
+        return byTable;
+    }
+
+    /** Close several abandoned empty sessions in one writable transaction. */
+    public void closeDiningSessions(List<String> sessionIds) {
+        if (sessionIds == null || sessionIds.isEmpty()) {
+            return;
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        try {
+            db.beginTransaction();
+            for (String sessionId : sessionIds) {
+                if (sessionId == null || sessionId.trim().isEmpty()) {
+                    continue;
+                }
+                ContentValues values = new ContentValues();
+                values.put("sessionStatus", "CLOSED");
+                values.put("closedAt", String.valueOf(System.currentTimeMillis()));
+                db.update(DINING_SESSION_TABLE, values, "sessionId = ?", new String[]{sessionId.trim()});
+                db.execSQL("UPDATE " + DINING_SESSION_TABLE
+                                + " SET sessionVersion = CAST(IFNULL(sessionVersion,1) AS INTEGER) + 1 WHERE sessionId = ?",
+                        new Object[]{sessionId.trim()});
+            }
+            db.setTransactionSuccessful();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                db.endTransaction();
+            } catch (Exception ignored) {
             }
             db.close();
         }

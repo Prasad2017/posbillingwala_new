@@ -145,7 +145,7 @@
     <string name="time">वेळ : </string>
 
     <string name="connect_fail">प्रिंटर कनेक्शन त्रुटी</string>
-    <string name="connect_lost">डिस्कनेक्ट</string>
+    <string name="connect_lost">प्रिंटर डिस्कनेक्ट झाले</string>
     <string name="not_connected">कनेक्शन झाले नाही</string>
     <string name="title_paired_devices">पेअर केलेले डिव्हाइस</string>
     <string name="title_other_devices">इतर डिव्हाइस</string>

@@ -5,9 +5,12 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -44,6 +47,10 @@ public final class BluetoothPrinterChannel {
     private static final BluetoothPrinterChannel BILL = new BluetoothPrinterChannel("bill");
     private static final BluetoothPrinterChannel KOT = new BluetoothPrinterChannel("kot");
 
+    private static BroadcastReceiver bluetoothStateReceiver;
+    private static boolean bluetoothStateReceiverRegistered;
+    private static boolean bluetoothOffToastShown;
+
     private final String channelName;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
@@ -69,6 +76,9 @@ public final class BluetoothPrinterChannel {
             if (savedAddress == null || savedAddress.trim().isEmpty()) {
                 return;
             }
+            if (!isBluetoothAdapterEnabled()) {
+                return;
+            }
             if (isReady()) {
                 return;
             }
@@ -85,6 +95,17 @@ public final class BluetoothPrinterChannel {
         return KOT;
     }
 
+    /** True when the device Bluetooth radio is on. Never throws. */
+    public static boolean isBluetoothOn() {
+        try {
+            BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+            return adapter != null && adapter.isEnabled();
+        } catch (Exception e) {
+            Log.e(TAG, "isBluetoothOn failed", e);
+            return false;
+        }
+    }
+
     /** Call once from {@link android.app.Application#onCreate()} for app-scoped sessions. */
     public static void initializeApp(Context context) {
         if (context == null) {
@@ -93,6 +114,7 @@ public final class BluetoothPrinterChannel {
         Context app = context.getApplicationContext();
         BILL.ensureAppContext(app);
         KOT.ensureAppContext(app);
+        registerBluetoothStateReceiver(app);
     }
 
     /** Tear down both channels when the app process is ending. */
@@ -101,8 +123,97 @@ public final class BluetoothPrinterChannel {
             return;
         }
         Context app = context.getApplicationContext();
+        unregisterBluetoothStateReceiver(app);
         BILL.shutdownInternal(app);
         KOT.shutdownInternal(app);
+    }
+
+    private static void registerBluetoothStateReceiver(Context app) {
+        if (bluetoothStateReceiverRegistered || app == null) {
+            return;
+        }
+        try {
+            bluetoothStateReceiver = new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    try {
+                        if (intent == null
+                                || !BluetoothAdapter.ACTION_STATE_CHANGED.equals(intent.getAction())) {
+                            return;
+                        }
+                        int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR);
+                        if (state == BluetoothAdapter.STATE_OFF
+                                || state == BluetoothAdapter.STATE_TURNING_OFF) {
+                            BILL.onBluetoothRadioOff();
+                            KOT.onBluetoothRadioOff();
+                        } else if (state == BluetoothAdapter.STATE_ON) {
+                            bluetoothOffToastShown = false;
+                            BILL.onBluetoothRadioOn();
+                            KOT.onBluetoothRadioOn();
+                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, "bluetooth state receiver failed", e);
+                    }
+                }
+            };
+            IntentFilter filter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                app.registerReceiver(bluetoothStateReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+            } else {
+                app.registerReceiver(bluetoothStateReceiver, filter);
+            }
+            bluetoothStateReceiverRegistered = true;
+        } catch (Exception e) {
+            Log.e(TAG, "registerBluetoothStateReceiver failed", e);
+            bluetoothStateReceiverRegistered = false;
+        }
+    }
+
+    private static void unregisterBluetoothStateReceiver(Context app) {
+        if (!bluetoothStateReceiverRegistered || app == null || bluetoothStateReceiver == null) {
+            return;
+        }
+        try {
+            app.unregisterReceiver(bluetoothStateReceiver);
+        } catch (Exception e) {
+            Log.e(TAG, "unregisterBluetoothStateReceiver failed", e);
+        } finally {
+            bluetoothStateReceiverRegistered = false;
+            bluetoothStateReceiver = null;
+        }
+    }
+
+    private void onBluetoothRadioOff() {
+        try {
+            cancelReconnect();
+            boolean wasLinked = isInternallyReady() || isInternallyConnecting() || persistentSession;
+            if (printService != null) {
+                try {
+                    printService.stop();
+                } catch (Exception e) {
+                    Log.e(TAG, channelName + ": stop on BT off failed", e);
+                }
+            }
+            // Keep savedAddress so we can auto-reconnect when Bluetooth turns back on.
+            if (wasLinked && !bluetoothOffToastShown && appContext != null) {
+                bluetoothOffToastShown = true;
+                showToast(appContext, R.string.toast_bluetooth_is_off);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, channelName + ": onBluetoothRadioOff failed", e);
+        }
+    }
+
+    private void onBluetoothRadioOn() {
+        try {
+            if (savedAddress == null || savedAddress.trim().isEmpty()) {
+                return;
+            }
+            reconnectBackoffMs = RECONNECT_DELAY_MS;
+            autoConnect(appContext, savedAddress);
+        } catch (Exception e) {
+            Log.e(TAG, channelName + ": onBluetoothRadioOn failed", e);
+        }
     }
 
     /** Silent background connect — used from Home / billing screen onStart. */
@@ -164,10 +275,12 @@ public final class BluetoothPrinterChannel {
                 return;
             }
 
-            if (allowDevicePicker && !checkBluetoothEnabled(btActivity, true)) {
-                return;
-            }
-            if (!allowDevicePicker && !isBluetoothAdapterEnabled()) {
+            if (!isBluetoothAdapterEnabled()) {
+                if (btActivity != null) {
+                    checkBluetoothEnabled(btActivity, true);
+                } else {
+                    showToast(appContext, R.string.toast_bluetooth_is_off);
+                }
                 return;
             }
 
@@ -274,6 +387,9 @@ public final class BluetoothPrinterChannel {
     public boolean waitUntilReady(long timeoutMs) {
         long deadline = System.currentTimeMillis() + timeoutMs;
         while (System.currentTimeMillis() < deadline) {
+            if (!isBluetoothAdapterEnabled()) {
+                return false;
+            }
             if (isReady()) {
                 return true;
             }
@@ -302,7 +418,7 @@ public final class BluetoothPrinterChannel {
         }
         try {
             BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
-            if (adapter == null) {
+            if (adapter == null || !adapter.isEnabled()) {
                 return false;
             }
             Set<BluetoothDevice> bonded = adapter.getBondedDevices();
@@ -327,6 +443,9 @@ public final class BluetoothPrinterChannel {
     public boolean write(byte[] data) {
         try {
             if (data == null || data.length == 0) {
+                return false;
+            }
+            if (!isBluetoothAdapterEnabled()) {
                 return false;
             }
             BluetoothPrinterChannel owner = connectionOwner();
@@ -401,6 +520,14 @@ public final class BluetoothPrinterChannel {
     private void connectInternal(String address, boolean fromUser) {
         synchronized (GLOBAL_CONNECT_LOCK) {
             try {
+                if (!isBluetoothAdapterEnabled()) {
+                    if (fromUser && hostActivity != null) {
+                        checkBluetoothEnabled(hostActivity, true);
+                    } else if (fromUser) {
+                        showToast(appContext, R.string.toast_bluetooth_is_off);
+                    }
+                    return;
+                }
                 if (fromUser) {
                     userInitiatedSession = true;
                 }
@@ -475,6 +602,10 @@ public final class BluetoothPrinterChannel {
     }
 
     private void onServiceConnectionFailed() {
+        if (!isBluetoothAdapterEnabled()) {
+            showToast(appContext, R.string.toast_bluetooth_is_off);
+            return;
+        }
         if (userInitiatedSession) {
             showToast(appContext, R.string.connect_fail);
         }
@@ -482,8 +613,13 @@ public final class BluetoothPrinterChannel {
     }
 
     private void onServiceConnectionLost() {
+        if (!isBluetoothAdapterEnabled()) {
+            // Radio-off path already toasts via ACTION_STATE_CHANGED.
+            cancelReconnect();
+            return;
+        }
         if (userInitiatedSession || persistentSession) {
-            showToast(appContext, R.string.connect_lost);
+            showToast(appContext, R.string.toast_printer_disconnect);
         }
         scheduleReconnect();
     }
@@ -507,6 +643,13 @@ public final class BluetoothPrinterChannel {
                         case BluetoothPrintCallbacks.MESSAGE_READ:
                             if (woosimService != null && msg.obj instanceof byte[]) {
                                 woosimService.processRcvData((byte[]) msg.obj, msg.arg1);
+                            }
+                            break;
+                        case BluetoothPrintCallbacks.MESSAGE_TOAST:
+                            if (msg.obj instanceof String) {
+                                showToast(appContext, (String) msg.obj);
+                            } else if (msg.arg1 != 0) {
+                                showToast(appContext, msg.arg1);
                             }
                             break;
                         case WoosimService.MESSAGE_PRINTER:
@@ -571,17 +714,14 @@ public final class BluetoothPrinterChannel {
     }
 
     private boolean isBluetoothAdapterEnabled() {
-        try {
-            BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
-            return adapter != null && adapter.isEnabled();
-        } catch (Exception e) {
-            Log.e(TAG, channelName + ": isBluetoothAdapterEnabled failed", e);
-            return false;
-        }
+        return isBluetoothOn();
     }
 
     private void scheduleReconnect() {
         if (savedAddress == null || savedAddress.trim().isEmpty()) {
+            return;
+        }
+        if (!isBluetoothAdapterEnabled()) {
             return;
         }
         BluetoothPrinterChannel owner = connectionOwner();
@@ -661,20 +801,27 @@ public final class BluetoothPrinterChannel {
             if (adapter.isEnabled()) {
                 return true;
             }
+            showToast(activity, R.string.toast_bluetooth_is_off);
             if (fromUser) {
-                Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                if (ActivityCompat.checkSelfPermission(activity, Manifest.permission.BLUETOOTH_CONNECT)
-                        == PackageManager.PERMISSION_GRANTED
-                        || android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.S) {
-                    int enableReq = "kot".equals(channelName)
-                            ? KOTWoosimPrnMng.REQUEST_ENABLE_BT
-                            : WoosimPrnMng.REQUEST_ENABLE_BT;
-                    activity.startActivityForResult(enableIntent, enableReq);
+                try {
+                    Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                    boolean canRequest = ActivityCompat.checkSelfPermission(activity,
+                            Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED
+                            || Build.VERSION.SDK_INT < Build.VERSION_CODES.S;
+                    if (canRequest) {
+                        int enableReq = "kot".equals(channelName)
+                                ? KOTWoosimPrnMng.REQUEST_ENABLE_BT
+                                : WoosimPrnMng.REQUEST_ENABLE_BT;
+                        activity.startActivityForResult(enableIntent, enableReq);
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, "request enable bluetooth failed", e);
                 }
             }
             return false;
         } catch (Exception e) {
             Log.e(TAG, "ensureBluetoothOn failed", e);
+            showToast(activity, R.string.toast_bluetooth_is_off);
             return false;
         }
     }

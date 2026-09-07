@@ -77,7 +77,12 @@ public class BluetoothPrintService {
     }
 
     public boolean isBluetoothEnabled() {
-        return adapter != null && adapter.isEnabled();
+        try {
+            return adapter != null && adapter.isEnabled();
+        } catch (Exception e) {
+            Log.e(TAG, "isBluetoothEnabled failed", e);
+            return false;
+        }
     }
 
     public synchronized void start() {
@@ -108,6 +113,17 @@ public class BluetoothPrintService {
         }
         if (adapter == null) {
             Log.e(TAG, "connect: adapter null");
+            notifyConnectionFailed();
+            return;
+        }
+        try {
+            if (!adapter.isEnabled()) {
+                Log.e(TAG, "connect: bluetooth off");
+                notifyConnectionFailed();
+                return;
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "connect: bluetooth state check failed", e);
             notifyConnectionFailed();
             return;
         }

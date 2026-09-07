@@ -1,6 +1,6 @@
 # POS Billingwala
 
-Offline-first point-of-sale for restaurants and shops — four Android apps, a shared PHP/MySQL API, and a production website with Laravel web admin.
+Offline-first point-of-sale for restaurants and shops — four Android apps, a shared PHP/MySQL API, a marketing website, and a Laravel web admin.
 
 ## What’s in this repo
 
@@ -9,9 +9,9 @@ Offline-first point-of-sale for restaurants and shops — four Android apps, a s
 | `WithTable/` | Main POS app — billing, tables, takeaway, mess + QR tokens, combos, reports, Bluetooth print, i18n |
 | `Owner/` | Shop owner app — invoices, sales, multi-branch view, full catalog CRUD |
 | `Dealer/` | Dealer app — customer & licence registration / renew, catalog setup |
-| `Admin/` | Admin app — dealers, customers, licences, catalog |
+| `Admin/` | Admin Android app — dealers, customers, licences, catalog, monitoring |
 | `website/` | Marketing site (deploy to domain root) |
-| `admin.posbillingwala.com/` | Laravel web admin |
+| `admin.posbillingwala.com/` | Laravel web admin + Website CMS API |
 | `API/` | PHP REST API (POS root + `Owner/` / `Dealer/` / `Admin/`) |
 | `API/migrations/` | Additive SQL upgrades (safe to re-run) |
 | `API/schema/` | Install helper + schema-only reference |
@@ -20,6 +20,8 @@ Offline-first point-of-sale for restaurants and shops — four Android apps, a s
 | `releases/` | Local release APK copies (**gitignored**) |
 
 Each Android app is a **standalone Gradle project** — open its folder in Android Studio (no root multi-module wrapper).
+
+Per-app docs: [WithTable/README.md](WithTable/README.md) · [Owner/README.md](Owner/README.md) · [Dealer/README.md](Dealer/README.md) · [Admin/README.md](Admin/README.md) · [admin.posbillingwala.com/README.md](admin.posbillingwala.com/README.md) · [website/README.md](website/README.md)
 
 ## Features (current)
 
@@ -33,8 +35,8 @@ Each Android app is a **standalone Gradle project** — open its folder in Andro
 - **Auth** — login/MPIN issues Bearer tokens (`api_tokens`); guarded write endpoints
 - **Multi-branch** — organization/branch scope; Owner store-wise comparison
 - **i18n (POS)** — English / Hindi / Marathi (Settings → language; per-app locale)
-- **Observability** — Firebase Crashlytics + Performance
-- **Web admin** — dealers, customers, licences, categories, subcategories, portion masters, products, CSV/Excel import
+- **Observability** — Firebase Crashlytics + Performance (POS); Analytics + Messaging across apps
+- **Web admin** — dealers, customers, licences, catalog, CSV/Excel import, crashes, support, push, Website CMS
 
 ## Stack
 
@@ -49,12 +51,12 @@ Each Android app is a **standalone Gradle project** — open its folder in Andro
 
 | App | Module | Package | versionName / versionCode |
 |-----|--------|---------|---------------------------|
-| POS | `WithTable` | `com.pos_billingwala` | **2.0.51** / 67 |
-| Owner | `Owner` | `com.posbillingwala.owner` | **1.0.6** / 7 |
-| Dealer | `Dealer` | `com.posbillingwala.dealer` | **1.0.10** / 12 |
-| Admin | `Admin` | `com.posbillingwala.admin` | **1.0** / 1 |
+| POS | `WithTable` | `com.pos_billingwala` | **2.0.59** / 75 |
+| Owner | `Owner` | `com.posbillingwala.owner` | **1.0.7** / 8 |
+| Dealer | `Dealer` | `com.posbillingwala.dealer` | **1.0.11** / 13 |
+| Admin | `Admin` | `com.posbillingwala.admin` | **1.1** / 2 |
 
-Default API host pattern: `http://www.posbillingwala.com/androidApp/` (+ `Owner/` / `Dealer/` / `Admin/`). Override via `BuildConfig.API_BASE_URL` in each app’s `build.gradle`. POS also uses `BuildConfig.MEDIA_BASE_URL` for product images.
+Default API host pattern: `https://posbillingwala.com/androidApp/` (+ `Owner/` / `Dealer/` / `Admin/`). Override via `BuildConfig.API_BASE_URL` in each app’s `build.gradle`. POS also uses `BuildConfig.MEDIA_BASE_URL` for product images.
 
 ## Prerequisites
 
@@ -63,27 +65,27 @@ Default API host pattern: `http://www.posbillingwala.com/androidApp/` (+ `Owner/
 | Android Studio (Ladybug+) | Build/run the four Android apps |
 | JDK 17 | Matches `compileSdk 37` / Java 17 in Gradle |
 | PHP 7.4+ with mysqli | Host `API/` on Apache/nginx |
+| PHP 8.0+ + Composer | Laravel web admin (`admin.posbillingwala.com/`) |
 | MySQL 5.7+ / MariaDB | Shared database for all clients |
-| Composer | Laravel web admin (`adminpanel/`) |
 
 Copy `API/db_local.example.php` → `API/db_local.php` locally. Firebase config (`google-services.json`) is gitignored — add your own for Crashlytics/Performance builds.
 
 ## Quick start — website & web admin
 
 1. Upload `website/` to the hosting document root.
-2. Upload/configure `admin.posbillingwala.com/` (Laravel web admin).
+2. Upload/configure `admin.posbillingwala.com/` (Laravel web admin on subdomain).
 3. Configure `admin.posbillingwala.com/.env` (production DB, `APP_DEBUG=false`).
 4. Run `composer install --no-dev` inside the admin folder.
-4. Run `php artisan key:generate`, then cache config/routes/views.
-5. Ensure DB has catalog + licence tables (see Database below).
+5. Run `php artisan key:generate`, then cache config/routes/views.
+6. Ensure DB has catalog + licence + website CMS tables (see Database below).
 
 **Full checklist:** [docs/DEPLOY_WEB.md](docs/DEPLOY_WEB.md)
 
 | URL | Purpose |
 |-----|---------|
 | `https://posbillingwala.com/` | Marketing website |
-| `http://posbillingwala.com/login` | Redirects to web admin login |
-| `http://posbillingwala.com/login` | Web admin (Admin / Dealer / Customer) |
+| `https://posbillingwala.com/login` | Redirects to web admin login |
+| `https://admin.posbillingwala.com/login` | Web admin (Admin / Dealer / Customer) |
 
 ## Quick start — database
 
@@ -97,7 +99,7 @@ Or phpMyAdmin → Import → `rgusomuk_posbilling.sql`.
 
 ### Existing DB upgrade (keep data)
 
-Prefer the single upgrade script (food types, subcategories, portions, portion master, bill snapshots, API tokens, licensing, multi-branch, mess tokens, **combos**, **structured store details**):
+Prefer the single upgrade script (food types, subcategories, portions, portion master, bill snapshots, API tokens, licensing, multi-branch, mess tokens, **combos**, **structured store details**, website CMS schema):
 
 ```bash
 mysql -u USER -p DATABASE < API/migrations/server_upgrade_all.sql
@@ -108,8 +110,9 @@ mysql -u USER -p DATABASE < API/migrations/server_upgrade_all.sql
 | `API/migrations/server_upgrade_all.sql` | **Recommended** one-shot upgrade (safe to re-run) |
 | `API/schema/posbill_install.sql` | Fresh install helper |
 | `API/schema/schema_reference.sql` | Schema-only reference (no production rows) |
+| `API/migrations/p23_website_catalog.sql` | Website CMS schema + sample data |
 
-Individual reference migrations (optional; all included in `server_upgrade_all.sql`): `p3_1`–`p3_7`, `p3_5_portion_master`, `p5_3_api_tokens`, `p6_production_licensing`, `p7_multi_branch_scope`, `p8_mess_token_qr`, `p9_combo_items`, `p10_store_details_structured`.
+Individual reference migrations (optional; most included in `server_upgrade_all.sql`): `p3_1`–`p3_7`, `p3_5_portion_master`, `p5_3_api_tokens`, `p6_production_licensing`, `p7_multi_branch_scope`, `p8_mess_token_qr`, `p9_combo_items`, `p10_store_details_structured`, `p23_website_catalog`.
 
 Full steps: [docs/DEPLOY_DB.md](docs/DEPLOY_DB.md)
 
@@ -127,7 +130,7 @@ Full steps: [docs/DEPLOY_DB.md](docs/DEPLOY_DB.md)
 
 4. Deploy the `API/` folder so app base URLs resolve to these endpoints.
 
-5. Run `server_upgrade_all.sql` (or at least `p9_combo_items.sql` + `p10_store_details_structured.sql`) **before** POS clients sync combos or structured store fields.
+5. Run `server_upgrade_all.sql` (or at least combo + store-details migrations) **before** POS clients sync combos or structured store fields.
 
 ### Key API areas
 
@@ -181,10 +184,11 @@ Sign with your upload keystore before store/rollout — do not commit keystores 
 | [docs/DEPLOY_DB.md](docs/DEPLOY_DB.md) | DB credentials, migrations, upgrade notes |
 | [docs/DEPLOY_WEB.md](docs/DEPLOY_WEB.md) | Website + web admin production deploy |
 | [docs/LICENSE_API_REQUIREMENTS.md](docs/LICENSE_API_REQUIREMENTS.md) | Licensing / trial API behaviour |
-| [docs/COMBO_API_REQUIREMENTS.md](docs/COMBO_API_REQUIREMENTS.md) | Combo master contract (POS done; Owner/Admin/Dealer TBD) |
+| [docs/COMBO_API_REQUIREMENTS.md](docs/COMBO_API_REQUIREMENTS.md) | Combo master contract |
 | [docs/STORE_DETAILS_API_CHANGES.md](docs/STORE_DETAILS_API_CHANGES.md) | Structured shop / address / phone fields |
 | [docs/CURSOR_CODEBASE_AUDIT.md](docs/CURSOR_CODEBASE_AUDIT.md) | Codebase audit |
-| [docs/CURSOR_IMPLEMENTATION_PLAN.md](docs/CURSOR_IMPLEMENTATION_PLAN.md) | Implementation plan (P0–P6 complete; later P9/P10 in migrations) |
+| [docs/CURSOR_IMPLEMENTATION_PLAN.md](docs/CURSOR_IMPLEMENTATION_PLAN.md) | Implementation plan |
+| [docs/POS_BILLINGWALA_BUSINESS_AND_WEBSITE_MODEL.md](docs/POS_BILLINGWALA_BUSINESS_AND_WEBSITE_MODEL.md) | Business + website model |
 
 ## Security notes
 

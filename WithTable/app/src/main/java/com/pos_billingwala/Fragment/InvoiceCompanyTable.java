@@ -64,63 +64,75 @@ public class InvoiceCompanyTable extends Fragment implements View.OnClickListene
         final boolean showLoader = tableAdapter == null;
         final cn.pedant.SweetAlert.SweetAlertDialog loader =
                 showLoader ? ListLoader.show(activity) : null;
+        final POSBillingWalaDatabase db = posBillingWalaDatabase;
         AppExecutors.get().db().execute(() -> {
-            List<CompanyResponse> list = posBillingWalaDatabase.getCompanyDetails();
+            List<CompanyResponse> list;
             List<PosTableResponse> floorTables = null;
             List<DiningAreaResponse> areas = new ArrayList<>();
-            final boolean tableFeatureOn;
-            final boolean shopMissing = list == null || list.isEmpty();
-            if (!shopMissing
-                    && list.get(0).getTableStatus() != null
-                    && list.get(0).getTableStatus().equalsIgnoreCase("on")) {
-                tableFeatureOn = true;
-                floorTables = com.pos_billingwala.Extra.DineInTableHelper
-                        .buildFloorTableList(posBillingWalaDatabase);
-                List<DiningAreaResponse> loadedAreas = posBillingWalaDatabase.getDiningAreas();
-                if (loadedAreas != null) {
-                    areas.addAll(loadedAreas);
-                }
-                if (floorTables == null || floorTables.isEmpty()) {
-                    int parsed = 0;
-                    try {
-                        parsed = Integer.parseInt(list.get(0).getNoOfTable());
-                    } catch (Exception ignored) {
+            boolean tableFeatureOn = false;
+            boolean shopMissing;
+            try {
+                list = db.getCompanyDetails();
+                shopMissing = list == null || list.isEmpty();
+                if (!shopMissing
+                        && list.get(0).getTableStatus() != null
+                        && list.get(0).getTableStatus().equalsIgnoreCase("on")) {
+                    tableFeatureOn = true;
+                    floorTables = com.pos_billingwala.Extra.DineInTableHelper
+                            .buildFloorTableList(db);
+                    List<DiningAreaResponse> loadedAreas = db.getDiningAreas();
+                    if (loadedAreas != null) {
+                        areas.addAll(loadedAreas);
                     }
-                    if (parsed > 0) {
-                        floorTables = new ArrayList<>();
-                        for (int i = 1; i <= parsed; i++) {
-                            PosTableResponse fallback = new PosTableResponse();
-                            fallback.setTableNumber(String.valueOf(i));
-                            fallback.setTableName("T" + i);
-                            fallback.setCapacity("4");
-                            fallback.setDisplayStatus(TableStatus.AVAILABLE);
-                            com.pos_billingwala.Extra.DineInTableHelper.enrichTableRuntime(
-                                    posBillingWalaDatabase, fallback);
-                            floorTables.add(fallback);
+                    if (floorTables == null || floorTables.isEmpty()) {
+                        int parsed = 0;
+                        try {
+                            parsed = Integer.parseInt(list.get(0).getNoOfTable());
+                        } catch (Exception ignored) {
+                        }
+                        if (parsed > 0) {
+                            floorTables = new ArrayList<>();
+                            for (int i = 1; i <= parsed; i++) {
+                                PosTableResponse fallback = new PosTableResponse();
+                                fallback.setTableNumber(String.valueOf(i));
+                                fallback.setTableName("T" + i);
+                                fallback.setCapacity("4");
+                                fallback.setDisplayStatus(TableStatus.AVAILABLE);
+                                com.pos_billingwala.Extra.DineInTableHelper.enrichTableRuntime(db, fallback);
+                                floorTables.add(fallback);
+                            }
                         }
                     }
                 }
-            } else {
+            } catch (Exception e) {
+                e.printStackTrace();
+                list = new ArrayList<>();
+                shopMissing = true;
                 tableFeatureOn = false;
             }
+            final boolean tableFeatureOnFinal = tableFeatureOn;
+            final List<CompanyResponse> companyList = list;
+            final boolean shopMissingFinal = shopMissing;
             final List<PosTableResponse> tablesForUi = floorTables;
             final List<DiningAreaResponse> areasForUi = areas;
             AppExecutors.get().main(() -> {
                 try {
-                    if (activity == null) {
+                    if (activity == null || activeInstance != ui) {
                         return;
                     }
                     companyResponseList.clear();
-                    if (list != null) {
-                        companyResponseList.addAll(list);
+                    if (companyList != null) {
+                        companyResponseList.addAll(companyList);
                     }
-                    if (shopMissing) {
+                    if (shopMissingFinal) {
                         Toast.makeText(activity, activity.getString(R.string.toast_please_fill_shop_details),
                                 Toast.LENGTH_SHORT).show();
-                        ((MainActivity) activity).loadFragment(new CompanyDetailSetting(), true);
+                        if (activity instanceof MainActivity) {
+                            ((MainActivity) activity).loadFragment(new CompanyDetailSetting(), true);
+                        }
                         return;
                     }
-                    if (!tableFeatureOn || tableRecyclerView == null) {
+                    if (!tableFeatureOnFinal || tableRecyclerView == null) {
                         return;
                     }
                     if (tablesForUi != null && !tablesForUi.isEmpty()) {
@@ -149,7 +161,7 @@ public class InvoiceCompanyTable extends Fragment implements View.OnClickListene
                         EmptyListUi.bind(ui != null && ui.binding != null ? ui.binding.noDataFound : null, false,
                                 R.string.empty_sub_dine_in);
                     }
-                    if (ui != null) {
+                    if (ui != null && ui.isAdded()) {
                         ui.diningAreas.clear();
                         ui.diningAreas.addAll(areasForUi);
                         ui.renderAreaFilters();
@@ -171,7 +183,9 @@ public class InvoiceCompanyTable extends Fragment implements View.OnClickListene
         activity = getActivity();
         activeInstance = this;
 
-        posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
+        if (posBillingWalaDatabase == null && activity != null) {
+            posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
+        }
 
         tableRecyclerView = binding.tableRecyclerView;
 
@@ -180,7 +194,9 @@ public class InvoiceCompanyTable extends Fragment implements View.OnClickListene
         view.setOnKeyListener((v, keyCode, event) -> {
             if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
                 Log.i("tag", "onKey Back listener is working!!!");
-                ((MainActivity) activity).navigateBack();
+                if (activity instanceof MainActivity) {
+                    ((MainActivity) activity).navigateBack();
+                }
                 return true;
             }
             return false;

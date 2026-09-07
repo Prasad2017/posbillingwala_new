@@ -330,21 +330,32 @@ public class Home extends Fragment implements View.OnClickListener {
     }
 
     private boolean enableBluetooth() {
-        if (ContextCompat.checkSelfPermission(activity, Manifest.permission.BLUETOOTH_CONNECT)
-                != PackageManager.PERMISSION_GRANTED) {
-            // Permission not granted, return false indicating Bluetooth cannot be enabled
-            requestBluetoothPermission();
-            return false;
-        } else {
-            // Permission granted, proceed to enable Bluetooth if necessary
+        try {
+            if (bluetoothAdapter == null) {
+                bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+            }
+            if (bluetoothAdapter == null) {
+                Toast.makeText(activity, getString(R.string.toast_bluetooth_is_not_supported_on_this_devic),
+                        Toast.LENGTH_LONG).show();
+                return false;
+            }
+            if (ContextCompat.checkSelfPermission(activity, Manifest.permission.BLUETOOTH_CONNECT)
+                    != PackageManager.PERMISSION_GRANTED
+                    && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                requestBluetoothPermission();
+                return false;
+            }
             if (!bluetoothAdapter.isEnabled()) {
+                Toast.makeText(activity, getString(R.string.toast_bluetooth_is_off), Toast.LENGTH_SHORT).show();
                 Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                 startActivityForResult(enableBtIntent, 1);
-                return false; // Bluetooth is being enabled, return false until user responds
-            } else {
-                Log.e("enableBluetooth: ", "Bluetooth is already enabled");
-                return true; // Bluetooth is already enabled
+                return false;
             }
+            return true;
+        } catch (Exception e) {
+            Log.e("Home", "enableBluetooth failed", e);
+            Toast.makeText(activity, getString(R.string.toast_bluetooth_is_off), Toast.LENGTH_SHORT).show();
+            return false;
         }
     }
 

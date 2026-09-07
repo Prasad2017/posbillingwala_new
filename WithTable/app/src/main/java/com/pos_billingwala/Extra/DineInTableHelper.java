@@ -13,8 +13,11 @@ import com.pos_billingwala.Model.ProductCartResponse;
 import com.pos_billingwala.Model.TableStatus;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -82,6 +85,11 @@ public final class DineInTableHelper {
         }
         List<CompanyResponse> companyResponseList = db.getCompanyDetails();
         List<ProductCartResponse> productCartResponseList = db.getCartProductList(tableNumber, CART_ORDER_TABLE);
+        return computeCartTotal(companyResponseList, productCartResponseList);
+    }
+
+    public static float computeCartTotal(List<CompanyResponse> companyResponseList,
+                                         List<ProductCartResponse> productCartResponseList) {
         if (productCartResponseList == null || productCartResponseList.isEmpty()) {
             return 0f;
         }
@@ -136,44 +144,114 @@ public final class DineInTableHelper {
         return (float) Math.ceil(totalAmount);
     }
 
+    /**
+     * Floor list with batched SQLite reads (avoids N+1 per-table queries).
+     */
     public static List<PosTableResponse> buildFloorTableList(POSBillingWalaDatabase db) {
         db.ensureDineInMastersSeeded();
         List<PosTableResponse> tables = db.getActivePosTables();
         if (tables == null) {
             tables = new ArrayList<>();
         }
+        if (tables.isEmpty()) {
+            return tables;
+        }
+
+        List<CompanyResponse> companyResponseList = db.getCompanyDetails();
+        Map<String, List<ProductCartResponse>> cartsByTable = db.getCartProductsGroupedByTable(CART_ORDER_TABLE);
+        Map<String, InvoiceResponse> unpaidByTable = db.getUnpaidInvoicesByTable();
+        Map<String, DiningSessionResponse> sessionsByTable = db.getOpenDiningSessionsByTable();
+        Map<String, InvoiceResponse> failedPrintByTable = db.getLatestFailedPrintInvoicesByTable();
+        if (cartsByTable == null) {
+            cartsByTable = Collections.emptyMap();
+        }
+        if (unpaidByTable == null) {
+            unpaidByTable = Collections.emptyMap();
+        }
+        if (sessionsByTable == null) {
+            sessionsByTable = Collections.emptyMap();
+        }
+        if (failedPrintByTable == null) {
+            failedPrintByTable = Collections.emptyMap();
+        }
+
+        List<String> sessionsToClose = new ArrayList<>();
         for (PosTableResponse table : tables) {
-            enrichTableRuntime(db, table);
+            enrichTableRuntime(table, companyResponseList, cartsByTable, unpaidByTable,
+                    sessionsByTable, failedPrintByTable, sessionsToClose);
+        }
+        if (!sessionsToClose.isEmpty()) {
+            db.closeDiningSessions(sessionsToClose);
         }
         return tables;
     }
 
+    /** Single-table enrich (fallback / one-off callers). Prefer {@link #buildFloorTableList}. */
     public static void enrichTableRuntime(POSBillingWalaDatabase db, PosTableResponse table) {
         if (table == null || db == null) {
             return;
         }
         String tableNumber = table.getTableNumber();
+        Map<String, List<ProductCartResponse>> cartsByTable = new HashMap<>();
+        List<ProductCartResponse> cart = db.getCartProductList(tableNumber, CART_ORDER_TABLE);
+        if (cart != null && !cart.isEmpty()) {
+            cartsByTable.put(safe(tableNumber), cart);
+        }
+        Map<String, InvoiceResponse> unpaidByTable = new HashMap<>();
+        List<InvoiceResponse> unpaid = db.checkTablePaymentMode(tableNumber);
+        if (unpaid != null && !unpaid.isEmpty()) {
+            unpaidByTable.put(safe(tableNumber), unpaid.get(0));
+        }
+        Map<String, DiningSessionResponse> sessionsByTable = new HashMap<>();
+        DiningSessionResponse session = db.getOpenDiningSessionForTable(tableNumber);
+        if (session != null) {
+            sessionsByTable.put(safe(tableNumber), session);
+        }
+        Map<String, InvoiceResponse> failedPrintByTable = new HashMap<>();
+        InvoiceResponse failed = db.getLatestFailedPrintInvoiceForTable(tableNumber);
+        if (failed != null) {
+            failedPrintByTable.put(safe(tableNumber), failed);
+        }
+        List<String> sessionsToClose = new ArrayList<>();
+        enrichTableRuntime(table, db.getCompanyDetails(), cartsByTable, unpaidByTable,
+                sessionsByTable, failedPrintByTable, sessionsToClose);
+        if (!sessionsToClose.isEmpty()) {
+            db.closeDiningSessions(sessionsToClose);
+        }
+    }
+
+    private static void enrichTableRuntime(PosTableResponse table,
+                                           List<CompanyResponse> companyResponseList,
+                                           Map<String, List<ProductCartResponse>> cartsByTable,
+                                           Map<String, InvoiceResponse> unpaidByTable,
+                                           Map<String, DiningSessionResponse> sessionsByTable,
+                                           Map<String, InvoiceResponse> failedPrintByTable,
+                                           List<String> sessionsToClose) {
+        if (table == null) {
+            return;
+        }
+        String tableNumber = safe(table.getTableNumber());
         if (TableStatus.BLOCKED.equalsIgnoreCase(safe(table.getStatusOverride()))
                 || TableStatus.RESERVED.equalsIgnoreCase(safe(table.getStatusOverride()))) {
             table.setDisplayStatus(table.getStatusOverride().trim().toUpperCase(Locale.US));
             return;
         }
 
-        List<ProductCartResponse> cart = db.getCartProductList(tableNumber, CART_ORDER_TABLE);
+        List<ProductCartResponse> cart = cartsByTable.get(tableNumber);
         boolean hasCart = cart != null && !cart.isEmpty();
         table.setHasCartItems(hasCart);
 
-        List<InvoiceResponse> unpaid = db.checkTablePaymentMode(tableNumber);
-        boolean hasUnpaid = unpaid != null && !unpaid.isEmpty();
+        InvoiceResponse unpaid = unpaidByTable.get(tableNumber);
+        boolean hasUnpaid = unpaid != null;
         if (hasUnpaid) {
-            table.setUnpaidInvoiceNumber(unpaid.get(0).getInvoiceNumber());
+            table.setUnpaidInvoiceNumber(unpaid.getInvoiceNumber());
             try {
-                table.setCurrentAmount(ReportCursorHelper.parseAmount(unpaid.get(0).getTotalAmount()));
+                table.setCurrentAmount(ReportCursorHelper.parseAmount(unpaid.getTotalAmount()));
             } catch (Exception ignored) {
             }
         }
 
-        DiningSessionResponse session = db.getOpenDiningSessionForTable(tableNumber);
+        DiningSessionResponse session = sessionsByTable.get(tableNumber);
         if (session != null) {
             table.setSessionId(session.getSessionId());
             table.setJoinedTableLabel(session.dineInHeaderLabel());
@@ -194,7 +272,7 @@ public final class DineInTableHelper {
         }
 
         if (hasCart) {
-            table.setCurrentAmount(computeCartTotal(db, tableNumber));
+            table.setCurrentAmount(computeCartTotal(companyResponseList, cart));
             if (session != null) {
                 float paid = DineInSettlementHelper.sessionPaid(session);
                 float rem = DineInSettlementHelper.remaining(table.getCurrentAmount(), session);
@@ -204,10 +282,8 @@ public final class DineInTableHelper {
                 }
             }
             if (session == null) {
-                // Cart-only running bill (session created lazily on open/hold)
                 table.setDisplayStatus(TableStatus.RUNNING);
                 if (table.getSessionStartedAt() <= 0L) {
-                    // Prefer earliest cart row time is unavailable — use now only for display fallback
                     table.setSessionStartedAt(0L);
                 }
             } else if (TextUtils.isEmpty(table.getDisplayStatus())
@@ -221,30 +297,24 @@ public final class DineInTableHelper {
                 table.setDisplayStatus(TableStatus.PAYMENT_PENDING);
             }
             try {
-                InvoiceResponse inv = unpaid.get(0);
-                float total = ReportCursorHelper.parseAmount(inv.getTotalAmount());
+                float total = ReportCursorHelper.parseAmount(unpaid.getTotalAmount());
                 table.setRemainingAmount(total);
-                if (inv.getBillPrintStatus() == null) {
-                    // map may not include billPrintStatus from checkTablePaymentMode — lookup
-                    InvoiceResponse full = db.getInvoiceByNumber(inv.getInvoiceNumber());
-                    if (full != null && DineInSettlementHelper.invoiceNeedsPrintRetry(full)) {
-                        table.setPrintRetryAvailable(true);
-                    }
-                } else if (DineInSettlementHelper.invoiceNeedsPrintRetry(inv)) {
+                if (DineInSettlementHelper.invoiceNeedsPrintRetry(unpaid)) {
                     table.setPrintRetryAvailable(true);
                 }
             } catch (Exception ignored) {
             }
         } else {
-            // No cart items and no unpaid bill → table is free
-            InvoiceResponse failedPrint = db.getLatestFailedPrintInvoiceForTable(tableNumber);
+            InvoiceResponse failedPrint = failedPrintByTable.get(tableNumber);
             if (failedPrint != null) {
                 table.setPrintRetryAvailable(true);
                 table.setUnpaidInvoiceNumber(failedPrint.getInvoiceNumber());
             }
             if (session != null && failedPrint == null) {
-                // Abandon empty open session so floor does not stay "Running"
-                db.updateDiningSessionStatus(session.getSessionId(), "CLOSED");
+                String sessionId = session.getSessionId();
+                if (sessionId != null && !sessionId.trim().isEmpty() && sessionsToClose != null) {
+                    sessionsToClose.add(sessionId.trim());
+                }
                 table.setSessionId(null);
                 table.setJoinedTableLabel(null);
                 table.setGuestCount(0);
