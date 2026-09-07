@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.pos_billingwala.Extra.CakeBakeryModule;
 import com.pos_billingwala.Model.ProductCartResponse;
 import com.pos_billingwala.databinding.ThreeInchPrinterProductListBinding;
 
@@ -49,7 +50,8 @@ public class ThreePrintAdapter extends RecyclerView.Adapter<ThreePrintAdapter.My
         }
         float totalPerProductGST = productPrice + (productPrice * ((totalCGST + totalSGST) / 100));
 
-        holder.binding.productName.setText(productCartResponse.getDisplayLineName());
+        holder.binding.productName.setText(CakeBakeryModule.stripPhotoMarker(
+                productCartResponse.getDisplayLineName()));
         holder.binding.productQuantity.setText("X" + productCartResponse.getProductQuantity());
         holder.binding.productRate.setText(String.format(Locale.US, "%.2f", totalPerProductGST));
         float totalPerProductAmount = (totalPerProductGST * productQuantity);

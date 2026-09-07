@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.pos_billingwala.Extra.CakeBakeryModule;
 import com.pos_billingwala.Model.InvoiceProductResponse;
 import com.pos_billingwala.databinding.ThreeInchPrinterProductListBinding;
 
@@ -39,7 +40,8 @@ public class ThreeInvoicePrintAdapter extends RecyclerView.Adapter<ThreeInvoiceP
         float productPrice = Float.parseFloat(productCartResponse.getResolvedLinePrice());
         float productQuantity = Float.parseFloat(productCartResponse.getProductQuantity());
 
-        holder.binding.productName.setText(productCartResponse.getDisplayLineName());
+        holder.binding.productName.setText(CakeBakeryModule.stripPhotoMarker(
+                productCartResponse.getDisplayLineName()));
         holder.binding.productQuantity.setText("X" + productCartResponse.getProductQuantity());
         holder.binding.productRate.setText(String.format(Locale.US, "%.2f", productPrice));
         float totalPerProductAmount = (productPrice * productQuantity);

@@ -86,8 +86,13 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
     public static final String ORDER_ROUND_TABLE = "order_round";
     public static final String KOT_TABLE = "kot";
     public static final String KOT_ITEM_TABLE = "kot_item";
+    public static final String PRODUCT_VARIANT_TABLE = "product_variant";
+    public static final String SERVICE_APPOINTMENT_TABLE = "service_appointment";
+    public static final String STAFF_USER_TABLE = "staff_user";
+    public static final String CUSTOM_ORDER_DEPOSIT_TABLE = "custom_order_deposit";
+    public static final String PRODUCT_PRICE_TIER_TABLE = "product_price_tier";
     // Database Version
-    public static final int DATABASE_VERSION = 29;
+    public static final int DATABASE_VERSION = 38;
 
     /** SQL suffix: only rows for the logged-in licence branch. */
     private static String andBranchScope(String tableAlias) {
@@ -264,6 +269,85 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             + " printStatus VARCHAR DEFAULT 'RECEIVED',"
             + " localUpdatedAt VARCHAR)";
 
+    /** Fashion/jewellery size·color·SKU matrix — separate from product_portion. */
+    public final String PRODUCT_VARIANT_QUERY = "CREATE TABLE IF NOT EXISTS " + PRODUCT_VARIANT_TABLE
+            + "(variantId INTEGER PRIMARY KEY AUTOINCREMENT,"
+            + " productId VARCHAR NOT NULL,"
+            + " variantSize VARCHAR,"
+            + " variantColor VARCHAR,"
+            + " variantSku VARCHAR,"
+            + " variantPrice VARCHAR,"
+            + " variantDeletedStatus VARCHAR DEFAULT '0',"
+            + " variantSortOrder INTEGER DEFAULT 0,"
+            + " variantStatus TINYINT DEFAULT 1,"
+            + " variantNetworkStatus VARCHAR DEFAULT 'pending')";
+
+    public final String ALTER_VARIANT_NETWORK_STATUS_QUERY =
+            "ALTER TABLE " + PRODUCT_VARIANT_TABLE + " ADD COLUMN variantNetworkStatus VARCHAR";
+
+    /** Local salon/service appointments (no cloud sync yet). */
+    public final String SERVICE_APPOINTMENT_QUERY = "CREATE TABLE IF NOT EXISTS " + SERVICE_APPOINTMENT_TABLE
+            + "(appointmentId INTEGER PRIMARY KEY AUTOINCREMENT,"
+            + " productId VARCHAR,"
+            + " productName VARCHAR,"
+            + " customerName VARCHAR,"
+            + " customerMobile VARCHAR,"
+            + " appointmentAt VARCHAR,"
+            + " durationMinutes VARCHAR,"
+            + " notes VARCHAR,"
+            + " appointmentStatus VARCHAR DEFAULT 'booked',"
+            + " staffId VARCHAR,"
+            + " staffName VARCHAR,"
+            + " appointmentNetworkStatus VARCHAR DEFAULT 'pending',"
+            + " createdAt VARCHAR)";
+
+    /** Local multi-user staff roster (device session switch + cloud sync). */
+    public final String STAFF_USER_QUERY = "CREATE TABLE IF NOT EXISTS " + STAFF_USER_TABLE
+            + "(staffId INTEGER PRIMARY KEY AUTOINCREMENT,"
+            + " staffName VARCHAR NOT NULL,"
+            + " staffRole VARCHAR NOT NULL DEFAULT 'cashier',"
+            + " staffPin VARCHAR,"
+            + " staffActive VARCHAR DEFAULT '1',"
+            + " staffDeletedStatus VARCHAR DEFAULT '0',"
+            + " createdAt VARCHAR,"
+            + " staffNetworkStatus VARCHAR DEFAULT 'pending')";
+
+    public final String ALTER_STAFF_NETWORK_STATUS_QUERY =
+            "ALTER TABLE " + STAFF_USER_TABLE + " ADD COLUMN staffNetworkStatus VARCHAR";
+
+    /** Bakery custom-order deposits (local ledger). */
+    public final String CUSTOM_ORDER_DEPOSIT_QUERY = "CREATE TABLE IF NOT EXISTS " + CUSTOM_ORDER_DEPOSIT_TABLE
+            + "(depositId INTEGER PRIMARY KEY AUTOINCREMENT,"
+            + " productName VARCHAR,"
+            + " orderNote VARCHAR,"
+            + " depositAmount VARCHAR,"
+            + " dueDate VARCHAR,"
+            + " photoFile VARCHAR,"
+            + " depositStatus VARCHAR DEFAULT 'open',"
+            + " createdAt VARCHAR,"
+            + " depositNetworkStatus VARCHAR DEFAULT 'pending')";
+
+    /** Wholesale qty price tiers (local + cloud sync). */
+    public final String PRODUCT_PRICE_TIER_QUERY = "CREATE TABLE IF NOT EXISTS " + PRODUCT_PRICE_TIER_TABLE
+            + "(tierId INTEGER PRIMARY KEY AUTOINCREMENT,"
+            + " productId VARCHAR NOT NULL,"
+            + " minQty VARCHAR NOT NULL DEFAULT '1',"
+            + " tierPrice VARCHAR NOT NULL,"
+            + " tierLabel VARCHAR,"
+            + " tierDeletedStatus VARCHAR DEFAULT '0',"
+            + " tierSortOrder INTEGER DEFAULT 0,"
+            + " tierNetworkStatus VARCHAR DEFAULT 'pending')";
+
+    public final String ALTER_PRICE_TIER_NETWORK_STATUS_QUERY =
+            "ALTER TABLE " + PRODUCT_PRICE_TIER_TABLE + " ADD COLUMN tierNetworkStatus VARCHAR";
+
+    public final String ALTER_APPOINTMENT_STAFF_ID_QUERY =
+            "ALTER TABLE " + SERVICE_APPOINTMENT_TABLE + " ADD COLUMN staffId VARCHAR";
+    public final String ALTER_APPOINTMENT_STAFF_NAME_QUERY =
+            "ALTER TABLE " + SERVICE_APPOINTMENT_TABLE + " ADD COLUMN staffName VARCHAR";
+    public final String ALTER_APPOINTMENT_NETWORK_STATUS_QUERY =
+            "ALTER TABLE " + SERVICE_APPOINTMENT_TABLE + " ADD COLUMN appointmentNetworkStatus VARCHAR";
+
     public final String ALTER_MEMBER_REGISTRATION_QUERY = "ALTER TABLE " + MEMBER_TABLE + " ADD COLUMN registrationNo VARCHAR";
     public final String COMBO_QUERY = "CREATE TABLE IF NOT EXISTS " + COMBO_TABLE
             + "(comboId INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -417,6 +501,12 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN kotEnable VARCHAR DEFAULT 'on'";
     public final String ALTER_PRINTER_KOT_PREFIX_QUERY =
             "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN kotPrefix VARCHAR DEFAULT 'KOT-'";
+    public final String ALTER_PRINTER_BOT_ENABLE_QUERY =
+            "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN botEnable VARCHAR DEFAULT 'off'";
+    public final String ALTER_PRINTER_BOT_PREFIX_QUERY =
+            "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN botPrefix VARCHAR DEFAULT 'BOT-'";
+    public final String ALTER_PRINTER_BOT_BLUETOOTH_QUERY =
+            "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN bluetoothBotAddress VARCHAR";
     public final String ALTER_PRINTER_KOT_COPIES_QUERY =
             "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN kotCopies VARCHAR DEFAULT '1'";
     public final String ALTER_PRINTER_KOT_AUTO_PRINT_QUERY =
@@ -543,6 +633,11 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         db.execSQL(ORDER_ROUND_QUERY);
         db.execSQL(KOT_QUERY);
         db.execSQL(KOT_ITEM_QUERY);
+        db.execSQL(PRODUCT_VARIANT_QUERY);
+        db.execSQL(SERVICE_APPOINTMENT_QUERY);
+        db.execSQL(STAFF_USER_QUERY);
+        db.execSQL(CUSTOM_ORDER_DEPOSIT_QUERY);
+        db.execSQL(PRODUCT_PRICE_TIER_QUERY);
         ensureFoodTypeCatalog(db);
     }
 
@@ -653,6 +748,38 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         db.execSQL(INVOICE_PRODUCT_DELETE_QUEUE_QUERY);
         ensureUniqueSyncIndexes(db);
         ensureDineInSchema(db);
+        ensureUniversalVerticalSchema(db);
+    }
+
+    /** Phase 10–12 + staff roster additive tables. Safe to re-run. */
+    public void ensureUniversalVerticalSchema(SQLiteDatabase db) {
+        db.execSQL(PRODUCT_VARIANT_QUERY);
+        db.execSQL(SERVICE_APPOINTMENT_QUERY);
+        db.execSQL(STAFF_USER_QUERY);
+        db.execSQL(CUSTOM_ORDER_DEPOSIT_QUERY);
+        db.execSQL(PRODUCT_PRICE_TIER_QUERY);
+        addColumnIfNotExists(db, SERVICE_APPOINTMENT_TABLE, "staffId", ALTER_APPOINTMENT_STAFF_ID_QUERY);
+        addColumnIfNotExists(db, SERVICE_APPOINTMENT_TABLE, "staffName", ALTER_APPOINTMENT_STAFF_NAME_QUERY);
+        addColumnIfNotExists(db, SERVICE_APPOINTMENT_TABLE, "appointmentNetworkStatus",
+                ALTER_APPOINTMENT_NETWORK_STATUS_QUERY);
+        addColumnIfNotExists(db, PRODUCT_PRICE_TIER_TABLE, "tierNetworkStatus",
+                ALTER_PRICE_TIER_NETWORK_STATUS_QUERY);
+        addColumnIfNotExists(db, PRODUCT_VARIANT_TABLE, "variantNetworkStatus",
+                ALTER_VARIANT_NETWORK_STATUS_QUERY);
+        addColumnIfNotExists(db, STAFF_USER_TABLE, "staffNetworkStatus",
+                ALTER_STAFF_NETWORK_STATUS_QUERY);
+        try {
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_product_variant_product ON "
+                    + PRODUCT_VARIANT_TABLE + "(productId)");
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_service_appointment_at ON "
+                    + SERVICE_APPOINTMENT_TABLE + "(appointmentAt)");
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_staff_user_active ON "
+                    + STAFF_USER_TABLE + "(staffActive, staffDeletedStatus)");
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_product_price_tier_product ON "
+                    + PRODUCT_PRICE_TIER_TABLE + "(productId)");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /** Additive dine-in / table / KOT schema (safe to re-run). */
@@ -666,6 +793,9 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         db.execSQL(KOT_ITEM_QUERY);
         addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "kotEnable", ALTER_PRINTER_KOT_ENABLE_QUERY);
         addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "kotPrefix", ALTER_PRINTER_KOT_PREFIX_QUERY);
+        addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "botEnable", ALTER_PRINTER_BOT_ENABLE_QUERY);
+        addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "botPrefix", ALTER_PRINTER_BOT_PREFIX_QUERY);
+        addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "bluetoothBotAddress", ALTER_PRINTER_BOT_BLUETOOTH_QUERY);
         addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "kotCopies", ALTER_PRINTER_KOT_COPIES_QUERY);
         addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "kotAutoPrint", ALTER_PRINTER_KOT_AUTO_PRINT_QUERY);
         addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "kotPreview", ALTER_PRINTER_KOT_PREVIEW_QUERY);
@@ -3681,6 +3811,71 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
     }
 
     /**
+     * Exact {@code productCode} match for barcode wedge scanners (trimmed, case-sensitive as stored).
+     * Returns null when missing / deleted.
+     */
+    public ProductResponse findActiveProductByExactCode(String productCode) {
+        if (productCode == null || productCode.trim().isEmpty()) {
+            return null;
+        }
+        String code = productCode.trim();
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT productId, categoryId, categoryName, productName, productCode, productPrice, "
+                            + "productUnit, productCGST, productSGST, productStatus, openPrice, subcategoryId "
+                            + "FROM " + PRODUCT_TABLE
+                            + " WHERE IFNULL(productDeletedStatus, '0') = '0'"
+                            + " AND TRIM(IFNULL(productCode, '')) = ?"
+                            + " LIMIT 1",
+                    new String[]{code});
+            if (cursor.moveToFirst()) {
+                return mapHomeProductRow(cursor);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return null;
+    }
+
+    /** Food type code for a product via its category ({@code beverage} / {@code food} / …). */
+    public String getFoodTypeCodeForProductId(String productId) {
+        if (productId == null || productId.trim().isEmpty()) {
+            return null;
+        }
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT ft.foodTypeCode FROM " + PRODUCT_TABLE + " p "
+                            + "LEFT JOIN " + PRODUCT_CATEGORY_TABLE + " c "
+                            + "ON CAST(c.categoryId AS TEXT) = CAST(p.categoryId AS TEXT) "
+                            + "OR (IFNULL(p.categoryName, '') != '' AND c.categoryName = p.categoryName) "
+                            + "LEFT JOIN " + FOOD_TYPE_TABLE + " ft ON ft.foodTypeId = c.foodTypeId "
+                            + "WHERE CAST(p.productId AS TEXT) = ? LIMIT 1",
+                    new String[]{productId.trim()});
+            if (cursor.moveToFirst()) {
+                int idx = cursor.getColumnIndex("foodTypeCode");
+                if (idx >= 0 && !cursor.isNull(idx)) {
+                    return cursor.getString(idx);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return null;
+    }
+
+    /**
      * Fast billing search: parameterized SQL, single cart JOIN, limited results.
      * Matches name / code / category / price (same fields as previous in-memory search).
      */
@@ -3940,6 +4135,13 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
                 printerSettingResponse.setKotAutoPrint(kotAutoIdx >= 0 ? cursor.getString(kotAutoIdx) : "off");
                 int kotPreviewIdx = cursor.getColumnIndex("kotPreview");
                 printerSettingResponse.setKotPreview(kotPreviewIdx >= 0 ? cursor.getString(kotPreviewIdx) : "on");
+                int botEnableIdx = cursor.getColumnIndex("botEnable");
+                printerSettingResponse.setBotEnable(botEnableIdx >= 0 ? cursor.getString(botEnableIdx) : "off");
+                int botPrefixIdx = cursor.getColumnIndex("botPrefix");
+                printerSettingResponse.setBotPrefix(botPrefixIdx >= 0 ? cursor.getString(botPrefixIdx) : "BOT-");
+                int botBtIdx = cursor.getColumnIndex("bluetoothBotAddress");
+                printerSettingResponse.setBluetoothBotAddress(
+                        botBtIdx >= 0 ? cursor.getString(botBtIdx) : "");
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -8128,6 +8330,30 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         }
     }
 
+    public void updateBotSettings(String settingId, String botEnable, String botPrefix) {
+        updateBotSettings(settingId, botEnable, botPrefix, null);
+    }
+
+    public void updateBotSettings(String settingId, String botEnable, String botPrefix,
+                                  String bluetoothBotAddress) {
+        if (settingId == null) {
+            return;
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        try {
+            ContentValues values = new ContentValues();
+            values.put("botEnable", botEnable != null ? botEnable : "off");
+            values.put("botPrefix", botPrefix != null && !botPrefix.trim().isEmpty() ? botPrefix : "BOT-");
+            if (bluetoothBotAddress != null) {
+                values.put("bluetoothBotAddress", bluetoothBotAddress);
+            }
+            values.put("settingStatus", 0);
+            db.update(PRINTER_SETTING_TABLE, values, "settingId = ?", new String[]{settingId});
+        } finally {
+            db.close();
+        }
+    }
+
     /** Apply KOT fields from cloud download without marking printer settings unsynced. */
     public void applyKotSettingsFromCloud(String settingId, String kotEnable, String kotPrefix,
                                           String kotCopies, String kotAutoPrint, String kotPreview) {
@@ -9179,4 +9405,1202 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
 
     // endregion
 
+    // region Universal verticals (10–12)
+
+    public boolean hasProductVariants(String productId) {
+        return countActiveProductVariants(productId) > 0;
+    }
+
+    public int countActiveProductVariants(String productId) {
+        if (productId == null || productId.trim().isEmpty()) {
+            return 0;
+        }
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT COUNT(*) FROM " + PRODUCT_VARIANT_TABLE
+                            + " WHERE productId = ? AND IFNULL(variantDeletedStatus,'0') = '0'",
+                    new String[]{productId.trim()});
+            if (cursor.moveToFirst()) {
+                return cursor.getInt(0);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return 0;
+    }
+
+    public List<com.pos_billingwala.Model.ProductVariantResponse> getProductVariantList(String productId) {
+        List<com.pos_billingwala.Model.ProductVariantResponse> list = new ArrayList<>();
+        if (productId == null || productId.trim().isEmpty()) {
+            return list;
+        }
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT * FROM " + PRODUCT_VARIANT_TABLE
+                            + " WHERE productId = ? AND IFNULL(variantDeletedStatus,'0') = '0'"
+                            + " ORDER BY variantSortOrder ASC, variantId ASC",
+                    new String[]{productId.trim()});
+            while (cursor.moveToNext()) {
+                list.add(mapProductVariant(cursor));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return list;
+    }
+
+    private com.pos_billingwala.Model.ProductVariantResponse mapProductVariant(Cursor cursor) {
+        com.pos_billingwala.Model.ProductVariantResponse v =
+                new com.pos_billingwala.Model.ProductVariantResponse();
+        v.setVariantId(cursor.getString(cursor.getColumnIndex("variantId")));
+        v.setProductId(cursor.getString(cursor.getColumnIndex("productId")));
+        v.setVariantSize(cursor.getString(cursor.getColumnIndex("variantSize")));
+        v.setVariantColor(cursor.getString(cursor.getColumnIndex("variantColor")));
+        v.setVariantSku(cursor.getString(cursor.getColumnIndex("variantSku")));
+        v.setVariantPrice(cursor.getString(cursor.getColumnIndex("variantPrice")));
+        int delIdx = cursor.getColumnIndex("variantDeletedStatus");
+        if (delIdx >= 0) {
+            v.setVariantDeletedStatus(cursor.getString(delIdx));
+        }
+        int sortIdx = cursor.getColumnIndex("variantSortOrder");
+        if (sortIdx >= 0) {
+            v.setVariantSortOrder(cursor.getString(sortIdx));
+        }
+        int netIdx = cursor.getColumnIndex("variantNetworkStatus");
+        if (netIdx >= 0) {
+            v.setVariantNetworkStatus(cursor.getString(netIdx));
+        }
+        return v;
+    }
+
+    public long addProductVariant(String productId, String size, String color, String sku, String price) {
+        if (productId == null || productId.trim().isEmpty()) {
+            return -1L;
+        }
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("productId", productId.trim());
+        values.put("variantSize", size != null ? size.trim() : "");
+        values.put("variantColor", color != null ? color.trim() : "");
+        values.put("variantSku", sku != null ? sku.trim() : "");
+        values.put("variantPrice", price != null ? price.trim() : "0");
+        values.put("variantDeletedStatus", "0");
+        values.put("variantSortOrder", countActiveProductVariants(productId));
+        values.put("variantStatus", 1);
+        values.put("variantNetworkStatus", "pending");
+        long id = db.insert(PRODUCT_VARIANT_TABLE, null, values);
+        db.close();
+        return id;
+    }
+
+    public void softDeleteProductVariant(String variantId) {
+        if (variantId == null || variantId.trim().isEmpty()) {
+            return;
+        }
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("variantDeletedStatus", "1");
+        values.put("variantNetworkStatus", "pending");
+        db.update(PRODUCT_VARIANT_TABLE, values, "variantId = ?", new String[]{variantId.trim()});
+        db.close();
+    }
+
+    public List<com.pos_billingwala.Model.ProductVariantResponse> getPendingVariantsForSync(int limit) {
+        List<com.pos_billingwala.Model.ProductVariantResponse> list = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT v.*, p.productNetworkStatus AS productNetworkStatus"
+                            + " FROM " + PRODUCT_VARIANT_TABLE + " v"
+                            + " LEFT JOIN " + PRODUCT_TABLE + " p ON p.productId = v.productId"
+                            + " WHERE IFNULL(v.variantNetworkStatus,'pending') != 'synced'"
+                            + " ORDER BY v.variantId ASC LIMIT ?",
+                    new String[]{String.valueOf(Math.max(1, limit))});
+            while (cursor.moveToNext()) {
+                com.pos_billingwala.Model.ProductVariantResponse v = mapProductVariant(cursor);
+                int pNet = cursor.getColumnIndex("productNetworkStatus");
+                if (pNet >= 0) {
+                    v.setProductNetworkStatus(cursor.getString(pNet));
+                }
+                list.add(v);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return list;
+    }
+
+    public void markVariantSynced(String variantId) {
+        if (variantId == null || variantId.trim().isEmpty()) {
+            return;
+        }
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("variantNetworkStatus", "synced");
+        db.update(PRODUCT_VARIANT_TABLE, values, "variantId = ?", new String[]{variantId.trim()});
+        db.close();
+    }
+
+    public void upsertProductVariantFromCloud(String localVariantId, String productNetworkStatus,
+                                              String productIdFallback, String variantSize,
+                                              String variantColor, String variantSku,
+                                              String variantPrice, String variantDeletedStatus,
+                                              String variantSortOrder) {
+        String key = localVariantId != null ? localVariantId.trim() : "";
+        if (key.isEmpty()) {
+            return;
+        }
+        String localProductId = "";
+        if (productNetworkStatus != null && !productNetworkStatus.trim().isEmpty()) {
+            String resolved = getProductIdByNetworkStatus(productNetworkStatus.trim());
+            if (resolved != null) {
+                localProductId = resolved;
+            }
+        }
+        if (localProductId.isEmpty() && productIdFallback != null) {
+            localProductId = productIdFallback.trim();
+        }
+        if (localProductId.isEmpty()) {
+            return;
+        }
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT variantId FROM " + PRODUCT_VARIANT_TABLE
+                            + " WHERE variantId = ? LIMIT 1",
+                    new String[]{key});
+            ContentValues values = new ContentValues();
+            values.put("productId", localProductId);
+            values.put("variantSize", variantSize != null ? variantSize : "");
+            values.put("variantColor", variantColor != null ? variantColor : "");
+            values.put("variantSku", variantSku != null ? variantSku : "");
+            values.put("variantPrice", variantPrice != null ? variantPrice : "0");
+            values.put("variantDeletedStatus",
+                    variantDeletedStatus != null && !variantDeletedStatus.isEmpty()
+                            ? variantDeletedStatus : "0");
+            int sort = 0;
+            try {
+                if (variantSortOrder != null && !variantSortOrder.trim().isEmpty()) {
+                    sort = Integer.parseInt(variantSortOrder.trim());
+                }
+            } catch (NumberFormatException ignored) {
+            }
+            values.put("variantSortOrder", sort);
+            values.put("variantStatus", 1);
+            values.put("variantNetworkStatus", "synced");
+            if (cursor.moveToFirst()) {
+                db.update(PRODUCT_VARIANT_TABLE, values, "variantId = ?", new String[]{key});
+            } else {
+                db.insert(PRODUCT_VARIANT_TABLE, null, values);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            db.close();
+        }
+    }
+
+    public int countPendingVariants() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT COUNT(*) FROM " + PRODUCT_VARIANT_TABLE
+                            + " WHERE IFNULL(variantNetworkStatus,'pending') != 'synced'",
+                    null);
+            if (cursor.moveToFirst()) {
+                return cursor.getInt(0);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return 0;
+    }
+
+    public long addServiceAppointment(String productId, String productName, String customerName,
+                                      String customerMobile, String appointmentAt, String notes) {
+        return addServiceAppointment(productId, productName, customerName, customerMobile,
+                appointmentAt, notes, null, null);
+    }
+
+    public long addServiceAppointment(String productId, String productName, String customerName,
+                                      String customerMobile, String appointmentAt, String notes,
+                                      String staffId, String staffName) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("productId", productId != null ? productId : "");
+        values.put("productName", productName != null ? productName : "");
+        values.put("customerName", customerName != null ? customerName : "");
+        values.put("customerMobile", customerMobile != null ? customerMobile : "");
+        values.put("appointmentAt", appointmentAt != null ? appointmentAt : "");
+        values.put("notes", notes != null ? notes : "");
+        values.put("appointmentStatus", "booked");
+        values.put("staffId", staffId != null ? staffId : "");
+        values.put("staffName", staffName != null ? staffName : "");
+        values.put("appointmentNetworkStatus", "pending");
+        values.put("createdAt", String.valueOf(System.currentTimeMillis()));
+        long id = db.insert(SERVICE_APPOINTMENT_TABLE, null, values);
+        db.close();
+        return id;
+    }
+
+    public List<com.pos_billingwala.Model.ServiceAppointmentResponse> getUpcomingAppointments(int limit) {
+        List<com.pos_billingwala.Model.ServiceAppointmentResponse> list = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT * FROM " + SERVICE_APPOINTMENT_TABLE
+                            + " WHERE IFNULL(appointmentStatus,'') != 'cancelled'"
+                            + " ORDER BY appointmentAt ASC, appointmentId DESC LIMIT ?",
+                    new String[]{String.valueOf(Math.max(1, limit))});
+            while (cursor.moveToNext()) {
+                list.add(mapServiceAppointmentRow(cursor));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return list;
+    }
+
+    /** Day key format must match book dialog: {@code dd-MM-yyyy}. */
+    public List<com.pos_billingwala.Model.ServiceAppointmentResponse> getAppointmentsForDay(String dayKey) {
+        List<com.pos_billingwala.Model.ServiceAppointmentResponse> list = new ArrayList<>();
+        if (dayKey == null || dayKey.trim().isEmpty()) {
+            return list;
+        }
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT * FROM " + SERVICE_APPOINTMENT_TABLE
+                            + " WHERE IFNULL(appointmentAt,'') LIKE ?"
+                            + " ORDER BY appointmentAt ASC, appointmentId ASC",
+                    new String[]{dayKey.trim() + "%"});
+            while (cursor.moveToNext()) {
+                list.add(mapServiceAppointmentRow(cursor));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return list;
+    }
+
+    public void updateAppointmentStatus(String appointmentId, String status) {
+        if (appointmentId == null || appointmentId.trim().isEmpty()) {
+            return;
+        }
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("appointmentStatus", status != null ? status : "booked");
+        values.put("appointmentNetworkStatus", "pending");
+        db.update(SERVICE_APPOINTMENT_TABLE, values, "appointmentId = ?",
+                new String[]{appointmentId.trim()});
+        db.close();
+    }
+
+    private com.pos_billingwala.Model.ServiceAppointmentResponse mapServiceAppointmentRow(Cursor cursor) {
+        com.pos_billingwala.Model.ServiceAppointmentResponse a =
+                new com.pos_billingwala.Model.ServiceAppointmentResponse();
+        a.setAppointmentId(cursor.getString(cursor.getColumnIndex("appointmentId")));
+        a.setProductId(cursor.getString(cursor.getColumnIndex("productId")));
+        a.setProductName(cursor.getString(cursor.getColumnIndex("productName")));
+        a.setCustomerName(cursor.getString(cursor.getColumnIndex("customerName")));
+        a.setCustomerMobile(cursor.getString(cursor.getColumnIndex("customerMobile")));
+        a.setAppointmentAt(cursor.getString(cursor.getColumnIndex("appointmentAt")));
+        a.setNotes(cursor.getString(cursor.getColumnIndex("notes")));
+        a.setAppointmentStatus(cursor.getString(cursor.getColumnIndex("appointmentStatus")));
+        int staffIdIdx = cursor.getColumnIndex("staffId");
+        int staffNameIdx = cursor.getColumnIndex("staffName");
+        int netIdx = cursor.getColumnIndex("appointmentNetworkStatus");
+        if (staffIdIdx >= 0) {
+            a.setStaffId(cursor.getString(staffIdIdx));
+        }
+        if (staffNameIdx >= 0) {
+            a.setStaffName(cursor.getString(staffNameIdx));
+        }
+        if (netIdx >= 0) {
+            a.setAppointmentNetworkStatus(cursor.getString(netIdx));
+        }
+        return a;
+    }
+
+    public List<com.pos_billingwala.Model.StaffUserResponse> getActiveStaffUsers() {
+        migrateLegacyStaffPinsToHash();
+        List<com.pos_billingwala.Model.StaffUserResponse> list = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT * FROM " + STAFF_USER_TABLE
+                            + " WHERE IFNULL(staffDeletedStatus,'0') = '0'"
+                            + " AND IFNULL(staffActive,'1') = '1'"
+                            + " ORDER BY staffName COLLATE NOCASE ASC",
+                    null);
+            while (cursor.moveToNext()) {
+                list.add(mapStaffUserRow(cursor));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return list;
+    }
+
+    /**
+     * Re-hash legacy plaintext staff PINs to {@code sha256:<hex>} and mark pending for cloud sync.
+     * Safe to call often — no-ops when already hashed or empty.
+     */
+    public int migrateLegacyStaffPinsToHash() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = null;
+        int migrated = 0;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT staffId, staffPin FROM " + STAFF_USER_TABLE
+                            + " WHERE IFNULL(staffPin,'') != ''",
+                    null);
+            while (cursor.moveToNext()) {
+                String id = cursor.getString(0);
+                String pin = cursor.getString(1);
+                if (id == null || pin == null || pin.trim().isEmpty()) {
+                    continue;
+                }
+                if (com.pos_billingwala.Extra.StaffPinHasher.isHashed(pin)) {
+                    continue;
+                }
+                ContentValues values = new ContentValues();
+                values.put("staffPin",
+                        com.pos_billingwala.Extra.StaffPinHasher.hashForStorage(pin));
+                values.put("staffNetworkStatus", "pending");
+                migrated += db.update(STAFF_USER_TABLE, values, "staffId = ?", new String[]{id});
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            db.close();
+        }
+        return migrated;
+    }
+
+    public com.pos_billingwala.Model.StaffUserResponse getStaffUserById(String staffId) {
+        if (staffId == null || staffId.trim().isEmpty()) {
+            return null;
+        }
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT * FROM " + STAFF_USER_TABLE + " WHERE staffId = ? LIMIT 1",
+                    new String[]{staffId.trim()});
+            if (cursor.moveToFirst()) {
+                return mapStaffUserRow(cursor);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return null;
+    }
+
+    public long addStaffUser(String name, String role, String pin) {
+        if (name == null || name.trim().isEmpty()) {
+            return -1;
+        }
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("staffName", name.trim());
+        values.put("staffRole", role != null && !role.trim().isEmpty() ? role.trim().toLowerCase() : "cashier");
+        values.put("staffPin", com.pos_billingwala.Extra.StaffPinHasher.hashForStorage(pin));
+        values.put("staffActive", "1");
+        values.put("staffDeletedStatus", "0");
+        values.put("createdAt", String.valueOf(System.currentTimeMillis()));
+        values.put("staffNetworkStatus", "pending");
+        long id = db.insert(STAFF_USER_TABLE, null, values);
+        db.close();
+        return id;
+    }
+
+    public void updateStaffUser(String staffId, String name, String role, String pin) {
+        if (staffId == null || staffId.trim().isEmpty()) {
+            return;
+        }
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        if (name != null && !name.trim().isEmpty()) {
+            values.put("staffName", name.trim());
+        }
+        if (role != null && !role.trim().isEmpty()) {
+            values.put("staffRole", role.trim().toLowerCase());
+        }
+        if (pin != null) {
+            // Empty string clears PIN; non-empty is hashed for storage.
+            values.put("staffPin", com.pos_billingwala.Extra.StaffPinHasher.hashForStorage(pin));
+        }
+        values.put("staffNetworkStatus", "pending");
+        db.update(STAFF_USER_TABLE, values, "staffId = ?", new String[]{staffId.trim()});
+        db.close();
+    }
+
+    public void softDeleteStaffUser(String staffId) {
+        if (staffId == null || staffId.trim().isEmpty()) {
+            return;
+        }
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("staffDeletedStatus", "1");
+        values.put("staffActive", "0");
+        values.put("staffNetworkStatus", "pending");
+        db.update(STAFF_USER_TABLE, values, "staffId = ?", new String[]{staffId.trim()});
+        db.close();
+    }
+
+    private com.pos_billingwala.Model.StaffUserResponse mapStaffUserRow(Cursor cursor) {
+        com.pos_billingwala.Model.StaffUserResponse s = new com.pos_billingwala.Model.StaffUserResponse();
+        s.setStaffId(cursor.getString(cursor.getColumnIndex("staffId")));
+        s.setStaffName(cursor.getString(cursor.getColumnIndex("staffName")));
+        s.setStaffRole(cursor.getString(cursor.getColumnIndex("staffRole")));
+        s.setStaffPin(cursor.getString(cursor.getColumnIndex("staffPin")));
+        s.setStaffActive(cursor.getString(cursor.getColumnIndex("staffActive")));
+        s.setStaffDeletedStatus(cursor.getString(cursor.getColumnIndex("staffDeletedStatus")));
+        int netIdx = cursor.getColumnIndex("staffNetworkStatus");
+        if (netIdx >= 0) {
+            s.setStaffNetworkStatus(cursor.getString(netIdx));
+        }
+        int createdIdx = cursor.getColumnIndex("createdAt");
+        if (createdIdx >= 0) {
+            s.setCreatedAt(cursor.getString(createdIdx));
+        }
+        return s;
+    }
+
+    public List<com.pos_billingwala.Model.StaffUserResponse> getPendingStaffUsersForSync(int limit) {
+        List<com.pos_billingwala.Model.StaffUserResponse> list = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT * FROM " + STAFF_USER_TABLE
+                            + " WHERE IFNULL(staffNetworkStatus,'pending') != 'synced'"
+                            + " ORDER BY staffId ASC LIMIT ?",
+                    new String[]{String.valueOf(Math.max(1, limit))});
+            while (cursor.moveToNext()) {
+                list.add(mapStaffUserRow(cursor));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return list;
+    }
+
+    public void markStaffUserSynced(String staffId) {
+        if (staffId == null || staffId.trim().isEmpty()) {
+            return;
+        }
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("staffNetworkStatus", "synced");
+        db.update(STAFF_USER_TABLE, values, "staffId = ?", new String[]{staffId.trim()});
+        db.close();
+    }
+
+    public void upsertStaffUserFromCloud(String localStaffId, String staffName, String staffRole,
+                                         String staffPin, String staffActive,
+                                         String staffDeletedStatus, String createdAt) {
+        String key = localStaffId != null ? localStaffId.trim() : "";
+        if (key.isEmpty()) {
+            return;
+        }
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT staffId FROM " + STAFF_USER_TABLE + " WHERE staffId = ? LIMIT 1",
+                    new String[]{key});
+            ContentValues values = new ContentValues();
+            values.put("staffName", staffName != null ? staffName : "");
+            values.put("staffRole",
+                    staffRole != null && !staffRole.isEmpty() ? staffRole.toLowerCase() : "cashier");
+            values.put("staffPin", staffPin != null ? staffPin : "");
+            values.put("staffActive",
+                    staffActive != null && !staffActive.isEmpty() ? staffActive : "1");
+            values.put("staffDeletedStatus",
+                    staffDeletedStatus != null && !staffDeletedStatus.isEmpty()
+                            ? staffDeletedStatus : "0");
+            values.put("staffNetworkStatus", "synced");
+            if (createdAt != null && !createdAt.trim().isEmpty()) {
+                values.put("createdAt", createdAt.trim());
+            }
+            if (cursor.moveToFirst()) {
+                db.update(STAFF_USER_TABLE, values, "staffId = ?", new String[]{key});
+            } else {
+                if (createdAt == null || createdAt.trim().isEmpty()) {
+                    values.put("createdAt", String.valueOf(System.currentTimeMillis()));
+                }
+                db.insert(STAFF_USER_TABLE, null, values);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            db.close();
+        }
+    }
+
+    public int countPendingStaffUsers() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT COUNT(*) FROM " + STAFF_USER_TABLE
+                            + " WHERE IFNULL(staffNetworkStatus,'pending') != 'synced'",
+                    null);
+            if (cursor.moveToFirst()) {
+                return cursor.getInt(0);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return 0;
+    }
+
+    public long addCustomOrderDeposit(String productName, String orderNote, String depositAmount,
+                                      String dueDate, String photoFile) {
+        if (depositAmount == null || depositAmount.trim().isEmpty()) {
+            return -1;
+        }
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("productName", productName != null ? productName : "");
+        values.put("orderNote", orderNote != null ? orderNote : "");
+        values.put("depositAmount", depositAmount.trim());
+        values.put("dueDate", dueDate != null ? dueDate : "");
+        values.put("photoFile", photoFile != null ? photoFile : "");
+        values.put("depositStatus", "open");
+        values.put("createdAt", String.valueOf(System.currentTimeMillis()));
+        values.put("depositNetworkStatus", "pending");
+        long id = db.insert(CUSTOM_ORDER_DEPOSIT_TABLE, null, values);
+        db.close();
+        return id;
+    }
+
+    public List<android.util.Pair<String, String>> getOpenCustomOrderDeposits(int limit) {
+        List<android.util.Pair<String, String>> list = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT depositId, productName, orderNote, depositAmount, dueDate, depositStatus"
+                            + " FROM " + CUSTOM_ORDER_DEPOSIT_TABLE
+                            + " WHERE IFNULL(depositStatus,'open') = 'open'"
+                            + " ORDER BY depositId DESC LIMIT ?",
+                    new String[]{String.valueOf(Math.max(1, limit))});
+            while (cursor.moveToNext()) {
+                String id = cursor.getString(0);
+                String line = "₹" + cursor.getString(3)
+                        + " — " + (cursor.getString(1) != null ? cursor.getString(1) : "")
+                        + (cursor.getString(2) != null && !cursor.getString(2).isEmpty()
+                        ? " · " + cursor.getString(2) : "")
+                        + (cursor.getString(4) != null && !cursor.getString(4).isEmpty()
+                        ? " · Due " + cursor.getString(4) : "");
+                list.add(new android.util.Pair<>(id, line));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return list;
+    }
+
+    public void updateCustomOrderDepositStatus(String depositId, String status) {
+        if (depositId == null || depositId.trim().isEmpty()) {
+            return;
+        }
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("depositStatus", status != null ? status : "open");
+        values.put("depositNetworkStatus", "pending");
+        db.update(CUSTOM_ORDER_DEPOSIT_TABLE, values, "depositId = ?", new String[]{depositId.trim()});
+        db.close();
+    }
+
+    public List<com.pos_billingwala.Model.ServiceAppointmentResponse> getPendingAppointmentsForSync(int limit) {
+        List<com.pos_billingwala.Model.ServiceAppointmentResponse> list = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT * FROM " + SERVICE_APPOINTMENT_TABLE
+                            + " WHERE IFNULL(appointmentNetworkStatus,'pending') != 'synced'"
+                            + " ORDER BY appointmentId ASC LIMIT ?",
+                    new String[]{String.valueOf(Math.max(1, limit))});
+            while (cursor.moveToNext()) {
+                list.add(mapServiceAppointmentRow(cursor));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return list;
+    }
+
+    public void markAppointmentSynced(String appointmentId) {
+        if (appointmentId == null || appointmentId.trim().isEmpty()) {
+            return;
+        }
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("appointmentNetworkStatus", "synced");
+        db.update(SERVICE_APPOINTMENT_TABLE, values, "appointmentId = ?",
+                new String[]{appointmentId.trim()});
+        db.close();
+    }
+
+    public List<com.pos_billingwala.Model.CustomOrderDepositResponse> getPendingDepositsForSync(int limit) {
+        List<com.pos_billingwala.Model.CustomOrderDepositResponse> list = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT * FROM " + CUSTOM_ORDER_DEPOSIT_TABLE
+                            + " WHERE IFNULL(depositNetworkStatus,'pending') != 'synced'"
+                            + " ORDER BY depositId ASC LIMIT ?",
+                    new String[]{String.valueOf(Math.max(1, limit))});
+            while (cursor.moveToNext()) {
+                list.add(mapCustomOrderDepositRow(cursor));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return list;
+    }
+
+    public void markDepositSynced(String depositId) {
+        if (depositId == null || depositId.trim().isEmpty()) {
+            return;
+        }
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("depositNetworkStatus", "synced");
+        db.update(CUSTOM_ORDER_DEPOSIT_TABLE, values, "depositId = ?",
+                new String[]{depositId.trim()});
+        db.close();
+    }
+
+    public void upsertCustomOrderDepositFromCloud(String localDepositId,
+                                                  String productName, String orderNote,
+                                                  String depositAmount, String dueDate,
+                                                  String photoFile, String depositStatus,
+                                                  String createdAt) {
+        String key = localDepositId != null ? localDepositId.trim() : "";
+        if (key.isEmpty()) {
+            return;
+        }
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT depositId FROM " + CUSTOM_ORDER_DEPOSIT_TABLE
+                            + " WHERE depositId = ? LIMIT 1",
+                    new String[]{key});
+            ContentValues values = new ContentValues();
+            values.put("productName", productName != null ? productName : "");
+            values.put("orderNote", orderNote != null ? orderNote : "");
+            values.put("depositAmount", depositAmount != null ? depositAmount : "");
+            values.put("dueDate", dueDate != null ? dueDate : "");
+            values.put("photoFile", photoFile != null ? photoFile : "");
+            values.put("depositStatus",
+                    depositStatus != null && !depositStatus.isEmpty() ? depositStatus : "open");
+            values.put("depositNetworkStatus", "synced");
+            if (createdAt != null && !createdAt.trim().isEmpty()) {
+                values.put("createdAt", createdAt.trim());
+            }
+            if (cursor.moveToFirst()) {
+                db.update(CUSTOM_ORDER_DEPOSIT_TABLE, values, "depositId = ?", new String[]{key});
+            } else {
+                if (createdAt == null || createdAt.trim().isEmpty()) {
+                    values.put("createdAt", String.valueOf(System.currentTimeMillis()));
+                }
+                db.insert(CUSTOM_ORDER_DEPOSIT_TABLE, null, values);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            db.close();
+        }
+    }
+
+    public int countPendingDeposits() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT COUNT(*) FROM " + CUSTOM_ORDER_DEPOSIT_TABLE
+                            + " WHERE IFNULL(depositNetworkStatus,'pending') != 'synced'",
+                    null);
+            if (cursor.moveToFirst()) {
+                return cursor.getInt(0);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return 0;
+    }
+
+    private com.pos_billingwala.Model.CustomOrderDepositResponse mapCustomOrderDepositRow(Cursor cursor) {
+        com.pos_billingwala.Model.CustomOrderDepositResponse d =
+                new com.pos_billingwala.Model.CustomOrderDepositResponse();
+        d.setDepositId(cursor.getString(cursor.getColumnIndex("depositId")));
+        d.setProductName(cursor.getString(cursor.getColumnIndex("productName")));
+        d.setOrderNote(cursor.getString(cursor.getColumnIndex("orderNote")));
+        d.setDepositAmount(cursor.getString(cursor.getColumnIndex("depositAmount")));
+        d.setDueDate(cursor.getString(cursor.getColumnIndex("dueDate")));
+        d.setPhotoFile(cursor.getString(cursor.getColumnIndex("photoFile")));
+        d.setDepositStatus(cursor.getString(cursor.getColumnIndex("depositStatus")));
+        int netIdx = cursor.getColumnIndex("depositNetworkStatus");
+        if (netIdx >= 0) {
+            d.setDepositNetworkStatus(cursor.getString(netIdx));
+        }
+        int createdIdx = cursor.getColumnIndex("createdAt");
+        if (createdIdx >= 0) {
+            d.setCreatedAt(cursor.getString(createdIdx));
+        }
+        return d;
+    }
+
+    public void upsertServiceAppointmentFromCloud(String localAppointmentId,
+                                                    String productId, String productName,
+                                                    String customerName, String customerMobile,
+                                                    String appointmentAt, String notes,
+                                                    String appointmentStatus,
+                                                    String staffId, String staffName) {
+        String key = localAppointmentId != null ? localAppointmentId.trim() : "";
+        if (key.isEmpty()) {
+            return;
+        }
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT appointmentId FROM " + SERVICE_APPOINTMENT_TABLE
+                            + " WHERE appointmentId = ? LIMIT 1",
+                    new String[]{key});
+            ContentValues values = new ContentValues();
+            values.put("productId", productId != null ? productId : "");
+            values.put("productName", productName != null ? productName : "");
+            values.put("customerName", customerName != null ? customerName : "");
+            values.put("customerMobile", customerMobile != null ? customerMobile : "");
+            values.put("appointmentAt", appointmentAt != null ? appointmentAt : "");
+            values.put("notes", notes != null ? notes : "");
+            values.put("appointmentStatus",
+                    appointmentStatus != null && !appointmentStatus.isEmpty() ? appointmentStatus : "booked");
+            values.put("staffId", staffId != null ? staffId : "");
+            values.put("staffName", staffName != null ? staffName : "");
+            values.put("appointmentNetworkStatus", "synced");
+            if (cursor.moveToFirst()) {
+                db.update(SERVICE_APPOINTMENT_TABLE, values, "appointmentId = ?", new String[]{key});
+            } else {
+                values.put("createdAt", String.valueOf(System.currentTimeMillis()));
+                db.insert(SERVICE_APPOINTMENT_TABLE, null, values);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            db.close();
+        }
+    }
+
+    public int countPendingAppointments() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT COUNT(*) FROM " + SERVICE_APPOINTMENT_TABLE
+                            + " WHERE IFNULL(appointmentNetworkStatus,'pending') != 'synced'",
+                    null);
+            if (cursor.moveToFirst()) {
+                return cursor.getInt(0);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return 0;
+    }
+
+    public boolean hasProductPriceTiers(String productId) {
+        if (productId == null || productId.trim().isEmpty()) {
+            return false;
+        }
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT COUNT(*) FROM " + PRODUCT_PRICE_TIER_TABLE
+                            + " WHERE productId = ? AND IFNULL(tierDeletedStatus,'0') = '0'",
+                    new String[]{productId.trim()});
+            return cursor.moveToFirst() && cursor.getInt(0) > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
+    public List<com.pos_billingwala.Model.ProductPriceTierResponse> getProductPriceTier(String productId) {
+        List<com.pos_billingwala.Model.ProductPriceTierResponse> list = new ArrayList<>();
+        if (productId == null || productId.trim().isEmpty()) {
+            return list;
+        }
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT * FROM " + PRODUCT_PRICE_TIER_TABLE
+                            + " WHERE productId = ? AND IFNULL(tierDeletedStatus,'0') = '0'"
+                            + " ORDER BY CAST(IFNULL(minQty,'1') AS REAL) ASC, tierId ASC",
+                    new String[]{productId.trim()});
+            while (cursor.moveToNext()) {
+                com.pos_billingwala.Model.ProductPriceTierResponse t =
+                        new com.pos_billingwala.Model.ProductPriceTierResponse();
+                t.setTierId(cursor.getString(cursor.getColumnIndex("tierId")));
+                t.setProductId(cursor.getString(cursor.getColumnIndex("productId")));
+                t.setMinQty(cursor.getString(cursor.getColumnIndex("minQty")));
+                t.setTierPrice(cursor.getString(cursor.getColumnIndex("tierPrice")));
+                t.setTierLabel(cursor.getString(cursor.getColumnIndex("tierLabel")));
+                t.setTierDeletedStatus(cursor.getString(cursor.getColumnIndex("tierDeletedStatus")));
+                int netIdx = cursor.getColumnIndex("tierNetworkStatus");
+                if (netIdx >= 0) {
+                    t.setTierNetworkStatus(cursor.getString(netIdx));
+                }
+                list.add(t);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return list;
+    }
+
+    public long addProductPriceTier(String productId, String minQty, String tierPrice, String tierLabel) {
+        if (productId == null || productId.trim().isEmpty()
+                || tierPrice == null || tierPrice.trim().isEmpty()) {
+            return -1;
+        }
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("productId", productId.trim());
+        values.put("minQty", minQty != null && !minQty.trim().isEmpty() ? minQty.trim() : "1");
+        values.put("tierPrice", tierPrice.trim());
+        values.put("tierLabel", tierLabel != null ? tierLabel.trim() : "");
+        values.put("tierDeletedStatus", "0");
+        values.put("tierSortOrder", 0);
+        values.put("tierNetworkStatus", "pending");
+        long id = db.insert(PRODUCT_PRICE_TIER_TABLE, null, values);
+        db.close();
+        return id;
+    }
+
+    public void softDeleteProductPriceTier(String tierId) {
+        if (tierId == null || tierId.trim().isEmpty()) {
+            return;
+        }
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("tierDeletedStatus", "1");
+        values.put("tierNetworkStatus", "pending");
+        db.update(PRODUCT_PRICE_TIER_TABLE, values, "tierId = ?", new String[]{tierId.trim()});
+        db.close();
+    }
+
+    public List<com.pos_billingwala.Model.ProductPriceTierResponse> getPendingPriceTiersForSync(int limit) {
+        List<com.pos_billingwala.Model.ProductPriceTierResponse> list = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT t.*, p.productNetworkStatus AS productNetworkStatus"
+                            + " FROM " + PRODUCT_PRICE_TIER_TABLE + " t"
+                            + " LEFT JOIN " + PRODUCT_TABLE + " p ON p.productId = t.productId"
+                            + " WHERE IFNULL(t.tierNetworkStatus,'pending') != 'synced'"
+                            + " ORDER BY t.tierId ASC LIMIT ?",
+                    new String[]{String.valueOf(Math.max(1, limit))});
+            while (cursor.moveToNext()) {
+                com.pos_billingwala.Model.ProductPriceTierResponse t =
+                        new com.pos_billingwala.Model.ProductPriceTierResponse();
+                t.setTierId(cursor.getString(cursor.getColumnIndex("tierId")));
+                t.setProductId(cursor.getString(cursor.getColumnIndex("productId")));
+                t.setMinQty(cursor.getString(cursor.getColumnIndex("minQty")));
+                t.setTierPrice(cursor.getString(cursor.getColumnIndex("tierPrice")));
+                t.setTierLabel(cursor.getString(cursor.getColumnIndex("tierLabel")));
+                t.setTierDeletedStatus(cursor.getString(cursor.getColumnIndex("tierDeletedStatus")));
+                int netIdx = cursor.getColumnIndex("tierNetworkStatus");
+                if (netIdx >= 0) {
+                    t.setTierNetworkStatus(cursor.getString(netIdx));
+                }
+                int pNet = cursor.getColumnIndex("productNetworkStatus");
+                if (pNet >= 0) {
+                    t.setProductNetworkStatus(cursor.getString(pNet));
+                }
+                list.add(t);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return list;
+    }
+
+    public void markPriceTierSynced(String tierId) {
+        if (tierId == null || tierId.trim().isEmpty()) {
+            return;
+        }
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("tierNetworkStatus", "synced");
+        db.update(PRODUCT_PRICE_TIER_TABLE, values, "tierId = ?", new String[]{tierId.trim()});
+        db.close();
+    }
+
+    public void upsertProductPriceTierFromCloud(String localTierId, String productNetworkStatus,
+                                                String productIdFallback, String minQty,
+                                                String tierPrice, String tierLabel,
+                                                String tierDeletedStatus) {
+        String key = localTierId != null ? localTierId.trim() : "";
+        if (key.isEmpty()) {
+            return;
+        }
+        String localProductId = "";
+        if (productNetworkStatus != null && !productNetworkStatus.trim().isEmpty()) {
+            String resolved = getProductIdByNetworkStatus(productNetworkStatus.trim());
+            if (resolved != null) {
+                localProductId = resolved;
+            }
+        }
+        if (localProductId.isEmpty() && productIdFallback != null) {
+            localProductId = productIdFallback.trim();
+        }
+        if (localProductId.isEmpty()) {
+            return;
+        }
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT tierId FROM " + PRODUCT_PRICE_TIER_TABLE
+                            + " WHERE tierId = ? LIMIT 1",
+                    new String[]{key});
+            ContentValues values = new ContentValues();
+            values.put("productId", localProductId);
+            values.put("minQty", minQty != null && !minQty.isEmpty() ? minQty : "1");
+            values.put("tierPrice", tierPrice != null ? tierPrice : "");
+            values.put("tierLabel", tierLabel != null ? tierLabel : "");
+            values.put("tierDeletedStatus",
+                    tierDeletedStatus != null && !tierDeletedStatus.isEmpty() ? tierDeletedStatus : "0");
+            values.put("tierNetworkStatus", "synced");
+            if (cursor.moveToFirst()) {
+                db.update(PRODUCT_PRICE_TIER_TABLE, values, "tierId = ?", new String[]{key});
+            } else {
+                values.put("tierSortOrder", 0);
+                db.insert(PRODUCT_PRICE_TIER_TABLE, null, values);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            db.close();
+        }
+    }
+
+    public int countPendingPriceTiers() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT COUNT(*) FROM " + PRODUCT_PRICE_TIER_TABLE
+                            + " WHERE IFNULL(tierNetworkStatus,'pending') != 'synced'",
+                    null);
+            if (cursor.moveToFirst()) {
+                return cursor.getInt(0);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return 0;
+    }
+
+    public ProductResponse findActiveProductByNameAndCategory(String productName, String categoryName) {
+        if (productName == null || productName.trim().isEmpty()
+                || categoryName == null || categoryName.trim().isEmpty()) {
+            return null;
+        }
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT productId, categoryId, categoryName, productName, productCode, productPrice, "
+                            + "productUnit, productCGST, productSGST, productStatus, openPrice, subcategoryId "
+                            + "FROM " + PRODUCT_TABLE
+                            + " WHERE IFNULL(productDeletedStatus, '0') = '0'"
+                            + " AND LOWER(TRIM(IFNULL(productName,''))) = LOWER(?)"
+                            + " AND LOWER(TRIM(IFNULL(categoryName,''))) = LOWER(?)"
+                            + " LIMIT 1",
+                    new String[]{productName.trim(), categoryName.trim()});
+            if (cursor.moveToFirst()) {
+                return mapHomeProductRow(cursor);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Returns categoryId for name; creates a local category if missing.
+     */
+    public String ensureCategoryIdByName(String categoryName) {
+        if (categoryName == null || categoryName.trim().isEmpty()) {
+            return null;
+        }
+        String name = categoryName.trim();
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT categoryId FROM " + PRODUCT_CATEGORY_TABLE
+                            + " WHERE IFNULL(categoryDeletedStatus,'0') = '0'"
+                            + " AND LOWER(TRIM(IFNULL(categoryName,''))) = LOWER(?) LIMIT 1",
+                    new String[]{name});
+            if (cursor.moveToFirst()) {
+                return cursor.getString(0);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        long foodTypeId = 0L;
+        try {
+            foodTypeId = getFoodTypeIdByCode(FoodTypeResponse.CODE_FOOD);
+        } catch (Exception ignored) {
+        }
+        String network = "csv" + System.currentTimeMillis();
+        insertProductCategory(name, 0, "0", network, foodTypeId, -1);
+        db = this.getReadableDatabase();
+        cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT categoryId FROM " + PRODUCT_CATEGORY_TABLE
+                            + " WHERE LOWER(TRIM(IFNULL(categoryName,''))) = LOWER(?) LIMIT 1",
+                    new String[]{name});
+            if (cursor.moveToFirst()) {
+                return cursor.getString(0);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return null;
+    }
+
 }
+

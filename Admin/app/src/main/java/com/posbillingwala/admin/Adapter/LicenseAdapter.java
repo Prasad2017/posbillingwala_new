@@ -23,6 +23,7 @@ import com.posbillingwala.admin.Extra.BottomSheetUi;
 import com.posbillingwala.admin.Extra.LicenceValidityTiers;
 import com.posbillingwala.admin.Extra.LicenseStatusHelper;
 import com.posbillingwala.admin.Fragment.CustomerDetails;
+import com.posbillingwala.admin.Fragment.LicenceBusinessTemplate;
 import com.posbillingwala.admin.Model.AllApiResponse;
 import com.posbillingwala.admin.Model.LicenseResponse;
 import com.posbillingwala.admin.R;
@@ -169,6 +170,27 @@ public class LicenseAdapter extends RecyclerView.Adapter<LicenseAdapter.MyViewHo
                             licenseResponse, licenseValidity, licenseType, amount,
                             holder.binding.registrationDate.getText().toString()));
         });
+
+        if (holder.binding.openBusinessTemplate != null) {
+            holder.binding.openBusinessTemplate.setOnClickListener(v -> openBusinessTemplate(licenseResponse));
+        }
+    }
+
+    private void openBusinessTemplate(LicenseResponse licenseResponse) {
+        if (!(context instanceof MainActivity)) {
+            return;
+        }
+        String shop = licenseResponse.getShopName1();
+        if (shop == null || shop.trim().isEmpty()) {
+            shop = licenseResponse.getBranchLabel() != null ? licenseResponse.getBranchLabel() : "Licence";
+        }
+        String display = shop + " (#" + licenseResponse.getLicensesId() + ")";
+        LicenceBusinessTemplate fragment = new LicenceBusinessTemplate();
+        Bundle b = new Bundle();
+        b.putString("licenceId", licenseResponse.getLicensesId());
+        b.putString("licenceDisplay", display);
+        fragment.setArguments(b);
+        ((MainActivity) context).loadFragment(fragment, true);
     }
 
     private void getLicenseValidity(MyViewHolder holder) {

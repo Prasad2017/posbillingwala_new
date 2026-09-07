@@ -26,17 +26,20 @@ Per-app docs: [WithTable/README.md](WithTable/README.md) · [Owner/README.md](Ow
 ## Features (current)
 
 - **Offline-first billing** — bills save to SQLite first; sync via WorkManager + receivers when online
+- **Universal multi-business POS** — business templates + feature flags (restaurant, mess, bar, retail, fashion, salon, bakery, weight/fresh); pack docs in `Billingwala_Universal_POS_COMPLETE/`
 - **Catalog** — Food type → Category → optional Subcategory → Product → Portions linked to **Portion Master** (Half, Full, Kg, etc.)
 - **Combo items** — separate combo master (not a product); fixed component list + manual sell price; bill on POS with invoice component snapshots
 - **Store details** — structured shop name / address / phone lines for receipts (legacy company fields kept for sync compatibility)
 - **Order modes** — dine-in tables, takeaway, mess membership + walk-in mess QR tokens (generate, print, scan/verify)
-- **Print** — Bluetooth (Woosim/SPP); print failures do not wipe saved bills
+- **Print** — Bluetooth (Woosim/SPP); print failures do not wipe saved bills; optional BOT split for bar
 - **Licensing** — server-authoritative expiry; 7-day / 50-bill trial; validity tiers (6m / 1y / 3y / 5y / lifetime); same-key renew
 - **Auth** — login/MPIN issues Bearer tokens (`api_tokens`); guarded write endpoints
 - **Multi-branch** — organization/branch scope; Owner store-wise comparison
 - **i18n (POS)** — English / Hindi / Marathi (Settings → language; per-app locale)
 - **Observability** — Firebase Crashlytics + Performance (POS); Analytics + Messaging across apps
 - **Web admin** — dealers, customers, licences, catalog, CSV/Excel import, crashes, support, push, Website CMS
+
+Live Universal schema: MySQL `p27`–`p32` (appointments, deposits, price tiers, variants, business templates, staff). Smoke checklist: `Billingwala_Universal_POS_COMPLETE/23_TESTING_AND_MIGRATION.md`.
 
 ## Stack
 

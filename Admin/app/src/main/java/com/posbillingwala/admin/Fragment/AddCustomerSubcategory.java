@@ -86,7 +86,7 @@ public class AddCustomerSubcategory extends Fragment implements View.OnClickList
 
         subcategoryRecyclerview = binding.subcategoryRecyclerview;
         subcategoryListCardView = binding.subcategoryListCardView;
-        noDataFound = binding.noDataFound;
+        noDataFound = binding.noDataFound.getRoot();
 
         MainActivity.back.setOnClickListener(v -> {
             ((MainActivity) activity).removeCurrentFragmentAndMoveBack();

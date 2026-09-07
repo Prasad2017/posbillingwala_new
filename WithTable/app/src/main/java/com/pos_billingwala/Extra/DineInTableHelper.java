@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
  */
 public final class DineInTableHelper {
 
-    public static final String CART_ORDER_TABLE = "table_wise";
+    public static final String CART_ORDER_TABLE = BillingMode.TABLE.getWireValue();
 
     private DineInTableHelper() {
     }
@@ -50,18 +50,7 @@ public final class DineInTableHelper {
     }
 
     public static boolean isKotEnabled(POSBillingWalaDatabase db) {
-        if (db == null) {
-            return true;
-        }
-        List<PrinterSettingResponse> list = db.getPrinterSettingDetails();
-        if (list == null || list.isEmpty()) {
-            return true;
-        }
-        String enabled = list.get(0).getKotEnable();
-        if (enabled == null || enabled.trim().isEmpty()) {
-            return true;
-        }
-        return "on".equalsIgnoreCase(enabled.trim());
+        return RestaurantFoodModule.canKot(db);
     }
 
     public static String kotPrefix(POSBillingWalaDatabase db) {

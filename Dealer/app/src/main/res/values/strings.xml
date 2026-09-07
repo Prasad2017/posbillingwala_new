@@ -32,4 +32,18 @@
     <string name="empty_sub_portions">Add portion sizes like Half / Full.</string>
     <string name="empty_sub_customers">No customers found yet.</string>
 
+    <string name="licence_template_title">Business template</string>
+    <string name="licence_template_intro">Choose the POS business template for this licence. The outlet device applies it on the next Fetch Data.</string>
+    <string name="licence_template_pick">Template</string>
+    <string name="licence_template_save">Save template</string>
+    <string name="licence_template_saving">Saving…</string>
+    <string name="licence_template_current_placeholder">Current: —</string>
+    <string name="licence_template_current">Current: %1$s · %2$s</string>
+    <string name="licence_template_load_failed">Could not load current template</string>
+    <string name="licence_template_failed">Save failed. Try again.</string>
+    <string name="licence_template_confirm_title">Apply template?</string>
+    <string name="licence_template_confirm_body">Set this licence to “%1$s”?</string>
+    <string name="licence_template_button">Business template</string>
+    <string name="licence_template_sync_modules">Also update Fast / Dine-In / Take Away / Mess modules</string>
+
 </resources>

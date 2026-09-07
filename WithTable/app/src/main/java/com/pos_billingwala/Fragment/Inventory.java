@@ -16,6 +16,8 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.InventoryAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.EmptyListUi;
+import com.pos_billingwala.Extra.InventoryStockEngine;
 import com.pos_billingwala.Extra.ListLoader;
 import com.pos_billingwala.Model.InventoryResponse;
 import com.pos_billingwala.R;
@@ -25,7 +27,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import cn.pedant.SweetAlert.SweetAlertDialog;
-import com.pos_billingwala.Extra.EmptyListUi;
 
 
 @SuppressLint("StaticFieldLeak")
@@ -47,8 +48,11 @@ public class Inventory extends Fragment implements View.OnClickListener {
 
         activity = getActivity();
 
-
         posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
+
+        if (!InventoryStockEngine.ensureEnabled(activity)) {
+            return view;
+        }
 
         view.setFocusableInTouchMode(true);
         view.requestFocus();

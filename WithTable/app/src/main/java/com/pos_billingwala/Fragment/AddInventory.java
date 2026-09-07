@@ -14,6 +14,7 @@ import androidx.fragment.app.Fragment;
 
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.InventoryStockEngine;
 import com.pos_billingwala.Model.InventoryResponse;
 import com.pos_billingwala.Model.ProductResponse;
 import com.pos_billingwala.R;
@@ -25,7 +26,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.Random;
 
 
 public class AddInventory extends Fragment implements View.OnClickListener {
@@ -95,39 +95,28 @@ public class AddInventory extends Fragment implements View.OnClickListener {
     public void addInventory() {
 
         Date c = Calendar.getInstance().getTime();
-        System.out.println("Current time => " + c);
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
         String inventoryDate = df.format(c);
 
+        int addQty;
+        try {
+            addQty = Integer.parseInt(binding.inventoryQty.getText().toString().trim());
+        } catch (Exception e) {
+            Toast.makeText(activity, getString(R.string.toast_please_select_product), Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         inventoryResponseList = posBillingWalaDatabase.getInventoryDetails(productId);
-        if (!inventoryResponseList.isEmpty()) {
-
-            int newInventoryQty = Integer.parseInt(binding.inventoryQty.getText().toString());
-            int oldInventoryQty = Integer.parseInt(inventoryResponseList.get(0).getProductInventoryQuantity());
-            int afterSaleInventoryQuantity = Integer.parseInt(inventoryResponseList.get(0).getAfterSaleInventoryQuantity());
-            int totalQty = newInventoryQty + afterSaleInventoryQuantity;
-
-            posBillingWalaDatabase.addInventory(productId, "" + totalQty, "0", "0", inventoryDate, 0, getRandomString(10));
+        boolean updating = inventoryResponseList != null && !inventoryResponseList.isEmpty();
+        InventoryStockEngine.stockIn(posBillingWalaDatabase, productId, addQty, inventoryDate);
+        if (updating) {
             Toast.makeText(activity, getString(R.string.toast_update_inventory_successfully), Toast.LENGTH_SHORT).show();
         } else {
-            posBillingWalaDatabase.addInventory(productId, binding.inventoryQty.getText().toString(), binding.inventoryQty.getText().toString(), "0", inventoryDate, 0, getRandomString(10));
-
             Toast.makeText(activity, getString(R.string.toast_add_inventory_successfully), Toast.LENGTH_SHORT).show();
         }
 
         ((MainActivity) activity).navigateBack();
 
-    }
-
-    public String getRandomString(final int sizeOfRandomString) {
-
-        String ALLOWED_CHARACTERS = "0123456789qwertyuiopasdfghjklzxcvbnm";
-
-        final Random random = new Random();
-        final StringBuilder sb = new StringBuilder(sizeOfRandomString);
-        for (int i = 0; i < sizeOfRandomString; ++i)
-            sb.append(ALLOWED_CHARACTERS.charAt(random.nextInt(ALLOWED_CHARACTERS.length())));
-        return sb.toString();
     }
 
     @Override

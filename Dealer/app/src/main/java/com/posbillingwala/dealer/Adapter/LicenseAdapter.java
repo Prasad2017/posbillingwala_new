@@ -26,6 +26,7 @@ import com.posbillingwala.dealer.Activity.MainActivity;
 import com.posbillingwala.dealer.Extra.BottomSheetUi;
 import com.posbillingwala.dealer.Extra.LicenceValidityTiers;
 import com.posbillingwala.dealer.Fragment.CustomerDetails;
+import com.posbillingwala.dealer.Fragment.LicenceBusinessTemplate;
 import com.posbillingwala.dealer.Model.AllApiResponse;
 import com.posbillingwala.dealer.Model.LicenseResponse;
 import com.posbillingwala.dealer.R;
@@ -126,6 +127,10 @@ public class LicenseAdapter extends RecyclerView.Adapter<LicenseAdapter.MyViewHo
             }
         });
 
+        if (holder.binding.openBusinessTemplate != null) {
+            holder.binding.openBusinessTemplate.setOnClickListener(v -> openBusinessTemplate(licenseResponse));
+        }
+
         licenseKeyStatus = licenseResponse.getLicenseStatus();
         if (licenseKeyStatus.equalsIgnoreCase("active")) {
             holder.binding.activeButton.setChecked(true);
@@ -207,6 +212,23 @@ public class LicenseAdapter extends RecyclerView.Adapter<LicenseAdapter.MyViewHo
                 }
             }
         });
+    }
+
+    private void openBusinessTemplate(LicenseResponse licenseResponse) {
+        if (!(context instanceof MainActivity)) {
+            return;
+        }
+        String shop = licenseResponse.getShopName1();
+        if (shop == null || shop.trim().isEmpty()) {
+            shop = licenseResponse.getBranchLabel() != null ? licenseResponse.getBranchLabel() : "Licence";
+        }
+        String display = shop + " (#" + licenseResponse.getLicensesId() + ")";
+        LicenceBusinessTemplate fragment = new LicenceBusinessTemplate();
+        Bundle b = new Bundle();
+        b.putString("licenceId", licenseResponse.getLicensesId());
+        b.putString("licenceDisplay", display);
+        fragment.setArguments(b);
+        ((MainActivity) context).loadFragment(fragment, true);
     }
 
     private void updateCustomerLicenceDetails(LicenseResponse licenseResponse, String licenseValidity, String licenseType, String amount, String registrationDate, String licenseKeyStatus) {

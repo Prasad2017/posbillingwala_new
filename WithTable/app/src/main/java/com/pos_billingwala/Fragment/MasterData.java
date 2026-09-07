@@ -10,11 +10,21 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Activity.TableMasterActivity;
+import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.BusinessTemplate;
+import com.pos_billingwala.Extra.CakeBakeryModule;
+import com.pos_billingwala.Extra.FeatureEngine;
+import com.pos_billingwala.Extra.FeatureFlags;
+import com.pos_billingwala.Extra.ImportExportEngine;
+import com.pos_billingwala.Extra.LicenseModules;
+import com.pos_billingwala.Extra.SalonAppointmentModule;
+import com.pos_billingwala.Extra.SecurityPermissions;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentMasterDataBinding;
 import com.pos_billingwala.databinding.ItemGroupedMenuRowBinding;
@@ -26,6 +36,7 @@ public class MasterData extends Fragment implements View.OnClickListener {
     public static Activity activity;
     public static FragmentMasterDataBinding binding;
     View view;
+    private POSBillingWalaDatabase posBillingWalaDatabase;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
@@ -34,6 +45,7 @@ public class MasterData extends Fragment implements View.OnClickListener {
         view = binding.getRoot();
 
         activity = getActivity();
+        posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
 
         view.setFocusableInTouchMode(true);
         view.requestFocus();
@@ -64,19 +76,52 @@ public class MasterData extends Fragment implements View.OnClickListener {
                 R.color.statusTrial, getString(R.string.master_portions), getString(R.string.master_hint_portions));
         setupRow(binding.productLayout, R.drawable.ic_report_product, R.drawable.bg_quick_action_green,
                 R.color.green_600, getString(R.string.master_products), getString(R.string.master_hint_products));
+        setupRow(binding.catalogCsvLayout, R.drawable.ic_cloud_download, R.drawable.bg_quick_action_blue,
+                R.color.colorPrimary, getString(R.string.catalog_csv_title), getString(R.string.catalog_csv_subtitle));
         setupRow(binding.comboLayout, R.drawable.ic_report_combo, R.drawable.bg_quick_action_blue,
                 R.color.colorPrimary, getString(R.string.master_combos), getString(R.string.master_hint_combos));
         setupRow(binding.tableMasterLayout, R.drawable.ic_inventory, R.drawable.bg_quick_action_orange,
                 R.color.statusTrial, getString(R.string.master_table_master), getString(R.string.master_hint_table_master));
+        setupRow(binding.appointmentLayout, R.drawable.ic_report_product, R.drawable.bg_quick_action_purple,
+                R.color.deepPurple, getString(R.string.appointment_calendar_title),
+                getString(R.string.master_hint_appointments));
+        setupRow(binding.depositLayout, R.drawable.ic_inventory, R.drawable.bg_quick_action_orange,
+                R.color.statusTrial, getString(R.string.deposit_ledger_title),
+                getString(R.string.master_hint_deposits));
         showGroupDividers(binding.categoryLayout, binding.subcategoryLayout, binding.portionLayout,
-                binding.productLayout, binding.comboLayout, binding.tableMasterLayout);
+                binding.productLayout, binding.catalogCsvLayout, binding.comboLayout,
+                binding.tableMasterLayout, binding.appointmentLayout, binding.depositLayout);
 
         binding.categoryLayout.getRoot().setOnClickListener(this);
         binding.subcategoryLayout.getRoot().setOnClickListener(this);
         binding.portionLayout.getRoot().setOnClickListener(this);
         binding.productLayout.getRoot().setOnClickListener(this);
+        binding.catalogCsvLayout.getRoot().setOnClickListener(this);
         binding.comboLayout.getRoot().setOnClickListener(this);
         binding.tableMasterLayout.getRoot().setOnClickListener(this);
+        binding.appointmentLayout.getRoot().setOnClickListener(this);
+        binding.depositLayout.getRoot().setOnClickListener(this);
+        // Doc 11: long-press product row also opens appointment calendar when enabled
+        binding.productLayout.getRoot().setOnLongClickListener(v -> {
+            if (SalonAppointmentModule.isEnabled(activity)) {
+                SalonAppointmentModule.showUpcomingDialog(activity, posBillingWalaDatabase);
+                return true;
+            }
+            return false;
+        });
+
+        applyFeatureVisibility();
+    }
+
+    private void applyFeatureVisibility() {
+        FeatureEngine.setVisible(activity, binding.portionLayout.getRoot(), FeatureFlags.PORTIONS);
+        FeatureEngine.setVisible(activity, binding.comboLayout.getRoot(), FeatureFlags.COMBOS);
+        BusinessTemplate template = FeatureEngine.currentTemplate(activity);
+        LicenseModules.setVisible(binding.tableMasterLayout.getRoot(),
+                template != null && template.supports(FeatureFlags.TABLES)
+                        && LicenseModules.isEnabled(MainActivity.dineIn));
+        FeatureEngine.setVisible(activity, binding.appointmentLayout.getRoot(), FeatureFlags.APPOINTMENTS);
+        FeatureEngine.setVisible(activity, binding.depositLayout.getRoot(), FeatureFlags.CUSTOM_ORDERS);
     }
 
     private void setupRow(ItemGroupedMenuRowBinding row, int iconRes, int bgRes, int tintColor,
@@ -118,13 +163,27 @@ public class MasterData extends Fragment implements View.OnClickListener {
             ProductMaster productMaster = new ProductMaster();
             productMaster.setArguments(openedFromMaster());
             ((MainActivity) activity).loadFragment(productMaster, true);
+        } else if (id == R.id.catalogCsvLayout) {
+            SecurityPermissions.runAuthorized(activity, SecurityPermissions.MASTER_DATA,
+                    getString(R.string.catalog_csv_title),
+                    () -> ImportExportEngine.showCatalogMenu(activity, MasterData.this, posBillingWalaDatabase));
         } else if (id == R.id.comboLayout) {
             ComboMaster comboMaster = new ComboMaster();
             comboMaster.setArguments(openedFromMaster());
             ((MainActivity) activity).loadFragment(comboMaster, true);
         } else if (id == R.id.tableMasterLayout) {
             startActivity(new Intent(activity, TableMasterActivity.class));
+        } else if (id == R.id.appointmentLayout) {
+            SalonAppointmentModule.showUpcomingDialog(activity, posBillingWalaDatabase);
+        } else if (id == R.id.depositLayout) {
+            CakeBakeryModule.showDepositLedger(activity);
         }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        ImportExportEngine.handleImportActivityResult(this, requestCode, resultCode, data, posBillingWalaDatabase);
     }
 
     private void goToSettings() {

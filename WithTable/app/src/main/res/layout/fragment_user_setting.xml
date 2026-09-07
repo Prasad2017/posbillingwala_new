@@ -87,11 +87,19 @@
                         layout="@layout/item_grouped_menu_row" />
 
                     <include
+                        android:id="@+id/businessTemplateLayout"
+                        layout="@layout/item_grouped_menu_row" />
+
+                    <include
                         android:id="@+id/businessHoursLayout"
                         layout="@layout/item_grouped_menu_row" />
 
                     <include
                         android:id="@+id/printerDetailLayout"
+                        layout="@layout/item_grouped_menu_row" />
+
+                    <include
+                        android:id="@+id/scaleLayout"
                         layout="@layout/item_grouped_menu_row" />
 
                     <include
@@ -174,6 +182,10 @@
 
                     <include
                         android:id="@+id/appPinLayout"
+                        layout="@layout/item_grouped_menu_row" />
+
+                    <include
+                        android:id="@+id/staffRoleLayout"
                         layout="@layout/item_grouped_menu_row" />
 
                     <include

@@ -3,9 +3,11 @@ package com.pos_billingwala.Fragment;
 import com.pos_billingwala.Extra.PopupUi;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.Manifest;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Handler;
@@ -35,6 +37,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.zxing.integration.android.IntentIntegrator;
+import com.google.zxing.integration.android.IntentResult;
 import com.pos_billingwala.Activity.BluetoothPrint;
 import com.pos_billingwala.Activity.DuplicateBluetoothPrint;
 import com.pos_billingwala.Activity.MainActivity;
@@ -49,6 +53,14 @@ import com.pos_billingwala.Extra.AppExecutors;
 import com.pos_billingwala.Extra.BottomSheetUi;
 import com.pos_billingwala.Extra.ListLoader;
 import com.pos_billingwala.Extra.ReportCursorHelper;
+import com.pos_billingwala.Extra.CakeBakeryModule;
+import com.pos_billingwala.Extra.FashionJewelleryModule;
+import com.pos_billingwala.Extra.RestaurantFoodModule;
+import com.pos_billingwala.Extra.SalonAppointmentModule;
+import com.pos_billingwala.Extra.SecurityPermissions;
+import com.pos_billingwala.Extra.WeightFreshModule;
+import android.view.inputmethod.EditorInfo;
+import com.pos_billingwala.Extra.RetailGroceryModule;
 import com.pos_billingwala.Interface.ClickListerInterface;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.PrinterSettingResponse;
@@ -61,6 +73,7 @@ import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentCreatePosBinding;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 
@@ -103,16 +116,58 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
     /** Prevents double navigation / ignored taps while payment screen is opening. */
     private boolean paymentScreenOpening = false;
     private long lastPaymentTapMs = 0L;
+    private static final int CAMERA_BARCODE_PERMISSION_REQUEST = 512;
+    private static final int REQUEST_SCALE_DEVICE = 513;
+    private TextInputEditText pendingScaleWeightField;
 
-    /* When Mic activity close */
+    /* When Mic / barcode camera / custom-order photo activity close */
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (CakeBakeryModule.handlePhotoActivityResult(this, requestCode, resultCode, data)) {
+            return;
+        }
+        if (requestCode == REQUEST_SCALE_DEVICE) {
+            if (resultCode == Activity.RESULT_OK && data != null && data.getExtras() != null) {
+                String addr = data.getExtras().getString(
+                        com.pos_billingwala.Print.DeviceListActivity.EXTRA_DEVICE_ADDRESS);
+                if (addr != null && !addr.trim().isEmpty()) {
+                    WeightFreshModule.setScaleAddress(activity, addr);
+                    Toast.makeText(activity, R.string.toast_scale_saved, Toast.LENGTH_SHORT).show();
+                    if (pendingScaleWeightField != null) {
+                        readWeightFromScale(pendingScaleWeightField);
+                    }
+                }
+            }
+            return;
+        }
+        IntentResult scan = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
+        if (scan != null) {
+            if (scan.getContents() != null && !scan.getContents().trim().isEmpty()) {
+                tryBarcodeExactAdd(scan.getContents());
+            } else if (resultCode != Activity.RESULT_CANCELED) {
+                Toast.makeText(activity, R.string.toast_scan_cancelled, Toast.LENGTH_SHORT).show();
+            }
+            return;
+        }
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == 1) {
             if (resultCode == Activity.RESULT_OK && null != data) {
                 String yourResult = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS).get(0);
                 binding.productSearch.setText(yourResult.replace(" ", ""));
                 searchHomeProduct(yourResult.replace(" ", ""));
+            }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == CAMERA_BARCODE_PERMISSION_REQUEST) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                launchCameraBarcodeScanner();
+            } else {
+                Toast.makeText(activity, R.string.toast_camera_permission_barcode, Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -204,6 +259,30 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
             }
         });
 
+        if (RetailGroceryModule.shouldAutoAddOnBarcodeScan(activity)) {
+            binding.productSearch.setHint(getString(R.string.ui_search_or_scan_barcode));
+            binding.productSearch.setOnEditorActionListener((v, actionId, event) -> {
+                boolean enter = event != null
+                        && event.getKeyCode() == KeyEvent.KEYCODE_ENTER
+                        && event.getAction() == KeyEvent.ACTION_DOWN;
+                if (actionId == EditorInfo.IME_ACTION_SEARCH
+                        || actionId == EditorInfo.IME_ACTION_DONE
+                        || enter) {
+                    String q = binding.productSearch.getText() != null
+                            ? binding.productSearch.getText().toString() : "";
+                    tryBarcodeExactAdd(q);
+                    return true;
+                }
+                return false;
+            });
+            if (binding.cameraBarcodeScan != null) {
+                binding.cameraBarcodeScan.setVisibility(View.VISIBLE);
+                binding.cameraBarcodeScan.setOnClickListener(v -> startCameraBarcodeScan());
+            }
+        } else if (binding.cameraBarcodeScan != null) {
+            binding.cameraBarcodeScan.setVisibility(View.GONE);
+        }
+
 
         binding.voiceSearchProduct.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -251,6 +330,7 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
             binding.payButtonPhone.setOnClickListener(this);
         }
         setupDineInActionBar();
+        applyRestaurantCatalogTabs();
         setupTabletCartPanel();
 
         binding.productRecyclerView.setHasFixedSize(true);
@@ -576,13 +656,13 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
 
     private void setupDineInActionBar() {
         if (binding == null || cartOrderStatus == null
-                || !cartOrderStatus.equalsIgnoreCase("table_wise")) {
+                || !RestaurantFoodModule.isTableWiseCart(cartOrderStatus)) {
             if (binding != null && binding.dineInActionBar != null) {
                 binding.dineInActionBar.setVisibility(View.GONE);
             }
             return;
         }
-        boolean kotOn = com.pos_billingwala.Extra.DineInTableHelper.isKotEnabled(posBillingWalaDatabase);
+        boolean kotOn = RestaurantFoodModule.canKot(posBillingWalaDatabase);
         if (binding.dineInActionBar != null) {
             binding.dineInActionBar.setVisibility(View.VISIBLE);
             if (binding.viewCartButton != null) {
@@ -604,6 +684,14 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
         }
     }
 
+    private void applyRestaurantCatalogTabs() {
+        if (binding == null || binding.combosTab == null) {
+            return;
+        }
+        boolean showCombos = RestaurantFoodModule.canCombos(activity);
+        binding.combosTab.setVisibility(showCombos ? View.VISIBLE : View.GONE);
+    }
+
     private void holdTableBill() {
         if (tableNumber == null) {
             navigateFromPos();
@@ -619,7 +707,7 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
     }
 
     private void onKotClicked() {
-        if (!com.pos_billingwala.Extra.DineInTableHelper.isKotEnabled(posBillingWalaDatabase)) {
+        if (!com.pos_billingwala.Extra.RestaurantFoodModule.canKot(posBillingWalaDatabase)) {
             Toast.makeText(activity, "KOT is disabled in settings", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -760,14 +848,16 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
             Toast.makeText(activity, getString(R.string.toast_cart_is_empty), Toast.LENGTH_SHORT).show();
             return;
         }
-        BottomSheetUi.showConfirm(
-                activity,
+        SecurityPermissions.runAuthorized(activity, SecurityPermissions.CLEAR_CART,
                 getString(R.string.ui_clear_cart_confirm_title),
-                getString(R.string.ui_clear_cart_confirm_message),
-                "YES",
-                "NO",
-                true,
-                this::clearCart);
+                () -> BottomSheetUi.showConfirm(
+                        activity,
+                        getString(R.string.ui_clear_cart_confirm_title),
+                        getString(R.string.ui_clear_cart_confirm_message),
+                        "YES",
+                        "NO",
+                        true,
+                        this::clearCart));
     }
 
     private void clearCart() {
@@ -1122,10 +1212,206 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
         });
     }
 
+    /**
+     * Weight / fresh: rate × weight. Cart stores unit rate in price and weight in quantity.
+     */
+    public void setWeightQuantity(ProductResponse productResponse, ProductPortionResponse portion,
+                                  ProductCartResponse existingLine) {
+        View content = LayoutInflater.from(activity).inflate(R.layout.update_amount_quantity_dialog, null);
+        BottomSheetDialog sheet = BottomSheetUi.showContent(activity, content, false);
+        sheet.setOnDismissListener(dialog -> getCartCount());
+
+        TextView continueToQuantity = content.findViewById(R.id.continueToQuantity);
+        TextView dismissQuantity = content.findViewById(R.id.dismissQuantity);
+        TextInputEditText amountTxt = content.findViewById(R.id.amount);
+        TextInputEditText quantityTxt = content.findViewById(R.id.quantity);
+        TextView detailsTxt = content.findViewById(R.id.details);
+        detailsTxt.setText(getString(R.string.ui_enter_weight));
+        quantityTxt.setHint(getString(R.string.ui_weight_hint));
+        amountTxt.setHint(getString(R.string.ui_rate_per_unit));
+
+        String defaultPrice = resolveLinePrice(productResponse, portion);
+        if (existingLine != null) {
+            amountTxt.setText(existingLine.getResolvedLinePrice());
+            quantityTxt.setText(existingLine.getProductQuantity());
+        } else {
+            amountTxt.setText(defaultPrice);
+            quantityTxt.setText("");
+        }
+        quantityTxt.requestFocus();
+
+        TextView readFromScale = content.findViewById(R.id.readFromScale);
+        if (readFromScale != null && WeightFreshModule.isEnabled(activity)) {
+            readFromScale.setVisibility(View.VISIBLE);
+            readFromScale.setOnClickListener(v -> {
+                pendingScaleWeightField = quantityTxt;
+                if (!WeightFreshModule.hasScaleAddress(activity)) {
+                    try {
+                        startActivityForResult(
+                                new Intent(activity, com.pos_billingwala.Print.DeviceListActivity.class),
+                                REQUEST_SCALE_DEVICE);
+                    } catch (Exception e) {
+                        Toast.makeText(activity, R.string.toast_scale_pick_failed, Toast.LENGTH_SHORT).show();
+                    }
+                    return;
+                }
+                readWeightFromScale(quantityTxt);
+            });
+            readFromScale.setOnLongClickListener(v -> {
+                pendingScaleWeightField = quantityTxt;
+                try {
+                    startActivityForResult(
+                            new Intent(activity, com.pos_billingwala.Print.DeviceListActivity.class),
+                            REQUEST_SCALE_DEVICE);
+                } catch (Exception e) {
+                    Toast.makeText(activity, R.string.toast_scale_pick_failed, Toast.LENGTH_SHORT).show();
+                }
+                return true;
+            });
+        }
+
+        dismissQuantity.setOnClickListener(v -> sheet.dismiss());
+        continueToQuantity.setOnClickListener(v -> {
+            String rateStr = amountTxt.getText() != null ? amountTxt.getText().toString().trim() : "";
+            String weightStr = quantityTxt.getText() != null ? quantityTxt.getText().toString().trim() : "";
+            float rate;
+            try {
+                rate = Float.parseFloat(rateStr);
+            } catch (NumberFormatException e) {
+                rate = 0f;
+            }
+            if (rate <= 0) {
+                amountTxt.setError(getString(R.string.ui_enter_amount));
+                amountTxt.requestFocus();
+                return;
+            }
+            float weight;
+            try {
+                weight = Float.parseFloat(weightStr);
+            } catch (NumberFormatException e) {
+                weight = 0f;
+            }
+            if (weight <= 0) {
+                quantityTxt.setError(getString(R.string.ui_enter_weight));
+                quantityTxt.requestFocus();
+                return;
+            }
+            String unitRate = String.format(Locale.US, "%.2f", rate);
+            String weightQty = String.format(Locale.US, "%.3f", weight).replaceAll("0+$", "").replaceAll("\\.$", "");
+            if (existingLine != null) {
+                updateCart(existingLine.getCartId(), weightQty, unitRate);
+            } else {
+                addToCart(productResponse, unitRate, weightQty, portion);
+            }
+            sheet.dismiss();
+        });
+    }
+
+    private void readWeightFromScale(TextInputEditText quantityTxt) {
+        if (activity == null || quantityTxt == null) {
+            return;
+        }
+        Toast.makeText(activity, R.string.toast_scale_reading, Toast.LENGTH_SHORT).show();
+        WeightFreshModule.readScaleWeightAsync(activity, new WeightFreshModule.ScaleWeightCallback() {
+            @Override
+            public void onWeight(float kg) {
+                if (!isAdded()) {
+                    return;
+                }
+                String w = String.format(Locale.US, "%.3f", kg).replaceAll("0+$", "").replaceAll("\\.$", "");
+                quantityTxt.setText(w);
+                quantityTxt.setError(null);
+                Toast.makeText(activity, getString(R.string.toast_scale_weight, w), Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onError(String message) {
+                if (!isAdded()) {
+                    return;
+                }
+                if ("scale_not_configured".equals(message)) {
+                    Toast.makeText(activity, R.string.toast_scale_not_configured, Toast.LENGTH_SHORT).show();
+                } else if ("bluetooth_off".equals(message)) {
+                    Toast.makeText(activity, R.string.toast_scale_bluetooth_off, Toast.LENGTH_SHORT).show();
+                } else if ("no_weight".equals(message)) {
+                    Toast.makeText(activity, R.string.toast_scale_no_weight, Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(activity, R.string.toast_scale_failed, Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+    }
+
+    /**
+     * Barcode wedge / camera: exact productCode match → add to cart; else fall back to name search.
+     */
+    private void tryBarcodeExactAdd(String rawCode) {
+        if (activity == null || !RetailGroceryModule.shouldAutoAddOnBarcodeScan(activity) || showingCombos) {
+            searchHomeProduct(rawCode);
+            return;
+        }
+        if (rawCode == null || rawCode.trim().isEmpty()) {
+            return;
+        }
+        if (pendingProductSearch != null) {
+            productSearchHandler.removeCallbacks(pendingProductSearch);
+        }
+        final String code = rawCode.trim();
+        AppExecutors.get().db().execute(() -> {
+            ProductResponse match = posBillingWalaDatabase.findActiveProductByExactCode(code);
+            AppExecutors.get().main(() -> {
+                if (!isAdded() || binding == null) {
+                    return;
+                }
+                if (match != null) {
+                    binding.productSearch.setText("");
+                    binding.productSearch.clearFocus();
+                    productClicked(match);
+                } else {
+                    Toast.makeText(activity, getString(R.string.toast_barcode_not_found), Toast.LENGTH_SHORT).show();
+                    searchHomeProduct(code);
+                }
+            });
+        });
+    }
+
+    private void startCameraBarcodeScan() {
+        if (activity == null || !RetailGroceryModule.shouldAutoAddOnBarcodeScan(activity)) {
+            return;
+        }
+        if (ContextCompat.checkSelfPermission(activity, Manifest.permission.CAMERA)
+                != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.CAMERA}, CAMERA_BARCODE_PERMISSION_REQUEST);
+            return;
+        }
+        launchCameraBarcodeScanner();
+    }
+
+    private void launchCameraBarcodeScanner() {
+        if (!isAdded()) {
+            return;
+        }
+        IntentIntegrator integrator = IntentIntegrator.forSupportFragment(this);
+        Collection<String> formats = new ArrayList<>(IntentIntegrator.ONE_D_CODE_TYPES);
+        formats.add(IntentIntegrator.QR_CODE);
+        integrator.setDesiredBarcodeFormats(formats);
+        integrator.setPrompt(getString(R.string.ui_scan_barcode_prompt));
+        integrator.setBeepEnabled(true);
+        integrator.setOrientationLocked(false);
+        integrator.setBarcodeImageEnabled(false);
+        integrator.initiateScan();
+    }
+
     @Override
     public void productClicked(ProductResponse productResponse) {
         final String productId = productResponse.getProductId();
         AppExecutors.get().db().execute(() -> {
+            boolean hasVariants = posBillingWalaDatabase.hasProductVariants(productId);
+            List<com.pos_billingwala.Model.ProductVariantResponse> variants = hasVariants
+                    ? posBillingWalaDatabase.getProductVariantList(productId) : null;
+            boolean hasTiers = posBillingWalaDatabase.hasProductPriceTiers(productId);
+            List<com.pos_billingwala.Model.ProductPriceTierResponse> tiers = hasTiers
+                    ? posBillingWalaDatabase.getProductPriceTier(productId) : null;
             boolean hasPortions = posBillingWalaDatabase.hasProductPortions(productId);
             List<ProductPortionResponse> portions = hasPortions
                     ? posBillingWalaDatabase.getProductPortionList(productId)
@@ -1134,13 +1420,42 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
                 if (!isAdded()) {
                     return;
                 }
-                if (hasPortions && portions != null && !portions.isEmpty()) {
+                if (FashionJewelleryModule.shouldOfferVariantPicker(activity, hasVariants)
+                        && variants != null && !variants.isEmpty()) {
+                    showPortionDialog(productResponse,
+                            FashionJewelleryModule.asPseudoPortions(variants));
+                } else if (RetailGroceryModule.shouldOfferTierPicker(activity, hasTiers)
+                        && tiers != null && !tiers.isEmpty()) {
+                    showPortionDialog(productResponse,
+                            RetailGroceryModule.asPseudoPortions(productResponse, tiers));
+                } else if (RestaurantFoodModule.shouldOfferPortionPicker(hasPortions)
+                        && portions != null && !portions.isEmpty()) {
                     showPortionDialog(productResponse, portions);
                 } else {
-                    handleProductSelection(productResponse, null);
+                    routeProductWithoutOptionPicker(productResponse);
                 }
             });
         });
+    }
+
+    private void routeProductWithoutOptionPicker(ProductResponse productResponse) {
+        Runnable go = () -> handleProductSelection(productResponse, null);
+        if (CakeBakeryModule.shouldPromptCustomOrder(activity)) {
+            CakeBakeryModule.showCustomOrderDialog(this, activity, productResponse, null, noted -> {
+                if (SalonAppointmentModule.shouldPromptBook(activity)) {
+                    SalonAppointmentModule.showBookDialog(activity, posBillingWalaDatabase, productResponse,
+                            () -> handleProductSelection(productResponse, noted));
+                } else {
+                    handleProductSelection(productResponse, noted);
+                }
+            });
+            return;
+        }
+        if (SalonAppointmentModule.shouldPromptBook(activity)) {
+            SalonAppointmentModule.showBookDialog(activity, posBillingWalaDatabase, productResponse, go);
+            return;
+        }
+        go.run();
     }
 
     private void showPortionDialog(ProductResponse productResponse, List<ProductPortionResponse> portions) {
@@ -1226,12 +1541,50 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
             }
             ProductPortionResponse selectedPortion = portions.get(index);
             sheet.dismiss();
-            if (productResponse.isOpenPrice()) {
-                handleProductSelection(productResponse, selectedPortion);
-            } else {
-                addSelectedPortionToCart(productResponse, selectedPortion, quantity[0]);
-            }
+            continueAfterOptionSelected(productResponse, selectedPortion, quantity[0]);
         });
+    }
+
+    private void continueAfterOptionSelected(ProductResponse productResponse,
+                                             ProductPortionResponse portion, int quantity) {
+        Runnable addLine = () -> {
+            if (productResponse.isOpenPrice()) {
+                handleProductSelection(productResponse, portion);
+            } else if (quantity > 1) {
+                addSelectedPortionToCart(productResponse, portion, quantity);
+            } else {
+                handleProductSelection(productResponse, portion);
+            }
+        };
+        if (CakeBakeryModule.shouldPromptCustomOrder(activity)
+                && !FashionJewelleryModule.isVariantCartKey(portion != null ? portion.getPortionId() : null)) {
+            CakeBakeryModule.showCustomOrderDialog(this, activity, productResponse, portion, noted -> {
+                if (SalonAppointmentModule.shouldPromptBook(activity)) {
+                    SalonAppointmentModule.showBookDialog(activity, posBillingWalaDatabase, productResponse,
+                            () -> {
+                                if (productResponse.isOpenPrice()) {
+                                    handleProductSelection(productResponse, noted);
+                                } else if (quantity > 1) {
+                                    addSelectedPortionToCart(productResponse, noted, quantity);
+                                } else {
+                                    handleProductSelection(productResponse, noted);
+                                }
+                            });
+                } else if (productResponse.isOpenPrice()) {
+                    handleProductSelection(productResponse, noted);
+                } else if (quantity > 1) {
+                    addSelectedPortionToCart(productResponse, noted, quantity);
+                } else {
+                    handleProductSelection(productResponse, noted);
+                }
+            });
+            return;
+        }
+        if (SalonAppointmentModule.shouldPromptBook(activity)) {
+            SalonAppointmentModule.showBookDialog(activity, posBillingWalaDatabase, productResponse, addLine);
+            return;
+        }
+        addLine.run();
     }
 
     private void addSelectedPortionToCart(ProductResponse productResponse, ProductPortionResponse portion, int quantity) {
@@ -1298,8 +1651,11 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
                         refreshCatalogAfterCart();
                     }
                 }
+            } else if (WeightFreshModule.shouldPromptWeight(activity, productResponse.getProductUnit(),
+                    productResponse.isOpenPrice())) {
+                setWeightQuantity(productResponse, portion, existingLine[0]);
             } else if (existingLine[0] != null) {
-                int quantity = Integer.parseInt(existingLine[0].getProductQuantity());
+                int quantity = parseCartQuantity(existingLine[0].getProductQuantity());
                 updateCart(existingLine[0].getCartId(), String.valueOf(quantity + 1),
                         resolveLinePrice(productResponse, portion));
             } else {

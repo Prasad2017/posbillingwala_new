@@ -23,6 +23,12 @@ import com.pos_billingwala.NetworkToOffline.WorkerClass.CompanyPrinterWorker;
 import com.pos_billingwala.NetworkToOffline.WorkerClass.CompanyWorker;
 import com.pos_billingwala.NetworkToOffline.WorkerClass.DiningAreaWorker;
 import com.pos_billingwala.NetworkToOffline.WorkerClass.ExpensesWorker;
+import com.pos_billingwala.NetworkToOffline.WorkerClass.ServiceAppointmentWorker;
+import com.pos_billingwala.NetworkToOffline.WorkerClass.CustomOrderDepositWorker;
+import com.pos_billingwala.NetworkToOffline.WorkerClass.ProductPriceTierWorker;
+import com.pos_billingwala.NetworkToOffline.WorkerClass.ProductVariantWorker;
+import com.pos_billingwala.NetworkToOffline.WorkerClass.BusinessTemplateWorker;
+import com.pos_billingwala.NetworkToOffline.WorkerClass.StaffUserWorker;
 import com.pos_billingwala.NetworkToOffline.WorkerClass.FoodTypeWorker;
 import com.pos_billingwala.NetworkToOffline.WorkerClass.InventoryWorker;
 import com.pos_billingwala.NetworkToOffline.WorkerClass.InvoiceComboItemWorker;
@@ -140,6 +146,12 @@ public class NetworkDataFetcher {
         OneTimeWorkRequest messMemberPaymentRequest = tagged(MessMemberPaymentWorker.class);
         OneTimeWorkRequest inventoryRequest = tagged(InventoryWorker.class);
         OneTimeWorkRequest expensesRequest = tagged(ExpensesWorker.class);
+        OneTimeWorkRequest appointmentRequest = tagged(ServiceAppointmentWorker.class);
+        OneTimeWorkRequest depositRequest = tagged(CustomOrderDepositWorker.class);
+        OneTimeWorkRequest priceTierRequest = tagged(ProductPriceTierWorker.class);
+        OneTimeWorkRequest variantRequest = tagged(ProductVariantWorker.class);
+        OneTimeWorkRequest businessTemplateRequest = tagged(BusinessTemplateWorker.class);
+        OneTimeWorkRequest staffRequest = tagged(StaffUserWorker.class);
 
         // Sequential chain avoids SQLite contention on large invoice/product pulls
         WorkManager.getInstance(context)
@@ -164,6 +176,12 @@ public class NetworkDataFetcher {
                 .then(messMemberPaymentRequest)
                 .then(inventoryRequest)
                 .then(expensesRequest)
+                .then(appointmentRequest)
+                .then(depositRequest)
+                .then(priceTierRequest)
+                .then(variantRequest)
+                .then(businessTemplateRequest)
+                .then(staffRequest)
                 .enqueue();
     }
 

@@ -17,7 +17,9 @@ import androidx.fragment.app.Fragment;
 
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.FashionJewelleryModule;
 import com.pos_billingwala.Extra.ProductPortionSectionHelper;
+import com.pos_billingwala.Extra.RetailGroceryModule;
 import com.pos_billingwala.Model.ProductCategoryResponse;
 import com.pos_billingwala.Model.ProductResponse;
 import com.pos_billingwala.Model.ProductSubcategoryResponse;
@@ -168,6 +170,16 @@ public class AddProduct extends Fragment implements View.OnClickListener {
         }
 
         Toast.makeText(activity, getString(R.string.toast_product_added_successfully), Toast.LENGTH_SHORT).show();
+        if (newProductId != null && (FashionJewelleryModule.isEnabled(activity)
+                || RetailGroceryModule.canWholesalePricing(activity))) {
+            UpdateProduct updateProduct = new UpdateProduct();
+            Bundle openEdit = new Bundle();
+            openEdit.putString("productId", newProductId);
+            updateProduct.setArguments(openEdit);
+            ((MainActivity) activity).navigateBack();
+            ((MainActivity) activity).loadFragment(updateProduct, true);
+            return;
+        }
         ((MainActivity) activity).navigateBack();
     }
 

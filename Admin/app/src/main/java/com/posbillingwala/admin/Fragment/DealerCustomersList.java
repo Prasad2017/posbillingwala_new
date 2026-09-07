@@ -17,6 +17,7 @@ import com.posbillingwala.admin.Adapter.CustomerAdapter;
 import com.posbillingwala.admin.Extra.DetectConnection;
 import com.posbillingwala.admin.Model.AllApiResponse;
 import com.posbillingwala.admin.Model.CustomerResponse;
+import com.posbillingwala.admin.R;
 import com.posbillingwala.admin.Retrofit.Api;
 import com.posbillingwala.admin.databinding.FragmentAllCustomerListBinding;
 

@@ -7,6 +7,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 
 import com.posbillingwala.admin.R;
+import com.posbillingwala.admin.databinding.IncludeEmptyListStateBinding;
 
 /**
  * Shared empty-list UI: title "No data found" + screen-specific subtitle.
@@ -14,6 +15,16 @@ import com.posbillingwala.admin.R;
 public final class EmptyListUi {
 
     private EmptyListUi() {
+    }
+
+    public static void bind(@Nullable IncludeEmptyListStateBinding emptyBinding, boolean hasData,
+                            @StringRes int subtitleRes) {
+        bind(emptyBinding != null ? emptyBinding.getRoot() : null, hasData, subtitleRes);
+    }
+
+    public static void bind(@Nullable IncludeEmptyListStateBinding emptyBinding, boolean hasData,
+                            CharSequence subtitleText) {
+        bind(emptyBinding != null ? emptyBinding.getRoot() : null, hasData, subtitleText);
     }
 
     public static void bind(@Nullable View emptyRoot, boolean hasData, @StringRes int subtitleRes) {

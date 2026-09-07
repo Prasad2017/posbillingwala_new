@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Universal POS — smoke checklist preview</title>
+  <style>
+    :root {
+      --bg: #f4f4f5;
+      --card: #ffffff;
+      --text: #18181b;
+      --muted: #71717a;
+      --border: #e4e4e7;
+      --accent: #2563eb;
+      --ok: #16a34a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 24px;
+    }
+    .wrap { max-width: 720px; margin: 0 auto; }
+    h1 { font-size: 28px; margin: 0 0 6px; font-weight: 650; }
+    .sub { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
+    .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 16px; }
+    .stat {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      min-width: 110px;
+    }
+    .stat strong { display: block; font-size: 22px; }
+    .stat span { color: var(--muted); font-size: 12px; }
+    .pill {
+      font-size: 12px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 4px 10px;
+      background: var(--card);
+    }
+    .pill.on { background: #dcfce7; border-color: #86efac; color: #166534; }
+    button {
+      border: 1px solid var(--border);
+      background: var(--card);
+      border-radius: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .callout {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      color: #1e3a8a;
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+    .card h2 {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .item {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      width: 100%;
+      text-align: left;
+      border: 0;
+      border-bottom: 1px solid var(--border);
+      border-radius: 0;
+      padding: 12px 14px;
+      background: transparent;
+      font-size: 14px;
+      line-height: 1.35;
+    }
+    .item:last-child { border-bottom: 0; }
+    .item.done { color: var(--muted); text-decoration: line-through; }
+    .box {
+      width: 16px; height: 16px; margin-top: 2px; flex: 0 0 16px;
+      border: 1.5px solid var(--border); border-radius: 4px;
+    }
+    .item.done .box {
+      background: var(--ok);
+      border-color: var(--ok);
+    }
+    .note { color: var(--muted); font-size: 13px; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Universal POS — smoke 1–27</h1>
+    <p class="sub">Local preview of the Cursor smoke canvas · tap a row to toggle · same checklist as in Cursor</p>
+
+    <div class="row">
+      <div class="stat"><strong id="passed">0/27</strong><span>Passed</span></div>
+      <div class="stat"><strong id="rest">7</strong><span>Restaurant left</span></div>
+      <span class="pill" id="status">In progress</span>
+      <button type="button" id="reset">Reset all</button>
+    </div>
+
+    <div class="callout">
+      <strong>Deploy status</strong><br />
+      Live MySQL p27–p32 + POS/Owner/Admin/Dealer PHP are marked done.
+      This checklist is production verification.
+    </div>
+
+    <div id="sections"></div>
+    <p class="note">This HTML mirrors the Cursor Canvas UI. In Cursor, open <code>universal-pos-smoke.canvas.tsx</code> as a Canvas panel for the live version beside chat.</p>
+  </div>
+  <script>
+    const INITIAL = [
+      ["Restaurant default (1–7)", "Must pass", [
+        "1. Login + MPIN → token",
+        "2. Catalog sync",
+        "3. Fast / Dine-In / Takeaway / Mess bill + print",
+        "4. Inventory stock-in + sale deduct",
+        "5. Template switch Retail ↔ Restaurant",
+        "6. BOT toggle (Bar only); KOT unchanged when BOT off",
+        "7. Mess QR still POSBILL|v1|…",
+      ]],
+      ["Universal extras (8–18)", "", [
+        "8. Barcode (Retail): Enter + camera",
+        "9. Weight keypad / BT scale",
+        "10. Bar BOT split print",
+        "11. Staff roster + PIN switch",
+        "12. Salon appointments + Master Data calendar",
+        "13. Bakery custom order + Deposit ledger",
+        "14. Wholesale price tiers",
+        "15. Fashion variants",
+        "16. Business template cloud sync / Fetch",
+        "17. Staff roster cloud sync",
+        "18. Print failure never deletes invoice",
+      ]],
+      ["Owner app (19–23)", "", [
+        "19. Owner Outlet tools hub",
+        "20. Owner set template → POS Fetch",
+        "21. Owner appointment status → POS",
+        "22. Owner deposit status → POS",
+        "23. Owner staff activate/role/delete → POS",
+      ]],
+      ["Admin / Dealer (24–26)", "", [
+        "24. Admin/Dealer licence Business template",
+        "25. New franchise licence with non-restaurant template",
+        "26. New customer registration with template",
+      ]],
+      ["Web admin (27)", "Optional", [
+        "27. Web admin: Add/Edit licence Business template + sync modules",
+      ]],
+    ];
+
+    let done = new Set(JSON.parse(localStorage.getItem("smoke-preview") || "[]"));
+
+    function render() {
+      const root = document.getElementById("sections");
+      root.innerHTML = "";
+      let i = 0;
+      let restaurantLeft = 0;
+      INITIAL.forEach(([title, badge, items], sectionIndex) => {
+        const card = document.createElement("div");
+        card.className = "card";
+        const h = document.createElement("h2");
+        h.innerHTML = title + (badge ? ` <span class="pill">${badge}</span>` : "");
+        card.appendChild(h);
+        items.forEach((label) => {
+          const id = String(++i);
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "item" + (done.has(id) ? " done" : "");
+          btn.innerHTML = `<span class="box"></span><span>${label}</span>`;
+          if (sectionIndex === 0 && !done.has(id)) restaurantLeft++;
+          btn.onclick = () => {
+            if (done.has(id)) done.delete(id); else done.add(id);
+            localStorage.setItem("smoke-preview", JSON.stringify([...done]));
+            render();
+          };
+          card.appendChild(btn);
+        });
+        root.appendChild(card);
+      });
+      const total = 27;
+      const n = done.size;
+      document.getElementById("passed").textContent = `${n}/${total}`;
+      document.getElementById("rest").textContent = String(restaurantLeft);
+      const st = document.getElementById("status");
+      st.textContent = n === total ? "All smoke passed" : "In progress";
+      st.className = "pill" + (n === total ? " on" : "");
+    }
+
+    document.getElementById("reset").onclick = () => {
+      done = new Set();
+      localStorage.removeItem("smoke-preview");
+      render();
+    };
+    render();
+  </script>
+</body>
+</html>

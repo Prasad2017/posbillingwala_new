@@ -61,6 +61,18 @@
             android:textColor="@color/colorTextPrimary" />
 
         <com.google.android.material.button.MaterialButton
+            android:id="@+id/openBusinessTemplate"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:layout_marginTop="8dp"
+            android:fontFamily="@font/poppinsmedium"
+            android:text="@string/licence_template_button"
+            android:textAllCaps="false"
+            app:backgroundTint="@color/colorPrimaryLight"
+            app:cornerRadius="10dp"
+            android:textColor="@color/colorPrimary" />
+
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/saveModules"
             android:layout_width="match_parent"
             android:layout_height="44dp"

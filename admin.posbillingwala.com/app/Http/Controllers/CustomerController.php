@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\License;
 use App\Support\LicenceDefaults;
+use App\Support\BusinessTemplateSupport;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Auth;
@@ -138,6 +139,8 @@ class CustomerController extends Controller
         $license->mpin = LicenceDefaults::defaultMpin();
         $license->save();
 
+        BusinessTemplateSupport::applyFromRequest($license->id, $request);
+
         return redirect('customers/edit/' . $data->id)->with([
             'success' => 'Customer registered successfully. Share the credentials below with the customer.',
             'registration_credentials' => [
@@ -205,6 +208,7 @@ class CustomerController extends Controller
             $license->dineIn = $request->dine_in ?? $license->dineIn;
             $license->mess = $request->mess ?? $license->mess;
             $license->save();
+            BusinessTemplateSupport::applyFromRequest($license->id, $request);
         }
 
         return redirect()->back()->with('success', 'Customer updated successfully');
@@ -318,6 +322,8 @@ class CustomerController extends Controller
         $license->mpin = LicenceDefaults::defaultMpin();
         $license->save();
 
+        BusinessTemplateSupport::applyFromRequest($license->id, $request);
+
         return redirect('customers/edit/'.$request->id)->with([
             'success' => 'App license key generated successfully.',
             'registration_credentials' => [
@@ -368,7 +374,8 @@ class CustomerController extends Controller
             $license->takeAway = $request->take_away ?? $license->takeAway;
             $license->dineIn = $request->dine_in ?? $license->dineIn;
             $license->mess = $request->mess ?? $license->mess;
-            $license->save(); 
+            $license->save();
+            BusinessTemplateSupport::applyFromRequest($license->id, $request);
         }
         return redirect('customers/edit/'.$license->userId)->with('success','App license key updated successfully');
 

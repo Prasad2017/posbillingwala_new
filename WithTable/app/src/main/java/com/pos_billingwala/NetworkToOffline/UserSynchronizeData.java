@@ -479,6 +479,14 @@ public class UserSynchronizeData {
             } while (cursor.moveToNext());
         }
         closeCursor();
+        setTableProgress(CloudSyncTracker.KEY_APPOINTMENTS, context.getString(R.string.sync_progress_appointments));
+        setTableProgress(CloudSyncTracker.KEY_DEPOSITS, context.getString(R.string.sync_progress_deposits));
+        setTableProgress(CloudSyncTracker.KEY_PRICE_TIERS, context.getString(R.string.sync_progress_price_tiers));
+        setTableProgress(CloudSyncTracker.KEY_VARIANTS, context.getString(R.string.sync_progress_variants));
+        setTableProgress(CloudSyncTracker.KEY_BUSINESS_TEMPLATE,
+                context.getString(R.string.sync_progress_business_template));
+        setTableProgress(CloudSyncTracker.KEY_STAFF, context.getString(R.string.sync_progress_staff));
+        UniversalPendingUpload.uploadAll(context, posBillingWalaDatabase);
         setTableProgress(CloudSyncTracker.KEY_DINING_AREAS, context.getString(R.string.sync_progress_dining_areas));
         cursor = posBillingWalaDatabase.getUnSynchronizeDiningArea(NAME_NOT_SYNCED_WITH_SERVER);
         if (cursor != null && cursor.moveToFirst()) {
@@ -573,6 +581,116 @@ public class UserSynchronizeData {
     public void saveExpenses(String expensesId, String expensesName, String expensesAmount, String expensesDate, String expensesNetworkStatus, String expensesStatus) {
         if (executeCall(Api.getClient(context).saveExpenses(MainActivity.userId, expensesName, expensesAmount, expensesDate, expensesNetworkStatus))) {
             posBillingWalaDatabase.updateSyncExpenses(expensesId, NAME_SYNCED_WITH_SERVER);
+        }
+    }
+
+    public void saveServiceAppointment(com.pos_billingwala.Model.ServiceAppointmentResponse a) {
+        if (a == null || a.getAppointmentId() == null) {
+            return;
+        }
+        if (executeCall(Api.getClient(context).saveServiceAppointment(
+                MainActivity.userId,
+                a.getAppointmentId(),
+                a.getProductId() != null ? a.getProductId() : "",
+                a.getProductName() != null ? a.getProductName() : "",
+                a.getCustomerName() != null ? a.getCustomerName() : "",
+                a.getCustomerMobile() != null ? a.getCustomerMobile() : "",
+                a.getAppointmentAt() != null ? a.getAppointmentAt() : "",
+                a.getNotes() != null ? a.getNotes() : "",
+                a.getAppointmentStatus() != null ? a.getAppointmentStatus() : "booked",
+                a.getStaffId() != null ? a.getStaffId() : "",
+                a.getStaffName() != null ? a.getStaffName() : "",
+                a.getAppointmentNetworkStatus() != null ? a.getAppointmentNetworkStatus() : "pending"))) {
+            posBillingWalaDatabase.markAppointmentSynced(a.getAppointmentId());
+        }
+    }
+
+    public void saveCustomOrderDeposit(com.pos_billingwala.Model.CustomOrderDepositResponse d) {
+        if (d == null || d.getDepositId() == null) {
+            return;
+        }
+        if (executeCall(Api.getClient(context).saveCustomOrderDeposit(
+                MainActivity.userId,
+                d.getDepositId(),
+                d.getProductName() != null ? d.getProductName() : "",
+                d.getOrderNote() != null ? d.getOrderNote() : "",
+                d.getDepositAmount() != null ? d.getDepositAmount() : "",
+                d.getDueDate() != null ? d.getDueDate() : "",
+                d.getPhotoFile() != null ? d.getPhotoFile() : "",
+                d.getDepositStatus() != null ? d.getDepositStatus() : "open",
+                d.getDepositNetworkStatus() != null ? d.getDepositNetworkStatus() : "pending",
+                d.getCreatedAt() != null ? d.getCreatedAt() : ""))) {
+            posBillingWalaDatabase.markDepositSynced(d.getDepositId());
+        }
+    }
+
+    public void saveProductPriceTier(com.pos_billingwala.Model.ProductPriceTierResponse t) {
+        if (t == null || t.getTierId() == null) {
+            return;
+        }
+        if (executeCall(Api.getClient(context).saveProductPriceTier(
+                MainActivity.userId,
+                t.getTierId(),
+                t.getProductId() != null ? t.getProductId() : "",
+                t.getProductNetworkStatus() != null ? t.getProductNetworkStatus() : "",
+                t.getMinQty() != null ? t.getMinQty() : "1",
+                t.getTierPrice() != null ? t.getTierPrice() : "",
+                t.getTierLabel() != null ? t.getTierLabel() : "",
+                t.getTierDeletedStatus() != null ? t.getTierDeletedStatus() : "0",
+                t.getTierNetworkStatus() != null ? t.getTierNetworkStatus() : "pending"))) {
+            posBillingWalaDatabase.markPriceTierSynced(t.getTierId());
+        }
+    }
+
+    public void saveProductVariant(com.pos_billingwala.Model.ProductVariantResponse v) {
+        if (v == null || v.getVariantId() == null) {
+            return;
+        }
+        if (executeCall(Api.getClient(context).saveProductVariant(
+                MainActivity.userId,
+                v.getVariantId(),
+                v.getProductId() != null ? v.getProductId() : "",
+                v.getProductNetworkStatus() != null ? v.getProductNetworkStatus() : "",
+                v.getVariantSize() != null ? v.getVariantSize() : "",
+                v.getVariantColor() != null ? v.getVariantColor() : "",
+                v.getVariantSku() != null ? v.getVariantSku() : "",
+                v.getVariantPrice() != null ? v.getVariantPrice() : "",
+                v.getVariantDeletedStatus() != null ? v.getVariantDeletedStatus() : "0",
+                v.getVariantSortOrder() != null ? v.getVariantSortOrder() : "0",
+                v.getVariantNetworkStatus() != null ? v.getVariantNetworkStatus() : "pending"))) {
+            posBillingWalaDatabase.markVariantSynced(v.getVariantId());
+        }
+    }
+
+    public void saveBusinessTemplate() {
+        String type = com.pos_billingwala.Extra.BusinessSession.getBusinessType(context);
+        String templateId = com.pos_billingwala.Extra.BusinessSession.getTemplateId(context);
+        String json = com.pos_billingwala.Extra.BusinessConfigStore.getTemplateJson(context);
+        if (executeCall(Api.getClient(context).saveBusinessTemplate(
+                MainActivity.userId,
+                type != null ? type : "restaurant",
+                templateId != null ? templateId : "restaurant_default",
+                json != null ? json : "",
+                "pending"))) {
+            com.pos_billingwala.Extra.BusinessSession.markTemplateSynced(context);
+        }
+    }
+
+    public void saveStaffUser(com.pos_billingwala.Model.StaffUserResponse s) {
+        if (s == null || s.getStaffId() == null) {
+            return;
+        }
+        if (executeCall(Api.getClient(context).saveStaffUser(
+                MainActivity.userId,
+                s.getStaffId(),
+                s.getStaffName() != null ? s.getStaffName() : "",
+                s.getStaffRole() != null ? s.getStaffRole() : "cashier",
+                s.getStaffPin() != null ? s.getStaffPin() : "",
+                s.getStaffActive() != null ? s.getStaffActive() : "1",
+                s.getStaffDeletedStatus() != null ? s.getStaffDeletedStatus() : "0",
+                s.getStaffNetworkStatus() != null ? s.getStaffNetworkStatus() : "pending",
+                s.getCreatedAt() != null ? s.getCreatedAt() : ""))) {
+            posBillingWalaDatabase.markStaffUserSynced(s.getStaffId());
         }
     }
 

@@ -8,6 +8,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.BusinessTemplateEngine;
 import com.pos_billingwala.Extra.Common;
 import com.pos_billingwala.Extra.ErrorLogQueue;
 import com.pos_billingwala.R;
@@ -39,6 +40,12 @@ public final class CloudSyncTracker {
     public static final String KEY_MESS_INVOICES = "mess_invoices";
     public static final String KEY_INVENTORY = "inventory";
     public static final String KEY_EXPENSES = "expenses";
+    public static final String KEY_APPOINTMENTS = "appointments";
+    public static final String KEY_DEPOSITS = "deposits";
+    public static final String KEY_PRICE_TIERS = "price_tiers";
+    public static final String KEY_VARIANTS = "variants";
+    public static final String KEY_BUSINESS_TEMPLATE = "business_template";
+    public static final String KEY_STAFF = "staff";
     public static final String KEY_MESS_TOKENS = "mess_tokens";
     public static final String KEY_ERROR_LOGS = "error_logs";
     public static final String KEY_DINING_AREAS = "dining_areas";
@@ -119,6 +126,8 @@ public final class CloudSyncTracker {
         for (TableDef def : TABLE_DEFS) {
             int pending = KEY_ERROR_LOGS.equals(def.key)
                     ? ErrorLogQueue.pendingCount(context)
+                    : KEY_BUSINESS_TEMPLATE.equals(def.key)
+                    ? BusinessTemplateEngine.countPendingSync(context)
                     : safeCount(def, db);
             pendingTotal += pending;
             tables.add(new TableStatus(def.key, def.labelRes, pending, pending == 0,
@@ -223,6 +232,18 @@ public final class CloudSyncTracker {
                     db -> db.countUnsyncedRows(POSBillingWalaDatabase.INVENTORY_TABLE, "inventoryStatus")),
             new TableDef(KEY_EXPENSES, R.string.sync_table_expenses,
                     db -> db.countUnsyncedRows(POSBillingWalaDatabase.EXPENSES_TABLE, "expensesStatus")),
+            new TableDef(KEY_APPOINTMENTS, R.string.sync_table_appointments,
+                    POSBillingWalaDatabase::countPendingAppointments),
+            new TableDef(KEY_DEPOSITS, R.string.sync_table_deposits,
+                    POSBillingWalaDatabase::countPendingDeposits),
+            new TableDef(KEY_PRICE_TIERS, R.string.sync_table_price_tiers,
+                    POSBillingWalaDatabase::countPendingPriceTiers),
+            new TableDef(KEY_VARIANTS, R.string.sync_table_variants,
+                    POSBillingWalaDatabase::countPendingVariants),
+            new TableDef(KEY_BUSINESS_TEMPLATE, R.string.sync_table_business_template,
+                    db -> 0),
+            new TableDef(KEY_STAFF, R.string.sync_table_staff,
+                    POSBillingWalaDatabase::countPendingStaffUsers),
             new TableDef(KEY_DINING_AREAS, R.string.sync_table_dining_areas,
                     db -> db.countUnsyncedRows(POSBillingWalaDatabase.DINING_AREA_TABLE, "areaStatus")),
             new TableDef(KEY_TABLE_TYPES, R.string.sync_table_table_types,

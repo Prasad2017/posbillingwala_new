@@ -133,6 +133,17 @@
                     android:textSize="14dp" />
 
                 <ImageView
+                    android:id="@+id/cameraBarcodeScan"
+                    android:layout_width="35dp"
+                    android:layout_height="35dp"
+                    android:layout_gravity="center"
+                    android:layout_marginEnd="6dp"
+                    android:contentDescription="@string/ui_scan_barcode_camera"
+                    android:src="@drawable/ic_qr_code"
+                    android:visibility="gone"
+                    app:tint="@color/black" />
+
+                <ImageView
                     android:id="@+id/voiceSearchProduct"
                     android:layout_width="35dp"
                     android:layout_height="35dp"

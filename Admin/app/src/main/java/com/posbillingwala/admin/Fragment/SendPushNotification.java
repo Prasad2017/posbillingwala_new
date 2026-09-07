@@ -19,7 +19,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
-import com.github.f0ris.sweetalert.SweetAlertDialog;
+import cn.pedant.SweetAlert.SweetAlertDialog;
 import com.posbillingwala.admin.Activity.MainActivity;
 import com.posbillingwala.admin.Model.AllApiResponse;
 import com.posbillingwala.admin.R;

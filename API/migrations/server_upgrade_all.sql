@@ -1612,6 +1612,162 @@ CREATE TABLE IF NOT EXISTS `kot_item` (
   KEY `idx_kot_item_kot` (`kotId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- =============================================================================
+-- STEP p27 — Service appointments (salon upload; insertServiceAppointment.php)
+-- Prefer dedicated file: API/migrations/p27_service_appointment.sql
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS `service_appointments` (
+  `appointmentId` INT NOT NULL AUTO_INCREMENT,
+  `userId` VARCHAR(64) NOT NULL,
+  `organization_id` INT NULL DEFAULT NULL,
+  `branch_id` INT NULL DEFAULT NULL,
+  `device_id` VARCHAR(255) NULL DEFAULT NULL,
+  `local_appointment_id` VARCHAR(64) NOT NULL,
+  `productId` VARCHAR(64) NULL DEFAULT NULL,
+  `productName` VARCHAR(255) NULL DEFAULT NULL,
+  `customerName` VARCHAR(255) NULL DEFAULT NULL,
+  `customerMobile` VARCHAR(64) NULL DEFAULT NULL,
+  `appointmentAt` VARCHAR(64) NULL DEFAULT NULL,
+  `notes` TEXT NULL,
+  `appointmentStatus` VARCHAR(32) NOT NULL DEFAULT 'booked',
+  `staffId` VARCHAR(64) NULL DEFAULT NULL,
+  `staffName` VARCHAR(255) NULL DEFAULT NULL,
+  `appointmentNetworkStatus` VARCHAR(64) NULL DEFAULT NULL,
+  `createdAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`appointmentId`),
+  UNIQUE KEY `uq_service_appt_local` (`userId`, `local_appointment_id`),
+  KEY `idx_service_appt_branch` (`branch_id`),
+  KEY `idx_service_appt_at` (`appointmentAt`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- =============================================================================
+-- STEP p28 — Custom order deposits (bakery upload; insertCustomOrderDeposit.php)
+-- Prefer dedicated file: API/migrations/p28_custom_order_deposit.sql
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS `custom_order_deposits` (
+  `depositId` INT NOT NULL AUTO_INCREMENT,
+  `userId` VARCHAR(64) NOT NULL,
+  `organization_id` INT NULL DEFAULT NULL,
+  `branch_id` INT NULL DEFAULT NULL,
+  `device_id` VARCHAR(255) NULL DEFAULT NULL,
+  `local_deposit_id` VARCHAR(64) NOT NULL,
+  `productName` VARCHAR(255) NULL DEFAULT NULL,
+  `orderNote` TEXT NULL,
+  `depositAmount` VARCHAR(64) NULL DEFAULT NULL,
+  `dueDate` VARCHAR(64) NULL DEFAULT NULL,
+  `photoFile` VARCHAR(512) NULL DEFAULT NULL,
+  `depositStatus` VARCHAR(32) NOT NULL DEFAULT 'open',
+  `depositNetworkStatus` VARCHAR(64) NULL DEFAULT NULL,
+  `createdAtLocal` VARCHAR(64) NULL DEFAULT NULL,
+  `createdAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`depositId`),
+  UNIQUE KEY `uq_custom_deposit_local` (`userId`, `local_deposit_id`),
+  KEY `idx_custom_deposit_branch` (`branch_id`),
+  KEY `idx_custom_deposit_status` (`depositStatus`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- =============================================================================
+-- STEP p29 — Product price tiers (wholesale; insertProductPriceTier.php)
+-- Prefer dedicated file: API/migrations/p29_product_price_tier.sql
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS `product_price_tiers` (
+  `tierId` INT NOT NULL AUTO_INCREMENT,
+  `userId` VARCHAR(64) NOT NULL,
+  `organization_id` INT NULL DEFAULT NULL,
+  `branch_id` INT NULL DEFAULT NULL,
+  `device_id` VARCHAR(255) NULL DEFAULT NULL,
+  `local_tier_id` VARCHAR(64) NOT NULL,
+  `productId` VARCHAR(64) NULL DEFAULT NULL,
+  `productNetworkStatus` VARCHAR(128) NULL DEFAULT NULL,
+  `minQty` VARCHAR(64) NOT NULL DEFAULT '1',
+  `tierPrice` VARCHAR(64) NOT NULL,
+  `tierLabel` VARCHAR(255) NULL DEFAULT NULL,
+  `tierDeletedStatus` VARCHAR(8) NOT NULL DEFAULT '0',
+  `tierNetworkStatus` VARCHAR(64) NULL DEFAULT NULL,
+  `createdAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`tierId`),
+  UNIQUE KEY `uq_price_tier_local` (`userId`, `local_tier_id`),
+  KEY `idx_price_tier_branch` (`branch_id`),
+  KEY `idx_price_tier_product` (`productNetworkStatus`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- =============================================================================
+-- STEP p30 — Product variants (fashion; insertProductVariant.php)
+-- Prefer dedicated file: API/migrations/p30_product_variant.sql
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS `product_variants` (
+  `variantId` INT NOT NULL AUTO_INCREMENT,
+  `userId` VARCHAR(64) NOT NULL,
+  `organization_id` INT NULL DEFAULT NULL,
+  `branch_id` INT NULL DEFAULT NULL,
+  `device_id` VARCHAR(255) NULL DEFAULT NULL,
+  `local_variant_id` VARCHAR(64) NOT NULL,
+  `productId` VARCHAR(64) NULL DEFAULT NULL,
+  `productNetworkStatus` VARCHAR(128) NULL DEFAULT NULL,
+  `variantSize` VARCHAR(128) NULL DEFAULT NULL,
+  `variantColor` VARCHAR(128) NULL DEFAULT NULL,
+  `variantSku` VARCHAR(128) NULL DEFAULT NULL,
+  `variantPrice` VARCHAR(64) NULL DEFAULT NULL,
+  `variantDeletedStatus` VARCHAR(8) NOT NULL DEFAULT '0',
+  `variantSortOrder` INT NOT NULL DEFAULT 0,
+  `variantNetworkStatus` VARCHAR(64) NULL DEFAULT NULL,
+  `createdAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`variantId`),
+  UNIQUE KEY `uq_product_variant_local` (`userId`, `local_variant_id`),
+  KEY `idx_product_variant_branch` (`branch_id`),
+  KEY `idx_product_variant_product` (`productNetworkStatus`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- =============================================================================
+-- STEP p31 — Company business template (insertBusinessTemplate.php)
+-- Prefer dedicated file: API/migrations/p31_company_business_template.sql
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS `company_business_templates` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `userId` VARCHAR(64) NOT NULL,
+  `organization_id` INT NULL DEFAULT NULL,
+  `branch_id` INT NULL DEFAULT NULL,
+  `device_id` VARCHAR(255) NULL DEFAULT NULL,
+  `businessType` VARCHAR(64) NOT NULL DEFAULT 'restaurant',
+  `businessTemplateId` VARCHAR(128) NOT NULL DEFAULT 'restaurant_default',
+  `businessTemplateJson` MEDIUMTEXT NULL,
+  `templateNetworkStatus` VARCHAR(64) NULL DEFAULT NULL,
+  `createdAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_company_biz_template_user` (`userId`),
+  KEY `idx_company_biz_template_branch` (`branch_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- =============================================================================
+-- STEP p32 — Staff users (device roster; insertStaffUser.php)
+-- Prefer dedicated file: API/migrations/p32_staff_user.sql
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS `staff_users` (
+  `staffId` INT NOT NULL AUTO_INCREMENT,
+  `userId` VARCHAR(64) NOT NULL,
+  `organization_id` INT NULL DEFAULT NULL,
+  `branch_id` INT NULL DEFAULT NULL,
+  `device_id` VARCHAR(255) NULL DEFAULT NULL,
+  `local_staff_id` VARCHAR(64) NOT NULL,
+  `staffName` VARCHAR(255) NOT NULL,
+  `staffRole` VARCHAR(64) NOT NULL DEFAULT 'cashier',
+  `staffPin` VARCHAR(64) NULL DEFAULT NULL,
+  `staffActive` VARCHAR(8) NOT NULL DEFAULT '1',
+  `staffDeletedStatus` VARCHAR(8) NOT NULL DEFAULT '0',
+  `staffNetworkStatus` VARCHAR(64) NULL DEFAULT NULL,
+  `createdAtLocal` VARCHAR(64) NULL DEFAULT NULL,
+  `createdAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`staffId`),
+  UNIQUE KEY `uq_staff_user_local` (`userId`, `local_staff_id`),
+  KEY `idx_staff_user_branch` (`branch_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- Business data still there (compare to first SELECT — counts must match)
 SELECT
   (SELECT COUNT(*) FROM `categories`) AS categories_after,

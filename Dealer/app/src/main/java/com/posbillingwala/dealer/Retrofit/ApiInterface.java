@@ -66,7 +66,9 @@ public interface ApiInterface {
                                               @Field("fastBilling") String fastBilling,
                                               @Field("takeAway") String takeAway,
                                               @Field("dineIn") String dineIn,
-                                              @Field("mess") String mess);
+                                              @Field("mess") String mess,
+                                              @Field("businessType") String businessType,
+                                              @Field("businessTemplateId") String businessTemplateId);
 
     @FormUrlEncoded
     @POST("insertExportAllProduct.php")
@@ -236,7 +238,9 @@ public interface ApiInterface {
                                                         @Field("fastBilling") String fastBilling,
                                                         @Field("takeAway") String takeAway,
                                                         @Field("dineIn") String dineIn,
-                                                        @Field("mess") String mess);
+                                                        @Field("mess") String mess,
+                                                        @Field("businessType") String businessType,
+                                                        @Field("businessTemplateId") String businessTemplateId);
 
     @Multipart
     @POST("catalogImportValidate.php")
@@ -258,5 +262,18 @@ public interface ApiInterface {
     Call<AllApiResponse> registerFcmToken(@Field("userId") String userId,
                                           @Field("android_device_id") String androidDeviceId,
                                           @Field("fcm_token") String fcmToken);
+
+    @GET("getBusinessTemplate.php")
+    Call<AllApiResponse> getBusinessTemplate(@Query("userId") String userId,
+                                             @Query("licenceId") String licenceId);
+
+    @FormUrlEncoded
+    @POST("setBusinessTemplate.php")
+    Call<AllApiResponse> setBusinessTemplate(@Field("userId") String userId,
+                                             @Field("licenceId") String licenceId,
+                                             @Field("businessType") String businessType,
+                                             @Field("businessTemplateId") String businessTemplateId,
+                                             @Field("businessTemplateJson") String businessTemplateJson,
+                                             @Field("syncModules") String syncModules);
 
 }

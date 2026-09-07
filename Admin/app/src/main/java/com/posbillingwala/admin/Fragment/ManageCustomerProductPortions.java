@@ -77,7 +77,7 @@ public class ManageCustomerProductPortions extends Fragment implements View.OnCl
         binding.productInfo.setText("Product: " + productName);
         portionRecyclerview = binding.portionRecyclerview;
         portionListCardView = binding.portionListCardView;
-        noDataFound = binding.noDataFound;
+        noDataFound = binding.noDataFound.getRoot();
 
         binding.portionMasterSpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
             @Override

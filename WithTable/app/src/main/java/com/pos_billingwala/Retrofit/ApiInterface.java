@@ -100,6 +100,24 @@ public interface ApiInterface {
     @GET("getExpensesList.php")
     Call<AllApiResponse> getExpensesList(@Query("userId") String userId);
 
+    @GET("getServiceAppointmentList.php")
+    Call<AllApiResponse> getServiceAppointmentList(@Query("userId") String userId);
+
+    @GET("getCustomOrderDepositList.php")
+    Call<AllApiResponse> getCustomOrderDepositList(@Query("userId") String userId);
+
+    @GET("getProductPriceTierList.php")
+    Call<AllApiResponse> getProductPriceTierList(@Query("userId") String userId);
+
+    @GET("getProductVariantList.php")
+    Call<AllApiResponse> getProductVariantList(@Query("userId") String userId);
+
+    @GET("getBusinessTemplate.php")
+    Call<AllApiResponse> getBusinessTemplate(@Query("userId") String userId);
+
+    @GET("getStaffUserList.php")
+    Call<AllApiResponse> getStaffUserList(@Query("userId") String userId);
+
     @FormUrlEncoded
     @POST("insertCategory.php")
     Call<AllApiResponse> saveCategory(@Field("userId") String userId,
@@ -379,6 +397,86 @@ public interface ApiInterface {
                                       @Field("expensesAmount") String expensesAmount,
                                       @Field("expensesDate") String expensesDate,
                                       @Field("expensesNetworkStatus") String expensesNetworkStatus);
+
+    /** Local salon appointments → cloud (server PHP may be deployed separately). */
+    @FormUrlEncoded
+    @POST("insertServiceAppointment.php")
+    Call<AllApiResponse> saveServiceAppointment(@Field("userId") String userId,
+                                                @Field("localAppointmentId") String localAppointmentId,
+                                                @Field("productId") String productId,
+                                                @Field("productName") String productName,
+                                                @Field("customerName") String customerName,
+                                                @Field("customerMobile") String customerMobile,
+                                                @Field("appointmentAt") String appointmentAt,
+                                                @Field("notes") String notes,
+                                                @Field("appointmentStatus") String appointmentStatus,
+                                                @Field("staffId") String staffId,
+                                                @Field("staffName") String staffName,
+                                                @Field("appointmentNetworkStatus") String appointmentNetworkStatus);
+
+    /** Bakery custom-order deposits → cloud (metadata only; photo file stays local). */
+    @FormUrlEncoded
+    @POST("insertCustomOrderDeposit.php")
+    Call<AllApiResponse> saveCustomOrderDeposit(@Field("userId") String userId,
+                                                @Field("localDepositId") String localDepositId,
+                                                @Field("productName") String productName,
+                                                @Field("orderNote") String orderNote,
+                                                @Field("depositAmount") String depositAmount,
+                                                @Field("dueDate") String dueDate,
+                                                @Field("photoFile") String photoFile,
+                                                @Field("depositStatus") String depositStatus,
+                                                @Field("depositNetworkStatus") String depositNetworkStatus,
+                                                @Field("createdAt") String createdAt);
+
+    /** Wholesale qty price tiers → cloud. */
+    @FormUrlEncoded
+    @POST("insertProductPriceTier.php")
+    Call<AllApiResponse> saveProductPriceTier(@Field("userId") String userId,
+                                              @Field("localTierId") String localTierId,
+                                              @Field("productId") String productId,
+                                              @Field("productNetworkStatus") String productNetworkStatus,
+                                              @Field("minQty") String minQty,
+                                              @Field("tierPrice") String tierPrice,
+                                              @Field("tierLabel") String tierLabel,
+                                              @Field("tierDeletedStatus") String tierDeletedStatus,
+                                              @Field("tierNetworkStatus") String tierNetworkStatus);
+
+    /** Fashion / jewellery variants → cloud. */
+    @FormUrlEncoded
+    @POST("insertProductVariant.php")
+    Call<AllApiResponse> saveProductVariant(@Field("userId") String userId,
+                                            @Field("localVariantId") String localVariantId,
+                                            @Field("productId") String productId,
+                                            @Field("productNetworkStatus") String productNetworkStatus,
+                                            @Field("variantSize") String variantSize,
+                                            @Field("variantColor") String variantColor,
+                                            @Field("variantSku") String variantSku,
+                                            @Field("variantPrice") String variantPrice,
+                                            @Field("variantDeletedStatus") String variantDeletedStatus,
+                                            @Field("variantSortOrder") String variantSortOrder,
+                                            @Field("variantNetworkStatus") String variantNetworkStatus);
+
+    /** Shop business template selection → cloud. */
+    @FormUrlEncoded
+    @POST("insertBusinessTemplate.php")
+    Call<AllApiResponse> saveBusinessTemplate(@Field("userId") String userId,
+                                              @Field("businessType") String businessType,
+                                              @Field("businessTemplateId") String businessTemplateId,
+                                              @Field("businessTemplateJson") String businessTemplateJson,
+                                              @Field("templateNetworkStatus") String templateNetworkStatus);
+
+    /** Device staff roster → cloud. */
+    @FormUrlEncoded
+    @POST("insertStaffUser.php")
+    Call<AllApiResponse> saveStaffUser(@Field("userId") String userId,
+                                       @Field("localStaffId") String localStaffId,
+                                       @Field("staffName") String staffName,
+                                       @Field("staffRole") String staffRole,
+                                       @Field("staffPin") String staffPin,
+                                       @Field("staffActive") String staffActive,
+                                       @Field("staffDeletedStatus") String staffDeletedStatus,
+                                       @Field("staffNetworkStatus") String staffNetworkStatus,
+                                       @Field("createdAt") String createdAt);
 
     @GET("LogOut.php")
     Call<AllApiResponse> serverLogout(@Query("licenceKey") String licenceKey);

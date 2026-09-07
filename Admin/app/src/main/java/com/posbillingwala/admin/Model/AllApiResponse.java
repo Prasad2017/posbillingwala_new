@@ -14,6 +14,9 @@ public class AllApiResponse {
     @SerializedName("message")
     @Expose
     private String message;
+    @SerializedName("businessTemplateResponse")
+    @Expose
+    private List<BusinessTemplateResponse> businessTemplateResponseList;
     @SerializedName("totalCustomer")
     @Expose
     private String totalCustomer;
@@ -298,6 +301,14 @@ public class AllApiResponse {
     @SerializedName("totalAmount") @Expose private String totalAmount;
     @SerializedName("customerName") @Expose private String detailCustomerName;
 
+
+    public List<BusinessTemplateResponse> getBusinessTemplateResponseList() {
+        return businessTemplateResponseList;
+    }
+
+    public void setBusinessTemplateResponseList(List<BusinessTemplateResponse> businessTemplateResponseList) {
+        this.businessTemplateResponseList = businessTemplateResponseList;
+    }
 
     public String getStatus() {
         return status;

@@ -248,6 +248,87 @@
                         android:layout_marginTop="@dimen/spacing_sm"
                         app:psr_label="@string/ui_enable_kot" />
 
+                    <com.pos_billingwala.Extra.PosSwitchRowView
+                        android:id="@+id/botEnableSwitch"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_sm"
+                        android:visibility="gone"
+                        app:psr_label="@string/ui_enable_bot" />
+
+                    <LinearLayout
+                        android:id="@+id/botPrinterRow"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_sm"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:visibility="gone">
+
+                        <TextView
+                            android:id="@+id/botPrinterAddressLabel"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:fontFamily="@font/poppinsregular"
+                            android:text="@string/ui_bot_printer_same_as_kot"
+                            android:textColor="@color/colorTextSecondary"
+                            android:textSize="@dimen/text_caption" />
+
+                        <TextView
+                            android:id="@+id/connectBotPrinter"
+                            android:layout_width="wrap_content"
+                            android:layout_height="36dp"
+                            android:background="@drawable/bg_button_primary"
+                            android:fontFamily="@font/poppinsmedium"
+                            android:gravity="center"
+                            android:minWidth="96dp"
+                            android:paddingStart="@dimen/spacing_md"
+                            android:paddingEnd="@dimen/spacing_md"
+                            android:text="@string/ui_bot_connect"
+                            android:textColor="@color/white"
+                            android:textSize="@dimen/text_caption" />
+
+                        <TextView
+                            android:id="@+id/clearBotPrinter"
+                            android:layout_width="wrap_content"
+                            android:layout_height="36dp"
+                            android:layout_marginStart="@dimen/spacing_sm"
+                            android:background="@drawable/bg_sheet_btn_danger"
+                            android:fontFamily="@font/poppinsmedium"
+                            android:gravity="center"
+                            android:minWidth="72dp"
+                            android:paddingStart="@dimen/spacing_md"
+                            android:paddingEnd="@dimen/spacing_md"
+                            android:text="@string/ui_clear"
+                            android:textColor="@color/white"
+                            android:textSize="@dimen/text_caption"
+                            android:visibility="gone" />
+                    </LinearLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/botPrefixLayout"
+                        style="@style/PosFormTextInput"
+                        android:layout_marginTop="@dimen/spacing_sm"
+                        android:visibility="gone">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/botPrefix"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/poppinsregular"
+                            android:hint="@string/ui_bot_prefix"
+                            android:imeOptions="actionNext"
+                            android:inputType="text"
+                            android:maxLines="1"
+                            android:paddingStart="@dimen/spacing_lg"
+                            android:paddingEnd="@dimen/spacing_md"
+                            android:singleLine="true"
+                            android:text="BOT-"
+                            android:textColor="@color/colorTextPrimary"
+                            android:textSize="@dimen/text_body" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
                     <LinearLayout
                         android:id="@+id/kotDetailsContainer"
                         android:layout_width="match_parent"

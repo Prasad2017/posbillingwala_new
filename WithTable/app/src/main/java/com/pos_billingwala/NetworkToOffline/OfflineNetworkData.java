@@ -427,6 +427,7 @@ public class OfflineNetworkData {
             } while (cursor.moveToNext());
         }
 
+        UniversalPendingUpload.uploadAll(activity, posBillingWalaDatabase);
         posBillingWalaDatabase.close();
     }
 

@@ -177,7 +177,7 @@ public class AddCustomerProductCategory extends Fragment implements View.OnClick
 
         categoryRecyclerview = binding.categoryRecyclerview;
         categoryListCardView = binding.categoryListCardView;
-        noDataFound = binding.noDataFound;
+        noDataFound = binding.noDataFound.getRoot();
 
         binding.addCategory.setOnClickListener(this);
         binding.managePortionMaster.setOnClickListener(this);

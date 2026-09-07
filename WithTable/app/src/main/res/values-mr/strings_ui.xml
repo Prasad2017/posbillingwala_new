@@ -79,6 +79,12 @@
     <string name="ui_duplicate_bill_copy_hint">सुरू असताना इनव्हॉइस यादीतून प्रिंट केलेल्या बिलांवर Duplicate Copy दिसेल. नवीन बिलिंगवर परिणाम होणार नाही.</string>
     <string name="ui_enter_pin">PIN प्रविष्ट करा*</string>
     <string name="ui_enter_quantity">प्रमाण प्रविष्ट करा*</string>
+    <string name="ui_enter_weight">वजन प्रविष्ट करा</string>
+    <string name="ui_weight_hint">वजन*</string>
+    <string name="ui_rate_per_unit">दर / युनिट</string>
+    <string name="ui_search_or_scan_barcode">नाव शोधा किंवा बारकोड स्कॅन करा</string>
+    <string name="ui_scan_barcode_camera">बारकोड स्कॅन</string>
+    <string name="ui_scan_barcode_prompt">उत्पादन बारकोड स्कॅन करा</string>
     <string name="ui_expense">खर्च</string>
     <string name="ui_expense_date">खर्चाची तारीख</string>
     <string name="ui_expense_management_खर्चच_महत">खर्च व्यवस्थापन</string>
@@ -265,6 +271,7 @@
     <string name="ui_update_settings">सेटिंग अपडेट करा</string>
     <string name="ui_printer_details_subtitle">प्रिंटर, KOT, बिल पर्याय आणि अटी</string>
     <string name="ui_enable_kot">KOT सक्षम करा</string>
+    <string name="ui_enable_bot">BOT सक्षम करा (पेय बार तिकीट)</string>
     <string name="ui_kot_prefix">KOT उपसर्ग</string>
     <string name="ui_kot_copies">KOT कॉपी</string>
     <string name="ui_auto_print_kot">ऑटो प्रिंट KOT</string>
@@ -360,8 +367,11 @@
     <string name="toast_bluetooth_is_off">ब्लूटूथ बंद आहे. कृपया ब्लूटूथ सुरू करा.</string>
     <string name="toast_bluetooth_permission_denied">ब्लूटूथ परवानगी नाकारली</string>
     <string name="toast_camera_permission_is_required_to_scan_qr">QR कोड स्कॅन करण्यासाठी कॅमेरा परवानगी आवश्यक आहे</string>
+    <string name="toast_camera_permission_barcode">बारकोड स्कॅन करण्यासाठी कॅमेरा परवानगी आवश्यक आहे</string>
     <string name="toast_canceled_by_user">वापरकर्त्याने रद्द केले</string>
     <string name="toast_cart_is_empty">कार्ट रिकामी आहे</string>
+    <string name="toast_barcode_not_found">या बारकोडसाठी उत्पादन सापडले नाही</string>
+    <string name="toast_enter_correct_pin">योग्य पिन प्रविष्ट करा</string>
     <string name="toast_category_deleted">श्रेणी हटवली</string>
     <string name="toast_category_updated">श्रेणी अपडेट केली</string>
     <string name="toast_company_details_missing">कंपनी तपशील उपलब्ध नाहीत</string>

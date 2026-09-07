@@ -15,7 +15,12 @@ import androidx.fragment.app.Fragment;
 
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.FashionJewelleryModule;
+import com.pos_billingwala.Extra.RetailGroceryModule;
+import com.pos_billingwala.Extra.FeatureEngine;
+import com.pos_billingwala.Extra.FeatureFlags;
 import com.pos_billingwala.Extra.ProductPortionSectionHelper;
+import android.widget.TextView;
 import com.pos_billingwala.Model.ProductCategoryResponse;
 import com.pos_billingwala.Model.ProductResponse;
 import com.pos_billingwala.Model.ProductSubcategoryResponse;
@@ -59,6 +64,7 @@ public class UpdateProduct extends Fragment implements View.OnClickListener {
         portionSectionHelper.setOnPortionMasterLinkClick(this::openPortionMaster);
         portionSectionHelper.setOnPortionsChanged(this::syncProductCostVisibility);
         portionSectionHelper.loadExistingForProduct(productId);
+        setupVariantEntryIfNeeded();
 
         view.setFocusableInTouchMode(true);
         view.requestFocus();
@@ -110,8 +116,10 @@ public class UpdateProduct extends Fragment implements View.OnClickListener {
                 if (!binding.productFormBody.productName.getText().toString().isEmpty()) {
                     String price = binding.productFormBody.productPrice.getText().toString().trim();
                     boolean hasPortions = portionSectionHelper != null && portionSectionHelper.hasPortions();
+                    boolean hasVariants = FashionJewelleryModule.isEnabled(activity)
+                            && posBillingWalaDatabase.hasProductVariants(productId);
                     boolean openPrice = binding.productFormBody.openPriceSwitch.isChecked();
-                    if (!price.isEmpty() || hasPortions || openPrice) {
+                    if (!price.isEmpty() || hasPortions || hasVariants || openPrice) {
                         if (unitName != null) {
                             updateProduct();
                         } else {
@@ -286,5 +294,45 @@ public class UpdateProduct extends Fragment implements View.OnClickListener {
         }
         binding.productFormBody.subcategoryDropdown.setSelectedIndex(selection);
         subcategoryId = subcategoryIdList[selection];
+    }
+
+    private void setupVariantEntryIfNeeded() {
+        if (FashionJewelleryModule.isEnabled(activity)) {
+            TextView link = view.findViewById(R.id.managePortionMasterLink);
+            if (link != null) {
+                link.setVisibility(View.VISIBLE);
+                link.setText(R.string.variant_manage_title);
+                link.setOnClickListener(v -> FashionJewelleryModule.showManageVariantsDialog(
+                        activity, posBillingWalaDatabase, productId));
+                TextView hint = view.findViewById(R.id.portionSectionHint);
+                if (hint != null) {
+                    hint.setText(R.string.variant_section_hint);
+                }
+            }
+            if (!FeatureEngine.isEnabled(activity, FeatureFlags.PORTIONS)) {
+                View picker = view.findViewById(R.id.portionMasterPickerSection);
+                if (picker != null) {
+                    picker.setVisibility(View.GONE);
+                }
+                View listCard = view.findViewById(R.id.inlinePortionListCard);
+                if (listCard != null) {
+                    listCard.setVisibility(View.GONE);
+                }
+            }
+            return;
+        }
+        if (RetailGroceryModule.canWholesalePricing(activity)) {
+            TextView link = view.findViewById(R.id.managePortionMasterLink);
+            if (link != null) {
+                link.setVisibility(View.VISIBLE);
+                link.setText(R.string.tier_manage_title);
+                link.setOnClickListener(v -> RetailGroceryModule.showManageTiersDialog(
+                        activity, posBillingWalaDatabase, productId));
+                TextView hint = view.findViewById(R.id.portionSectionHint);
+                if (hint != null) {
+                    hint.setText(R.string.tier_section_hint);
+                }
+            }
+        }
     }
 }

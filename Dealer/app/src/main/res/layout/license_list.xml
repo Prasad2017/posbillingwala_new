@@ -349,11 +349,26 @@
 
 
         <TextView
+            android:id="@+id/openBusinessTemplate"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:layout_gravity="center"
+            android:layout_marginTop="16dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/button_rounded_border"
+            android:fontFamily="@font/poppinsmedium"
+            android:gravity="center"
+            android:text="@string/licence_template_button"
+            android:textColor="@color/colorPrimary"
+            android:textSize="13sp" />
+
+        <TextView
             android:id="@+id/updateLicence"
             android:layout_width="match_parent"
             android:layout_height="45dp"
             android:layout_gravity="center"
-            android:layout_marginTop="30dp"
+            android:layout_marginTop="12dp"
             android:background="@color/blue_grey_900"
             android:fontFamily="@font/poppinsmedium"
             android:gravity="center"

@@ -103,6 +103,20 @@
 
         </com.google.android.material.textfield.TextInputLayout>
 
+        <TextView
+            android:id="@+id/readFromScale"
+            android:layout_width="match_parent"
+            android:layout_height="36dp"
+            android:layout_marginStart="15dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="15dp"
+            android:fontFamily="@font/poppinsregular"
+            android:gravity="center"
+            android:text="@string/ui_read_from_scale"
+            android:textColor="@color/colorPrimary"
+            android:textSize="13sp"
+            android:visibility="gone" />
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

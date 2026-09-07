@@ -55,6 +55,24 @@ public class AllApiResponse {
     @SerializedName("expensesResponse")
     @Expose
     public List<ExpenseResponse> expenseResponseList;
+    @SerializedName("serviceAppointmentResponse")
+    @Expose
+    public List<ServiceAppointmentResponse> serviceAppointmentResponseList;
+    @SerializedName("customOrderDepositResponse")
+    @Expose
+    public List<CustomOrderDepositResponse> customOrderDepositResponseList;
+    @SerializedName("productPriceTierResponse")
+    @Expose
+    public List<ProductPriceTierResponse> productPriceTierResponseList;
+    @SerializedName("productVariantResponse")
+    @Expose
+    public List<ProductVariantResponse> productVariantResponseList;
+    @SerializedName("businessTemplateResponse")
+    @Expose
+    public List<BusinessTemplateSyncResponse> businessTemplateResponseList;
+    @SerializedName("staffUserResponse")
+    @Expose
+    public List<StaffUserResponse> staffUserResponseList;
     @SerializedName("foodTypeResponse")
     @Expose
     public List<FoodTypeResponse> foodTypeResponseList;
@@ -312,6 +330,54 @@ public class AllApiResponse {
 
     public void setExpenseResponseList(List<ExpenseResponse> expenseResponseList) {
         this.expenseResponseList = expenseResponseList;
+    }
+
+    public List<ServiceAppointmentResponse> getServiceAppointmentResponseList() {
+        return serviceAppointmentResponseList;
+    }
+
+    public void setServiceAppointmentResponseList(List<ServiceAppointmentResponse> serviceAppointmentResponseList) {
+        this.serviceAppointmentResponseList = serviceAppointmentResponseList;
+    }
+
+    public List<CustomOrderDepositResponse> getCustomOrderDepositResponseList() {
+        return customOrderDepositResponseList;
+    }
+
+    public void setCustomOrderDepositResponseList(List<CustomOrderDepositResponse> customOrderDepositResponseList) {
+        this.customOrderDepositResponseList = customOrderDepositResponseList;
+    }
+
+    public List<ProductPriceTierResponse> getProductPriceTierResponseList() {
+        return productPriceTierResponseList;
+    }
+
+    public void setProductPriceTierResponseList(List<ProductPriceTierResponse> productPriceTierResponseList) {
+        this.productPriceTierResponseList = productPriceTierResponseList;
+    }
+
+    public List<ProductVariantResponse> getProductVariantResponseList() {
+        return productVariantResponseList;
+    }
+
+    public void setProductVariantResponseList(List<ProductVariantResponse> productVariantResponseList) {
+        this.productVariantResponseList = productVariantResponseList;
+    }
+
+    public List<BusinessTemplateSyncResponse> getBusinessTemplateResponseList() {
+        return businessTemplateResponseList;
+    }
+
+    public void setBusinessTemplateResponseList(List<BusinessTemplateSyncResponse> businessTemplateResponseList) {
+        this.businessTemplateResponseList = businessTemplateResponseList;
+    }
+
+    public List<StaffUserResponse> getStaffUserResponseList() {
+        return staffUserResponseList;
+    }
+
+    public void setStaffUserResponseList(List<StaffUserResponse> staffUserResponseList) {
+        this.staffUserResponseList = staffUserResponseList;
     }
 
     public List<FoodTypeResponse> getFoodTypeResponseList() {

@@ -159,7 +159,7 @@ public class AllCustomerProductList extends Fragment {
 
     private void initViews() {
         productRecyclerView = binding.productRecyclerView;
-        noDataFound = binding.noDataFound;
+        noDataFound = binding.noDataFound.getRoot();
     }
 
     public void onStart() {

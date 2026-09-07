@@ -238,4 +238,38 @@ public class PrinterSettingResponse {
     public void setKotPreview(String kotPreview) {
         this.kotPreview = kotPreview;
     }
+
+    @SerializedName("botEnable")
+    @Expose
+    public String botEnable;
+    @SerializedName("botPrefix")
+    @Expose
+    public String botPrefix;
+    @SerializedName("bluetoothBotAddress")
+    @Expose
+    public String bluetoothBotAddress;
+
+    public String getBotEnable() {
+        return botEnable;
+    }
+
+    public void setBotEnable(String botEnable) {
+        this.botEnable = botEnable;
+    }
+
+    public String getBotPrefix() {
+        return botPrefix;
+    }
+
+    public void setBotPrefix(String botPrefix) {
+        this.botPrefix = botPrefix;
+    }
+
+    public String getBluetoothBotAddress() {
+        return bluetoothBotAddress;
+    }
+
+    public void setBluetoothBotAddress(String bluetoothBotAddress) {
+        this.bluetoothBotAddress = bluetoothBotAddress;
+    }
 }

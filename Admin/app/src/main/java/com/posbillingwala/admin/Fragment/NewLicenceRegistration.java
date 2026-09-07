@@ -21,6 +21,8 @@ import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.posbillingwala.admin.Activity.MainActivity;
 import com.posbillingwala.admin.Extra.BottomSheetUi;
 import com.posbillingwala.admin.Extra.DetectConnection;
+import com.posbillingwala.admin.Extra.BusinessTemplateChoices;
+import com.posbillingwala.admin.Extra.LicenceModuleDefaults;
 import com.posbillingwala.admin.Extra.LicenceValidityTiers;
 import com.posbillingwala.admin.Model.AllApiResponse;
 import com.posbillingwala.admin.R;
@@ -35,11 +37,26 @@ import retrofit2.Response;
 @SuppressLint("SetTextI18n, NonConstantResourceId, UseCompatLoadingForDrawables, StaticFieldLeak")
 public class NewLicenceRegistration extends Fragment implements View.OnClickListener {
 
+    private static final class TemplateChoice {
+        final String businessType;
+        final String templateId;
+        final String label;
+
+        TemplateChoice(String businessType, String templateId, String label) {
+            this.businessType = businessType;
+            this.templateId = templateId;
+            this.label = label;
+        }
+    }
+
     public static Activity activity;
     View view;
     FragmentNewLicenceRegistrationBinding binding;
     String[] licenseValidityList;
     String fastBilling = "0", dineIn = "0", takeAway = "0", mess = "0", customerId, licenceValidity, licenceType;
+    private final java.util.List<TemplateChoice> templates = new java.util.ArrayList<>();
+    private String businessType = "restaurant";
+    private String businessTemplateId = "restaurant_default";
 
 
     @Override
@@ -102,6 +119,8 @@ public class NewLicenceRegistration extends Fragment implements View.OnClickList
             }
         });
 
+        setupBusinessTemplateSpinner();
+
         binding.fastBilling.setOnCheckedChangeListener((buttonView, isChecked) -> fastBilling = isChecked ? "1" : "0");
         binding.dineIn.setOnCheckedChangeListener((buttonView, isChecked) -> dineIn = isChecked ? "1" : "0");
         binding.takeAway.setOnCheckedChangeListener((buttonView, isChecked) -> takeAway = isChecked ? "1" : "0");
@@ -111,6 +130,51 @@ public class NewLicenceRegistration extends Fragment implements View.OnClickList
 
         return view;
 
+    }
+
+    private void setupBusinessTemplateSpinner() {
+        templates.clear();
+        for (BusinessTemplateChoices.Item item : BusinessTemplateChoices.all()) {
+            templates.add(new TemplateChoice(item.businessType, item.templateId, item.label));
+        }
+        java.util.List<String> labels = new java.util.ArrayList<>();
+        for (TemplateChoice t : templates) {
+            labels.add(t.label);
+        }
+        if (binding.businessTemplate != null) {
+            binding.businessTemplate.setItems(labels);
+            binding.businessTemplate.setSelectedIndex(0);
+            binding.businessTemplate.setOnItemSelectedListener(
+                    (MaterialSpinner.OnItemSelectedListener<String>) (view, position, id, item) -> {
+                        if (position >= 0 && position < templates.size()) {
+                            TemplateChoice choice = templates.get(position);
+                            businessType = choice.businessType;
+                            businessTemplateId = choice.templateId;
+                            applyModuleDefaults(choice.businessType, choice.templateId);
+                        }
+                    });
+            applyModuleDefaults(businessType, businessTemplateId);
+        }
+    }
+
+    private void applyModuleDefaults(String type, String templateId) {
+        LicenceModuleDefaults.Modules m = LicenceModuleDefaults.forTemplate(type, templateId);
+        if (binding.fastBilling != null) {
+            binding.fastBilling.setChecked(m.fastBilling);
+        }
+        if (binding.takeAway != null) {
+            binding.takeAway.setChecked(m.takeAway);
+        }
+        if (binding.dineIn != null) {
+            binding.dineIn.setChecked(m.dineIn);
+        }
+        if (binding.mess != null) {
+            binding.mess.setChecked(m.mess);
+        }
+        fastBilling = m.fastBilling ? "1" : "0";
+        takeAway = m.takeAway ? "1" : "0";
+        dineIn = m.dineIn ? "1" : "0";
+        mess = m.mess ? "1" : "0";
     }
 
     @Override
@@ -156,7 +220,9 @@ public class NewLicenceRegistration extends Fragment implements View.OnClickList
                 fastBilling,
                 takeAway,
                 dineIn,
-                mess);
+                mess,
+                businessType,
+                businessTemplateId);
         call.enqueue(new Callback<AllApiResponse>() {
             @Override
             public void onResponse(Call<AllApiResponse> call, Response<AllApiResponse> response) {

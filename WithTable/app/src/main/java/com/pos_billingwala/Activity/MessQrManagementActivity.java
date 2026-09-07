@@ -55,6 +55,9 @@ public class MessQrManagementActivity extends BaseActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (!com.pos_billingwala.Extra.MessModule.ensureEnabled(this)) {
+            return;
+        }
         setContentView(R.layout.activity_mess_qr_management);
 
         qrImage = findViewById(R.id.qrImage);

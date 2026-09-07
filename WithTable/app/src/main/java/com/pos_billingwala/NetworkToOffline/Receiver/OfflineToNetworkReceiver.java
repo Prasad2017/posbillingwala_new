@@ -17,6 +17,7 @@ import com.pos_billingwala.Extra.Observability;
 import com.pos_billingwala.Model.AllApiResponse;
 import com.pos_billingwala.NetworkToOffline.InvoicePendingSync;
 import com.pos_billingwala.NetworkToOffline.OfflineSyncExecutor;
+import com.pos_billingwala.NetworkToOffline.UniversalPendingUpload;
 import com.pos_billingwala.Retrofit.Api;
 
 import retrofit2.Call;
@@ -423,6 +424,7 @@ public class OfflineToNetworkReceiver extends BroadcastReceiver {
                         columnOrEmpty(cursor, "posTableNetworkStatus"));
             } while (cursor.moveToNext());
         }
+        UniversalPendingUpload.uploadAll(context, posBillingWalaDatabase);
         posBillingWalaDatabase.close();
     }
 

@@ -49,7 +49,9 @@ public interface ApiInterface {
                                               @Field("fastBilling") String fastBilling,
                                               @Field("takeAway") String takeAway,
                                               @Field("dineIn") String dineIn,
-                                              @Field("mess") String mess);
+                                              @Field("mess") String mess,
+                                              @Field("businessType") String businessType,
+                                              @Field("businessTemplateId") String businessTemplateId);
 
 
     @FormUrlEncoded
@@ -214,7 +216,9 @@ public interface ApiInterface {
                                                         @Field("fastBilling") String fastBilling,
                                                         @Field("takeAway") String takeAway,
                                                         @Field("dineIn") String dineIn,
-                                                        @Field("mess") String mess);
+                                                        @Field("mess") String mess,
+                                                        @Field("businessType") String businessType,
+                                                        @Field("businessTemplateId") String businessTemplateId);
 
     @GET("getProfile.php")
     Call<AllApiResponse> getProfile(@Query("userId") String dealerId);
@@ -390,5 +394,16 @@ public interface ApiInterface {
     Call<AllApiResponse> registerFcmToken(@Field("userId") String userId,
                                           @Field("android_device_id") String androidDeviceId,
                                           @Field("fcm_token") String fcmToken);
+
+    @GET("getBusinessTemplate.php")
+    Call<AllApiResponse> getBusinessTemplate(@Query("licenceId") String licenceId);
+
+    @FormUrlEncoded
+    @POST("setBusinessTemplate.php")
+    Call<AllApiResponse> setBusinessTemplate(@Field("licenceId") String licenceId,
+                                             @Field("businessType") String businessType,
+                                             @Field("businessTemplateId") String businessTemplateId,
+                                             @Field("businessTemplateJson") String businessTemplateJson,
+                                             @Field("syncModules") String syncModules);
 
 }

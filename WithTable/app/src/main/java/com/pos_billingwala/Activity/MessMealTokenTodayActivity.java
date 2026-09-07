@@ -41,6 +41,9 @@ public class MessMealTokenTodayActivity extends BaseActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (!com.pos_billingwala.Extra.MessModule.ensureEnabled(this)) {
+            return;
+        }
         setContentView(R.layout.activity_mess_meal_token_today);
         countsText = findViewById(R.id.countsText);
         recyclerView = findViewById(R.id.recyclerView);

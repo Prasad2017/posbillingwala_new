@@ -67,6 +67,18 @@ public class AllApiResponse {
     @SerializedName("licensesResponse")
     @Expose
     public List<LicenseResponse> licenseResponseList;
+    @SerializedName("businessTemplateResponse")
+    @Expose
+    public List<BusinessTemplateResponse> businessTemplateResponseList;
+    @SerializedName("serviceAppointmentResponse")
+    @Expose
+    public List<ServiceAppointmentResponse> serviceAppointmentResponseList;
+    @SerializedName("customOrderDepositResponse")
+    @Expose
+    public List<CustomOrderDepositResponse> customOrderDepositResponseList;
+    @SerializedName("staffUserResponse")
+    @Expose
+    public List<StaffUserResponse> staffUserResponseList;
     @SerializedName("branches")
     @Expose
     public List<BranchComparisonResponse> branchComparisonList;
@@ -240,6 +252,38 @@ public class AllApiResponse {
 
     public void setLicenseResponseList(List<LicenseResponse> licenseResponseList) {
         this.licenseResponseList = licenseResponseList;
+    }
+
+    public List<BusinessTemplateResponse> getBusinessTemplateResponseList() {
+        return businessTemplateResponseList;
+    }
+
+    public void setBusinessTemplateResponseList(List<BusinessTemplateResponse> businessTemplateResponseList) {
+        this.businessTemplateResponseList = businessTemplateResponseList;
+    }
+
+    public List<ServiceAppointmentResponse> getServiceAppointmentResponseList() {
+        return serviceAppointmentResponseList;
+    }
+
+    public void setServiceAppointmentResponseList(List<ServiceAppointmentResponse> serviceAppointmentResponseList) {
+        this.serviceAppointmentResponseList = serviceAppointmentResponseList;
+    }
+
+    public List<CustomOrderDepositResponse> getCustomOrderDepositResponseList() {
+        return customOrderDepositResponseList;
+    }
+
+    public void setCustomOrderDepositResponseList(List<CustomOrderDepositResponse> customOrderDepositResponseList) {
+        this.customOrderDepositResponseList = customOrderDepositResponseList;
+    }
+
+    public List<StaffUserResponse> getStaffUserResponseList() {
+        return staffUserResponseList;
+    }
+
+    public void setStaffUserResponseList(List<StaffUserResponse> staffUserResponseList) {
+        this.staffUserResponseList = staffUserResponseList;
     }
 
     public List<BranchComparisonResponse> getBranchComparisonList() {

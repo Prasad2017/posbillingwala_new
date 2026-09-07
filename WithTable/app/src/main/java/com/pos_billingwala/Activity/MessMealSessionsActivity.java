@@ -38,6 +38,9 @@ public class MessMealSessionsActivity extends BaseActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (!com.pos_billingwala.Extra.MessModule.ensureEnabled(this)) {
+            return;
+        }
         setContentView(R.layout.activity_mess_meal_sessions);
         findViewById(R.id.backBtn).setOnClickListener(v -> finish());
         RecyclerView rv = findViewById(R.id.recyclerView);

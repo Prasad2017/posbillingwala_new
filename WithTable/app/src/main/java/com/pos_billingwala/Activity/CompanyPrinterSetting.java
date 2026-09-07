@@ -19,6 +19,8 @@ import androidx.core.app.ActivityCompat;
 
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ActionButtonUi;
+import com.pos_billingwala.Extra.FeatureEngine;
+import com.pos_billingwala.Extra.FeatureFlags;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.PrinterSettingResponse;
 import com.pos_billingwala.Print.BluetoothPrinterChannel;
@@ -42,6 +44,8 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
     String[] printerList;
     String printerName = "2-Inch", KOTPrinterName = "2-Inch", settingId, logoUse = "off", paymentUse = "off", customerUse = "off", productQuantityUpdate = "off", duplicateBillUse = "off";
     String kotEnable = "on", kotPrefix = "KOT-", kotCopies = "1", kotAutoPrint = "off";
+    String botEnable = "off", botPrefix = "BOT-";
+    String bluetoothBotAddress = "";
     /** Paper size last used when a bill/KOT printer was successfully picked or loaded. */
     String lastConnectedPrinterName = "2-Inch", lastConnectedKOTPrinterName = "2-Inch";
     boolean loadingDropdowns;
@@ -59,6 +63,7 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
     String bluetoothAddress, bluetoothKOTAddress;
     int REQUEST_ENABLE_BT = 4, REQUEST_CONNECT_DEVICE = 6;
     int REQUEST_KOT_ENABLE_BT = 8, REQUEST_KOT_CONNECT_DEVICE = 10;
+    int REQUEST_BOT_CONNECT_DEVICE = 12;
     //******************** Bluetooth Printer End ************************//
     ActivityCompanyPrinterSettingBinding binding;
 
@@ -150,6 +155,20 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
                 updateKotSettingsVisibility();
             }
         });
+        if (binding.botEnableSwitch != null) {
+            binding.botEnableSwitch.setOnCheckedChangeListener((button, isChecked) -> {
+                if (!suppressSwitchListener) {
+                    botEnable = isChecked ? "on" : "off";
+                    updateBotPrinterRowVisibility();
+                }
+            });
+        }
+        if (binding.connectBotPrinter != null) {
+            binding.connectBotPrinter.setOnClickListener(this);
+        }
+        if (binding.clearBotPrinter != null) {
+            binding.clearBotPrinter.setOnClickListener(this);
+        }
         binding.kotAutoPrintSwitch.setOnCheckedChangeListener((button, isChecked) -> {
             if (!suppressSwitchListener) {
                 kotAutoPrint = isChecked ? "on" : "off";
@@ -217,6 +236,14 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
             KOTWoosimPrnMng.connectFromButton(activity, bluetoothKOTAddress, CompanyPrinterSetting.this, kotSizeChangedByUser);
         } else if (id == R.id.disconnectKOTPrinter) {
             disconnectKotPrinter();
+        } else if (id == R.id.connectBotPrinter) {
+            Intent serverIntent = new Intent(activity, DeviceListActivity.class);
+            startActivityForResult(serverIntent, REQUEST_BOT_CONNECT_DEVICE);
+        } else if (id == R.id.clearBotPrinter) {
+            bluetoothBotAddress = "";
+            persistBotSettings();
+            refreshBotPrinterLabel();
+            Toast.makeText(activity, R.string.toast_bot_printer_cleared, Toast.LENGTH_SHORT).show();
         } else if (id == R.id.invoicePreview) {
             Intent invoicePreview = new Intent(activity, TestInvoiceBluetoothPrint.class);
             invoicePreview.putExtra(TestInvoiceBluetoothPrint.EXTRA_PREVIEW_MODE,
@@ -255,6 +282,7 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
             settingId = printerSettingResponseList.get(0).getSettingId();
         }
         persistKotSettings();
+        persistBotSettings();
     }
 
     private void persistKotSettings() {
@@ -272,9 +300,63 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
         posBillingWalaDatabase.updateKotSettings(settingId, kotEnable, prefix, copies, kotAutoPrint, "on");
     }
 
+    private void persistBotSettings() {
+        if (settingId == null || settingId.trim().isEmpty()) {
+            return;
+        }
+        if (binding.botEnableSwitch == null || binding.botEnableSwitch.getVisibility() != View.VISIBLE) {
+            return;
+        }
+        if (binding.botPrefix != null && binding.botPrefix.getText() != null) {
+            String p = binding.botPrefix.getText().toString().trim();
+            botPrefix = p.isEmpty() ? "BOT-" : p;
+        }
+        posBillingWalaDatabase.updateBotSettings(settingId, botEnable, botPrefix,
+                bluetoothBotAddress != null ? bluetoothBotAddress : "");
+    }
+
     private void updateKotSettingsVisibility() {
         boolean enabled = "on".equalsIgnoreCase(kotEnable);
         binding.kotDetailsContainer.setVisibility(enabled ? View.VISIBLE : View.GONE);
+    }
+
+    private void updateBotSwitchVisibility() {
+        if (binding.botEnableSwitch == null) {
+            return;
+        }
+        // Show when template includes BOT (Bar+Restaurant) — restaurant stays kitchen-only by default.
+        boolean show = FeatureEngine.currentTemplate(this).supports(FeatureFlags.BOT);
+        binding.botEnableSwitch.setVisibility(show ? View.VISIBLE : View.GONE);
+        updateBotPrinterRowVisibility();
+    }
+
+    private void updateBotPrinterRowVisibility() {
+        if (binding.botPrinterRow == null) {
+            return;
+        }
+        boolean show = binding.botEnableSwitch != null
+                && binding.botEnableSwitch.getVisibility() == View.VISIBLE
+                && "on".equalsIgnoreCase(botEnable);
+        binding.botPrinterRow.setVisibility(show ? View.VISIBLE : View.GONE);
+        if (binding.botPrefixLayout != null) {
+            binding.botPrefixLayout.setVisibility(show ? View.VISIBLE : View.GONE);
+        }
+        refreshBotPrinterLabel();
+    }
+
+    private void refreshBotPrinterLabel() {
+        if (binding.botPrinterAddressLabel == null) {
+            return;
+        }
+        boolean has = bluetoothBotAddress != null && !bluetoothBotAddress.trim().isEmpty();
+        if (has) {
+            binding.botPrinterAddressLabel.setText(getString(R.string.ui_bot_printer_saved, bluetoothBotAddress));
+        } else {
+            binding.botPrinterAddressLabel.setText(R.string.ui_bot_printer_same_as_kot);
+        }
+        if (binding.clearBotPrinter != null) {
+            binding.clearBotPrinter.setVisibility(has ? View.VISIBLE : View.GONE);
+        }
     }
 
     @Override
@@ -329,8 +411,14 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
                     ? printerSettingResponse.getKotCopies() : "1";
             kotAutoPrint = printerSettingResponse.getKotAutoPrint() != null && !printerSettingResponse.getKotAutoPrint().isEmpty()
                     ? printerSettingResponse.getKotAutoPrint() : "off";
+            botEnable = printerSettingResponse.getBotEnable() != null && !printerSettingResponse.getBotEnable().isEmpty()
+                    ? printerSettingResponse.getBotEnable() : "off";
+            botPrefix = printerSettingResponse.getBotPrefix() != null && !printerSettingResponse.getBotPrefix().isEmpty()
+                    ? printerSettingResponse.getBotPrefix() : "BOT-";
             bluetoothAddress = printerSettingResponse.getBluetoothAddress() != null ? printerSettingResponse.getBluetoothAddress() : "";
             bluetoothKOTAddress = printerSettingResponse.getBluetoothKOTAddress() != null ? printerSettingResponse.getBluetoothKOTAddress() : "";
+            bluetoothBotAddress = printerSettingResponse.getBluetoothBotAddress() != null
+                    ? printerSettingResponse.getBluetoothBotAddress() : "";
             binding.invoicePrefix.setText(printerSettingResponse.getInvoicePrefix().isEmpty() ? "POS" : printerSettingResponse.getInvoicePrefix());
             binding.printerFeedLines.setText(printerSettingResponse.getPrinterFeedLines().isEmpty() ? "1" : printerSettingResponse.getPrinterFeedLines());
             binding.KotPrinterFeedLines.setText(printerSettingResponse.getKotPrinterFeedLines().isEmpty() ? "1" : printerSettingResponse.getKotPrinterFeedLines());
@@ -338,6 +426,9 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
             binding.invoiceTermsCondition.setText(printerSettingResponse.getInvoiceTermsCondition());
             binding.kotPrefix.setText(kotPrefix);
             binding.kotCopies.setText(kotCopies);
+            if (binding.botPrefix != null) {
+                binding.botPrefix.setText(botPrefix);
+            }
 
             ActionButtonUi.bind(binding.saveSetting.getRoot(), R.drawable.ic_save, R.string.ui_update_settings);
         } else {
@@ -346,6 +437,9 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
             binding.KotPrinterFeedLines.setText("1");
             binding.kotPrefix.setText("KOT-");
             binding.kotCopies.setText("1");
+            if (binding.botPrefix != null) {
+                binding.botPrefix.setText("BOT-");
+            }
             ActionButtonUi.bind(binding.saveSetting.getRoot(), R.drawable.ic_save, R.string.ui_save_setting);
         }
 
@@ -356,7 +450,12 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
         setSwitchCheckedSilently(binding.duplicateBillSwitch, duplicateBillUse.equalsIgnoreCase("on"));
         setSwitchCheckedSilently(binding.kotEnableSwitch, kotEnable.equalsIgnoreCase("on"));
         setSwitchCheckedSilently(binding.kotAutoPrintSwitch, kotAutoPrint.equalsIgnoreCase("on"));
+        if (binding.botEnableSwitch != null) {
+            setSwitchCheckedSilently(binding.botEnableSwitch, botEnable.equalsIgnoreCase("on"));
+        }
         updateKotSettingsVisibility();
+        updateBotSwitchVisibility();
+        refreshBotPrinterLabel();
 
         printerList = activity.getResources().getStringArray(R.array.printer_list);
         loadingDropdowns = true;
@@ -500,6 +599,16 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
                 PrinterConnectionHelper.onKotDevicePicked(activity, bluetoothKOTAddress);
                 persistConnectionState();
                 binding.getRoot().postDelayed(this::updatePrinterConnectionUi, 800);
+            }
+        } else if (requestCode == REQUEST_BOT_CONNECT_DEVICE) {
+            if (resultCode == RESULT_OK && data != null && data.getExtras() != null) {
+                bluetoothBotAddress = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
+                if (bluetoothBotAddress == null) {
+                    bluetoothBotAddress = "";
+                }
+                persistBotSettings();
+                refreshBotPrinterLabel();
+                Toast.makeText(activity, R.string.toast_bot_printer_saved, Toast.LENGTH_SHORT).show();
             }
         }
     }

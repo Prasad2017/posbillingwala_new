@@ -30,6 +30,8 @@ import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.AppExecutors;
 import com.pos_billingwala.Extra.AutoFitGridRecyclerView;
 import com.pos_billingwala.Extra.EmptyListUi;
+import com.pos_billingwala.Extra.FeatureEngine;
+import com.pos_billingwala.Extra.FeatureFlags;
 import com.pos_billingwala.Extra.ListLoader;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.DiningAreaResponse;
@@ -75,8 +77,7 @@ public class InvoiceCompanyTable extends Fragment implements View.OnClickListene
                 list = db.getCompanyDetails();
                 shopMissing = list == null || list.isEmpty();
                 if (!shopMissing
-                        && list.get(0).getTableStatus() != null
-                        && list.get(0).getTableStatus().equalsIgnoreCase("on")) {
+                        && FeatureEngine.isEnabled(activity, FeatureFlags.TABLES, db)) {
                     tableFeatureOn = true;
                     floorTables = com.pos_billingwala.Extra.DineInTableHelper
                             .buildFloorTableList(db);

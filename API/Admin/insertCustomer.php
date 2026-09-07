@@ -4,6 +4,7 @@ include_once(__DIR__ . '/../licence_expiry.php');
 require_once __DIR__ . '/../db_prepared.php';
 require_once __DIR__ . '/../user_identity.php';
 require_once __DIR__ . '/auth_guard.php';
+require_once __DIR__ . '/../business_template_ops.php';
 
 $response = array();
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -24,6 +25,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $takeAway = isset($_POST['takeAway']) ? trim($_POST['takeAway']) : '0';
     $dineIn = isset($_POST['dineIn']) ? trim($_POST['dineIn']) : '0';
     $mess = isset($_POST['mess']) ? trim($_POST['mess']) : '0';
+    $businessType = isset($_POST['businessType']) ? trim($_POST['businessType']) : 'restaurant';
+    $businessTemplateId = isset($_POST['businessTemplateId'])
+        ? trim($_POST['businessTemplateId']) : 'restaurant_default';
+    if ($businessType === '') {
+        $businessType = 'restaurant';
+    }
+    if ($businessTemplateId === '') {
+        $businessTemplateId = 'restaurant_default';
+    }
+
+    // If no modules selected, apply template-suggested flags (UI usually sets these).
+    if ($fastBilling === '0' && $takeAway === '0' && $dineIn === '0' && $mess === '0') {
+        $mods = business_template_default_licence_modules($businessType, $businessTemplateId);
+        $fastBilling = $mods['fastBilling'];
+        $takeAway = $mods['takeAway'];
+        $dineIn = $mods['dineIn'];
+        $mess = $mods['mess'];
+    }
 
     date_default_timezone_set('Asia/Kolkata');
     $date = date('Y-m-d');
@@ -82,7 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     if ($okUser) {
         $customerId = mysqli_insert_id($con);
-        $okLic = db_stmt_execute(
+        $licenseId = db_stmt_insert_id(
             $con,
             'INSERT INTO `licenses`(`userId`, `licenseKey`, `licenseValidity`, `licenseType`, `licenseStatus`, `expiryDate`, `paymentStatus`, `amount`, `userType`, `userName`, `mpin`, `fastBilling`, `takeAway`, `dineIn`, `mess`)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, \'owner\', ?, ?, ?, ?, ?, ?)',
@@ -103,15 +122,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             (int) $mess
         );
 
-        if ($okLic) {
+        if ($licenseId !== false && (int) $licenseId > 0) {
+            $tpl = business_template_upsert(
+                $con,
+                (string) $licenseId,
+                (int) $customerId,
+                (int) $licenseId,
+                $businessType,
+                $businessTemplateId,
+                '',
+                'admin_register'
+            );
             $response['status'] = 'true';
             $response['message'] = 'registration successful!';
             $response['licenseKey'] = $licenseKey;
+            $response['licensesId'] = (string) $licenseId;
             $response['mpin'] = $defaultMpin;
             $response['reportPin'] = $defaultReportPin;
             $response['customerId'] = (string) $customerId;
             $response['expiryDate'] = $expiryDate;
             $response['licenseStatus'] = $licenseStatus;
+            $response['businessType'] = $businessType;
+            $response['businessTemplateId'] = $businessTemplateId;
+            $response['templateStatus'] = isset($tpl['status']) ? $tpl['status'] : '0';
         } else {
             $response['status'] = 'false';
             $response['message'] = 'registration failed...';

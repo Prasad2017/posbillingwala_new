@@ -17,16 +17,15 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
-import com.google.android.material.bottomsheet.BottomSheetDialog;
-import com.google.android.material.textfield.TextInputEditText;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Activity.MessMealSessionsActivity;
 import com.pos_billingwala.Activity.MessMealTokenTodayActivity;
 import com.pos_billingwala.Activity.MessQrManagementActivity;
 import com.pos_billingwala.Adapter.MessInvoiceAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
-import com.pos_billingwala.Extra.BottomSheetUi;
 import com.pos_billingwala.Extra.MessMealTokenPrintWorker;
+import com.pos_billingwala.Extra.MessModule;
+import com.pos_billingwala.Extra.SecurityPermissions;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.MemberResponse;
 import com.pos_billingwala.R;
@@ -56,6 +55,12 @@ public class InvoiceMess extends Fragment implements View.OnClickListener {
 
         activity = getActivity();
         posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
+
+        if (!MessModule.isEnabled(activity)) {
+            Toast.makeText(activity, R.string.toast_you_have_not_selected_mess_please_contact, Toast.LENGTH_SHORT).show();
+            ((MainActivity) activity).navigateBack();
+            return view;
+        }
 
         view.setFocusableInTouchMode(true);
         view.requestFocus();
@@ -142,33 +147,9 @@ public class InvoiceMess extends Fragment implements View.OnClickListener {
     }
 
     public void setMemberListPassword() {
-        View content = LayoutInflater.from(activity).inflate(R.layout.report_password_dialog, null);
-        BottomSheetDialog sheet = BottomSheetUi.showContent(activity, content, false);
-
-        TextView continueToReport = content.findViewById(R.id.continueToReport);
-        TextView dismissReport = content.findViewById(R.id.dismissReport);
-        TextInputEditText reportPin = content.findViewById(R.id.reportPin);
-        TextView detailsTxt = content.findViewById(R.id.details);
-        detailsTxt.setText("Member List Password");
-
-        dismissReport.setOnClickListener(v -> sheet.dismiss());
-
-        continueToReport.setOnClickListener(v -> {
-            String pin;
-            if (MainActivity.reportPin != null) {
-                pin = MainActivity.reportPin;
-            } else {
-                pin = "9082";
-            }
-
-            if (reportPin.getText().toString().equalsIgnoreCase(pin)) {
-                sheet.dismiss();
-                ((MainActivity) activity).loadFragment(new MessMemberList(), true);
-            } else {
-                reportPin.requestFocus();
-                reportPin.setError("Enter correct pin");
-            }
-        });
+        SecurityPermissions.runAuthorized(activity, SecurityPermissions.MESS_MEMBERS,
+                "Member List Password",
+                () -> ((MainActivity) activity).loadFragment(new MessMemberList(), true));
     }
 
     @Override

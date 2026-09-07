@@ -43,6 +43,7 @@ public class PosBillingWalaApp extends Application implements DisplayScale.Resou
     public void onCreate() {
         super.onCreate();
         AppLanguage.applyStored(this);
+        com.pos_billingwala.Extra.AppContexts.init(this);
         Observability.init(this);
         ScreenshotConfig.install(this);
         PrinterConnectionHelper.initializeApp(this);

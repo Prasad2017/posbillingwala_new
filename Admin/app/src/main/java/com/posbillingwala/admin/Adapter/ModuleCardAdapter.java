@@ -2,6 +2,7 @@ package com.posbillingwala.admin.Adapter;
 
 import android.app.Activity;
 import android.graphics.Color;
+import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.widget.Toast;
@@ -9,6 +10,8 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.posbillingwala.admin.Activity.MainActivity;
+import com.posbillingwala.admin.Fragment.LicenceBusinessTemplate;
 import com.posbillingwala.admin.Model.AllApiResponse;
 import com.posbillingwala.admin.Model.LicenseResponse;
 import com.posbillingwala.admin.Retrofit.Api;
@@ -52,6 +55,25 @@ public class ModuleCardAdapter extends RecyclerView.Adapter<ModuleCardAdapter.Ho
         holder.binding.switchTakeAway.setChecked(isOn(lic.getTakeAway()));
         holder.binding.switchMess.setChecked(isOn(lic.getMess()));
         holder.binding.saveModules.setOnClickListener(v -> save(lic, holder));
+        if (holder.binding.openBusinessTemplate != null) {
+            holder.binding.openBusinessTemplate.setOnClickListener(v -> openTemplate(lic));
+        }
+    }
+
+    private void openTemplate(LicenseResponse lic) {
+        if (!(activity instanceof MainActivity)) {
+            return;
+        }
+        String shop = lic.getShopName1();
+        if (shop == null || shop.trim().isEmpty()) {
+            shop = lic.getBranchLabel() != null ? lic.getBranchLabel() : "Licence";
+        }
+        LicenceBusinessTemplate fragment = new LicenceBusinessTemplate();
+        Bundle b = new Bundle();
+        b.putString("licenceId", lic.getLicensesId());
+        b.putString("licenceDisplay", shop + " (#" + lic.getLicensesId() + ")");
+        fragment.setArguments(b);
+        ((MainActivity) activity).loadFragment(fragment, true);
     }
 
     private void save(LicenseResponse lic, Holder holder) {

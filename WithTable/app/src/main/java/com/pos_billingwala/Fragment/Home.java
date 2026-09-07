@@ -67,7 +67,12 @@ import com.pos_billingwala.Extra.BusinessHours;
 import com.pos_billingwala.Extra.Common;
 import com.pos_billingwala.Extra.LocalSalesAnalytics;
 import com.pos_billingwala.Extra.LicenceExpiredUi;
+import com.pos_billingwala.Extra.BillingMode;
+import com.pos_billingwala.Extra.FeatureEngine;
+import com.pos_billingwala.Extra.FeatureFlags;
 import com.pos_billingwala.Extra.LicenseModules;
+import com.pos_billingwala.Extra.MessModule;
+import com.pos_billingwala.Extra.RestaurantFoodModule;
 import com.pos_billingwala.Extra.LicenseValidator;
 import com.pos_billingwala.Extra.DetectConnection;
 import com.pos_billingwala.Extra.ErrorLogQueue;
@@ -270,10 +275,11 @@ public class Home extends Fragment implements View.OnClickListener {
     }
 
     private static void applyModuleVisibility() {
-        boolean showFast = LicenseModules.isEnabled(MainActivity.fastBilling);
-        boolean showDineIn = LicenseModules.isEnabled(MainActivity.dineIn);
-        boolean showTakeAway = LicenseModules.isEnabled(MainActivity.takeAway);
-        boolean showMess = LicenseModules.isEnabled(MainActivity.mess);
+        // FeatureEngine = business template ∩ licence modules (default restaurant = prior behaviour)
+        boolean showFast = FeatureEngine.isEnabled(activity, FeatureFlags.FAST_BILLING);
+        boolean showDineIn = FeatureEngine.isEnabled(activity, FeatureFlags.DINE_IN);
+        boolean showTakeAway = FeatureEngine.isEnabled(activity, FeatureFlags.TAKE_AWAY);
+        boolean showMess = FeatureEngine.isEnabled(activity, FeatureFlags.MESS);
         boolean wide = activity != null && ResponsiveUi.isWideLayout(activity);
 
         LicenseModules.setVisible(fastBilling, showFast);
@@ -284,8 +290,10 @@ public class Home extends Fragment implements View.OnClickListener {
                 showFast || showDineIn || (wide && (showTakeAway || showMess)));
         LicenseModules.setVisible(posBillingRow2, !wide && (showTakeAway || showMess));
 
-        LicenseModules.setVisible(totalSalesCardView, LicenseModules.isEnabled(MainActivity.totalSaleData));
-        LicenseModules.setVisible(todaySalesCardView, LicenseModules.isEnabled(MainActivity.todaySaleData));
+        LicenseModules.setVisible(totalSalesCardView,
+                FeatureEngine.isEnabled(activity, FeatureFlags.TOTAL_SALE_DATA));
+        LicenseModules.setVisible(todaySalesCardView,
+                FeatureEngine.isEnabled(activity, FeatureFlags.TODAY_SALE_DATA));
     }
 
     @Override
@@ -501,34 +509,30 @@ public class Home extends Fragment implements View.OnClickListener {
         } else if (id == R.id.homeNotificationBtn) {
             showHomeNotificationsSheet();
         } else if (id == R.id.fastBilling) {
-            if (LicenseModules.isEnabled(MainActivity.fastBilling)) {
+            if (RestaurantFoodModule.canFastBilling(activity)) {
                 CreatePos createPos = new CreatePos();
                 Bundle bundle = new Bundle();
                 bundle.putString("tableNumber", "FS" + getRandomString(3));
-                bundle.putString("cartOrderStatus", "fast_billing");
+                bundle.putString("cartOrderStatus", BillingMode.FAST.getWireValue());
                 createPos.setArguments(bundle);
                 ((MainActivity) activity).loadFragment(createPos, true);
             } else {
                 Toast.makeText(activity, getString(R.string.toast_you_have_not_selected_fast_billing_pleas), Toast.LENGTH_SHORT).show();
             }
         } else if (id == R.id.tableBilling) {
-            if (LicenseModules.isEnabled(MainActivity.dineIn)) {
+            if (RestaurantFoodModule.canDineIn(activity)) {
                 ((MainActivity) activity).loadFragment(new InvoiceCompanyTable(), true);
             } else {
                 Toast.makeText(activity, getString(R.string.toast_you_have_not_selected_dinein_please_cont), Toast.LENGTH_SHORT).show();
             }
         } else if (id == R.id.takeAwayBilling) {
-            if (LicenseModules.isEnabled(MainActivity.takeAway)) {
+            if (RestaurantFoodModule.canTakeAway(activity)) {
                 ((MainActivity) activity).loadFragment(new InvoiceTakeAway(), true);
             } else {
                 Toast.makeText(activity, getString(R.string.toast_you_have_not_selected_take_away_please_c), Toast.LENGTH_SHORT).show();
             }
         } else if (id == R.id.messBilling) {
-            if (LicenseModules.isEnabled(MainActivity.mess)) {
-                ((MainActivity) activity).loadFragment(new InvoiceMess(), true);
-            } else {
-                Toast.makeText(activity, getString(R.string.toast_you_have_not_selected_mess_please_contact), Toast.LENGTH_SHORT).show();
-            }
+            MessModule.openHub(activity);
         } else if (id == R.id.subcategoryCardView) {
             ((MainActivity) activity).loadFragment(new AddSubcategory(), true);
         } else if (id == R.id.productCardView) {

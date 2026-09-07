@@ -177,6 +177,57 @@ public interface ApiInterface {
     @GET("getStoreWise.php")
     Call<AllApiResponse> getStoreWise(@Query("userId") String userId);
 
+    @GET("getBusinessTemplate.php")
+    Call<AllApiResponse> getBusinessTemplate(@Query("userId") String userId,
+                                             @Query("licenceId") String licenceId);
+
+    @FormUrlEncoded
+    @POST("setBusinessTemplate.php")
+    Call<AllApiResponse> setBusinessTemplate(@Field("userId") String userId,
+                                             @Field("licenceId") String licenceId,
+                                             @Field("businessType") String businessType,
+                                             @Field("businessTemplateId") String businessTemplateId,
+                                             @Field("businessTemplateJson") String businessTemplateJson,
+                                             @Field("syncModules") String syncModules);
+
+    @GET("getServiceAppointmentList.php")
+    Call<AllApiResponse> getServiceAppointmentList(@Query("userId") String userId,
+                                                   @Query("licenceId") String licenceId);
+
+    @FormUrlEncoded
+    @POST("updateServiceAppointmentStatus.php")
+    Call<AllApiResponse> updateServiceAppointmentStatus(@Field("userId") String userId,
+                                                        @Field("licenceId") String licenceId,
+                                                        @Field("appointmentId") String appointmentId,
+                                                        @Field("localAppointmentId") String localAppointmentId,
+                                                        @Field("appointmentStatus") String appointmentStatus);
+
+    @GET("getCustomOrderDepositList.php")
+    Call<AllApiResponse> getCustomOrderDepositList(@Query("userId") String userId,
+                                                   @Query("licenceId") String licenceId);
+
+    @FormUrlEncoded
+    @POST("updateCustomOrderDepositStatus.php")
+    Call<AllApiResponse> updateCustomOrderDepositStatus(@Field("userId") String userId,
+                                                        @Field("licenceId") String licenceId,
+                                                        @Field("depositId") String depositId,
+                                                        @Field("localDepositId") String localDepositId,
+                                                        @Field("depositStatus") String depositStatus);
+
+    @GET("getStaffUserList.php")
+    Call<AllApiResponse> getStaffUserList(@Query("userId") String userId,
+                                          @Query("licenceId") String licenceId);
+
+    @FormUrlEncoded
+    @POST("updateStaffUserStatus.php")
+    Call<AllApiResponse> updateStaffUserStatus(@Field("userId") String userId,
+                                               @Field("licenceId") String licenceId,
+                                               @Field("staffId") String staffId,
+                                               @Field("localStaffId") String localStaffId,
+                                               @Field("staffActive") String staffActive,
+                                               @Field("staffDeletedStatus") String staffDeletedStatus,
+                                               @Field("staffRole") String staffRole);
+
     @FormUrlEncoded
     @POST("pushCatalogToBranches.php")
     Call<CatalogPushResponse> pushCatalogToBranches(@Field("userId") String userId,

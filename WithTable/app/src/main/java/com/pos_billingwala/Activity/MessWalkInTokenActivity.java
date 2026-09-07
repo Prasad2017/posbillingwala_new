@@ -27,6 +27,9 @@ public class MessWalkInTokenActivity extends BaseActivity implements View.OnClic
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (!com.pos_billingwala.Extra.MessModule.ensureEnabled(this)) {
+            return;
+        }
         binding = ActivityMessWalkInTokenBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 

@@ -15,7 +15,9 @@ import androidx.fragment.app.FragmentTransaction;
 
 import com.pos_billingwala.Extra.AppExecutors;
 import com.pos_billingwala.Extra.AppLanguage;
+import com.pos_billingwala.Extra.BillingMode;
 import com.pos_billingwala.Extra.BranchSession;
+import com.pos_billingwala.Extra.BusinessSession;
 import com.pos_billingwala.Extra.Common;
 import com.pos_billingwala.Extra.LicenceScopeGuard;
 import com.pos_billingwala.Extra.LicenseModules;
@@ -66,6 +68,7 @@ public class MainActivity extends BaseActivity {
         ownerId = Common.getSavedUserData(this, "ownerId");
         BranchSession.loadFromPreferences(this);
         LicenceScopeGuard.ensureSessionScope(this);
+        BusinessSession.ensureDefaults(this);
         userName = Common.getSavedUserData(this, "userName");
         shopName = Common.getSavedUserData(this, "shopName");
         shopImage = Common.getSavedUserData(this, "shopImage");
@@ -110,14 +113,23 @@ public class MainActivity extends BaseActivity {
                     loadFragment(new Home(), false);
                 } else if (cartOrderStatus == null || cartOrderStatus.equalsIgnoreCase("")) {
                     openAboveHome(new CreatePos());
-                } else if (cartOrderStatus.equalsIgnoreCase("table_wise")) {
-                    openAboveHome(new InvoiceCompanyTable());
-                } else if (cartOrderStatus.equalsIgnoreCase("take_away")) {
-                    openAboveHome(new InvoiceTakeAway());
-                } else if (cartOrderStatus.equalsIgnoreCase("fast_billing")) {
-                    openAboveHome(new CreatePos());
-                } else if (cartOrderStatus.equalsIgnoreCase("mess")) {
-                    openAboveHome(new InvoiceMess());
+                } else {
+                    BillingMode mode = BillingMode.fromWire(cartOrderStatus);
+                    switch (mode) {
+                        case TABLE:
+                            openAboveHome(new InvoiceCompanyTable());
+                            break;
+                        case TAKEAWAY:
+                            openAboveHome(new InvoiceTakeAway());
+                            break;
+                        case MESS:
+                            openAboveHome(new InvoiceMess());
+                            break;
+                        case FAST:
+                        default:
+                            openAboveHome(new CreatePos());
+                            break;
+                    }
                 }
             }
         } catch (Exception e) {

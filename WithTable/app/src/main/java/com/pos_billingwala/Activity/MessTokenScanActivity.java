@@ -44,6 +44,9 @@ public class MessTokenScanActivity extends BaseActivity implements View.OnClickL
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (!com.pos_billingwala.Extra.MessModule.ensureEnabled(this)) {
+            return;
+        }
         binding = ActivityMessTokenScanBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         database = new POSBillingWalaDatabase(this);

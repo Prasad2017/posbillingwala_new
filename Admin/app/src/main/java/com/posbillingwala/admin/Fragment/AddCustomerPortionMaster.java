@@ -82,7 +82,7 @@ public class AddCustomerPortionMaster extends Fragment implements View.OnClickLi
         binding.portionMasterName.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
         portionMasterRecyclerview = binding.portionMasterRecyclerview;
         portionMasterListCardView = binding.portionMasterListCardView;
-        noDataFound = binding.noDataFound;
+        noDataFound = binding.noDataFound.getRoot();
 
         MainActivity.back.setOnClickListener(v -> navigateBack());
 

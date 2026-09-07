@@ -30,7 +30,10 @@ Override URLs via `BuildConfig.API_BASE_URL` / `MEDIA_BASE_URL` in `app/build.gr
 - **i18n** — English / Hindi / Marathi
 - **Reports** — sales, invoice, product, payment, discount, refund, expense, mess
 - **Ops** — inventory, expenses, printer settings, cloud sync status, support tickets
+- **Universal templates** — Settings → Business Template; appointments / deposits in Master Data; staff roster; barcode / weight / variants / wholesale tiers when template enables them
 - **Observability** — Firebase Crashlytics, Performance, Analytics, Messaging
+
+Pack + smoke: [../Billingwala_Universal_POS_COMPLETE/23_TESTING_AND_MIGRATION.md](../Billingwala_Universal_POS_COMPLETE/23_TESTING_AND_MIGRATION.md)
 
 ## Stack
 
@@ -61,12 +64,39 @@ Add `google-services.json` for Firebase builds. Sign with your upload keystore b
 6. Mess walk-in token → QR print → scan/verify  
 7. Switch language EN / HI / MR  
 8. Expired / trial-blocked licence rejected server-side  
+9. Universal extras (template-gated): barcode/camera, weight+scale, BOT printer, staff roster, salon calendar sync, bakery deposit/photo, wholesale tiers — see `Billingwala_Universal_POS_COMPLETE/23_TESTING_AND_MIGRATION.md` (includes Owner template/appointments + full server deploy checklist)
 
 ## Related
 
 | Path | Notes |
 |------|--------|
 | `../API/` | POS PHP endpoints at androidApp root |
+| `../Billingwala_Universal_POS_COMPLETE/23_TESTING_AND_MIGRATION.md` | Smoke + live deploy checklist (p27–p32, Owner PHP) |
+| `../API/insertServiceAppointment.php` | Salon appointment cloud upload |
+| `../API/insertCustomOrderDeposit.php` | Bakery deposit cloud upload |
+| `../API/migrations/p27_service_appointment.sql` | Appointments table |
+| `../API/migrations/p28_custom_order_deposit.sql` | Custom order deposits table |
+| `../API/migrations/p29_product_price_tier.sql` | Wholesale price tiers table |
+| `../API/insertProductPriceTier.php` | Wholesale tier cloud upload |
+| `../API/migrations/p30_product_variant.sql` | Fashion product variants table |
+| `../API/insertProductVariant.php` | Fashion variant cloud upload |
+| `../API/migrations/p31_company_business_template.sql` | Business template per licence |
+| `../API/insertBusinessTemplate.php` | Business template cloud upload (POS) |
+| `../API/Owner/getBusinessTemplate.php` | Owner read outlet template |
+| `../API/Owner/setBusinessTemplate.php` | Owner set outlet template |
+| `../API/Owner/getServiceAppointmentList.php` | Owner read outlet appointments |
+| `../API/Owner/updateServiceAppointmentStatus.php` | Owner update appointment status |
+| `../API/Owner/getCustomOrderDepositList.php` | Owner read outlet deposits |
+| `../API/Owner/updateCustomOrderDepositStatus.php` | Owner update deposit status |
+| `../API/Owner/getStaffUserList.php` | Owner read outlet staff (no PIN) |
+| `../API/Owner/updateStaffUserStatus.php` | Owner update staff active/role/delete |
+| `../API/migrations/p32_staff_user.sql` | Staff roster table |
+| `../API/insertStaffUser.php` | Staff roster cloud upload |
+| `../API/Admin/setBusinessTemplate.php` | Admin set licence template |
+| `../API/Admin/insertNewLicence.php` | Admin register licence (+ optional template) |
+| `../API/Dealer/setBusinessTemplate.php` | Dealer set licence template |
+| `../API/Dealer/insertNewLicence.php` | Dealer register licence (+ optional template) |
+| `../API/business_template_ops.php` | Shared template ensure/upsert helper |
 | `../docs/COMBO_API_REQUIREMENTS.md` | Combo API contract |
 | `../docs/STORE_DETAILS_API_CHANGES.md` | Structured store fields |
 | `../docs/LICENSE_API_REQUIREMENTS.md` | Licence / trial behaviour |

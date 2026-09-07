@@ -119,6 +119,46 @@
     </div>
 </div>
 
+@php
+    $btChoices = \App\Support\BusinessTemplateSupport::choices();
+    $btCurrent = ['businessType' => 'restaurant', 'businessTemplateId' => 'restaurant_default'];
+    $licencePk = null;
+    if (isset($license)) {
+        $licencePk = $license->licenseId ?? $license->id ?? null;
+    }
+    if (!empty($licencePk)) {
+        $btCurrent = \App\Support\BusinessTemplateSupport::fetchForLicence($licencePk);
+    }
+    $btSelected = old(
+        'business_template_choice',
+        \App\Support\BusinessTemplateSupport::choiceKey($btCurrent['businessType'], $btCurrent['businessTemplateId'])
+    );
+    $btSync = old('sync_modules', '1');
+@endphp
+<div class="col-lg-8">
+    <label class="form-label" for="business_template_choice">Business template</label>
+    <div class="input-group pb-input-group">
+        <span class="input-group-text bg-transparent"><i class='bx bx-store-alt'></i></span>
+        <select class="form-select pb-select-search" id="business_template_choice" name="business_template_choice" data-placeholder="Select template">
+            @foreach($btChoices as $choice)
+                @php $key = \App\Support\BusinessTemplateSupport::choiceKey($choice['type'], $choice['templateId']); @endphp
+                <option value="{{ $key }}" @if($btSelected === $key) selected @endif>{{ $choice['label'] }}</option>
+            @endforeach
+        </select>
+    </div>
+    <small class="text-secondary">POS applies on Fetch Data. Priority-3 types map to nearest live engines.</small>
+</div>
+<div class="col-lg-4">
+    <label class="form-label" for="sync_modules">Sync modules from template</label>
+    <div class="input-group pb-input-group">
+        <span class="input-group-text bg-transparent"><i class='bx bx-sync'></i></span>
+        <select class="form-select pb-select-search" id="sync_modules" name="sync_modules">
+            <option value="1" @if((string)$btSync === '1') selected @endif>Yes (recommended)</option>
+            <option value="0" @if((string)$btSync === '0') selected @endif>No — keep module Yes/No above</option>
+        </select>
+    </div>
+</div>
+
 @push('scripts')
 <script>
 (function () {

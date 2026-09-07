@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.posbillingwala.dealer.Activity.MainActivity;
 import com.posbillingwala.dealer.Adapter.LicenseAdapter;
+import com.posbillingwala.dealer.Adapter.ModuleCardAdapter;
 import com.posbillingwala.dealer.Extra.DetectConnection;
 import com.posbillingwala.dealer.Model.AllApiResponse;
 import com.posbillingwala.dealer.Model.CustomerResponse;
@@ -225,6 +226,10 @@ public class CustomerDetails extends Fragment implements View.OnClickListener {
                             binding.recyclerView.setAdapter(licenseAdapter);
                             binding.recyclerView.setHasFixedSize(true);
                         }
+                        binding.recyclerModules.setLayoutManager(new LinearLayoutManager(activity));
+                        binding.recyclerModules.setAdapter(
+                                new ModuleCardAdapter(activity, licenseResponseList));
+                        binding.recyclerModules.setNestedScrollingEnabled(false);
                     }
                 }
                 pDialog.dismiss();
