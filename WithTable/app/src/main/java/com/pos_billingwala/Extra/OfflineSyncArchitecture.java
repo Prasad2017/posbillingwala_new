@@ -26,8 +26,11 @@ public final class OfflineSyncArchitecture {
                 + "\nUniversalPendingUpload: appointments, deposits, tiers, variants, template, staff"
                 + "\nDownload: " + downloadPath()
                 + "\nUI: " + statusUi()
+                + "\nPosConfigCache: per-shop Dynamic config snapshot"
+                + "\nConfigApplyGuard: block template apply while cart/payment/print active"
                 + "\nRule: mark synced only when API status==1"
                 + "\nInvoice pending: InvoicePendingSync"
-                + "\nStaff PIN: sha256 hashed (legacy plaintext still verifies)";
+                + "\nStaff PIN: sha256 hashed (legacy plaintext still verifies)"
+                + "\nNever mix branch/shop data; never delete history when modules off";
     }
 }

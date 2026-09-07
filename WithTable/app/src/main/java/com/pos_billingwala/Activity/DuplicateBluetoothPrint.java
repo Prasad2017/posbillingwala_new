@@ -707,8 +707,9 @@ public class DuplicateBluetoothPrint extends BaseActivity implements View.OnClic
         if (printerSettingResponseList == null || printerSettingResponseList.isEmpty()) {
             return "";
         }
-        String addr = printerSettingResponseList.get(0).getBluetoothAddress();
-        return addr != null ? addr : "";
+        return com.pos_billingwala.Extra.UniversalPrinterEngine.addressForRole(
+                printerSettingResponseList.get(0),
+                com.pos_billingwala.Extra.dynamic.PrinterRole.INVOICE);
     }
 
     public void getPrinterSettingDetails() {

@@ -17,6 +17,7 @@ import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.DetectConnection;
 import com.pos_billingwala.Extra.LicenseModules;
 import com.pos_billingwala.Extra.TabletFormUi;
+import com.pos_billingwala.Extra.dynamicui.UiCodes;
 import com.pos_billingwala.NetworkToOffline.UserSynchronizeData;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentReportSettingBinding;
@@ -81,9 +82,9 @@ public class ReportSetting extends Fragment implements View.OnClickListener {
     }
 
     private void applyModuleVisibility() {
-        boolean showDineIn = LicenseModules.isEnabled(MainActivity.dineIn);
-        boolean showTakeAway = LicenseModules.isEnabled(MainActivity.takeAway);
-        boolean showMess = LicenseModules.isEnabled(MainActivity.mess);
+        boolean showDineIn = com.pos_billingwala.Extra.dynamic.ReportResolver.isVisible(activity, UiCodes.RP_TABLES);
+        boolean showTakeAway = com.pos_billingwala.Extra.dynamic.ReportResolver.isVisible(activity, UiCodes.RP_TAKE_AWAY);
+        boolean showMess = com.pos_billingwala.Extra.dynamic.ReportResolver.isVisible(activity, UiCodes.RP_MESS);
 
         LicenseModules.setVisible(binding.invoiceTableWiseReportLayout, showDineIn);
         LicenseModules.setVisible(binding.invoiceTableWiseReportDivider, showDineIn);

@@ -703,6 +703,10 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         backfillSubcategorySortOrders(db);
         addColumnIfNotExists(db, PRODUCT_TABLE, "subcategoryId", ALTER_PRODUCT_SUBCATEGORY_QUERY);
         addColumnIfNotExists(db, PRODUCT_TABLE, "openPrice", ALTER_PRODUCT_OPEN_PRICE_QUERY);
+        addColumnIfNotExists(db, PRODUCT_TABLE, "productExtraAttrs",
+                "ALTER TABLE " + PRODUCT_TABLE + " ADD COLUMN productExtraAttrs VARCHAR");
+        addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "printerConnectionType",
+                "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN printerConnectionType VARCHAR");
         addColumnIfNotExists(db, PRODUCT_PORTION_TABLE, "portionMasterId", ALTER_PRODUCT_PORTION_MASTER_QUERY);
         migrateProductPortionsToPortionMaster(db);
         addColumnIfNotExists(db, CART_PRODUCT_TABLE, "portionId", ALTER_CART_PORTION_ID_QUERY);
@@ -2839,6 +2843,53 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         }
     }
 
+    public void updateProductExtraAttrs(String productId, String extraAttrsJson) {
+        if (productId == null || productId.trim().isEmpty()) {
+            return;
+        }
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("productExtraAttrs", extraAttrsJson != null ? extraAttrsJson : "");
+        db.update(PRODUCT_TABLE, values, "productId = ?", new String[]{productId});
+    }
+
+    /** Recent invoice line notes starting with a prefix (e.g. Repair: / Rental:). */
+    public List<String> listRecentInvoicePortionNotes(String prefix, int limit) {
+        List<String> out = new ArrayList<>();
+        if (prefix == null || prefix.trim().isEmpty()) {
+            return out;
+        }
+        SQLiteDatabase db = this.getReadableDatabase();
+        int cap = Math.max(1, Math.min(limit, 100));
+        try (Cursor cursor = db.rawQuery(
+                "SELECT DISTINCT portionName FROM " + INVOICE_PRODUCT_TABLE
+                        + " WHERE portionName IS NOT NULL AND portionName LIKE ?"
+                        + " ORDER BY invoiceProductId DESC LIMIT " + cap,
+                new String[]{prefix + "%"})) {
+            while (cursor.moveToNext()) {
+                String name = cursor.getString(0);
+                if (name != null && !name.trim().isEmpty()) {
+                    out.add(name.trim());
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return out;
+    }
+
+    public void updatePrinterConnectionType(String settingId, String connectionType) {
+        if (settingId == null) {
+            return;
+        }
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("printerConnectionType",
+                connectionType != null && !connectionType.trim().isEmpty()
+                        ? connectionType.trim() : "bluetooth");
+        db.update(PRINTER_SETTING_TABLE, values, "settingId = ?", new String[]{settingId});
+    }
+
     private void mapCartLineSnapshots(Cursor cursor, ProductCartResponse item) {
         mapStringColumn(cursor, "portionId", item::setPortionId);
         mapStringColumn(cursor, "portionName", item::setPortionName);
@@ -3667,6 +3718,10 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         if (subcategoryCol >= 0 && !cursor.isNull(subcategoryCol)) {
             productResponse.setSubcategoryId(cursor.getString(subcategoryCol));
         }
+        int extraCol = cursor.getColumnIndex("productExtraAttrs");
+        if (extraCol >= 0 && !cursor.isNull(extraCol)) {
+            productResponse.setProductExtraAttrs(cursor.getString(extraCol));
+        }
         return productResponse;
     }
 
@@ -4142,6 +4197,10 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
                 int botBtIdx = cursor.getColumnIndex("bluetoothBotAddress");
                 printerSettingResponse.setBluetoothBotAddress(
                         botBtIdx >= 0 ? cursor.getString(botBtIdx) : "");
+                int connIdx = cursor.getColumnIndex("printerConnectionType");
+                printerSettingResponse.setPrinterConnectionType(
+                        connIdx >= 0 && !cursor.isNull(connIdx)
+                                ? cursor.getString(connIdx) : "bluetooth");
             } catch (Exception e) {
                 e.printStackTrace();
             }

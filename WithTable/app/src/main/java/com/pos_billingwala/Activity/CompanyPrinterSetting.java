@@ -19,8 +19,10 @@ import androidx.core.app.ActivityCompat;
 
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ActionButtonUi;
+import com.pos_billingwala.Extra.BottomSheetUi;
 import com.pos_billingwala.Extra.FeatureEngine;
 import com.pos_billingwala.Extra.FeatureFlags;
+import com.pos_billingwala.Extra.dynamic.PrinterConnectionType;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.PrinterSettingResponse;
 import com.pos_billingwala.Print.BluetoothPrinterChannel;
@@ -46,6 +48,7 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
     String kotEnable = "on", kotPrefix = "KOT-", kotCopies = "1", kotAutoPrint = "off";
     String botEnable = "off", botPrefix = "BOT-";
     String bluetoothBotAddress = "";
+    String printerConnectionType = PrinterConnectionType.BLUETOOTH.wire;
     /** Paper size last used when a bill/KOT printer was successfully picked or loaded. */
     String lastConnectedPrinterName = "2-Inch", lastConnectedKOTPrinterName = "2-Inch";
     boolean loadingDropdowns;
@@ -188,6 +191,10 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
         binding.kotPreview.setOnClickListener(this);
         binding.backToSetting.setOnClickListener(this);
         binding.saveSetting.getRoot().setOnClickListener(this);
+        if (binding.printerConnectionTypeLabel != null) {
+            binding.printerConnectionTypeLabel.setOnClickListener(this);
+            refreshConnectionTypeLabel();
+        }
         ActionButtonUi.bind(binding.saveSetting.getRoot(), R.drawable.ic_save, R.string.ui_save_setting);
 
         applyTabletPrinterForm();
@@ -228,12 +235,14 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
         int id = view.getId();
         if (id == R.id.backToSetting) {
             finish();
+        } else if (id == R.id.printerConnectionTypeLabel) {
+            showConnectionTypePicker();
         } else if (id == R.id.connectPrinter) {
-            WoosimPrnMng.connectFromButton(activity, bluetoothAddress, CompanyPrinterSetting.this, billSizeChangedByUser);
+            connectBillPrinter();
         } else if (id == R.id.disconnectPrinter) {
             disconnectInvoicePrinter();
         } else if (id == R.id.connectKOTPrinter) {
-            KOTWoosimPrnMng.connectFromButton(activity, bluetoothKOTAddress, CompanyPrinterSetting.this, kotSizeChangedByUser);
+            connectKotPrinter();
         } else if (id == R.id.disconnectKOTPrinter) {
             disconnectKotPrinter();
         } else if (id == R.id.connectBotPrinter) {
@@ -283,6 +292,111 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
         }
         persistKotSettings();
         persistBotSettings();
+        persistConnectionType();
+    }
+
+    private void persistConnectionType() {
+        if (settingId == null || settingId.trim().isEmpty()) {
+            return;
+        }
+        posBillingWalaDatabase.updatePrinterConnectionType(settingId, printerConnectionType);
+    }
+
+    private void showConnectionTypePicker() {
+        PrinterConnectionType[] types = PrinterConnectionType.values();
+        String[] labels = new String[types.length];
+        int selected = 0;
+        PrinterConnectionType current = PrinterConnectionType.fromWire(printerConnectionType);
+        for (int i = 0; i < types.length; i++) {
+            labels[i] = labelForConnectionType(types[i]);
+            if (types[i] == current) {
+                selected = i;
+            }
+        }
+        BottomSheetUi.showSingleChoice(activity, getString(R.string.printer_connection_type_title),
+                labels, selected, true, index -> {
+                    if (index < 0 || index >= types.length) {
+                        return;
+                    }
+                    printerConnectionType = types[index].wire;
+                    refreshConnectionTypeLabel();
+                    persistConnectionType();
+                });
+    }
+
+    private void refreshConnectionTypeLabel() {
+        if (binding.printerConnectionTypeLabel == null) {
+            return;
+        }
+        binding.printerConnectionTypeLabel.setText(
+                labelForConnectionType(PrinterConnectionType.fromWire(printerConnectionType)));
+    }
+
+    private String labelForConnectionType(PrinterConnectionType type) {
+        if (type == PrinterConnectionType.WIFI) {
+            return getString(R.string.printer_connection_wifi);
+        }
+        if (type == PrinterConnectionType.USB) {
+            return getString(R.string.printer_connection_usb);
+        }
+        if (type == PrinterConnectionType.NETWORK) {
+            return getString(R.string.printer_connection_network);
+        }
+        return getString(R.string.printer_connection_bluetooth);
+    }
+
+    private void connectBillPrinter() {
+        PrinterConnectionType type = PrinterConnectionType.fromWire(printerConnectionType);
+        if (type == PrinterConnectionType.USB) {
+            Toast.makeText(activity, R.string.printer_connection_usb, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (type == PrinterConnectionType.WIFI || type == PrinterConnectionType.NETWORK) {
+            promptNetworkIdentifier(true);
+            return;
+        }
+        WoosimPrnMng.connectFromButton(activity, bluetoothAddress, CompanyPrinterSetting.this, billSizeChangedByUser);
+    }
+
+    private void connectKotPrinter() {
+        PrinterConnectionType type = PrinterConnectionType.fromWire(printerConnectionType);
+        if (type == PrinterConnectionType.USB) {
+            Toast.makeText(activity, R.string.printer_connection_usb, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (type == PrinterConnectionType.WIFI || type == PrinterConnectionType.NETWORK) {
+            promptNetworkIdentifier(false);
+            return;
+        }
+        KOTWoosimPrnMng.connectFromButton(activity, bluetoothKOTAddress, CompanyPrinterSetting.this, kotSizeChangedByUser);
+    }
+
+    private void promptNetworkIdentifier(boolean bill) {
+        final android.widget.EditText input = new android.widget.EditText(activity);
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
+        String existing = bill ? bluetoothAddress : bluetoothKOTAddress;
+        if (existing != null) {
+            input.setText(existing);
+            input.setSelection(existing.length());
+        }
+        input.setHint(getString(R.string.printer_connection_network));
+        new androidx.appcompat.app.AlertDialog.Builder(activity)
+                .setTitle(R.string.printer_connection_type_title)
+                .setMessage(R.string.printer_connection_hint)
+                .setView(input)
+                .setNegativeButton(android.R.string.cancel, null)
+                .setPositiveButton(android.R.string.ok, (d, w) -> {
+                    String value = input.getText() != null ? input.getText().toString().trim() : "";
+                    if (bill) {
+                        bluetoothAddress = value;
+                    } else {
+                        bluetoothKOTAddress = value;
+                    }
+                    persistConnectionState();
+                    persistConnectionType();
+                    updatePrinterConnectionUi();
+                })
+                .show();
     }
 
     private void persistKotSettings() {
@@ -419,6 +533,9 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
             bluetoothKOTAddress = printerSettingResponse.getBluetoothKOTAddress() != null ? printerSettingResponse.getBluetoothKOTAddress() : "";
             bluetoothBotAddress = printerSettingResponse.getBluetoothBotAddress() != null
                     ? printerSettingResponse.getBluetoothBotAddress() : "";
+            printerConnectionType = PrinterConnectionType.fromWire(
+                    printerSettingResponse.getPrinterConnectionType()).wire;
+            refreshConnectionTypeLabel();
             binding.invoicePrefix.setText(printerSettingResponse.getInvoicePrefix().isEmpty() ? "POS" : printerSettingResponse.getInvoicePrefix());
             binding.printerFeedLines.setText(printerSettingResponse.getPrinterFeedLines().isEmpty() ? "1" : printerSettingResponse.getPrinterFeedLines());
             binding.KotPrinterFeedLines.setText(printerSettingResponse.getKotPrinterFeedLines().isEmpty() ? "1" : printerSettingResponse.getKotPrinterFeedLines());

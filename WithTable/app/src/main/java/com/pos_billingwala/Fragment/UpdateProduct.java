@@ -102,6 +102,8 @@ public class UpdateProduct extends Fragment implements View.OnClickListener {
         binding.backToProduct.setOnClickListener(this);
         binding.updateProduct.setOnClickListener(this);
 
+        com.pos_billingwala.Extra.dynamic.DynamicProductFormUi.apply(activity, binding.productFormBody);
+
         return view;
 
     }
@@ -113,13 +115,16 @@ public class UpdateProduct extends Fragment implements View.OnClickListener {
             ((MainActivity) activity).navigateBack();
         } else if (id == R.id.updateProduct) {
             if (categoryId != null) {
-                if (!binding.productFormBody.productName.getText().toString().isEmpty()) {
+                if (com.pos_billingwala.Extra.dynamic.FieldValidator.required(
+                        binding.productFormBody.productName.getText() != null
+                                ? binding.productFormBody.productName.getText().toString() : null)) {
                     String price = binding.productFormBody.productPrice.getText().toString().trim();
                     boolean hasPortions = portionSectionHelper != null && portionSectionHelper.hasPortions();
                     boolean hasVariants = FashionJewelleryModule.isEnabled(activity)
                             && posBillingWalaDatabase.hasProductVariants(productId);
                     boolean openPrice = binding.productFormBody.openPriceSwitch.isChecked();
-                    if (!price.isEmpty() || hasPortions || hasVariants || openPrice) {
+                    if (com.pos_billingwala.Extra.dynamic.FieldValidator.required(price)
+                            || hasPortions || hasVariants || openPrice) {
                         if (unitName != null) {
                             updateProduct();
                         } else {
@@ -157,8 +162,12 @@ public class UpdateProduct extends Fragment implements View.OnClickListener {
 
         posBillingWalaDatabase.updateProduct(MainActivity.userId, productId, categoryId, categoryName, binding.productFormBody.productCode.getText().toString(), binding.productFormBody.productName.getText().toString(), productPrice,
                 unitName, binding.productFormBody.productCGST.getText().toString(), binding.productFormBody.productSGST.getText().toString(), 0, subcategoryId, openPrice);
-
-        portionSectionHelper.savePortionsForProduct(productId);
+        posBillingWalaDatabase.updateProductExtraAttrs(productId,
+                com.pos_billingwala.Extra.dynamic.DynamicProductFormUi.readExtraAttrsJson(
+                        activity, binding.productFormBody));
+        if (portionSectionHelper != null) {
+            portionSectionHelper.savePortionsForProduct(productId);
+        }
 
         Toast.makeText(activity, getString(R.string.toast_product_updated_successfully), Toast.LENGTH_SHORT).show();
         ((MainActivity) activity).navigateBack();
@@ -219,6 +228,10 @@ public class UpdateProduct extends Fragment implements View.OnClickListener {
             binding.productFormBody.productSGST.setText(productResponse.getProductSGST());
             binding.productFormBody.productCode.setText(productResponse.getProductCode());
             binding.productFormBody.openPriceSwitch.setChecked(productResponse.isOpenPrice());
+
+            com.pos_billingwala.Extra.dynamic.DynamicProductFormUi.apply(activity, binding.productFormBody);
+            com.pos_billingwala.Extra.dynamic.DynamicProductFormUi.bindExtraAttrs(
+                    binding.productFormBody, productResponse.getProductExtraAttrs());
 
             unitNameList = activity.getResources().getStringArray(R.array.product_unit);
             binding.productFormBody.unitDropdown.setItems(unitNameList);

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="homeExtraQuickActions" type="id" />
+    <item name="homeExtraQuickActionsRow" type="id" />
+    <item name="productExtraSection" type="id" />
+    <item name="productSerial" type="id" />
+    <item name="productWarranty" type="id" />
+    <item name="productFlavour" type="id" />
+</resources>

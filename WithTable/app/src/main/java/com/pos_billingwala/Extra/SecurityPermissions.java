@@ -66,6 +66,7 @@ public final class SecurityPermissions {
         // Quick device role is not tied to a roster row.
         Common.saveUserData(ctx, PREF_ACTIVE_STAFF_ID, "");
         Common.saveUserData(ctx, PREF_ACTIVE_STAFF_NAME, "");
+        DynamicUiEngine.invalidate(ctx);
     }
 
     public static String getActiveStaffId(Context context) {
@@ -97,6 +98,7 @@ public final class SecurityPermissions {
                 staff.getStaffId() != null ? staff.getStaffId() : "");
         Common.saveUserData(ctx, PREF_ACTIVE_STAFF_NAME,
                 staff.getStaffName() != null ? staff.getStaffName() : "");
+        DynamicUiEngine.invalidate(ctx);
     }
 
     public static boolean matchesStaffPin(StaffUserResponse staff, @Nullable CharSequence entered) {

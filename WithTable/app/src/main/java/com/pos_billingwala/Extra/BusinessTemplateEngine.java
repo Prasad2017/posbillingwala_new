@@ -49,12 +49,16 @@ public final class BusinessTemplateEngine {
         if (context == null || templateId == null || templateId.trim().isEmpty()) {
             return false;
         }
+        if (!com.pos_billingwala.Extra.dynamic.ConfigApplyGuard.canApplyConfiguration(context)) {
+            return false;
+        }
         BusinessTemplate template = BusinessTemplateRegistry.findById(templateId.trim());
         if (template == null) {
             return false;
         }
         BusinessConfigStore.clearTemplateJson(context);
         BusinessSession.saveSelection(context, template.getBusinessType(), template.getId());
+        invalidateDynamicSafe(context);
         return true;
     }
 
@@ -65,9 +69,13 @@ public final class BusinessTemplateEngine {
         if (context == null) {
             return false;
         }
+        if (!com.pos_billingwala.Extra.dynamic.ConfigApplyGuard.canApplyConfiguration(context)) {
+            return false;
+        }
         BusinessTypeInfo info = BusinessTypeCatalog.get(businessType);
         BusinessConfigStore.clearTemplateJson(context);
         BusinessSession.saveSelection(context, info.getTypeId(), info.getDefaultTemplateId());
+        invalidateDynamicSafe(context);
         return BusinessTemplateRegistry.findById(info.getDefaultTemplateId()) != null
                 || BusinessTemplateRegistry.forBusinessType(info.getTypeId()) != null;
     }
@@ -80,8 +88,19 @@ public final class BusinessTemplateEngine {
         if (parsed == null || context == null) {
             return false;
         }
+        if (!com.pos_billingwala.Extra.dynamic.ConfigApplyGuard.canApplyConfiguration(context)) {
+            return false;
+        }
         BusinessConfigStore.saveTemplateJson(context, BusinessTemplateJson.toJson(parsed));
+        invalidateDynamicSafe(context);
         return true;
+    }
+
+    private static void invalidateDynamicSafe(Context context) {
+        com.pos_billingwala.Extra.dynamic.PosConfigCache.invalidate(context);
+        DynamicUiEngine.invalidate(context);
+        com.pos_billingwala.Extra.dynamic.PosConfigCache.persist(context,
+                com.pos_billingwala.Extra.dynamic.POSConfiguration.resolve(context));
     }
 
     /**

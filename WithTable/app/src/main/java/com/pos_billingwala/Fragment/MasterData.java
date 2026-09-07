@@ -17,14 +17,11 @@ import androidx.fragment.app.Fragment;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Activity.TableMasterActivity;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
-import com.pos_billingwala.Extra.BusinessTemplate;
 import com.pos_billingwala.Extra.CakeBakeryModule;
-import com.pos_billingwala.Extra.FeatureEngine;
-import com.pos_billingwala.Extra.FeatureFlags;
 import com.pos_billingwala.Extra.ImportExportEngine;
-import com.pos_billingwala.Extra.LicenseModules;
 import com.pos_billingwala.Extra.SalonAppointmentModule;
 import com.pos_billingwala.Extra.SecurityPermissions;
+import com.pos_billingwala.Extra.dynamic.TabRegistry;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentMasterDataBinding;
 import com.pos_billingwala.databinding.ItemGroupedMenuRowBinding;
@@ -114,14 +111,11 @@ public class MasterData extends Fragment implements View.OnClickListener {
     }
 
     private void applyFeatureVisibility() {
-        FeatureEngine.setVisible(activity, binding.portionLayout.getRoot(), FeatureFlags.PORTIONS);
-        FeatureEngine.setVisible(activity, binding.comboLayout.getRoot(), FeatureFlags.COMBOS);
-        BusinessTemplate template = FeatureEngine.currentTemplate(activity);
-        LicenseModules.setVisible(binding.tableMasterLayout.getRoot(),
-                template != null && template.supports(FeatureFlags.TABLES)
-                        && LicenseModules.isEnabled(MainActivity.dineIn));
-        FeatureEngine.setVisible(activity, binding.appointmentLayout.getRoot(), FeatureFlags.APPOINTMENTS);
-        FeatureEngine.setVisible(activity, binding.depositLayout.getRoot(), FeatureFlags.CUSTOM_ORDERS);
+        TabRegistry.apply(activity, binding.portionLayout.getRoot(), TabRegistry.TAB_PORTION);
+        TabRegistry.apply(activity, binding.comboLayout.getRoot(), TabRegistry.TAB_COMBO);
+        TabRegistry.apply(activity, binding.tableMasterLayout.getRoot(), TabRegistry.TAB_TABLE);
+        TabRegistry.apply(activity, binding.appointmentLayout.getRoot(), TabRegistry.TAB_APPOINTMENT);
+        TabRegistry.apply(activity, binding.depositLayout.getRoot(), TabRegistry.TAB_DEPOSIT);
     }
 
     private void setupRow(ItemGroupedMenuRowBinding row, int iconRes, int bgRes, int tintColor,

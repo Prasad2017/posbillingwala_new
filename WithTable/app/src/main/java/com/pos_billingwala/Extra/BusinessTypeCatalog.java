@@ -69,11 +69,11 @@ public final class BusinessTypeCatalog {
         list.add(info(BusinessTypes.ELECTRONICS, "Electronics / Mobile", "Retail",
                 BusinessTypeReadiness.PARTIAL, 3,
                 BusinessTemplateRegistry.TEMPLATE_RETAIL_DEFAULT,
-                "Maps to retail (barcode/inventory); serial/IMEI later"));
+                "Retail + serial/IMEI prompt on add-to-cart"));
         list.add(info(BusinessTypes.HARDWARE, "Hardware", "Retail",
                 BusinessTypeReadiness.PARTIAL, 3,
                 BusinessTemplateRegistry.TEMPLATE_RETAIL_DEFAULT,
-                "Maps to retail template"));
+                "Maps to retail; serial prompt when electronics module maps hardware"));
         list.add(info(BusinessTypes.STATIONERY, "Stationery", "Retail",
                 BusinessTypeReadiness.PARTIAL, 3,
                 BusinessTemplateRegistry.TEMPLATE_RETAIL_DEFAULT,
@@ -93,11 +93,11 @@ public final class BusinessTypeCatalog {
         list.add(info(BusinessTypes.REPAIR, "Repair", "Services",
                 BusinessTypeReadiness.PARTIAL, 3,
                 BusinessTemplateRegistry.TEMPLATE_SALON_DEFAULT,
-                "Maps to salon / appointment template"));
+                "Salon template + repair job note/serial on billing"));
         list.add(info(BusinessTypes.RENTAL, "Rental", "Services",
                 BusinessTypeReadiness.PARTIAL, 3,
                 BusinessTemplateRegistry.TEMPLATE_RETAIL_DEFAULT,
-                "Maps to retail billing; rental periods later"));
+                "Retail + custom-order deposits; return date prompt on billing"));
         list.add(info(BusinessTypes.HEALTHCARE, "Healthcare-ready", "Services",
                 BusinessTypeReadiness.PARTIAL, 3,
                 BusinessTemplateRegistry.TEMPLATE_SALON_DEFAULT,

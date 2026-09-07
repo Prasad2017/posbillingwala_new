@@ -68,16 +68,16 @@ import com.pos_billingwala.Extra.Common;
 import com.pos_billingwala.Extra.LocalSalesAnalytics;
 import com.pos_billingwala.Extra.LicenceExpiredUi;
 import com.pos_billingwala.Extra.BillingMode;
-import com.pos_billingwala.Extra.FeatureEngine;
-import com.pos_billingwala.Extra.FeatureFlags;
 import com.pos_billingwala.Extra.LicenseModules;
 import com.pos_billingwala.Extra.MessModule;
 import com.pos_billingwala.Extra.RestaurantFoodModule;
 import com.pos_billingwala.Extra.LicenseValidator;
 import com.pos_billingwala.Extra.DetectConnection;
+import com.pos_billingwala.Extra.DynamicUiEngine;
 import com.pos_billingwala.Extra.ErrorLogQueue;
 import com.pos_billingwala.Extra.InAppNotificationStore;
 import com.pos_billingwala.Extra.ResponsiveUi;
+import com.pos_billingwala.Extra.dynamicui.UiCodes;
 import com.pos_billingwala.Model.AllApiResponse;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.InAppNotification;
@@ -124,6 +124,7 @@ public class Home extends Fragment implements View.OnClickListener {
     public static View fastBilling, tableBilling, takeAwayBilling, messBilling;
     public static View posBillingRow1, posBillingRow2;
     public static CardView totalSalesCardView, todaySalesCardView;
+    public static View comboCardView;
     /** When true, next onStart skips heavy DB/Bluetooth (used when Home is only a back-stack seed). */
     public static boolean deferHeavyWorkForNextStart = false;
     public final ActivityResultLauncher<Intent> storageActivityResultLauncher = registerForActivityResult(
@@ -142,6 +143,8 @@ public class Home extends Fragment implements View.OnClickListener {
     );
     View view;
     POSBillingWalaDatabase posBillingWalaDatabase;
+    /** Soft ref for static visibility apply (licence hydrate callback). */
+    private static Home activeHome;
     LicenceKeyReceiver licenceKeyReceiver;
     OfflineToNetworkReceiver offlineToNetworkReceiver;
     private final BroadcastReceiver networkStatusReceiver = new BroadcastReceiver() {
@@ -275,11 +278,15 @@ public class Home extends Fragment implements View.OnClickListener {
     }
 
     private static void applyModuleVisibility() {
-        // FeatureEngine = business template ∩ licence modules (default restaurant = prior behaviour)
-        boolean showFast = FeatureEngine.isEnabled(activity, FeatureFlags.FAST_BILLING);
-        boolean showDineIn = FeatureEngine.isEnabled(activity, FeatureFlags.DINE_IN);
-        boolean showTakeAway = FeatureEngine.isEnabled(activity, FeatureFlags.TAKE_AWAY);
-        boolean showMess = FeatureEngine.isEnabled(activity, FeatureFlags.MESS);
+        // Dynamic UI Engine: quick actions ∩ NavigationRegistry (Phase 03)
+        boolean showFast = DynamicUiEngine.isQuickActionVisible(activity, UiCodes.QA_FAST_BILLING)
+                && com.pos_billingwala.Extra.dynamic.NavigationRegistry.isVisible(activity, UiCodes.BILLING);
+        boolean showDineIn = DynamicUiEngine.isQuickActionVisible(activity, UiCodes.QA_DINE_IN)
+                && com.pos_billingwala.Extra.dynamic.NavigationRegistry.isVisible(activity, UiCodes.TABLE_MANAGEMENT);
+        boolean showTakeAway = DynamicUiEngine.isQuickActionVisible(activity, UiCodes.QA_TAKE_AWAY)
+                && com.pos_billingwala.Extra.dynamic.NavigationRegistry.isVisible(activity, UiCodes.TAKE_AWAY);
+        boolean showMess = DynamicUiEngine.isQuickActionVisible(activity, UiCodes.QA_MESS)
+                && com.pos_billingwala.Extra.dynamic.NavigationRegistry.isVisible(activity, UiCodes.MESS);
         boolean wide = activity != null && ResponsiveUi.isWideLayout(activity);
 
         LicenseModules.setVisible(fastBilling, showFast);
@@ -291,9 +298,30 @@ public class Home extends Fragment implements View.OnClickListener {
         LicenseModules.setVisible(posBillingRow2, !wide && (showTakeAway || showMess));
 
         LicenseModules.setVisible(totalSalesCardView,
-                FeatureEngine.isEnabled(activity, FeatureFlags.TOTAL_SALE_DATA));
+                DynamicUiEngine.isWidgetVisible(activity, UiCodes.W_TOTAL_SALES));
         LicenseModules.setVisible(todaySalesCardView,
-                FeatureEngine.isEnabled(activity, FeatureFlags.TODAY_SALE_DATA));
+                DynamicUiEngine.isWidgetVisible(activity, UiCodes.W_TODAY_SALES));
+        LicenseModules.setVisible(comboCardView,
+                com.pos_billingwala.Extra.dynamic.DashboardWidgetResolver.isVisible(
+                        activity, UiCodes.W_COMBOS)
+                        && com.pos_billingwala.Extra.dynamic.ScreenRegistry.isVisible(
+                        activity, UiCodes.COMBOS));
+        if (activeHome != null && activeHome.view != null) {
+            View productCard = activeHome.view.findViewById(R.id.productCardView);
+            View subcategoryCard = activeHome.view.findViewById(R.id.subcategoryCardView);
+            com.pos_billingwala.Extra.dynamic.ScreenRegistry.apply(
+                    activity, productCard, UiCodes.PRODUCTS);
+            com.pos_billingwala.Extra.dynamic.ScreenRegistry.apply(
+                    activity, subcategoryCard, UiCodes.CATEGORIES);
+        }
+        // Persist offline config snapshot when Home is active and not mid-cart
+        com.pos_billingwala.Extra.dynamic.PosConfigCache.resolveSafe(activity);
+        // Secondary quick actions (weight / stock / appointments / custom order)
+        View root = activeHome != null ? activeHome.view : null;
+        POSBillingWalaDatabase db = activeHome != null ? activeHome.posBillingWalaDatabase : null;
+        View inventoryCard = root != null ? root.findViewById(R.id.inventoryCardView) : null;
+        com.pos_billingwala.Extra.dynamic.HomeDynamicQuickActions.bind(
+                activity, root, inventoryCard, db);
     }
 
     @Override
@@ -303,6 +331,7 @@ public class Home extends Fragment implements View.OnClickListener {
         view = binding.getRoot(); //Root xml or viewGroup will be a part of converted view over here
 
         activity = getActivity();
+        activeHome = this;
 
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (bluetoothAdapter == null) {
@@ -404,8 +433,13 @@ public class Home extends Fragment implements View.OnClickListener {
         posBillingRow2 = view.findViewById(R.id.posBillingRow2);
         totalSalesCardView = view.findViewById(R.id.totalSalesCardView);
         todaySalesCardView = view.findViewById(R.id.todaySalesCardView);
+        comboCardView = view.findViewById(R.id.comboCardView);
 
         binding.userSettingIcon.setOnClickListener(this);
+        binding.userSettingIcon.setOnLongClickListener(v -> {
+            com.pos_billingwala.Extra.dynamic.DynamicNavigationSheet.show(activity);
+            return true;
+        });
         if (binding.homeNotificationBtn != null) {
             binding.homeNotificationBtn.setOnClickListener(this);
         }
@@ -534,12 +568,24 @@ public class Home extends Fragment implements View.OnClickListener {
         } else if (id == R.id.messBilling) {
             MessModule.openHub(activity);
         } else if (id == R.id.subcategoryCardView) {
+            if (!com.pos_billingwala.Extra.dynamic.ScreenRegistry.guardOpen(activity, UiCodes.CATEGORIES)) {
+                return;
+            }
             ((MainActivity) activity).loadFragment(new AddSubcategory(), true);
         } else if (id == R.id.productCardView) {
+            if (!com.pos_billingwala.Extra.dynamic.ScreenRegistry.guardOpen(activity, UiCodes.PRODUCTS)) {
+                return;
+            }
             ((MainActivity) activity).loadFragment(new ProductMaster(), true);
         } else if (id == R.id.comboCardView) {
+            if (!com.pos_billingwala.Extra.dynamic.ScreenRegistry.guardOpen(activity, UiCodes.COMBOS)) {
+                return;
+            }
             ((MainActivity) activity).loadFragment(new ComboMaster(), true);
         } else if (id == R.id.catalogViewAll) {
+            if (!com.pos_billingwala.Extra.dynamic.ScreenRegistry.guardOpen(activity, UiCodes.PRODUCTS)) {
+                return;
+            }
             ((MainActivity) activity).loadFragment(new ProductMaster(), true);
         } else if (id == R.id.salesPeriodFilter) {
             showSalesPeriodMenu();
@@ -655,12 +701,14 @@ public class Home extends Fragment implements View.OnClickListener {
                 return;
             }
             hasPrinterSettingsRow = true;
-            final String bluetoothAddress = printerSettingResponseList.get(0).getBluetoothAddress() != null
-                    ? printerSettingResponseList.get(0).getBluetoothAddress() : "";
-            final String bluetoothKOTAddress = printerSettingResponseList.get(0).getBluetoothKOTAddress() != null
-                    ? printerSettingResponseList.get(0).getBluetoothKOTAddress() : "";
-            cachedBillPrinterAddress = bluetoothAddress.trim();
-            cachedKotPrinterAddress = bluetoothKOTAddress.trim();
+            final String bluetoothAddress = com.pos_billingwala.Extra.UniversalPrinterEngine.addressForRole(
+                    printerSettingResponseList.get(0),
+                    com.pos_billingwala.Extra.dynamic.PrinterRole.INVOICE);
+            final String bluetoothKOTAddress = com.pos_billingwala.Extra.UniversalPrinterEngine.addressForRole(
+                    printerSettingResponseList.get(0),
+                    com.pos_billingwala.Extra.dynamic.PrinterRole.KOT);
+            cachedBillPrinterAddress = bluetoothAddress;
+            cachedKotPrinterAddress = bluetoothKOTAddress;
             updatePrinterStatusUi();
             // Bluetooth enable prompt stays on main; connect off main to avoid Home hitch
             final boolean btOk = enableBluetooth();
@@ -1625,6 +1673,9 @@ public class Home extends Fragment implements View.OnClickListener {
         stopHomeClock();
         AppExecutors.get().removeMainCallbacks(deferredPrinterConnectRunnable);
         cachedCompanyDetails = null;
+        if (activeHome == this) {
+            activeHome = null;
+        }
         super.onDestroyView();
     }
 

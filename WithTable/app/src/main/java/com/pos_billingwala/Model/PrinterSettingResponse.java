@@ -272,4 +272,15 @@ public class PrinterSettingResponse {
     public void setBluetoothBotAddress(String bluetoothBotAddress) {
         this.bluetoothBotAddress = bluetoothBotAddress;
     }
+
+    @SerializedName("printerConnectionType")
+    public String printerConnectionType;
+
+    public String getPrinterConnectionType() {
+        return printerConnectionType;
+    }
+
+    public void setPrinterConnectionType(String printerConnectionType) {
+        this.printerConnectionType = printerConnectionType;
+    }
 }

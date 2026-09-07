@@ -16,7 +16,7 @@ import androidx.fragment.app.Fragment;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.DetectConnection;
-import com.pos_billingwala.Extra.LicenseModules;
+import com.pos_billingwala.Extra.dynamicui.UiCodes;
 import com.pos_billingwala.NetworkToOffline.UserSynchronizeData;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentReportsHubBinding;
@@ -171,14 +171,14 @@ public class ReportsHub extends Fragment {
     }
 
     private void applyModuleVisibility() {
-        LicenseModules.setVisible(binding.rowTableReport.getRoot(),
-                LicenseModules.isEnabled(MainActivity.dineIn));
-        LicenseModules.setVisible(binding.rowTakeAwayReport.getRoot(),
-                LicenseModules.isEnabled(MainActivity.takeAway));
-        LicenseModules.setVisible(binding.rowMessMemberReport.getRoot(),
-                LicenseModules.isEnabled(MainActivity.mess));
-        LicenseModules.setVisible(binding.rowMessReport.getRoot(),
-                LicenseModules.isEnabled(MainActivity.mess));
+        com.pos_billingwala.Extra.dynamic.ReportResolver.apply(activity, binding.rowTableReport.getRoot(), UiCodes.RP_TABLES);
+        com.pos_billingwala.Extra.dynamic.ReportResolver.apply(activity, binding.rowTakeAwayReport.getRoot(), UiCodes.RP_TAKE_AWAY);
+        com.pos_billingwala.Extra.dynamic.ReportResolver.apply(activity, binding.rowMessMemberReport.getRoot(), UiCodes.RP_MESS_MEMBER);
+        com.pos_billingwala.Extra.dynamic.ReportResolver.apply(activity, binding.rowMessReport.getRoot(), UiCodes.RP_MESS);
+        com.pos_billingwala.Extra.dynamic.ReportResolver.apply(activity, binding.rowComboReport.getRoot(), UiCodes.RP_COMBO);
+        com.pos_billingwala.Extra.dynamic.ReportResolver.apply(activity, binding.rowProductReport.getRoot(), UiCodes.RP_PRODUCT);
+        com.pos_billingwala.Extra.dynamic.ReportResolver.apply(activity, binding.rowExpenseReport.getRoot(), UiCodes.RP_EXPENSE);
+        com.pos_billingwala.Extra.dynamic.ReportResolver.apply(activity, binding.rowPaymentReport.getRoot(), UiCodes.RP_PAYMENT);
     }
 
     private void clearAllInvoices() {

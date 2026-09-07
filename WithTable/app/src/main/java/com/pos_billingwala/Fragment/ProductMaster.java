@@ -28,9 +28,11 @@ import com.pos_billingwala.Activity.ProductListBluetoothPrint;
 import com.pos_billingwala.Adapter.ProductAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.AppExecutors;
+import com.pos_billingwala.Extra.EmptyListUi;
 import com.pos_billingwala.Extra.ListLoader;
 import com.pos_billingwala.Extra.ResponsiveUi;
 import com.pos_billingwala.Extra.SimpleDividerItemDecoration;
+import com.pos_billingwala.Extra.dynamic.DynamicListRegistry;
 import com.pos_billingwala.Model.ProductResponse;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentProductMasterBinding;
@@ -38,7 +40,6 @@ import com.pos_billingwala.databinding.FragmentProductMasterBinding;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
-import com.pos_billingwala.Extra.EmptyListUi;
 
 
 public class ProductMaster extends Fragment implements View.OnClickListener {
@@ -132,6 +133,7 @@ public class ProductMaster extends Fragment implements View.OnClickListener {
 
 
         initViews();
+        DynamicListRegistry.applyProductSearchHint(activity, searchProduct);
 
         view.setFocusableInTouchMode(true);
         view.requestFocus();

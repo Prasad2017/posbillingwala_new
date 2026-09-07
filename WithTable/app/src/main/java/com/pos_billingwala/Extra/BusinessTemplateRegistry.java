@@ -54,8 +54,9 @@ public final class BusinessTemplateRegistry {
             case BusinessTypes.HARDWARE:
             case BusinessTypes.STATIONERY:
             case BusinessTypes.PET_SHOP:
-            case BusinessTypes.RENTAL:
                 return retailDefault();
+            case BusinessTypes.RENTAL:
+                return rentalDefault();
             case BusinessTypes.GROCERY:
                 return groceryDefault();
             case BusinessTypes.WEIGHT_FRESH:
@@ -177,6 +178,18 @@ public final class BusinessTemplateRegistry {
                         FeatureFlags.INVENTORY,
                         FeatureFlags.GST
                 )
+        );
+    }
+
+    /** Rental: retail billing + deposit/return notes via custom-order deposit ledger. */
+    public static BusinessTemplate rentalDefault() {
+        Set<String> flags = new LinkedHashSet<>(retailDefault().getEnabledFeatures());
+        flags.add(FeatureFlags.CUSTOM_ORDERS);
+        return new BusinessTemplate(
+                TEMPLATE_RETAIL_DEFAULT,
+                BusinessTypes.RENTAL,
+                "Rental",
+                flags
         );
     }
 

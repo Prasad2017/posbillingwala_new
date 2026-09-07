@@ -107,6 +107,8 @@ public class AddProduct extends Fragment implements View.OnClickListener {
             }
         });
 
+        com.pos_billingwala.Extra.dynamic.DynamicProductFormUi.apply(activity, binding.productFormBody);
+
         binding.backToProduct.setOnClickListener(this);
         binding.addProduct.setOnClickListener(this);
 
@@ -121,11 +123,14 @@ public class AddProduct extends Fragment implements View.OnClickListener {
             ((MainActivity) activity).navigateBack();
         } else if (id == R.id.addProduct) {
             if (categoryId != null) {
-                if (!binding.productFormBody.productName.getText().toString().isEmpty()) {
+                if (com.pos_billingwala.Extra.dynamic.FieldValidator.required(
+                        binding.productFormBody.productName.getText() != null
+                                ? binding.productFormBody.productName.getText().toString() : null)) {
                     String price = binding.productFormBody.productPrice.getText().toString().trim();
                     boolean hasPortions = portionSectionHelper != null && portionSectionHelper.hasPortions();
                     boolean openPrice = binding.productFormBody.openPriceSwitch.isChecked();
-                    if (!price.isEmpty() || hasPortions || openPrice) {
+                    if (com.pos_billingwala.Extra.dynamic.FieldValidator.required(price)
+                            || hasPortions || openPrice) {
                         if (unitName != null) {
                             addProduct();
                         } else {
@@ -167,6 +172,11 @@ public class AddProduct extends Fragment implements View.OnClickListener {
         }
         if (newProductId != null && portionSectionHelper.hasPortions()) {
             portionSectionHelper.savePortionsForProduct(newProductId);
+        }
+        if (newProductId != null) {
+            posBillingWalaDatabase.updateProductExtraAttrs(newProductId,
+                    com.pos_billingwala.Extra.dynamic.DynamicProductFormUi.readExtraAttrsJson(
+                            activity, binding.productFormBody));
         }
 
         Toast.makeText(activity, getString(R.string.toast_product_added_successfully), Toast.LENGTH_SHORT).show();

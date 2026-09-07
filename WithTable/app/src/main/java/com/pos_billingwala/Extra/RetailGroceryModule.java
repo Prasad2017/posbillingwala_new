@@ -39,6 +39,7 @@ public final class RetailGroceryModule {
             case BusinessTypes.HARDWARE:
             case BusinessTypes.STATIONERY:
             case BusinessTypes.PET_SHOP:
+            case BusinessTypes.RENTAL:
                 return true;
             default:
                 return false;

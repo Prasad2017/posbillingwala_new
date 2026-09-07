@@ -37,6 +37,7 @@ Evolve the live restaurant/mess POS into a **Universal multi-business POS** with
 | 22 | Security Permissions | **Done** (device roles + staff_user roster sync + reportPin) |
 | 23 | Testing And Migration | **Done** (smoke checklist expanded) |
 | 24 | Master Cursor Prompt | **Done** |
+| 25 | Dynamic UI Engine | **Done** |
 
 ## Facades (`WithTable/.../Extra/`)
 
@@ -50,6 +51,7 @@ Use `UniversalPosModules.fullDiagnostics(context)` for a full readout.
 | Verticals | `WeightFreshModule`, `RetailGroceryModule`, `FashionJewelleryModule`, `SalonAppointmentModule`, `CakeBakeryModule` |
 | Catalog / stock / print | `ProductServiceEngine`, `ImportExportEngine`, `InventoryStockEngine`, `UniversalPrinterEngine` |
 | Platform | `AdminDealerPlatform`, `CrashApiDeviceLogging`, `DynamicSettingsReports`, `DatabaseApiArchitecture`, `OfflineSyncArchitecture`, `SecurityPermissions` |
+| Dynamic UI | `DynamicUiEngine` (+ `Extra/dynamicui/*`) |
 
 ## Safe constraints (do not break)
 

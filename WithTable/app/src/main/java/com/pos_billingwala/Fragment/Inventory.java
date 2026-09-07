@@ -19,6 +19,7 @@ import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.EmptyListUi;
 import com.pos_billingwala.Extra.InventoryStockEngine;
 import com.pos_billingwala.Extra.ListLoader;
+import com.pos_billingwala.Extra.dynamic.DynamicListRegistry;
 import com.pos_billingwala.Model.InventoryResponse;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentInventoryBinding;
@@ -53,6 +54,8 @@ public class Inventory extends Fragment implements View.OnClickListener {
         if (!InventoryStockEngine.ensureEnabled(activity)) {
             return view;
         }
+        // Soft touch: column plan from DynamicListRegistry (adapters remain static).
+        DynamicListRegistry.inventoryColumns(activity);
 
         view.setFocusableInTouchMode(true);
         view.requestFocus();

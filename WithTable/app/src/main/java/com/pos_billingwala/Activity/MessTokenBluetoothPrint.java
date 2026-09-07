@@ -86,6 +86,12 @@ public class MessTokenBluetoothPrint extends BaseActivity implements View.OnClic
         }
     }
 
+    @Override
+    protected void onDestroy() {
+        com.pos_billingwala.Extra.UniversalPrinterEngine.markPrintSession(this, false);
+        super.onDestroy();
+    }
+
     private void readIntentExtras() {
         Intent intent = getIntent();
         if (intent == null) {
@@ -150,9 +156,15 @@ public class MessTokenBluetoothPrint extends BaseActivity implements View.OnClic
                 Toast.makeText(this, getString(R.string.toast_please_select_printer_from_setting), Toast.LENGTH_SHORT).show();
                 return;
             }
-            String addr = printerSettingResponseList.get(0).getBluetoothAddress();
+            String addr = com.pos_billingwala.Extra.UniversalPrinterEngine.requireAddress(
+                    this, printerSettingResponseList.get(0),
+                    com.pos_billingwala.Extra.dynamic.PrinterRole.TOKEN);
+            if (addr.isEmpty()) {
+                return;
+            }
+            com.pos_billingwala.Extra.UniversalPrinterEngine.markPrintSession(this, true);
             PrinterConnectionHelper.ensureBillPrinterAsync(this,
-                    addr != null ? addr : "",
+                    addr,
                     this::runMessTokenPrintAfterPrinterReady);
         }
     }
@@ -179,7 +191,10 @@ public class MessTokenBluetoothPrint extends BaseActivity implements View.OnClic
         PrintImage printImage = new PrintImage(getResizedBitmap(image, effectivePrintWidth));
         printImage.PrepareImage(com.pos_billingwala.Print.PrintImage.dither.floyd_steinberg, 128);
         if (!PrinterConnectionHelper.safeWriteBill(this, printImage.getPrintImageData())) {
-            String addr = printerSettingResponseList.isEmpty() ? "" : printerSettingResponseList.get(0).getBluetoothAddress();
+            String addr = printerSettingResponseList.isEmpty() ? ""
+                    : com.pos_billingwala.Extra.UniversalPrinterEngine.addressForRole(
+                    printerSettingResponseList.get(0),
+                    com.pos_billingwala.Extra.dynamic.PrinterRole.TOKEN);
             WoosimPrnMng.connect(this, addr != null ? addr : "", MessTokenBluetoothPrint.this);
             return;
         }
@@ -247,8 +262,10 @@ public class MessTokenBluetoothPrint extends BaseActivity implements View.OnClic
         if (printerSettingResponseList.isEmpty()) {
             return;
         }
-        String bluetoothAddress = printerSettingResponseList.get(0).getBluetoothAddress();
-        if (!bluetoothAddress.equalsIgnoreCase("")) {
+        String bluetoothAddress = com.pos_billingwala.Extra.UniversalPrinterEngine.addressForRole(
+                printerSettingResponseList.get(0),
+                com.pos_billingwala.Extra.dynamic.PrinterRole.TOKEN);
+        if (bluetoothAddress != null && !bluetoothAddress.isEmpty()) {
             try {
                 new WoosimPrnMng(this, bluetoothAddress, MessTokenBluetoothPrint.this);
             } catch (Exception e) {
@@ -333,7 +350,10 @@ public class MessTokenBluetoothPrint extends BaseActivity implements View.OnClic
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_ENABLE_BT && resultCode == RESULT_OK) {
-            String addr = printerSettingResponseList.isEmpty() ? "" : printerSettingResponseList.get(0).getBluetoothAddress();
+            String addr = printerSettingResponseList.isEmpty() ? ""
+                    : com.pos_billingwala.Extra.UniversalPrinterEngine.addressForRole(
+                    printerSettingResponseList.get(0),
+                    com.pos_billingwala.Extra.dynamic.PrinterRole.TOKEN);
             WoosimPrnMng.connect(this, addr != null ? addr : "", MessTokenBluetoothPrint.this);
         } else if (requestCode == REQUEST_CONNECT_DEVICE) {
             if (resultCode == RESULT_OK && data != null && data.getExtras() != null) {

@@ -54,13 +54,18 @@ import com.pos_billingwala.Extra.BottomSheetUi;
 import com.pos_billingwala.Extra.ListLoader;
 import com.pos_billingwala.Extra.ReportCursorHelper;
 import com.pos_billingwala.Extra.CakeBakeryModule;
+import com.pos_billingwala.Extra.DynamicUiEngine;
+import com.pos_billingwala.Extra.ElectronicsModule;
 import com.pos_billingwala.Extra.FashionJewelleryModule;
+import com.pos_billingwala.Extra.RentalModule;
+import com.pos_billingwala.Extra.RepairModule;
 import com.pos_billingwala.Extra.RestaurantFoodModule;
 import com.pos_billingwala.Extra.SalonAppointmentModule;
 import com.pos_billingwala.Extra.SecurityPermissions;
 import com.pos_billingwala.Extra.WeightFreshModule;
 import android.view.inputmethod.EditorInfo;
 import com.pos_billingwala.Extra.RetailGroceryModule;
+import com.pos_billingwala.Extra.dynamicui.UiCodes;
 import com.pos_billingwala.Interface.ClickListerInterface;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.PrinterSettingResponse;
@@ -119,6 +124,8 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
     private static final int CAMERA_BARCODE_PERMISSION_REQUEST = 512;
     private static final int REQUEST_SCALE_DEVICE = 513;
     private TextInputEditText pendingScaleWeightField;
+    /** Billing UI snapshot for this cart session (Dynamic Phase 06). */
+    private com.pos_billingwala.Extra.dynamic.BillingUIConfiguration billingUiSnapshot;
 
     /* When Mic / barcode camera / custom-order photo activity close */
     @Override
@@ -231,6 +238,7 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
             }
         });
 
+        billingUiSnapshot = com.pos_billingwala.Extra.dynamic.BillingUIConfiguration.snapshotForCart(activity);
 
         binding.productSearch.addTextChangedListener(new TextWatcher() {
             @Override
@@ -259,7 +267,8 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
             }
         });
 
-        if (RetailGroceryModule.shouldAutoAddOnBarcodeScan(activity)) {
+        if (RetailGroceryModule.shouldAutoAddOnBarcodeScan(activity)
+                && billingFieldVisible(UiCodes.BF_BARCODE)) {
             binding.productSearch.setHint(getString(R.string.ui_search_or_scan_barcode));
             binding.productSearch.setOnEditorActionListener((v, actionId, event) -> {
                 boolean enter = event != null
@@ -282,7 +291,11 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
         } else if (binding.cameraBarcodeScan != null) {
             binding.cameraBarcodeScan.setVisibility(View.GONE);
         }
-
+        if (billingFieldVisible(UiCodes.BF_SERIAL)
+                && !(RetailGroceryModule.shouldAutoAddOnBarcodeScan(activity)
+                && billingFieldVisible(UiCodes.BF_BARCODE))) {
+            binding.productSearch.setHint(getString(R.string.ui_search_or_scan_barcode));
+        }
 
         binding.voiceSearchProduct.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -655,33 +668,12 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
     }
 
     private void setupDineInActionBar() {
-        if (binding == null || cartOrderStatus == null
-                || !RestaurantFoodModule.isTableWiseCart(cartOrderStatus)) {
-            if (binding != null && binding.dineInActionBar != null) {
-                binding.dineInActionBar.setVisibility(View.GONE);
-            }
-            return;
-        }
-        boolean kotOn = RestaurantFoodModule.canKot(posBillingWalaDatabase);
-        if (binding.dineInActionBar != null) {
-            binding.dineInActionBar.setVisibility(View.VISIBLE);
-            if (binding.viewCartButton != null) {
-                binding.viewCartButton.setVisibility(View.GONE);
-            }
-            if (binding.kotButton != null) {
-                binding.kotButton.setVisibility(kotOn ? View.VISIBLE : View.GONE);
-            }
-        }
-        if (binding.kotButton != null && binding.dineInActionBar == null) {
-            // Tablet / land layouts
-            binding.kotButton.setVisibility(kotOn ? View.VISIBLE : View.GONE);
-        }
-        if (binding.holdButton != null && binding.dineInActionBar == null) {
-            binding.holdButton.setVisibility(View.VISIBLE);
-        }
-        if (binding.holdButton != null && binding.dineInActionBar != null) {
-            binding.holdButton.setVisibility(View.VISIBLE);
-        }
+        com.pos_billingwala.Extra.dynamic.DynamicBillingUi.applyTableActions(
+                activity,
+                binding,
+                billingUiSnapshot,
+                cartOrderStatus,
+                RestaurantFoodModule.canKot(posBillingWalaDatabase));
     }
 
     private void applyRestaurantCatalogTabs() {
@@ -690,6 +682,12 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
         }
         boolean showCombos = RestaurantFoodModule.canCombos(activity);
         binding.combosTab.setVisibility(showCombos ? View.VISIBLE : View.GONE);
+    }
+
+    /** Prefer cart-lifetime billing snapshot so mid-cart config changes do not flip fields. */
+    private boolean billingFieldVisible(String fieldCode) {
+        return com.pos_billingwala.Extra.dynamic.DynamicBillingUi.fieldVisible(
+                billingUiSnapshot, activity, fieldCode);
     }
 
     private void holdTableBill() {
@@ -707,7 +705,8 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
     }
 
     private void onKotClicked() {
-        if (!com.pos_billingwala.Extra.RestaurantFoodModule.canKot(posBillingWalaDatabase)) {
+        if (!com.pos_billingwala.Extra.RestaurantFoodModule.canKot(posBillingWalaDatabase)
+                || !billingFieldVisible(UiCodes.BF_KOT)) {
             Toast.makeText(activity, "KOT is disabled in settings", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -782,6 +781,8 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
     private void launchPaymentScreen() {
         paymentScreenOpening = true;
         setPaymentControlsEnabled(false);
+        // Guard config apply while leaving CreatePos for payment/print
+        com.pos_billingwala.Extra.dynamic.ConfigApplyGuard.setPaymentActive(activity, true);
         Intent intent = new Intent(activity, BluetoothPrint.class);
         intent.putExtra("invoiceRunningStatus", "printBill");
         intent.putExtra("tableNumber", tableNumber);
@@ -1376,7 +1377,9 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
     }
 
     private void startCameraBarcodeScan() {
-        if (activity == null || !RetailGroceryModule.shouldAutoAddOnBarcodeScan(activity)) {
+        if (activity == null
+                || !billingFieldVisible(UiCodes.BF_BARCODE)
+                || !RetailGroceryModule.shouldAutoAddOnBarcodeScan(activity)) {
             return;
         }
         if (ContextCompat.checkSelfPermission(activity, Manifest.permission.CAMERA)
@@ -1420,7 +1423,9 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
                 if (!isAdded()) {
                     return;
                 }
-                if (FashionJewelleryModule.shouldOfferVariantPicker(activity, hasVariants)
+                if (com.pos_billingwala.Extra.dynamic.DynamicBillingUi.allowVariantPicker(
+                        billingUiSnapshot, activity,
+                        FashionJewelleryModule.shouldOfferVariantPicker(activity, hasVariants))
                         && variants != null && !variants.isEmpty()) {
                     showPortionDialog(productResponse,
                             FashionJewelleryModule.asPseudoPortions(variants));
@@ -1428,7 +1433,9 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
                         && tiers != null && !tiers.isEmpty()) {
                     showPortionDialog(productResponse,
                             RetailGroceryModule.asPseudoPortions(productResponse, tiers));
-                } else if (RestaurantFoodModule.shouldOfferPortionPicker(hasPortions)
+                } else if (com.pos_billingwala.Extra.dynamic.DynamicBillingUi.allowPortionPicker(
+                        billingUiSnapshot, activity,
+                        RestaurantFoodModule.shouldOfferPortionPicker(hasPortions))
                         && portions != null && !portions.isEmpty()) {
                     showPortionDialog(productResponse, portions);
                 } else {
@@ -1439,23 +1446,68 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
     }
 
     private void routeProductWithoutOptionPicker(ProductResponse productResponse) {
-        Runnable go = () -> handleProductSelection(productResponse, null);
-        if (CakeBakeryModule.shouldPromptCustomOrder(activity)) {
-            CakeBakeryModule.showCustomOrderDialog(this, activity, productResponse, null, noted -> {
-                if (SalonAppointmentModule.shouldPromptBook(activity)) {
-                    SalonAppointmentModule.showBookDialog(activity, posBillingWalaDatabase, productResponse,
-                            () -> handleProductSelection(productResponse, noted));
+        routeSpecialBillingNotes(productResponse, null, 1, () -> handleProductSelection(productResponse, null));
+    }
+
+    /**
+     * Electronics serial → repair job → rental → bakery custom order → appointment → continue.
+     */
+    private void routeSpecialBillingNotes(ProductResponse productResponse,
+                                          ProductPortionResponse existingPortion,
+                                          int quantity,
+                                          Runnable continueWithoutNote) {
+        java.util.function.Consumer<ProductPortionResponse> afterNote = noted -> {
+            ProductPortionResponse line = noted != null ? noted : existingPortion;
+            Runnable add = () -> {
+                if (productResponse.isOpenPrice()) {
+                    handleProductSelection(productResponse, line);
+                } else if (quantity > 1 && line != null) {
+                    addSelectedPortionToCart(productResponse, line, quantity);
+                } else if (line != null) {
+                    handleProductSelection(productResponse, line);
                 } else {
-                    handleProductSelection(productResponse, noted);
+                    continueWithoutNote.run();
                 }
-            });
+            };
+            if (com.pos_billingwala.Extra.dynamic.DynamicBillingUi.allowAppointmentPrompt(
+                    billingUiSnapshot, activity,
+                    SalonAppointmentModule.shouldPromptBook(activity)
+                            || RepairModule.usesAppointments(activity))) {
+                SalonAppointmentModule.showBookDialog(activity, posBillingWalaDatabase, productResponse, add);
+            } else {
+                add.run();
+            }
+        };
+
+        if (com.pos_billingwala.Extra.dynamic.DynamicBillingUi.allowSerialPrompt(
+                billingUiSnapshot, activity, ElectronicsModule.shouldPromptSerial(activity))) {
+            ElectronicsModule.showSerialDialog(activity, productResponse, existingPortion, afterNote::accept);
             return;
         }
-        if (SalonAppointmentModule.shouldPromptBook(activity)) {
-            SalonAppointmentModule.showBookDialog(activity, posBillingWalaDatabase, productResponse, go);
+        if (com.pos_billingwala.Extra.dynamic.DynamicBillingUi.allowRepairPrompt(
+                billingUiSnapshot, activity, RepairModule.shouldPromptJob(activity))) {
+            RepairModule.showJobDialog(activity, productResponse, existingPortion, afterNote::accept);
             return;
         }
-        go.run();
+        if (com.pos_billingwala.Extra.dynamic.DynamicBillingUi.allowRentalPrompt(
+                billingUiSnapshot, activity, RentalModule.shouldPromptRental(activity))) {
+            RentalModule.showRentalDialog(activity, productResponse, existingPortion, afterNote::accept);
+            return;
+        }
+        if (com.pos_billingwala.Extra.dynamic.DynamicBillingUi.allowCustomOrderPrompt(
+                billingUiSnapshot, activity, CakeBakeryModule.shouldPromptCustomOrder(activity))
+                && !FashionJewelleryModule.isVariantCartKey(
+                existingPortion != null ? existingPortion.getPortionId() : null)) {
+            CakeBakeryModule.showCustomOrderDialog(this, activity, productResponse, existingPortion, afterNote::accept);
+            return;
+        }
+        if (com.pos_billingwala.Extra.dynamic.DynamicBillingUi.allowAppointmentPrompt(
+                billingUiSnapshot, activity, SalonAppointmentModule.shouldPromptBook(activity))) {
+            SalonAppointmentModule.showBookDialog(activity, posBillingWalaDatabase, productResponse,
+                    continueWithoutNote);
+            return;
+        }
+        continueWithoutNote.run();
     }
 
     private void showPortionDialog(ProductResponse productResponse, List<ProductPortionResponse> portions) {
@@ -1547,7 +1599,7 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
 
     private void continueAfterOptionSelected(ProductResponse productResponse,
                                              ProductPortionResponse portion, int quantity) {
-        Runnable addLine = () -> {
+        routeSpecialBillingNotes(productResponse, portion, quantity, () -> {
             if (productResponse.isOpenPrice()) {
                 handleProductSelection(productResponse, portion);
             } else if (quantity > 1) {
@@ -1555,36 +1607,7 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
             } else {
                 handleProductSelection(productResponse, portion);
             }
-        };
-        if (CakeBakeryModule.shouldPromptCustomOrder(activity)
-                && !FashionJewelleryModule.isVariantCartKey(portion != null ? portion.getPortionId() : null)) {
-            CakeBakeryModule.showCustomOrderDialog(this, activity, productResponse, portion, noted -> {
-                if (SalonAppointmentModule.shouldPromptBook(activity)) {
-                    SalonAppointmentModule.showBookDialog(activity, posBillingWalaDatabase, productResponse,
-                            () -> {
-                                if (productResponse.isOpenPrice()) {
-                                    handleProductSelection(productResponse, noted);
-                                } else if (quantity > 1) {
-                                    addSelectedPortionToCart(productResponse, noted, quantity);
-                                } else {
-                                    handleProductSelection(productResponse, noted);
-                                }
-                            });
-                } else if (productResponse.isOpenPrice()) {
-                    handleProductSelection(productResponse, noted);
-                } else if (quantity > 1) {
-                    addSelectedPortionToCart(productResponse, noted, quantity);
-                } else {
-                    handleProductSelection(productResponse, noted);
-                }
-            });
-            return;
-        }
-        if (SalonAppointmentModule.shouldPromptBook(activity)) {
-            SalonAppointmentModule.showBookDialog(activity, posBillingWalaDatabase, productResponse, addLine);
-            return;
-        }
-        addLine.run();
+        });
     }
 
     private void addSelectedPortionToCart(ProductResponse productResponse, ProductPortionResponse portion, int quantity) {
@@ -1651,8 +1674,10 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
                         refreshCatalogAfterCart();
                     }
                 }
-            } else if (WeightFreshModule.shouldPromptWeight(activity, productResponse.getProductUnit(),
-                    productResponse.isOpenPrice())) {
+            } else if (com.pos_billingwala.Extra.dynamic.DynamicBillingUi.allowWeightPrompt(
+                    billingUiSnapshot, activity,
+                    WeightFreshModule.shouldPromptWeight(activity, productResponse.getProductUnit(),
+                            productResponse.isOpenPrice()))) {
                 setWeightQuantity(productResponse, portion, existingLine[0]);
             } else if (existingLine[0] != null) {
                 int quantity = parseCartQuantity(existingLine[0].getProductQuantity());
@@ -1866,6 +1891,8 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
         catalogRequestId++;
         cartAdapter = null;
         hideCatalogLoader();
+        com.pos_billingwala.Extra.dynamic.BillingUIConfiguration.releaseCart(activity);
+        billingUiSnapshot = null;
         super.onDestroyView();
     }
 

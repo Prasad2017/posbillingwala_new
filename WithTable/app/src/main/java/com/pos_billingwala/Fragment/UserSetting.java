@@ -65,6 +65,7 @@ import com.pos_billingwala.Extra.FcmTokenManager;
 import com.pos_billingwala.Extra.InventoryStockEngine;
 import com.pos_billingwala.Extra.Common;
 import com.pos_billingwala.Extra.DetectConnection;
+import com.pos_billingwala.Extra.DynamicUiEngine;
 import com.pos_billingwala.Model.AllApiResponse;
 import com.pos_billingwala.Model.LoginResponse;
 import com.pos_billingwala.Model.PrinterSettingResponse;
@@ -163,9 +164,31 @@ public class UserSetting extends Fragment implements View.OnClickListener {
         refreshScaleRow();
         setupRow(binding.inventoryManagementLayout, R.drawable.ic_report_product, R.drawable.bg_quick_action_orange,
                 R.color.statusTrial, getString(R.string.setting_inventory), getString(R.string.setting_hint_inventory));
-        FeatureEngine.setVisible(activity, binding.inventoryManagementLayout.getRoot(), FeatureFlags.INVENTORY);
+        DynamicUiEngine.applySettingsSection(activity, binding.inventoryManagementLayout.getRoot(),
+                com.pos_billingwala.Extra.dynamicui.UiCodes.ST_INVENTORY);
+        com.pos_billingwala.Extra.dynamic.SettingsRegistry.applySection(activity,
+                binding.masterDataLayout.getRoot(),
+                com.pos_billingwala.Extra.dynamicui.UiCodes.ST_MASTER);
+        com.pos_billingwala.Extra.dynamic.SettingsRegistry.applySection(activity,
+                binding.reportLayout.getRoot(),
+                com.pos_billingwala.Extra.dynamicui.UiCodes.ST_REPORTS);
+        com.pos_billingwala.Extra.dynamic.SettingsRegistry.applySection(activity,
+                binding.shopDetailLayout.getRoot(),
+                com.pos_billingwala.Extra.dynamicui.UiCodes.ST_SHOP);
+        com.pos_billingwala.Extra.dynamic.SettingsRegistry.applySection(activity,
+                binding.businessTemplateLayout.getRoot(),
+                com.pos_billingwala.Extra.dynamicui.UiCodes.ST_TEMPLATE);
+        com.pos_billingwala.Extra.dynamic.SettingsRegistry.applySection(activity,
+                binding.printerDetailLayout.getRoot(),
+                com.pos_billingwala.Extra.dynamicui.UiCodes.ST_PRINTER);
         setupRow(binding.expenseManagementLayout, R.drawable.ic_report_expense, R.drawable.bg_quick_action_purple,
                 R.color.deepPurple, getString(R.string.setting_expense), getString(R.string.setting_hint_expense));
+        com.pos_billingwala.Extra.dynamic.ScreenRegistry.apply(activity,
+                binding.expenseManagementLayout.getRoot(),
+                com.pos_billingwala.Extra.dynamicui.UiCodes.EXPENSES);
+        com.pos_billingwala.Extra.dynamic.ScreenRegistry.apply(activity,
+                binding.inventoryManagementLayout.getRoot(),
+                com.pos_billingwala.Extra.dynamicui.UiCodes.INVENTORY);
         setupRow(binding.supportLayout, R.drawable.ic_phone, R.drawable.bg_quick_action_blue,
                 R.color.colorPrimary, getString(R.string.setting_support), getString(R.string.setting_hint_support));
         setupRow(binding.aboutLayout, R.drawable.ic_info, R.drawable.bg_quick_action_green,
@@ -203,11 +226,23 @@ public class UserSetting extends Fragment implements View.OnClickListener {
         binding.reportLayout.getRoot().setOnClickListener(v ->
                 SecurityPermissions.runAuthorized(activity, SecurityPermissions.REPORTS,
                         getString(R.string.setting_reports),
-                        () -> ((MainActivity) activity).loadFragment(new ReportsHub(), true)));
+                        () -> {
+                            if (!com.pos_billingwala.Extra.dynamic.ScreenRegistry.guardOpen(
+                                    activity, com.pos_billingwala.Extra.dynamicui.UiCodes.REPORTS)) {
+                                return;
+                            }
+                            ((MainActivity) activity).loadFragment(new ReportsHub(), true);
+                        }));
         binding.masterDataLayout.getRoot().setOnClickListener(v ->
                 SecurityPermissions.runAuthorized(activity, SecurityPermissions.MASTER_DATA,
                         getString(R.string.setting_master_data),
-                        () -> ((MainActivity) activity).loadFragment(new MasterData(), true)));
+                        () -> {
+                            if (!com.pos_billingwala.Extra.dynamic.ScreenRegistry.guardOpen(
+                                    activity, com.pos_billingwala.Extra.dynamicui.UiCodes.MASTER_DATA)) {
+                                return;
+                            }
+                            ((MainActivity) activity).loadFragment(new MasterData(), true);
+                        }));
         binding.masterDataLayout.getRoot().setOnLongClickListener(v -> {
             boolean appt = SalonAppointmentModule.isEnabled(activity);
             boolean bakery = CakeBakeryModule.isEnabled(activity);
@@ -252,7 +287,13 @@ public class UserSetting extends Fragment implements View.OnClickListener {
         binding.printerDetailLayout.getRoot().setOnClickListener(v ->
                 SecurityPermissions.runAuthorized(activity, SecurityPermissions.PRINTER_SETTINGS,
                         getString(R.string.setting_printer_details),
-                        () -> startActivity(new Intent(activity, CompanyPrinterSetting.class))));
+                        () -> {
+                            if (!com.pos_billingwala.Extra.dynamic.ScreenRegistry.guardOpen(
+                                    activity, com.pos_billingwala.Extra.dynamicui.UiCodes.PRINTER)) {
+                                return;
+                            }
+                            startActivity(new Intent(activity, CompanyPrinterSetting.class));
+                        }));
         binding.scaleLayout.getRoot().setOnClickListener(v ->
                 SecurityPermissions.runAuthorized(activity, SecurityPermissions.SHOP_SETTINGS,
                         getString(R.string.setting_bluetooth_scale),
@@ -260,11 +301,23 @@ public class UserSetting extends Fragment implements View.OnClickListener {
         binding.inventoryManagementLayout.getRoot().setOnClickListener(v ->
                 SecurityPermissions.runAuthorized(activity, SecurityPermissions.INVENTORY,
                         getString(R.string.setting_inventory),
-                        () -> InventoryStockEngine.openHub(activity)));
+                        () -> {
+                            if (!com.pos_billingwala.Extra.dynamic.ScreenRegistry.guardOpen(
+                                    activity, com.pos_billingwala.Extra.dynamicui.UiCodes.INVENTORY)) {
+                                return;
+                            }
+                            InventoryStockEngine.openHub(activity);
+                        }));
         binding.expenseManagementLayout.getRoot().setOnClickListener(v ->
                 SecurityPermissions.runAuthorized(activity, SecurityPermissions.EXPENSE,
                         getString(R.string.setting_expense),
-                        () -> ((MainActivity) activity).loadFragment(new Expenses(), true)));
+                        () -> {
+                            if (!com.pos_billingwala.Extra.dynamic.ScreenRegistry.guardOpen(
+                                    activity, com.pos_billingwala.Extra.dynamicui.UiCodes.EXPENSES)) {
+                                return;
+                            }
+                            ((MainActivity) activity).loadFragment(new Expenses(), true);
+                        }));
         binding.supportLayout.getRoot().setOnClickListener(v -> {
             if (DetectConnection.checkInternetConnection(activity)) {
                 ((MainActivity) activity).loadFragment(new SupportHub(), true);
@@ -550,7 +603,8 @@ public class UserSetting extends Fragment implements View.OnClickListener {
         if (binding == null || binding.scaleLayout == null || activity == null) {
             return;
         }
-        boolean show = WeightFreshModule.isEnabled(activity);
+        boolean show = com.pos_billingwala.Extra.dynamic.SettingsRegistry.isSectionVisible(activity,
+                com.pos_billingwala.Extra.dynamicui.UiCodes.ST_SCALE);
         binding.scaleLayout.getRoot().setVisibility(show ? View.VISIBLE : View.GONE);
         if (!show) {
             return;

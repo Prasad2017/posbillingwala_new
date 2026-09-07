@@ -196,4 +196,16 @@ public class ProductResponse {
     public void setProductDeletedStatus(String productDeletedStatus) {
         this.productDeletedStatus = productDeletedStatus;
     }
+
+    @SerializedName("productExtraAttrs")
+    @Expose
+    String productExtraAttrs;
+
+    public String getProductExtraAttrs() {
+        return productExtraAttrs;
+    }
+
+    public void setProductExtraAttrs(String productExtraAttrs) {
+        this.productExtraAttrs = productExtraAttrs;
+    }
 }

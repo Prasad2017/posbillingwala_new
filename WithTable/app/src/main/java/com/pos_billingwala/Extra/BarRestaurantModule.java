@@ -119,23 +119,10 @@ public final class BarRestaurantModule {
     }
 
     /**
-     * Dedicated bar printer MAC when set; otherwise falls back to kitchen KOT address.
+     * Dedicated bar printer MAC when set; otherwise falls back via UniversalPrinterEngine (BOT→KOT→bill).
      */
     public static String resolveBotPrinterAddress(POSBillingWalaDatabase db) {
-        if (db == null) {
-            return "";
-        }
-        List<PrinterSettingResponse> list = db.getPrinterSettingDetails();
-        if (list == null || list.isEmpty()) {
-            return "";
-        }
-        PrinterSettingResponse s = list.get(0);
-        String bot = s.getBluetoothBotAddress();
-        if (bot != null && !bot.trim().isEmpty()) {
-            return bot.trim();
-        }
-        String kot = s.getBluetoothKOTAddress();
-        return kot != null ? kot.trim() : "";
+        return UniversalPrinterEngine.addressForRole(db, com.pos_billingwala.Extra.dynamic.PrinterRole.BOT);
     }
 
     public static boolean hasDedicatedBotPrinter(POSBillingWalaDatabase db) {

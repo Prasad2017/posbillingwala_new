@@ -741,6 +741,9 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
         // Fresh checkout session â€” do not reuse a previous bill's reserved number
         invoiceNumber = "";
         paymentMode = "";
+        // Block template/config apply while payment + print session is open (Phase 12)
+        com.pos_billingwala.Extra.dynamic.ConfigApplyGuard.setPaymentActive(activity, true);
+        com.pos_billingwala.Extra.UniversalPrinterEngine.markPrintSession(activity, true);
 
         initViews();
 
@@ -1192,8 +1195,9 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
             Toast.makeText(activity, getString(R.string.toast_please_select_printer_from_setting), Toast.LENGTH_SHORT).show();
             return;
         }
-        String kotAddress = printerSettingResponseList.get(0).getBluetoothKOTAddress();
-        String connectAddress = kotAddress != null ? kotAddress : "";
+        String connectAddress = com.pos_billingwala.Extra.UniversalPrinterEngine.addressForRole(
+                printerSettingResponseList.get(0),
+                com.pos_billingwala.Extra.dynamic.PrinterRole.KOT);
         // Bar-only ticket: prefer dedicated BOT printer when configured.
         if (com.pos_billingwala.Extra.BarRestaurantModule.shouldSplitKitchenAndBar(
                 activity, posBillingWalaDatabase)) {
@@ -1204,9 +1208,15 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                     com.pos_billingwala.Extra.BarRestaurantModule.copyLines(kotPrintItems),
                     kitchenPeek, barPeek);
             if (kitchenPeek.isEmpty() && !barPeek.isEmpty()) {
-                connectAddress = com.pos_billingwala.Extra.BarRestaurantModule
-                        .resolveBotPrinterAddress(posBillingWalaDatabase);
+                connectAddress = com.pos_billingwala.Extra.UniversalPrinterEngine.addressForRole(
+                        printerSettingResponseList.get(0),
+                        com.pos_billingwala.Extra.dynamic.PrinterRole.BOT);
             }
+        }
+        if (connectAddress == null || connectAddress.isEmpty()) {
+            Toast.makeText(activity, getString(R.string.toast_please_select_printer_from_setting),
+                    Toast.LENGTH_LONG).show();
+            return;
         }
         printerEnsureInFlight = true;
         PrinterConnectionHelper.ensureKotPrinterAsync(activity,
@@ -1314,13 +1324,17 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
     /** After kitchen KOT succeeds — switch to BOT printer when dedicated MAC is set. */
     private void printBotTicketBatch(List<ProductCartResponse> barLines, String kotSize) {
         applyKotTicketBatch(barLines, "BOT");
-        String botAddr = com.pos_billingwala.Extra.BarRestaurantModule
-                .resolveBotPrinterAddress(posBillingWalaDatabase);
-        String kotAddr = printerSettingResponseList != null && !printerSettingResponseList.isEmpty()
-                ? printerSettingResponseList.get(0).getBluetoothKOTAddress() : "";
+        String botAddr = com.pos_billingwala.Extra.UniversalPrinterEngine.addressForRole(
+                printerSettingResponseList != null && !printerSettingResponseList.isEmpty()
+                        ? printerSettingResponseList.get(0) : null,
+                com.pos_billingwala.Extra.dynamic.PrinterRole.BOT);
+        String kotAddr = com.pos_billingwala.Extra.UniversalPrinterEngine.addressForRole(
+                printerSettingResponseList != null && !printerSettingResponseList.isEmpty()
+                        ? printerSettingResponseList.get(0) : null,
+                com.pos_billingwala.Extra.dynamic.PrinterRole.KOT);
         boolean dedicated = botAddr != null && !botAddr.isEmpty()
-                && (kotAddr == null || kotAddr.trim().isEmpty()
-                || !botAddr.equalsIgnoreCase(kotAddr.trim()));
+                && (kotAddr == null || kotAddr.isEmpty()
+                || !botAddr.equalsIgnoreCase(kotAddr));
         if (dedicated) {
             if (printerEnsureInFlight) {
                 printKotBatchOnce(kotSize);
@@ -1572,11 +1586,16 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
             Toast.makeText(activity, getString(R.string.toast_please_select_printer_from_setting), Toast.LENGTH_SHORT).show();
             return;
         }
-        String billAddress = printerSettingResponseList.get(0).getBluetoothAddress();
+        String billAddress = com.pos_billingwala.Extra.UniversalPrinterEngine.requireAddress(
+                activity, printerSettingResponseList.get(0),
+                com.pos_billingwala.Extra.dynamic.PrinterRole.INVOICE);
+        if (billAddress.isEmpty()) {
+            return;
+        }
         printerEnsureInFlight = true;
         // Wait for BT off the UI thread â€” never block before BottomSheet / ProgressDialog.
         PrinterConnectionHelper.ensureBillPrinterAsync(activity,
-                billAddress != null ? billAddress : "",
+                billAddress,
                 () -> {
                     printerEnsureInFlight = false;
                     runBillPrintAfterPrinterReady();
@@ -2414,6 +2433,8 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
     protected void onDestroy() {
         invoiceSaveExecutor.shutdownNow();
         printBitmapExecutor.shutdownNow();
+        com.pos_billingwala.Extra.UniversalPrinterEngine.markPrintSession(activity, false);
+        com.pos_billingwala.Extra.dynamic.ConfigApplyGuard.setPaymentActive(activity, false);
         super.onDestroy();
     }
 
@@ -2486,8 +2507,12 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
     public void getPrinterSettingDetails() {
         printerSettingResponseList = posBillingWalaDatabase.getPrinterSettingDetails();
         if (printerSettingResponseList != null && !printerSettingResponseList.isEmpty()) {
-            String bluetoothAddress = printerSettingResponseList.get(0).getBluetoothAddress() != null ? printerSettingResponseList.get(0).getBluetoothAddress() : "";
-            String bluetoothKOTAddress = printerSettingResponseList.get(0).getBluetoothKOTAddress() != null ? printerSettingResponseList.get(0).getBluetoothKOTAddress() : "";
+            String bluetoothAddress = com.pos_billingwala.Extra.UniversalPrinterEngine.addressForRole(
+                    printerSettingResponseList.get(0),
+                    com.pos_billingwala.Extra.dynamic.PrinterRole.INVOICE);
+            String bluetoothKOTAddress = com.pos_billingwala.Extra.UniversalPrinterEngine.addressForRole(
+                    printerSettingResponseList.get(0),
+                    com.pos_billingwala.Extra.dynamic.PrinterRole.KOT);
             PrinterConnectionHelper.autoConnectBillPrinter(activity, bluetoothAddress);
             PrinterConnectionHelper.autoConnectKotPrinter(activity, bluetoothKOTAddress);
             //Company Logo

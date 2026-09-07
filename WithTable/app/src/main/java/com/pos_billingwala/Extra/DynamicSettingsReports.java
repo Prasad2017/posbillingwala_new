@@ -2,9 +2,12 @@ package com.pos_billingwala.Extra;
 
 import android.content.Context;
 
+import com.pos_billingwala.Extra.dynamic.SettingsRegistry;
+import com.pos_billingwala.Extra.dynamicui.UiCodes;
+
 /**
  * Dynamic settings + reports facade over UserSetting / ReportsHub.
- * Phase 19: map entry points; report PIN remains soft gate (not full RBAC).
+ * Phase 19 + Dynamic Phase 09/11: SettingsRegistry + DynamicUiEngine.
  */
 public final class DynamicSettingsReports {
 
@@ -20,7 +23,11 @@ public final class DynamicSettingsReports {
     }
 
     public static boolean isInventoryVisible(Context context) {
-        return FeatureEngine.isEnabled(context, FeatureFlags.INVENTORY);
+        return SettingsRegistry.isSectionVisible(context, UiCodes.ST_INVENTORY);
+    }
+
+    public static boolean isSectionVisible(Context context, String sectionCode) {
+        return SettingsRegistry.isSectionVisible(context, sectionCode);
     }
 
     public static String moduleSummary(Context context) {
@@ -28,6 +35,8 @@ public final class DynamicSettingsReports {
                 + "\nReports: " + reportsEntry()
                 + "\nBusiness template: Settings → Store → Business Template"
                 + "\nInventory row: " + (isInventoryVisible(context) ? "visible" : "hidden")
-                + "\nKPIs: total/today sale FeatureFlags";
+                + "\nScale: " + (SettingsRegistry.isSectionVisible(context, UiCodes.ST_SCALE) ? "on" : "off")
+                + "\nMaster: " + (SettingsRegistry.isSectionVisible(context, UiCodes.ST_MASTER) ? "on" : "off")
+                + "\nKPIs / reports: DynamicUiEngine + SettingsRegistry";
     }
 }
