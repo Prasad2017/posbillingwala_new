@@ -89,7 +89,7 @@ public final class DynamicNavigationSheet {
             return activity.getString(R.string.setting_inventory);
         }
         if (UiCodes.REPORTS.equals(code)) {
-            return activity.getString(R.string.ui_reports_hub);
+            return activity.getString(R.string.setting_reports);
         }
         if (UiCodes.SETTINGS.equals(code)) {
             return activity.getString(R.string.setting_shop_details);
