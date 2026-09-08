@@ -390,7 +390,13 @@ public class UserSynchronizeData {
                         cursor.getString(cursor.getColumnIndex("memberAlternetMobileNumber")),
                         cursor.getString(cursor.getColumnIndex("memberAddress")),
                         cursor.getString(cursor.getColumnIndex("memberNetworkStatus")),
-                        cursor.getString(cursor.getColumnIndex("memberStatus")));
+                        cursor.getString(cursor.getColumnIndex("memberStatus")),
+                        columnOrEmpty(cursor, "registrationNo"),
+                        columnOrEmpty(cursor, "memberType"),
+                        columnOrEmpty(cursor, "rollNo"),
+                        columnOrEmpty(cursor, "college"),
+                        columnOrEmpty(cursor, "studentYear"),
+                        columnOrEmpty(cursor, "company"));
             } while (cursor.moveToNext());
         }
         closeCursor();
@@ -564,8 +570,15 @@ public class UserSynchronizeData {
         }
     }
 
-    public void saveMessMember(String memberId, String memberName, String memberMobileNumber, String memberAlternetMobileNumber, String memberAddress, String memberNetworkStatus, String memberStatus) {
-        if (executeCall(Api.getClient(context).saveMessMember(MainActivity.userId, memberName, memberMobileNumber, memberAlternetMobileNumber, memberAddress, memberNetworkStatus, memberStatus, ""))) {
+    public void saveMessMember(String memberId, String memberName, String memberMobileNumber, String memberAlternetMobileNumber, String memberAddress, String memberNetworkStatus, String memberStatus,
+                               String registrationNo, String memberType, String rollNo, String college, String studentYear, String company) {
+        if (executeCall(Api.getClient(context).saveMessMember(MainActivity.userId, memberName, memberMobileNumber, memberAlternetMobileNumber, memberAddress, memberNetworkStatus, memberStatus,
+                registrationNo != null ? registrationNo : "",
+                memberType != null ? memberType : "",
+                rollNo != null ? rollNo : "",
+                college != null ? college : "",
+                studentYear != null ? studentYear : "",
+                company != null ? company : ""))) {
             posBillingWalaDatabase.updateSyncMessMember(memberId, NAME_SYNCED_WITH_SERVER);
         }
     }

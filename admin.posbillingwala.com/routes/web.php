@@ -12,6 +12,7 @@ use App\Http\Controllers\SubcategoryController;
 use App\Http\Controllers\PortionController;
 use App\Http\Controllers\PortionMasterController;
 use App\Http\Controllers\CatalogImportExportController;
+use App\Http\Controllers\MessMemberController;
 use App\Http\Controllers\SalesController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\DeviceController;
@@ -160,6 +161,21 @@ Route::group(['prefix' => 'customers', 'middleware' => ['auth']], function(){
 	Route::post('edit-license/{id}',[CustomerController::class, 'editLicenseData']);
 
 });
+
+Route::prefix('customers/{customerId}/mess-members')->middleware('auth')->as('mess-members.')->group(function () {
+	Route::get('/', [MessMemberController::class, 'index'])->name('index');
+	Route::get('create', [MessMemberController::class, 'create'])->name('create');
+	Route::post('/', [MessMemberController::class, 'store'])->name('store');
+	Route::get('excel', [MessMemberController::class, 'excel'])->name('excel');
+	Route::get('template', [MessMemberController::class, 'template'])->name('template');
+	Route::post('export', [MessMemberController::class, 'export'])->name('export');
+	Route::post('import', [MessMemberController::class, 'import'])->name('import');
+	Route::get('{memberId}/edit', [MessMemberController::class, 'edit'])->name('edit');
+	Route::put('{memberId}', [MessMemberController::class, 'update'])->name('update');
+	Route::get('{memberId}/payments', [MessMemberController::class, 'payments'])->name('payments');
+	Route::post('{memberId}/payments', [MessMemberController::class, 'storePayment'])->name('store-payment');
+});
+
 
 Route::group(['prefix' => 'expenses', 'middleware' => ['auth']], function(){
 	Route::get('all',[ExpenseController::class, 'getExpensePage']);

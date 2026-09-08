@@ -169,6 +169,10 @@
                     <include
                         android:id="@+id/rowMessReport"
                         layout="@layout/item_grouped_menu_row" />
+
+                    <include
+                        android:id="@+id/rowMessTokenReport"
+                        layout="@layout/item_grouped_menu_row" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>

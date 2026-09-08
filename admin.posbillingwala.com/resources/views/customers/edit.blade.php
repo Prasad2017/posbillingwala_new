@@ -8,10 +8,15 @@
 
 				<div class="card border-top border-0 border-4 border-primary">
 					<div class="card-body p-5">
-						<div class="card-title d-flex align-items-center">
-							<div><i class="bx bx-user-circle me-1 font-22 text-primary"></i>
+						<div class="card-title d-flex align-items-center justify-content-between flex-wrap gap-2">
+							<div class="d-flex align-items-center">
+								<div><i class="bx bx-user-circle me-1 font-22 text-primary"></i>
+								</div>
+								<h5 class="mb-0 text-primary">Update Customer Details</h5>
 							</div>
-							<h5 class="mb-0 text-primary">Update Customer Details</h5>
+							<a href="{{ url('customers/'.$data->userId.'/mess-members') }}" class="btn btn-outline-primary btn-sm">
+								<i class='bx bx-group'></i> Mess Members
+							</a>
 						</div>
 						<hr>
 						<form class="row g-3" method="POST" action="{{url('customers/edit')}}/{{$data->userId}}" enctype="multipart/form-data">

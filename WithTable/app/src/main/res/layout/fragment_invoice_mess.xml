@@ -270,6 +270,57 @@
             </LinearLayout>
         </LinearLayout>
 
+        <com.pos_billingwala.Extra.PosCardView
+            android:id="@+id/messPayerModeCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginEnd="12dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingStart="12dp"
+                android:paddingTop="10dp"
+                android:paddingEnd="12dp"
+                android:paddingBottom="10dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:fontFamily="@font/poppinsmedium"
+                        android:text="@string/ui_mess_institute_pay"
+                        android:textColor="@color/black"
+                        android:textSize="14sp" />
+
+                    <androidx.appcompat.widget.SwitchCompat
+                        android:id="@+id/messInstitutePaySwitch"
+                        style="@style/PosSwitch" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/messPayerModeHint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:fontFamily="@font/poppinsregular"
+                    android:text="@string/ui_mess_payer_mode_hint_user"
+                    android:textColor="@color/colorTextHint"
+                    android:textSize="11sp" />
+            </LinearLayout>
+        </com.pos_billingwala.Extra.PosCardView>
+
         <LinearLayout
             android:id="@+id/messAlertBanner"
             android:layout_width="match_parent"

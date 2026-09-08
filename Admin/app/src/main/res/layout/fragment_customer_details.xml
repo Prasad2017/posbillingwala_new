@@ -548,6 +548,18 @@
                     android:textSize="14sp" />
 
                 <TextView
+                    android:id="@+id/openMessMembers"
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:layout_marginTop="10dp"
+                    android:background="@drawable/bg_card"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:gravity="center"
+                    android:text="@string/mess_members"
+                    android:textColor="@color/colorPrimary"
+                    android:textSize="14sp" />
+
+                <TextView
                     android:id="@+id/openCombos"
                     android:layout_width="match_parent"
                     android:layout_height="44dp"

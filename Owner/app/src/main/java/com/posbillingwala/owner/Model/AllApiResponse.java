@@ -67,6 +67,18 @@ public class AllApiResponse {
     @SerializedName("licensesResponse")
     @Expose
     public List<LicenseResponse> licenseResponseList;
+    @SerializedName("memberResponse")
+    @Expose
+    public List<MessMemberResponse> messMemberResponseList;
+    @SerializedName("membersImported")
+    @Expose
+    public Integer membersImported;
+    @SerializedName("membersUpdated")
+    @Expose
+    public Integer membersUpdated;
+    @SerializedName("paymentsImported")
+    @Expose
+    public Integer paymentsImported;
     @SerializedName("branches")
     @Expose
     public List<BranchComparisonResponse> branchComparisonList;
@@ -240,6 +252,10 @@ public class AllApiResponse {
 
     public void setLicenseResponseList(List<LicenseResponse> licenseResponseList) {
         this.licenseResponseList = licenseResponseList;
+    }
+
+    public List<MessMemberResponse> getMessMemberResponseList() {
+        return messMemberResponseList;
     }
 
     public List<BranchComparisonResponse> getBranchComparisonList() {

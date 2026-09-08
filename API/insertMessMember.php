@@ -17,7 +17,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $memberStatus = isset($_POST['memberStatus']) ? $_POST['memberStatus'] : 'active';
     $userId = isset($_POST['userId']) ? $_POST['userId'] : '';
     $registrationNo = isset($_POST['registrationNo']) ? mess_normalize_registration($_POST['registrationNo']) : '';
-    // Default registration no = customer mobile (used on public Mess QR page).
+    $memberType = isset($_POST['memberType']) ? strtolower(trim((string) $_POST['memberType'])) : 'student';
+    if ($memberType !== 'working') {
+        $memberType = 'student';
+    }
+    $rollNo = isset($_POST['rollNo']) ? trim((string) $_POST['rollNo']) : '';
+    $college = isset($_POST['college']) ? trim((string) $_POST['college']) : '';
+    $studentYear = isset($_POST['studentYear']) ? trim((string) $_POST['studentYear']) : '';
+    $company = isset($_POST['company']) ? trim((string) $_POST['company']) : '';
+
+    // Default registration no = roll no (student) or mobile (used on public Mess QR page).
+    if ($registrationNo === '' && $memberType === 'student' && $rollNo !== '') {
+        $registrationNo = mess_normalize_registration($rollNo);
+    }
     if ($registrationNo === '') {
         $registrationNo = mess_normalize_registration($memberMobileNumber);
     }
@@ -52,13 +64,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
         $ok = db_stmt_execute(
             $con,
-            'UPDATE mess_member SET member_name = ?, member_mobile_number = ?, member_altenet_mobile_number = ?, member_address = ?, registration_no = ?, member_status = ? WHERE id = ?',
-            'ssssssi',
+            'UPDATE mess_member SET member_name = ?, member_mobile_number = ?, member_altenet_mobile_number = ?, member_address = ?, registration_no = ?, member_type = ?, roll_no = ?, college = ?, student_year = ?, company = ?, member_status = ? WHERE id = ?',
+            'sssssssssssi',
             $memberName,
             $memberMobileNumber,
             $memberAltenetMobileNumber,
             $memberAddress,
             $registrationNo,
+            $memberType,
+            $rollNo,
+            $college,
+            $studentYear,
+            $company,
             $memberStatus,
             $memberId
         );
@@ -69,15 +86,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     } else {
         $ok = db_stmt_execute(
             $con,
-            'INSERT INTO mess_member (userId, member_name, member_mobile_number, member_altenet_mobile_number, member_address, registration_no, member_status, member_network_status)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-            'isssssss',
+            'INSERT INTO mess_member (userId, member_name, member_mobile_number, member_altenet_mobile_number, member_address, registration_no, member_type, roll_no, college, student_year, company, member_status, member_network_status)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            'issssssssssss',
             (int) $userId,
             $memberName,
             $memberMobileNumber,
             $memberAltenetMobileNumber,
             $memberAddress,
             $registrationNo !== '' ? $registrationNo : null,
+            $memberType,
+            $rollNo,
+            $college,
+            $studentYear,
+            $company,
             'active',
             $memberNetworkStatus
         );

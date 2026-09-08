@@ -33,6 +33,8 @@ public class UpdateMessMember extends Fragment implements View.OnClickListener {
     View view;
     POSBillingWalaDatabase posBillingWalaDatabase;
     String memberId;
+    String[] memberTypeList;
+    String memberType;
     List<MemberResponse> memberResponseList = new ArrayList<>();
     FragmentUpdateMessMemberBinding binding;
 
@@ -41,7 +43,7 @@ public class UpdateMessMember extends Fragment implements View.OnClickListener {
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         binding = FragmentUpdateMessMemberBinding.inflate(inflater, container, false);
-        view = binding.getRoot(); //Root xml or viewGroup will be a part of converted view over here
+        view = binding.getRoot();
 
         activity = getActivity();
 
@@ -67,6 +69,24 @@ public class UpdateMessMember extends Fragment implements View.OnClickListener {
             memberId = bundle.getString("memberId");
         }
 
+        memberTypeList = activity.getResources().getStringArray(R.array.mess_member_type);
+        try {
+            binding.memberTypeSpinner.setItems(memberTypeList);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        binding.memberTypeSpinner.setOnItemSelectedListener((position, label) -> {
+            try {
+                memberType = memberTypeList[position];
+                toggleTypeFields();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+
+        binding.studentFieldsLayout.setVisibility(View.GONE);
+        binding.workingFieldsLayout.setVisibility(View.GONE);
+
         binding.backToMess.setOnClickListener(this);
         binding.updateMember.setOnClickListener(this);
 
@@ -76,40 +96,96 @@ public class UpdateMessMember extends Fragment implements View.OnClickListener {
 
     }
 
+    private void toggleTypeFields() {
+        if (memberType == null) {
+            binding.studentFieldsLayout.setVisibility(View.GONE);
+            binding.workingFieldsLayout.setVisibility(View.GONE);
+            return;
+        }
+        boolean isStudent = "Student".equalsIgnoreCase(memberType);
+        binding.studentFieldsLayout.setVisibility(isStudent ? View.VISIBLE : View.GONE);
+        binding.workingFieldsLayout.setVisibility(isStudent ? View.GONE : View.VISIBLE);
+    }
+
     @Override
     public void onClick(View view) {
         int id = view.getId();
         if (id == R.id.backToMess) {
             ((MainActivity) activity).navigateBack();
         } else if (id == R.id.updateMember) {
-            if (!binding.memberName.getText().toString().isEmpty()) {
-                if (binding.memberMobileNumber.getText().toString().length() == 10) {
-                    if (binding.memberAlternetMobileNumber.getText().toString().length() == 10) {
-                        if (!binding.memberAddress.getText().toString().isEmpty()) {
-                            updateMessMember();
-                        } else {
-                            Toast.makeText(activity, getString(R.string.toast_please_enter_member_address), Toast.LENGTH_SHORT).show();
-                        }
-                    } else {
-                        Toast.makeText(activity, getString(R.string.toast_please_enter_member_mobile_number), Toast.LENGTH_SHORT).show();
-                    }
-                } else {
-                    Toast.makeText(activity, getString(R.string.toast_please_enter_member_name), Toast.LENGTH_SHORT).show();
-                }
+            String name = binding.memberName.getText() != null
+                    ? binding.memberName.getText().toString().trim() : "";
+            String mobile = binding.memberMobileNumber.getText() != null
+                    ? binding.memberMobileNumber.getText().toString().trim() : "";
+            String altMobile = binding.memberAlternetMobileNumber.getText() != null
+                    ? binding.memberAlternetMobileNumber.getText().toString().trim() : "";
 
+            if (name.isEmpty()) {
+                Toast.makeText(activity, getString(R.string.toast_please_enter_member_name), Toast.LENGTH_SHORT).show();
+                return;
             }
+            if (mobile.length() != 10) {
+                Toast.makeText(activity, getString(R.string.toast_please_enter_member_mobile_number), Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (memberType == null || memberType.isEmpty()) {
+                Toast.makeText(activity, getString(R.string.toast_please_select_member_type), Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (!altMobile.isEmpty() && altMobile.length() != 10) {
+                Toast.makeText(activity, getString(R.string.toast_please_enter_member_mobile_number), Toast.LENGTH_SHORT).show();
+                return;
+            }
+            updateMessMember();
         }
     }
 
     public void updateMessMember() {
+        String mobile = binding.memberMobileNumber.getText().toString().trim();
+        String altMobile = binding.memberAlternetMobileNumber.getText() != null
+                ? binding.memberAlternetMobileNumber.getText().toString().trim() : "";
+        String address = binding.memberAddress.getText() != null
+                ? binding.memberAddress.getText().toString().trim() : "";
 
-        posBillingWalaDatabase.updateMessMember(memberId, binding.memberName.getText().toString(), binding.memberMobileNumber.getText().toString(), binding.memberAlternetMobileNumber.getText().toString(),
-                binding.memberAddress.getText().toString(), 0);
+        boolean isStudent = "Student".equalsIgnoreCase(memberType);
+        String typeValue = isStudent ? "student" : "working";
+
+        String rollNo = "";
+        String college = "";
+        String studentYear = "";
+        String company = "";
+
+        if (isStudent) {
+            rollNo = binding.rollNo.getText() != null ? binding.rollNo.getText().toString().trim() : "";
+            college = binding.college.getText() != null ? binding.college.getText().toString().trim() : "";
+            studentYear = binding.studentYear.getText() != null ? binding.studentYear.getText().toString().trim() : "";
+            company = "";
+        } else {
+            company = binding.company.getText() != null ? binding.company.getText().toString().trim() : "";
+            rollNo = "";
+            college = "";
+            studentYear = "";
+        }
+
+        String registrationNo = (isStudent && !rollNo.isEmpty()) ? rollNo : mobile;
+
+        posBillingWalaDatabase.updateMessMemberProfile(
+                memberId,
+                binding.memberName.getText().toString().trim(),
+                mobile,
+                altMobile,
+                address,
+                registrationNo,
+                typeValue,
+                rollNo,
+                college,
+                studentYear,
+                company,
+                0);
 
         Toast.makeText(activity, getString(R.string.toast_member_details_updated_successfully), Toast.LENGTH_SHORT).show();
 
         ((MainActivity) activity).navigateBack();
-
     }
 
     public String getRandomString(final int sizeOfRandomString) {
@@ -138,12 +214,40 @@ public class UpdateMessMember extends Fragment implements View.OnClickListener {
 
         memberResponseList = posBillingWalaDatabase.getMemberDetails(memberId);
         if (memberResponseList.size() > 0) {
+            MemberResponse member = memberResponseList.get(0);
 
-            binding.memberName.setText(memberResponseList.get(0).getMemberName());
-            binding.memberMobileNumber.setText(memberResponseList.get(0).getMemberMobileNumber());
-            binding.memberAlternetMobileNumber.setText(memberResponseList.get(0).getMemberAlternetMobileNumber());
-            binding.memberAddress.setText(memberResponseList.get(0).getMemberAddress());
+            binding.memberName.setText(member.getMemberName());
+            binding.memberMobileNumber.setText(member.getMemberMobileNumber());
+            binding.memberAlternetMobileNumber.setText(member.getMemberAlternetMobileNumber());
+            binding.memberAddress.setText(member.getMemberAddress());
 
+            String storedType = member.getMemberType() != null ? member.getMemberType().trim() : "";
+            if ("working".equalsIgnoreCase(storedType)) {
+                memberType = "Working";
+                binding.memberTypeSpinner.setSelectedIndex(1);
+            } else if ("student".equalsIgnoreCase(storedType) || !storedType.isEmpty()) {
+                memberType = "Student";
+                binding.memberTypeSpinner.setSelectedIndex(0);
+            } else {
+                memberType = null;
+            }
+            toggleTypeFields();
+
+            if (binding.rollNo != null) {
+                binding.rollNo.setText(member.getRollNo() != null ? member.getRollNo() : "");
+            }
+            if (binding.college != null) {
+                binding.college.setText(member.getCollege() != null ? member.getCollege() : "");
+            }
+            if (binding.studentYear != null) {
+                binding.studentYear.setText(member.getStudentYear() != null ? member.getStudentYear() : "");
+            }
+            if (binding.company != null) {
+                binding.company.setText(member.getCompany() != null ? member.getCompany() : "");
+            }
+            if (binding.registrationNo != null) {
+                binding.registrationNo.setText(member.getRegistrationNo() != null ? member.getRegistrationNo() : "");
+            }
         }
 
     }

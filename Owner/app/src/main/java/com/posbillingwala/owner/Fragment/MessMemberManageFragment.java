@@ -1,0 +1,213 @@
+package com.posbillingwala.owner.Fragment;
+
+import android.app.Activity;
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ImageView;
+import android.widget.Spinner;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.posbillingwala.owner.Activity.MainActivity;
+import com.posbillingwala.owner.Adapter.MessMemberManageAdapter;
+import com.posbillingwala.owner.Model.AllApiResponse;
+import com.posbillingwala.owner.Model.LicenseResponse;
+import com.posbillingwala.owner.Model.MessMemberResponse;
+import com.posbillingwala.owner.R;
+import com.posbillingwala.owner.Retrofit.Api;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+public class MessMemberManageFragment extends Fragment implements MessMemberManageAdapter.Listener {
+
+    private Activity activity;
+    private Spinner outletSpinner;
+    private RecyclerView recyclerMembers;
+    private TextView emptyView;
+    private final List<LicenseResponse> outlets = new ArrayList<>();
+    private LicenseResponse selectedOutlet;
+    private MessMemberManageAdapter adapter;
+
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_mess_member_manage, container, false);
+        activity = getActivity();
+
+        outletSpinner = view.findViewById(R.id.outletSpinner);
+        recyclerMembers = view.findViewById(R.id.recyclerMembers);
+        emptyView = view.findViewById(R.id.emptyView);
+        ImageView back = view.findViewById(R.id.backBtn);
+        TextView btnAdd = view.findViewById(R.id.btnAddMember);
+        TextView btnExcel = view.findViewById(R.id.btnExcel);
+
+        adapter = new MessMemberManageAdapter(this);
+        recyclerMembers.setLayoutManager(new LinearLayoutManager(activity));
+        recyclerMembers.setAdapter(adapter);
+
+        if (back != null) {
+            back.setOnClickListener(v -> {
+                if (activity != null) {
+                    ((MainActivity) activity).removeCurrentFragmentAndMoveBack();
+                }
+            });
+        }
+
+        btnAdd.setOnClickListener(v -> openEdit(null));
+        btnExcel.setOnClickListener(v -> {
+            if (selectedOutlet == null || selectedOutlet.getLicensesId() == null) {
+                Toast.makeText(activity, R.string.mess_select_outlet, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            MessMemberExcelFragment excel = new MessMemberExcelFragment();
+            Bundle b = new Bundle();
+            b.putString("licenceId", selectedOutlet.getLicensesId());
+            b.putString("outletLabel", outletLabel(selectedOutlet));
+            excel.setArguments(b);
+            ((MainActivity) activity).loadFragment(excel, true);
+        });
+
+        outletSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view1, int position, long id) {
+                if (position >= 0 && position < outlets.size()) {
+                    selectedOutlet = outlets.get(position);
+                    loadMembers();
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+
+        loadOutlets();
+        return view;
+    }
+
+    private String outletLabel(LicenseResponse lic) {
+        String name = lic.getShopName1() != null && !lic.getShopName1().isEmpty()
+                ? lic.getShopName1()
+                : (lic.getUserName() != null ? lic.getUserName() : "Outlet");
+        String branch = lic.getBranchLabel() != null && !lic.getBranchLabel().isEmpty()
+                ? " · " + lic.getBranchLabel() : "";
+        return name + branch + " (#" + lic.getLicensesId() + ")";
+    }
+
+    private void loadOutlets() {
+        Api.getClient().getStoreWise(MainActivity.userId).enqueue(new Callback<AllApiResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<AllApiResponse> call, @NonNull Response<AllApiResponse> response) {
+                outlets.clear();
+                if (response.isSuccessful() && response.body() != null
+                        && response.body().getLicenseResponseList() != null) {
+                    outlets.addAll(response.body().getLicenseResponseList());
+                }
+                List<String> labels = new ArrayList<>();
+                for (LicenseResponse lic : outlets) {
+                    labels.add(outletLabel(lic));
+                }
+                if (activity == null) return;
+                ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(activity,
+                        android.R.layout.simple_spinner_dropdown_item, labels);
+                outletSpinner.setAdapter(spinnerAdapter);
+                if (outlets.isEmpty()) {
+                    emptyView.setVisibility(View.VISIBLE);
+                    emptyView.setText("No outlets found");
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<AllApiResponse> call, @NonNull Throwable t) {
+                Toast.makeText(activity, "Unable to load outlets", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void loadMembers() {
+        if (selectedOutlet == null || selectedOutlet.getLicensesId() == null) return;
+        Api.getClient().getMessMemberManageList(MainActivity.userId, selectedOutlet.getLicensesId())
+                .enqueue(new Callback<AllApiResponse>() {
+                    @Override
+                    public void onResponse(@NonNull Call<AllApiResponse> call, @NonNull Response<AllApiResponse> response) {
+                        List<MessMemberResponse> list = new ArrayList<>();
+                        if (response.isSuccessful() && response.body() != null
+                                && response.body().getMessMemberResponseList() != null) {
+                            list = response.body().getMessMemberResponseList();
+                        }
+                        adapter.setItems(list);
+                        emptyView.setVisibility(list.isEmpty() ? View.VISIBLE : View.GONE);
+                    }
+
+                    @Override
+                    public void onFailure(@NonNull Call<AllApiResponse> call, @NonNull Throwable t) {
+                        Toast.makeText(activity, "Unable to load members", Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    private void openEdit(MessMemberResponse member) {
+        if (selectedOutlet == null || selectedOutlet.getLicensesId() == null) {
+            Toast.makeText(activity, R.string.mess_select_outlet, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        MessMemberEditFragment edit = new MessMemberEditFragment();
+        Bundle b = new Bundle();
+        b.putString("licenceId", selectedOutlet.getLicensesId());
+        if (member != null) {
+            b.putString("memberId", member.getMemberId());
+            b.putString("memberName", member.getMemberName());
+            b.putString("memberMobileNumber", member.getMemberMobileNumber());
+            b.putString("memberAltenetMobileNumber", member.getMemberAltenetMobileNumber());
+            b.putString("memberAddress", member.getMemberAddress());
+            b.putString("memberType", member.getMemberType());
+            b.putString("rollNo", member.getRollNo());
+            b.putString("college", member.getCollege());
+            b.putString("studentYear", member.getStudentYear());
+            b.putString("company", member.getCompany());
+            b.putString("registrationNo", member.getRegistrationNo());
+            b.putString("memberStatus", member.getMemberStatus());
+            b.putString("memberNetworkStatus", member.memberNetworkStatus);
+        }
+        edit.setArguments(b);
+        ((MainActivity) activity).loadFragment(edit, true);
+    }
+
+    @Override
+    public void onEdit(MessMemberResponse member) {
+        openEdit(member);
+    }
+
+    @Override
+    public void onPayments(MessMemberResponse member) {
+        if (selectedOutlet == null) return;
+        MessMemberPaymentFragment pay = new MessMemberPaymentFragment();
+        Bundle b = new Bundle();
+        b.putString("licenceId", selectedOutlet.getLicensesId());
+        b.putString("memberId", member.getMemberId());
+        b.putString("memberName", member.getMemberName());
+        pay.setArguments(b);
+        ((MainActivity) activity).loadFragment(pay, true);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (selectedOutlet != null) {
+            loadMembers();
+        }
+    }
+}

@@ -1612,6 +1612,27 @@ CREATE TABLE IF NOT EXISTS `kot_item` (
   KEY `idx_kot_item_kot` (`kotId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- p27: mess payer mode (user vs institute)
+CREATE TABLE IF NOT EXISTS `mess_shop_setting` (
+  `userId` INT NOT NULL,
+  `payer_mode` VARCHAR(16) NOT NULL DEFAULT 'user',
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`userId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- p28: mess member profile (student/working)
+SET @sql = (SELECT IF((SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'mess_member' AND COLUMN_NAME = 'member_type') > 0, 'SELECT 1', 'ALTER TABLE `mess_member` ADD COLUMN `member_type` VARCHAR(16) NULL DEFAULT ''student'''));
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET @sql = (SELECT IF((SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'mess_member' AND COLUMN_NAME = 'roll_no') > 0, 'SELECT 1', 'ALTER TABLE `mess_member` ADD COLUMN `roll_no` VARCHAR(64) NULL'));
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET @sql = (SELECT IF((SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'mess_member' AND COLUMN_NAME = 'college') > 0, 'SELECT 1', 'ALTER TABLE `mess_member` ADD COLUMN `college` VARCHAR(255) NULL'));
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET @sql = (SELECT IF((SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'mess_member' AND COLUMN_NAME = 'student_year') > 0, 'SELECT 1', 'ALTER TABLE `mess_member` ADD COLUMN `student_year` VARCHAR(32) NULL'));
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET @sql = (SELECT IF((SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'mess_member' AND COLUMN_NAME = 'company') > 0, 'SELECT 1', 'ALTER TABLE `mess_member` ADD COLUMN `company` VARCHAR(255) NULL'));
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
 -- Business data still there (compare to first SELECT — counts must match)
 SELECT
   (SELECT COUNT(*) FROM `categories`) AS categories_after,
@@ -1619,5 +1640,9 @@ SELECT
   (SELECT COUNT(*) FROM `invoice`) AS invoices_after,
   (SELECT COUNT(*) FROM `invoice_final_product`) AS invoice_lines_after,
   (SELECT COUNT(*) FROM `licenses`) AS licenses_after,
-  (SELECT COUNT(*) FROM `users`) AS users_after;
+  (SELECT COUNT(*) FROM `users`) AS users_after,
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES
+   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'mess_shop_setting') AS mess_shop_setting_ok,
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'mess_member' AND COLUMN_NAME = 'member_type') AS mess_member_type_ok;
 -- before and after counts for categories/products/invoice/licenses/users must be EQUAL

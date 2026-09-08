@@ -70,6 +70,8 @@ public class ReportsHub extends Fragment {
                 R.color.green_600, getString(R.string.ui_invoice_member_report), multiHint);
         setupRow(binding.rowMessReport, R.drawable.ic_report_mess, R.drawable.bg_quick_action_orange,
                 R.color.statusTrial, getString(R.string.ui_invoice_mess_report), multiHint);
+        setupRow(binding.rowMessTokenReport, R.drawable.ic_report_mess, R.drawable.bg_quick_action_purple,
+                R.color.deepPurple, getString(R.string.ui_mess_token_report), multiHint);
 
         if (!multi) {
             binding.rowBranchComparison.getRoot().setVisibility(View.GONE);
@@ -89,7 +91,8 @@ public class ReportsHub extends Fragment {
                 binding.rowComboReport,
                 binding.rowExpenseReport,
                 binding.rowMessMemberReport,
-                binding.rowMessReport);
+                binding.rowMessReport,
+                binding.rowMessTokenReport);
 
         binding.rowSalesDashboard.getRoot().setOnClickListener(v ->
                 ((MainActivity) activity).loadFragment(new SalesDashboard(), true));
@@ -126,6 +129,8 @@ public class ReportsHub extends Fragment {
                 openOperational(OwnerOperationalReport.TYPE_MESS_MEMBER));
         binding.rowMessReport.getRoot().setOnClickListener(v ->
                 openOperational(OwnerOperationalReport.TYPE_MESS));
+        binding.rowMessTokenReport.getRoot().setOnClickListener(v ->
+                openOperational(OwnerOperationalReport.TYPE_MESS_TOKEN));
 
         View root = binding.getRoot();
         root.setFocusableInTouchMode(true);

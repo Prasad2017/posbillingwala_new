@@ -20,6 +20,11 @@
         <item>Two Time</item>
     </array>
 
+    <array name="mess_member_type">
+        <item>Student</item>
+        <item>Working</item>
+    </array>
+
     <array name="discount_type">
         <item>Percentage</item>
         <item>Amount</item>

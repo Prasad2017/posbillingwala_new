@@ -77,6 +77,18 @@ public class AllApiResponse {
     @SerializedName("productResponse")
     @Expose
     private List<ProductResponse> productResponseList;
+    @SerializedName("memberResponse")
+    @Expose
+    private List<MessMemberResponse> messMemberResponseList;
+    @SerializedName("membersImported")
+    @Expose
+    private Integer membersImported;
+    @SerializedName("membersUpdated")
+    @Expose
+    private Integer membersUpdated;
+    @SerializedName("paymentsImported")
+    @Expose
+    private Integer paymentsImported;
     @SerializedName("foodTypeResponse")
     @Expose
     private List<FoodTypeResponse> foodTypeResponseList;
@@ -800,4 +812,21 @@ public class AllApiResponse {
     public String getTotalAmount() { return totalAmount; }
     public String getDetailCustomerName() { return detailCustomerName; }
     public String getBillCountField() { return billCount; }
+    public List<MessMemberResponse> getMessMemberResponseList() {
+        return messMemberResponseList;
+    }
+
+    public Integer getMembersImported() {
+        return membersImported;
+    }
+
+    public Integer getMembersUpdated() {
+        return membersUpdated;
+    }
+
+    public Integer getPaymentsImported() {
+        return paymentsImported;
+    }
+
+
 }

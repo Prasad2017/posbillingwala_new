@@ -101,6 +101,14 @@ public class CustomerDetails extends Fragment implements View.OnClickListener {
             ((MainActivity) activity).loadFragment(category, true);
         });
 
+        binding.openMessMembers.setOnClickListener(v -> {
+            MessMemberManageFragment mess = new MessMemberManageFragment();
+            Bundle b = new Bundle();
+            b.putString("customerId", customerId);
+            mess.setArguments(b);
+            ((MainActivity) activity).loadFragment(mess, true);
+        });
+
         return view;
 
     }

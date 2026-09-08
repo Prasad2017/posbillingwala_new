@@ -253,6 +253,58 @@ public interface ApiInterface {
     Call<CatalogImportHistoryResponse> catalogImportHistory(@Query("customerId") String customerId,
                                                             @Query("importType") String importType);
 
+    @GET("getMessMemberManageList.php")
+    Call<AllApiResponse> getMessMemberManageList(@Query("userId") String userId,
+                                                 @Query("customerId") String customerId,
+                                                 @Query("licenceId") String licenceId);
+
+    @FormUrlEncoded
+    @POST("saveMessMemberManage.php")
+    Call<AllApiResponse> saveMessMemberManage(@Field("userId") String userId,
+                                              @Field("customerId") String customerId,
+                                              @Field("licenceId") String licenceId,
+                                              @Field("memberId") String memberId,
+                                              @Field("memberName") String memberName,
+                                              @Field("memberMobileNumber") String memberMobileNumber,
+                                              @Field("memberAltenetMobileNumber") String memberAltenetMobileNumber,
+                                              @Field("memberAddress") String memberAddress,
+                                              @Field("memberType") String memberType,
+                                              @Field("rollNo") String rollNo,
+                                              @Field("college") String college,
+                                              @Field("studentYear") String studentYear,
+                                              @Field("company") String company,
+                                              @Field("registrationNo") String registrationNo,
+                                              @Field("memberStatus") String memberStatus,
+                                              @Field("memberNetworkStatus") String memberNetworkStatus);
+
+    @GET("getMessMemberPaymentManageList.php")
+    Call<AllApiResponse> getMessMemberPaymentManageList(@Query("userId") String userId,
+                                                        @Query("customerId") String customerId,
+                                                        @Query("licenceId") String licenceId,
+                                                        @Query("memberId") String memberId);
+
+    @FormUrlEncoded
+    @POST("saveMessMemberPaymentManage.php")
+    Call<AllApiResponse> saveMessMemberPaymentManage(@Field("userId") String userId,
+                                                     @Field("customerId") String customerId,
+                                                     @Field("licenceId") String licenceId,
+                                                     @Field("memberId") String memberId,
+                                                     @Field("memberName") String memberName,
+                                                     @Field("paymentMessAmount") String paymentMessAmount,
+                                                     @Field("paymentPaidAmount") String paymentPaidAmount,
+                                                     @Field("messTotalDays") String messTotalDays,
+                                                     @Field("paymentDate") String paymentDate,
+                                                     @Field("paymentStatus") String paymentStatus,
+                                                     @Field("paymentNetworkStatus") String paymentNetworkStatus,
+                                                     @Field("paymentId") String paymentId);
+
+    @Multipart
+    @POST("messMemberImport.php")
+    Call<AllApiResponse> messMemberImport(@Part("userId") RequestBody userId,
+                                          @Part("customerId") RequestBody customerId,
+                                          @Part("licenceId") RequestBody licenceId,
+                                          @Part MultipartBody.Part importFile);
+
     @FormUrlEncoded
     @POST("registerFcmToken.php")
     Call<AllApiResponse> registerFcmToken(@Field("userId") String userId,

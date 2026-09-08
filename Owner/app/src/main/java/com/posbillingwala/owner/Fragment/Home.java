@@ -147,6 +147,9 @@ public class Home extends Fragment {
         binding.messQrManagementLayout.setOnClickListener(v ->
                 ((MainActivity) activity).loadFragment(new MessQrManagementFragment(), true));
 
+        binding.messMembersLayout.setOnClickListener(v ->
+                ((MainActivity) activity).loadFragment(new MessMemberManageFragment(), true));
+
         binding.storeWiseLayout.setOnClickListener(v -> openStoreWise("totalSale"));
         binding.outletsCard.setOnClickListener(v -> openStoreWise("totalSale"));
 

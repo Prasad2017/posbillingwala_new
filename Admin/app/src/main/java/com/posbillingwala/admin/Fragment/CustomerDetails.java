@@ -92,6 +92,15 @@ public class CustomerDetails extends Fragment implements View.OnClickListener {
                 ((MainActivity) activity).loadFragment(export, true);
             });
         }
+        if (binding.openMessMembers != null) {
+            binding.openMessMembers.setOnClickListener(v -> {
+                MessMemberManageFragment mess = new MessMemberManageFragment();
+                Bundle b = new Bundle();
+                b.putString("customerId", customerId);
+                mess.setArguments(b);
+                ((MainActivity) activity).loadFragment(mess, true);
+            });
+        }
         if (binding.catalogCategoriesCard != null) {
             binding.catalogCategoriesCard.setOnClickListener(v -> binding.openCatalog.performClick());
         }

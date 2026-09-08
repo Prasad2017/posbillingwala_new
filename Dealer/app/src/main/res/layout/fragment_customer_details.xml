@@ -246,6 +246,20 @@
             android:textSize="14sp" />
 
         <TextView
+            android:id="@+id/openMessMembers"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="10dp"
+            android:background="@drawable/button_rounded_border"
+            android:fontFamily="@font/poppinsmedium"
+            android:gravity="center"
+            android:text="@string/mess_members"
+            android:textColor="@color/colorPrimary"
+            android:textSize="14sp" />
+
+        <TextView
             android:id="@+id/customerReportPin"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

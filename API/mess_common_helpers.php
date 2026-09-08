@@ -143,8 +143,105 @@ if (!function_exists('mess_common_ensure_schema')) {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
         );
 
+        db_safe_query(
+            $con,
+            "CREATE TABLE IF NOT EXISTS `mess_shop_setting` (
+              `userId` INT NOT NULL,
+              `payer_mode` VARCHAR(16) NOT NULL DEFAULT 'user',
+              `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+              `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              PRIMARY KEY (`userId`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+        );
+
+        // Member profile: student / working extras (additive).
+        $memberCols = array(
+            'member_type' => "ALTER TABLE `mess_member` ADD COLUMN `member_type` VARCHAR(16) NULL DEFAULT 'student'",
+            'roll_no' => "ALTER TABLE `mess_member` ADD COLUMN `roll_no` VARCHAR(64) NULL",
+            'college' => "ALTER TABLE `mess_member` ADD COLUMN `college` VARCHAR(255) NULL",
+            'student_year' => "ALTER TABLE `mess_member` ADD COLUMN `student_year` VARCHAR(32) NULL",
+            'company' => "ALTER TABLE `mess_member` ADD COLUMN `company` VARCHAR(255) NULL",
+        );
+        foreach ($memberCols as $colName => $alterSql) {
+            $col = db_stmt_fetch_one(
+                $con,
+                "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+                 WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'mess_member' AND COLUMN_NAME = ? LIMIT 1",
+                's',
+                $colName
+            );
+            if ($col === null) {
+                db_safe_query($con, $alterSql);
+            }
+        }
+
         $done = true;
         return true;
+    }
+}
+
+if (!function_exists('mess_normalize_payer_mode')) {
+    /** @return string 'user'|'institute' */
+    function mess_normalize_payer_mode($mode)
+    {
+        $m = strtolower(trim((string) $mode));
+        return ($m === 'institute') ? 'institute' : 'user';
+    }
+}
+
+if (!function_exists('mess_get_payer_mode')) {
+    /** Mess-level payment mode: user (default) or institute. */
+    function mess_get_payer_mode($con, $userId)
+    {
+        mess_common_ensure_schema($con);
+        $row = db_stmt_fetch_one(
+            $con,
+            'SELECT payer_mode FROM mess_shop_setting WHERE userId = ? LIMIT 1',
+            'i',
+            (int) $userId
+        );
+        if ($row === null) {
+            return 'user';
+        }
+        return mess_normalize_payer_mode(isset($row['payer_mode']) ? $row['payer_mode'] : 'user');
+    }
+}
+
+if (!function_exists('mess_is_institute_pay')) {
+    function mess_is_institute_pay($con, $userId)
+    {
+        return mess_get_payer_mode($con, $userId) === 'institute';
+    }
+}
+
+if (!function_exists('mess_set_payer_mode')) {
+    function mess_set_payer_mode($con, $userId, $mode)
+    {
+        mess_common_ensure_schema($con);
+        $mode = mess_normalize_payer_mode($mode);
+        $uid = (int) $userId;
+        $existing = db_stmt_fetch_one(
+            $con,
+            'SELECT userId FROM mess_shop_setting WHERE userId = ? LIMIT 1',
+            'i',
+            $uid
+        );
+        if ($existing !== null) {
+            return db_stmt_execute(
+                $con,
+                'UPDATE mess_shop_setting SET payer_mode = ? WHERE userId = ?',
+                'si',
+                $mode,
+                $uid
+            );
+        }
+        return db_stmt_execute(
+            $con,
+            'INSERT INTO mess_shop_setting (userId, payer_mode) VALUES (?, ?)',
+            'is',
+            $uid,
+            $mode
+        );
     }
 }
 
@@ -580,9 +677,14 @@ if (!function_exists('mess_member_has_any_previous_payment')) {
 if (!function_exists('mess_member_require_current_month_payment')) {
     /**
      * Returns null when OK to issue token, or an error message string when unpaid this month.
+     * Skipped entirely when mess-level payer_mode is institute.
      */
     function mess_member_require_current_month_payment($con, $userId, $memberId, $memberName = '')
     {
+        if (mess_is_institute_pay($con, $userId)) {
+            return null;
+        }
+
         $paid = mess_member_current_month_paid_sum($con, $userId, $memberId, $memberName);
         if ($paid > 0.009) {
             return null;

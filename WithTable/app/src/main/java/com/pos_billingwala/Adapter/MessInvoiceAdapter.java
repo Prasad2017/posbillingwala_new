@@ -23,6 +23,7 @@ import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Activity.MessTokenBluetoothPrint;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.BottomSheetUi;
+import com.pos_billingwala.Extra.MessPayerMode;
 import com.pos_billingwala.Extra.MessTokenQrHelper;
 import com.pos_billingwala.Model.MemberResponse;
 import com.pos_billingwala.Model.MessInvoiceResponse;
@@ -144,8 +145,11 @@ public class MessInvoiceAdapter extends RecyclerView.Adapter<MessInvoiceAdapter.
         });
     }
 
-    /** True when this month has any paid amount (> 0). Previous months alone do not count. */
+    /** True when institute pay is on, or this month has any paid amount (> 0). */
     private boolean hasPaidCurrentMonth(MemberResponse memberResponse) {
+        if (MessPayerMode.isInstitutePay(context)) {
+            return true;
+        }
         float paid = parseFloatSafe(memberResponse.getPaymentPaidAmount());
         float mess = parseFloatSafe(memberResponse.getPaymentMessAmount());
         // Must have this-month package with at least some payment received.

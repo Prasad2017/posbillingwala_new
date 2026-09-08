@@ -5,6 +5,7 @@
  */
 include_once('config.php');
 require_once __DIR__ . '/mess_common_helpers.php';
+require_once __DIR__ . '/company_store_fields.php';
 
 mysqli_query($con, 'set names utf8mb4');
 mess_common_ensure_schema($con);
@@ -36,6 +37,10 @@ $qr = ($t !== '') ? mess_get_qr_by_public_token($con, $t) : null;
 $pageState = 'ok';
 $messLabel = 'Mess Token';
 $errorMessage = '';
+$shopName = '';
+$shopAddress = '';
+$shopPhone = '';
+$logoSrc = '';
 
 if ($qr === null) {
     $pageState = 'invalid';
@@ -52,6 +57,48 @@ if ($qr === null) {
     mess_audit($con, (int) $qr['userId'], 'qr_scanned', $t, null, null, null);
 }
 
+$userIdForShop = ($qr !== null && isset($qr['userId'])) ? (int) $qr['userId'] : 0;
+if ($userIdForShop > 0) {
+    $company = db_stmt_fetch_one(
+        $con,
+        'SELECT * FROM `companys` WHERE `licenseId` = ? LIMIT 1',
+        'i',
+        $userIdForShop
+    );
+    if (is_array($company)) {
+        $fields = company_structured_fields($company);
+        $shopName = company_first_non_empty($fields['shopName1'], $messLabel);
+        $addrParts = array();
+        foreach (array('addressLine1', 'addressLine2', 'addressLine3') as $addrKey) {
+            if ($fields[$addrKey] !== '') {
+                $addrParts[] = $fields[$addrKey];
+            }
+        }
+        $shopAddress = implode(', ', $addrParts);
+        $shopPhone = company_first_non_empty($fields['phoneNo1'], $fields['phoneNo2']);
+
+        $rawLogo = isset($company['companyLogo']) ? trim((string) $company['companyLogo']) : '';
+        if ($rawLogo !== '') {
+            if (stripos($rawLogo, 'data:image/') === 0) {
+                $logoSrc = $rawLogo;
+            } else {
+                $mime = 'image/jpeg';
+                if (strpos($rawLogo, 'iVBOR') === 0) {
+                    $mime = 'image/png';
+                } elseif (strpos($rawLogo, 'R0lGOD') === 0) {
+                    $mime = 'image/gif';
+                } elseif (strpos($rawLogo, 'UklGR') === 0) {
+                    $mime = 'image/webp';
+                }
+                $logoSrc = 'data:' . $mime . ';base64,' . $rawLogo;
+            }
+        }
+    }
+}
+if ($shopName === '') {
+    $shopName = $messLabel;
+}
+
 if ($wantsJson) {
     header('Content-Type: application/json; charset=utf-8');
     echo json_encode(array(
@@ -59,29 +106,37 @@ if ($wantsJson) {
         'state' => $pageState,
         'message' => $errorMessage,
         'messLabel' => $messLabel,
+        'shopName' => $shopName,
+        'shopAddress' => $shopAddress,
+        'shopPhone' => $shopPhone,
+        'hasLogo' => ($logoSrc !== ''),
     ));
     mysqli_close($con);
     exit;
 }
 
 header('Content-Type: text/html; charset=utf-8');
-$tEsc = htmlspecialchars($t, ENT_QUOTES, 'UTF-8');
-$messEsc = htmlspecialchars($messLabel, ENT_QUOTES, 'UTF-8');
+$shopNameEsc = htmlspecialchars($shopName, ENT_QUOTES, 'UTF-8');
+$shopAddressEsc = htmlspecialchars($shopAddress, ENT_QUOTES, 'UTF-8');
+$shopPhoneEsc = htmlspecialchars($shopPhone, ENT_QUOTES, 'UTF-8');
 $errEsc = htmlspecialchars($errorMessage, ENT_QUOTES, 'UTF-8');
+$pageTitle = htmlspecialchars($shopName !== '' ? $shopName . ' — Mess Token' : 'Mess Token', ENT_QUOTES, 'UTF-8');
 ?><!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0f3d2e">
-<title>Billingwala — Mess Token</title>
+<title><?php echo $pageTitle; ?></title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:linear-gradient(165deg,#0f3d2e 0%,#1a5c45 45%,#e8f2ed 45%);min-height:100vh;color:#122}
-.wrap{max-width:420px;margin:0 auto;padding:28px 18px 40px}
+.wrap{max-width:420px;margin:0 auto;padding:28px 18px 24px;display:flex;flex-direction:column;min-height:100vh}
 .brand{text-align:center;color:#fff;margin-bottom:22px}
-.brand h1{font-size:1.35rem;font-weight:700;letter-spacing:.04em}
-.brand p{opacity:.9;margin-top:4px;font-size:.95rem}
+.brand .logo{width:88px;height:88px;object-fit:contain;border-radius:14px;background:#fff;padding:6px;margin:0 auto 14px;display:block;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+.brand h1{font-size:1.35rem;font-weight:700;letter-spacing:.02em;line-height:1.25}
+.brand .addr,.brand .phone{opacity:.92;margin-top:8px;font-size:.95rem;line-height:1.45}
+.brand .phone{margin-top:4px;font-weight:600}
 .card{background:#fff;border-radius:16px;padding:22px 18px;box-shadow:0 10px 30px rgba(0,0,0,.12)}
 label{display:block;font-size:.85rem;font-weight:600;color:#345;margin-bottom:8px}
 input{width:100%;font-size:1.15rem;padding:14px 12px;border:1.5px solid #c9d6cf;border-radius:10px;outline:none}
@@ -96,13 +151,24 @@ button:disabled{opacity:.6}
 .result .token{font-size:2rem;font-weight:800;letter-spacing:.04em;margin:10px 0}
 .result .meta{color:#456;line-height:1.5;font-size:.95rem}
 .hidden{display:none}
+.powered{margin-top:auto;padding-top:28px;text-align:center;color:#345;font-size:.85rem;line-height:1.5}
+.powered .by{opacity:.85}
+.powered a{color:#0f3d2e;font-weight:600;text-decoration:none}
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="brand">
-    <h1>BILLINGWALA</h1>
-    <p><?php echo $messEsc; ?></p>
+<?php if ($logoSrc !== ''): ?>
+    <img class="logo" src="<?php echo htmlspecialchars($logoSrc, ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo $shopNameEsc; ?>">
+<?php endif; ?>
+    <h1><?php echo $shopNameEsc; ?></h1>
+<?php if ($shopAddressEsc !== ''): ?>
+    <p class="addr"><?php echo $shopAddressEsc; ?></p>
+<?php endif; ?>
+<?php if ($shopPhoneEsc !== ''): ?>
+    <p class="phone"><?php echo $shopPhoneEsc; ?></p>
+<?php endif; ?>
   </div>
   <div class="card">
 <?php if ($pageState !== 'ok'): ?>
@@ -118,6 +184,10 @@ button:disabled{opacity:.6}
     </div>
     <div id="resultBox" class="result hidden"></div>
 <?php endif; ?>
+  </div>
+  <div class="powered">
+    <div class="by">powered by POS Billingwala</div>
+    <a href="https://www.posbillingwala.com" target="_blank" rel="noopener noreferrer">www.posbillingwala.com</a>
   </div>
 </div>
 <?php if ($pageState === 'ok'): ?>

@@ -36,6 +36,11 @@ $i=0;
         $getdata["memberAltenetMobileNumber"]=$row['member_altenet_mobile_number'];
         $getdata["memberAddress"]=$row['member_address'];
         $getdata["registrationNo"]= isset($row['registration_no']) ? $row['registration_no'] : '';
+        $getdata["memberType"]= isset($row['member_type']) ? $row['member_type'] : 'student';
+        $getdata["rollNo"]= isset($row['roll_no']) ? $row['roll_no'] : '';
+        $getdata["college"]= isset($row['college']) ? $row['college'] : '';
+        $getdata["studentYear"]= isset($row['student_year']) ? $row['student_year'] : '';
+        $getdata["company"]= isset($row['company']) ? $row['company'] : '';
         $getdata["memberStatus"]=$row['member_status'];
         $getdata["memberNetworkStatus"]=$row['member_network_status'];
        

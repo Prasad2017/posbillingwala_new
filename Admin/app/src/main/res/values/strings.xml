@@ -33,4 +33,20 @@
     <string name="empty_sub_dealers">No dealers found. Use + to add a dealer.</string>
     <string name="empty_sub_dealer_customers">No customers for this dealer.</string>
 
+    <string name="mess_members">Mess Members</string>
+    <string name="mess_members_subtitle">Add, edit, payments &amp; Excel import/export</string>
+    <string name="mess_member_excel">Mess Excel</string>
+    <string name="mess_add_member">Add Member</string>
+    <string name="mess_edit_member">Edit Member</string>
+    <string name="mess_payments">Payments</string>
+    <string name="mess_download_template">Download Template</string>
+    <string name="mess_export">Export Excel</string>
+    <string name="mess_import">Import Excel</string>
+    <string name="mess_select_outlet">Select outlet</string>
+    <string name="mess_save_member">Save Member</string>
+    <string name="mess_add_payment">Add Payment</string>
+    <string name="mess_member_type">Member Type</string>
+    <string name="mess_student">Student</string>
+    <string name="mess_working">Working</string>
+
 </resources>

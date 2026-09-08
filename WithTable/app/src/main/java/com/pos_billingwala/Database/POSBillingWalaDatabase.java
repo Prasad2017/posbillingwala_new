@@ -242,7 +242,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
 
     public final String EXPENSES_QUERY = "CREATE TABLE IF NOT EXISTS " + EXPENSES_TABLE + "(expensesId INTEGER PRIMARY KEY AUTOINCREMENT, expensesName VARCHAR, expensesAmount VARCHAR, expensesDate VARCHAR, expensesNetworkStatus VARCHAR, expensesStatus TINYINT)";
 
-    public final String MEMBER_QUERY = "CREATE TABLE IF NOT EXISTS " + MEMBER_TABLE + "(memberId INTEGER PRIMARY KEY AUTOINCREMENT, memberName VARCHAR, memberAddress VARCHAR, memberMobileNumber VARCHAR, memberAlternetMobileNumber VARCHAR, memberNetworkStatus VARCHAR, memberStatus TINYINT, registrationNo VARCHAR)";
+    public final String MEMBER_QUERY = "CREATE TABLE IF NOT EXISTS " + MEMBER_TABLE + "(memberId INTEGER PRIMARY KEY AUTOINCREMENT, memberName VARCHAR, memberAddress VARCHAR, memberMobileNumber VARCHAR, memberAlternetMobileNumber VARCHAR, memberNetworkStatus VARCHAR, memberStatus TINYINT, registrationNo VARCHAR, memberType VARCHAR, rollNo VARCHAR, college VARCHAR, studentYear VARCHAR, company VARCHAR)";
     public final String MEMBER_PAYMENT_QUERY = "CREATE TABLE IF NOT EXISTS " + MEMBER_PAYMENT_TABLE + "(paymentId INTEGER PRIMARY KEY AUTOINCREMENT, memberId VARCHAR, memberName VARCHAR, paymentMessAmount VARCHAR, paymentPaidAmount VARCHAR, messTotalDays VARCHAR, paymentDate VARCHAR, paymentNetworkStatus VARCHAR, paymentStatus TINYINT)";
     public final String MESS_INVOICE_QUERY = "CREATE TABLE IF NOT EXISTS " + MESS_INVOICE_TABLE + "(invoiceId INTEGER PRIMARY KEY AUTOINCREMENT, memberId VARCHAR, memberName VARCHAR, messType VARCHAR, messInvoiceDate VARCHAR, messInvoiceNetworkStatus VARCHAR, messInvoiceStatus TINYINT)";
 
@@ -265,6 +265,11 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             + " localUpdatedAt VARCHAR)";
 
     public final String ALTER_MEMBER_REGISTRATION_QUERY = "ALTER TABLE " + MEMBER_TABLE + " ADD COLUMN registrationNo VARCHAR";
+    public final String ALTER_MEMBER_TYPE_QUERY = "ALTER TABLE " + MEMBER_TABLE + " ADD COLUMN memberType VARCHAR";
+    public final String ALTER_MEMBER_ROLL_NO_QUERY = "ALTER TABLE " + MEMBER_TABLE + " ADD COLUMN rollNo VARCHAR";
+    public final String ALTER_MEMBER_COLLEGE_QUERY = "ALTER TABLE " + MEMBER_TABLE + " ADD COLUMN college VARCHAR";
+    public final String ALTER_MEMBER_STUDENT_YEAR_QUERY = "ALTER TABLE " + MEMBER_TABLE + " ADD COLUMN studentYear VARCHAR";
+    public final String ALTER_MEMBER_COMPANY_QUERY = "ALTER TABLE " + MEMBER_TABLE + " ADD COLUMN company VARCHAR";
     public final String COMBO_QUERY = "CREATE TABLE IF NOT EXISTS " + COMBO_TABLE
             + "(comboId INTEGER PRIMARY KEY AUTOINCREMENT,"
             + " comboName VARCHAR NOT NULL,"
@@ -634,6 +639,11 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         db.execSQL(MESS_TOKEN_QUERY);
         db.execSQL(MESS_MEAL_TOKEN_QUEUE_QUERY);
         addColumnIfNotExists(db, MEMBER_TABLE, "registrationNo", ALTER_MEMBER_REGISTRATION_QUERY);
+        addColumnIfNotExists(db, MEMBER_TABLE, "memberType", ALTER_MEMBER_TYPE_QUERY);
+        addColumnIfNotExists(db, MEMBER_TABLE, "rollNo", ALTER_MEMBER_ROLL_NO_QUERY);
+        addColumnIfNotExists(db, MEMBER_TABLE, "college", ALTER_MEMBER_COLLEGE_QUERY);
+        addColumnIfNotExists(db, MEMBER_TABLE, "studentYear", ALTER_MEMBER_STUDENT_YEAR_QUERY);
+        addColumnIfNotExists(db, MEMBER_TABLE, "company", ALTER_MEMBER_COMPANY_QUERY);
         db.execSQL(COMBO_QUERY);
         db.execSQL(COMBO_ITEM_QUERY);
         db.execSQL(CART_COMBO_ITEM_QUERY);
@@ -5406,6 +5416,11 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
                         + " member.memberAlternetMobileNumber AS memberAlternetMobileNumber,"
                         + " member.memberAddress AS memberAddress,"
                         + " member.registrationNo AS registrationNo,"
+                        + " member.memberType AS memberType,"
+                        + " member.rollNo AS rollNo,"
+                        + " member.college AS college,"
+                        + " member.studentYear AS studentYear,"
+                        + " member.company AS company,"
                         + " member.memberStatus AS memberStatus"
                         + " FROM member"
                         + " WHERE IFNULL(member.memberStatus, 0) != 2"
@@ -5419,13 +5434,12 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             memberResponse.setMemberMobileNumber(cursor.getString(cursor.getColumnIndex("memberMobileNumber")));
             memberResponse.setMemberAlternetMobileNumber(cursor.getString(cursor.getColumnIndex("memberAlternetMobileNumber")));
             memberResponse.setMemberAddress(cursor.getString(cursor.getColumnIndex("memberAddress")));
-            try {
-                int regIdx = cursor.getColumnIndex("registrationNo");
-                if (regIdx >= 0) {
-                    memberResponse.setRegistrationNo(cursor.getString(regIdx));
-                }
-            } catch (Exception ignored) {
-            }
+            memberResponse.setRegistrationNo(safeCursorString(cursor, "registrationNo"));
+            memberResponse.setMemberType(safeCursorString(cursor, "memberType"));
+            memberResponse.setRollNo(safeCursorString(cursor, "rollNo"));
+            memberResponse.setCollege(safeCursorString(cursor, "college"));
+            memberResponse.setStudentYear(safeCursorString(cursor, "studentYear"));
+            memberResponse.setCompany(safeCursorString(cursor, "company"));
             fillMemberPaymentAndTokenSummary(db, memberResponse, memberId, currentMonth);
             memberResponseList.add(memberResponse);
         }
@@ -5769,15 +5783,31 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             memberMobileNumber, String memberAlternetMobileNumber, String memberAddress,
                                         String registrationNo, String paymentMessAmount, String paymentPaidAmount, String messDays,
                                         int memberStatus, String memberNetworkStatus) {
+        insertMessMemberWithProfile(memberName, memberMobileNumber, memberAlternetMobileNumber,
+                memberAddress, registrationNo, "student", "", "", "", "",
+                paymentMessAmount, paymentPaidAmount, messDays, memberStatus, memberNetworkStatus);
+    }
+
+    public void insertMessMemberWithProfile(String memberName, String memberMobileNumber,
+                                            String memberAlternetMobileNumber, String memberAddress,
+                                            String registrationNo, String memberType, String rollNo,
+                                            String college, String studentYear, String company,
+                                            String paymentMessAmount, String paymentPaidAmount,
+                                            String messDays, int memberStatus, String memberNetworkStatus) {
 
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
 
         contentValues.put("memberName", memberName);
         contentValues.put("memberMobileNumber", memberMobileNumber);
-        contentValues.put("memberAlternetMobileNumber", memberAlternetMobileNumber);
-        contentValues.put("memberAddress", memberAddress);
+        contentValues.put("memberAlternetMobileNumber", memberAlternetMobileNumber != null ? memberAlternetMobileNumber : "");
+        contentValues.put("memberAddress", memberAddress != null ? memberAddress : "");
         contentValues.put("registrationNo", registrationNo != null ? registrationNo : "");
+        contentValues.put("memberType", memberType != null ? memberType : "student");
+        contentValues.put("rollNo", rollNo != null ? rollNo : "");
+        contentValues.put("college", college != null ? college : "");
+        contentValues.put("studentYear", studentYear != null ? studentYear : "");
+        contentValues.put("company", company != null ? company : "");
         contentValues.put("memberStatus", memberStatus);
         contentValues.put("memberNetworkStatus", memberNetworkStatus);
 
@@ -5807,14 +5837,31 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
     public void updateMessMember(String memberId, String memberName, String
             memberMobileNumber, String memberAlternetMobileNumber, String memberAddress,
                                  int memberStatus) {
+        updateMessMemberProfile(memberId, memberName, memberMobileNumber, memberAlternetMobileNumber,
+                memberAddress, null, "student", "", "", "", "", memberStatus);
+    }
+
+    public void updateMessMemberProfile(String memberId, String memberName, String memberMobileNumber,
+                                        String memberAlternetMobileNumber, String memberAddress,
+                                        String registrationNo, String memberType, String rollNo,
+                                        String college, String studentYear, String company,
+                                        int memberStatus) {
 
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
 
         contentValues.put("memberName", memberName);
         contentValues.put("memberMobileNumber", memberMobileNumber);
-        contentValues.put("memberAlternetMobileNumber", memberAlternetMobileNumber);
-        contentValues.put("memberAddress", memberAddress);
+        contentValues.put("memberAlternetMobileNumber", memberAlternetMobileNumber != null ? memberAlternetMobileNumber : "");
+        contentValues.put("memberAddress", memberAddress != null ? memberAddress : "");
+        if (registrationNo != null) {
+            contentValues.put("registrationNo", registrationNo);
+        }
+        contentValues.put("memberType", memberType != null ? memberType : "student");
+        contentValues.put("rollNo", rollNo != null ? rollNo : "");
+        contentValues.put("college", college != null ? college : "");
+        contentValues.put("studentYear", studentYear != null ? studentYear : "");
+        contentValues.put("company", company != null ? company : "");
         contentValues.put("memberStatus", 0);
 
         db.update(MEMBER_TABLE, contentValues, "memberId=?", new String[]{memberId});
@@ -5904,6 +5951,12 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         contentValues.put("memberMobileNumber", memberResponse.getMemberMobileNumber());
         contentValues.put("memberAlternetMobileNumber", memberResponse.getMemberAlternetMobileNumber());
         contentValues.put("memberAddress", memberResponse.getMemberAddress());
+        contentValues.put("registrationNo", memberResponse.getRegistrationNo() != null ? memberResponse.getRegistrationNo() : "");
+        contentValues.put("memberType", memberResponse.getMemberType() != null ? memberResponse.getMemberType() : "student");
+        contentValues.put("rollNo", memberResponse.getRollNo() != null ? memberResponse.getRollNo() : "");
+        contentValues.put("college", memberResponse.getCollege() != null ? memberResponse.getCollege() : "");
+        contentValues.put("studentYear", memberResponse.getStudentYear() != null ? memberResponse.getStudentYear() : "");
+        contentValues.put("company", memberResponse.getCompany() != null ? memberResponse.getCompany() : "");
         contentValues.put("memberStatus", memberResponse.getMemberStatus());
         contentValues.put("memberNetworkStatus", memberResponse.getMemberNetworkStatus());
 
@@ -6285,12 +6338,34 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             memberResponse.setMemberMobileNumber(cursor.getString(cursor.getColumnIndex("memberMobileNumber")));
             memberResponse.setMemberAlternetMobileNumber(cursor.getString(cursor.getColumnIndex("memberAlternetMobileNumber")));
             memberResponse.setMemberAddress(cursor.getString(cursor.getColumnIndex("memberAddress")));
+            memberResponse.setRegistrationNo(safeCursorString(cursor, "registrationNo"));
+            memberResponse.setMemberType(safeCursorString(cursor, "memberType"));
+            memberResponse.setRollNo(safeCursorString(cursor, "rollNo"));
+            memberResponse.setCollege(safeCursorString(cursor, "college"));
+            memberResponse.setStudentYear(safeCursorString(cursor, "studentYear"));
+            memberResponse.setCompany(safeCursorString(cursor, "company"));
             memberResponseList.add(memberResponse);
         }
 
         db.close();
         return memberResponseList;
 
+    }
+
+    private static String safeCursorString(Cursor cursor, String column) {
+        if (cursor == null || column == null) {
+            return "";
+        }
+        try {
+            int idx = cursor.getColumnIndex(column);
+            if (idx < 0) {
+                return "";
+            }
+            String value = cursor.getString(idx);
+            return value != null ? value : "";
+        } catch (Exception e) {
+            return "";
+        }
     }
 
     public List<MemberResponse> getInvoiceMemberList() {

@@ -26,15 +26,22 @@ import com.pos_billingwala.Activity.MessQrManagementActivity;
 import com.pos_billingwala.Adapter.MessInvoiceAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.BottomSheetUi;
+import com.pos_billingwala.Extra.EmptyListUi;
 import com.pos_billingwala.Extra.MessMealTokenPrintWorker;
+import com.pos_billingwala.Extra.MessPayerMode;
+import com.pos_billingwala.Model.AllApiResponse;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.MemberResponse;
 import com.pos_billingwala.R;
+import com.pos_billingwala.Retrofit.Api;
 import com.pos_billingwala.databinding.FragmentInvoiceMessBinding;
 
 import java.util.ArrayList;
 import java.util.List;
-import com.pos_billingwala.Extra.EmptyListUi;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 @SuppressLint("StaticFieldLeak, ClickableViewAccessibility, NonConstantResourceId, NotifyDataSetChanged, SetTextI18n")
 public class InvoiceMess extends Fragment implements View.OnClickListener {
@@ -47,6 +54,7 @@ public class InvoiceMess extends Fragment implements View.OnClickListener {
     List<MemberResponse> searchMemberResponseList = new ArrayList<>();
     MessInvoiceAdapter messInvoiceAdapter;
     FragmentInvoiceMessBinding binding;
+    private boolean suppressPayerSwitchCallback = false;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
@@ -92,7 +100,90 @@ public class InvoiceMess extends Fragment implements View.OnClickListener {
         binding.todayTokensLayout.setOnClickListener(this);
         binding.mealSessionsLayout.setOnClickListener(this);
 
+        applyPayerModeUi(MessPayerMode.isInstitutePay(activity));
+        binding.messInstitutePaySwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (suppressPayerSwitchCallback) {
+                return;
+            }
+            String mode = isChecked ? MessPayerMode.MODE_INSTITUTE : MessPayerMode.MODE_USER;
+            MessPayerMode.setLocal(activity, mode);
+            applyPayerModeUi(isChecked);
+            savePayerModeToServer(mode);
+            getMemberList();
+        });
+
         return view;
+    }
+
+    private void applyPayerModeUi(boolean institutePay) {
+        if (binding == null) {
+            return;
+        }
+        binding.messPayerModeHint.setText(institutePay
+                ? R.string.ui_mess_payer_mode_hint_institute
+                : R.string.ui_mess_payer_mode_hint_user);
+    }
+
+    private void loadPayerModeFromServer() {
+        if (MainActivity.userId == null || MainActivity.userId.trim().isEmpty()) {
+            return;
+        }
+        Api.getClient(activity).getMessShopSetting(MainActivity.userId).enqueue(new Callback<AllApiResponse>() {
+            @Override
+            public void onResponse(Call<AllApiResponse> call, Response<AllApiResponse> response) {
+                if (binding == null || activity == null) {
+                    return;
+                }
+                if (response.isSuccessful() && response.body() != null
+                        && "1".equals(response.body().status)
+                        && response.body().payerMode != null) {
+                    String mode = MessPayerMode.normalize(response.body().payerMode);
+                    MessPayerMode.setLocal(activity, mode);
+                    boolean institute = MessPayerMode.MODE_INSTITUTE.equals(mode);
+                    suppressPayerSwitchCallback = true;
+                    binding.messInstitutePaySwitch.setChecked(institute);
+                    suppressPayerSwitchCallback = false;
+                    applyPayerModeUi(institute);
+                    getMemberList();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<AllApiResponse> call, Throwable t) {
+                // Keep local cached mode.
+            }
+        });
+    }
+
+    private void savePayerModeToServer(String mode) {
+        if (MainActivity.userId == null || MainActivity.userId.trim().isEmpty()) {
+            return;
+        }
+        Api.getClient(activity).saveMessShopSetting(MainActivity.userId, mode)
+                .enqueue(new Callback<AllApiResponse>() {
+                    @Override
+                    public void onResponse(Call<AllApiResponse> call, Response<AllApiResponse> response) {
+                        if (activity == null) {
+                            return;
+                        }
+                        boolean ok = response.isSuccessful() && response.body() != null
+                                && "1".equals(response.body().status);
+                        Toast.makeText(activity,
+                                activity.getString(ok
+                                        ? R.string.toast_mess_payer_mode_saved
+                                        : R.string.toast_mess_payer_mode_save_failed),
+                                Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onFailure(Call<AllApiResponse> call, Throwable t) {
+                        if (activity != null) {
+                            Toast.makeText(activity,
+                                    activity.getString(R.string.toast_mess_payer_mode_save_failed),
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
     }
 
     public void searchMessMember(String memberData) {
@@ -175,8 +266,13 @@ public class InvoiceMess extends Fragment implements View.OnClickListener {
     public void onStart() {
         super.onStart();
         ((MainActivity) activity).lockUnlockDrawer(1);
+        suppressPayerSwitchCallback = true;
+        binding.messInstitutePaySwitch.setChecked(MessPayerMode.isInstitutePay(activity));
+        suppressPayerSwitchCallback = false;
+        applyPayerModeUi(MessPayerMode.isInstitutePay(activity));
         getCompanyDetails();
         MessMealTokenPrintWorker.recoverPendingFromServer(activity);
+        loadPayerModeFromServer();
     }
 
     public void getCompanyDetails() {
@@ -192,12 +288,17 @@ public class InvoiceMess extends Fragment implements View.OnClickListener {
 
     public void getMemberList() {
         List<MemberResponse> allMembers = posBillingWalaDatabase.getMemberList();
-        // Alert uses full roster (e.g. unpaid tokens); list shows current-month members only.
-        updateMessPaymentAlert(allMembers);
+        boolean institutePay = MessPayerMode.isInstitutePay(activity);
+        // Payment alerts only matter in User Pay mode.
+        if (institutePay) {
+            binding.messAlertBanner.setVisibility(View.GONE);
+        } else {
+            updateMessPaymentAlert(allMembers);
+        }
 
         memberResponseList.clear();
         for (MemberResponse m : allMembers) {
-            if (hasCurrentMonthPayment(m)) {
+            if (institutePay || hasCurrentMonthPayment(m)) {
                 memberResponseList.add(m);
             }
         }

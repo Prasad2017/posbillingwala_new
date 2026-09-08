@@ -55,6 +55,7 @@ public class OwnerOperationalReport extends Fragment {
     public static final String TYPE_EXPENSE = "expense";
     public static final String TYPE_MESS_MEMBER = "mess_member";
     public static final String TYPE_MESS = "mess";
+    public static final String TYPE_MESS_TOKEN = "mess_token";
 
     private static final int[] CHART_COLORS = new int[]{
             Color.parseColor("#4862b7"),
@@ -360,6 +361,8 @@ public class OwnerOperationalReport extends Fragment {
                 return getString(R.string.ui_invoice_member_report);
             case TYPE_MESS:
                 return getString(R.string.ui_invoice_mess_report);
+            case TYPE_MESS_TOKEN:
+                return getString(R.string.ui_mess_token_report);
             case TYPE_INVOICE:
             default:
                 return getString(R.string.ui_invoice_report);

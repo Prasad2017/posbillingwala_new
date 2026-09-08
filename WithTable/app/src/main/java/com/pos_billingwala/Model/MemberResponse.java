@@ -41,6 +41,21 @@ public class MemberResponse {
     @SerializedName("registrationNo")
     @Expose
     public String registrationNo;
+    @SerializedName("memberType")
+    @Expose
+    public String memberType;
+    @SerializedName("rollNo")
+    @Expose
+    public String rollNo;
+    @SerializedName("college")
+    @Expose
+    public String college;
+    @SerializedName("studentYear")
+    @Expose
+    public String studentYear;
+    @SerializedName("company")
+    @Expose
+    public String company;
     @SerializedName("paymentNetworkStatus")
     @Expose
     public String paymentNetworkStatus;
@@ -110,6 +125,46 @@ public class MemberResponse {
 
     public void setRegistrationNo(String registrationNo) {
         this.registrationNo = registrationNo;
+    }
+
+    public String getMemberType() {
+        return memberType;
+    }
+
+    public void setMemberType(String memberType) {
+        this.memberType = memberType;
+    }
+
+    public String getRollNo() {
+        return rollNo;
+    }
+
+    public void setRollNo(String rollNo) {
+        this.rollNo = rollNo;
+    }
+
+    public String getCollege() {
+        return college;
+    }
+
+    public void setCollege(String college) {
+        this.college = college;
+    }
+
+    public String getStudentYear() {
+        return studentYear;
+    }
+
+    public void setStudentYear(String studentYear) {
+        this.studentYear = studentYear;
+    }
+
+    public String getCompany() {
+        return company;
+    }
+
+    public void setCompany(String company) {
+        this.company = company;
     }
 
     public String getMemberAddress() {

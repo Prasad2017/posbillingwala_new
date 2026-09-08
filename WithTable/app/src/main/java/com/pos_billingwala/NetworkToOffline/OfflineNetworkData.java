@@ -324,7 +324,13 @@ public class OfflineNetworkData {
                         cursor.getString(cursor.getColumnIndex("memberAlternetMobileNumber")),
                         cursor.getString(cursor.getColumnIndex("memberAddress")),
                         cursor.getString(cursor.getColumnIndex("memberNetworkStatus")),
-                        cursor.getString(cursor.getColumnIndex("memberStatus")));
+                        cursor.getString(cursor.getColumnIndex("memberStatus")),
+                        columnOrEmpty(cursor, "registrationNo"),
+                        columnOrEmpty(cursor, "memberType"),
+                        columnOrEmpty(cursor, "rollNo"),
+                        columnOrEmpty(cursor, "college"),
+                        columnOrEmpty(cursor, "studentYear"),
+                        columnOrEmpty(cursor, "company"));
             } while (cursor.moveToNext());
         }
         //getting all the unSynced Mess Member Payment
@@ -458,9 +464,16 @@ public class OfflineNetworkData {
         }
 }
 
-    public void saveMessMember(String memberId, String memberName, String memberMobileNumber, String memberAlternetMobileNumber, String memberAddress, String memberNetworkStatus, String memberStatus) {
+    public void saveMessMember(String memberId, String memberName, String memberMobileNumber, String memberAlternetMobileNumber, String memberAddress, String memberNetworkStatus, String memberStatus,
+                               String registrationNo, String memberType, String rollNo, String college, String studentYear, String company) {
 
-        Call<AllApiResponse> call = Api.getClient(activity).saveMessMember(MainActivity.userId, memberName, memberMobileNumber, memberAlternetMobileNumber, memberAddress, memberNetworkStatus, memberStatus, "");
+        Call<AllApiResponse> call = Api.getClient(activity).saveMessMember(MainActivity.userId, memberName, memberMobileNumber, memberAlternetMobileNumber, memberAddress, memberNetworkStatus, memberStatus,
+                registrationNo != null ? registrationNo : "",
+                memberType != null ? memberType : "",
+                rollNo != null ? rollNo : "",
+                college != null ? college : "",
+                studentYear != null ? studentYear : "",
+                company != null ? company : "");
         if (executeCall(call)) {
             posBillingWalaDatabase.updateSyncMessMember(memberId, NAME_SYNCED_WITH_SERVER);
         }

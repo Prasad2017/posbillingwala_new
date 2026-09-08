@@ -402,7 +402,12 @@ public interface ApiInterface {
                                         @Field("memberAddress") String memberAddress,
                                         @Field("memberNetworkStatus") String memberNetworkStatus,
                                         @Field("memberStatus") String memberStatus,
-                                        @Field("registrationNo") String registrationNo);
+                                        @Field("registrationNo") String registrationNo,
+                                        @Field("memberType") String memberType,
+                                        @Field("rollNo") String rollNo,
+                                        @Field("college") String college,
+                                        @Field("studentYear") String studentYear,
+                                        @Field("company") String company);
 
     @FormUrlEncoded
     @POST("insertMessPayment.php")
@@ -447,6 +452,14 @@ public interface ApiInterface {
     Call<AllApiResponse> setMessQrStatus(@Field("userId") String userId,
                                          @Field("status") String status,
                                          @Field("android_device_id") String androidDeviceId);
+
+    @GET("mess_shop_setting_get.php")
+    Call<AllApiResponse> getMessShopSetting(@Query("userId") String userId);
+
+    @FormUrlEncoded
+    @POST("mess_shop_setting_save.php")
+    Call<AllApiResponse> saveMessShopSetting(@Field("userId") String userId,
+                                             @Field("payerMode") String payerMode);
 
     @GET("mess_meal_session_list.php")
     Call<AllApiResponse> getMessMealSessions(@Query("userId") String userId);

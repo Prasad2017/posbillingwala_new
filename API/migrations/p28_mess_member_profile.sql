@@ -1,0 +1,43 @@
+-- P28: Mess member profile fields (type + student/working details). Additive only.
+
+SET NAMES utf8mb4;
+
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'mess_member' AND COLUMN_NAME = 'member_type') > 0,
+  'SELECT 1',
+  'ALTER TABLE `mess_member` ADD COLUMN `member_type` VARCHAR(16) NULL DEFAULT ''student'''
+));
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'mess_member' AND COLUMN_NAME = 'roll_no') > 0,
+  'SELECT 1',
+  'ALTER TABLE `mess_member` ADD COLUMN `roll_no` VARCHAR(64) NULL'
+));
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'mess_member' AND COLUMN_NAME = 'college') > 0,
+  'SELECT 1',
+  'ALTER TABLE `mess_member` ADD COLUMN `college` VARCHAR(255) NULL'
+));
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'mess_member' AND COLUMN_NAME = 'student_year') > 0,
+  'SELECT 1',
+  'ALTER TABLE `mess_member` ADD COLUMN `student_year` VARCHAR(32) NULL'
+));
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'mess_member' AND COLUMN_NAME = 'company') > 0,
+  'SELECT 1',
+  'ALTER TABLE `mess_member` ADD COLUMN `company` VARCHAR(255) NULL'
+));
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;

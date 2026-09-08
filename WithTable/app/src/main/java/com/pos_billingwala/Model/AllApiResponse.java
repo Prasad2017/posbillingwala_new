@@ -120,6 +120,9 @@ public class AllApiResponse {
     @SerializedName("printStatus")
     @Expose
     public String printStatus;
+    @SerializedName("payerMode")
+    @Expose
+    public String payerMode;
 
     @SerializedName("tickets")
     @Expose

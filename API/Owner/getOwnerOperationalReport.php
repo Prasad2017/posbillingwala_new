@@ -472,6 +472,117 @@ try {
             break;
         }
 
+        case 'mess_token': {
+            // Users token report: paper coupons + QR tokens + Common QR meal tokens.
+            $mJoin = 'INNER JOIN `licenses` l ON (m.`branch_id` = l.`id` OR (m.`branch_id` IS NULL AND m.`userId` = l.`id`))';
+            $dateTypes = $scope['types'];
+            $dateParams = $scope['params'];
+            $couponDate = '';
+            $qrDate = '';
+            $mealDate = '';
+            if ($dateRaw !== '') {
+                if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateRaw)) {
+                    $couponDate = ' AND DATE(m.messInvoiceDate) = ?';
+                    $qrDate = ' AND DATE(m.tokenDate) = ?';
+                    $mealDate = ' AND m.token_date = ?';
+                    $dateTypes .= 's';
+                    $dateParams[] = $dateRaw;
+                } elseif (preg_match('/^\d{4}-\d{2}$/', $dateRaw)) {
+                    $monthStart = $dateRaw . '-01';
+                    $monthEnd = date('Y-m-t', strtotime($monthStart));
+                    $couponDate = ' AND DATE(m.messInvoiceDate) >= ? AND DATE(m.messInvoiceDate) <= ?';
+                    $qrDate = ' AND DATE(m.tokenDate) >= ? AND DATE(m.tokenDate) <= ?';
+                    $mealDate = ' AND m.token_date >= ? AND m.token_date <= ?';
+                    $dateTypes .= 'ss';
+                    $dateParams[] = $monthStart;
+                    $dateParams[] = $monthEnd;
+                }
+            }
+
+            $couponSql = "SELECT IFNULL(NULLIF(TRIM(m.memberName),''),'Member') AS mname,
+                                 DATE(m.messInvoiceDate) AS tdate,
+                                 IFNULL(NULLIF(TRIM(m.messType),''),'Meal') AS meal,
+                                 'Coupon' AS src,
+                                 CAST(m.invoiceId AS CHAR) AS tref
+                          FROM `mess_invoice` m
+                          $mJoin
+                          WHERE {$scope['where']} $couponDate
+                            AND IFNULL(m.messInvoiceStatus,'1') <> '0'";
+
+            $qrSql = "SELECT IFNULL(NULLIF(TRIM(m.memberName),''),'Member') AS mname,
+                             DATE(m.tokenDate) AS tdate,
+                             IFNULL(NULLIF(TRIM(m.messType),''),'Meal') AS meal,
+                             'QR Token' AS src,
+                             IFNULL(m.tokenCode,'') AS tref
+                      FROM `mess_token` m
+                      $mJoin
+                      WHERE {$scope['where']} $qrDate
+                        AND IFNULL(m.tokenStatus,'active') <> '0'";
+
+            $mealSql = "SELECT IFNULL(NULLIF(TRIM(m.member_name),''),'Member') AS mname,
+                               m.token_date AS tdate,
+                               IFNULL(NULLIF(TRIM(m.session_name),''),'Meal') AS meal,
+                               'Meal Token' AS src,
+                               IFNULL(m.token_number,'') AS tref
+                        FROM `mess_meal_token` m
+                        $mJoin
+                        WHERE {$scope['where']} $mealDate
+                          AND IFNULL(m.print_status,'') <> 'CANCELLED'";
+
+            $unionSql = "SELECT * FROM (($couponSql) UNION ALL ($qrSql) UNION ALL ($mealSql)) u
+                         ORDER BY tdate DESC, mname ASC
+                         LIMIT 400";
+
+            // Each subquery uses the same scope + date params.
+            $unionTypes = $dateTypes . $dateTypes . $dateTypes;
+            $unionParams = array_merge($dateParams, $dateParams, $dateParams);
+
+            $rows = db_stmt_fetch_all($con, $unionSql, $unionTypes, ...$unionParams);
+            if (!is_array($rows)) {
+                $rows = array();
+            }
+
+            $byMember = array();
+            $bySource = array();
+            foreach ($rows as $row) {
+                $name = isset($row['mname']) ? (string) $row['mname'] : 'Member';
+                $src = isset($row['src']) ? (string) $row['src'] : 'Token';
+                $date = isset($row['tdate']) ? (string) $row['tdate'] : '';
+                $meal = isset($row['meal']) ? (string) $row['meal'] : '';
+                $ref = isset($row['tref']) ? (string) $row['tref'] : '';
+                if (!isset($byMember[$name])) {
+                    $byMember[$name] = 0;
+                }
+                $byMember[$name]++;
+                if (!isset($bySource[$src])) {
+                    $bySource[$src] = 0;
+                }
+                $bySource[$src]++;
+                $subtitle = trim($date . ' · ' . $meal . ' · ' . $src . ($ref !== '' ? ' · ' . $ref : ''));
+                owner_report_push_item($response['items'], $name, $subtitle, 0);
+            }
+
+            arsort($byMember);
+            $memberShown = 0;
+            foreach ($byMember as $name => $cnt) {
+                if ($memberShown >= 12) {
+                    break;
+                }
+                owner_report_push_breakdown($response['breakdown'], $name, 0, $cnt);
+                $memberShown++;
+            }
+            if (empty($response['breakdown'])) {
+                foreach ($bySource as $src => $cnt) {
+                    owner_report_push_breakdown($response['breakdown'], $src, 0, $cnt);
+                }
+            }
+
+            owner_report_set_totals($response, count($rows), 0);
+            $response['extraKpiLabel'] = 'Members';
+            $response['extraKpiValue'] = (string) count($byMember);
+            break;
+        }
+
         case 'invoice':
         default: {
             $sql = "SELECT DATE(i.invoiceDate) AS d,

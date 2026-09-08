@@ -143,6 +143,7 @@
     <string name="ui_expense_wise_report">Expense Wise Report</string>
     <string name="ui_invoice_member_report">Mess Member Report</string>
     <string name="ui_invoice_mess_report">Mess Report</string>
+    <string name="ui_mess_token_report">Mess Token Report</string>
     <string name="ui_all_time">All time</string>
     <string name="ui_breakdown">Breakdown</string>
     <string name="ui_details">Details</string>
@@ -204,5 +205,20 @@
     <string name="compare_branches">Compare Branches</string>
     <string name="compare_branches_subtitle">Side-by-side sales across all stores</string>
     <string name="profile_outlet_count">Outlet licenses (%1$d)</string>
+    <string name="mess_members">Mess Members</string>
+    <string name="mess_members_subtitle">Add, edit, payments &amp; Excel import/export</string>
+    <string name="mess_member_excel">Mess Excel</string>
+    <string name="mess_add_member">Add Member</string>
+    <string name="mess_edit_member">Edit Member</string>
+    <string name="mess_payments">Payments</string>
+    <string name="mess_download_template">Download Template</string>
+    <string name="mess_export">Export Excel</string>
+    <string name="mess_import">Import Excel</string>
+    <string name="mess_select_outlet">Select outlet</string>
+    <string name="mess_save_member">Save Member</string>
+    <string name="mess_add_payment">Add Payment</string>
+    <string name="mess_member_type">Member Type</string>
+    <string name="mess_student">Student</string>
+    <string name="mess_working">Working</string>
 
 </resources>
