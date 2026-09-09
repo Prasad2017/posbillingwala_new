@@ -122,7 +122,7 @@ class CustomerController extends Controller
 
         $license = new License();
         $license->userId = $data->id;
-        $license->licenseKey = $request->license_key;
+        $license->licenseKey = LicenceDefaults::generateUniqueKey();
         $license->licenseValidity = $request->license_validity;
         $license->licenseType = $request->license_type;
         $license->licenseStatus = $request->license_status;
@@ -302,7 +302,7 @@ class CustomerController extends Controller
 
         $license = new License();
         $license->userId = $request->id;
-        $license->licenseKey = $request->license_key;
+        $license->licenseKey = LicenceDefaults::generateUniqueKey();
         $license->licenseValidity = $request->license_validity;
         $license->licenseType = $request->license_type;
         $license->licenseStatus = $request->license_status;

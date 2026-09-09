@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $contact_number = $_POST['contact_number'];
     $address = $_POST['address'];
     $shopName = $_POST['shopName'];
-    $licenseKey = $_POST['licenseKey'];
+    // Client-supplied key ignored — server generates BW-XXXX-XXXX-XXXX
     $licenseValidity = $_POST['licenseValidity'];
     $licenseType = $_POST['licenseType'];
     $amount = $_POST['amount'];
@@ -39,6 +39,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $paymentStatus = '';
     } else {
         $paymentStatus = 'cash';
+    }
+
+    $licenseKey = licence_generate_unique_key($con);
+    if ($licenseKey === null) {
+        $response['status'] = 'false';
+        $response['message'] = 'Unable to generate license key. Please try again.';
+        header('Content-type: application/json; charset=utf-8');
+        echo json_encode($response);
+        exit;
     }
 
     $branchLabel = $branchName !== '' ? $branchName : $shopName;

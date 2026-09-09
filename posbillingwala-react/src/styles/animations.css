@@ -1,0 +1,63 @@
+@keyframes floatY {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+@keyframes pulseSoft {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes orbSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes colorShift {
+  0%,
+  100% {
+    filter: hue-rotate(0deg);
+  }
+  50% {
+    filter: hue-rotate(18deg);
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #e8eef5 25%, #f5f8fb 50%, #e8eef5 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease infinite;
+  border-radius: var(--radius-sm);
+}
+
+.float-y {
+  animation: floatY 5s var(--ease) infinite;
+}
+
+.float-y-delay {
+  animation: floatY 6.5s var(--ease) infinite;
+  animation-delay: 0.8s;
+}

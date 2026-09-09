@@ -212,7 +212,12 @@ public class NewLicenceRegistration extends Fragment implements View.OnClickList
                         TextView txtYes = dialogView.findViewById(R.id.yes);
                         TextView txtMessage = dialogView.findViewById(R.id.message);
 
-                        String message = "Licence Registration completed successfully with license key </br><b><font color='#ff0000'>" + licenseKey + "</font</b>";
+                        String issuedKey = response.body().getLicenseKey();
+                        if (issuedKey == null || issuedKey.isEmpty()) {
+                            issuedKey = licenseKey;
+                        }
+
+                        String message = "Licence Registration completed successfully with license key </br><b><font color='#ff0000'>" + issuedKey + "</font></b>";
                         txtMessage.setText(Html.fromHtml(message));
 
                         txtYes.setOnClickListener(new View.OnClickListener() {

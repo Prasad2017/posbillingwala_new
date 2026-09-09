@@ -688,14 +688,35 @@ if (!function_exists('mess_remote_import_xlsx')) {
             return $result;
         }
 
+        // Normalize header labels (trim + collapse spaces) for robust matching
+        $normalizedHeaders = array();
+        foreach ($memberSheet['headers'] as $colIndex => $headerName) {
+            $label = trim(preg_replace('/\s+/', ' ', (string) $headerName));
+            $normalizedHeaders[$colIndex] = $label;
+            $memberSheet['headers'][$colIndex] = $label;
+        }
+        // Remap row keys to normalized header names
+        foreach ($memberSheet['rows'] as $excelRow => $assoc) {
+            $mapped = array();
+            foreach ($assoc as $key => $val) {
+                $mapped[trim(preg_replace('/\s+/', ' ', (string) $key))] = $val;
+            }
+            $memberSheet['rows'][$excelRow] = $mapped;
+        }
+
         $requiredMemberHeaders = array('Name', 'Mobile');
         foreach ($requiredMemberHeaders as $h) {
-            if (!in_array($h, $memberSheet['headers'], true)) {
+            if (!in_array($h, $normalizedHeaders, true)) {
                 $result['errors'][] = array('row' => 1, 'sheet' => 'Members', 'message' => "Missing header: $h");
             }
         }
         if (!empty($result['errors'])) {
-            $result['message'] = 'Invalid Members sheet headers';
+            $found = array_values(array_filter($normalizedHeaders, function ($h) {
+                return $h !== '';
+            }));
+            $result['message'] = 'Invalid Members sheet headers. Found: '
+                . (empty($found) ? '(none — file may use unsupported Excel format)' : implode(', ', $found))
+                . '. Required: Name, Mobile';
             return $result;
         }
 
@@ -814,12 +835,14 @@ if (!function_exists('mess_remote_import_xlsx')) {
         }
 
         $result['status'] = '1';
+        $errorCount = isset($result['errors']) ? count($result['errors']) : 0;
+        $errorSuffix = $errorCount > 0 ? (' (' . $errorCount . ' row errors)') : '';
         $result['message'] = sprintf(
             'Imported %d members, updated %d, payments %d%s',
             $result['membersImported'],
             $result['membersUpdated'],
             $result['paymentsImported'],
-            !empty($result['errors']) ? ('; ' (' . count($result['errors']) . ' row errors)') : ''
+            $errorSuffix
         );
         return $result;
     }

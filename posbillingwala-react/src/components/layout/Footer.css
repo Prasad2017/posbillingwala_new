@@ -1,0 +1,97 @@
+.site-footer {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 12% 20%, rgba(21, 101, 216, 0.45), transparent 28%),
+    radial-gradient(circle at 88% 10%, rgba(229, 57, 53, 0.28), transparent 24%),
+    radial-gradient(circle at 70% 90%, rgba(124, 58, 237, 0.35), transparent 26%),
+    linear-gradient(135deg, #061020 0%, #0b3a82 42%, #1e1b4b 78%, #0b1220 100%);
+  color: rgba(255, 255, 255, 0.82);
+  padding: 64px 0 0;
+  margin-top: auto;
+}
+
+.site-footer__glow {
+  position: absolute;
+  width: 320px;
+  height: 320px;
+  right: -60px;
+  top: -140px;
+  border-radius: 50%;
+  background: rgba(255, 196, 0, 0.18);
+  filter: blur(20px);
+  pointer-events: none;
+}
+
+.site-footer__grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1.4fr repeat(4, 1fr);
+  gap: 32px;
+  padding-bottom: 40px;
+  border-bottom: 1px solid rgba(147, 197, 253, 0.2);
+}
+
+.site-footer__brand img {
+  height: 48px;
+  margin-bottom: 14px;
+  display: block;
+}
+
+.site-footer__brand p {
+  max-width: 30ch;
+  font-size: 14px;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.site-footer h4 {
+  display: inline-block;
+  color: #fff;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: linear-gradient(105deg, rgba(21, 101, 216, 0.45), rgba(124, 58, 237, 0.4), rgba(229, 57, 53, 0.3));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.site-footer a {
+  display: block;
+  padding: 5px 0;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.72);
+  transition: color var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+
+.site-footer a:hover {
+  color: #ffc400;
+  transform: translateX(2px);
+}
+
+.site-footer__bottom {
+  position: relative;
+  z-index: 1;
+  padding: 18px 0 24px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+@media (max-width: 1023px) {
+  .site-footer__grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .site-footer__brand {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 640px) {
+  .site-footer__grid {
+    grid-template-columns: 1fr;
+  }
+}

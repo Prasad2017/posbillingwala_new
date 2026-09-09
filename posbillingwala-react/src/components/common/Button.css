@@ -1,0 +1,125 @@
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1.5px solid transparent;
+  border-radius: 999px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease),
+    background var(--dur) var(--ease), color var(--dur) var(--ease);
+  text-decoration: none;
+  white-space: nowrap;
+  position: relative;
+  line-height: 1.2;
+}
+
+.btn:hover:not(:disabled) {
+  transform: scale(1.02);
+}
+
+.btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.btn--sm {
+  padding: 8px 14px;
+  font-size: 13px;
+}
+
+.btn--md {
+  padding: 12px 22px;
+  font-size: 14px;
+}
+
+.btn--lg {
+  padding: 16px 28px;
+  font-size: 15px;
+}
+
+.btn--full {
+  width: 100%;
+}
+
+.btn--primary,
+.btn--blue {
+  background: var(--grad-blue);
+  color: var(--white);
+  box-shadow: 0 10px 24px rgba(21, 101, 216, 0.28);
+}
+
+.btn--primary:hover:not(:disabled),
+.btn--blue:hover:not(:disabled) {
+  box-shadow: 0 14px 28px rgba(21, 101, 216, 0.35);
+}
+
+.btn--red {
+  background: var(--grad-red);
+  color: var(--white);
+  box-shadow: 0 10px 24px rgba(229, 57, 53, 0.28);
+}
+
+.btn--secondary {
+  background: var(--navy);
+  color: var(--white);
+}
+
+.btn--outline {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.45);
+  color: var(--white);
+}
+
+.btn--outline:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.btn--ghost {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--dark-text);
+}
+
+.btn--ghost:hover:not(:disabled) {
+  border-color: var(--primary-blue);
+  color: var(--primary-blue);
+}
+
+.btn--yellow {
+  background: #ffc400;
+  color: var(--navy);
+  box-shadow: 0 10px 24px rgba(255, 196, 0, 0.28);
+}
+
+.btn__spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+.btn__label.is-loading {
+  opacity: 0.85;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 640px) {
+  .btn {
+    white-space: normal;
+    text-align: center;
+  }
+
+  .btn--lg {
+    padding: 14px 18px;
+    font-size: 15px;
+  }
+}

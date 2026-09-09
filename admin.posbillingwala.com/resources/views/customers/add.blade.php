@@ -135,21 +135,22 @@
 	</div>
 </div>
 <script type="text/javascript">
-
+	// Preview only — server regenerates a unique BW-XXXX-XXXX-XXXX key on save.
 	$(document).ready(function(){
-		generateString(10);
+		generateLicenseKey();
 	});
 
-	const characters ='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+	const characters = '0123456789ABCDEFGHJKLMNPQRSTUVWXYZ';
 
-	function generateString(length) {
-		let result = '';
-		const charactersLength = characters.length;
-		for ( let i = 0; i < length; i++ ) {
-			result += characters.charAt(Math.floor(Math.random() * charactersLength));
-		}
-
-		$("#inputEmailAddress1").val(result);
+	function generateLicenseKey() {
+		const segment = () => {
+			let part = '';
+			for (let i = 0; i < 4; i++) {
+				part += characters.charAt(Math.floor(Math.random() * characters.length));
+			}
+			return part;
+		};
+		$("#inputEmailAddress1").val('BW-' + segment() + '-' + segment() + '-' + segment());
 	}
 </script>
 <script type="text/javascript">

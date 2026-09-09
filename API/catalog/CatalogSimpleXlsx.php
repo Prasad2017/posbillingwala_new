@@ -218,10 +218,28 @@ class CatalogSimpleXlsx
                 $colLetters = preg_replace('/[0-9]+/', '', $ref);
                 $colIndex = self::columnLettersToIndex($colLetters);
                 $type = (string) $cell['t'];
-                $value = isset($cell->v) ? (string) $cell->v : '';
+                $value = '';
                 if ($type === 's') {
-                    $idx = (int) $value;
-                    $value = isset($sharedStrings[$idx]) ? $sharedStrings[$idx] : '';
+                    // Shared string table index
+                    $idx = isset($cell->v) ? (int) (string) $cell->v : -1;
+                    $value = ($idx >= 0 && isset($sharedStrings[$idx])) ? $sharedStrings[$idx] : '';
+                } elseif ($type === 'inlineStr') {
+                    // LibreOffice / some converters write text inline (no sharedStrings.xml)
+                    if (isset($cell->is)) {
+                        if (isset($cell->is->t)) {
+                            $value = (string) $cell->is->t;
+                        } elseif (isset($cell->is->r)) {
+                            foreach ($cell->is->r as $run) {
+                                $value .= (string) $run->t;
+                            }
+                        }
+                    }
+                } elseif ($type === 'b') {
+                    $raw = isset($cell->v) ? (string) $cell->v : '0';
+                    $value = ($raw === '1' || strtolower($raw) === 'true') ? '1' : '0';
+                } else {
+                    // Number, date serial, formula cached value, or plain string (t="str")
+                    $value = isset($cell->v) ? (string) $cell->v : '';
                 }
                 $rowData[$colIndex] = $value;
             }

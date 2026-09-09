@@ -1,0 +1,62 @@
+.dealer-card {
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: linear-gradient(180deg, #ffffff, #f8fbff);
+  border: 1px solid rgba(147, 197, 253, 0.55);
+  box-shadow: 0 12px 28px rgba(21, 101, 216, 0.08);
+}
+
+.dealer-card__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.dealer-card__top h3 {
+  font-size: 1.1rem;
+  background: linear-gradient(105deg, #0b3a82, #1565d8, #7c3aed);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.dealer-card__badge {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  background: linear-gradient(105deg, #fee2e2, #fce7f3);
+  color: #be123c;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid #fecdd3;
+}
+
+.dealer-card__person {
+  font-size: 14px;
+  color: var(--gray);
+}
+
+.dealer-card__loc {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: 14px;
+  color: var(--dark-text);
+}
+
+.dealer-card__loc svg {
+  color: var(--primary-blue);
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.dealer-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}

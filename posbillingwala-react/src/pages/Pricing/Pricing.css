@@ -1,0 +1,43 @@
+.pricing-tabs {
+  margin-bottom: 32px;
+}
+
+.pricing-page__row {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 20px;
+  align-items: stretch;
+  overflow-x: auto;
+  overflow-y: visible;
+  padding: 18px 4px 12px;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.pricing-page__row > * {
+  flex: 1 1 0;
+  min-width: 260px;
+  max-width: 360px;
+  scroll-snap-align: start;
+  overflow: visible;
+}
+
+@media (max-width: 1023px) {
+  .pricing-page__row > * {
+    flex: 0 0 min(70%, 300px);
+    max-width: 300px;
+  }
+}
+
+@media (max-width: 640px) {
+  .pricing-page__row {
+    gap: 14px;
+    padding: 14px 2px 10px;
+  }
+
+  .pricing-page__row > * {
+    flex: 0 0 85%;
+    max-width: 320px;
+  }
+}

@@ -217,7 +217,12 @@ public class CustomerRegistration extends Fragment implements View.OnClickListen
                         TextView txtYes = dialogView.findViewById(R.id.yes);
                         TextView txtMessage = dialogView.findViewById(R.id.message);
 
-                        String message = "Registration completed successfully.</br><b>License key:</b> <font color='#ff0000'>" + licenseKey + "</font></br><b>PB-PIN (daily login):</b> <font color='#ff0000'>" + mpin + "</font></br><b>Report PIN:</b> <font color='#ff0000'>" + reportPin + "</font>";
+                        String issuedKey = response.body().getLicenseKey();
+                        if (issuedKey == null || issuedKey.isEmpty()) {
+                            issuedKey = licenseKey;
+                        }
+
+                        String message = "Registration completed successfully.</br><b>License key:</b> <font color='#ff0000'>" + issuedKey + "</font></br><b>PB-PIN (daily login):</b> <font color='#ff0000'>" + mpin + "</font></br><b>Report PIN:</b> <font color='#ff0000'>" + reportPin + "</font>";
                         txtMessage.setText(Html.fromHtml(message));
                         txtMessage.setTextIsSelectable(true);
 

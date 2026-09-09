@@ -29,116 +29,17 @@ class WebsiteContentController extends Controller
         }
     }
 
-    public function seedWebsitePages(): void
+    private function pageOrCreate(string $slug, string $title): WebsitePage
     {
-        $this->seedDefaults();
-    }
-
-    private function seedDefaults(): void
-    {
-        if (!WebsitePage::where('slug', 'privacy')->exists()) {
-            WebsitePage::create([
-                'slug' => 'privacy',
-                'title' => 'Privacy Policy',
-                'body_html' => $this->defaultPrivacyHtml(),
-                'updated_at' => '2026-08-26 00:00:00',
-            ]);
-        } else {
-            $privacy = WebsitePage::where('slug', 'privacy')->first();
-            if ($privacy && !str_contains((string) $privacy->body_html, 'sawantp500@gmail.com')) {
-                $privacy->body_html = $this->defaultPrivacyHtml();
-                $privacy->updated_at = '2026-08-26 00:00:00';
-                $privacy->save();
-            }
-        }
-
-        if (!WebsitePage::where('slug', 'about')->exists()) {
-            WebsitePage::create([
-                'slug' => 'about',
-                'title' => 'About Us',
-                'body_html' => $this->defaultAboutHtml(),
-                'updated_at' => now(),
-            ]);
-        } else {
-            $about = WebsitePage::where('slug', 'about')->first();
-            if ($about && !str_contains((string) $about->body_html, 'CANA Tech Solutions')) {
-                $about->body_html = $this->defaultAboutHtml();
-                $about->updated_at = now();
-                $about->save();
-            }
-        }
-    }
-
-    private function defaultAboutHtml(): string
-    {
-        return '<p class="about-estd"><strong>Estd. 2022</strong></p>'
-            . '<p>POS Billingwala is an offline-first billing platform built for restaurants, cafés, sweet shops, and retail counters across India. We started with a simple goal: keep billing fast and reliable even when the internet does not.</p>'
-            . '<p>Since 2022, thousands of counters have trusted POS Billingwala for daily sales, thermal printing, table and takeaway billing, inventory tracking, and owner-level reporting — without depending on constant connectivity.</p>'
-            . '<h2>Our mission</h2>'
-            . '<p>Help every business bill faster, print reliably, and stay in control — from a single shop to multi-branch operations.</p>'
-            . '<h2>What we offer</h2>'
-            . '<p>Three connected Android apps work together with a secure web admin panel:</p>'
-            . '<ul>'
-            . '<li><strong>POS app</strong> — counter billing, KOT, mess tokens, combos, Bluetooth thermal printing, and offline sales</li>'
-            . '<li><strong>Owner app</strong> — sales dashboards, catalog management, branch insights, and business overview on the go</li>'
-            . '<li><strong>Dealer app</strong> — customer onboarding, licence management, and partner sales tools</li>'
-            . '</ul>'
-            . '<p>Owners and admins can also use the browser-based web panel for deeper reporting, user management, and configuration.</p>'
-            . '<h2>Built for India</h2>'
-            . '<p>Multilingual receipts (English, Hindi, Marathi), GST-friendly billing, combo and mess workflows, multi-branch sync, and hardware integrations designed for how Indian businesses actually run — morning rush to closing time.</p>'
-            . '<h2>Why businesses choose us</h2>'
-            . '<ul>'
-            . '<li>Works offline — billing never stops when the network drops</li>'
-            . '<li>Simple for staff, powerful for owners</li>'
-            . '<li>Regular updates, support tickets, and dealer-backed onboarding</li>'
-            . '<li>Affordable licensing for shops of every size</li>'
-            . '</ul>'
-            . '<h2>Developed by</h2>'
-            . '<p>POS Billingwala is developed by <strong>CANA Tech Solutions Private Limited</strong>, a technology company focused on practical software for Indian small and medium businesses.</p>'
-            . '<h2>Contact</h2>'
-            . '<p>Questions, demos, or partnership enquiries? Use the contact form on our website or email <a href="mailto:support@posbillingwala.com">support@posbillingwala.com</a>.</p>';
-    }
-
-    private function defaultPrivacyHtml(): string
-    {
-        return '<p>POS Billingwala (&ldquo;POS Billingwala&rdquo;) respects the privacy rights of its customers and protects the personal information collected. To further this commitment, we have adopted this Privacy Policy (&ldquo;Privacy Policy&rdquo;) to guide how we collect and use the information you provide us.</p>'
-            . '<h2>Scope of this Privacy Policy</h2>'
-            . '<p>This Privacy Policy applies only to personal information and non-personal information submitted. By installing and using our app, you are accepting the practices described in this Privacy Policy. If you do not agree to this Privacy Policy, please do not install or use. We reserve the right to modify this Privacy Policy at reasonable times, so please review it frequently. Your continued use of the application will signify your acceptance of the changes to this Privacy Policy.</p>'
-            . '<h2>Information We Collect</h2>'
-            . '<p>When you use POS Billingwala, we may collect and process the following information depending on the features you use:</p>'
-            . '<p><strong>Personal Information.</strong> We may collect your name, mobile phone number, address, and other information that you voluntarily provide while using the application or services.</p>'
-            . '<p><strong>Device Information.</strong> We may collect device information, device identifiers, operating system information, application information, and other technical information required to maintain and secure the application.</p>'
-            . '<p><strong>Location Information.</strong> We may collect approximate or precise location information when required for specific features and when permission is granted.</p>'
-            . '<p><strong>Photos and Media.</strong> We may access photos or images that you choose to capture, upload, or provide through the application when required for app functionality.</p>'
-            . '<p><strong>Crash, Diagnostic and Analytics Data.</strong> We may collect crash reports, error logs, diagnostic information, application performance information, and usage or analytics information. This information helps us identify crashes, troubleshoot problems, monitor application performance, and improve our services.</p>'
-            . '<h2>How We Use Information</h2>'
-            . '<p>The information we collect may be used to provide and operate the application, authenticate users, provide requested features, maintain security, troubleshoot errors and crashes, improve application performance, analyze usage, and improve our services.</p>'
-            . '<h2>How We Store and Process Information</h2>'
-            . '<p>Some information may be stored locally on your device. Depending on the features you use, information may also be securely transmitted to and processed by our servers or trusted third-party service providers that help us provide application functionality, synchronization, analytics, crash reporting, security, or other services.</p>'
-            . '<p>We only collect information that is reasonably necessary for the relevant functionality and purposes described in this Privacy Policy.</p>'
-            . '<h2>Third-Party Services</h2>'
-            . '<p>POS Billingwala may use third-party SDKs, APIs, libraries, analytics services, crash-reporting services, cloud services, messaging services, or other technology providers. These third-party services may process certain information required to provide their respective services. Their processing of information is governed by their applicable privacy policies and terms.</p>'
-            . '<h2>Data Security</h2>'
-            . '<p>We take reasonable technical and organizational measures to protect the information we process against unauthorized access, loss, misuse, alteration, or disclosure. However, no method of electronic storage or transmission over the internet can be guaranteed to be completely secure.</p>'
-            . '<h2>Data Retention and Deletion</h2>'
-            . '<p>We retain information for as long as reasonably necessary to provide our services, comply with applicable legal obligations, resolve disputes, maintain security, and enforce our agreements.</p>'
-            . '<p>Where applicable, users may request deletion of their personal information by contacting us using the contact details provided in this Privacy Policy. Certain information may be retained where required by law or for legitimate business and security purposes.</p>'
-            . '<h2>Children&rsquo;s personal information</h2>'
-            . '<p>The Services comply with the Children&rsquo;s Online Privacy Protection Act (&ldquo;COPPA&rdquo;). We do not knowingly collect personal information from children under the age of 13 through the Services.</p>'
-            . '<h2>Links to third-party sites or services</h2>'
-            . '<p>The Services may contain links to third-party sites, products or services. POS Billingwala is not responsible for the privacy practices or the content of such sites or services. If you are concerned about the privacy policy of a certain third party, we recommend that you read the privacy policy of the site or service to which you link before you submit any personal information.</p>'
-            . '<h2>Changes to this Privacy Policy</h2>'
-            . '<p>This policy may be updated at any time. We will publish any updated version via the Service. Please check this page from time to time. Your continued use of the App after changes take effect indicates acceptance of the amended policy. If you do not agree, uninstall the App and avoid further use.</p>'
-            . '<h2>Questions</h2>'
-            . '<p>If you have questions about this Privacy Policy, email <a href="mailto:sawantp500@gmail.com">sawantp500@gmail.com</a>.</p>'
-            . '<p><em>This Privacy Policy was last updated: 26 August 2026.</em></p>';
+        return WebsitePage::firstOrCreate(
+            ['slug' => $slug],
+            ['title' => $title, 'body_html' => '', 'updated_at' => now()]
+        );
     }
 
     public function hub()
     {
         $this->adminOnly();
-        $this->seedDefaults();
-        app(\App\Http\Controllers\WebsiteCatalogController::class)->seedDefaults();
 
         return view('website.hub', [
             'clientCount' => WebsiteClient::count(),
@@ -154,8 +55,7 @@ class WebsiteContentController extends Controller
     public function privacy()
     {
         $this->adminOnly();
-        $this->seedDefaults();
-        $page = WebsitePage::where('slug', 'privacy')->firstOrFail();
+        $page = $this->pageOrCreate('privacy', 'Privacy Policy');
 
         return view('website.privacy', compact('page'));
     }
@@ -168,7 +68,7 @@ class WebsiteContentController extends Controller
             'body_html' => 'required|string',
         ]);
 
-        $page = WebsitePage::where('slug', 'privacy')->firstOrFail();
+        $page = $this->pageOrCreate('privacy', 'Privacy Policy');
         $page->title = $validated['title'];
         $page->body_html = $validated['body_html'];
         $page->updated_at = now();
@@ -180,8 +80,7 @@ class WebsiteContentController extends Controller
     public function about()
     {
         $this->adminOnly();
-        $this->seedDefaults();
-        $page = WebsitePage::where('slug', 'about')->firstOrFail();
+        $page = $this->pageOrCreate('about', 'About Us');
 
         return view('website.about', compact('page'));
     }
@@ -194,7 +93,7 @@ class WebsiteContentController extends Controller
             'body_html' => 'required|string',
         ]);
 
-        $page = WebsitePage::where('slug', 'about')->firstOrFail();
+        $page = $this->pageOrCreate('about', 'About Us');
         $page->title = $validated['title'];
         $page->body_html = $validated['body_html'];
         $page->updated_at = now();

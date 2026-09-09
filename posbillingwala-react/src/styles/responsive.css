@@ -1,0 +1,39 @@
+@media (max-width: 1023px) {
+  .section {
+    padding: var(--space-6) 0;
+  }
+
+  .container {
+    width: min(100% - 28px, var(--container));
+  }
+
+  .hide-mobile {
+    display: none !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hide-desktop {
+    display: none !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .container {
+    width: min(100% - 24px, var(--container));
+  }
+
+  .section {
+    padding: var(--space-5) 0;
+  }
+
+  .page-hero {
+    padding: calc(var(--header-h) + 32px) 0 40px;
+  }
+}
+
+@media (min-width: 1440px) {
+  :root {
+    --container: 1240px;
+  }
+}

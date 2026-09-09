@@ -1,0 +1,155 @@
+.section-title {
+  margin-bottom: var(--space-5);
+  max-width: 720px;
+}
+
+.section-title--center {
+  text-align: center;
+  margin-inline: auto;
+}
+
+.section-title--left {
+  text-align: left;
+}
+
+.section-title__eyebrow {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--primary-blue);
+  margin-bottom: var(--space-2);
+}
+
+.section-title h2 {
+  font-size: clamp(1.75rem, 3.4vw, 2.6rem);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  color: var(--dark-text);
+  line-height: 1.15;
+}
+
+.section-title p {
+  margin-top: 12px;
+  color: var(--gray);
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+/* Colorful variant */
+.section-title--colorful .section-title__eyebrow,
+.section-title__eyebrow--badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #2563eb, #7c3aed, #db2777);
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: clamp(0.85rem, 1.4vw, 1rem);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  box-shadow: 0 10px 22px rgba(124, 58, 237, 0.28);
+  margin-bottom: 16px;
+}
+
+.section-title--colorful h2 {
+  font-size: clamp(1.9rem, 3.4vw, 2.85rem);
+  font-weight: 900;
+  background: linear-gradient(105deg, #0b3a82 0%, #1565d8 35%, #7c3aed 70%, #e53935 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  max-width: 18ch;
+  margin-inline: auto;
+}
+
+.section-title--colorful.section-title--left h2 {
+  margin-inline: 0;
+}
+
+.section-title--colorful p {
+  margin-top: 14px;
+  color: #475569;
+  font-size: 1.12rem;
+  font-weight: 600;
+  max-width: 46ch;
+  margin-inline: auto;
+}
+
+.section-title--colorful.section-title--left p {
+  margin-inline: 0;
+}
+
+/* Force title + subtitle on one line each (desktop) */
+.section-title--single {
+  max-width: min(100%, 980px);
+}
+
+.section-title--single h2,
+.section-title--single p {
+  max-width: none;
+  white-space: nowrap;
+}
+
+.section-title--single p {
+  font-size: clamp(0.92rem, 1.5vw, 1.12rem);
+}
+
+@media (max-width: 1023px) {
+  .section-title--single h2,
+  .section-title--single p {
+    white-space: normal;
+  }
+
+  .section-title--colorful h2 {
+    max-width: none;
+  }
+
+  .section-title--colorful p {
+    max-width: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .section-title--single h2,
+  .section-title h2 {
+    font-size: clamp(1.45rem, 6.5vw, 2rem);
+  }
+
+  .section-title--colorful .section-title__eyebrow,
+  .section-title__eyebrow--badge {
+    padding: 8px 14px;
+    font-size: 0.78rem;
+  }
+}
+
+.section-title--light .section-title__eyebrow {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.section-title--light h2,
+.section-title--light p {
+  color: var(--white);
+}
+
+.section-title--light p {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.section-title--light.section-title--colorful .section-title__eyebrow {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  box-shadow: none;
+}
+
+.section-title--light.section-title--colorful h2 {
+  background: linear-gradient(90deg, #fff 0%, #ffd54f 50%, #fff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.section-title--light.section-title--colorful p {
+  color: rgba(255, 255, 255, 0.8);
+}

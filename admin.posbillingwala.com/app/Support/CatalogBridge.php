@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use Auth;
+use Illuminate\Support\Facades\DB;
 use mysqli;
 
 class CatalogBridge
@@ -34,6 +35,40 @@ class CatalogBridge
         return $con;
     }
 
+    /**
+     * Resolve shared catalog bootstrap.php (local API/ or production androidApp/).
+     */
+    public static function resolveBootstrapPath(): ?string
+    {
+        $androidApp = env('ANDROID_APP_PATH');
+        $candidates = array_filter([
+            env('CATALOG_BOOTSTRAP_PATH'),
+            is_string($androidApp) && $androidApp !== ''
+                ? rtrim(str_replace('\\', '/', $androidApp), '/') . '/catalog/bootstrap.php'
+                : null,
+            // Production: API is deployed as posbillingwala.com/androidApp
+            '/home/rgusomuk/posbillingwala.com/androidApp/catalog/bootstrap.php',
+            dirname(base_path()) . '/posbillingwala.com/androidApp/catalog/bootstrap.php',
+            base_path('../posbillingwala.com/androidApp/catalog/bootstrap.php'),
+            // Local monorepo: ../API/catalog
+            base_path('../API/catalog/bootstrap.php'),
+            base_path('API/catalog/bootstrap.php'),
+            dirname(base_path()) . '/API/catalog/bootstrap.php',
+        ]);
+
+        foreach ($candidates as $candidate) {
+            if (!is_string($candidate) || $candidate === '') {
+                continue;
+            }
+            $candidate = str_replace('\\', '/', $candidate);
+            if (is_file($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return null;
+    }
+
     public static function bootstrap(): void
     {
         static $bootstrapped = false;
@@ -41,27 +76,19 @@ class CatalogBridge
             return;
         }
 
-        $candidates = array_filter([
-            env('CATALOG_BOOTSTRAP_PATH'),
-            base_path('../API/catalog/bootstrap.php'),
-            base_path('API/catalog/bootstrap.php'),
-            dirname(base_path()) . '/API/catalog/bootstrap.php',
-        ]);
-
-        $apiCatalogPath = null;
-        foreach ($candidates as $candidate) {
-            if ($candidate !== null && $candidate !== '' && is_file($candidate)) {
-                $apiCatalogPath = $candidate;
-                break;
-            }
-        }
-
+        $apiCatalogPath = self::resolveBootstrapPath();
         if ($apiCatalogPath === null) {
-            throw new \RuntimeException('Shared catalog module not found. Deploy API/catalog alongside the admin app or set CATALOG_BOOTSTRAP_PATH in .env.');
+            throw new \RuntimeException(
+                'Shared catalog module not found. On the server, catalog lives at '
+                . 'posbillingwala.com/androidApp/catalog/. Set CATALOG_BOOTSTRAP_PATH or ANDROID_APP_PATH in .env.'
+            );
         }
 
         require_once $apiCatalogPath;
-        require_once dirname($apiCatalogPath) . '/catalog_handlers.php';
+        $handlers = dirname($apiCatalogPath) . '/catalog_handlers.php';
+        if (is_file($handlers)) {
+            require_once $handlers;
+        }
         $bootstrapped = true;
     }
 
@@ -93,14 +120,46 @@ class CatalogBridge
             return false;
         }
 
-        self::bootstrap();
-        $con = self::connection();
+        // Prefer shared catalog auth when available; fall back to Laravel DB so
+        // Mess Members / customer pages keep working if only path config is wrong.
+        if (self::resolveBootstrapPath() !== null) {
+            try {
+                self::bootstrap();
+                if (function_exists('catalog_authorize_customer')) {
+                    return catalog_authorize_customer(
+                        self::connection(),
+                        $actor['actor_type'],
+                        $actor['actor_id'],
+                        $customerId
+                    ) !== null;
+                }
+            } catch (\Throwable $e) {
+                \Log::warning('CatalogBridge::authorizeCustomer bootstrap failed: ' . $e->getMessage());
+            }
+        }
 
-        return catalog_authorize_customer(
-            $con,
-            $actor['actor_type'],
-            $actor['actor_id'],
-            $customerId
-        ) !== null;
+        return self::authorizeCustomerLocal($actor['actor_type'], $actor['actor_id'], $customerId);
+    }
+
+    private static function authorizeCustomerLocal(string $actorType, int $actorId, int $customerId): bool
+    {
+        if ($customerId <= 0) {
+            return false;
+        }
+
+        $query = DB::table('users')
+            ->where('id', $customerId)
+            ->where('role_id', 3)
+            ->where('is_active', 1);
+
+        if ($actorType === 'dealer') {
+            $query->where('dealerId', $actorId);
+        } elseif ($actorType === 'owner') {
+            $query->where('id', $actorId);
+        } elseif ($actorType !== 'admin') {
+            return false;
+        }
+
+        return $query->exists();
     }
 }

@@ -348,7 +348,7 @@ class AdminMetrics
         );
 
         $activeLicenses = self::countOne(
-            "SELECT COUNT(*) AS c FROM licenses WHERE " . self::licenseActiveSql(),
+            "SELECT COUNT(*) AS c FROM licenses l WHERE " . self::licenseActiveSql('l'),
             [$today]
         );
 
@@ -370,8 +370,8 @@ class AdminMetrics
         $totalDevices = self::deviceCount();
 
         $trialLicenses = self::countOne(
-            "SELECT COUNT(*) AS c FROM licenses
-             WHERE " . self::trialSql() . " AND " . self::licenseActiveSql(),
+            "SELECT COUNT(*) AS c FROM licenses l
+             WHERE " . self::trialSql('l') . " AND " . self::licenseActiveSql('l'),
             [$today]
         );
 
@@ -383,10 +383,10 @@ class AdminMetrics
         );
 
         $trialLicensesExpiringTomorrow = self::countOne(
-            "SELECT COUNT(*) AS c FROM licenses
-             WHERE " . self::trialSql() . "
-               AND LOWER(IFNULL(licenseStatus,'')) NOT IN ('expire','expired','suspended','revoked')
-               AND expiryDate = ?",
+            "SELECT COUNT(*) AS c FROM licenses l
+             WHERE " . self::trialSql('l') . "
+               AND LOWER(IFNULL(l.licenseStatus,'')) NOT IN ('expire','expired','suspended','revoked')
+               AND l.expiryDate = ?",
             [$tomorrow]
         );
 
@@ -612,14 +612,16 @@ class AdminMetrics
         try {
             $filter = self::invoiceFilterSql($filters);
             $rows = DB::select(
-                "SELECT COALESCE(NULLIF(TRIM(i.paymentMode), ''), 'Cash') AS mode,
-                        COALESCE(SUM(i.totalAmount),0) AS total,
-                        COUNT(*) AS bills
-                 FROM invoice i
-                 INNER JOIN licenses l ON l.id = i.licenseId
-                 INNER JOIN users u ON u.id = l.userId AND u.role_id='3'
-                 WHERE DATE(i.invoiceDate) >= ? AND DATE(i.invoiceDate) <= ?" . $filter['sql'] . "
-                 GROUP BY COALESCE(NULLIF(TRIM(i.paymentMode), ''), 'Cash')
+                "SELECT mode, COALESCE(SUM(amount),0) AS total, COUNT(*) AS bills
+                 FROM (
+                    SELECT COALESCE(NULLIF(TRIM(i.paymentMode), ''), 'Cash') AS mode,
+                           i.totalAmount AS amount
+                    FROM invoice i
+                    INNER JOIN licenses l ON l.id = i.licenseId
+                    INNER JOIN users u ON u.id = l.userId AND u.role_id='3'
+                    WHERE DATE(i.invoiceDate) >= ? AND DATE(i.invoiceDate) <= ?" . $filter['sql'] . "
+                 ) pay
+                 GROUP BY mode
                  ORDER BY total DESC",
                 array_merge([$from, $to], $filter['params'])
             );
@@ -683,16 +685,19 @@ class AdminMetrics
         try {
             $filter = self::invoiceFilterSql($filters);
             $rows = DB::select(
-                "SELECT COALESCE(NULLIF(TRIM(c.categoryName), ''), 'Others') AS categoryName,
-                        COALESCE(SUM(fp.productQuantity * fp.productPrice),0) AS total
-                 FROM invoice_final_product fp
-                 INNER JOIN invoice i ON i.invoiceNumber = fp.invoiceNumber
-                 INNER JOIN licenses l ON l.id = i.licenseId
-                 INNER JOIN users u ON u.id = l.userId AND u.role_id='3'
-                 LEFT JOIN products p ON TRIM(p.productName) = TRIM(fp.productName) AND p.userId = u.id
-                 LEFT JOIN categories c ON c.categoryId = p.categoryId
-                 WHERE DATE(i.invoiceDate) >= ? AND DATE(i.invoiceDate) <= ?" . $filter['sql'] . "
-                 GROUP BY COALESCE(NULLIF(TRIM(c.categoryName), ''), 'Others')
+                "SELECT categoryName, COALESCE(SUM(lineTotal),0) AS total
+                 FROM (
+                    SELECT COALESCE(NULLIF(TRIM(c.categoryName), ''), 'Others') AS categoryName,
+                           (fp.productQuantity * fp.productPrice) AS lineTotal
+                    FROM invoice_final_product fp
+                    INNER JOIN invoice i ON i.invoiceNumber = fp.invoiceNumber
+                    INNER JOIN licenses l ON l.id = i.licenseId
+                    INNER JOIN users u ON u.id = l.userId AND u.role_id='3'
+                    LEFT JOIN products p ON TRIM(p.productName) = TRIM(fp.productName) AND p.userId = u.id
+                    LEFT JOIN categories c ON c.categoryId = p.categoryId
+                    WHERE DATE(i.invoiceDate) >= ? AND DATE(i.invoiceDate) <= ?" . $filter['sql'] . "
+                 ) cat
+                 GROUP BY categoryName
                  ORDER BY total DESC
                  LIMIT {$limit}",
                 array_merge([$from, $to], $filter['params'])
@@ -1169,7 +1174,7 @@ class AdminMetrics
             $monthStart = self::today()->copy()->startOfMonth()->toDateString();
             $total = (int) DB::table('licenses')->count();
             $active = self::countOne(
-                "SELECT COUNT(*) AS c FROM licenses WHERE " . self::licenseActiveSql(),
+                "SELECT COUNT(*) AS c FROM licenses l WHERE " . self::licenseActiveSql('l'),
                 [$today]
             );
             $inactive = max(0, $total - $active);
@@ -1227,9 +1232,9 @@ class AdminMetrics
             $today = self::today()->toDateString();
             $total = (int) DB::table('licenses')->whereNotNull('android_device_id')->whereRaw("TRIM(android_device_id)<>''")->count();
             $active = self::countOne(
-                "SELECT COUNT(*) AS c FROM licenses
-                 WHERE android_device_id IS NOT NULL AND TRIM(android_device_id)<>''
-                   AND " . self::licenseActiveSql(),
+                "SELECT COUNT(*) AS c FROM licenses l
+                 WHERE l.android_device_id IS NOT NULL AND TRIM(l.android_device_id)<>''
+                   AND " . self::licenseActiveSql('l'),
                 [$today]
             );
             $inactive = max(0, $total - $active);

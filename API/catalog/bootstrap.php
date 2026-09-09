@@ -8,6 +8,9 @@ if (!defined('CATALOG_VENDOR_LOADED')) {
     $candidates = array(
         __DIR__ . '/../vendor/autoload.php',
         __DIR__ . '/../../admin.posbillingwala.com/vendor/autoload.php',
+        // Production: admin is a sibling domain folder under the account home
+        __DIR__ . '/../../../admin.posbillingwala.com/vendor/autoload.php',
+        '/home/rgusomuk/admin.posbillingwala.com/vendor/autoload.php',
     );
 
     foreach ($candidates as $autoload) {
