@@ -87,9 +87,9 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
     public static final String KOT_TABLE = "kot";
     public static final String KOT_ITEM_TABLE = "kot_item";
     // Database Version
-    public static final int DATABASE_VERSION = 29;
+    public static final int DATABASE_VERSION = 30;
 
-    /** SQL suffix: only rows for the logged-in licence branch. */
+    /** SQL suffix: only rows for the logged-in license branch. */
     private static String andBranchScope(String tableAlias) {
         String branchId = BranchSession.effectiveBranchId();
         if (branchId == null || branchId.isEmpty()) {
@@ -221,26 +221,52 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             + "(cartId INTEGER PRIMARY KEY AUTOINCREMENT, userId VARCHAR, productId VARCHAR, productName VARCHAR,"
             + " productOldPrice VARCHAR, productNewPrice VARCHAR, productUnit VARCHAR, productCGST VARCHAR,"
             + " productSGST VARCHAR, productQuantity VARCHAR, cartDiscount VARCHAR, cartDiscountType VARCHAR,"
-            + " cartPackingCharge VARCHAR, cartPackingChargeType VARCHAR,"
+            + " cartPackingCharge VARCHAR DEFAULT '0', cartPackingChargeType VARCHAR DEFAULT 'Percentage',"
             + " noOfTable VARCHAR, cartOrderStatus VARCHAR, cartStatus TINYINT,"
-            + " portionId VARCHAR, portionName VARCHAR, snapshotProductName VARCHAR, snapshotLinePrice VARCHAR)";
+            + " portionId VARCHAR, portionName VARCHAR, snapshotProductName VARCHAR, snapshotLinePrice VARCHAR,"
+            + " cartItemType VARCHAR DEFAULT 'PRODUCT', comboId VARCHAR, snapshotComboComponents VARCHAR,"
+            + " diningSessionId VARCHAR, orderRoundId VARCHAR, kotPrinted VARCHAR DEFAULT '0')";
 
-    public final String INVOICE_QUERY = "CREATE TABLE IF NOT EXISTS " + INVOICE_TABLE + "(invoiceId INTEGER PRIMARY KEY AUTOINCREMENT, userId VARCHAR, noOfTable VARCHAR, invoiceNumber VARCHAR, customerName VARCHAR, customerMobile VARCHAR, customerEmail VARCHAR, " + "customerAddress VARCHAR, invoiceDate VARCHAR, subTotal VARCHAR, totalGSTAmount, discount VARCHAR, discountType VARCHAR, packingCharge VARCHAR, packingChargeType VARCHAR, totalAmount VARCHAR, paymentMode VARCHAR, cashAmount VARCHAR DEFAULT '0', upiAmount VARCHAR DEFAULT '0', invoiceOrderStatus VARCHAR, invoiceType VARCHAR, invoiceNetworkStatus VARCHAR, invoiceStatus TINYINT)";
+    public final String INVOICE_QUERY = "CREATE TABLE IF NOT EXISTS " + INVOICE_TABLE
+            + "(invoiceId INTEGER PRIMARY KEY AUTOINCREMENT, userId VARCHAR, noOfTable VARCHAR, invoiceNumber VARCHAR,"
+            + " customerName VARCHAR, customerMobile VARCHAR, customerEmail VARCHAR, customerAddress VARCHAR,"
+            + " invoiceDate VARCHAR, subTotal VARCHAR, totalGSTAmount VARCHAR, discount VARCHAR, discountType VARCHAR,"
+            + " packingCharge VARCHAR DEFAULT '0', packingChargeType VARCHAR DEFAULT 'Percentage',"
+            + " totalAmount VARCHAR, paymentMode VARCHAR, cashAmount VARCHAR DEFAULT '0', upiAmount VARCHAR DEFAULT '0',"
+            + " invoiceOrderStatus VARCHAR, invoiceType VARCHAR, invoiceNetworkStatus VARCHAR, invoiceStatus TINYINT,"
+            + " organizationId VARCHAR, branchId VARCHAR, deviceId VARCHAR,"
+            + " diningSessionId VARCHAR, billPrintStatus VARCHAR DEFAULT '')";
 
     public final String INVOICE_PRODUCT_QUERY = "CREATE TABLE IF NOT EXISTS " + INVOICE_PRODUCT_TABLE
             + "(invoiceProductId INTEGER PRIMARY KEY AUTOINCREMENT, invoiceNumber VARCHAR, productName VARCHAR,"
             + " productPrice VARCHAR, productUnit VARCHAR, productCGST VARCHAR, productSGST VARCHAR,"
             + " productQuantity VARCHAR, productStatus VARCHAR, invoiceProductNetworkStatus VARCHAR,"
             + " invoiceProductStatus TINYINT,"
-            + " portionId VARCHAR, portionName VARCHAR, snapshotProductName VARCHAR, snapshotLinePrice VARCHAR)";
+            + " portionId VARCHAR, portionName VARCHAR, snapshotProductName VARCHAR, snapshotLinePrice VARCHAR,"
+            + " organizationId VARCHAR, branchId VARCHAR, deviceId VARCHAR,"
+            + " invoiceItemType VARCHAR DEFAULT 'PRODUCT', comboId VARCHAR, snapshotComboComponents VARCHAR)";
 
-    public final String PRINTER_SETTING_QUERY = "CREATE TABLE IF NOT EXISTS " + PRINTER_SETTING_TABLE + "(settingId INTEGER PRIMARY KEY AUTOINCREMENT, printerName VARCHAR, invoicePrefix VARCHAR, invoiceTitle VARCHAR, invoiceTermsCondition VARCHAR, logoUse VARCHAR, paymentUse VARCHAR, customerUse VARCHAR, productQuantityUpdate VARCHAR, duplicateBillUse VARCHAR, bluetoothAddress VARCHAR, bluetoothKOTAddress VARCHAR, KOTPrinterName VARCHAR, printerFeedLines VARCHAR, KotPrinterFeedLines VARCHAR, settingStatus TINYINT)";
+    public final String PRINTER_SETTING_QUERY = "CREATE TABLE IF NOT EXISTS " + PRINTER_SETTING_TABLE
+            + "(settingId INTEGER PRIMARY KEY AUTOINCREMENT, printerName VARCHAR, invoicePrefix VARCHAR,"
+            + " invoiceTitle VARCHAR, invoiceTermsCondition VARCHAR, logoUse VARCHAR, paymentUse VARCHAR,"
+            + " customerUse VARCHAR, productQuantityUpdate VARCHAR, duplicateBillUse VARCHAR,"
+            + " bluetoothAddress VARCHAR, bluetoothKOTAddress VARCHAR, KOTPrinterName VARCHAR,"
+            + " printerFeedLines VARCHAR, KotPrinterFeedLines VARCHAR, settingStatus TINYINT,"
+            + " kotEnable VARCHAR DEFAULT 'on', kotPrefix VARCHAR DEFAULT 'KOT-', kotCopies VARCHAR DEFAULT '1',"
+            + " kotAutoPrint VARCHAR DEFAULT 'off', kotPreview VARCHAR DEFAULT 'on')";
 
     public final String COMPANY_QUERY = "CREATE TABLE IF NOT EXISTS " + COMPANY_TABLE + "(companyId INTEGER PRIMARY KEY AUTOINCREMENT, companyName VARCHAR, cashierName VARCHAR, companyMobile VARCHAR, " + "companyAddress VARCHAR, shopName1 VARCHAR, shopName2 VARCHAR, addressLine1 VARCHAR, addressLine2 VARCHAR, addressLine3 VARCHAR, phoneNo1 VARCHAR, phoneNo2 VARCHAR, currencyName VARCHAR, countryName VARCHAR, stateName VARCHAR, tableStatus VARCHAR, noOfTable VARCHAR,gstStatus VARCHAR, gstNumber VARCHAR, shopCGST VARCHAR, shopSGST VARCHAR, panNumber VARCHAR, companyFssis VARCHAR, companyLogo VARCHAR, paymentLogo VARCHAR, openingMinutes VARCHAR, closingMinutes VARCHAR, companyStatus TINYINT)";
 
-    public final String INVENTORY_QUERY = "CREATE TABLE IF NOT EXISTS " + INVENTORY_TABLE + "(inventoryId INTEGER PRIMARY KEY AUTOINCREMENT, productId VARCHAR, productInventoryQuantity VARCHAR, afterSaleInventoryQuantity VARCHAR, saleInventoryQuantity VARCHAR, inventoryDate VARCHAR, inventoryNetworkStatus VARCHAR, inventoryStatus TINYINT)";
+    public final String INVENTORY_QUERY = "CREATE TABLE IF NOT EXISTS " + INVENTORY_TABLE
+            + "(inventoryId INTEGER PRIMARY KEY AUTOINCREMENT, productId VARCHAR, productInventoryQuantity VARCHAR,"
+            + " afterSaleInventoryQuantity VARCHAR, saleInventoryQuantity VARCHAR, inventoryDate VARCHAR,"
+            + " inventoryNetworkStatus VARCHAR, inventoryStatus TINYINT,"
+            + " organizationId VARCHAR, branchId VARCHAR, deviceId VARCHAR)";
 
-    public final String EXPENSES_QUERY = "CREATE TABLE IF NOT EXISTS " + EXPENSES_TABLE + "(expensesId INTEGER PRIMARY KEY AUTOINCREMENT, expensesName VARCHAR, expensesAmount VARCHAR, expensesDate VARCHAR, expensesNetworkStatus VARCHAR, expensesStatus TINYINT)";
+    public final String EXPENSES_QUERY = "CREATE TABLE IF NOT EXISTS " + EXPENSES_TABLE
+            + "(expensesId INTEGER PRIMARY KEY AUTOINCREMENT, expensesName VARCHAR, expensesAmount VARCHAR,"
+            + " expensesDate VARCHAR, expensesNetworkStatus VARCHAR, expensesStatus TINYINT,"
+            + " organizationId VARCHAR, branchId VARCHAR, deviceId VARCHAR)";
 
     public final String MEMBER_QUERY = "CREATE TABLE IF NOT EXISTS " + MEMBER_TABLE + "(memberId INTEGER PRIMARY KEY AUTOINCREMENT, memberName VARCHAR, memberAddress VARCHAR, memberMobileNumber VARCHAR, memberAlternetMobileNumber VARCHAR, memberNetworkStatus VARCHAR, memberStatus TINYINT, registrationNo VARCHAR, memberType VARCHAR, rollNo VARCHAR, college VARCHAR, studentYear VARCHAR, company VARCHAR)";
     public final String MEMBER_PAYMENT_QUERY = "CREATE TABLE IF NOT EXISTS " + MEMBER_PAYMENT_TABLE + "(paymentId INTEGER PRIMARY KEY AUTOINCREMENT, memberId VARCHAR, memberName VARCHAR, paymentMessAmount VARCHAR, paymentPaidAmount VARCHAR, messTotalDays VARCHAR, paymentDate VARCHAR, paymentNetworkStatus VARCHAR, paymentStatus TINYINT)";
@@ -549,11 +575,19 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         db.execSQL(KOT_QUERY);
         db.execSQL(KOT_ITEM_QUERY);
         ensureFoodTypeCatalog(db);
+        // Fresh install must get every additive column / dine-in table immediately
+        ensureAdditiveSchema(db);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         // Additive only — never DROP production tables
+        ensureAdditiveSchema(db);
+    }
+
+    @Override
+    public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        // Uninstall + Auto Backup can restore a higher DB version; never crash the app.
         ensureAdditiveSchema(db);
     }
 
@@ -1064,9 +1098,20 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
                     + COMBO_ITEM_TABLE + "(comboItemNetworkStatus) "
                     + "WHERE comboItemNetworkStatus IS NOT NULL AND comboItemNetworkStatus != ''");
             db.execSQL("CREATE INDEX IF NOT EXISTS idx_combo_item_combo ON " + COMBO_ITEM_TABLE + "(comboId)");
+            // Expression indexes (IFNULL/COALESCE) are unreliable on Android SQLite — use partial uniques instead.
+            dedupeComboItemByProductPortion(db);
+            try {
+                db.execSQL("DROP INDEX IF EXISTS idx_combo_item_product_portion");
+            } catch (Exception ignored) {
+            }
             db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_combo_item_product_portion ON "
-                    + COMBO_ITEM_TABLE + "(comboId, productId, IFNULL(portionId, '')) "
-                    + "WHERE comboItemDeletedStatus = '0'");
+                    + COMBO_ITEM_TABLE + "(comboId, productId, portionId) "
+                    + "WHERE comboItemDeletedStatus = '0' "
+                    + "AND portionId IS NOT NULL AND CAST(portionId AS TEXT) != '' AND portionId != 0");
+            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_combo_item_product_no_portion ON "
+                    + COMBO_ITEM_TABLE + "(comboId, productId) "
+                    + "WHERE comboItemDeletedStatus = '0' "
+                    + "AND (portionId IS NULL OR CAST(portionId AS TEXT) = '' OR portionId = 0)");
             db.execSQL("CREATE INDEX IF NOT EXISTS idx_combo_deleted_status ON " + COMBO_TABLE + "(comboDeletedStatus)");
             db.execSQL("CREATE INDEX IF NOT EXISTS idx_combo_code ON " + COMBO_TABLE + "(comboCode)");
             db.execSQL("CREATE INDEX IF NOT EXISTS idx_combo_name ON " + COMBO_TABLE + "(comboName)");
@@ -1397,6 +1442,26 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
                             + "  GROUP BY productId, portionMasterId HAVING COUNT(*) > 1"
                             + ") d ON t.productId = d.productId AND t.portionMasterId = d.portionMasterId "
                             + "AND t.portionId != d.keepId"
+                            + ")"
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /** Keep one active combo_item per (comboId, productId, portion). */
+    private void dedupeComboItemByProductPortion(SQLiteDatabase db) {
+        try {
+            db.execSQL(
+                    "DELETE FROM " + COMBO_ITEM_TABLE + " WHERE comboItemId IN ("
+                            + "SELECT t.comboItemId FROM " + COMBO_ITEM_TABLE + " t "
+                            + "INNER JOIN ("
+                            + "  SELECT comboId, productId, IFNULL(portionId, 0) AS portionKey, MIN(comboItemId) AS keepId "
+                            + "  FROM " + COMBO_ITEM_TABLE + " "
+                            + "  WHERE comboItemDeletedStatus = '0' "
+                            + "  GROUP BY comboId, productId, IFNULL(portionId, 0) HAVING COUNT(*) > 1"
+                            + ") d ON t.comboId = d.comboId AND t.productId = d.productId "
+                            + "AND IFNULL(t.portionId, 0) = d.portionKey AND t.comboItemId != d.keepId"
                             + ")"
             );
         } catch (Exception e) {

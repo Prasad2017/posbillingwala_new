@@ -86,7 +86,7 @@
 
     <application
         android:name=".PosBillingWalaApp"
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:allowClearUserData="true"
         android:hardwareAccelerated="true"
         android:icon="@mipmap/ic_launcher"
