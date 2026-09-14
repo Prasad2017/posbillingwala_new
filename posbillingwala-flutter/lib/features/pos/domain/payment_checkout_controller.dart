@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
 import 'package:pos_billingwala_v2/core/network/online_guard.dart';
+import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 import 'package:pos_billingwala_v2/features/auth/data/device_identity_service.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/license_validator.dart';
@@ -161,7 +162,7 @@ class PaymentCheckoutController extends Notifier<PaymentCheckoutState> {
     final totalAmount = state.payableTotal(subtotal: subtotal, taxTotal: taxTotal);
     state = state.copyWith(busy: true, clearError: true, clearResult: true);
     try {
-      if (!await ensureOnline()) {
+      if (!await ensureOnline(force: AppPlatform.requiresNetwork)) {
         state = state.copyWith(
           busy: false,
           errorMessage: kOnlineRequiredMessage,

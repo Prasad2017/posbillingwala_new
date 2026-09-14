@@ -53,7 +53,7 @@ final productsProvider = StreamProvider<List<Product>>((ref) {
       .watchProducts(categoryId: categoryId);
 });
 
-/// Unfiltered product stream — used by home catalog KPIs.
+/* Unfiltered product stream — used by home catalog KPIs. */
 final allProductsProvider = StreamProvider<List<Product>>((ref) {
   return ref.watch(mastersRepositoryProvider).watchProducts();
 });
@@ -196,7 +196,10 @@ class MastersSyncController extends Notifier<AsyncValue<MastersSyncResult?>> {
     int? foodTypeId,
     String? foodTypeCode,
   }) {
+    final userId =
+        ref.read(authControllerProvider).session?.catalogOwnerId ?? '';
     return ref.read(mastersRepositoryProvider).updateCategory(
+          userId: userId,
           categoryId: categoryId,
           categoryName: name,
           foodTypeId: foodTypeId,
@@ -205,7 +208,12 @@ class MastersSyncController extends Notifier<AsyncValue<MastersSyncResult?>> {
   }
 
   Future<void> deleteCategory(int categoryId) {
-    return ref.read(mastersRepositoryProvider).deleteCategory(categoryId);
+    final userId =
+        ref.read(authControllerProvider).session?.catalogOwnerId ?? '';
+    return ref.read(mastersRepositoryProvider).deleteCategory(
+          userId: userId,
+          categoryId: categoryId,
+        );
   }
 
   Future<void> updateProduct({
@@ -221,7 +229,10 @@ class MastersSyncController extends Notifier<AsyncValue<MastersSyncResult?>> {
     double productSgst = 0,
     int? subcategoryId,
   }) {
+    final userId =
+        ref.read(authControllerProvider).session?.catalogOwnerId ?? '';
     return ref.read(mastersRepositoryProvider).updateProduct(
+          userId: userId,
           productId: productId,
           productName: name,
           productPrice: price,
@@ -237,7 +248,12 @@ class MastersSyncController extends Notifier<AsyncValue<MastersSyncResult?>> {
   }
 
   Future<void> deleteProduct(int productId) {
-    return ref.read(mastersRepositoryProvider).deleteProduct(productId);
+    final userId =
+        ref.read(authControllerProvider).session?.catalogOwnerId ?? '';
+    return ref.read(mastersRepositoryProvider).deleteProduct(
+          userId: userId,
+          productId: productId,
+        );
   }
 
   Future<void> createCombo({
@@ -249,7 +265,10 @@ class MastersSyncController extends Notifier<AsyncValue<MastersSyncResult?>> {
     bool activeOnPos = true,
     List<({int productId, int quantity})> items = const [],
   }) {
+    final userId =
+        ref.read(authControllerProvider).session?.catalogOwnerId ?? '';
     return ref.read(mastersRepositoryProvider).createCombo(
+          userId: userId,
           comboName: name,
           comboPrice: price,
           comboCode: comboCode,
@@ -270,7 +289,10 @@ class MastersSyncController extends Notifier<AsyncValue<MastersSyncResult?>> {
     bool? activeOnPos,
     List<({int productId, int quantity})> items = const [],
   }) {
+    final userId =
+        ref.read(authControllerProvider).session?.catalogOwnerId ?? '';
     return ref.read(mastersRepositoryProvider).updateCombo(
+          userId: userId,
           comboId: comboId,
           comboName: name,
           comboPrice: price,
@@ -283,7 +305,12 @@ class MastersSyncController extends Notifier<AsyncValue<MastersSyncResult?>> {
   }
 
   Future<void> deleteCombo(int comboId) {
-    return ref.read(mastersRepositoryProvider).deleteCombo(comboId);
+    final userId =
+        ref.read(authControllerProvider).session?.catalogOwnerId ?? '';
+    return ref.read(mastersRepositoryProvider).deleteCombo(
+          userId: userId,
+          comboId: comboId,
+        );
   }
 }
 

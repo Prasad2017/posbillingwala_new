@@ -35,16 +35,16 @@ class AuthRepository {
       try {
         await api.serverLogout(licenceKey: licenceKey);
       } catch (_) {
-        // Local logout still proceeds if network fails.
+        /* Local logout still proceeds if network fails. */
       }
     }
     await sessionStore.clearSession();
   }
 
-  /// Soft lock for app logout — keep licence so next screen is MPIN.
+  /* Soft lock for app logout — keep licence so next screen is MPIN. */
   Future<void> lockSession() => sessionStore.clearAuthToken();
 
-  /// Licence-key login matching Android Login.java flow.
+  /* Licence-key login matching Android Login.java flow. */
   Future<UserSession> loginWithLicence({
     required String licenceKey,
     Future<DeviceConflictAction> Function(String message)? onDeviceConflict,
@@ -130,7 +130,7 @@ class AuthRepository {
     return session;
   }
 
-  /// MPIN unlock matching Android LoginMPin.java flow.
+  /* MPIN unlock matching Android LoginMPin.java flow. */
   Future<UserSession> loginWithMpin({
     required String mpin,
     Future<DeviceConflictAction> Function(String message)? onDeviceConflict,

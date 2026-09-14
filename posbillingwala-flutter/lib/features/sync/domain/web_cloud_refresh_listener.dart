@@ -7,10 +7,10 @@ import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/sync/domain/full_sync_controller.dart';
 
-/// Web-only: periodically pull cloud data so rows created on Android/iOS
-/// appear without a manual "Refresh from Cloud".
-///
-/// Uses non-destructive [FullSyncController.downloadAll] (no local wipe).
+/* Web-only: periodically push pending local rows then pull cloud data so */
+/* Android/iOS entries appear without a manual "Refresh from Cloud". */
+/* */
+/* Uses [FullSyncController.syncEverything] (upload + non-destructive download). */
 class WebCloudRefreshListener {
   WebCloudRefreshListener(this.webCloudRefreshListenerRef);
 
@@ -51,9 +51,10 @@ class WebCloudRefreshListener {
 
     running = true;
     try {
+      /* API-first web: flush pending writes, then refresh cache from cloud. */
       await webCloudRefreshListenerRef
           .read(fullSyncControllerProvider.notifier)
-          .downloadAll(silent: true);
+          .syncEverythingSilent();
       lastRefreshAt = DateTime.now();
     } catch (e, st) {
       debugPrint('Web cloud refresh failed: $e\n$st');

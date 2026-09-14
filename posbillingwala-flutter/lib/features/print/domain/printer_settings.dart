@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// How the bill/KOT printer is reached. Works with any ESC/POS model.
+/* How the bill/KOT printer is reached. Works with any ESC/POS model. */
 enum PosPrinterTransport {
   bluetooth,
   usb,
@@ -80,7 +80,7 @@ class PrinterSettings {
   final PosPrinterTransport kotTransport;
   final String billBluetoothAddress;
   final String kotBluetoothAddress;
-  /// Android USB id `vendorId:productId`, or desktop serial path.
+  /* Android USB id `vendorId:productId`, or desktop serial path. */
   final String billUsbIdentifier;
   final String kotUsbIdentifier;
   final String billUsbName;

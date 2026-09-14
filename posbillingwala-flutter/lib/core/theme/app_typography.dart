@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
 
-/// Central typography for POS Billingwala.
+/* Central typography for POS Billingwala. */
 abstract final class AppTypography {
   static const appTypographyFamily = AppFonts.family;
 

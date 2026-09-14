@@ -13,7 +13,7 @@ import 'package:pos_billingwala_v2/features/mess/data/mess_api.dart';
 import 'package:pos_billingwala_v2/features/mess/domain/mess_dtos.dart';
 import 'package:pos_billingwala_v2/features/mess/domain/mess_payer_mode.dart';
 
-/// Matches Android MessTokenQrHelper payload.
+/* Matches Android MessTokenQrHelper payload. */
 class MessTokenQrHelper {
   static const prefix = 'POSBILL|v1|';
   static const memberTypeMember = 'member';
@@ -33,7 +33,7 @@ class MessTokenQrHelper {
     return '$prefix$tokenCode|$userId|$memberType';
   }
 
-  /// Returns [tokenCode, userId, memberType] or null.
+  /* Returns [tokenCode, userId, memberType] or null. */
   static List<String>? parsePayload(String raw) {
     if (!raw.startsWith(prefix)) return null;
     final parts = raw.split('|');
@@ -183,7 +183,7 @@ class MessController extends Notifier<AsyncValue<void>> {
                 .toList(),
           );
 
-      // Upload pending paper coupons, then refresh cloud list.
+      /* Upload pending paper coupons, then refresh cloud list. */
       final db = ref.read(appDatabaseProvider);
       for (final coupon in await db.getPendingMessInvoices()) {
         try {
@@ -299,7 +299,7 @@ class MessController extends Notifier<AsyncValue<void>> {
         );
       } catch (_) {}
 
-      // Shop payer mode cache (WithTable MessPayerMode + mess_shop_setting_get).
+      /* Shop payer mode cache (WithTable MessPayerMode + mess_shop_setting_get). */
       try {
         final mode = await api.fetchShopPayerMode(userId);
         if (mode != null) {
@@ -307,14 +307,14 @@ class MessController extends Notifier<AsyncValue<void>> {
         }
       } catch (_) {}
 
-      // Recover unprinted meal tokens for this device into local print queue.
+      /* Recover unprinted meal tokens for this device into local print queue. */
       try {
         await recoverPendingMealTokens();
       } catch (_) {}
     });
   }
 
-  /// Pulls `mess_meal_token_pending` into Drift print queue (WithTable recover).
+  /* Pulls `mess_meal_token_pending` into Drift print queue (WithTable recover). */
   Future<int> recoverPendingMealTokens() async {
     final userId = ref.read(authControllerProvider).session?.userId;
     if (userId == null || userId.isEmpty) return 0;
@@ -415,7 +415,7 @@ class MessController extends Notifier<AsyncValue<void>> {
           if (ok) await db.markMessMemberSynced(id);
         }
       } catch (_) {
-        // Keep local pending row for later full sync.
+        /* Keep local pending row for later full sync. */
       }
     }
     return id;

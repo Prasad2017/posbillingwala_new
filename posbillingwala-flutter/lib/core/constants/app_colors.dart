@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Official POS2 BillingWala palette derived from the supplied logo.
+/* Official POS2 BillingWala palette derived from the supplied logo. */
 class AppColors {
   AppColors._();
 

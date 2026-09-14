@@ -9,6 +9,8 @@ if ($_SERVER['REQUEST_METHOD'] == "GET") {
 
     $postedUserId = isset($_GET['userId']) ? $_GET['userId'] : '';
     $invoiceDate = isset($_GET['invoiceDate']) ? $_GET['invoiceDate'] : '';
+    $startDate = isset($_GET['startDate']) ? trim($_GET['startDate']) : '';
+    $endDate = isset($_GET['endDate']) ? trim($_GET['endDate']) : '';
 
     $readCtx = branch_pos_prepare_read($con, $postedUserId, $postedUserId, $response);
     if ($readCtx === null) {
@@ -21,11 +23,22 @@ if ($_SERVER['REQUEST_METHOD'] == "GET") {
 
     date_default_timezone_set("Asia/Calcutta");
 
-    if ($invoiceDate !== '') {
+    $scopeWhere = "(`branch_id`='$userIdEsc' OR (`branch_id` IS NULL AND `licenseId`='$userIdEsc'))";
+
+    /* Date range for Web POS reports (startDate/endDate inclusive, Y-m-d). */
+    if ($startDate !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $startDate)
+        && $endDate !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $endDate)) {
+        $startEsc = mysqli_real_escape_string($con, $startDate);
+        $endEsc = mysqli_real_escape_string($con, $endDate);
+        $sth = "SELECT * FROM `invoice` WHERE $scopeWhere"
+             . " AND DATE(`invoiceDate`) >= '$startEsc'"
+             . " AND DATE(`invoiceDate`) <= '$endEsc'"
+             . " ORDER BY `invoiceDate` DESC";
+    } elseif ($invoiceDate !== '') {
         $invoiceDateEsc = mysqli_real_escape_string($con, $invoiceDate);
-        $sth = "SELECT * FROM `invoice` WHERE (`branch_id`='$userIdEsc' OR (`branch_id` IS NULL AND `licenseId`='$userIdEsc')) AND `invoiceDate` LIKE '%$invoiceDateEsc%'";
+        $sth = "SELECT * FROM `invoice` WHERE $scopeWhere AND `invoiceDate` LIKE '%$invoiceDateEsc%'";
     } else {
-        $sth = "SELECT * FROM `invoice` WHERE `branch_id`='$userIdEsc' OR (`branch_id` IS NULL AND `licenseId`='$userIdEsc')";
+        $sth = "SELECT * FROM `invoice` WHERE $scopeWhere";
     }
 
     if ($result = mysqli_query($con, $sth)) {

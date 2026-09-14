@@ -36,7 +36,7 @@ class ThreeDotsLoaderState extends State<ThreeDotsLoader>
   }
 
   double bounceOffset(double t) {
-    // Smooth up-down bounce per dot cycle.
+    /* Smooth up-down bounce per dot cycle. */
     return -5 * (t < 0.5 ? t * 2 : (1 - t) * 2);
   }
 

@@ -1,9 +1,9 @@
-/// Image paths under `assets/images`.
+/* Image paths under `assets/images`. */
 abstract final class AppAssets {
   static const png = 'assets/images/png';
   static const svg = 'assets/images/svg';
 
-  // —— PNG ——
+  /* —— PNG —— */
   static const appLogo = '$png/app_logo.png';
   static const splashBranding = '$png/splash_branding.png';
   static const yourLogoHere = '$png/your_logo_here.png';
@@ -29,10 +29,10 @@ abstract final class AppAssets {
   static const sharePhoneQr = '$png/img_share_phone_qr.png';
   static const shareGrowthBadge = '$png/img_share_growth_badge.png';
 
-  /// Default thermal / bill logo when shop file is missing.
+  /* Default thermal / bill logo when shop file is missing. */
   static const receiptLogo = yourLogoHere;
 
-  // —— SVG backgrounds ——
+  /* —— SVG backgrounds —— */
   static const svgSplashWave = '$svg/bg_splash_wave.svg';
   static const svgLoginCard = '$svg/bg_login_card.svg';
   static const svgLoginGradientButton = '$svg/bg_login_gradient_button.svg';
@@ -61,7 +61,7 @@ abstract final class AppAssets {
   static const svgBottomSheet = '$svg/bg_bottom_sheet_panel.svg';
   static const svgNotificationBadge = '$svg/bg_notification_badge.svg';
 
-  // —— SVG icons ——
+  /* —— SVG icons —— */
   static const svgKey = '$svg/ic_key.svg';
   static const svgLock = '$svg/ic_lock.svg';
   static const svgLockOpen = '$svg/ic_lock_open.svg';
@@ -125,7 +125,7 @@ abstract final class AppAssets {
   static const svgPlayStore = '$svg/ic_play_store.svg';
   static const svgGooglePlayBadge = '$svg/bg_google_play_badge.svg';
 
-  // —— About Us ——
+  /* —— About Us —— */
   static const svgAboutWeb = '$svg/ic_about_web.svg';
   static const svgAboutEmail = '$svg/ic_about_email.svg';
   static const svgAboutPhone = '$svg/ic_about_phone.svg';

@@ -15,7 +15,7 @@ import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
 class MastersPage extends ConsumerWidget {
   const MastersPage({super.key, this.initialTab = 0});
 
-  /// 0 = Products, 1 = Combos
+  /* 0 = Products, 1 = Combos */
   final int initialTab;
 
   @override

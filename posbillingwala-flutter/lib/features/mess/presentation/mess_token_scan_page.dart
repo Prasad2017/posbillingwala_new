@@ -9,7 +9,7 @@ import 'package:pos_billingwala_v2/core/widgtes/widgtes.dart';
 import 'package:pos_billingwala_v2/l10n/app_strings.dart';
 import 'package:pos_billingwala_v2/features/mess/domain/mess_providers.dart';
 
-/// Matches `activity_mess_token_scan.xml`: intro + Start QR scanner, then camera.
+/* Matches `activity_mess_token_scan.xml`: intro + Start QR scanner, then camera. */
 class MessTokenScanPage extends ConsumerStatefulWidget {
   const MessTokenScanPage({super.key});
 

@@ -7,8 +7,8 @@ import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/sync/domain/full_sync_controller.dart';
 
-/// When the device comes back online, push pending offline rows (Android
-/// OfflineToNetworkReceiver style).
+/* When the device comes back online, push pending offline rows (Android */
+/* OfflineToNetworkReceiver style). */
 class ConnectivitySyncListener {
   ConnectivitySyncListener(this.connectivitySyncListenerRef);
 
@@ -38,7 +38,7 @@ class ConnectivitySyncListener {
       await uploadIfLoggedIn();
     });
 
-    // Seed current state.
+    /* Seed current state. */
     Connectivity().checkConnectivity().then((results) {
       final online = results.any(
         (r) =>

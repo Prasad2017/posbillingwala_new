@@ -6,15 +6,15 @@ import 'package:pos_billingwala_v2/features/auth/data/session_store.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/session_keys.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Silent POS token refresh for licence-bound devices (mirrors WithTable
-/// `AuthTokenRefresh`). Uses licence key + device id — no MPIN prompt.
+/* Silent POS token refresh for licence-bound devices (mirrors WithTable */
+/* `AuthTokenRefresh`). Uses licence key + device id — no MPIN prompt. */
 class AuthTokenRefresh {
   AuthTokenRefresh._();
 
   static DateTime? lastAttempt;
   static Future<bool>? inFlight;
 
-  /// Returns true when a fresh Bearer token was saved.
+  /* Returns true when a fresh Bearer token was saved. */
   static Future<bool> tryRefresh({
     void Function(String? token)? onTokenSaved,
   }) {
@@ -39,7 +39,7 @@ class AuthTokenRefresh {
       final oldToken = prefs.getString(SessionKeys.authToken);
 
       try {
-        // Bare client — no auth interceptor — avoids refresh recursion.
+        /* Bare client — no auth interceptor — avoids refresh recursion. */
         final dio = Dio(
           BaseOptions(
             baseUrl: ApiConstants.baseUrl,

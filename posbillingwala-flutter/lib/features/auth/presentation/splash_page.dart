@@ -1,13 +1,17 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pos_billingwala_v2/core/constants/app_assets.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/network/online_guard.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
+import 'package:pos_billingwala_v2/core/widgtes/widgtes.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
+import 'package:pos_billingwala_v2/features/settings/domain/in_app_update_service.dart';
+import 'package:pos_billingwala_v2/l10n/app_strings.dart';
 
-/// Matches `docs/layout/activity_splash_screen.xml`:
-/// full-bleed splash branding + bottom indeterminate progress only.
+/* Matches `docs/layout/activity_splash_screen.xml`: */
+/* full-bleed splash branding + bottom indeterminate progress only. */
 class SplashPage extends ConsumerStatefulWidget {
   const SplashPage({super.key});
 
@@ -23,6 +27,10 @@ class SplashPageState extends ConsumerState<SplashPage> {
     super.initState();
     Future<void>.delayed(const Duration(milliseconds: 1200), () async {
       if (!mounted) return;
+      if (!kDebugMode) {
+        await promptPlayUpdateIfNeeded();
+      }
+      if (!mounted) return;
       if (AppPlatform.requiresNetwork && !await ensureOnline()) {
         if (!mounted) return;
         setState(() => webOfflineMessage = kOnlineRequiredMessage);
@@ -32,6 +40,31 @@ class SplashPageState extends ConsumerState<SplashPage> {
       if (!mounted) return;
       ref.read(authControllerProvider.notifier).bootstrap();
     });
+  }
+
+  Future<void> promptPlayUpdateIfNeeded() async {
+    if (!InAppUpdateService.isAndroidPlay) return;
+    final outcome = await inAppUpdateService.checkAvailability();
+    if (!mounted) return;
+    if (outcome.status == InAppUpdateStatus.downloaded) {
+      await inAppUpdateService.completeFlexibleUpdate();
+      return;
+    }
+    if (outcome.status != InAppUpdateStatus.available) return;
+    final strings = AppStrings.of(ref);
+    final go = await showAppConfirmBottomSheet(
+      context: context,
+      title: strings.newVersionAvailable,
+      message: strings.updateBeforeContinue,
+      confirmLabel: strings.updateApp,
+      cancelLabel: strings.cancel,
+      icon: Icons.system_update_rounded,
+    );
+    if (!mounted || !go) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(strings.dataUploadingOnServer)),
+    );
+    await inAppUpdateService.startUpdate(preferImmediate: true);
   }
 
   @override

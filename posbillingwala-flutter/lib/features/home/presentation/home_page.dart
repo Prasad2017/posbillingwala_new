@@ -28,7 +28,7 @@ import 'package:pos_billingwala_v2/features/sync/domain/catalog_bootstrap_listen
 import 'package:pos_billingwala_v2/features/sync/domain/web_cloud_refresh_listener.dart';
 import 'package:pos_billingwala_v2/l10n/app_strings.dart';
 
-/// Home dashboard — layout aligned to the product reference design.
+/* Home dashboard — layout aligned to the product reference design. */
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
@@ -56,7 +56,7 @@ class HomePageState extends ConsumerState<HomePage> {
     if (!permissionsPrompted) {
       permissionsPrompted = true;
       Future.microtask(() async {
-        // Pull catalog if local DB was emptied by a prior wrong-id sync.
+        /* Pull catalog if local DB was emptied by a prior wrong-id sync. */
         await ref
             .read(catalogBootstrapListenerProvider)
             .ensureCatalogIfEmpty(force: true);
@@ -156,7 +156,7 @@ class HomePageState extends ConsumerState<HomePage> {
     );
   }
 
-  /// When no module flags are set (older sessions), treat as full licence.
+  /* When no module flags are set (older sessions), treat as full licence. */
   bool anyBilling(UserSession s) =>
       !s.fastBilling && !s.dineIn && !s.takeAway && !s.mess;
 

@@ -444,7 +444,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
         await hub.autoConnect(PrinterChannelKind.bill);
       }
     } catch (_) {
-      // Keep local fields if cloud load fails.
+      /* Keep local fields if cloud load fails. */
     } finally {
       if (mounted) setState(() => companyBusy = false);
     }

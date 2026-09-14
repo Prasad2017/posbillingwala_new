@@ -38,7 +38,7 @@ class AppTextField extends StatefulWidget {
   final String? hint;
   final String? helperText;
   final IconData? prefixIcon;
-  /// Optional SVG asset path (preferred over [prefixIcon] when set).
+  /* Optional SVG asset path (preferred over [prefixIcon] when set). */
   final String? prefixSvg;
   final String? prefixText;
   final String? Function(String?)? validator;

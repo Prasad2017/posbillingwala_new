@@ -12,7 +12,7 @@ import 'package:pos_billingwala_v2/core/widgets/app_module_icon.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
 
-/// Split an open dine-in bill into shares (equal / by item / by amount).
+/* Split an open dine-in bill into shares (equal / by item / by amount). */
 class SplitBillPage extends ConsumerStatefulWidget {
   const SplitBillPage({
     super.key,
@@ -28,7 +28,7 @@ class SplitBillPage extends ConsumerStatefulWidget {
 }
 
 class SplitBillPageState extends ConsumerState<SplitBillPage> {
-  int tab = 0; // 0 equal, 1 items, 2 amount
+  int tab = 0; /* 0 equal, 1 items, 2 amount */
   int equalParts = 2;
   final amountCtrl = TextEditingController();
   final splitBillPageSelected = <int>{};

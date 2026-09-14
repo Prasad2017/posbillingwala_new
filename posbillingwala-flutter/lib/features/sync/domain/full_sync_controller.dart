@@ -78,9 +78,9 @@ class FullSyncResult {
   final int failed;
 }
 
-/// Android-parity sync orchestrator:
-/// - Upload pending offline rows to server
-/// - Download / refresh cloud data into local DB
+/* Android-parity sync orchestrator: */
+/* - Upload pending offline rows to server */
+/* - Download / refresh cloud data into local DB */
 class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
   @override
   AsyncValue<FullSyncResult?> build() => const AsyncData(null);
@@ -88,18 +88,22 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
   Future<FullSyncResult> syncEverything() =>
       run(FullSyncMode.both, trackProgress: false);
 
+  /* Web background refresh: upload pending then download without UI loading. */
+  Future<FullSyncResult> syncEverythingSilent() =>
+      run(FullSyncMode.both, trackProgress: false, silent: true);
+
   Future<FullSyncResult> uploadAll() =>
       run(FullSyncMode.uploadOnly, trackProgress: false);
 
   Future<FullSyncResult> downloadAll({bool silent = false}) =>
       run(FullSyncMode.downloadOnly, trackProgress: false, silent: silent);
 
-  /// Settings → Offline Data Synchronize with Cloud.
+  /* Settings → Offline Data Synchronize with Cloud. */
   Future<FullSyncResult> uploadWithProgress() =>
       run(FullSyncMode.uploadOnly, trackProgress: true);
 
-  /// Settings → Fetch Data From Cloud (after confirm).
-  /// Blocks when unsynced bills exist (Android parity).
+  /* Settings → Fetch Data From Cloud (after confirm). */
+  /* Blocks when unsynced bills exist (Android parity). */
   Future<FullSyncResult> resetAndFetchWithProgress() async {
     final progress = ref.read(syncProgressProvider.notifier);
     progress.begin(SyncScreenMode.fetch);
@@ -143,7 +147,7 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
     }
   }
 
-  /// Android Home "Fetch Data": confirm wipe → reset local ops tables → download.
+  /* Android Home "Fetch Data": confirm wipe → reset local ops tables → download. */
   Future<FullSyncResult> resetAndFetchAll() async {
     final userId = ref.read(authControllerProvider).session?.userId;
     if (userId == null || userId.isEmpty) {
@@ -213,7 +217,7 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
     final doDownload =
         mode == FullSyncMode.downloadOnly || mode == FullSyncMode.both;
 
-    // ---- UPLOAD (local → server) — same spirit as Android UserSynchronizeData
+    /* ---- UPLOAD (local → server) — same spirit as Android UserSynchronizeData */
     if (doUpload) {
       final snap = await db.getSyncPendingSnapshot();
       hadPending = snap.total > 0;
@@ -295,7 +299,7 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
       }
     }
 
-    // ---- DOWNLOAD (server → local) — same spirit as Android NetworkDataFetcher
+    /* ---- DOWNLOAD (server → local) — same spirit as Android NetworkDataFetcher */
     if (doDownload) {
       const masterFetchIds = [
         'categories',
@@ -306,7 +310,7 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
         'combos',
         'combo_items',
       ];
-      // Food types are also replaced inside syncFromCloud (no separate UI step).
+      /* Food types are also replaced inside syncFromCloud (no separate UI step). */
       progress?.markRunning([masterFetchIds.first]);
       try {
         await ref.read(mastersRepositoryProvider).syncFromCloud(
@@ -328,7 +332,7 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
         notes.add('tables↓ ok');
         await progress?.completeSequentially(tableFetchIds);
       } catch (_) {
-        // Masters sync already pulls tables; ignore secondary failure.
+        /* Masters sync already pulls tables; ignore secondary failure. */
         notes.add('tables↓ skip');
         await progress?.completeSequentially(tableFetchIds);
       }
@@ -340,7 +344,7 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
       ];
       progress?.markRunning([invoiceFetchIds.first]);
       try {
-        // Full bill history like WithTable InvoiceWorker (no month filter).
+        /* Full bill history like WithTable InvoiceWorker (no month filter). */
         final download = await ref
             .read(invoiceSyncControllerProvider.notifier)
             .downloadInvoices();
@@ -358,7 +362,7 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
       }
 
       if (!doUpload) {
-        // When download-only, still refresh inventory/expenses from cloud.
+        /* When download-only, still refresh inventory/expenses from cloud. */
         progress?.markRunning([inventoryStepIds.first]);
         try {
           await ref.read(inventoryControllerProvider.notifier).syncAll();
@@ -498,7 +502,7 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
       }
     }
 
-    // Verified offline → verifyMessToken.php (WithTable verify queue).
+    /* Verified offline → verifyMessToken.php (WithTable verify queue). */
     for (final token in await db.getPendingMessTokenVerifies()) {
       final ok = await api.verifyMessToken(
         userId: userId,
@@ -652,7 +656,7 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
     final settings = ref.read(printerSettingsProvider);
     final profile = ref.read(shopReceiptProfileProvider);
 
-    // Prefer local Drift snapshot, then prefs profile, then cloud/session.
+    /* Prefer local Drift snapshot, then prefs profile, then cloud/session. */
     final localCompany = await db.getLocalCompany();
     final companies = await api.getCompanyList(userId);
     final base = companies.isNotEmpty

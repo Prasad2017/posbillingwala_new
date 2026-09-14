@@ -14,7 +14,7 @@ import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/auth/presentation/device_conflict_dialog.dart';
 import 'package:pos_billingwala_v2/l10n/app_strings.dart';
 
-/// Matches `docs/layout/activity_login_mpin.xml`.
+/* Matches `docs/layout/activity_login_mpin.xml`. */
 class MpinPage extends ConsumerStatefulWidget {
   const MpinPage({super.key});
 

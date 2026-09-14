@@ -63,7 +63,7 @@ class AppModuleIcon extends StatelessWidget {
   }
 }
 
-/// Tiny helper for inline asset images with Poppins-safe fallbacks.
+/* Tiny helper for inline asset images with Poppins-safe fallbacks. */
 class AppAssetImage extends StatelessWidget {
   const AppAssetImage(
     this.path, {

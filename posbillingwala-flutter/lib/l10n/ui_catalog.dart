@@ -1,5 +1,5 @@
-// GENERATED from WithTable strings_ui.xml — do not edit by hand.
-// node tool/gen_ui_catalog.js
+/* GENERATED from WithTable strings_ui.xml — do not edit by hand. */
+/* node tool/gen_ui_catalog.js */
 class UiCatalog {
   UiCatalog._();
 

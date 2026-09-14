@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/theme/app_dimensions.dart';
 
-/// Centers [child] within a max width that grows with [AppWidthClass].
+/* Centers [child] within a max width that grows with [AppWidthClass]. */
 class ResponsiveContent extends StatelessWidget {
   const ResponsiveContent({
     super.key,
@@ -44,9 +44,9 @@ class ResponsiveContent extends StatelessWidget {
   }
 }
 
-/// Scrollable page body with responsive max-width — default for hub / form screens.
-///
-/// Use as `Scaffold.body`. Always scrollable (keyboard + overflow safe).
+/* Scrollable page body with responsive max-width — default for hub / form screens. */
+/* */
+/* Use as `Scaffold.body`. Always scrollable (keyboard + overflow safe). */
 class ResponsivePageBody extends StatelessWidget {
   const ResponsivePageBody({
     super.key,
@@ -59,8 +59,8 @@ class ResponsivePageBody extends StatelessWidget {
     this.primary,
   });
 
-  /// When [child] is already a scrollable (e.g. [ListView]), prefer
-  /// [ResponsivePageBody.sliver] or wrap with [ResponsiveContent] instead.
+  /* When [child] is already a scrollable (e.g. [ListView]), prefer */
+  /* [ResponsivePageBody.sliver] or wrap with [ResponsiveContent] instead. */
   final Widget child;
   final EdgeInsetsGeometry? padding;
   final double? maxWidth;
@@ -97,7 +97,7 @@ class ResponsivePageBody extends StatelessWidget {
   }
 }
 
-/// Wraps an existing vertical [ListView]/[CustomScrollView] with centered max-width.
+/* Wraps an existing vertical [ListView]/[CustomScrollView] with centered max-width. */
 class ResponsiveScrollShell extends StatelessWidget {
   const ResponsiveScrollShell({
     super.key,
@@ -128,7 +128,7 @@ class ResponsiveScrollShell extends StatelessWidget {
   }
 }
 
-/// Simple responsive grid that picks column count from a callback.
+/* Simple responsive grid that picks column count from a callback. */
 class ResponsiveGrid extends StatelessWidget {
   const ResponsiveGrid({
     super.key,
@@ -172,7 +172,7 @@ class ResponsiveGrid extends StatelessWidget {
   }
 }
 
-/// Two-column layout on large widths; stacks on compact/medium.
+/* Two-column layout on large widths; stacks on compact/medium. */
 class ResponsiveSplit extends StatelessWidget {
   const ResponsiveSplit({
     super.key,

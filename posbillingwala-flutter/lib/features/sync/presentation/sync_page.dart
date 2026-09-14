@@ -11,13 +11,13 @@ import 'package:pos_billingwala_v2/core/widgtes/widgtes.dart';
 import 'package:pos_billingwala_v2/features/sync/domain/full_sync_controller.dart';
 import 'package:pos_billingwala_v2/features/sync/domain/sync_progress.dart';
 
-/// Android-parity progress screen for:
-/// - Offline Data Synchronize with Cloud (`mode=sync`) — mobile only
-/// - Fetch / Refresh Data From Cloud (`mode=fetch`)
+/* Android-parity progress screen for: */
+/* - Offline Data Synchronize with Cloud (`mode=sync`) — mobile only */
+/* - Fetch / Refresh Data From Cloud (`mode=fetch`) */
 class SyncPage extends ConsumerStatefulWidget {
   const SyncPage({super.key, this.initialMode});
 
-  /// `fetch` = wipe & download; `sync` / null = upload pending.
+  /* `fetch` = wipe & download; `sync` / null = upload pending. */
   final String? initialMode;
 
   @override
@@ -30,7 +30,7 @@ class SyncPageState extends ConsumerState<SyncPage> {
   SyncScreenMode get syncPageMode {
     final raw = widget.initialMode?.trim().toLowerCase();
     if (raw == 'fetch') return SyncScreenMode.fetch;
-    // Web is online-only — never run offline upload mode.
+    /* Web is online-only — never run offline upload mode. */
     if (!AppPlatform.supportsOfflineSync) return SyncScreenMode.fetch;
     return SyncScreenMode.upload;
   }

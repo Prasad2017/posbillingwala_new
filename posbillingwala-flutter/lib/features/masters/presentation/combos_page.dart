@@ -8,7 +8,7 @@ import 'package:pos_billingwala_v2/features/masters/domain/masters_providers.dar
 import 'package:pos_billingwala_v2/features/masters/presentation/widgets/master_ui.dart';
 import 'package:pos_billingwala_v2/l10n/app_strings.dart';
 
-/// WithTable ComboMaster list.
+/* WithTable ComboMaster list. */
 class CombosPage extends ConsumerStatefulWidget {
   const CombosPage({super.key});
 

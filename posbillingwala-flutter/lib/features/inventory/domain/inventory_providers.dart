@@ -17,7 +17,7 @@ final stockBalancesProvider = Provider<List<ProductStockBalance>>((ref) {
         orElse: () => const <InventoryMovement>[],
       );
   final latestByProduct = <int, InventoryMovement>{};
-  // movements are newest-first; first seen wins.
+  /* movements are newest-first; first seen wins. */
   for (final row in movements) {
     latestByProduct.putIfAbsent(row.productId, () => row);
   }
@@ -95,11 +95,21 @@ class InventoryController extends Notifier<AsyncValue<String?>> {
     });
   }
 
-  /// Dual-write when online: push pending inventory/expense rows to API.
+  /* Dual-write when online: push pending inventory/expense rows to API. */
   Future<void> uploadPendingIfOnline() async {
-    if (!await isDeviceOnline()) return;
+    if (!await isDeviceOnline()) {
+      if (AppPlatform.requiresNetwork) {
+        throw StateError(kOnlineRequiredMessage);
+      }
+      return;
+    }
     final userId = ref.read(authControllerProvider).session?.userId;
-    if (userId == null || userId.isEmpty) return;
+    if (userId == null || userId.isEmpty) {
+      if (AppPlatform.requiresNetwork) {
+        throw StateError('Please login to save on Web POS.');
+      }
+      return;
+    }
     final db = ref.read(appDatabaseProvider);
     final api = InventoryExpenseApi(ref.read(apiClientProvider));
     for (final row in await db.getPendingInventory()) {
@@ -109,6 +119,13 @@ class InventoryController extends Notifier<AsyncValue<String?>> {
     for (final row in await db.getPendingExpenses()) {
       final ok = await api.uploadExpense(userId: userId, row: row);
       if (ok) await db.markExpenseSynced(row.expensesId);
+    }
+    if (AppPlatform.requiresNetwork) {
+      final leftInv = (await db.getPendingInventory()).length;
+      final leftExp = (await db.getPendingExpenses()).length;
+      if (leftInv > 0 || leftExp > 0) {
+        throw StateError(kWebApiSaveFailedMessage);
+      }
     }
   }
 

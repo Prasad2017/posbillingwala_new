@@ -28,7 +28,7 @@ final pendingInvoicesProvider = StreamProvider<List<Invoice>>((ref) {
 
 final syncPendingSnapshotProvider =
     FutureProvider<SyncPendingSnapshot>((ref) async {
-  // Refresh when pending invoices change.
+  /* Refresh when pending invoices change. */
   ref.watch(pendingInvoicesProvider);
   return ref.read(appDatabaseProvider).getSyncPendingSnapshot();
 });
@@ -69,8 +69,8 @@ class InvoiceSyncController extends Notifier<AsyncValue<InvoiceSyncResult?>> {
       var failed = 0;
       String? lastError;
 
-      // WithTable InvoicePendingSync + UserSynchronizeData:
-      // deletes → invoice products → invoice combo items → invoice headers.
+      /* WithTable InvoicePendingSync + UserSynchronizeData: */
+      /* deletes → invoice products → invoice combo items → invoice headers. */
       for (final row in await db.getPendingInvoiceProductDeletes()) {
         final network = row.invoiceProductNetworkStatus?.trim();
         if (network == null || network.isEmpty) {
@@ -85,7 +85,7 @@ class InvoiceSyncController extends Notifier<AsyncValue<InvoiceSyncResult?>> {
             await db.removeInvoiceProductDelete(row.deleteId);
           }
         } catch (_) {
-          // Keep queued for next sync.
+          /* Keep queued for next sync. */
         }
       }
 
@@ -189,7 +189,7 @@ class InvoiceSyncController extends Notifier<AsyncValue<InvoiceSyncResult?>> {
     }
   }
 
-  /// Downloads invoices (+ lines) from cloud and upserts as synced.
+  /* Downloads invoices (+ lines) from cloud and upserts as synced. */
   Future<InvoiceSyncResult> downloadInvoices({String? invoiceDate}) async {
     final userId = ref.read(authControllerProvider).session?.userId;
     if (userId == null || userId.isEmpty) {
@@ -217,7 +217,7 @@ class InvoiceSyncController extends Notifier<AsyncValue<InvoiceSyncResult?>> {
       try {
         comboLines = await api.fetchInvoiceComboItems(userId);
       } catch (_) {
-        // Older servers may omit combo lines; invoices still import.
+        /* Older servers may omit combo lines; invoices still import. */
         comboLines = const [];
       }
 
@@ -284,7 +284,7 @@ class InvoiceSyncController extends Notifier<AsyncValue<InvoiceSyncResult?>> {
 
   Future<InvoiceSyncResult> syncBothWays() async {
     final upload = await uploadPending();
-    // Full history like WithTable InvoiceWorker (no month filter).
+    /* Full history like WithTable InvoiceWorker (no month filter). */
     final download = await downloadInvoices();
     final result = InvoiceSyncResult(
       uploaded: upload.uploaded,

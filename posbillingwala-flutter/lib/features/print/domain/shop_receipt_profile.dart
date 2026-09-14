@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pos_billingwala_v2/features/company/data/company_dtos.dart';
 
-/// Local snapshot of shop identity used on thermal bills (Android ShopHeader).
+/* Local snapshot of shop identity used on thermal bills (Android ShopHeader). */
 class ShopReceiptProfile {
   const ShopReceiptProfile({
     this.companyName = '',
@@ -37,12 +37,12 @@ class ShopReceiptProfile {
   final String gstNumber;
   final String panNumber;
   final String companyFssis;
-  /// Android stores UPI VPA in `paymentLogo` when it looks like `name@bank`.
+  /* Android stores UPI VPA in `paymentLogo` when it looks like `name@bank`. */
   final String paymentLogo;
   final String shopName1;
   final String shopName2;
   final String cashierName;
-  /// Local filesystem path for shop logo used on thermal bills.
+  /* Local filesystem path for shop logo used on thermal bills. */
   final String logoLocalPath;
   final String shopCgst;
   final String shopSgst;
@@ -64,7 +64,7 @@ class ShopReceiptProfile {
 
   String get upiId => hasUpiId ? paymentLogo.trim() : '';
 
-  /// Android ShopHeaderBuilder layout for thermal bills.
+  /* Android ShopHeaderBuilder layout for thermal bills. */
   List<String> headerLines() {
     final lines = <String>[];
     void add(String? v) {
@@ -72,7 +72,7 @@ class ShopReceiptProfile {
       if (t.isNotEmpty) lines.add(t);
     }
 
-    // Primary title: shopName1 else companyName (do not stack both).
+    /* Primary title: shopName1 else companyName (do not stack both). */
     final title = shopName1.trim().isNotEmpty ? shopName1.trim() : companyName.trim();
     add(title);
     add(shopName2);
@@ -254,7 +254,7 @@ class ShopReceiptProfileController extends Notifier<ShopReceiptProfile> {
   }
 }
 
-/// Android PaymentUpiQrHelper.buildUpiPayUri
+/* Android PaymentUpiQrHelper.buildUpiPayUri */
 String buildUpiPayUri({
   required String upiId,
   required String payeeName,

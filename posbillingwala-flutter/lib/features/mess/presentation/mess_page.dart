@@ -244,7 +244,7 @@ class MessPageState extends ConsumerState<MessPage>
               studentYear: result.studentYear,
               company: result.company,
             );
-    // Inventory AddMessMember also collects first payment amounts/days.
+    /* Inventory AddMessMember also collects first payment amounts/days. */
     if (result.messAmount != null || result.messPaidAmount != null) {
       final month = DateFormat('yyyy-MM').format(DateTime.now());
       final network = 'pay_${DateTime.now().millisecondsSinceEpoch}';

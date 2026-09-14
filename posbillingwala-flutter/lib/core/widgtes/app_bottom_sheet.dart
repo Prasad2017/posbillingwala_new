@@ -56,7 +56,7 @@ Future<T?> showAppBottomSheet<T>({
   );
 }
 
-/// Confirmation sheet built on [showAppBottomSheet] with message + AppButton row.
+/* Confirmation sheet built on [showAppBottomSheet] with message + AppButton row. */
 Future<bool> showAppConfirmBottomSheet({
   required BuildContext context,
   required String title,
@@ -110,7 +110,7 @@ Future<bool> showAppConfirmBottomSheet({
   return result == true;
 }
 
-/// Info sheet matching `bottom_sheet_info.xml` (title, message, two actions).
+/* Info sheet matching `bottom_sheet_info.xml` (title, message, two actions). */
 Future<bool> showAppInfoBottomSheet({
   required BuildContext context,
   required String title,

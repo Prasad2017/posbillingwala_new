@@ -93,7 +93,7 @@ class MastersRepository {
     );
 
     final foodTypes = await api.fetchFoodTypes();
-    // Catalog lists are keyed by ownerId (WithTable CategoryWorker / ProductWorker).
+    /* Catalog lists are keyed by ownerId (WithTable CategoryWorker / ProductWorker). */
     final categories = await api.fetchCategories(catalogId);
     List<SubcategoryDto> subcategories = const [];
     try {
@@ -107,14 +107,14 @@ class MastersRepository {
       combos = await api.fetchCombos(catalogId);
       comboItems = await api.fetchComboItems(catalogId);
     } catch (_) {
-      // Combo endpoints may be unavailable on older servers.
+      /* Combo endpoints may be unavailable on older servers. */
     }
-    // Floor masters are keyed by licenceId (WithTable PosTableWorker).
+    /* Floor masters are keyed by licenceId (WithTable PosTableWorker). */
     List<PosTableDto> tables = const [];
     try {
       tables = await api.fetchPosTables(opsId);
     } catch (_) {
-      // Tables endpoint may be unavailable; floor can seed locally.
+      /* Tables endpoint may be unavailable; floor can seed locally. */
     }
     List<DiningAreaDto> diningAreas = const [];
     List<TableTypeDto> tableTypes = const [];
@@ -156,7 +156,7 @@ class MastersRepository {
               categorySortOrder: Value(e.categorySortOrder),
               categoryDeletedStatus: Value(e.categoryDeletedStatus),
               categoryNetworkStatus: Value(e.categoryNetworkStatus),
-              // Server uses active/deactive → deletedStatus; local *Status is sync/active flag.
+              /* Server uses active/deactive → deletedStatus; local *Status is sync/active flag. */
               categoryStatus: const Value('1'),
               categorySyncStatus: const Value('1'),
             ),
@@ -296,7 +296,7 @@ class MastersRepository {
             )
             .toList(),
       );
-      // If cloud returned only inactive tables, still seed a usable floor.
+      /* If cloud returned only inactive tables, still seed a usable floor. */
       await db.seedDefaultTablesIfEmpty();
     } else {
       await db.seedDefaultTablesIfEmpty();
@@ -371,8 +371,8 @@ class MastersRepository {
     );
   }
 
-  /// Uploads locally-created categories / products / portions / combos / tables.
-  /// Catalog rows use [ownerId]; floor rows use [licenceUserId].
+  /* Uploads locally-created categories / products / portions / combos / tables. */
+  /* Catalog rows use [ownerId]; floor rows use [licenceUserId]. */
   Future<int> uploadPendingMasters({
     required String ownerId,
     String? licenceUserId,
@@ -598,17 +598,13 @@ class MastersRepository {
     String? foodTypeCode,
     bool uploadNow = true,
   }) async {
-    if (AppPlatform.requiresNetwork && !await ensureOnline()) {
-      throw StateError(kOnlineRequiredMessage);
-    }
+    await _requireOnlineIfWeb();
     final id = await db.insertLocalCategory(
       categoryName: categoryName.trim(),
       foodTypeId: foodTypeId,
       foodTypeCode: foodTypeCode,
     );
-    if (uploadNow && userId.trim().isNotEmpty) {
-      await uploadPendingMasters(ownerId: userId);
-    }
+    await _pushPendingToApi(userId, uploadNow: uploadNow);
     return id;
   }
 
@@ -617,10 +613,9 @@ class MastersRepository {
     required String areaName,
     bool uploadNow = true,
   }) async {
+    await _requireOnlineIfWeb();
     final id = await db.insertLocalDiningArea(areaName: areaName.trim());
-    if (uploadNow && userId.trim().isNotEmpty) {
-      await uploadPendingMasters(ownerId: userId);
-    }
+    await _pushPendingToApi(userId, uploadNow: uploadNow);
     return id;
   }
 
@@ -629,11 +624,10 @@ class MastersRepository {
     required String tableTypeName,
     bool uploadNow = true,
   }) async {
+    await _requireOnlineIfWeb();
     final id =
         await db.insertLocalTableType(tableTypeName: tableTypeName.trim());
-    if (uploadNow && userId.trim().isNotEmpty) {
-      await uploadPendingMasters(ownerId: userId);
-    }
+    await _pushPendingToApi(userId, uploadNow: uploadNow);
     return id;
   }
 
@@ -642,16 +636,22 @@ class MastersRepository {
     required String portionName,
     bool uploadNow = true,
   }) async {
+    await _requireOnlineIfWeb();
     final id =
         await db.insertLocalPortionMaster(portionName: portionName.trim());
-    if (uploadNow && userId.trim().isNotEmpty) {
-      await uploadPendingMasters(ownerId: userId);
-    }
+    await _pushPendingToApi(userId, uploadNow: uploadNow);
     return id;
   }
 
-  Future<void> deletePortionMaster(int portionMasterId) =>
-      db.softDeletePortionMaster(portionMasterId);
+  Future<void> deletePortionMaster({
+    required String userId,
+    required int portionMasterId,
+    bool uploadNow = true,
+  }) async {
+    await _requireOnlineIfWeb();
+    await db.softDeletePortionMaster(portionMasterId);
+    await _pushPendingToApi(userId, uploadNow: uploadNow);
+  }
 
   Future<int> createSubcategory({
     required String userId,
@@ -660,14 +660,13 @@ class MastersRepository {
     String? categoryNetworkStatus,
     bool uploadNow = true,
   }) async {
+    await _requireOnlineIfWeb();
     final id = await db.insertLocalSubcategory(
       subcategoryName: subcategoryName.trim(),
       categoryId: categoryId,
       categoryNetworkStatus: categoryNetworkStatus,
     );
-    if (uploadNow && userId.trim().isNotEmpty) {
-      await uploadPendingMasters(ownerId: userId);
-    }
+    await _pushPendingToApi(userId, uploadNow: uploadNow);
     return id;
   }
 
@@ -685,9 +684,7 @@ class MastersRepository {
     int? subcategoryId,
     bool uploadNow = true,
   }) async {
-    if (AppPlatform.requiresNetwork && !await ensureOnline()) {
-      throw StateError(kOnlineRequiredMessage);
-    }
+    await _requireOnlineIfWeb();
     final id = await db.insertLocalProduct(
       productName: productName.trim(),
       productPrice: productPrice,
@@ -702,9 +699,7 @@ class MastersRepository {
       productSgst: productSgst,
       subcategoryId: subcategoryId,
     );
-    if (uploadNow && userId.trim().isNotEmpty) {
-      await uploadPendingMasters(ownerId: userId);
-    }
+    await _pushPendingToApi(userId, uploadNow: uploadNow);
     return id;
   }
 
@@ -716,18 +711,14 @@ class MastersRepository {
     int? areaId,
     bool uploadNow = true,
   }) async {
-    if (AppPlatform.requiresNetwork && !await ensureOnline()) {
-      throw StateError(kOnlineRequiredMessage);
-    }
+    await _requireOnlineIfWeb();
     final id = await db.insertLocalPosTable(
       tableNumber: tableNumber.trim(),
       displayName: displayName.trim(),
       capacity: capacity,
       areaId: areaId,
     );
-    if (uploadNow && userId.trim().isNotEmpty) {
-      await uploadPendingMasters(ownerId: userId);
-    }
+    await _pushPendingToApi(userId, uploadNow: uploadNow);
     return id;
   }
 
@@ -740,6 +731,7 @@ class MastersRepository {
     int? areaId,
     bool uploadNow = true,
   }) async {
+    await _requireOnlineIfWeb();
     await db.updateLocalPosTable(
       tableId: tableId,
       tableNumber: tableNumber.trim(),
@@ -747,29 +739,39 @@ class MastersRepository {
       capacity: capacity,
       areaId: areaId,
     );
-    if (uploadNow && userId.trim().isNotEmpty) {
-      await uploadPendingMasters(ownerId: userId);
-    }
+    await _pushPendingToApi(userId, uploadNow: uploadNow);
   }
 
   Future<void> updateCategory({
+    required String userId,
     required int categoryId,
     required String categoryName,
     int? foodTypeId,
     String? foodTypeCode,
-  }) {
-    return db.updateLocalCategory(
+    bool uploadNow = true,
+  }) async {
+    await _requireOnlineIfWeb();
+    await db.updateLocalCategory(
       categoryId: categoryId,
       categoryName: categoryName.trim(),
       foodTypeId: foodTypeId,
       foodTypeCode: foodTypeCode,
     );
+    await _pushPendingToApi(userId, uploadNow: uploadNow);
   }
 
-  Future<void> deleteCategory(int categoryId) =>
-      db.softDeleteCategory(categoryId);
+  Future<void> deleteCategory({
+    required String userId,
+    required int categoryId,
+    bool uploadNow = true,
+  }) async {
+    await _requireOnlineIfWeb();
+    await db.softDeleteCategory(categoryId);
+    await _pushPendingToApi(userId, uploadNow: uploadNow);
+  }
 
   Future<void> updateProduct({
+    required String userId,
     required int productId,
     required String productName,
     required double productPrice,
@@ -781,8 +783,10 @@ class MastersRepository {
     double productCgst = 0,
     double productSgst = 0,
     int? subcategoryId,
-  }) {
-    return db.updateLocalProduct(
+    bool uploadNow = true,
+  }) async {
+    await _requireOnlineIfWeb();
+    await db.updateLocalProduct(
       productId: productId,
       productName: productName.trim(),
       productPrice: productPrice,
@@ -797,12 +801,21 @@ class MastersRepository {
       productSgst: productSgst,
       subcategoryId: subcategoryId,
     );
+    await _pushPendingToApi(userId, uploadNow: uploadNow);
   }
 
-  Future<void> deleteProduct(int productId) =>
-      db.softDeleteProduct(productId);
+  Future<void> deleteProduct({
+    required String userId,
+    required int productId,
+    bool uploadNow = true,
+  }) async {
+    await _requireOnlineIfWeb();
+    await db.softDeleteProduct(productId);
+    await _pushPendingToApi(userId, uploadNow: uploadNow);
+  }
 
   Future<int> createCombo({
+    required String userId,
     required String comboName,
     required double comboPrice,
     String? comboCode,
@@ -810,7 +823,9 @@ class MastersRepository {
     double comboSgst = 0,
     bool activeOnPos = true,
     List<({int productId, int quantity})> items = const [],
+    bool uploadNow = true,
   }) async {
+    await _requireOnlineIfWeb();
     final id = await db.insertLocalCombo(
       comboName: comboName.trim(),
       comboCode: comboCode?.trim().isEmpty == true ? null : comboCode?.trim(),
@@ -822,10 +837,12 @@ class MastersRepository {
     if (items.isNotEmpty) {
       await db.replaceLocalComboItems(comboId: id, items: items);
     }
+    await _pushPendingToApi(userId, uploadNow: uploadNow);
     return id;
   }
 
   Future<void> updateCombo({
+    required String userId,
     required int comboId,
     required String comboName,
     required double comboPrice,
@@ -834,7 +851,9 @@ class MastersRepository {
     double comboSgst = 0,
     bool? activeOnPos,
     List<({int productId, int quantity})> items = const [],
+    bool uploadNow = true,
   }) async {
+    await _requireOnlineIfWeb();
     await db.updateLocalCombo(
       comboId: comboId,
       comboName: comboName.trim(),
@@ -845,7 +864,57 @@ class MastersRepository {
       activeOnPos: activeOnPos,
     );
     await db.replaceLocalComboItems(comboId: comboId, items: items);
+    await _pushPendingToApi(userId, uploadNow: uploadNow);
   }
 
-  Future<void> deleteCombo(int comboId) => db.softDeleteCombo(comboId);
+  Future<void> deleteCombo({
+    required String userId,
+    required int comboId,
+    bool uploadNow = true,
+  }) async {
+    await _requireOnlineIfWeb();
+    await db.softDeleteCombo(comboId);
+    await _pushPendingToApi(userId, uploadNow: uploadNow);
+  }
+
+  Future<void> _requireOnlineIfWeb() => requireOnlineForWeb();
+
+  /* Web: every local catalog write must reach insert* APIs immediately. */
+  Future<void> _pushPendingToApi(
+    String userId, {
+    bool uploadNow = true,
+  }) async {
+    if (!uploadNow) {
+      if (AppPlatform.requiresNetwork) {
+        throw StateError(kOnlineRequiredMessage);
+      }
+      return;
+    }
+    final ownerId = userId.trim();
+    if (ownerId.isEmpty) {
+      if (AppPlatform.requiresNetwork) {
+        throw StateError('Please login to save on Web POS.');
+      }
+      return;
+    }
+    await uploadPendingMasters(ownerId: ownerId);
+    if (!AppPlatform.requiresNetwork) return;
+    final left = await _pendingCatalogCount();
+    if (left > 0) {
+      throw StateError(kWebApiSaveFailedMessage);
+    }
+  }
+
+  Future<int> _pendingCatalogCount() async {
+    Future<int> len(Future<List<dynamic>> f) async => (await f).length;
+    return (await len(db.getPendingCategories())) +
+        (await len(db.getPendingSubcategories())) +
+        (await len(db.getPendingProducts())) +
+        (await len(db.getPendingPortions())) +
+        (await len(db.getPendingCombos())) +
+        (await len(db.getPendingDiningAreas())) +
+        (await len(db.getPendingTableTypes())) +
+        (await len(db.getPendingPortionMasters())) +
+        (await len(db.getPendingPosTables()));
+  }
 }

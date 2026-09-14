@@ -16,19 +16,15 @@ import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/report_pin_gate.dart';
 import 'package:pos_billingwala_v2/features/sync/domain/full_sync_controller.dart';
 import 'package:pos_billingwala_v2/features/sync/domain/sync_progress.dart';
+import 'package:pos_billingwala_v2/features/settings/domain/in_app_update_service.dart';
 import 'package:pos_billingwala_v2/l10n/app_strings.dart';
-import 'package:url_launcher/url_launcher.dart';
 
-/// Settings hub — card groups matching the Settings reference UI.
+/* Settings hub — card groups matching the Settings reference UI. */
 class SettingsHubPage extends ConsumerWidget {
   const SettingsHubPage({super.key});
 
-  static const playStoreUrl =
-      'https://play.google.com/store/apps/details?id=com.pos_billingwala';
-
   Future<void> rateUs(BuildContext context) async {
-    final uri = Uri.parse(playStoreUrl);
-    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    final ok = await inAppUpdateService.openPlayStore();
     if (!ok && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Could not open Play Store')),
@@ -36,19 +32,46 @@ class SettingsHubPage extends ConsumerWidget {
     }
   }
 
-  Future<void> checkUpdate(BuildContext context) async {
-    final uri = Uri.parse(playStoreUrl);
-    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+  Future<void> checkUpdate(BuildContext context, WidgetRef ref) async {
+    final strings = AppStrings.of(ref);
+    final outcome = await inAppUpdateService.checkAvailability();
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          ok
-              ? 'Opened Play Store — check for updates'
-              : 'Could not open Play Store',
-        ),
-      ),
-    );
+    if (outcome.status == InAppUpdateStatus.notAvailable) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(strings.appUpdateNotAvailable)),
+      );
+      return;
+    }
+    if (outcome.status == InAppUpdateStatus.failed &&
+        InAppUpdateService.isAndroidPlay) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(strings.appFailedToUpdate)),
+      );
+      return;
+    }
+    if (outcome.status == InAppUpdateStatus.available ||
+        outcome.status == InAppUpdateStatus.downloaded) {
+      final go = await showAppConfirmBottomSheet(
+        context: context,
+        title: strings.newVersionAvailable,
+        message: strings.updateBeforeContinue,
+        confirmLabel: strings.updateApp,
+        cancelLabel: strings.cancel,
+        icon: Icons.system_update_rounded,
+      );
+      if (!context.mounted || !go) return;
+      final started = await inAppUpdateService.startUpdate(
+        preferImmediate: true,
+      );
+      if (!context.mounted) return;
+      if (started.status == InAppUpdateStatus.failed) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(strings.appFailedToUpdate)),
+        );
+      }
+      return;
+    }
+    await inAppUpdateService.openPlayStore();
   }
 
   Future<void> pickLanguage(BuildContext context, WidgetRef ref) async {
@@ -312,9 +335,9 @@ class SettingsHubPage extends ConsumerWidget {
         SettingsItem(
           icon: Icons.system_update_rounded,
           color: AppColors.primary,
-          title: 'Update App',
-          subtitle: 'Open Play Store listing',
-          onTap: () => checkUpdate(context),
+          title: strings.updateApp,
+          subtitle: strings.updateAppHint,
+          onTap: () => checkUpdate(context, ref),
         ),
       if (!AppPlatform.isWeb)
         SettingsItem(

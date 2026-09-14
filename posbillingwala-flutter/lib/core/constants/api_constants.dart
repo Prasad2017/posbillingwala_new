@@ -1,23 +1,23 @@
-/// Central API base URL, endpoint paths, and response list keys.
-/// Matches WithTable `ApiInterface` / `AllApiResponse` naming.
+/* Central API base URL, endpoint paths, and response list keys. */
+/* Matches WithTable `ApiInterface` / `AllApiResponse` naming. */
 abstract final class ApiConstants {
   ApiConstants._();
 
-  /// Same Android API host used by WithTable (`BuildConfig.API_BASE_URL`).
-  /// Override at build time:
-  /// `--dart-define=API_BASE_URL=http://10.0.2.2/androidApp/`
+  /* Same Android API host used by WithTable (`BuildConfig.API_BASE_URL`). */
+  /* Override at build time: */
+  /* `--dart-define=API_BASE_URL=http://10.0.2.2/androidApp/` */
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
     defaultValue: 'https://posbillingwala.com/androidApp/',
   );
 
-  /// Shop / media assets (`BuildConfig.MEDIA_BASE_URL`).
+  /* Shop / media assets (`BuildConfig.MEDIA_BASE_URL`). */
   static const String mediaBaseUrl = String.fromEnvironment(
     'MEDIA_BASE_URL',
     defaultValue: 'https://posbillingwala.com/storage/app/',
   );
 
-  /// Resolves a relative shop/company image path to an absolute URL.
+  /* Resolves a relative shop/company image path to an absolute URL. */
   static String? mediaUrl(String? path) {
     final p = path?.trim() ?? '';
     if (p.isEmpty) return null;
@@ -27,11 +27,11 @@ abstract final class ApiConstants {
   }
 }
 
-/// PHP script paths (relative to [ApiConstants.baseUrl]).
+/* PHP script paths (relative to [ApiConstants.baseUrl]). */
 abstract final class ApiEndpoints {
   ApiEndpoints._();
 
-  // Auth / licence
+  /* Auth / licence */
   static const String login = 'Login.php';
   static const String loginMpin = 'LoginMpin.php';
   static const String updateMpin = 'updateMPin.php';
@@ -41,7 +41,7 @@ abstract final class ApiEndpoints {
   static const String logOut = 'LogOut.php';
   static const String refreshAuthToken = 'refreshAuthToken.php';
 
-  // Masters / catalog
+  /* Masters / catalog */
   static const String getFoodTypeList = 'getFoodTypeList.php';
   static const String getCategoryList = 'getCategoryList.php';
   static const String getSubcategoryList = 'getSubcategoryList.php';
@@ -55,7 +55,7 @@ abstract final class ApiEndpoints {
   static const String insertPortion = 'insertPortion.php';
   static const String insertPortionMaster = 'insertPortionMaster.php';
 
-  // Combos
+  /* Combos */
   static const String getComboList = 'getComboList.php';
   static const String getComboItemList = 'getComboItemList.php';
   static const String insertCombo = 'insertCombo.php';
@@ -63,7 +63,7 @@ abstract final class ApiEndpoints {
   static const String insertInvoiceComboItem = 'insertInvoiceComboItem.php';
   static const String getInvoiceComboItemList = 'getInvoiceComboItemList.php';
 
-  // Company / printer
+  /* Company / printer */
   static const String getCompanyList = 'getCompanyList.php';
   static const String insertCompanyDetail = 'insertCompanyDetail.php';
   static const String getCompanyPrinterSetting = 'getCompanyPrinterSetting.php';
@@ -71,7 +71,7 @@ abstract final class ApiEndpoints {
       'insertCompanyPrinterSetting.php';
   static const String getHomeSalesOverview = 'getHomeSalesOverview.php';
 
-  // Tables / dining
+  /* Tables / dining */
   static const String insertPosTable = 'insertPosTable.php';
   static const String insertDiningArea = 'insertDiningArea.php';
   static const String getDiningAreaList = 'getDiningAreaList.php';
@@ -80,20 +80,21 @@ abstract final class ApiEndpoints {
   static const String insertDiningSession = 'insertDiningSession.php';
   static const String getDiningSessionList = 'getDiningSessionList.php';
 
-  // Invoices / sync
+  /* Invoices / sync */
   static const String insertInvoice = 'insertInvoice.php';
   static const String insertInvoiceProduct = 'insertInvoiceProduct.php';
   static const String deleteInvoiceProduct = 'deleteInvoiceProduct.php';
   static const String getInvoiceList = 'getInvoiceList.php';
   static const String getInvoiceProductList = 'getInvoiceProductList.php';
+  static const String getPosSalesReport = 'getPosSalesReport.php';
 
-  // Inventory / expenses
+  /* Inventory / expenses */
   static const String insertInventory = 'insertInventory.php';
   static const String getInventoryList = 'getInventoryList.php';
   static const String insertExpenses = 'insertExpenses.php';
   static const String getExpensesList = 'getExpensesList.php';
 
-  // Mess
+  /* Mess */
   static const String getMessMemberList = 'getMessMemberList.php';
   static const String insertMessMember = 'insertMessMember.php';
   static const String getMessMemberPaymentList = 'getMessMemberPaymentList.php';
@@ -116,10 +117,10 @@ abstract final class ApiEndpoints {
   static const String insertMessToken = 'insertMessToken.php';
   static const String verifyMessToken = 'verifyMessToken.php';
 
-  // Notifications
+  /* Notifications */
   static const String registerFcmToken = 'registerFcmToken.php';
 
-  // Support / observability
+  /* Support / observability */
   static const String getSupportTickets = 'getSupportTickets.php';
   static const String getSupportTicketDetails = 'getSupportTicketDetails.php';
   static const String createSupportTicket = 'createSupportTicket.php';
@@ -127,8 +128,8 @@ abstract final class ApiEndpoints {
   static const String reportErrorLog = 'reportErrorLog.php';
 }
 
-/// JSON list / payload keys returned by PHP endpoints
-/// (mirrors Android `AllApiResponse` field names).
+/* JSON list / payload keys returned by PHP endpoints */
+/* (mirrors Android `AllApiResponse` field names). */
 abstract final class ApiResponseKeys {
   ApiResponseKeys._();
 

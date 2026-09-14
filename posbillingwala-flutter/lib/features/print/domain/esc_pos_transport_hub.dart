@@ -3,9 +3,9 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:unified_esc_pos_printer/unified_esc_pos_printer.dart';
 
-/// USB (+ optional BLE) ESC/POS connection via [PrinterManager].
-/// Works with generic USB Printer Class (0x07) and USB-serial chips
-/// (FTDI / CP210x / PL2303 / CH34x) — any ESC/POS thermal model.
+/* USB (+ optional BLE) ESC/POS connection via [PrinterManager]. */
+/* Works with generic USB Printer Class (0x07) and USB-serial chips */
+/* (FTDI / CP210x / PL2303 / CH34x) — any ESC/POS thermal model. */
 class EscPosTransportHub {
   EscPosTransportHub({PrinterManager? manager})
       : escPosTransportHubManager = manager ?? PrinterManager();

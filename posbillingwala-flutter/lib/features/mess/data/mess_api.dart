@@ -176,7 +176,7 @@ class MessApi {
     return isApiSuccess(data);
   }
 
-  /// WithTable `mess_shop_setting_get.php` — payer mode (`user` / `institute`).
+  /* WithTable `mess_shop_setting_get.php` — payer mode (`user` / `institute`). */
   Future<String?> fetchShopPayerMode(String userId) async {
     final data = await messApiGet(
       ApiEndpoints.messShopSettingGet,
@@ -200,7 +200,7 @@ class MessApi {
     return isApiSuccess(data);
   }
 
-  /// Pending meal tokens for this device (WithTable `mess_meal_token_pending`).
+  /* Pending meal tokens for this device (WithTable `mess_meal_token_pending`). */
   Future<List<MessMealTokenDto>> fetchPendingMealTokens({
     required String userId,
     required String deviceId,

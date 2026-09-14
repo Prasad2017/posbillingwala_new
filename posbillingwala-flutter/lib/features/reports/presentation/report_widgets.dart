@@ -11,7 +11,7 @@ const pageBg = Color(0xFFF3F7FC);
 
 Color get reportPageBg => pageBg;
 
-/// Uppercase section label used on hub and detail screens.
+/* Uppercase section label used on hub and detail screens. */
 class ReportSectionLabel extends StatelessWidget {
   const ReportSectionLabel(this.label, {super.key});
 
@@ -32,7 +32,7 @@ class ReportSectionLabel extends StatelessWidget {
   }
 }
 
-/// Pill used under AppBar for period / store context.
+/* Pill used under AppBar for period / store context. */
 class ReportPeriodPill extends StatelessWidget {
   const ReportPeriodPill({
     super.key,
@@ -93,7 +93,7 @@ class ReportPeriodPill extends StatelessWidget {
   }
 }
 
-/// White card shell matching Masters / Settings list cards.
+/* White card shell matching Masters / Settings list cards. */
 class ReportSurfaceCard extends StatelessWidget {
   const ReportSurfaceCard({
     super.key,
@@ -141,7 +141,7 @@ class ReportKpiData {
   final double? changePercent;
 }
 
-/// 2×2 KPI grid with blue top accent (screenshot style).
+/* 2×2 KPI grid with blue top accent (screenshot style). */
 class ReportKpiGrid extends StatelessWidget {
   const ReportKpiGrid({super.key, required this.items});
 
@@ -265,7 +265,7 @@ class ReportSlice {
   final Color color;
 }
 
-/// Donut + legend block used on invoice / sale / table reports.
+/* Donut + legend block used on invoice / sale / table reports. */
 class ReportDonutBreakdown extends StatelessWidget {
   const ReportDonutBreakdown({
     super.key,
@@ -459,7 +459,7 @@ class ReportDonutPainter extends CustomPainter {
       oldDelegate.slices != slices;
 }
 
-/// Simple line trend for Sales Dashboard / Overview.
+/* Simple line trend for Sales Dashboard / Overview. */
 class ReportLineTrend extends StatelessWidget {
   const ReportLineTrend({
     super.key,
@@ -579,7 +579,7 @@ class LineTrendPainter extends CustomPainter {
       oldDelegate.values != values;
 }
 
-/// Indexed invoice row matching Sales List / Invoice Sale screenshots.
+/* Indexed invoice row matching Sales List / Invoice Sale screenshots. */
 class ReportInvoiceRow extends StatelessWidget {
   const ReportInvoiceRow({
     super.key,

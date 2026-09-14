@@ -20,7 +20,7 @@ final overviewWindowProvider = StreamProvider<List<Invoice>>((ref) {
   return ref.watch(appDatabaseProvider).watchInvoicesInRange(start, end);
 });
 
-/// WithTable `SalesOverview` — monthly snapshot KPIs (not dashboard charts).
+/* WithTable `SalesOverview` — monthly snapshot KPIs (not dashboard charts). */
 class SalesOverviewPage extends ConsumerWidget {
   const SalesOverviewPage({super.key});
 

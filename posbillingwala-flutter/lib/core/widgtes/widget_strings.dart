@@ -1,4 +1,4 @@
-/// Small string helpers for reusable widgets (no ARB dependency).
+/* Small string helpers for reusable widgets (no ARB dependency). */
 class WidgetStrings {
   WidgetStrings._();
 

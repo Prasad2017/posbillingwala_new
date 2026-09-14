@@ -5,7 +5,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:share_plus/share_plus.dart';
 
-/// Android-style HTML spreadsheet saved as `.xls` (opens in Excel / Sheets).
+/* Android-style HTML spreadsheet saved as `.xls` (opens in Excel / Sheets). */
 String buildHtmlSpreadsheet({
   required String reportTitle,
   String? subtitle,

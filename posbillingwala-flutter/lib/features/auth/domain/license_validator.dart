@@ -8,7 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/session_keys.dart';
 
-/// Offline RSA licence validation (Android [LicenseValidator] parity).
+/* Offline RSA licence validation (Android [LicenseValidator] parity). */
 class LicenseValidator {
   LicenseValidator._();
 
@@ -67,7 +67,7 @@ class LicenseValidator {
     final prefs = await SharedPreferences.getInstance();
 
     if (!await hasStoredPayload()) {
-      // No signed payload yet — fall back to expiry-date login (legacy).
+      /* No signed payload yet — fall back to expiry-date login (legacy). */
       result.valid = true;
       result.message = '';
       result.legacyFallback = true;
@@ -104,9 +104,9 @@ class LicenseValidator {
     }
 
     final graceMs = payload.offlineGraceUntil * 1000;
-    // Web is online-only: do not allow billing under offline grace alone.
+    /* Web is online-only: do not allow billing under offline grace alone. */
     if (AppPlatform.requiresNetwork) {
-      // Grace still ends the session when expired (must re-login online).
+      /* Grace still ends the session when expired (must re-login online). */
       if (graceMs > 0 && trustedNow > graceMs) {
         result.message =
             'Session expired. Connect to the internet and login again.';
@@ -180,7 +180,7 @@ class LicenseValidator {
     return parsePublicKeyFromDer(Uint8List.fromList(der));
   }
 
-  /// Parses SubjectPublicKeyInfo (X.509) DER into [RSAPublicKey].
+  /* Parses SubjectPublicKeyInfo (X.509) DER into [RSAPublicKey]. */
   static RSAPublicKey parsePublicKeyFromDer(Uint8List der) {
     final parser = ASN1Parser(der);
     final top = parser.nextObject() as ASN1Sequence;

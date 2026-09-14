@@ -12,7 +12,7 @@ import 'package:pos_billingwala_v2/core/widgets/app_module_icon.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
 
-/// On-screen KOT ticket (Bluetooth thermal print via ESC/POS when MAC set).
+/* On-screen KOT ticket (Bluetooth thermal print via ESC/POS when MAC set). */
 class KotPreviewPage extends ConsumerWidget {
   const KotPreviewPage({super.key, required this.ticket});
 

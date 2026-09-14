@@ -96,7 +96,7 @@ class MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
         ]);
       }
     } catch (_) {
-      // Keep local Drift rows.
+      /* Keep local Drift rows. */
     }
     if (mounted) setState(() => cloudLoaded = true);
   }

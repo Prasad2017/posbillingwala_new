@@ -7,7 +7,7 @@ import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/report_widgets.dart';
 import 'package:pos_billingwala_v2/l10n/app_strings.dart';
 
-/// WithTable member payment report (all local mess payments).
+/* WithTable member payment report (all local mess payments). */
 class MessPaymentReportPage extends ConsumerWidget {
   const MessPaymentReportPage({super.key});
 

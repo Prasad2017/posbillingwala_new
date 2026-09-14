@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-/// WithTable AdMob IDs (`AndroidManifest` + login / settings / about layouts).
+/* WithTable AdMob IDs (`AndroidManifest` + login / settings / about layouts). */
 abstract final class AdConfig {
   AdConfig._();
 

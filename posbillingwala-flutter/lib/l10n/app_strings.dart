@@ -3,13 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pos_billingwala_v2/l10n/ui_catalog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Persisted app language (en / hi / mr). Applies without restart.
+/* Persisted app language (en / hi / mr). Applies without restart. */
 class AppLocaleController extends Notifier<Locale> {
   static const prefsKey = 'appLanguage';
 
   @override
   Locale build() {
-    // Sync bootstrap; prefs load happens in [hydrate].
+    /* Sync bootstrap; prefs load happens in [hydrate]. */
     Future.microtask(hydrate);
     return const Locale('en');
   }
@@ -40,7 +40,7 @@ class AppLocaleController extends Notifier<Locale> {
 final appLocaleProvider =
     NotifierProvider<AppLocaleController, Locale>(AppLocaleController.new);
 
-/// Lightweight EN/HI/MR strings for hub surfaces (Material widgets still use locale).
+/* Lightweight EN/HI/MR strings for hub surfaces (Material widgets still use locale). */
 class AppStrings {
   AppStrings(this.locale);
 
@@ -548,4 +548,25 @@ class AppStrings {
         'क्लाउड से टेबल सिंक करें, या डिफ़ॉल्ट अपने आप बनेंगे।',
         'क्लाउडवरून टेबल सिंक करा, किंवा डीफॉल्ट आपोआप तयार होतील.',
       );
+  String get updateApp => t('Update App', 'ऐप अपडेट', 'अॅप अपडेट');
+  String get updateAppHint => t(
+        'Install from Play Store without leaving the app',
+        'ऐप छोड़े बिना Play Store से इंस्टॉल करें',
+        'अॅप न सोडता Play Store वरून इंस्टॉल करा',
+      );
+  String get newVersionAvailable => ui('toast_new_version_available');
+  String get appUpdateNotAvailable => ui('toast_app_update_not_available');
+  String get appFailedToUpdate => ui('toast_app_failed_to_update');
+  String get dataUploadingOnServer => ui('toast_data_uploading_on_server');
+  String get updateBeforeContinue => t(
+        'Please update POS Billingwala to continue. Upload your data to the server first. We are not responsible for losing data.',
+        'जारी रखने के लिए POS Billingwala अपडेट करें। पहले डेटा सर्वर पर अपलोड करें। डेटा खोने की ज़िम्मेदारी हमारी नहीं है।',
+        'पुढे जाण्यासाठी POS Billingwala अपडेट करा. आधी डेटा सर्व्हरवर अपलोड करा. डेटा हरवल्यास आम्ही जबाबदार नाही.',
+      );
+  String get updateDownloaded => t(
+        'An update has been downloaded. Restart to install.',
+        'अपडेट डाउनलोड हो गया है। इंस्टॉल के लिए रीस्टार्ट करें।',
+        'अपडेट डाउनलोड झाले आहे. इंस्टॉलसाठी रीस्टार्ट करा.',
+      );
+  String get restart => t('Restart', 'रीस्टार्ट', 'रीस्टार्ट');
 }

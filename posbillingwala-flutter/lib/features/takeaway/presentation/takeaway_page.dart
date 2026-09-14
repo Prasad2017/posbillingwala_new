@@ -15,7 +15,7 @@ import 'package:pos_billingwala_v2/l10n/app_strings.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/billing_session.dart';
 import 'package:pos_billingwala_v2/features/takeaway/domain/takeaway_providers.dart';
 
-/// Take Away parcel counter: open parcels waiting for billing.
+/* Take Away parcel counter: open parcels waiting for billing. */
 class TakeawayPage extends ConsumerStatefulWidget {
   const TakeawayPage({super.key});
 
@@ -93,7 +93,7 @@ class TakeawayPageState extends ConsumerState<TakeawayPage> {
     ref.read(billingSessionProvider.notifier).startTakeaway(
           parcelNumber: parcel.parcelNumber,
         );
-    // Same cart experience as Fast Billing cart icon / View Cart flow.
+    /* Same cart experience as Fast Billing cart icon / View Cart flow. */
     context.push('/takeaway/billing?cart=1');
   }
 

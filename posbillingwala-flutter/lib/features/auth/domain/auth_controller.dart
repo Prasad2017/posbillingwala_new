@@ -77,9 +77,9 @@ class AuthController extends Notifier<AuthState> {
       state = const AuthState(status: AuthStatus.unauthenticated);
       return;
     }
-    // Bind Drift branch filters before MPIN so cold-start queries stay scoped.
+    /* Bind Drift branch filters before MPIN so cold-start queries stay scoped. */
     await bindBranchScope(session);
-    // Stronger than Android: require PB-PIN unlock each cold start.
+    /* Stronger than Android: require PB-PIN unlock each cold start. */
     state = AuthState(status: AuthStatus.needsMpin, session: session);
   }
 
@@ -112,7 +112,7 @@ class AuthController extends Notifier<AuthState> {
         status: AuthStatus.authenticated,
         session: session,
       );
-      // Fire-and-forget FCM registration.
+      /* Fire-and-forget FCM registration. */
       FcmService(apiClient: ref.read(apiClientProvider))
           .registerForUser(session.userId);
       return true;
@@ -174,7 +174,7 @@ class AuthController extends Notifier<AuthState> {
     }
   }
 
-  /// Soft logout: keep licence on device and require PB-PIN unlock.
+  /* Soft logout: keep licence on device and require PB-PIN unlock. */
   Future<void> logout() async {
     final session = state.session;
     final userId = session?.userId;
@@ -193,7 +193,7 @@ class AuthController extends Notifier<AuthState> {
     state = AuthState(status: AuthStatus.needsMpin, session: locked);
   }
 
-  /// Hard logout: wipe local licence/session and return to licence login.
+  /* Hard logout: wipe local licence/session and return to licence login. */
   Future<void> clearLicence() async {
     final session = state.session;
     final userId = session?.userId;

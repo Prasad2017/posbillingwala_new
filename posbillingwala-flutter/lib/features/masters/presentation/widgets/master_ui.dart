@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
 
-/// Shared Master Data list/form chrome matching the reference screens.
+/* Shared Master Data list/form chrome matching the reference screens. */
 abstract final class MasterUi {
   static const bg = Color(0xFFF3F7FC);
   static const cardRadius = 14.0;

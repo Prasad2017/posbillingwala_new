@@ -12,7 +12,7 @@ import 'package:pos_billingwala_v2/features/reports/presentation/report_period_c
 import 'package:pos_billingwala_v2/features/reports/presentation/report_widgets.dart';
 import 'package:pos_billingwala_v2/l10n/app_strings.dart';
 
-/// WithTable `SalesList` — bills plus product lines for the selected period.
+/* WithTable `SalesList` — bills plus product lines for the selected period. */
 class SalesListPage extends ConsumerWidget {
   const SalesListPage({super.key});
 

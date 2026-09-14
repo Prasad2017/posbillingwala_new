@@ -1,7 +1,7 @@
 import 'package:pos_billingwala_v2/features/print/domain/receipt_labels.dart';
 
-/// Structured bill matching WithTable `activity_bluetooth_print.xml`
-/// (`twoLinearLayout` 48mm / `threeLinearLayout` 72mm).
+/* Structured bill matching WithTable `activity_bluetooth_print.xml` */
+/* (`twoLinearLayout` 48mm / `threeLinearLayout` 72mm). */
 class ThermalTicket {
   const ThermalTicket({
     required this.shopLines,

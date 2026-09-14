@@ -9,7 +9,7 @@ import 'package:pos_billingwala_v2/core/widgtes/widgtes.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/widgets/app_module_icon.dart';
 
-/// Result returned when the user picks a printer for bill/KOT.
+/* Result returned when the user picks a printer for bill/KOT. */
 class PickedPrinter {
   const PickedPrinter({
     required this.transport,
@@ -30,7 +30,7 @@ class PickedPrinter {
   final int networkPort;
 }
 
-/// Pick any ESC/POS printer: Bluetooth (paired), USB (OTG), or Network.
+/* Pick any ESC/POS printer: Bluetooth (paired), USB (OTG), or Network. */
 class PrinterDevicePickerPage extends StatefulWidget {
   const PrinterDevicePickerPage({
     super.key,

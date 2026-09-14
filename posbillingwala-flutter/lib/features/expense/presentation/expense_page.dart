@@ -11,7 +11,7 @@ import 'package:pos_billingwala_v2/features/inventory/domain/inventory_providers
 import 'package:pos_billingwala_v2/features/masters/presentation/widgets/master_ui.dart';
 import 'package:pos_billingwala_v2/l10n/app_strings.dart';
 
-/// Expense management list matching the reference table layout.
+/* Expense management list matching the reference table layout. */
 class ExpensePage extends ConsumerWidget {
   const ExpensePage({super.key});
 
@@ -94,7 +94,7 @@ class ExpensePage extends ConsumerWidget {
   }
 }
 
-/// Shared expense table used by Expense Management and Inventory tab.
+/* Shared expense table used by Expense Management and Inventory tab. */
 class ExpenseListBody extends ConsumerWidget {
   const ExpenseListBody({super.key});
 

@@ -8,8 +8,8 @@ import 'package:pos_billingwala_v2/core/widgtes/widgtes.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/pos_providers.dart';
 import 'package:pos_billingwala_v2/l10n/app_strings.dart';
 
-/// Matches `dialog_select_portion.xml`: product name, portion tabs, qty stepper,
-/// Dismiss + Add to cart.
+/* Matches `dialog_select_portion.xml`: product name, portion tabs, qty stepper, */
+/* Dismiss + Add to cart. */
 Future<void> addProductWithPortionPicker(
   BuildContext context,
   WidgetRef ref,
@@ -307,7 +307,7 @@ Future<void> promptOpenPriceAndAdd(
       );
 }
 
-/// Edit cart line quantity and/or unit price (Android qty/price dialog).
+/* Edit cart line quantity and/or unit price (Android qty/price dialog). */
 Future<void> editCartLineDialog(
   BuildContext context,
   WidgetRef ref,

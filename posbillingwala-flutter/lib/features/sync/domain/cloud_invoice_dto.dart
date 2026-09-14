@@ -65,7 +65,7 @@ class CloudInvoiceDto {
     final networkRaw = parseString(json['invoiceNetworkStatus'])?.trim() ?? '';
     return CloudInvoiceDto(
       invoiceNumber: number,
-      // Older cloud rows may omit network status — fall back so they still import.
+      /* Older cloud rows may omit network status — fall back so they still import. */
       invoiceNetworkStatus:
           networkRaw.isNotEmpty ? networkRaw : (number.isEmpty ? '' : 'inv_$number'),
       invoiceDate: date,
@@ -195,7 +195,7 @@ class CloudInvoiceItemDto {
   final String invoiceItemType;
 
   factory CloudInvoiceItemDto.fromJson(Map<String, dynamic> json) {
-    // PHP misnames invoiceProductStatus — it is the line network UUID.
+    /* PHP misnames invoiceProductStatus — it is the line network UUID. */
     final network = parseString(json['invoiceProductStatus'])?.trim().isNotEmpty ==
             true
         ? parseString(json['invoiceProductStatus'])!.trim()
@@ -250,7 +250,7 @@ class CloudInvoiceItemDto {
   }
 }
 
-/// Cloud invoice combo component line (`getInvoiceComboItemList.php`).
+/* Cloud invoice combo component line (`getInvoiceComboItemList.php`). */
 class CloudInvoiceComboItemDto {
   const CloudInvoiceComboItemDto({
     required this.invoiceNumber,

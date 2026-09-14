@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
 import 'package:pos_billingwala_v2/features/print/domain/thermal_ticket.dart';
 
-/// On-screen clone of WithTable `twoLinearLayout` / `threeLinearLayout`.
+/* On-screen clone of WithTable `twoLinearLayout` / `threeLinearLayout`. */
 class WoosimTicket extends StatelessWidget {
   const WoosimTicket({
     super.key,

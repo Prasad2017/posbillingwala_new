@@ -20,7 +20,7 @@ import 'package:pos_billingwala_v2/features/company/data/company_dtos.dart';
 import 'package:pos_billingwala_v2/features/masters/presentation/widgets/master_ui.dart';
 import 'package:pos_billingwala_v2/features/print/domain/shop_receipt_profile.dart';
 
-/// Company / shop profile only (Android Shop Details parity).
+/* Company / shop profile only (Android Shop Details parity). */
 class CompanySettingsPage extends ConsumerStatefulWidget {
   const CompanySettingsPage({super.key});
 
@@ -227,7 +227,7 @@ class CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
         setState(() => logoPath = profile.logoLocalPath);
       }
     } catch (_) {
-      // Keep local / profile fields.
+      /* Keep local / profile fields. */
     } finally {
       if (mounted) setState(() => busy = false);
     }

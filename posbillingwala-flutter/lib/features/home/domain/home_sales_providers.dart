@@ -7,9 +7,9 @@ import 'package:pos_billingwala_v2/features/home/data/home_sales_api.dart';
 import 'package:pos_billingwala_v2/features/masters/domain/masters_providers.dart';
 import 'package:pos_billingwala_v2/features/reports/domain/reports_providers.dart';
 
-/// Home period filter — Android `SALES_FILTER_TODAY` / `SALES_FILTER_MONTH`.
-/// - today → primary card = all-time total sales
-/// - month → primary card = this month
+/* Home period filter — Android `SALES_FILTER_TODAY` / `SALES_FILTER_MONTH`. */
+/* - today → primary card = all-time total sales */
+/* - month → primary card = this month */
 enum HomeSalesPeriod { today, month }
 
 final homeSalesPeriodProvider =
@@ -42,7 +42,7 @@ final allTimeSalesSummaryProvider = Provider<SalesSummary>((ref) {
   return SalesSummary.fromInvoices(invoices);
 });
 
-/// Cloud overview (Android `getHomeSalesOverview`) — null when offline / failed.
+/* Cloud overview (Android `getHomeSalesOverview`) — null when offline / failed. */
 final homeSalesOverviewProvider =
     FutureProvider.autoDispose<HomeSalesOverview?>((ref) async {
   final userId = ref.watch(authControllerProvider).session?.userId;
@@ -57,7 +57,7 @@ final homeSalesOverviewProvider =
   );
 });
 
-/// Display model for home Sales Overview + catalog KPI tiles.
+/* Display model for home Sales Overview + catalog KPI tiles. */
 class HomeDashboardKpis {
   const HomeDashboardKpis({
     required this.primarySales,
@@ -99,14 +99,14 @@ final homeDashboardKpisProvider = Provider<HomeDashboardKpis>((ref) {
   if (overview != null) {
     final parsed = parseTrend(overview.primarySalesTrend);
     return HomeDashboardKpis(
-      // API already selects all-time vs month via `period`.
+      /* API already selects all-time vs month via `period`. */
       primarySales: overview.primarySales,
       todaySales: overview.todaySales,
       primaryTitle:
           period == HomeSalesPeriod.month ? 'Monthly Sales' : 'Total Sales',
       growthText: parsed.$1,
       growthUp: parsed.$2,
-      // Prefer local catalog; fall back to cloud (web often has empty Drift).
+      /* Prefer local catalog; fall back to cloud (web often has empty Drift). */
       subcategories: catalog.subcategories > 0
           ? catalog.subcategories
           : overview.totalSubcategory,

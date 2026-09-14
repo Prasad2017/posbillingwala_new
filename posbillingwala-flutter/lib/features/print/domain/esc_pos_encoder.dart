@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-/// Minimal ESC/POS builder for 58mm/80mm thermal printers.
+/* Minimal ESC/POS builder for 58mm/80mm thermal printers. */
 class EscPosEncoder {
   EscPosEncoder({this.charsPerLine = 32});
 
-  /// 32 ≈ 58mm (2"), 48 ≈ 80mm (3").
+  /* 32 ≈ 58mm (2"), 48 ≈ 80mm (3"). */
   final int charsPerLine;
   final BytesBuilder escPosEncoderBytes = BytesBuilder();
 
@@ -14,7 +14,7 @@ class EscPosEncoder {
   void raw(List<int> data) => escPosEncoderBytes.add(data);
 
   void init() {
-    raw(const [0x1B, 0x40]); // ESC @
+    raw(const [0x1B, 0x40]); /* ESC @ */
   }
 
   void alignLeft() => raw(const [0x1B, 0x61, 0x00]);
@@ -58,7 +58,7 @@ class EscPosEncoder {
   }
 
   void cut() {
-    // Partial cut where supported.
+    /* Partial cut where supported. */
     raw(const [0x1D, 0x56, 0x01]);
   }
 

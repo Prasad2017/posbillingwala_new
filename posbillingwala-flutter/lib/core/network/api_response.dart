@@ -1,4 +1,4 @@
-// Shared helpers for PHP API JSON envelopes (status / list payloads).
+/* Shared helpers for PHP API JSON envelopes (status / list payloads). */
 
 Map<String, dynamic> asJsonMap(Object? data) {
   if (data is Map<String, dynamic>) return data;

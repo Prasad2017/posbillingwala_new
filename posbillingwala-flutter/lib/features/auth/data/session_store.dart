@@ -61,14 +61,14 @@ class SessionStore {
     await prefs.clear();
   }
 
-  /// Soft lock: drop API token but keep licence/session so MPIN unlock works.
+  /* Soft lock: drop API token but keep licence/session so MPIN unlock works. */
   Future<void> clearAuthToken() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(SessionKeys.authToken);
     await prefs.remove(SessionKeys.tokenExpiresAt);
   }
 
-  /// Persists a refreshed Bearer token (WithTable `AuthTokens.save`).
+  /* Persists a refreshed Bearer token (WithTable `AuthTokens.save`). */
   Future<void> saveAuthToken(String token, {String? expiresAt}) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(SessionKeys.authToken, token);

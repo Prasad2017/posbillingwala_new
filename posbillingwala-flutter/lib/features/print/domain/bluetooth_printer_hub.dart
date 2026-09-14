@@ -8,15 +8,15 @@ import 'package:pos_billingwala_v2/features/print/domain/woosim_print_channel.da
 
 enum PrinterChannelKind { bill, kot }
 
-/// Android-parity Bluetooth printer session manager.
-///
-/// Mirrors [BluetoothPrinterChannel] in WithTable:
-/// - Separate bill / KOT saved MACs
-/// - One RFCOMM link via [print_bluetooth_thermal] (plugin is single-connection)
-/// - Same MAC for bill+KOT → reuse connection (no second socket)
-/// - Different MACs → disconnect then reconnect before write
-/// - Skip connect when already linked to the same address
-/// - Soft auto-reconnect with backoff after failed writes / disconnects
+/* Android-parity Bluetooth printer session manager. */
+/* */
+/* Mirrors [BluetoothPrinterChannel] in WithTable: */
+/* - Separate bill / KOT saved MACs */
+/* - One RFCOMM link via [print_bluetooth_thermal] (plugin is single-connection) */
+/* - Same MAC for bill+KOT → reuse connection (no second socket) */
+/* - Different MACs → disconnect then reconnect before write */
+/* - Skip connect when already linked to the same address */
+/* - Soft auto-reconnect with backoff after failed writes / disconnects */
 class BluetoothPrinterHub {
   BluetoothPrinterHub({
     this.permissions = const AppPermissionService(),
@@ -99,7 +99,7 @@ class BluetoothPrinterHub {
     }
   }
 
-  /// Silent auto-connect (Home / Settings load), same as Android autoConnect.
+  /* Silent auto-connect (Home / Settings load), same as Android autoConnect. */
   Future<void> autoConnect(PrinterChannelKind kind) async {
     final mac = addressFor(kind);
     if (mac.isEmpty) return;
@@ -107,7 +107,7 @@ class BluetoothPrinterHub {
     await connectInternal(mac, fromUser: false);
   }
 
-  /// User-initiated connect (Settings Connect button).
+  /* User-initiated connect (Settings Connect button). */
   Future<bool> connect(
     PrinterChannelKind kind, {
     String? address,
@@ -138,7 +138,7 @@ class BluetoothPrinterHub {
       kotAddress = '';
     }
 
-    // Keep physical link if the other channel still needs the same MAC.
+    /* Keep physical link if the other channel still needs the same MAC. */
     final other = addressFor(
       kind == PrinterChannelKind.bill
           ? PrinterChannelKind.kot
@@ -163,7 +163,7 @@ class BluetoothPrinterHub {
     connectedAddress = '';
   }
 
-  /// Ensures the correct printer is connected before a print write (≤12s).
+  /* Ensures the correct printer is connected before a print write (≤12s). */
   Future<bool> ensureReady(PrinterChannelKind kind) async {
     final mac = addressFor(kind);
     if (mac.isEmpty) return false;
@@ -181,7 +181,7 @@ class BluetoothPrinterHub {
     while (DateTime.now().isBefore(deadline)) {
       if (await isLinkedTo(mac)) return true;
       if (!connecting && !await isLinkedTo(mac)) {
-        // One more attempt before giving up.
+        /* One more attempt before giving up. */
         final retry = await connectInternal(mac, fromUser: false);
         if (!retry) return await isLinkedTo(mac);
       }
@@ -219,8 +219,8 @@ class BluetoothPrinterHub {
       return false;
     }
     try {
-      // print_bluetooth_thermal Android expects List<Int>, not Uint8List
-      // (Uint8List arrives as typed data and the Kotlin cast returns null → false).
+      /* print_bluetooth_thermal Android expects List<Int>, not Uint8List */
+      /* (Uint8List arrives as typed data and the Kotlin cast returns null → false). */
       final payload = List<int>.from(bytes);
       final ok = await PrintBluetoothThermal.writeBytes(payload);
       debugPrint(
@@ -248,8 +248,8 @@ class BluetoothPrinterHub {
     final linked = await connectionStatus();
     if (!linked) return false;
     if (connectedAddress.isEmpty) {
-      // Plugin connected but we lost tracked MAC — treat as linked only if
-      // caller reconnects explicitly. Force reconnect for safety.
+      /* Plugin connected but we lost tracked MAC — treat as linked only if */
+      /* caller reconnects explicitly. Force reconnect for safety. */
       return false;
     }
     return connectedAddress.toLowerCase() == mac.toLowerCase();
@@ -259,7 +259,7 @@ class BluetoothPrinterHub {
     final mac = normalizeMac(address);
     if (mac.isEmpty) return false;
 
-    // Already on the right printer — Android skips reconnect.
+    /* Already on the right printer — Android skips reconnect. */
     if (await isLinkedTo(mac)) {
       persistentSession = true;
       cancelReconnect();
@@ -268,7 +268,7 @@ class BluetoothPrinterHub {
     }
 
     if (connecting) {
-      // Wait briefly for in-flight connect to the same MAC.
+      /* Wait briefly for in-flight connect to the same MAC. */
       final deadline = DateTime.now().add(const Duration(seconds: 8));
       while (connecting && DateTime.now().isBefore(deadline)) {
         await Future<void>.delayed(const Duration(milliseconds: 150));

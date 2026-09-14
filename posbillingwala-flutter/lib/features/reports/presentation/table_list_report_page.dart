@@ -15,7 +15,7 @@ import 'package:pos_billingwala_v2/features/tables/domain/tables_providers.dart'
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
 
-/// Invoice Table List Report — filter table bills by selected table + period.
+/* Invoice Table List Report — filter table bills by selected table + period. */
 class TableListReportPage extends ConsumerStatefulWidget {
   const TableListReportPage({super.key, this.initialTableNumber});
 

@@ -52,7 +52,7 @@ class HomeSalesApi {
 
   final ApiClient client;
 
-  /// Android [ApiInterface.getHomeSalesOverview] — period: `today` | `month`.
+  /* Android [ApiInterface.getHomeSalesOverview] — period: `today` | `month`. */
   Future<HomeSalesOverview?> fetchOverview({
     required String userId,
     String period = 'today',

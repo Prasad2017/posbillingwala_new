@@ -7,7 +7,7 @@ import 'package:pos_billingwala_v2/features/print/domain/receipt_rasterizer.dart
 import 'package:pos_billingwala_v2/features/print/domain/shop_receipt_profile.dart';
 import 'package:pos_billingwala_v2/features/print/domain/thermal_ticket.dart';
 
-/// Bill / KOT receipt content aligned with Android BluetoothPrint layouts.
+/* Bill / KOT receipt content aligned with Android BluetoothPrint layouts. */
 class ReceiptBuilder {
   ReceiptBuilder(
     this.settings, {
@@ -19,16 +19,16 @@ class ReceiptBuilder {
   final ShopReceiptProfile shopProfile;
   final ReceiptLabels labels;
   final money = NumberFormat('#0.00');
-  /// Android bill date format.
+  /* Android bill date format. */
   final receiptBuilderDate = DateFormat('yyyy-MM-dd HH:mm:ss');
   final rasterizer = const ReceiptRasterizer();
 
-  /// Marker inserted where UPI QR should appear (terms → QR → footer).
+  /* Marker inserted where UPI QR should appear (terms → QR → footer). */
   static const upiQrMarker = '<<<UPI_QR>>>';
 
   String rupee(num value) => '₹${money.format(value)}';
 
-  /// Unicode-safe thermal bytes (any language + ₹) via bitmap, like Android.
+  /* Unicode-safe thermal bytes (any language + ₹) via bitmap, like Android. */
   Future<List<int>> billPrintBytes({
     required Invoice invoice,
     required List<InvoiceItem> items,
@@ -104,7 +104,7 @@ class ReceiptBuilder {
     );
   }
 
-  /// Android ORIGINAL / DUPLICATE bill layout (BluetoothPrint XML).
+  /* Android ORIGINAL / DUPLICATE bill layout (BluetoothPrint XML). */
   ThermalTicket ticket({
     required Invoice invoice,
     required List<InvoiceItem> items,
@@ -213,7 +213,7 @@ class ReceiptBuilder {
     ).toPlainText(width: settings.charsPerLine);
   }
 
-  /// Latin-1 fallback only. Prefer [billPrintBytes] for Unicode / ₹.
+  /* Latin-1 fallback only. Prefer [billPrintBytes] for Unicode / ₹. */
   List<int> billEscPos({
     required Invoice invoice,
     required List<InvoiceItem> items,
@@ -253,7 +253,7 @@ class ReceiptBuilder {
     return buf.toString();
   }
 
-  /// Latin-1 fallback only. Prefer [kotPrintBytes] for Unicode.
+  /* Latin-1 fallback only. Prefer [kotPrintBytes] for Unicode. */
   List<int> kotEscPos(KotTicket ticket) {
     final encoder = EscPosEncoder(charsPerLine: settings.charsPerLine)
       ..init()

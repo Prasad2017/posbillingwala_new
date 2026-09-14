@@ -1,7 +1,7 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Mess-level payer mode: user (default) or institute.
-/// Cached locally; synced via `mess_shop_setting_*` APIs (WithTable `MessPayerMode`).
+/* Mess-level payer mode: user (default) or institute. */
+/* Cached locally; synced via `mess_shop_setting_*` APIs (WithTable `MessPayerMode`). */
 abstract final class MessPayerMode {
   MessPayerMode._();
 

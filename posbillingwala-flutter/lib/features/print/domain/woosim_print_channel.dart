@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:pos_billingwala_v2/features/print/domain/bluetooth_printer_hub.dart';
 
-/// Android MethodChannel to WithTable [BluetoothPrintService] + WoosimService.
+/* Android MethodChannel to WithTable [BluetoothPrintService] + WoosimService. */
 class WoosimPrintChannel {
   WoosimPrintChannel();
 

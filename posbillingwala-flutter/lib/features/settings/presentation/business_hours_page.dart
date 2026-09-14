@@ -8,7 +8,7 @@ import 'package:pos_billingwala_v2/features/company/data/company_dtos.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
 
-/// Matches `dialog_business_hours.xml`: opening + closing time values only.
+/* Matches `dialog_business_hours.xml`: opening + closing time values only. */
 class BusinessHoursPage extends ConsumerStatefulWidget {
   const BusinessHoursPage({super.key});
 
@@ -72,7 +72,7 @@ class BusinessHoursPageState extends ConsumerState<BusinessHoursPage> {
           if (close != null) businessHoursPageClose = close;
         }
       } catch (_) {
-        // Keep prefs / defaults.
+        /* Keep prefs / defaults. */
       }
     }
     if (mounted) setState(() {});
@@ -137,7 +137,7 @@ class BusinessHoursPageState extends ConsumerState<BusinessHoursPage> {
             ),
           );
         } catch (_) {
-          // Local prefs still saved.
+          /* Local prefs still saved. */
         }
       }
 

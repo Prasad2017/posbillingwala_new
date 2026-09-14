@@ -11,8 +11,8 @@ import 'package:pos_billingwala_v2/l10n/app_strings.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
 
-/// Matches `activity_test_invoice_bluetooth_print.xml`:
-/// preview card + bottom Connect / Test Print.
+/* Matches `activity_test_invoice_bluetooth_print.xml`: */
+/* preview card + bottom Connect / Test Print. */
 class TestInvoicePreviewPage extends ConsumerStatefulWidget {
   const TestInvoicePreviewPage({
     super.key,

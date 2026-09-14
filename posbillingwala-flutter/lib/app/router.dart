@@ -65,7 +65,7 @@ import 'package:pos_billingwala_v2/features/tables/presentation/split_bill_page.
 import 'package:pos_billingwala_v2/features/tables/presentation/tables_page.dart';
 import 'package:pos_billingwala_v2/features/takeaway/presentation/takeaway_page.dart';
 
-/// Global navigator key for FCM deep links and context-free navigation.
+/* Global navigator key for FCM deep links and context-free navigation. */
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 
 class GoRouterRefresh extends ChangeNotifier {
@@ -100,7 +100,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           return '/login';
         case AuthStatus.needsMpin:
           if (isMpin) return null;
-          // Keep registration/login reachable for licence recovery or account changes.
+          /* Keep registration/login reachable for licence recovery or account changes. */
           if (isLogin || isRegister) return null;
           return '/mpin';
         case AuthStatus.authenticated:

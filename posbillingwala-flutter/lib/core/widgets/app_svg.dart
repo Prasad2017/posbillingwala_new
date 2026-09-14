@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-/// Loads SVG assets from `assets/images/svg/` with optional tint.
+/* Loads SVG assets from `assets/images/svg/` with optional tint. */
 class AppSvg extends StatelessWidget {
   const AppSvg(
     this.assetPath, {
@@ -39,7 +39,7 @@ class AppSvg extends StatelessWidget {
   }
 }
 
-/// Circular / rounded icon chip using an SVG glyph.
+/* Circular / rounded icon chip using an SVG glyph. */
 class AppSvgIconChip extends StatelessWidget {
   const AppSvgIconChip({
     super.key,

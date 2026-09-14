@@ -1,6 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
+import 'package:pos_billingwala_v2/core/network/online_guard.dart';
+import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
+import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
+import 'package:pos_billingwala_v2/features/sync/data/invoice_sync_api.dart';
 
 enum ReportPeriodKind { today, month, day, year }
 
@@ -20,9 +25,9 @@ class ReportPeriod {
         day = yearAnchor;
 
   final ReportPeriodKind kind;
-  /// For [ReportPeriodKind.day]: the day.
-  /// For [ReportPeriodKind.month]: any day in the selected month (null = current).
-  /// For [ReportPeriodKind.year]: any day in the selected year (null = current).
+  /* For [ReportPeriodKind.day]: the day. */
+  /* For [ReportPeriodKind.month]: any day in the selected month (null = current). */
+  /* For [ReportPeriodKind.year]: any day in the selected year (null = current). */
   final DateTime? day;
 
   (DateTime start, DateTime end) get range {
@@ -192,11 +197,62 @@ final reportPeriodProvider =
   ReportPeriodController.new,
 );
 
+/* Mobile: local Drift stream. Web: fetch from getPosSalesReport / getInvoiceList. */
 final periodInvoicesProvider = StreamProvider<List<Invoice>>((ref) {
   final period = ref.watch(reportPeriodProvider);
   final (start, end) = period.range;
+  if (AppPlatform.requiresNetwork) {
+    return Stream.fromFuture(_loadPeriodInvoicesFromApi(ref, start, end));
+  }
   return ref.watch(appDatabaseProvider).watchInvoicesInRange(start, end);
 });
+
+Future<List<Invoice>> _loadPeriodInvoicesFromApi(
+  Ref ref,
+  DateTime start,
+  DateTime end,
+) async {
+  await requireOnlineForWeb();
+  final userId = ref.read(authControllerProvider).session?.userId;
+  if (userId == null || userId.isEmpty) {
+    throw StateError('Please login to view reports on Web POS.');
+  }
+  final fmt = DateFormat('yyyy-MM-dd');
+  /* ReportPeriod.range uses exclusive end — convert to inclusive endDate. */
+  final inclusiveEnd = end.subtract(const Duration(days: 1));
+  final endDay = inclusiveEnd.isBefore(start) ? start : inclusiveEnd;
+  final api = InvoiceSyncApi(ref.read(apiClientProvider));
+  final db = ref.read(appDatabaseProvider);
+
+  try {
+    final report = await api.fetchPosSalesReport(
+      userId: userId,
+      startDate: fmt.format(start),
+      endDate: fmt.format(endDay),
+    );
+    if (report.invoices.isNotEmpty) {
+      await db.upsertCloudInvoices(
+        headers: report.invoices.map((e) => e.toCompanion()).toList(),
+        itemsByNumber: const {},
+      );
+    }
+  } catch (_) {
+    /* Fallback: range list endpoint (enhanced getInvoiceList). */
+    final cloud = await api.fetchInvoices(
+      userId,
+      startDate: fmt.format(start),
+      endDate: fmt.format(endDay),
+    );
+    if (cloud.isNotEmpty) {
+      await db.upsertCloudInvoices(
+        headers: cloud.map((e) => e.toCompanion()).toList(),
+        itemsByNumber: const {},
+      );
+    }
+  }
+
+  return (await db.watchInvoicesInRange(start, end).first);
+}
 
 enum ReportPaymentFilter { all, cash, upi, cashPlusUpi }
 
@@ -293,7 +349,7 @@ final periodSalesSummaryProvider = Provider<SalesSummary>((ref) {
   return SalesSummary.fromInvoices(invoices);
 });
 
-/// Back-compat aliases used by older call sites.
+/* Back-compat aliases used by older call sites. */
 typedef TodaySalesSummary = SalesSummary;
 
 final todayInvoicesProvider = StreamProvider<List<Invoice>>((ref) {

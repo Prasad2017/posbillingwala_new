@@ -33,8 +33,8 @@ class PrintResult {
   final String? message;
 }
 
-/// Routes ESC/POS raster bytes to Bluetooth, USB, or Network.
-/// Any ESC/POS thermal model is supported (bitmap path is brand-agnostic).
+/* Routes ESC/POS raster bytes to Bluetooth, USB, or Network. */
+/* Any ESC/POS thermal model is supported (bitmap path is brand-agnostic). */
 class PrintService {
   PrintService(
     this.settings, {
@@ -153,7 +153,7 @@ class PrintService {
     );
   }
 
-  /// Sample invoice / KOT (same lines as Android printer-settings test).
+  /* Sample invoice / KOT (same lines as Android printer-settings test). */
   Future<PrintResult> printTest(PrinterChannelKind channel, {String? shopName}) {
     if (channel == PrinterChannelKind.kot) {
       return printKot(SampleReceiptData.sampleKot());
@@ -236,7 +236,7 @@ class PrintService {
       final isKot = channel == PrinterChannelKind.kot;
       final transport = settings.transportFor(isKot: isKot);
 
-      // Preferred transport for this channel.
+      /* Preferred transport for this channel. */
       final preferred = await tryTransport(
         transport: transport,
         channel: channel,
@@ -247,7 +247,7 @@ class PrintService {
       );
       if (preferred != null) return preferred;
 
-      // Fallbacks so a misconfigured type still prints if another path works.
+      /* Fallbacks so a misconfigured type still prints if another path works. */
       for (final alt in PosPrinterTransport.values) {
         if (alt == transport) continue;
         final result = await tryTransport(

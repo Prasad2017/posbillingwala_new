@@ -9,6 +9,7 @@ import 'package:pos_billingwala_v2/features/sync/domain/catalog_bootstrap_listen
 import 'package:pos_billingwala_v2/features/sync/domain/connectivity_sync_listener.dart';
 import 'package:pos_billingwala_v2/features/sync/domain/web_cloud_refresh_listener.dart';
 import 'package:pos_billingwala_v2/l10n/app_strings.dart';
+import 'package:pos_billingwala_v2/features/settings/presentation/in_app_update_host.dart';
 
 class PosBillingwalaApp extends ConsumerWidget {
   const PosBillingwalaApp({super.key});
@@ -16,13 +17,13 @@ class PosBillingwalaApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
-    // Recover empty catalog after wrong-id sync / first login.
+    /* Recover empty catalog after wrong-id sync / first login. */
     ref.watch(catalogBootstrapListenerProvider);
-    // Mobile: push pending rows when connectivity returns.
+    /* Mobile: push pending rows when connectivity returns. */
     if (AppPlatform.supportsOfflineSync) {
       ref.watch(connectivitySyncListenerProvider);
     }
-    // Web: auto-fetch cloud so Android/iOS entries appear.
+    /* Web: auto-fetch cloud so Android/iOS entries appear. */
     if (AppPlatform.autoCloudRefresh) {
       ref.watch(webCloudRefreshListenerProvider);
     }
@@ -44,6 +45,9 @@ class PosBillingwalaApp extends ConsumerWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       routerConfig: router,
+      builder: (context, child) {
+        return InAppUpdateHost(child: child ?? const SizedBox.shrink());
+      },
     );
   }
 }

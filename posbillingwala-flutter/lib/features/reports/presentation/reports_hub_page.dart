@@ -13,7 +13,7 @@ import 'package:pos_billingwala_v2/features/reports/domain/reports_providers.dar
 import 'package:pos_billingwala_v2/features/reports/presentation/report_widgets.dart';
 import 'package:pos_billingwala_v2/l10n/app_strings.dart';
 
-/// Reports Hub — section cards with pastel icon rows (reference UI).
+/* Reports Hub — section cards with pastel icon rows (reference UI). */
 class ReportsHubPage extends ConsumerWidget {
   const ReportsHubPage({super.key});
 

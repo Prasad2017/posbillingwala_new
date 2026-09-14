@@ -10,7 +10,7 @@ import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
 import 'package:pos_billingwala_v2/core/widgtes/widgtes.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 
-/// Matches `docs/layout/activity_register.xml` — trial fields only.
+/* Matches `docs/layout/activity_register.xml` — trial fields only. */
 class RegisterPage extends ConsumerStatefulWidget {
   const RegisterPage({super.key});
 

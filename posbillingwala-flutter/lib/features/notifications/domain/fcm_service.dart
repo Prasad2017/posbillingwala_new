@@ -14,7 +14,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 const pendingMessTokensKey = 'pending_mess_meal_tokens_v1';
 
-/// Background isolate entry — must be top-level.
+/* Background isolate entry — must be top-level. */
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
@@ -36,7 +36,7 @@ class FcmService {
   static const channelId = 'pos_push_alerts';
   static bool initialized = false;
 
-  /// Last opened notification type/url (for debugging / deferred navigation).
+  /* Last opened notification type/url (for debugging / deferred navigation). */
   static String? lastOpenedType;
   static String? lastOpenedUrl;
 
@@ -90,7 +90,7 @@ class FcmService {
 
     final initial = await FirebaseMessaging.instance.getInitialMessage();
     if (initial != null) {
-      // Defer until navigator is ready.
+      /* Defer until navigator is ready. */
       Future<void>.delayed(const Duration(milliseconds: 800), () {
         handleOpenedMessage(initial);
       });
@@ -115,7 +115,7 @@ class FcmService {
     final url = data['url']?.toString();
     lastOpenedType = type;
     lastOpenedUrl = url;
-    // Uses rootNavigatorKey from router.dart when no BuildContext is available.
+    /* Uses rootNavigatorKey from router.dart when no BuildContext is available. */
     openNotificationTargetFromKey(type: type, url: url);
   }
 
@@ -244,7 +244,7 @@ class FcmService {
       jsonEncode(list.take(100).toList()),
     );
 
-    // Dual-write Android mess_meal_token_queue (works in background isolate).
+    /* Dual-write Android mess_meal_token_queue (works in background isolate). */
     try {
       final db = AppDatabase();
       try {
@@ -267,7 +267,7 @@ class FcmService {
         await db.close();
       }
     } catch (_) {
-      // Prefs queue remains the fallback.
+      /* Prefs queue remains the fallback. */
     }
   }
 

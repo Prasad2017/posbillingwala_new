@@ -4,7 +4,7 @@ import 'package:pos_billingwala_v2/core/theme/app_dimensions.dart';
 import 'package:pos_billingwala_v2/core/theme/app_typography.dart';
 import 'package:pos_billingwala_v2/core/widgets/app_svg.dart';
 
-/// Shared app bar with optional SVG actions — keeps Material AppBar behavior.
+/* Shared app bar with optional SVG actions — keeps Material AppBar behavior. */
 class AppPageAppBar extends StatelessWidget implements PreferredSizeWidget {
   const AppPageAppBar({
     super.key,
@@ -38,7 +38,7 @@ class AppPageAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 }
 
-/// Circular white header action matching Android `bg_home_settings_btn`.
+/* Circular white header action matching Android `bg_home_settings_btn`. */
 class AppHeaderIconButton extends StatelessWidget {
   const AppHeaderIconButton({
     super.key,
@@ -77,7 +77,7 @@ class AppHeaderIconButton extends StatelessWidget {
   }
 }
 
-/// Gradient feature banner used on hub screens (Mess, Settings, etc.).
+/* Gradient feature banner used on hub screens (Mess, Settings, etc.). */
 class AppFeatureBanner extends StatelessWidget {
   const AppFeatureBanner({
     super.key,

@@ -11,8 +11,8 @@ import 'package:pos_billingwala_v2/features/print/domain/shop_receipt_profile.da
 import 'package:pos_billingwala_v2/features/print/presentation/woosim_ticket.dart';
 import 'package:pos_billingwala_v2/l10n/app_strings.dart';
 
-/// WithTable `BluetoothPrint` / `DuplicateBluetoothPrint` / `InvoiceDetailsBluetoothPrint`:
-/// live 2" + 3" receipt, print, and bitmap share of the on-screen ticket.
+/* WithTable `BluetoothPrint` / `DuplicateBluetoothPrint` / `InvoiceDetailsBluetoothPrint`: */
+/* live 2" + 3" receipt, print, and bitmap share of the on-screen ticket. */
 class BillPrintPreviewPage extends ConsumerStatefulWidget {
   const BillPrintPreviewPage({
     super.key,

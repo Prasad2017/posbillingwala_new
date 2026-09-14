@@ -14,7 +14,7 @@ import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
 import 'package:pos_billingwala_v2/l10n/app_strings.dart';
 
-/// Android InvoiceMess / CouponBluetoothPrint — paper meal coupon.
+/* Android InvoiceMess / CouponBluetoothPrint — paper meal coupon. */
 class MessCouponPage extends ConsumerStatefulWidget {
   const MessCouponPage({super.key, required this.member});
 

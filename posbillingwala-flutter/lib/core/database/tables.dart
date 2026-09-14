@@ -1,13 +1,13 @@
 import 'package:drift/drift.dart';
 
-/// Android [BranchSession] columns stamped on operational tables.
+/* Android [BranchSession] columns stamped on operational tables. */
 mixin BranchColumns on Table {
   TextColumn get organizationId => text().withDefault(const Constant(''))();
   TextColumn get branchId => text().withDefault(const Constant(''))();
   TextColumn get deviceId => text().withDefault(const Constant(''))();
 }
 
-/// Matches Android `food_type` master table (subset for catalog UI).
+/* Matches Android `food_type` master table (subset for catalog UI). */
 class FoodTypes extends Table {
   IntColumn get foodTypeId => integer()();
   TextColumn get foodTypeName => text().withDefault(const Constant(''))();
@@ -20,7 +20,7 @@ class FoodTypes extends Table {
   Set<Column<Object>> get primaryKey => {foodTypeId};
 }
 
-/// Matches Android `product_category`.
+/* Matches Android `product_category`. */
 class ProductCategories extends Table {
   IntColumn get categoryId => integer()();
   TextColumn get categoryName => text().withDefault(const Constant(''))();
@@ -32,7 +32,7 @@ class ProductCategories extends Table {
       text().withDefault(const Constant('0'))();
   TextColumn get categoryNetworkStatus => text().nullable()();
   TextColumn get categoryStatus => text().withDefault(const Constant('1'))();
-  /// Local sync flag: `0` pending, `1` uploaded.
+  /* Local sync flag: `0` pending, `1` uploaded. */
   TextColumn get categorySyncStatus =>
       text().withDefault(const Constant('1'))();
 
@@ -40,7 +40,7 @@ class ProductCategories extends Table {
   Set<Column<Object>> get primaryKey => {categoryId};
 }
 
-/// Matches Android `product_subcategory`.
+/* Matches Android `product_subcategory`. */
 class ProductSubcategories extends Table {
   IntColumn get subcategoryId => integer()();
   IntColumn get categoryId => integer().nullable()();
@@ -53,7 +53,7 @@ class ProductSubcategories extends Table {
       text().withDefault(const Constant('0'))();
   TextColumn get subcategoryStatus =>
       text().withDefault(const Constant('1'))();
-  /// Local sync flag: `0` pending, `1` uploaded.
+  /* Local sync flag: `0` pending, `1` uploaded. */
   TextColumn get subcategorySyncStatus =>
       text().withDefault(const Constant('1'))();
 
@@ -61,7 +61,7 @@ class ProductSubcategories extends Table {
   Set<Column<Object>> get primaryKey => {subcategoryId};
 }
 
-/// Matches Android `product` (fields needed for Masters + POS cart).
+/* Matches Android `product` (fields needed for Masters + POS cart). */
 class Products extends Table {
   IntColumn get productId => integer()();
   TextColumn get userId => text().nullable()();
@@ -88,7 +88,7 @@ class Products extends Table {
   Set<Column<Object>> get primaryKey => {productId};
 }
 
-/// Matches Android `product_portion`.
+/* Matches Android `product_portion`. */
 class ProductPortions extends Table {
   IntColumn get portionId => integer()();
   IntColumn get productId => integer()();
@@ -107,7 +107,7 @@ class ProductPortions extends Table {
   Set<Column<Object>> get primaryKey => {portionId};
 }
 
-/// Android `combo` master.
+/* Android `combo` master. */
 class Combos extends Table {
   IntColumn get comboId => integer()();
   TextColumn get comboName => text().withDefault(const Constant(''))();
@@ -122,7 +122,7 @@ class Combos extends Table {
   TextColumn get comboDeletedStatus =>
       text().withDefault(const Constant('0'))();
   TextColumn get comboNetworkStatus => text().nullable()();
-  /// Android `comboStatus` TINYINT — pending upload flag.
+  /* Android `comboStatus` TINYINT — pending upload flag. */
   TextColumn get comboStatus => text().withDefault(const Constant('0'))();
   IntColumn get comboSortOrder => integer().withDefault(const Constant(0))();
   TextColumn get comboSyncStatus =>
@@ -132,7 +132,7 @@ class Combos extends Table {
   Set<Column<Object>> get primaryKey => {comboId};
 }
 
-/// Android `combo_item` components.
+/* Android `combo_item` components. */
 class ComboItems extends Table {
   IntColumn get comboItemId => integer()();
   IntColumn get comboId => integer()();
@@ -145,7 +145,7 @@ class ComboItems extends Table {
   TextColumn get comboItemDeletedStatus =>
       text().withDefault(const Constant('0'))();
   TextColumn get comboItemNetworkStatus => text().nullable()();
-  /// Android `comboItemStatus` TINYINT — pending upload flag.
+  /* Android `comboItemStatus` TINYINT — pending upload flag. */
   TextColumn get comboItemStatus => text().withDefault(const Constant('0'))();
   TextColumn get comboNetworkStatus => text().nullable()();
   TextColumn get productNetworkStatus => text().nullable()();
@@ -157,30 +157,30 @@ class ComboItems extends Table {
   Set<Column<Object>> get primaryKey => {comboItemId};
 }
 
-/// Persistent cart. `cartScope` isolates POS (`''`), takeaway parcels (`P1`…),
-/// and dine-in tables (table number).
-/// Android `cart_product`: `cartId INTEGER PRIMARY KEY AUTOINCREMENT`.
+/* Persistent cart. `cartScope` isolates POS (`''`), takeaway parcels (`P1`…), */
+/* and dine-in tables (table number). */
+/* Android `cart_product`: `cartId INTEGER PRIMARY KEY AUTOINCREMENT`. */
 class CartItems extends Table {
   IntColumn get cartId => integer().autoIncrement()();
   IntColumn get productId => integer()();
   TextColumn get cartScope => text().withDefault(const Constant(''))();
-  /// `0` = base product / no portion; else product_portion.portionId.
+  /* `0` = base product / no portion; else product_portion.portionId. */
   IntColumn get portionId => integer().withDefault(const Constant(0))();
   TextColumn get productName => text().withDefault(const Constant(''))();
   IntColumn get categoryId => integer().nullable()();
   TextColumn get categoryName => text().nullable()();
   TextColumn get productCode => text().nullable()();
   RealColumn get unitPrice => real().withDefault(const Constant(0))();
-  /// Android `productOldPrice` / `productNewPrice`.
+  /* Android `productOldPrice` / `productNewPrice`. */
   RealColumn get productOldPrice => real().nullable()();
   RealColumn get productNewPrice => real().nullable()();
   RealColumn get gstPercent => real().withDefault(const Constant(0))();
   RealColumn get productCgst => real().withDefault(const Constant(0))();
   RealColumn get productSgst => real().withDefault(const Constant(0))();
   IntColumn get quantity => integer().withDefault(const Constant(1))();
-  /// Qty already sent to kitchen via KOT (delta = quantity - printedQuantity).
+  /* Qty already sent to kitchen via KOT (delta = quantity - printedQuantity). */
   IntColumn get printedQuantity => integer().withDefault(const Constant(0))();
-  /// Android `kotPrinted` flag (`0`/`1`).
+  /* Android `kotPrinted` flag (`0`/`1`). */
   TextColumn get kotPrinted => text().withDefault(const Constant('0'))();
   TextColumn get productUnit => text().nullable()();
   TextColumn get portionName => text().nullable()();
@@ -199,19 +199,19 @@ class CartItems extends Table {
   TextColumn get userId => text().nullable()();
   IntColumn get diningSessionId => integer().nullable()();
   IntColumn get orderRoundId => integer().nullable()();
-  /// `product` or `combo` (Android `cartItemType`).
+  /* `product` or `combo` (Android `cartItemType`). */
   TextColumn get lineType => text().withDefault(const Constant('product'))();
   IntColumn get comboId => integer().nullable()();
   TextColumn get comboNetworkStatus => text().nullable()();
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
 }
 
-/// Android `cart_combo_item` — expanded combo components in the cart.
+/* Android `cart_combo_item` — expanded combo components in the cart. */
 class CartComboItems extends Table {
   IntColumn get cartComboItemId => integer().autoIncrement()();
-  /// Android `cartId` — parent cart_product row.
+  /* Android `cartId` — parent cart_product row. */
   IntColumn get cartId => integer().withDefault(const Constant(0))();
-  /// Legacy join key (productId|cartScope|portionId) kept for migration.
+  /* Legacy join key (productId|cartScope|portionId) kept for migration. */
   IntColumn get productId => integer()();
   TextColumn get cartScope => text().withDefault(const Constant(''))();
   IntColumn get parentPortionId => integer().withDefault(const Constant(0))();
@@ -224,7 +224,7 @@ class CartComboItems extends Table {
   IntColumn get sortOrder => integer().withDefault(const Constant(0))();
 }
 
-/// Local offline mess member payments (synced via API when online).
+/* Local offline mess member payments (synced via API when online). */
 class MessMemberPayments extends Table {
   IntColumn get localPaymentId => integer().autoIncrement()();
   TextColumn get memberId => text()();
@@ -232,17 +232,17 @@ class MessMemberPayments extends Table {
   RealColumn get paymentMessAmount => real().withDefault(const Constant(0))();
   RealColumn get paymentPaidAmount => real().withDefault(const Constant(0))();
   TextColumn get messTotalDays => text().withDefault(const Constant('30'))();
-  /// `yyyy-MM`
+  /* `yyyy-MM` */
   TextColumn get paymentDate => text()();
   TextColumn get paymentNetworkStatus => text()();
   TextColumn get paymentStatus => text().withDefault(const Constant('0'))();
-  /// `0` pending upload, `1` uploaded.
+  /* `0` pending upload, `1` uploaded. */
   TextColumn get paymentSyncStatus =>
       text().withDefault(const Constant('0'))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
 
-/// Local invoice header (Android `invoice` subset).
+/* Local invoice header (Android `invoice` subset). */
 class Invoices extends Table with BranchColumns {
   IntColumn get invoiceId => integer().autoIncrement()();
   TextColumn get invoiceNumber => text()();
@@ -263,9 +263,9 @@ class Invoices extends Table with BranchColumns {
   RealColumn get upiAmount => real().withDefault(const Constant(0))();
   TextColumn get invoiceOrderStatus =>
       text().withDefault(const Constant('completed'))();
-  /// Idempotency key uploaded to cloud (never changes after create).
+  /* Idempotency key uploaded to cloud (never changes after create). */
   TextColumn get invoiceNetworkStatus => text()();
-  /// Local sync flag: `0` pending, `1` uploaded (Android `invoiceStatus`).
+  /* Local sync flag: `0` pending, `1` uploaded (Android `invoiceStatus`). */
   TextColumn get invoiceSyncStatus => text().withDefault(const Constant('0'))();
   TextColumn get noOfTable => text().withDefault(const Constant(''))();
   TextColumn get customerName => text().nullable()();
@@ -273,15 +273,15 @@ class Invoices extends Table with BranchColumns {
   TextColumn get customerEmail => text().nullable()();
   TextColumn get customerAddress => text().nullable()();
   IntColumn get diningSessionId => integer().nullable()();
-  /// Android `billPrintStatus`.
+  /* Android `billPrintStatus`. */
   TextColumn get billPrintStatus => text().withDefault(const Constant(''))();
-  /// Android `invoice.userId` (licence / shop user).
+  /* Android `invoice.userId` (licence / shop user). */
   TextColumn get userId => text().nullable()();
   IntColumn get itemCount => integer().withDefault(const Constant(0))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
 
-/// Local invoice line items (Android `invoice_final_product`).
+/* Local invoice line items (Android `invoice_final_product`). */
 class InvoiceItems extends Table with BranchColumns {
   IntColumn get invoiceItemId => integer().autoIncrement()();
   TextColumn get invoiceNumber => text()();
@@ -308,7 +308,7 @@ class InvoiceItems extends Table with BranchColumns {
       text().withDefault(const Constant('0'))();
 }
 
-/// Android `invoice_combo_item` — combo component snapshots on billed lines.
+/* Android `invoice_combo_item` — combo component snapshots on billed lines. */
 class InvoiceComboItems extends Table {
   IntColumn get invoiceComboItemId => integer().autoIncrement()();
   TextColumn get invoiceNumber => text().nullable()();
@@ -326,18 +326,18 @@ class InvoiceComboItems extends Table {
       text().withDefault(const Constant('0'))();
 }
 
-/// Android `invoice_product_delete_queue` — pending cloud line deletes.
+/* Android `invoice_product_delete_queue` — pending cloud line deletes. */
 class InvoiceProductDeleteQueue extends Table {
   IntColumn get deleteId => integer().autoIncrement()();
   TextColumn get invoiceNumber => text().nullable()();
   TextColumn get invoiceProductNetworkStatus => text().nullable()();
 }
 
-/// Android `pos_table` for dine-in floor.
+/* Android `pos_table` for dine-in floor. */
 class PosTables extends Table with BranchColumns {
   IntColumn get tableId => integer()();
   TextColumn get tableNumber => text()();
-  /// Android `tableName`.
+  /* Android `tableName`. */
   TextColumn get displayName => text().withDefault(const Constant(''))();
   IntColumn get tableTypeId => integer().nullable()();
   IntColumn get capacity => integer().withDefault(const Constant(0))();
@@ -348,14 +348,14 @@ class PosTables extends Table with BranchColumns {
   IntColumn get sortOrder => integer().withDefault(const Constant(0))();
   TextColumn get statusOverride => text().nullable()();
   TextColumn get posTableNetworkStatus => text().nullable()();
-  /// Android `posTableStatus` — pending upload flag.
+  /* Android `posTableStatus` — pending upload flag. */
   TextColumn get posTableStatus => text().withDefault(const Constant('0'))();
 
   @override
   Set<Column<Object>> get primaryKey => {tableId};
 }
 
-/// Android dining area master.
+/* Android dining area master. */
 class DiningAreas extends Table with BranchColumns {
   IntColumn get areaId => integer()();
   TextColumn get areaName => text().withDefault(const Constant(''))();
@@ -368,11 +368,11 @@ class DiningAreas extends Table with BranchColumns {
   Set<Column<Object>> get primaryKey => {areaId};
 }
 
-/// Android table type master.
+/* Android table type master. */
 class TableTypes extends Table with BranchColumns {
   IntColumn get tableTypeId => integer()();
   TextColumn get tableTypeName => text().withDefault(const Constant(''))();
-  /// Android `defaultCapacity`.
+  /* Android `defaultCapacity`. */
   IntColumn get defaultCapacity => integer().withDefault(const Constant(4))();
   IntColumn get tableTypeSortOrder =>
       integer().withDefault(const Constant(0))();
@@ -385,7 +385,7 @@ class TableTypes extends Table with BranchColumns {
   Set<Column<Object>> get primaryKey => {tableTypeId};
 }
 
-/// Android portion_master (reusable portion names).
+/* Android portion_master (reusable portion names). */
 class PortionMasters extends Table {
   IntColumn get portionMasterId => integer()();
   TextColumn get portionName => text().withDefault(const Constant(''))();
@@ -399,11 +399,11 @@ class PortionMasters extends Table {
   Set<Column<Object>> get primaryKey => {portionMasterId};
 }
 
-/// Android `dining_session` subset for open dine-in bills.
+/* Android `dining_session` subset for open dine-in bills. */
 class DiningSessions extends Table with BranchColumns {
   IntColumn get sessionId => integer().autoIncrement()();
   TextColumn get primaryTableNumber => text()();
-  /// CSV of joined secondary table numbers (Android `joinedTableNumbers`).
+  /* CSV of joined secondary table numbers (Android `joinedTableNumbers`). */
   TextColumn get joinedTableNumbers =>
       text().withDefault(const Constant(''))();
   TextColumn get sessionStatus =>
@@ -413,19 +413,19 @@ class DiningSessions extends Table with BranchColumns {
   DateTimeColumn get closedAt => dateTime().nullable()();
   TextColumn get customerName => text().nullable()();
   TextColumn get customerMobile => text().nullable()();
-  /// Android `waiterName`.
+  /* Android `waiterName`. */
   TextColumn get waiterName => text().nullable()();
-  /// Android `unpaidInvoiceNumber`.
+  /* Android `unpaidInvoiceNumber`. */
   TextColumn get unpaidInvoiceNumber => text().nullable()();
   RealColumn get paidAmount => real().withDefault(const Constant(0))();
   TextColumn get sessionNetworkStatus => text().nullable()();
-  /// Local sync flag: `0` pending, `1` uploaded.
+  /* Local sync flag: `0` pending, `1` uploaded. */
   TextColumn get sessionSyncStatus =>
       text().withDefault(const Constant('0'))();
   IntColumn get sessionVersion => integer().withDefault(const Constant(1))();
 }
 
-/// Android `order_round` — one round per KOT delta.
+/* Android `order_round` — one round per KOT delta. */
 class OrderRounds extends Table with BranchColumns {
   IntColumn get orderRoundId => integer().autoIncrement()();
   IntColumn get sessionId => integer()();
@@ -434,7 +434,7 @@ class OrderRounds extends Table with BranchColumns {
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
 
-/// Android `kot` — kitchen order ticket header.
+/* Android `kot` — kitchen order ticket header. */
 class Kots extends Table with BranchColumns {
   IntColumn get kotId => integer().autoIncrement()();
   IntColumn get sessionId => integer()();
@@ -448,11 +448,11 @@ class Kots extends Table with BranchColumns {
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
 
-/// Android `kot_item` — name + qty only on the ticket.
+/* Android `kot_item` — name + qty only on the ticket. */
 class KotItems extends Table with BranchColumns {
   IntColumn get kotItemId => integer().autoIncrement()();
   IntColumn get kotId => integer()();
-  /// Android `cartId` — optional link back to cart line.
+  /* Android `cartId` — optional link back to cart line. */
   IntColumn get cartId => integer().nullable()();
   IntColumn get productId => integer().nullable()();
   TextColumn get productName => text().withDefault(const Constant(''))();
@@ -461,7 +461,7 @@ class KotItems extends Table with BranchColumns {
   TextColumn get productUnit => text().nullable()();
 }
 
-/// Android `member` / mess_member subset.
+/* Android `member` / mess_member subset. */
 class MessMembers extends Table {
   IntColumn get memberId => integer()();
   TextColumn get memberName => text().withDefault(const Constant(''))();
@@ -484,7 +484,7 @@ class MessMembers extends Table {
   Set<Column<Object>> get primaryKey => {memberId};
 }
 
-/// Android `mess_token` subset for local issue / verify.
+/* Android `mess_token` subset for local issue / verify. */
 class MessTokens extends Table {
   IntColumn get tokenId => integer().autoIncrement()();
   TextColumn get tokenCode => text()();
@@ -500,16 +500,16 @@ class MessTokens extends Table {
   TextColumn get tokenState =>
       text().withDefault(const Constant('active'))();
   TextColumn get tokenNetworkStatus => text().nullable()();
-  /// Android `tokenStatus` TINYINT.
+  /* Android `tokenStatus` TINYINT. */
   TextColumn get tokenStatus => text().withDefault(const Constant('0'))();
   TextColumn get tokenSyncStatus =>
       text().withDefault(const Constant('0'))();
-  /// Android verify sync fields.
+  /* Android verify sync fields. */
   TextColumn get verifyNetworkStatus => text().nullable()();
   TextColumn get verifyStatus => text().withDefault(const Constant('0'))();
 }
 
-/// Android `mess_meal_token_queue` — FCM / print queue for meal tokens.
+/* Android `mess_meal_token_queue` — FCM / print queue for meal tokens. */
 class MessMealTokenQueue extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get serverPublicId => text()();
@@ -524,7 +524,7 @@ class MessMealTokenQueue extends Table {
   TextColumn get localUpdatedAt => text().nullable()();
 }
 
-/// Android `company` profile (offline receipt / shop settings).
+/* Android `company` profile (offline receipt / shop settings). */
 class Companies extends Table {
   IntColumn get companyId => integer().autoIncrement()();
   TextColumn get companyName => text().nullable()();
@@ -556,7 +556,7 @@ class Companies extends Table {
   TextColumn get companyStatus => text().withDefault(const Constant('1'))();
 }
 
-/// Android `company_printer_setting`.
+/* Android `company_printer_setting`. */
 class CompanyPrinterSettings extends Table {
   IntColumn get settingId => integer().autoIncrement()();
   TextColumn get printerName => text().nullable()();
@@ -581,18 +581,18 @@ class CompanyPrinterSettings extends Table {
   TextColumn get kotPreview => text().withDefault(const Constant('on'))();
 }
 
-/// Android `inventory` ledger (append-only stock in/out rows).
+/* Android `inventory` ledger (append-only stock in/out rows). */
 class InventoryMovements extends Table with BranchColumns {
   IntColumn get inventoryId => integer().autoIncrement()();
   IntColumn get productId => integer()();
   TextColumn get productName => text().withDefault(const Constant(''))();
-  /// Qty added on stock-in (0 on sale deduct).
+  /* Qty added on stock-in (0 on sale deduct). */
   RealColumn get productInventoryQuantity =>
       real().withDefault(const Constant(0))();
-  /// Remaining balance after this movement.
+  /* Remaining balance after this movement. */
   RealColumn get afterSaleInventoryQuantity =>
       real().withDefault(const Constant(0))();
-  /// Qty sold on this movement (0 on stock-in).
+  /* Qty sold on this movement (0 on stock-in). */
   RealColumn get saleInventoryQuantity =>
       real().withDefault(const Constant(0))();
   DateTimeColumn get inventoryDate => dateTime()();
@@ -601,7 +601,7 @@ class InventoryMovements extends Table with BranchColumns {
       text().withDefault(const Constant('0'))();
 }
 
-/// Android `expenses` table.
+/* Android `expenses` table. */
 class ShopExpenses extends Table with BranchColumns {
   IntColumn get expensesId => integer().autoIncrement()();
   TextColumn get expensesName => text().withDefault(const Constant(''))();
@@ -612,7 +612,7 @@ class ShopExpenses extends Table with BranchColumns {
       text().withDefault(const Constant('0'))();
 }
 
-/// Android `mess_invoice` paper coupon ledger.
+/* Android `mess_invoice` paper coupon ledger. */
 class MessInvoices extends Table {
   IntColumn get invoiceId => integer().autoIncrement()();
   TextColumn get memberId => text().nullable()();
@@ -620,7 +620,7 @@ class MessInvoices extends Table {
   TextColumn get messType => text().withDefault(const Constant('Lunch'))();
   DateTimeColumn get messInvoiceDate => dateTime()();
   TextColumn get messInvoiceNetworkStatus => text()();
-  /// `0` pending upload, `1` synced (Android messInvoiceStatus).
+  /* `0` pending upload, `1` synced (Android messInvoiceStatus). */
   TextColumn get messInvoiceStatus =>
       text().withDefault(const Constant('0'))();
 }

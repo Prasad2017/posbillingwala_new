@@ -1,4 +1,4 @@
-/// Reusable UI kit for POS Billingwala v2.
+/* Reusable UI kit for POS Billingwala v2. */
 library;
 
 export 'app_bottom_sheet.dart';

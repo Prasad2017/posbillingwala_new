@@ -12,7 +12,7 @@ import 'package:pos_billingwala_v2/features/reports/domain/reports_providers.dar
 import 'package:pos_billingwala_v2/features/sync/data/invoice_sync_api.dart';
 import 'package:pos_billingwala_v2/l10n/app_strings.dart';
 
-/// WithTable `EditInvoice` — full line editor + header + print after save.
+/* WithTable `EditInvoice` — full line editor + header + print after save. */
 class EditInvoicePage extends ConsumerWidget {
   const EditInvoicePage({super.key, required this.invoiceId});
 

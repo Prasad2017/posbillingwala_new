@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Active billing context for POS / Takeaway / Table flows.
+/* Active billing context for POS / Takeaway / Table flows. */
 class BillingSession {
   const BillingSession({
     required this.invoiceType,

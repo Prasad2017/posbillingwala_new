@@ -1,6 +1,6 @@
 import 'package:pos_billingwala_v2/l10n/ui_catalog.dart';
 
-/// Thermal receipt labels matching WithTable `strings_ui.xml`.
+/* Thermal receipt labels matching WithTable `strings_ui.xml`. */
 class ReceiptLabels {
   const ReceiptLabels({
     required this.originalCopy,

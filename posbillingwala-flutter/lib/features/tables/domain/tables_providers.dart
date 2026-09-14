@@ -44,7 +44,7 @@ class FloorTableView {
     }
   }
 
-  /// Cart / billing always uses the primary table number.
+  /* Cart / billing always uses the primary table number. */
   String get billingTableNumber =>
       openSession?.primaryTableNumber ?? table.tableNumber;
 }
@@ -232,7 +232,7 @@ class TablesController extends Notifier<AsyncValue<void>> {
             .markDiningSessionSynced(session.sessionId);
       }
     } catch (_) {
-      // Keep pending for reconnect / Sync button.
+      /* Keep pending for reconnect / Sync button. */
     }
   }
 

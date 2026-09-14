@@ -53,15 +53,15 @@ class UserSession {
   String get displayName =>
       (shopName?.trim().isNotEmpty ?? false) ? shopName!.trim() : 'POS Billingwala';
 
-  /// Catalog APIs (categories / products / portions / combos).
-  /// Matches WithTable `MainActivity.ownerId` (`licenses.userId`).
+  /* Catalog APIs (categories / products / portions / combos). */
+  /* Matches WithTable `MainActivity.ownerId` (`licenses.userId`). */
   String get catalogOwnerId {
     final o = ownerId?.trim() ?? '';
     return o.isNotEmpty ? o : userId;
   }
 
-  /// Licence / ops APIs (tables, invoices, mess).
-  /// Matches WithTable `MainActivity.userId` (`licenses.id` / licenceId).
+  /* Licence / ops APIs (tables, invoices, mess). */
+  /* Matches WithTable `MainActivity.userId` (`licenses.id` / licenceId). */
   String get licenceUserId => userId;
 
   factory UserSession.fromLogin(LoginResponse response) {

@@ -114,7 +114,7 @@ class AuthApi {
     return isApiSuccess(asJsonMap(response.data));
   }
 
-  /// Silent refresh — same fields as WithTable `AuthTokenRefresh`.
+  /* Silent refresh — same fields as WithTable `AuthTokenRefresh`. */
   Future<({String token, String? expiresAt})?> refreshAuthToken({
     required String licenceKey,
     required String deviceId,

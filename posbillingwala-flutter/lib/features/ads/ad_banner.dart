@@ -15,7 +15,7 @@ Future<void> initializeMobileAds() async {
   } catch (_) {}
 }
 
-/// Adaptive banner — same placements as WithTable Login / UserSetting / About.
+/* Adaptive banner — same placements as WithTable Login / UserSetting / About. */
 class AdBanner extends StatefulWidget {
   const AdBanner({super.key, required this.slot});
 

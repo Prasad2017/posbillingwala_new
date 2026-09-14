@@ -10,7 +10,7 @@ import 'package:pos_billingwala_v2/core/widgets/app_svg.dart';
 import 'package:pos_billingwala_v2/core/widgtes/widgtes.dart';
 import 'package:pos_billingwala_v2/features/print/domain/bluetooth_printer_hub.dart';
 
-/// Paired Bluetooth device list — same role as Android [DeviceListActivity].
+/* Paired Bluetooth device list — same role as Android [DeviceListActivity]. */
 class BluetoothDevicePickerPage extends StatefulWidget {
   const BluetoothDevicePickerPage({
     super.key,

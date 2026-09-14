@@ -7,7 +7,7 @@ import 'package:pos_billingwala_v2/l10n/app_strings.dart';
 import 'package:pos_billingwala_v2/core/widgets/app_module_icon.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 
-/// Android `report_password_dialog` — unlock Reports.
+/* Android `report_password_dialog` — unlock Reports. */
 Future<bool> showReportPinGate(BuildContext context, WidgetRef ref) async {
   final expected =
       ref.read(authControllerProvider).session?.reportPin?.trim();

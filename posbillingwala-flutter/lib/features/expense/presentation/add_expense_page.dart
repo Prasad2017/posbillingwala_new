@@ -8,7 +8,7 @@ import 'package:pos_billingwala_v2/features/inventory/domain/inventory_providers
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
 
-/// Full-page Add Expense form matching the reference layout.
+/* Full-page Add Expense form matching the reference layout. */
 class AddExpensePage extends ConsumerStatefulWidget {
   const AddExpensePage({super.key});
 

@@ -6,7 +6,7 @@ double parseMoney(Object? value) {
   return double.tryParse(value.toString().trim()) ?? 0;
 }
 
-/// Alias used by cloud invoice DTOs (same rules as [parseMoney]).
+/* Alias used by cloud invoice DTOs (same rules as [parseMoney]). */
 double parseCloudMoney(Object? value) => parseMoney(value);
 
 int? parseInt(Object? value) {
@@ -21,7 +21,7 @@ String? parseString(Object? value) {
   return value.toString();
 }
 
-/// PHP APIs often send `'1'` / `'0'` or bool-like strings.
+/* PHP APIs often send `'1'` / `'0'` or bool-like strings. */
 bool parseBoolFlag(Object? value, {bool defaultValue = false}) {
   if (value == null) return defaultValue;
   if (value is bool) return value;

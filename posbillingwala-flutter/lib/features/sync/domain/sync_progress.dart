@@ -50,7 +50,7 @@ class SyncProgressState {
   final String? headline;
   final String? subtitle;
 
-  /// 1-based step shown in "Fetching data... (x/y)".
+  /* 1-based step shown in "Fetching data... (x/y)". */
   final int displayStep;
 
   bool get allComplete =>
@@ -63,7 +63,7 @@ class SyncProgressState {
 
   int get totalCount => steps.length;
 
-  /// 1-based index for Android-style "Fetching data... (3/21)".
+  /* 1-based index for Android-style "Fetching data... (3/21)". */
   int get currentIndex {
     if (displayStep > 0) return displayStep.clamp(1, totalCount);
     if (isFinished) return totalCount;
@@ -193,7 +193,7 @@ class SyncProgressController extends Notifier<SyncProgressState> {
   void markError(List<String> ids, [String? message]) =>
       markGroup(ids, status: SyncTableStatus.error, message: message);
 
-  /// Marks [ids] running then complete one-by-one so (x/y) advances smoothly.
+  /* Marks [ids] running then complete one-by-one so (x/y) advances smoothly. */
   Future<void> completeSequentially(
     List<String> ids, {
     bool error = false,
@@ -259,7 +259,7 @@ class SyncProgressController extends Notifier<SyncProgressState> {
       }
     }
 
-    // Mark any leftover pending steps as complete when overall ok.
+    /* Mark any leftover pending steps as complete when overall ok. */
     final steps = [
       for (final step in state.steps)
         if (ok &&

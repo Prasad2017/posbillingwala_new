@@ -10,12 +10,12 @@ import 'package:pos_billingwala_v2/features/print/domain/print_image_encoder.dar
 import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
-/// Renders receipt Unicode text (any language + ₹) to ESC/POS raster bytes,
-/// same approach as Android layout → bitmap → [PrintImage].
+/* Renders receipt Unicode text (any language + ₹) to ESC/POS raster bytes, */
+/* same approach as Android layout → bitmap → [PrintImage]. */
 class ReceiptRasterizer {
   const ReceiptRasterizer();
 
-  /// Android effective widths: 2″ → 48*8=384, 3″ → 72*8=576.
+  /* Android effective widths: 2″ → 48*8=384, 3″ → 72*8=576. */
   static int widthPxFor(PrinterPaperSize size) =>
       size == PrinterPaperSize.inch3 ? 576 : 384;
 

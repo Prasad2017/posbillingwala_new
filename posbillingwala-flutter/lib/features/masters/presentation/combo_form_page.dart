@@ -7,7 +7,7 @@ import 'package:pos_billingwala_v2/core/widgtes/widgtes.dart';
 import 'package:pos_billingwala_v2/features/masters/domain/masters_providers.dart';
 import 'package:pos_billingwala_v2/features/masters/presentation/widgets/master_ui.dart';
 
-/// WithTable AddCombo / UpdateCombo full form.
+/* WithTable AddCombo / UpdateCombo full form. */
 class ComboFormPage extends ConsumerStatefulWidget {
   const ComboFormPage({super.key, this.comboId});
 

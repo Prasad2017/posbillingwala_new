@@ -138,7 +138,7 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
             n.selectMode(mode, total);
             if (mode == PaymentMode.cashPlusUpi) {
               n.setCashAmount(cash, total);
-              // Keep explicit UPI if setCashAmount overwrote it incorrectly.
+              /* Keep explicit UPI if setCashAmount overwrote it incorrectly. */
               if ((cash + upi - total).abs() > 0.05) {
                 n.setUpiAmount(upi, total);
               }
@@ -170,8 +170,8 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
     if (!mounted || result == null) return;
 
     final session = ref.read(billingSessionProvider);
-    // Online (all platforms): dual-write — local already saved, await API upload.
-    // Offline mobile: keep local pending; ConnectivitySyncListener uploads later.
+    /* Online (all platforms): dual-write — local already saved, await API upload. */
+    /* Offline mobile: keep local pending; ConnectivitySyncListener uploads later. */
     final online = await isDeviceOnline();
     if (AppPlatform.requiresNetwork || online) {
       final sync = await ref

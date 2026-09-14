@@ -1,14 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Local business hours stored as minutes-from-midnight ints
-/// (`businessOpenMinutes` / `businessCloseMinutes`), matching
-/// [BusinessHoursPage] SharedPreferences writes.
+/* Local business hours stored as minutes-from-midnight ints */
+/* (`businessOpenMinutes` / `businessCloseMinutes`), matching */
+/* [BusinessHoursPage] SharedPreferences writes. */
 class BusinessHours {
   static const openKey = 'businessOpenMinutes';
   static const closeKey = 'businessCloseMinutes';
 
-  /// Minutes from midnight, or null if unset (treat as always open).
+  /* Minutes from midnight, or null if unset (treat as always open). */
   static Future<({int? open, int? close})> load() async {
     final prefs = await SharedPreferences.getInstance();
     return (
@@ -17,8 +17,8 @@ class BusinessHours {
     );
   }
 
-  /// When either bound is null, the shop is treated as always open.
-  /// Overnight ranges (close ≤ open) wrap past midnight.
+  /* When either bound is null, the shop is treated as always open. */
+  /* Overnight ranges (close ≤ open) wrap past midnight. */
   static bool isOpenNow({
     required int? openMinutes,
     required int? closeMinutes,

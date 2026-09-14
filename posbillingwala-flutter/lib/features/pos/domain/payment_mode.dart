@@ -1,4 +1,4 @@
-/// Payment modes aligned with Android `PaymentSettlementHelper`.
+/* Payment modes aligned with Android `PaymentSettlementHelper`. */
 enum PaymentMode {
   cash('Cash'),
   upi('UPI'),

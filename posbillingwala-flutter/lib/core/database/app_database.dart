@@ -51,7 +51,7 @@ part 'app_database.g.dart';
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? appDatabaseOpen());
 
-  /// In-memory Android [BranchSession] equivalents.
+  /* In-memory Android [BranchSession] equivalents. */
   String scopeOrg = '';
   String scopeBranch = '';
   String scopeDevice = '';
@@ -83,7 +83,7 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(invoices, invoices.diningSessionId);
             await m.createTable(posTables);
             await m.createTable(diningSessions);
-            // Cart PK changed to (productId, cartScope) — recreate safely.
+            /* Cart PK changed to (productId, cartScope) — recreate safely. */
             await m.deleteTable('cart_items');
             await m.createTable(cartItems);
           }
@@ -145,7 +145,7 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(comboItems);
           }
           if (from < 10) {
-            // Cart PK adds portionId — recreate empty cart safely.
+            /* Cart PK adds portionId — recreate empty cart safely. */
             await m.deleteTable('cart_items');
             await m.createTable(cartItems);
             await m.createTable(messMemberPayments);
@@ -204,7 +204,7 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(invoices, invoices.customerAddress);
           }
           if (from < 16) {
-            // Align Drift schema with Android POSBillingWalaDatabase (v30).
+            /* Align Drift schema with Android POSBillingWalaDatabase (v30). */
             await m.addColumn(products, products.userId);
             await m.addColumn(combos, combos.comboStatus);
             await m.addColumn(comboItems, comboItems.comboItemStatus);
@@ -273,7 +273,7 @@ class AppDatabase extends _$AppDatabase {
         },
       );
 
-  /// Android `cartId INTEGER PRIMARY KEY AUTOINCREMENT`.
+  /* Android `cartId INTEGER PRIMARY KEY AUTOINCREMENT`. */
   Future<void> migrateCartIdPrimaryKey() async {
     await customStatement('''
 CREATE TABLE IF NOT EXISTS cart_items_v18 (
@@ -379,7 +379,7 @@ WHERE cart_id = 0;
     scopeUserId = userId.trim();
   }
 
-  /// Android [LicenceScopeGuard.applyScope] — purge or claim, then bind prefs.
+  /* Android [LicenceScopeGuard.applyScope] — purge or claim, then bind prefs. */
   Future<void> applyLicenceScope({
     required UserSession session,
     required String deviceId,
@@ -418,12 +418,12 @@ WHERE cart_id = 0;
 
   Expression<bool> branchMatches(GeneratedColumn<String> col) {
     if (scopeBranch.isEmpty) return const Constant(true);
-    // Include unscoped rows so cloud imports / pre-scope data still appear.
+    /* Include unscoped rows so cloud imports / pre-scope data still appear. */
     return col.equals(scopeBranch) | col.equals('');
   }
 
-  /// Android parity: `IFNULL(invoiceOrderStatus,'completed') != 'refunded'`
-  /// (+ skip cancelled). Empty / completed / other statuses still count.
+  /* Android parity: `IFNULL(invoiceOrderStatus,'completed') != 'refunded'` */
+  /* (+ skip cancelled). Empty / completed / other statuses still count. */
   Expression<bool> isBillableInvoice($InvoicesTable t) {
     final status = t.invoiceOrderStatus.lower();
     return status.isNotValue('refunded') & status.isNotValue('cancelled');
@@ -561,7 +561,7 @@ WHERE cart_id = 0;
     return row != null;
   }
 
-  /// Android purge: drop invoices (+ lines) that are unscoped or other-branch.
+  /* Android purge: drop invoices (+ lines) that are unscoped or other-branch. */
   Future<void> purgeLocalDataNotMatchingBranch(String branchId) async {
     if (branchId.trim().isEmpty) return;
     await transaction(() async {
@@ -585,7 +585,7 @@ WHERE cart_id = 0;
     });
   }
 
-  /// Stamp empty branchId rows to the active branch (upgrade path).
+  /* Stamp empty branchId rows to the active branch (upgrade path). */
   Future<void> claimUnscopedRowsForBranch(String branchId) async {
     if (branchId.trim().isEmpty) return;
     final stamp = InvoicesCompanion(branchId: Value(branchId));
@@ -594,7 +594,7 @@ WHERE cart_id = 0;
         .write(stamp);
     await (update(invoiceItems)..where((t) => t.branchId.equals('')))
         .write(itemStamp);
-    // Also claim operational tables so pre-v14 rows remain visible.
+    /* Also claim operational tables so pre-v14 rows remain visible. */
     await (update(posTables)..where((t) => t.branchId.equals(''))).write(
       PosTablesCompanion(branchId: Value(branchId)),
     );
@@ -1341,7 +1341,7 @@ WHERE cart_id = 0;
         .write(const MessTokensCompanion(tokenSyncStatus: Value('1')));
   }
 
-  /// Upsert cloud dining sessions keyed by [sessionNetworkStatus] when present.
+  /* Upsert cloud dining sessions keyed by [sessionNetworkStatus] when present. */
   Future<int> upsertDiningSessionsFromCloud(
     List<DiningSessionsCompanion> rows,
   ) async {
@@ -1766,7 +1766,7 @@ WHERE cart_id = 0;
         .watch();
   }
 
-  /// Updates header fields on a settled/pending bill and marks it for re-upload.
+  /* Updates header fields on a settled/pending bill and marks it for re-upload. */
   Future<void> updateInvoiceHeader({
     required int invoiceId,
     String? customerName,
@@ -1822,7 +1822,7 @@ WHERE cart_id = 0;
   }
 
   Stream<List<ProductCategory>> watchActiveCategories() {
-    // Match WithTable: show non-deleted only (status is sync flag on Android).
+    /* Match WithTable: show non-deleted only (status is sync flag on Android). */
     return (select(productCategories)
           ..where((t) => t.categoryDeletedStatus.equals('0'))
           ..orderBy([
@@ -2083,7 +2083,7 @@ WHERE cart_id = 0;
     );
   }
 
-  /// Merges [secondaryTable] into [primaryTable]'s running session.
+  /* Merges [secondaryTable] into [primaryTable]'s running session. */
   Future<DiningSession> joinTables({
     required String primaryTable,
     required String secondaryTable,
@@ -2096,7 +2096,7 @@ WHERE cart_id = 0;
       final primary = await openOrGetDiningSession(primaryTable);
       final secondary = await getOpenSessionForTable(secondaryTable);
 
-      // Move / merge secondary cart into primary scope.
+      /* Move / merge secondary cart into primary scope. */
       final secondaryItems =
           await getCartItems(cartScope: secondaryTable);
       for (final item in secondaryItems) {
@@ -2151,7 +2151,7 @@ WHERE cart_id = 0;
       }
       await clearCart(cartScope: secondaryTable);
 
-      // Move KOT table labels to primary.
+      /* Move KOT table labels to primary. */
       await (update(kots)..where((t) => t.tableNumber.equals(secondaryTable)))
           .write(KotsCompanion(tableNumber: Value(primaryTable)));
 
@@ -2189,7 +2189,7 @@ WHERE cart_id = 0;
     });
   }
 
-  /// Clears join CSV only — cart stays on primary (Android parity).
+  /* Clears join CSV only — cart stays on primary (Android parity). */
   Future<void> splitJoinedTables(int sessionId) async {
     await (update(diningSessions)..where((t) => t.sessionId.equals(sessionId)))
         .write(const DiningSessionsCompanion(joinedTableNumbers: Value('')));
@@ -2213,7 +2213,7 @@ WHERE cart_id = 0;
     return (row.read(maxExp) ?? 0) + 1;
   }
 
-  /// Creates a delta KOT for unprinted cart qty on a dine-in table.
+  /* Creates a delta KOT for unprinted cart qty on a dine-in table. */
   Future<KotTicket> createKotFromUnprintedCart({
     required int sessionId,
     required String tableNumber,
@@ -2369,7 +2369,7 @@ WHERE cart_id = 0;
     String? company,
   }) async {
     final network = 'local_${DateTime.now().millisecondsSinceEpoch}';
-    // Negative local ids avoid colliding with server ids until sync assigns one.
+    /* Negative local ids avoid colliding with server ids until sync assigns one. */
     final minId = await (selectOnly(messMembers)
           ..addColumns([messMembers.memberId.min()]))
         .getSingle();
@@ -2441,7 +2441,7 @@ WHERE cart_id = 0;
       MessTokensCompanion(
         tokenState: const Value('verified'),
         verifiedDate: Value(DateTime.now()),
-        // Keep insert sync status; only verify queue goes pending.
+        /* Keep insert sync status; only verify queue goes pending. */
         verifyNetworkStatus: Value(appDatabaseNetworkStatus(prefix: 'ver_')),
         verifyStatus: const Value('0'),
       ),
@@ -2449,7 +2449,7 @@ WHERE cart_id = 0;
     return getMessTokenByCode(tokenCode);
   }
 
-  /// Tokens verified offline that still need `verifyMessToken.php`.
+  /* Tokens verified offline that still need `verifyMessToken.php`. */
   Future<List<MessToken>> getPendingMessTokenVerifies({int limit = 100}) {
     return (select(messTokens)
           ..where(
@@ -2467,9 +2467,9 @@ WHERE cart_id = 0;
     );
   }
 
-  /// Deletes an invoice line and recomputes header totals.
-  /// Works for synced bills too — marks header pending re-upload.
-  /// Enqueues cloud line-delete when [invoiceItemNetworkStatus] is present.
+  /* Deletes an invoice line and recomputes header totals. */
+  /* Works for synced bills too — marks header pending re-upload. */
+  /* Enqueues cloud line-delete when [invoiceItemNetworkStatus] is present. */
   Future<void> deleteInvoiceItemAndRecompute(int invoiceItemId) async {
     await transaction(() async {
       final item = await (select(invoiceItems)
@@ -2795,14 +2795,14 @@ WHERE cart_id = 0;
     };
   }
 
-  /// Whether [scope] is a takeaway parcel id (`P1`, `P2`, …).
+  /* Whether [scope] is a takeaway parcel id (`P1`, `P2`, …). */
   static bool isTakeawayParcelScope(String scope) {
     final trimmed = scope.trim();
     if (trimmed.isEmpty) return false;
     return RegExp(r'^P\d+$', caseSensitive: false).hasMatch(trimmed);
   }
 
-  /// Next parcel counter id for takeaway (`P1`, `P2`, …). Not a dine-in table.
+  /* Next parcel counter id for takeaway (`P1`, `P2`, …). Not a dine-in table. */
   Future<String> nextTakeAwayParcelNumber() async {
     final items = await select(cartItems).get();
     var max = 0;
@@ -2894,7 +2894,7 @@ WHERE cart_id = 0;
     );
   }
 
-  /// Adds a combo as a cart line using negative [productId] (`-combo.comboId`).
+  /* Adds a combo as a cart line using negative [productId] (`-combo.comboId`). */
   Future<void> addComboToCart(
     Combo combo, {
     String cartScope = '',
@@ -3164,7 +3164,7 @@ WHERE cart_id = 0;
     await (delete(cartItems)..where((t) => t.cartScope.equals(cartScope))).go();
   }
 
-  /// Moves an open dining session (and its cart) from [fromTable] to [toTable].
+  /* Moves an open dining session (and its cart) from [fromTable] to [toTable]. */
   Future<DiningSession> transferTable({
     required String fromTable,
     required String toTable,
@@ -3229,7 +3229,7 @@ WHERE cart_id = 0;
     );
   }
 
-  /// Moves selected cart lines from [fromTable] to [toTable] (opens target session).
+  /* Moves selected cart lines from [fromTable] to [toTable] (opens target session). */
   Future<void> moveCartItemsToTable({
     required String fromTable,
     required String toTable,
@@ -3494,7 +3494,7 @@ WHERE cart_id = 0;
     return watchInvoicesInRange(start, end);
   }
 
-  /// All non-refunded / non-cancelled bills (Android home "Total Sales").
+  /* All non-refunded / non-cancelled bills (Android home "Total Sales"). */
   Stream<List<Invoice>> watchAllBillableInvoices() {
     return (select(invoices)
           ..where(
@@ -3541,7 +3541,7 @@ WHERE cart_id = 0;
         .get();
   }
 
-  /// Upserts cloud invoices as already-synced so they are not re-uploaded.
+  /* Upserts cloud invoices as already-synced so they are not re-uploaded. */
   Future<({int inserted, int updated, int skipped, int comboItems})>
       upsertCloudInvoices({
     required List<InvoicesCompanion> headers,
@@ -3567,7 +3567,7 @@ WHERE cart_id = 0;
           continue;
         }
 
-        // Never overwrite a local pending bill with the same network key mid-edit.
+        /* Never overwrite a local pending bill with the same network key mid-edit. */
         final existingByNetwork = await getInvoiceByNetworkStatus(network);
         if (existingByNetwork != null &&
             existingByNetwork.invoiceSyncStatus == '0') {
@@ -3591,7 +3591,7 @@ WHERE cart_id = 0;
               .write(
             stampInvoice(
               header.copyWith(
-                // Keep local auto-id; force synced.
+                /* Keep local auto-id; force synced. */
                 invoiceSyncStatus: const Value('1'),
               ),
             ),
@@ -3602,7 +3602,7 @@ WHERE cart_id = 0;
           await (delete(invoiceComboItems)
                 ..where((t) => t.invoiceNumber.equals(existing.invoiceNumber)))
               .go();
-          // If cloud renamed number (rare), also clear old number lines already done.
+          /* If cloud renamed number (rare), also clear old number lines already done. */
           if (existing.invoiceNumber != number) {
             await (delete(invoiceItems)
                   ..where((t) => t.invoiceNumber.equals(number)))
@@ -3730,8 +3730,8 @@ WHERE cart_id = 0;
     );
   }
 
-  /// Destructive reset used by Android "Fetch Data" (wipe local then re-download).
-  /// Keeps auth session; clears operational / catalog tables.
+  /* Destructive reset used by Android "Fetch Data" (wipe local then re-download). */
+  /* Keeps auth session; clears operational / catalog tables. */
   Future<void> resetOperationalDataForFetch() async {
     await transaction(() async {
       await delete(kotItems).go();
@@ -3833,11 +3833,11 @@ WHERE cart_id = 0;
     );
   }
 
-  /// Alias used by reports hub clear-all flow.
+  /* Alias used by reports hub clear-all flow. */
   Future<int> countPendingInvoiceSync() => countPendingSyncInvoices();
 
-  /// Deletes all invoice items then invoices. Blocked while any bill is
-  /// pending cloud sync (`invoiceSyncStatus == '0'`).
+  /* Deletes all invoice items then invoices. Blocked while any bill is */
+  /* pending cloud sync (`invoiceSyncStatus == '0'`). */
   Future<void> clearAllInvoices() async {
     final pending = await countPendingInvoiceSync();
     if (pending > 0) {
@@ -3926,7 +3926,7 @@ WHERE cart_id = 0;
     );
   }
 
-  /// Saves scoped cart as a completed invoice and clears that cart scope.
+  /* Saves scoped cart as a completed invoice and clears that cart scope. */
   Future<SavedInvoiceResult> saveInvoiceFromCart({
     required PaymentTender tender,
     String invoiceType = 'fast_billing',
@@ -3944,8 +3944,8 @@ WHERE cart_id = 0;
     String packingChargeType = 'Amount',
     bool updateInventory = true,
   }) async {
-    // WithTable BluetoothPrint always deducts when stock exists; the printer
-    // productQuantityUpdate switch is stored but not applied at save.
+    /* WithTable BluetoothPrint always deducts when stock exists; the printer */
+    /* productQuantityUpdate switch is stored but not applied at save. */
     final items = await getCartItems(cartScope: cartScope);
     if (items.isEmpty) {
       throw StateError('Cart is empty');
@@ -4084,10 +4084,10 @@ WHERE cart_id = 0;
         }
       }
 
-      // WithTable `BluetoothPrint.saveInvoice`: deduct only if that product
-      // already has an inventory row. Combos deduct component products.
-      // productQuantityUpdate is accepted for API parity; Android does not
-      // gate save on that switch.
+      /* WithTable `BluetoothPrint.saveInvoice`: deduct only if that product */
+      /* already has an inventory row. Combos deduct component products. */
+      /* productQuantityUpdate is accepted for API parity; Android does not */
+      /* gate save on that switch. */
       final deductLikeAndroid = updateInventory || true;
       if (deductLikeAndroid) {
       for (final item in items) {
@@ -4184,7 +4184,7 @@ WHERE cart_id = 0;
     ));
   }
 
-  /// Stock-in: remaining = previous remaining + qty (fixes Android restock=0 bug).
+  /* Stock-in: remaining = previous remaining + qty (fixes Android restock=0 bug). */
   Future<InventoryMovement> addStockIn({
     required int productId,
     required String productName,
@@ -4214,7 +4214,7 @@ WHERE cart_id = 0;
         .getSingle();
   }
 
-  /// WithTable: skip products that were never stocked (`getInventoryDetails` empty).
+  /* WithTable: skip products that were never stocked (`getInventoryDetails` empty). */
   Future<InventoryMovement?> deductInventoryForSaleIfTracked({
     required int productId,
     required String productName,
@@ -4231,7 +4231,7 @@ WHERE cart_id = 0;
     );
   }
 
-  /// Sale deduct when a stock row exists. Remaining may go negative.
+  /* Sale deduct when a stock row exists. Remaining may go negative. */
   Future<InventoryMovement?> deductInventoryForSale({
     required int productId,
     required String productName,
@@ -4376,7 +4376,7 @@ WHERE cart_id = 0;
     return count;
   }
 
-  // ── Company / printer (Android company + company_printer_setting) ──
+  /* ── Company / printer (Android company + company_printer_setting) ── */
 
   Future<Company?> getLocalCompany() {
     return (select(companies)
@@ -4568,7 +4568,7 @@ WHERE cart_id = 0;
     );
   }
 
-  // ── Mess meal token print queue (Android mess_meal_token_queue) ──
+  /* ── Mess meal token print queue (Android mess_meal_token_queue) ── */
 
   Future<void> enqueueMessMealToken({
     required String serverPublicId,
@@ -4637,7 +4637,7 @@ WHERE cart_id = 0;
   }
 }
 
-/// Aggregated product / combo sales for reports.
+/* Aggregated product / combo sales for reports. */
 class ProductSalesRow {
   const ProductSalesRow({
     required this.productName,
@@ -4706,7 +4706,7 @@ class SyncPendingSnapshot {
       expenses;
 }
 
-/// Result of creating a kitchen order ticket.
+/* Result of creating a kitchen order ticket. */
 class KotTicket {
   const KotTicket({
     required this.kot,
@@ -4719,7 +4719,7 @@ class KotTicket {
   final int roundNumber;
 }
 
-/// Current stock balance derived from latest inventory movement.
+/* Current stock balance derived from latest inventory movement. */
 class ProductStockBalance {
   const ProductStockBalance({
     required this.productId,

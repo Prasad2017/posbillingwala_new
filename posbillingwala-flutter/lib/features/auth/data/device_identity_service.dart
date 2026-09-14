@@ -15,10 +15,10 @@ class DeviceIdentity {
   final String deviceName;
 }
 
-/// Cross-platform device identity for Android + iOS (and web fallback).
-///
-/// Does **not** use the Android-only `android_id` package. A stable UUID is
-/// persisted when the OS does not expose a reliable hardware id.
+/* Cross-platform device identity for Android + iOS (and web fallback). */
+/* */
+/* Does **not** use the Android-only `android_id` package. A stable UUID is */
+/* persisted when the OS does not expose a reliable hardware id. */
 class DeviceIdentityService {
   DeviceIdentityService({
     DeviceInfoPlugin? plugin,
@@ -86,11 +86,11 @@ class DeviceIdentityService {
   }
 }
 
-/// Maps app [DeviceIdentity] to legacy PHP form field names.
-///
-/// The existing backend still expects `android_device_id` / `androidId` /
-/// `android_device_name` even for iOS clients. Prefer calling this helper
-/// instead of hard-coding those keys at each call site.
+/* Maps app [DeviceIdentity] to legacy PHP form field names. */
+/* */
+/* The existing backend still expects `android_device_id` / `androidId` / */
+/* `android_device_name` even for iOS clients. Prefer calling this helper */
+/* instead of hard-coding those keys at each call site. */
 class DeviceApiFields {
   const DeviceApiFields._();
 
@@ -108,7 +108,7 @@ class DeviceApiFields {
       map['androidId'] = deviceId;
     }
     if (includeDeviceIdAlias) {
-      // Forward-compatible / error-log style field used by some PHP endpoints.
+      /* Forward-compatible / error-log style field used by some PHP endpoints. */
       map['device_id'] = deviceId;
     }
     if (includeDeviceName && deviceName != null && deviceName.isNotEmpty) {

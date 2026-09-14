@@ -107,16 +107,11 @@ class PortionMastersPageState extends ConsumerState<PortionMastersPage> {
     if (!ok) return;
     await ref
         .read(mastersRepositoryProvider)
-        .deletePortionMaster(row.portionMasterId);
-    final userId =
-        ref.read(authControllerProvider).session?.catalogOwnerId ?? '';
-    if (userId.isNotEmpty) {
-      await ref.read(mastersRepositoryProvider).uploadPendingMasters(
-            ownerId: userId,
-            licenceUserId:
-                ref.read(authControllerProvider).session?.licenceUserId,
-          );
-    }
+        .deletePortionMaster(
+          userId:
+              ref.read(authControllerProvider).session?.catalogOwnerId ?? '',
+          portionMasterId: row.portionMasterId,
+        );
   }
 
   @override

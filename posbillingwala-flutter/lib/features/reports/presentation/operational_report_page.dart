@@ -13,7 +13,7 @@ import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
 import 'package:pos_billingwala_v2/l10n/app_strings.dart';
 
-/// Reusable operational report: period filter, KPIs, donut, invoice list.
+/* Reusable operational report: period filter, KPIs, donut, invoice list. */
 class OperationalReportPage extends ConsumerStatefulWidget {
   const OperationalReportPage({
     super.key,

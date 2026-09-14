@@ -24,7 +24,7 @@ class ProductWiseReportPage extends ConsumerStatefulWidget {
 }
 
 class ProductWiseReportPageState extends ConsumerState<ProductWiseReportPage> {
-  late String typeFilter; // all | product | combo
+  late String typeFilter; /* all | product | combo */
   bool productWiseReportPageLeastSold = false;
   AsyncValue<List<ProductSalesRow>> productWiseReportPageRows = const AsyncLoading();
 

@@ -51,7 +51,7 @@ const List<ButtonSegment<ReportPeriodKind>> kReportPeriodSegments = [
   ButtonSegment(value: ReportPeriodKind.year, label: Text('Year')),
 ];
 
-/// Blue period filter menu used across refreshed report screens.
+/* Blue period filter menu used across refreshed report screens. */
 Future<void> showReportPeriodFilterMenu(
   BuildContext context,
   WidgetRef ref, {

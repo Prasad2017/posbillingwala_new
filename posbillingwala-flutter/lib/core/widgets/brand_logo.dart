@@ -3,7 +3,7 @@ import 'package:pos_billingwala_v2/core/constants/app_assets.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
 
-/// Official POS Billingwala logo from `assets/images/png`.
+/* Official POS Billingwala logo from `assets/images/png`. */
 class BrandLogo extends StatelessWidget {
   const BrandLogo({super.key, this.width = 230, this.useSplashArt = false});
 

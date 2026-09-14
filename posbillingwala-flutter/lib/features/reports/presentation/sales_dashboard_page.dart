@@ -14,7 +14,7 @@ import 'package:pos_billingwala_v2/features/reports/presentation/report_period_c
 import 'package:pos_billingwala_v2/features/reports/presentation/report_widgets.dart';
 import 'package:pos_billingwala_v2/l10n/app_strings.dart';
 
-/// High-level sales dashboard / overview matching the refreshed reports UI.
+/* High-level sales dashboard / overview matching the refreshed reports UI. */
 class SalesDashboardPage extends ConsumerWidget {
   const SalesDashboardPage({super.key});
 
@@ -321,7 +321,7 @@ class SalesDashboardPage extends ConsumerWidget {
 }
 
 final last7DaysProvider = FutureProvider<List<DailySalesPoint>>((ref) {
-  // Rebuild when invoices change so chart updates after sync / new bills.
+  /* Rebuild when invoices change so chart updates after sync / new bills. */
   ref.watch(todayInvoicesProvider);
   ref.watch(monthInvoicesProvider);
   return ref.watch(appDatabaseProvider).getDailySalesLastDays(7);

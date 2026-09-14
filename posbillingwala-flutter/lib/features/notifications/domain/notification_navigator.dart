@@ -3,11 +3,11 @@ import 'package:go_router/go_router.dart';
 import 'package:pos_billingwala_v2/app/router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-/// Opens the in-app destination (or external URL) for a notification payload.
-///
-/// Prefer calling with a [BuildContext] from the widget tree. When only FCM
-/// data is available (no widget context), use [openNotificationTargetFromKey]
-/// which navigates via [rootNavigatorKey].
+/* Opens the in-app destination (or external URL) for a notification payload. */
+/* */
+/* Prefer calling with a [BuildContext] from the widget tree. When only FCM */
+/* data is available (no widget context), use [openNotificationTargetFromKey] */
+/* which navigates via [rootNavigatorKey]. */
 Future<void> openNotificationTarget(
   BuildContext context, {
   required String type,
@@ -40,7 +40,7 @@ Future<void> openNotificationTarget(
   context.push('/notifications');
 }
 
-/// Context-free variant for FCM open handlers using [rootNavigatorKey].
+/* Context-free variant for FCM open handlers using [rootNavigatorKey]. */
 Future<void> openNotificationTargetFromKey({
   required String type,
   String? url,

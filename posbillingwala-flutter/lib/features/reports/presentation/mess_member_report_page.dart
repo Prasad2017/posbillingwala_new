@@ -11,7 +11,7 @@ import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
 import 'package:pos_billingwala_v2/l10n/app_strings.dart';
 
-/// Mess member list → open payment history (refreshed reports UI).
+/* Mess member list → open payment history (refreshed reports UI). */
 class MessMemberReportPage extends ConsumerStatefulWidget {
   const MessMemberReportPage({super.key});
 

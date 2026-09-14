@@ -1,12 +1,12 @@
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 
-/// Fake bill / KOT used by printer Settings → Test (Android `TestInvoiceBluetoothPrint`).
+/* Fake bill / KOT used by printer Settings → Test (Android `TestInvoiceBluetoothPrint`). */
 class SampleReceiptData {
   SampleReceiptData._();
 
   static const invoiceNumber = 'POS-TEST';
 
-  /// Sample Item A @ ₹100 × 1 + Sample Item B @ ₹150 × 2 = ₹400.
+  /* Sample Item A @ ₹100 × 1 + Sample Item B @ ₹150 × 2 = ₹400. */
   static ({Invoice invoice, List<InvoiceItem> items}) sampleBill({
     DateTime? now,
   }) {

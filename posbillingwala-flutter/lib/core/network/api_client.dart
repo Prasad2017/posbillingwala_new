@@ -2,10 +2,10 @@ import 'package:dio/dio.dart';
 import 'package:pos_billingwala_v2/core/constants/api_constants.dart';
 import 'package:pos_billingwala_v2/features/auth/data/auth_token_refresh.dart';
 
-/// HTTP client for POS Billingwala API (form-urlencoded endpoints).
-///
-/// On 401, silently refreshes the Bearer token (WithTable OkHttp authenticator)
-/// and retries the request once.
+/* HTTP client for POS Billingwala API (form-urlencoded endpoints). */
+/* */
+/* On 401, silently refreshes the Bearer token (WithTable OkHttp authenticator) */
+/* and retries the request once. */
 class ApiClient {
   ApiClient({Dio? dio})
       : apiClientDio = dio ??
@@ -17,10 +17,10 @@ class ApiClient {
                 headers: const {
                   'Accept': 'application/json',
                 },
-                // Many legacy endpoints return text/html content-type with JSON body.
+                /* Many legacy endpoints return text/html content-type with JSON body. */
                 responseType: ResponseType.json,
-                // Treat HTTP 401 as error so the refresh interceptor can retry
-                // (WithTable OkHttp authenticator). Other 4xx keep legacy body parsing.
+                /* Treat HTTP 401 as error so the refresh interceptor can retry */
+                /* (WithTable OkHttp authenticator). Other 4xx keep legacy body parsing. */
                 validateStatus: (status) =>
                     status != null &&
                     status >= 200 &&

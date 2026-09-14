@@ -1,9 +1,9 @@
 import 'dart:typed_data';
 
-/// ESC/POS raster encoder matching Android [PrintImage] (GS v 0 + Floyd–Steinberg).
+/* ESC/POS raster encoder matching Android [PrintImage] (GS v 0 + Floyd–Steinberg). */
 class PrintImageEncoder {
-  /// [rgba] is raw RGBA bytes from [ui.ImageByteFormat.rawRgba].
-  /// [brightValue] matches Android default `128`.
+  /* [rgba] is raw RGBA bytes from [ui.ImageByteFormat.rawRgba]. */
+  /* [brightValue] matches Android default `128`. */
   static List<int> encodeRgba({
     required Uint8List rgba,
     required int width,
@@ -14,10 +14,10 @@ class PrintImageEncoder {
     var h = height;
     if (w <= 0 || h <= 0) return const [];
 
-    // Match Android: cap at 576px and force width divisible by 8.
+    /* Match Android: cap at 576px and force width divisible by 8. */
     if (w > 576) {
       final scale = 576 / w;
-      // Caller should already resize; still clamp bytes width expectation.
+      /* Caller should already resize; still clamp bytes width expectation. */
       w = 576;
       h = (h * scale).floor();
     }
@@ -34,7 +34,7 @@ class PrintImageEncoder {
         final r = rgba[i];
         final g = rgba[i + 1];
         final b = rgba[i + 2];
-        // Pack as ARGB-style luminance source; dither expects channel access.
+        /* Pack as ARGB-style luminance source; dither expects channel access. */
         pixels[y * w + x] = (0xff << 24) | (r << 16) | (g << 8) | b;
       }
     }
@@ -47,7 +47,7 @@ class PrintImageEncoder {
     final wh = widthBytes ~/ 256;
     final hl = h % 256;
     final hh = h ~/ 256;
-    // ESC/POS: GS v 0 m xL xH yL yH
+    /* ESC/POS: GS v 0 m xL xH yL yH */
     out.add([0x1d, 0x76, 0x30, 0x00, wl, wh, hl, hh]);
 
     for (var y = 0; y < h; y++) {
@@ -56,7 +56,7 @@ class PrintImageEncoder {
         for (var bit = 0; bit < 8; bit++) {
           printByte <<= 1;
           final pixel = pixels[(xByte * 8) + bit + y * w];
-          // Android treats pure black (0xff000000) as print-dot.
+          /* Android treats pure black (0xff000000) as print-dot. */
           if ((pixel & 0x00ffffff) == 0) {
             printByte |= 1;
           }
@@ -87,7 +87,7 @@ class PrintImageEncoder {
           final r = (pixel >> 16) & 0xff;
           final g = (pixel >> 8) & 0xff;
           final b = pixel & 0xff;
-          // Same weights as Android PrintImage (note: blue/green swapped vs classic BT.601).
+          /* Same weights as Android PrintImage (note: blue/green swapped vs classic BT.601). */
           final l = ((76 * r + 151 * b + 29 * g) ~/ 256) + bright;
           tab[x + w * y] = l;
         }

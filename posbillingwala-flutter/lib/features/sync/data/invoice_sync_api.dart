@@ -5,6 +5,51 @@ import 'package:pos_billingwala_v2/core/network/api_client.dart';
 import 'package:pos_billingwala_v2/core/network/api_response.dart';
 import 'package:pos_billingwala_v2/features/sync/domain/cloud_invoice_dto.dart';
 import 'package:pos_billingwala_v2/core/constants/api_constants.dart';
+import 'package:pos_billingwala_v2/core/utils/json_parsers.dart';
+
+class SalesReportSummary {
+  const SalesReportSummary({
+    required this.billCount,
+    required this.totalSales,
+    required this.subTotal,
+    required this.gstTotal,
+    required this.discountTotal,
+    required this.cashTotal,
+    required this.upiTotal,
+    required this.posCount,
+    required this.takeawayCount,
+    required this.tableCount,
+    required this.avgBill,
+  });
+
+  final int billCount;
+  final double totalSales;
+  final double subTotal;
+  final double gstTotal;
+  final double discountTotal;
+  final double cashTotal;
+  final double upiTotal;
+  final int posCount;
+  final int takeawayCount;
+  final int tableCount;
+  final double avgBill;
+
+  factory SalesReportSummary.fromJson(Map<String, dynamic> json) {
+    return SalesReportSummary(
+      billCount: parseInt(json['billCount']) ?? 0,
+      totalSales: parseMoney(json['totalSales']),
+      subTotal: parseMoney(json['subTotal']),
+      gstTotal: parseMoney(json['gstTotal']),
+      discountTotal: parseMoney(json['discountTotal']),
+      cashTotal: parseMoney(json['cashTotal']),
+      upiTotal: parseMoney(json['upiTotal']),
+      posCount: parseInt(json['posCount']) ?? 0,
+      takeawayCount: parseInt(json['takeawayCount']) ?? 0,
+      tableCount: parseInt(json['tableCount']) ?? 0,
+      avgBill: parseMoney(json['avgBill']),
+    );
+  }
+}
 
 class InvoiceSyncApi {
   InvoiceSyncApi(this.client);
@@ -91,7 +136,7 @@ class InvoiceSyncApi {
     return isApiSuccess(data);
   }
 
-  /// Uploads one invoice combo component row (WithTable `saveInvoiceComboItem`).
+  /* Uploads one invoice combo component row (WithTable `saveInvoiceComboItem`). */
   Future<bool> uploadInvoiceComboItem({
     required InvoiceComboItem item,
   }) async {
@@ -134,6 +179,8 @@ class InvoiceSyncApi {
   Future<List<CloudInvoiceDto>> fetchInvoices(
     String userId, {
     String? invoiceDate,
+    String? startDate,
+    String? endDate,
   }) async {
     final data = await invoiceSyncApiGet(
       ApiEndpoints.getInvoiceList,
@@ -141,11 +188,43 @@ class InvoiceSyncApi {
         'userId': userId,
         if (invoiceDate != null && invoiceDate.isNotEmpty)
           'invoiceDate': invoiceDate,
+        if (startDate != null && startDate.isNotEmpty) 'startDate': startDate,
+        if (endDate != null && endDate.isNotEmpty) 'endDate': endDate,
       },
     );
     return mapJsonList(
       data[ApiResponseKeys.invoiceResponse],
       CloudInvoiceDto.fromJson,
+    );
+  }
+
+  /* Web reports: range sales summary + invoice headers from cloud. */
+  Future<({SalesReportSummary summary, List<CloudInvoiceDto> invoices})>
+      fetchPosSalesReport({
+    required String userId,
+    required String startDate,
+    required String endDate,
+  }) async {
+    final data = await invoiceSyncApiGet(
+      ApiEndpoints.getPosSalesReport,
+      query: {
+        'userId': userId,
+        'startDate': startDate,
+        'endDate': endDate,
+      },
+    );
+    final status = '${data[ApiResponseKeys.status] ?? ''}'.toLowerCase();
+    if (status != '1' && status != 'true') {
+      throw StateError(
+        '${data[ApiResponseKeys.message] ?? 'Failed to load sales report'}',
+      );
+    }
+    return (
+      summary: SalesReportSummary.fromJson(data),
+      invoices: mapJsonList(
+        data[ApiResponseKeys.invoiceResponse],
+        CloudInvoiceDto.fromJson,
+      ),
     );
   }
 

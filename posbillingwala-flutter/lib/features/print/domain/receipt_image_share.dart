@@ -7,7 +7,7 @@ import 'package:flutter/rendering.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
-/// Android `BluetoothPrint.convertLayout` analogue: screenshot the ticket widget.
+/* Android `BluetoothPrint.convertLayout` analogue: screenshot the ticket widget. */
 Future<void> shareTicketWidgetAsImage({
   required GlobalKey boundaryKey,
   required String label,
@@ -45,7 +45,7 @@ Future<void> sharePngBytes(Uint8List bytes, String label) async {
   );
 }
 
-/// Fallback: paint receipt text to a PNG (used when no widget is on screen).
+/* Fallback: paint receipt text to a PNG (used when no widget is on screen). */
 Future<void> shareReceiptAsImage({
   required String text,
   String label = 'Invoice',

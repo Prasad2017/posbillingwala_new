@@ -4,7 +4,7 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-/// Runtime permission helper for print / QR / nearby hardware.
+/* Runtime permission helper for print / QR / nearby hardware. */
 class AppPermissionService {
   const AppPermissionService();
 
@@ -13,7 +13,7 @@ class AppPermissionService {
     if (Platform.isAndroid) {
       final sdk = (await DeviceInfoPlugin().androidInfo).version.sdkInt;
       if (sdk >= 31) {
-        // Android 12+: nearby devices + optional location for discovery.
+        /* Android 12+: nearby devices + optional location for discovery. */
         return const [
           Permission.bluetoothScan,
           Permission.bluetoothConnect,
@@ -21,7 +21,7 @@ class AppPermissionService {
           Permission.locationWhenInUse,
         ];
       }
-      // Android 11 and below: classic Bluetooth + location for discovery.
+      /* Android 11 and below: classic Bluetooth + location for discovery. */
       return const [
         Permission.bluetooth,
         Permission.locationWhenInUse,
@@ -37,7 +37,7 @@ class AppPermissionService {
     return const [];
   }
 
-  /// Full set for Settings / first home open.
+  /* Full set for Settings / first home open. */
   Future<List<Permission>> allRuntimePermissions() async {
     if (kIsWeb) return const [];
     final list = <Permission>[

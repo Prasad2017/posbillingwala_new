@@ -7,7 +7,7 @@ import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
 import 'package:pos_billingwala_v2/l10n/app_strings.dart';
 
-/// Master Data hub — section card with pastel icon rows (reference UI).
+/* Master Data hub — section card with pastel icon rows (reference UI). */
 class MastersHubPage extends ConsumerWidget {
   const MastersHubPage({super.key});
 

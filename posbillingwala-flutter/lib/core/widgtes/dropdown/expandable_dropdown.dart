@@ -56,7 +56,7 @@ class ExpandableDropdownField<T> extends StatefulWidget {
   final bool showLabel;
   final String Function(int count, T? singleValue)? multiSelectLabelBuilder;
   final bool hasError;
-  /// When true, the field sizes to its content instead of stretching full width.
+  /* When true, the field sizes to its content instead of stretching full width. */
   final bool fitContent;
 
   @override
@@ -281,8 +281,8 @@ class ExpandableDropdownFieldState<T>
                           textAlign: TextAlign.center,
                         ),
                       )
-                    // fitContent must not use ListView/viewport â€” parents may
-                    // measure intrinsics, and ShrinkWrappingViewport forbids that.
+                    /* fitContent must not use ListView/viewport â€” parents may */
+                    /* measure intrinsics, and ShrinkWrappingViewport forbids that. */
                     : widget.fitContent
                         ? Column(
                             mainAxisSize: MainAxisSize.min,
@@ -343,7 +343,7 @@ class ExpandableDropdownFieldState<T>
           ),
           const SizedBox(height: 8),
         ],
-        // Sized from content via MainAxisSize.min â€” never IntrinsicWidth.
+        /* Sized from content via MainAxisSize.min â€” never IntrinsicWidth. */
         dropdown,
       ],
     );

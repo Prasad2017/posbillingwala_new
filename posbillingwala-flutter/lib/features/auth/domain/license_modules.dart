@@ -1,7 +1,7 @@
 import 'package:pos_billingwala_v2/features/auth/domain/user_session.dart';
 
-/// WithTable `LicenseModules` — hide POS modes the shop did not buy.
-/// If every flag is off (legacy payload), treat all modules as enabled.
+/* WithTable `LicenseModules` — hide POS modes the shop did not buy. */
+/* If every flag is off (legacy payload), treat all modules as enabled. */
 class LicenseModules {
   const LicenseModules._();
 

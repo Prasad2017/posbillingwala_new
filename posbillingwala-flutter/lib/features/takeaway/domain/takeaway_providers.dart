@@ -12,7 +12,7 @@ class TakeawayParcel {
   final double billAmount;
 }
 
-/// Open takeaway carts grouped by parcel scope (`P1`, `P2`, …).
+/* Open takeaway carts grouped by parcel scope (`P1`, `P2`, …). */
 final openTakeawayParcelsProvider = Provider<List<TakeawayParcel>>((ref) {
   final cart = ref.watch(allCartItemsProvider).maybeWhen(
         data: (rows) => rows,
