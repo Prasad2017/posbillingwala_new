@@ -12,7 +12,7 @@ import 'package:pos_billingwala_v2/features/notifications/domain/in_app_notifica
 import 'package:pos_billingwala_v2/features/notifications/domain/notification_navigator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-const _pendingMessTokensKey = 'pending_mess_meal_tokens_v1';
+const pendingMessTokensKey = 'pending_mess_meal_tokens_v1';
 
 /// Background isolate entry — must be top-level.
 @pragma('vm:entry-point')
@@ -25,23 +25,23 @@ class FcmService {
   FcmService({
     ApiClient? apiClient,
     DeviceIdentityService? deviceIdentity,
-  })  : _api = FcmApi(apiClient ?? ApiClient()),
-        _deviceIdentity = deviceIdentity ?? DeviceIdentityService();
+  })  : api = FcmApi(apiClient ?? ApiClient()),
+        fcmServiceDeviceIdentity = deviceIdentity ?? DeviceIdentityService();
 
-  final FcmApi _api;
-  final DeviceIdentityService _deviceIdentity;
-  final FlutterLocalNotificationsPlugin _local =
+  final FcmApi api;
+  final DeviceIdentityService fcmServiceDeviceIdentity;
+  final FlutterLocalNotificationsPlugin fcmServiceLocal =
       FlutterLocalNotificationsPlugin();
 
   static const channelId = 'pos_push_alerts';
-  static bool _initialized = false;
+  static bool initialized = false;
 
   /// Last opened notification type/url (for debugging / deferred navigation).
   static String? lastOpenedType;
   static String? lastOpenedUrl;
 
   Future<void> initialize() async {
-    if (kIsWeb || _initialized) return;
+    if (kIsWeb || initialized) return;
     try {
       await Firebase.initializeApp();
     } catch (e) {
@@ -53,14 +53,14 @@ class FcmService {
 
     const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosInit = DarwinInitializationSettings();
-    await _local.initialize(
+    await fcmServiceLocal.initialize(
       settings: const InitializationSettings(android: androidInit, iOS: iosInit),
       onDidReceiveNotificationResponse: (response) {
         final payload = response.payload;
         if (payload == null || payload.isEmpty) return;
         try {
           final map = jsonDecode(payload) as Map<String, dynamic>;
-          _openFromData(map);
+          openFromData(map);
         } catch (_) {}
       },
     );
@@ -71,7 +71,7 @@ class FcmService {
       description: 'Licence, promo, and mess alerts',
       importance: Importance.high,
     );
-    await _local
+    await fcmServiceLocal
         .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(channel);
@@ -86,13 +86,13 @@ class FcmService {
       handleIncomingMessage(message, fromBackground: false);
     });
 
-    FirebaseMessaging.onMessageOpenedApp.listen(_handleOpenedMessage);
+    FirebaseMessaging.onMessageOpenedApp.listen(handleOpenedMessage);
 
     final initial = await FirebaseMessaging.instance.getInitialMessage();
     if (initial != null) {
       // Defer until navigator is ready.
       Future<void>.delayed(const Duration(milliseconds: 800), () {
-        _handleOpenedMessage(initial);
+        handleOpenedMessage(initial);
       });
     }
 
@@ -103,14 +103,14 @@ class FcmService {
       await registerForUser(userId);
     });
 
-    _initialized = true;
+    initialized = true;
   }
 
-  static void _handleOpenedMessage(RemoteMessage message) {
-    _openFromData(message.data);
+  static void handleOpenedMessage(RemoteMessage message) {
+    openFromData(message.data);
   }
 
-  static void _openFromData(Map<String, dynamic> data) {
+  static void openFromData(Map<String, dynamic> data) {
     final type = (data['type'] ?? data['event'] ?? '').toString();
     final url = data['url']?.toString();
     lastOpenedType = type;
@@ -122,11 +122,11 @@ class FcmService {
   Future<void> registerForUser(String userId) async {
     if (kIsWeb || userId.isEmpty) return;
     try {
-      if (!_initialized) await initialize();
+      if (!initialized) await initialize();
       final token = await FirebaseMessaging.instance.getToken();
       if (token == null || token.isEmpty) return;
-      final device = await _deviceIdentity.resolve();
-      await _api.registerToken(
+      final device = await fcmServiceDeviceIdentity.resolve();
+      await api.registerToken(
         userId: userId,
         deviceId: device.deviceId,
         fcmToken: token,
@@ -141,8 +141,8 @@ class FcmService {
   Future<void> clearForUser(String userId) async {
     if (kIsWeb || userId.isEmpty) return;
     try {
-      final device = await _deviceIdentity.resolve();
-      await _api.registerToken(
+      final device = await fcmServiceDeviceIdentity.resolve();
+      await api.registerToken(
         userId: userId,
         deviceId: device.deviceId,
         fcmToken: '',
@@ -163,7 +163,7 @@ class FcmService {
     final type = (data['type'] ?? data['event'] ?? '').toString();
 
     if (type == 'mess.token.created') {
-      await _enqueueMessToken(data);
+      await enqueueMessToken(data);
       return;
     }
 
@@ -216,9 +216,9 @@ class FcmService {
     );
   }
 
-  static Future<void> _enqueueMessToken(Map<String, dynamic> data) async {
+  static Future<void> enqueueMessToken(Map<String, dynamic> data) async {
     final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_pendingMessTokensKey);
+    final raw = prefs.getString(pendingMessTokensKey);
     final list = <Map<String, dynamic>>[];
     if (raw != null && raw.isNotEmpty) {
       try {
@@ -240,7 +240,7 @@ class FcmService {
     };
     list.insert(0, entry);
     await prefs.setString(
-      _pendingMessTokensKey,
+      pendingMessTokensKey,
       jsonEncode(list.take(100).toList()),
     );
 
@@ -273,7 +273,7 @@ class FcmService {
 
   static Future<List<Map<String, dynamic>>> loadPendingMessTokens() async {
     final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_pendingMessTokensKey);
+    final raw = prefs.getString(pendingMessTokensKey);
     if (raw == null || raw.isEmpty) return const [];
     try {
       final decoded = jsonDecode(raw) as List<dynamic>;

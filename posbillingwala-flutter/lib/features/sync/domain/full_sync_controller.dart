@@ -20,7 +20,7 @@ import 'package:pos_billingwala_v2/features/tables/domain/tables_providers.dart'
 
 enum FullSyncMode { uploadOnly, downloadOnly, both }
 
-const _masterStepIds = [
+const masterStepIds = [
   'categories',
   'subcategories',
   'products',
@@ -33,22 +33,22 @@ const _masterStepIds = [
   'tables',
 ];
 
-const _invoiceStepIds = [
+const invoiceStepIds = [
   'invoice_item_deletes',
   'invoice_items',
   'invoice_combo_items',
   'invoices',
 ];
 
-const _messStepIds = [
+const messStepIds = [
   'mess_members',
   'mess_payments',
   'mess_invoices',
   'mess_tokens',
 ];
 
-const _inventoryStepIds = ['inventory', 'expenses'];
-const _companyStepIds = ['printer_settings', 'shop_details'];
+const inventoryStepIds = ['inventory', 'expenses'];
+const companyStepIds = ['printer_settings', 'shop_details'];
 
 class FullSyncResult {
   const FullSyncResult({
@@ -86,17 +86,17 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
   AsyncValue<FullSyncResult?> build() => const AsyncData(null);
 
   Future<FullSyncResult> syncEverything() =>
-      _run(FullSyncMode.both, trackProgress: false);
+      run(FullSyncMode.both, trackProgress: false);
 
   Future<FullSyncResult> uploadAll() =>
-      _run(FullSyncMode.uploadOnly, trackProgress: false);
+      run(FullSyncMode.uploadOnly, trackProgress: false);
 
   Future<FullSyncResult> downloadAll({bool silent = false}) =>
-      _run(FullSyncMode.downloadOnly, trackProgress: false, silent: silent);
+      run(FullSyncMode.downloadOnly, trackProgress: false, silent: silent);
 
   /// Settings → Offline Data Synchronize with Cloud.
   Future<FullSyncResult> uploadWithProgress() =>
-      _run(FullSyncMode.uploadOnly, trackProgress: true);
+      run(FullSyncMode.uploadOnly, trackProgress: true);
 
   /// Settings → Fetch Data From Cloud (after confirm).
   /// Blocks when unsynced bills exist (Android parity).
@@ -134,7 +134,7 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
     state = const AsyncLoading();
     try {
       await ref.read(appDatabaseProvider).resetOperationalDataForFetch();
-      return await _run(FullSyncMode.downloadOnly, trackProgress: true);
+      return await run(FullSyncMode.downloadOnly, trackProgress: true);
     } catch (e) {
       progress.finish(failed: 1, hadPending: true);
       final result = FullSyncResult(message: '$e', failed: 1);
@@ -155,7 +155,7 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
     try {
       await ref.read(appDatabaseProvider).resetOperationalDataForFetch();
       final result =
-          await _run(FullSyncMode.downloadOnly, trackProgress: false);
+          await run(FullSyncMode.downloadOnly, trackProgress: false);
       return result;
     } catch (e) {
       final result = FullSyncResult(message: '$e', failed: 1);
@@ -164,10 +164,10 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
     }
   }
 
-  SyncProgressController? _progress(bool track) =>
+  SyncProgressController? fullSyncControllerProgress(bool track) =>
       track ? ref.read(syncProgressProvider.notifier) : null;
 
-  Future<FullSyncResult> _run(
+  Future<FullSyncResult> run(
     FullSyncMode mode, {
     required bool trackProgress,
     bool silent = false,
@@ -184,7 +184,7 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
       return result;
     }
 
-    final progress = _progress(trackProgress);
+    final progress = fullSyncControllerProgress(trackProgress);
     if (trackProgress && mode == FullSyncMode.uploadOnly) {
       progress!.begin(SyncScreenMode.upload);
     } else if (trackProgress &&
@@ -218,7 +218,7 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
       final snap = await db.getSyncPendingSnapshot();
       hadPending = snap.total > 0;
 
-      progress?.markRunning(_masterStepIds);
+      progress?.markRunning(masterStepIds);
       try {
         mastersUploaded = await ref
             .read(mastersRepositoryProvider)
@@ -227,25 +227,25 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
               licenceUserId: userId,
             );
         notes.add('masters↑$mastersUploaded');
-        progress?.markComplete(_masterStepIds);
+        progress?.markComplete(masterStepIds);
       } catch (_) {
         failed++;
         notes.add('masters↑ error');
-        progress?.markError(_masterStepIds);
+        progress?.markError(masterStepIds);
       }
 
-      progress?.markRunning(_companyStepIds);
+      progress?.markRunning(companyStepIds);
       try {
-        companySynced = await _uploadCompanyAndPrinter(userId);
+        companySynced = await uploadCompanyAndPrinter(userId);
         notes.add(companySynced ? 'company↑ ok' : 'company↑ skip');
-        progress?.markComplete(_companyStepIds);
+        progress?.markComplete(companyStepIds);
       } catch (_) {
         failed++;
         notes.add('company↑ error');
-        progress?.markError(_companyStepIds);
+        progress?.markError(companyStepIds);
       }
 
-      progress?.markRunning(_invoiceStepIds);
+      progress?.markRunning(invoiceStepIds);
       try {
         final upload =
             await ref.read(invoiceSyncControllerProvider.notifier).uploadPending();
@@ -253,45 +253,45 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
         failed += upload.failed;
         notes.add('bills↑$invoicesUploaded');
         if (upload.failed > 0) {
-          progress?.markError(_invoiceStepIds);
+          progress?.markError(invoiceStepIds);
         } else {
-          progress?.markComplete(_invoiceStepIds);
+          progress?.markComplete(invoiceStepIds);
         }
       } catch (_) {
         failed++;
         notes.add('bills↑ error');
-        progress?.markError(_invoiceStepIds);
+        progress?.markError(invoiceStepIds);
       }
 
-      progress?.markRunning(_messStepIds);
+      progress?.markRunning(messStepIds);
       try {
-        messUploaded = await _uploadPendingMess(userId, db);
+        messUploaded = await uploadPendingMess(userId, db);
         notes.add('mess↑$messUploaded');
-        progress?.markComplete(_messStepIds);
+        progress?.markComplete(messStepIds);
       } catch (_) {
         failed++;
         notes.add('mess↑ error');
-        progress?.markError(_messStepIds);
+        progress?.markError(messStepIds);
       }
 
       try {
-        diningUploaded = await _uploadPendingDining(userId, db);
+        diningUploaded = await uploadPendingDining(userId, db);
         notes.add('dining↑$diningUploaded');
       } catch (_) {
         failed++;
         notes.add('dining↑ error');
       }
 
-      progress?.markRunning(_inventoryStepIds);
+      progress?.markRunning(inventoryStepIds);
       try {
         await ref.read(inventoryControllerProvider.notifier).syncAll();
         inventorySynced = true;
         notes.add('inventory↑ ok');
-        progress?.markComplete(_inventoryStepIds);
+        progress?.markComplete(inventoryStepIds);
       } catch (_) {
         failed++;
         notes.add('inventory↑ error');
-        progress?.markError(_inventoryStepIds);
+        progress?.markError(inventoryStepIds);
       }
     }
 
@@ -359,50 +359,50 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
 
       if (!doUpload) {
         // When download-only, still refresh inventory/expenses from cloud.
-        progress?.markRunning([_inventoryStepIds.first]);
+        progress?.markRunning([inventoryStepIds.first]);
         try {
           await ref.read(inventoryControllerProvider.notifier).syncAll();
           inventorySynced = true;
           notes.add('inventory↓ ok');
-          await progress?.completeSequentially(_inventoryStepIds);
+          await progress?.completeSequentially(inventoryStepIds);
         } catch (_) {
           failed++;
           notes.add('inventory↓ error');
-          await progress?.completeSequentially(_inventoryStepIds, error: true);
+          await progress?.completeSequentially(inventoryStepIds, error: true);
         }
       } else {
-        await progress?.completeSequentially(_inventoryStepIds);
+        await progress?.completeSequentially(inventoryStepIds);
       }
 
-      progress?.markRunning([_messStepIds.first]);
+      progress?.markRunning([messStepIds.first]);
       try {
         await ref.read(messControllerProvider.notifier).syncMembers();
         notes.add('mess↓ ok');
-        await progress?.completeSequentially(_messStepIds);
+        await progress?.completeSequentially(messStepIds);
       } catch (_) {
         failed++;
         notes.add('mess↓ error');
-        await progress?.completeSequentially(_messStepIds, error: true);
+        await progress?.completeSequentially(messStepIds, error: true);
       }
 
       try {
-        diningDownloaded = await _downloadDining(userId, db);
+        diningDownloaded = await downloadDining(userId, db);
         notes.add('dining↓$diningDownloaded');
       } catch (_) {
         failed++;
         notes.add('dining↓ error');
       }
 
-      progress?.markRunning([_companyStepIds.first]);
+      progress?.markRunning([companyStepIds.first]);
       try {
-        final ok = await _downloadCompanyAndPrinter(userId);
+        final ok = await downloadCompanyAndPrinter(userId);
         companySynced = companySynced || ok;
         notes.add(ok ? 'company↓ ok' : 'company↓ skip');
-        await progress?.completeSequentially(_companyStepIds);
+        await progress?.completeSequentially(companyStepIds);
       } catch (_) {
         failed++;
         notes.add('company↓ error');
-        await progress?.completeSequentially(_companyStepIds, error: true);
+        await progress?.completeSequentially(companyStepIds, error: true);
       }
     }
 
@@ -432,7 +432,7 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
     return result;
   }
 
-  Future<int> _uploadPendingMess(String userId, AppDatabase db) async {
+  Future<int> uploadPendingMess(String userId, AppDatabase db) async {
     final api = MessApi(ref.read(apiClientProvider));
     var uploaded = 0;
 
@@ -530,7 +530,7 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
     return uploaded;
   }
 
-  Future<int> _uploadPendingDining(String userId, AppDatabase db) async {
+  Future<int> uploadPendingDining(String userId, AppDatabase db) async {
     final diningApi = DiningSessionApi(ref.read(apiClientProvider));
     var diningUploaded = 0;
     for (final session in await db.getPendingDiningSessions()) {
@@ -563,7 +563,7 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
     return diningUploaded;
   }
 
-  Future<int> _downloadDining(String userId, AppDatabase db) async {
+  Future<int> downloadDining(String userId, AppDatabase db) async {
     final diningApi = DiningSessionApi(ref.read(apiClientProvider));
     final cloudSessions =
         await diningApi.fetchDiningSessions(userId, openOnly: true);
@@ -591,7 +591,7 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
     return db.upsertDiningSessionsFromCloud(companions);
   }
 
-  Future<bool> _downloadCompanyAndPrinter(String userId) async {
+  Future<bool> downloadCompanyAndPrinter(String userId) async {
     final api = CompanyApi(ref.read(apiClientProvider));
     final db = ref.read(appDatabaseProvider);
     final companies = await api.getCompanyList(userId);
@@ -645,7 +645,7 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
     return true;
   }
 
-  Future<bool> _uploadCompanyAndPrinter(String userId) async {
+  Future<bool> uploadCompanyAndPrinter(String userId) async {
     final api = CompanyApi(ref.read(apiClientProvider));
     final db = ref.read(appDatabaseProvider);
     final session = ref.read(authControllerProvider).session;

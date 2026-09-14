@@ -48,9 +48,9 @@ class HomeSalesOverview {
 }
 
 class HomeSalesApi {
-  HomeSalesApi(this._client);
+  HomeSalesApi(this.client);
 
-  final ApiClient _client;
+  final ApiClient client;
 
   /// Android [ApiInterface.getHomeSalesOverview] — period: `today` | `month`.
   Future<HomeSalesOverview?> fetchOverview({
@@ -59,7 +59,7 @@ class HomeSalesApi {
   }) async {
     if (userId.trim().isEmpty) return null;
     try {
-      final response = await _client.dio.get<dynamic>(
+      final response = await client.dio.get<dynamic>(
         ApiEndpoints.getHomeSalesOverview,
         queryParameters: {
           'userId': userId,

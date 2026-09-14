@@ -17,7 +17,7 @@ import 'package:pos_billingwala_v2/l10n/app_strings.dart';
 class ExpenseReportPage extends ConsumerWidget {
   const ExpenseReportPage({super.key});
 
-  List<ShopExpense> _inPeriod(
+  List<ShopExpense> inPeriod(
     List<ShopExpense> rows,
     ReportPeriod period,
   ) {
@@ -31,7 +31,7 @@ class ExpenseReportPage extends ConsumerWidget {
         .toList();
   }
 
-  List<ReportSlice> _categorySlices(List<ShopExpense> rows) {
+  List<ReportSlice> categorySlices(List<ShopExpense> rows) {
     final map = <String, double>{};
     for (final row in rows) {
       final key = row.expensesName.trim().isEmpty ? 'Other' : row.expensesName.trim();
@@ -74,7 +74,7 @@ class ExpenseReportPage extends ConsumerWidget {
             tooltip: 'Export',
             onPressed: expensesAsync.maybeWhen(
               data: (all) {
-                final filtered = _inPeriod(all, period);
+                final filtered = inPeriod(all, period);
                 if (filtered.isEmpty) return null;
                 return () => shareExpensesCsv(
                       expenses: filtered,
@@ -96,11 +96,11 @@ class ExpenseReportPage extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('$e')),
         data: (all) {
-          final filtered = _inPeriod(all, period);
+          final filtered = inPeriod(all, period);
           final total =
               filtered.fold<double>(0, (s, e) => s + e.expensesAmount);
           final avg = filtered.isEmpty ? 0.0 : total / filtered.length;
-          final slices = _categorySlices(filtered);
+          final slices = categorySlices(filtered);
 
           return ResponsiveScrollShell(
         dashboard: true,
@@ -203,7 +203,7 @@ class ExpenseReportPage extends ConsumerWidget {
                             height: 1,
                             color: AppColors.border.withValues(alpha: .7),
                           ),
-                        _ExpenseRow(
+                        ExpenseRow(
                           index: i + 1,
                           row: filtered[i],
                           currency: currency,
@@ -252,8 +252,8 @@ class ExpenseReportPage extends ConsumerWidget {
   }
 }
 
-class _ExpenseRow extends StatelessWidget {
-  const _ExpenseRow({
+class ExpenseRow extends StatelessWidget {
+  const ExpenseRow({super.key, 
     required this.index,
     required this.row,
     required this.currency,

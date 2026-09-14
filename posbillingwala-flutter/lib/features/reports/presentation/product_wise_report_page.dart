@@ -20,53 +20,53 @@ class ProductWiseReportPage extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<ProductWiseReportPage> createState() =>
-      _ProductWiseReportPageState();
+      ProductWiseReportPageState();
 }
 
-class _ProductWiseReportPageState extends ConsumerState<ProductWiseReportPage> {
-  late String _typeFilter; // all | product | combo
-  bool _leastSold = false;
-  AsyncValue<List<ProductSalesRow>> _rows = const AsyncLoading();
+class ProductWiseReportPageState extends ConsumerState<ProductWiseReportPage> {
+  late String typeFilter; // all | product | combo
+  bool productWiseReportPageLeastSold = false;
+  AsyncValue<List<ProductSalesRow>> productWiseReportPageRows = const AsyncLoading();
 
   @override
   void initState() {
     super.initState();
-    _typeFilter =
+    typeFilter =
         widget.initialType == 'combo' || widget.initialType == 'product'
             ? widget.initialType
             : 'all';
-    Future.microtask(_load);
+    Future.microtask(load);
   }
 
-  Future<void> _load() async {
+  Future<void> load() async {
     final period = ref.read(reportPeriodProvider);
     final (start, end) = period.range;
-    setState(() => _rows = const AsyncLoading());
+    setState(() => productWiseReportPageRows = const AsyncLoading());
     final result = await AsyncValue.guard(() {
       return ref.read(appDatabaseProvider).getProductWiseSales(
             start: start,
             end: end,
-            invoiceItemType: _typeFilter == 'all' ? null : _typeFilter,
-            leastSold: _leastSold,
+            invoiceItemType: typeFilter == 'all' ? null : typeFilter,
+            leastSold: productWiseReportPageLeastSold,
           );
     });
     if (!mounted) return;
-    setState(() => _rows = result);
+    setState(() => productWiseReportPageRows = result);
   }
 
   @override
   Widget build(BuildContext context) {
     final period = ref.watch(reportPeriodProvider);
     final currency = NumberFormat.currency(locale: 'en_IN', symbol: '₹');
-    final isCombo = widget.initialType == 'combo' || _typeFilter == 'combo';
+    final isCombo = widget.initialType == 'combo' || typeFilter == 'combo';
 
-    ref.listen(reportPeriodProvider, (_, _) => _load());
+    ref.listen(reportPeriodProvider, (_, _) => load());
 
     return Scaffold(
       backgroundColor: reportPageBg,
       appBar: AppBar(
         title: Text(
-          isCombo && _typeFilter == 'combo'
+          isCombo && typeFilter == 'combo'
               ? 'Combo Wise Report'
               : 'Product Wise Report',
         ),
@@ -74,7 +74,7 @@ class _ProductWiseReportPageState extends ConsumerState<ProductWiseReportPage> {
           IconButton(
             tooltip: 'Export CSV',
             onPressed: () {
-              final rows = _rows.asData?.value;
+              final rows = productWiseReportPageRows.asData?.value;
               if (rows == null || rows.isEmpty) return;
               shareProductSalesCsv(
                 rows: rows,
@@ -122,10 +122,10 @@ class _ProductWiseReportPageState extends ConsumerState<ProductWiseReportPage> {
                     padding: const EdgeInsets.only(right: 8),
                     child: FilterChip(
                       label: Text(entry.$2),
-                      selected: _leastSold == entry.$1,
+                      selected: productWiseReportPageLeastSold == entry.$1,
                       onSelected: (_) {
-                        setState(() => _leastSold = entry.$1);
-                        _load();
+                        setState(() => productWiseReportPageLeastSold = entry.$1);
+                        load();
                       },
                     ),
                   ),
@@ -138,10 +138,10 @@ class _ProductWiseReportPageState extends ConsumerState<ProductWiseReportPage> {
                     padding: const EdgeInsets.only(right: 8),
                     child: FilterChip(
                       label: Text(entry.$2),
-                      selected: _typeFilter == entry.$1,
+                      selected: typeFilter == entry.$1,
                       onSelected: (_) {
-                        setState(() => _typeFilter = entry.$1);
-                        _load();
+                        setState(() => typeFilter = entry.$1);
+                        load();
                       },
                     ),
                   ),
@@ -149,7 +149,7 @@ class _ProductWiseReportPageState extends ConsumerState<ProductWiseReportPage> {
             ),
           ),
           const SizedBox(height: 12),
-          _rows.when(
+          productWiseReportPageRows.when(
             data: (rows) {
               if (rows.isEmpty) {
                 return ReportSurfaceCard(
@@ -203,7 +203,7 @@ class _ProductWiseReportPageState extends ConsumerState<ProductWiseReportPage> {
                   ),
                   const SizedBox(height: 14),
                   ReportDonutBreakdown(
-                    title: _leastSold ? 'Least Sold Mix' : 'Top Sellers Mix',
+                    title: productWiseReportPageLeastSold ? 'Least Sold Mix' : 'Top Sellers Mix',
                     slices: topSlices,
                     centerValue: currency.format(totalAmt),
                   ),
@@ -216,7 +216,7 @@ class _ProductWiseReportPageState extends ConsumerState<ProductWiseReportPage> {
                         Padding(
                           padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
                           child: Text(
-                            _leastSold ? 'Least Sold Items' : 'Product Sales',
+                            productWiseReportPageLeastSold ? 'Least Sold Items' : 'Product Sales',
                             style: const TextStyle(
                               fontFamily: AppFonts.family,
                               fontWeight: FontWeight.w800,
@@ -231,7 +231,7 @@ class _ProductWiseReportPageState extends ConsumerState<ProductWiseReportPage> {
                               height: 1,
                               color: AppColors.border.withValues(alpha: .7),
                             ),
-                          _ProductRow(
+                          ProductRow(
                             index: i + 1,
                             row: rows[i],
                             currency: currency,
@@ -261,8 +261,8 @@ class _ProductWiseReportPageState extends ConsumerState<ProductWiseReportPage> {
   }
 }
 
-class _ProductRow extends StatelessWidget {
-  const _ProductRow({
+class ProductRow extends StatelessWidget {
+  const ProductRow({super.key, 
     required this.index,
     required this.row,
     required this.currency,

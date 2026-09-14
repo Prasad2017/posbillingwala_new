@@ -69,7 +69,7 @@ class PrintService {
   final ShopReceiptProfile shopProfile;
   final ReceiptLabels labels;
 
-  ReceiptBuilder get _builder =>
+  ReceiptBuilder get builder =>
       ReceiptBuilder(settings, shopProfile: shopProfile, labels: labels);
 
   ThermalTicket billTicket({
@@ -78,7 +78,7 @@ class PrintService {
     String? shopName,
     bool duplicate = false,
   }) {
-    return _builder.ticket(
+    return builder.ticket(
       invoice: invoice,
       items: items,
       shopName: shopName,
@@ -115,20 +115,20 @@ class PrintService {
     bool preferShare = false,
     bool duplicate = false,
   }) async {
-    _syncSavedEndpoints(isKot: false);
-    final text = _builder.billText(
+    syncSavedEndpoints(isKot: false);
+    final text = builder.billText(
       invoice: invoice,
       items: items,
       shopName: shopName,
       duplicate: duplicate,
     );
-    final bytes = await _builder.billPrintBytes(
+    final bytes = await builder.billPrintBytes(
       invoice: invoice,
       items: items,
       shopName: shopName,
       duplicate: duplicate,
     );
-    return _dispatch(
+    return dispatch(
       text: text,
       bytes: bytes,
       channel: PrinterChannelKind.bill,
@@ -141,10 +141,10 @@ class PrintService {
     KotTicket ticket, {
     bool preferShare = false,
   }) async {
-    _syncSavedEndpoints(isKot: true);
-    final text = _builder.kotText(ticket);
-    final bytes = await _builder.kotPrintBytes(ticket);
-    return _dispatch(
+    syncSavedEndpoints(isKot: true);
+    final text = builder.kotText(ticket);
+    final bytes = await builder.kotPrintBytes(ticket);
+    return dispatch(
       text: text,
       bytes: bytes,
       channel: PrinterChannelKind.kot,
@@ -168,10 +168,10 @@ class PrintService {
 
   String previewText(PrinterChannelKind channel, {String? shopName}) {
     if (channel == PrinterChannelKind.kot) {
-      return _builder.kotText(SampleReceiptData.sampleKot());
+      return builder.kotText(SampleReceiptData.sampleKot());
     }
     final sample = SampleReceiptData.sampleBill();
-    return _builder.billText(
+    return builder.billText(
       invoice: sample.invoice,
       items: sample.items,
       shopName: shopName,
@@ -184,9 +184,9 @@ class PrintService {
     bool preferShare = false,
     String label = 'Receipt',
   }) async {
-    _syncSavedEndpoints(isKot: channel == PrinterChannelKind.kot);
-    final bytes = await _builder.rawPrintBytes(text);
-    return _dispatch(
+    syncSavedEndpoints(isKot: channel == PrinterChannelKind.kot);
+    final bytes = await builder.rawPrintBytes(text);
+    return dispatch(
       text: text,
       bytes: bytes,
       channel: channel,
@@ -195,7 +195,7 @@ class PrintService {
     );
   }
 
-  void _syncSavedEndpoints({required bool isKot}) {
+  void syncSavedEndpoints({required bool isKot}) {
     hub.updateSavedAddresses(
       billMac: settings.billBluetoothAddress,
       kotMac: settings.kotBluetoothAddress,
@@ -206,7 +206,7 @@ class PrintService {
     );
   }
 
-  Future<bool> _printNetwork(List<int> bytes) async {
+  Future<bool> printNetwork(List<int> bytes) async {
     final host = settings.networkHost.trim();
     if (host.isEmpty) return false;
     final port = settings.networkPort <= 0 ? 9100 : settings.networkPort;
@@ -225,7 +225,7 @@ class PrintService {
     }
   }
 
-  Future<PrintResult> _dispatch({
+  Future<PrintResult> dispatch({
     required String text,
     required List<int> bytes,
     required PrinterChannelKind channel,
@@ -237,7 +237,7 @@ class PrintService {
       final transport = settings.transportFor(isKot: isKot);
 
       // Preferred transport for this channel.
-      final preferred = await _tryTransport(
+      final preferred = await tryTransport(
         transport: transport,
         channel: channel,
         isKot: isKot,
@@ -250,7 +250,7 @@ class PrintService {
       // Fallbacks so a misconfigured type still prints if another path works.
       for (final alt in PosPrinterTransport.values) {
         if (alt == transport) continue;
-        final result = await _tryTransport(
+        final result = await tryTransport(
           transport: alt,
           channel: channel,
           isKot: isKot,
@@ -276,7 +276,7 @@ class PrintService {
     );
   }
 
-  Future<PrintResult?> _tryTransport({
+  Future<PrintResult?> tryTransport({
     required PosPrinterTransport transport,
     required PrinterChannelKind channel,
     required bool isKot,
@@ -325,7 +325,7 @@ class PrintService {
 
         case PosPrinterTransport.network:
           if (settings.networkHost.trim().isEmpty) return null;
-          final ok = await _printNetwork(bytes);
+          final ok = await printNetwork(bytes);
           if (!ok) return null;
           return PrintResult(
             outcome: PrintOutcome.networkPrinted,

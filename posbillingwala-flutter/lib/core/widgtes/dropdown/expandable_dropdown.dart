@@ -61,33 +61,33 @@ class ExpandableDropdownField<T> extends StatefulWidget {
 
   @override
   State<ExpandableDropdownField<T>> createState() =>
-      _ExpandableDropdownFieldState<T>();
+      ExpandableDropdownFieldState<T>();
 }
 
-class _ExpandableDropdownFieldState<T>
+class ExpandableDropdownFieldState<T>
     extends State<ExpandableDropdownField<T>> {
-  var _expanded = false;
-  final _searchController = TextEditingController();
+  var expanded = false;
+  final searchController = TextEditingController();
 
-  bool _itemsEqual(T a, T b) => widget.itemComparer?.call(a, b) ?? a == b;
+  bool itemsEqual(T a, T b) => widget.itemComparer?.call(a, b) ?? a == b;
 
-  bool _isSelected(T item) {
+  bool isSelected(T item) {
     if (widget.mode == ExpandableDropdownMode.multi) {
-      return widget.selectedValues!.any((value) => _itemsEqual(value, item));
+      return widget.selectedValues!.any((value) => itemsEqual(value, item));
     }
     final selected = widget.value;
-    return selected != null && _itemsEqual(selected, item);
+    return selected != null && itemsEqual(selected, item);
   }
 
-  List<T> _filteredItems() {
-    final query = _searchController.text.trim().toLowerCase();
+  List<T> filteredItems() {
+    final query = searchController.text.trim().toLowerCase();
     if (query.isEmpty) return widget.items;
     return widget.items
         .where((item) => widget.itemLabel(item).toLowerCase().contains(query))
         .toList();
   }
 
-  String _triggerLabel() {
+  String expandableDropdownTriggerLabel() {
     if (widget.mode == ExpandableDropdownMode.multi) {
       final selected = widget.selectedValues!;
       if (selected.isEmpty) return widget.hint;
@@ -108,51 +108,51 @@ class _ExpandableDropdownFieldState<T>
     return widget.itemLabel(selected);
   }
 
-  bool get _hasSelection {
+  bool get hasSelection {
     if (widget.mode == ExpandableDropdownMode.multi) {
       return widget.selectedValues!.isNotEmpty;
     }
     return widget.value != null;
   }
 
-  void _closeDropdown() {
-    if (!_expanded) return;
+  void closeDropdown() {
+    if (!expanded) return;
     FocusManager.instance.primaryFocus?.unfocus();
     setState(() {
-      _expanded = false;
-      _searchController.clear();
+      expanded = false;
+      searchController.clear();
     });
   }
 
-  void _toggleExpanded() {
+  void toggleExpanded() {
     setState(() {
-      _expanded = !_expanded;
-      if (!_expanded) {
-        _searchController.clear();
+      expanded = !expanded;
+      if (!expanded) {
+        searchController.clear();
       }
     });
   }
 
-  void _handleItemTap(T item) {
+  void handleItemTap(T item) {
     if (widget.mode == ExpandableDropdownMode.multi) {
       final next = {...widget.selectedValues!};
-      if (_isSelected(item)) {
-        next.removeWhere((value) => _itemsEqual(value, item));
+      if (isSelected(item)) {
+        next.removeWhere((value) => itemsEqual(value, item));
       } else {
         next.add(item);
       }
       widget.onSelectionChanged!(next);
-      _closeDropdown();
+      closeDropdown();
       return;
     }
 
     widget.onChanged!(item);
-    _closeDropdown();
+    closeDropdown();
   }
 
   @override
   void dispose() {
-    _searchController.dispose();
+    searchController.dispose();
     super.dispose();
   }
 
@@ -162,18 +162,18 @@ class _ExpandableDropdownFieldState<T>
         Theme.of(context).textTheme.bodyMedium ?? const TextStyle();
     final bodySm =
         Theme.of(context).textTheme.bodySmall ?? const TextStyle(fontSize: 12);
-    final items = _filteredItems();
+    final items = filteredItems();
 
     final triggerLabel = Text(
-      _triggerLabel(),
+      expandableDropdownTriggerLabel(),
       style: bodyStyle.copyWith(
-        color: _hasSelection ? context.textPrimary : context.textSecondary,
+        color: hasSelection ? context.textPrimary : context.textSecondary,
         fontSize: 14,
       ),
     );
 
     final dropdown = TapRegion(
-      onTapOutside: (_) => _closeDropdown(),
+      onTapOutside: (_) => closeDropdown(),
       child: Container(
         decoration: BoxDecoration(
           color: context.cardColor,
@@ -190,7 +190,7 @@ class _ExpandableDropdownFieldState<T>
           mainAxisSize: MainAxisSize.min,
           children: [
             InkWell(
-              onTap: _toggleExpanded,
+              onTap: toggleExpanded,
               child: Padding(
                 padding: EdgeInsets.symmetric(
                   horizontal: widget.fitContent ? 12 : 14,
@@ -207,7 +207,7 @@ class _ExpandableDropdownFieldState<T>
                       Expanded(child: triggerLabel),
                     const SizedBox(width: 8),
                     Icon(
-                      _expanded
+                      expanded
                           ? Icons.keyboard_arrow_up_rounded
                           : Icons.keyboard_arrow_down_rounded,
                       color: context.textSecondary,
@@ -216,13 +216,13 @@ class _ExpandableDropdownFieldState<T>
                 ),
               ),
             ),
-            if (_expanded) ...[
+            if (expanded) ...[
               Divider(height: 1, color: context.borderColor),
               if (widget.enableSearch && !widget.fitContent)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(12, 8, 12, 6),
                   child: TextField(
-                    controller: _searchController,
+                    controller: searchController,
                     onChanged: (_) => setState(() {}),
                     cursorColor: context.textPrimary,
                     style: bodyStyle.copyWith(
@@ -291,14 +291,14 @@ class _ExpandableDropdownFieldState<T>
                               for (var index = 0;
                                   index < items.length;
                                   index++)
-                                _buildOption(
+                                buildOption(
                                   context: context,
                                   bodyStyle: bodyStyle,
                                   item: items[index],
                                   isFirst: index == 0,
                                 ),
                               if (widget.actionLabel != null)
-                                _buildAction(bodyStyle),
+                                buildAction(bodyStyle),
                             ],
                           )
                         : ListView.builder(
@@ -310,9 +310,9 @@ class _ExpandableDropdownFieldState<T>
                             itemBuilder: (context, index) {
                               if (widget.actionLabel != null &&
                                   index == items.length) {
-                                return _buildAction(bodyStyle);
+                                return buildAction(bodyStyle);
                               }
-                              return _buildOption(
+                              return buildOption(
                                 context: context,
                                 bodyStyle: bodyStyle,
                                 item: items[index],
@@ -349,11 +349,11 @@ class _ExpandableDropdownFieldState<T>
     );
   }
 
-  Widget _buildAction(TextStyle bodyStyle) {
+  Widget buildAction(TextStyle bodyStyle) {
     return InkWell(
       onTap: () {
         widget.onActionTap?.call();
-        _closeDropdown();
+        closeDropdown();
       },
       child: Padding(
         padding: const EdgeInsets.fromLTRB(14, 6, 14, 10),
@@ -368,19 +368,19 @@ class _ExpandableDropdownFieldState<T>
     );
   }
 
-  Widget _buildOption({
+  Widget buildOption({
     required BuildContext context,
     required TextStyle bodyStyle,
     required T item,
     required bool isFirst,
   }) {
-    final selected = _isSelected(item);
+    final selected = isSelected(item);
     return Material(
       color: selected && widget.mode == ExpandableDropdownMode.multi
           ? context.subtleBackground
           : Colors.transparent,
       child: InkWell(
-        onTap: () => _handleItemTap(item),
+        onTap: () => handleItemTap(item),
         child: Padding(
           padding: EdgeInsets.fromLTRB(
             widget.fitContent ? 12 : 14,

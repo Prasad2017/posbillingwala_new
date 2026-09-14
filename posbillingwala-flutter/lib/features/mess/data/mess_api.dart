@@ -7,14 +7,14 @@ import 'package:pos_billingwala_v2/features/mess/domain/mess_dtos.dart';
 import 'package:pos_billingwala_v2/core/constants/api_constants.dart';
 
 class MessApi {
-  MessApi(this._client);
+  MessApi(this.client);
 
-  final ApiClient _client;
+  final ApiClient client;
 
-  static final _date = DateFormat('yyyy-MM-dd HH:mm:ss');
+  static final messApiDate = DateFormat('yyyy-MM-dd HH:mm:ss');
 
   Future<List<MessMemberDto>> fetchMembers(String userId) async {
-    final data = await _get(
+    final data = await messApiGet(
       ApiEndpoints.getMessMemberList,
       query: {'userId': userId},
     );
@@ -25,7 +25,7 @@ class MessApi {
   }
 
   Future<MessCommonQrDto?> fetchCommonQr(String userId) async {
-    final data = await _get(
+    final data = await messApiGet(
       ApiEndpoints.messQrGet,
       query: {'userId': userId},
     );
@@ -42,7 +42,7 @@ class MessApi {
     String messLabel = '',
     String branchLabel = '',
   }) async {
-    final data = await _post(
+    final data = await messApiPost(
       ApiEndpoints.messQrGenerate,
       data: {
         'userId': userId,
@@ -66,7 +66,7 @@ class MessApi {
     String messLabel = '',
     String branchLabel = '',
   }) async {
-    final data = await _post(
+    final data = await messApiPost(
       ApiEndpoints.messQrRegenerate,
       data: {
         'userId': userId,
@@ -89,7 +89,7 @@ class MessApi {
     required String deviceId,
     String? deviceName,
   }) async {
-    final data = await _post(
+    final data = await messApiPost(
       ApiEndpoints.messQrSetStatus,
       data: {
         'userId': userId,
@@ -107,7 +107,7 @@ class MessApi {
     required String userId,
     required MessMemberDto member,
   }) async {
-    final data = await _post(
+    final data = await messApiPost(
       ApiEndpoints.insertMessMember,
       data: {
         'userId': userId,
@@ -140,7 +140,7 @@ class MessApi {
     DateTime? tokenDate,
     String tokenNetworkStatus = '',
   }) async {
-    final data = await _post(
+    final data = await messApiPost(
       ApiEndpoints.insertMessToken,
       data: {
         'userId': userId,
@@ -151,7 +151,7 @@ class MessApi {
         'memberType': memberType,
         'messType': messType,
         'tokenAmount': tokenAmount,
-        'tokenDate': _date.format(tokenDate ?? DateTime.now()),
+        'tokenDate': messApiDate.format(tokenDate ?? DateTime.now()),
         'tokenNetworkStatus': tokenNetworkStatus,
       },
     );
@@ -164,12 +164,12 @@ class MessApi {
     DateTime? verifiedDate,
     String verifyNetworkStatus = '',
   }) async {
-    final data = await _post(
+    final data = await messApiPost(
       ApiEndpoints.verifyMessToken,
       data: {
         'userId': userId,
         'tokenCode': tokenCode,
-        'verifiedDate': _date.format(verifiedDate ?? DateTime.now()),
+        'verifiedDate': messApiDate.format(verifiedDate ?? DateTime.now()),
         'verifyNetworkStatus': verifyNetworkStatus,
       },
     );
@@ -178,7 +178,7 @@ class MessApi {
 
   /// WithTable `mess_shop_setting_get.php` — payer mode (`user` / `institute`).
   Future<String?> fetchShopPayerMode(String userId) async {
-    final data = await _get(
+    final data = await messApiGet(
       ApiEndpoints.messShopSettingGet,
       query: {'userId': userId},
     );
@@ -190,7 +190,7 @@ class MessApi {
     required String userId,
     required String payerMode,
   }) async {
-    final data = await _post(
+    final data = await messApiPost(
       ApiEndpoints.messShopSettingSave,
       data: {
         'userId': userId,
@@ -205,7 +205,7 @@ class MessApi {
     required String userId,
     required String deviceId,
   }) async {
-    final data = await _get(
+    final data = await messApiGet(
       ApiEndpoints.messMealTokenPending,
       query: {
         'userId': userId,
@@ -221,7 +221,7 @@ class MessApi {
   }
 
   Future<List<MessMealSessionDto>> fetchMealSessions(String userId) async {
-    final data = await _get(
+    final data = await messApiGet(
       ApiEndpoints.messMealSessionList,
       query: {'userId': userId},
     );
@@ -240,7 +240,7 @@ class MessApi {
     String menuNotes = '',
     String sortOrder = '0',
   }) async {
-    final data = await _post(
+    final data = await messApiPost(
       ApiEndpoints.messMealSessionSave,
       data: {
         'userId': userId,
@@ -258,7 +258,7 @@ class MessApi {
   }
 
   Future<List<MessMemberPaymentDto>> fetchMemberPayments(String userId) async {
-    final data = await _get(
+    final data = await messApiGet(
       ApiEndpoints.getMessMemberPaymentList,
       query: {'userId': userId},
     );
@@ -269,7 +269,7 @@ class MessApi {
   }
 
   Future<List<MessTokenDto>> fetchMessTokens(String userId) async {
-    final data = await _get(
+    final data = await messApiGet(
       ApiEndpoints.getMessTokenList,
       query: {'userId': userId},
     );
@@ -290,7 +290,7 @@ class MessApi {
     required String paymentNetworkStatus,
     String paymentStatus = '0',
   }) async {
-    final data = await _post(
+    final data = await messApiPost(
       ApiEndpoints.insertMessPayment,
       data: {
         'userId': userId,
@@ -312,7 +312,7 @@ class MessApi {
     String? date,
   }) async {
     final day = date ?? DateFormat('yyyy-MM-dd').format(DateTime.now());
-    final data = await _get(
+    final data = await messApiGet(
       ApiEndpoints.messMealTokenToday,
       query: {'userId': userId, 'date': day},
     );
@@ -335,7 +335,7 @@ class MessApi {
     required String deviceId,
     String? deviceName,
   }) async {
-    final data = await _post(
+    final data = await messApiPost(
       ApiEndpoints.messMealTokenPrintAck,
       data: {
         'userId': userId,
@@ -354,7 +354,7 @@ class MessApi {
     required String userId,
     required String tokenId,
   }) async {
-    final data = await _post(
+    final data = await messApiPost(
       ApiEndpoints.messMealTokenCancel,
       data: {
         'userId': userId,
@@ -365,7 +365,7 @@ class MessApi {
   }
 
   Future<List<MessInvoiceDto>> fetchMessInvoices(String userId) async {
-    final data = await _get(
+    final data = await messApiGet(
       ApiEndpoints.getMessInvoiceList,
       query: {'userId': userId},
     );
@@ -383,7 +383,7 @@ class MessApi {
     required String messInvoiceNetworkStatus,
     String messInvoiceStatus = '0',
   }) async {
-    final data = await _post(
+    final data = await messApiPost(
       ApiEndpoints.insertMessInvoice,
       data: {
         'userId': userId,
@@ -397,11 +397,11 @@ class MessApi {
     return isApiSuccess(data);
   }
 
-  Future<Map<String, dynamic>> _get(
+  Future<Map<String, dynamic>> messApiGet(
     String path, {
     Map<String, dynamic>? query,
   }) async {
-    final response = await _client.dio.get<dynamic>(
+    final response = await client.dio.get<dynamic>(
       path,
       queryParameters: query,
       options: Options(responseType: ResponseType.json),
@@ -409,11 +409,11 @@ class MessApi {
     return asJsonMap(response.data);
   }
 
-  Future<Map<String, dynamic>> _post(
+  Future<Map<String, dynamic>> messApiPost(
     String path, {
     Map<String, dynamic>? data,
   }) async {
-    final response = await _client.dio.post<dynamic>(
+    final response = await client.dio.post<dynamic>(
       path,
       data: data == null ? null : FormData.fromMap(data),
       options: Options(responseType: ResponseType.json),

@@ -7,11 +7,11 @@ class EscPosEncoder {
 
   /// 32 ≈ 58mm (2"), 48 ≈ 80mm (3").
   final int charsPerLine;
-  final BytesBuilder _bytes = BytesBuilder();
+  final BytesBuilder escPosEncoderBytes = BytesBuilder();
 
-  List<int> get bytes => _bytes.toBytes();
+  List<int> get bytes => escPosEncoderBytes.toBytes();
 
-  void raw(List<int> data) => _bytes.add(data);
+  void raw(List<int> data) => escPosEncoderBytes.add(data);
 
   void init() {
     raw(const [0x1B, 0x40]); // ESC @
@@ -34,7 +34,7 @@ class EscPosEncoder {
       alignLeft();
     }
     bold(boldStyle);
-    final encoded = latin1.encode(_sanitize(value));
+    final encoded = latin1.encode(sanitize(value));
     raw(encoded);
     raw(const [0x0A]);
     bold(false);
@@ -62,7 +62,7 @@ class EscPosEncoder {
     raw(const [0x1D, 0x56, 0x01]);
   }
 
-  String _sanitize(String value) {
+  String sanitize(String value) {
     return value
         .replaceAll('₹', 'Rs.')
         .replaceAll('—', '-')

@@ -5,15 +5,15 @@ class UiCatalog {
 
   static String get(String lang, String key) {
     final map = switch (lang) {
-      'hi' => _hi,
-      'mr' => _mr,
-      _ => _en,
+      'hi' => uiCatalogHi,
+      'mr' => uiCatalogMr,
+      _ => en,
     };
-    return map[key] ?? _en[key] ?? key;
+    return map[key] ?? en[key] ?? key;
   }
 }
 
-const _en = <String, String>{
+const en = <String, String>{
   "cancel": "Cancel",
   "discount_wise_report": "Discount Wise Report",
   "empty_sub_categories": "Add categories from Master Data first.",
@@ -641,7 +641,7 @@ const _en = <String, String>{
   "ui_yes": "Yes",
 };
 
-const _hi = <String, String>{
+const uiCatalogHi = <String, String>{
   "cancel": "रद्द करें",
   "discount_wise_report": "छूट के अनुसार रिपोर्ट",
   "empty_sub_categories": "पहले मास्टर डेटा से श्रेणियाँ जोड़ें।",
@@ -1182,7 +1182,7 @@ const _hi = <String, String>{
   "ui_yes": "हाँ",
 };
 
-const _mr = <String, String>{
+const uiCatalogMr = <String, String>{
   "cancel": "रद्द करा",
   "discount_wise_report": "सवलत नुसार अहवाल",
   "empty_sub_categories": "आधी मास्टर डेटामधून श्रेण्या जोडा.",

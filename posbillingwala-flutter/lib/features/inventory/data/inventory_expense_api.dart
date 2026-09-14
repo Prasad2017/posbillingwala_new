@@ -7,15 +7,15 @@ import 'package:pos_billingwala_v2/shared/models/inventory_dtos.dart';
 import 'package:pos_billingwala_v2/core/constants/api_constants.dart';
 
 class InventoryExpenseApi {
-  InventoryExpenseApi(this._client);
+  InventoryExpenseApi(this.client);
 
-  final ApiClient _client;
+  final ApiClient client;
 
   Future<bool> uploadInventory({
     required String userId,
     required InventoryMovement row,
   }) async {
-    final data = await _post(
+    final data = await inventoryExpenseApiPost(
       ApiEndpoints.insertInventory,
       fields: {
         'userId': userId,
@@ -36,7 +36,7 @@ class InventoryExpenseApi {
     required String userId,
     required ShopExpense row,
   }) async {
-    final data = await _post(
+    final data = await inventoryExpenseApiPost(
       ApiEndpoints.insertExpenses,
       fields: {
         'userId': userId,
@@ -50,7 +50,7 @@ class InventoryExpenseApi {
   }
 
   Future<List<InventoryDto>> fetchInventory(String userId) async {
-    final data = await _get(
+    final data = await inventoryExpenseApiGet(
       ApiEndpoints.getInventoryList,
       query: {'userId': userId},
     );
@@ -61,7 +61,7 @@ class InventoryExpenseApi {
   }
 
   Future<List<ExpenseDto>> fetchExpenses(String userId) async {
-    final data = await _get(
+    final data = await inventoryExpenseApiGet(
       ApiEndpoints.getExpensesList,
       query: {'userId': userId},
     );
@@ -71,11 +71,11 @@ class InventoryExpenseApi {
     );
   }
 
-  Future<Map<String, dynamic>> _get(
+  Future<Map<String, dynamic>> inventoryExpenseApiGet(
     String path, {
     Map<String, dynamic>? query,
   }) async {
-    final response = await _client.dio.get<dynamic>(
+    final response = await client.dio.get<dynamic>(
       path,
       queryParameters: query,
       options: Options(responseType: ResponseType.json),
@@ -83,11 +83,11 @@ class InventoryExpenseApi {
     return asJsonMap(response.data);
   }
 
-  Future<Map<String, dynamic>> _post(
+  Future<Map<String, dynamic>> inventoryExpenseApiPost(
     String path, {
     required Map<String, dynamic> fields,
   }) async {
-    final response = await _client.dio.post<dynamic>(
+    final response = await client.dio.post<dynamic>(
       path,
       data: FormData.fromMap(fields),
       options: Options(responseType: ResponseType.json),

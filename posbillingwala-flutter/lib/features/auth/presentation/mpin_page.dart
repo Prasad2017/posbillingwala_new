@@ -19,17 +19,17 @@ class MpinPage extends ConsumerStatefulWidget {
   const MpinPage({super.key});
 
   @override
-  ConsumerState<MpinPage> createState() => _MpinPageState();
+  ConsumerState<MpinPage> createState() => MpinPageState();
 }
 
-class _MpinPageState extends ConsumerState<MpinPage> {
-  final _controllers = List.generate(4, (_) => TextEditingController());
-  final _focusNodes = List.generate(4, (_) => FocusNode());
+class MpinPageState extends ConsumerState<MpinPage> {
+  final controllers = List.generate(4, (_) => TextEditingController());
+  final focusNodes = List.generate(4, (_) => FocusNode());
 
   @override
   void initState() {
     super.initState();
-    for (final node in _focusNodes) {
+    for (final node in focusNodes) {
       node.addListener(() {
         if (mounted) setState(() {});
       });
@@ -38,25 +38,25 @@ class _MpinPageState extends ConsumerState<MpinPage> {
       ref.read(authControllerProvider.notifier).setDeviceConflictHandler(
             (message) => showDeviceConflictDialog(context, message),
           );
-      _focusNodes.first.requestFocus();
+      focusNodes.first.requestFocus();
     });
   }
 
   @override
   void dispose() {
-    for (final c in _controllers) {
+    for (final c in controllers) {
       c.dispose();
     }
-    for (final n in _focusNodes) {
+    for (final n in focusNodes) {
       n.dispose();
     }
     super.dispose();
   }
 
-  String get _mpin => _controllers.map((c) => c.text).join();
+  String get mpin => controllers.map((c) => c.text).join();
 
-  Future<void> _submit() async {
-    if (_mpin.length != 4) {
+  Future<void> submit() async {
+    if (mpin.length != 4) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Enter your 4-digit PB-PIN')),
       );
@@ -64,23 +64,23 @@ class _MpinPageState extends ConsumerState<MpinPage> {
     }
     FocusScope.of(context).unfocus();
     final ok =
-        await ref.read(authControllerProvider.notifier).loginWithMpin(_mpin);
+        await ref.read(authControllerProvider.notifier).loginWithMpin(mpin);
     if (!ok && mounted) {
-      for (final c in _controllers) {
+      for (final c in controllers) {
         c.clear();
       }
-      _focusNodes.first.requestFocus();
+      focusNodes.first.requestFocus();
     }
   }
 
-  void _onDigitChanged(int index, String value) {
+  void onDigitChanged(int index, String value) {
     setState(() {});
     if (value.length == 1 && index < 3) {
-      _focusNodes[index + 1].requestFocus();
+      focusNodes[index + 1].requestFocus();
     } else if (value.isEmpty && index > 0) {
-      _focusNodes[index - 1].requestFocus();
+      focusNodes[index - 1].requestFocus();
     }
-    if (_mpin.length == 4) _submit();
+    if (mpin.length == 4) submit();
   }
 
   @override
@@ -201,8 +201,8 @@ class _MpinPageState extends ConsumerState<MpinPage> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: List.generate(4, (index) {
                             final filled =
-                                _controllers[index].text.isNotEmpty;
-                            final focused = _focusNodes[index].hasFocus;
+                                controllers[index].text.isNotEmpty;
+                            final focused = focusNodes[index].hasFocus;
                             return Padding(
                               padding: EdgeInsets.only(
                                 left: index == 0 ? 0 : 12,
@@ -231,8 +231,8 @@ class _MpinPageState extends ConsumerState<MpinPage> {
                                     ],
                                   ),
                                   child: TextField(
-                                    controller: _controllers[index],
-                                    focusNode: _focusNodes[index],
+                                    controller: controllers[index],
+                                    focusNode: focusNodes[index],
                                     textAlign: TextAlign.center,
                                     keyboardType: TextInputType.number,
                                     obscureText: true,
@@ -257,7 +257,7 @@ class _MpinPageState extends ConsumerState<MpinPage> {
                                       contentPadding: EdgeInsets.zero,
                                     ),
                                     onChanged: (value) =>
-                                        _onDigitChanged(index, value),
+                                        onDigitChanged(index, value),
                                   ),
                                 ),
                               ),
@@ -285,7 +285,7 @@ class _MpinPageState extends ConsumerState<MpinPage> {
                         AppButton(
                           label: auth.busy ? strings.pleaseWait : strings.login,
                           isLoading: auth.busy,
-                          onPressed: auth.busy ? null : _submit,
+                          onPressed: auth.busy ? null : submit,
                         ),
                         const SizedBox(height: 16),
                         const AdBanner(slot: AdSlot.login),

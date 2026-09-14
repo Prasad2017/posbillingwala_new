@@ -39,7 +39,7 @@ class PrintImageEncoder {
       }
     }
 
-    _floydSteinberg(pixels, w, h, brightValue);
+    floydSteinberg(pixels, w, h, brightValue);
 
     final out = BytesBuilder();
     final widthBytes = w ~/ 8;
@@ -67,7 +67,7 @@ class PrintImageEncoder {
     return out.toBytes();
   }
 
-  static void _floydSteinberg(
+  static void floydSteinberg(
     List<int> pixels,
     int bmWidth,
     int bmHeight,

@@ -28,24 +28,24 @@ String buildHtmlSpreadsheet({
     ..write('tr.data:nth-child(even){background:#FAFAFA;}')
     ..write('tr.total td{font-weight:bold;background:#F0F0F0;}')
     ..write('</style></head><body>')
-    ..write('<h2>${_escapeHtml(reportTitle)}</h2>');
+    ..write('<h2>${escapeHtml(reportTitle)}</h2>');
   if (subtitle != null && subtitle.trim().isNotEmpty) {
-    buf.write('<p class="meta">${_escapeHtml(subtitle.trim())}</p>');
+    buf.write('<p class="meta">${escapeHtml(subtitle.trim())}</p>');
   }
   buf.write('<table><thead><tr>');
   if (rows.isNotEmpty) {
     for (final header in rows.first) {
-      buf.write('<th>${_escapeHtml(header)}</th>');
+      buf.write('<th>${escapeHtml(header)}</th>');
     }
     buf.write('</tr></thead><tbody>');
     final columnCount = rows.first.length;
     for (var i = 1; i < rows.length; i++) {
       final row = rows[i];
-      final totalRow = _isTotalRow(row);
+      final totalRow = isTotalRow(row);
       buf.write('<tr class="${totalRow ? 'total' : 'data'}">');
       for (var j = 0; j < columnCount; j++) {
         final cell = j < row.length ? row[j] : '';
-        buf.write('<td>${_escapeHtml(cell)}</td>');
+        buf.write('<td>${escapeHtml(cell)}</td>');
       }
       buf.write('</tr>');
     }
@@ -54,7 +54,7 @@ String buildHtmlSpreadsheet({
   return buf.toString();
 }
 
-bool _isTotalRow(List<String> row) {
+bool isTotalRow(List<String> row) {
   for (final cell in row) {
     final t = cell.trim().toLowerCase();
     if (t == 'total' || t == 'total amount' || t.startsWith('total ')) {
@@ -64,7 +64,7 @@ bool _isTotalRow(List<String> row) {
   return false;
 }
 
-String _escapeHtml(String value) {
+String escapeHtml(String value) {
   return value
       .replaceAll('&', '&amp;')
       .replaceAll('<', '&lt;')
@@ -72,7 +72,7 @@ String _escapeHtml(String value) {
       .replaceAll('"', '&quot;');
 }
 
-String _invoiceTypeLabel(String type) {
+String invoiceTypeLabel(String type) {
   final lower = type.toLowerCase();
   if (lower.contains('mess')) return 'Mess';
   return switch (type) {
@@ -82,7 +82,7 @@ String _invoiceTypeLabel(String type) {
   };
 }
 
-Future<void> _shareXlsFile({
+Future<void> shareXlsFile({
   required String title,
   required String fileStem,
   required String htmlBody,
@@ -130,13 +130,13 @@ Future<void> shareInvoicesCsv({
       '${i + 1}',
       dateFmt.format(inv.invoiceDate),
       inv.invoiceNumber,
-      _invoiceTypeLabel(inv.invoiceType),
+      invoiceTypeLabel(inv.invoiceType),
       inv.paymentMode,
       inv.totalAmount.toStringAsFixed(2),
     ]);
   }
   rows.add(['', '', '', '', 'TOTAL', total.toStringAsFixed(2)]);
-  await _shareXlsFile(
+  await shareXlsFile(
     title: title,
     fileStem: title,
     htmlBody: buildHtmlSpreadsheet(
@@ -169,7 +169,7 @@ Future<void> shareProductSalesCsv({
     ]);
   }
   table.add(['', 'TOTAL', '$totalQty', totalAmt.toStringAsFixed(2)]);
-  await _shareXlsFile(
+  await shareXlsFile(
     title: title,
     fileStem: title,
     htmlBody: buildHtmlSpreadsheet(
@@ -201,7 +201,7 @@ Future<void> shareExpensesCsv({
     ]);
   }
   rows.add(['', '', 'TOTAL', total.toStringAsFixed(2)]);
-  await _shareXlsFile(
+  await shareXlsFile(
     title: title,
     fileStem: title,
     htmlBody: buildHtmlSpreadsheet(

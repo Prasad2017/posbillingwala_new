@@ -19,38 +19,38 @@ class MessMealSessionsPage extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<MessMealSessionsPage> createState() =>
-      _MessMealSessionsPageState();
+      MessMealSessionsPageState();
 }
 
-Color _sessionColor(int index) => [AppColors.orange, AppColors.purple, AppColors.teal, AppColors.primary][index % 4];
+Color sessionColor(int index) => [AppColors.orange, AppColors.purple, AppColors.teal, AppColors.primary][index % 4];
 
-class _MessMealSessionsPageState extends ConsumerState<MessMealSessionsPage> {
-  AsyncValue<List<MessMealSessionDto>> _sessions = const AsyncLoading();
-  bool _saving = false;
+class MessMealSessionsPageState extends ConsumerState<MessMealSessionsPage> {
+  AsyncValue<List<MessMealSessionDto>> messMealSessionsPageSessions = const AsyncLoading();
+  bool saving = false;
 
   @override
   void initState() {
     super.initState();
-    Future.microtask(_load);
+    Future.microtask(load);
   }
 
-  Future<void> _load() async {
+  Future<void> load() async {
     final userId = ref.read(authControllerProvider).session?.userId;
     if (userId == null || userId.isEmpty) {
       setState(
-        () => _sessions = AsyncError('Login required', StackTrace.current),
+        () => messMealSessionsPageSessions = AsyncError('Login required', StackTrace.current),
       );
       return;
     }
-    setState(() => _sessions = const AsyncLoading());
+    setState(() => messMealSessionsPageSessions = const AsyncLoading());
     final result = await AsyncValue.guard(() async {
       return MessApi(ref.read(apiClientProvider)).fetchMealSessions(userId);
     });
     if (!mounted) return;
-    setState(() => _sessions = result);
+    setState(() => messMealSessionsPageSessions = result);
   }
 
-  Future<void> _edit(MessMealSessionDto session) async {
+  Future<void> edit(MessMealSessionDto session) async {
     final nameCtrl = TextEditingController(text: session.sessionName);
     final prefixCtrl = TextEditingController(text: session.tokenPrefix);
     var start = session.startTime;
@@ -148,7 +148,7 @@ class _MessMealSessionsPageState extends ConsumerState<MessMealSessionsPage> {
     if (ok != true || !mounted) return;
     final userId = ref.read(authControllerProvider).session?.userId;
     if (userId == null) return;
-    setState(() => _saving = true);
+    setState(() => saving = true);
     try {
       final success = await MessApi(ref.read(apiClientProvider)).saveMealSession(
         userId: userId,
@@ -169,9 +169,9 @@ class _MessMealSessionsPageState extends ConsumerState<MessMealSessionsPage> {
           content: Text(success ? 'Session saved' : 'Save failed'),
         ),
       );
-      if (success) await _load();
+      if (success) await load();
     } finally {
-      if (mounted) setState(() => _saving = false);
+      if (mounted) setState(() => saving = false);
     }
     nameCtrl.dispose();
     prefixCtrl.dispose();
@@ -184,9 +184,9 @@ class _MessMealSessionsPageState extends ConsumerState<MessMealSessionsPage> {
         title: Text(AppStrings.of(ref).mealSessions),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _saving
+        onPressed: saving
             ? null
-            : () => _edit(
+            : () => edit(
                   const MessMealSessionDto(
                     sessionId: '',
                     sessionName: '',
@@ -197,7 +197,7 @@ class _MessMealSessionsPageState extends ConsumerState<MessMealSessionsPage> {
       body: Column(
         children: [
           Expanded(
-            child: _sessions.when(
+            child: messMealSessionsPageSessions.when(
               data: (rows) {
                 if (rows.isEmpty) {
                   return AppEmptyState(
@@ -205,9 +205,9 @@ class _MessMealSessionsPageState extends ConsumerState<MessMealSessionsPage> {
                     message: 'Add breakfast, lunch or dinner windows.',
                     iconAsset: AppAssets.svgClock,
                     actionLabel: 'Add session',
-                    onAction: _saving
+                    onAction: saving
                         ? null
-                        : () => _edit(
+                        : () => edit(
                               const MessMealSessionDto(
                                 sessionId: '',
                                 sessionName: '',
@@ -227,7 +227,7 @@ class _MessMealSessionsPageState extends ConsumerState<MessMealSessionsPage> {
                   separatorBuilder: (_, _) => const SizedBox(height: 8),
                   itemBuilder: (context, index) {
                     final s = rows[index];
-                    final color = _sessionColor(index);
+                    final color = sessionColor(index);
                     return AppCard(
                       accentColor: color,
                       padding: EdgeInsets.zero,
@@ -258,7 +258,7 @@ class _MessMealSessionsPageState extends ConsumerState<MessMealSessionsPage> {
                             ),
                           ],
                         ),
-                        onTap: () => _edit(s),
+                        onTap: () => edit(s),
                       ),
                     );
                   },
@@ -268,7 +268,7 @@ class _MessMealSessionsPageState extends ConsumerState<MessMealSessionsPage> {
               loading: () => const AppLoadingState(message: 'Loading sessions…'),
               error: (e, _) => AppErrorState(
                 message: '$e',
-                onRetry: _load,
+                onRetry: load,
               ),
             ),
           ),

@@ -5,6 +5,7 @@ import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
 import 'package:pos_billingwala_v2/core/widgtes/widgtes.dart';
 import 'package:pos_billingwala_v2/features/tables/domain/tables_providers.dart';
+import 'package:pos_billingwala_v2/l10n/app_strings.dart';
 
 FloorTableView? floorForTable(WidgetRef ref, String? tableNumber) {
   if (tableNumber == null || tableNumber.isEmpty) return null;
@@ -33,7 +34,7 @@ Future<void> printLatestInvoiceDuplicate(
   if (!context.mounted) return;
   if (invoice == null) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('No previous bill to reprint')),
+      SnackBar(content: Text(AppStrings.of(ref).noPreviousBill)),
     );
     return;
   }
@@ -49,22 +50,23 @@ Future<void> editDiningGuestsWaiter(
   if (session == null) return;
   final guests = TextEditingController(text: '${session.guestCount}');
   final waiter = TextEditingController(text: session.waiterName ?? '');
+  final strings = AppStrings.of(ref);
   final ok = await showDialog<bool>(
     context: context,
     builder: (context) => AlertDialog(
-      title: const Text('Guests / Waiter'),
+      title: Text(strings.guestsWaiter),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           AppTextField(
             controller: guests,
-            label: 'Guest count',
+            label: strings.guestCount,
             keyboardType: TextInputType.number,
           ),
           const SizedBox(height: 12),
           AppTextField(
             controller: waiter,
-            label: 'Waiter name',
+            label: strings.waiterName,
             textCapitalization: TextCapitalization.words,
           ),
         ],
@@ -72,10 +74,10 @@ Future<void> editDiningGuestsWaiter(
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context, false),
-          child: const Text('Cancel'),
+          child: Text(strings.cancel),
         ),
         AppButton(
-          label: 'Save',
+          label: strings.save,
           expanded: false,
           onPressed: () => Navigator.pop(context, true),
         ),
@@ -94,7 +96,7 @@ Future<void> editDiningGuestsWaiter(
       );
   if (!context.mounted) return;
   ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(content: Text('Table details saved')),
+    SnackBar(content: Text(AppStrings.of(ref).tableDetailsSaved)),
   );
 }
 
@@ -104,6 +106,7 @@ Future<void> showPosTableOverflow(
   FloorTableView floor,
 ) async {
   final all = ref.read(floorTablesProvider);
+  final strings = AppStrings.of(ref);
   final more = await showModalBottomSheet<String>(
     context: context,
     showDragHandle: true,
@@ -111,51 +114,51 @@ Future<void> showPosTableOverflow(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const ListTile(title: Text('Table actions')),
+          ListTile(title: Text(strings.tableActions)),
           const Divider(height: 1),
           ListTile(
-            title: const Text('Guests / Waiter'),
+            title: Text(strings.guestsWaiter),
             onTap: () => Navigator.pop(context, 'meta'),
           ),
           ListTile(
-            title: const Text('Join with another table'),
+            title: Text(strings.joinTable),
             onTap: () => Navigator.pop(context, 'join'),
           ),
           ListTile(
-            title: const Text('Transfer to another table'),
+            title: Text(strings.transferTable),
             onTap: () => Navigator.pop(context, 'transfer'),
           ),
           ListTile(
-            title: const Text('Move items to another table'),
+            title: Text(strings.moveItemsTable),
             onTap: () => Navigator.pop(context, 'move'),
           ),
           ListTile(
-            title: const Text('Split bill'),
+            title: Text(strings.splitBill),
             onTap: () => Navigator.pop(context, 'split_bill'),
           ),
           if (floor.openSession?.sessionStatus != 'HOLD')
             ListTile(
-              title: const Text('Hold table'),
+              title: Text(strings.holdTable),
               onTap: () => Navigator.pop(context, 'hold'),
             ),
           if (floor.openSession?.sessionStatus == 'HOLD')
             ListTile(
-              title: const Text('Resume table'),
+              title: Text(strings.resumeTable),
               onTap: () => Navigator.pop(context, 'resume'),
             ),
           ListTile(
-            title: const Text('Mark bill requested'),
+            title: Text(strings.markBillRequested),
             onTap: () => Navigator.pop(context, 'bill'),
           ),
           ListTile(
-            title: const Text('Duplicate print last bill'),
+            title: Text(strings.duplicatePrintLastBill),
             onTap: () => Navigator.pop(context, 'print'),
           ),
           if (floor.openSession != null &&
               (floor.joinedLabel?.contains('+') ?? false) &&
               !floor.isJoinedSecondary)
             ListTile(
-              title: const Text('Split joined tables'),
+              title: Text(strings.splitJoined),
               onTap: () => Navigator.pop(context, 'split'),
             ),
           const SizedBox(height: 8),
@@ -299,7 +302,7 @@ Future<void> handleTableOpsAction(
           context: context,
           isScrollControlled: true,
           showDragHandle: true,
-          builder: (context) => _MoveItemsSheet(items: items),
+          builder: (context) => MoveItemsSheet(items: items),
         );
         if (selected == null || selected.isEmpty || !context.mounted) return;
         await ref.read(tablesControllerProvider.notifier).moveItems(
@@ -369,22 +372,22 @@ Future<void> handleTableOpsAction(
   }
 }
 
-class _MoveItemsSheet extends StatefulWidget {
-  const _MoveItemsSheet({required this.items});
+class MoveItemsSheet extends StatefulWidget {
+  const MoveItemsSheet({super.key, required this.items});
 
   final List<CartItem> items;
 
   @override
-  State<_MoveItemsSheet> createState() => _MoveItemsSheetState();
+  State<MoveItemsSheet> createState() => MoveItemsSheetState();
 }
 
-class _MoveItemsSheetState extends State<_MoveItemsSheet> {
-  late final Set<int> _selected;
+class MoveItemsSheetState extends State<MoveItemsSheet> {
+  late final Set<int> tableOpsSelected;
 
   @override
   void initState() {
     super.initState();
-    _selected = {for (var i = 0; i < widget.items.length; i++) i};
+    tableOpsSelected = {for (var i = 0; i < widget.items.length; i++) i};
   }
 
   @override
@@ -407,14 +410,14 @@ class _MoveItemsSheetState extends State<_MoveItemsSheet> {
                 itemBuilder: (context, index) {
                   final item = widget.items[index];
                   return CheckboxListTile(
-                    value: _selected.contains(index),
+                    value: tableOpsSelected.contains(index),
                     title: Text(item.productName),
                     subtitle: Text('Qty ${item.quantity}'),
                     onChanged: (on) => setState(() {
                       if (on == true) {
-                        _selected.add(index);
+                        tableOpsSelected.add(index);
                       } else {
-                        _selected.remove(index);
+                        tableOpsSelected.remove(index);
                       }
                     }),
                   );
@@ -437,7 +440,7 @@ class _MoveItemsSheetState extends State<_MoveItemsSheet> {
                     label: 'Continue',
                     onPressed: () {
                       Navigator.pop(context, [
-                        for (final i in _selected) widget.items[i],
+                        for (final i in tableOpsSelected) widget.items[i],
                       ]);
                     },
                   ),

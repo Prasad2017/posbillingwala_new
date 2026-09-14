@@ -6,17 +6,17 @@ import 'package:pos_billingwala_v2/features/print/domain/bluetooth_printer_hub.d
 
 /// Android MethodChannel to WithTable [BluetoothPrintService] + WoosimService.
 class WoosimPrintChannel {
-  WoosimPrintChannel._();
+  WoosimPrintChannel();
 
-  static const _channel = MethodChannel('pos_billingwala/woosim_print');
-  static final WoosimPrintChannel instance = WoosimPrintChannel._();
+  static const methodChannel = MethodChannel('pos_billingwala/woosim_print');
+  static final WoosimPrintChannel instance = WoosimPrintChannel();
 
   static bool get isSupported => !kIsWeb && Platform.isAndroid;
 
   Future<bool> connect(PrinterChannelKind kind, String mac) async {
     if (!isSupported || mac.trim().isEmpty) return false;
     try {
-      final ok = await _channel.invokeMethod<bool>('connect', {
+      final ok = await methodChannel.invokeMethod<bool>('connect', {
         'kind': kind.name,
         'mac': mac.trim(),
       });
@@ -30,7 +30,7 @@ class WoosimPrintChannel {
   Future<bool> write(PrinterChannelKind kind, List<int> bytes) async {
     if (!isSupported || bytes.isEmpty) return false;
     try {
-      final ok = await _channel.invokeMethod<bool>('write', {
+      final ok = await methodChannel.invokeMethod<bool>('write', {
         'kind': kind.name,
         'bytes': Uint8List.fromList(bytes),
       });
@@ -44,18 +44,21 @@ class WoosimPrintChannel {
   Future<void> disconnect(PrinterChannelKind kind) async {
     if (!isSupported) return;
     try {
-      await _channel.invokeMethod<void>('disconnect', {'kind': kind.name});
-    } catch (_) {}
+      await methodChannel.invokeMethod<void>('disconnect', {'kind': kind.name});
+    } catch (error) {
+      debugPrint('Woosim disconnect: $error');
+    }
   }
 
   Future<bool> isReady(PrinterChannelKind kind) async {
     if (!isSupported) return false;
     try {
-      final ok = await _channel.invokeMethod<bool>('isReady', {
+      final ok = await methodChannel.invokeMethod<bool>('isReady', {
         'kind': kind.name,
       });
       return ok == true;
-    } catch (_) {
+    } catch (error) {
+      debugPrint('Woosim isReady: $error');
       return false;
     }
   }

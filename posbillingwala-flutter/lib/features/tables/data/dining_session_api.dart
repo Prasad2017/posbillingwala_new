@@ -80,17 +80,17 @@ class DiningSessionDto {
 }
 
 class DiningSessionApi {
-  DiningSessionApi(this._client);
+  DiningSessionApi(this.client);
 
-  final ApiClient _client;
+  final ApiClient client;
 
-  static final _dt = DateFormat('yyyy-MM-dd HH:mm:ss');
+  static final dt = DateFormat('yyyy-MM-dd HH:mm:ss');
 
   Future<bool> insertDiningSession({
     required String userId,
     required DiningSessionDto session,
   }) async {
-    final data = await _post(
+    final data = await diningSessionApiPost(
       ApiEndpoints.insertDiningSession,
       fields: {
         'userId': userId,
@@ -102,9 +102,9 @@ class DiningSessionApi {
         'guestCount': '${session.guestCount}',
         'startedAt': session.startedAt == null
             ? ''
-            : _dt.format(session.startedAt!),
+            : dt.format(session.startedAt!),
         'closedAt':
-            session.closedAt == null ? '' : _dt.format(session.closedAt!),
+            session.closedAt == null ? '' : dt.format(session.closedAt!),
         'customerName': session.customerName ?? '',
         'customerMobile': session.customerMobile ?? '',
         'waiterName': session.waiterName ?? '',
@@ -121,7 +121,7 @@ class DiningSessionApi {
     String userId, {
     bool openOnly = true,
   }) async {
-    final data = await _get(
+    final data = await diningSessionApiGet(
       ApiEndpoints.getDiningSessionList,
       query: {
         'userId': userId,
@@ -134,11 +134,11 @@ class DiningSessionApi {
     );
   }
 
-  Future<Map<String, dynamic>> _get(
+  Future<Map<String, dynamic>> diningSessionApiGet(
     String path, {
     Map<String, dynamic>? query,
   }) async {
-    final response = await _client.dio.get<dynamic>(
+    final response = await client.dio.get<dynamic>(
       path,
       queryParameters: query,
       options: Options(responseType: ResponseType.json),
@@ -146,11 +146,11 @@ class DiningSessionApi {
     return asJsonMap(response.data);
   }
 
-  Future<Map<String, dynamic>> _post(
+  Future<Map<String, dynamic>> diningSessionApiPost(
     String path, {
     required Map<String, dynamic> fields,
   }) async {
-    final response = await _client.dio.post<dynamic>(
+    final response = await client.dio.post<dynamic>(
       path,
       data: FormData.fromMap(fields),
       options: Options(responseType: ResponseType.json),

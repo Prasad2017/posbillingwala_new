@@ -6,12 +6,12 @@ import 'package:pos_billingwala_v2/shared/models/combo_dtos.dart';
 import 'package:pos_billingwala_v2/core/constants/api_constants.dart';
 
 class MastersApi {
-  MastersApi(this._client);
+  MastersApi(this.client);
 
-  final ApiClient _client;
+  final ApiClient client;
 
   Future<List<FoodTypeDto>> fetchFoodTypes() async {
-    final data = await _get(ApiEndpoints.getFoodTypeList);
+    final data = await mastersApiGet(ApiEndpoints.getFoodTypeList);
     return mapJsonList(
       data[ApiResponseKeys.foodTypeResponse],
       FoodTypeDto.fromJson,
@@ -19,7 +19,7 @@ class MastersApi {
   }
 
   Future<List<CategoryDto>> fetchCategories(String userId) async {
-    final data = await _get(
+    final data = await mastersApiGet(
       ApiEndpoints.getCategoryList,
       query: {'userId': userId},
     );
@@ -30,7 +30,7 @@ class MastersApi {
   }
 
   Future<List<ProductDto>> fetchProducts(String userId) async {
-    final data = await _get(
+    final data = await mastersApiGet(
       ApiEndpoints.getProductList,
       query: {'userId': userId},
     );
@@ -41,7 +41,7 @@ class MastersApi {
   }
 
   Future<List<PortionDto>> fetchPortions(String userId) async {
-    final data = await _get(
+    final data = await mastersApiGet(
       ApiEndpoints.getPortionList,
       query: {'userId': userId},
     );
@@ -52,7 +52,7 @@ class MastersApi {
   }
 
   Future<List<PosTableDto>> fetchPosTables(String userId) async {
-    final data = await _get(
+    final data = await mastersApiGet(
       ApiEndpoints.getPosTableList,
       query: {'userId': userId},
     );
@@ -63,7 +63,7 @@ class MastersApi {
   }
 
   Future<List<SubcategoryDto>> fetchSubcategories(String userId) async {
-    final data = await _get(
+    final data = await mastersApiGet(
       ApiEndpoints.getSubcategoryList,
       query: {'userId': userId},
     );
@@ -74,7 +74,7 @@ class MastersApi {
   }
 
   Future<List<DiningAreaDto>> fetchDiningAreas(String userId) async {
-    final data = await _get(
+    final data = await mastersApiGet(
       ApiEndpoints.getDiningAreaList,
       query: {'userId': userId},
     );
@@ -85,7 +85,7 @@ class MastersApi {
   }
 
   Future<List<TableTypeDto>> fetchTableTypes(String userId) async {
-    final data = await _get(
+    final data = await mastersApiGet(
       ApiEndpoints.getTableTypeList,
       query: {'userId': userId},
     );
@@ -96,7 +96,7 @@ class MastersApi {
   }
 
   Future<List<PortionMasterDto>> fetchPortionMasters(String userId) async {
-    final data = await _get(
+    final data = await mastersApiGet(
       ApiEndpoints.getPortionMasterList,
       query: {'userId': userId},
     );
@@ -115,7 +115,7 @@ class MastersApi {
     String subcategoryDeletedStatus = '0',
     String subcategorySortOrder = '0',
   }) async {
-    final data = await _post(
+    final data = await mastersApiPost(
       ApiEndpoints.insertSubcategory,
       fields: {
         'userId': userId,
@@ -137,7 +137,7 @@ class MastersApi {
     String areaActive = '1',
     String areaNetworkStatus = '',
   }) async {
-    final data = await _post(
+    final data = await mastersApiPost(
       ApiEndpoints.insertDiningArea,
       fields: {
         'userId': userId,
@@ -157,7 +157,7 @@ class MastersApi {
     String tableTypeActive = '1',
     String tableTypeNetworkStatus = '',
   }) async {
-    final data = await _post(
+    final data = await mastersApiPost(
       ApiEndpoints.insertTableType,
       fields: {
         'userId': userId,
@@ -180,7 +180,7 @@ class MastersApi {
     String sortOrder = '0',
     String posTableNetworkStatus = '',
   }) async {
-    final data = await _post(
+    final data = await mastersApiPost(
       ApiEndpoints.insertPosTable,
       fields: {
         'userId': userId,
@@ -197,7 +197,7 @@ class MastersApi {
   }
 
   Future<List<ComboDto>> fetchCombos(String userId) async {
-    final data = await _get(
+    final data = await mastersApiGet(
       ApiEndpoints.getComboList,
       query: {'userId': userId},
     );
@@ -208,7 +208,7 @@ class MastersApi {
   }
 
   Future<List<ComboItemDto>> fetchComboItems(String userId) async {
-    final data = await _get(
+    final data = await mastersApiGet(
       ApiEndpoints.getComboItemList,
       query: {'userId': userId},
     );
@@ -225,7 +225,7 @@ class MastersApi {
     String foodTypeCode = '',
     String categorySortOrder = '0',
   }) async {
-    final data = await _post(
+    final data = await mastersApiPost(
       ApiEndpoints.insertCategory,
       fields: {
         'userId': userId,
@@ -254,7 +254,7 @@ class MastersApi {
     String subcategoryId = '0',
     String openPrice = '0',
   }) async {
-    final data = await _post(
+    final data = await mastersApiPost(
       ApiEndpoints.insertProduct,
       fields: {
         'userId': userId,
@@ -287,7 +287,7 @@ class MastersApi {
     String portionMasterId = '0',
     String portionMasterNetworkStatus = '',
   }) async {
-    final data = await _post(
+    final data = await mastersApiPost(
       ApiEndpoints.insertPortion,
       fields: {
         'userId': userId,
@@ -311,7 +311,7 @@ class MastersApi {
     String portionMasterDeletedStatus = '0',
     String portionMasterNetworkStatus = '',
   }) async {
-    final data = await _post(
+    final data = await mastersApiPost(
       ApiEndpoints.insertPortionMaster,
       fields: {
         'userId': userId,
@@ -336,7 +336,7 @@ class MastersApi {
     String comboDeletedStatus = '0',
     String comboSortOrder = '0',
   }) async {
-    final data = await _post(
+    final data = await mastersApiPost(
       ApiEndpoints.insertCombo,
       fields: {
         'userId': userId,
@@ -368,7 +368,7 @@ class MastersApi {
     required String comboItemNetworkStatus,
     String comboItemDeletedStatus = '0',
   }) async {
-    final data = await _post(
+    final data = await mastersApiPost(
       ApiEndpoints.insertComboItem,
       fields: {
         'userId': userId,
@@ -387,11 +387,11 @@ class MastersApi {
     return isApiSuccess(data);
   }
 
-  Future<Map<String, dynamic>> _get(
+  Future<Map<String, dynamic>> mastersApiGet(
     String path, {
     Map<String, dynamic>? query,
   }) async {
-    final response = await _client.dio.get<dynamic>(
+    final response = await client.dio.get<dynamic>(
       path,
       queryParameters: query,
       options: Options(responseType: ResponseType.json),
@@ -399,11 +399,11 @@ class MastersApi {
     return asJsonMap(response.data);
   }
 
-  Future<Map<String, dynamic>> _post(
+  Future<Map<String, dynamic>> mastersApiPost(
     String path, {
     required Map<String, dynamic> fields,
   }) async {
-    final response = await _client.dio.post<dynamic>(
+    final response = await client.dio.post<dynamic>(
       path,
       data: FormData.fromMap(fields),
       options: Options(responseType: ResponseType.json),

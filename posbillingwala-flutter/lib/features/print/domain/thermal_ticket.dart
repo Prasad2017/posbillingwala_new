@@ -32,20 +32,20 @@ class ThermalTicket {
   String toPlainText({required int width}) {
     final buf = StringBuffer();
     for (final line in shopLines) {
-      buf.writeln(_center(line, width));
+      buf.writeln(center(line, width));
     }
     for (final line in metaLines) {
       buf.writeln(line);
     }
-    buf.writeln(_center(copyBanner, width));
+    buf.writeln(center(copyBanner, width));
     buf.writeln('-' * width);
     final itemW = width - 16;
-    buf.writeln(_columns([colItem, colRate, colAmount], [itemW, 8, 8]));
+    buf.writeln(columns([colItem, colRate, colAmount], [itemW, 8, 8]));
     buf.writeln('-' * width);
     for (final item in items) {
       buf.writeln(item.name);
       buf.writeln(
-        _columns(
+        columns(
           ['X${item.qty}', item.rate, item.amount],
           [itemW, 8, 8],
         ),
@@ -53,34 +53,34 @@ class ThermalTicket {
     }
     buf.writeln('-' * width);
     for (final pair in pairs) {
-      buf.writeln(_pair(pair.$1, pair.$2, width));
+      buf.writeln(thermalTicketPair(pair.$1, pair.$2, width));
     }
     buf.writeln('-' * width);
     if (terms.trim().isNotEmpty) {
-      buf.writeln(_center(terms.trim(), width));
+      buf.writeln(center(terms.trim(), width));
     }
     if (qrPayload != null && qrPayload!.trim().isNotEmpty) {
       buf.writeln('<<<UPI_QR>>>');
     }
     for (final line in footerLines) {
-      buf.writeln(_center(line, width));
+      buf.writeln(center(line, width));
     }
     return buf.toString();
   }
 
-  static String _center(String value, int width) {
+  static String center(String value, int width) {
     if (value.runes.length >= width) return value;
     final pad = width - value.runes.length;
     return (' ' * (pad ~/ 2)) + value;
   }
 
-  static String _pair(String left, String right, int width) {
+  static String thermalTicketPair(String left, String right, int width) {
     final space = width - left.runes.length - right.runes.length;
     final gap = space > 1 ? ' ' * space : ' ';
     return '$left$gap$right';
   }
 
-  static String _columns(List<String> values, List<int> widths) {
+  static String columns(List<String> values, List<int> widths) {
     final parts = <String>[];
     for (var i = 0; i < values.length; i++) {
       final w = widths[i];

@@ -12,11 +12,11 @@ class SplashPage extends ConsumerStatefulWidget {
   const SplashPage({super.key});
 
   @override
-  ConsumerState<SplashPage> createState() => _SplashPageState();
+  ConsumerState<SplashPage> createState() => SplashPageState();
 }
 
-class _SplashPageState extends ConsumerState<SplashPage> {
-  String? _webOfflineMessage;
+class SplashPageState extends ConsumerState<SplashPage> {
+  String? webOfflineMessage;
 
   @override
   void initState() {
@@ -25,7 +25,7 @@ class _SplashPageState extends ConsumerState<SplashPage> {
       if (!mounted) return;
       if (AppPlatform.requiresNetwork && !await ensureOnline()) {
         if (!mounted) return;
-        setState(() => _webOfflineMessage = kOnlineRequiredMessage);
+        setState(() => webOfflineMessage = kOnlineRequiredMessage);
         ref.read(authControllerProvider.notifier).bootstrap();
         return;
       }
@@ -59,7 +59,7 @@ class _SplashPageState extends ConsumerState<SplashPage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (_webOfflineMessage != null) ...[
+                    if (webOfflineMessage != null) ...[
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(12),
@@ -69,7 +69,7 @@ class _SplashPageState extends ConsumerState<SplashPage> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          _webOfflineMessage!,
+                          webOfflineMessage!,
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             color: AppColors.danger,
@@ -79,11 +79,11 @@ class _SplashPageState extends ConsumerState<SplashPage> {
                       ),
                       TextButton(
                         onPressed: () async {
-                          setState(() => _webOfflineMessage = null);
+                          setState(() => webOfflineMessage = null);
                           if (!await ensureOnline()) {
                             if (!mounted) return;
                             setState(
-                              () => _webOfflineMessage = kOnlineRequiredMessage,
+                              () => webOfflineMessage = kOnlineRequiredMessage,
                             );
                             return;
                           }

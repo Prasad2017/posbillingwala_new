@@ -23,26 +23,26 @@ class DeviceIdentityService {
   DeviceIdentityService({
     DeviceInfoPlugin? plugin,
     SharedPreferences? prefs,
-  })  : _plugin = plugin ?? DeviceInfoPlugin(),
-        _prefsOverride = prefs;
+  })  : deviceIdentityServicePlugin = plugin ?? DeviceInfoPlugin(),
+        prefsOverride = prefs;
 
-  static const _prefsKey = 'pb_device_id_v1';
+  static const prefsKey = 'pb_device_id_v1';
 
-  final DeviceInfoPlugin _plugin;
-  final SharedPreferences? _prefsOverride;
+  final DeviceInfoPlugin deviceIdentityServicePlugin;
+  final SharedPreferences? prefsOverride;
 
   Future<DeviceIdentity> resolve() async {
     if (kIsWeb) {
-      final id = await _persistedOrCreate('web');
+      final id = await persistedOrCreate('web');
       return DeviceIdentity(deviceId: id, deviceName: 'Web Browser');
     }
 
     if (Platform.isAndroid) {
-      final info = await _plugin.androidInfo;
+      final info = await deviceIdentityServicePlugin.androidInfo;
       final raw = info.id.trim();
       final id = raw.isNotEmpty && raw.toLowerCase() != 'unknown'
           ? raw
-          : await _persistedOrCreate('android');
+          : await persistedOrCreate('android');
       final name = '${info.manufacturer} ${info.model}'.trim();
       return DeviceIdentity(
         deviceId: id,
@@ -51,11 +51,11 @@ class DeviceIdentityService {
     }
 
     if (Platform.isIOS) {
-      final info = await _plugin.iosInfo;
+      final info = await deviceIdentityServicePlugin.iosInfo;
       final vendor = info.identifierForVendor?.trim();
       final id = (vendor != null && vendor.isNotEmpty)
           ? vendor
-          : await _persistedOrCreate('ios');
+          : await persistedOrCreate('ios');
       final name = '${info.name} ${info.model}'.trim();
       return DeviceIdentity(
         deviceId: id,
@@ -63,20 +63,20 @@ class DeviceIdentityService {
       );
     }
 
-    final id = await _persistedOrCreate('device');
+    final id = await persistedOrCreate('device');
     return DeviceIdentity(deviceId: id, deviceName: 'Unknown Device');
   }
 
-  Future<String> _persistedOrCreate(String prefix) async {
-    final prefs = _prefsOverride ?? await SharedPreferences.getInstance();
-    final existing = prefs.getString(_prefsKey)?.trim();
+  Future<String> persistedOrCreate(String prefix) async {
+    final prefs = prefsOverride ?? await SharedPreferences.getInstance();
+    final existing = prefs.getString(prefsKey)?.trim();
     if (existing != null && existing.isNotEmpty) return existing;
-    final id = '${prefix}_${_randomUuid()}';
-    await prefs.setString(_prefsKey, id);
+    final id = '${prefix}_${randomUuid()}';
+    await prefs.setString(prefsKey, id);
     return id;
   }
 
-  String _randomUuid() {
+  String randomUuid() {
     final r = Random.secure();
     String hex(int bytes) => List.generate(
           bytes,

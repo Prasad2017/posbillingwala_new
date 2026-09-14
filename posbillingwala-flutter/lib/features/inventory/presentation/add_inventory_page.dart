@@ -14,30 +14,30 @@ class AddInventoryPage extends ConsumerStatefulWidget {
   const AddInventoryPage({super.key});
 
   @override
-  ConsumerState<AddInventoryPage> createState() => _AddInventoryPageState();
+  ConsumerState<AddInventoryPage> createState() => AddInventoryPageState();
 }
 
-class _AddInventoryPageState extends ConsumerState<AddInventoryPage> {
-  final _qtyCtrl = TextEditingController(text: '1');
-  Product? _selected;
-  var _busy = false;
+class AddInventoryPageState extends ConsumerState<AddInventoryPage> {
+  final qtyCtrl = TextEditingController(text: '1');
+  Product? addInventoryPageSelected;
+  var busy = false;
 
   @override
   void dispose() {
-    _qtyCtrl.dispose();
+    qtyCtrl.dispose();
     super.dispose();
   }
 
-  Future<void> _save() async {
-    final selected = _selected;
-    final qty = double.tryParse(_qtyCtrl.text.trim()) ?? 0;
+  Future<void> save() async {
+    final selected = addInventoryPageSelected;
+    final qty = double.tryParse(qtyCtrl.text.trim()) ?? 0;
     if (selected == null || qty <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Select a product and quantity')),
       );
       return;
     }
-    setState(() => _busy = true);
+    setState(() => busy = true);
     try {
       await ref.read(inventoryControllerProvider.notifier).addStock(
             productId: selected.productId,
@@ -47,7 +47,7 @@ class _AddInventoryPageState extends ConsumerState<AddInventoryPage> {
       if (!mounted) return;
       context.pop();
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) setState(() => busy = false);
     }
   }
 
@@ -57,7 +57,7 @@ class _AddInventoryPageState extends ConsumerState<AddInventoryPage> {
           data: (v) => v,
           orElse: () => const <Product>[],
         );
-    _selected ??= products.isEmpty ? null : products.first;
+    addInventoryPageSelected ??= products.isEmpty ? null : products.first;
 
     return Scaffold(
       backgroundColor: MasterUi.bg,
@@ -75,13 +75,13 @@ class _AddInventoryPageState extends ConsumerState<AddInventoryPage> {
                     label: 'Product',
                     items: products,
                     itemLabel: (p) => p.productName,
-                    value: _selected,
+                    value: addInventoryPageSelected,
                     enableSearch: true,
-                    onChanged: (v) => setState(() => _selected = v),
+                    onChanged: (v) => setState(() => addInventoryPageSelected = v),
                   ),
                 const SizedBox(height: 12),
                 AppTextField(
-                  controller: _qtyCtrl,
+                  controller: qtyCtrl,
                   label: 'Quantity',
                   keyboardType:
                       const TextInputType.numberWithOptions(decimal: true),
@@ -92,8 +92,8 @@ class _AddInventoryPageState extends ConsumerState<AddInventoryPage> {
                 const SizedBox(height: 16),
                 MasterPrimaryButton(
                   label: 'Add Inventory',
-                  isLoading: _busy,
-                  onPressed: _busy ? null : _save,
+                  isLoading: busy,
+                  onPressed: busy ? null : save,
                 ),
               ],
             ),

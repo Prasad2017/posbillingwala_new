@@ -196,116 +196,128 @@ class PrinterSettings {
 enum PrinterPaperSize { inch2, inch3 }
 
 class PrinterSettingsStore {
-  static const _paperKey = 'printer_paper_size';
-  static const _billTransportKey = 'printer_bill_transport';
-  static const _kotTransportKey = 'printer_kot_transport';
-  static const _billMacKey = 'printer_bill_mac';
-  static const _kotMacKey = 'printer_kot_mac';
-  static const _billUsbKey = 'printer_bill_usb';
-  static const _kotUsbKey = 'printer_kot_usb';
-  static const _billUsbNameKey = 'printer_bill_usb_name';
-  static const _kotUsbNameKey = 'printer_kot_usb_name';
-  static const _hostKey = 'printer_network_host';
-  static const _portKey = 'printer_network_port';
-  static const _feedKey = 'printer_feed_lines';
-  static const _kotFeedKey = 'printer_kot_feed_lines';
-  static const _autoShareKey = 'printer_auto_share';
-  static const _invoiceTitleKey = 'printer_invoice_title';
-  static const _invoiceTermsKey = 'printer_invoice_terms';
-  static const _invoicePrefixKey = 'printer_invoice_prefix';
-  static const _kotPrefixKey = 'printer_kot_prefix';
-  static const _customerUseKey = 'printer_customer_use';
-  static const _paymentUseKey = 'printer_payment_use';
-  static const _duplicateKey = 'printer_duplicate_bill';
-  static const _logoUseKey = 'printer_logo_use';
-  static const _kotEnableKey = 'printer_kot_enable';
-  static const _qtyUpdateKey = 'printer_qty_update';
-  static const _kotAutoKey = 'printer_kot_auto';
-  static const _kotPreviewKey = 'printer_kot_preview';
-  static const _kotCopiesKey = 'printer_kot_copies';
+  static Future<PrinterSettings> Function(PrinterSettings prefs)? dbOverlay;
+  static Future<void> Function(PrinterSettings settings)? dbPersist;
+
+  static const paperKey = 'printer_paper_size';
+  static const billTransportKey = 'printer_bill_transport';
+  static const kotTransportKey = 'printer_kot_transport';
+  static const billMacKey = 'printer_bill_mac';
+  static const kotMacKey = 'printer_kot_mac';
+  static const billUsbKey = 'printer_bill_usb';
+  static const kotUsbKey = 'printer_kot_usb';
+  static const billUsbNameKey = 'printer_bill_usb_name';
+  static const kotUsbNameKey = 'printer_kot_usb_name';
+  static const hostKey = 'printer_network_host';
+  static const portKey = 'printer_network_port';
+  static const feedKey = 'printer_feed_lines';
+  static const kotFeedKey = 'printer_kot_feed_lines';
+  static const autoShareKey = 'printer_auto_share';
+  static const invoiceTitleKey = 'printer_invoice_title';
+  static const invoiceTermsKey = 'printer_invoice_terms';
+  static const invoicePrefixKey = 'printer_invoice_prefix';
+  static const kotPrefixKey = 'printer_kot_prefix';
+  static const customerUseKey = 'printer_customer_use';
+  static const paymentUseKey = 'printer_payment_use';
+  static const duplicateKey = 'printer_duplicate_bill';
+  static const logoUseKey = 'printer_logo_use';
+  static const kotEnableKey = 'printer_kot_enable';
+  static const qtyUpdateKey = 'printer_qty_update';
+  static const kotAutoKey = 'printer_kot_auto';
+  static const kotPreviewKey = 'printer_kot_preview';
+  static const kotCopiesKey = 'printer_kot_copies';
 
   Future<PrinterSettings> load() async {
     final prefs = await SharedPreferences.getInstance();
-    final paper = prefs.getString(_paperKey) == '3-Inch'
+    final paper = prefs.getString(paperKey) == '3-Inch'
         ? PrinterPaperSize.inch3
         : PrinterPaperSize.inch2;
-    return PrinterSettings(
+    var loaded = PrinterSettings(
       paperSize: paper,
       billTransport:
-          PosPrinterTransportX.fromStorage(prefs.getString(_billTransportKey)),
+          PosPrinterTransportX.fromStorage(prefs.getString(billTransportKey)),
       kotTransport:
-          PosPrinterTransportX.fromStorage(prefs.getString(_kotTransportKey)),
-      billBluetoothAddress: prefs.getString(_billMacKey) ?? '',
-      kotBluetoothAddress: prefs.getString(_kotMacKey) ?? '',
-      billUsbIdentifier: prefs.getString(_billUsbKey) ?? '',
-      kotUsbIdentifier: prefs.getString(_kotUsbKey) ?? '',
-      billUsbName: prefs.getString(_billUsbNameKey) ?? '',
-      kotUsbName: prefs.getString(_kotUsbNameKey) ?? '',
-      networkHost: prefs.getString(_hostKey) ?? '',
-      networkPort: prefs.getInt(_portKey) ?? 9100,
-      feedLines: prefs.getInt(_feedKey) ?? 3,
-      kotFeedLines: prefs.getInt(_kotFeedKey) ?? prefs.getInt(_feedKey) ?? 3,
-      autoShareOnSave: prefs.getBool(_autoShareKey) ?? true,
-      invoiceTitle: prefs.getString(_invoiceTitleKey) ?? '',
-      invoiceTerms: prefs.getString(_invoiceTermsKey) ?? '',
-      invoicePrefix: prefs.getString(_invoicePrefixKey) ?? 'PB',
-      kotPrefix: prefs.getString(_kotPrefixKey) ?? 'KOT',
-      customerUse: prefs.getBool(_customerUseKey) ?? false,
-      paymentUse: prefs.getBool(_paymentUseKey) ?? false,
-      duplicateBillUse: prefs.getBool(_duplicateKey) ?? false,
-      logoUse: prefs.getBool(_logoUseKey) ?? false,
-      kotEnable: prefs.getBool(_kotEnableKey) ?? true,
-      productQuantityUpdate: prefs.getBool(_qtyUpdateKey) ?? true,
-      kotAutoPrint: prefs.getBool(_kotAutoKey) ?? false,
-      kotPreview: prefs.getBool(_kotPreviewKey) ?? true,
-      kotCopies: prefs.getInt(_kotCopiesKey) ?? 1,
+          PosPrinterTransportX.fromStorage(prefs.getString(kotTransportKey)),
+      billBluetoothAddress: prefs.getString(billMacKey) ?? '',
+      kotBluetoothAddress: prefs.getString(kotMacKey) ?? '',
+      billUsbIdentifier: prefs.getString(billUsbKey) ?? '',
+      kotUsbIdentifier: prefs.getString(kotUsbKey) ?? '',
+      billUsbName: prefs.getString(billUsbNameKey) ?? '',
+      kotUsbName: prefs.getString(kotUsbNameKey) ?? '',
+      networkHost: prefs.getString(hostKey) ?? '',
+      networkPort: prefs.getInt(portKey) ?? 9100,
+      feedLines: prefs.getInt(feedKey) ?? 3,
+      kotFeedLines: prefs.getInt(kotFeedKey) ?? prefs.getInt(feedKey) ?? 3,
+      autoShareOnSave: prefs.getBool(autoShareKey) ?? true,
+      invoiceTitle: prefs.getString(invoiceTitleKey) ?? '',
+      invoiceTerms: prefs.getString(invoiceTermsKey) ?? '',
+      invoicePrefix: prefs.getString(invoicePrefixKey) ?? 'PB',
+      kotPrefix: prefs.getString(kotPrefixKey) ?? 'KOT',
+      customerUse: prefs.getBool(customerUseKey) ?? false,
+      paymentUse: prefs.getBool(paymentUseKey) ?? false,
+      duplicateBillUse: prefs.getBool(duplicateKey) ?? false,
+      logoUse: prefs.getBool(logoUseKey) ?? false,
+      kotEnable: prefs.getBool(kotEnableKey) ?? true,
+      productQuantityUpdate: prefs.getBool(qtyUpdateKey) ?? true,
+      kotAutoPrint: prefs.getBool(kotAutoKey) ?? false,
+      kotPreview: prefs.getBool(kotPreviewKey) ?? true,
+      kotCopies: prefs.getInt(kotCopiesKey) ?? 1,
     );
+    final overlay = dbOverlay;
+    if (overlay != null) {
+      loaded = await overlay(loaded);
+    }
+    return loaded;
   }
 
   Future<void> save(PrinterSettings settings) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(
-      _paperKey,
+      paperKey,
       settings.paperSize == PrinterPaperSize.inch3 ? '3-Inch' : '2-Inch',
     );
     await prefs.setString(
-      _billTransportKey,
+      billTransportKey,
       settings.billTransport.storageValue,
     );
     await prefs.setString(
-      _kotTransportKey,
+      kotTransportKey,
       settings.kotTransport.storageValue,
     );
-    await prefs.setString(_billMacKey, settings.billBluetoothAddress.trim());
-    await prefs.setString(_kotMacKey, settings.kotBluetoothAddress.trim());
-    await prefs.setString(_billUsbKey, settings.billUsbIdentifier.trim());
-    await prefs.setString(_kotUsbKey, settings.kotUsbIdentifier.trim());
-    await prefs.setString(_billUsbNameKey, settings.billUsbName.trim());
-    await prefs.setString(_kotUsbNameKey, settings.kotUsbName.trim());
-    await prefs.setString(_hostKey, settings.networkHost.trim());
-    await prefs.setInt(_portKey, settings.networkPort);
-    await prefs.setInt(_feedKey, settings.feedLines);
-    await prefs.setInt(_kotFeedKey, settings.kotFeedLines);
-    await prefs.setBool(_autoShareKey, settings.autoShareOnSave);
-    await prefs.setString(_invoiceTitleKey, settings.invoiceTitle.trim());
-    await prefs.setString(_invoiceTermsKey, settings.invoiceTerms.trim());
+    await prefs.setString(billMacKey, settings.billBluetoothAddress.trim());
+    await prefs.setString(kotMacKey, settings.kotBluetoothAddress.trim());
+    await prefs.setString(billUsbKey, settings.billUsbIdentifier.trim());
+    await prefs.setString(kotUsbKey, settings.kotUsbIdentifier.trim());
+    await prefs.setString(billUsbNameKey, settings.billUsbName.trim());
+    await prefs.setString(kotUsbNameKey, settings.kotUsbName.trim());
+    await prefs.setString(hostKey, settings.networkHost.trim());
+    await prefs.setInt(portKey, settings.networkPort);
+    await prefs.setInt(feedKey, settings.feedLines);
+    await prefs.setInt(kotFeedKey, settings.kotFeedLines);
+    await prefs.setBool(autoShareKey, settings.autoShareOnSave);
+    await prefs.setString(invoiceTitleKey, settings.invoiceTitle.trim());
+    await prefs.setString(invoiceTermsKey, settings.invoiceTerms.trim());
     await prefs.setString(
-      _invoicePrefixKey,
+      invoicePrefixKey,
       settings.invoicePrefix.trim().isEmpty ? 'PB' : settings.invoicePrefix.trim(),
     );
     await prefs.setString(
-      _kotPrefixKey,
+      kotPrefixKey,
       settings.kotPrefix.trim().isEmpty ? 'KOT' : settings.kotPrefix.trim(),
     );
-    await prefs.setBool(_customerUseKey, settings.customerUse);
-    await prefs.setBool(_paymentUseKey, settings.paymentUse);
-    await prefs.setBool(_duplicateKey, settings.duplicateBillUse);
-    await prefs.setBool(_logoUseKey, settings.logoUse);
-    await prefs.setBool(_kotEnableKey, settings.kotEnable);
-    await prefs.setBool(_qtyUpdateKey, settings.productQuantityUpdate);
-    await prefs.setBool(_kotAutoKey, settings.kotAutoPrint);
-    await prefs.setBool(_kotPreviewKey, settings.kotPreview);
-    await prefs.setInt(_kotCopiesKey, settings.kotCopies);
+    await prefs.setBool(customerUseKey, settings.customerUse);
+    await prefs.setBool(paymentUseKey, settings.paymentUse);
+    await prefs.setBool(duplicateKey, settings.duplicateBillUse);
+    await prefs.setBool(logoUseKey, settings.logoUse);
+    await prefs.setBool(kotEnableKey, settings.kotEnable);
+    await prefs.setBool(qtyUpdateKey, settings.productQuantityUpdate);
+    await prefs.setBool(kotAutoKey, settings.kotAutoPrint);
+    await prefs.setBool(kotPreviewKey, settings.kotPreview);
+    await prefs.setInt(kotCopiesKey, settings.kotCopies);
+    final persist = dbPersist;
+    if (persist != null) {
+      await persist(settings);
+    }
   }
 }
 
@@ -315,20 +327,20 @@ final printerSettingsProvider =
 );
 
 class PrinterSettingsController extends Notifier<PrinterSettings> {
-  final _store = PrinterSettingsStore();
+  final store = PrinterSettingsStore();
 
   @override
   PrinterSettings build() {
-    Future.microtask(_reload);
+    Future.microtask(reload);
     return const PrinterSettings();
   }
 
-  Future<void> _reload() async {
-    state = await _store.load();
+  Future<void> reload() async {
+    state = await store.load();
   }
 
   Future<void> update(PrinterSettings settings) async {
-    await _store.save(settings);
+    await store.save(settings);
     state = settings;
   }
 }

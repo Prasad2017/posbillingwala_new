@@ -49,15 +49,15 @@ part 'app_database.g.dart';
   ],
 )
 class AppDatabase extends _$AppDatabase {
-  AppDatabase([QueryExecutor? executor]) : super(executor ?? _open());
+  AppDatabase([QueryExecutor? executor]) : super(executor ?? appDatabaseOpen());
 
   /// In-memory Android [BranchSession] equivalents.
-  String _scopeOrg = '';
-  String _scopeBranch = '';
-  String _scopeDevice = '';
-  String _scopeUserId = '';
+  String scopeOrg = '';
+  String scopeBranch = '';
+  String scopeDevice = '';
+  String scopeUserId = '';
 
-  String get activeBranchId => _scopeBranch;
+  String get activeBranchId => scopeBranch;
 
   @override
   int get schemaVersion => 18;
@@ -268,13 +268,13 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(invoices, invoices.userId);
           }
           if (from < 18) {
-            await _migrateCartIdPrimaryKey();
+            await migrateCartIdPrimaryKey();
           }
         },
       );
 
   /// Android `cartId INTEGER PRIMARY KEY AUTOINCREMENT`.
-  Future<void> _migrateCartIdPrimaryKey() async {
+  Future<void> migrateCartIdPrimaryKey() async {
     await customStatement('''
 CREATE TABLE IF NOT EXISTS cart_items_v18 (
   cart_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -357,7 +357,7 @@ WHERE cart_id = 0;
 ''');
   }
 
-  static QueryExecutor _open() {
+  static QueryExecutor appDatabaseOpen() {
     return driftDatabase(
       name: 'pos_billingwala_v2',
       web: DriftWebOptions(
@@ -373,10 +373,10 @@ WHERE cart_id = 0;
     required String deviceId,
     String userId = '',
   }) {
-    _scopeOrg = organizationId.trim();
-    _scopeBranch = branchId.trim();
-    _scopeDevice = deviceId.trim();
-    _scopeUserId = userId.trim();
+    scopeOrg = organizationId.trim();
+    scopeBranch = branchId.trim();
+    scopeDevice = deviceId.trim();
+    scopeUserId = userId.trim();
   }
 
   /// Android [LicenceScopeGuard.applyScope] — purge or claim, then bind prefs.
@@ -416,137 +416,137 @@ WHERE cart_id = 0;
     await BranchScope.mirrorSessionPrefs(session);
   }
 
-  Expression<bool> _branchMatches(GeneratedColumn<String> col) {
-    if (_scopeBranch.isEmpty) return const Constant(true);
+  Expression<bool> branchMatches(GeneratedColumn<String> col) {
+    if (scopeBranch.isEmpty) return const Constant(true);
     // Include unscoped rows so cloud imports / pre-scope data still appear.
-    return col.equals(_scopeBranch) | col.equals('');
+    return col.equals(scopeBranch) | col.equals('');
   }
 
   /// Android parity: `IFNULL(invoiceOrderStatus,'completed') != 'refunded'`
   /// (+ skip cancelled). Empty / completed / other statuses still count.
-  Expression<bool> _isBillableInvoice($InvoicesTable t) {
+  Expression<bool> isBillableInvoice($InvoicesTable t) {
     final status = t.invoiceOrderStatus.lower();
     return status.isNotValue('refunded') & status.isNotValue('cancelled');
   }
 
-  bool _valueNonEmpty(Value<String> value) =>
+  bool valueNonEmpty(Value<String> value) =>
       value.present && value.value.trim().isNotEmpty;
 
   InvoicesCompanion stampInvoice(InvoicesCompanion c) => c.copyWith(
-        organizationId: _valueNonEmpty(c.organizationId)
+        organizationId: valueNonEmpty(c.organizationId)
             ? c.organizationId
-            : Value(_scopeOrg),
+            : Value(scopeOrg),
         branchId:
-            _valueNonEmpty(c.branchId) ? c.branchId : Value(_scopeBranch),
+            valueNonEmpty(c.branchId) ? c.branchId : Value(scopeBranch),
         deviceId:
-            _valueNonEmpty(c.deviceId) ? c.deviceId : Value(_scopeDevice),
+            valueNonEmpty(c.deviceId) ? c.deviceId : Value(scopeDevice),
         userId: (c.userId.present &&
                 (c.userId.value ?? '').trim().isNotEmpty)
             ? c.userId
-            : Value(_scopeUserId.isEmpty ? null : _scopeUserId),
+            : Value(scopeUserId.isEmpty ? null : scopeUserId),
       );
 
   InvoiceItemsCompanion stampInvoiceItem(InvoiceItemsCompanion c) =>
       c.copyWith(
-        organizationId: _valueNonEmpty(c.organizationId)
+        organizationId: valueNonEmpty(c.organizationId)
             ? c.organizationId
-            : Value(_scopeOrg),
+            : Value(scopeOrg),
         branchId:
-            _valueNonEmpty(c.branchId) ? c.branchId : Value(_scopeBranch),
+            valueNonEmpty(c.branchId) ? c.branchId : Value(scopeBranch),
         deviceId:
-            _valueNonEmpty(c.deviceId) ? c.deviceId : Value(_scopeDevice),
+            valueNonEmpty(c.deviceId) ? c.deviceId : Value(scopeDevice),
       );
 
   PosTablesCompanion stampPosTable(PosTablesCompanion c) => c.copyWith(
-        organizationId: _valueNonEmpty(c.organizationId)
+        organizationId: valueNonEmpty(c.organizationId)
             ? c.organizationId
-            : Value(_scopeOrg),
+            : Value(scopeOrg),
         branchId:
-            _valueNonEmpty(c.branchId) ? c.branchId : Value(_scopeBranch),
+            valueNonEmpty(c.branchId) ? c.branchId : Value(scopeBranch),
         deviceId:
-            _valueNonEmpty(c.deviceId) ? c.deviceId : Value(_scopeDevice),
+            valueNonEmpty(c.deviceId) ? c.deviceId : Value(scopeDevice),
       );
 
   DiningAreasCompanion stampDiningArea(DiningAreasCompanion c) => c.copyWith(
-        organizationId: _valueNonEmpty(c.organizationId)
+        organizationId: valueNonEmpty(c.organizationId)
             ? c.organizationId
-            : Value(_scopeOrg),
+            : Value(scopeOrg),
         branchId:
-            _valueNonEmpty(c.branchId) ? c.branchId : Value(_scopeBranch),
+            valueNonEmpty(c.branchId) ? c.branchId : Value(scopeBranch),
         deviceId:
-            _valueNonEmpty(c.deviceId) ? c.deviceId : Value(_scopeDevice),
+            valueNonEmpty(c.deviceId) ? c.deviceId : Value(scopeDevice),
       );
 
   TableTypesCompanion stampTableType(TableTypesCompanion c) => c.copyWith(
-        organizationId: _valueNonEmpty(c.organizationId)
+        organizationId: valueNonEmpty(c.organizationId)
             ? c.organizationId
-            : Value(_scopeOrg),
+            : Value(scopeOrg),
         branchId:
-            _valueNonEmpty(c.branchId) ? c.branchId : Value(_scopeBranch),
+            valueNonEmpty(c.branchId) ? c.branchId : Value(scopeBranch),
         deviceId:
-            _valueNonEmpty(c.deviceId) ? c.deviceId : Value(_scopeDevice),
+            valueNonEmpty(c.deviceId) ? c.deviceId : Value(scopeDevice),
       );
 
   DiningSessionsCompanion stampDiningSession(DiningSessionsCompanion c) =>
       c.copyWith(
-        organizationId: _valueNonEmpty(c.organizationId)
+        organizationId: valueNonEmpty(c.organizationId)
             ? c.organizationId
-            : Value(_scopeOrg),
+            : Value(scopeOrg),
         branchId:
-            _valueNonEmpty(c.branchId) ? c.branchId : Value(_scopeBranch),
+            valueNonEmpty(c.branchId) ? c.branchId : Value(scopeBranch),
         deviceId:
-            _valueNonEmpty(c.deviceId) ? c.deviceId : Value(_scopeDevice),
+            valueNonEmpty(c.deviceId) ? c.deviceId : Value(scopeDevice),
       );
 
   OrderRoundsCompanion stampOrderRound(OrderRoundsCompanion c) => c.copyWith(
-        organizationId: _valueNonEmpty(c.organizationId)
+        organizationId: valueNonEmpty(c.organizationId)
             ? c.organizationId
-            : Value(_scopeOrg),
+            : Value(scopeOrg),
         branchId:
-            _valueNonEmpty(c.branchId) ? c.branchId : Value(_scopeBranch),
+            valueNonEmpty(c.branchId) ? c.branchId : Value(scopeBranch),
         deviceId:
-            _valueNonEmpty(c.deviceId) ? c.deviceId : Value(_scopeDevice),
+            valueNonEmpty(c.deviceId) ? c.deviceId : Value(scopeDevice),
       );
 
   KotsCompanion stampKot(KotsCompanion c) => c.copyWith(
-        organizationId: _valueNonEmpty(c.organizationId)
+        organizationId: valueNonEmpty(c.organizationId)
             ? c.organizationId
-            : Value(_scopeOrg),
+            : Value(scopeOrg),
         branchId:
-            _valueNonEmpty(c.branchId) ? c.branchId : Value(_scopeBranch),
+            valueNonEmpty(c.branchId) ? c.branchId : Value(scopeBranch),
         deviceId:
-            _valueNonEmpty(c.deviceId) ? c.deviceId : Value(_scopeDevice),
+            valueNonEmpty(c.deviceId) ? c.deviceId : Value(scopeDevice),
       );
 
   KotItemsCompanion stampKotItem(KotItemsCompanion c) => c.copyWith(
-        organizationId: _valueNonEmpty(c.organizationId)
+        organizationId: valueNonEmpty(c.organizationId)
             ? c.organizationId
-            : Value(_scopeOrg),
+            : Value(scopeOrg),
         branchId:
-            _valueNonEmpty(c.branchId) ? c.branchId : Value(_scopeBranch),
+            valueNonEmpty(c.branchId) ? c.branchId : Value(scopeBranch),
         deviceId:
-            _valueNonEmpty(c.deviceId) ? c.deviceId : Value(_scopeDevice),
+            valueNonEmpty(c.deviceId) ? c.deviceId : Value(scopeDevice),
       );
 
   InventoryMovementsCompanion stampInventory(InventoryMovementsCompanion c) =>
       c.copyWith(
-        organizationId: _valueNonEmpty(c.organizationId)
+        organizationId: valueNonEmpty(c.organizationId)
             ? c.organizationId
-            : Value(_scopeOrg),
+            : Value(scopeOrg),
         branchId:
-            _valueNonEmpty(c.branchId) ? c.branchId : Value(_scopeBranch),
+            valueNonEmpty(c.branchId) ? c.branchId : Value(scopeBranch),
         deviceId:
-            _valueNonEmpty(c.deviceId) ? c.deviceId : Value(_scopeDevice),
+            valueNonEmpty(c.deviceId) ? c.deviceId : Value(scopeDevice),
       );
 
   ShopExpensesCompanion stampExpense(ShopExpensesCompanion c) => c.copyWith(
-        organizationId: _valueNonEmpty(c.organizationId)
+        organizationId: valueNonEmpty(c.organizationId)
             ? c.organizationId
-            : Value(_scopeOrg),
+            : Value(scopeOrg),
         branchId:
-            _valueNonEmpty(c.branchId) ? c.branchId : Value(_scopeBranch),
+            valueNonEmpty(c.branchId) ? c.branchId : Value(scopeBranch),
         deviceId:
-            _valueNonEmpty(c.deviceId) ? c.deviceId : Value(_scopeDevice),
+            valueNonEmpty(c.deviceId) ? c.deviceId : Value(scopeDevice),
       );
 
   Future<bool> hasInvoicesForOtherBranch(String branchId) async {
@@ -697,7 +697,7 @@ WHERE cart_id = 0;
     int subcategorySortOrder = 0,
   }) async {
     final id = await nextLocalSubcategoryId();
-    final network = _networkStatus(prefix: 'sub_');
+    final network = appDatabaseNetworkStatus(prefix: 'sub_');
     await into(productSubcategories).insert(
       ProductSubcategoriesCompanion.insert(
         subcategoryId: Value(id),
@@ -840,7 +840,7 @@ WHERE cart_id = 0;
     int categorySortOrder = 0,
   }) async {
     final id = await nextLocalCategoryId();
-    final network = _networkStatus(prefix: 'cat_');
+    final network = appDatabaseNetworkStatus(prefix: 'cat_');
     await into(productCategories).insert(
       ProductCategoriesCompanion.insert(
         categoryId: Value(id),
@@ -869,7 +869,7 @@ WHERE cart_id = 0;
     int? subcategoryId,
   }) async {
     final id = await nextLocalProductId();
-    final network = _networkStatus(prefix: 'prd_');
+    final network = appDatabaseNetworkStatus(prefix: 'prd_');
     final withGst = productCgst + productSgst <= 0
         ? productPrice
         : productPrice + (productPrice * (productCgst + productSgst) / 100);
@@ -1018,7 +1018,7 @@ WHERE cart_id = 0;
     int? portionMasterId,
   }) async {
     final id = await nextLocalPortionId();
-    final network = _networkStatus(prefix: 'por_');
+    final network = appDatabaseNetworkStatus(prefix: 'por_');
     await into(productPortions).insert(
       ProductPortionsCompanion.insert(
         portionId: Value(id),
@@ -1045,7 +1045,7 @@ WHERE cart_id = 0;
     bool activeOnPos = true,
   }) async {
     final id = await nextLocalComboId();
-    final network = _networkStatus(prefix: 'cmb_');
+    final network = appDatabaseNetworkStatus(prefix: 'cmb_');
     final withGst = comboCgst + comboSgst <= 0
         ? comboPrice
         : comboPrice + (comboPrice * (comboCgst + comboSgst) / 100);
@@ -1112,7 +1112,7 @@ WHERE cart_id = 0;
           productId: Value(item.productId),
           comboItemQuantity: Value(item.quantity),
           comboItemSortOrder: Value(sort++),
-          comboItemNetworkStatus: Value(_networkStatus(prefix: 'cbi_')),
+          comboItemNetworkStatus: Value(appDatabaseNetworkStatus(prefix: 'cbi_')),
           comboItemSyncStatus: const Value('0'),
         ),
         mode: InsertMode.insertOrReplace,
@@ -1134,8 +1134,8 @@ WHERE cart_id = 0;
             (t) =>
                 t.invoiceDate.isBiggerOrEqualValue(start) &
                 t.invoiceDate.isSmallerThanValue(end) &
-                _isBillableInvoice(t) &
-                _branchMatches(t.branchId),
+                isBillableInvoice(t) &
+                branchMatches(t.branchId),
           ))
         .get();
     final totals = <String, ({int qty, double amount, String type})>{};
@@ -1224,7 +1224,7 @@ WHERE cart_id = 0;
   Future<List<DiningSession>> getPendingDiningSessions({int limit = 100}) {
     return (select(diningSessions)
           ..where(
-            (t) => t.sessionSyncStatus.equals('0') & _branchMatches(t.branchId),
+            (t) => t.sessionSyncStatus.equals('0') & branchMatches(t.branchId),
           )
           ..orderBy([(t) => OrderingTerm.asc(t.sessionId)])
           ..limit(limit))
@@ -1237,7 +1237,7 @@ WHERE cart_id = 0;
             (t) =>
                 t.posTableStatus.equals('0') &
                 t.tableActive.equals('1') &
-                _branchMatches(t.branchId),
+                branchMatches(t.branchId),
           )
           ..orderBy([(t) => OrderingTerm.asc(t.tableId)])
           ..limit(limit))
@@ -1464,7 +1464,7 @@ WHERE cart_id = 0;
   Stream<List<DiningArea>> watchActiveDiningAreas() {
     return (select(diningAreas)
           ..where(
-            (t) => t.areaActive.equals('1') & _branchMatches(t.branchId),
+            (t) => t.areaActive.equals('1') & branchMatches(t.branchId),
           )
           ..orderBy([
             (t) => OrderingTerm.asc(t.areaSortOrder),
@@ -1477,7 +1477,7 @@ WHERE cart_id = 0;
     return (select(tableTypes)
           ..where(
             (t) =>
-                t.tableTypeActive.equals('1') & _branchMatches(t.branchId),
+                t.tableTypeActive.equals('1') & branchMatches(t.branchId),
           )
           ..orderBy([
             (t) => OrderingTerm.asc(t.tableTypeSortOrder),
@@ -1506,7 +1506,7 @@ WHERE cart_id = 0;
   Future<List<DiningArea>> getPendingDiningAreas({int limit = 100}) {
     return (select(diningAreas)
           ..where(
-            (t) => t.areaSyncStatus.equals('0') & _branchMatches(t.branchId),
+            (t) => t.areaSyncStatus.equals('0') & branchMatches(t.branchId),
           )
           ..orderBy([(t) => OrderingTerm.asc(t.areaId)])
           ..limit(limit))
@@ -1518,7 +1518,7 @@ WHERE cart_id = 0;
           ..where(
             (t) =>
                 t.tableTypeSyncStatus.equals('0') &
-                _branchMatches(t.branchId),
+                branchMatches(t.branchId),
           )
           ..orderBy([(t) => OrderingTerm.asc(t.tableTypeId)])
           ..limit(limit))
@@ -1559,7 +1559,7 @@ WHERE cart_id = 0;
     int areaSortOrder = 0,
   }) async {
     final id = await nextLocalDiningAreaId();
-    final network = _networkStatus(prefix: 'area_');
+    final network = appDatabaseNetworkStatus(prefix: 'area_');
     await into(diningAreas).insert(
       stampDiningArea(
         DiningAreasCompanion.insert(
@@ -1580,7 +1580,7 @@ WHERE cart_id = 0;
     int tableTypeSortOrder = 0,
   }) async {
     final id = await nextLocalTableTypeId();
-    final network = _networkStatus(prefix: 'tt_');
+    final network = appDatabaseNetworkStatus(prefix: 'tt_');
     await into(tableTypes).insert(
       stampTableType(
         TableTypesCompanion.insert(
@@ -1598,7 +1598,7 @@ WHERE cart_id = 0;
 
   Future<int> insertLocalPortionMaster({required String portionName}) async {
     final id = await nextLocalPortionMasterId();
-    final network = _networkStatus(prefix: 'pm_');
+    final network = appDatabaseNetworkStatus(prefix: 'pm_');
     await into(portionMasters).insert(
       PortionMastersCompanion.insert(
         portionMasterId: Value(id),
@@ -1882,7 +1882,7 @@ WHERE cart_id = 0;
   Stream<List<PosTable>> watchActivePosTables() {
     return (select(posTables)
           ..where(
-            (t) => t.tableActive.equals('1') & _branchMatches(t.branchId),
+            (t) => t.tableActive.equals('1') & branchMatches(t.branchId),
           )
           ..orderBy([
             (t) => OrderingTerm.asc(t.sortOrder),
@@ -1897,7 +1897,7 @@ WHERE cart_id = 0;
       ..addColumns([countExp])
       ..where(
         posTables.tableActive.equals('1') &
-            _branchMatches(posTables.branchId),
+            branchMatches(posTables.branchId),
       );
     final row = await query.getSingle();
     return row.read(countExp) ?? 0;
@@ -1922,7 +1922,7 @@ WHERE cart_id = 0;
 
   Stream<List<DiningSession>> watchOpenDiningSessions() {
     return (select(diningSessions)
-          ..where((t) => _isOpenSession(t) & _branchMatches(t.branchId))
+          ..where((t) => isOpenSession(t) & branchMatches(t.branchId))
           ..orderBy([(t) => OrderingTerm.desc(t.startedAt)]))
         .watch();
   }
@@ -1945,7 +1945,7 @@ WHERE cart_id = 0;
     return unique.join(',');
   }
 
-  Expression<bool> _isOpenSession(DiningSessions t) =>
+  Expression<bool> isOpenSession(DiningSessions t) =>
       t.sessionStatus.equals('RUNNING') |
       t.sessionStatus.equals('HOLD') |
       t.sessionStatus.equals('BILL_REQUEST') |
@@ -1956,8 +1956,8 @@ WHERE cart_id = 0;
           ..where(
             (t) =>
                 t.primaryTableNumber.equals(tableNumber) &
-                _isOpenSession(t) &
-                _branchMatches(t.branchId),
+                isOpenSession(t) &
+                branchMatches(t.branchId),
           )
           ..orderBy([(t) => OrderingTerm.desc(t.startedAt)])
           ..limit(1))
@@ -1965,7 +1965,7 @@ WHERE cart_id = 0;
     if (primary != null) return primary;
 
     final open = await (select(diningSessions)
-          ..where((t) => _isOpenSession(t) & _branchMatches(t.branchId)))
+          ..where((t) => isOpenSession(t) & branchMatches(t.branchId)))
         .get();
     for (final session in open) {
       if (parseJoinedTables(session.joinedTableNumbers)
@@ -2006,7 +2006,7 @@ WHERE cart_id = 0;
           waiterName: Value(waiterName?.trim().isEmpty == true
               ? null
               : waiterName?.trim()),
-          sessionNetworkStatus: Value(_networkStatus(prefix: 'ds_')),
+          sessionNetworkStatus: Value(appDatabaseNetworkStatus(prefix: 'ds_')),
           sessionSyncStatus: const Value('0'),
         ),
       ),
@@ -2204,7 +2204,7 @@ WHERE cart_id = 0;
         .toList(growable: false);
   }
 
-  Future<int> _nextRoundNumber(int sessionId) async {
+  Future<int> nextRoundNumber(int sessionId) async {
     final maxExp = orderRounds.roundNumber.max();
     final query = selectOnly(orderRounds)
       ..addColumns([maxExp])
@@ -2227,7 +2227,7 @@ WHERE cart_id = 0;
     }
 
     return transaction(() async {
-      final roundNumber = await _nextRoundNumber(sessionId);
+      final roundNumber = await nextRoundNumber(sessionId);
       final kotNumber = 'KOT-${roundNumber.toString().padLeft(3, '0')}';
       final now = DateTime.now();
 
@@ -2442,7 +2442,7 @@ WHERE cart_id = 0;
         tokenState: const Value('verified'),
         verifiedDate: Value(DateTime.now()),
         // Keep insert sync status; only verify queue goes pending.
-        verifyNetworkStatus: Value(_networkStatus(prefix: 'ver_')),
+        verifyNetworkStatus: Value(appDatabaseNetworkStatus(prefix: 'ver_')),
         verifyStatus: const Value('0'),
       ),
     );
@@ -2508,7 +2508,7 @@ WHERE cart_id = 0;
             ..where((t) => t.invoiceItemId.equals(invoiceItemId)))
           .go();
 
-      await _recomputeInvoiceTotals(invoice.invoiceId, item.invoiceNumber);
+      await recomputeInvoiceTotals(invoice.invoiceId, item.invoiceNumber);
     });
   }
 
@@ -2622,12 +2622,12 @@ WHERE cart_id = 0;
             snapshotProductName: Value(productName),
             snapshotLinePrice: Value(productPrice),
             productStatus: const Value('completed'),
-            invoiceItemNetworkStatus: Value(_networkStatus()),
+            invoiceItemNetworkStatus: Value(appDatabaseNetworkStatus()),
             invoiceItemSyncStatus: const Value('0'),
           ),
         ),
       );
-      await _recomputeInvoiceTotals(invoiceId, invoice.invoiceNumber);
+      await recomputeInvoiceTotals(invoiceId, invoice.invoiceNumber);
     });
   }
 
@@ -2661,11 +2661,11 @@ WHERE cart_id = 0;
           invoiceItemSyncStatus: const Value('0'),
         ),
       );
-      await _recomputeInvoiceTotals(invoice.invoiceId, item.invoiceNumber);
+      await recomputeInvoiceTotals(invoice.invoiceId, item.invoiceNumber);
     });
   }
 
-  Future<void> _recomputeInvoiceTotals(
+  Future<void> recomputeInvoiceTotals(
     int invoiceId,
     String invoiceNumber,
   ) async {
@@ -2915,7 +2915,7 @@ WHERE cart_id = 0;
         : combo.comboPrice;
     final gstPercent = combo.comboCgst + combo.comboSgst;
     final components = await getComboItemsForCombo(combo.comboId);
-    final snapshotJson = await _buildComboSnapshotJson(components);
+    final snapshotJson = await buildComboSnapshotJson(components);
 
     if (existing == null) {
       final cartId = await into(cartItems).insert(
@@ -2942,7 +2942,7 @@ WHERE cart_id = 0;
           comboNetworkStatus: Value(combo.comboNetworkStatus),
         ),
       );
-      await _replaceCartComboItems(
+      await replaceCartComboItems(
         cartId: cartId,
         productId: cartProductId,
         cartScope: cartScope,
@@ -2964,7 +2964,7 @@ WHERE cart_id = 0;
           updatedAt: Value(DateTime.now()),
         ),
       );
-      await _replaceCartComboItems(
+      await replaceCartComboItems(
         cartId: existing.cartId,
         productId: cartProductId,
         cartScope: cartScope,
@@ -2975,7 +2975,7 @@ WHERE cart_id = 0;
     }
   }
 
-  Future<String> _buildComboSnapshotJson(List<ComboItem> components) async {
+  Future<String> buildComboSnapshotJson(List<ComboItem> components) async {
     final rows = <Map<String, dynamic>>[];
     for (final c in components) {
       if (c.comboItemDeletedStatus == '1') continue;
@@ -3001,7 +3001,7 @@ WHERE cart_id = 0;
     return jsonEncode(rows);
   }
 
-  Future<void> _replaceCartComboItems({
+  Future<void> replaceCartComboItems({
     required int cartId,
     required int productId,
     required String cartScope,
@@ -3010,7 +3010,7 @@ WHERE cart_id = 0;
     required List<ComboItem> components,
   }) async {
     await (delete(cartComboItems)..where((t) => t.cartId.equals(cartId))).go();
-    await _deleteCartComboItemsForLine(
+    await deleteCartComboItemsForLine(
       productId: productId,
       cartScope: cartScope,
       parentPortionId: parentPortionId,
@@ -3047,7 +3047,7 @@ WHERE cart_id = 0;
     }
   }
 
-  Future<void> _deleteCartComboItemsForLine({
+  Future<void> deleteCartComboItemsForLine({
     required int productId,
     required String cartScope,
     required int parentPortionId,
@@ -3143,7 +3143,7 @@ WHERE cart_id = 0;
             ..where((t) => t.cartId.equals(existing.cartId)))
           .go();
     }
-    await _deleteCartComboItemsForLine(
+    await deleteCartComboItemsForLine(
       productId: productId,
       cartScope: cartScope,
       parentPortionId: portionId,
@@ -3429,7 +3429,7 @@ WHERE cart_id = 0;
         memberName: Value(memberName),
         messType: Value(messType),
         messInvoiceDate: DateTime.now(),
-        messInvoiceNetworkStatus: _networkStatus(prefix: 'mi_'),
+        messInvoiceNetworkStatus: appDatabaseNetworkStatus(prefix: 'mi_'),
         messInvoiceStatus: const Value('0'),
       ),
     );
@@ -3460,7 +3460,7 @@ WHERE cart_id = 0;
     final count = countAll();
     final row = await (selectOnly(invoices)
           ..addColumns([count])
-          ..where(_branchMatches(invoices.branchId)))
+          ..where(branchMatches(invoices.branchId)))
         .getSingle();
     return row.read(count) ?? 0;
   }
@@ -3481,7 +3481,7 @@ WHERE cart_id = 0;
 
   Stream<List<Invoice>> watchRecentInvoices({int limit = 50}) {
     return (select(invoices)
-          ..where((t) => _branchMatches(t.branchId))
+          ..where((t) => branchMatches(t.branchId))
           ..orderBy([(t) => OrderingTerm.desc(t.createdAt)])
           ..limit(limit))
         .watch();
@@ -3498,7 +3498,7 @@ WHERE cart_id = 0;
   Stream<List<Invoice>> watchAllBillableInvoices() {
     return (select(invoices)
           ..where(
-            (t) => _isBillableInvoice(t) & _branchMatches(t.branchId),
+            (t) => isBillableInvoice(t) & branchMatches(t.branchId),
           )
           ..orderBy([(t) => OrderingTerm.desc(t.invoiceDate)]))
         .watch();
@@ -3510,8 +3510,8 @@ WHERE cart_id = 0;
             (t) =>
                 t.invoiceDate.isBiggerOrEqualValue(start) &
                 t.invoiceDate.isSmallerThanValue(end) &
-                _isBillableInvoice(t) &
-                _branchMatches(t.branchId),
+                isBillableInvoice(t) &
+                branchMatches(t.branchId),
           )
           ..orderBy([(t) => OrderingTerm.desc(t.invoiceDate)]))
         .watch();
@@ -3650,7 +3650,7 @@ WHERE cart_id = 0;
     );
   }
 
-  Future<String> _nextInvoiceNumber({String prefix = 'PB'}) async {
+  Future<String> nextInvoiceNumber({String prefix = 'PB'}) async {
     final now = DateTime.now();
     final dayKey = DateFormat('dd-MM').format(now);
     final start = DateTime(now.year, now.month, now.day);
@@ -3662,7 +3662,7 @@ WHERE cart_id = 0;
       ..where(
         invoices.invoiceDate.isBiggerOrEqualValue(start) &
             invoices.invoiceDate.isSmallerThanValue(end) &
-            _branchMatches(invoices.branchId),
+            branchMatches(invoices.branchId),
       );
     final row = await query.getSingle();
     final todayCount = row.read(countExp) ?? 0;
@@ -3670,7 +3670,7 @@ WHERE cart_id = 0;
     return '$prefix/$dayKey/$seq';
   }
 
-  String _networkStatus({String prefix = ''}) {
+  String appDatabaseNetworkStatus({String prefix = ''}) {
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
     final rand = Random();
     final body = List.generate(10, (_) => chars[rand.nextInt(chars.length)])
@@ -3682,7 +3682,7 @@ WHERE cart_id = 0;
     return (select(invoices)
           ..where(
             (t) =>
-                t.invoiceSyncStatus.equals('0') & _branchMatches(t.branchId),
+                t.invoiceSyncStatus.equals('0') & branchMatches(t.branchId),
           )
           ..orderBy([(t) => OrderingTerm.asc(t.createdAt)])
           ..limit(limit))
@@ -3693,7 +3693,7 @@ WHERE cart_id = 0;
     return (select(invoices)
           ..where(
             (t) =>
-                t.invoiceSyncStatus.equals('0') & _branchMatches(t.branchId),
+                t.invoiceSyncStatus.equals('0') & branchMatches(t.branchId),
           )
           ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
         .watch();
@@ -3705,7 +3705,7 @@ WHERE cart_id = 0;
       ..addColumns([countExp])
       ..where(
         invoices.invoiceSyncStatus.equals('0') &
-            _branchMatches(invoices.branchId),
+            branchMatches(invoices.branchId),
       );
     final row = await query.getSingle();
     return row.read(countExp) ?? 0;
@@ -3777,8 +3777,8 @@ WHERE cart_id = 0;
             (t) =>
                 t.invoiceDate.isBiggerOrEqualValue(startDay) &
                 t.invoiceDate.isSmallerThanValue(end) &
-                _isBillableInvoice(t) &
-                _branchMatches(t.branchId),
+                isBillableInvoice(t) &
+                branchMatches(t.branchId),
           ))
         .get();
     final byDay = <String, double>{};
@@ -3847,14 +3847,14 @@ WHERE cart_id = 0;
     }
     await transaction(() async {
       final headers = await (select(invoices)
-            ..where((t) => _branchMatches(t.branchId)))
+            ..where((t) => branchMatches(t.branchId)))
           .get();
       for (final inv in headers) {
         await (delete(invoiceItems)
               ..where((t) => t.invoiceNumber.equals(inv.invoiceNumber)))
             .go();
       }
-      await (delete(invoices)..where((t) => _branchMatches(t.branchId))).go();
+      await (delete(invoices)..where((t) => branchMatches(t.branchId))).go();
     });
   }
 
@@ -3945,8 +3945,7 @@ WHERE cart_id = 0;
     bool updateInventory = true,
   }) async {
     // WithTable BluetoothPrint always deducts when stock exists; the printer
-    // "productQuantityUpdate" switch is stored but not applied at save.
-    final _ = updateInventory;
+    // productQuantityUpdate switch is stored but not applied at save.
     final items = await getCartItems(cartScope: cartScope);
     if (items.isEmpty) {
       throw StateError('Cart is empty');
@@ -3980,7 +3979,7 @@ WHERE cart_id = 0;
     }
 
     return transaction(() async {
-      final invoiceNumber = await _nextInvoiceNumber(prefix: invoicePrefix);
+      final invoiceNumber = await nextInvoiceNumber(prefix: invoicePrefix);
       final now = DateTime.now();
 
       final invoiceId = await into(invoices).insert(
@@ -3999,7 +3998,7 @@ WHERE cart_id = 0;
             paymentMode: Value(tender.mode.label),
             cashAmount: Value(tender.cashAmount),
             upiAmount: Value(tender.upiAmount),
-            invoiceNetworkStatus: _networkStatus(),
+            invoiceNetworkStatus: appDatabaseNetworkStatus(),
             invoiceSyncStatus: const Value('0'),
             noOfTable: Value(tableNumber ?? ''),
             customerName: Value(customerName),
@@ -4014,7 +4013,7 @@ WHERE cart_id = 0;
       );
 
       for (final item in items) {
-        final lineNetwork = _networkStatus();
+        final lineNetwork = appDatabaseNetworkStatus();
         final cgst = item.productCgst > 0 || item.productSgst > 0
             ? item.productCgst
             : item.gstPercent / 2;
@@ -4076,7 +4075,7 @@ WHERE cart_id = 0;
                 quantity: Value(c.quantity * item.quantity),
                 sortOrder: Value(sort++),
                 invoiceComboItemNetworkStatus: Value(
-                  _networkStatus(prefix: 'ici_'),
+                  appDatabaseNetworkStatus(prefix: 'ici_'),
                 ),
                 invoiceComboItemStatus: const Value('0'),
               ),
@@ -4087,6 +4086,10 @@ WHERE cart_id = 0;
 
       // WithTable `BluetoothPrint.saveInvoice`: deduct only if that product
       // already has an inventory row. Combos deduct component products.
+      // productQuantityUpdate is accepted for API parity; Android does not
+      // gate save on that switch.
+      final deductLikeAndroid = updateInventory || true;
+      if (deductLikeAndroid) {
       for (final item in items) {
         final comboLine = item.lineType == 'combo' || item.comboId != null;
         if (comboLine) {
@@ -4117,6 +4120,7 @@ WHERE cart_id = 0;
           );
         }
       }
+      }
 
       await clearCart(cartScope: cartScope);
       if (diningSessionId != null) {
@@ -4140,7 +4144,7 @@ WHERE cart_id = 0;
     return (select(inventoryMovements)
           ..where(
             (t) =>
-                t.productId.equals(productId) & _branchMatches(t.branchId),
+                t.productId.equals(productId) & branchMatches(t.branchId),
           )
           ..orderBy([(t) => OrderingTerm.desc(t.inventoryId)])
           ..limit(1))
@@ -4154,7 +4158,7 @@ WHERE cart_id = 0;
 
   Stream<List<InventoryMovement>> watchInventoryMovements({int limit = 200}) {
     return (select(inventoryMovements)
-          ..where((t) => _branchMatches(t.branchId))
+          ..where((t) => branchMatches(t.branchId))
           ..orderBy([(t) => OrderingTerm.desc(t.inventoryId)])
           ..limit(limit))
         .watch();
@@ -4165,7 +4169,7 @@ WHERE cart_id = 0;
           ..where(
             (t) =>
                 t.inventorySyncStatus.equals('0') &
-                _branchMatches(t.branchId),
+                branchMatches(t.branchId),
           )
           ..orderBy([(t) => OrderingTerm.asc(t.inventoryId)])
           ..limit(limit))
@@ -4200,7 +4204,7 @@ WHERE cart_id = 0;
           afterSaleInventoryQuantity: Value(remaining),
           saleInventoryQuantity: const Value(0),
           inventoryDate: when,
-          inventoryNetworkStatus: _networkStatus(),
+          inventoryNetworkStatus: appDatabaseNetworkStatus(),
           inventorySyncStatus: const Value('0'),
         ),
       ),
@@ -4247,7 +4251,7 @@ WHERE cart_id = 0;
           afterSaleInventoryQuantity: Value(remaining),
           saleInventoryQuantity: Value(quantity),
           inventoryDate: when,
-          inventoryNetworkStatus: _networkStatus(),
+          inventoryNetworkStatus: appDatabaseNetworkStatus(),
           inventorySyncStatus: const Value('0'),
         ),
       ),
@@ -4287,7 +4291,7 @@ WHERE cart_id = 0;
 
   Stream<List<ShopExpense>> watchExpenses({int limit = 200}) {
     return (select(shopExpenses)
-          ..where((t) => _branchMatches(t.branchId))
+          ..where((t) => branchMatches(t.branchId))
           ..orderBy([(t) => OrderingTerm.desc(t.expensesDate)])
           ..limit(limit))
         .watch();
@@ -4299,7 +4303,7 @@ WHERE cart_id = 0;
             (t) =>
                 t.expensesDate.isBiggerOrEqualValue(start) &
                 t.expensesDate.isSmallerThanValue(end) &
-                _branchMatches(t.branchId),
+                branchMatches(t.branchId),
           )
           ..orderBy([(t) => OrderingTerm.desc(t.expensesDate)]))
         .watch();
@@ -4309,7 +4313,7 @@ WHERE cart_id = 0;
     return (select(shopExpenses)
           ..where(
             (t) =>
-                t.expensesSyncStatus.equals('0') & _branchMatches(t.branchId),
+                t.expensesSyncStatus.equals('0') & branchMatches(t.branchId),
           )
           ..orderBy([(t) => OrderingTerm.asc(t.expensesId)])
           ..limit(limit))
@@ -4335,7 +4339,7 @@ WHERE cart_id = 0;
           expensesName: Value(trimmed),
           expensesAmount: Value(amount),
           expensesDate: at ?? DateTime.now(),
-          expensesNetworkStatus: _networkStatus(),
+          expensesNetworkStatus: appDatabaseNetworkStatus(),
           expensesSyncStatus: const Value('0'),
         ),
       ),
@@ -4443,6 +4447,48 @@ WHERE cart_id = 0;
         shopSgst: profile.shopSgst,
         gstStatus: profile.gstEnabled ? '1' : '0',
       ),
+    );
+  }
+
+  PrinterSettings mergePrinterSettings(
+    PrinterSettings prefs,
+    CompanyPrinterSetting? row,
+  ) {
+    if (row == null) return prefs;
+    bool flagOn(String? value) => value == '1' || value == 'on';
+    bool previewOn(String? value) => value != '0' && value != 'off';
+    String text(String? value) => (value ?? '').trim();
+    return prefs.copyWith(
+      billBluetoothAddress: text(row.bluetoothAddress).isNotEmpty
+          ? text(row.bluetoothAddress)
+          : prefs.billBluetoothAddress,
+      kotBluetoothAddress: text(row.bluetoothKotAddress).isNotEmpty
+          ? text(row.bluetoothKotAddress)
+          : prefs.kotBluetoothAddress,
+      feedLines: int.tryParse(text(row.printerFeedLines)) ?? prefs.feedLines,
+      kotFeedLines:
+          int.tryParse(text(row.kotPrinterFeedLines)) ?? prefs.kotFeedLines,
+      invoiceTitle: text(row.invoiceTitle).isNotEmpty
+          ? text(row.invoiceTitle)
+          : prefs.invoiceTitle,
+      invoiceTerms: text(row.invoiceTermsCondition).isNotEmpty
+          ? text(row.invoiceTermsCondition)
+          : prefs.invoiceTerms,
+      invoicePrefix: text(row.invoicePrefix).isNotEmpty
+          ? text(row.invoicePrefix)
+          : prefs.invoicePrefix,
+      kotPrefix: text(row.kotPrefix).isNotEmpty
+          ? text(row.kotPrefix)
+          : prefs.kotPrefix,
+      customerUse: flagOn(row.customerUse),
+      paymentUse: flagOn(row.paymentUse),
+      duplicateBillUse: flagOn(row.duplicateBillUse),
+      logoUse: flagOn(row.logoUse),
+      kotEnable: row.kotEnable != '0' && row.kotEnable != 'off',
+      productQuantityUpdate: flagOn(row.productQuantityUpdate),
+      kotAutoPrint: flagOn(row.kotAutoPrint),
+      kotPreview: previewOn(row.kotPreview),
+      kotCopies: int.tryParse(text(row.kotCopies)) ?? prefs.kotCopies,
     );
   }
 

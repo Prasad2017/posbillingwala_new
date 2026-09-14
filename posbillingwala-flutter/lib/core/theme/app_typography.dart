@@ -4,10 +4,10 @@ import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
 
 /// Central typography for POS Billingwala.
 abstract final class AppTypography {
-  static const _family = AppFonts.family;
+  static const appTypographyFamily = AppFonts.family;
 
   static TextStyle screenTitle({Color? color}) => TextStyle(
-        fontFamily: _family,
+        fontFamily: appTypographyFamily,
         fontSize: 22,
         fontWeight: FontWeight.w800,
         height: 1.25,
@@ -15,7 +15,7 @@ abstract final class AppTypography {
       );
 
   static TextStyle sectionTitle({Color? color}) => TextStyle(
-        fontFamily: _family,
+        fontFamily: appTypographyFamily,
         fontSize: 17,
         fontWeight: FontWeight.w800,
         height: 1.3,
@@ -23,7 +23,7 @@ abstract final class AppTypography {
       );
 
   static TextStyle cardTitle({Color? color}) => TextStyle(
-        fontFamily: _family,
+        fontFamily: appTypographyFamily,
         fontSize: 15,
         fontWeight: FontWeight.w700,
         height: 1.3,
@@ -31,7 +31,7 @@ abstract final class AppTypography {
       );
 
   static TextStyle body({Color? color}) => TextStyle(
-        fontFamily: _family,
+        fontFamily: appTypographyFamily,
         fontSize: 14,
         fontWeight: FontWeight.w500,
         height: 1.4,
@@ -39,7 +39,7 @@ abstract final class AppTypography {
       );
 
   static TextStyle bodySmall({Color? color}) => TextStyle(
-        fontFamily: _family,
+        fontFamily: appTypographyFamily,
         fontSize: 12,
         fontWeight: FontWeight.w500,
         height: 1.35,
@@ -47,7 +47,7 @@ abstract final class AppTypography {
       );
 
   static TextStyle button({Color? color}) => TextStyle(
-        fontFamily: _family,
+        fontFamily: appTypographyFamily,
         fontSize: 15,
         fontWeight: FontWeight.w700,
         height: 1.2,
@@ -55,7 +55,7 @@ abstract final class AppTypography {
       );
 
   static TextStyle amount({Color? color, double size = 20}) => TextStyle(
-        fontFamily: _family,
+        fontFamily: appTypographyFamily,
         fontSize: size,
         fontWeight: FontWeight.w800,
         height: 1.2,
@@ -63,7 +63,7 @@ abstract final class AppTypography {
       );
 
   static TextStyle invoiceTotal({Color? color}) => TextStyle(
-        fontFamily: _family,
+        fontFamily: appTypographyFamily,
         fontSize: 24,
         fontWeight: FontWeight.w900,
         height: 1.15,
@@ -71,7 +71,7 @@ abstract final class AppTypography {
       );
 
   static TextStyle statusLabel({Color? color}) => TextStyle(
-        fontFamily: _family,
+        fontFamily: appTypographyFamily,
         fontSize: 11,
         fontWeight: FontWeight.w700,
         height: 1.2,
@@ -80,7 +80,7 @@ abstract final class AppTypography {
       );
 
   static TextStyle tableHeader({Color? color}) => TextStyle(
-        fontFamily: _family,
+        fontFamily: appTypographyFamily,
         fontSize: 12,
         fontWeight: FontWeight.w700,
         height: 1.25,
@@ -88,7 +88,7 @@ abstract final class AppTypography {
       );
 
   static TextStyle caption({Color? color}) => TextStyle(
-        fontFamily: _family,
+        fontFamily: appTypographyFamily,
         fontSize: 11,
         fontWeight: FontWeight.w500,
         height: 1.3,

@@ -30,7 +30,7 @@ class DonutChart extends StatelessWidget {
         children: [
           CustomPaint(
             size: Size.square(size),
-            painter: _DonutPainter(
+            painter: DonutPainter(
               values: values,
               colors: colors,
               total: total == 0 ? 1 : total,
@@ -58,8 +58,8 @@ class DonutChart extends StatelessWidget {
   }
 }
 
-class _DonutPainter extends CustomPainter {
-  const _DonutPainter({
+class DonutPainter extends CustomPainter {
+  const DonutPainter({
     required this.values,
     required this.colors,
     required this.total,
@@ -93,6 +93,6 @@ class _DonutPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _DonutPainter old) =>
+  bool shouldRepaint(covariant DonutPainter old) =>
       old.values != values || old.colors != colors;
 }

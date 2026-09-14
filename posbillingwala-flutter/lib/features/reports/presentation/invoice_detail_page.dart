@@ -103,7 +103,7 @@ class InvoiceDetailPage extends ConsumerWidget {
                       Text(timeFormat.format(invoice.invoiceDate)),
                       const SizedBox(height: 8),
                       Text(
-                        _typeLabel(invoice.invoiceType, strings),
+                        typeLabel(invoice.invoiceType, strings),
                         style: Theme.of(context).textTheme.labelLarge,
                       ),
                       const SizedBox(height: 8),
@@ -147,25 +147,25 @@ class InvoiceDetailPage extends ConsumerWidget {
                         Text('${strings.customerAddress}: ${invoice.customerAddress}'),
                       ],
                       const Divider(height: 24),
-                      _Row(label: strings.payment, value: invoice.paymentMode),
-                      _Row(
+                      InvoiceDetailPageRow(label: strings.payment, value: invoice.paymentMode),
+                      InvoiceDetailPageRow(
                         label: strings.cash,
                         value: currency.format(invoice.cashAmount),
                       ),
-                      _Row(
+                      InvoiceDetailPageRow(
                         label: strings.upi,
                         value: currency.format(invoice.upiAmount),
                       ),
-                      _Row(
+                      InvoiceDetailPageRow(
                         label: strings.subtotal,
                         value: currency.format(invoice.subTotal),
                       ),
-                      _Row(
+                      InvoiceDetailPageRow(
                         label: strings.gst,
                         value: currency.format(invoice.totalGstAmount),
                       ),
                       const SizedBox(height: 8),
-                      _Row(
+                      InvoiceDetailPageRow(
                         label: strings.grandTotal,
                         value: currency.format(invoice.totalAmount),
                         emphasized: true,
@@ -181,7 +181,7 @@ class InvoiceDetailPage extends ConsumerWidget {
             variant: AppButtonVariant.outlined,
             expanded: false,
             onPressed: () async {
-                    await _editInvoiceHeader(context, ref, invoice);
+                    await editInvoiceHeader(context, ref, invoice);
                     ref.invalidate(invoiceDetailProvider(invoiceId));
                   },
           ),
@@ -289,7 +289,7 @@ class InvoiceDetailPage extends ConsumerWidget {
                   const Spacer(),
                   if (!cancelled && !refunded)
                     TextButton.icon(
-                      onPressed: () => _addInvoiceProduct(
+                      onPressed: () => addInvoiceProduct(
                         context,
                         ref,
                         invoice.invoiceId,
@@ -461,7 +461,7 @@ class InvoiceDetailPage extends ConsumerWidget {
     );
   }
 
-  String _typeLabel(String type, AppStrings strings) {
+  String typeLabel(String type, AppStrings strings) {
     return switch (type) {
       'take_away' => strings.takeAway,
       'table_wise' => strings.dineIn,
@@ -470,7 +470,7 @@ class InvoiceDetailPage extends ConsumerWidget {
   }
 }
 
-Future<void> _addInvoiceProduct(
+Future<void> addInvoiceProduct(
   BuildContext context,
   WidgetRef ref,
   int invoiceId,
@@ -554,7 +554,7 @@ Future<void> _addInvoiceProduct(
   }
 }
 
-Future<void> _editInvoiceHeader(
+Future<void> editInvoiceHeader(
   BuildContext context,
   WidgetRef ref,
   Invoice invoice,
@@ -572,9 +572,9 @@ Future<void> _editInvoiceHeader(
       TextEditingController(text: invoice.cashAmount.toStringAsFixed(2));
   final upiCtrl =
       TextEditingController(text: invoice.upiAmount.toStringAsFixed(2));
-  var paymentMode = _normalizePaymentMode(invoice.paymentMode);
-  var discountType = _normalizeDiscountType(invoice.discountType);
-  var packingType = _normalizeDiscountType(invoice.packingChargeType);
+  var paymentMode = normalizePaymentMode(invoice.paymentMode);
+  var discountType = normalizeDiscountType(invoice.discountType);
+  var packingType = normalizeDiscountType(invoice.packingChargeType);
 
   final ok = await showDialog<bool>(
     context: context,
@@ -729,13 +729,13 @@ Future<void> _editInvoiceHeader(
   upiCtrl.dispose();
 }
 
-String _normalizeDiscountType(String raw) {
+String normalizeDiscountType(String raw) {
   final v = raw.trim().toLowerCase();
   if (v.startsWith('p')) return 'Percent';
   return 'Amount';
 }
 
-String _normalizePaymentMode(String raw) {
+String normalizePaymentMode(String raw) {
   final v = raw.trim().toLowerCase();
   if (v.contains('card')) return 'Card';
   if (v.contains('mixed') || (v.contains('cash') && v.contains('upi'))) {
@@ -745,8 +745,8 @@ String _normalizePaymentMode(String raw) {
   return 'Cash';
 }
 
-class _Row extends StatelessWidget {
-  const _Row({
+class InvoiceDetailPageRow extends StatelessWidget {
+  const InvoiceDetailPageRow({super.key, 
     required this.label,
     required this.value,
     this.emphasized = false,

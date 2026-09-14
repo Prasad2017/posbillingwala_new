@@ -58,12 +58,12 @@ class InAppNotification {
 }
 
 class InAppNotificationStore {
-  static const _key = 'in_app_notifications_v1';
-  static const _max = 50;
+  static const key = 'in_app_notifications_v1';
+  static const max = 50;
 
   Future<List<InAppNotification>> load() async {
     final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_key);
+    final raw = prefs.getString(key);
     if (raw == null || raw.isEmpty) return const [];
     try {
       final list = jsonDecode(raw) as List<dynamic>;
@@ -78,9 +78,9 @@ class InAppNotificationStore {
 
   Future<void> save(List<InAppNotification> items) async {
     final prefs = await SharedPreferences.getInstance();
-    final clipped = items.take(_max).toList();
+    final clipped = items.take(max).toList();
     await prefs.setString(
-      _key,
+      key,
       jsonEncode(clipped.map((e) => e.toJson()).toList()),
     );
   }

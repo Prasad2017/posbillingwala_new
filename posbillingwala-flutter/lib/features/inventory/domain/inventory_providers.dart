@@ -72,7 +72,7 @@ class InventoryController extends Notifier<AsyncValue<String?>> {
             productName: productName,
             quantity: quantity,
           );
-      await _uploadPendingIfOnline();
+      await uploadPendingIfOnline();
       return 'Stock added';
     });
   }
@@ -90,13 +90,13 @@ class InventoryController extends Notifier<AsyncValue<String?>> {
             name: name,
             amount: amount,
           );
-      await _uploadPendingIfOnline();
+      await uploadPendingIfOnline();
       return 'Expense saved';
     });
   }
 
   /// Dual-write when online: push pending inventory/expense rows to API.
-  Future<void> _uploadPendingIfOnline() async {
+  Future<void> uploadPendingIfOnline() async {
     if (!await isDeviceOnline()) return;
     final userId = ref.read(authControllerProvider).session?.userId;
     if (userId == null || userId.isEmpty) return;

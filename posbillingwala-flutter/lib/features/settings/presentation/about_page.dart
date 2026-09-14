@@ -18,17 +18,17 @@ import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
 class AboutPage extends StatelessWidget {
   const AboutPage({super.key});
 
-  static const _tagline =
+  static const aboutPageTagline =
       'POS BillingWala is your complete billing solution to manage sales, '
       'inventory, customers and reports easily. Simple, Fast and Reliable – '
       'All in One App.';
 
-  static const _disclaimer =
+  static const disclaimer =
       "This Software is provided 'is-as', without any express or implied "
       'warranty. In no event will the authors be held liable for any damages '
       'arising from the use of this software.';
 
-  Future<void> _openExternal(BuildContext context, Uri uri) async {
+  Future<void> openExternal(BuildContext context, Uri uri) async {
     final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!ok && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -37,22 +37,22 @@ class AboutPage extends StatelessWidget {
     }
   }
 
-  Future<void> _rateUs(BuildContext context) {
-    return _openExternal(context, Uri.parse(AppConstants.playStoreUrl));
+  Future<void> rateUs(BuildContext context) {
+    return openExternal(context, Uri.parse(AppConstants.playStoreUrl));
   }
 
-  Future<void> _openWebsite(BuildContext context) {
-    return _openExternal(context, Uri.parse(AppConstants.website));
+  Future<void> openWebsite(BuildContext context) {
+    return openExternal(context, Uri.parse(AppConstants.website));
   }
 
-  Future<void> _openEmail(BuildContext context) {
-    return _openExternal(
+  Future<void> openEmail(BuildContext context) {
+    return openExternal(
       context,
       Uri(scheme: 'mailto', path: AppConstants.supportEmail),
     );
   }
 
-  Future<void> _openPhone(BuildContext context) => callSupport(context);
+  Future<void> openPhone(BuildContext context) => callSupport(context);
 
   @override
   Widget build(BuildContext context) {
@@ -97,7 +97,7 @@ class AboutPage extends StatelessWidget {
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert_rounded, color: Colors.white),
             onSelected: (value) {
-              if (value == 'rate') _rateUs(context);
+              if (value == 'rate') rateUs(context);
             },
             itemBuilder: (context) => const [
               PopupMenuItem(value: 'rate', child: Text('Rate us')),
@@ -114,44 +114,44 @@ class AboutPage extends StatelessWidget {
             AppBreakpoints.pagePaddingFor(context.widthClass),
             28),
         children: [
-          _HeroCard(tagline: _tagline),
+          HeroCard(tagline: aboutPageTagline),
           const SizedBox(height: 22),
-          const _SectionTitle('Get in touch'),
+          const SectionTitle('Get in touch'),
           const SizedBox(height: 12),
           AppCard(
             accentColor: AppColors.primary,
             padding: EdgeInsets.zero,
             child: Column(
               children: [
-                _ContactTile(
+                ContactTile(
                   iconAsset: AppAssets.svgAboutWeb,
                   label: 'Website',
                   value: AppConstants.websiteDisplay,
-                  onTap: () => _openWebsite(context),
+                  onTap: () => openWebsite(context),
                 ),
                 const Divider(height: 1, indent: 72, endIndent: 16),
-                _ContactTile(
+                ContactTile(
                   iconAsset: AppAssets.svgAboutEmail,
                   label: 'Email',
                   value: AppConstants.supportEmail,
-                  onTap: () => _openEmail(context),
+                  onTap: () => openEmail(context),
                 ),
                 const Divider(height: 1, indent: 72, endIndent: 16),
-                _ContactTile(
+                ContactTile(
                   iconAsset: AppAssets.svgAboutPhone,
                   label: 'Phone',
                   value: phone,
-                  onTap: () => _openPhone(context),
+                  onTap: () => openPhone(context),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 14),
-          const _DisclaimerCard(text: _disclaimer),
+          const DisclaimerCard(text: disclaimer),
           const SizedBox(height: 14),
-          _DeveloperCard(phone: phone, onCall: () => _openPhone(context)),
+          DeveloperCard(phone: phone, onCall: () => openPhone(context)),
           const SizedBox(height: 14),
-          _RateUsCard(onRate: () => _rateUs(context)),
+          RateUsCard(onRate: () => rateUs(context)),
           const SizedBox(height: 16),
           const Center(child: AdBanner(slot: AdSlot.about)),
         ],
@@ -161,8 +161,8 @@ class AboutPage extends StatelessWidget {
   }
 }
 
-class _SectionTitle extends StatelessWidget {
-  const _SectionTitle(this.title);
+class SectionTitle extends StatelessWidget {
+  const SectionTitle(this.title, {super.key});
 
   final String title;
 
@@ -189,37 +189,37 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
-class _HeroCard extends StatelessWidget {
-  const _HeroCard({required this.tagline});
+class HeroCard extends StatelessWidget {
+  const HeroCard({super.key, required this.tagline});
 
   final String tagline;
 
-  static const _features = <_FeatureItem>[
-    _FeatureItem(
+  static const aboutPageFeatures = <FeatureItem>[
+    FeatureItem(
       label: 'Fast Billing',
       icon: Icons.shopping_cart_rounded,
       color: AppColors.primary,
       background: Color(0xFFEFF6FF),
     ),
-    _FeatureItem(
+    FeatureItem(
       label: 'Inventory Management',
       icon: Icons.inventory_2_rounded,
       color: AppColors.green,
       background: Color(0xFFECFDF5),
     ),
-    _FeatureItem(
+    FeatureItem(
       label: 'Customer Management',
       icon: Icons.person_rounded,
       color: AppColors.orange,
       background: Color(0xFFFFF7ED),
     ),
-    _FeatureItem(
+    FeatureItem(
       label: 'Powerful Reports',
       icon: Icons.grid_view_rounded,
       color: AppColors.purple,
       background: Color(0xFFF5F3FF),
     ),
-    _FeatureItem(
+    FeatureItem(
       label: 'Multi Language Print Support',
       icon: Icons.print_rounded,
       color: AppColors.red,
@@ -266,7 +266,7 @@ class _HeroCard extends StatelessWidget {
             style: AppTypography.cardTitle(color: AppColors.primary),
           ),
           const SizedBox(height: 16),
-          const _DiamondDivider(),
+          const DiamondDivider(),
           const SizedBox(height: 14),
           Text(
             tagline,
@@ -277,8 +277,8 @@ class _HeroCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              for (final feature in _features)
-                Expanded(child: _FeatureTile(item: feature)),
+              for (final feature in aboutPageFeatures)
+                Expanded(child: FeatureTile(item: feature)),
             ],
           ),
         ],
@@ -287,8 +287,8 @@ class _HeroCard extends StatelessWidget {
   }
 }
 
-class _FeatureItem {
-  const _FeatureItem({
+class FeatureItem {
+  const FeatureItem({
     required this.label,
     required this.icon,
     required this.color,
@@ -301,10 +301,10 @@ class _FeatureItem {
   final Color background;
 }
 
-class _FeatureTile extends StatelessWidget {
-  const _FeatureTile({required this.item});
+class FeatureTile extends StatelessWidget {
+  const FeatureTile({super.key, required this.item});
 
-  final _FeatureItem item;
+  final FeatureItem item;
 
   @override
   Widget build(BuildContext context) {
@@ -342,8 +342,8 @@ class _FeatureTile extends StatelessWidget {
   }
 }
 
-class _DiamondDivider extends StatelessWidget {
-  const _DiamondDivider();
+class DiamondDivider extends StatelessWidget {
+  const DiamondDivider({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -376,8 +376,8 @@ class _DiamondDivider extends StatelessWidget {
   }
 }
 
-class _ContactTile extends StatelessWidget {
-  const _ContactTile({
+class ContactTile extends StatelessWidget {
+  const ContactTile({super.key, 
     required this.iconAsset,
     required this.label,
     required this.value,
@@ -437,8 +437,8 @@ class _ContactTile extends StatelessWidget {
   }
 }
 
-class _DisclaimerCard extends StatelessWidget {
-  const _DisclaimerCard({required this.text});
+class DisclaimerCard extends StatelessWidget {
+  const DisclaimerCard({super.key, required this.text});
 
   final String text;
 
@@ -481,8 +481,8 @@ class _DisclaimerCard extends StatelessWidget {
   }
 }
 
-class _DeveloperCard extends StatelessWidget {
-  const _DeveloperCard({required this.phone, required this.onCall});
+class DeveloperCard extends StatelessWidget {
+  const DeveloperCard({super.key, required this.phone, required this.onCall});
 
   final String phone;
   final VoidCallback onCall;
@@ -557,8 +557,8 @@ class _DeveloperCard extends StatelessWidget {
   }
 }
 
-class _RateUsCard extends StatelessWidget {
-  const _RateUsCard({required this.onRate});
+class RateUsCard extends StatelessWidget {
+  const RateUsCard({super.key, required this.onRate});
 
   final VoidCallback onRate;
 
@@ -596,15 +596,15 @@ class _RateUsCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          const _GooglePlayBadge(),
+          const GooglePlayBadge(),
         ],
       ),
     );
   }
 }
 
-class _GooglePlayBadge extends StatelessWidget {
-  const _GooglePlayBadge();
+class GooglePlayBadge extends StatelessWidget {
+  const GooglePlayBadge({super.key});
 
   @override
   Widget build(BuildContext context) {

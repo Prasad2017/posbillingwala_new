@@ -23,27 +23,27 @@ class MessPaymentsPage extends ConsumerStatefulWidget {
   final MessMember? member;
 
   @override
-  ConsumerState<MessPaymentsPage> createState() => _MessPaymentsPageState();
+  ConsumerState<MessPaymentsPage> createState() => MessPaymentsPageState();
 }
 
-class _MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
-  bool _busy = false;
-  bool _cloudLoaded = false;
+class MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
+  bool busy = false;
+  bool cloudLoaded = false;
 
   @override
   void initState() {
     super.initState();
-    Future.microtask(_refreshFromCloud);
+    Future.microtask(refreshFromCloud);
   }
 
-  String? get _memberIdFilter =>
+  String? get memberIdFilter =>
       widget.member == null ? null : '${widget.member!.memberId}';
 
-  Future<void> _refreshFromCloud() async {
+  Future<void> refreshFromCloud() async {
     final userId = ref.read(authControllerProvider).session?.userId;
     if (userId == null || userId.isEmpty) return;
     if (!await isDeviceOnline()) {
-      if (mounted) setState(() => _cloudLoaded = true);
+      if (mounted) setState(() => cloudLoaded = true);
       return;
     }
     try {
@@ -98,10 +98,10 @@ class _MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
     } catch (_) {
       // Keep local Drift rows.
     }
-    if (mounted) setState(() => _cloudLoaded = true);
+    if (mounted) setState(() => cloudLoaded = true);
   }
 
-  MessMemberPaymentDto _toDto(MessMemberPayment e) {
+  MessMemberPaymentDto toDto(MessMemberPayment e) {
     return MessMemberPaymentDto(
       paymentId: e.localPaymentId,
       memberId: e.memberId,
@@ -115,7 +115,7 @@ class _MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
     );
   }
 
-  Future<void> _addPayment() async {
+  Future<void> messPaymentsPageAddPayment() async {
     final members = ref.read(messMembersProvider).maybeWhen(
           data: (v) => v,
           orElse: () => const <MessMember>[],
@@ -220,7 +220,7 @@ class _MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
       return;
     }
 
-    setState(() => _busy = true);
+    setState(() => busy = true);
     try {
       final network = 'pay_${DateTime.now().millisecondsSinceEpoch}';
       final messAmount = double.tryParse(messAmt.text.trim()) ?? 0;
@@ -286,7 +286,7 @@ class _MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
         ),
       );
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) setState(() => busy = false);
     }
     messAmt.dispose();
     paidAmt.dispose();
@@ -294,7 +294,7 @@ class _MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
     mobileCtrl.dispose();
   }
 
-  Future<void> _editPayment(MessMemberPaymentDto payment) async {
+  Future<void> editPayment(MessMemberPaymentDto payment) async {
     final messAmt = TextEditingController(
       text: payment.paymentMessAmount.toStringAsFixed(2),
     );
@@ -395,7 +395,7 @@ class _MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
     final messAmount = double.tryParse(messAmt.text.trim()) ?? 0;
     final paidAmount = double.tryParse(paidAmt.text.trim()) ?? 0;
     final db = ref.read(appDatabaseProvider);
-    setState(() => _busy = true);
+    setState(() => busy = true);
     try {
       final locals = await db.getLocalMessPayments(memberId: payment.memberId);
       MessMemberPayment? local;
@@ -431,7 +431,7 @@ class _MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
         SnackBar(content: Text(AppStrings.of(ref).paymentUpdated)),
       );
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) setState(() => busy = false);
       messAmt.dispose();
       paidAmt.dispose();
       pendingCtrl.dispose();
@@ -441,7 +441,7 @@ class _MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
   @override
   Widget build(BuildContext context) {
     final currency = NumberFormat.currency(locale: 'en_IN', symbol: '₹');
-    final paymentsAsync = ref.watch(messPaymentsProvider(_memberIdFilter));
+    final paymentsAsync = ref.watch(messPaymentsProvider(memberIdFilter));
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -451,23 +451,23 @@ class _MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
         ),
         actions: [
           IconButton(
-            onPressed: _busy ? null : _refreshFromCloud,
+            onPressed: busy ? null : refreshFromCloud,
             icon: const Icon(Icons.refresh_rounded),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _busy ? null : _addPayment,
+        onPressed: busy ? null : messPaymentsPageAddPayment,
         icon: const Icon(Icons.payments_rounded),
         label: Text(AppStrings.of(ref).addPayment),
       ),
       body: Column(children: [
         Expanded(
-          child: (!_cloudLoaded && paymentsAsync.isLoading)
+          child: (!cloudLoaded && paymentsAsync.isLoading)
               ? const Center(child: CircularProgressIndicator())
               : paymentsAsync.when(
                   data: (rows) {
-                    final dtos = rows.map(_toDto).toList();
+                    final dtos = rows.map(toDto).toList();
                     if (dtos.isEmpty) {
                       return Center(child: Text(AppStrings.of(ref).noPaymentsYet));
                     }
@@ -514,7 +514,7 @@ class _MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
                                   color: AppColors.primary,
                                 ),
                               ),
-                              onTap: _busy ? null : () => _editPayment(p),
+                              onTap: busy ? null : () => editPayment(p),
                             ),
                           );
                         },

@@ -23,11 +23,11 @@ import 'package:url_launcher/url_launcher.dart';
 class SettingsHubPage extends ConsumerWidget {
   const SettingsHubPage({super.key});
 
-  static const _playStoreUrl =
+  static const playStoreUrl =
       'https://play.google.com/store/apps/details?id=com.pos_billingwala';
 
-  Future<void> _rateUs(BuildContext context) async {
-    final uri = Uri.parse(_playStoreUrl);
+  Future<void> rateUs(BuildContext context) async {
+    final uri = Uri.parse(playStoreUrl);
     final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!ok && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -36,8 +36,8 @@ class SettingsHubPage extends ConsumerWidget {
     }
   }
 
-  Future<void> _checkUpdate(BuildContext context) async {
-    final uri = Uri.parse(_playStoreUrl);
+  Future<void> checkUpdate(BuildContext context) async {
+    final uri = Uri.parse(playStoreUrl);
     final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -51,7 +51,7 @@ class SettingsHubPage extends ConsumerWidget {
     );
   }
 
-  Future<void> _pickLanguage(BuildContext context, WidgetRef ref) async {
+  Future<void> pickLanguage(BuildContext context, WidgetRef ref) async {
     final current = ref.read(appLocaleProvider).languageCode;
 
     final selected = await showDialog<String>(
@@ -91,7 +91,7 @@ class SettingsHubPage extends ConsumerWidget {
     );
   }
 
-  Future<void> _confirmFetchFromCloud(
+  Future<void> confirmFetchFromCloud(
     BuildContext context,
     WidgetRef ref,
   ) async {
@@ -215,8 +215,8 @@ class SettingsHubPage extends ConsumerWidget {
     final strings = AppStrings.of(ref);
     final topInset = MediaQuery.paddingOf(context).top;
 
-    final billingItems = <_SettingsItem>[
-      _SettingsItem(
+    final billingItems = <SettingsItem>[
+      SettingsItem(
         icon: Icons.receipt_long_rounded,
         color: AppColors.purple,
         title: strings.invoiceDetails,
@@ -227,14 +227,14 @@ class SettingsHubPage extends ConsumerWidget {
           route: '/reports/invoices',
         ),
       ),
-      _SettingsItem(
+      SettingsItem(
         icon: Icons.bar_chart_rounded,
         color: AppColors.green,
         title: strings.reports,
         subtitle: 'Sales, product & payment reports.',
         onTap: () => pushReportsUnlocked(context, ref),
       ),
-      _SettingsItem(
+      SettingsItem(
         icon: Icons.inventory_2_rounded,
         color: AppColors.primary,
         title: strings.masterData,
@@ -243,36 +243,36 @@ class SettingsHubPage extends ConsumerWidget {
       ),
     ];
 
-    final storeItems = <_SettingsItem>[
-      _SettingsItem(
+    final storeItems = <SettingsItem>[
+      SettingsItem(
         icon: Icons.storefront_rounded,
         color: AppColors.orange,
         title: strings.shopDetails,
         subtitle: 'Business profile & cloud company',
         onTap: () => context.push('/settings/company'),
       ),
-      _SettingsItem(
+      SettingsItem(
         icon: Icons.print_rounded,
         color: AppColors.primary,
         title: strings.printerDetails,
         subtitle: 'Bluetooth / USB / Network & test print',
         onTap: () => context.push('/settings/devices'),
       ),
-      _SettingsItem(
+      SettingsItem(
         icon: Icons.schedule_rounded,
         color: AppColors.green,
         title: strings.businessHours,
         subtitle: 'Opening and closing times',
         onTap: () => context.push('/settings/business-hours'),
       ),
-      _SettingsItem(
+      SettingsItem(
         icon: Icons.warehouse_rounded,
         color: AppColors.teal,
         title: strings.inventory,
         subtitle: 'Stock ledger',
         onTap: () => context.push('/inventory'),
       ),
-      _SettingsItem(
+      SettingsItem(
         icon: Icons.account_balance_wallet_rounded,
         color: const Color(0xFFE91E63),
         title: strings.expenses,
@@ -281,8 +281,8 @@ class SettingsHubPage extends ConsumerWidget {
       ),
     ];
 
-    final cloudItems = <_SettingsItem>[
-      _SettingsItem(
+    final cloudItems = <SettingsItem>[
+      SettingsItem(
         icon: Icons.cloud_download_rounded,
         color: AppColors.orange,
         title: AppPlatform.requiresNetwork
@@ -291,17 +291,17 @@ class SettingsHubPage extends ConsumerWidget {
         subtitle: AppPlatform.requiresNetwork
             ? 'Download latest data (online required)'
             : 'Download latest data from cloud',
-        onTap: () => _confirmFetchFromCloud(context, ref),
+        onTap: () => confirmFetchFromCloud(context, ref),
       ),
       if (AppPlatform.supportsOfflineSync)
-        _SettingsItem(
+        SettingsItem(
           icon: Icons.cloud_upload_rounded,
           color: AppColors.primary,
           title: 'Offline Data Synchronize with Cloud',
           subtitle: 'Upload offline bills to cloud',
           onTap: () => context.push('/sync?mode=sync'),
         ),
-      _SettingsItem(
+      SettingsItem(
         icon: Icons.support_agent_rounded,
         color: AppColors.purple,
         title: strings.helpSupport,
@@ -309,29 +309,29 @@ class SettingsHubPage extends ConsumerWidget {
         onTap: () => context.push('/support'),
       ),
       if (!AppPlatform.isWeb)
-        _SettingsItem(
+        SettingsItem(
           icon: Icons.system_update_rounded,
           color: AppColors.primary,
           title: 'Update App',
           subtitle: 'Open Play Store listing',
-          onTap: () => _checkUpdate(context),
+          onTap: () => checkUpdate(context),
         ),
       if (!AppPlatform.isWeb)
-        _SettingsItem(
+        SettingsItem(
           icon: Icons.star_rounded,
           color: AppColors.yellow,
           title: 'Rate Us',
           subtitle: 'Open Play Store listing',
-          onTap: () => _rateUs(context),
+          onTap: () => rateUs(context),
         ),
-      _SettingsItem(
+      SettingsItem(
         icon: Icons.language_rounded,
         color: const Color(0xFFE91E63),
         title: strings.language,
         subtitle: 'English / हिंदी / मराठी',
-        onTap: () => _pickLanguage(context, ref),
+        onTap: () => pickLanguage(context, ref),
       ),
-      _SettingsItem(
+      SettingsItem(
         icon: Icons.info_outline_rounded,
         color: AppColors.green,
         title: strings.about,
@@ -339,7 +339,7 @@ class SettingsHubPage extends ConsumerWidget {
         onTap: () => context.push('/settings/about'),
       ),
       if (!AppPlatform.isWeb)
-        _SettingsItem(
+        SettingsItem(
           icon: Icons.share_rounded,
           color: AppColors.orange,
           title: strings.shareApp,
@@ -348,15 +348,15 @@ class SettingsHubPage extends ConsumerWidget {
         ),
     ];
 
-    final accountItems = <_SettingsItem>[
-      _SettingsItem(
+    final accountItems = <SettingsItem>[
+      SettingsItem(
         icon: Icons.pin_rounded,
         color: AppColors.primary,
         title: 'Change App Login PB-PIN',
         subtitle: 'Unlock with PB-PIN next launch',
         onTap: () => context.push('/settings/change-pin'),
       ),
-      _SettingsItem(
+      SettingsItem(
         icon: Icons.logout_rounded,
         color: AppColors.red,
         title: 'Logout',
@@ -382,7 +382,7 @@ class SettingsHubPage extends ConsumerWidget {
       backgroundColor: const Color(0xFFF3F7FC),
       body: Column(
         children: [
-          _SettingsHeader(
+          SettingsHeader(
             topInset: topInset,
             title: strings.settings,
             subtitle: 'Manage your business, devices and app preferences',
@@ -405,7 +405,7 @@ class SettingsHubPage extends ConsumerWidget {
                       breakpoint: AppWidthClass.large,
                       primary: Column(
                         children: [
-                          _SettingsSectionCard(
+                          SettingsSectionCard(
                             accent: AppColors.purple,
                             headerIcon: Icons.description_rounded,
                             title: strings.billingCatalog,
@@ -414,7 +414,7 @@ class SettingsHubPage extends ConsumerWidget {
                             items: billingItems,
                           ),
                           const SizedBox(height: 14),
-                          _SettingsSectionCard(
+                          SettingsSectionCard(
                             accent: AppColors.orange,
                             headerIcon: Icons.storefront_rounded,
                             title: strings.store,
@@ -426,7 +426,7 @@ class SettingsHubPage extends ConsumerWidget {
                       ),
                       secondary: Column(
                         children: [
-                          _SettingsSectionCard(
+                          SettingsSectionCard(
                             accent: AppColors.primary,
                             headerIcon: Icons.cloud_download_rounded,
                             title: strings.cloudApp,
@@ -435,7 +435,7 @@ class SettingsHubPage extends ConsumerWidget {
                             items: cloudItems,
                           ),
                           const SizedBox(height: 14),
-                          _SettingsSectionCard(
+                          SettingsSectionCard(
                             accent: AppColors.green,
                             headerIcon: Icons.person_rounded,
                             title: strings.account,
@@ -447,7 +447,7 @@ class SettingsHubPage extends ConsumerWidget {
                       ),
                     )
                   else ...[
-                    _SettingsSectionCard(
+                    SettingsSectionCard(
                       accent: AppColors.purple,
                       headerIcon: Icons.description_rounded,
                       title: strings.billingCatalog,
@@ -456,7 +456,7 @@ class SettingsHubPage extends ConsumerWidget {
                       items: billingItems,
                     ),
                     const SizedBox(height: 14),
-                    _SettingsSectionCard(
+                    SettingsSectionCard(
                       accent: AppColors.orange,
                       headerIcon: Icons.storefront_rounded,
                       title: strings.store,
@@ -465,7 +465,7 @@ class SettingsHubPage extends ConsumerWidget {
                       items: storeItems,
                     ),
                     const SizedBox(height: 14),
-                    _SettingsSectionCard(
+                    SettingsSectionCard(
                       accent: AppColors.primary,
                       headerIcon: Icons.cloud_download_rounded,
                       title: strings.cloudApp,
@@ -474,7 +474,7 @@ class SettingsHubPage extends ConsumerWidget {
                       items: cloudItems,
                     ),
                     const SizedBox(height: 14),
-                    _SettingsSectionCard(
+                    SettingsSectionCard(
                       accent: AppColors.green,
                       headerIcon: Icons.person_rounded,
                       title: strings.account,
@@ -517,8 +517,8 @@ class SettingsHubPage extends ConsumerWidget {
   }
 }
 
-class _SettingsItem {
-  const _SettingsItem({
+class SettingsItem {
+  const SettingsItem({
     required this.icon,
     required this.color,
     required this.title,
@@ -533,8 +533,8 @@ class _SettingsItem {
   final VoidCallback onTap;
 }
 
-class _SettingsHeader extends StatelessWidget {
-  const _SettingsHeader({
+class SettingsHeader extends StatelessWidget {
+  const SettingsHeader({super.key, 
     required this.topInset,
     required this.title,
     required this.subtitle,
@@ -549,7 +549,7 @@ class _SettingsHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipPath(
-      clipper: const _HeaderCurveClipper(),
+      clipper: const HeaderCurveClipper(),
       child: Container(
         width: double.infinity,
         decoration: const BoxDecoration(
@@ -609,7 +609,7 @@ class _SettingsHeader extends StatelessWidget {
             const SizedBox(width: 8),
             const Padding(
               padding: EdgeInsets.only(top: 4),
-              child: _HeaderDecoration(),
+              child: HeaderDecoration(),
             ),
           ],
         ),
@@ -618,8 +618,8 @@ class _SettingsHeader extends StatelessWidget {
   }
 }
 
-class _HeaderDecoration extends StatelessWidget {
-  const _HeaderDecoration();
+class HeaderDecoration extends StatelessWidget {
+  const HeaderDecoration({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -673,8 +673,8 @@ class _HeaderDecoration extends StatelessWidget {
   }
 }
 
-class _HeaderCurveClipper extends CustomClipper<Path> {
-  const _HeaderCurveClipper();
+class HeaderCurveClipper extends CustomClipper<Path> {
+  const HeaderCurveClipper();
 
   @override
   Path getClip(Size size) {
@@ -695,8 +695,8 @@ class _HeaderCurveClipper extends CustomClipper<Path> {
   bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }
 
-class _SettingsSectionCard extends StatelessWidget {
-  const _SettingsSectionCard({
+class SettingsSectionCard extends StatelessWidget {
+  const SettingsSectionCard({super.key, 
     required this.accent,
     required this.headerIcon,
     required this.title,
@@ -710,7 +710,7 @@ class _SettingsSectionCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final IconData watermark;
-  final List<_SettingsItem> items;
+  final List<SettingsItem> items;
 
   @override
   Widget build(BuildContext context) {
@@ -827,7 +827,7 @@ class _SettingsSectionCard extends StatelessWidget {
               indent: 14,
               endIndent: 14,
             ),
-            _SettingsRowTile(item: items[i]),
+            SettingsRowTile(item: items[i]),
           ],
         ],
       ),
@@ -835,10 +835,10 @@ class _SettingsSectionCard extends StatelessWidget {
   }
 }
 
-class _SettingsRowTile extends StatelessWidget {
-  const _SettingsRowTile({required this.item});
+class SettingsRowTile extends StatelessWidget {
+  const SettingsRowTile({super.key, required this.item});
 
-  final _SettingsItem item;
+  final SettingsItem item;
 
   @override
   Widget build(BuildContext context) {

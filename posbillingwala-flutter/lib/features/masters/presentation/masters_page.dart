@@ -95,9 +95,9 @@ class MastersPage extends ConsumerWidget {
           PopupMenuButton<String>(
             onSelected: (value) async {
               if (value == 'category') {
-                await _showAddCategoryDialog(context, ref);
+                await showAddCategoryDialog(context, ref);
               } else if (value == 'product') {
-                await _showAddProductDialog(context, ref);
+                await showAddProductDialog(context, ref);
               } else if (value == 'combo') {
                 context.push('/masters/combos/form');
               } else if (value == 'subcategories') {
@@ -107,7 +107,7 @@ class MastersPage extends ConsumerWidget {
               } else if (value == 'portions') {
                 context.push('/masters/portion-masters');
               } else if (value == 'print_catalog') {
-                await _printCatalog(context, ref);
+                await printCatalog(context, ref);
               }
             },
             itemBuilder: (context) => const [
@@ -134,7 +134,7 @@ class MastersPage extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: isSyncing
             ? null
-            : () => _showAddProductDialog(context, ref),
+            : () => showAddProductDialog(context, ref),
         icon: const Icon(Icons.add),
         label: const Text('Add product'),
       ),
@@ -149,21 +149,21 @@ class MastersPage extends ConsumerWidget {
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
-                        _CountChip(
+                        CountChip(
                           label: 'Categories',
                           value: '${counts.categories}',
                           icon: Icons.category_rounded,
                           color: AppColors.purple,
                         ),
                         const SizedBox(width: 8),
-                        _CountChip(
+                        CountChip(
                           label: 'Products',
                           value: '${counts.products}',
                           icon: Icons.inventory_2_rounded,
                           color: AppColors.primary,
                         ),
                         const SizedBox(width: 8),
-                        _CountChip(
+                        CountChip(
                           label: 'Combos',
                           value: '${counts.combos}',
                           icon: Icons.auto_awesome_rounded,
@@ -270,7 +270,7 @@ class MastersPage extends ConsumerWidget {
                               );
                               if (action == 'edit') {
                                 if (!context.mounted) return;
-                                await _showEditCategoryDialog(
+                                await showEditCategoryDialog(
                                   context,
                                   ref,
                                   category,
@@ -369,16 +369,16 @@ class MastersPage extends ConsumerWidget {
                                   const SizedBox(height: 8),
                               itemBuilder: (context, index) {
                                 final product = products[index];
-                                return _ProductTile(
+                                return ProductTile(
                                   product: product,
                                   priceLabel: currency
                                       .format(product.productPrice),
-                                  onEdit: () => _showEditProductDialog(
+                                  onEdit: () => showEditProductDialog(
                                     context,
                                     ref,
                                     product,
                                   ),
-                                  onDelete: () => _confirmDeleteProduct(
+                                  onDelete: () => confirmDeleteProduct(
                                     context,
                                     ref,
                                     product,
@@ -393,7 +393,7 @@ class MastersPage extends ConsumerWidget {
                           ),
                           error: (e, _) => Center(child: Text('$e')),
                         ),
-                        _CombosTab(currency: currency),
+                        CombosTab(currency: currency),
                       ],
                     ),
                   ),
@@ -407,7 +407,7 @@ class MastersPage extends ConsumerWidget {
   }
 }
 
-Future<void> _printCatalog(BuildContext context, WidgetRef ref) async {
+Future<void> printCatalog(BuildContext context, WidgetRef ref) async {
   final products = await ref.read(appDatabaseProvider).watchActiveProducts().first;
   if (products.isEmpty) {
     if (context.mounted) {
@@ -438,7 +438,7 @@ Future<void> _printCatalog(BuildContext context, WidgetRef ref) async {
   );
 }
 
-Future<void> _showAddCategoryDialog(BuildContext context, WidgetRef ref) async {
+Future<void> showAddCategoryDialog(BuildContext context, WidgetRef ref) async {
   final controller = TextEditingController();
   final foodTypes = ref.read(foodTypesProvider).maybeWhen(
         data: (v) => v,
@@ -493,7 +493,7 @@ Future<void> _showAddCategoryDialog(BuildContext context, WidgetRef ref) async {
   controller.dispose();
 }
 
-const _productUnits = [
+const productUnits = [
   'Pcs',
   'Kg',
   'Plate',
@@ -504,7 +504,7 @@ const _productUnits = [
   'Dozen',
 ];
 
-Future<void> _showAddProductDialog(BuildContext context, WidgetRef ref) async {
+Future<void> showAddProductDialog(BuildContext context, WidgetRef ref) async {
   final nameController = TextEditingController();
   final codeController = TextEditingController();
   final priceController = TextEditingController();
@@ -519,7 +519,7 @@ Future<void> _showAddProductDialog(BuildContext context, WidgetRef ref) async {
   int? categoryId = ref.read(selectedCategoryIdProvider) ??
       (categories.isNotEmpty ? categories.first.categoryId : null);
   int? subcategoryId;
-  String? productUnit = _productUnits.first;
+  String? productUnit = productUnits.first;
   var openPrice = false;
   final portionMasters =
       ref.read(portionMastersProvider).maybeWhen(data: (v) => v, orElse: () => null) ??
@@ -637,7 +637,7 @@ Future<void> _showAddProductDialog(BuildContext context, WidgetRef ref) async {
                 const SizedBox(height: 12),
                 AppDropdownFormField<String>(
                   label: 'Product Unit*',
-                  items: _productUnits,
+                  items: productUnits,
                   itemLabel: (u) => u,
                   value: productUnit,
                   onChanged: (u) => setState(() => productUnit = u),
@@ -761,8 +761,8 @@ Future<void> _showAddProductDialog(BuildContext context, WidgetRef ref) async {
   inlinePortionPriceCtrl.dispose();
 }
 
-class _CountChip extends StatelessWidget {
-  const _CountChip({
+class CountChip extends StatelessWidget {
+  const CountChip({super.key, 
     required this.label,
     required this.value,
     required this.icon,
@@ -802,8 +802,8 @@ class _CountChip extends StatelessWidget {
   }
 }
 
-class _ProductTile extends StatelessWidget {
-  const _ProductTile({
+class ProductTile extends StatelessWidget {
+  const ProductTile({super.key, 
     required this.product,
     required this.priceLabel,
     required this.onEdit,
@@ -887,22 +887,22 @@ class _ProductTile extends StatelessWidget {
   }
 }
 
-class _CombosTab extends ConsumerStatefulWidget {
-  const _CombosTab({required this.currency});
+class CombosTab extends ConsumerStatefulWidget {
+  const CombosTab({super.key, required this.currency});
 
   final NumberFormat currency;
 
   @override
-  ConsumerState<_CombosTab> createState() => _CombosTabState();
+  ConsumerState<CombosTab> createState() => CombosTabState();
 }
 
-class _CombosTabState extends ConsumerState<_CombosTab> {
-  final _search = TextEditingController();
-  String _query = '';
+class CombosTabState extends ConsumerState<CombosTab> {
+  final mastersPageSearch = TextEditingController();
+  String mastersPageQuery = '';
 
   @override
   void dispose() {
-    _search.dispose();
+    mastersPageSearch.dispose();
     super.dispose();
   }
 
@@ -912,8 +912,8 @@ class _CombosTabState extends ConsumerState<_CombosTab> {
     return combosAsync.when(
       data: (combos) {
         final filtered = combos.where((c) {
-          if (_query.trim().isEmpty) return true;
-          final q = _query.trim().toLowerCase();
+          if (mastersPageQuery.trim().isEmpty) return true;
+          final q = mastersPageQuery.trim().toLowerCase();
           return c.comboName.toLowerCase().contains(q) ||
               (c.comboCode?.toLowerCase().contains(q) ?? false);
         }).toList();
@@ -926,7 +926,7 @@ class _CombosTabState extends ConsumerState<_CombosTab> {
                 const SizedBox(height: 12),
                 AppButton(
                   label: 'Add combo',
-                  onPressed: () => _showAddComboDialog(context, ref),
+                  onPressed: () => showAddComboDialog(context, ref),
                 ),
               ],
             ),
@@ -937,10 +937,10 @@ class _CombosTabState extends ConsumerState<_CombosTab> {
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
               child: AppTextField(
-                controller: _search,
+                controller: mastersPageSearch,
                 label: 'Search combo',
                 hint: 'Search combo',
-                onChanged: (v) => setState(() => _query = v),
+                onChanged: (v) => setState(() => mastersPageQuery = v),
               ),
             ),
             Expanded(
@@ -973,7 +973,7 @@ class _CombosTabState extends ConsumerState<_CombosTab> {
                               size: 48,
                             ),
                             onTap: () =>
-                                _showEditComboDialog(context, ref, combo),
+                                showEditComboDialog(context, ref, combo),
                             title: Text(
                               combo.comboName,
                               style:
@@ -1027,7 +1027,7 @@ class _CombosTabState extends ConsumerState<_CombosTab> {
   }
 }
 
-Future<void> _showEditCategoryDialog(
+Future<void> showEditCategoryDialog(
   BuildContext context,
   WidgetRef ref,
   ProductCategory category,
@@ -1100,7 +1100,7 @@ Future<void> _showEditCategoryDialog(
   ref.invalidate(catalogCountsProvider);
 }
 
-Future<void> _showEditProductDialog(
+Future<void> showEditProductDialog(
   BuildContext context,
   WidgetRef ref,
   Product product,
@@ -1124,9 +1124,9 @@ Future<void> _showEditProductDialog(
   int? subcategoryId = product.subcategoryId;
   String? productUnit = product.productUnit?.trim().isNotEmpty == true
       ? product.productUnit
-      : _productUnits.first;
-  if (productUnit != null && !_productUnits.contains(productUnit)) {
-    productUnit = [..._productUnits, productUnit].last;
+      : productUnits.first;
+  if (productUnit != null && !productUnits.contains(productUnit)) {
+    productUnit = [...productUnits, productUnit].last;
   }
   var openPrice = product.openPrice == '1';
 
@@ -1134,9 +1134,9 @@ Future<void> _showEditProductDialog(
     context: context,
     builder: (context) => StatefulBuilder(
       builder: (context, setState) {
-        final units = productUnit != null && !_productUnits.contains(productUnit)
-            ? [..._productUnits, productUnit!]
-            : _productUnits;
+        final units = productUnit != null && !productUnits.contains(productUnit)
+            ? [...productUnits, productUnit!]
+            : productUnits;
         final subs = categoryId == null
             ? allSubcats
             : allSubcats.where((s) => s.categoryId == categoryId).toList();
@@ -1242,7 +1242,7 @@ Future<void> _showEditProductDialog(
                   expanded: false,
                   onPressed: () async {
                     Navigator.pop(context, false);
-                    await _showManagePortionsDialog(context, ref, product);
+                    await showManagePortionsDialog(context, ref, product);
                   },
                 ),
               ],
@@ -1295,7 +1295,7 @@ Future<void> _showEditProductDialog(
   sgstController.dispose();
 }
 
-Future<void> _showManagePortionsDialog(
+Future<void> showManagePortionsDialog(
   BuildContext context,
   WidgetRef ref,
   Product product,
@@ -1423,7 +1423,7 @@ Future<void> _showManagePortionsDialog(
   );
 }
 
-Future<void> _confirmDeleteProduct(
+Future<void> confirmDeleteProduct(
   BuildContext context,
   WidgetRef ref,
   Product product,
@@ -1453,7 +1453,7 @@ Future<void> _confirmDeleteProduct(
   }
 }
 
-Future<void> _showAddComboDialog(BuildContext context, WidgetRef ref) async {
+Future<void> showAddComboDialog(BuildContext context, WidgetRef ref) async {
   final nameController = TextEditingController();
   final codeController = TextEditingController();
   final priceController = TextEditingController();
@@ -1688,7 +1688,7 @@ Future<void> _showAddComboDialog(BuildContext context, WidgetRef ref) async {
   searchController.dispose();
 }
 
-Future<void> _showEditComboDialog(
+Future<void> showEditComboDialog(
   BuildContext context,
   WidgetRef ref,
   Combo combo,

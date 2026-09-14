@@ -79,7 +79,7 @@ class EditInvoicePage extends ConsumerWidget {
                         label: strings.editCustomerDiscountPayment,
                         variant: AppButtonVariant.outlined,
                         onPressed: () async {
-                          await _editHeader(context, ref, invoice);
+                          await editHeader(context, ref, invoice);
                           ref.invalidate(invoiceDetailProvider(invoiceId));
                         },
                       ),
@@ -96,7 +96,7 @@ class EditInvoicePage extends ConsumerWidget {
                   const Spacer(),
                   if (!locked)
                     TextButton.icon(
-                      onPressed: () => _addProduct(context, ref, invoiceId),
+                      onPressed: () => editInvoicePageAddProduct(context, ref, invoiceId),
                       icon: const Icon(Icons.add_rounded),
                       label: Text(strings.addProduct),
                     ),
@@ -125,7 +125,7 @@ class EditInvoicePage extends ConsumerWidget {
                             children: [
                               IconButton(
                                 icon: const Icon(Icons.edit_note_rounded),
-                                onPressed: () => _editLine(
+                                onPressed: () => editLine(
                                   context,
                                   ref,
                                   invoiceId,
@@ -134,7 +134,7 @@ class EditInvoicePage extends ConsumerWidget {
                               ),
                               IconButton(
                                 icon: const Icon(Icons.delete_outline),
-                                onPressed: () => _deleteLine(
+                                onPressed: () => deleteLine(
                                   context,
                                   ref,
                                   invoiceId,
@@ -166,7 +166,7 @@ class EditInvoicePage extends ConsumerWidget {
   }
 }
 
-Future<void> _editLine(
+Future<void> editLine(
   BuildContext context,
   WidgetRef ref,
   int invoiceId,
@@ -231,7 +231,7 @@ Future<void> _editLine(
   }
 }
 
-Future<void> _deleteLine(
+Future<void> deleteLine(
   BuildContext context,
   WidgetRef ref,
   int invoiceId,
@@ -261,7 +261,7 @@ Future<void> _deleteLine(
   }
 }
 
-Future<void> _addProduct(
+Future<void> editInvoicePageAddProduct(
   BuildContext context,
   WidgetRef ref,
   int invoiceId,
@@ -374,7 +374,7 @@ Future<void> _addProduct(
   }
 }
 
-Future<void> _editHeader(
+Future<void> editHeader(
   BuildContext context,
   WidgetRef ref,
   Invoice invoice,

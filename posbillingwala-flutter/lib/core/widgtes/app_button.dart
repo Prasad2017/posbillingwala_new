@@ -22,12 +22,12 @@ class AppButton extends StatelessWidget {
   final bool isLoading;
   final bool expanded;
 
-  Color get _loaderColor => variant == AppButtonVariant.outlined ? AppColors.primary : Colors.white;
+  Color get loaderColor => variant == AppButtonVariant.outlined ? AppColors.primary : Colors.white;
 
   @override
   Widget build(BuildContext context) {
     final child = isLoading
-        ? ThreeDotsLoader(color: _loaderColor)
+        ? ThreeDotsLoader(color: loaderColor)
         : Row(
             mainAxisSize: expanded ? MainAxisSize.max : MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,

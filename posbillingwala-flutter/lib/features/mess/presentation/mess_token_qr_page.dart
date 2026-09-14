@@ -28,11 +28,11 @@ class MessTokenQrPage extends ConsumerWidget {
   final String? tokenCode;
   final String? messType;
 
-  Future<void> _print(BuildContext context, WidgetRef ref) async {
+  Future<void> messTokenQrPagePrint(BuildContext context, WidgetRef ref) async {
     final width = ref.read(printerSettingsProvider).charsPerLine;
     final time = DateFormat('dd-MM-yyyy HH:mm').format(DateTime.now());
     final buf = StringBuffer()
-      ..writeln(_center('MESS TOKEN', width))
+      ..writeln(messTokenQrPageCenter('MESS TOKEN', width))
       ..writeln('-' * width)
       ..writeln(subtitle)
       ..writeln(messType ?? 'Meal')
@@ -51,7 +51,7 @@ class MessTokenQrPage extends ConsumerWidget {
     );
   }
 
-  String _center(String text, int width) {
+  String messTokenQrPageCenter(String text, int width) {
     if (text.length >= width) return text;
     final pad = (width - text.length) ~/ 2;
     return '${' ' * pad}$text';
@@ -65,7 +65,7 @@ class MessTokenQrPage extends ConsumerWidget {
         actions: [
           IconButton(
             tooltip: 'Print token',
-            onPressed: () => _print(context, ref),
+            onPressed: () => messTokenQrPagePrint(context, ref),
             icon: const Icon(Icons.print_rounded),
           ),
           IconButton(
@@ -143,7 +143,7 @@ class MessTokenQrPage extends ConsumerWidget {
             label: 'Print token',
             icon: Icons.print_rounded,
             expanded: false,
-            onPressed: () => _print(context, ref),
+            onPressed: () => messTokenQrPagePrint(context, ref),
           ),
           const SizedBox(height: 8),
           AppButton(

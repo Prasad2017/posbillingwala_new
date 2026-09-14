@@ -15,43 +15,43 @@ class MastersHubPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final strings = AppStrings.of(ref);
 
-    final items = <_MasterItem>[
-      _MasterItem(
+    final items = <MasterItem>[
+      MasterItem(
         icon: Icons.category_rounded,
         color: AppColors.primary,
         title: strings.categories,
         subtitle: 'Food groups such as Veg, Non Veg',
         onTap: () => context.push('/masters/categories'),
       ),
-      _MasterItem(
+      MasterItem(
         icon: Icons.folder_rounded,
         color: AppColors.purple,
         title: strings.subcategories,
         subtitle: 'Starter, Main Course, Beverage',
         onTap: () => context.push('/masters/subcategories'),
       ),
-      _MasterItem(
+      MasterItem(
         icon: Icons.layers_rounded,
         color: AppColors.orange,
         title: strings.portions,
         subtitle: 'Half, Full and other sizes',
         onTap: () => context.push('/masters/portion-masters'),
       ),
-      _MasterItem(
+      MasterItem(
         icon: Icons.inventory_2_rounded,
         color: AppColors.green,
         title: strings.products,
         subtitle: 'Menu items and prices',
         onTap: () => context.push('/masters/products'),
       ),
-      _MasterItem(
+      MasterItem(
         icon: Icons.filter_none_rounded,
         color: const Color(0xFF5B6CFF),
         title: strings.combos,
         subtitle: 'Combo meals and offers',
         onTap: () => context.push('/masters/combos'),
       ),
-      _MasterItem(
+      MasterItem(
         icon: Icons.table_restaurant_rounded,
         color: const Color(0xFFE6A100),
         title: strings.tableMaster,
@@ -111,7 +111,7 @@ class MastersHubPage extends ConsumerWidget {
                         child: InkWell(
                           onTap: items[index].onTap,
                           borderRadius: BorderRadius.circular(18),
-                          child: _MasterRowTile(item: items[index]),
+                          child: MasterRowTile(item: items[index]),
                         ),
                       );
                     },
@@ -143,7 +143,7 @@ class MastersHubPage extends ConsumerWidget {
                               indent: 72,
                               endIndent: 16,
                             ),
-                          _MasterRowTile(item: items[i]),
+                          MasterRowTile(item: items[i]),
                         ],
                       ],
                     ),
@@ -155,8 +155,8 @@ class MastersHubPage extends ConsumerWidget {
   }
 }
 
-class _MasterItem {
-  const _MasterItem({
+class MasterItem {
+  const MasterItem({
     required this.icon,
     required this.color,
     required this.title,
@@ -171,10 +171,10 @@ class _MasterItem {
   final VoidCallback onTap;
 }
 
-class _MasterRowTile extends StatelessWidget {
-  const _MasterRowTile({required this.item});
+class MasterRowTile extends StatelessWidget {
+  const MasterRowTile({super.key, required this.item});
 
-  final _MasterItem item;
+  final MasterItem item;
 
   @override
   Widget build(BuildContext context) {

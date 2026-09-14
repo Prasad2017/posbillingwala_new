@@ -14,21 +14,21 @@ class SubcategoriesPage extends ConsumerStatefulWidget {
   const SubcategoriesPage({super.key});
 
   @override
-  ConsumerState<SubcategoriesPage> createState() => _SubcategoriesPageState();
+  ConsumerState<SubcategoriesPage> createState() => SubcategoriesPageState();
 }
 
-class _SubcategoriesPageState extends ConsumerState<SubcategoriesPage> {
-  final _nameCtrl = TextEditingController();
-  ProductCategory? _selectedCategory;
-  bool _busy = false;
+class SubcategoriesPageState extends ConsumerState<SubcategoriesPage> {
+  final subcategoriesPageNameCtrl = TextEditingController();
+  ProductCategory? selectedCategory;
+  bool busy = false;
 
   @override
   void dispose() {
-    _nameCtrl.dispose();
+    subcategoriesPageNameCtrl.dispose();
     super.dispose();
   }
 
-  Future<void> _add() async {
+  Future<void> add() async {
     final categories = ref.read(categoriesProvider).maybeWhen(
           data: (v) => v,
           orElse: () => const <ProductCategory>[],
@@ -39,8 +39,8 @@ class _SubcategoriesPageState extends ConsumerState<SubcategoriesPage> {
       );
       return;
     }
-    final selected = _selectedCategory ?? categories.first;
-    final name = _nameCtrl.text.trim();
+    final selected = selectedCategory ?? categories.first;
+    final name = subcategoriesPageNameCtrl.text.trim();
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Enter subcategory name')),
@@ -49,7 +49,7 @@ class _SubcategoriesPageState extends ConsumerState<SubcategoriesPage> {
     }
     final userId =
         ref.read(authControllerProvider).session?.catalogOwnerId ?? '';
-    setState(() => _busy = true);
+    setState(() => busy = true);
     try {
       await ref.read(mastersRepositoryProvider).createSubcategory(
             userId: userId,
@@ -57,17 +57,17 @@ class _SubcategoriesPageState extends ConsumerState<SubcategoriesPage> {
             categoryId: selected.categoryId,
             categoryNetworkStatus: selected.categoryNetworkStatus,
           );
-      _nameCtrl.clear();
+      subcategoriesPageNameCtrl.clear();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Subcategory saved')),
       );
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) setState(() => busy = false);
     }
   }
 
-  Future<void> _edit(ProductSubcategory row) async {
+  Future<void> edit(ProductSubcategory row) async {
     final categories = ref.read(categoriesProvider).maybeWhen(
           data: (v) => v,
           orElse: () => const <ProductCategory>[],
@@ -130,7 +130,7 @@ class _SubcategoriesPageState extends ConsumerState<SubcategoriesPage> {
         );
   }
 
-  Future<void> _delete(ProductSubcategory row) async {
+  Future<void> delete(ProductSubcategory row) async {
     final ok = await showAppConfirmBottomSheet(
       context: context,
       title: 'Delete subcategory',
@@ -155,10 +155,10 @@ class _SubcategoriesPageState extends ConsumerState<SubcategoriesPage> {
     final categoryNames = {
       for (final c in categories) c.categoryId: c.categoryName,
     };
-    final selected = _selectedCategory != null &&
-            categories.any((c) => c.categoryId == _selectedCategory!.categoryId)
+    final selected = selectedCategory != null &&
+            categories.any((c) => c.categoryId == selectedCategory!.categoryId)
         ? categories.firstWhere(
-            (c) => c.categoryId == _selectedCategory!.categoryId,
+            (c) => c.categoryId == selectedCategory!.categoryId,
           )
         : (categories.isNotEmpty ? categories.first : null);
 
@@ -190,18 +190,18 @@ class _SubcategoriesPageState extends ConsumerState<SubcategoriesPage> {
                   items: categories,
                   hint: 'Select category',
                   itemLabel: (c) => c.categoryName,
-                  onChanged: (v) => setState(() => _selectedCategory = v),
+                  onChanged: (v) => setState(() => selectedCategory = v),
                 ),
                 const SizedBox(height: 12),
                 MasterOutlinedField(
-                  controller: _nameCtrl,
+                  controller: subcategoriesPageNameCtrl,
                   hint: 'Subcategory Name',
                 ),
                 const SizedBox(height: 12),
                 MasterPrimaryButton(
                   label: 'Add Subcategory',
-                  isLoading: _busy,
-                  onPressed: _busy ? null : _add,
+                  isLoading: busy,
+                  onPressed: busy ? null : add,
                 ),
               ],
             ),
@@ -226,8 +226,8 @@ class _SubcategoriesPageState extends ConsumerState<SubcategoriesPage> {
                         index: i + 1,
                         title: rows[i].subcategoryName,
                         subtitle: categoryNames[rows[i].categoryId],
-                        onEdit: () => _edit(rows[i]),
-                        onDelete: () => _delete(rows[i]),
+                        onEdit: () => edit(rows[i]),
+                        onDelete: () => delete(rows[i]),
                         showDivider: i < rows.length - 1,
                       ),
                   ],

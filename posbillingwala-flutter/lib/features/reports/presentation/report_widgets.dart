@@ -7,9 +7,9 @@ import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/features/reports/domain/reports_providers.dart';
 
-const _pageBg = Color(0xFFF3F7FC);
+const pageBg = Color(0xFFF3F7FC);
 
-Color get reportPageBg => _pageBg;
+Color get reportPageBg => pageBg;
 
 /// Uppercase section label used on hub and detail screens.
 class ReportSectionLabel extends StatelessWidget {
@@ -348,7 +348,7 @@ class ReportDonutBreakdown extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           for (final slice in paintSlices)
-            _LegendRow(
+            LegendRow(
               slice: slice,
               total: total,
               currency: currency,
@@ -359,8 +359,8 @@ class ReportDonutBreakdown extends StatelessWidget {
   }
 }
 
-class _LegendRow extends StatelessWidget {
-  const _LegendRow({
+class LegendRow extends StatelessWidget {
+  const LegendRow({super.key, 
     required this.slice,
     required this.total,
     required this.currency,
@@ -478,7 +478,7 @@ class ReportLineTrend extends StatelessWidget {
         children: [
           Expanded(
             child: CustomPaint(
-              painter: _LineTrendPainter(values: values),
+              painter: LineTrendPainter(values: values),
               child: const SizedBox.expand(),
             ),
           ),
@@ -506,8 +506,8 @@ class ReportLineTrend extends StatelessWidget {
   }
 }
 
-class _LineTrendPainter extends CustomPainter {
-  _LineTrendPainter({required this.values});
+class LineTrendPainter extends CustomPainter {
+  LineTrendPainter({required this.values});
 
   final List<double> values;
 
@@ -575,7 +575,7 @@ class _LineTrendPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _LineTrendPainter oldDelegate) =>
+  bool shouldRepaint(covariant LineTrendPainter oldDelegate) =>
       oldDelegate.values != values;
 }
 

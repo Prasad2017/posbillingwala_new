@@ -163,7 +163,7 @@ class SyncProgressController extends Notifier<SyncProgressState> {
     state = SyncProgressState.initial(mode);
   }
 
-  void _setHeader(String headline, String subtitle) {
+  void setHeader(String headline, String subtitle) {
     state = state.copyWith(headline: headline, subtitle: subtitle);
   }
 
@@ -291,7 +291,7 @@ class SyncProgressController extends Notifier<SyncProgressState> {
       headline: headline,
       subtitle: subtitle,
     );
-    _setHeader(headline, subtitle);
+    setHeader(headline, subtitle);
   }
 }
 

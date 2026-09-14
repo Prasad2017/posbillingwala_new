@@ -17,7 +17,7 @@ import 'package:pos_billingwala_v2/l10n/app_strings.dart';
 class ReportsHubPage extends ConsumerWidget {
   const ReportsHubPage({super.key});
 
-  void _resetFilters(WidgetRef ref) {
+  void resetFilters(WidgetRef ref) {
     ref
         .read(reportInvoiceTypeFilterProvider.notifier)
         .select(ReportInvoiceTypeFilter.all);
@@ -26,7 +26,7 @@ class ReportsHubPage extends ConsumerWidget {
         .select(ReportPaymentFilter.all);
   }
 
-  Future<void> _clearAllInvoices(BuildContext context, WidgetRef ref) async {
+  Future<void> reportsHubPageClearAllInvoices(BuildContext context, WidgetRef ref) async {
     final db = ref.read(appDatabaseProvider);
     final pending = await db.countPendingInvoiceSync();
     if (!context.mounted) return;
@@ -62,22 +62,22 @@ class ReportsHubPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(authControllerProvider).session;
     final strings = AppStrings.of(ref);
-    final salesItems = <_ReportItem>[
-      _ReportItem(
+    final salesItems = <ReportItem>[
+      ReportItem(
         icon: Icons.dashboard_customize_rounded,
         color: AppColors.primary,
         title: strings.salesDashboard,
         subtitle: strings.thisBranchOnly,
         onTap: () => context.push('/reports/dashboard'),
       ),
-      _ReportItem(
+      ReportItem(
         icon: Icons.bar_chart_rounded,
         color: AppColors.purple,
         title: strings.salesOverview,
         subtitle: strings.thisBranchOnly,
         onTap: () => context.push('/reports/overview'),
       ),
-      _ReportItem(
+      ReportItem(
         icon: Icons.list_alt_rounded,
         color: AppColors.green,
         title: strings.salesList,
@@ -86,77 +86,85 @@ class ReportsHubPage extends ConsumerWidget {
       ),
     ];
 
-    final operationalItems = <_ReportItem>[
-      _ReportItem(
+    final operationalItems = <ReportItem>[
+      ReportItem(
         icon: Icons.receipt_long_rounded,
         color: AppColors.green,
         title: strings.invoiceReport,
         subtitle: strings.reportDetail,
         onTap: () {
-          _resetFilters(ref);
+          resetFilters(ref);
           context.push('/reports/invoices');
         },
       ),
       if (LicenseModules.fastBilling(session))
-        _ReportItem(
+        ReportItem(
           icon: Icons.trending_up_rounded,
           color: AppColors.orange,
           title: strings.saleWiseReport,
           subtitle: strings.saleReports,
           onTap: () => context.push('/reports/sale'),
         ),
-      if (LicenseModules.dineIn(session))
-        _ReportItem(
+      if (LicenseModules.dineIn(session)) ...[
+        ReportItem(
           icon: Icons.table_restaurant_rounded,
           color: const Color(0xFF1A4FD8),
           title: strings.invoiceTableReport,
           subtitle: strings.saleReports,
           onTap: () => context.push('/reports/table'),
         ),
+        ReportItem(
+          icon: Icons.table_rows_rounded,
+          color: const Color(0xFF1A4FD8),
+          title: strings.invoiceTableListReport,
+          subtitle: strings.saleReports,
+          onTap: () => context.push('/reports/table-list'),
+        ),
+      ],
       if (LicenseModules.takeAway(session))
-        _ReportItem(
+        ReportItem(
           icon: Icons.shopping_basket_rounded,
           color: AppColors.purple,
           title: strings.invoiceTakeAwayReport,
           subtitle: strings.saleReports,
           onTap: () => context.push('/reports/takeaway'),
         ),
-      _ReportItem(
+      ReportItem(
         icon: Icons.credit_card_rounded,
         color: AppColors.green,
         title: strings.invoicePaymentModeReport,
         subtitle: strings.saleReports,
         onTap: () => context.push('/reports/payment-mode'),
       ),
-      _ReportItem(
+      ReportItem(
         icon: Icons.trending_up_rounded,
         color: AppColors.orange,
         title: strings.discountWiseReport,
         subtitle: strings.saleReports,
         onTap: () => context.push('/reports/discount'),
       ),
-      _ReportItem(
+      ReportItem(
         icon: Icons.trending_down_rounded,
         color: AppColors.red,
         title: strings.refundWiseReport,
         subtitle: strings.saleReports,
         onTap: () => context.push('/reports/refund'),
       ),
-      _ReportItem(
+      ReportItem(
         icon: Icons.inventory_2_rounded,
         color: const Color(0xFFE6A100),
         title: strings.productWiseReport,
         subtitle: strings.saleReports,
         onTap: () => context.push('/reports/products'),
       ),
-      _ReportItem(
+      ReportItem(
         icon: Icons.filter_none_rounded,
         color: AppColors.primary,
         title: strings.comboWiseReport,
         subtitle: strings.saleReports,
         onTap: () => context.push('/reports/products?type=combo'),
       ),
-      _ReportItem(
+      ReportItem(
         icon: Icons.money_off_rounded,
         color: AppColors.purple,
         title: strings.expenseWiseReport,
@@ -164,21 +172,21 @@ class ReportsHubPage extends ConsumerWidget {
         onTap: () => context.push('/reports/expense'),
       ),
       if (LicenseModules.mess(session)) ...[
-        _ReportItem(
+        ReportItem(
           icon: Icons.groups_rounded,
           color: AppColors.green,
           title: strings.invoiceMemberReport,
           subtitle: strings.saleReports,
           onTap: () => context.push('/reports/mess-members'),
         ),
-        _ReportItem(
+        ReportItem(
           icon: Icons.payments_rounded,
           color: AppColors.primary,
           title: strings.memberPaymentReport,
           subtitle: strings.saleReports,
           onTap: () => context.push('/reports/mess-payments'),
         ),
-        _ReportItem(
+        ReportItem(
           icon: Icons.restaurant_rounded,
           color: const Color(0xFFE6A100),
           title: strings.invoiceMessReport,
@@ -209,23 +217,23 @@ class ReportsHubPage extends ConsumerWidget {
           children: [
             ReportSectionLabel(strings.salesAndAnalytics),
             const SizedBox(height: 12),
-            _ReportGroupCard(items: salesItems),
+            ReportGroupCard(items: salesItems),
             const SizedBox(height: 18),
             ReportSectionLabel(strings.operationalReports),
             const SizedBox(height: 12),
-            _ReportGroupCard(items: operationalItems),
+            ReportGroupCard(items: operationalItems),
             const SizedBox(height: 18),
             ReportSectionLabel(strings.dataManagement),
             const SizedBox(height: 12),
-            _ReportGroupCard(
+            ReportGroupCard(
               items: [
-                _ReportItem(
+                ReportItem(
                   icon: Icons.delete_forever_rounded,
                   color: AppColors.red,
                   title: strings.deleteAllInvoice,
                   subtitle: strings.deleteAllInvoicesHint,
                   titleSecondary: '(सर्व बिले हटवा)',
-                  onTap: () => _clearAllInvoices(context, ref),
+                  onTap: () => reportsHubPageClearAllInvoices(context, ref),
                 ),
               ],
             ),
@@ -236,8 +244,8 @@ class ReportsHubPage extends ConsumerWidget {
   }
 }
 
-class _ReportItem {
-  const _ReportItem({
+class ReportItem {
+  const ReportItem({
     required this.icon,
     required this.color,
     required this.title,
@@ -254,10 +262,10 @@ class _ReportItem {
   final VoidCallback onTap;
 }
 
-class _ReportGroupCard extends StatelessWidget {
-  const _ReportGroupCard({required this.items});
+class ReportGroupCard extends StatelessWidget {
+  const ReportGroupCard({super.key, required this.items});
 
-  final List<_ReportItem> items;
+  final List<ReportItem> items;
 
   @override
   Widget build(BuildContext context) {
@@ -273,7 +281,7 @@ class _ReportGroupCard extends StatelessWidget {
                 indent: 72,
                 endIndent: 16,
               ),
-            _ReportRowTile(item: items[i]),
+            ReportRowTile(item: items[i]),
           ],
         ],
       ),
@@ -281,10 +289,10 @@ class _ReportGroupCard extends StatelessWidget {
   }
 }
 
-class _ReportRowTile extends StatelessWidget {
-  const _ReportRowTile({required this.item});
+class ReportRowTile extends StatelessWidget {
+  const ReportRowTile({super.key, required this.item});
 
-  final _ReportItem item;
+  final ReportItem item;
 
   @override
   Widget build(BuildContext context) {

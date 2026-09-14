@@ -10,7 +10,7 @@ import 'package:pos_billingwala_v2/features/masters/presentation/widgets/master_
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
 
-const _productUnits = [
+const productUnits = [
   'Pcs',
   'Kg',
   'Plate',
@@ -28,84 +28,84 @@ class ProductFormPage extends ConsumerStatefulWidget {
   final int? productId;
 
   @override
-  ConsumerState<ProductFormPage> createState() => _ProductFormPageState();
+  ConsumerState<ProductFormPage> createState() => ProductFormPageState();
 }
 
-class _ProductFormPageState extends ConsumerState<ProductFormPage> {
-  final _codeCtrl = TextEditingController();
-  final _nameCtrl = TextEditingController();
-  final _priceCtrl = TextEditingController();
-  final _cgstCtrl = TextEditingController(text: '0');
-  final _sgstCtrl = TextEditingController(text: '0');
-  final _portionPriceCtrl = TextEditingController();
+class ProductFormPageState extends ConsumerState<ProductFormPage> {
+  final codeCtrl = TextEditingController();
+  final nameCtrl = TextEditingController();
+  final priceCtrl = TextEditingController();
+  final cgstCtrl = TextEditingController(text: '0');
+  final sgstCtrl = TextEditingController(text: '0');
+  final portionPriceCtrl = TextEditingController();
 
-  ProductCategory? _category;
-  ProductSubcategory? _subcategory;
-  PortionMaster? _portionMaster;
-  String _unit = _productUnits.first;
-  bool _openPrice = false;
-  bool _busy = false;
-  bool _loaded = false;
-  final _inlinePortions = <({PortionMaster master, double price})>[];
+  ProductCategory? productFormPageCategory;
+  ProductSubcategory? productFormPageSubcategory;
+  PortionMaster? productFormPagePortionMaster;
+  String unit = productUnits.first;
+  bool productFormPageOpenPrice = false;
+  bool busy = false;
+  bool loaded = false;
+  final inlinePortions = <({PortionMaster master, double price})>[];
 
-  bool get _isEdit => widget.productId != null;
+  bool get isEdit => widget.productId != null;
 
   @override
   void dispose() {
-    _codeCtrl.dispose();
-    _nameCtrl.dispose();
-    _priceCtrl.dispose();
-    _cgstCtrl.dispose();
-    _sgstCtrl.dispose();
-    _portionPriceCtrl.dispose();
+    codeCtrl.dispose();
+    nameCtrl.dispose();
+    priceCtrl.dispose();
+    cgstCtrl.dispose();
+    sgstCtrl.dispose();
+    portionPriceCtrl.dispose();
     super.dispose();
   }
 
-  void _hydrate(Product product, List<ProductCategory> categories,
+  void hydrate(Product product, List<ProductCategory> categories,
       List<ProductSubcategory> subs) {
-    if (_loaded) return;
-    _loaded = true;
-    _codeCtrl.text = product.productCode ?? '';
-    _nameCtrl.text = product.productName;
-    _priceCtrl.text = product.productPrice.toStringAsFixed(
+    if (loaded) return;
+    loaded = true;
+    codeCtrl.text = product.productCode ?? '';
+    nameCtrl.text = product.productName;
+    priceCtrl.text = product.productPrice.toStringAsFixed(
       product.productPrice % 1 == 0 ? 0 : 2,
     );
-    _cgstCtrl.text = product.productCgst.toStringAsFixed(
+    cgstCtrl.text = product.productCgst.toStringAsFixed(
       product.productCgst % 1 == 0 ? 0 : 1,
     );
-    _sgstCtrl.text = product.productSgst.toStringAsFixed(
+    sgstCtrl.text = product.productSgst.toStringAsFixed(
       product.productSgst % 1 == 0 ? 0 : 1,
     );
-    _openPrice = product.openPrice == '1';
-    _unit = (product.productUnit ?? '').trim().isEmpty
-        ? _productUnits.first
+    productFormPageOpenPrice = product.openPrice == '1';
+    unit = (product.productUnit ?? '').trim().isEmpty
+        ? productUnits.first
         : product.productUnit!;
-    if (!_productUnits.contains(_unit)) {
-      _unit = _productUnits.first;
+    if (!productUnits.contains(unit)) {
+      unit = productUnits.first;
     }
     for (final c in categories) {
       if (c.categoryId == product.categoryId) {
-        _category = c;
+        productFormPageCategory = c;
         break;
       }
     }
     for (final s in subs) {
       if (s.subcategoryId == product.subcategoryId) {
-        _subcategory = s;
+        productFormPageSubcategory = s;
         break;
       }
     }
   }
 
-  Future<void> _addInlinePortion() async {
-    final master = _portionMaster;
+  Future<void> addInlinePortion() async {
+    final master = productFormPagePortionMaster;
     if (master == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Select a portion')),
       );
       return;
     }
-    final price = double.tryParse(_portionPriceCtrl.text.trim());
+    final price = double.tryParse(portionPriceCtrl.text.trim());
     if (price == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Enter selling price for portion')),
@@ -113,75 +113,75 @@ class _ProductFormPageState extends ConsumerState<ProductFormPage> {
       return;
     }
     setState(() {
-      _inlinePortions.removeWhere(
+      inlinePortions.removeWhere(
         (e) => e.master.portionMasterId == master.portionMasterId,
       );
-      _inlinePortions.add((master: master, price: price));
-      _portionPriceCtrl.clear();
+      inlinePortions.add((master: master, price: price));
+      portionPriceCtrl.clear();
     });
   }
 
-  Future<void> _save() async {
-    final name = _nameCtrl.text.trim();
+  Future<void> save() async {
+    final name = nameCtrl.text.trim();
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Product name is required')),
       );
       return;
     }
-    if (_category == null) {
+    if (productFormPageCategory == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Select a category')),
       );
       return;
     }
-    final price = _openPrice
+    final price = productFormPageOpenPrice
         ? 0.0
-        : (double.tryParse(_priceCtrl.text.trim()) ?? -1);
-    if (!_openPrice && price < 0) {
+        : (double.tryParse(priceCtrl.text.trim()) ?? -1);
+    if (!productFormPageOpenPrice && price < 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Enter a valid product price')),
       );
       return;
     }
 
-    setState(() => _busy = true);
+    setState(() => busy = true);
     try {
       final sync = ref.read(mastersSyncControllerProvider.notifier);
-      if (_isEdit) {
+      if (isEdit) {
         await sync.updateProduct(
           productId: widget.productId!,
           name: name,
           price: price,
-          categoryId: _category!.categoryId,
-          categoryName: _category!.categoryName,
-          productCode: _codeCtrl.text.trim().isEmpty
+          categoryId: productFormPageCategory!.categoryId,
+          categoryName: productFormPageCategory!.categoryName,
+          productCode: codeCtrl.text.trim().isEmpty
               ? null
-              : _codeCtrl.text.trim(),
-          openPrice: _openPrice ? '1' : '0',
-          productUnit: _unit,
-          productCgst: double.tryParse(_cgstCtrl.text.trim()) ?? 0,
-          productSgst: double.tryParse(_sgstCtrl.text.trim()) ?? 0,
-          subcategoryId: _subcategory?.subcategoryId,
+              : codeCtrl.text.trim(),
+          openPrice: productFormPageOpenPrice ? '1' : '0',
+          productUnit: unit,
+          productCgst: double.tryParse(cgstCtrl.text.trim()) ?? 0,
+          productSgst: double.tryParse(sgstCtrl.text.trim()) ?? 0,
+          subcategoryId: productFormPageSubcategory?.subcategoryId,
         );
       } else {
         final id = await sync.createProduct(
           name: name,
           price: price,
-          categoryId: _category!.categoryId,
-          categoryName: _category!.categoryName,
-          productCode: _codeCtrl.text.trim().isEmpty
+          categoryId: productFormPageCategory!.categoryId,
+          categoryName: productFormPageCategory!.categoryName,
+          productCode: codeCtrl.text.trim().isEmpty
               ? null
-              : _codeCtrl.text.trim(),
-          openPrice: _openPrice ? '1' : '0',
-          productUnit: _unit,
-          productCgst: double.tryParse(_cgstCtrl.text.trim()) ?? 0,
-          productSgst: double.tryParse(_sgstCtrl.text.trim()) ?? 0,
-          subcategoryId: _subcategory?.subcategoryId,
+              : codeCtrl.text.trim(),
+          openPrice: productFormPageOpenPrice ? '1' : '0',
+          productUnit: unit,
+          productCgst: double.tryParse(cgstCtrl.text.trim()) ?? 0,
+          productSgst: double.tryParse(sgstCtrl.text.trim()) ?? 0,
+          subcategoryId: productFormPageSubcategory?.subcategoryId,
         );
         final db = ref.read(appDatabaseProvider);
         var sort = 1;
-        for (final portion in _inlinePortions) {
+        for (final portion in inlinePortions) {
           await db.insertLocalPortion(
             productId: id,
             portionName: portion.master.portionName,
@@ -195,12 +195,12 @@ class _ProductFormPageState extends ConsumerState<ProductFormPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_isEdit ? 'Product updated' : 'Product saved'),
+          content: Text(isEdit ? 'Product updated' : 'Product saved'),
         ),
       );
       context.pop();
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) setState(() => busy = false);
     }
   }
 
@@ -219,7 +219,7 @@ class _ProductFormPageState extends ConsumerState<ProductFormPage> {
           orElse: () => const <PortionMaster>[],
         );
 
-    if (_isEdit) {
+    if (isEdit) {
       final products = ref.watch(productsProvider).maybeWhen(
             data: (v) => v,
             orElse: () => const <Product>[],
@@ -232,43 +232,43 @@ class _ProductFormPageState extends ConsumerState<ProductFormPage> {
         }
       }
       if (existing != null) {
-        _hydrate(existing, categories, allSubs);
+        hydrate(existing, categories, allSubs);
       }
-    } else if (_category == null && categories.isNotEmpty) {
+    } else if (productFormPageCategory == null && categories.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted || _category != null) return;
+        if (!mounted || productFormPageCategory != null) return;
         setState(() {
-          _category = categories.first;
-          _portionMaster =
+          productFormPageCategory = categories.first;
+          productFormPagePortionMaster =
               portionMasters.isNotEmpty ? portionMasters.first : null;
         });
       });
     }
 
-    final category = _category != null &&
-            categories.any((c) => c.categoryId == _category!.categoryId)
-        ? categories.firstWhere((c) => c.categoryId == _category!.categoryId)
+    final category = productFormPageCategory != null &&
+            categories.any((c) => c.categoryId == productFormPageCategory!.categoryId)
+        ? categories.firstWhere((c) => c.categoryId == productFormPageCategory!.categoryId)
         : (categories.isNotEmpty ? categories.first : null);
     final subs = category == null
         ? const <ProductSubcategory>[]
         : allSubs.where((s) => s.categoryId == category.categoryId).toList();
-    final subcategory = _subcategory != null &&
-            subs.any((s) => s.subcategoryId == _subcategory!.subcategoryId)
-        ? subs.firstWhere((s) => s.subcategoryId == _subcategory!.subcategoryId)
+    final subcategory = productFormPageSubcategory != null &&
+            subs.any((s) => s.subcategoryId == productFormPageSubcategory!.subcategoryId)
+        ? subs.firstWhere((s) => s.subcategoryId == productFormPageSubcategory!.subcategoryId)
         : null;
-    final portionMaster = _portionMaster != null &&
+    final portionMaster = productFormPagePortionMaster != null &&
             portionMasters.any(
-              (m) => m.portionMasterId == _portionMaster!.portionMasterId,
+              (m) => m.portionMasterId == productFormPagePortionMaster!.portionMasterId,
             )
         ? portionMasters.firstWhere(
-            (m) => m.portionMasterId == _portionMaster!.portionMasterId,
+            (m) => m.portionMasterId == productFormPagePortionMaster!.portionMasterId,
           )
         : (portionMasters.isNotEmpty ? portionMasters.first : null);
 
     return Scaffold(
       backgroundColor: MasterUi.bg,
       appBar: AppBar(
-        title: Text(_isEdit ? 'Edit Product' : 'Add Product'),
+        title: Text(isEdit ? 'Edit Product' : 'Add Product'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => context.pop(),
@@ -294,8 +294,8 @@ class _ProductFormPageState extends ConsumerState<ProductFormPage> {
                   hint: 'Select category',
                   itemLabel: (c) => c.categoryName,
                   onChanged: (v) => setState(() {
-                    _category = v;
-                    _subcategory = null;
+                    productFormPageCategory = v;
+                    productFormPageSubcategory = null;
                   }),
                 ),
                 const SizedBox(height: 12),
@@ -304,12 +304,12 @@ class _ProductFormPageState extends ConsumerState<ProductFormPage> {
                   items: subs,
                   hint: 'None',
                   itemLabel: (s) => s.subcategoryName,
-                  onChanged: (v) => setState(() => _subcategory = v),
+                  onChanged: (v) => setState(() => productFormPageSubcategory = v),
                 ),
               ],
             ),
           ),
-          if (!_isEdit) ...[
+          if (!isEdit) ...[
             const SizedBox(height: 18),
             MasterSectionLabel(
               'Portions (Optional)',
@@ -336,11 +336,11 @@ class _ProductFormPageState extends ConsumerState<ProductFormPage> {
                     items: portionMasters,
                     hint: 'Select portion',
                     itemLabel: (m) => m.portionName,
-                    onChanged: (v) => setState(() => _portionMaster = v),
+                    onChanged: (v) => setState(() => productFormPagePortionMaster = v),
                   ),
                   const SizedBox(height: 12),
                   MasterOutlinedField(
-                    controller: _portionPriceCtrl,
+                    controller: portionPriceCtrl,
                     hint: 'Selling price for this product + portion',
                     keyboardType:
                         const TextInputType.numberWithOptions(decimal: true),
@@ -348,11 +348,11 @@ class _ProductFormPageState extends ConsumerState<ProductFormPage> {
                   const SizedBox(height: 12),
                   MasterPrimaryButton(
                     label: 'Add Portion to Product',
-                    onPressed: _addInlinePortion,
+                    onPressed: addInlinePortion,
                   ),
-                  if (_inlinePortions.isNotEmpty) ...[
+                  if (inlinePortions.isNotEmpty) ...[
                     const SizedBox(height: 12),
-                    for (final p in _inlinePortions)
+                    for (final p in inlinePortions)
                       ListTile(
                         dense: true,
                         contentPadding: EdgeInsets.zero,
@@ -364,7 +364,7 @@ class _ProductFormPageState extends ConsumerState<ProductFormPage> {
                             color: AppColors.red,
                           ),
                           onPressed: () => setState(
-                            () => _inlinePortions.remove(p),
+                            () => inlinePortions.remove(p),
                           ),
                         ),
                       ),
@@ -388,13 +388,13 @@ class _ProductFormPageState extends ConsumerState<ProductFormPage> {
             child: Column(
               children: [
                 MasterOutlinedField(
-                  controller: _codeCtrl,
+                  controller: codeCtrl,
                   hint: 'Product Code',
                   textCapitalization: TextCapitalization.characters,
                 ),
                 const SizedBox(height: 12),
                 MasterOutlinedField(
-                  controller: _nameCtrl,
+                  controller: nameCtrl,
                   hint: 'Product Name',
                 ),
                 const SizedBox(height: 8),
@@ -417,14 +417,14 @@ class _ProductFormPageState extends ConsumerState<ProductFormPage> {
                       color: AppColors.navy.withValues(alpha: .45),
                     ),
                   ),
-                  value: _openPrice,
+                  value: productFormPageOpenPrice,
                   activeThumbColor: AppColors.primary,
-                  onChanged: (v) => setState(() => _openPrice = v),
+                  onChanged: (v) => setState(() => productFormPageOpenPrice = v),
                 ),
-                if (!_openPrice) ...[
+                if (!productFormPageOpenPrice) ...[
                   const SizedBox(height: 4),
                   MasterOutlinedField(
-                    controller: _priceCtrl,
+                    controller: priceCtrl,
                     hint: 'Product Price (without GST)',
                     keyboardType:
                         const TextInputType.numberWithOptions(decimal: true),
@@ -432,11 +432,11 @@ class _ProductFormPageState extends ConsumerState<ProductFormPage> {
                 ],
                 const SizedBox(height: 12),
                 MasterDropdown<String>(
-                  value: _unit,
-                  items: _productUnits,
+                  value: unit,
+                  items: productUnits,
                   itemLabel: (u) => u,
                   onChanged: (v) {
-                    if (v != null) setState(() => _unit = v);
+                    if (v != null) setState(() => unit = v);
                   },
                 ),
               ],
@@ -450,7 +450,7 @@ class _ProductFormPageState extends ConsumerState<ProductFormPage> {
               children: [
                 Expanded(
                   child: MasterOutlinedField(
-                    controller: _cgstCtrl,
+                    controller: cgstCtrl,
                     hint: 'Product CGST',
                     keyboardType:
                         const TextInputType.numberWithOptions(decimal: true),
@@ -459,7 +459,7 @@ class _ProductFormPageState extends ConsumerState<ProductFormPage> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: MasterOutlinedField(
-                    controller: _sgstCtrl,
+                    controller: sgstCtrl,
                     hint: 'Product SGST',
                     keyboardType:
                         const TextInputType.numberWithOptions(decimal: true),
@@ -470,9 +470,9 @@ class _ProductFormPageState extends ConsumerState<ProductFormPage> {
           ),
           const SizedBox(height: 22),
           MasterPrimaryButton(
-            label: _isEdit ? 'Save Product' : 'Add Product',
-            isLoading: _busy,
-            onPressed: _busy ? null : _save,
+            label: isEdit ? 'Save Product' : 'Add Product',
+            isLoading: busy,
+            onPressed: busy ? null : save,
           ),
         ],
       ),

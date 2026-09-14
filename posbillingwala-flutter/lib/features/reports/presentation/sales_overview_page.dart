@@ -13,7 +13,7 @@ import 'package:pos_billingwala_v2/features/reports/domain/reports_providers.dar
 import 'package:pos_billingwala_v2/features/reports/presentation/report_widgets.dart';
 import 'package:pos_billingwala_v2/l10n/app_strings.dart';
 
-final _overviewWindowProvider = StreamProvider<List<Invoice>>((ref) {
+final overviewWindowProvider = StreamProvider<List<Invoice>>((ref) {
   final now = DateTime.now();
   final start = DateTime(now.year, now.month - 1, 1);
   final end = DateTime(now.year, now.month + 1, 1);
@@ -30,7 +30,7 @@ class SalesOverviewPage extends ConsumerWidget {
     final start = DateTime(now.year, now.month, 1);
     final end = DateTime(now.year, now.month + 1, 1);
     final prevStart = DateTime(now.year, now.month - 1, 1);
-    final rows = ref.watch(_overviewWindowProvider).maybeWhen(
+    final rows = ref.watch(overviewWindowProvider).maybeWhen(
           data: (v) => v,
           orElse: () => const <Invoice>[],
         );
@@ -133,12 +133,12 @@ class SalesOverviewPage extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  _kv('Fast billing bills', '${summary.posCount}'),
-                  _kv('Dine-in bills', '${summary.tableCount}'),
-                  _kv('Takeaway bills', '${summary.takeawayCount}'),
+                  kv('Fast billing bills', '${summary.posCount}'),
+                  kv('Dine-in bills', '${summary.tableCount}'),
+                  kv('Takeaway bills', '${summary.takeawayCount}'),
                   const Divider(height: 24),
-                  _kv('Cash', currency.format(summary.cashTotal)),
-                  _kv('UPI', currency.format(summary.upiTotal)),
+                  kv('Cash', currency.format(summary.cashTotal)),
+                  kv('UPI', currency.format(summary.upiTotal)),
                 ],
               ),
             ),
@@ -153,7 +153,7 @@ class SalesOverviewPage extends ConsumerWidget {
     );
   }
 
-  Widget _kv(String k, String v) {
+  Widget kv(String k, String v) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(

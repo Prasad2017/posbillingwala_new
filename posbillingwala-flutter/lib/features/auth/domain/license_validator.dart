@@ -12,10 +12,10 @@ import 'package:pos_billingwala_v2/features/auth/domain/session_keys.dart';
 class LicenseValidator {
   LicenseValidator._();
 
-  static const _payloadKey = 'licensePayload';
-  static const _signatureKey = 'licenseSignature';
-  static const _lastServerTimeKey = 'licenseLastServerTimeMs';
-  static const _clockToleranceMs = 24 * 60 * 60 * 1000;
+  static const payloadKey = 'licensePayload';
+  static const signatureKey = 'licenseSignature';
+  static const lastServerTimeKey = 'licenseLastServerTimeMs';
+  static const clockToleranceMs = 24 * 60 * 60 * 1000;
 
   static Future<void> saveFromLogin({
     required String? licensePayload,
@@ -29,8 +29,8 @@ class LicenseValidator {
     required String deviceId,
   }) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_payloadKey, licensePayload?.trim() ?? '');
-    await prefs.setString(_signatureKey, licenseSignature?.trim() ?? '');
+    await prefs.setString(payloadKey, licensePayload?.trim() ?? '');
+    await prefs.setString(signatureKey, licenseSignature?.trim() ?? '');
     await prefs.setString(SessionKeys.organizationId, organizationId ?? '');
     await prefs.setString(SessionKeys.branchId, branchId ?? '');
     await prefs.setString(SessionKeys.branchLabel, branchLabel ?? '');
@@ -42,19 +42,19 @@ class LicenseValidator {
     final issuedSec = int.tryParse(issuedAt?.trim() ?? '') ?? 0;
     if (issuedSec > 0) {
       final issuedMs = issuedSec * 1000;
-      final last = int.tryParse(prefs.getString(_lastServerTimeKey) ?? '') ?? 0;
+      final last = int.tryParse(prefs.getString(lastServerTimeKey) ?? '') ?? 0;
       if (issuedMs > last) {
-        await prefs.setString(_lastServerTimeKey, '$issuedMs');
+        await prefs.setString(lastServerTimeKey, '$issuedMs');
       }
     }
 
-    await _persistModulesFromPayload(prefs, licensePayload);
+    await persistModulesFromPayload(prefs, licensePayload);
   }
 
   static Future<bool> hasStoredPayload() async {
     final prefs = await SharedPreferences.getInstance();
-    final p = prefs.getString(_payloadKey)?.trim() ?? '';
-    final s = prefs.getString(_signatureKey)?.trim() ?? '';
+    final p = prefs.getString(payloadKey)?.trim() ?? '';
+    final s = prefs.getString(signatureKey)?.trim() ?? '';
     return p.isNotEmpty && s.isNotEmpty;
   }
 
@@ -92,13 +92,13 @@ class LicenseValidator {
       return result;
     }
 
-    final trustedNow = _trustedNowMs(prefs);
-    if (_detectClockRollback(prefs, trustedNow)) {
+    final trustedNow = licenseValidatorTrustedNowMs(prefs);
+    if (detectClockRollback(prefs, trustedNow)) {
       result.message = 'Device clock appears incorrect.';
       return result;
     }
 
-    if (!_isExpiryValid(payload.expiryDate, trustedNow)) {
+    if (!isExpiryValid(payload.expiryDate, trustedNow)) {
       result.message = 'Your licence has expired. Please renew.';
       return result;
     }
@@ -142,8 +142,8 @@ class LicenseValidator {
     SharedPreferences prefs,
   ) async {
     try {
-      final payloadB64 = prefs.getString(_payloadKey)?.trim();
-      final signatureB64 = prefs.getString(_signatureKey)?.trim();
+      final payloadB64 = prefs.getString(payloadKey)?.trim();
+      final signatureB64 = prefs.getString(signatureKey)?.trim();
       if (payloadB64 == null ||
           payloadB64.isEmpty ||
           signatureB64 == null ||
@@ -153,7 +153,7 @@ class LicenseValidator {
 
       final payloadBytes = base64.decode(payloadB64);
       final signatureBytes = base64.decode(signatureB64);
-      final publicKey = await _loadPublicKey();
+      final publicKey = await loadPublicKey();
       final verifier = Signer('SHA-256/RSA')
         ..init(false, PublicKeyParameter<RSAPublicKey>(publicKey));
       final ok = verifier.verifySignature(
@@ -170,18 +170,18 @@ class LicenseValidator {
     }
   }
 
-  static Future<RSAPublicKey> _loadPublicKey() async {
+  static Future<RSAPublicKey> loadPublicKey() async {
     final pem = await rootBundle.loadString('assets/license_signing_public.pem');
     final b64 = pem
         .replaceAll('-----BEGIN PUBLIC KEY-----', '')
         .replaceAll('-----END PUBLIC KEY-----', '')
         .replaceAll(RegExp(r'\s'), '');
     final der = base64.decode(b64);
-    return _parsePublicKeyFromDer(Uint8List.fromList(der));
+    return parsePublicKeyFromDer(Uint8List.fromList(der));
   }
 
   /// Parses SubjectPublicKeyInfo (X.509) DER into [RSAPublicKey].
-  static RSAPublicKey _parsePublicKeyFromDer(Uint8List der) {
+  static RSAPublicKey parsePublicKeyFromDer(Uint8List der) {
     final parser = ASN1Parser(der);
     final top = parser.nextObject() as ASN1Sequence;
     final topElements = top.elements;
@@ -198,7 +198,7 @@ class LicenseValidator {
     return RSAPublicKey(modulus, exponent);
   }
 
-  static Future<void> _persistModulesFromPayload(
+  static Future<void> persistModulesFromPayload(
     SharedPreferences prefs,
     String? payloadB64,
   ) async {
@@ -221,23 +221,23 @@ class LicenseValidator {
     } catch (_) {}
   }
 
-  static int _trustedNowMs(SharedPreferences prefs) {
+  static int licenseValidatorTrustedNowMs(SharedPreferences prefs) {
     final deviceNow = DateTime.now().millisecondsSinceEpoch;
     final lastServer =
-        int.tryParse(prefs.getString(_lastServerTimeKey) ?? '') ?? 0;
+        int.tryParse(prefs.getString(lastServerTimeKey) ?? '') ?? 0;
     return deviceNow > lastServer ? deviceNow : lastServer;
   }
 
-  static bool _detectClockRollback(SharedPreferences prefs, int trustedNowMs) {
+  static bool detectClockRollback(SharedPreferences prefs, int trustedNowMs) {
     final lastServer =
-        int.tryParse(prefs.getString(_lastServerTimeKey) ?? '') ?? 0;
+        int.tryParse(prefs.getString(lastServerTimeKey) ?? '') ?? 0;
     if (lastServer <= 0) return false;
     final deviceNow = DateTime.now().millisecondsSinceEpoch;
-    return deviceNow + _clockToleranceMs < lastServer ||
-        trustedNowMs + _clockToleranceMs < lastServer;
+    return deviceNow + clockToleranceMs < lastServer ||
+        trustedNowMs + clockToleranceMs < lastServer;
   }
 
-  static bool _isExpiryValid(String expiryDateYmd, int trustedNowMs) {
+  static bool isExpiryValid(String expiryDateYmd, int trustedNowMs) {
     if (expiryDateYmd.trim().isEmpty) return false;
     try {
       final parts = expiryDateYmd.trim().split('-');

@@ -60,23 +60,23 @@ class AppTextField extends StatefulWidget {
   final TextAlign textAlign;
 
   @override
-  State<AppTextField> createState() => _AppTextFieldState();
+  State<AppTextField> createState() => AppTextFieldState();
 }
 
-class _AppTextFieldState extends State<AppTextField> {
-  late bool _obscure;
+class AppTextFieldState extends State<AppTextField> {
+  late bool obscure;
 
   @override
   void initState() {
     super.initState();
-    _obscure = widget.obscureText;
+    obscure = widget.obscureText;
   }
 
   @override
   void didUpdateWidget(covariant AppTextField oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.obscureText != widget.obscureText) {
-      _obscure = widget.obscureText;
+      obscure = widget.obscureText;
     }
   }
 
@@ -93,7 +93,7 @@ class _AppTextFieldState extends State<AppTextField> {
       focusNode: widget.focusNode,
       validator: widget.validator,
       autovalidateMode: AutovalidateMode.onUserInteraction,
-      obscureText: _obscure,
+      obscureText: obscure,
       keyboardType: widget.keyboardType,
       textInputAction: widget.textInputAction,
       textCapitalization: widget.textCapitalization,
@@ -149,10 +149,10 @@ class _AppTextFieldState extends State<AppTextField> {
         suffixIcon: widget.obscureText
             ? IconButton(
                 icon: Icon(
-                  _obscure ? Icons.visibility_off : Icons.visibility,
+                  obscure ? Icons.visibility_off : Icons.visibility,
                   size: 20,
                 ),
-                onPressed: () => setState(() => _obscure = !_obscure),
+                onPressed: () => setState(() => obscure = !obscure),
               )
             : null,
       ),

@@ -13,17 +13,17 @@ class ThreeDotsLoader extends StatefulWidget {
   final double spacing;
 
   @override
-  State<ThreeDotsLoader> createState() => _ThreeDotsLoaderState();
+  State<ThreeDotsLoader> createState() => ThreeDotsLoaderState();
 }
 
-class _ThreeDotsLoaderState extends State<ThreeDotsLoader>
+class ThreeDotsLoaderState extends State<ThreeDotsLoader>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
+  late final AnimationController controller;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
+    controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
     )..repeat();
@@ -31,11 +31,11 @@ class _ThreeDotsLoaderState extends State<ThreeDotsLoader>
 
   @override
   void dispose() {
-    _controller.dispose();
+    controller.dispose();
     super.dispose();
   }
 
-  double _bounceOffset(double t) {
+  double bounceOffset(double t) {
     // Smooth up-down bounce per dot cycle.
     return -5 * (t < 0.5 ? t * 2 : (1 - t) * 2);
   }
@@ -49,10 +49,10 @@ class _ThreeDotsLoaderState extends State<ThreeDotsLoader>
         mainAxisAlignment: MainAxisAlignment.center,
         children: List.generate(3, (index) {
           return AnimatedBuilder(
-            animation: _controller,
+            animation: controller,
             builder: (context, child) {
-              final phase = (_controller.value - index * 0.18) % 1.0;
-              final offsetY = _bounceOffset(phase < 0 ? phase + 1 : phase);
+              final phase = (controller.value - index * 0.18) % 1.0;
+              final offsetY = bounceOffset(phase < 0 ? phase + 1 : phase);
               return Transform.translate(
                 offset: Offset(0, offsetY),
                 child: child,

@@ -11,45 +11,45 @@ import 'package:pos_billingwala_v2/features/masters/domain/masters_providers.dar
 /// ownerId), pull masters once after login so Categories/Products appear
 /// without a manual Fetch Data.
 class CatalogBootstrapListener {
-  CatalogBootstrapListener(this._ref);
+  CatalogBootstrapListener(this.catalogBootstrapListenerRef);
 
-  final Ref _ref;
-  bool _running = false;
-  bool _attemptedThisSession = false;
+  final Ref catalogBootstrapListenerRef;
+  bool running = false;
+  bool attemptedThisSession = false;
 
   void onAuthenticated() {
     unawaited(ensureCatalogIfEmpty());
   }
 
   Future<void> ensureCatalogIfEmpty({bool force = false}) async {
-    if (_running) return;
-    if (_attemptedThisSession && !force) return;
+    if (running) return;
+    if (attemptedThisSession && !force) return;
 
-    final auth = _ref.read(authControllerProvider);
+    final auth = catalogBootstrapListenerRef.read(authControllerProvider);
     if (auth.status != AuthStatus.authenticated) return;
     final session = auth.session;
     if (session == null) return;
     final ownerId = session.catalogOwnerId.trim();
     if (ownerId.isEmpty) return;
 
-    final db = _ref.read(appDatabaseProvider);
+    final db = catalogBootstrapListenerRef.read(appDatabaseProvider);
     final categories = await db.countActiveCategories();
     final products = await db.countActiveProducts();
     if (categories > 0 && products > 0) {
-      _attemptedThisSession = true;
+      attemptedThisSession = true;
       return;
     }
 
     if (!await ensureOnline()) return;
 
-    _running = true;
-    _attemptedThisSession = true;
+    running = true;
+    attemptedThisSession = true;
     try {
       debugPrint(
         'Catalog empty (cats=$categories products=$products) — '
         'syncing with ownerId=$ownerId licenceId=${session.licenceUserId}',
       );
-      final result = await _ref.read(mastersRepositoryProvider).syncFromCloud(
+      final result = await catalogBootstrapListenerRef.read(mastersRepositoryProvider).syncFromCloud(
             ownerId: ownerId,
             licenceUserId: session.licenceUserId,
           );
@@ -61,9 +61,9 @@ class CatalogBootstrapListener {
     } catch (e, st) {
       debugPrint('Catalog bootstrap failed: $e\n$st');
       // Allow retry on next Home open if this attempt failed.
-      _attemptedThisSession = false;
+      attemptedThisSession = false;
     } finally {
-      _running = false;
+      running = false;
     }
   }
 }

@@ -26,19 +26,19 @@ class MessPage extends ConsumerStatefulWidget {
   const MessPage({super.key});
 
   @override
-  ConsumerState<MessPage> createState() => _MessPageState();
+  ConsumerState<MessPage> createState() => MessPageState();
 }
 
-class _MessPageState extends ConsumerState<MessPage>
+class MessPageState extends ConsumerState<MessPage>
     with SingleTickerProviderStateMixin {
-  late final TabController _tabs;
-  final _verifyController = TextEditingController();
+  late final TabController messPageTabs;
+  final messPageVerifyController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: 3, vsync: this);
-    _tabs.addListener(() {
+    messPageTabs = TabController(length: 3, vsync: this);
+    messPageTabs.addListener(() {
       if (mounted) setState(() {});
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -48,8 +48,8 @@ class _MessPageState extends ConsumerState<MessPage>
 
   @override
   void dispose() {
-    _tabs.dispose();
-    _verifyController.dispose();
+    messPageTabs.dispose();
+    messPageVerifyController.dispose();
     super.dispose();
   }
 
@@ -99,19 +99,19 @@ class _MessPageState extends ConsumerState<MessPage>
                 Row(
                   children: [
                     Expanded(
-                      child: _MessMenuCard(
+                      child: MessMenuCard(
                         label: 'Member List',
                         color: AppColors.primary,
                         svgPath: AppAssets.svgPerson,
-                        onTap: () => _tabs.animateTo(0),
+                        onTap: () => messPageTabs.animateTo(0),
                       ),
                     ),
                     Expanded(
-                      child: _MessMenuCard(
+                      child: MessMenuCard(
                         label: 'QR Management',
                         color: AppColors.purple,
                         svgPath: AppAssets.svgQr,
-                        onTap: () => _tabs.animateTo(2),
+                        onTap: () => messPageTabs.animateTo(2),
                       ),
                     ),
                   ],
@@ -134,7 +134,7 @@ class _MessPageState extends ConsumerState<MessPage>
                 Row(
                   children: [
                     Expanded(
-                      child: _MessMenuCard(
+                      child: MessMenuCard(
                         label: "Today's Mess Tokens",
                         color: AppColors.orange,
                         svgPath: AppAssets.svgReceipt,
@@ -142,7 +142,7 @@ class _MessPageState extends ConsumerState<MessPage>
                       ),
                     ),
                     Expanded(
-                      child: _MessMenuCard(
+                      child: MessMenuCard(
                         label: 'Meal Sessions',
                         color: AppColors.teal,
                         svgPath: AppAssets.svgClock,
@@ -157,7 +157,7 @@ class _MessPageState extends ConsumerState<MessPage>
           Material(
             color: Colors.white,
             child: TabBar(
-              controller: _tabs,
+              controller: messPageTabs,
               labelColor: AppColors.primary,
               unselectedLabelColor: AppColors.textSecondary,
               tabs: const [
@@ -170,21 +170,21 @@ class _MessPageState extends ConsumerState<MessPage>
           const Divider(height: 1),
           Expanded(
             child: TabBarView(
-              controller: _tabs,
+              controller: messPageTabs,
               children: [
-                _MembersTab(
-                  onEditMember: (m) => _editMember(context, m),
+                MembersTab(
+                  onEditMember: (m) => editMember(context, m),
                 ),
-                _TokensTab(verifyController: _verifyController),
-                const _CommonQrTab(),
+                TokensTab(verifyController: messPageVerifyController),
+                const CommonQrTab(),
               ],
             ),
           ),
         ],
       ),
-      floatingActionButton: _tabs.index == 0
+      floatingActionButton: messPageTabs.index == 0
           ? FloatingActionButton.extended(
-              onPressed: () => _addMember(context),
+              onPressed: () => messPageAddMember(context),
               icon: const Icon(Icons.person_add_alt_1_rounded),
               label: Text(AppStrings.of(ref).addMember),
             )
@@ -192,8 +192,8 @@ class _MessPageState extends ConsumerState<MessPage>
     );
   }
 
-  Future<void> _editMember(BuildContext context, MessMember member) async {
-    final result = await _showMemberFormDialog(
+  Future<void> editMember(BuildContext context, MessMember member) async {
+    final result = await showMemberFormDialog(
       context,
       title: 'Edit mess member',
       initial: member,
@@ -218,8 +218,8 @@ class _MessPageState extends ConsumerState<MessPage>
     );
   }
 
-  Future<void> _addMember(BuildContext context) async {
-    final result = await _showMemberFormDialog(
+  Future<void> messPageAddMember(BuildContext context) async {
+    final result = await showMemberFormDialog(
       context,
       title: 'Add mess member',
     );
@@ -266,8 +266,8 @@ class _MessPageState extends ConsumerState<MessPage>
 }
 
 
-class _MessMemberFormResult {
-  const _MessMemberFormResult({
+class MessMemberFormResult {
+  const MessMemberFormResult({
     required this.name,
     this.mobile,
     this.altMobile,
@@ -298,7 +298,7 @@ class _MessMemberFormResult {
   final String? messDays;
 }
 
-Future<_MessMemberFormResult?> _showMemberFormDialog(
+Future<MessMemberFormResult?> showMemberFormDialog(
   BuildContext context, {
   required String title,
   MessMember? initial,
@@ -420,7 +420,7 @@ Future<_MessMemberFormResult?> _showMemberFormDialog(
   }
 
   final result = ok == true
-      ? _MessMemberFormResult(
+      ? MessMemberFormResult(
           name: nameCtrl.text.trim(),
           mobile: trimOrNull(mobileCtrl),
           altMobile: trimOrNull(altCtrl),
@@ -455,8 +455,8 @@ Future<_MessMemberFormResult?> _showMemberFormDialog(
   return result;
 }
 
-class _MessMenuCard extends StatelessWidget {
-  const _MessMenuCard({
+class MessMenuCard extends StatelessWidget {
+  const MessMenuCard({super.key, 
     required this.label,
     required this.color,
     required this.svgPath,
@@ -509,30 +509,30 @@ class _MessMenuCard extends StatelessWidget {
   }
 }
 
-class _MembersTab extends ConsumerStatefulWidget {
-  const _MembersTab({
+class MembersTab extends ConsumerStatefulWidget {
+  const MembersTab({super.key, 
     required this.onEditMember,
   });
 
   final void Function(MessMember member) onEditMember;
 
   @override
-  ConsumerState<_MembersTab> createState() => _MembersTabState();
+  ConsumerState<MembersTab> createState() => MembersTabState();
 }
 
-class _MembersTabState extends ConsumerState<_MembersTab> {
-  final _search = TextEditingController();
+class MembersTabState extends ConsumerState<MembersTab> {
+  final messPageSearch = TextEditingController();
 
   @override
   void dispose() {
-    _search.dispose();
+    messPageSearch.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final membersAsync = ref.watch(messMembersProvider);
-    final query = _search.text.trim().toLowerCase();
+    final query = messPageSearch.text.trim().toLowerCase();
 
     return membersAsync.when(
       data: (members) {
@@ -553,7 +553,7 @@ class _MembersTabState extends ConsumerState<_MembersTab> {
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
               child: AppTextField(
-                controller: _search,
+                controller: messPageSearch,
                 label: 'Search member',
                 onChanged: (_) => setState(() {}),
               ),
@@ -634,13 +634,13 @@ class _MembersTabState extends ConsumerState<_MembersTab> {
                                 IconButton(
                                   tooltip: 'Issue token',
                                   onPressed: () =>
-                                      _issueToken(context, ref, member),
+                                      issueToken(context, ref, member),
                                   icon: const Icon(Icons.qr_code_2_rounded),
                                 ),
                               ],
                             ),
                             onLongPress: () => widget.onEditMember(member),
-                            onTap: () => _issueToken(context, ref, member),
+                            onTap: () => issueToken(context, ref, member),
                           ),
                         );
                       },
@@ -654,7 +654,7 @@ class _MembersTabState extends ConsumerState<_MembersTab> {
     );
   }
 
-  Future<void> _issueToken(
+  Future<void> issueToken(
     BuildContext context,
     WidgetRef ref,
     MessMember member,
@@ -683,8 +683,8 @@ class _MembersTabState extends ConsumerState<_MembersTab> {
   }
 }
 
-class _TokensTab extends ConsumerWidget {
-  const _TokensTab({required this.verifyController});
+class TokensTab extends ConsumerWidget {
+  const TokensTab({super.key, required this.verifyController});
 
   final TextEditingController verifyController;
 
@@ -888,17 +888,17 @@ class _TokensTab extends ConsumerWidget {
   }
 }
 
-class _CommonQrTab extends ConsumerStatefulWidget {
-  const _CommonQrTab();
+class CommonQrTab extends ConsumerStatefulWidget {
+  const CommonQrTab({super.key});
 
   @override
-  ConsumerState<_CommonQrTab> createState() => _CommonQrTabState();
+  ConsumerState<CommonQrTab> createState() => CommonQrTabState();
 }
 
-class _CommonQrTabState extends ConsumerState<_CommonQrTab> {
-  final GlobalKey _qrKey = GlobalKey();
+class CommonQrTabState extends ConsumerState<CommonQrTab> {
+  final GlobalKey qrKey = GlobalKey();
 
-  Future<void> _shareUrl(BuildContext context, String url) async {
+  Future<void> shareUrl(BuildContext context, String url) async {
     final box = context.findRenderObject() as RenderBox?;
     await SharePlus.instance.share(
       ShareParams(
@@ -911,7 +911,7 @@ class _CommonQrTabState extends ConsumerState<_CommonQrTab> {
     );
   }
 
-  Future<void> _printUrl(WidgetRef ref, BuildContext context, String url) async {
+  Future<void> printUrl(WidgetRef ref, BuildContext context, String url) async {
     final result = await ref.read(printServiceProvider).printRawText(
           'Mess Common QR\n\n$url\n',
           label: 'Mess QR',
@@ -922,10 +922,10 @@ class _CommonQrTabState extends ConsumerState<_CommonQrTab> {
     );
   }
 
-  Future<void> _saveToGallery(BuildContext context) async {
+  Future<void> saveToGallery(BuildContext context) async {
     try {
       final boundary =
-          _qrKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+          qrKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
       if (boundary == null) {
         throw StateError('QR not ready');
       }
@@ -1003,7 +1003,7 @@ class _CommonQrTabState extends ConsumerState<_CommonQrTab> {
             const SizedBox(height: 16),
             Center(
               child: RepaintBoundary(
-                key: _qrKey,
+                key: qrKey,
                 child: QrImageView(
                   data: qr.qrUrl,
                   size: 240,
@@ -1038,7 +1038,7 @@ class _CommonQrTabState extends ConsumerState<_CommonQrTab> {
                   child: AppButton(
                     label: 'Share',
                     variant: AppButtonVariant.outlined,
-                    onPressed: () => _shareUrl(context, qr.qrUrl),
+                    onPressed: () => shareUrl(context, qr.qrUrl),
                   ),
                 ),
               ],
@@ -1050,7 +1050,7 @@ class _CommonQrTabState extends ConsumerState<_CommonQrTab> {
                   child: AppButton(
                     label: 'Download',
                     variant: AppButtonVariant.outlined,
-                    onPressed: () => _saveToGallery(context),
+                    onPressed: () => saveToGallery(context),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -1058,7 +1058,7 @@ class _CommonQrTabState extends ConsumerState<_CommonQrTab> {
                   child: AppButton(
                     label: 'Print QR',
                     variant: AppButtonVariant.outlined,
-                    onPressed: () => _printUrl(ref, context, qr.qrUrl),
+                    onPressed: () => printUrl(ref, context, qr.qrUrl),
                   ),
                 ),
               ],

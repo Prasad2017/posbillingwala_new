@@ -43,122 +43,122 @@ class PrinterDevicePickerPage extends StatefulWidget {
 
   @override
   State<PrinterDevicePickerPage> createState() =>
-      _PrinterDevicePickerPageState();
+      PrinterDevicePickerPageState();
 }
 
-class _PrinterDevicePickerPageState extends State<PrinterDevicePickerPage>
+class PrinterDevicePickerPageState extends State<PrinterDevicePickerPage>
     with SingleTickerProviderStateMixin {
-  late final TabController _tabs;
-  final _btHub = BluetoothPrinterHub.instance;
-  final _usbHub = EscPosTransportHub.instance;
-  final _permissions = const AppPermissionService();
-  final _hostCtrl = TextEditingController();
-  final _portCtrl = TextEditingController(text: '9100');
+  late final TabController printerDevicePickerPageTabs;
+  final btHub = BluetoothPrinterHub.instance;
+  final usbHub = EscPosTransportHub.instance;
+  final printerDevicePickerPagePermissions = const AppPermissionService();
+  final hostCtrl = TextEditingController();
+  final portCtrl = TextEditingController(text: '9100');
 
-  bool _loading = false;
-  String? _error;
-  List<BluetoothInfo> _btDevices = const [];
-  List<esc.PrinterDevice> _usbDevices = const [];
+  bool printerDevicePickerPageLoading = false;
+  String? printerDevicePickerPageError;
+  List<BluetoothInfo> btDevices = const [];
+  List<esc.PrinterDevice> usbDevices = const [];
 
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(
+    printerDevicePickerPageTabs = TabController(
       length: 3,
       vsync: this,
       initialIndex: widget.initialTransport.index.clamp(0, 2),
     );
-    _tabs.addListener(() {
-      if (!_tabs.indexIsChanging) _loadCurrentTab();
+    printerDevicePickerPageTabs.addListener(() {
+      if (!printerDevicePickerPageTabs.indexIsChanging) loadCurrentTab();
     });
-    _loadCurrentTab();
+    loadCurrentTab();
   }
 
   @override
   void dispose() {
-    _tabs.dispose();
-    _hostCtrl.dispose();
-    _portCtrl.dispose();
+    printerDevicePickerPageTabs.dispose();
+    hostCtrl.dispose();
+    portCtrl.dispose();
     super.dispose();
   }
 
-  Future<void> _loadCurrentTab() async {
-    final index = _tabs.index;
+  Future<void> loadCurrentTab() async {
+    final index = printerDevicePickerPageTabs.index;
     if (index == 0) {
-      await _loadBluetooth();
+      await loadBluetooth();
     } else if (index == 1) {
-      await _loadUsb();
+      await loadUsb();
     }
   }
 
-  Future<void> _loadBluetooth() async {
+  Future<void> loadBluetooth() async {
     setState(() {
-      _loading = true;
-      _error = null;
+      printerDevicePickerPageLoading = true;
+      printerDevicePickerPageError = null;
     });
     try {
-      final allowed = await _permissions.ensurePrintPermissions();
+      final allowed = await printerDevicePickerPagePermissions.ensurePrintPermissions();
       if (!allowed) {
         setState(() {
-          _loading = false;
-          _error =
+          printerDevicePickerPageLoading = false;
+          printerDevicePickerPageError =
               'Allow Bluetooth / nearby devices / location to list printers.';
         });
         return;
       }
-      if (!await _btHub.isBluetoothOn()) {
+      if (!await btHub.isBluetoothOn()) {
         setState(() {
-          _loading = false;
-          _error = 'Turn on Bluetooth and try again.';
+          printerDevicePickerPageLoading = false;
+          printerDevicePickerPageError = 'Turn on Bluetooth and try again.';
         });
         return;
       }
-      final list = await _btHub.pairedDevices();
+      final list = await btHub.pairedDevices();
       if (!mounted) return;
       setState(() {
-        _btDevices = list;
-        _loading = false;
+        btDevices = list;
+        printerDevicePickerPageLoading = false;
         if (list.isEmpty) {
-          _error =
+          printerDevicePickerPageError =
               'No paired Bluetooth printers. Pair any ESC/POS thermal printer in system Bluetooth settings, then refresh.';
         }
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _loading = false;
-        _error = '$e';
+        printerDevicePickerPageLoading = false;
+        printerDevicePickerPageError = '$e';
       });
     }
   }
 
-  Future<void> _loadUsb() async {
+  Future<void> loadUsb() async {
     setState(() {
-      _loading = true;
-      _error = null;
+      printerDevicePickerPageLoading = true;
+      printerDevicePickerPageError = null;
     });
     try {
-      final list = await _usbHub.scanUsb();
+      final list = await usbHub.scanUsb();
       if (!mounted) return;
       setState(() {
-        _usbDevices = list;
-        _loading = false;
+        usbDevices = list;
+        printerDevicePickerPageLoading = false;
         if (list.isEmpty) {
-          _error =
+          printerDevicePickerPageError =
               'No USB printers found. Connect any ESC/POS USB/OTG printer (Printer Class or USB-serial), grant USB permission, then refresh.';
         }
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _loading = false;
-        _error = '$e';
+        printerDevicePickerPageLoading = false;
+        printerDevicePickerPageError = '$e';
       });
     }
   }
 
-  Future<void> _selectBluetooth(BluetoothInfo device) async {
-    final ok = await _btHub.connect(
+  Future<void> selectBluetooth(BluetoothInfo device) async {
+    final ok = await btHub.connect(
       widget.channel,
       address: device.macAdress,
       fromUser: true,
@@ -180,8 +180,8 @@ class _PrinterDevicePickerPageState extends State<PrinterDevicePickerPage>
     );
   }
 
-  Future<void> _selectUsb(esc.PrinterDevice device) async {
-    final ok = await _usbHub.connectDevice(device);
+  Future<void> selectUsb(esc.PrinterDevice device) async {
+    final ok = await usbHub.connectDevice(device);
     if (!mounted) return;
     if (!ok) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -204,9 +204,9 @@ class _PrinterDevicePickerPageState extends State<PrinterDevicePickerPage>
     );
   }
 
-  void _selectNetwork() {
-    final host = _hostCtrl.text.trim();
-    final port = int.tryParse(_portCtrl.text.trim()) ?? 9100;
+  void selectNetwork() {
+    final host = hostCtrl.text.trim();
+    final port = int.tryParse(portCtrl.text.trim()) ?? 9100;
     if (host.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Enter printer IP / host')),
@@ -233,7 +233,7 @@ class _PrinterDevicePickerPageState extends State<PrinterDevicePickerPage>
       appBar: AppBar(
         title: Text(title),
         bottom: TabBar(
-          controller: _tabs,
+          controller: printerDevicePickerPageTabs,
           tabs: const [
             Tab(text: 'Bluetooth'),
             Tab(text: 'USB'),
@@ -243,7 +243,7 @@ class _PrinterDevicePickerPageState extends State<PrinterDevicePickerPage>
         actions: [
           IconButton(
             tooltip: 'Refresh',
-            onPressed: _loading ? null : _loadCurrentTab,
+            onPressed: printerDevicePickerPageLoading ? null : loadCurrentTab,
             icon: const Icon(Icons.refresh_rounded),
           ),
         ],
@@ -278,13 +278,13 @@ class _PrinterDevicePickerPageState extends State<PrinterDevicePickerPage>
         ),
         Expanded(
           child: TabBarView(
-            controller: _tabs,
+            controller: printerDevicePickerPageTabs,
             children: [
-              _deviceList(
-                loading: _loading && _tabs.index == 0,
-                error: _tabs.index == 0 ? _error : null,
-                emptyAction: _loadBluetooth,
-                children: _btDevices
+              deviceList(
+                loading: printerDevicePickerPageLoading && printerDevicePickerPageTabs.index == 0,
+                error: printerDevicePickerPageTabs.index == 0 ? printerDevicePickerPageError : null,
+                emptyAction: loadBluetooth,
+                children: btDevices
                     .map(
                       (d) => ListTile(
                         leading: const Icon(Icons.bluetooth_rounded),
@@ -293,16 +293,16 @@ class _PrinterDevicePickerPageState extends State<PrinterDevicePickerPage>
                         ),
                         subtitle: Text(d.macAdress),
                         trailing: const Icon(Icons.chevron_right_rounded),
-                        onTap: () => _selectBluetooth(d),
+                        onTap: () => selectBluetooth(d),
                       ),
                     )
                     .toList(),
               ),
-              _deviceList(
-                loading: _loading && _tabs.index == 1,
-                error: _tabs.index == 1 ? _error : null,
-                emptyAction: _loadUsb,
-                children: _usbDevices
+              deviceList(
+                loading: printerDevicePickerPageLoading && printerDevicePickerPageTabs.index == 1,
+                error: printerDevicePickerPageTabs.index == 1 ? printerDevicePickerPageError : null,
+                emptyAction: loadUsb,
+                children: usbDevices
                     .map(
                       (d) => ListTile(
                         leading: const Icon(Icons.usb_rounded),
@@ -313,7 +313,7 @@ class _PrinterDevicePickerPageState extends State<PrinterDevicePickerPage>
                               : d.connectionType.name,
                         ),
                         trailing: const Icon(Icons.chevron_right_rounded),
-                        onTap: () => _selectUsb(d),
+                        onTap: () => selectUsb(d),
                       ),
                     )
                     .toList(),
@@ -326,13 +326,13 @@ class _PrinterDevicePickerPageState extends State<PrinterDevicePickerPage>
                   ),
                   const SizedBox(height: 16),
                   AppTextField(
-                    controller: _hostCtrl,
+                    controller: hostCtrl,
                     label: 'IP / host',
                     hint: '192.168.1.50',
                   ),
                   const SizedBox(height: 12),
                   AppTextField(
-                    controller: _portCtrl,
+                    controller: portCtrl,
                     label: 'Port',
                     hint: '9100',
                     keyboardType: TextInputType.number,
@@ -341,7 +341,7 @@ class _PrinterDevicePickerPageState extends State<PrinterDevicePickerPage>
                   AppButton(
                     label: 'Use this network printer',
                     icon: Icons.wifi_rounded,
-                    onPressed: _selectNetwork,
+                    onPressed: selectNetwork,
                     expanded: false,
                   ),
                 ],
@@ -353,7 +353,7 @@ class _PrinterDevicePickerPageState extends State<PrinterDevicePickerPage>
     );
   }
 
-  Widget _deviceList({
+  Widget deviceList({
     required bool loading,
     required String? error,
     required Future<void> Function() emptyAction,

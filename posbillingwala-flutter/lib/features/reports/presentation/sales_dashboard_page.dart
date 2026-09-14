@@ -18,12 +18,12 @@ import 'package:pos_billingwala_v2/l10n/app_strings.dart';
 class SalesDashboardPage extends ConsumerWidget {
   const SalesDashboardPage({super.key});
 
-  double _pctChange(double current, double previous) {
+  double pctChange(double current, double previous) {
     if (previous <= 0) return current > 0 ? 100 : 0;
     return ((current - previous) / previous) * 100;
   }
 
-  Future<void> _pickPeriod(BuildContext context, WidgetRef ref) async {
+  Future<void> pickPeriod(BuildContext context, WidgetRef ref) async {
     final period = ref.read(reportPeriodProvider);
     final selected = await showModalBottomSheet<ReportPeriodKind>(
       context: context,
@@ -85,7 +85,7 @@ class SalesDashboardPage extends ConsumerWidget {
     final period = ref.watch(reportPeriodProvider);
     final summary = ref.watch(periodSalesSummaryProvider);
     final invoicesAsync = ref.watch(filteredPeriodInvoicesProvider);
-    final trendAsync = ref.watch(_last7DaysProvider);
+    final trendAsync = ref.watch(last7DaysProvider);
     final shop =
         ref.watch(authControllerProvider).session?.shopName?.trim() ?? '';
     final currency = NumberFormat.currency(locale: 'en_IN', symbol: '₹');
@@ -117,7 +117,7 @@ class SalesDashboardPage extends ConsumerWidget {
             alignment: Alignment.centerLeft,
             child: ReportPeriodPill(
               label: periodLabel,
-              onTap: () => _pickPeriod(context, ref),
+              onTap: () => pickPeriod(context, ref),
             ),
           ),
           const SizedBox(height: 14),
@@ -126,9 +126,9 @@ class SalesDashboardPage extends ConsumerWidget {
               final prev = points.length >= 2
                   ? points[points.length - 2].total
                   : 0.0;
-              final salesPct = _pctChange(summary.totalSales, prev);
+              final salesPct = pctChange(summary.totalSales, prev);
               final billsPrev = points.length >= 2 ? 1.0 : 0.0;
-              final billsPct = _pctChange(
+              final billsPct = pctChange(
                 summary.billCount.toDouble(),
                 billsPrev,
               );
@@ -320,7 +320,7 @@ class SalesDashboardPage extends ConsumerWidget {
   }
 }
 
-final _last7DaysProvider = FutureProvider<List<DailySalesPoint>>((ref) {
+final last7DaysProvider = FutureProvider<List<DailySalesPoint>>((ref) {
   // Rebuild when invoices change so chart updates after sync / new bills.
   ref.watch(todayInvoicesProvider);
   ref.watch(monthInvoicesProvider);

@@ -23,69 +23,69 @@ class BluetoothDevicePickerPage extends StatefulWidget {
 
   @override
   State<BluetoothDevicePickerPage> createState() =>
-      _BluetoothDevicePickerPageState();
+      BluetoothDevicePickerPageState();
 }
 
-class _BluetoothDevicePickerPageState extends State<BluetoothDevicePickerPage> {
-  final _hub = BluetoothPrinterHub.instance;
-  final _permissions = const AppPermissionService();
+class BluetoothDevicePickerPageState extends State<BluetoothDevicePickerPage> {
+  final hub = BluetoothPrinterHub.instance;
+  final bluetoothDevicePickerPagePermissions = const AppPermissionService();
 
-  bool _loading = true;
-  String? _error;
-  List<BluetoothInfo> _devices = const [];
+  bool loading = true;
+  String? error;
+  List<BluetoothInfo> bluetoothDevicePickerPageDevices = const [];
 
   @override
   void initState() {
     super.initState();
-    _load();
+    bluetoothDevicePickerPageLoad();
   }
 
-  Future<void> _load() async {
+  Future<void> bluetoothDevicePickerPageLoad() async {
     setState(() {
-      _loading = true;
-      _error = null;
+      loading = true;
+      error = null;
     });
     try {
-      final allowed = await _permissions.ensurePrintPermissions();
+      final allowed = await bluetoothDevicePickerPagePermissions.ensurePrintPermissions();
       if (!allowed) {
         setState(() {
-          _loading = false;
-          _error =
+          loading = false;
+          error =
               'Allow Bluetooth, nearby devices, and location to list printers.';
-          _devices = const [];
+          bluetoothDevicePickerPageDevices = const [];
         });
         return;
       }
-      if (!await _hub.isBluetoothOn()) {
+      if (!await hub.isBluetoothOn()) {
         setState(() {
-          _loading = false;
-          _error = 'Turn on Bluetooth and try again.';
-          _devices = const [];
+          loading = false;
+          error = 'Turn on Bluetooth and try again.';
+          bluetoothDevicePickerPageDevices = const [];
         });
         return;
       }
-      final list = await _hub.pairedDevices();
+      final list = await hub.pairedDevices();
       if (!mounted) return;
       setState(() {
-        _devices = list;
-        _loading = false;
+        bluetoothDevicePickerPageDevices = list;
+        loading = false;
         if (list.isEmpty) {
-          _error =
+          error =
               'No paired printers found. Pair the thermal printer in Android Bluetooth settings, then refresh.';
         }
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _loading = false;
-        _error = 'Could not load paired devices: $e';
-        _devices = const [];
+        loading = false;
+        error = 'Could not load paired devices: $e';
+        bluetoothDevicePickerPageDevices = const [];
       });
     }
   }
 
-  Future<void> _select(BluetoothInfo device) async {
-    final ok = await _hub.connect(
+  Future<void> select(BluetoothInfo device) async {
+    final ok = await hub.connect(
       widget.channel,
       address: device.macAdress,
       fromUser: true,
@@ -116,7 +116,7 @@ class _BluetoothDevicePickerPageState extends State<BluetoothDevicePickerPage> {
         actions: [
           IconButton(
             tooltip: 'Refresh',
-            onPressed: _loading ? null : _load,
+            onPressed: loading ? null : bluetoothDevicePickerPageLoad,
             icon: const AppSvg(
               AppAssets.svgRefresh,
               width: 20,
@@ -129,28 +129,28 @@ class _BluetoothDevicePickerPageState extends State<BluetoothDevicePickerPage> {
       body: Column(
         children: [
           Expanded(
-            child: _loading
+            child: loading
                 ? const AppLoadingState(message: 'Scanning paired devices…')
-                : _devices.isEmpty
+                : bluetoothDevicePickerPageDevices.isEmpty
                     ? AppErrorState(
                         title: 'No printers found',
-                        message: _error ?? 'Pair a printer and try again.',
-                        onRetry: _load,
+                        message: error ?? 'Pair a printer and try again.',
+                        onRetry: bluetoothDevicePickerPageLoad,
                       )
                     : ListView.separated(
                         padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                        itemCount: _devices.length,
+                        itemCount: bluetoothDevicePickerPageDevices.length,
                         separatorBuilder: (_, _) => const SizedBox(height: 8),
                         itemBuilder: (context, index) {
-                          final d = _devices[index];
+                          final d = bluetoothDevicePickerPageDevices[index];
                           final connected =
-                              _hub.connectedAddress == d.macAdress;
+                              hub.connectedAddress == d.macAdress;
                           return AppCard(
                             accentColor: connected
                                 ? AppColors.success
                                 : AppColors.primary,
                             padding: EdgeInsets.zero,
-                            onTap: () => _select(d),
+                            onTap: () => select(d),
                             child: ListTile(
                               leading: AppModuleIcon(
                                 svgPath: AppAssets.svgPrint,

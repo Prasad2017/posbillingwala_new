@@ -29,7 +29,7 @@ class ReceiptRasterizer {
     bool useAssetLogoFallback = false,
   }) async {
     final width = widthPxFor(settings.paperSize);
-    final rendered = await _render(
+    final rendered = await render(
       text,
       width,
       qrPayload: qrPayload,
@@ -51,7 +51,7 @@ class ReceiptRasterizer {
     return out.bytes;
   }
 
-  Future<_RenderedImage> _render(
+  Future<RenderedImage> render(
     String text,
     int widthPx, {
     String? qrPayload,
@@ -59,7 +59,7 @@ class ReceiptRasterizer {
     String? qrMarker,
     bool useAssetLogoFallback = false,
   }) async {
-    final logoImage = await _loadLogo(
+    final logoImage = await loadLogo(
       logoPath: logoPath,
       widthPx: widthPx,
       useAssetLogoFallback: useAssetLogoFallback,
@@ -149,7 +149,7 @@ class ReceiptRasterizer {
     y += topPainter.height + 8;
 
     if (drawQr) {
-      _drawQr(
+      receiptRasterizerDrawQr(
         canvas,
         qrData,
         left: (widthPx - qrSize) / 2,
@@ -166,20 +166,20 @@ class ReceiptRasterizer {
     final byteData = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
     image.dispose();
     if (byteData == null) {
-      return _RenderedImage(
+      return RenderedImage(
         rgba: Uint8List(widthPx * height * 4),
         width: widthPx,
         height: height,
       );
     }
-    return _RenderedImage(
+    return RenderedImage(
       rgba: byteData.buffer.asUint8List(),
       width: widthPx,
       height: height,
     );
   }
 
-  Future<ui.Image?> _loadLogo({
+  Future<ui.Image?> loadLogo({
     required String? logoPath,
     required int widthPx,
     required bool useAssetLogoFallback,
@@ -191,25 +191,25 @@ class ReceiptRasterizer {
         final file = File(filePath);
         if (await file.exists()) {
           final bytes = await file.readAsBytes();
-          return await _decodeImage(bytes, targetWidth);
+          return await decodeImage(bytes, targetWidth);
         }
       } catch (_) {}
     }
     if (!useAssetLogoFallback) return null;
     try {
       final data = await rootBundle.load(AppAssets.receiptLogo);
-      return await _decodeImage(data.buffer.asUint8List(), targetWidth);
+      return await decodeImage(data.buffer.asUint8List(), targetWidth);
     } catch (_) {
       try {
         final data = await rootBundle.load(AppAssets.appLogo);
-        return await _decodeImage(data.buffer.asUint8List(), targetWidth);
+        return await decodeImage(data.buffer.asUint8List(), targetWidth);
       } catch (_) {
         return null;
       }
     }
   }
 
-  Future<ui.Image?> _decodeImage(Uint8List bytes, int targetWidth) async {
+  Future<ui.Image?> decodeImage(Uint8List bytes, int targetWidth) async {
     final codec = await ui.instantiateImageCodec(
       bytes,
       targetWidth: targetWidth,
@@ -218,7 +218,7 @@ class ReceiptRasterizer {
     return frame.image;
   }
 
-  void _drawQr(
+  void receiptRasterizerDrawQr(
     Canvas canvas,
     String data, {
     required double left,
@@ -245,8 +245,8 @@ class ReceiptRasterizer {
   }
 }
 
-class _RenderedImage {
-  const _RenderedImage({
+class RenderedImage {
+  const RenderedImage({
     required this.rgba,
     required this.width,
     required this.height,

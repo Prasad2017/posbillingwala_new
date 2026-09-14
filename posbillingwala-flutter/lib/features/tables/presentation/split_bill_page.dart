@@ -24,23 +24,23 @@ class SplitBillPage extends ConsumerStatefulWidget {
   final int sessionId;
 
   @override
-  ConsumerState<SplitBillPage> createState() => _SplitBillPageState();
+  ConsumerState<SplitBillPage> createState() => SplitBillPageState();
 }
 
-class _SplitBillPageState extends ConsumerState<SplitBillPage> {
-  int _tab = 0; // 0 equal, 1 items, 2 amount
-  int _equalParts = 2;
-  final _amountCtrl = TextEditingController();
-  final _selected = <int>{};
-  bool _busy = false;
+class SplitBillPageState extends ConsumerState<SplitBillPage> {
+  int tab = 0; // 0 equal, 1 items, 2 amount
+  int equalParts = 2;
+  final amountCtrl = TextEditingController();
+  final splitBillPageSelected = <int>{};
+  bool busy = false;
 
   @override
   void dispose() {
-    _amountCtrl.dispose();
+    amountCtrl.dispose();
     super.dispose();
   }
 
-  double _cartTotal(List<CartItem> items) {
+  double cartTotal(List<CartItem> items) {
     var t = 0.0;
     for (final i in items) {
       t += i.unitPrice * i.quantity * (1 + i.gstPercent / 100);
@@ -48,9 +48,9 @@ class _SplitBillPageState extends ConsumerState<SplitBillPage> {
     return double.parse(t.toStringAsFixed(2));
   }
 
-  Future<void> _recordShares(List<double> shares) async {
+  Future<void> recordShares(List<double> shares) async {
     if (shares.isEmpty) return;
-    setState(() => _busy = true);
+    setState(() => busy = true);
     try {
       final db = ref.read(appDatabaseProvider);
       for (final share in shares) {
@@ -70,11 +70,11 @@ class _SplitBillPageState extends ConsumerState<SplitBillPage> {
       );
       Navigator.pop(context, true);
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) setState(() => busy = false);
     }
   }
 
-  List<double> _equalShares(double total, int parts) {
+  List<double> equalShares(double total, int parts) {
     if (parts < 2) return [total];
     final paise = (total * 100).round();
     final base = paise ~/ parts;
@@ -97,7 +97,7 @@ class _SplitBillPageState extends ConsumerState<SplitBillPage> {
         data: (all) {
           final items =
               all.where((e) => e.cartScope == widget.tableNumber).toList();
-          final total = _cartTotal(items);
+          final total = cartTotal(items);
           return Column(
             children: [
               Padding(
@@ -130,15 +130,15 @@ class _SplitBillPageState extends ConsumerState<SplitBillPage> {
                     ButtonSegment(value: 1, label: Text('By item')),
                     ButtonSegment(value: 2, label: Text('By amount')),
                   ],
-                  selected: {_tab},
-                  onSelectionChanged: (v) => setState(() => _tab = v.first),
+                  selected: {tab},
+                  onSelectionChanged: (v) => setState(() => tab = v.first),
                 ),
               ),
               Expanded(
-                child: switch (_tab) {
-                  1 => _byItem(items, currency),
-                  2 => _byAmount(total, currency),
-                  _ => _equal(total, currency),
+                child: switch (tab) {
+                  1 => byItem(items, currency),
+                  2 => byAmount(total, currency),
+                  _ => splitBillPageEqual(total, currency),
                 },
               ),
             ],
@@ -151,8 +151,8 @@ class _SplitBillPageState extends ConsumerState<SplitBillPage> {
     );
   }
 
-  Widget _equal(double total, NumberFormat currency) {
-    final shares = _equalShares(total, _equalParts);
+  Widget splitBillPageEqual(double total, NumberFormat currency) {
+    final shares = equalShares(total, equalParts);
     return ResponsiveScrollShell(
         dashboard: true,
         child: ListView(
@@ -167,19 +167,19 @@ class _SplitBillPageState extends ConsumerState<SplitBillPage> {
             const Text('Number of shares'),
             const Spacer(),
             IconButton(
-              onPressed: _equalParts <= 2
+              onPressed: equalParts <= 2
                   ? null
-                  : () => setState(() => _equalParts--),
+                  : () => setState(() => equalParts--),
               icon: const Icon(Icons.remove_circle_outline),
             ),
             Text(
-              '$_equalParts',
+              '$equalParts',
               style: const TextStyle(fontWeight: FontWeight.w800),
             ),
             IconButton(
-              onPressed: _equalParts >= 20
+              onPressed: equalParts >= 20
                   ? null
-                  : () => setState(() => _equalParts++),
+                  : () => setState(() => equalParts++),
               icon: const Icon(Icons.add_circle_outline),
             ),
           ],
@@ -198,15 +198,15 @@ class _SplitBillPageState extends ConsumerState<SplitBillPage> {
         const SizedBox(height: 16),
         AppButton(
             label: 'Record equal shares',
-            isLoading: _busy || total <= 0,
-            onPressed: () => _recordShares(shares),
+            isLoading: busy || total <= 0,
+            onPressed: () => recordShares(shares),
           ),
       ],
     ),
       );
   }
 
-  Widget _byItem(List<CartItem> items, NumberFormat currency) {
+  Widget byItem(List<CartItem> items, NumberFormat currency) {
     if (items.length < 2) {
       return const Center(
         child: Text('Need at least 2 cart lines to split by item'),
@@ -214,7 +214,7 @@ class _SplitBillPageState extends ConsumerState<SplitBillPage> {
     }
     double sumSelected() {
       var t = 0.0;
-      for (final i in _selected) {
+      for (final i in splitBillPageSelected) {
         if (i < 0 || i >= items.length) continue;
         final it = items[i];
         t += it.unitPrice * it.quantity * (1 + it.gstPercent / 100);
@@ -222,7 +222,7 @@ class _SplitBillPageState extends ConsumerState<SplitBillPage> {
       return double.parse(t.toStringAsFixed(2));
     }
 
-    final total = _cartTotal(items);
+    final total = cartTotal(items);
     final bill1 = sumSelected();
     final bill2 = double.parse((total - bill1).toStringAsFixed(2));
 
@@ -236,15 +236,15 @@ class _SplitBillPageState extends ConsumerState<SplitBillPage> {
           final line =
               it.unitPrice * it.quantity * (1 + it.gstPercent / 100);
           return CheckboxListTile(
-            value: _selected.contains(e.key),
+            value: splitBillPageSelected.contains(e.key),
             title: Text(it.productName),
             subtitle: Text('Qty ${it.quantity}'),
             secondary: Text(currency.format(line)),
             onChanged: (on) => setState(() {
               if (on == true) {
-                _selected.add(e.key);
+                splitBillPageSelected.add(e.key);
               } else {
-                _selected.remove(e.key);
+                splitBillPageSelected.remove(e.key);
               }
             }),
           );
@@ -260,27 +260,27 @@ class _SplitBillPageState extends ConsumerState<SplitBillPage> {
         ),
         AppButton(
             label: 'Record 2 shares',
-            isLoading: _busy,
-            onPressed: _busy ||
-                  _selected.isEmpty ||
-                  _selected.length == items.length ||
+            isLoading: busy,
+            onPressed: busy ||
+                  splitBillPageSelected.isEmpty ||
+                  splitBillPageSelected.length == items.length ||
                   bill1 <= 0 ||
                   bill2 <= 0
               ? null
-              : () => _recordShares([bill1, bill2]),
+              : () => recordShares([bill1, bill2]),
           ),
       ],
     );
   }
 
-  Widget _byAmount(double total, NumberFormat currency) {
+  Widget byAmount(double total, NumberFormat currency) {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
       children: [
         Text('Enter share amounts separated by commas (must sum to ${currency.format(total)})'),
         const SizedBox(height: 12),
         AppTextField(
-                      controller: _amountCtrl,
+                      controller: amountCtrl,
                       label: 'e.g. 200, 150, 50',
                       keyboardType: TextInputType.text,
                       inputFormatters: [
@@ -290,9 +290,9 @@ class _SplitBillPageState extends ConsumerState<SplitBillPage> {
         const SizedBox(height: 16),
         AppButton(
             label: 'Record amount shares',
-            isLoading: _busy,
+            isLoading: busy,
             onPressed: () {
-                  final parts = _amountCtrl.text
+                  final parts = amountCtrl.text
                       .split(',')
                       .map((e) => double.tryParse(e.trim()) ?? 0)
                       .where((e) => e > 0)
@@ -316,7 +316,7 @@ class _SplitBillPageState extends ConsumerState<SplitBillPage> {
                     );
                     return;
                   }
-                  _recordShares(parts);
+                  recordShares(parts);
                 },
           ),
       ],

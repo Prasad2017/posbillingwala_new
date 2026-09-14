@@ -5,16 +5,16 @@ import 'package:pos_billingwala_v2/features/auth/data/device_identity_service.da
 import 'package:pos_billingwala_v2/core/constants/api_constants.dart';
 
 class FcmApi {
-  FcmApi(this._client);
+  FcmApi(this.client);
 
-  final ApiClient _client;
+  final ApiClient client;
 
   Future<bool> registerToken({
     required String userId,
     required String deviceId,
     required String fcmToken,
   }) async {
-    final response = await _client.dio.post<dynamic>(
+    final response = await client.dio.post<dynamic>(
       ApiEndpoints.registerFcmToken,
       data: FormData.fromMap({
         'userId': userId,

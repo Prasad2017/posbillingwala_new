@@ -26,214 +26,214 @@ class CompanySettingsPage extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<CompanySettingsPage> createState() =>
-      _CompanySettingsPageState();
+      CompanySettingsPageState();
 }
 
-class _CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
-  late final TextEditingController _companyName;
-  late final TextEditingController _shopName1;
-  late final TextEditingController _shopName2;
-  late final TextEditingController _cashierName;
-  late final TextEditingController _companyMobile;
-  late final TextEditingController _companyAddress;
-  late final TextEditingController _addressLine1;
-  late final TextEditingController _addressLine2;
-  late final TextEditingController _addressLine3;
-  late final TextEditingController _phoneNo1;
-  late final TextEditingController _phoneNo2;
-  late final TextEditingController _gstNumber;
-  late final TextEditingController _panNumber;
-  late final TextEditingController _companyFssis;
-  late final TextEditingController _shopCgst;
-  late final TextEditingController _shopSgst;
-  late final TextEditingController _currencyName;
-  late final TextEditingController _countryName;
-  late final TextEditingController _stateName;
-  late final TextEditingController _noOfTable;
-  late final TextEditingController _paymentLogo;
-  late final TextEditingController _openingMinutes;
-  late final TextEditingController _closingMinutes;
-  bool _gstEnabled = false;
-  bool _useTable = true;
-  bool _busy = false;
-  String _logoPath = '';
+class CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
+  late final TextEditingController companySettingsPageCompanyName;
+  late final TextEditingController companySettingsPageShopName1;
+  late final TextEditingController companySettingsPageShopName2;
+  late final TextEditingController companySettingsPageCashierName;
+  late final TextEditingController companySettingsPageCompanyMobile;
+  late final TextEditingController companySettingsPageCompanyAddress;
+  late final TextEditingController companySettingsPageAddressLine1;
+  late final TextEditingController companySettingsPageAddressLine2;
+  late final TextEditingController companySettingsPageAddressLine3;
+  late final TextEditingController companySettingsPagePhoneNo1;
+  late final TextEditingController companySettingsPagePhoneNo2;
+  late final TextEditingController companySettingsPageGstNumber;
+  late final TextEditingController companySettingsPagePanNumber;
+  late final TextEditingController companySettingsPageCompanyFssis;
+  late final TextEditingController companySettingsPageShopCgst;
+  late final TextEditingController companySettingsPageShopSgst;
+  late final TextEditingController companySettingsPageCurrencyName;
+  late final TextEditingController companySettingsPageCountryName;
+  late final TextEditingController companySettingsPageStateName;
+  late final TextEditingController companySettingsPageNoOfTable;
+  late final TextEditingController companySettingsPagePaymentLogo;
+  late final TextEditingController companySettingsPageOpeningMinutes;
+  late final TextEditingController companySettingsPageClosingMinutes;
+  bool gstEnabled = false;
+  bool useTable = true;
+  bool busy = false;
+  String logoPath = '';
 
   @override
   void initState() {
     super.initState();
     final shop = ref.read(authControllerProvider).session?.shopName ?? '';
     final profile = ref.read(shopReceiptProfileProvider);
-    _companyName = TextEditingController(text: shop);
-    _shopName1 = TextEditingController();
-    _shopName2 = TextEditingController();
-    _cashierName = TextEditingController();
-    _companyMobile = TextEditingController();
-    _companyAddress = TextEditingController();
-    _addressLine1 = TextEditingController();
-    _addressLine2 = TextEditingController();
-    _addressLine3 = TextEditingController();
-    _phoneNo1 = TextEditingController();
-    _phoneNo2 = TextEditingController();
-    _gstNumber = TextEditingController();
-    _panNumber = TextEditingController();
-    _companyFssis = TextEditingController();
-    _shopCgst = TextEditingController(text: '0');
-    _shopSgst = TextEditingController(text: '0');
-    _currencyName = TextEditingController(text: 'INR');
-    _countryName = TextEditingController(text: 'India');
-    _stateName = TextEditingController();
-    _noOfTable = TextEditingController();
-    _paymentLogo = TextEditingController();
-    _openingMinutes = TextEditingController();
-    _closingMinutes = TextEditingController();
-    _logoPath = profile.logoLocalPath;
-    Future.microtask(_load);
+    companySettingsPageCompanyName = TextEditingController(text: shop);
+    companySettingsPageShopName1 = TextEditingController();
+    companySettingsPageShopName2 = TextEditingController();
+    companySettingsPageCashierName = TextEditingController();
+    companySettingsPageCompanyMobile = TextEditingController();
+    companySettingsPageCompanyAddress = TextEditingController();
+    companySettingsPageAddressLine1 = TextEditingController();
+    companySettingsPageAddressLine2 = TextEditingController();
+    companySettingsPageAddressLine3 = TextEditingController();
+    companySettingsPagePhoneNo1 = TextEditingController();
+    companySettingsPagePhoneNo2 = TextEditingController();
+    companySettingsPageGstNumber = TextEditingController();
+    companySettingsPagePanNumber = TextEditingController();
+    companySettingsPageCompanyFssis = TextEditingController();
+    companySettingsPageShopCgst = TextEditingController(text: '0');
+    companySettingsPageShopSgst = TextEditingController(text: '0');
+    companySettingsPageCurrencyName = TextEditingController(text: 'INR');
+    companySettingsPageCountryName = TextEditingController(text: 'India');
+    companySettingsPageStateName = TextEditingController();
+    companySettingsPageNoOfTable = TextEditingController();
+    companySettingsPagePaymentLogo = TextEditingController();
+    companySettingsPageOpeningMinutes = TextEditingController();
+    companySettingsPageClosingMinutes = TextEditingController();
+    logoPath = profile.logoLocalPath;
+    Future.microtask(load);
   }
 
   @override
   void dispose() {
-    _companyName.dispose();
-    _shopName1.dispose();
-    _shopName2.dispose();
-    _cashierName.dispose();
-    _companyMobile.dispose();
-    _companyAddress.dispose();
-    _addressLine1.dispose();
-    _addressLine2.dispose();
-    _addressLine3.dispose();
-    _phoneNo1.dispose();
-    _phoneNo2.dispose();
-    _gstNumber.dispose();
-    _panNumber.dispose();
-    _companyFssis.dispose();
-    _shopCgst.dispose();
-    _shopSgst.dispose();
-    _currencyName.dispose();
-    _countryName.dispose();
-    _stateName.dispose();
-    _noOfTable.dispose();
-    _paymentLogo.dispose();
-    _openingMinutes.dispose();
-    _closingMinutes.dispose();
+    companySettingsPageCompanyName.dispose();
+    companySettingsPageShopName1.dispose();
+    companySettingsPageShopName2.dispose();
+    companySettingsPageCashierName.dispose();
+    companySettingsPageCompanyMobile.dispose();
+    companySettingsPageCompanyAddress.dispose();
+    companySettingsPageAddressLine1.dispose();
+    companySettingsPageAddressLine2.dispose();
+    companySettingsPageAddressLine3.dispose();
+    companySettingsPagePhoneNo1.dispose();
+    companySettingsPagePhoneNo2.dispose();
+    companySettingsPageGstNumber.dispose();
+    companySettingsPagePanNumber.dispose();
+    companySettingsPageCompanyFssis.dispose();
+    companySettingsPageShopCgst.dispose();
+    companySettingsPageShopSgst.dispose();
+    companySettingsPageCurrencyName.dispose();
+    companySettingsPageCountryName.dispose();
+    companySettingsPageStateName.dispose();
+    companySettingsPageNoOfTable.dispose();
+    companySettingsPagePaymentLogo.dispose();
+    companySettingsPageOpeningMinutes.dispose();
+    companySettingsPageClosingMinutes.dispose();
     super.dispose();
   }
 
-  CompanyDto _buildDto() {
-    final shop1 = _shopName1.text.trim();
-    final phone1 = _phoneNo1.text.trim();
+  CompanyDto buildDto() {
+    final shop1 = companySettingsPageShopName1.text.trim();
+    final phone1 = companySettingsPagePhoneNo1.text.trim();
     final address = [
-      _addressLine1.text.trim(),
-      _addressLine2.text.trim(),
-      _addressLine3.text.trim(),
+      companySettingsPageAddressLine1.text.trim(),
+      companySettingsPageAddressLine2.text.trim(),
+      companySettingsPageAddressLine3.text.trim(),
     ].where((e) => e.isNotEmpty).join(', ');
     return CompanyDto(
-      companyName: shop1.isNotEmpty ? shop1 : _companyName.text.trim(),
+      companyName: shop1.isNotEmpty ? shop1 : companySettingsPageCompanyName.text.trim(),
       shopName1: shop1,
-      shopName2: _shopName2.text.trim(),
-      cashierName: _cashierName.text.trim(),
-      companyMobile: phone1.isNotEmpty ? phone1 : _companyMobile.text.trim(),
+      shopName2: companySettingsPageShopName2.text.trim(),
+      cashierName: companySettingsPageCashierName.text.trim(),
+      companyMobile: phone1.isNotEmpty ? phone1 : companySettingsPageCompanyMobile.text.trim(),
       companyAddress:
-          address.isNotEmpty ? address : _companyAddress.text.trim(),
-      addressLine1: _addressLine1.text.trim(),
-      addressLine2: _addressLine2.text.trim(),
-      addressLine3: _addressLine3.text.trim(),
+          address.isNotEmpty ? address : companySettingsPageCompanyAddress.text.trim(),
+      addressLine1: companySettingsPageAddressLine1.text.trim(),
+      addressLine2: companySettingsPageAddressLine2.text.trim(),
+      addressLine3: companySettingsPageAddressLine3.text.trim(),
       phoneNo1: phone1,
-      phoneNo2: _phoneNo2.text.trim(),
-      gstStatus: _gstEnabled ? '1' : '0',
-      gstNumber: _gstNumber.text.trim(),
-      panNumber: _panNumber.text.trim(),
-      companyFssis: _companyFssis.text.trim(),
-      shopCgst: _shopCgst.text.trim(),
-      shopSgst: _shopSgst.text.trim(),
-      currencyName: _currencyName.text.trim(),
-      countryName: _countryName.text.trim(),
-      stateName: _stateName.text.trim(),
-      noOfTable: _noOfTable.text.trim(),
-      tableStatus: _useTable ? '1' : '0',
-      paymentLogo: _paymentLogo.text.trim(),
-      openingMinutes: _openingMinutes.text.trim(),
-      closingMinutes: _closingMinutes.text.trim(),
+      phoneNo2: companySettingsPagePhoneNo2.text.trim(),
+      gstStatus: gstEnabled ? '1' : '0',
+      gstNumber: companySettingsPageGstNumber.text.trim(),
+      panNumber: companySettingsPagePanNumber.text.trim(),
+      companyFssis: companySettingsPageCompanyFssis.text.trim(),
+      shopCgst: companySettingsPageShopCgst.text.trim(),
+      shopSgst: companySettingsPageShopSgst.text.trim(),
+      currencyName: companySettingsPageCurrencyName.text.trim(),
+      countryName: companySettingsPageCountryName.text.trim(),
+      stateName: companySettingsPageStateName.text.trim(),
+      noOfTable: companySettingsPageNoOfTable.text.trim(),
+      tableStatus: useTable ? '1' : '0',
+      paymentLogo: companySettingsPagePaymentLogo.text.trim(),
+      openingMinutes: companySettingsPageOpeningMinutes.text.trim(),
+      closingMinutes: companySettingsPageClosingMinutes.text.trim(),
     );
   }
 
-  void _applyDto(CompanyDto c) {
-    _companyName.text = c.companyName;
-    _shopName1.text = c.shopName1 ?? '';
-    _shopName2.text = c.shopName2 ?? '';
-    _cashierName.text = c.cashierName ?? '';
-    _companyMobile.text = c.companyMobile ?? '';
-    _companyAddress.text = c.companyAddress ?? '';
-    _addressLine1.text = c.addressLine1 ?? '';
-    _addressLine2.text = c.addressLine2 ?? '';
-    _addressLine3.text = c.addressLine3 ?? '';
-    _phoneNo1.text = c.phoneNo1 ?? '';
-    _phoneNo2.text = c.phoneNo2 ?? '';
-    _gstEnabled = c.gstStatus == '1' || c.gstStatus?.toLowerCase() == 'true';
-    _gstNumber.text = c.gstNumber ?? '';
-    _panNumber.text = c.panNumber ?? '';
-    _companyFssis.text = c.companyFssis ?? '';
-    _shopCgst.text = c.shopCgst ?? '0';
-    _shopSgst.text = c.shopSgst ?? '0';
-    _currencyName.text = c.currencyName ?? 'INR';
-    _countryName.text = c.countryName ?? 'India';
-    _stateName.text = c.stateName ?? '';
-    _noOfTable.text = c.noOfTable ?? '';
-    _useTable = c.tableStatus == null ||
+  void applyDto(CompanyDto c) {
+    companySettingsPageCompanyName.text = c.companyName;
+    companySettingsPageShopName1.text = c.shopName1 ?? '';
+    companySettingsPageShopName2.text = c.shopName2 ?? '';
+    companySettingsPageCashierName.text = c.cashierName ?? '';
+    companySettingsPageCompanyMobile.text = c.companyMobile ?? '';
+    companySettingsPageCompanyAddress.text = c.companyAddress ?? '';
+    companySettingsPageAddressLine1.text = c.addressLine1 ?? '';
+    companySettingsPageAddressLine2.text = c.addressLine2 ?? '';
+    companySettingsPageAddressLine3.text = c.addressLine3 ?? '';
+    companySettingsPagePhoneNo1.text = c.phoneNo1 ?? '';
+    companySettingsPagePhoneNo2.text = c.phoneNo2 ?? '';
+    gstEnabled = c.gstStatus == '1' || c.gstStatus?.toLowerCase() == 'true';
+    companySettingsPageGstNumber.text = c.gstNumber ?? '';
+    companySettingsPagePanNumber.text = c.panNumber ?? '';
+    companySettingsPageCompanyFssis.text = c.companyFssis ?? '';
+    companySettingsPageShopCgst.text = c.shopCgst ?? '0';
+    companySettingsPageShopSgst.text = c.shopSgst ?? '0';
+    companySettingsPageCurrencyName.text = c.currencyName ?? 'INR';
+    companySettingsPageCountryName.text = c.countryName ?? 'India';
+    companySettingsPageStateName.text = c.stateName ?? '';
+    companySettingsPageNoOfTable.text = c.noOfTable ?? '';
+    useTable = c.tableStatus == null ||
         c.tableStatus == '1' ||
         c.tableStatus?.toLowerCase() == 'true';
-    _paymentLogo.text = c.paymentLogo ?? '';
-    _openingMinutes.text = c.openingMinutes ?? '';
-    _closingMinutes.text = c.closingMinutes ?? '';
+    companySettingsPagePaymentLogo.text = c.paymentLogo ?? '';
+    companySettingsPageOpeningMinutes.text = c.openingMinutes ?? '';
+    companySettingsPageClosingMinutes.text = c.closingMinutes ?? '';
   }
 
-  Future<void> _load() async {
+  Future<void> load() async {
     final userId = ref.read(authControllerProvider).session?.userId;
     if (userId == null || userId.isEmpty) return;
-    setState(() => _busy = true);
+    setState(() => busy = true);
     try {
       final db = ref.read(appDatabaseProvider);
       final local = await db.getLocalCompany();
       if (local != null && mounted) {
-        setState(() => _applyDto(_companyRowToDto(local)));
+        setState(() => applyDto(companyRowToDto(local)));
       } else {
         final profile = ref.read(shopReceiptProfileProvider);
         if (mounted && profile.companyName.isNotEmpty) {
           setState(() {
-            _companyName.text = profile.companyName;
-            _shopName1.text = profile.shopName1;
-            _addressLine1.text = profile.addressLine1;
-            _phoneNo1.text = profile.phoneNo1;
-            _gstNumber.text = profile.gstNumber;
-            _logoPath = profile.logoLocalPath;
+            companySettingsPageCompanyName.text = profile.companyName;
+            companySettingsPageShopName1.text = profile.shopName1;
+            companySettingsPageAddressLine1.text = profile.addressLine1;
+            companySettingsPagePhoneNo1.text = profile.phoneNo1;
+            companySettingsPageGstNumber.text = profile.gstNumber;
+            logoPath = profile.logoLocalPath;
           });
         }
       }
 
       if (!await ensureOnline()) {
         final profile = ref.read(shopReceiptProfileProvider);
-        if (mounted) setState(() => _logoPath = profile.logoLocalPath);
+        if (mounted) setState(() => logoPath = profile.logoLocalPath);
         return;
       }
 
       final api = CompanyApi(ref.read(apiClientProvider));
       final companies = await api.getCompanyList(userId);
       if (companies.isNotEmpty && mounted) {
-        setState(() => _applyDto(companies.first));
+        setState(() => applyDto(companies.first));
         await db.upsertLocalCompany(companies.first);
         await ref
             .read(shopReceiptProfileProvider.notifier)
             .saveFromCompany(companies.first);
         final profile = ref.read(shopReceiptProfileProvider);
-        setState(() => _logoPath = profile.logoLocalPath);
+        setState(() => logoPath = profile.logoLocalPath);
       }
     } catch (_) {
       // Keep local / profile fields.
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) setState(() => busy = false);
     }
   }
 
-  CompanyDto _companyRowToDto(Company c) {
+  CompanyDto companyRowToDto(Company c) {
     return CompanyDto(
       companyId: c.companyId,
       companyName: c.companyName ?? '',
@@ -266,7 +266,7 @@ class _CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
     );
   }
 
-  Future<void> _pickLogo(ImageSource source) async {
+  Future<void> pickLogo(ImageSource source) async {
     final picked = await ImagePicker().pickImage(
       source: source,
       maxWidth: 800,
@@ -279,13 +279,13 @@ class _CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
     await File(picked.path).copy(dest.path);
     await ref.read(shopReceiptProfileProvider.notifier).saveLogoPath(dest.path);
     if (!mounted) return;
-    setState(() => _logoPath = dest.path);
+    setState(() => logoPath = dest.path);
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Shop logo saved for bills')),
     );
   }
 
-  Future<void> _save() async {
+  Future<void> companySettingsPageSave() async {
     final userId = ref.read(authControllerProvider).session?.userId;
     if (userId == null || userId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -300,10 +300,10 @@ class _CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
       );
       return;
     }
-    setState(() => _busy = true);
+    setState(() => busy = true);
     try {
       final db = ref.read(appDatabaseProvider);
-      final dto = _buildDto();
+      final dto = buildDto();
       var ok = false;
       if (await isDeviceOnline()) {
         try {
@@ -317,10 +317,10 @@ class _CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
       }
       await db.upsertLocalCompany(dto);
       await ref.read(shopReceiptProfileProvider.notifier).saveFromCompany(dto);
-      if (_logoPath.isNotEmpty) {
+      if (logoPath.isNotEmpty) {
         await ref
             .read(shopReceiptProfileProvider.notifier)
-            .saveLogoPath(_logoPath);
+            .saveLogoPath(logoPath);
       }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -338,11 +338,11 @@ class _CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) setState(() => busy = false);
     }
   }
 
-  Widget _field(
+  Widget field(
     TextEditingController c,
     String label, {
     TextInputType? keyboardType,
@@ -394,7 +394,7 @@ class _CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
     );
   }
 
-  Widget _section({
+  Widget section({
     required String title,
     required List<Widget> children,
   }) {
@@ -418,7 +418,7 @@ class _CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
     );
   }
 
-  Widget _toggleRow({
+  Widget toggleRow({
     required String label,
     required bool value,
     required ValueChanged<bool> onChanged,
@@ -446,7 +446,7 @@ class _CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
     );
   }
 
-  Widget _currencyDropdown() {
+  Widget currencyDropdown() {
     const defaults = [
       'INR',
       'USD',
@@ -463,7 +463,7 @@ class _CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
       'LKR',
     ];
     final current =
-        _currencyName.text.trim().isEmpty ? 'INR' : _currencyName.text.trim();
+        companySettingsPageCurrencyName.text.trim().isEmpty ? 'INR' : companySettingsPageCurrencyName.text.trim();
     final options = {
       ...defaults,
       if (current.isNotEmpty) current,
@@ -475,16 +475,16 @@ class _CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
       enableSearch: true,
       options: options,
       onChanged: (v) {
-        if (v != null) setState(() => _currencyName.text = v);
+        if (v != null) setState(() => companySettingsPageCurrencyName.text = v);
       },
     );
   }
 
-  Widget _logoCard() {
-    final logoFile = _logoPath.isNotEmpty ? File(_logoPath) : null;
+  Widget logoCard() {
+    final logoFile = logoPath.isNotEmpty ? File(logoPath) : null;
     final hasLogo = logoFile != null && logoFile.existsSync();
 
-    return _section(
+    return section(
       title: 'Branding',
       children: [
         AspectRatio(
@@ -496,7 +496,7 @@ class _CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(MasterUi.fieldRadius),
                 child: InkWell(
-                  onTap: _busy ? null : () => _pickLogo(ImageSource.gallery),
+                  onTap: busy ? null : () => pickLogo(ImageSource.gallery),
                   borderRadius: BorderRadius.circular(MasterUi.fieldRadius),
                   child: Ink(
                     decoration: BoxDecoration(
@@ -529,7 +529,7 @@ class _CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
                   child: InkWell(
                     customBorder: const CircleBorder(),
                     onTap:
-                        _busy ? null : () => _pickLogo(ImageSource.gallery),
+                        busy ? null : () => pickLogo(ImageSource.gallery),
                     child: const SizedBox(
                       width: 40,
                       height: 40,
@@ -607,70 +607,70 @@ class _CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
                       28,
                     ),
                     children: [
-                    _logoCard(),
+                    logoCard(),
                     const SizedBox(height: 18),
-                    _section(
+                    section(
                       title: 'Shop Identity',
                       children: [
-                        _field(_shopName1, 'Shop Name 1'),
-                        _field(_shopName2, 'Shop Name 2'),
-                        _field(_addressLine1, 'Address Line 1'),
-                        _field(_addressLine2, 'Address Line 2'),
-                        _field(_addressLine3, 'Address Line 3'),
+                        field(companySettingsPageShopName1, 'Shop Name 1'),
+                        field(companySettingsPageShopName2, 'Shop Name 2'),
+                        field(companySettingsPageAddressLine1, 'Address Line 1'),
+                        field(companySettingsPageAddressLine2, 'Address Line 2'),
+                        field(companySettingsPageAddressLine3, 'Address Line 3'),
                       ],
                     ),
                     const SizedBox(height: 18),
-                    _section(
+                    section(
                       title: 'Contact',
                       children: [
-                        _field(
-                          _phoneNo1,
+                        field(
+                          companySettingsPagePhoneNo1,
                           'Phone No. 1',
                           keyboardType: TextInputType.phone,
                         ),
-                        _field(
-                          _phoneNo2,
+                        field(
+                          companySettingsPagePhoneNo2,
                           'Phone No. 2',
                           keyboardType: TextInputType.phone,
                         ),
-                        _field(_cashierName, 'Cashier Name'),
+                        field(companySettingsPageCashierName, 'Cashier Name'),
                       ],
                     ),
                     const SizedBox(height: 18),
-                    _section(
+                    section(
                       title: 'Operations',
                       children: [
-                        _currencyDropdown(),
-                        _toggleRow(
+                        currencyDropdown(),
+                        toggleRow(
                           label: 'Use Table',
-                          value: _useTable,
-                          onChanged: (v) => setState(() => _useTable = v),
+                          value: useTable,
+                          onChanged: (v) => setState(() => useTable = v),
                         ),
-                        if (_useTable)
-                          _field(
-                            _noOfTable,
+                        if (useTable)
+                          field(
+                            companySettingsPageNoOfTable,
                             'No of Table',
                             keyboardType: TextInputType.number,
                           ),
                       ],
                     ),
                     const SizedBox(height: 18),
-                    _section(
+                    section(
                       title: 'Tax & Compliance',
                       children: [
-                        _field(_countryName, 'Country Name'),
-                        _field(_stateName, 'State Name'),
-                        _toggleRow(
+                        field(companySettingsPageCountryName, 'Country Name'),
+                        field(companySettingsPageStateName, 'State Name'),
+                        toggleRow(
                           label: 'GST',
-                          value: _gstEnabled,
-                          onChanged: (v) => setState(() => _gstEnabled = v),
+                          value: gstEnabled,
+                          onChanged: (v) => setState(() => gstEnabled = v),
                         ),
-                        _field(_gstNumber, 'GST Number'),
+                        field(companySettingsPageGstNumber, 'GST Number'),
                         Row(
                           children: [
                             Expanded(
-                              child: _field(
-                                _shopCgst,
+                              child: field(
+                                companySettingsPageShopCgst,
                                 'Shop CGST',
                                 keyboardType:
                                     const TextInputType.numberWithOptions(
@@ -680,8 +680,8 @@ class _CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
                             ),
                             const SizedBox(width: 10),
                             Expanded(
-                              child: _field(
-                                _shopSgst,
+                              child: field(
+                                companySettingsPageShopSgst,
                                 'Shop SGST',
                                 keyboardType:
                                     const TextInputType.numberWithOptions(
@@ -691,16 +691,16 @@ class _CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
                             ),
                           ],
                         ),
-                        _field(_panNumber, 'PAN Number'),
-                        _field(_companyFssis, 'shop FSSAI Number'),
+                        field(companySettingsPagePanNumber, 'PAN Number'),
+                        field(companySettingsPageCompanyFssis, 'shop FSSAI Number'),
                       ],
                     ),
                     const SizedBox(height: 18),
-                    _section(
+                    section(
                       title: 'Payment UPI',
                       children: [
-                        _field(
-                          _paymentLogo,
+                        field(
+                          companySettingsPagePaymentLogo,
                           'UPI ID (e.g. shopname@upi)',
                           keyboardType: TextInputType.emailAddress,
                         ),
@@ -718,7 +718,7 @@ class _CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
                   ],
                 ),
                 ),
-                if (_busy)
+                if (busy)
                   const Positioned.fill(
                     child: ColoredBox(
                       color: Color(0x66F3F7FC),
@@ -743,8 +743,8 @@ class _CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
               child: AppButton(
                 label: 'UPDATE DETAILS',
                 icon: Icons.save_rounded,
-                isLoading: _busy,
-                onPressed: _save,
+                isLoading: busy,
+                onPressed: companySettingsPageSave,
               ),
             ),
           ),

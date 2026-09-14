@@ -15,35 +15,35 @@ class RegisterPage extends ConsumerStatefulWidget {
   const RegisterPage({super.key});
 
   @override
-  ConsumerState<RegisterPage> createState() => _RegisterPageState();
+  ConsumerState<RegisterPage> createState() => RegisterPageState();
 }
 
-class _RegisterPageState extends ConsumerState<RegisterPage> {
-  final _formKey = GlobalKey<FormState>();
-  final _name = TextEditingController();
-  final _contact = TextEditingController();
-  final _shop = TextEditingController();
-  final _address = TextEditingController();
-  bool _busy = false;
+class RegisterPageState extends ConsumerState<RegisterPage> {
+  final formKey = GlobalKey<FormState>();
+  final registerPageName = TextEditingController();
+  final contact = TextEditingController();
+  final registerPageShop = TextEditingController();
+  final registerPageAddress = TextEditingController();
+  bool busy = false;
 
   @override
   void dispose() {
-    _name.dispose();
-    _contact.dispose();
-    _shop.dispose();
-    _address.dispose();
+    registerPageName.dispose();
+    contact.dispose();
+    registerPageShop.dispose();
+    registerPageAddress.dispose();
     super.dispose();
   }
 
-  Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
-    setState(() => _busy = true);
+  Future<void> submit() async {
+    if (!formKey.currentState!.validate()) return;
+    setState(() => busy = true);
     try {
       final result = await ref.read(authRepositoryProvider).registerTrial(
-            name: _name.text,
-            contactNumber: _contact.text,
-            address: _address.text,
-            shopName: _shop.text,
+            name: registerPageName.text,
+            contactNumber: contact.text,
+            address: registerPageAddress.text,
+            shopName: registerPageShop.text,
           );
       if (!mounted) return;
       if (!result.isSuccess ||
@@ -98,7 +98,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
         );
       }
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) setState(() => busy = false);
     }
   }
 
@@ -121,7 +121,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
           child: ResponsiveContent(
             padding: EdgeInsets.zero,
             child: Form(
-              key: _formKey,
+              key: formKey,
               child: Column(
                 children: [
                   const BrandLogo(width: 180),
@@ -133,7 +133,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                   ),
                   const SizedBox(height: 20),
                   AppTextField(
-                    controller: _name,
+                    controller: registerPageName,
                     label: 'Your name',
                     prefixSvg: AppAssets.svgPerson,
                     validator: (v) =>
@@ -141,7 +141,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                   ),
                   const SizedBox(height: 12),
                   AppTextField(
-                    controller: _contact,
+                    controller: contact,
                     label: 'Contact number',
                     prefixSvg: AppAssets.svgPhone,
                     keyboardType: TextInputType.phone,
@@ -151,7 +151,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                   ),
                   const SizedBox(height: 12),
                   AppTextField(
-                  controller: _shop,
+                  controller: registerPageShop,
                   label: 'Shop name',
                   prefixSvg: AppAssets.svgBusiness,
                   textCapitalization: TextCapitalization.words,
@@ -160,7 +160,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 ),
                 const SizedBox(height: 12),
                 AppTextField(
-                  controller: _address,
+                  controller: registerPageAddress,
                   label: 'Address',
                   prefixSvg: AppAssets.svgLocation,
                   maxLines: 3,
@@ -169,13 +169,13 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 ),
                 const SizedBox(height: 28),
                 AppButton(
-                  label: _busy ? 'Please wait…' : 'Create Free Account',
-                  isLoading: _busy,
-                  onPressed: _busy ? null : _submit,
+                  label: busy ? 'Please wait…' : 'Create Free Account',
+                  isLoading: busy,
+                  onPressed: busy ? null : submit,
                 ),
                 const SizedBox(height: 12),
                 TextButton(
-                  onPressed: _busy ? null : () => context.go('/login'),
+                  onPressed: busy ? null : () => context.go('/login'),
                   child: Text(
                     'Already have an account? Login',
                     style: AppTypography.cardTitle(color: AppColors.primary),

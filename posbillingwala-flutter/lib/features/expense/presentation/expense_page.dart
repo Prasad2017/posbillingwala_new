@@ -137,7 +137,7 @@ class ExpenseListBody extends ConsumerWidget {
                     )
                   : Column(
                       children: [
-                        const _ExpenseTableHeader(),
+                        const ExpenseTableHeader(),
                         const Divider(height: 1, thickness: 1),
                         for (var i = 0; i < rows.length; i++) ...[
                           if (i > 0)
@@ -146,7 +146,7 @@ class ExpenseListBody extends ConsumerWidget {
                               thickness: 1,
                               color: AppColors.border.withValues(alpha: .7),
                             ),
-                          _ExpenseTableRow(
+                          ExpenseTableRow(
                             index: i + 1,
                             row: rows[i],
                             dateFmt: dateFmt,
@@ -158,7 +158,7 @@ class ExpenseListBody extends ConsumerWidget {
                           thickness: 1,
                           color: AppColors.border.withValues(alpha: .9),
                         ),
-                        _ExpenseTotalRow(
+                        ExpenseTotalRow(
                           totalLabel: totalCurrency.format(total),
                         ),
                       ],
@@ -172,8 +172,8 @@ class ExpenseListBody extends ConsumerWidget {
   }
 }
 
-class _ExpenseTableHeader extends StatelessWidget {
-  const _ExpenseTableHeader();
+class ExpenseTableHeader extends StatelessWidget {
+  const ExpenseTableHeader({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -184,19 +184,19 @@ class _ExpenseTableHeader extends StatelessWidget {
         children: [
           SizedBox(
             width: 42,
-            child: _HeaderCell('Sr No.'),
+            child: HeaderCell('Sr No.'),
           ),
           Expanded(
             flex: 3,
-            child: _HeaderCell('Expense Date'),
+            child: HeaderCell('Expense Date'),
           ),
           Expanded(
             flex: 4,
-            child: _HeaderCell('Expense Name'),
+            child: HeaderCell('Expense Name'),
           ),
           Expanded(
             flex: 3,
-            child: _HeaderCell('AMOUNT', align: TextAlign.right),
+            child: HeaderCell('AMOUNT', align: TextAlign.right),
           ),
         ],
       ),
@@ -204,8 +204,8 @@ class _ExpenseTableHeader extends StatelessWidget {
   }
 }
 
-class _HeaderCell extends StatelessWidget {
-  const _HeaderCell(this.label, {this.align = TextAlign.left});
+class HeaderCell extends StatelessWidget {
+  const HeaderCell(this.label, {super.key, this.align = TextAlign.left});
 
   final String label;
   final TextAlign align;
@@ -225,8 +225,8 @@ class _HeaderCell extends StatelessWidget {
   }
 }
 
-class _ExpenseTableRow extends StatelessWidget {
-  const _ExpenseTableRow({
+class ExpenseTableRow extends StatelessWidget {
+  const ExpenseTableRow({super.key, 
     required this.index,
     required this.row,
     required this.dateFmt,
@@ -306,8 +306,8 @@ class _ExpenseTableRow extends StatelessWidget {
   }
 }
 
-class _ExpenseTotalRow extends StatelessWidget {
-  const _ExpenseTotalRow({required this.totalLabel});
+class ExpenseTotalRow extends StatelessWidget {
+  const ExpenseTotalRow({super.key, required this.totalLabel});
 
   final String totalLabel;
 

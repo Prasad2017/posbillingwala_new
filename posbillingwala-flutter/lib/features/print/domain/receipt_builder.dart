@@ -18,15 +18,15 @@ class ReceiptBuilder {
   final PrinterSettings settings;
   final ShopReceiptProfile shopProfile;
   final ReceiptLabels labels;
-  final _money = NumberFormat('#0.00');
+  final money = NumberFormat('#0.00');
   /// Android bill date format.
-  final _date = DateFormat('yyyy-MM-dd HH:mm:ss');
-  final _rasterizer = const ReceiptRasterizer();
+  final receiptBuilderDate = DateFormat('yyyy-MM-dd HH:mm:ss');
+  final rasterizer = const ReceiptRasterizer();
 
   /// Marker inserted where UPI QR should appear (terms → QR → footer).
   static const upiQrMarker = '<<<UPI_QR>>>';
 
-  String _rupee(num value) => '₹${_money.format(value)}';
+  String rupee(num value) => '₹${money.format(value)}';
 
   /// Unicode-safe thermal bytes (any language + ₹) via bitmap, like Android.
   Future<List<int>> billPrintBytes({
@@ -35,9 +35,9 @@ class ReceiptBuilder {
     String? shopName,
     bool duplicate = false,
   }) {
-    final upiUri = _upiUriFor(invoice);
+    final upiUri = upiUriFor(invoice);
     final logoPath = settings.logoUse ? shopProfile.logoLocalPath : null;
-    return _rasterizer.encodeText(
+    return rasterizer.encodeText(
       billText(
         invoice: invoice,
         items: items,
@@ -53,7 +53,7 @@ class ReceiptBuilder {
   }
 
   Future<List<int>> kotPrintBytes(KotTicket ticket) {
-    return _rasterizer.encodeText(
+    return rasterizer.encodeText(
       kotText(ticket),
       settings: settings,
       feedLinesOverride: settings.kotFeedLines,
@@ -62,7 +62,7 @@ class ReceiptBuilder {
   }
 
   Future<List<int>> rawPrintBytes(String text) {
-    return _rasterizer.encodeText(
+    return rasterizer.encodeText(
       text,
       settings: settings,
       useAssetLogoFallback: false,
@@ -72,22 +72,22 @@ class ReceiptBuilder {
   Future<List<int>> testPrintBytes(String label) {
     final width = settings.charsPerLine;
     final text = StringBuffer()
-      ..writeln(_center('POS Billingwala', width))
-      ..writeln(_center('टेस्ट प्रिंट / Test', width))
+      ..writeln(receiptBuilderCenter('POS Billingwala', width))
+      ..writeln(receiptBuilderCenter('टेस्ट प्रिंट / Test', width))
       ..writeln('-' * width)
       ..writeln(label)
-      ..writeln(_date.format(DateTime.now()))
-      ..writeln(_rupee(123.45))
+      ..writeln(receiptBuilderDate.format(DateTime.now()))
+      ..writeln(rupee(123.45))
       ..writeln('-' * width)
       ..writeln('नमस्ते · Hello · வணக்கம்');
-    return _rasterizer.encodeText(
+    return rasterizer.encodeText(
       text.toString(),
       settings: settings,
       useAssetLogoFallback: true,
     );
   }
 
-  String? _upiUriFor(Invoice invoice) {
+  String? upiUriFor(Invoice invoice) {
     if (!settings.paymentUse || !shopProfile.hasUpiId) return null;
     final amount = invoice.totalAmount > 0
         ? invoice.totalAmount
@@ -122,7 +122,7 @@ class ReceiptBuilder {
 
     final meta = <String>[
       'Bill No: ${invoice.invoiceNumber}',
-      '${labels.date}: ${_date.format(invoice.invoiceDate)}',
+      '${labels.date}: ${receiptBuilderDate.format(invoice.invoiceDate)}',
     ];
     if (invoice.noOfTable.trim().isNotEmpty) {
       meta.add('Table No: ${invoice.noOfTable}');
@@ -151,13 +151,13 @@ class ReceiptBuilder {
         ThermalLine(
           name: item.productName,
           qty: item.productQuantity,
-          rate: _money.format(item.productPrice),
-          amount: _money.format(item.productPrice * item.productQuantity),
+          rate: money.format(item.productPrice),
+          amount: money.format(item.productPrice * item.productQuantity),
         ),
     ];
 
     final pairs = <(String, String)>[
-      (labels.subTotal, _rupee(invoice.subTotal)),
+      (labels.subTotal, rupee(invoice.subTotal)),
     ];
     final cgstPct = double.tryParse(shopProfile.shopCgst.trim()) ?? 0;
     final sgstPct = double.tryParse(shopProfile.shopSgst.trim()) ?? 0;
@@ -165,26 +165,26 @@ class ReceiptBuilder {
     if (gstOn) {
       if (cgstPct > 0) {
         pairs.add((
-          'CGST@${_money.format(cgstPct)}%',
-          _rupee(invoice.subTotal * cgstPct / 100),
+          'CGST@${money.format(cgstPct)}%',
+          rupee(invoice.subTotal * cgstPct / 100),
         ));
       }
       if (sgstPct > 0) {
         pairs.add((
-          'SGST@${_money.format(sgstPct)}%',
-          _rupee(invoice.subTotal * sgstPct / 100),
+          'SGST@${money.format(sgstPct)}%',
+          rupee(invoice.subTotal * sgstPct / 100),
         ));
       }
     } else if (invoice.totalGstAmount > 0) {
       final half = invoice.totalGstAmount / 2;
-      pairs.add(('CGST', _rupee(half)));
-      pairs.add(('SGST', _rupee(half)));
+      pairs.add(('CGST', rupee(half)));
+      pairs.add(('SGST', rupee(half)));
     }
-    pairs.add((labels.discount, _rupee(invoice.discount)));
+    pairs.add((labels.discount, rupee(invoice.discount)));
     if (invoice.packingCharge > 0) {
-      pairs.add((labels.packing, _rupee(invoice.packingCharge)));
+      pairs.add((labels.packing, rupee(invoice.packingCharge)));
     }
-    pairs.add((labels.totalAmount, _rupee(invoice.totalAmount.ceilToDouble())));
+    pairs.add((labels.totalAmount, rupee(invoice.totalAmount.ceilToDouble())));
 
     return ticketFromLabels(
       labels: labels,
@@ -195,7 +195,7 @@ class ReceiptBuilder {
       pairs: pairs,
       footerLines: [labels.poweredBy, labels.website],
       terms: settings.invoiceTerms,
-      qrPayload: _upiUriFor(invoice),
+      qrPayload: upiUriFor(invoice),
     );
   }
 
@@ -235,18 +235,18 @@ class ReceiptBuilder {
   String kotText(KotTicket ticket) {
     final width = settings.charsPerLine;
     final buf = StringBuffer()
-      ..writeln(_center(labels.kot, width))
-      ..writeln(_center(ticket.kot.kotNumber, width))
+      ..writeln(receiptBuilderCenter(labels.kot, width))
+      ..writeln(receiptBuilderCenter(ticket.kot.kotNumber, width))
       ..writeln('-' * width)
       ..writeln('KOT: ${ticket.kot.kotNumber}')
-      ..writeln('${labels.date}: ${_date.format(ticket.kot.createdAt)}')
+      ..writeln('${labels.date}: ${receiptBuilderDate.format(ticket.kot.createdAt)}')
       ..writeln('Table No: ${ticket.kot.tableNumber}')
       ..writeln('Round: ${ticket.roundNumber}')
       ..writeln(ticket.kot.kitchenName)
       ..writeln('-' * width);
     for (final item in ticket.items) {
       buf.writeln(
-        _pair(item.productName, 'X${item.productQuantity}', width),
+        pair(item.productName, 'X${item.productQuantity}', width),
       );
     }
     buf.writeln('-' * width);
@@ -260,7 +260,7 @@ class ReceiptBuilder {
       ..text('KOT', boldStyle: true, center: true)
       ..text(ticket.kot.kotNumber, boldStyle: true, center: true)
       ..separator()
-      ..text('Date: ${_date.format(ticket.kot.createdAt)}')
+      ..text('Date: ${receiptBuilderDate.format(ticket.kot.createdAt)}')
       ..text('Table No: ${ticket.kot.tableNumber}')
       ..text('Round: ${ticket.roundNumber}')
       ..text(ticket.kot.kitchenName)
@@ -281,20 +281,20 @@ class ReceiptBuilder {
           ..text('Test print', center: true)
           ..separator()
           ..text(label)
-          ..text(_date.format(DateTime.now()))
+          ..text(receiptBuilderDate.format(DateTime.now()))
           ..separator()
           ..feed(settings.feedLines))
         .bytes;
   }
 
-  String _center(String value, int width) {
+  String receiptBuilderCenter(String value, int width) {
     if (value.runes.length >= width) return value;
     final pad = width - value.runes.length;
     final left = pad ~/ 2;
     return (' ' * left) + value;
   }
 
-  String _pair(String left, String right, int width) {
+  String pair(String left, String right, int width) {
     final space = width - left.runes.length - right.runes.length;
     final gap = space > 1 ? ' ' * space : ' ';
     return '$left$gap$right';

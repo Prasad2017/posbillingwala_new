@@ -18,22 +18,22 @@ class SupportTicketsPage extends ConsumerStatefulWidget {
   const SupportTicketsPage({super.key});
 
   @override
-  ConsumerState<SupportTicketsPage> createState() => _SupportTicketsPageState();
+  ConsumerState<SupportTicketsPage> createState() => SupportTicketsPageState();
 }
 
-class _SupportTicketsPageState extends ConsumerState<SupportTicketsPage> {
-  List<SupportTicketDto> _tickets = const [];
-  bool _loading = false;
-  bool _online = true;
-  String? _error;
-  String _statusFilter = 'All Status';
+class SupportTicketsPageState extends ConsumerState<SupportTicketsPage> {
+  List<SupportTicketDto> supportTicketsPageTickets = const [];
+  bool loading = false;
+  bool supportTicketsPageOnline = true;
+  String? error;
+  String statusFilter = 'All Status';
 
-  static const _statusFilters = ['All Status', 'Open', 'Closed'];
+  static const statusFilters = ['All Status', 'Open', 'Closed'];
 
-  List<SupportTicketDto> get _visibleTickets {
-    if (_statusFilter == 'All Status') return _tickets;
-    final needle = _statusFilter.toLowerCase();
-    return _tickets.where((t) {
+  List<SupportTicketDto> get visibleTickets {
+    if (statusFilter == 'All Status') return supportTicketsPageTickets;
+    final needle = statusFilter.toLowerCase();
+    return supportTicketsPageTickets.where((t) {
       final status = t.status.toLowerCase();
       if (needle == 'closed') {
         return status.contains('closed') || status.contains('resolved');
@@ -48,45 +48,45 @@ class _SupportTicketsPageState extends ConsumerState<SupportTicketsPage> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _reload());
+    WidgetsBinding.instance.addPostFrameCallback((_) => reload());
   }
 
-  Future<void> _reload() async {
+  Future<void> reload() async {
     final online = await checkOnline();
     final userId = ref.read(authControllerProvider).session?.userId;
     if (userId == null || userId.isEmpty) {
       setState(() {
-        _online = online;
-        _error = 'Please login first';
-        _loading = false;
+        supportTicketsPageOnline = online;
+        error = 'Please login first';
+        loading = false;
       });
       return;
     }
     setState(() {
-      _online = online;
-      _loading = true;
-      _error = null;
+      supportTicketsPageOnline = online;
+      loading = true;
+      error = null;
     });
     try {
       final api = SupportApi(ref.read(apiClientProvider));
       final tickets = await api.getSupportTickets(userId);
       if (!mounted) return;
       setState(() {
-        _tickets = tickets;
-        _loading = false;
+        supportTicketsPageTickets = tickets;
+        loading = false;
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = '$e';
-        _loading = false;
+        error = '$e';
+        loading = false;
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final visible = _visibleTickets;
+    final visible = visibleTickets;
     return Scaffold(
       backgroundColor: AppColors.surface,
       appBar: AppBar(
@@ -103,10 +103,10 @@ class _SupportTicketsPageState extends ConsumerState<SupportTicketsPage> {
           ),
         ],
       ),
-      body: _error != null && _tickets.isEmpty
-          ? AppErrorState(message: _error!, onRetry: _reload)
+      body: error != null && supportTicketsPageTickets.isEmpty
+          ? AppErrorState(message: error!, onRetry: reload)
           : RefreshIndicator(
-              onRefresh: _reload,
+              onRefresh: reload,
               child: ResponsiveScrollShell(
         dashboard: true,
         child: ListView(
@@ -118,15 +118,15 @@ class _SupportTicketsPageState extends ConsumerState<SupportTicketsPage> {
             24),
                 children: [
                   SupportOnlineBanner(
-                    online: _online,
+                    online: supportTicketsPageOnline,
                     title: 'Stay Connected',
                   ),
                   const SizedBox(height: 14),
                   AppButton(
                     label: 'REFRESH TICKETS',
                     icon: Icons.refresh_rounded,
-                    isLoading: _loading,
-                    onPressed: _loading ? null : _reload,
+                    isLoading: loading,
+                    onPressed: loading ? null : reload,
                   ),
                   const SizedBox(height: 18),
                   Row(
@@ -138,9 +138,9 @@ class _SupportTicketsPageState extends ConsumerState<SupportTicketsPage> {
                         ),
                       ),
                       PopupMenuButton<String>(
-                        initialValue: _statusFilter,
-                        onSelected: (v) => setState(() => _statusFilter = v),
-                        itemBuilder: (context) => _statusFilters
+                        initialValue: statusFilter,
+                        onSelected: (v) => setState(() => statusFilter = v),
+                        itemBuilder: (context) => statusFilters
                             .map(
                               (s) => PopupMenuItem<String>(
                                 value: s,
@@ -162,9 +162,9 @@ class _SupportTicketsPageState extends ConsumerState<SupportTicketsPage> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                _statusFilter == 'All Status'
+                                statusFilter == 'All Status'
                                     ? 'Select Item'
-                                    : _statusFilter,
+                                    : statusFilter,
                                 style: AppTypography.bodySmall(
                                   color: AppColors.navy,
                                 ),
@@ -182,12 +182,12 @@ class _SupportTicketsPageState extends ConsumerState<SupportTicketsPage> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  if (_loading && _tickets.isEmpty)
+                  if (loading && supportTicketsPageTickets.isEmpty)
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 40),
                       child: Center(child: CircularProgressIndicator()),
                     )
-                  else if (_tickets.isEmpty)
+                  else if (supportTicketsPageTickets.isEmpty)
                     const Padding(
                       padding: EdgeInsets.only(top: 24),
                       child: AppEmptyState(
@@ -206,7 +206,7 @@ class _SupportTicketsPageState extends ConsumerState<SupportTicketsPage> {
                       ),
                     )
                   else
-                    ...visible.map((t) => _TicketListCard(ticket: t)),
+                    ...visible.map((t) => TicketListCard(ticket: t)),
                   const SizedBox(height: 14),
                   const SupportUrgentHelpCard(),
                 ],
@@ -217,8 +217,8 @@ class _SupportTicketsPageState extends ConsumerState<SupportTicketsPage> {
   }
 }
 
-class _TicketListCard extends StatelessWidget {
-  const _TicketListCard({required this.ticket});
+class TicketListCard extends StatelessWidget {
+  const TicketListCard({super.key, required this.ticket});
 
   final SupportTicketDto ticket;
 

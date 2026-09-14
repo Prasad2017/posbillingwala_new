@@ -12,29 +12,29 @@ class ChangePinPage extends ConsumerStatefulWidget {
   const ChangePinPage({super.key});
 
   @override
-  ConsumerState<ChangePinPage> createState() => _ChangePinPageState();
+  ConsumerState<ChangePinPage> createState() => ChangePinPageState();
 }
 
-class _ChangePinPageState extends ConsumerState<ChangePinPage> {
-  final _current = TextEditingController();
-  final _next = TextEditingController();
-  final _confirm = TextEditingController();
-  bool _busy = false;
+class ChangePinPageState extends ConsumerState<ChangePinPage> {
+  final changePinPageCurrent = TextEditingController();
+  final changePinPageNext = TextEditingController();
+  final changePinPageConfirm = TextEditingController();
+  bool busy = false;
 
   @override
   void dispose() {
-    _current.dispose();
-    _next.dispose();
-    _confirm.dispose();
+    changePinPageCurrent.dispose();
+    changePinPageNext.dispose();
+    changePinPageConfirm.dispose();
     super.dispose();
   }
 
-  Future<void> _save() async {
+  Future<void> save() async {
     final session = ref.read(authControllerProvider).session;
     final stored = session?.appPin?.trim() ?? '';
-    final current = _current.text.trim();
-    final next = _next.text.trim();
-    final confirm = _confirm.text.trim();
+    final current = changePinPageCurrent.text.trim();
+    final next = changePinPageNext.text.trim();
+    final confirm = changePinPageConfirm.text.trim();
 
     if (stored.isNotEmpty && current != stored) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -55,7 +55,7 @@ class _ChangePinPageState extends ConsumerState<ChangePinPage> {
       return;
     }
 
-    setState(() => _busy = true);
+    setState(() => busy = true);
     try {
       final ok =
           await ref.read(authControllerProvider.notifier).updateAppPin(next);
@@ -71,7 +71,7 @@ class _ChangePinPageState extends ConsumerState<ChangePinPage> {
         );
       }
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) setState(() => busy = false);
     }
   }
 
@@ -115,7 +115,7 @@ class _ChangePinPageState extends ConsumerState<ChangePinPage> {
               children: [
                 if (hasPin) ...[
                   AppTextField(
-                    controller: _current,
+                    controller: changePinPageCurrent,
                     label: 'Current PB-PIN',
                     obscureText: true,
                     keyboardType: TextInputType.number,
@@ -126,7 +126,7 @@ class _ChangePinPageState extends ConsumerState<ChangePinPage> {
                   const SizedBox(height: 12),
                 ],
                 AppTextField(
-                  controller: _next,
+                  controller: changePinPageNext,
                   label: 'New PB-PIN',
                   obscureText: true,
                   keyboardType: TextInputType.number,
@@ -136,7 +136,7 @@ class _ChangePinPageState extends ConsumerState<ChangePinPage> {
                 ),
                 const SizedBox(height: 12),
                 AppTextField(
-                  controller: _confirm,
+                  controller: changePinPageConfirm,
                   label: 'Confirm new PB-PIN',
                   obscureText: true,
                   keyboardType: TextInputType.number,
@@ -147,8 +147,8 @@ class _ChangePinPageState extends ConsumerState<ChangePinPage> {
                 const SizedBox(height: 16),
                 AppButton(
                   label: 'Update PIN',
-                  isLoading: _busy,
-                  onPressed: _save,
+                  isLoading: busy,
+                  onPressed: save,
                 ),
               ],
             ),

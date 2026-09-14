@@ -12,22 +12,22 @@ class SupportPage extends ConsumerStatefulWidget {
   const SupportPage({super.key});
 
   @override
-  ConsumerState<SupportPage> createState() => _SupportPageState();
+  ConsumerState<SupportPage> createState() => SupportPageState();
 }
 
-class _SupportPageState extends ConsumerState<SupportPage> {
-  bool _online = true;
+class SupportPageState extends ConsumerState<SupportPage> {
+  bool supportPageOnline = true;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _refreshOnline());
+    WidgetsBinding.instance.addPostFrameCallback((_) => refreshOnline());
   }
 
-  Future<void> _refreshOnline() async {
+  Future<void> refreshOnline() async {
     final online = await checkOnline();
     if (!mounted) return;
-    setState(() => _online = online);
+    setState(() => supportPageOnline = online);
   }
 
   @override
@@ -50,7 +50,7 @@ class _SupportPageState extends ConsumerState<SupportPage> {
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: _refreshOnline,
+        onRefresh: refreshOnline,
         child: ResponsiveScrollShell(
           dashboard: true,
           child: ListView(
@@ -62,7 +62,7 @@ class _SupportPageState extends ConsumerState<SupportPage> {
               24,
             ),
             children: [
-            SupportOnlineBanner(online: _online),
+            SupportOnlineBanner(online: supportPageOnline),
             const SizedBox(height: 14),
             Container(
               decoration: BoxDecoration(

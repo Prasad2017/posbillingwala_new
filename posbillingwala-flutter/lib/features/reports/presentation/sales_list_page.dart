@@ -39,7 +39,7 @@ class SalesListPage extends ConsumerWidget {
               alignment: Alignment.centerLeft,
               child: ReportPeriodPill(
                 label: reportPeriodDisplayLabel(period),
-                onTap: () => _pickPeriod(context, ref),
+                onTap: () => pickPeriod(context, ref),
               ),
             ),
           ),
@@ -57,7 +57,7 @@ class SalesListPage extends ConsumerWidget {
                     separatorBuilder: (_, _) => const SizedBox(height: 10),
                     itemBuilder: (context, index) {
                       final invoice = invoices[index];
-                      return _SalesListCard(
+                      return SalesListCard(
                         invoice: invoice,
                         currency: currency,
                         onOpen: () => context.push(
@@ -72,7 +72,7 @@ class SalesListPage extends ConsumerWidget {
     );
   }
 
-  Future<void> _pickPeriod(BuildContext context, WidgetRef ref) async {
+  Future<void> pickPeriod(BuildContext context, WidgetRef ref) async {
     final period = ref.read(reportPeriodProvider);
     final selected = await showModalBottomSheet<ReportPeriodKind>(
       context: context,
@@ -110,8 +110,8 @@ class SalesListPage extends ConsumerWidget {
   }
 }
 
-class _SalesListCard extends ConsumerWidget {
-  const _SalesListCard({
+class SalesListCard extends ConsumerWidget {
+  const SalesListCard({super.key, 
     required this.invoice,
     required this.currency,
     required this.onOpen,

@@ -14,7 +14,7 @@ import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
 import 'package:pos_billingwala_v2/l10n/app_strings.dart';
 
-final _productPortionsMapProvider =
+final productPortionsMapProvider =
     StreamProvider<Map<int, List<ProductPortion>>>((ref) {
   return ref.watch(appDatabaseProvider).watchActivePortions().map((rows) {
     final map = <int, List<ProductPortion>>{};
@@ -29,20 +29,20 @@ class ProductsPage extends ConsumerStatefulWidget {
   const ProductsPage({super.key});
 
   @override
-  ConsumerState<ProductsPage> createState() => _ProductsPageState();
+  ConsumerState<ProductsPage> createState() => ProductsPageState();
 }
 
-class _ProductsPageState extends ConsumerState<ProductsPage> {
-  final _searchCtrl = TextEditingController();
-  String _query = '';
+class ProductsPageState extends ConsumerState<ProductsPage> {
+  final searchCtrl = TextEditingController();
+  String query = '';
 
   @override
   void dispose() {
-    _searchCtrl.dispose();
+    searchCtrl.dispose();
     super.dispose();
   }
 
-  Future<void> _printCatalog(List<Product> products) async {
+  Future<void> printCatalog(List<Product> products) async {
     if (products.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No products to print')),
@@ -70,7 +70,7 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
     );
   }
 
-  Future<void> _delete(Product product) async {
+  Future<void> delete(Product product) async {
     final ok = await showAppConfirmBottomSheet(
       context: context,
       title: 'Delete product',
@@ -89,7 +89,7 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
   @override
   Widget build(BuildContext context) {
     final productsAsync = ref.watch(productsProvider);
-    final portionsMap = ref.watch(_productPortionsMapProvider).maybeWhen(
+    final portionsMap = ref.watch(productPortionsMapProvider).maybeWhen(
           data: (v) => v,
           orElse: () => const <int, List<ProductPortion>>{},
         );
@@ -111,7 +111,7 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
                 data: (v) => v,
                 orElse: () => const <Product>[],
               );
-              _printCatalog(products);
+              printCatalog(products);
             },
             style: IconButton.styleFrom(
               backgroundColor: Colors.white.withValues(alpha: .18),
@@ -147,7 +147,7 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
       ),
       body: productsAsync.when(
         data: (all) {
-          final q = _query.trim().toLowerCase();
+          final q = query.trim().toLowerCase();
           final products = q.isEmpty
               ? all
               : all.where((p) {
@@ -167,8 +167,8 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
             28),
             children: [
               TextField(
-                controller: _searchCtrl,
-                onChanged: (v) => setState(() => _query = v),
+                controller: searchCtrl,
+                onChanged: (v) => setState(() => query = v),
                 style: const TextStyle(
                   fontFamily: AppFonts.family,
                   fontSize: 14,
@@ -239,14 +239,14 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
                 )
               else
                 for (final product in products) ...[
-                  _ProductCard(
+                  ProductCard(
                     product: product,
                     priceLabel: currency.format(product.productPrice),
                     portions: portionsMap[product.productId] ?? const [],
                     onEdit: () => context.push(
                       '/masters/products/form?id=${product.productId}',
                     ),
-                    onDelete: () => _delete(product),
+                    onDelete: () => delete(product),
                     onPortions: () => context.push(
                       '/masters/products/portions?id=${product.productId}',
                     ),
@@ -264,8 +264,8 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
   }
 }
 
-class _ProductCard extends StatelessWidget {
-  const _ProductCard({
+class ProductCard extends StatelessWidget {
+  const ProductCard({super.key, 
     required this.product,
     required this.priceLabel,
     required this.portions,
@@ -430,12 +430,12 @@ class _ProductCard extends StatelessWidget {
           const SizedBox(height: 10),
           Row(
             children: [
-              _TaxChip(
+              TaxChip(
                 label:
                     'CGST ${product.productCgst.toStringAsFixed(product.productCgst % 1 == 0 ? 0 : 1)}%',
               ),
               const SizedBox(width: 8),
-              _TaxChip(
+              TaxChip(
                 label:
                     'SGST ${product.productSgst.toStringAsFixed(product.productSgst % 1 == 0 ? 0 : 1)}%',
               ),
@@ -447,8 +447,8 @@ class _ProductCard extends StatelessWidget {
   }
 }
 
-class _TaxChip extends StatelessWidget {
-  const _TaxChip({required this.label});
+class TaxChip extends StatelessWidget {
+  const TaxChip({super.key, required this.label});
   final String label;
 
   @override

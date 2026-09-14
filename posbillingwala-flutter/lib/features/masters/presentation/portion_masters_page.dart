@@ -14,21 +14,21 @@ class PortionMastersPage extends ConsumerStatefulWidget {
   const PortionMastersPage({super.key});
 
   @override
-  ConsumerState<PortionMastersPage> createState() => _PortionMastersPageState();
+  ConsumerState<PortionMastersPage> createState() => PortionMastersPageState();
 }
 
-class _PortionMastersPageState extends ConsumerState<PortionMastersPage> {
-  final _nameCtrl = TextEditingController();
-  bool _busy = false;
+class PortionMastersPageState extends ConsumerState<PortionMastersPage> {
+  final nameCtrl = TextEditingController();
+  bool busy = false;
 
   @override
   void dispose() {
-    _nameCtrl.dispose();
+    nameCtrl.dispose();
     super.dispose();
   }
 
-  Future<void> _add() async {
-    final name = _nameCtrl.text.trim();
+  Future<void> add() async {
+    final name = nameCtrl.text.trim();
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Enter portion name')),
@@ -37,13 +37,13 @@ class _PortionMastersPageState extends ConsumerState<PortionMastersPage> {
     }
     final userId =
         ref.read(authControllerProvider).session?.catalogOwnerId ?? '';
-    setState(() => _busy = true);
+    setState(() => busy = true);
     try {
       await ref.read(mastersRepositoryProvider).createPortionMaster(
             userId: userId,
             portionName: name,
           );
-      _nameCtrl.clear();
+      nameCtrl.clear();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Portion master saved')),
@@ -52,11 +52,11 @@ class _PortionMastersPageState extends ConsumerState<PortionMastersPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) setState(() => busy = false);
     }
   }
 
-  Future<void> _edit(PortionMaster row) async {
+  Future<void> edit(PortionMaster row) async {
     final controller = TextEditingController(text: row.portionName);
     final ok = await showAppBottomSheet<bool>(
       context: context,
@@ -95,7 +95,7 @@ class _PortionMastersPageState extends ConsumerState<PortionMastersPage> {
         );
   }
 
-  Future<void> _delete(PortionMaster row) async {
+  Future<void> delete(PortionMaster row) async {
     final ok = await showAppConfirmBottomSheet(
       context: context,
       title: 'Delete portion',
@@ -147,14 +147,14 @@ class _PortionMastersPageState extends ConsumerState<PortionMastersPage> {
             child: Column(
               children: [
                 MasterOutlinedField(
-                  controller: _nameCtrl,
+                  controller: nameCtrl,
                   hint: 'Portion Name',
                 ),
                 const SizedBox(height: 12),
                 MasterPrimaryButton(
                   label: 'Add Portion',
-                  isLoading: _busy,
-                  onPressed: _busy ? null : _add,
+                  isLoading: busy,
+                  onPressed: busy ? null : add,
                 ),
               ],
             ),
@@ -178,8 +178,8 @@ class _PortionMastersPageState extends ConsumerState<PortionMastersPage> {
                       MasterListRow(
                         index: i + 1,
                         title: rows[i].portionName,
-                        onEdit: () => _edit(rows[i]),
-                        onDelete: () => _delete(rows[i]),
+                        onEdit: () => edit(rows[i]),
+                        onDelete: () => delete(rows[i]),
                         showDivider: i < rows.length - 1,
                       ),
                   ],

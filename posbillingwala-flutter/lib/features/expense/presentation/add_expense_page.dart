@@ -13,25 +13,25 @@ class AddExpensePage extends ConsumerStatefulWidget {
   const AddExpensePage({super.key});
 
   @override
-  ConsumerState<AddExpensePage> createState() => _AddExpensePageState();
+  ConsumerState<AddExpensePage> createState() => AddExpensePageState();
 }
 
-class _AddExpensePageState extends ConsumerState<AddExpensePage> {
-  final _nameCtrl = TextEditingController();
-  final _amountCtrl = TextEditingController();
-  final _formKey = GlobalKey<FormState>();
-  var _submitting = false;
+class AddExpensePageState extends ConsumerState<AddExpensePage> {
+  final nameCtrl = TextEditingController();
+  final amountCtrl = TextEditingController();
+  final formKey = GlobalKey<FormState>();
+  var submitting = false;
 
   @override
   void dispose() {
-    _nameCtrl.dispose();
-    _amountCtrl.dispose();
+    nameCtrl.dispose();
+    amountCtrl.dispose();
     super.dispose();
   }
 
-  Future<void> _submit() async {
-    final name = _nameCtrl.text.trim();
-    final amount = double.tryParse(_amountCtrl.text.trim()) ?? 0;
+  Future<void> submit() async {
+    final name = nameCtrl.text.trim();
+    final amount = double.tryParse(amountCtrl.text.trim()) ?? 0;
 
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -46,13 +46,13 @@ class _AddExpensePageState extends ConsumerState<AddExpensePage> {
       return;
     }
 
-    setState(() => _submitting = true);
+    setState(() => submitting = true);
     await ref.read(inventoryControllerProvider.notifier).addExpense(
           name: name,
           amount: amount,
         );
     if (!mounted) return;
-    setState(() => _submitting = false);
+    setState(() => submitting = false);
 
     final result = ref.read(inventoryControllerProvider);
     result.whenOrNull(
@@ -65,7 +65,7 @@ class _AddExpensePageState extends ConsumerState<AddExpensePage> {
     );
   }
 
-  InputDecoration _fieldDecoration(String hint) {
+  InputDecoration fieldDecoration(String hint) {
     return InputDecoration(
       hintText: hint,
       hintStyle: TextStyle(
@@ -104,7 +104,7 @@ class _AddExpensePageState extends ConsumerState<AddExpensePage> {
         ),
       ),
       body: Form(
-        key: _formKey,
+        key: formKey,
         child: ResponsiveScrollShell(
         dashboard: true,
         child: ListView(
@@ -115,7 +115,7 @@ class _AddExpensePageState extends ConsumerState<AddExpensePage> {
             24),
           children: [
             TextField(
-              controller: _nameCtrl,
+              controller: nameCtrl,
               textCapitalization: TextCapitalization.sentences,
               style: const TextStyle(
                 fontFamily: AppFonts.family,
@@ -123,11 +123,11 @@ class _AddExpensePageState extends ConsumerState<AddExpensePage> {
                 color: AppColors.navy,
                 fontWeight: FontWeight.w500,
               ),
-              decoration: _fieldDecoration('Expenses Name'),
+              decoration: fieldDecoration('Expenses Name'),
             ),
             const SizedBox(height: 16),
             TextField(
-              controller: _amountCtrl,
+              controller: amountCtrl,
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
               inputFormatters: [
@@ -139,7 +139,7 @@ class _AddExpensePageState extends ConsumerState<AddExpensePage> {
                 color: AppColors.navy,
                 fontWeight: FontWeight.w500,
               ),
-              decoration: _fieldDecoration('Expenses Amount'),
+              decoration: fieldDecoration('Expenses Amount'),
             ),
           ],
         ),
@@ -153,9 +153,9 @@ class _AddExpensePageState extends ConsumerState<AddExpensePage> {
           child: Material(
             color: AppColors.primary,
             child: InkWell(
-              onTap: _submitting ? null : _submit,
+              onTap: submitting ? null : submit,
               child: Center(
-                child: _submitting
+                child: submitting
                     ? const SizedBox(
                         width: 22,
                         height: 22,

@@ -5,12 +5,12 @@ import 'package:pos_billingwala_v2/features/company/data/company_dtos.dart';
 import 'package:pos_billingwala_v2/core/constants/api_constants.dart';
 
 class CompanyApi {
-  CompanyApi(this._client);
+  CompanyApi(this.client);
 
-  final ApiClient _client;
+  final ApiClient client;
 
   Future<List<CompanyDto>> getCompanyList(String userId) async {
-    final data = await _get(
+    final data = await companyApiGet(
       ApiEndpoints.getCompanyList,
       query: {'userId': userId},
     );
@@ -24,7 +24,7 @@ class CompanyApi {
     required String userId,
     required CompanyDto company,
   }) async {
-    final data = await _post(
+    final data = await companyApiPost(
       ApiEndpoints.insertCompanyDetail,
       fields: {
         'userId': userId,
@@ -62,7 +62,7 @@ class CompanyApi {
   Future<List<CompanyPrinterSettingDto>> getCompanyPrinterSetting(
     String userId,
   ) async {
-    final data = await _get(
+    final data = await companyApiGet(
       ApiEndpoints.getCompanyPrinterSetting,
       query: {'userId': userId},
     );
@@ -76,7 +76,7 @@ class CompanyApi {
     required String userId,
     required CompanyPrinterSettingDto setting,
   }) async {
-    final data = await _post(
+    final data = await companyApiPost(
       ApiEndpoints.insertCompanyPrinterSetting,
       fields: {
         'userId': userId,
@@ -104,11 +104,11 @@ class CompanyApi {
     return isApiSuccess(data);
   }
 
-  Future<Map<String, dynamic>> _get(
+  Future<Map<String, dynamic>> companyApiGet(
     String path, {
     Map<String, dynamic>? query,
   }) async {
-    final response = await _client.dio.get<dynamic>(
+    final response = await client.dio.get<dynamic>(
       path,
       queryParameters: query,
       options: Options(responseType: ResponseType.json),
@@ -116,11 +116,11 @@ class CompanyApi {
     return asJsonMap(response.data);
   }
 
-  Future<Map<String, dynamic>> _post(
+  Future<Map<String, dynamic>> companyApiPost(
     String path, {
     required Map<String, dynamic> fields,
   }) async {
-    final response = await _client.dio.post<dynamic>(
+    final response = await client.dio.post<dynamic>(
       path,
       data: FormData.fromMap(fields),
       options: Options(responseType: ResponseType.json),

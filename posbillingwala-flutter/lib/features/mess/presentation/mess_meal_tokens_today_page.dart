@@ -15,40 +15,40 @@ class MessMealTokensTodayPage extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<MessMealTokensTodayPage> createState() =>
-      _MessMealTokensTodayPageState();
+      MessMealTokensTodayPageState();
 }
 
-class _MessMealTokensTodayPageState
+class MessMealTokensTodayPageState
     extends ConsumerState<MessMealTokensTodayPage> {
-  AsyncValue<MessMealTokenTodayResult> _state = const AsyncLoading();
-  bool _busy = false;
+  AsyncValue<MessMealTokenTodayResult> state = const AsyncLoading();
+  bool busy = false;
 
   @override
   void initState() {
     super.initState();
-    Future.microtask(_load);
+    Future.microtask(load);
   }
 
-  Future<void> _load() async {
+  Future<void> load() async {
     final userId = ref.read(authControllerProvider).session?.userId;
     if (userId == null || userId.isEmpty) {
       setState(() {
-        _state = AsyncError('Login required', StackTrace.current);
+        state = AsyncError('Login required', StackTrace.current);
       });
       return;
     }
-    setState(() => _state = const AsyncLoading());
+    setState(() => state = const AsyncLoading());
     final next = await AsyncValue.guard(
       () => MessApi(ref.read(apiClientProvider)).fetchMealTokensToday(userId),
     );
     if (!mounted) return;
-    setState(() => _state = next);
+    setState(() => state = next);
   }
 
-  Future<void> _printToken(MessMealTokenDto token) async {
+  Future<void> printToken(MessMealTokenDto token) async {
     final userId = ref.read(authControllerProvider).session?.userId;
     if (userId == null) return;
-    setState(() => _busy = true);
+    setState(() => busy = true);
     try {
       final text = StringBuffer()
         ..writeln('MESS MEAL TOKEN')
@@ -76,16 +76,16 @@ class _MessMealTokensTodayPageState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(printResult.message ?? printResult.outcome.name)),
       );
-      await _load();
+      await load();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) setState(() => busy = false);
     }
   }
 
-  Future<void> _cancelToken(MessMealTokenDto token) async {
+  Future<void> messMealTokensTodayPageCancelToken(MessMealTokenDto token) async {
     final userId = ref.read(authControllerProvider).session?.userId;
     if (userId == null) return;
     final confirm = await showDialog<bool>(
@@ -106,18 +106,18 @@ class _MessMealTokensTodayPageState
       ),
     );
     if (confirm != true) return;
-    setState(() => _busy = true);
+    setState(() => busy = true);
     try {
       await MessApi(ref.read(apiClientProvider)).cancelMealToken(
         userId: userId,
         tokenId: token.tokenId,
       );
-      await _load();
+      await load();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) setState(() => busy = false);
     }
   }
 
@@ -128,12 +128,12 @@ class _MessMealTokensTodayPageState
         title: const Text("Today's Mess Tokens"),
         actions: [
           IconButton(
-            onPressed: _busy ? null : _load,
+            onPressed: busy ? null : load,
             icon: const Icon(Icons.refresh_rounded),
           ),
         ],
       ),
-      body: _state.when(
+      body: state.when(
         data: (data) {
           final countsText = data.sessionCounts.isEmpty
               ? ''
@@ -197,13 +197,13 @@ class _MessMealTokensTodayPageState
                                   IconButton(
                                     tooltip: 'Print',
                                     onPressed:
-                                        _busy ? null : () => _printToken(t),
+                                        busy ? null : () => printToken(t),
                                     icon: const Icon(Icons.print_rounded),
                                   ),
                                   IconButton(
                                     tooltip: 'Cancel',
                                     onPressed:
-                                        _busy ? null : () => _cancelToken(t),
+                                        busy ? null : () => messMealTokensTodayPageCancelToken(t),
                                     icon: const Icon(Icons.cancel_outlined),
                                   ),
                                 ],
@@ -228,7 +228,7 @@ class _MessMealTokensTodayPageState
                 AppButton(
                   label: 'Retry',
                   expanded: false,
-                  onPressed: _load,
+                  onPressed: load,
                 ),
               ],
             ),

@@ -22,21 +22,21 @@ class AdBanner extends StatefulWidget {
   final AdSlot slot;
 
   @override
-  State<AdBanner> createState() => _AdBannerState();
+  State<AdBanner> createState() => AdBannerState();
 }
 
-class _AdBannerState extends State<AdBanner> {
-  BannerAd? _ad;
-  var _loaded = false;
+class AdBannerState extends State<AdBanner> {
+  BannerAd? adBannerAd;
+  var loaded = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_ad != null || !adsSupported) return;
-    _load();
+    if (adBannerAd != null || !adsSupported) return;
+    adBannerLoad();
   }
 
-  Future<void> _load() async {
+  Future<void> adBannerLoad() async {
     final width = MediaQuery.sizeOf(context).width.truncate();
     final size = await AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(
       width < 320 ? 320 : width,
@@ -51,34 +51,34 @@ class _AdBannerState extends State<AdBanner> {
             ad.dispose();
             return;
           }
-          setState(() => _loaded = true);
+          setState(() => loaded = true);
         },
         onAdFailedToLoad: (ad, _) {
           ad.dispose();
-          if (mounted) setState(() => _loaded = false);
+          if (mounted) setState(() => loaded = false);
         },
       ),
       request: const AdRequest(),
     );
-    _ad = ad;
+    adBannerAd = ad;
     await ad.load();
   }
 
   @override
   void dispose() {
-    _ad?.dispose();
+    adBannerAd?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (!adsSupported || !_loaded || _ad == null) {
+    if (!adsSupported || !loaded || adBannerAd == null) {
       return const SizedBox.shrink();
     }
     return SizedBox(
-      width: _ad!.size.width.toDouble(),
-      height: _ad!.size.height.toDouble(),
-      child: AdWidget(ad: _ad!),
+      width: adBannerAd!.size.width.toDouble(),
+      height: adBannerAd!.size.height.toDouble(),
+      child: AdWidget(ad: adBannerAd!),
     );
   }
 }

@@ -13,34 +13,34 @@ class BusinessHoursPage extends ConsumerStatefulWidget {
   const BusinessHoursPage({super.key});
 
   @override
-  ConsumerState<BusinessHoursPage> createState() => _BusinessHoursPageState();
+  ConsumerState<BusinessHoursPage> createState() => BusinessHoursPageState();
 }
 
-class _BusinessHoursPageState extends ConsumerState<BusinessHoursPage> {
-  static const _openKey = 'businessOpenMinutes';
-  static const _closeKey = 'businessCloseMinutes';
+class BusinessHoursPageState extends ConsumerState<BusinessHoursPage> {
+  static const openKey = 'businessOpenMinutes';
+  static const closeKey = 'businessCloseMinutes';
 
-  TimeOfDay _open = const TimeOfDay(hour: 9, minute: 0);
-  TimeOfDay _close = const TimeOfDay(hour: 22, minute: 0);
-  bool _busy = false;
+  TimeOfDay businessHoursPageOpen = const TimeOfDay(hour: 9, minute: 0);
+  TimeOfDay businessHoursPageClose = const TimeOfDay(hour: 22, minute: 0);
+  bool busy = false;
 
   @override
   void initState() {
     super.initState();
-    Future.microtask(_load);
+    Future.microtask(load);
   }
 
-  int _toMinutes(TimeOfDay t) => t.hour * 60 + t.minute;
+  int toMinutes(TimeOfDay t) => t.hour * 60 + t.minute;
 
-  TimeOfDay _fromMinutes(int minutes) {
+  TimeOfDay fromMinutes(int minutes) {
     final m = minutes.clamp(0, 24 * 60 - 1);
     return TimeOfDay(hour: m ~/ 60, minute: m % 60);
   }
 
-  TimeOfDay? _parseStored(String? raw) {
+  TimeOfDay? parseStored(String? raw) {
     if (raw == null || raw.trim().isEmpty) return null;
     final asInt = int.tryParse(raw.trim());
-    if (asInt != null) return _fromMinutes(asInt);
+    if (asInt != null) return fromMinutes(asInt);
     final parts = raw.trim().split(':');
     if (parts.length >= 2) {
       final h = int.tryParse(parts[0]);
@@ -52,12 +52,12 @@ class _BusinessHoursPageState extends ConsumerState<BusinessHoursPage> {
     return null;
   }
 
-  Future<void> _load() async {
+  Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
-    final openPref = prefs.getInt(_openKey);
-    final closePref = prefs.getInt(_closeKey);
-    if (openPref != null) _open = _fromMinutes(openPref);
-    if (closePref != null) _close = _fromMinutes(closePref);
+    final openPref = prefs.getInt(openKey);
+    final closePref = prefs.getInt(closeKey);
+    if (openPref != null) businessHoursPageOpen = fromMinutes(openPref);
+    if (closePref != null) businessHoursPageClose = fromMinutes(closePref);
 
     final userId = ref.read(authControllerProvider).session?.userId;
     if (userId != null && userId.isNotEmpty) {
@@ -66,10 +66,10 @@ class _BusinessHoursPageState extends ConsumerState<BusinessHoursPage> {
             await CompanyApi(ref.read(apiClientProvider)).getCompanyList(userId);
         if (companies.isNotEmpty) {
           final c = companies.first;
-          final open = _parseStored(c.openingMinutes);
-          final close = _parseStored(c.closingMinutes);
-          if (open != null) _open = open;
-          if (close != null) _close = close;
+          final open = parseStored(c.openingMinutes);
+          final close = parseStored(c.closingMinutes);
+          if (open != null) businessHoursPageOpen = open;
+          if (close != null) businessHoursPageClose = close;
         }
       } catch (_) {
         // Keep prefs / defaults.
@@ -78,25 +78,25 @@ class _BusinessHoursPageState extends ConsumerState<BusinessHoursPage> {
     if (mounted) setState(() {});
   }
 
-  Future<void> _pickOpen() async {
-    final picked = await showTimePicker(context: context, initialTime: _open);
-    if (picked != null) setState(() => _open = picked);
+  Future<void> pickOpen() async {
+    final picked = await showTimePicker(context: context, initialTime: businessHoursPageOpen);
+    if (picked != null) setState(() => businessHoursPageOpen = picked);
   }
 
-  Future<void> _pickClose() async {
-    final picked = await showTimePicker(context: context, initialTime: _close);
-    if (picked != null) setState(() => _close = picked);
+  Future<void> pickClose() async {
+    final picked = await showTimePicker(context: context, initialTime: businessHoursPageClose);
+    if (picked != null) setState(() => businessHoursPageClose = picked);
   }
 
-  String _fmt(TimeOfDay t) =>
+  String fmt(TimeOfDay t) =>
       '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
 
-  Future<void> _save() async {
-    setState(() => _busy = true);
+  Future<void> save() async {
+    setState(() => busy = true);
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setInt(_openKey, _toMinutes(_open));
-      await prefs.setInt(_closeKey, _toMinutes(_close));
+      await prefs.setInt(openKey, toMinutes(businessHoursPageOpen));
+      await prefs.setInt(closeKey, toMinutes(businessHoursPageClose));
 
       final userId = ref.read(authControllerProvider).session?.userId;
       if (userId != null && userId.isNotEmpty) {
@@ -131,8 +131,8 @@ class _BusinessHoursPageState extends ConsumerState<BusinessHoursPage> {
               gstNumber: base.gstNumber,
               panNumber: base.panNumber,
               companyFssis: base.companyFssis,
-              openingMinutes: _fmt(_open),
-              closingMinutes: _fmt(_close),
+              openingMinutes: fmt(businessHoursPageOpen),
+              closingMinutes: fmt(businessHoursPageClose),
               companyStatus: base.companyStatus,
             ),
           );
@@ -146,7 +146,7 @@ class _BusinessHoursPageState extends ConsumerState<BusinessHoursPage> {
         const SnackBar(content: Text('Business hours saved')),
       );
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) setState(() => busy = false);
     }
   }
 
@@ -157,7 +157,7 @@ class _BusinessHoursPageState extends ConsumerState<BusinessHoursPage> {
         title: const Text('Business Hours'),
         actions: [
           TextButton(
-            onPressed: _busy ? null : _save,
+            onPressed: busy ? null : save,
             child: const Text('Save', style: TextStyle(color: Colors.white)),
           ),
         ],
@@ -172,25 +172,25 @@ class _BusinessHoursPageState extends ConsumerState<BusinessHoursPage> {
           ListTile(
             title: const Text('Opening time'),
             trailing: Text(
-              _fmt(_open),
+              fmt(businessHoursPageOpen),
               style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
             ),
-            onTap: _pickOpen,
+            onTap: pickOpen,
           ),
           const Divider(height: 1),
           ListTile(
             title: const Text('Closing time'),
             trailing: Text(
-              _fmt(_close),
+              fmt(businessHoursPageClose),
               style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
             ),
-            onTap: _pickClose,
+            onTap: pickClose,
           ),
           const SizedBox(height: 24),
           AppButton(
             label: 'Save',
-            isLoading: _busy,
-            onPressed: _save,
+            isLoading: busy,
+            onPressed: save,
           ),
         ],
       ),

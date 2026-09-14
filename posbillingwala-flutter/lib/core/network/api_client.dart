@@ -8,7 +8,7 @@ import 'package:pos_billingwala_v2/features/auth/data/auth_token_refresh.dart';
 /// and retries the request once.
 class ApiClient {
   ApiClient({Dio? dio})
-      : _dio = dio ??
+      : apiClientDio = dio ??
             Dio(
               BaseOptions(
                 baseUrl: ApiConstants.baseUrl,
@@ -28,23 +28,23 @@ class ApiClient {
                     status != 401,
               ),
             ) {
-    _installAuthRefreshInterceptor();
+    installAuthRefreshInterceptor();
   }
 
-  final Dio _dio;
+  final Dio apiClientDio;
 
-  Dio get dio => _dio;
+  Dio get dio => apiClientDio;
 
   void setAuthToken(String? token) {
     if (token == null || token.isEmpty) {
-      _dio.options.headers.remove('Authorization');
+      apiClientDio.options.headers.remove('Authorization');
     } else {
-      _dio.options.headers['Authorization'] = 'Bearer $token';
+      apiClientDio.options.headers['Authorization'] = 'Bearer $token';
     }
   }
 
-  void _installAuthRefreshInterceptor() {
-    _dio.interceptors.add(
+  void installAuthRefreshInterceptor() {
+    apiClientDio.interceptors.add(
       QueuedInterceptorsWrapper(
         onError: (error, handler) async {
           final status = error.response?.statusCode;
@@ -65,11 +65,11 @@ class ApiClient {
           try {
             final opts = error.requestOptions;
             opts.extra['authRetry'] = true;
-            final auth = _dio.options.headers['Authorization'];
+            final auth = apiClientDio.options.headers['Authorization'];
             if (auth != null) {
               opts.headers['Authorization'] = auth;
             }
-            final response = await _dio.fetch<dynamic>(opts);
+            final response = await apiClientDio.fetch<dynamic>(opts);
             return handler.resolve(response);
           } catch (e) {
             return handler.next(error);

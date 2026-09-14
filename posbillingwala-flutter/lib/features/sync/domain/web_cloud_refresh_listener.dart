@@ -12,61 +12,61 @@ import 'package:pos_billingwala_v2/features/sync/domain/full_sync_controller.dar
 ///
 /// Uses non-destructive [FullSyncController.downloadAll] (no local wipe).
 class WebCloudRefreshListener {
-  WebCloudRefreshListener(this._ref);
+  WebCloudRefreshListener(this.webCloudRefreshListenerRef);
 
-  final Ref _ref;
-  AppLifecycleListener? _lifecycle;
-  Timer? _timer;
-  bool _running = false;
-  DateTime? _lastRefreshAt;
+  final Ref webCloudRefreshListenerRef;
+  AppLifecycleListener? lifecycle;
+  Timer? timer;
+  bool running = false;
+  DateTime? lastRefreshAt;
 
   static const pollInterval = Duration(seconds: 45);
   static const minRefreshGap = Duration(seconds: 20);
 
   void start() {
     if (!AppPlatform.requiresNetwork) return;
-    _lifecycle?.dispose();
-    _lifecycle = AppLifecycleListener(onResume: () => unawaited(refresh()));
-    _timer?.cancel();
-    _timer = Timer.periodic(pollInterval, (_) => unawaited(refresh()));
+    lifecycle?.dispose();
+    lifecycle = AppLifecycleListener(onResume: () => unawaited(refresh()));
+    timer?.cancel();
+    timer = Timer.periodic(pollInterval, (_) => unawaited(refresh()));
     unawaited(refresh());
   }
 
   Future<void> refresh({bool force = false}) async {
     if (!AppPlatform.requiresNetwork) return;
-    if (_running) return;
+    if (running) return;
 
-    final auth = _ref.read(authControllerProvider);
+    final auth = webCloudRefreshListenerRef.read(authControllerProvider);
     if (auth.status != AuthStatus.authenticated) return;
     final userId = auth.session?.userId;
     if (userId == null || userId.isEmpty) return;
 
     if (!force &&
-        _lastRefreshAt != null &&
-        DateTime.now().difference(_lastRefreshAt!) < minRefreshGap) {
+        lastRefreshAt != null &&
+        DateTime.now().difference(lastRefreshAt!) < minRefreshGap) {
       return;
     }
 
     if (!await ensureOnline()) return;
 
-    _running = true;
+    running = true;
     try {
-      await _ref
+      await webCloudRefreshListenerRef
           .read(fullSyncControllerProvider.notifier)
           .downloadAll(silent: true);
-      _lastRefreshAt = DateTime.now();
+      lastRefreshAt = DateTime.now();
     } catch (e, st) {
       debugPrint('Web cloud refresh failed: $e\n$st');
     } finally {
-      _running = false;
+      running = false;
     }
   }
 
   void dispose() {
-    _timer?.cancel();
-    _timer = null;
-    _lifecycle?.dispose();
-    _lifecycle = null;
+    timer?.cancel();
+    timer = null;
+    lifecycle?.dispose();
+    lifecycle = null;
   }
 }
 

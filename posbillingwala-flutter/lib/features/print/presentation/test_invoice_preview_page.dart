@@ -23,32 +23,32 @@ class TestInvoicePreviewPage extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<TestInvoicePreviewPage> createState() =>
-      _TestInvoicePreviewPageState();
+      TestInvoicePreviewPageState();
 }
 
-class _TestInvoicePreviewPageState extends ConsumerState<TestInvoicePreviewPage> {
-  bool _printing = false;
-  bool _connecting = false;
+class TestInvoicePreviewPageState extends ConsumerState<TestInvoicePreviewPage> {
+  bool printing = false;
+  bool connecting = false;
 
-  bool get _isKot => widget.channel == PrinterChannelKind.kot;
+  bool get isKot => widget.channel == PrinterChannelKind.kot;
 
-  String get _title => _isKot ? 'KOT Preview' : 'Invoice Preview';
+  String get testInvoicePreviewPageTitle => isKot ? 'KOT Preview' : 'Invoice Preview';
 
-  String? get _shopName =>
+  String? get testInvoicePreviewPageShopName =>
       ref.read(authControllerProvider).session?.shopName;
 
-  String get _previewText =>
+  String get testInvoicePreviewPagePreviewText =>
       ref.read(printServiceProvider).previewText(
             widget.channel,
-            shopName: _shopName,
+            shopName: testInvoicePreviewPageShopName,
           );
 
-  Future<void> _print() async {
-    setState(() => _printing = true);
+  Future<void> testInvoicePreviewPagePrint() async {
+    setState(() => printing = true);
     try {
       final result = await ref.read(printServiceProvider).printTest(
             widget.channel,
-            shopName: _shopName,
+            shopName: testInvoicePreviewPageShopName,
           );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -60,13 +60,13 @@ class _TestInvoicePreviewPageState extends ConsumerState<TestInvoicePreviewPage>
         SnackBar(content: Text('Print failed: $e')),
       );
     } finally {
-      if (mounted) setState(() => _printing = false);
+      if (mounted) setState(() => printing = false);
     }
   }
 
-  Future<void> _connect() async {
+  Future<void> testInvoicePreviewPageConnect() async {
     final settings = ref.read(printerSettingsProvider);
-    final mac = _isKot
+    final mac = isKot
         ? settings.kotBluetoothAddress
         : settings.billBluetoothAddress;
     if (mac.trim().isEmpty) {
@@ -81,7 +81,7 @@ class _TestInvoicePreviewPageState extends ConsumerState<TestInvoicePreviewPage>
       if (mounted) setState(() {});
       return;
     }
-    setState(() => _connecting = true);
+    setState(() => connecting = true);
     try {
       final ok = await BluetoothPrinterHub.instance.connect(
         widget.channel,
@@ -95,7 +95,7 @@ class _TestInvoicePreviewPageState extends ConsumerState<TestInvoicePreviewPage>
         ),
       );
     } finally {
-      if (mounted) setState(() => _connecting = false);
+      if (mounted) setState(() => connecting = false);
     }
   }
 
@@ -104,7 +104,7 @@ class _TestInvoicePreviewPageState extends ConsumerState<TestInvoicePreviewPage>
     super.initState();
     if (const bool.fromEnvironment('AUTO_TEST_PRINT')) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _print();
+        if (mounted) testInvoicePreviewPagePrint();
       });
     }
   }
@@ -114,11 +114,11 @@ class _TestInvoicePreviewPageState extends ConsumerState<TestInvoicePreviewPage>
     final settings = ref.watch(printerSettingsProvider);
     final strings = AppStrings.of(ref);
     final chars = settings.charsPerLine;
-    final text = _previewText;
+    final text = testInvoicePreviewPagePreviewText;
     final connected = BluetoothPrinterHub.instance.isReady;
 
     return Scaffold(
-      appBar: AppBar(title: Text(_title)),
+      appBar: AppBar(title: Text(testInvoicePreviewPageTitle)),
       body: ResponsiveScrollShell(
         dashboard: true,
         child: ListView(
@@ -196,16 +196,16 @@ class _TestInvoicePreviewPageState extends ConsumerState<TestInvoicePreviewPage>
                 child: AppButton(
                   label: 'Connect',
                   variant: AppButtonVariant.outlined,
-                  isLoading: _connecting,
-                  onPressed: _printing ? null : _connect,
+                  isLoading: connecting,
+                  onPressed: printing ? null : testInvoicePreviewPageConnect,
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: AppButton(
                   label: strings.testPrint,
-                  isLoading: _printing,
-                  onPressed: _connecting ? null : _print,
+                  isLoading: printing,
+                  onPressed: connecting ? null : testInvoicePreviewPagePrint,
                 ),
               ),
             ],

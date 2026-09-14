@@ -21,13 +21,13 @@ class SyncPage extends ConsumerStatefulWidget {
   final String? initialMode;
 
   @override
-  ConsumerState<SyncPage> createState() => _SyncPageState();
+  ConsumerState<SyncPage> createState() => SyncPageState();
 }
 
-class _SyncPageState extends ConsumerState<SyncPage> {
-  bool _started = false;
+class SyncPageState extends ConsumerState<SyncPage> {
+  bool started = false;
 
-  SyncScreenMode get _mode {
+  SyncScreenMode get syncPageMode {
     final raw = widget.initialMode?.trim().toLowerCase();
     if (raw == 'fetch') return SyncScreenMode.fetch;
     // Web is online-only — never run offline upload mode.
@@ -35,7 +35,7 @@ class _SyncPageState extends ConsumerState<SyncPage> {
     return SyncScreenMode.upload;
   }
 
-  String get _title => _mode == SyncScreenMode.fetch
+  String get syncPageTitle => syncPageMode == SyncScreenMode.fetch
       ? (AppPlatform.requiresNetwork
           ? 'Refresh Data From Cloud'
           : 'Fetch Data From Cloud')
@@ -44,12 +44,12 @@ class _SyncPageState extends ConsumerState<SyncPage> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _start());
+    WidgetsBinding.instance.addPostFrameCallback((_) => syncPageStart());
   }
 
-  Future<void> _start() async {
-    if (_started) return;
-    _started = true;
+  Future<void> syncPageStart() async {
+    if (started) return;
+    started = true;
 
     if (!await ensureOnline()) {
       ref.read(syncProgressProvider.notifier).setBlocked(
@@ -60,7 +60,7 @@ class _SyncPageState extends ConsumerState<SyncPage> {
     }
 
     final full = ref.read(fullSyncControllerProvider.notifier);
-    if (_mode == SyncScreenMode.fetch) {
+    if (syncPageMode == SyncScreenMode.fetch) {
       await full.resetAndFetchWithProgress();
     } else {
       await full.uploadWithProgress();
@@ -78,7 +78,7 @@ class _SyncPageState extends ConsumerState<SyncPage> {
         backgroundColor: const Color(0xFFF3F7FC),
         appBar: AppBar(
           title: Text(
-            _title,
+            syncPageTitle,
             style: const TextStyle(
               fontFamily: AppFonts.family,
               fontWeight: FontWeight.w700,
@@ -103,9 +103,9 @@ class _SyncPageState extends ConsumerState<SyncPage> {
                     12,
                   ),
                   children: [
-                  _StatusCard(
+                  StatusCard(
                     headline: progress.headline ??
-                        (_mode == SyncScreenMode.upload
+                        (syncPageMode == SyncScreenMode.upload
                             ? 'Preparing upload…'
                             : 'Preparing fetch…'),
                     subtitle: progress.subtitle ?? '',
@@ -149,7 +149,7 @@ class _SyncPageState extends ConsumerState<SyncPage> {
                               color: AppColors.border.withValues(alpha: .65),
                               indent: 56,
                             ),
-                          _TableStatusRow(step: progress.steps[i]),
+                          TableStatusRow(step: progress.steps[i]),
                         ],
                       ],
                     ),
@@ -175,8 +175,8 @@ class _SyncPageState extends ConsumerState<SyncPage> {
   }
 }
 
-class _StatusCard extends StatelessWidget {
-  const _StatusCard({
+class StatusCard extends StatelessWidget {
+  const StatusCard({super.key, 
     required this.headline,
     required this.subtitle,
     required this.isRunning,
@@ -270,8 +270,8 @@ class _StatusCard extends StatelessWidget {
   }
 }
 
-class _TableStatusRow extends StatelessWidget {
-  const _TableStatusRow({required this.step});
+class TableStatusRow extends StatelessWidget {
+  const TableStatusRow({super.key, required this.step});
 
   final SyncTableStep step;
 

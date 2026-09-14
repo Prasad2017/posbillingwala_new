@@ -202,7 +202,7 @@ class TablesController extends Notifier<AsyncValue<void>> {
     });
   }
 
-  Future<void> _uploadDiningSessionIfOnline(DiningSession session) async {
+  Future<void> uploadDiningSessionIfOnline(DiningSession session) async {
     final userId = ref.read(authControllerProvider).session?.userId;
     if (userId == null || userId.isEmpty) return;
     if (!await isDeviceOnline()) return;
@@ -245,7 +245,7 @@ class TablesController extends Notifier<AsyncValue<void>> {
     final db = ref.read(appDatabaseProvider);
     final session =
         await db.openOrGetDiningSession(floor.billingTableNumber);
-    await _uploadDiningSessionIfOnline(session);
+    await uploadDiningSessionIfOnline(session);
     final label = floor.joinedLabel ??
         (floor.table.displayName.isEmpty
             ? floor.table.tableNumber
@@ -266,7 +266,7 @@ class TablesController extends Notifier<AsyncValue<void>> {
           primaryTable: primaryTable,
           secondaryTable: secondaryTable,
         );
-    await _uploadDiningSessionIfOnline(session);
+    await uploadDiningSessionIfOnline(session);
     return session;
   }
 
@@ -274,7 +274,7 @@ class TablesController extends Notifier<AsyncValue<void>> {
     final db = ref.read(appDatabaseProvider);
     await db.splitJoinedTables(sessionId);
     final session = await db.getDiningSessionById(sessionId);
-    if (session != null) await _uploadDiningSessionIfOnline(session);
+    if (session != null) await uploadDiningSessionIfOnline(session);
   }
 
   Future<void> transferTable({
@@ -287,7 +287,7 @@ class TablesController extends Notifier<AsyncValue<void>> {
       toTable: toTable,
     );
     final session = await db.openOrGetDiningSession(toTable);
-    await _uploadDiningSessionIfOnline(session);
+    await uploadDiningSessionIfOnline(session);
   }
 
   Future<void> setSessionStatus({
@@ -300,7 +300,7 @@ class TablesController extends Notifier<AsyncValue<void>> {
       status: status,
     );
     final session = await db.getDiningSessionById(sessionId);
-    if (session != null) await _uploadDiningSessionIfOnline(session);
+    if (session != null) await uploadDiningSessionIfOnline(session);
   }
 
   Future<void> moveItems({
@@ -327,7 +327,7 @@ class TablesController extends Notifier<AsyncValue<void>> {
       guestCount: guestCount,
     );
     final session = await db.getDiningSessionById(sessionId);
-    if (session != null) await _uploadDiningSessionIfOnline(session);
+    if (session != null) await uploadDiningSessionIfOnline(session);
   }
 }
 

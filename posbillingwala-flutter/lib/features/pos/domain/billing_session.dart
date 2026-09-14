@@ -86,14 +86,14 @@ class BillingSessionController extends Notifier<BillingSession> {
     String? customerPhone,
     String? parcelNumber,
   }) {
-    final parcel = _trimOrNull(parcelNumber);
+    final parcel = trimOrNull(parcelNumber);
     state = BillingSession(
       invoiceType: 'take_away',
       title: parcel == null ? 'Takeaway Billing' : 'Parcel $parcel',
       billingRoute: '/takeaway/billing',
       paymentRoute: '/takeaway/payment',
-      customerName: _trimOrNull(customerName),
-      customerPhone: _trimOrNull(customerPhone),
+      customerName: trimOrNull(customerName),
+      customerPhone: trimOrNull(customerPhone),
       cartScope: parcel ?? '',
       tableNumber: parcel,
     );
@@ -126,11 +126,11 @@ class BillingSessionController extends Notifier<BillingSession> {
       title: state.title,
       billingRoute: state.billingRoute,
       paymentRoute: state.paymentRoute,
-      customerName: name != null ? _trimOrNull(name) : state.customerName,
-      customerPhone: phone != null ? _trimOrNull(phone) : state.customerPhone,
-      customerEmail: email != null ? _trimOrNull(email) : state.customerEmail,
+      customerName: name != null ? trimOrNull(name) : state.customerName,
+      customerPhone: phone != null ? trimOrNull(phone) : state.customerPhone,
+      customerEmail: email != null ? trimOrNull(email) : state.customerEmail,
       customerAddress:
-          address != null ? _trimOrNull(address) : state.customerAddress,
+          address != null ? trimOrNull(address) : state.customerAddress,
       invoicePrefix: state.invoicePrefix,
       cartScope: state.cartScope,
       tableNumber: state.tableNumber,
@@ -138,7 +138,7 @@ class BillingSessionController extends Notifier<BillingSession> {
     );
   }
 
-  String? _trimOrNull(String? value) {
+  String? trimOrNull(String? value) {
     final trimmed = value?.trim();
     if (trimmed == null || trimmed.isEmpty) return null;
     return trimmed;

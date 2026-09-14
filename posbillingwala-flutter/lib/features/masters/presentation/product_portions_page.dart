@@ -19,71 +19,71 @@ class ProductPortionsPage extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<ProductPortionsPage> createState() =>
-      _ProductPortionsPageState();
+      ProductPortionsPageState();
 }
 
-class _ProductPortionsPageState extends ConsumerState<ProductPortionsPage> {
-  final _priceCtrl = TextEditingController();
-  final _sortCtrl = TextEditingController(text: '1');
-  PortionMaster? _selected;
-  bool _busy = false;
-  List<ProductPortion> _portions = const [];
-  bool _loaded = false;
+class ProductPortionsPageState extends ConsumerState<ProductPortionsPage> {
+  final priceCtrl = TextEditingController();
+  final sortCtrl = TextEditingController(text: '1');
+  PortionMaster? productPortionsPageSelected;
+  bool busy = false;
+  List<ProductPortion> productPortionsPagePortions = const [];
+  bool loaded = false;
 
   @override
   void dispose() {
-    _priceCtrl.dispose();
-    _sortCtrl.dispose();
+    priceCtrl.dispose();
+    sortCtrl.dispose();
     super.dispose();
   }
 
-  Future<void> _reload() async {
+  Future<void> reload() async {
     final rows = await ref
         .read(appDatabaseProvider)
         .getPortionsForProduct(widget.productId);
     if (!mounted) return;
     setState(() {
-      _portions = rows;
-      _loaded = true;
+      productPortionsPagePortions = rows;
+      loaded = true;
     });
   }
 
-  Future<void> _add() async {
+  Future<void> productPortionsPageAdd() async {
     final masters = ref.read(portionMastersProvider).maybeWhen(
           data: (v) => v,
           orElse: () => const <PortionMaster>[],
         );
-    final selected = _selected ?? (masters.isNotEmpty ? masters.first : null);
+    final selected = productPortionsPageSelected ?? (masters.isNotEmpty ? masters.first : null);
     if (selected == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Add portion masters first')),
       );
       return;
     }
-    final price = double.tryParse(_priceCtrl.text.trim());
+    final price = double.tryParse(priceCtrl.text.trim());
     if (price == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Enter portion price')),
       );
       return;
     }
-    setState(() => _busy = true);
+    setState(() => busy = true);
     try {
       await ref.read(appDatabaseProvider).insertLocalPortion(
             productId: widget.productId,
             portionName: selected.portionName,
             portionPrice: price,
-            portionSortOrder: int.tryParse(_sortCtrl.text.trim()) ?? 1,
+            portionSortOrder: int.tryParse(sortCtrl.text.trim()) ?? 1,
             portionMasterId: selected.portionMasterId,
           );
-      _priceCtrl.clear();
-      await _reload();
+      priceCtrl.clear();
+      await reload();
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) setState(() => busy = false);
     }
   }
 
-  Future<void> _delete(ProductPortion portion) async {
+  Future<void> delete(ProductPortion portion) async {
     final ok = await showAppConfirmBottomSheet(
       context: context,
       title: 'Delete portion',
@@ -93,7 +93,7 @@ class _ProductPortionsPageState extends ConsumerState<ProductPortionsPage> {
     );
     if (!ok) return;
     await ref.read(appDatabaseProvider).softDeletePortion(portion.portionId);
-    await _reload();
+    await reload();
   }
 
   @override
@@ -113,16 +113,16 @@ class _ProductPortionsPageState extends ConsumerState<ProductPortionsPage> {
           data: (v) => v,
           orElse: () => const <PortionMaster>[],
         );
-    final selected = _selected != null &&
-            masters.any((m) => m.portionMasterId == _selected!.portionMasterId)
+    final selected = productPortionsPageSelected != null &&
+            masters.any((m) => m.portionMasterId == productPortionsPageSelected!.portionMasterId)
         ? masters.firstWhere(
-            (m) => m.portionMasterId == _selected!.portionMasterId,
+            (m) => m.portionMasterId == productPortionsPageSelected!.portionMasterId,
           )
         : (masters.isNotEmpty ? masters.first : null);
 
-    if (!_loaded) {
+    if (!loaded) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && !_loaded) _reload();
+        if (mounted && !loaded) reload();
       });
     }
 
@@ -164,7 +164,7 @@ class _ProductPortionsPageState extends ConsumerState<ProductPortionsPage> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  _portions.isEmpty
+                  productPortionsPagePortions.isEmpty
                       ? 'No portions — product price is used for billing. Optionally add portions.'
                       : 'Configured portions override base price when selected.',
                   style: TextStyle(
@@ -217,26 +217,26 @@ class _ProductPortionsPageState extends ConsumerState<ProductPortionsPage> {
                   items: masters,
                   hint: 'Select Portion',
                   itemLabel: (m) => m.portionName,
-                  onChanged: (v) => setState(() => _selected = v),
+                  onChanged: (v) => setState(() => productPortionsPageSelected = v),
                 ),
                 const SizedBox(height: 12),
                 MasterOutlinedField(
-                  controller: _priceCtrl,
+                  controller: priceCtrl,
                   hint: 'Portion Price',
                   keyboardType:
                       const TextInputType.numberWithOptions(decimal: true),
                 ),
                 const SizedBox(height: 12),
                 MasterOutlinedField(
-                  controller: _sortCtrl,
+                  controller: sortCtrl,
                   hint: 'Sort Order',
                   keyboardType: TextInputType.number,
                 ),
                 const SizedBox(height: 12),
                 MasterPrimaryButton(
                   label: 'Add Portion',
-                  isLoading: _busy,
-                  onPressed: _busy ? null : _add,
+                  isLoading: busy,
+                  onPressed: busy ? null : productPortionsPageAdd,
                 ),
               ],
             ),
@@ -246,24 +246,24 @@ class _ProductPortionsPageState extends ConsumerState<ProductPortionsPage> {
           const SizedBox(height: 10),
           MasterCard(
             padding: EdgeInsets.zero,
-            child: !_loaded
+            child: !loaded
                 ? const Padding(
                     padding: EdgeInsets.all(24),
                     child: Center(child: CircularProgressIndicator()),
                   )
-                : _portions.isEmpty
+                : productPortionsPagePortions.isEmpty
                     ? const MasterEmptyState(
                         title: 'No data found',
                         subtitle: 'Add portion sizes like Half / Full.',
                       )
                     : Column(
                         children: [
-                          for (var i = 0; i < _portions.length; i++)
+                          for (var i = 0; i < productPortionsPagePortions.length; i++)
                             MasterListRow(
                               index: i + 1,
-                              title: _portions[i].portionName,
+                              title: productPortionsPagePortions[i].portionName,
                               subtitle: currency
-                                  .format(_portions[i].portionPrice),
+                                  .format(productPortionsPagePortions[i].portionPrice),
                               onEdit: () {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
@@ -273,8 +273,8 @@ class _ProductPortionsPageState extends ConsumerState<ProductPortionsPage> {
                                   ),
                                 );
                               },
-                              onDelete: () => _delete(_portions[i]),
-                              showDivider: i < _portions.length - 1,
+                              onDelete: () => delete(productPortionsPagePortions[i]),
+                              showDivider: i < productPortionsPagePortions.length - 1,
                             ),
                         ],
                       ),

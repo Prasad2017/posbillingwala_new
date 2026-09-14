@@ -21,22 +21,22 @@ class MessCouponPage extends ConsumerStatefulWidget {
   final MessMember member;
 
   @override
-  ConsumerState<MessCouponPage> createState() => _MessCouponPageState();
+  ConsumerState<MessCouponPage> createState() => MessCouponPageState();
 }
 
-class _MessCouponPageState extends ConsumerState<MessCouponPage> {
-  String _messType = 'Lunch';
-  bool _busy = false;
-  int _used = 0;
-  int _limit = 30;
+class MessCouponPageState extends ConsumerState<MessCouponPage> {
+  String messCouponPageMessType = 'Lunch';
+  bool busy = false;
+  int messCouponPageUsed = 0;
+  int messCouponPageLimit = 30;
 
   @override
   void initState() {
     super.initState();
-    Future.microtask(_loadCounts);
+    Future.microtask(loadCounts);
   }
 
-  Future<void> _loadCounts() async {
+  Future<void> loadCounts() async {
     final db = ref.read(appDatabaseProvider);
     final used = await db.countMessCouponsForMember(widget.member.memberName);
     final payments = await db.getLocalMessPayments(
@@ -48,26 +48,26 @@ class _MessCouponPageState extends ConsumerState<MessCouponPage> {
     }
     if (!mounted) return;
     setState(() {
-      _used = used;
-      _limit = limit;
+      messCouponPageUsed = used;
+      messCouponPageLimit = limit;
     });
   }
 
-  Future<void> _issueAndPrint() async {
-    if (_used >= _limit) {
+  Future<void> issueAndPrint() async {
+    if (messCouponPageUsed >= messCouponPageLimit) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Coupon limit $_limit reached for this member')),
+        SnackBar(content: Text('Coupon limit $messCouponPageLimit reached for this member')),
       );
       return;
     }
-    setState(() => _busy = true);
+    setState(() => busy = true);
     try {
       final db = ref.read(appDatabaseProvider);
-      final couponNo = _used + 1;
+      final couponNo = messCouponPageUsed + 1;
       final id = await db.issueMessCoupon(
         memberId: '${widget.member.memberId}',
         memberName: widget.member.memberName,
-        messType: _messType,
+        messType: messCouponPageMessType,
       );
       final now = DateFormat('dd MMM yyyy, hh:mm a').format(DateTime.now());
       final shop = ref.read(authControllerProvider).session?.shopName ??
@@ -77,7 +77,7 @@ class _MessCouponPageState extends ConsumerState<MessCouponPage> {
         ..writeln('MESS COUPON')
         ..writeln('-' * 32)
         ..writeln(widget.member.memberName)
-        ..writeln(_messType)
+        ..writeln(messCouponPageMessType)
         ..writeln(now)
         ..writeln('MESS COUPON No: $couponNo')
         ..writeln('-' * 32)
@@ -115,12 +115,12 @@ class _MessCouponPageState extends ConsumerState<MessCouponPage> {
           ),
         ),
       );
-      await _loadCounts();
+      await loadCounts();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) setState(() => busy = false);
     }
   }
 
@@ -148,7 +148,7 @@ class _MessCouponPageState extends ConsumerState<MessCouponPage> {
                 style: const TextStyle(fontWeight: FontWeight.w800),
               ),
               subtitle: Text(
-                'Used $_used / $_limit coupons',
+                'Used $messCouponPageUsed / $messCouponPageLimit coupons',
               ),
             ),
           ),
@@ -169,10 +169,10 @@ class _MessCouponPageState extends ConsumerState<MessCouponPage> {
                 .map(
                   (t) => ChoiceChip(
                     label: Text(t),
-                    selected: _messType == t,
-                    onSelected: _busy
+                    selected: messCouponPageMessType == t,
+                    onSelected: busy
                         ? null
-                        : (_) => setState(() => _messType = t),
+                        : (_) => setState(() => messCouponPageMessType = t),
                   ),
                 )
                 .toList(),
@@ -180,9 +180,9 @@ class _MessCouponPageState extends ConsumerState<MessCouponPage> {
           const SizedBox(height: 24),
           AppButton(
             label: 'Print coupon',
-            isLoading: _busy,
+            isLoading: busy,
             expanded: false,
-            onPressed: _issueAndPrint,
+            onPressed: issueAndPrint,
           ),
         ],
       ),

@@ -13,21 +13,21 @@ class CategoriesPage extends ConsumerStatefulWidget {
   const CategoriesPage({super.key});
 
   @override
-  ConsumerState<CategoriesPage> createState() => _CategoriesPageState();
+  ConsumerState<CategoriesPage> createState() => CategoriesPageState();
 }
 
-class _CategoriesPageState extends ConsumerState<CategoriesPage> {
-  final _nameCtrl = TextEditingController();
-  FoodType? _foodType;
-  bool _busy = false;
+class CategoriesPageState extends ConsumerState<CategoriesPage> {
+  final nameCtrl = TextEditingController();
+  FoodType? foodType;
+  bool busy = false;
 
   @override
   void dispose() {
-    _nameCtrl.dispose();
+    nameCtrl.dispose();
     super.dispose();
   }
 
-  FoodType? _matchFoodType(List<FoodType> types, int? id) {
+  FoodType? matchFoodType(List<FoodType> types, int? id) {
     if (id == null) return types.isEmpty ? null : types.first;
     for (final t in types) {
       if (t.foodTypeId == id) return t;
@@ -35,11 +35,11 @@ class _CategoriesPageState extends ConsumerState<CategoriesPage> {
     return types.isEmpty ? null : types.first;
   }
 
-  Future<void> _add() async {
-    final name = _nameCtrl.text.trim();
+  Future<void> add() async {
+    final name = nameCtrl.text.trim();
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter category name')),
+        SnackBar(content: Text(AppStrings.of(ref).enterCategoryName)),
       );
       return;
     }
@@ -47,31 +47,31 @@ class _CategoriesPageState extends ConsumerState<CategoriesPage> {
           data: (v) => v,
           orElse: () => const <FoodType>[],
         );
-    final selected = _foodType ?? (foodTypes.isEmpty ? null : foodTypes.first);
-    setState(() => _busy = true);
+    final selected = foodType ?? (foodTypes.isEmpty ? null : foodTypes.first);
+    setState(() => busy = true);
     try {
       await ref.read(mastersSyncControllerProvider.notifier).createCategory(
             name,
             foodTypeId: selected?.foodTypeId,
             foodTypeCode: selected?.foodTypeCode,
           );
-      _nameCtrl.clear();
+      nameCtrl.clear();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Category saved')),
+        SnackBar(content: Text(AppStrings.of(ref).categorySaved)),
       );
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) setState(() => busy = false);
     }
   }
 
-  Future<void> _edit(ProductCategory category) async {
+  Future<void> edit(ProductCategory category) async {
     final controller = TextEditingController(text: category.categoryName);
     final foodTypes = ref.read(foodTypesProvider).maybeWhen(
           data: (v) => v,
           orElse: () => const <FoodType>[],
         );
-    var selected = _matchFoodType(foodTypes, category.foodTypeId);
+    var selected = matchFoodType(foodTypes, category.foodTypeId);
     final ok = await showAppBottomSheet<bool>(
       context: context,
       title: 'Edit Category',
@@ -123,7 +123,7 @@ class _CategoriesPageState extends ConsumerState<CategoriesPage> {
         );
   }
 
-  Future<void> _delete(ProductCategory category) async {
+  Future<void> delete(ProductCategory category) async {
     final ok = await showAppConfirmBottomSheet(
       context: context,
       title: 'Delete category',
@@ -145,7 +145,7 @@ class _CategoriesPageState extends ConsumerState<CategoriesPage> {
           data: (v) => v,
           orElse: () => const <FoodType>[],
         );
-    final selected = _foodType ?? (foodTypes.isEmpty ? null : foodTypes.first);
+    final selected = foodType ?? (foodTypes.isEmpty ? null : foodTypes.first);
 
     return Scaffold(
       backgroundColor: MasterUi.bg,
@@ -171,7 +171,7 @@ class _CategoriesPageState extends ConsumerState<CategoriesPage> {
             child: Column(
               children: [
                 MasterOutlinedField(
-                  controller: _nameCtrl,
+                  controller: nameCtrl,
                   hint: 'Category Name',
                 ),
                 if (foodTypes.isNotEmpty) ...[
@@ -181,14 +181,14 @@ class _CategoriesPageState extends ConsumerState<CategoriesPage> {
                     items: foodTypes,
                     itemLabel: (f) => f.foodTypeName,
                     value: selected,
-                    onChanged: (v) => setState(() => _foodType = v),
+                    onChanged: (v) => setState(() => foodType = v),
                   ),
                 ],
                 const SizedBox(height: 12),
                 MasterPrimaryButton(
                   label: 'Add Category',
-                  isLoading: _busy,
-                  onPressed: _busy ? null : _add,
+                  isLoading: busy,
+                  onPressed: busy ? null : add,
                 ),
               ],
             ),
@@ -212,8 +212,8 @@ class _CategoriesPageState extends ConsumerState<CategoriesPage> {
                       MasterListRow(
                         index: i + 1,
                         title: rows[i].categoryName,
-                        onEdit: () => _edit(rows[i]),
-                        onDelete: () => _delete(rows[i]),
+                        onEdit: () => edit(rows[i]),
+                        onDelete: () => delete(rows[i]),
                         showDivider: i < rows.length - 1,
                       ),
                   ],

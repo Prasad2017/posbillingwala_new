@@ -24,30 +24,30 @@ class PaymentPage extends ConsumerStatefulWidget {
   const PaymentPage({super.key});
 
   @override
-  ConsumerState<PaymentPage> createState() => _PaymentPageState();
+  ConsumerState<PaymentPage> createState() => PaymentPageState();
 }
 
-class _PaymentPageState extends ConsumerState<PaymentPage> {
-  final _cashController = TextEditingController();
-  final _upiController = TextEditingController();
-  final _discountController = TextEditingController(text: '0');
-  final _packingController = TextEditingController(text: '0');
-  final _customerNameController = TextEditingController();
-  final _customerPhoneController = TextEditingController();
-  final _customerEmailController = TextEditingController();
-  final _customerAddressController = TextEditingController();
-  late final NumberFormat _currency;
+class PaymentPageState extends ConsumerState<PaymentPage> {
+  final cashController = TextEditingController();
+  final upiController = TextEditingController();
+  final paymentPageDiscountController = TextEditingController(text: '0');
+  final paymentPagePackingController = TextEditingController(text: '0');
+  final customerNameController = TextEditingController();
+  final customerPhoneController = TextEditingController();
+  final customerEmailController = TextEditingController();
+  final customerAddressController = TextEditingController();
+  late final NumberFormat paymentPageCurrency;
 
   @override
   void initState() {
     super.initState();
-    _currency = NumberFormat.currency(locale: 'en_IN', symbol: '₹ ');
+    paymentPageCurrency = NumberFormat.currency(locale: 'en_IN', symbol: '₹ ');
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final session = ref.read(billingSessionProvider);
-      _customerNameController.text = session.customerName ?? '';
-      _customerPhoneController.text = session.customerPhone ?? '';
-      _customerEmailController.text = session.customerEmail ?? '';
-      _customerAddressController.text = session.customerAddress ?? '';
+      customerNameController.text = session.customerName ?? '';
+      customerPhoneController.text = session.customerPhone ?? '';
+      customerEmailController.text = session.customerEmail ?? '';
+      customerAddressController.text = session.customerAddress ?? '';
       final summary = ref.read(cartSummaryProvider);
       final total = ref.read(paymentCheckoutControllerProvider).payableTotal(
             subtotal: summary.subtotal,
@@ -59,33 +59,33 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
       ref
           .read(paymentCheckoutControllerProvider.notifier)
           .selectMode(PaymentMode.cash, total);
-      _syncControllers();
+      syncControllers();
     });
   }
 
   @override
   void dispose() {
-    _cashController.dispose();
-    _upiController.dispose();
-    _discountController.dispose();
-    _packingController.dispose();
-    _customerNameController.dispose();
-    _customerPhoneController.dispose();
-    _customerEmailController.dispose();
-    _customerAddressController.dispose();
+    cashController.dispose();
+    upiController.dispose();
+    paymentPageDiscountController.dispose();
+    paymentPagePackingController.dispose();
+    customerNameController.dispose();
+    customerPhoneController.dispose();
+    customerEmailController.dispose();
+    customerAddressController.dispose();
     super.dispose();
   }
 
-  void _persistCustomer() {
+  void persistCustomer() {
     ref.read(billingSessionProvider.notifier).updateCustomer(
-          name: _customerNameController.text,
-          phone: _customerPhoneController.text,
-          email: _customerEmailController.text,
-          address: _customerAddressController.text,
+          name: customerNameController.text,
+          phone: customerPhoneController.text,
+          email: customerEmailController.text,
+          address: customerAddressController.text,
         );
   }
 
-  Future<void> _confirmClearCart() async {
+  Future<void> confirmClearCart() async {
     final strings = AppStrings.of(ref);
     final confirm = await showAppConfirmBottomSheet(
       context: context,
@@ -104,22 +104,22 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
     context.go(session.billingRoute);
   }
 
-  void _syncControllers() {
+  void syncControllers() {
     final state = ref.read(paymentCheckoutControllerProvider);
-    _cashController.text = state.cashAmount.toStringAsFixed(2);
-    _upiController.text = state.upiAmount.toStringAsFixed(2);
+    cashController.text = state.cashAmount.toStringAsFixed(2);
+    upiController.text = state.upiAmount.toStringAsFixed(2);
   }
 
-  double _payable(CartSummary summary, PaymentCheckoutState checkout) =>
+  double paymentPagePayable(CartSummary summary, PaymentCheckoutState checkout) =>
       checkout.payableTotal(
         subtotal: summary.subtotal,
         taxTotal: summary.taxTotal,
       );
 
-  Future<void> _openPaymentModeDialog() async {
+  Future<void> openPaymentModeDialog() async {
     final summary = ref.read(cartSummaryProvider);
     final checkout = ref.read(paymentCheckoutControllerProvider);
-    final total = _payable(summary, checkout);
+    final total = paymentPagePayable(summary, checkout);
     if (summary.isEmpty) return;
 
     final confirmed = await showModalBottomSheet<bool>(
@@ -127,9 +127,9 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) {
-        return _PaymentModeSheet(
+        return PaymentModeSheet(
           totalAmount: total,
-          currency: _currency,
+          currency: paymentPageCurrency,
           initialMode: checkout.mode,
           initialCash: checkout.cashAmount,
           initialUpi: checkout.upiAmount,
@@ -150,16 +150,16 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
     );
 
     if (confirmed == true && mounted) {
-      await _complete();
+      await complete();
     }
   }
 
-  Future<void> _complete({
+  Future<void> complete({
     bool printAfterSave = true,
     bool preferShare = false,
   }) async {
     final strings = AppStrings.of(ref);
-    _persistCustomer();
+    persistCustomer();
     final summary = ref.read(cartSummaryProvider);
     final result = await ref
         .read(paymentCheckoutControllerProvider.notifier)
@@ -206,7 +206,7 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
         content: Text(
           'Invoice: ${result.invoiceNumber}\n'
           'Payment: ${result.paymentMode}\n'
-          'Amount: ${_currency.format(result.totalAmount)}'
+          'Amount: ${paymentPageCurrency.format(result.totalAmount)}'
           '${session.tableNumber != null ? '\nTable: ${session.tableNumber}' : ''}'
           '${session.customerName != null ? '\nCustomer: ${session.customerName}' : ''}',
         ),
@@ -278,7 +278,7 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
         (session.customerEmail?.trim().isNotEmpty ?? false) ||
         (session.customerAddress?.trim().isNotEmpty ?? false);
     final strings = AppStrings.of(ref);
-    final payable = _payable(summary, checkout);
+    final payable = paymentPagePayable(summary, checkout);
 
     ref.listen(paymentCheckoutControllerProvider, (prev, next) {
       if (next.errorMessage != null &&
@@ -335,9 +335,9 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
             PopupMenuButton<String>(
               onSelected: (value) async {
                 if (value == 'save') {
-                  await _complete(printAfterSave: false);
+                  await complete(printAfterSave: false);
                 } else if (value == 'share') {
-                  await _complete(preferShare: true);
+                  await complete(preferShare: true);
                 }
               },
               itemBuilder: (context) => [
@@ -355,7 +355,7 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
             Padding(
               padding: const EdgeInsets.only(right: 4),
               child: TextButton(
-                onPressed: _confirmClearCart,
+                onPressed: confirmClearCart,
                 style: TextButton.styleFrom(
                   side: const BorderSide(color: Colors.white70),
                   padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -416,34 +416,34 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
                               ),
                               const SizedBox(height: 12),
                               AppTextField(
-                                controller: _customerNameController,
+                                controller: customerNameController,
                                 label: strings.customerName,
                                 textCapitalization: TextCapitalization.words,
-                                onChanged: (_) => _persistCustomer(),
+                                onChanged: (_) => persistCustomer(),
                               ),
                               const SizedBox(height: 12),
                               AppTextField(
-                                controller: _customerPhoneController,
+                                controller: customerPhoneController,
                                 label: strings.customerMobile,
                                 keyboardType: TextInputType.phone,
-                                onChanged: (_) => _persistCustomer(),
+                                onChanged: (_) => persistCustomer(),
                               ),
                               const SizedBox(height: 12),
                               AppTextField(
-                                controller: _customerEmailController,
+                                controller: customerEmailController,
                                 label: strings.customerEmail,
                                 keyboardType: TextInputType.emailAddress,
-                                onChanged: (_) => _persistCustomer(),
+                                onChanged: (_) => persistCustomer(),
                               ),
                               const SizedBox(height: 12),
                               AppTextField(
-                                controller: _customerAddressController,
+                                controller: customerAddressController,
                                 label: strings.customerAddress,
                                 textCapitalization:
                                     TextCapitalization.sentences,
                                 maxLines: 2,
                                 minLines: 2,
-                                onChanged: (_) => _persistCustomer(),
+                                onChanged: (_) => persistCustomer(),
                               ),
                             ],
                           ),
@@ -521,9 +521,9 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
                                 return Column(
                                   children: [
                                     for (var i = 0; i < items.length; i++) ...[
-                                      _InvoiceLineRow(
+                                      InvoiceLineRow(
                                         item: items[i],
-                                        currency: _currency,
+                                        currency: paymentPageCurrency,
                                       ),
                                       if (i < items.length - 1)
                                         const Divider(height: 1),
@@ -541,12 +541,12 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
                         ),
                       ),
                       const SizedBox(height: 14),
-                      _BillSummaryCard(
+                      BillSummaryCard(
                         summary: summary,
                         checkout: checkout,
-                        currency: _currency,
-                        discountController: _discountController,
-                        packingController: _packingController,
+                        currency: paymentPageCurrency,
+                        discountController: paymentPageDiscountController,
+                        packingController: paymentPagePackingController,
                         payable: payable,
                         onDiscountChanged: (value) {
                           final d = double.tryParse(value) ?? 0;
@@ -556,12 +556,12 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
                           n.setDiscount(d, type: 'Percent');
                           n.selectMode(
                             checkout.mode,
-                            _payable(
+                            paymentPagePayable(
                               summary,
                               ref.read(paymentCheckoutControllerProvider),
                             ),
                           );
-                          _syncControllers();
+                          syncControllers();
                         },
                         onPackingChanged: (value) {
                           final p = double.tryParse(value) ?? 0;
@@ -571,12 +571,12 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
                           n.setPacking(p, type: 'Amount');
                           n.selectMode(
                             checkout.mode,
-                            _payable(
+                            paymentPagePayable(
                               summary,
                               ref.read(paymentCheckoutControllerProvider),
                             ),
                           );
-                          _syncControllers();
+                          syncControllers();
                         },
                       ),
                       const SizedBox(height: 14),
@@ -597,7 +597,7 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
                           final name = shop.companyName;
                           return Column(
                             children: [
-                              _ReceiptPreviewCard(
+                              ReceiptPreviewCard(
                                 title: strings.paper2Inch,
                                 text: service.billPreviewText(
                                   invoice: preview.invoice,
@@ -607,7 +607,7 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
                                 ),
                               ),
                               const SizedBox(height: 12),
-                              _ReceiptPreviewCard(
+                              ReceiptPreviewCard(
                                 title: strings.paper3Inch,
                                 text: service.billPreviewText(
                                   invoice: preview.invoice,
@@ -622,14 +622,14 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
                         orElse: () => const SizedBox.shrink(),
                       ),
                       const SizedBox(height: 14),
-                      _PaymentModeCard(
+                      PaymentModeCard(
                         selected: checkout.mode,
                         busy: checkout.busy,
                         onSelected: (mode) {
                           ref
                               .read(paymentCheckoutControllerProvider.notifier)
                               .selectMode(mode, payable);
-                          _syncControllers();
+                          syncControllers();
                         },
                       ),
                       const SizedBox(height: 80),
@@ -657,7 +657,7 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
                                   ),
                                 ),
                                 Text(
-                                  _currency.format(payable),
+                                  paymentPageCurrency.format(payable),
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w900,
@@ -674,7 +674,7 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
                               borderRadius: BorderRadius.circular(14),
                               onTap: summary.isEmpty || checkout.busy
                                   ? null
-                                  : _openPaymentModeDialog,
+                                  : openPaymentModeDialog,
                               child: SizedBox(
                                 width: 56,
                                 height: 56,
@@ -707,8 +707,8 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
   }
 }
 
-class _InvoiceLineRow extends ConsumerWidget {
-  const _InvoiceLineRow({
+class InvoiceLineRow extends ConsumerWidget {
+  const InvoiceLineRow({super.key, 
     required this.item,
     required this.currency,
   });
@@ -739,7 +739,7 @@ class _InvoiceLineRow extends ConsumerWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _CircleQtyButton(
+                CircleQtyButton(
                   icon: Icons.remove,
                   onTap: () => ref
                       .read(posCartControllerProvider.notifier)
@@ -759,7 +759,7 @@ class _InvoiceLineRow extends ConsumerWidget {
                     ),
                   ),
                 ),
-                _CircleQtyButton(
+                CircleQtyButton(
                   icon: Icons.add,
                   onTap: () => ref
                       .read(posCartControllerProvider.notifier)
@@ -791,8 +791,8 @@ class _InvoiceLineRow extends ConsumerWidget {
   }
 }
 
-class _CircleQtyButton extends StatelessWidget {
-  const _CircleQtyButton({required this.icon, required this.onTap});
+class CircleQtyButton extends StatelessWidget {
+  const CircleQtyButton({super.key, required this.icon, required this.onTap});
 
   final IconData icon;
   final VoidCallback onTap;
@@ -815,8 +815,8 @@ class _CircleQtyButton extends StatelessWidget {
   }
 }
 
-class _BillSummaryCard extends StatelessWidget {
-  const _BillSummaryCard({
+class BillSummaryCard extends StatelessWidget {
+  const BillSummaryCard({super.key, 
     required this.summary,
     required this.checkout,
     required this.currency,
@@ -857,14 +857,14 @@ class _BillSummaryCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          _SummaryField(
+          SummaryField(
             label: 'SUBTOTAL',
-            child: _ValueBox(currency.format(summary.subtotal)),
+            child: ValueBox(currency.format(summary.subtotal)),
           ),
           const SizedBox(height: 10),
-          _SummaryField(
+          SummaryField(
             label: 'DISCOUNT (%)',
-            child: _EditableValueBox(
+            child: EditableValueBox(
               controller: discountController,
               suffix: '%',
               enabled: !checkout.busy,
@@ -872,9 +872,9 @@ class _BillSummaryCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          _SummaryField(
+          SummaryField(
             label: 'Packing Charges',
-            child: _EditableValueBox(
+            child: EditableValueBox(
               controller: packingController,
               prefix: '₹ ',
               enabled: !checkout.busy,
@@ -909,8 +909,8 @@ class _BillSummaryCard extends StatelessWidget {
   }
 }
 
-class _SummaryField extends StatelessWidget {
-  const _SummaryField({required this.label, required this.child});
+class SummaryField extends StatelessWidget {
+  const SummaryField({super.key, required this.label, required this.child});
 
   final String label;
   final Widget child;
@@ -935,8 +935,8 @@ class _SummaryField extends StatelessWidget {
   }
 }
 
-class _ValueBox extends StatelessWidget {
-  const _ValueBox(this.text);
+class ValueBox extends StatelessWidget {
+  const ValueBox(this.text, {super.key});
 
   final String text;
 
@@ -957,8 +957,8 @@ class _ValueBox extends StatelessWidget {
   }
 }
 
-class _EditableValueBox extends StatelessWidget {
-  const _EditableValueBox({
+class EditableValueBox extends StatelessWidget {
+  const EditableValueBox({super.key, 
     required this.controller,
     required this.onChanged,
     this.prefix,
@@ -1001,8 +1001,8 @@ class _EditableValueBox extends StatelessWidget {
   }
 }
 
-class _PaymentModeCard extends StatelessWidget {
-  const _PaymentModeCard({
+class PaymentModeCard extends StatelessWidget {
+  const PaymentModeCard({super.key, 
     required this.selected,
     required this.busy,
     required this.onSelected,
@@ -1037,7 +1037,7 @@ class _PaymentModeCard extends StatelessWidget {
             children: [
               for (final mode in PaymentMode.values) ...[
                 Expanded(
-                  child: _PaymentModeChip(
+                  child: PaymentModeChip(
                     mode: mode,
                     selected: selected == mode,
                     onTap: busy ? null : () => onSelected(mode),
@@ -1053,8 +1053,8 @@ class _PaymentModeCard extends StatelessWidget {
   }
 }
 
-class _PaymentModeChip extends StatelessWidget {
-  const _PaymentModeChip({
+class PaymentModeChip extends StatelessWidget {
+  const PaymentModeChip({super.key, 
     required this.mode,
     required this.selected,
     this.onTap,
@@ -1118,8 +1118,8 @@ class _PaymentModeChip extends StatelessWidget {
   }
 }
 
-class _PaymentModeSheet extends ConsumerStatefulWidget {
-  const _PaymentModeSheet({
+class PaymentModeSheet extends ConsumerStatefulWidget {
+  const PaymentModeSheet({super.key, 
     required this.totalAmount,
     required this.currency,
     required this.initialMode,
@@ -1136,55 +1136,55 @@ class _PaymentModeSheet extends ConsumerStatefulWidget {
   final void Function(PaymentMode mode, double cash, double upi) onContinue;
 
   @override
-  ConsumerState<_PaymentModeSheet> createState() => _PaymentModeSheetState();
+  ConsumerState<PaymentModeSheet> createState() => PaymentModeSheetState();
 }
 
-class _PaymentModeSheetState extends ConsumerState<_PaymentModeSheet> {
-  late PaymentMode _mode;
-  late final TextEditingController _cashController;
-  late final TextEditingController _upiController;
+class PaymentModeSheetState extends ConsumerState<PaymentModeSheet> {
+  late PaymentMode paymentPageMode;
+  late final TextEditingController cashController;
+  late final TextEditingController upiController;
 
   @override
   void initState() {
     super.initState();
-    _mode = widget.initialMode;
-    _cashController = TextEditingController(
+    paymentPageMode = widget.initialMode;
+    cashController = TextEditingController(
       text: widget.initialCash.toStringAsFixed(2),
     );
-    _upiController = TextEditingController(
+    upiController = TextEditingController(
       text: widget.initialUpi.toStringAsFixed(2),
     );
   }
 
   @override
   void dispose() {
-    _cashController.dispose();
-    _upiController.dispose();
+    cashController.dispose();
+    upiController.dispose();
     super.dispose();
   }
 
-  double get _cash => double.tryParse(_cashController.text) ?? 0;
-  double get _upi => double.tryParse(_upiController.text) ?? 0;
-  double get _settlement =>
-      double.parse((_cash + _upi).toStringAsFixed(2));
+  double get paymentPageCash => double.tryParse(cashController.text) ?? 0;
+  double get paymentPageUpi => double.tryParse(upiController.text) ?? 0;
+  double get settlement =>
+      double.parse((paymentPageCash + paymentPageUpi).toStringAsFixed(2));
 
-  bool get _settlementOk {
-    if (_mode != PaymentMode.cashPlusUpi) return true;
-    return (_settlement - widget.totalAmount).abs() <= 0.05;
+  bool get settlementOk {
+    if (paymentPageMode != PaymentMode.cashPlusUpi) return true;
+    return (settlement - widget.totalAmount).abs() <= 0.05;
   }
 
-  void _selectMode(PaymentMode mode) {
+  void paymentPageSelectMode(PaymentMode mode) {
     setState(() {
-      _mode = mode;
+      paymentPageMode = mode;
       if (mode == PaymentMode.cash) {
-        _cashController.text = widget.totalAmount.toStringAsFixed(2);
-        _upiController.text = '0.00';
+        cashController.text = widget.totalAmount.toStringAsFixed(2);
+        upiController.text = '0.00';
       } else if (mode == PaymentMode.upi) {
-        _cashController.text = '0.00';
-        _upiController.text = widget.totalAmount.toStringAsFixed(2);
+        cashController.text = '0.00';
+        upiController.text = widget.totalAmount.toStringAsFixed(2);
       } else {
-        _cashController.text = '0.00';
-        _upiController.text = '0.00';
+        cashController.text = '0.00';
+        upiController.text = '0.00';
       }
     });
   }
@@ -1225,23 +1225,23 @@ class _PaymentModeSheetState extends ConsumerState<_PaymentModeSheet> {
               children: [
                 for (final mode in PaymentMode.values) ...[
                   Expanded(
-                    child: _PaymentModeChip(
+                    child: PaymentModeChip(
                       mode: mode,
-                      selected: _mode == mode,
-                      onTap: () => _selectMode(mode),
+                      selected: paymentPageMode == mode,
+                      onTap: () => paymentPageSelectMode(mode),
                     ),
                   ),
                   if (mode != PaymentMode.values.last) const SizedBox(width: 8),
                 ],
               ],
             ),
-            if (_mode == PaymentMode.cashPlusUpi) ...[
+            if (paymentPageMode == PaymentMode.cashPlusUpi) ...[
               const SizedBox(height: 18),
               Row(
                 children: [
                   Expanded(
                     child: TextField(
-                      controller: _cashController,
+                      controller: cashController,
                       keyboardType:
                           const TextInputType.numberWithOptions(decimal: true),
                       inputFormatters: [
@@ -1256,7 +1256,7 @@ class _PaymentModeSheetState extends ConsumerState<_PaymentModeSheet> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: TextField(
-                      controller: _upiController,
+                      controller: upiController,
                       keyboardType:
                           const TextInputType.numberWithOptions(decimal: true),
                       inputFormatters: [
@@ -1274,11 +1274,11 @@ class _PaymentModeSheetState extends ConsumerState<_PaymentModeSheet> {
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  '${strings.totalSettlement}: ${widget.currency.format(_settlement)}',
+                  '${strings.totalSettlement}: ${widget.currency.format(settlement)}',
                   style: const TextStyle(fontWeight: FontWeight.w800),
                 ),
               ),
-              if (!_settlementOk) ...[
+              if (!settlementOk) ...[
                 const SizedBox(height: 6),
                 Align(
                   alignment: Alignment.centerLeft,
@@ -1307,9 +1307,9 @@ class _PaymentModeSheetState extends ConsumerState<_PaymentModeSheet> {
                 Expanded(
                   child: AppButton(
                     label: 'Continue',
-                    onPressed: !_settlementOk
+                    onPressed: !settlementOk
                         ? null
-                        : () => widget.onContinue(_mode, _cash, _upi),
+                        : () => widget.onContinue(paymentPageMode, paymentPageCash, paymentPageUpi),
                   ),
                 ),
               ],
@@ -1386,8 +1386,8 @@ class _PaymentModeSheetState extends ConsumerState<_PaymentModeSheet> {
   return (invoice: invoice, items: lines);
 }
 
-class _ReceiptPreviewCard extends StatelessWidget {
-  const _ReceiptPreviewCard({required this.title, required this.text});
+class ReceiptPreviewCard extends StatelessWidget {
+  const ReceiptPreviewCard({super.key, required this.title, required this.text});
 
   final String title;
   final String text;

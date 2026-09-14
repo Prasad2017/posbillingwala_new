@@ -14,44 +14,44 @@ class ComboFormPage extends ConsumerStatefulWidget {
   final int? comboId;
 
   @override
-  ConsumerState<ComboFormPage> createState() => _ComboFormPageState();
+  ConsumerState<ComboFormPage> createState() => ComboFormPageState();
 }
 
-class _ComboFormPageState extends ConsumerState<ComboFormPage> {
-  final _code = TextEditingController();
-  final _name = TextEditingController();
-  final _price = TextEditingController();
-  final _cgst = TextEditingController(text: '0');
-  final _sgst = TextEditingController(text: '0');
-  final _search = TextEditingController();
-  final _selected = <int, int>{};
-  var _active = true;
-  var _loaded = false;
-  var _busy = false;
-  var _query = '';
+class ComboFormPageState extends ConsumerState<ComboFormPage> {
+  final comboFormPageCode = TextEditingController();
+  final comboFormPageName = TextEditingController();
+  final comboFormPagePrice = TextEditingController();
+  final cgst = TextEditingController(text: '0');
+  final sgst = TextEditingController(text: '0');
+  final search = TextEditingController();
+  final selected = <int, int>{};
+  var comboFormPageActive = true;
+  var loaded = false;
+  var busy = false;
+  var query = '';
 
-  bool get _isEdit => widget.comboId != null;
+  bool get isEdit => widget.comboId != null;
 
   @override
   void dispose() {
-    _code.dispose();
-    _name.dispose();
-    _price.dispose();
-    _cgst.dispose();
-    _sgst.dispose();
-    _search.dispose();
+    comboFormPageCode.dispose();
+    comboFormPageName.dispose();
+    comboFormPagePrice.dispose();
+    cgst.dispose();
+    sgst.dispose();
+    search.dispose();
     super.dispose();
   }
 
-  Future<void> _hydrate(Combo combo) async {
-    if (_loaded) return;
-    _loaded = true;
-    _code.text = combo.comboCode ?? '';
-    _name.text = combo.comboName;
-    _price.text = combo.comboPrice.toStringAsFixed(2);
-    _cgst.text = combo.comboCgst.toStringAsFixed(1);
-    _sgst.text = combo.comboSgst.toStringAsFixed(1);
-    _active = combo.comboActiveStatus == '1';
+  Future<void> hydrate(Combo combo) async {
+    if (loaded) return;
+    loaded = true;
+    comboFormPageCode.text = combo.comboCode ?? '';
+    comboFormPageName.text = combo.comboName;
+    comboFormPagePrice.text = combo.comboPrice.toStringAsFixed(2);
+    cgst.text = combo.comboCgst.toStringAsFixed(1);
+    sgst.text = combo.comboSgst.toStringAsFixed(1);
+    comboFormPageActive = combo.comboActiveStatus == '1';
     final items =
         await ref.read(appDatabaseProvider).getComboItemsForCombo(combo.comboId);
     if (!mounted) return;
@@ -59,55 +59,55 @@ class _ComboFormPageState extends ConsumerState<ComboFormPage> {
       for (final item in items) {
         final pid = item.productId;
         if (pid == null) continue;
-        _selected[pid] = item.comboItemQuantity;
+        selected[pid] = item.comboItemQuantity;
       }
     });
   }
 
-  Future<void> _save() async {
-    final name = _name.text.trim();
-    final price = double.tryParse(_price.text.trim()) ?? 0;
+  Future<void> save() async {
+    final name = comboFormPageName.text.trim();
+    final price = double.tryParse(comboFormPagePrice.text.trim()) ?? 0;
     if (name.isEmpty || price <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Enter combo name and price')),
       );
       return;
     }
-    setState(() => _busy = true);
+    setState(() => busy = true);
     try {
-      final items = _selected.entries
+      final items = selected.entries
           .map((e) => (productId: e.key, quantity: e.value))
           .toList();
       final n = ref.read(mastersSyncControllerProvider.notifier);
-      if (_isEdit) {
+      if (isEdit) {
         await n.updateCombo(
           comboId: widget.comboId!,
           name: name,
           price: price,
-          comboCode: _code.text.trim(),
-          comboCgst: double.tryParse(_cgst.text.trim()) ?? 0,
-          comboSgst: double.tryParse(_sgst.text.trim()) ?? 0,
-          activeOnPos: _active,
+          comboCode: comboFormPageCode.text.trim(),
+          comboCgst: double.tryParse(cgst.text.trim()) ?? 0,
+          comboSgst: double.tryParse(sgst.text.trim()) ?? 0,
+          activeOnPos: comboFormPageActive,
           items: items,
         );
       } else {
         await n.createCombo(
           name: name,
           price: price,
-          comboCode: _code.text.trim(),
-          comboCgst: double.tryParse(_cgst.text.trim()) ?? 0,
-          comboSgst: double.tryParse(_sgst.text.trim()) ?? 0,
-          activeOnPos: _active,
+          comboCode: comboFormPageCode.text.trim(),
+          comboCgst: double.tryParse(cgst.text.trim()) ?? 0,
+          comboSgst: double.tryParse(sgst.text.trim()) ?? 0,
+          activeOnPos: comboFormPageActive,
           items: items,
         );
       }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_isEdit ? 'Combo updated' : 'Combo saved')),
+        SnackBar(content: Text(isEdit ? 'Combo updated' : 'Combo saved')),
       );
       context.pop();
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) setState(() => busy = false);
     }
   }
 
@@ -117,7 +117,7 @@ class _ComboFormPageState extends ConsumerState<ComboFormPage> {
           data: (v) => v,
           orElse: () => const <Product>[],
         );
-    if (_isEdit) {
+    if (isEdit) {
       final combos = ref.watch(combosListProvider).maybeWhen(
             data: (v) => v,
             orElse: () => const <Combo>[],
@@ -127,13 +127,13 @@ class _ComboFormPageState extends ConsumerState<ComboFormPage> {
         if (c.comboId == widget.comboId) match = c;
       }
       if (match != null) {
-        _hydrate(match);
+        hydrate(match);
       }
     }
 
     final filtered = products.where((p) {
-      if (_query.trim().isEmpty) return true;
-      final q = _query.trim().toLowerCase();
+      if (query.trim().isEmpty) return true;
+      final q = query.trim().toLowerCase();
       return p.productName.toLowerCase().contains(q) ||
           (p.productCode?.toLowerCase().contains(q) ?? false);
     }).toList();
@@ -141,21 +141,21 @@ class _ComboFormPageState extends ConsumerState<ComboFormPage> {
     return Scaffold(
       backgroundColor: MasterUi.bg,
       appBar: AppBar(
-        title: Text(_isEdit ? 'Update Combo' : 'Add Combo'),
+        title: Text(isEdit ? 'Update Combo' : 'Add Combo'),
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
         children: [
           AppTextField(
-            controller: _code,
+            controller: comboFormPageCode,
             label: 'Combo code',
             textCapitalization: TextCapitalization.characters,
           ),
           const SizedBox(height: 12),
-          AppTextField(controller: _name, label: 'Combo name'),
+          AppTextField(controller: comboFormPageName, label: 'Combo name'),
           const SizedBox(height: 12),
           AppTextField(
-            controller: _price,
+            controller: comboFormPagePrice,
             label: 'Combo selling price',
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
           ),
@@ -164,7 +164,7 @@ class _ComboFormPageState extends ConsumerState<ComboFormPage> {
             children: [
               Expanded(
                 child: AppTextField(
-                  controller: _cgst,
+                  controller: cgst,
                   label: 'CGST',
                   keyboardType:
                       const TextInputType.numberWithOptions(decimal: true),
@@ -173,7 +173,7 @@ class _ComboFormPageState extends ConsumerState<ComboFormPage> {
               const SizedBox(width: 10),
               Expanded(
                 child: AppTextField(
-                  controller: _sgst,
+                  controller: sgst,
                   label: 'SGST',
                   keyboardType:
                       const TextInputType.numberWithOptions(decimal: true),
@@ -184,8 +184,8 @@ class _ComboFormPageState extends ConsumerState<ComboFormPage> {
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             title: const Text('Combo active on POS'),
-            value: _active,
-            onChanged: (v) => setState(() => _active = v),
+            value: comboFormPageActive,
+            onChanged: (v) => setState(() => comboFormPageActive = v),
           ),
           const SizedBox(height: 8),
           const Text(
@@ -194,13 +194,13 @@ class _ComboFormPageState extends ConsumerState<ComboFormPage> {
           ),
           const SizedBox(height: 8),
           AppTextField(
-            controller: _search,
+            controller: search,
             label: 'Search product',
-            onChanged: (v) => setState(() => _query = v),
+            onChanged: (v) => setState(() => query = v),
           ),
           const SizedBox(height: 8),
-          if (_selected.isNotEmpty)
-            ..._selected.entries.map((e) {
+          if (selected.isNotEmpty)
+            ...selected.entries.map((e) {
               Product? product;
               for (final p in products) {
                 if (p.productId == e.key) product = p;
@@ -211,12 +211,12 @@ class _ComboFormPageState extends ConsumerState<ComboFormPage> {
                 subtitle: Text('Qty: ${e.value}'),
                 trailing: IconButton(
                   icon: const Icon(Icons.delete_outline),
-                  onPressed: () => setState(() => _selected.remove(e.key)),
+                  onPressed: () => setState(() => selected.remove(e.key)),
                 ),
               );
             }),
           ...filtered.take(50).map((p) {
-            final qty = _selected[p.productId] ?? 0;
+            final qty = selected[p.productId] ?? 0;
             return CheckboxListTile(
               dense: true,
               value: qty > 0,
@@ -224,9 +224,9 @@ class _ComboFormPageState extends ConsumerState<ComboFormPage> {
               subtitle: qty > 0 ? Text('Qty: $qty') : null,
               onChanged: (checked) => setState(() {
                 if (checked == true) {
-                  _selected[p.productId] = 1;
+                  selected[p.productId] = 1;
                 } else {
-                  _selected.remove(p.productId);
+                  selected.remove(p.productId);
                 }
               }),
               secondary: qty > 0
@@ -238,16 +238,16 @@ class _ComboFormPageState extends ConsumerState<ComboFormPage> {
                           onPressed: () => setState(() {
                             final next = qty - 1;
                             if (next <= 0) {
-                              _selected.remove(p.productId);
+                              selected.remove(p.productId);
                             } else {
-                              _selected[p.productId] = next;
+                              selected[p.productId] = next;
                             }
                           }),
                         ),
                         IconButton(
                           icon: const Icon(Icons.add),
                           onPressed: () => setState(
-                            () => _selected[p.productId] = qty + 1,
+                            () => selected[p.productId] = qty + 1,
                           ),
                         ),
                       ],
@@ -257,10 +257,10 @@ class _ComboFormPageState extends ConsumerState<ComboFormPage> {
           }),
           const SizedBox(height: 16),
           AppButton(
-            label: _busy
+            label: busy
                 ? 'Saving…'
-                : (_isEdit ? 'Save Combo' : 'Create Combo'),
-            onPressed: _busy ? null : _save,
+                : (isEdit ? 'Save Combo' : 'Create Combo'),
+            onPressed: busy ? null : save,
           ),
         ],
       ),

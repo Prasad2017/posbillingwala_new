@@ -18,19 +18,19 @@ class CreateSupportTicketPage extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<CreateSupportTicketPage> createState() =>
-      _CreateSupportTicketPageState();
+      CreateSupportTicketPageState();
 }
 
-class _CreateSupportTicketPageState
+class CreateSupportTicketPageState
     extends ConsumerState<CreateSupportTicketPage> {
-  final _subject = TextEditingController();
-  final _description = TextEditingController();
-  String _category = 'Billing';
-  String? _attachmentPath;
-  bool _submitting = false;
-  bool _online = true;
+  final createSupportTicketPageSubject = TextEditingController();
+  final createSupportTicketPageDescription = TextEditingController();
+  String createSupportTicketPageCategory = 'Billing';
+  String? createSupportTicketPageAttachmentPath;
+  bool submitting = false;
+  bool createSupportTicketPageOnline = true;
 
-  static const _categories = [
+  static const categories = [
     'Billing',
     'General',
     'Printer',
@@ -45,30 +45,30 @@ class _CreateSupportTicketPageState
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final online = await checkOnline();
-      if (mounted) setState(() => _online = online);
+      if (mounted) setState(() => createSupportTicketPageOnline = online);
     });
   }
 
   @override
   void dispose() {
-    _subject.dispose();
-    _description.dispose();
+    createSupportTicketPageSubject.dispose();
+    createSupportTicketPageDescription.dispose();
     super.dispose();
   }
 
-  Future<void> _pickAttachment() async {
+  Future<void> pickAttachment() async {
     final picked = await ImagePicker().pickImage(
       source: ImageSource.gallery,
       imageQuality: 85,
     );
     if (picked == null) return;
-    setState(() => _attachmentPath = picked.path);
+    setState(() => createSupportTicketPageAttachmentPath = picked.path);
   }
 
-  Future<void> _submit() async {
-    if (_submitting) return;
-    final subject = _subject.text.trim();
-    final description = _description.text.trim();
+  Future<void> submit() async {
+    if (submitting) return;
+    final subject = createSupportTicketPageSubject.text.trim();
+    final description = createSupportTicketPageDescription.text.trim();
     if (subject.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter a subject')),
@@ -90,15 +90,15 @@ class _CreateSupportTicketPageState
       return;
     }
 
-    setState(() => _submitting = true);
+    setState(() => submitting = true);
     try {
       final api = SupportApi(ref.read(apiClientProvider));
       final result = await api.createSupportTicket(
         userId: userId,
-        category: _category,
+        category: createSupportTicketPageCategory,
         subject: subject,
         description: description,
-        attachmentPath: _attachmentPath,
+        attachmentPath: createSupportTicketPageAttachmentPath,
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -119,7 +119,7 @@ class _CreateSupportTicketPageState
         SnackBar(content: Text('$e')),
       );
     } finally {
-      if (mounted) setState(() => _submitting = false);
+      if (mounted) setState(() => submitting = false);
     }
   }
 
@@ -151,27 +151,27 @@ class _CreateSupportTicketPageState
             AppBreakpoints.pagePaddingFor(context.widthClass),
             28),
         children: [
-          SupportOnlineBanner(online: _online),
+          SupportOnlineBanner(online: createSupportTicketPageOnline),
           const SizedBox(height: 16),
           StringDropdownField(
             label: 'Category',
-            value: _category,
+            value: createSupportTicketPageCategory,
             enableSearch: false,
-            options: _categories,
+            options: categories,
             onChanged: (v) {
-              if (v != null) setState(() => _category = v);
+              if (v != null) setState(() => createSupportTicketPageCategory = v);
             },
           ),
           const SizedBox(height: 14),
           AppTextField(
-            controller: _subject,
+            controller: createSupportTicketPageSubject,
             label: 'Subject',
             hint: 'Enter subject',
             prefixIcon: Icons.edit_outlined,
           ),
           const SizedBox(height: 14),
           AppTextField(
-            controller: _description,
+            controller: createSupportTicketPageDescription,
             label: 'Describe your issue',
             hint: 'Type your issue in detail...',
             maxLines: 5,
@@ -185,7 +185,7 @@ class _CreateSupportTicketPageState
             borderRadius: BorderRadius.circular(16),
             child: InkWell(
               borderRadius: BorderRadius.circular(16),
-              onTap: _pickAttachment,
+              onTap: pickAttachment,
               child: Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
@@ -218,9 +218,9 @@ class _CreateSupportTicketPageState
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            _attachmentPath == null
+                            createSupportTicketPageAttachmentPath == null
                                 ? 'Upload screenshots or documents'
-                                : _attachmentPath!
+                                : createSupportTicketPageAttachmentPath!
                                     .split(RegExp(r'[\\/]'))
                                     .last,
                             style: AppTypography.bodySmall(),
@@ -241,8 +241,8 @@ class _CreateSupportTicketPageState
           AppButton(
             label: 'SUBMIT TICKET',
             icon: Icons.send_rounded,
-            isLoading: _submitting,
-            onPressed: _submitting ? null : _submit,
+            isLoading: submitting,
+            onPressed: submitting ? null : submit,
           ),
         ],
       ),

@@ -23,10 +23,10 @@ Future<void> shareTicketWidgetAsImage({
   if (data == null) {
     throw StateError('Could not capture bill image');
   }
-  await _sharePngBytes(data.buffer.asUint8List(), label);
+  await sharePngBytes(data.buffer.asUint8List(), label);
 }
 
-Future<void> _sharePngBytes(Uint8List bytes, String label) async {
+Future<void> sharePngBytes(Uint8List bytes, String label) async {
   if (kIsWeb) {
     await SharePlus.instance.share(ShareParams(text: label, subject: label));
     return;
@@ -55,7 +55,7 @@ Future<void> shareReceiptAsImage({
     return;
   }
   final bytes = await renderReceiptPng(text);
-  await _sharePngBytes(bytes, label);
+  await sharePngBytes(bytes, label);
 }
 
 Future<Uint8List> renderReceiptPng(String text) async {

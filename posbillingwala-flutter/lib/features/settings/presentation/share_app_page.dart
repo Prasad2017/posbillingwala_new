@@ -17,14 +17,14 @@ import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
 class ShareAppPage extends StatelessWidget {
   const ShareAppPage({super.key});
 
-  static const _playStoreLink =
+  static const shareAppPagePlayStoreLink =
       'https://play.google.com/store/apps/details?id=com.pos_billingwala';
 
-  Future<void> _share(BuildContext context) async {
+  Future<void> shareAppPageShare(BuildContext context) async {
     final box = context.findRenderObject() as RenderBox?;
     final text =
         'Try ${AppConstants.appName} — smart POS billing for shops & restaurants.\n'
-        'Download: $_playStoreLink\n'
+        'Download: $shareAppPagePlayStoreLink\n'
         'Learn more: ${AppConstants.website}';
     await SharePlus.instance.share(
       ShareParams(
@@ -37,15 +37,15 @@ class ShareAppPage extends StatelessWidget {
     );
   }
 
-  Future<void> _copyLink(BuildContext context) async {
-    await Clipboard.setData(const ClipboardData(text: _playStoreLink));
+  Future<void> copyLink(BuildContext context) async {
+    await Clipboard.setData(const ClipboardData(text: shareAppPagePlayStoreLink));
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Play Store link copied')),
     );
   }
 
-  void _showQr(BuildContext context) {
+  void showQr(BuildContext context) {
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
@@ -59,7 +59,7 @@ class ShareAppPage extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _QrPreview(size: 220),
+              QrPreview(size: 220),
               const SizedBox(height: 12),
               Text(
                 'Scan to download the app instantly.',
@@ -87,7 +87,7 @@ class ShareAppPage extends StatelessWidget {
       backgroundColor: const Color(0xFFF3F7FC),
       body: Column(
         children: [
-          _ShareHeader(
+          ShareHeader(
             topInset: topInset,
             onBack: () => context.pop(),
           ),
@@ -101,17 +101,17 @@ class ShareAppPage extends StatelessWidget {
             AppBreakpoints.pagePaddingFor(context.widthClass),
             28),
               children: [
-                const _LoveCard(),
+                const LoveCard(),
                 const SizedBox(height: 14),
-                _ShareLinkCard(
-                  playStoreLink: _playStoreLink,
-                  onCopy: () => _copyLink(context),
-                  onShare: () => _share(context),
+                ShareLinkCard(
+                  playStoreLink: shareAppPagePlayStoreLink,
+                  onCopy: () => copyLink(context),
+                  onShare: () => shareAppPageShare(context),
                 ),
                 const SizedBox(height: 14),
-                _QrInviteCard(onShowQr: () => _showQr(context)),
+                QrInviteCard(onShowQr: () => showQr(context)),
                 const SizedBox(height: 14),
-                const _WhyShareCard(),
+                const WhyShareCard(),
               ],
             ),
       ),
@@ -122,8 +122,8 @@ class ShareAppPage extends StatelessWidget {
   }
 }
 
-class _ShareHeader extends StatelessWidget {
-  const _ShareHeader({
+class ShareHeader extends StatelessWidget {
+  const ShareHeader({super.key, 
     required this.topInset,
     required this.onBack,
   });
@@ -207,8 +207,8 @@ class _ShareHeader extends StatelessWidget {
   }
 }
 
-class _LoveCard extends StatelessWidget {
-  const _LoveCard();
+class LoveCard extends StatelessWidget {
+  const LoveCard({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -268,8 +268,8 @@ class _LoveCard extends StatelessWidget {
   }
 }
 
-class _ShareLinkCard extends StatelessWidget {
-  const _ShareLinkCard({
+class ShareLinkCard extends StatelessWidget {
+  const ShareLinkCard({super.key, 
     required this.playStoreLink,
     required this.onCopy,
     required this.onShare,
@@ -363,8 +363,8 @@ class _ShareLinkCard extends StatelessWidget {
   }
 }
 
-class _QrInviteCard extends StatelessWidget {
-  const _QrInviteCard({required this.onShowQr});
+class QrInviteCard extends StatelessWidget {
+  const QrInviteCard({super.key, required this.onShowQr});
 
   final VoidCallback onShowQr;
 
@@ -378,7 +378,7 @@ class _QrInviteCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const _QrPreview(size: 96),
+              const QrPreview(size: 96),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
@@ -429,8 +429,8 @@ class _QrInviteCard extends StatelessWidget {
   }
 }
 
-class _QrPreview extends StatelessWidget {
-  const _QrPreview({required this.size});
+class QrPreview extends StatelessWidget {
+  const QrPreview({super.key, required this.size});
 
   final double size;
 
@@ -453,7 +453,7 @@ class _QrPreview extends StatelessWidget {
         ],
       ),
       child: QrImageView(
-        data: ShareAppPage._playStoreLink,
+        data: ShareAppPage.shareAppPagePlayStoreLink,
         size: size * 0.88,
         backgroundColor: Colors.white,
         eyeStyle: const QrEyeStyle(
@@ -473,8 +473,8 @@ class _QrPreview extends StatelessWidget {
   }
 }
 
-class _WhyShareCard extends StatelessWidget {
-  const _WhyShareCard();
+class WhyShareCard extends StatelessWidget {
+  const WhyShareCard({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -493,7 +493,7 @@ class _WhyShareCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: _BenefitItem(
+                child: BenefitItem(
                   svgPath: AppAssets.svgShareBenefitGrow,
                   bgColor: Color(0xFFE8F1FF),
                   title: 'Grow Together',
@@ -502,7 +502,7 @@ class _WhyShareCard extends StatelessWidget {
               ),
               SizedBox(width: 8),
               Expanded(
-                child: _BenefitItem(
+                child: BenefitItem(
                   svgPath: AppAssets.svgShareBenefitTime,
                   bgColor: Color(0xFFFFF6E5),
                   title: 'Save Time',
@@ -511,7 +511,7 @@ class _WhyShareCard extends StatelessWidget {
               ),
               SizedBox(width: 8),
               Expanded(
-                child: _BenefitItem(
+                child: BenefitItem(
                   svgPath: AppAssets.svgShareBenefitBilling,
                   bgColor: Color(0xFFE8F8EF),
                   title: 'Easy Billing',
@@ -526,8 +526,8 @@ class _WhyShareCard extends StatelessWidget {
   }
 }
 
-class _BenefitItem extends StatelessWidget {
-  const _BenefitItem({
+class BenefitItem extends StatelessWidget {
+  const BenefitItem({super.key, 
     required this.svgPath,
     required this.bgColor,
     required this.title,

@@ -18,83 +18,83 @@ class SupportTicketDetailPage extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<SupportTicketDetailPage> createState() =>
-      _SupportTicketDetailPageState();
+      SupportTicketDetailPageState();
 }
 
-class _SupportTicketDetailPageState
+class SupportTicketDetailPageState
     extends ConsumerState<SupportTicketDetailPage> {
-  SupportTicketDetailsDto? _details;
-  bool _loading = false;
-  bool _sending = false;
-  bool _online = true;
-  bool _oldestFirst = true;
-  String? _error;
-  final _replyController = TextEditingController();
-  final _scrollController = ScrollController();
+  SupportTicketDetailsDto? supportTicketDetailPageDetails;
+  bool loading = false;
+  bool sending = false;
+  bool supportTicketDetailPageOnline = true;
+  bool oldestFirst = true;
+  String? error;
+  final replyController = TextEditingController();
+  final scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _reload());
+    WidgetsBinding.instance.addPostFrameCallback((_) => reload());
   }
 
   @override
   void dispose() {
-    _replyController.dispose();
-    _scrollController.dispose();
+    replyController.dispose();
+    scrollController.dispose();
     super.dispose();
   }
 
-  Future<void> _reload() async {
+  Future<void> reload() async {
     final online = await checkOnline();
     final userId = ref.read(authControllerProvider).session?.userId;
     if (userId == null || userId.isEmpty) {
       setState(() {
-        _online = online;
-        _error = 'Please login first';
+        supportTicketDetailPageOnline = online;
+        error = 'Please login first';
       });
       return;
     }
     setState(() {
-      _online = online;
-      _loading = true;
-      _error = null;
+      supportTicketDetailPageOnline = online;
+      loading = true;
+      error = null;
     });
     try {
       final api = SupportApi(ref.read(apiClientProvider));
       final details = await api.getTicketDetails(userId, widget.ticketId);
       if (!mounted) return;
       setState(() {
-        _details = details;
-        _loading = false;
+        supportTicketDetailPageDetails = details;
+        loading = false;
       });
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!_scrollController.hasClients) return;
-        if (_oldestFirst) {
-          _scrollController.jumpTo(0);
+        if (!scrollController.hasClients) return;
+        if (oldestFirst) {
+          scrollController.jumpTo(0);
         } else {
-          _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+          scrollController.jumpTo(scrollController.position.maxScrollExtent);
         }
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = '$e';
-        _loading = false;
+        error = '$e';
+        loading = false;
       });
     }
   }
 
-  Future<void> _sendReply() async {
-    final details = _details;
-    if (details == null || details.isClosed || _sending) return;
-    final message = _replyController.text.trim();
+  Future<void> sendReply() async {
+    final details = supportTicketDetailPageDetails;
+    if (details == null || details.isClosed || sending) return;
+    final message = replyController.text.trim();
     if (message.isEmpty) return;
 
     final userId = ref.read(authControllerProvider).session?.userId;
     if (userId == null || userId.isEmpty) return;
 
-    setState(() => _sending = true);
+    setState(() => sending = true);
     try {
       final api = SupportApi(ref.read(apiClientProvider));
       final result = await api.replyTicket(
@@ -104,11 +104,11 @@ class _SupportTicketDetailPageState
       );
       if (!mounted) return;
       if (result.isSuccess) {
-        _replyController.clear();
+        replyController.clear();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(result.message ?? 'Reply sent')),
         );
-        await _reload();
+        await reload();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(result.message ?? 'Failed to send reply')),
@@ -120,17 +120,17 @@ class _SupportTicketDetailPageState
         SnackBar(content: Text('$e')),
       );
     } finally {
-      if (mounted) setState(() => _sending = false);
+      if (mounted) setState(() => sending = false);
     }
   }
 
-  List<_ChatLine> get _lines {
-    final details = _details;
+  List<ChatLine> get supportTicketDetailPageLines {
+    final details = supportTicketDetailPageDetails;
     if (details == null) return const [];
-    final lines = <_ChatLine>[];
+    final lines = <ChatLine>[];
     if (details.description.isNotEmpty) {
       lines.add(
-        _ChatLine(
+        ChatLine(
           isSupport: false,
           message: details.description,
           createdAt: details.createdAt,
@@ -140,7 +140,7 @@ class _SupportTicketDetailPageState
     }
     for (final m in details.messages) {
       lines.add(
-        _ChatLine(
+        ChatLine(
           isSupport: !m.isFromUser,
           message: m.message,
           createdAt: m.createdAt,
@@ -150,7 +150,7 @@ class _SupportTicketDetailPageState
         ),
       );
     }
-    if (!_oldestFirst) {
+    if (!oldestFirst) {
       return lines.reversed.toList();
     }
     return lines;
@@ -158,7 +158,7 @@ class _SupportTicketDetailPageState
 
   @override
   Widget build(BuildContext context) {
-    final details = _details;
+    final details = supportTicketDetailPageDetails;
     final closed = details?.isClosed ?? false;
     final statusColor = ticketStatusColor(details?.status ?? '');
 
@@ -170,7 +170,7 @@ class _SupportTicketDetailPageState
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert_rounded, color: Colors.white),
             onSelected: (v) {
-              if (v == 'refresh') _reload();
+              if (v == 'refresh') reload();
               if (v == 'call') callSupport(context);
               if (v == 'new') context.push('/support/create');
             },
@@ -182,18 +182,18 @@ class _SupportTicketDetailPageState
           ),
         ],
       ),
-      body: _error != null && details == null
+      body: error != null && details == null
           ? Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(_error!, textAlign: TextAlign.center),
+                    Text(error!, textAlign: TextAlign.center),
                     const SizedBox(height: 12),
                     AppButton(
                       label: 'Retry',
-                      onPressed: _reload,
+                      onPressed: reload,
                     ),
                   ],
                 ),
@@ -202,12 +202,12 @@ class _SupportTicketDetailPageState
           : Column(
               children: [
                 Expanded(
-                  child: _loading && details == null
+                  child: loading && details == null
                       ? const Center(child: CircularProgressIndicator())
                       : ResponsiveScrollShell(
                           dashboard: true,
                           child: ListView(
-                          controller: _scrollController,
+                          controller: scrollController,
                           padding: EdgeInsets.fromLTRB(
                             AppBreakpoints.pagePaddingFor(context.widthClass),
                             16,
@@ -216,7 +216,7 @@ class _SupportTicketDetailPageState
                           ),
                           children: [
                             SupportOnlineBanner(
-                              online: _online,
+                              online: supportTicketDetailPageOnline,
                               title: 'How support tickets work',
                             ),
                             if (closed) ...[
@@ -335,7 +335,7 @@ class _SupportTicketDetailPageState
                                 const Spacer(),
                                 InkWell(
                                   onTap: () => setState(
-                                    () => _oldestFirst = !_oldestFirst,
+                                    () => oldestFirst = !oldestFirst,
                                   ),
                                   borderRadius: BorderRadius.circular(8),
                                   child: Padding(
@@ -346,7 +346,7 @@ class _SupportTicketDetailPageState
                                     child: Row(
                                       children: [
                                         Text(
-                                          _oldestFirst
+                                          oldestFirst
                                               ? 'Oldest first'
                                               : 'Newest first',
                                           style: AppTypography.bodySmall(),
@@ -364,17 +364,17 @@ class _SupportTicketDetailPageState
                               ],
                             ),
                             const SizedBox(height: 10),
-                            if (_lines.isEmpty)
+                            if (supportTicketDetailPageLines.isEmpty)
                               const Padding(
                                 padding: EdgeInsets.symmetric(vertical: 32),
                                 child: Center(child: Text('No messages yet')),
                               )
                             else
-                              ..._lines.asMap().entries.map((entry) {
+                              ...supportTicketDetailPageLines.asMap().entries.map((entry) {
                                 final index = entry.key;
                                 final line = entry.value;
-                                final isLast = index == _lines.length - 1;
-                                return _MessageBubble(
+                                final isLast = index == supportTicketDetailPageLines.length - 1;
+                                return MessageBubble(
                                   line: line,
                                   showConnector: !isLast,
                                 );
@@ -433,14 +433,14 @@ class _SupportTicketDetailPageState
                         : Column(
                             children: [
                               AppTextField(
-                                controller: _replyController,
-                                enabled: !_sending,
+                                controller: replyController,
+                                enabled: !sending,
                                 minLines: 1,
                                 maxLines: 4,
                                 hint: 'Type a reply…',
                                 textCapitalization:
                                     TextCapitalization.sentences,
-                                onSubmitted: (_) => _sendReply(),
+                                onSubmitted: (_) => sendReply(),
                               ),
                               const SizedBox(height: 8),
                               Row(
@@ -449,16 +449,16 @@ class _SupportTicketDetailPageState
                                     child: AppButton(
                                       label: 'Refresh',
                                       variant: AppButtonVariant.outlined,
-                                      onPressed: _loading ? null : _reload,
+                                      onPressed: loading ? null : reload,
                                     ),
                                   ),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: AppButton(
                                       label: 'Send',
-                                      isLoading: _sending,
+                                      isLoading: sending,
                                       onPressed:
-                                          _sending ? null : _sendReply,
+                                          sending ? null : sendReply,
                                     ),
                                   ),
                                 ],
@@ -473,8 +473,8 @@ class _SupportTicketDetailPageState
   }
 }
 
-class _ChatLine {
-  const _ChatLine({
+class ChatLine {
+  const ChatLine({
     required this.isSupport,
     required this.message,
     required this.senderLabel,
@@ -487,13 +487,13 @@ class _ChatLine {
   final String? createdAt;
 }
 
-class _MessageBubble extends StatelessWidget {
-  const _MessageBubble({
+class MessageBubble extends StatelessWidget {
+  const MessageBubble({super.key, 
     required this.line,
     required this.showConnector,
   });
 
-  final _ChatLine line;
+  final ChatLine line;
   final bool showConnector;
 
   @override

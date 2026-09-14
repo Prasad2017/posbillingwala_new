@@ -11,8 +11,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 class AuthTokenRefresh {
   AuthTokenRefresh._();
 
-  static DateTime? _lastAttempt;
-  static Future<bool>? _inFlight;
+  static DateTime? lastAttempt;
+  static Future<bool>? inFlight;
 
   /// Returns true when a fresh Bearer token was saved.
   static Future<bool> tryRefresh({
@@ -20,13 +20,13 @@ class AuthTokenRefresh {
   }) {
     return synchronized(() async {
       final now = DateTime.now();
-      if (_lastAttempt != null &&
-          now.difference(_lastAttempt!) < const Duration(seconds: 5)) {
+      if (lastAttempt != null &&
+          now.difference(lastAttempt!) < const Duration(seconds: 5)) {
         final prefs = await SharedPreferences.getInstance();
         final existing = prefs.getString(SessionKeys.authToken);
         return existing != null && existing.isNotEmpty;
       }
-      _lastAttempt = now;
+      lastAttempt = now;
 
       final prefs = await SharedPreferences.getInstance();
       final licenceKey = (prefs.getString(SessionKeys.licenceKey) ?? '').trim();
@@ -81,9 +81,9 @@ class AuthTokenRefresh {
   }
 
   static Future<bool> synchronized(Future<bool> Function() action) {
-    if (_inFlight != null) return _inFlight!;
-    final future = action().whenComplete(() => _inFlight = null);
-    _inFlight = future;
+    if (inFlight != null) return inFlight!;
+    final future = action().whenComplete(() => inFlight = null);
+    inFlight = future;
     return future;
   }
 }

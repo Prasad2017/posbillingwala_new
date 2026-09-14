@@ -5,15 +5,15 @@ import 'package:pos_billingwala_v2/features/support/data/support_dtos.dart';
 import 'package:pos_billingwala_v2/core/constants/api_constants.dart';
 
 class SupportApi {
-  SupportApi(this._client);
+  SupportApi(this.client);
 
-  final ApiClient _client;
+  final ApiClient client;
 
   Future<List<SupportTicketDto>> getSupportTickets(
     String userId, {
     String status = '',
   }) async {
-    final data = await _get(
+    final data = await supportApiGet(
       ApiEndpoints.getSupportTickets,
       query: {
         'userId': userId,
@@ -46,7 +46,7 @@ class SupportApi {
         filename: path.split(RegExp(r'[\\/]')).last,
       );
     }
-    final data = await _post(
+    final data = await supportApiPost(
       ApiEndpoints.createSupportTicket,
       fields: fields,
     );
@@ -57,7 +57,7 @@ class SupportApi {
     String userId,
     String ticketId,
   ) async {
-    final data = await _get(
+    final data = await supportApiGet(
       ApiEndpoints.getSupportTicketDetails,
       query: {
         'userId': userId,
@@ -72,7 +72,7 @@ class SupportApi {
     required String ticketId,
     required String message,
   }) async {
-    final data = await _post(
+    final data = await supportApiPost(
       ApiEndpoints.replySupportTicket,
       fields: {
         'userId': userId,
@@ -83,11 +83,11 @@ class SupportApi {
     return StatusMessage.fromJson(data);
   }
 
-  Future<Map<String, dynamic>> _get(
+  Future<Map<String, dynamic>> supportApiGet(
     String path, {
     Map<String, dynamic>? query,
   }) async {
-    final response = await _client.dio.get<dynamic>(
+    final response = await client.dio.get<dynamic>(
       path,
       queryParameters: query,
       options: Options(responseType: ResponseType.json),
@@ -95,11 +95,11 @@ class SupportApi {
     return asJsonMap(response.data);
   }
 
-  Future<Map<String, dynamic>> _post(
+  Future<Map<String, dynamic>> supportApiPost(
     String path, {
     required Map<String, dynamic> fields,
   }) async {
-    final response = await _client.dio.post<dynamic>(
+    final response = await client.dio.post<dynamic>(
       path,
       data: FormData.fromMap(fields),
       options: Options(responseType: ResponseType.json),

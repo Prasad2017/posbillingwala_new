@@ -20,11 +20,11 @@ class TablesPage extends ConsumerStatefulWidget {
   const TablesPage({super.key});
 
   @override
-  ConsumerState<TablesPage> createState() => _TablesPageState();
+  ConsumerState<TablesPage> createState() => TablesPageState();
 }
 
-class _TablesPageState extends ConsumerState<TablesPage> {
-  int? _selectedAreaId;
+class TablesPageState extends ConsumerState<TablesPage> {
+  int? selectedAreaId;
 
   @override
   Widget build(BuildContext context) {
@@ -46,9 +46,9 @@ class _TablesPageState extends ConsumerState<TablesPage> {
       );
     });
 
-    final filtered = _selectedAreaId == null
+    final filtered = selectedAreaId == null
         ? floor
-        : floor.where((t) => t.table.areaId == _selectedAreaId).toList();
+        : floor.where((t) => t.table.areaId == selectedAreaId).toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -87,16 +87,16 @@ class _TablesPageState extends ConsumerState<TablesPage> {
               padding: const EdgeInsets.fromLTRB(12, 8, 12, 6),
               child: Row(
                 children: [
-                  _AreaChip(
+                  AreaChip(
                     label: strings.allAreas,
-                    selected: _selectedAreaId == null,
-                    onTap: () => setState(() => _selectedAreaId = null),
+                    selected: selectedAreaId == null,
+                    onTap: () => setState(() => selectedAreaId = null),
                   ),
                   ...areas.map(
-                    (a) => _AreaChip(
+                    (a) => AreaChip(
                       label: a.areaName.isEmpty ? 'Area ${a.areaId}' : a.areaName,
-                      selected: _selectedAreaId == a.areaId,
-                      onTap: () => setState(() => _selectedAreaId = a.areaId),
+                      selected: selectedAreaId == a.areaId,
+                      onTap: () => setState(() => selectedAreaId = a.areaId),
                     ),
                   ),
                 ],
@@ -107,12 +107,12 @@ class _TablesPageState extends ConsumerState<TablesPage> {
             padding: const EdgeInsets.fromLTRB(12, 2, 12, 6),
             child: Row(
               children: [
-                _LegendDot(label: strings.tableAvailable, color: AppColors.success),
-                _LegendDot(label: strings.tableRunning, color: AppColors.warning),
-                _LegendDot(label: strings.tableHold, color: AppColors.orange),
-                _LegendDot(label: strings.tableBill, color: AppColors.purple),
-                _LegendDot(label: strings.tableBlocked, color: AppColors.red),
-                _LegendDot(label: strings.tableReserved, color: AppColors.teal),
+                LegendDot(label: strings.tableAvailable, color: AppColors.success),
+                LegendDot(label: strings.tableRunning, color: AppColors.warning),
+                LegendDot(label: strings.tableHold, color: AppColors.orange),
+                LegendDot(label: strings.tableBill, color: AppColors.purple),
+                LegendDot(label: strings.tableBlocked, color: AppColors.red),
+                LegendDot(label: strings.tableReserved, color: AppColors.teal),
               ],
             ),
           ),
@@ -142,6 +142,79 @@ class _TablesPageState extends ConsumerState<TablesPage> {
                           AppBreakpoints.ofWidth(constraints.maxWidth);
                       final cols =
                           AppBreakpoints.tableColumnsFor(widthClass);
+                      final useXy = filtered.any(
+                        (t) =>
+                            (t.table.positionX ?? 0) != 0 ||
+                            (t.table.positionY ?? 0) != 0,
+                      );
+                      Widget card(FloorTableView item) {
+                        return TableCard(
+                          floor: item,
+                          currency: currency,
+                          onTap: () => onTableTap(context, ref, item),
+                          onLongPress: () => onTableActions(
+                            context,
+                            ref,
+                            item,
+                            floor,
+                          ),
+                        );
+                      }
+
+                      if (useXy) {
+                        var maxX = 1.0;
+                        var maxY = 1.0;
+                        for (final t in filtered) {
+                          final x = t.table.positionX ?? 0;
+                          final y = t.table.positionY ?? 0;
+                          if (x > maxX) maxX = x;
+                          if (y > maxY) maxY = y;
+                        }
+                        final canvasW = constraints.maxWidth < 720
+                            ? 720.0
+                            : constraints.maxWidth;
+                        final canvasH = constraints.maxHeight < 520
+                            ? 520.0
+                            : constraints.maxHeight;
+                        const cardW = 128.0;
+                        const cardH = 118.0;
+                        double left(double? v) {
+                          final n = v ?? 0;
+                          final span = canvasW - cardW;
+                          if (maxX <= 1.5) return n.clamp(0.0, 1.0) * span;
+                          return (n / maxX).clamp(0.0, 1.0) * span;
+                        }
+
+                        double top(double? v) {
+                          final n = v ?? 0;
+                          final span = canvasH - cardH;
+                          if (maxY <= 1.5) return n.clamp(0.0, 1.0) * span;
+                          return (n / maxY).clamp(0.0, 1.0) * span;
+                        }
+
+                        return InteractiveViewer(
+                          constrained: false,
+                          minScale: 0.7,
+                          maxScale: 2.2,
+                          child: SizedBox(
+                            width: canvasW,
+                            height: canvasH,
+                            child: Stack(
+                              children: [
+                                for (final item in filtered)
+                                  Positioned(
+                                    left: left(item.table.positionX),
+                                    top: top(item.table.positionY),
+                                    width: cardW,
+                                    height: cardH,
+                                    child: card(item),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+
                       return ResponsiveScrollShell(
                         dashboard: true,
                         child: GridView.builder(
@@ -163,18 +236,7 @@ class _TablesPageState extends ConsumerState<TablesPage> {
                           ),
                           itemCount: filtered.length,
                           itemBuilder: (context, index) {
-                            final item = filtered[index];
-                            return _TableCard(
-                              floor: item,
-                              currency: currency,
-                              onTap: () => _onTableTap(context, ref, item),
-                              onLongPress: () => _onTableActions(
-                                context,
-                                ref,
-                                item,
-                                floor,
-                              ),
-                            );
+                            return card(filtered[index]);
                           },
                         ),
                       );
@@ -186,7 +248,7 @@ class _TablesPageState extends ConsumerState<TablesPage> {
     );
   }
 
-  Future<void> _onTableTap(
+  Future<void> onTableTap(
     BuildContext context,
     WidgetRef ref,
     FloorTableView floor,
@@ -211,7 +273,7 @@ class _TablesPageState extends ConsumerState<TablesPage> {
     }
   }
 
-  Future<void> _onTableActions(
+  Future<void> onTableActions(
     BuildContext context,
     WidgetRef ref,
     FloorTableView floor,
@@ -288,14 +350,14 @@ class _TablesPageState extends ConsumerState<TablesPage> {
     if (!context.mounted || action == null) return;
 
     if (action == 'more') {
-      final more = await _showAdvancedTableActions(context, floor);
+      final more = await showAdvancedTableActions(context, floor);
       if (!context.mounted || more == null) return;
-      await _handleTableAction(context, ref, floor, all, more);
+      await handleTableAction(context, ref, floor, all, more);
       return;
     }
 
     if (action == 'add_items' || action == 'view_bill' || action == 'open') {
-      await _onTableTap(context, ref, floor);
+      await onTableTap(context, ref, floor);
       return;
     }
 
@@ -311,10 +373,10 @@ class _TablesPageState extends ConsumerState<TablesPage> {
       return;
     }
 
-    await _handleTableAction(context, ref, floor, all, action);
+    await handleTableAction(context, ref, floor, all, action);
   }
 
-  Future<String?> _showAdvancedTableActions(
+  Future<String?> showAdvancedTableActions(
     BuildContext context,
     FloorTableView floor,
   ) {
@@ -379,7 +441,7 @@ class _TablesPageState extends ConsumerState<TablesPage> {
     );
   }
 
-  Future<void> _handleTableAction(
+  Future<void> handleTableAction(
     BuildContext context,
     WidgetRef ref,
     FloorTableView floor,
@@ -392,7 +454,7 @@ class _TablesPageState extends ConsumerState<TablesPage> {
     }
 
     if (action == 'open') {
-      await _onTableTap(context, ref, floor);
+      await onTableTap(context, ref, floor);
       return;
     }
 
@@ -507,7 +569,7 @@ class _TablesPageState extends ConsumerState<TablesPage> {
             context: context,
             isScrollControlled: true,
             showDragHandle: true,
-            builder: (context) => _MoveItemsSheet(items: items),
+            builder: (context) => MoveItemsSheet(items: items),
           );
           if (selected == null || selected.isEmpty || !context.mounted) return;
           await ref.read(tablesControllerProvider.notifier).moveItems(
@@ -593,8 +655,8 @@ class _TablesPageState extends ConsumerState<TablesPage> {
   }
 }
 
-class _AreaChip extends StatelessWidget {
-  const _AreaChip({
+class AreaChip extends StatelessWidget {
+  const AreaChip({super.key, 
     required this.label,
     required this.selected,
     required this.onTap,
@@ -617,8 +679,8 @@ class _AreaChip extends StatelessWidget {
   }
 }
 
-class _LegendDot extends StatelessWidget {
-  const _LegendDot({required this.label, required this.color});
+class LegendDot extends StatelessWidget {
+  const LegendDot({super.key, required this.label, required this.color});
 
   final String label;
   final Color color;
@@ -643,8 +705,8 @@ class _LegendDot extends StatelessWidget {
   }
 }
 
-class _TableCard extends StatelessWidget {
-  const _TableCard({
+class TableCard extends StatelessWidget {
+  const TableCard({super.key, 
     required this.floor,
     required this.currency,
     required this.onTap,
@@ -656,7 +718,7 @@ class _TableCard extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onLongPress;
 
-  Color get _bg {
+  Color get bg {
     switch (floor.status) {
       case FloorTableStatus.available:
         return AppColors.success.withValues(alpha: 0.12);
@@ -673,7 +735,7 @@ class _TableCard extends StatelessWidget {
     }
   }
 
-  Color get _fg {
+  Color get fg {
     switch (floor.status) {
       case FloorTableStatus.available:
         return AppColors.success;
@@ -699,10 +761,10 @@ class _TableCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: _bg,
+        color: bg,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: _fg.withValues(alpha: .18)),
-        boxShadow: [BoxShadow(color: _fg.withValues(alpha: .06), blurRadius: 16, offset: const Offset(0, 6))],
+        border: Border.all(color: fg.withValues(alpha: .18)),
+        boxShadow: [BoxShadow(color: fg.withValues(alpha: .06), blurRadius: 16, offset: const Offset(0, 6))],
       ),
       child: Material(
         color: Colors.transparent,
@@ -722,12 +784,12 @@ class _TableCard extends StatelessWidget {
                     AppAssets.svgTable,
                     width: 22,
                     height: 22,
-                    color: _fg,
+                    color: fg,
                   ),
                   const Spacer(),
                   AppStatusBadge(
                     label: floor.statusLabel,
-                    color: _fg,
+                    color: fg,
                   ),
                 ],
               ),
@@ -764,7 +826,7 @@ class _TableCard extends StatelessWidget {
                 Text(
                   currency.format(floor.currentAmount),
                   style: TextStyle(
-                    color: _fg,
+                    color: fg,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -773,7 +835,7 @@ class _TableCard extends StatelessWidget {
                 Text(
                   'Joined → T${floor.billingTableNumber}',
                   style: TextStyle(
-                    color: _fg,
+                    color: fg,
                     fontWeight: FontWeight.w700,
                     fontSize: 12,
                   ),
@@ -788,22 +850,22 @@ class _TableCard extends StatelessWidget {
   }
 }
 
-class _MoveItemsSheet extends StatefulWidget {
-  const _MoveItemsSheet({required this.items});
+class MoveItemsSheet extends StatefulWidget {
+  const MoveItemsSheet({super.key, required this.items});
 
   final List<CartItem> items;
 
   @override
-  State<_MoveItemsSheet> createState() => _MoveItemsSheetState();
+  State<MoveItemsSheet> createState() => MoveItemsSheetState();
 }
 
-class _MoveItemsSheetState extends State<_MoveItemsSheet> {
-  late final Set<int> _selected;
+class MoveItemsSheetState extends State<MoveItemsSheet> {
+  late final Set<int> tablesPageSelected;
 
   @override
   void initState() {
     super.initState();
-    _selected = {for (var i = 0; i < widget.items.length; i++) i};
+    tablesPageSelected = {for (var i = 0; i < widget.items.length; i++) i};
   }
 
   @override
@@ -827,14 +889,14 @@ class _MoveItemsSheetState extends State<_MoveItemsSheet> {
                 itemBuilder: (context, index) {
                   final item = widget.items[index];
                   return CheckboxListTile(
-                    value: _selected.contains(index),
+                    value: tablesPageSelected.contains(index),
                     title: Text(item.productName),
                     subtitle: Text('Qty ${item.quantity}'),
                     onChanged: (on) => setState(() {
                       if (on == true) {
-                        _selected.add(index);
+                        tablesPageSelected.add(index);
                       } else {
-                        _selected.remove(index);
+                        tablesPageSelected.remove(index);
                       }
                     }),
                   );
@@ -857,7 +919,7 @@ class _MoveItemsSheetState extends State<_MoveItemsSheet> {
                     label: 'Continue',
                     onPressed: () {
                       final picked = [
-                        for (final i in _selected) widget.items[i],
+                        for (final i in tablesPageSelected) widget.items[i],
                       ];
                       Navigator.pop(context, picked);
                     },

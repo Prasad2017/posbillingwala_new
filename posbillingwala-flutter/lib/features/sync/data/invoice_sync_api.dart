@@ -7,15 +7,15 @@ import 'package:pos_billingwala_v2/features/sync/domain/cloud_invoice_dto.dart';
 import 'package:pos_billingwala_v2/core/constants/api_constants.dart';
 
 class InvoiceSyncApi {
-  InvoiceSyncApi(this._client);
+  InvoiceSyncApi(this.client);
 
-  final ApiClient _client;
+  final ApiClient client;
 
   Future<bool> uploadInvoice({
     required String userId,
     required Invoice invoice,
   }) async {
-    final data = await _post(
+    final data = await invoiceSyncApiPost(
       ApiEndpoints.insertInvoice,
       fields: {
         'userId': userId,
@@ -57,7 +57,7 @@ class InvoiceSyncApi {
     final network = item.invoiceItemNetworkStatus?.trim().isNotEmpty == true
         ? item.invoiceItemNetworkStatus!
         : 'item${item.invoiceItemId}';
-    final data = await _post(
+    final data = await invoiceSyncApiPost(
       ApiEndpoints.insertInvoiceProduct,
       fields: {
         'invoiceNumber': item.invoiceNumber,
@@ -98,7 +98,7 @@ class InvoiceSyncApi {
     final network = item.invoiceComboItemNetworkStatus?.trim().isNotEmpty == true
         ? item.invoiceComboItemNetworkStatus!
         : 'ici_${item.invoiceComboItemId}';
-    final data = await _post(
+    final data = await invoiceSyncApiPost(
       ApiEndpoints.insertInvoiceComboItem,
       fields: {
         'invoiceNumber': item.invoiceNumber ?? '',
@@ -122,7 +122,7 @@ class InvoiceSyncApi {
   Future<bool> deleteInvoiceProduct({
     required String invoiceProductNetworkStatus,
   }) async {
-    final data = await _post(
+    final data = await invoiceSyncApiPost(
       ApiEndpoints.deleteInvoiceProduct,
       fields: {
         'invoiceProductNetworkStatus': invoiceProductNetworkStatus,
@@ -135,7 +135,7 @@ class InvoiceSyncApi {
     String userId, {
     String? invoiceDate,
   }) async {
-    final data = await _get(
+    final data = await invoiceSyncApiGet(
       ApiEndpoints.getInvoiceList,
       query: {
         'userId': userId,
@@ -150,7 +150,7 @@ class InvoiceSyncApi {
   }
 
   Future<List<CloudInvoiceItemDto>> fetchInvoiceItems(String userId) async {
-    final data = await _get(
+    final data = await invoiceSyncApiGet(
       ApiEndpoints.getInvoiceProductList,
       query: {'userId': userId},
     );
@@ -163,7 +163,7 @@ class InvoiceSyncApi {
   Future<List<CloudInvoiceComboItemDto>> fetchInvoiceComboItems(
     String userId,
   ) async {
-    final data = await _get(
+    final data = await invoiceSyncApiGet(
       ApiEndpoints.getInvoiceComboItemList,
       query: {'userId': userId},
     );
@@ -174,11 +174,11 @@ class InvoiceSyncApi {
     );
   }
 
-  Future<Map<String, dynamic>> _get(
+  Future<Map<String, dynamic>> invoiceSyncApiGet(
     String path, {
     Map<String, dynamic>? query,
   }) async {
-    final response = await _client.dio.get<dynamic>(
+    final response = await client.dio.get<dynamic>(
       path,
       queryParameters: query,
       options: Options(responseType: ResponseType.json),
@@ -186,11 +186,11 @@ class InvoiceSyncApi {
     return asJsonMap(response.data);
   }
 
-  Future<Map<String, dynamic>> _post(
+  Future<Map<String, dynamic>> invoiceSyncApiPost(
     String path, {
     required Map<String, dynamic> fields,
   }) async {
-    final response = await _client.dio.post<dynamic>(
+    final response = await client.dio.post<dynamic>(
       path,
       data: FormData.fromMap(fields),
       options: Options(responseType: ResponseType.json),

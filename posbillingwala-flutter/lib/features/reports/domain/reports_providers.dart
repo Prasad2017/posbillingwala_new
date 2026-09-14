@@ -159,20 +159,20 @@ class SalesSummary {
     final count = invoices.length;
     return SalesSummary(
       billCount: count,
-      totalSales: _r(total),
-      subTotal: _r(sub),
-      gstTotal: _r(gst),
-      discountTotal: _r(discount),
-      cashTotal: _r(cash),
-      upiTotal: _r(upi),
+      totalSales: r(total),
+      subTotal: r(sub),
+      gstTotal: r(gst),
+      discountTotal: r(discount),
+      cashTotal: r(cash),
+      upiTotal: r(upi),
       posCount: posCount,
       takeawayCount: takeawayCount,
       tableCount: tableCount,
-      avgBill: _r(total / count),
+      avgBill: r(total / count),
     );
   }
 
-  static double _r(double v) => double.parse(v.toStringAsFixed(2));
+  static double r(double v) => double.parse(v.toStringAsFixed(2));
 }
 
 class ReportPeriodController extends Notifier<ReportPeriod> {

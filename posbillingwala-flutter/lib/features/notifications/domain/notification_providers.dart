@@ -13,7 +13,7 @@ final inAppNotificationsProvider =
 );
 
 class InAppNotificationsController extends Notifier<List<InAppNotification>> {
-  final _store = InAppNotificationStore();
+  final store = InAppNotificationStore();
 
   @override
   List<InAppNotification> build() {
@@ -22,15 +22,15 @@ class InAppNotificationsController extends Notifier<List<InAppNotification>> {
   }
 
   Future<void> reload() async {
-    state = await _store.load();
+    state = await store.load();
   }
 
   Future<void> markRead(String id) async {
-    state = await _store.markRead(id);
+    state = await store.markRead(id);
   }
 
   Future<void> markAllRead() async {
-    state = await _store.markAllRead();
+    state = await store.markAllRead();
   }
 
   int get unreadCount => state.where((e) => !e.read).length;

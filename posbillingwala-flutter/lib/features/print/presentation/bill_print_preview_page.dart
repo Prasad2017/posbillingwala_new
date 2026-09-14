@@ -25,18 +25,18 @@ class BillPrintPreviewPage extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<BillPrintPreviewPage> createState() =>
-      _BillPrintPreviewPageState();
+      BillPrintPreviewPageState();
 }
 
-class _BillPrintPreviewPageState extends ConsumerState<BillPrintPreviewPage> {
-  final _ticket48Key = GlobalKey();
-  final _ticket72Key = GlobalKey();
+class BillPrintPreviewPageState extends ConsumerState<BillPrintPreviewPage> {
+  final ticket48Key = GlobalKey();
+  final ticket72Key = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
     final strings = AppStrings.of(ref);
     return FutureBuilder<(Invoice, List<InvoiceItem>)?>(
-      future: _load(ref),
+      future: loadInvoice(ref),
       builder: (context, snap) {
         if (!snap.hasData && snap.connectionState != ConnectionState.done) {
           return Scaffold(
@@ -77,23 +77,23 @@ class _BillPrintPreviewPageState extends ConsumerState<BillPrintPreviewPage> {
           body: ListView(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
             children: [
-              _PreviewCard(
+              PreviewCard(
                 title: strings.paper2Inch,
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: RepaintBoundary(
-                    key: _ticket48Key,
+                    key: ticket48Key,
                     child: WoosimTicket(ticket: ticket, widthMm: 48),
                   ),
                 ),
               ),
               const SizedBox(height: 12),
-              _PreviewCard(
+              PreviewCard(
                 title: strings.paper3Inch,
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: RepaintBoundary(
-                    key: _ticket72Key,
+                    key: ticket72Key,
                     child: WoosimTicket(ticket: ticket, widthMm: 72),
                   ),
                 ),
@@ -122,7 +122,7 @@ class _BillPrintPreviewPageState extends ConsumerState<BillPrintPreviewPage> {
                 onPressed: () async {
                   try {
                     await shareTicketWidgetAsImage(
-                      boundaryKey: use3Inch ? _ticket72Key : _ticket48Key,
+                      boundaryKey: use3Inch ? ticket72Key : ticket48Key,
                       label: widget.duplicate ? 'Duplicate bill' : 'Invoice',
                     );
                     if (!context.mounted) return;
@@ -162,7 +162,7 @@ class _BillPrintPreviewPageState extends ConsumerState<BillPrintPreviewPage> {
     );
   }
 
-  Future<(Invoice, List<InvoiceItem>)?> _load(WidgetRef ref) async {
+  Future<(Invoice, List<InvoiceItem>)?> loadInvoice(WidgetRef ref) async {
     final db = ref.read(appDatabaseProvider);
     final invoice = await db.getInvoiceById(widget.invoiceId);
     if (invoice == null) return null;
@@ -171,8 +171,8 @@ class _BillPrintPreviewPageState extends ConsumerState<BillPrintPreviewPage> {
   }
 }
 
-class _PreviewCard extends StatelessWidget {
-  const _PreviewCard({required this.title, required this.child});
+class PreviewCard extends StatelessWidget {
+  const PreviewCard({super.key, required this.title, required this.child});
 
   final String title;
   final Widget child;

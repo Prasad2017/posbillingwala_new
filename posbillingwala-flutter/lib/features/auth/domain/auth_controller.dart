@@ -60,9 +60,9 @@ class AuthController extends Notifier<AuthState> {
   @override
   AuthState build() => const AuthState(status: AuthStatus.unknown);
 
-  AuthRepository get _repo => ref.read(authRepositoryProvider);
+  AuthRepository get repo => ref.read(authRepositoryProvider);
 
-  Future<void> _bindBranchScope(UserSession session) async {
+  Future<void> bindBranchScope(UserSession session) async {
     final device = await DeviceIdentityService().resolve();
     await ref.read(appDatabaseProvider).applyLicenceScope(
           session: session,
@@ -72,23 +72,23 @@ class AuthController extends Notifier<AuthState> {
 
   Future<void> bootstrap() async {
     state = state.copyWith(status: AuthStatus.unknown, clearError: true);
-    final session = await _repo.readStoredSession();
+    final session = await repo.readStoredSession();
     if (session == null) {
       state = const AuthState(status: AuthStatus.unauthenticated);
       return;
     }
     // Bind Drift branch filters before MPIN so cold-start queries stay scoped.
-    await _bindBranchScope(session);
+    await bindBranchScope(session);
     // Stronger than Android: require PB-PIN unlock each cold start.
     state = AuthState(status: AuthStatus.needsMpin, session: session);
   }
 
-  Future<DeviceConflictAction> Function(String message)? _conflictHandler;
+  Future<DeviceConflictAction> Function(String message)? conflictHandler;
 
   void setDeviceConflictHandler(
     Future<DeviceConflictAction> Function(String message)? handler,
   ) {
-    _conflictHandler = handler;
+    conflictHandler = handler;
   }
 
   Future<bool> loginWithLicence(String licenceKey) async {
@@ -102,12 +102,12 @@ class AuthController extends Notifier<AuthState> {
         );
         return false;
       }
-      final session = await _repo.loginWithLicence(
+      final session = await repo.loginWithLicence(
         licenceKey: licenceKey,
-        onDeviceConflict: _conflictHandler,
+        onDeviceConflict: conflictHandler,
       );
       ref.read(apiClientProvider).setAuthToken(session.authToken);
-      await _bindBranchScope(session);
+      await bindBranchScope(session);
       state = AuthState(
         status: AuthStatus.authenticated,
         session: session,
@@ -144,12 +144,12 @@ class AuthController extends Notifier<AuthState> {
         );
         return false;
       }
-      final session = await _repo.loginWithMpin(
+      final session = await repo.loginWithMpin(
         mpin: mpin,
-        onDeviceConflict: _conflictHandler,
+        onDeviceConflict: conflictHandler,
       );
       ref.read(apiClientProvider).setAuthToken(session.authToken);
-      await _bindBranchScope(session);
+      await bindBranchScope(session);
       state = AuthState(
         status: AuthStatus.authenticated,
         session: session,
@@ -182,10 +182,10 @@ class AuthController extends Notifier<AuthState> {
       await FcmService(apiClient: ref.read(apiClientProvider))
           .clearForUser(userId);
     }
-    await _repo.lockSession();
+    await repo.lockSession();
     ref.read(apiClientProvider).setAuthToken(null);
 
-    final locked = session ?? await _repo.readStoredSession();
+    final locked = session ?? await repo.readStoredSession();
     if (locked == null) {
       state = const AuthState(status: AuthStatus.unauthenticated);
       return;
@@ -201,7 +201,7 @@ class AuthController extends Notifier<AuthState> {
       await FcmService(apiClient: ref.read(apiClientProvider))
           .clearForUser(userId);
     }
-    await _repo.clearSession(licenceKey: session?.licenceKey);
+    await repo.clearSession(licenceKey: session?.licenceKey);
     ref.read(apiClientProvider).setAuthToken(null);
     state = const AuthState(status: AuthStatus.unauthenticated);
   }

@@ -18,7 +18,7 @@ class KotPreviewPage extends ConsumerWidget {
 
   final KotTicket ticket;
 
-  String get _plainText {
+  String get plainText {
     final buf = StringBuffer()
       ..writeln(ticket.kot.kotNumber)
       ..writeln('Table: T${ticket.kot.tableNumber}')
@@ -44,7 +44,7 @@ class KotPreviewPage extends ConsumerWidget {
           IconButton(
             tooltip: 'Copy ticket',
             onPressed: () async {
-              await Clipboard.setData(ClipboardData(text: _plainText));
+              await Clipboard.setData(ClipboardData(text: plainText));
               if (!context.mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text(AppStrings.of(ref).kotCopied)),
@@ -87,13 +87,13 @@ class KotPreviewPage extends ConsumerWidget {
                         ),
                   ),
                   const SizedBox(height: 16),
-                  _MetaRow(label: 'Table', value: 'T${ticket.kot.tableNumber}'),
-                  _MetaRow(label: 'Round', value: '${ticket.roundNumber}'),
-                  _MetaRow(
+                  MetaRow(label: 'Table', value: 'T${ticket.kot.tableNumber}'),
+                  MetaRow(label: 'Round', value: '${ticket.roundNumber}'),
+                  MetaRow(
                     label: 'Kitchen',
                     value: ticket.kot.kitchenName,
                   ),
-                  _MetaRow(
+                  MetaRow(
                     label: 'Date',
                     value: DateFormat('dd-MM-yyyy HH:mm')
                         .format(ticket.kot.createdAt),
@@ -177,8 +177,8 @@ class KotPreviewPage extends ConsumerWidget {
   }
 }
 
-class _MetaRow extends StatelessWidget {
-  const _MetaRow({required this.label, required this.value});
+class MetaRow extends StatelessWidget {
+  const MetaRow({super.key, required this.label, required this.value});
 
   final String label;
   final String value;

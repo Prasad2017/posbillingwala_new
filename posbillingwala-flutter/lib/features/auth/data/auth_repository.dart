@@ -19,46 +19,46 @@ class AuthException implements Exception {
 
 class AuthRepository {
   AuthRepository({
-    required this._api,
-    required this._sessionStore,
-    required this._deviceIdentityService,
+    required this.api,
+    required this.sessionStore,
+    required this.deviceIdentityService,
   });
 
-  final AuthApi _api;
-  final SessionStore _sessionStore;
-  final DeviceIdentityService _deviceIdentityService;
+  final AuthApi api;
+  final SessionStore sessionStore;
+  final DeviceIdentityService deviceIdentityService;
 
-  Future<UserSession?> readStoredSession() => _sessionStore.readSession();
+  Future<UserSession?> readStoredSession() => sessionStore.readSession();
 
   Future<void> clearSession({String? licenceKey}) async {
     if (licenceKey != null && licenceKey.isNotEmpty) {
       try {
-        await _api.serverLogout(licenceKey: licenceKey);
+        await api.serverLogout(licenceKey: licenceKey);
       } catch (_) {
         // Local logout still proceeds if network fails.
       }
     }
-    await _sessionStore.clearSession();
+    await sessionStore.clearSession();
   }
 
   /// Soft lock for app logout — keep licence so next screen is MPIN.
-  Future<void> lockSession() => _sessionStore.clearAuthToken();
+  Future<void> lockSession() => sessionStore.clearAuthToken();
 
   /// Licence-key login matching Android Login.java flow.
   Future<UserSession> loginWithLicence({
     required String licenceKey,
     Future<DeviceConflictAction> Function(String message)? onDeviceConflict,
   }) async {
-    final device = await _deviceIdentityService.resolve();
+    final device = await deviceIdentityService.resolve();
     final key = licenceKey.trim();
     if (key.isEmpty) {
       throw AuthException('Please enter your licence key');
     }
 
-    var check = await _api.loginCheck(licenceKey: key, deviceId: device.deviceId);
+    var check = await api.loginCheck(licenceKey: key, deviceId: device.deviceId);
 
     if (check.status == '2') {
-      final rebound = await _api.updateLicenceKey(
+      final rebound = await api.updateLicenceKey(
         licenceKey: key,
         deviceId: device.deviceId,
         deviceName: device.deviceName,
@@ -66,7 +66,7 @@ class AuthRepository {
       if (!rebound.isSuccess) {
         throw AuthException(rebound.message ?? 'Unable to bind this device');
       }
-      check = await _api.loginCheck(licenceKey: key, deviceId: device.deviceId);
+      check = await api.loginCheck(licenceKey: key, deviceId: device.deviceId);
     } else if (check.status == '3') {
       final action = onDeviceConflict == null
           ? DeviceConflictAction.cancel
@@ -77,7 +77,7 @@ class AuthRepository {
       if (action != DeviceConflictAction.rebind) {
         throw AuthException('Device binding cancelled');
       }
-      final rebound = await _api.updateLicenceKey(
+      final rebound = await api.updateLicenceKey(
         licenceKey: key,
         deviceId: device.deviceId,
         deviceName: device.deviceName,
@@ -85,7 +85,7 @@ class AuthRepository {
       if (!rebound.isSuccess) {
         throw AuthException(rebound.message ?? 'Unable to bind this device');
       }
-      check = await _api.loginCheck(licenceKey: key, deviceId: device.deviceId);
+      check = await api.loginCheck(licenceKey: key, deviceId: device.deviceId);
     }
 
     if (check.status == '0') {
@@ -95,7 +95,7 @@ class AuthRepository {
       throw AuthException(check.message ?? 'Login failed');
     }
 
-    final expire = await _api.checkLicenceExpire(
+    final expire = await api.checkLicenceExpire(
       userId: check.licenceId!,
       deviceId: device.deviceId,
       deviceName: device.deviceName,
@@ -103,7 +103,7 @@ class AuthRepository {
     if (!expire.isSuccess) {
       throw AuthException(expire.message ?? 'Licence check failed');
     }
-    if (!_isLicenceValid(expire.licenceKeyExpireDate)) {
+    if (!isLicenceValid(expire.licenceKeyExpireDate)) {
       throw AuthException('Your licence has expired. Please renew to continue.');
     }
 
@@ -111,7 +111,7 @@ class AuthRepository {
     if (session.userId.isEmpty || session.licenceKey.isEmpty) {
       throw AuthException('Incomplete licence data from server');
     }
-    await _sessionStore.saveSession(session);
+    await sessionStore.saveSession(session);
     await LicenseValidator.saveFromLogin(
       licensePayload: expire.licensePayload,
       licenseSignature: expire.licenseSignature,
@@ -123,7 +123,7 @@ class AuthRepository {
       branchLabel: expire.branchLabel,
       deviceId: device.deviceId,
     );
-    await _assertSignedLicense(
+    await assertSignedLicense(
       deviceId: device.deviceId,
       licenceKey: session.licenceKey,
     );
@@ -135,19 +135,19 @@ class AuthRepository {
     required String mpin,
     Future<DeviceConflictAction> Function(String message)? onDeviceConflict,
   }) async {
-    final stored = await _sessionStore.readSession();
+    final stored = await sessionStore.readSession();
     if (stored == null) {
       throw AuthException('No licence found. Please login with licence key.');
     }
 
-    final device = await _deviceIdentityService.resolve();
+    final device = await deviceIdentityService.resolve();
     final pin = mpin.trim();
     if (pin.length != 4) {
       throw AuthException('Enter your 4-digit PB-PIN');
     }
 
     Future<LoginResponse> attempt() {
-      return _api.loginMpin(
+      return api.loginMpin(
         mpin: pin,
         licenceKey: stored.licenceKey,
         deviceId: device.deviceId,
@@ -168,7 +168,7 @@ class AuthRepository {
         throw AuthException('Device binding cancelled');
       }
 
-      final rebound = await _api.updateLicenceKey(
+      final rebound = await api.updateLicenceKey(
         licenceKey: stored.licenceKey,
         deviceId: device.deviceId,
         deviceName: device.deviceName,
@@ -177,7 +177,7 @@ class AuthRepository {
         throw AuthException(rebound.message ?? 'Unable to bind this device');
       }
 
-      await _api.updateMpin(
+      await api.updateMpin(
         mpin: pin,
         licenceKey: stored.licenceKey,
         deviceId: device.deviceId,
@@ -189,12 +189,12 @@ class AuthRepository {
     if (!response.isSuccess) {
       throw AuthException(response.message ?? 'Invalid PB-PIN');
     }
-    if (!_isLicenceValid(response.licenceKeyExpireDate)) {
+    if (!isLicenceValid(response.licenceKeyExpireDate)) {
       throw AuthException('Your licence has expired. Please renew to continue.');
     }
 
     final session = UserSession.fromLogin(response);
-    await _sessionStore.saveSession(session);
+    await sessionStore.saveSession(session);
     await LicenseValidator.saveFromLogin(
       licensePayload: response.licensePayload,
       licenseSignature: response.licenseSignature,
@@ -206,14 +206,14 @@ class AuthRepository {
       branchLabel: response.branchLabel,
       deviceId: device.deviceId,
     );
-    await _assertSignedLicense(
+    await assertSignedLicense(
       deviceId: device.deviceId,
       licenceKey: session.licenceKey,
     );
     return session;
   }
 
-  Future<void> _assertSignedLicense({
+  Future<void> assertSignedLicense({
     required String deviceId,
     required String licenceKey,
   }) async {
@@ -236,7 +236,7 @@ class AuthRepository {
     required String address,
     required String shopName,
   }) {
-    return _api.registerTrial(
+    return api.registerTrial(
       name: name.trim(),
       contactNumber: contactNumber.trim(),
       address: address.trim(),
@@ -244,7 +244,7 @@ class AuthRepository {
     );
   }
 
-  bool _isLicenceValid(String? expireDate) {
+  bool isLicenceValid(String? expireDate) {
     if (expireDate == null || expireDate.isEmpty) return false;
     try {
       final end = DateTime.parse(expireDate);

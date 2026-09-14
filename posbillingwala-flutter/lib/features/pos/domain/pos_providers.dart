@@ -109,8 +109,8 @@ class PosCartController extends Notifier<void> {
   @override
   void build() {}
 
-  AppDatabase get _db => ref.read(appDatabaseProvider);
-  BillingSession get _session => ref.read(billingSessionProvider);
+  AppDatabase get db => ref.read(appDatabaseProvider);
+  BillingSession get session => ref.read(billingSessionProvider);
 
   Future<void> addProduct(
     Product product, {
@@ -119,10 +119,10 @@ class PosCartController extends Notifier<void> {
     int quantity = 1,
   }) async {
     final shopGst = ref.read(shopReceiptProfileProvider).shopGstPercent;
-    await _db.addProductToCart(
+    await db.addProductToCart(
       product,
-      cartScope: _session.cartScope,
-      diningSessionId: _session.diningSessionId,
+      cartScope: session.cartScope,
+      diningSessionId: session.diningSessionId,
       portion: portion,
       shopGstPercentFallback: shopGst > 0 ? shopGst : null,
       unitPriceOverride: unitPriceOverride,
@@ -131,27 +131,27 @@ class PosCartController extends Notifier<void> {
   }
 
   Future<void> addCombo(Combo combo) async {
-    await _db.addComboToCart(
+    await db.addComboToCart(
       combo,
-      cartScope: _session.cartScope,
-      diningSessionId: _session.diningSessionId,
+      cartScope: session.cartScope,
+      diningSessionId: session.diningSessionId,
     );
   }
 
   Future<void> increment(CartItem item) async {
-    await _db.changeCartQuantity(
+    await db.changeCartQuantity(
       item.productId,
       item.quantity + 1,
-      cartScope: _session.cartScope,
+      cartScope: session.cartScope,
       portionId: item.portionId,
     );
   }
 
   Future<void> decrement(CartItem item) async {
-    await _db.changeCartQuantity(
+    await db.changeCartQuantity(
       item.productId,
       item.quantity - 1,
-      cartScope: _session.cartScope,
+      cartScope: session.cartScope,
       portionId: item.portionId,
     );
   }
@@ -161,25 +161,25 @@ class PosCartController extends Notifier<void> {
     required int quantity,
     double? unitPrice,
   }) async {
-    await _db.changeCartQuantity(
+    await db.changeCartQuantity(
       item.productId,
       quantity,
-      cartScope: _session.cartScope,
+      cartScope: session.cartScope,
       portionId: item.portionId,
       unitPrice: unitPrice,
     );
   }
 
   Future<void> remove(CartItem item) async {
-    await _db.removeCartItem(
+    await db.removeCartItem(
       item.productId,
-      cartScope: _session.cartScope,
+      cartScope: session.cartScope,
       portionId: item.portionId,
     );
   }
 
   Future<void> clear() async {
-    await _db.clearCart(cartScope: _session.cartScope);
+    await db.clearCart(cartScope: session.cartScope);
   }
 }
 

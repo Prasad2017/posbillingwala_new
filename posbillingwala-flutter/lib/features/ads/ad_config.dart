@@ -6,20 +6,20 @@ abstract final class AdConfig {
 
   static const androidAppId = 'ca-app-pub-2325627373654257~2682249830';
 
-  static const _login = 'ca-app-pub-2325627373654257/8547020221';
-  static const _settings = 'ca-app-pub-2325627373654257/3294693541';
-  static const _about = 'ca-app-pub-2325627373654257/6815283571';
-  static const _googleTestBanner = 'ca-app-pub-3940256099942544/6300978111';
+  static const adConfigLogin = 'ca-app-pub-2325627373654257/8547020221';
+  static const adConfigSettings = 'ca-app-pub-2325627373654257/3294693541';
+  static const adConfigAbout = 'ca-app-pub-2325627373654257/6815283571';
+  static const googleTestBanner = 'ca-app-pub-3940256099942544/6300978111';
 
   static String unitId(AdSlot slot) {
-    if (!kReleaseMode) return _googleTestBanner;
+    if (!kReleaseMode) return googleTestBanner;
     switch (slot) {
       case AdSlot.login:
-        return _login;
+        return adConfigLogin;
       case AdSlot.settings:
-        return _settings;
+        return adConfigSettings;
       case AdSlot.about:
-        return _about;
+        return adConfigAbout;
     }
   }
 }

@@ -167,54 +167,54 @@ class ShopReceiptProfile {
 }
 
 class ShopReceiptProfileStore {
-  static const _prefix = 'shop_receipt_';
+  static const prefix = 'shop_receipt_';
 
   Future<ShopReceiptProfile> load() async {
     final p = await SharedPreferences.getInstance();
     return ShopReceiptProfile(
-      companyName: p.getString('${_prefix}companyName') ?? '',
-      companyMobile: p.getString('${_prefix}companyMobile') ?? '',
-      companyAddress: p.getString('${_prefix}companyAddress') ?? '',
-      addressLine1: p.getString('${_prefix}addressLine1') ?? '',
-      addressLine2: p.getString('${_prefix}addressLine2') ?? '',
-      addressLine3: p.getString('${_prefix}addressLine3') ?? '',
-      phoneNo1: p.getString('${_prefix}phoneNo1') ?? '',
-      phoneNo2: p.getString('${_prefix}phoneNo2') ?? '',
-      gstNumber: p.getString('${_prefix}gstNumber') ?? '',
-      panNumber: p.getString('${_prefix}panNumber') ?? '',
-      companyFssis: p.getString('${_prefix}companyFssis') ?? '',
-      paymentLogo: p.getString('${_prefix}paymentLogo') ?? '',
-      shopName1: p.getString('${_prefix}shopName1') ?? '',
-      shopName2: p.getString('${_prefix}shopName2') ?? '',
-      cashierName: p.getString('${_prefix}cashierName') ?? '',
-      logoLocalPath: p.getString('${_prefix}logoLocalPath') ?? '',
-      shopCgst: p.getString('${_prefix}shopCgst') ?? '',
-      shopSgst: p.getString('${_prefix}shopSgst') ?? '',
-      gstEnabled: p.getBool('${_prefix}gstEnabled') ?? false,
+      companyName: p.getString('${prefix}companyName') ?? '',
+      companyMobile: p.getString('${prefix}companyMobile') ?? '',
+      companyAddress: p.getString('${prefix}companyAddress') ?? '',
+      addressLine1: p.getString('${prefix}addressLine1') ?? '',
+      addressLine2: p.getString('${prefix}addressLine2') ?? '',
+      addressLine3: p.getString('${prefix}addressLine3') ?? '',
+      phoneNo1: p.getString('${prefix}phoneNo1') ?? '',
+      phoneNo2: p.getString('${prefix}phoneNo2') ?? '',
+      gstNumber: p.getString('${prefix}gstNumber') ?? '',
+      panNumber: p.getString('${prefix}panNumber') ?? '',
+      companyFssis: p.getString('${prefix}companyFssis') ?? '',
+      paymentLogo: p.getString('${prefix}paymentLogo') ?? '',
+      shopName1: p.getString('${prefix}shopName1') ?? '',
+      shopName2: p.getString('${prefix}shopName2') ?? '',
+      cashierName: p.getString('${prefix}cashierName') ?? '',
+      logoLocalPath: p.getString('${prefix}logoLocalPath') ?? '',
+      shopCgst: p.getString('${prefix}shopCgst') ?? '',
+      shopSgst: p.getString('${prefix}shopSgst') ?? '',
+      gstEnabled: p.getBool('${prefix}gstEnabled') ?? false,
     );
   }
 
   Future<void> save(ShopReceiptProfile profile) async {
     final p = await SharedPreferences.getInstance();
-    await p.setString('${_prefix}companyName', profile.companyName);
-    await p.setString('${_prefix}companyMobile', profile.companyMobile);
-    await p.setString('${_prefix}companyAddress', profile.companyAddress);
-    await p.setString('${_prefix}addressLine1', profile.addressLine1);
-    await p.setString('${_prefix}addressLine2', profile.addressLine2);
-    await p.setString('${_prefix}addressLine3', profile.addressLine3);
-    await p.setString('${_prefix}phoneNo1', profile.phoneNo1);
-    await p.setString('${_prefix}phoneNo2', profile.phoneNo2);
-    await p.setString('${_prefix}gstNumber', profile.gstNumber);
-    await p.setString('${_prefix}panNumber', profile.panNumber);
-    await p.setString('${_prefix}companyFssis', profile.companyFssis);
-    await p.setString('${_prefix}paymentLogo', profile.paymentLogo);
-    await p.setString('${_prefix}shopName1', profile.shopName1);
-    await p.setString('${_prefix}shopName2', profile.shopName2);
-    await p.setString('${_prefix}cashierName', profile.cashierName);
-    await p.setString('${_prefix}logoLocalPath', profile.logoLocalPath);
-    await p.setString('${_prefix}shopCgst', profile.shopCgst);
-    await p.setString('${_prefix}shopSgst', profile.shopSgst);
-    await p.setBool('${_prefix}gstEnabled', profile.gstEnabled);
+    await p.setString('${prefix}companyName', profile.companyName);
+    await p.setString('${prefix}companyMobile', profile.companyMobile);
+    await p.setString('${prefix}companyAddress', profile.companyAddress);
+    await p.setString('${prefix}addressLine1', profile.addressLine1);
+    await p.setString('${prefix}addressLine2', profile.addressLine2);
+    await p.setString('${prefix}addressLine3', profile.addressLine3);
+    await p.setString('${prefix}phoneNo1', profile.phoneNo1);
+    await p.setString('${prefix}phoneNo2', profile.phoneNo2);
+    await p.setString('${prefix}gstNumber', profile.gstNumber);
+    await p.setString('${prefix}panNumber', profile.panNumber);
+    await p.setString('${prefix}companyFssis', profile.companyFssis);
+    await p.setString('${prefix}paymentLogo', profile.paymentLogo);
+    await p.setString('${prefix}shopName1', profile.shopName1);
+    await p.setString('${prefix}shopName2', profile.shopName2);
+    await p.setString('${prefix}cashierName', profile.cashierName);
+    await p.setString('${prefix}logoLocalPath', profile.logoLocalPath);
+    await p.setString('${prefix}shopCgst', profile.shopCgst);
+    await p.setString('${prefix}shopSgst', profile.shopSgst);
+    await p.setBool('${prefix}gstEnabled', profile.gstEnabled);
   }
 }
 
@@ -224,25 +224,25 @@ final shopReceiptProfileProvider =
 );
 
 class ShopReceiptProfileController extends Notifier<ShopReceiptProfile> {
-  final _store = ShopReceiptProfileStore();
+  final store = ShopReceiptProfileStore();
 
   @override
   ShopReceiptProfile build() {
-    Future.microtask(_hydrate);
+    Future.microtask(hydrate);
     return const ShopReceiptProfile();
   }
 
-  Future<void> _hydrate() async {
-    state = await _store.load();
+  Future<void> hydrate() async {
+    state = await store.load();
   }
 
   Future<void> save(ShopReceiptProfile profile) async {
-    await _store.save(profile);
+    await store.save(profile);
     state = profile;
   }
 
   Future<void> saveFromCompany(CompanyDto company) async {
-    final current = await _store.load();
+    final current = await store.load();
     final next = ShopReceiptProfile.fromCompany(company).copyWith(
       logoLocalPath: current.logoLocalPath,
     );

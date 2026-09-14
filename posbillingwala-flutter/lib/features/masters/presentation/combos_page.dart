@@ -13,16 +13,16 @@ class CombosPage extends ConsumerStatefulWidget {
   const CombosPage({super.key});
 
   @override
-  ConsumerState<CombosPage> createState() => _CombosPageState();
+  ConsumerState<CombosPage> createState() => CombosPageState();
 }
 
-class _CombosPageState extends ConsumerState<CombosPage> {
-  final _search = TextEditingController();
-  String _query = '';
+class CombosPageState extends ConsumerState<CombosPage> {
+  final search = TextEditingController();
+  String query = '';
 
   @override
   void dispose() {
-    _search.dispose();
+    search.dispose();
     super.dispose();
   }
 
@@ -44,8 +44,8 @@ class _CombosPageState extends ConsumerState<CombosPage> {
         error: (e, _) => Center(child: Text('$e')),
         data: (combos) {
           final filtered = combos.where((c) {
-            if (_query.trim().isEmpty) return true;
-            final q = _query.trim().toLowerCase();
+            if (query.trim().isEmpty) return true;
+            final q = query.trim().toLowerCase();
             return c.comboName.toLowerCase().contains(q) ||
                 (c.comboCode?.toLowerCase().contains(q) ?? false);
           }).toList();
@@ -54,9 +54,9 @@ class _CombosPageState extends ConsumerState<CombosPage> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                 child: AppTextField(
-                  controller: _search,
+                  controller: search,
                   label: 'Search combo',
-                  onChanged: (v) => setState(() => _query = v),
+                  onChanged: (v) => setState(() => query = v),
                 ),
               ),
               Expanded(

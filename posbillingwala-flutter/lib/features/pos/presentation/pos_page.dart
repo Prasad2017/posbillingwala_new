@@ -28,6 +28,7 @@ Future<void> sendKotTicket(BuildContext context, WidgetRef ref) async {
     final ticket = await ref.read(kotControllerProvider.notifier).createKot();
     if (!context.mounted) return;
     final settings = ref.read(printerSettingsProvider);
+    final strings = AppStrings.of(ref);
     final skipPreview = settings.kotAutoPrint || !settings.kotPreview;
     if (skipPreview) {
       final copies = settings.kotCopies.clamp(1, 5);
@@ -40,7 +41,8 @@ Future<void> sendKotTicket(BuildContext context, WidgetRef ref) async {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            last?.message ?? 'KOT printed${copies > 1 ? ' ×$copies' : ''}',
+            last?.message ??
+                '${strings.kotPrinted}${copies > 1 ? ' ×$copies' : ''}',
           ),
         ),
       );
@@ -66,15 +68,15 @@ class PosPage extends ConsumerStatefulWidget {
   final bool openCartOnStart;
 
   @override
-  ConsumerState<PosPage> createState() => _PosPageState();
+  ConsumerState<PosPage> createState() => PosPageState();
 }
 
-class _PosPageState extends ConsumerState<PosPage> {
-  final _searchController = TextEditingController();
-  final _speech = stt.SpeechToText();
-  bool _showCombos = false;
-  bool _listening = false;
-  bool _openedCartOnStart = false;
+class PosPageState extends ConsumerState<PosPage> {
+  final posPageSearchController = TextEditingController();
+  final speech = stt.SpeechToText();
+  bool posPageShowCombos = false;
+  bool posPageListening = false;
+  bool openedCartOnStart = false;
 
   @override
   void initState() {
@@ -84,22 +86,22 @@ class _PosPageState extends ConsumerState<PosPage> {
         ref.read(billingSessionProvider.notifier).usePos();
       });
     }
-    _searchController.addListener(() => setState(() {}));
+    posPageSearchController.addListener(() => setState(() {}));
   }
 
   @override
   void dispose() {
-    _searchController.dispose();
-    _speech.stop();
+    posPageSearchController.dispose();
+    speech.stop();
     super.dispose();
   }
 
-  Future<void> _voiceSearch() async {
-    final available = await _speech.initialize(
+  Future<void> voiceSearch() async {
+    final available = await speech.initialize(
       onStatus: (status) {
         if (!mounted) return;
         if (status == 'done' || status == 'notListening') {
-          setState(() => _listening = false);
+          setState(() => posPageListening = false);
         }
       },
     );
@@ -110,12 +112,12 @@ class _PosPageState extends ConsumerState<PosPage> {
       );
       return;
     }
-    setState(() => _listening = true);
-    await _speech.listen(
+    setState(() => posPageListening = true);
+    await speech.listen(
       onResult: (result) {
-        _searchController.text = result.recognizedWords;
-        _searchController.selection = TextSelection.fromPosition(
-          TextPosition(offset: _searchController.text.length),
+        posPageSearchController.text = result.recognizedWords;
+        posPageSearchController.selection = TextSelection.fromPosition(
+          TextPosition(offset: posPageSearchController.text.length),
         );
       },
       listenOptions: stt.SpeechListenOptions(
@@ -146,12 +148,12 @@ class _PosPageState extends ConsumerState<PosPage> {
     final strings = AppStrings.of(ref);
 
     if (widget.openCartOnStart &&
-        !_openedCartOnStart &&
+        !openedCartOnStart &&
         !cartSummary.isEmpty) {
-      _openedCartOnStart = true;
+      openedCartOnStart = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        _openCartSheet(context, session);
+        openCartSheet(context, session);
       });
     }
 
@@ -228,11 +230,11 @@ class _PosPageState extends ConsumerState<PosPage> {
             Padding(
               padding: const EdgeInsets.only(right: 4),
               child: TextButton.icon(
-                onPressed: () => _confirmClearCart(context, ref),
+                onPressed: () => confirmClearCart(context, ref),
                 icon: const Icon(Icons.delete, color: AppColors.danger, size: 18),
-                label: const Text(
-                  'Clear Cart',
-                  style: TextStyle(
+                label: Text(
+                  strings.clearCart,
+                  style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w700,
                     fontSize: 13,
@@ -254,23 +256,23 @@ class _PosPageState extends ConsumerState<PosPage> {
                 children: [
                   Expanded(
                     flex: 3,
-                    child: _CatalogPane(
+                    child: CatalogPane(
                       session: session,
                       categoriesAsync: categoriesAsync,
                       productsAsync: productsAsync,
                       selectedCategoryId: selectedCategoryId,
                       selectedSubcategoryId: selectedSubcategoryId,
                       currency: currency,
-                      searchController: _searchController,
-                      showCombos: _showCombos,
-                      listening: _listening,
-                      onVoiceSearch: _voiceSearch,
-                      onToggleCombos: (v) => setState(() => _showCombos = v),
+                      searchController: posPageSearchController,
+                      showCombos: posPageShowCombos,
+                      listening: posPageListening,
+                      onVoiceSearch: voiceSearch,
+                      onToggleCombos: (v) => setState(() => posPageShowCombos = v),
                     ),
                   ),
                   SizedBox(
                     width: context.isLargeWidth ? 400 : 360,
-                    child: _CartPane(
+                    child: CartPane(
                       session: session,
                       cartAsync: cartAsync,
                       currency: currency,
@@ -281,22 +283,22 @@ class _PosPageState extends ConsumerState<PosPage> {
             : Column(
                 children: [
                   Expanded(
-                    child: _CatalogPane(
+                    child: CatalogPane(
                       session: session,
                       categoriesAsync: categoriesAsync,
                       productsAsync: productsAsync,
                       selectedCategoryId: selectedCategoryId,
                       selectedSubcategoryId: selectedSubcategoryId,
                       currency: currency,
-                      searchController: _searchController,
-                      showCombos: _showCombos,
-                      listening: _listening,
-                      onVoiceSearch: _voiceSearch,
-                      onToggleCombos: (v) => setState(() => _showCombos = v),
+                      searchController: posPageSearchController,
+                      showCombos: posPageShowCombos,
+                      listening: posPageListening,
+                      onVoiceSearch: voiceSearch,
+                      onToggleCombos: (v) => setState(() => posPageShowCombos = v),
                     ),
                   ),
                   if (isTable)
-                    _DineInFooter(
+                    DineInFooter(
                       summary: cartSummary,
                       currency: currency,
                       unprintedCount: unprintedCount,
@@ -311,13 +313,13 @@ class _PosPageState extends ConsumerState<PosPage> {
                           : () => context.push(session.paymentRoute),
                     )
                   else
-                    _CartFooter(
+                    CartFooter(
                       summary: cartSummary,
                       currency: currency,
                       paymentRoute: session.paymentRoute,
                       onTap: cartSummary.isEmpty
                           ? () {}
-                          : () => _openCartSheet(context, session),
+                          : () => openCartSheet(context, session),
                       onPay: cartSummary.isEmpty
                           ? null
                           : () => context.push(session.paymentRoute),
@@ -329,7 +331,7 @@ class _PosPageState extends ConsumerState<PosPage> {
       );
   }
 
-  Future<void> _confirmClearCart(BuildContext context, WidgetRef ref) async {
+  Future<void> confirmClearCart(BuildContext context, WidgetRef ref) async {
     final strings = AppStrings.of(ref);
     final confirm = await showAppConfirmBottomSheet(
       context: context,
@@ -346,21 +348,21 @@ class _PosPageState extends ConsumerState<PosPage> {
     }
   }
 
-  Future<void> _openCartSheet(BuildContext context, BillingSession session) async {
+  Future<void> openCartSheet(BuildContext context, BillingSession session) async {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
       builder: (context) => FractionallySizedBox(
         heightFactor: 0.82,
-        child: _CartSheetBody(session: session),
+        child: CartSheetBody(session: session),
       ),
     );
   }
 }
 
-class _CatalogPane extends ConsumerWidget {
-  const _CatalogPane({
+class CatalogPane extends ConsumerWidget {
+  const CatalogPane({super.key, 
     required this.session,
     required this.categoriesAsync,
     required this.productsAsync,
@@ -478,7 +480,7 @@ class _CatalogPane extends ConsumerWidget {
           child: Row(
             children: [
               Expanded(
-                child: _CatalogTab(
+                child: CatalogTab(
                   label: 'Products',
                   icon: Icons.shopping_bag_outlined,
                   selected: !showCombos,
@@ -487,7 +489,7 @@ class _CatalogPane extends ConsumerWidget {
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: _CatalogTab(
+                child: CatalogTab(
                   label: 'Combos',
                   icon: Icons.card_giftcard_outlined,
                   selected: showCombos,
@@ -514,7 +516,7 @@ class _CatalogPane extends ConsumerWidget {
                   children: [
                     Padding(
                       padding: const EdgeInsets.only(right: 8),
-                      child: _CategoryChip(
+                      child: CategoryChip(
                         label: 'All',
                         selected: selectedCategoryId == null,
                         onSelected: () {
@@ -530,7 +532,7 @@ class _CatalogPane extends ConsumerWidget {
                     ...categories.map(
                       (category) => Padding(
                         padding: const EdgeInsets.only(right: 8),
-                        child: _CategoryChip(
+                        child: CategoryChip(
                           label: category.categoryName,
                           selected:
                               selectedCategoryId == category.categoryId,
@@ -559,7 +561,7 @@ class _CatalogPane extends ConsumerWidget {
                   children: [
                     Padding(
                       padding: const EdgeInsets.only(right: 8),
-                      child: _CategoryChip(
+                      child: CategoryChip(
                         label: 'All',
                         selected: selectedSubcategoryId == null,
                         onSelected: () => ref
@@ -570,7 +572,7 @@ class _CatalogPane extends ConsumerWidget {
                     ...subs.map(
                       (sub) => Padding(
                         padding: const EdgeInsets.only(right: 8),
-                        child: _CategoryChip(
+                        child: CategoryChip(
                           label: sub.subcategoryName,
                           selected:
                               selectedSubcategoryId == sub.subcategoryId,
@@ -651,7 +653,7 @@ class _CatalogPane extends ConsumerWidget {
                             )
                             .toList();
                     if (filtered.isEmpty) {
-                      return _EmptyCatalog(
+                      return EmptyCatalog(
                         hasCategoryFilter: selectedCategoryId != null,
                       );
                     }
@@ -676,7 +678,7 @@ class _CatalogPane extends ConsumerWidget {
                             childAspectRatio: aspect,
                           ),
                           itemCount: filtered.length,
-                          itemBuilder: (context, index) => _ProductCard(
+                          itemBuilder: (context, index) => ProductCard(
                             product: filtered[index],
                             currency: currency,
                           ),
@@ -694,8 +696,8 @@ class _CatalogPane extends ConsumerWidget {
   }
 }
 
-class _CatalogTab extends StatelessWidget {
-  const _CatalogTab({
+class CatalogTab extends StatelessWidget {
+  const CatalogTab({super.key, 
     required this.label,
     required this.icon,
     required this.selected,
@@ -748,8 +750,8 @@ class _CatalogTab extends StatelessWidget {
   }
 }
 
-class _CategoryChip extends StatelessWidget {
-  const _CategoryChip({
+class CategoryChip extends StatelessWidget {
+  const CategoryChip({super.key, 
     required this.label,
     required this.selected,
     required this.onSelected,
@@ -789,8 +791,8 @@ class _CategoryChip extends StatelessWidget {
   }
 }
 
-class _EmptyCatalog extends ConsumerWidget {
-  const _EmptyCatalog({required this.hasCategoryFilter});
+class EmptyCatalog extends ConsumerWidget {
+  const EmptyCatalog({super.key, required this.hasCategoryFilter});
 
   final bool hasCategoryFilter;
 
@@ -807,8 +809,8 @@ class _EmptyCatalog extends ConsumerWidget {
   }
 }
 
-class _ProductCard extends ConsumerWidget {
-  const _ProductCard({required this.product, required this.currency});
+class ProductCard extends ConsumerWidget {
+  const ProductCard({super.key, required this.product, required this.currency});
 
   final Product product;
   final NumberFormat currency;
@@ -907,8 +909,8 @@ class _ProductCard extends ConsumerWidget {
   }
 }
 
-class _CartPane extends ConsumerWidget {
-  const _CartPane({
+class CartPane extends ConsumerWidget {
+  const CartPane({super.key, 
     required this.session,
     required this.cartAsync,
     required this.currency,
@@ -986,13 +988,13 @@ class _CartPane extends ConsumerWidget {
             child: cartAsync.when(
               data: (items) {
                 if (items.isEmpty) {
-                  return const _EmptyCart();
+                  return const EmptyCart();
                 }
                 return ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: items.length,
                   separatorBuilder: (_, _) => const SizedBox(height: 10),
-                  itemBuilder: (context, index) => _CartItemTile(
+                  itemBuilder: (context, index) => CartItemTile(
                     item: items[index],
                     currency: currency,
                   ),
@@ -1002,7 +1004,7 @@ class _CartPane extends ConsumerWidget {
               error: (e, _) => Center(child: Text('$e')),
             ),
           ),
-          _BillSummary(
+          BillSummary(
             summary: summary,
             currency: currency,
             paymentRoute: session.paymentRoute,
@@ -1015,14 +1017,14 @@ class _CartPane extends ConsumerWidget {
   }
 }
 
-class _CartSheetBody extends ConsumerWidget {
-  const _CartSheetBody({required this.session});
+class CartSheetBody extends ConsumerWidget {
+  const CartSheetBody({super.key, required this.session});
 
   final BillingSession session;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return _CartPane(
+    return CartPane(
       session: session,
       cartAsync: ref.watch(cartItemsProvider),
       currency: NumberFormat.currency(locale: 'en_IN', symbol: 'Rs. '),
@@ -1030,8 +1032,8 @@ class _CartSheetBody extends ConsumerWidget {
   }
 }
 
-class _EmptyCart extends ConsumerWidget {
-  const _EmptyCart();
+class EmptyCart extends ConsumerWidget {
+  const EmptyCart({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -1044,8 +1046,8 @@ class _EmptyCart extends ConsumerWidget {
   }
 }
 
-class _CartItemTile extends ConsumerWidget {
-  const _CartItemTile({required this.item, required this.currency});
+class CartItemTile extends ConsumerWidget {
+  const CartItemTile({super.key, required this.item, required this.currency});
 
   final CartItem item;
   final NumberFormat currency;
@@ -1084,7 +1086,7 @@ class _CartItemTile extends ConsumerWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _QtyButton(
+                QtyButton(
                   isAdd: false,
                   onTap: () => ref
                       .read(posCartControllerProvider.notifier)
@@ -1106,7 +1108,7 @@ class _CartItemTile extends ConsumerWidget {
                     ),
                   ),
                 ),
-                _QtyButton(
+                QtyButton(
                   isAdd: true,
                   onTap: () => ref
                       .read(posCartControllerProvider.notifier)
@@ -1146,8 +1148,8 @@ class _CartItemTile extends ConsumerWidget {
   }
 }
 
-class _QtyButton extends StatelessWidget {
-  const _QtyButton({
+class QtyButton extends StatelessWidget {
+  const QtyButton({super.key, 
     required this.onTap,
     required this.isAdd,
   });
@@ -1182,8 +1184,8 @@ class _QtyButton extends StatelessWidget {
   }
 }
 
-class _BillSummary extends ConsumerWidget {
-  const _BillSummary({
+class BillSummary extends ConsumerWidget {
+  const BillSummary({super.key, 
     required this.summary,
     required this.currency,
     required this.paymentRoute,
@@ -1209,11 +1211,11 @@ class _BillSummary extends ConsumerWidget {
       ),
       child: Column(
         children: [
-          _SummaryRow(label: strings.items, value: '${summary.totalQuantity}'),
-          _SummaryRow(label: strings.subtotal, value: currency.format(summary.subtotal)),
-          _SummaryRow(label: strings.gst, value: currency.format(summary.taxTotal)),
+          SummaryRow(label: strings.items, value: '${summary.totalQuantity}'),
+          SummaryRow(label: strings.subtotal, value: currency.format(summary.subtotal)),
+          SummaryRow(label: strings.gst, value: currency.format(summary.taxTotal)),
           const Divider(height: 18),
-          _SummaryRow(
+          SummaryRow(
             label: strings.grandTotal,
             value: currency.format(summary.grandTotal),
             emphasized: true,
@@ -1246,8 +1248,8 @@ class _BillSummary extends ConsumerWidget {
   }
 }
 
-class _SummaryRow extends StatelessWidget {
-  const _SummaryRow({
+class SummaryRow extends StatelessWidget {
+  const SummaryRow({super.key, 
     required this.label,
     required this.value,
     this.emphasized = false,
@@ -1280,8 +1282,8 @@ class _SummaryRow extends StatelessWidget {
   }
 }
 
-class _CartFooter extends StatelessWidget {
-  const _CartFooter({
+class CartFooter extends StatelessWidget {
+  const CartFooter({super.key, 
     required this.summary,
     required this.currency,
     required this.paymentRoute,
@@ -1427,8 +1429,8 @@ class _CartFooter extends StatelessWidget {
   }
 }
 
-class _DineInFooter extends StatelessWidget {
-  const _DineInFooter({
+class DineInFooter extends StatelessWidget {
+  const DineInFooter({super.key, 
     required this.summary,
     required this.currency,
     required this.unprintedCount,

@@ -23,16 +23,16 @@ class TableListReportPage extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<TableListReportPage> createState() =>
-      _TableListReportPageState();
+      TableListReportPageState();
 }
 
-class _TableListReportPageState extends ConsumerState<TableListReportPage> {
-  String? _tableNumber;
+class TableListReportPageState extends ConsumerState<TableListReportPage> {
+  String? tableListReportPageTableNumber;
 
   @override
   void initState() {
     super.initState();
-    _tableNumber = widget.initialTableNumber;
+    tableListReportPageTableNumber = widget.initialTableNumber;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref
           .read(reportInvoiceTypeFilterProvider.notifier)
@@ -43,7 +43,7 @@ class _TableListReportPageState extends ConsumerState<TableListReportPage> {
     });
   }
 
-  Future<void> _onFilterPressed() async {
+  Future<void> onFilterPressed() async {
     final period = ref.read(reportPeriodProvider);
     final selected = await showMenu<String>(
       context: context,
@@ -119,21 +119,21 @@ class _TableListReportPageState extends ConsumerState<TableListReportPage> {
 
     PosTable? selected;
     for (final t in tables) {
-      if (t.tableNumber == _tableNumber) {
+      if (t.tableNumber == tableListReportPageTableNumber) {
         selected = t;
         break;
       }
     }
 
     final tableInvoices = filtered.where((inv) {
-      if (_tableNumber == null || _tableNumber!.trim().isEmpty) return true;
-      return inv.noOfTable.trim() == _tableNumber!.trim();
+      if (tableListReportPageTableNumber == null || tableListReportPageTableNumber!.trim().isEmpty) return true;
+      return inv.noOfTable.trim() == tableListReportPageTableNumber!.trim();
     }).toList();
 
     final total = tableInvoices.fold<double>(0, (s, e) => s + e.totalAmount);
-    final title = _tableNumber == null || _tableNumber!.isEmpty
+    final title = tableListReportPageTableNumber == null || tableListReportPageTableNumber!.isEmpty
         ? 'Invoice List'
-        : 'Report of $_tableNumber';
+        : 'Report of $tableListReportPageTableNumber';
 
     return Scaffold(
       backgroundColor: reportPageBg,
@@ -147,13 +147,13 @@ class _TableListReportPageState extends ConsumerState<TableListReportPage> {
                 : () => shareInvoicesCsv(
                       invoices: tableInvoices,
                       title:
-                          'Table ${_tableNumber ?? 'all'} — ${period.label}',
+                          'Table ${tableListReportPageTableNumber ?? 'all'} — ${period.label}',
                     ),
             icon: const Icon(Icons.ios_share_rounded),
           ),
           IconButton(
             tooltip: 'Filter',
-            onPressed: _onFilterPressed,
+            onPressed: onFilterPressed,
             icon: const Icon(Icons.filter_list_rounded),
           ),
         ],
@@ -166,7 +166,7 @@ class _TableListReportPageState extends ConsumerState<TableListReportPage> {
               alignment: Alignment.centerLeft,
               child: ReportPeriodPill(
                 label: reportPeriodDisplayLabel(period),
-                onTap: _onFilterPressed,
+                onTap: onFilterPressed,
               ),
             ),
           ),
@@ -180,7 +180,7 @@ class _TableListReportPageState extends ConsumerState<TableListReportPage> {
                   : t.tableNumber,
               value: selected,
               enableSearch: true,
-              onChanged: (t) => setState(() => _tableNumber = t?.tableNumber),
+              onChanged: (t) => setState(() => tableListReportPageTableNumber = t?.tableNumber),
             ),
           ),
           Expanded(

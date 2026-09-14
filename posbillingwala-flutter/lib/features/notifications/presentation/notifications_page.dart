@@ -17,11 +17,11 @@ class NotificationsPage extends ConsumerStatefulWidget {
   const NotificationsPage({super.key});
 
   @override
-  ConsumerState<NotificationsPage> createState() => _NotificationsPageState();
+  ConsumerState<NotificationsPage> createState() => NotificationsPageState();
 }
 
-class _NotificationsPageState extends ConsumerState<NotificationsPage> {
-  List<Map<String, dynamic>> _messTokens = const [];
+class NotificationsPageState extends ConsumerState<NotificationsPage> {
+  List<Map<String, dynamic>> messTokens = const [];
 
   @override
   void initState() {
@@ -29,7 +29,7 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await ref.read(inAppNotificationsProvider.notifier).reload();
       final tokens = await FcmService.loadPendingMessTokens();
-      if (mounted) setState(() => _messTokens = tokens);
+      if (mounted) setState(() => messTokens = tokens);
     });
   }
 
@@ -60,11 +60,11 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
             AppBreakpoints.pagePaddingFor(context.widthClass),
           ),
           children: [
-          if (_messTokens.isNotEmpty) ...[
+          if (messTokens.isNotEmpty) ...[
             Text("Pending mess meal tokens",
                 style: AppTypography.sectionTitle()),
             const SizedBox(height: 8),
-            ..._messTokens.take(20).map(
+            ...messTokens.take(20).map(
                   (t) => AppCard(
                     accentColor: AppColors.orange,
                     color: AppColors.warning.withValues(alpha: 0.12),

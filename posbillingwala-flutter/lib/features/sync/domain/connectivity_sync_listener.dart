@@ -10,17 +10,17 @@ import 'package:pos_billingwala_v2/features/sync/domain/full_sync_controller.dar
 /// When the device comes back online, push pending offline rows (Android
 /// OfflineToNetworkReceiver style).
 class ConnectivitySyncListener {
-  ConnectivitySyncListener(this._ref);
+  ConnectivitySyncListener(this.connectivitySyncListenerRef);
 
-  final Ref _ref;
-  StreamSubscription<List<ConnectivityResult>>? _sub;
-  bool _wasOffline = false;
-  bool _running = false;
+  final Ref connectivitySyncListenerRef;
+  StreamSubscription<List<ConnectivityResult>>? sub;
+  bool wasOffline = false;
+  bool running = false;
 
   void start() {
     if (!AppPlatform.supportsOfflineSync) return;
-    _sub?.cancel();
-    _sub = Connectivity().onConnectivityChanged.listen((results) async {
+    sub?.cancel();
+    sub = Connectivity().onConnectivityChanged.listen((results) async {
       final online = results.any(
         (r) =>
             r == ConnectivityResult.mobile ||
@@ -30,12 +30,12 @@ class ConnectivitySyncListener {
             r == ConnectivityResult.other,
       );
       if (!online) {
-        _wasOffline = true;
+        wasOffline = true;
         return;
       }
-      if (!_wasOffline) return;
-      _wasOffline = false;
-      await _uploadIfLoggedIn();
+      if (!wasOffline) return;
+      wasOffline = false;
+      await uploadIfLoggedIn();
     });
 
     // Seed current state.
@@ -48,28 +48,28 @@ class ConnectivitySyncListener {
             r == ConnectivityResult.vpn ||
             r == ConnectivityResult.other,
       );
-      _wasOffline = !online;
+      wasOffline = !online;
     });
   }
 
-  Future<void> _uploadIfLoggedIn() async {
-    if (_running) return;
-    final userId = _ref.read(authControllerProvider).session?.userId;
+  Future<void> uploadIfLoggedIn() async {
+    if (running) return;
+    final userId = connectivitySyncListenerRef.read(authControllerProvider).session?.userId;
     if (userId == null || userId.isEmpty) return;
-    _running = true;
+    running = true;
     try {
       debugPrint('Connectivity restored — uploading pending sync…');
-      await _ref.read(fullSyncControllerProvider.notifier).uploadAll();
+      await connectivitySyncListenerRef.read(fullSyncControllerProvider.notifier).uploadAll();
     } catch (e) {
       debugPrint('Auto upload failed: $e');
     } finally {
-      _running = false;
+      running = false;
     }
   }
 
   void dispose() {
-    _sub?.cancel();
-    _sub = null;
+    sub?.cancel();
+    sub = null;
   }
 }
 

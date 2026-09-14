@@ -18,36 +18,36 @@ class InventoryPage extends ConsumerStatefulWidget {
   final int initialTab;
 
   @override
-  ConsumerState<InventoryPage> createState() => _InventoryPageState();
+  ConsumerState<InventoryPage> createState() => InventoryPageState();
 }
 
-class _InventoryPageState extends ConsumerState<InventoryPage>
+class InventoryPageState extends ConsumerState<InventoryPage>
     with SingleTickerProviderStateMixin {
-  late final TabController _tabs;
+  late final TabController inventoryPageTabs;
 
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(
+    inventoryPageTabs = TabController(
       length: 2,
       vsync: this,
       initialIndex: widget.initialTab.clamp(0, 1),
     );
-    _tabs.addListener(() {
+    inventoryPageTabs.addListener(() {
       if (mounted) setState(() {});
     });
   }
 
   @override
   void dispose() {
-    _tabs.dispose();
+    inventoryPageTabs.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final busy = ref.watch(inventoryControllerProvider).isLoading;
-    final onStock = _tabs.index == 0;
+    final onStock = inventoryPageTabs.index == 0;
 
     ref.listen(inventoryControllerProvider, (prev, next) {
       next.whenOrNull(
@@ -68,7 +68,7 @@ class _InventoryPageState extends ConsumerState<InventoryPage>
       appBar: AppBar(
         title: Text(AppStrings.of(ref).inventory),
         bottom: TabBar(
-          controller: _tabs,
+          controller: inventoryPageTabs,
           indicatorColor: Colors.white,
           indicatorWeight: 3,
           labelColor: Colors.white,
@@ -143,30 +143,30 @@ class _InventoryPageState extends ConsumerState<InventoryPage>
         ],
       ),
       body: TabBarView(
-        controller: _tabs,
+        controller: inventoryPageTabs,
         children: const [
-          _StockTab(),
-          _ExpensesTab(),
+          StockTab(),
+          ExpensesTab(),
         ],
       ),
     );
   }
 }
 
-class _StockTab extends ConsumerStatefulWidget {
-  const _StockTab();
+class StockTab extends ConsumerStatefulWidget {
+  const StockTab({super.key});
 
   @override
-  ConsumerState<_StockTab> createState() => _StockTabState();
+  ConsumerState<StockTab> createState() => StockTabState();
 }
 
-class _StockTabState extends ConsumerState<_StockTab> {
-  final _searchCtrl = TextEditingController();
-  String _query = '';
+class StockTabState extends ConsumerState<StockTab> {
+  final searchCtrl = TextEditingController();
+  String query = '';
 
   @override
   void dispose() {
-    _searchCtrl.dispose();
+    searchCtrl.dispose();
     super.dispose();
   }
 
@@ -181,7 +181,7 @@ class _StockTabState extends ConsumerState<_StockTab> {
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(child: Text('$e')),
       data: (rows) {
-        final q = _query.trim().toLowerCase();
+        final q = query.trim().toLowerCase();
         final filtered = q.isEmpty
             ? rows
             : rows.where((row) {
@@ -201,15 +201,15 @@ class _StockTabState extends ConsumerState<_StockTab> {
               28,
             ),
             children: [
-            _StockSummaryBar(
+            StockSummaryBar(
               productCount: balances.length,
               lowCount: lowCount,
               movementCount: rows.length,
             ),
             const SizedBox(height: 14),
             TextField(
-              controller: _searchCtrl,
-              onChanged: (v) => setState(() => _query = v),
+              controller: searchCtrl,
+              onChanged: (v) => setState(() => query = v),
               style: const TextStyle(
                 fontFamily: AppFonts.family,
                 fontSize: 14,
@@ -280,7 +280,7 @@ class _StockTabState extends ConsumerState<_StockTab> {
                     )
                   : Column(
                       children: [
-                        const _InventoryTableHeader(),
+                        const InventoryTableHeader(),
                         const Divider(height: 1, thickness: 1),
                         for (var i = 0; i < filtered.length; i++) ...[
                           if (i > 0)
@@ -289,7 +289,7 @@ class _StockTabState extends ConsumerState<_StockTab> {
                               thickness: 1,
                               color: AppColors.border.withValues(alpha: .7),
                             ),
-                          _InventoryTableRow(
+                          InventoryTableRow(
                             index: i + 1,
                             row: filtered[i],
                             qtyFormat: qtyFormat,
@@ -306,8 +306,8 @@ class _StockTabState extends ConsumerState<_StockTab> {
   }
 }
 
-class _StockSummaryBar extends StatelessWidget {
-  const _StockSummaryBar({
+class StockSummaryBar extends StatelessWidget {
+  const StockSummaryBar({super.key, 
     required this.productCount,
     required this.lowCount,
     required this.movementCount,
@@ -322,7 +322,7 @@ class _StockSummaryBar extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: _SummaryChip(
+          child: SummaryChip(
             label: 'Products',
             value: '$productCount',
             color: AppColors.primary,
@@ -330,7 +330,7 @@ class _StockSummaryBar extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         Expanded(
-          child: _SummaryChip(
+          child: SummaryChip(
             label: 'Low stock',
             value: '$lowCount',
             color: AppColors.orange,
@@ -338,7 +338,7 @@ class _StockSummaryBar extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         Expanded(
-          child: _SummaryChip(
+          child: SummaryChip(
             label: 'Entries',
             value: '$movementCount',
             color: AppColors.teal,
@@ -349,8 +349,8 @@ class _StockSummaryBar extends StatelessWidget {
   }
 }
 
-class _SummaryChip extends StatelessWidget {
-  const _SummaryChip({
+class SummaryChip extends StatelessWidget {
+  const SummaryChip({super.key, 
     required this.label,
     required this.value,
     required this.color,
@@ -397,8 +397,8 @@ class _SummaryChip extends StatelessWidget {
   }
 }
 
-class _InventoryTableHeader extends StatelessWidget {
-  const _InventoryTableHeader();
+class InventoryTableHeader extends StatelessWidget {
+  const InventoryTableHeader({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -409,24 +409,24 @@ class _InventoryTableHeader extends StatelessWidget {
         children: [
           SizedBox(
             width: 28,
-            child: _HeaderCell('Sr', align: TextAlign.center),
+            child: HeaderCell('Sr', align: TextAlign.center),
           ),
           SizedBox(width: 6),
           Expanded(
             flex: 5,
-            child: _HeaderCell('Product'),
+            child: HeaderCell('Product'),
           ),
           Expanded(
             flex: 2,
-            child: _HeaderCell('Total\nQty', align: TextAlign.center),
+            child: HeaderCell('Total\nQty', align: TextAlign.center),
           ),
           Expanded(
             flex: 2,
-            child: _HeaderCell('After\nSale', align: TextAlign.center),
+            child: HeaderCell('After\nSale', align: TextAlign.center),
           ),
           Expanded(
             flex: 2,
-            child: _HeaderCell('Sale\nQty', align: TextAlign.center),
+            child: HeaderCell('Sale\nQty', align: TextAlign.center),
           ),
         ],
       ),
@@ -434,8 +434,8 @@ class _InventoryTableHeader extends StatelessWidget {
   }
 }
 
-class _HeaderCell extends StatelessWidget {
-  const _HeaderCell(this.label, {this.align = TextAlign.left});
+class HeaderCell extends StatelessWidget {
+  const HeaderCell(this.label, {super.key, this.align = TextAlign.left});
 
   final String label;
   final TextAlign align;
@@ -456,8 +456,8 @@ class _HeaderCell extends StatelessWidget {
   }
 }
 
-class _InventoryTableRow extends StatelessWidget {
-  const _InventoryTableRow({
+class InventoryTableRow extends StatelessWidget {
+  const InventoryTableRow({super.key, 
     required this.index,
     required this.row,
     required this.qtyFormat,
@@ -510,13 +510,13 @@ class _InventoryTableRow extends StatelessWidget {
           ),
           Expanded(
             flex: 2,
-            child: _QtyCell(
+            child: QtyCell(
               qtyFormat.format(row.productInventoryQuantity),
             ),
           ),
           Expanded(
             flex: 2,
-            child: _QtyCell(
+            child: QtyCell(
               qtyFormat.format(row.afterSaleInventoryQuantity),
               emphasize: low,
               emphasizeColor: AppColors.orange,
@@ -524,7 +524,7 @@ class _InventoryTableRow extends StatelessWidget {
           ),
           Expanded(
             flex: 2,
-            child: _QtyCell(
+            child: QtyCell(
               qtyFormat.format(row.saleInventoryQuantity),
               emphasize: true,
               emphasizeColor: AppColors.primary,
@@ -536,9 +536,9 @@ class _InventoryTableRow extends StatelessWidget {
   }
 }
 
-class _QtyCell extends StatelessWidget {
-  const _QtyCell(
-    this.value, {
+class QtyCell extends StatelessWidget {
+  const QtyCell(
+    this.value, {super.key, 
     this.emphasize = false,
     this.emphasizeColor,
   });
@@ -564,8 +564,8 @@ class _QtyCell extends StatelessWidget {
   }
 }
 
-class _ExpensesTab extends ConsumerWidget {
-  const _ExpensesTab();
+class ExpensesTab extends ConsumerWidget {
+  const ExpensesTab({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

@@ -20,11 +20,11 @@ class TakeawayPage extends ConsumerStatefulWidget {
   const TakeawayPage({super.key});
 
   @override
-  ConsumerState<TakeawayPage> createState() => _TakeawayPageState();
+  ConsumerState<TakeawayPage> createState() => TakeawayPageState();
 }
 
-class _TakeawayPageState extends ConsumerState<TakeawayPage> {
-  Future<void> _startNewParcel({String? name, String? phone}) async {
+class TakeawayPageState extends ConsumerState<TakeawayPage> {
+  Future<void> startNewParcel({String? name, String? phone}) async {
     final nameCtrl = TextEditingController(text: name ?? '');
     final phoneCtrl = TextEditingController(text: phone ?? '');
     final ok = await showDialog<bool>(
@@ -82,14 +82,14 @@ class _TakeawayPageState extends ConsumerState<TakeawayPage> {
     context.push('/takeaway/billing');
   }
 
-  void _openParcelBilling(TakeawayParcel parcel) {
+  void openParcelBilling(TakeawayParcel parcel) {
     ref.read(billingSessionProvider.notifier).startTakeaway(
           parcelNumber: parcel.parcelNumber,
         );
     context.push('/takeaway/billing');
   }
 
-  void _openParcelCart(TakeawayParcel parcel) {
+  void openParcelCart(TakeawayParcel parcel) {
     ref.read(billingSessionProvider.notifier).startTakeaway(
           parcelNumber: parcel.parcelNumber,
         );
@@ -123,7 +123,7 @@ class _TakeawayPageState extends ConsumerState<TakeawayPage> {
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert),
             onSelected: (value) {
-              if (value == 'new') _startNewParcel();
+              if (value == 'new') startNewParcel();
             },
             itemBuilder: (context) => const [
               PopupMenuItem(value: 'new', child: Text('New Parcel')),
@@ -136,13 +136,13 @@ class _TakeawayPageState extends ConsumerState<TakeawayPage> {
               title: 'No data found',
               message: 'No open parcels. Tap New Parcel to start billing.',
               actionLabel: 'New Parcel',
-              onAction: () => _startNewParcel(),
+              onAction: () => startNewParcel(),
             )
           : ResponsiveScrollShell(
               dashboard: true,
               child: Column(
                 children: [
-                  const _ParcelTableHeader(),
+                  const ParcelTableHeader(),
                   const Divider(
                     height: 1,
                     thickness: 1,
@@ -163,12 +163,12 @@ class _TakeawayPageState extends ConsumerState<TakeawayPage> {
                       separatorBuilder: (_, _) => const Divider(height: 1),
                       itemBuilder: (context, index) {
                         final parcel = parcels[index];
-                        return _ParcelTableRow(
+                        return ParcelTableRow(
                           index: index + 1,
                           parcelNumber: parcel.parcelNumber,
                           billAmount: currency.format(parcel.billAmount),
-                          onAddProducts: () => _openParcelBilling(parcel),
-                          onOpenCart: () => _openParcelCart(parcel),
+                          onAddProducts: () => openParcelBilling(parcel),
+                          onOpenCart: () => openParcelCart(parcel),
                         );
                       },
                     ),
@@ -179,7 +179,7 @@ class _TakeawayPageState extends ConsumerState<TakeawayPage> {
       floatingActionButton: parcels.isEmpty
           ? null
           : FloatingActionButton.extended(
-              onPressed: () => _startNewParcel(),
+              onPressed: () => startNewParcel(),
               icon: const Icon(Icons.add),
               label: const Text('New Parcel'),
             ),
@@ -187,8 +187,8 @@ class _TakeawayPageState extends ConsumerState<TakeawayPage> {
   }
 }
 
-class _ParcelTableHeader extends StatelessWidget {
-  const _ParcelTableHeader();
+class ParcelTableHeader extends StatelessWidget {
+  const ParcelTableHeader({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -196,9 +196,9 @@ class _ParcelTableHeader extends StatelessWidget {
       padding: EdgeInsets.fromLTRB(16, 14, 8, 10),
       child: Row(
         children: [
-          SizedBox(width: 56, child: _HeaderCell('Sr No.')),
-          Expanded(child: _HeaderCell('Parcel No.')),
-          Expanded(child: _HeaderCell('Bill Amount')),
+          SizedBox(width: 56, child: HeaderCell('Sr No.')),
+          Expanded(child: HeaderCell('Parcel No.')),
+          Expanded(child: HeaderCell('Bill Amount')),
           SizedBox(width: 88),
         ],
       ),
@@ -206,8 +206,8 @@ class _ParcelTableHeader extends StatelessWidget {
   }
 }
 
-class _HeaderCell extends StatelessWidget {
-  const _HeaderCell(this.label);
+class HeaderCell extends StatelessWidget {
+  const HeaderCell(this.label, {super.key});
 
   final String label;
 
@@ -225,8 +225,8 @@ class _HeaderCell extends StatelessWidget {
   }
 }
 
-class _ParcelTableRow extends StatelessWidget {
-  const _ParcelTableRow({
+class ParcelTableRow extends StatelessWidget {
+  const ParcelTableRow({super.key, 
     required this.index,
     required this.parcelNumber,
     required this.billAmount,

@@ -15,7 +15,7 @@ import 'package:pos_billingwala_v2/l10n/app_strings.dart';
 class ReportsPage extends ConsumerWidget {
   const ReportsPage({super.key});
 
-  Future<void> _showPeriodMenu(BuildContext context, WidgetRef ref) async {
+  Future<void> showPeriodMenu(BuildContext context, WidgetRef ref) async {
     final period = ref.read(reportPeriodProvider);
     final selected = await showMenu<ReportPeriodKind>(
       context: context,
@@ -87,7 +87,7 @@ class ReportsPage extends ConsumerWidget {
           ),
           IconButton(
             tooltip: 'Filter period',
-            onPressed: () => _showPeriodMenu(context, ref),
+            onPressed: () => showPeriodMenu(context, ref),
             icon: const Icon(Icons.filter_list_rounded),
           ),
         ],
@@ -109,7 +109,7 @@ class ReportsPage extends ConsumerWidget {
                       period.label == 'Today'
                   ? 'All Records'
                   : reportPeriodDisplayLabel(period),
-              onTap: () => _showPeriodMenu(context, ref),
+              onTap: () => showPeriodMenu(context, ref),
             ),
           ),
           const SizedBox(height: 12),
@@ -180,7 +180,7 @@ class ReportsPage extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
-                _AmountBars(slices: slices.where((s) => s.value > 0).toList()),
+                AmountBars(slices: slices.where((s) => s.value > 0).toList()),
               ],
             ),
           ),
@@ -251,8 +251,8 @@ class ReportsPage extends ConsumerWidget {
   }
 }
 
-class _AmountBars extends ConsumerWidget {
-  const _AmountBars({required this.slices});
+class AmountBars extends ConsumerWidget {
+  const AmountBars({super.key, required this.slices});
 
   final List<ReportSlice> slices;
 

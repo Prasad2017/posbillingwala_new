@@ -22,12 +22,12 @@ class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
 
   @override
-  ConsumerState<LoginPage> createState() => _LoginPageState();
+  ConsumerState<LoginPage> createState() => LoginPageState();
 }
 
-class _LoginPageState extends ConsumerState<LoginPage> {
-  final _formKey = GlobalKey<FormState>();
-  final _licenceController = TextEditingController();
+class LoginPageState extends ConsumerState<LoginPage> {
+  final formKey = GlobalKey<FormState>();
+  final licenceController = TextEditingController();
 
   @override
   void initState() {
@@ -41,19 +41,19 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   @override
   void dispose() {
-    _licenceController.dispose();
+    licenceController.dispose();
     super.dispose();
   }
 
-  Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
+  Future<void> submit() async {
+    if (!formKey.currentState!.validate()) return;
     FocusScope.of(context).unfocus();
     await ref.read(authControllerProvider.notifier).loginWithLicence(
-          _licenceController.text.trim(),
+          licenceController.text.trim(),
         );
   }
 
-  Future<void> _showForgotLicenceSheet() async {
+  Future<void> showForgotLicenceSheet() async {
     final strings = AppStrings.of(ref);
     await showAppBottomSheet<void>(
       context: context,
@@ -129,7 +129,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               child: ResponsiveContent(
                 padding: EdgeInsets.zero,
                 child: Form(
-                  key: _formKey,
+                  key: formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -161,7 +161,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             ),
                             const SizedBox(height: 10),
                             AppTextField(
-                              controller: _licenceController,
+                              controller: licenceController,
                               hint: strings.licenceKeyHint,
                               prefixSvg: AppAssets.svgKey,
                               textCapitalization:
@@ -176,21 +176,21 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                   value == null || value.trim().isEmpty
                                       ? strings.licenceRequired
                                       : null,
-                              onSubmitted: (_) => _submit(),
+                              onSubmitted: (_) => submit(),
                             ),
                             Align(
                               alignment: Alignment.centerRight,
                               child: TextButton(
                                 onPressed: auth.busy
                                     ? null
-                                    : _showForgotLicenceSheet,
+                                    : showForgotLicenceSheet,
                                 child: Text(strings.forgotLicence),
                               ),
                             ),
                             AppButton(
                               label: auth.busy ? strings.pleaseWait : strings.login,
                               isLoading: auth.busy,
-                              onPressed: auth.busy ? null : _submit,
+                              onPressed: auth.busy ? null : submit,
                             ),
                             const SizedBox(height: 16),
                             TextButton(

@@ -14,50 +14,50 @@ class MessTokenScanPage extends ConsumerStatefulWidget {
   const MessTokenScanPage({super.key});
 
   @override
-  ConsumerState<MessTokenScanPage> createState() => _MessTokenScanPageState();
+  ConsumerState<MessTokenScanPage> createState() => MessTokenScanPageState();
 }
 
-class _MessTokenScanPageState extends ConsumerState<MessTokenScanPage> {
-  MobileScannerController? _controller;
-  bool _scanning = false;
-  bool _busy = false;
-  String? _last;
-  String? _resultText;
+class MessTokenScanPageState extends ConsumerState<MessTokenScanPage> {
+  MobileScannerController? messTokenScanPageController;
+  bool scanning = false;
+  bool busy = false;
+  String? last;
+  String? resultText;
 
   @override
   void dispose() {
-    _controller?.dispose();
+    messTokenScanPageController?.dispose();
     super.dispose();
   }
 
-  Future<void> _startScanner() async {
-    _controller?.dispose();
-    _controller = MobileScannerController(
+  Future<void> startScanner() async {
+    messTokenScanPageController?.dispose();
+    messTokenScanPageController = MobileScannerController(
       detectionSpeed: DetectionSpeed.normal,
       facing: CameraFacing.back,
     );
     setState(() {
-      _scanning = true;
-      _resultText = null;
-      _last = null;
+      scanning = true;
+      resultText = null;
+      last = null;
     });
   }
 
-  void _stopScanner() {
-    _controller?.dispose();
-    _controller = null;
-    setState(() => _scanning = false);
+  void stopScanner() {
+    messTokenScanPageController?.dispose();
+    messTokenScanPageController = null;
+    setState(() => scanning = false);
   }
 
-  Future<void> _onDetect(BarcodeCapture capture) async {
-    if (_busy) return;
+  Future<void> messTokenScanPageOnDetect(BarcodeCapture capture) async {
+    if (busy) return;
     final raw = capture.barcodes
         .map((b) => b.rawValue)
         .whereType<String>()
         .firstWhere((e) => e.trim().isNotEmpty, orElse: () => '');
-    if (raw.isEmpty || raw == _last) return;
-    _last = raw;
-    setState(() => _busy = true);
+    if (raw.isEmpty || raw == last) return;
+    last = raw;
+    setState(() => busy = true);
     try {
       final token =
           await ref.read(messControllerProvider.notifier).verifyRaw(raw);
@@ -66,32 +66,32 @@ class _MessTokenScanPageState extends ConsumerState<MessTokenScanPage> {
         throw StateError('Token not found');
       }
       final label = 'Verified: ${token.memberName ?? token.tokenCode}';
-      setState(() => _resultText = label);
+      setState(() => resultText = label);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(label)));
       Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
-      setState(() => _resultText = '$e');
+      setState(() => resultText = '$e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('$e')),
       );
       await Future<void>.delayed(const Duration(seconds: 2));
-      _last = null;
+      last = null;
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) setState(() => busy = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_scanning && _controller != null) {
+    if (scanning && messTokenScanPageController != null) {
       return Scaffold(
         backgroundColor: Colors.black,
         body: Stack(
           fit: StackFit.expand,
           children: [
-            MobileScanner(controller: _controller!, onDetect: _onDetect),
-            const _ScannerOverlay(),
+            MobileScanner(controller: messTokenScanPageController!, onDetect: messTokenScanPageOnDetect),
+            const ScannerOverlay(),
             SafeArea(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -104,7 +104,7 @@ class _MessTokenScanPageState extends ConsumerState<MessTokenScanPage> {
                           shape: const CircleBorder(),
                           child: IconButton(
                             tooltip: 'Close',
-                            onPressed: _stopScanner,
+                            onPressed: stopScanner,
                             icon: const AppSvg(
                               AppAssets.svgClose,
                               width: 20,
@@ -119,7 +119,7 @@ class _MessTokenScanPageState extends ConsumerState<MessTokenScanPage> {
                           shape: const CircleBorder(),
                           child: IconButton(
                             tooltip: 'Toggle torch',
-                            onPressed: () => _controller?.toggleTorch(),
+                            onPressed: () => messTokenScanPageController?.toggleTorch(),
                             icon: const Icon(
                               Icons.flashlight_on_rounded,
                               color: Colors.white,
@@ -136,7 +136,7 @@ class _MessTokenScanPageState extends ConsumerState<MessTokenScanPage> {
                         color: Colors.black.withValues(alpha: .65),
                         borderRadius: BorderRadius.circular(18),
                       ),
-                      child: _busy
+                      child: busy
                           ? const Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -181,12 +181,12 @@ class _MessTokenScanPageState extends ConsumerState<MessTokenScanPage> {
             const SizedBox(height: 24),
             AppButton(
               label: 'Start QR scanner',
-              onPressed: _startScanner,
+              onPressed: startScanner,
             ),
-            if (_resultText != null) ...[
+            if (resultText != null) ...[
               const SizedBox(height: 24),
               Text(
-                _resultText!,
+                resultText!,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 16,
@@ -201,19 +201,19 @@ class _MessTokenScanPageState extends ConsumerState<MessTokenScanPage> {
   }
 }
 
-class _ScannerOverlay extends StatelessWidget {
-  const _ScannerOverlay();
+class ScannerOverlay extends StatelessWidget {
+  const ScannerOverlay({super.key});
 
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
-      painter: _CornerFramePainter(),
+      painter: CornerFramePainter(),
       child: const SizedBox.expand(),
     );
   }
 }
 
-class _CornerFramePainter extends CustomPainter {
+class CornerFramePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final cut = Rect.fromCenter(

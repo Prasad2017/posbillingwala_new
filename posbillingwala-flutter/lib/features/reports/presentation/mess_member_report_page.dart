@@ -17,21 +17,21 @@ class MessMemberReportPage extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<MessMemberReportPage> createState() =>
-      _MessMemberReportPageState();
+      MessMemberReportPageState();
 }
 
-class _MessMemberReportPageState extends ConsumerState<MessMemberReportPage> {
-  final _search = TextEditingController();
-  String _query = '';
+class MessMemberReportPageState extends ConsumerState<MessMemberReportPage> {
+  final search = TextEditingController();
+  String query = '';
 
   @override
   void dispose() {
-    _search.dispose();
+    search.dispose();
     super.dispose();
   }
 
-  List<MessMember> _filtered(List<MessMember> members) {
-    final q = _query.trim().toLowerCase();
+  List<MessMember> messMemberReportPageFiltered(List<MessMember> members) {
+    final q = query.trim().toLowerCase();
     if (q.isEmpty) return members;
     return members.where((m) {
       final hay = [
@@ -70,7 +70,7 @@ class _MessMemberReportPageState extends ConsumerState<MessMemberReportPage> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('$e')),
         data: (members) {
-          final filtered = _filtered(members);
+          final filtered = messMemberReportPageFiltered(members);
           final types = <String>{};
           for (final m in members) {
             if (m.memberType.trim().isNotEmpty) types.add(m.memberType.trim());
@@ -88,8 +88,8 @@ class _MessMemberReportPageState extends ConsumerState<MessMemberReportPage> {
               ReportSurfaceCard(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 child: TextField(
-                  controller: _search,
-                  onChanged: (v) => setState(() => _query = v),
+                  controller: search,
+                  onChanged: (v) => setState(() => query = v),
                   decoration: InputDecoration(
                     hintText: 'Search member, mobile, type…',
                     border: InputBorder.none,
@@ -97,12 +97,12 @@ class _MessMemberReportPageState extends ConsumerState<MessMemberReportPage> {
                       Icons.search_rounded,
                       color: AppColors.navy.withValues(alpha: .45),
                     ),
-                    suffixIcon: _query.isEmpty
+                    suffixIcon: query.isEmpty
                         ? null
                         : IconButton(
                             onPressed: () {
-                              _search.clear();
-                              setState(() => _query = '');
+                              search.clear();
+                              setState(() => query = '');
                             },
                             icon: const Icon(Icons.close_rounded),
                           ),
@@ -150,7 +150,7 @@ class _MessMemberReportPageState extends ConsumerState<MessMemberReportPage> {
                             indent: 72,
                             endIndent: 16,
                           ),
-                        _MemberRow(
+                        MemberRow(
                           member: filtered[i],
                           color: i.isEven ? AppColors.teal : AppColors.purple,
                           onTap: () {
@@ -175,8 +175,8 @@ class _MessMemberReportPageState extends ConsumerState<MessMemberReportPage> {
   }
 }
 
-class _MemberRow extends StatelessWidget {
-  const _MemberRow({
+class MemberRow extends StatelessWidget {
+  const MemberRow({super.key, 
     required this.member,
     required this.color,
     required this.onTap,

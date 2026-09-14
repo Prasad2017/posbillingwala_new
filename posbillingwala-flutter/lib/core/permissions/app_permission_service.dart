@@ -64,20 +64,20 @@ class AppPermissionService {
     return result;
   }
 
-  bool _isAllowed(PermissionStatus status) =>
+  bool isAllowed(PermissionStatus status) =>
       status.isGranted || status.isLimited || status.isProvisional;
 
   Future<bool> ensurePrintPermissions() async {
     final permissions = await printPermissions();
     if (permissions.isEmpty) return true;
     final statuses = await permissions.request();
-    return statuses.values.every(_isAllowed);
+    return statuses.values.every(isAllowed);
   }
 
   Future<bool> ensureCameraPermission() async {
     if (kIsWeb) return true;
     final status = await Permission.camera.request();
-    return _isAllowed(status);
+    return isAllowed(status);
   }
 
   Future<Map<Permission, PermissionStatus>> requestAll() async {
@@ -90,7 +90,7 @@ class AppPermissionService {
     final permissions = await printPermissions();
     if (permissions.isEmpty) return true;
     for (final p in permissions) {
-      if (!_isAllowed(await p.status)) return false;
+      if (!isAllowed(await p.status)) return false;
     }
     return true;
   }
@@ -119,7 +119,7 @@ class AppPermissionService {
   }
 
   String statusLabel(PermissionStatus status) {
-    if (_isAllowed(status)) return 'Allowed';
+    if (isAllowed(status)) return 'Allowed';
     if (status.isPermanentlyDenied) return 'Blocked';
     if (status.isRestricted) return 'Restricted';
     if (status.isDenied) return 'Denied';

@@ -24,48 +24,45 @@ class BluetoothPrinterHub {
 
   static final BluetoothPrinterHub instance = BluetoothPrinterHub();
 
-  static const _connectWait = Duration(seconds: 12);
-  static const _reconnectDelay = Duration(milliseconds: 2500);
-  static const _reconnectMaxDelay = Duration(seconds: 30);
+  static const connectWait = Duration(seconds: 12);
+  static const reconnectDelay = Duration(milliseconds: 2500);
+  static const reconnectMaxDelay = Duration(seconds: 30);
 
   final AppPermissionService permissions;
 
-  String _billAddress = '';
-  String _kotAddress = '';
-  String _connectedAddress = '';
-  bool _connecting = false;
-  bool _persistentSession = false;
-  Duration _reconnectBackoff = _reconnectDelay;
-  Timer? _reconnectTimer;
+  String billAddress = '';
+  String kotAddress = '';
+  String connectedAddress = '';
+  bool connecting = false;
+  bool persistentSession = false;
+  Duration reconnectBackoff = reconnectDelay;
+  Timer? reconnectTimer;
 
-  String get billAddress => _billAddress;
-  String get kotAddress => _kotAddress;
-  String get connectedAddress => _connectedAddress;
-  bool get isConnecting => _connecting;
-  bool get isReady => _connectedAddress.isNotEmpty;
+  bool get isConnecting => connecting;
+  bool get isReady => connectedAddress.isNotEmpty;
 
   void updateSavedAddresses({
     required String billMac,
     required String kotMac,
   }) {
-    _billAddress = _normalize(billMac);
-    _kotAddress = _normalize(kotMac);
+    billAddress = normalizeMac(billMac);
+    kotAddress = normalizeMac(kotMac);
   }
 
   String addressFor(PrinterChannelKind kind) {
     if (kind == PrinterChannelKind.kot) {
-      final kot = _kotAddress;
+      final kot = kotAddress;
       if (kot.isNotEmpty) return kot;
-      return _billAddress;
+      return billAddress;
     }
-    return _billAddress;
+    return billAddress;
   }
 
   Future<bool> isBluetoothOn() async {
     if (kIsWeb || !(Platform.isAndroid || Platform.isIOS)) return false;
     try {
       return await PrintBluetoothThermal.bluetoothEnabled;
-    } catch (_) {
+    } catch (error) {
       return false;
     }
   }
@@ -87,17 +84,17 @@ class BluetoothPrinterHub {
     if (WoosimPrintChannel.isSupported) {
       final bill = await WoosimPrintChannel.instance.isReady(PrinterChannelKind.bill);
       final kot = await WoosimPrintChannel.instance.isReady(PrinterChannelKind.kot);
-      if (!bill && !kot) _connectedAddress = '';
+      if (!bill && !kot) connectedAddress = '';
       return bill || kot;
     }
     try {
       final linked = await PrintBluetoothThermal.connectionStatus;
       if (!linked) {
-        _connectedAddress = '';
+        connectedAddress = '';
       }
       return linked;
-    } catch (_) {
-      _connectedAddress = '';
+    } catch (error) {
+      connectedAddress = '';
       return false;
     }
   }
@@ -107,7 +104,7 @@ class BluetoothPrinterHub {
     final mac = addressFor(kind);
     if (mac.isEmpty) return;
     if (!await isBluetoothOn()) return;
-    await _connectInternal(mac, fromUser: false);
+    await connectInternal(mac, fromUser: false);
   }
 
   /// User-initiated connect (Settings Connect button).
@@ -116,13 +113,13 @@ class BluetoothPrinterHub {
     String? address,
     bool fromUser = true,
   }) async {
-    final mac = _normalize(address ?? addressFor(kind));
+    final mac = normalizeMac(address ?? addressFor(kind));
     if (mac.isEmpty) return false;
 
     if (kind == PrinterChannelKind.bill) {
-      _billAddress = mac;
+      billAddress = mac;
     } else {
-      _kotAddress = mac;
+      kotAddress = mac;
     }
 
     if (!await isBluetoothOn()) return false;
@@ -130,15 +127,15 @@ class BluetoothPrinterHub {
     final allowed = await permissions.ensurePrintPermissions();
     if (!allowed) return false;
 
-    return _connectInternal(mac, fromUser: fromUser);
+    return connectInternal(mac, fromUser: fromUser);
   }
 
   Future<void> disconnect(PrinterChannelKind kind) async {
-    _cancelReconnect();
+    cancelReconnect();
     if (kind == PrinterChannelKind.bill) {
-      _billAddress = '';
+      billAddress = '';
     } else {
-      _kotAddress = '';
+      kotAddress = '';
     }
 
     // Keep physical link if the other channel still needs the same MAC.
@@ -148,20 +145,22 @@ class BluetoothPrinterHub {
           : PrinterChannelKind.bill,
     );
     if (other.isNotEmpty &&
-        other.toLowerCase() == _connectedAddress.toLowerCase()) {
-      _persistentSession = true;
+        other.toLowerCase() == connectedAddress.toLowerCase()) {
+      persistentSession = true;
       return;
     }
 
-    _persistentSession = false;
+    persistentSession = false;
     try {
       if (WoosimPrintChannel.isSupported) {
         await WoosimPrintChannel.instance.disconnect(kind);
       } else {
         await PrintBluetoothThermal.disconnect;
       }
-    } catch (_) {}
-    _connectedAddress = '';
+    } catch (error) {
+      debugPrint('BT disconnect: $error');
+    }
+    connectedAddress = '';
   }
 
   /// Ensures the correct printer is connected before a print write (≤12s).
@@ -173,22 +172,22 @@ class BluetoothPrinterHub {
     if (!allowed) return false;
     if (!await isBluetoothOn()) return false;
 
-    if (await _isLinkedTo(mac)) return true;
+    if (await isLinkedTo(mac)) return true;
 
-    final started = await _connectInternal(mac, fromUser: false);
-    if (!started && !_connecting) return false;
+    final started = await connectInternal(mac, fromUser: false);
+    if (!started && !connecting) return false;
 
-    final deadline = DateTime.now().add(_connectWait);
+    final deadline = DateTime.now().add(connectWait);
     while (DateTime.now().isBefore(deadline)) {
-      if (await _isLinkedTo(mac)) return true;
-      if (!_connecting && !await _isLinkedTo(mac)) {
+      if (await isLinkedTo(mac)) return true;
+      if (!connecting && !await isLinkedTo(mac)) {
         // One more attempt before giving up.
-        final retry = await _connectInternal(mac, fromUser: false);
-        if (!retry) return await _isLinkedTo(mac);
+        final retry = await connectInternal(mac, fromUser: false);
+        if (!retry) return await isLinkedTo(mac);
       }
       await Future<void>.delayed(const Duration(milliseconds: 200));
     }
-    return _isLinkedTo(mac);
+    return isLinkedTo(mac);
   }
 
   Future<bool> write(PrinterChannelKind kind, List<int> bytes) async {
@@ -198,25 +197,25 @@ class BluetoothPrinterHub {
       if (mac.isEmpty) return false;
       final connected = await WoosimPrintChannel.instance.connect(kind, mac);
       if (!connected) {
-        _scheduleReconnect(kind);
+        scheduleReconnect(kind);
         return false;
       }
-      _connectedAddress = mac;
+      connectedAddress = mac;
       final ok = await WoosimPrintChannel.instance.write(kind, bytes);
       if (!ok) {
-        _connectedAddress = '';
-        _scheduleReconnect(kind);
+        connectedAddress = '';
+        scheduleReconnect(kind);
       } else {
-        _cancelReconnect();
-        _reconnectBackoff = _reconnectDelay;
-        _persistentSession = true;
+        cancelReconnect();
+        reconnectBackoff = reconnectDelay;
+        persistentSession = true;
       }
       return ok;
     }
     final ready = await ensureReady(kind);
     if (!ready) {
       debugPrint('BT write skipped: printer not ready (${addressFor(kind)})');
-      _scheduleReconnect(kind);
+      scheduleReconnect(kind);
       return false;
     }
     try {
@@ -226,144 +225,146 @@ class BluetoothPrinterHub {
       final ok = await PrintBluetoothThermal.writeBytes(payload);
       debugPrint(
         'BT write channel=${kind.name} bytes=${payload.length} ok=$ok '
-        'mac=$_connectedAddress',
+        'mac=$connectedAddress',
       );
       if (!ok) {
-        _connectedAddress = '';
-        _scheduleReconnect(kind);
+        connectedAddress = '';
+        scheduleReconnect(kind);
       } else {
-        _cancelReconnect();
-        _reconnectBackoff = _reconnectDelay;
-        _persistentSession = true;
+        cancelReconnect();
+        reconnectBackoff = reconnectDelay;
+        persistentSession = true;
       }
       return ok;
     } catch (e) {
       debugPrint('BT write failed: $e');
-      _connectedAddress = '';
-      _scheduleReconnect(kind);
+      connectedAddress = '';
+      scheduleReconnect(kind);
       return false;
     }
   }
 
-  Future<bool> _isLinkedTo(String mac) async {
+  Future<bool> isLinkedTo(String mac) async {
     final linked = await connectionStatus();
     if (!linked) return false;
-    if (_connectedAddress.isEmpty) {
+    if (connectedAddress.isEmpty) {
       // Plugin connected but we lost tracked MAC — treat as linked only if
       // caller reconnects explicitly. Force reconnect for safety.
       return false;
     }
-    return _connectedAddress.toLowerCase() == mac.toLowerCase();
+    return connectedAddress.toLowerCase() == mac.toLowerCase();
   }
 
-  Future<bool> _connectInternal(String address, {required bool fromUser}) async {
-    final mac = _normalize(address);
+  Future<bool> connectInternal(String address, {required bool fromUser}) async {
+    final mac = normalizeMac(address);
     if (mac.isEmpty) return false;
 
     // Already on the right printer — Android skips reconnect.
-    if (await _isLinkedTo(mac)) {
-      _persistentSession = true;
-      _cancelReconnect();
-      _reconnectBackoff = _reconnectDelay;
+    if (await isLinkedTo(mac)) {
+      persistentSession = true;
+      cancelReconnect();
+      reconnectBackoff = reconnectDelay;
       return true;
     }
 
-    if (_connecting) {
+    if (connecting) {
       // Wait briefly for in-flight connect to the same MAC.
       final deadline = DateTime.now().add(const Duration(seconds: 8));
-      while (_connecting && DateTime.now().isBefore(deadline)) {
+      while (connecting && DateTime.now().isBefore(deadline)) {
         await Future<void>.delayed(const Duration(milliseconds: 150));
       }
-      if (await _isLinkedTo(mac)) return true;
+      if (await isLinkedTo(mac)) return true;
     }
 
-    _connecting = true;
+    connecting = true;
     try {
       if (WoosimPrintChannel.isSupported) {
-        final kind = _kotAddress.isNotEmpty &&
-                mac.toLowerCase() == _kotAddress.toLowerCase()
+        final kind = kotAddress.isNotEmpty &&
+                mac.toLowerCase() == kotAddress.toLowerCase()
             ? PrinterChannelKind.kot
             : PrinterChannelKind.bill;
         final ok = await WoosimPrintChannel.instance.connect(kind, mac);
         if (ok) {
-          _connectedAddress = mac;
-          _persistentSession = true;
-          _cancelReconnect();
-          _reconnectBackoff = _reconnectDelay;
+          connectedAddress = mac;
+          persistentSession = true;
+          cancelReconnect();
+          reconnectBackoff = reconnectDelay;
           return true;
         }
-        _connectedAddress = '';
-        if (_persistentSession || fromUser) {
-          _scheduleReconnectForAddress(mac);
+        connectedAddress = '';
+        if (persistentSession || fromUser) {
+          scheduleReconnectForAddress(mac);
         }
         return false;
       }
       final currentlyLinked = await PrintBluetoothThermal.connectionStatus;
       if (currentlyLinked) {
-        final same = _connectedAddress.toLowerCase() == mac.toLowerCase();
+        final same = connectedAddress.toLowerCase() == mac.toLowerCase();
         if (!same) {
           try {
             await PrintBluetoothThermal.disconnect;
-          } catch (_) {}
-          _connectedAddress = '';
+          } catch (error) {
+            debugPrint('BT drop previous link: $error');
+          }
+          connectedAddress = '';
           await Future<void>.delayed(const Duration(milliseconds: 350));
         } else {
-          _connectedAddress = mac;
-          _persistentSession = true;
+          connectedAddress = mac;
+          persistentSession = true;
           return true;
         }
       }
 
       final ok = await PrintBluetoothThermal.connect(macPrinterAddress: mac);
       if (ok) {
-        _connectedAddress = mac;
-        _persistentSession = true;
-        _cancelReconnect();
-        _reconnectBackoff = _reconnectDelay;
+        connectedAddress = mac;
+        persistentSession = true;
+        cancelReconnect();
+        reconnectBackoff = reconnectDelay;
         return true;
       }
 
-      _connectedAddress = '';
-      if (_persistentSession || fromUser) {
-        _scheduleReconnectForAddress(mac);
+      connectedAddress = '';
+      if (persistentSession || fromUser) {
+        scheduleReconnectForAddress(mac);
       }
       return false;
     } catch (e) {
       debugPrint('BT connect failed: $e');
-      _connectedAddress = '';
-      _scheduleReconnectForAddress(mac);
+      connectedAddress = '';
+      scheduleReconnectForAddress(mac);
       return false;
     } finally {
-      _connecting = false;
+      connecting = false;
     }
   }
 
-  void _scheduleReconnect(PrinterChannelKind kind) {
+  void scheduleReconnect(PrinterChannelKind kind) {
     final mac = addressFor(kind);
     if (mac.isEmpty) return;
-    _scheduleReconnectForAddress(mac);
+    scheduleReconnectForAddress(mac);
   }
 
-  void _scheduleReconnectForAddress(String mac) {
+  void scheduleReconnectForAddress(String mac) {
     if (mac.isEmpty) return;
-    _reconnectTimer?.cancel();
-    final delay = _reconnectBackoff;
-    _reconnectBackoff = Duration(
-      milliseconds: (_reconnectBackoff.inMilliseconds * 2)
-          .clamp(0, _reconnectMaxDelay.inMilliseconds),
+    reconnectTimer?.cancel();
+    final delay = reconnectBackoff;
+    reconnectBackoff = Duration(
+      milliseconds: (reconnectBackoff.inMilliseconds * 2)
+          .clamp(0, reconnectMaxDelay.inMilliseconds),
     );
-    _reconnectTimer = Timer(delay, () async {
+    reconnectTimer = Timer(delay, () async {
       if (!await isBluetoothOn()) return;
-      if (await _isLinkedTo(mac)) return;
+      if (await isLinkedTo(mac)) return;
       debugPrint('BT auto-reconnect → $mac');
-      await _connectInternal(mac, fromUser: false);
+      await connectInternal(mac, fromUser: false);
     });
   }
 
-  void _cancelReconnect() {
-    _reconnectTimer?.cancel();
-    _reconnectTimer = null;
+  void cancelReconnect() {
+    reconnectTimer?.cancel();
+    reconnectTimer = null;
   }
 
-  String _normalize(String? value) => value?.trim() ?? '';
+  String normalizeMac(String? value) => value?.trim() ?? '';
 }

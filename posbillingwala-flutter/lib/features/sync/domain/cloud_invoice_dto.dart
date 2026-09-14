@@ -83,19 +83,19 @@ class CloudInvoiceDto {
       cashAmount: parseCloudMoney(json['cashAmount']),
       upiAmount: parseCloudMoney(json['upiAmount']),
       noOfTable: parseString(json['noOfTable']) ?? '',
-      customerName: _emptyToNull(parseString(json['customerName'])),
-      customerMobile: _emptyToNull(parseString(json['customerMobile'])),
-      customerEmail: _emptyToNull(parseString(json['customerEmail'])),
-      customerAddress: _emptyToNull(parseString(json['customerAddress'])),
+      customerName: emptyToNull(parseString(json['customerName'])),
+      customerMobile: emptyToNull(parseString(json['customerMobile'])),
+      customerEmail: emptyToNull(parseString(json['customerEmail'])),
+      customerAddress: emptyToNull(parseString(json['customerAddress'])),
       diningSessionId: parseInt(json['diningSessionId']),
       invoiceOrderStatus:
           parseString(json['invoiceOrderStatus'])?.trim().isNotEmpty == true
               ? parseString(json['invoiceOrderStatus'])!.trim()
               : 'completed',
-      organizationId: _emptyToNull(parseString(json['organizationId'])),
-      branchId: _emptyToNull(parseString(json['branchId'])),
-      deviceId: _emptyToNull(parseString(json['deviceId'])),
-      userId: _emptyToNull(parseString(json['userId'])),
+      organizationId: emptyToNull(parseString(json['organizationId'])),
+      branchId: emptyToNull(parseString(json['branchId'])),
+      deviceId: emptyToNull(parseString(json['deviceId'])),
+      userId: emptyToNull(parseString(json['userId'])),
     );
   }
 
@@ -162,7 +162,7 @@ class CloudInvoiceDto {
     );
   }
 
-  static String? _emptyToNull(String? value) {
+  static String? emptyToNull(String? value) {
     final trimmed = value?.trim();
     if (trimmed == null || trimmed.isEmpty) return null;
     return trimmed;

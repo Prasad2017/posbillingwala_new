@@ -97,7 +97,7 @@ final homeDashboardKpisProvider = Provider<HomeDashboardKpis>((ref) {
   );
 
   if (overview != null) {
-    final parsed = _parseTrend(overview.primarySalesTrend);
+    final parsed = parseTrend(overview.primarySalesTrend);
     return HomeDashboardKpis(
       // API already selects all-time vs month via `period`.
       primarySales: overview.primarySales,
@@ -119,7 +119,7 @@ final homeDashboardKpisProvider = Provider<HomeDashboardKpis>((ref) {
 
   final primarySummary =
       period == HomeSalesPeriod.month ? localMonth : localAll;
-  final growthPct = _growthPercent(
+  final growthPct = growthPercent(
     localToday.totalSales,
     yesterday.totalSales,
   );
@@ -128,7 +128,7 @@ final homeDashboardKpisProvider = Provider<HomeDashboardKpis>((ref) {
     todaySales: localToday.totalSales,
     primaryTitle:
         period == HomeSalesPeriod.month ? 'Monthly Sales' : 'Total Sales',
-    growthText: _growthLabel(growthPct),
+    growthText: growthLabel(growthPct),
     growthUp: (growthPct ?? 0) >= 0,
     subcategories: catalog.subcategories,
     products: catalog.products,
@@ -137,7 +137,7 @@ final homeDashboardKpisProvider = Provider<HomeDashboardKpis>((ref) {
   );
 });
 
-double? _growthPercent(double current, double previous) {
+double? growthPercent(double current, double previous) {
   if (previous <= 0) {
     if (current <= 0) return null;
     return 100;
@@ -145,14 +145,14 @@ double? _growthPercent(double current, double previous) {
   return ((current - previous) / previous) * 100;
 }
 
-String? _growthLabel(double? growth) {
+String? growthLabel(double? growth) {
   if (growth == null) return null;
   final abs = growth.abs().round();
   final arrow = growth >= 0 ? '↑' : '↓';
   return '$arrow $abs% vs Yesterday';
 }
 
-(String?, bool) _parseTrend(String raw) {
+(String?, bool) parseTrend(String raw) {
   final text = raw.trim();
   if (text.isEmpty || text == '0' || text == '0%') {
     return (null, true);

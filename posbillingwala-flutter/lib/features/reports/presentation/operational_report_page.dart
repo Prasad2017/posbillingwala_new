@@ -30,16 +30,16 @@ class OperationalReportPage extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<OperationalReportPage> createState() =>
-      _OperationalReportPageState();
+      OperationalReportPageState();
 }
 
-class _OperationalReportPageState extends ConsumerState<OperationalReportPage> {
-  late final bool _showTypeChips;
+class OperationalReportPageState extends ConsumerState<OperationalReportPage> {
+  late final bool showTypeChips;
 
   @override
   void initState() {
     super.initState();
-    _showTypeChips = widget.typeFilter == null ||
+    showTypeChips = widget.typeFilter == null ||
         widget.typeFilter == ReportInvoiceTypeFilter.all;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(reportInvoiceTypeFilterProvider.notifier).select(
@@ -51,7 +51,7 @@ class _OperationalReportPageState extends ConsumerState<OperationalReportPage> {
     });
   }
 
-  Future<void> _onFilterPressed() async {
+  Future<void> onFilterPressed() async {
     final period = ref.read(reportPeriodProvider);
     final selected = await showMenu<String>(
       context: context,
@@ -176,7 +176,7 @@ class _OperationalReportPageState extends ConsumerState<OperationalReportPage> {
           ),
           IconButton(
             tooltip: 'Filter',
-            onPressed: _onFilterPressed,
+            onPressed: onFilterPressed,
             icon: const Icon(Icons.filter_list_rounded),
           ),
         ],
@@ -196,10 +196,10 @@ class _OperationalReportPageState extends ConsumerState<OperationalReportPage> {
               label: reportPeriodDisplayLabel(period) == 'Today'
                   ? 'All Records'
                   : reportPeriodDisplayLabel(period),
-              onTap: _onFilterPressed,
+              onTap: onFilterPressed,
             ),
           ),
-          if (_showTypeChips) ...[
+          if (showTypeChips) ...[
             const SizedBox(height: 12),
             SizedBox(
               height: 40,
@@ -307,7 +307,7 @@ class _OperationalReportPageState extends ConsumerState<OperationalReportPage> {
                     ? 'Table Number'
                     : 'Billing Wise Details',
             slices: widget.typeFilter == ReportInvoiceTypeFilter.table
-                ? _tableSlices(filtered)
+                ? tableSlices(filtered)
                 : slices,
             centerValue: currency.format(summary.totalSales),
           ),
@@ -344,7 +344,7 @@ class _OperationalReportPageState extends ConsumerState<OperationalReportPage> {
                   ),
                 ),
                 if (widget.typeFilter == ReportInvoiceTypeFilter.table)
-                  _TableSummaryList(
+                  TableSummaryList(
                     invoices: filtered,
                     currency: currency,
                   )
@@ -402,7 +402,7 @@ class _OperationalReportPageState extends ConsumerState<OperationalReportPage> {
     );
   }
 
-  List<ReportSlice> _tableSlices(List<Invoice> filtered) {
+  List<ReportSlice> tableSlices(List<Invoice> filtered) {
     final map = <String, double>{};
     for (final inv in filtered) {
       final key =
@@ -432,8 +432,8 @@ class _OperationalReportPageState extends ConsumerState<OperationalReportPage> {
   }
 }
 
-class _TableSummaryList extends ConsumerWidget {
-  const _TableSummaryList({
+class TableSummaryList extends ConsumerWidget {
+  const TableSummaryList({super.key, 
     required this.invoices,
     required this.currency,
   });

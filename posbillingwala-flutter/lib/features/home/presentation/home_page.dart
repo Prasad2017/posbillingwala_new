@@ -33,28 +33,28 @@ class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
   @override
-  ConsumerState<HomePage> createState() => _HomePageState();
+  ConsumerState<HomePage> createState() => HomePageState();
 }
 
-class _HomePageState extends ConsumerState<HomePage> {
-  static bool _permissionsPrompted = false;
-  bool _hidePrimarySales = false;
-  bool _hideTodaySales = false;
-  String _printerChip = 'Checking…';
-  String? _closeTimeLabel;
-  String? _openTimeLabel;
-  DateTime _now = DateTime.now();
-  Timer? _clock;
+class HomePageState extends ConsumerState<HomePage> {
+  static bool permissionsPrompted = false;
+  bool homePageHidePrimarySales = false;
+  bool homePageHideTodaySales = false;
+  String printerChip = 'Checking…';
+  String? homePageCloseTimeLabel;
+  String? homePageOpenTimeLabel;
+  DateTime homePageNow = DateTime.now();
+  Timer? clock;
 
   @override
   void initState() {
     super.initState();
-    _clock = Timer.periodic(const Duration(seconds: 1), (_) {
+    clock = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
-      setState(() => _now = DateTime.now());
+      setState(() => homePageNow = DateTime.now());
     });
-    if (!_permissionsPrompted) {
-      _permissionsPrompted = true;
+    if (!permissionsPrompted) {
+      permissionsPrompted = true;
       Future.microtask(() async {
         // Pull catalog if local DB was emptied by a prior wrong-id sync.
         await ref
@@ -72,8 +72,8 @@ class _HomePageState extends ConsumerState<HomePage> {
           );
         await hub.autoConnect(PrinterChannelKind.bill);
         if (!mounted) return;
-        await _refreshPrinterChip();
-        await _refreshHoursLabels();
+        await refreshPrinterChip();
+        await refreshHoursLabels();
         if (!mounted) return;
         if (const bool.fromEnvironment('AUTO_TEST_PRINT')) {
           context.go('/settings/test-print?mode=invoice');
@@ -81,28 +81,28 @@ class _HomePageState extends ConsumerState<HomePage> {
       });
     } else {
       Future.microtask(() async {
-        await _refreshPrinterChip();
-        await _refreshHoursLabels();
+        await refreshPrinterChip();
+        await refreshHoursLabels();
       });
     }
   }
 
   @override
   void dispose() {
-    _clock?.cancel();
+    clock?.cancel();
     super.dispose();
   }
 
-  Future<void> _refreshHoursLabels() async {
+  Future<void> refreshHoursLabels() async {
     final hours = await BusinessHours.load();
     if (!mounted) return;
     setState(() {
-      _closeTimeLabel = _formatMinutesLabel(hours.close, prefix: 'Closes');
-      _openTimeLabel = _formatMinutesLabel(hours.open, prefix: 'Opens');
+      homePageCloseTimeLabel = formatMinutesLabel(hours.close, prefix: 'Closes');
+      homePageOpenTimeLabel = formatMinutesLabel(hours.open, prefix: 'Opens');
     });
   }
 
-  String? _formatMinutesLabel(int? minutes, {required String prefix}) {
+  String? formatMinutesLabel(int? minutes, {required String prefix}) {
     if (minutes == null) return null;
     final h = minutes ~/ 60;
     final m = minutes % 60;
@@ -110,7 +110,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     return '$prefix ${DateFormat('h:mm a').format(dt)}';
   }
 
-  Future<void> _refreshPrinterChip() async {
+  Future<void> refreshPrinterChip() async {
     final settings = ref.read(printerSettingsProvider);
     final hub = BluetoothPrinterHub.instance;
     final mac = settings.billBluetoothAddress.trim();
@@ -133,35 +133,31 @@ class _HomePageState extends ConsumerState<HomePage> {
       label = 'Offline';
     }
     if (!mounted) return;
-    setState(() => _printerChip = label);
+    setState(() => printerChip = label);
   }
 
-  String _greeting() {
-    final hour = _now.hour;
+  String homePageGreeting() {
+    final hour = homePageNow.hour;
     if (hour < 12) return 'Good Morning';
     if (hour < 17) return 'Good Afternoon';
     return 'Good Evening';
   }
 
-  Future<void> _openFastBilling() async {
+  Future<void> openFastBilling() async {
     ref.read(billingSessionProvider.notifier).usePos();
     await ref.read(posCartControllerProvider.notifier).clear();
     if (!mounted) return;
     context.push('/pos');
   }
 
-  void _moduleLocked(BuildContext context) {
+  void moduleLocked(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'This module is not enabled on your licence. Contact support.',
-        ),
-      ),
+      SnackBar(content: Text(AppStrings.of(ref).moduleLocked)),
     );
   }
 
   /// When no module flags are set (older sessions), treat as full licence.
-  bool _anyBilling(UserSession s) =>
+  bool anyBilling(UserSession s) =>
       !s.fastBilling && !s.dineIn && !s.takeAway && !s.mess;
 
   @override
@@ -173,9 +169,9 @@ class _HomePageState extends ConsumerState<HomePage> {
     final localCatalog = ref.watch(catalogCountsProvider);
     final currency = NumberFormat.currency(locale: 'en_IN', symbol: '₹ ');
     final nowLabel =
-        DateFormat('EEE, dd MMM yyyy | hh:mm:ss a').format(_now);
+        DateFormat('EEE, dd MMM yyyy | hh:mm:ss a').format(homePageNow);
 
-    final flagsMissing = session == null || _anyBilling(session);
+    final flagsMissing = session == null || anyBilling(session);
     final allowFast = flagsMissing || session.fastBilling;
     final allowDine = flagsMissing || session.dineIn;
     final allowTake = flagsMissing || session.takeAway;
@@ -186,9 +182,9 @@ class _HomePageState extends ConsumerState<HomePage> {
     final salesMonth = period == HomeSalesPeriod.month;
 
     final shopName = session?.shopName?.trim() ?? '';
-    final printerOnline = _printerChip == 'Connected' ||
-        _printerChip == 'USB ready' ||
-        _printerChip == 'Network';
+    final printerOnline = printerChip == 'Connected' ||
+        printerChip == 'USB ready' ||
+        printerChip == 'Network';
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F9FC),
@@ -209,24 +205,24 @@ class _HomePageState extends ConsumerState<HomePage> {
           ref.invalidate(allTimeInvoicesProvider);
           ref.invalidate(homeSalesOverviewProvider);
           ref.invalidate(shopOpenNowProvider);
-          await _refreshPrinterChip();
-          await _refreshHoursLabels();
+          await refreshPrinterChip();
+          await refreshHoursLabels();
         },
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             SliverToBoxAdapter(
-              child: _HomeHeader(
+              child: HomeHeader(
                 topInset: MediaQuery.paddingOf(context).top,
-                greeting: '${_greeting()} 👋',
+                greeting: '${homePageGreeting()} 👋',
                 shopName: shopName.isEmpty ? 'Your shop' : shopName,
                 shopImageUrl: ApiConstants.mediaUrl(session?.shopImage),
                 nowLabel: nowLabel,
                 unread: unread,
                 printerOnline: printerOnline,
-                printerLabel: _printerChip,
-                openTimeLabel: _openTimeLabel,
-                closeTimeLabel: _closeTimeLabel,
+                printerLabel: printerChip,
+                openTimeLabel: homePageOpenTimeLabel,
+                closeTimeLabel: homePageCloseTimeLabel,
                 onNotifications: () => context.push('/notifications'),
                 onSettings: () => context.push('/settings'),
                 onPrinter: () => context.push('/settings/devices'),
@@ -252,28 +248,28 @@ class _HomePageState extends ConsumerState<HomePage> {
                       AppBreakpoints.pagePaddingFor(context.widthClass),
                       28,
                     ),
-                    child: _HomeDashboardBody(
+                    child: HomeDashboardBody(
                       showTotalSales: showTotalSales,
                       showTodaySales: showTodaySales,
                       salesMonth: salesMonth,
                       onToggleSalesPeriod: () =>
                           ref.read(homeSalesPeriodProvider.notifier).toggle(),
                       primaryTitle: kpis.primaryTitle,
-                      primaryAmount: _hidePrimarySales
+                      primaryAmount: homePageHidePrimarySales
                           ? '••••••'
                           : currency.format(kpis.primarySales),
-                      todayAmount: _hideTodaySales
+                      todayAmount: homePageHideTodaySales
                           ? '••••••'
                           : currency.format(kpis.todaySales),
                       growthText: kpis.growthText,
                       growthUp: kpis.growthUp,
-                      hidePrimarySales: _hidePrimarySales,
-                      hideTodaySales: _hideTodaySales,
+                      hidePrimarySales: homePageHidePrimarySales,
+                      hideTodaySales: homePageHideTodaySales,
                       onToggleHidePrimary: () => setState(
-                        () => _hidePrimarySales = !_hidePrimarySales,
+                        () => homePageHidePrimarySales = !homePageHidePrimarySales,
                       ),
                       onToggleHideToday: () => setState(
-                        () => _hideTodaySales = !_hideTodaySales,
+                        () => homePageHideTodaySales = !homePageHideTodaySales,
                       ),
                       onOpenReports: () =>
                           pushReportsUnlocked(context, ref),
@@ -285,8 +281,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                       allowDine: allowDine,
                       allowTake: allowTake,
                       allowMess: allowMess,
-                      onModuleLocked: () => _moduleLocked(context),
-                      onFastBilling: _openFastBilling,
+                      onModuleLocked: () => moduleLocked(context),
+                      onFastBilling: openFastBilling,
                       onDineIn: () => context.push('/tables'),
                       onTakeAway: () => context.push('/takeaway'),
                       onMess: () => pushReportsUnlocked(
@@ -306,8 +302,8 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 }
 
-class _HomeDashboardBody extends ConsumerWidget {
-  const _HomeDashboardBody({
+class HomeDashboardBody extends ConsumerWidget {
+  const HomeDashboardBody({super.key, 
     required this.showTotalSales,
     required this.showTodaySales,
     required this.salesMonth,
@@ -371,7 +367,7 @@ class _HomeDashboardBody extends ConsumerWidget {
     final widthClass = context.widthClass;
     final billingCols = AppBreakpoints.moduleColumnsFor(widthClass);
     final billingTiles = <Widget>[
-      _BillingTile(
+      BillingTile(
         title: strings.fastBilling,
         subtitle: 'Quick billing for walk-in customers',
         icon: Icons.receipt_long_rounded,
@@ -384,7 +380,7 @@ class _HomeDashboardBody extends ConsumerWidget {
           onFastBilling();
         },
       ),
-      _BillingTile(
+      BillingTile(
         title: strings.dineIn,
         subtitle: 'Create bill for dine-in customers',
         icon: Icons.table_restaurant_rounded,
@@ -397,7 +393,7 @@ class _HomeDashboardBody extends ConsumerWidget {
           onDineIn();
         },
       ),
-      _BillingTile(
+      BillingTile(
         title: strings.takeAway,
         subtitle: 'Create bill for takeaway orders',
         icon: Icons.shopping_bag_rounded,
@@ -410,7 +406,7 @@ class _HomeDashboardBody extends ConsumerWidget {
           onTakeAway();
         },
       ),
-      _BillingTile(
+      BillingTile(
         title: strings.mess,
         subtitle: 'Manage mess billing easily',
         icon: Icons.restaurant_rounded,
@@ -481,7 +477,7 @@ class _HomeDashboardBody extends ConsumerWidget {
             children: [
               if (showTotalSales)
                 Expanded(
-                  child: _SalesCard(
+                  child: SalesCard(
                     title: primaryTitle,
                     amount: primaryAmount,
                     color: AppColors.green,
@@ -496,7 +492,7 @@ class _HomeDashboardBody extends ConsumerWidget {
               if (showTotalSales && showTodaySales) const SizedBox(width: 12),
               if (showTodaySales)
                 Expanded(
-                  child: _SalesCard(
+                  child: SalesCard(
                     title: strings.todaySales,
                     amount: todayAmount,
                     color: AppColors.primary,
@@ -524,7 +520,7 @@ class _HomeDashboardBody extends ConsumerWidget {
         Builder(
           builder: (context) {
             final tiles = [
-              _CatalogTile(
+              CatalogTile(
                 icon: Icons.category_rounded,
                 label: strings.categories,
                 value: '$categoriesCount',
@@ -532,7 +528,7 @@ class _HomeDashboardBody extends ConsumerWidget {
                 soft: const Color(0xFFE8F1FF),
                 onTap: () => context.push('/masters/categories'),
               ),
-              _CatalogTile(
+              CatalogTile(
                 icon: Icons.grid_view_rounded,
                 label: strings.subcategories,
                 value: '$subcategoriesCount',
@@ -540,7 +536,7 @@ class _HomeDashboardBody extends ConsumerWidget {
                 soft: const Color(0xFFF3EEFF),
                 onTap: () => context.push('/masters/subcategories'),
               ),
-              _CatalogTile(
+              CatalogTile(
                 icon: Icons.inventory_2_rounded,
                 label: strings.products,
                 value: '$productsCount',
@@ -548,7 +544,7 @@ class _HomeDashboardBody extends ConsumerWidget {
                 soft: const Color(0xFFE8F8F0),
                 onTap: () => context.push('/masters/products'),
               ),
-              _CatalogTile(
+              CatalogTile(
                 icon: Icons.layers_rounded,
                 label: strings.combos,
                 value: '$combosCount',
@@ -612,7 +608,7 @@ class _HomeDashboardBody extends ConsumerWidget {
           itemBuilder: (context, index) => billingTiles[index],
         ),
         const SizedBox(height: 20),
-        const _PromoBanner(),
+        const PromoBanner(),
       ],
     );
   }
@@ -623,8 +619,8 @@ class EscPosUsbHint {
       settings.billUsbIdentifier.trim().isNotEmpty;
 }
 
-class _HomeHeader extends ConsumerWidget {
-  const _HomeHeader({
+class HomeHeader extends ConsumerWidget {
+  const HomeHeader({super.key, 
     required this.topInset,
     required this.greeting,
     required this.shopName,
@@ -768,7 +764,7 @@ class _HomeHeader extends ConsumerWidget {
                   ],
                 ),
               ),
-              _HeaderIconButton(
+              HeaderIconButton(
                 onTap: onNotifications,
                 child: Badge(
                   isLabelVisible: unread > 0,
@@ -783,7 +779,7 @@ class _HomeHeader extends ConsumerWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              _HeaderIconButton(
+              HeaderIconButton(
                 onTap: onSettings,
                 child: const AppSvg(
                   AppAssets.svgSettings,
@@ -799,19 +795,19 @@ class _HomeHeader extends ConsumerWidget {
             children: [
               Flexible(
                 child: ref.watch(shopOpenNowProvider).when(
-                      data: (open) => _StatusPill(
+                      data: (open) => StatusPill(
                         online: open,
                         label: open
                             ? 'Shop Open${closeTimeLabel != null ? ' | $closeTimeLabel' : ''}'
                             : 'Shop Closed${openTimeLabel != null ? ' | $openTimeLabel' : ''}',
                         dark: true,
                       ),
-                      loading: () => const _StatusPill(
+                      loading: () => const StatusPill(
                         online: true,
                         label: 'Shop…',
                         dark: true,
                       ),
-                      error: (_, _) => const _StatusPill(
+                      error: (_, _) => const StatusPill(
                         online: true,
                         label: 'Shop Open',
                         dark: true,
@@ -823,7 +819,7 @@ class _HomeHeader extends ConsumerWidget {
                 child: InkWell(
                   onTap: onPrinter,
                   borderRadius: BorderRadius.circular(20),
-                  child: _StatusPill(
+                  child: StatusPill(
                     online: printerOnline,
                     label: 'Printer | $printerLabel',
                     solid: !printerOnline,
@@ -854,7 +850,7 @@ class _HomeHeader extends ConsumerWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              const _GrowthDecoBadge(),
+              const GrowthDecoBadge(),
             ],
           ),
         ],
@@ -863,8 +859,8 @@ class _HomeHeader extends ConsumerWidget {
   }
 }
 
-class _HeaderIconButton extends StatelessWidget {
-  const _HeaderIconButton({required this.onTap, required this.child});
+class HeaderIconButton extends StatelessWidget {
+  const HeaderIconButton({super.key, required this.onTap, required this.child});
 
   final VoidCallback onTap;
   final Widget child;
@@ -887,8 +883,8 @@ class _HeaderIconButton extends StatelessWidget {
   }
 }
 
-class _StatusPill extends StatelessWidget {
-  const _StatusPill({
+class StatusPill extends StatelessWidget {
+  const StatusPill({super.key, 
     required this.online,
     required this.label,
     this.dark = false,
@@ -952,8 +948,8 @@ class _StatusPill extends StatelessWidget {
   }
 }
 
-class _GrowthDecoBadge extends StatelessWidget {
-  const _GrowthDecoBadge();
+class GrowthDecoBadge extends StatelessWidget {
+  const GrowthDecoBadge({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -991,8 +987,8 @@ class _GrowthDecoBadge extends StatelessWidget {
   }
 }
 
-class _SalesCard extends StatelessWidget {
-  const _SalesCard({
+class SalesCard extends StatelessWidget {
+  const SalesCard({super.key, 
     required this.title,
     required this.amount,
     required this.color,
@@ -1051,7 +1047,7 @@ class _SalesCard extends StatelessWidget {
                   bottom: 0,
                   height: 36,
                   child: CustomPaint(
-                    painter: _WavePainter(color.withValues(alpha: 0.22)),
+                    painter: WavePainter(color.withValues(alpha: 0.22)),
                   ),
                 ),
                 Padding(
@@ -1144,8 +1140,8 @@ class _SalesCard extends StatelessWidget {
   }
 }
 
-class _WavePainter extends CustomPainter {
-  _WavePainter(this.color);
+class WavePainter extends CustomPainter {
+  WavePainter(this.color);
 
   final Color color;
 
@@ -1177,12 +1173,12 @@ class _WavePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _WavePainter oldDelegate) =>
+  bool shouldRepaint(covariant WavePainter oldDelegate) =>
       oldDelegate.color != color;
 }
 
-class _CatalogTile extends StatelessWidget {
-  const _CatalogTile({
+class CatalogTile extends StatelessWidget {
+  const CatalogTile({super.key, 
     required this.icon,
     required this.label,
     required this.value,
@@ -1264,8 +1260,8 @@ class _CatalogTile extends StatelessWidget {
   }
 }
 
-class _BillingTile extends StatelessWidget {
-  const _BillingTile({
+class BillingTile extends StatelessWidget {
+  const BillingTile({super.key, 
     required this.title,
     required this.subtitle,
     required this.icon,
@@ -1362,8 +1358,8 @@ class _BillingTile extends StatelessWidget {
   }
 }
 
-class _PromoBanner extends StatelessWidget {
-  const _PromoBanner();
+class PromoBanner extends StatelessWidget {
+  const PromoBanner({super.key});
 
   @override
   Widget build(BuildContext context) {

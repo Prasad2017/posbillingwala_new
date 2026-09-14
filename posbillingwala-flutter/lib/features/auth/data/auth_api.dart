@@ -6,15 +6,15 @@ import 'package:pos_billingwala_v2/features/auth/domain/login_response.dart';
 import 'package:pos_billingwala_v2/core/constants/api_constants.dart';
 
 class AuthApi {
-  AuthApi(this._client);
+  AuthApi(this.client);
 
-  final ApiClient _client;
+  final ApiClient client;
 
   Future<LoginResponse> loginCheck({
     required String licenceKey,
     required String deviceId,
   }) {
-    return _postForm(
+    return postForm(
       ApiEndpoints.login,
       {
         'app_licence_key': licenceKey,
@@ -33,7 +33,7 @@ class AuthApi {
     required String deviceId,
     required String deviceName,
   }) {
-    return _postForm(
+    return postForm(
       ApiEndpoints.updateAndroidKey,
       {
         'app_licence_key': licenceKey,
@@ -51,7 +51,7 @@ class AuthApi {
     required String deviceId,
     required String deviceName,
   }) {
-    return _postForm(
+    return postForm(
       ApiEndpoints.checkLicenceExpire,
       {
         'userId': userId,
@@ -71,7 +71,7 @@ class AuthApi {
     required String deviceId,
     required String deviceName,
   }) {
-    return _postForm(
+    return postForm(
       ApiEndpoints.loginMpin,
       {
         'mpin': mpin,
@@ -91,7 +91,7 @@ class AuthApi {
     required String deviceId,
     required String deviceName,
   }) {
-    return _postForm(
+    return postForm(
       ApiEndpoints.updateMpin,
       {
         'mpin': mpin,
@@ -106,7 +106,7 @@ class AuthApi {
   }
 
   Future<bool> serverLogout({required String licenceKey}) async {
-    final response = await _client.dio.get<dynamic>(
+    final response = await client.dio.get<dynamic>(
       ApiEndpoints.logOut,
       queryParameters: {'licenceKey': licenceKey},
       options: Options(responseType: ResponseType.json),
@@ -119,7 +119,7 @@ class AuthApi {
     required String licenceKey,
     required String deviceId,
   }) async {
-    final response = await _client.dio.post<dynamic>(
+    final response = await client.dio.post<dynamic>(
       ApiEndpoints.refreshAuthToken,
       data: {
         'app_licence_key': licenceKey,
@@ -141,7 +141,7 @@ class AuthApi {
     required String address,
     required String shopName,
   }) async {
-    final response = await _client.dio.post<Map<String, dynamic>>(
+    final response = await client.dio.post<Map<String, dynamic>>(
       ApiEndpoints.registerTrial,
       data: {
         'name': name,
@@ -154,11 +154,11 @@ class AuthApi {
     return TrialRegisterResponse.fromJson(response.data ?? const {});
   }
 
-  Future<LoginResponse> _postForm(
+  Future<LoginResponse> postForm(
     String path,
     Map<String, dynamic> fields,
   ) async {
-    final response = await _client.dio.post<dynamic>(
+    final response = await client.dio.post<dynamic>(
       path,
       data: fields,
       options: Options(contentType: Headers.formUrlEncodedContentType),

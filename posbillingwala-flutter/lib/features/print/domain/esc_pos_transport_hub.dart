@@ -8,23 +8,23 @@ import 'package:unified_esc_pos_printer/unified_esc_pos_printer.dart';
 /// (FTDI / CP210x / PL2303 / CH34x) — any ESC/POS thermal model.
 class EscPosTransportHub {
   EscPosTransportHub({PrinterManager? manager})
-      : _manager = manager ?? PrinterManager();
+      : escPosTransportHubManager = manager ?? PrinterManager();
 
   static final EscPosTransportHub instance = EscPosTransportHub();
 
-  final PrinterManager _manager;
-  PrinterDevice? _connected;
-  String _savedUsbId = '';
-  String _savedUsbName = '';
+  final PrinterManager escPosTransportHubManager;
+  PrinterDevice? connected;
+  String escPosTransportHubSavedUsbId = '';
+  String escPosTransportHubSavedUsbName = '';
 
-  PrinterDevice? get connectedDevice => _connected;
-  bool get isConnected => _manager.isConnected;
-  String get savedUsbId => _savedUsbId;
-  String get savedUsbName => _savedUsbName;
+  PrinterDevice? get connectedDevice => connected;
+  bool get isConnected => escPosTransportHubManager.isConnected;
+  String get savedUsbId => escPosTransportHubSavedUsbId;
+  String get savedUsbName => escPosTransportHubSavedUsbName;
 
   void updateSavedUsb({required String identifier, String name = ''}) {
-    _savedUsbId = identifier.trim();
-    _savedUsbName = name.trim();
+    escPosTransportHubSavedUsbId = identifier.trim();
+    escPosTransportHubSavedUsbName = name.trim();
   }
 
   Future<List<PrinterDevice>> scanUsb({
@@ -34,7 +34,7 @@ class EscPosTransportHub {
       return const [];
     }
     try {
-      return await _manager.scanPrinters(
+      return await escPosTransportHubManager.scanPrinters(
         timeout: timeout,
         types: const {PrinterConnectionType.usb},
       );
@@ -49,7 +49,7 @@ class EscPosTransportHub {
   }) async {
     if (kIsWeb) return const [];
     try {
-      return await _manager.scanPrinters(
+      return await escPosTransportHubManager.scanPrinters(
         timeout: timeout,
         types: const {PrinterConnectionType.ble},
       );
@@ -65,81 +65,81 @@ class EscPosTransportHub {
   }) async {
     final id = identifier.trim();
     if (id.isEmpty) return false;
-    _savedUsbId = id;
-    if (name.trim().isNotEmpty) _savedUsbName = name.trim();
+    escPosTransportHubSavedUsbId = id;
+    if (name.trim().isNotEmpty) escPosTransportHubSavedUsbName = name.trim();
 
     final platform = Platform.isAndroid ? UsbPlatform.android : UsbPlatform.desktop;
     final device = UsbPrinterDevice(
-      name: _savedUsbName.isEmpty ? 'USB Printer' : _savedUsbName,
+      name: escPosTransportHubSavedUsbName.isEmpty ? 'USB Printer' : escPosTransportHubSavedUsbName,
       identifier: id,
       usbPlatform: platform,
     );
-    return _connect(device);
+    return escPosTransportHubConnect(device);
   }
 
   Future<bool> connectDevice(PrinterDevice device) async {
     if (device is UsbPrinterDevice) {
-      _savedUsbId = device.identifier;
-      _savedUsbName = device.name;
+      escPosTransportHubSavedUsbId = device.identifier;
+      escPosTransportHubSavedUsbName = device.name;
     }
-    return _connect(device);
+    return escPosTransportHubConnect(device);
   }
 
   Future<bool> ensureUsbReady() async {
-    if (_savedUsbId.isEmpty) return false;
-    if (_manager.isConnected &&
-        _connected is UsbPrinterDevice &&
-        (_connected as UsbPrinterDevice).identifier == _savedUsbId) {
+    if (escPosTransportHubSavedUsbId.isEmpty) return false;
+    if (escPosTransportHubManager.isConnected &&
+        connected is UsbPrinterDevice &&
+        (connected as UsbPrinterDevice).identifier == escPosTransportHubSavedUsbId) {
       return true;
     }
-    return connectUsb(identifier: _savedUsbId, name: _savedUsbName);
+    return connectUsb(identifier: escPosTransportHubSavedUsbId, name: escPosTransportHubSavedUsbName);
   }
 
   Future<bool> writeBytes(List<int> bytes) async {
     if (bytes.isEmpty) return false;
     try {
-      if (!_manager.isConnected) {
+      if (!escPosTransportHubManager.isConnected) {
         final ok = await ensureUsbReady();
         if (!ok) return false;
       }
-      await _manager.printBytes(bytes);
+      await escPosTransportHubManager.printBytes(bytes);
       return true;
     } catch (e) {
       debugPrint('USB/BLE write failed: $e');
       try {
-        await _manager.disconnect();
+        await escPosTransportHubManager.disconnect();
       } catch (_) {}
-      _connected = null;
+      connected = null;
       return false;
     }
   }
 
   Future<void> disconnect() async {
     try {
-      await _manager.disconnect();
+      await escPosTransportHubManager.disconnect();
     } catch (_) {}
-    _connected = null;
+    connected = null;
   }
 
   Future<void> clearSavedUsb() async {
-    _savedUsbId = '';
-    _savedUsbName = '';
+    escPosTransportHubSavedUsbId = '';
+    escPosTransportHubSavedUsbName = '';
     await disconnect();
   }
 
-  Future<bool> _connect(PrinterDevice device) async {
+  Future<bool> escPosTransportHubConnect(PrinterDevice device) async {
     try {
-      await _manager.connect(device);
-      _connected = device;
+      await escPosTransportHubManager.connect(device);
+      connected = device;
       return true;
     } catch (e) {
       debugPrint('Printer connect failed: $e');
-      _connected = null;
+      connected = null;
       return false;
     }
   }
 
   void dispose() {
-    _manager.dispose();
+    escPosTransportHubManager.dispose();
   }
 }

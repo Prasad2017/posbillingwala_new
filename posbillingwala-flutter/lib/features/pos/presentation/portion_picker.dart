@@ -23,7 +23,7 @@ Future<void> addProductWithPortionPicker(
 
   if (portions.isEmpty) {
     if (isOpen) {
-      await _promptOpenPriceAndAdd(context, ref, product);
+      await promptOpenPriceAndAdd(context, ref, product);
     } else {
       await ref.read(posCartControllerProvider.notifier).addProduct(product);
     }
@@ -98,7 +98,7 @@ Future<void> addProductWithPortionPicker(
                             style: const TextStyle(fontSize: 12, height: 1.2),
                           ),
                           selected: selectedIndex == i,
-                          onSelected: (_) =>
+                          onSelected: (selected) =>
                               setLocal(() => selectedIndex = i),
                         ),
                       ),
@@ -116,7 +116,7 @@ Future<void> addProductWithPortionPicker(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                 child: Row(
                   children: [
-                    _QtyBox(
+                    QtyBox(
                       label: '−',
                       onTap: qty <= 1
                           ? null
@@ -139,7 +139,7 @@ Future<void> addProductWithPortionPicker(
                         ),
                       ),
                     ),
-                    _QtyBox(
+                    QtyBox(
                       label: '+',
                       onTap: () => setLocal(() => qty += 1),
                     ),
@@ -201,7 +201,7 @@ Future<void> addProductWithPortionPicker(
   if (confirmed != true || !context.mounted) return;
   final chosen = options[selectedIndex];
   if (isOpen) {
-    await _promptOpenPriceAndAdd(
+    await promptOpenPriceAndAdd(
       context,
       ref,
       product,
@@ -217,7 +217,7 @@ Future<void> addProductWithPortionPicker(
   }
 }
 
-Future<void> _promptOpenPriceAndAdd(
+Future<void> promptOpenPriceAndAdd(
   BuildContext context,
   WidgetRef ref,
   Product product, {
@@ -385,8 +385,8 @@ Future<void> editCartLineDialog(
       );
 }
 
-class _QtyBox extends StatelessWidget {
-  const _QtyBox({required this.label, this.onTap});
+class QtyBox extends StatelessWidget {
+  const QtyBox({super.key, required this.label, this.onTap});
 
   final String label;
   final VoidCallback? onTap;

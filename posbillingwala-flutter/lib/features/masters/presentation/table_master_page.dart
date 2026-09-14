@@ -17,14 +17,14 @@ class TableMasterPage extends ConsumerStatefulWidget {
   const TableMasterPage({super.key});
 
   @override
-  ConsumerState<TableMasterPage> createState() => _TableMasterPageState();
+  ConsumerState<TableMasterPage> createState() => TableMasterPageState();
 }
 
-class _TableMasterPageState extends ConsumerState<TableMasterPage> {
-  int _tab = 0;
-  bool _busy = false;
+class TableMasterPageState extends ConsumerState<TableMasterPage> {
+  int tab = 0;
+  bool busy = false;
 
-  Future<void> _addArea({DiningArea? existing}) async {
+  Future<void> addArea({DiningArea? existing}) async {
     final name = TextEditingController(text: existing?.areaName ?? '');
     final ok = await showAppBottomSheet<bool>(
       context: context,
@@ -58,7 +58,7 @@ class _TableMasterPageState extends ConsumerState<TableMasterPage> {
     name.dispose();
     if (ok != true || value.isEmpty) return;
 
-    setState(() => _busy = true);
+    setState(() => busy = true);
     try {
       final db = ref.read(appDatabaseProvider);
       if (existing != null) {
@@ -77,11 +77,11 @@ class _TableMasterPageState extends ConsumerState<TableMasterPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) setState(() => busy = false);
     }
   }
 
-  Future<void> _removeArea(DiningArea area) async {
+  Future<void> removeArea(DiningArea area) async {
     final ok = await showAppConfirmBottomSheet(
       context: context,
       title: 'Remove area',
@@ -93,10 +93,10 @@ class _TableMasterPageState extends ConsumerState<TableMasterPage> {
     await ref.read(appDatabaseProvider).deactivateDiningArea(area.areaId);
   }
 
-  Future<void> _addType({TableType? existing}) async {
+  Future<void> addType({TableType? existing}) async {
     final name = TextEditingController(text: existing?.tableTypeName ?? '');
     final seats = TextEditingController(
-      text: _seatsFromTypeName(existing?.tableTypeName ?? '') ?? '4',
+      text: seatsFromTypeName(existing?.tableTypeName ?? '') ?? '4',
     );
     final ok = await showAppBottomSheet<bool>(
       context: context,
@@ -137,7 +137,7 @@ class _TableMasterPageState extends ConsumerState<TableMasterPage> {
     seats.dispose();
     if (ok != true || typeName.isEmpty) return;
 
-    setState(() => _busy = true);
+    setState(() => busy = true);
     try {
       final db = ref.read(appDatabaseProvider);
       if (existing != null) {
@@ -156,11 +156,11 @@ class _TableMasterPageState extends ConsumerState<TableMasterPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) setState(() => busy = false);
     }
   }
 
-  Future<void> _removeType(TableType type) async {
+  Future<void> removeType(TableType type) async {
     final ok = await showAppConfirmBottomSheet(
       context: context,
       title: 'Remove type',
@@ -172,7 +172,7 @@ class _TableMasterPageState extends ConsumerState<TableMasterPage> {
     await ref.read(appDatabaseProvider).deactivateTableType(type.tableTypeId);
   }
 
-  Future<void> _addTable({PosTable? existing}) async {
+  Future<void> addTable({PosTable? existing}) async {
     final areas = ref.read(diningAreasProvider).maybeWhen(
           data: (v) => v,
           orElse: () => const <DiningArea>[],
@@ -206,7 +206,7 @@ class _TableMasterPageState extends ConsumerState<TableMasterPage> {
     TableType? type = types.isNotEmpty ? types.first : null;
     if (existing != null && types.isNotEmpty) {
       for (final t in types) {
-        final seatsHint = _seatsFromTypeName(t.tableTypeName);
+        final seatsHint = seatsFromTypeName(t.tableTypeName);
         if (seatsHint != null && seatsHint == '${existing.capacity}') {
           type = t;
           break;
@@ -248,7 +248,7 @@ class _TableMasterPageState extends ConsumerState<TableMasterPage> {
               items: types,
               hint: 'Table Type',
               itemLabel: (t) {
-                final s = _seatsFromTypeName(t.tableTypeName);
+                final s = seatsFromTypeName(t.tableTypeName);
                 return s == null
                     ? t.tableTypeName
                     : '${t.tableTypeName} ($s seats)';
@@ -256,7 +256,7 @@ class _TableMasterPageState extends ConsumerState<TableMasterPage> {
               onChanged: (v) {
                 setLocal(() {
                   type = v;
-                  final s = _seatsFromTypeName(v?.tableTypeName ?? '');
+                  final s = seatsFromTypeName(v?.tableTypeName ?? '');
                   if (s != null) seats.text = s;
                 });
               },
@@ -294,7 +294,7 @@ class _TableMasterPageState extends ConsumerState<TableMasterPage> {
     seats.dispose();
     if (ok != true || tableNo.isEmpty) return;
 
-    setState(() => _busy = true);
+    setState(() => busy = true);
     try {
       final userId = ref.read(authControllerProvider).session?.userId ?? '';
       final repo = ref.read(mastersRepositoryProvider);
@@ -326,11 +326,11 @@ class _TableMasterPageState extends ConsumerState<TableMasterPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) setState(() => busy = false);
     }
   }
 
-  Future<void> _removeTable(PosTable table) async {
+  Future<void> removeTable(PosTable table) async {
     final label = table.displayName.isEmpty
         ? 'Table ${table.tableNumber}'
         : table.displayName;
@@ -345,17 +345,17 @@ class _TableMasterPageState extends ConsumerState<TableMasterPage> {
     await ref.read(appDatabaseProvider).deactivatePosTable(table.tableId);
   }
 
-  String? _seatsFromTypeName(String name) {
+  String? seatsFromTypeName(String name) {
     final match = RegExp(r'(\d+)').firstMatch(name);
     return match?.group(1);
   }
 
-  String _typeSubtitle(TableType type) {
-    final seats = _seatsFromTypeName(type.tableTypeName);
+  String typeSubtitle(TableType type) {
+    final seats = seatsFromTypeName(type.tableTypeName);
     return seats == null ? 'Seating type' : '$seats seats default';
   }
 
-  String _tableSubtitle(PosTable table, Map<int, String> areas) {
+  String tableSubtitle(PosTable table, Map<int, String> areas) {
     final area = table.areaId == null ? null : areas[table.areaId!];
     final parts = <String>[
       if (area != null && area.isNotEmpty) area,
@@ -396,8 +396,8 @@ class _TableMasterPageState extends ConsumerState<TableMasterPage> {
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
             child: MasterPillTabs(
               labels: const ['Areas', 'Types', 'Tables'],
-              index: _tab,
-              onChanged: (i) => setState(() => _tab = i),
+              index: tab,
+              onChanged: (i) => setState(() => tab = i),
             ),
           ),
           Padding(
@@ -405,7 +405,7 @@ class _TableMasterPageState extends ConsumerState<TableMasterPage> {
             child: Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                hints[_tab],
+                hints[tab],
                 style: TextStyle(
                   fontFamily: AppFonts.family,
                   fontSize: 12.5,
@@ -416,7 +416,7 @@ class _TableMasterPageState extends ConsumerState<TableMasterPage> {
           ),
           Expanded(
             child: IndexedStack(
-              index: _tab,
+              index: tab,
               children: [
                 areas.when(
                   data: (rows) => rows.isEmpty
@@ -439,11 +439,11 @@ class _TableMasterPageState extends ConsumerState<TableMasterPage> {
                               const SizedBox(height: 10),
                           itemBuilder: (context, i) {
                             final a = rows[i];
-                            return _MasterEntityCard(
+                            return MasterEntityCard(
                               title: a.areaName,
                               subtitle: 'Floor area filter',
-                              onEdit: () => _addArea(existing: a),
-                              onRemove: () => _removeArea(a),
+                              onEdit: () => addArea(existing: a),
+                              onRemove: () => removeArea(a),
                             );
                           },
                         ),
@@ -473,11 +473,11 @@ class _TableMasterPageState extends ConsumerState<TableMasterPage> {
                               const SizedBox(height: 10),
                           itemBuilder: (context, i) {
                             final t = rows[i];
-                            return _MasterEntityCard(
+                            return MasterEntityCard(
                               title: t.tableTypeName,
-                              subtitle: _typeSubtitle(t),
-                              onEdit: () => _addType(existing: t),
-                              onRemove: () => _removeType(t),
+                              subtitle: typeSubtitle(t),
+                              onEdit: () => addType(existing: t),
+                              onRemove: () => removeType(t),
                             );
                           },
                         ),
@@ -508,11 +508,11 @@ class _TableMasterPageState extends ConsumerState<TableMasterPage> {
                           final title = t.displayName.isEmpty
                               ? 'T${t.tableNumber}'
                               : '${t.displayName} · No ${t.tableNumber}';
-                          return _MasterEntityCard(
+                          return MasterEntityCard(
                             title: title,
-                            subtitle: _tableSubtitle(t, areaNames),
-                            onEdit: () => _addTable(existing: t),
-                            onRemove: () => _removeTable(t),
+                            subtitle: tableSubtitle(t, areaNames),
+                            onEdit: () => addTable(existing: t),
+                            onRemove: () => removeTable(t),
                           );
                         },
                       ),
@@ -527,16 +527,16 @@ class _TableMasterPageState extends ConsumerState<TableMasterPage> {
               child: SizedBox(
                 height: 52,
                 child: FilledButton(
-                  onPressed: _busy
+                  onPressed: busy
                       ? null
                       : () {
-                          switch (_tab) {
+                          switch (tab) {
                             case 0:
-                              _addArea();
+                              addArea();
                             case 1:
-                              _addType();
+                              addType();
                             default:
-                              _addTable();
+                              addTable();
                           }
                         },
                   style: FilledButton.styleFrom(
@@ -546,7 +546,7 @@ class _TableMasterPageState extends ConsumerState<TableMasterPage> {
                     ),
                   ),
                   child: Text(
-                    addLabels[_tab],
+                    addLabels[tab],
                     style: const TextStyle(
                       fontFamily: AppFonts.family,
                       fontWeight: FontWeight.w700,
@@ -564,8 +564,8 @@ class _TableMasterPageState extends ConsumerState<TableMasterPage> {
   }
 }
 
-class _MasterEntityCard extends StatelessWidget {
-  const _MasterEntityCard({
+class MasterEntityCard extends StatelessWidget {
+  const MasterEntityCard({super.key, 
     required this.title,
     required this.subtitle,
     required this.onEdit,
