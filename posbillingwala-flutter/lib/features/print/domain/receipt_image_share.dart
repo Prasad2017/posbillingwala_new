@@ -1,0 +1,91 @@
+import 'dart:io';
+import 'dart:ui' as ui;
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
+
+/// Android `BluetoothPrint.convertLayout` analogue: screenshot the ticket widget.
+Future<void> shareTicketWidgetAsImage({
+  required GlobalKey boundaryKey,
+  required String label,
+}) async {
+  final boundary =
+      boundaryKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+  if (boundary == null) {
+    throw StateError('Bill preview is not ready to share');
+  }
+  final image = await boundary.toImage(pixelRatio: 2.5);
+  final data = await image.toByteData(format: ui.ImageByteFormat.png);
+  image.dispose();
+  if (data == null) {
+    throw StateError('Could not capture bill image');
+  }
+  await _sharePngBytes(data.buffer.asUint8List(), label);
+}
+
+Future<void> _sharePngBytes(Uint8List bytes, String label) async {
+  if (kIsWeb) {
+    await SharePlus.instance.share(ShareParams(text: label, subject: label));
+    return;
+  }
+  final dir = await getTemporaryDirectory();
+  final file = File(
+    '${dir.path}/${label.replaceAll(' ', '_').toLowerCase()}_${DateTime.now().millisecondsSinceEpoch}.png',
+  );
+  await file.writeAsBytes(bytes, flush: true);
+  await SharePlus.instance.share(
+    ShareParams(
+      files: [XFile(file.path, mimeType: 'image/png')],
+      subject: label,
+      text: label,
+    ),
+  );
+}
+
+/// Fallback: paint receipt text to a PNG (used when no widget is on screen).
+Future<void> shareReceiptAsImage({
+  required String text,
+  String label = 'Invoice',
+}) async {
+  if (kIsWeb) {
+    await SharePlus.instance.share(ShareParams(text: text, subject: label));
+    return;
+  }
+  final bytes = await renderReceiptPng(text);
+  await _sharePngBytes(bytes, label);
+}
+
+Future<Uint8List> renderReceiptPng(String text) async {
+  const width = 576.0;
+  const pad = 24.0;
+  final painter = TextPainter(
+    text: TextSpan(
+      text: text,
+      style: const TextStyle(
+        fontFamily: 'monospace',
+        fontSize: 22,
+        height: 1.28,
+        color: Color(0xFF111111),
+      ),
+    ),
+    textDirection: TextDirection.ltr,
+  )..layout(maxWidth: width - pad * 2);
+
+  final height = (painter.height + pad * 2).clamp(200.0, 8000.0);
+  final recorder = ui.PictureRecorder();
+  final canvas = Canvas(recorder);
+  canvas.drawRect(
+    Rect.fromLTWH(0, 0, width, height),
+    Paint()..color = const Color(0xFFFFFFFF),
+  );
+  painter.paint(canvas, const Offset(pad, pad));
+  final picture = recorder.endRecording();
+  final image = await picture.toImage(width.toInt(), height.toInt());
+  final data = await image.toByteData(format: ui.ImageByteFormat.png);
+  image.dispose();
+  picture.dispose();
+  return data!.buffer.asUint8List();
+}

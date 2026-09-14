@@ -1,0 +1,118 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
+import 'package:pos_billingwala_v2/core/widgtes/widgtes.dart';
+import 'package:pos_billingwala_v2/features/masters/domain/masters_providers.dart';
+import 'package:pos_billingwala_v2/features/masters/presentation/widgets/master_ui.dart';
+import 'package:pos_billingwala_v2/l10n/app_strings.dart';
+
+/// WithTable ComboMaster list.
+class CombosPage extends ConsumerStatefulWidget {
+  const CombosPage({super.key});
+
+  @override
+  ConsumerState<CombosPage> createState() => _CombosPageState();
+}
+
+class _CombosPageState extends ConsumerState<CombosPage> {
+  final _search = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final combosAsync = ref.watch(combosListProvider);
+    final currency = NumberFormat.currency(locale: 'en_IN', symbol: '₹');
+
+    return Scaffold(
+      backgroundColor: MasterUi.bg,
+      appBar: AppBar(title: Text(AppStrings.of(ref).comboMaster)),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => context.push('/masters/combos/form'),
+        icon: const Icon(Icons.add),
+        label: const Text('Add combo'),
+      ),
+      body: combosAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('$e')),
+        data: (combos) {
+          final filtered = combos.where((c) {
+            if (_query.trim().isEmpty) return true;
+            final q = _query.trim().toLowerCase();
+            return c.comboName.toLowerCase().contains(q) ||
+                (c.comboCode?.toLowerCase().contains(q) ?? false);
+          }).toList();
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                child: AppTextField(
+                  controller: _search,
+                  label: 'Search combo',
+                  onChanged: (v) => setState(() => _query = v),
+                ),
+              ),
+              Expanded(
+                child: filtered.isEmpty
+                    ? const Center(child: Text('No combos yet'))
+                    : ListView.separated(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 88),
+                        itemCount: filtered.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 8),
+                        itemBuilder: (context, index) {
+                          final combo = filtered[index];
+                          final price = combo.comboWithGstPrice > 0
+                              ? combo.comboWithGstPrice
+                              : combo.comboPrice;
+                          return AppCard(
+                            padding: EdgeInsets.zero,
+                            child: ListTile(
+                              title: Text(
+                                combo.comboName,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              subtitle: Text(combo.comboCode ?? ''),
+                              trailing: Text(
+                                currency.format(price),
+                                style: const TextStyle(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              onTap: () => context.push(
+                                '/masters/combos/form?id=${combo.comboId}',
+                              ),
+                              onLongPress: () async {
+                                final ok = await showAppConfirmBottomSheet(
+                                  context: context,
+                                  title: 'Delete combo',
+                                  message: 'Remove ${combo.comboName}?',
+                                  confirmLabel: 'Delete',
+                                  confirmVariant: AppButtonVariant.danger,
+                                );
+                                if (!ok) return;
+                                await ref
+                                    .read(mastersSyncControllerProvider.notifier)
+                                    .deleteCombo(combo.comboId);
+                              },
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}

@@ -4,11 +4,16 @@ require_once __DIR__ . '/db_prepared.php';
 require_once __DIR__ . '/licence_expiry.php';
 
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Headers: X-Requested-With');
-header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
+header('Access-Control-Allow-Headers: Authorization, Content-Type, Accept, X-Requested-With');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 header('Content-Type: application/json');
 
 $response = array('status' => '0', 'message' => 'Device bind failed');
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(204);
+    exit;
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     mysqli_query($con, 'set names utf8');

@@ -1,0 +1,197 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:pos_billingwala_v2/core/constants/app_assets.dart';
+import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
+import 'package:pos_billingwala_v2/core/constants/app_constants.dart';
+import 'package:pos_billingwala_v2/core/theme/app_typography.dart';
+import 'package:pos_billingwala_v2/core/widgets/brand_logo.dart';
+import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
+import 'package:pos_billingwala_v2/core/widgtes/widgtes.dart';
+import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
+
+/// Matches `docs/layout/activity_register.xml` — trial fields only.
+class RegisterPage extends ConsumerStatefulWidget {
+  const RegisterPage({super.key});
+
+  @override
+  ConsumerState<RegisterPage> createState() => _RegisterPageState();
+}
+
+class _RegisterPageState extends ConsumerState<RegisterPage> {
+  final _formKey = GlobalKey<FormState>();
+  final _name = TextEditingController();
+  final _contact = TextEditingController();
+  final _shop = TextEditingController();
+  final _address = TextEditingController();
+  bool _busy = false;
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _contact.dispose();
+    _shop.dispose();
+    _address.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _busy = true);
+    try {
+      final result = await ref.read(authRepositoryProvider).registerTrial(
+            name: _name.text,
+            contactNumber: _contact.text,
+            address: _address.text,
+            shopName: _shop.text,
+          );
+      if (!mounted) return;
+      if (!result.isSuccess ||
+          result.licenceKey == null ||
+          result.licenceKey!.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result.message ?? 'Registration failed')),
+        );
+        return;
+      }
+
+      final mpin = (result.mpin == null || result.mpin!.isEmpty)
+          ? '9082'
+          : result.mpin!;
+      final reportPin = (result.reportPin == null || result.reportPin!.isEmpty)
+          ? '9082'
+          : result.reportPin!;
+
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          title: const Text('Trial account created'),
+          content: Text(
+            'Licence key: ${result.licenceKey}\n'
+            'PB-PIN: $mpin\n'
+            'Report PIN: $reportPin\n\n'
+            'Save these details. We will log you in next.',
+          ),
+          actions: [
+            AppButton(
+              label: 'Continue',
+              expanded: false,
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ],
+        ),
+      );
+
+      final ok = await ref
+          .read(authControllerProvider.notifier)
+          .loginWithLicence(result.licenceKey!);
+      if (ok && mounted) {
+        context.go('/');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Registration failed.\n$e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.surface,
+      appBar: AppBar(
+        title: const Text(''),
+        leading: IconButton(
+          tooltip: 'Back to login',
+          onPressed: () => context.go('/login'),
+          icon: const Icon(Icons.arrow_back_rounded),
+        ),
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+          child: ResponsiveContent(
+            padding: EdgeInsets.zero,
+            child: Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  const BrandLogo(width: 180),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Create a free trial account for your shop.',
+                    textAlign: TextAlign.center,
+                    style: AppTypography.body(),
+                  ),
+                  const SizedBox(height: 20),
+                  AppTextField(
+                    controller: _name,
+                    label: 'Your name',
+                    prefixSvg: AppAssets.svgPerson,
+                    validator: (v) =>
+                        (v == null || v.trim().isEmpty) ? 'Required' : null,
+                  ),
+                  const SizedBox(height: 12),
+                  AppTextField(
+                    controller: _contact,
+                    label: 'Contact number',
+                    prefixSvg: AppAssets.svgPhone,
+                    keyboardType: TextInputType.phone,
+                    maxLength: 15,
+                    validator: (v) =>
+                        (v == null || v.trim().isEmpty) ? 'Required' : null,
+                  ),
+                  const SizedBox(height: 12),
+                  AppTextField(
+                  controller: _shop,
+                  label: 'Shop name',
+                  prefixSvg: AppAssets.svgBusiness,
+                  textCapitalization: TextCapitalization.words,
+                  validator: (v) =>
+                      (v == null || v.trim().isEmpty) ? 'Required' : null,
+                ),
+                const SizedBox(height: 12),
+                AppTextField(
+                  controller: _address,
+                  label: 'Address',
+                  prefixSvg: AppAssets.svgLocation,
+                  maxLines: 3,
+                  validator: (v) =>
+                      (v == null || v.trim().isEmpty) ? 'Required' : null,
+                ),
+                const SizedBox(height: 28),
+                AppButton(
+                  label: _busy ? 'Please wait…' : 'Create Free Account',
+                  isLoading: _busy,
+                  onPressed: _busy ? null : _submit,
+                ),
+                const SizedBox(height: 12),
+                TextButton(
+                  onPressed: _busy ? null : () => context.go('/login'),
+                  child: Text(
+                    'Already have an account? Login',
+                    style: AppTypography.cardTitle(color: AppColors.primary),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  AppConstants.supportPhone,
+                  style: AppTypography.body(color: AppColors.primary),
+                ),
+              ],
+            ),
+          ),
+        ),
+        ),
+      ),
+    );
+  }
+}

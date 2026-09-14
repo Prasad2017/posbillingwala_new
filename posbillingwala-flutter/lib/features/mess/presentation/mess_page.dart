@@ -1,0 +1,1098 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gal/gal.dart';
+import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import 'package:pos_billingwala_v2/core/constants/app_assets.dart';
+import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
+import 'package:pos_billingwala_v2/core/widgets/app_module_icon.dart';
+import 'package:pos_billingwala_v2/core/widgets/app_svg.dart';
+import 'package:pos_billingwala_v2/core/database/app_database.dart';
+import 'package:pos_billingwala_v2/core/database/database_provider.dart';
+import 'package:pos_billingwala_v2/features/mess/domain/mess_providers.dart';
+import 'package:pos_billingwala_v2/features/mess/presentation/mess_coupon_page.dart';
+import 'package:pos_billingwala_v2/features/mess/presentation/mess_token_qr_page.dart';
+import 'package:pos_billingwala_v2/features/print/domain/print_providers.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:share_plus/share_plus.dart';
+import 'dart:ui' as ui;
+import 'package:pos_billingwala_v2/core/widgtes/widgtes.dart';
+import 'package:pos_billingwala_v2/l10n/app_strings.dart';
+import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
+import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
+
+class MessPage extends ConsumerStatefulWidget {
+  const MessPage({super.key});
+
+  @override
+  ConsumerState<MessPage> createState() => _MessPageState();
+}
+
+class _MessPageState extends ConsumerState<MessPage>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabs;
+  final _verifyController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _tabs = TabController(length: 3, vsync: this);
+    _tabs.addListener(() {
+      if (mounted) setState(() {});
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(messCommonQrProvider.notifier).load();
+    });
+  }
+
+  @override
+  void dispose() {
+    _tabs.dispose();
+    _verifyController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final syncState = ref.watch(messControllerProvider);
+    final isSyncing = syncState.isLoading;
+
+    ref.listen(messControllerProvider, (prev, next) {
+      next.whenOrNull(
+        error: (error, _) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('$error')),
+          );
+        },
+      );
+    });
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(AppStrings.of(ref).mess),
+        actions: [
+          IconButton(
+            tooltip: 'Sync members',
+            onPressed: isSyncing
+                ? null
+                : () => ref.read(messControllerProvider.notifier).syncMembers(),
+            icon: isSyncing
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Icon(Icons.cloud_download_rounded),
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: _MessMenuCard(
+                        label: 'Member List',
+                        color: AppColors.primary,
+                        svgPath: AppAssets.svgPerson,
+                        onTap: () => _tabs.animateTo(0),
+                      ),
+                    ),
+                    Expanded(
+                      child: _MessMenuCard(
+                        label: 'QR Management',
+                        color: AppColors.purple,
+                        svgPath: AppAssets.svgQr,
+                        onTap: () => _tabs.animateTo(2),
+                      ),
+                    ),
+                  ],
+                ),
+                SwitchListTile.adaptive(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(AppStrings.of(ref).institutePays),
+                  subtitle: const Text(
+                    'When on, mess coupons bill the institute (server setting)',
+                  ),
+                  value: ref.watch(messInstitutePayProvider).asData?.value ??
+                      false,
+                  onChanged: (v) async {
+                    await ref
+                        .read(messControllerProvider.notifier)
+                        .setShopPayerMode(v);
+                    ref.invalidate(messInstitutePayProvider);
+                  },
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _MessMenuCard(
+                        label: "Today's Mess Tokens",
+                        color: AppColors.orange,
+                        svgPath: AppAssets.svgReceipt,
+                        onTap: () => context.push('/mess/meal-tokens-today'),
+                      ),
+                    ),
+                    Expanded(
+                      child: _MessMenuCard(
+                        label: 'Meal Sessions',
+                        color: AppColors.teal,
+                        svgPath: AppAssets.svgClock,
+                        onTap: () => context.push('/mess/meal-sessions'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Material(
+            color: Colors.white,
+            child: TabBar(
+              controller: _tabs,
+              labelColor: AppColors.primary,
+              unselectedLabelColor: AppColors.textSecondary,
+              tabs: const [
+                Tab(text: 'Members'),
+                Tab(text: 'Tokens'),
+                Tab(text: 'Common QR'),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+          Expanded(
+            child: TabBarView(
+              controller: _tabs,
+              children: [
+                _MembersTab(
+                  onEditMember: (m) => _editMember(context, m),
+                ),
+                _TokensTab(verifyController: _verifyController),
+                const _CommonQrTab(),
+              ],
+            ),
+          ),
+        ],
+      ),
+      floatingActionButton: _tabs.index == 0
+          ? FloatingActionButton.extended(
+              onPressed: () => _addMember(context),
+              icon: const Icon(Icons.person_add_alt_1_rounded),
+              label: Text(AppStrings.of(ref).addMember),
+            )
+          : null,
+    );
+  }
+
+  Future<void> _editMember(BuildContext context, MessMember member) async {
+    final result = await _showMemberFormDialog(
+      context,
+      title: 'Edit mess member',
+      initial: member,
+    );
+    if (result == null || !context.mounted) return;
+    await ref.read(messControllerProvider.notifier).updateLocalMember(
+          memberId: member.memberId,
+          name: result.name,
+          mobile: result.mobile,
+          altMobile: result.altMobile,
+          address: result.address,
+          registrationNo: result.registrationNo,
+          memberType: result.memberType,
+          rollNo: result.rollNo,
+          college: result.college,
+          studentYear: result.studentYear,
+          company: result.company,
+        );
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(AppStrings.of(ref).memberUpdated)),
+    );
+  }
+
+  Future<void> _addMember(BuildContext context) async {
+    final result = await _showMemberFormDialog(
+      context,
+      title: 'Add mess member',
+    );
+    if (result == null || !context.mounted) return;
+    if (result.name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppStrings.of(ref).nameRequired)),
+      );
+      return;
+    }
+
+    final memberId =
+        await ref.read(messControllerProvider.notifier).addLocalMember(
+              name: result.name,
+              mobile: result.mobile,
+              altMobile: result.altMobile,
+              address: result.address,
+              registrationNo: result.registrationNo,
+              memberType: result.memberType,
+              rollNo: result.rollNo,
+              college: result.college,
+              studentYear: result.studentYear,
+              company: result.company,
+            );
+    // Inventory AddMessMember also collects first payment amounts/days.
+    if (result.messAmount != null || result.messPaidAmount != null) {
+      final month = DateFormat('yyyy-MM').format(DateTime.now());
+      final network = 'pay_${DateTime.now().millisecondsSinceEpoch}';
+      await ref.read(appDatabaseProvider).upsertLocalMessPayment(
+            memberId: '$memberId',
+            memberName: result.name,
+            messAmount: result.messAmount ?? 0,
+            paidAmount: result.messPaidAmount ?? 0,
+            messTotalDays: result.messDays ?? '30',
+            paymentDate: month,
+            paymentNetworkStatus: network,
+          );
+    }
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(AppStrings.of(ref).memberSaved)),
+    );
+  }
+}
+
+
+class _MessMemberFormResult {
+  const _MessMemberFormResult({
+    required this.name,
+    this.mobile,
+    this.altMobile,
+    this.address,
+    this.registrationNo,
+    required this.memberType,
+    this.rollNo,
+    this.college,
+    this.studentYear,
+    this.company,
+    this.messAmount,
+    this.messPaidAmount,
+    this.messDays,
+  });
+
+  final String name;
+  final String? mobile;
+  final String? altMobile;
+  final String? address;
+  final String? registrationNo;
+  final String memberType;
+  final String? rollNo;
+  final String? college;
+  final String? studentYear;
+  final String? company;
+  final double? messAmount;
+  final double? messPaidAmount;
+  final String? messDays;
+}
+
+Future<_MessMemberFormResult?> _showMemberFormDialog(
+  BuildContext context, {
+  required String title,
+  MessMember? initial,
+}) async {
+  final isAdd = initial == null;
+  final nameCtrl = TextEditingController(text: initial?.memberName ?? '');
+  final mobileCtrl =
+      TextEditingController(text: initial?.memberMobileNumber ?? '');
+  final altCtrl =
+      TextEditingController(text: initial?.memberAltenetMobileNumber ?? '');
+  final addressCtrl = TextEditingController(text: initial?.memberAddress ?? '');
+  final regCtrl = TextEditingController(text: initial?.registrationNo ?? '');
+  final rollCtrl = TextEditingController(text: initial?.rollNo ?? '');
+  final collegeCtrl = TextEditingController(text: initial?.college ?? '');
+  final yearCtrl = TextEditingController(text: initial?.studentYear ?? '');
+  final companyCtrl = TextEditingController(text: initial?.company ?? '');
+  final messAmtCtrl = TextEditingController();
+  final paidAmtCtrl = TextEditingController();
+  const types = ['student', 'working', 'staff'];
+  var memberType = initial?.memberType.trim().isNotEmpty == true
+      ? initial!.memberType.trim().toLowerCase()
+      : 'student';
+  if (!types.contains(memberType)) {
+    memberType = 'student';
+  }
+  var messDays = '30';
+
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (context) => StatefulBuilder(
+      builder: (context, setLocal) {
+        final isStudent = memberType == 'student';
+        final isWorking = memberType == 'working' || memberType == 'staff';
+        return AlertDialog(
+          title: Text(title),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AppTextField(controller: nameCtrl, label: 'Member name*'),
+                const SizedBox(height: 12),
+                AppTextField(
+                  controller: mobileCtrl,
+                  label: 'Mobile',
+                  keyboardType: TextInputType.phone,
+                ),
+                const SizedBox(height: 12),
+                AppTextField(
+                  controller: altCtrl,
+                  label: 'Alternate mobile',
+                  keyboardType: TextInputType.phone,
+                ),
+                const SizedBox(height: 12),
+                AppTextField(
+                  controller: addressCtrl,
+                  label: 'Address',
+                  maxLines: 2,
+                ),
+                const SizedBox(height: 12),
+                AppDropdownFormField<String>(
+                  label: 'Member Type*',
+                  items: types,
+                  itemLabel: (t) => t[0].toUpperCase() + t.substring(1),
+                  value: memberType,
+                  onChanged: (v) => setLocal(() => memberType = v ?? 'student'),
+                ),
+                if (isStudent) ...[
+                  const SizedBox(height: 12),
+                  AppTextField(controller: rollCtrl, label: 'Roll no'),
+                  const SizedBox(height: 12),
+                  AppTextField(controller: collegeCtrl, label: 'College'),
+                  const SizedBox(height: 12),
+                  AppTextField(controller: yearCtrl, label: 'Student year'),
+                ],
+                if (isWorking) ...[
+                  const SizedBox(height: 12),
+                  AppTextField(controller: companyCtrl, label: 'Company'),
+                ],
+                if (isAdd) ...[
+                  const SizedBox(height: 12),
+                  StringDropdownField(
+                    label: 'Mess Days*',
+                    value: messDays,
+                    options: const ['15', '30', '45', '60'],
+                    onChanged: (v) => setLocal(() => messDays = v ?? '30'),
+                  ),
+                  const SizedBox(height: 12),
+                  AppTextField(
+                    controller: messAmtCtrl,
+                    label: 'Total amount',
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                  ),
+                  const SizedBox(height: 12),
+                  AppTextField(
+                    controller: paidAmtCtrl,
+                    label: 'Paid amount',
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          actions: [
+            AppButton(
+              label: title.startsWith('Add') ? 'Add Member' : 'Update Member',
+              onPressed: () => Navigator.pop(context, true),
+            ),
+          ],
+        );
+      },
+    ),
+  );
+
+  String? trimOrNull(TextEditingController c) {
+    final v = c.text.trim();
+    return v.isEmpty ? null : v;
+  }
+
+  final result = ok == true
+      ? _MessMemberFormResult(
+          name: nameCtrl.text.trim(),
+          mobile: trimOrNull(mobileCtrl),
+          altMobile: trimOrNull(altCtrl),
+          address: trimOrNull(addressCtrl),
+          registrationNo: trimOrNull(regCtrl),
+          memberType: memberType,
+          rollNo: trimOrNull(rollCtrl),
+          college: trimOrNull(collegeCtrl),
+          studentYear: trimOrNull(yearCtrl),
+          company: trimOrNull(companyCtrl),
+          messAmount: isAdd
+              ? double.tryParse(messAmtCtrl.text.trim()) ?? 0
+              : null,
+          messPaidAmount: isAdd
+              ? double.tryParse(paidAmtCtrl.text.trim()) ?? 0
+              : null,
+          messDays: isAdd ? messDays : null,
+        )
+      : null;
+
+  nameCtrl.dispose();
+  mobileCtrl.dispose();
+  altCtrl.dispose();
+  addressCtrl.dispose();
+  regCtrl.dispose();
+  rollCtrl.dispose();
+  collegeCtrl.dispose();
+  yearCtrl.dispose();
+  companyCtrl.dispose();
+  messAmtCtrl.dispose();
+  paidAmtCtrl.dispose();
+  return result;
+}
+
+class _MessMenuCard extends StatelessWidget {
+  const _MessMenuCard({
+    required this.label,
+    required this.color,
+    required this.svgPath,
+    required this.onTap,
+  });
+
+  final String label;
+  final Color color;
+  final String svgPath;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(4),
+      child: Material(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        elevation: 1,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: SizedBox(
+            height: 96,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                AppSvg(svgPath, width: 28, height: 28, color: color),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                      color: color,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MembersTab extends ConsumerStatefulWidget {
+  const _MembersTab({
+    required this.onEditMember,
+  });
+
+  final void Function(MessMember member) onEditMember;
+
+  @override
+  ConsumerState<_MembersTab> createState() => _MembersTabState();
+}
+
+class _MembersTabState extends ConsumerState<_MembersTab> {
+  final _search = TextEditingController();
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final membersAsync = ref.watch(messMembersProvider);
+    final query = _search.text.trim().toLowerCase();
+
+    return membersAsync.when(
+      data: (members) {
+        final filtered = query.isEmpty
+            ? members
+            : members.where((m) {
+                final hay = [
+                  m.memberName,
+                  m.memberMobileNumber ?? '',
+                  m.registrationNo ?? '',
+                  m.memberType,
+                ].join(' ').toLowerCase();
+                return hay.contains(query);
+              }).toList();
+
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              child: AppTextField(
+                controller: _search,
+                label: 'Search member',
+                onChanged: (_) => setState(() {}),
+              ),
+            ),
+            Expanded(
+              child: filtered.isEmpty
+                  ? Center(
+                      child: Text(
+                        members.isEmpty
+                            ? 'No mess members yet'
+                            : 'No members match search',
+                      ),
+                    )
+                  : ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 88),
+                      itemCount: filtered.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: 8),
+                      itemBuilder: (context, index) {
+                        final member = filtered[index];
+                        return AppCard(
+                          padding: EdgeInsets.zero,
+                          child: ListTile(
+                            leading: AppModuleIcon(
+                              icon: Icons.person_rounded,
+                              color: member.memberType
+                                      .toLowerCase()
+                                      .contains('staff')
+                                  ? AppColors.purple
+                                  : AppColors.teal,
+                              size: 48,
+                            ),
+                            title: Text(
+                              member.memberName,
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w700),
+                            ),
+                            subtitle: Text(
+                              [
+                                if (member.registrationNo?.isNotEmpty == true)
+                                  member.registrationNo!,
+                                if (member.memberMobileNumber?.isNotEmpty ==
+                                    true)
+                                  member.memberMobileNumber!,
+                                member.memberType,
+                              ].join(' • '),
+                            ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  tooltip: 'Payments',
+                                  onPressed: () => context.push(
+                                    '/mess/payments',
+                                    extra: member,
+                                  ),
+                                  icon: const Icon(Icons.payments_outlined),
+                                ),
+                                IconButton(
+                                  tooltip: 'Edit',
+                                  onPressed: () =>
+                                      widget.onEditMember(member),
+                                  icon: const Icon(Icons.edit_outlined),
+                                ),
+                                IconButton(
+                                  tooltip: 'Paper coupon',
+                                  onPressed: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute<void>(
+                                        builder: (_) =>
+                                            MessCouponPage(member: member),
+                                      ),
+                                    );
+                                  },
+                                  icon: const Icon(
+                                    Icons.confirmation_number_outlined,
+                                  ),
+                                ),
+                                IconButton(
+                                  tooltip: 'Issue token',
+                                  onPressed: () =>
+                                      _issueToken(context, ref, member),
+                                  icon: const Icon(Icons.qr_code_2_rounded),
+                                ),
+                              ],
+                            ),
+                            onLongPress: () => widget.onEditMember(member),
+                            onTap: () => _issueToken(context, ref, member),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('$e')),
+    );
+  }
+
+  Future<void> _issueToken(
+    BuildContext context,
+    WidgetRef ref,
+    MessMember member,
+  ) async {
+    try {
+      final result = await ref
+          .read(messControllerProvider.notifier)
+          .issueMemberToken(member);
+      if (!context.mounted) return;
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => MessTokenQrPage(
+            title: 'Member token',
+            subtitle: member.memberName,
+            payload: result.payload,
+            tokenCode: result.token.tokenCode,
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$e')),
+      );
+    }
+  }
+}
+
+class _TokensTab extends ConsumerWidget {
+  const _TokensTab({required this.verifyController});
+
+  final TextEditingController verifyController;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tokensAsync = ref.watch(todayMessTokensProvider);
+    final time = DateFormat('HH:mm');
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          child: Row(
+            children: [
+              Expanded(
+                child: AppTextField(
+                      controller: verifyController,
+                      label: 'Scan / paste QR or token code',
+                    ),
+              ),
+              const SizedBox(width: 8),
+              AppButton(
+            label: 'Verify',
+            onPressed: () async {
+                  final token = await ref
+                      .read(messControllerProvider.notifier)
+                      .verifyRaw(verifyController.text);
+                  if (!context.mounted) return;
+                  if (token == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(AppStrings.of(ref).tokenNotFound)),
+                    );
+                    return;
+                  }
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Verified: ${token.memberName ?? token.tokenCode}',
+                      ),
+                    ),
+                  );
+                  verifyController.clear();
+                },
+          ),
+              const SizedBox(width: 8),
+              IconButton.filledTonal(
+                tooltip: 'Camera scan',
+                onPressed: () => context.push('/mess/scan'),
+                icon: const Icon(Icons.qr_code_scanner_rounded),
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: AppButton(
+              label: 'Issue walk-in token',
+              icon: Icons.add_rounded,
+              variant: AppButtonVariant.outlined,
+              expanded: false,
+              onPressed: () async {
+                final nameCtrl = TextEditingController();
+                final mobileCtrl = TextEditingController();
+                final amountCtrl = TextEditingController(text: '0');
+                var messType = 'Lunch';
+                final ok = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => StatefulBuilder(
+                    builder: (context, setLocal) => AlertDialog(
+                      title: Text(AppStrings.of(ref).walkInToken),
+                      content: SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const Text(
+                              'Issue a one-time QR token for walk-in customer',
+                              style: TextStyle(fontSize: 14),
+                            ),
+                            const SizedBox(height: 16),
+                            AppTextField(
+                              controller: nameCtrl,
+                              label: 'Customer name *',
+                            ),
+                            const SizedBox(height: 12),
+                            AppTextField(
+                              controller: mobileCtrl,
+                              label: 'Mobile (optional)',
+                              keyboardType: TextInputType.phone,
+                            ),
+                            const SizedBox(height: 12),
+                            AppTextField(
+                              controller: amountCtrl,
+                              label: 'Amount collected (optional)',
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                decimal: true,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            StringDropdownField(
+                              label: 'Meal',
+                              value: messType,
+                              options: const ['Breakfast', 'Lunch', 'Dinner'],
+                              onChanged: (v) {
+                                if (v != null) setLocal(() => messType = v);
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: const Text('Cancel'),
+                        ),
+                        AppButton(
+                          label: 'Issue QR token & print',
+                          expanded: false,
+                          onPressed: () => Navigator.pop(context, true),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+                if (ok != true || !context.mounted) return;
+                final result = await ref
+                    .read(messControllerProvider.notifier)
+                    .issueWalkInToken(
+                      name: nameCtrl.text,
+                      mobile: mobileCtrl.text,
+                      messType: messType,
+                      amount: double.tryParse(amountCtrl.text.trim()) ?? 0,
+                    );
+                if (!context.mounted) return;
+                await Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => MessTokenQrPage(
+                      title: 'Walk-in token',
+                      subtitle: result.token.memberName ?? 'Walk-in',
+                      payload: result.payload,
+                      tokenCode: result.token.tokenCode,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: tokensAsync.when(
+            data: (tokens) {
+              if (tokens.isEmpty) {
+                return Center(child: Text(AppStrings.of(ref).noTokensToday));
+              }
+              return ListView.separated(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                itemCount: tokens.length,
+                separatorBuilder: (_, _) => const SizedBox(height: 8),
+                itemBuilder: (context, index) {
+                  final token = tokens[index];
+                  final verified = token.tokenState == 'verified';
+                  return AppCard(
+            padding: EdgeInsets.zero,
+            child: ListTile(
+                      leading: Icon(
+                        verified
+                            ? Icons.verified_rounded
+                            : Icons.qr_code_rounded,
+                        color: verified ? AppColors.success : AppColors.primary,
+                      ),
+                      title: Text(
+                        token.memberName ?? 'Token',
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      subtitle: Text(
+                        '${token.messType} Â· ${token.memberType} Â· ${time.format(token.tokenDate)}',
+                      ),
+                      trailing: Text(
+                        verified ? 'Verified' : 'Active',
+                        style: TextStyle(
+                          color:
+                              verified ? AppColors.success : AppColors.warning,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, _) => Center(child: Text('$e')),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CommonQrTab extends ConsumerStatefulWidget {
+  const _CommonQrTab();
+
+  @override
+  ConsumerState<_CommonQrTab> createState() => _CommonQrTabState();
+}
+
+class _CommonQrTabState extends ConsumerState<_CommonQrTab> {
+  final GlobalKey _qrKey = GlobalKey();
+
+  Future<void> _shareUrl(BuildContext context, String url) async {
+    final box = context.findRenderObject() as RenderBox?;
+    await SharePlus.instance.share(
+      ShareParams(
+        text: url,
+        subject: 'Mess Common QR',
+        sharePositionOrigin: box == null
+            ? null
+            : box.localToGlobal(Offset.zero) & box.size,
+      ),
+    );
+  }
+
+  Future<void> _printUrl(WidgetRef ref, BuildContext context, String url) async {
+    final result = await ref.read(printServiceProvider).printRawText(
+          'Mess Common QR\n\n$url\n',
+          label: 'Mess QR',
+        );
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(result.message ?? result.outcome.name)),
+    );
+  }
+
+  Future<void> _saveToGallery(BuildContext context) async {
+    try {
+      final boundary =
+          _qrKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      if (boundary == null) {
+        throw StateError('QR not ready');
+      }
+      final image = await boundary.toImage(pixelRatio: 3);
+      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      final bytes = byteData?.buffer.asUint8List();
+      if (bytes == null) {
+        throw StateError('Could not capture QR image');
+      }
+      final granted = await Gal.requestAccess(toAlbum: true);
+      if (!granted) {
+        throw StateError('Gallery permission denied');
+      }
+      await Gal.putImageBytes(bytes, name: 'mess_qr_${DateTime.now().millisecondsSinceEpoch}');
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppStrings.of(ref).qrSaved)),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Save failed: $e')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final qrAsync = ref.watch(messCommonQrProvider);
+    final controller = ref.read(messCommonQrProvider.notifier);
+
+    return qrAsync.when(
+      data: (qr) {
+        if (qr == null || qr.qrUrl.isEmpty) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    'Mess Token QR',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 16),
+                  AppButton(
+                    label: 'Generate',
+                    onPressed: () => controller.generate(),
+                    expanded: false,
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        final active = qr.status.toUpperCase() == 'ACTIVE';
+        final meta = [
+          if (qr.messLabel?.isNotEmpty == true) qr.messLabel!,
+          if (qr.branchLabel?.isNotEmpty == true) qr.branchLabel!,
+        ].join(' · ');
+
+        return ResponsiveScrollShell(
+        dashboard: true,
+        child: ListView(
+          padding: EdgeInsets.all(
+            AppBreakpoints.pagePaddingFor(context.widthClass) + 8,
+          ),
+          children: [
+            const Text(
+              'Mess Token QR',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 16),
+            Center(
+              child: RepaintBoundary(
+                key: _qrKey,
+                child: QrImageView(
+                  data: qr.qrUrl,
+                  size: 240,
+                  backgroundColor: Colors.white,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              qr.status,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: active ? AppColors.success : AppColors.danger,
+              ),
+            ),
+            if (meta.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(meta, textAlign: TextAlign.center),
+            ],
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: AppButton(
+                    label: 'Generate',
+                    onPressed: () => controller.generate(),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: AppButton(
+                    label: 'Share',
+                    variant: AppButtonVariant.outlined,
+                    onPressed: () => _shareUrl(context, qr.qrUrl),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: AppButton(
+                    label: 'Download',
+                    variant: AppButtonVariant.outlined,
+                    onPressed: () => _saveToGallery(context),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: AppButton(
+                    label: 'Print QR',
+                    variant: AppButtonVariant.outlined,
+                    onPressed: () => _printUrl(ref, context, qr.qrUrl),
+                  ),
+                ),
+              ],
+            ),
+            if (active) ...[
+              const SizedBox(height: 8),
+              AppButton(
+                label: 'Deactivate',
+                variant: AppButtonVariant.outlined,
+                onPressed: () => controller.setStatus('INACTIVE'),
+              ),
+            ],
+          ],
+        ),
+      );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('$e', textAlign: TextAlign.center),
+              const SizedBox(height: 12),
+              AppButton(
+            label: 'Retry',
+            onPressed: () => controller.load(),
+            expanded: false,
+          ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

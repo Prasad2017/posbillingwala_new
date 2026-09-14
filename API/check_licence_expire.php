@@ -6,11 +6,16 @@ require_once __DIR__ . '/pos_auth_guard.php';
 
 mysqli_query($con, 'set names utf8');
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Headers: X-Requested-With, Authorization');
-header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
+header('Access-Control-Allow-Headers: Authorization, Content-Type, Accept, X-Requested-With');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 header('Content-Type: application/json');
 
 $response = array('status' => '0', 'message' => 'Invalid request');
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(204);
+    exit;
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $licenceId = isset($_POST['userId']) ? trim($_POST['userId']) : '';

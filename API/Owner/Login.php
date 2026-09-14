@@ -4,8 +4,8 @@
 	require_once __DIR__ . '/../db_prepared.php';
 	mysqli_query($con, 'set names utf8');
 	header('Access-Control-Allow-Origin: *');
-    header('Access-Control-Allow-Headers: X-Requested-With, Authorization, Content-Type');
-    header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
+    header('Access-Control-Allow-Headers: Authorization, Content-Type, Accept, X-Requested-With');
+    header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
     header('Content-Type: application/json; charset=utf-8');
 
     $response = array(
@@ -14,7 +14,7 @@
     );
 
     if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-        echo json_encode($response);
+        http_response_code(204);
         exit;
     }
 

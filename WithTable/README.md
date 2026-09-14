@@ -62,10 +62,17 @@ Add `google-services.json` for Firebase builds. Sign with your upload keystore b
 7. Switch language EN / HI / MR  
 8. Expired / trial-blocked licence rejected server-side  
 
+## UI screen inventory (Flutter reference)
+
+Screen-wise fields, buttons, dialogs, and navigation for Flutter UI parity:
+
+→ **[UI_SCREEN_INVENTORY.md](./UI_SCREEN_INVENTORY.md)** — every Activity / Fragment / dialog with input IDs, button IDs, and labels.
+
 ## Related
 
 | Path | Notes |
 |------|--------|
+| `./UI_SCREEN_INVENTORY.md` | Screen-wise UI fields & buttons (Flutter rebuild) |
 | `../API/` | POS PHP endpoints at androidApp root |
 | `../docs/COMBO_API_REQUIREMENTS.md` | Combo API contract |
 | `../docs/STORE_DETAILS_API_CHANGES.md` | Structured store fields |

@@ -17,7 +17,6 @@ import com.pos_billingwala.Print.PrinterConnectionHelper;
  * Application entry for production monitoring.
  */
 public class PosBillingWalaApp extends Application implements DisplayScale.ResourcesHost {
-
     private Resources adjustedResources;
 
     @Override
