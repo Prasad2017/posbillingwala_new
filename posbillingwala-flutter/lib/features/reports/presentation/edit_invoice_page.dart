@@ -5,12 +5,37 @@ import 'package:intl/intl.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
+import 'package:pos_billingwala_v2/core/network/online_guard.dart';
+import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 import 'package:pos_billingwala_v2/core/widgtes/widgtes.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/print/domain/print_providers.dart';
 import 'package:pos_billingwala_v2/features/reports/domain/reports_providers.dart';
 import 'package:pos_billingwala_v2/features/sync/data/invoice_sync_api.dart';
+import 'package:pos_billingwala_v2/features/sync/domain/sync_providers.dart';
 import 'package:pos_billingwala_v2/l10n/app_strings.dart';
+
+Future<void> _pushInvoiceEditToApi(WidgetRef ref, int invoiceId) async {
+  if (!AppPlatform.requiresNetwork) {
+    if (await isDeviceOnline()) {
+      await ref
+          .read(invoiceSyncControllerProvider.notifier)
+          .uploadPending(onlyInvoiceId: invoiceId);
+    }
+    return;
+  }
+  await requireOnlineForWeb();
+  final sync = await ref
+      .read(invoiceSyncControllerProvider.notifier)
+      .uploadPending(onlyInvoiceId: invoiceId);
+  if (sync.failed > 0 || sync.uploaded < 1) {
+    throw StateError(
+      sync.message?.trim().isNotEmpty == true
+          ? sync.message!
+          : kWebApiSaveFailedMessage,
+    );
+  }
+}
 
 /* WithTable `EditInvoice` — full line editor + header + print after save. */
 class EditInvoicePage extends ConsumerWidget {
@@ -223,6 +248,7 @@ Future<void> editLine(
           quantity: qty,
           productPrice: price,
         );
+    await _pushInvoiceEditToApi(ref, invoiceId);
     ref.invalidate(invoiceDetailProvider(invoiceId));
   } catch (e) {
     if (context.mounted) {
@@ -250,9 +276,17 @@ Future<void> deleteLine(
           await ref
               .read(appDatabaseProvider)
               .removeInvoiceProductDeleteByNetworkStatus(network);
+        } else if (AppPlatform.requiresNetwork) {
+          throw StateError(kWebApiSaveFailedMessage);
         }
-      } catch (_) {}
+      } catch (e) {
+        if (AppPlatform.requiresNetwork) {
+          if (e is StateError) rethrow;
+          throw StateError(kWebApiSaveFailedMessage);
+        }
+      }
     }
+    await _pushInvoiceEditToApi(ref, invoiceId);
     ref.invalidate(invoiceDetailProvider(invoiceId));
   } catch (e) {
     if (context.mounted) {
@@ -366,6 +400,7 @@ Future<void> editInvoicePageAddProduct(
           portionId: portionId,
           portionName: portionName,
         );
+    await _pushInvoiceEditToApi(ref, invoiceId);
     ref.invalidate(invoiceDetailProvider(invoiceId));
   } catch (e) {
     if (context.mounted) {
@@ -482,16 +517,23 @@ Future<void> editHeader(
     ),
   );
   if (ok != true) return;
-  await ref.read(appDatabaseProvider).updateInvoiceHeader(
-        invoiceId: invoice.invoiceId,
-        customerName: nameCtrl.text.trim(),
-        customerMobile: mobileCtrl.text.trim(),
-        paymentMode: paymentMode,
-        cashAmount: double.tryParse(cashCtrl.text.trim()),
-        upiAmount: double.tryParse(upiCtrl.text.trim()),
-        discount: double.tryParse(discountCtrl.text.trim()),
-        discountType: discountType,
-        packingCharge: double.tryParse(packingCtrl.text.trim()),
-        packingChargeType: packingType,
-      );
+  try {
+    await ref.read(appDatabaseProvider).updateInvoiceHeader(
+          invoiceId: invoice.invoiceId,
+          customerName: nameCtrl.text.trim(),
+          customerMobile: mobileCtrl.text.trim(),
+          paymentMode: paymentMode,
+          cashAmount: double.tryParse(cashCtrl.text.trim()),
+          upiAmount: double.tryParse(upiCtrl.text.trim()),
+          discount: double.tryParse(discountCtrl.text.trim()),
+          discountType: discountType,
+          packingCharge: double.tryParse(packingCtrl.text.trim()),
+          packingChargeType: packingType,
+        );
+    await _pushInvoiceEditToApi(ref, invoice.invoiceId);
+  } catch (e) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    }
+  }
 }

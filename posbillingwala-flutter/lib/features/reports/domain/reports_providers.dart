@@ -2,10 +2,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
+import 'package:pos_billingwala_v2/core/network/api_client.dart';
 import 'package:pos_billingwala_v2/core/network/online_guard.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/sync/data/invoice_sync_api.dart';
+import 'package:pos_billingwala_v2/features/sync/domain/cloud_invoice_dto.dart';
 
 enum ReportPeriodKind { today, month, day, year }
 
@@ -202,18 +204,28 @@ final periodInvoicesProvider = StreamProvider<List<Invoice>>((ref) {
   final period = ref.watch(reportPeriodProvider);
   final (start, end) = period.range;
   if (AppPlatform.requiresNetwork) {
-    return Stream.fromFuture(_loadPeriodInvoicesFromApi(ref, start, end));
+    return Stream.fromFuture(
+      loadPeriodInvoicesFromApi(
+        userId: ref.read(authControllerProvider).session?.userId,
+        client: ref.read(apiClientProvider),
+        db: ref.read(appDatabaseProvider),
+        start: start,
+        end: end,
+      ),
+    );
   }
   return ref.watch(appDatabaseProvider).watchInvoicesInRange(start, end);
 });
 
-Future<List<Invoice>> _loadPeriodInvoicesFromApi(
-  Ref ref,
-  DateTime start,
-  DateTime end,
-) async {
+Future<List<Invoice>> loadPeriodInvoicesFromApi({
+  required String? userId,
+  required ApiClient client,
+  required AppDatabase db,
+  required DateTime start,
+  required DateTime end,
+  bool includeItems = false,
+}) async {
   await requireOnlineForWeb();
-  final userId = ref.read(authControllerProvider).session?.userId;
   if (userId == null || userId.isEmpty) {
     throw StateError('Please login to view reports on Web POS.');
   }
@@ -221,37 +233,61 @@ Future<List<Invoice>> _loadPeriodInvoicesFromApi(
   /* ReportPeriod.range uses exclusive end — convert to inclusive endDate. */
   final inclusiveEnd = end.subtract(const Duration(days: 1));
   final endDay = inclusiveEnd.isBefore(start) ? start : inclusiveEnd;
-  final api = InvoiceSyncApi(ref.read(apiClientProvider));
-  final db = ref.read(appDatabaseProvider);
+  final api = InvoiceSyncApi(client);
 
+  List<CloudInvoiceDto> cloud = const [];
   try {
     final report = await api.fetchPosSalesReport(
       userId: userId,
       startDate: fmt.format(start),
       endDate: fmt.format(endDay),
     );
-    if (report.invoices.isNotEmpty) {
-      await db.upsertCloudInvoices(
-        headers: report.invoices.map((e) => e.toCompanion()).toList(),
-        itemsByNumber: const {},
-      );
-    }
+    cloud = report.invoices;
   } catch (_) {
-    /* Fallback: range list endpoint (enhanced getInvoiceList). */
-    final cloud = await api.fetchInvoices(
+    cloud = await api.fetchInvoices(
       userId,
       startDate: fmt.format(start),
       endDate: fmt.format(endDay),
     );
-    if (cloud.isNotEmpty) {
-      await db.upsertCloudInvoices(
-        headers: cloud.map((e) => e.toCompanion()).toList(),
-        itemsByNumber: const {},
-      );
+  }
+
+  if (cloud.isNotEmpty) {
+    final itemsByNumber = <String, List<InvoiceItemsCompanion>>{};
+    if (includeItems) {
+      final items = await api.fetchInvoiceItems(userId);
+      final numbers = cloud.map((e) => e.invoiceNumber).toSet();
+      for (final item in items) {
+        if (!numbers.contains(item.invoiceNumber)) continue;
+        itemsByNumber
+            .putIfAbsent(item.invoiceNumber, () => [])
+            .add(item.toCompanion());
+      }
     }
+    await db.upsertCloudInvoices(
+      headers: cloud.map((e) => e.toCompanion()).toList(),
+      itemsByNumber: itemsByNumber,
+    );
   }
 
   return (await db.watchInvoicesInRange(start, end).first);
+}
+
+/* Hydrate Drift from cloud for web report screens that query local aggregates. */
+Future<void> hydrateWebReportRange(
+  WidgetRef ref, {
+  required DateTime start,
+  required DateTime end,
+  bool includeItems = false,
+}) async {
+  if (!AppPlatform.requiresNetwork) return;
+  await loadPeriodInvoicesFromApi(
+    userId: ref.read(authControllerProvider).session?.userId,
+    client: ref.read(apiClientProvider),
+    db: ref.read(appDatabaseProvider),
+    start: start,
+    end: end,
+    includeItems: includeItems,
+  );
 }
 
 enum ReportPaymentFilter { all, cash, upi, cashPlusUpi }

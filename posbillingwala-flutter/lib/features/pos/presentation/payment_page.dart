@@ -172,6 +172,7 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
     final session = ref.read(billingSessionProvider);
     /* Online (all platforms): dual-write — local already saved, await API upload. */
     /* Offline mobile: keep local pending; ConnectivitySyncListener uploads later. */
+    /* Web: API-only — abort success flow if cloud upload fails. */
     final online = await isDeviceOnline();
     if (AppPlatform.requiresNetwork || online) {
       final sync = await ref
@@ -185,7 +186,7 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
               sync.message?.trim().isNotEmpty == true
                   ? sync.message!
                   : AppPlatform.requiresNetwork
-                      ? 'Bill saved locally but cloud upload failed. Check internet and retry.'
+                      ? kWebApiSaveFailedMessage
                       : 'Bill saved on device — cloud upload failed; will retry when online.',
             ),
             backgroundColor: AppPlatform.requiresNetwork
@@ -193,7 +194,17 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
                 : AppColors.orange,
           ),
         );
+        if (AppPlatform.requiresNetwork) return;
       }
+    } else if (AppPlatform.requiresNetwork) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(kOnlineRequiredMessage),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+      return;
     }
 
     final autoPrint = ref.read(printerSettingsProvider).autoShareOnSave;

@@ -412,11 +412,21 @@ class MessController extends Notifier<AsyncValue<void>> {
               memberNetworkStatus: member.memberNetworkStatus,
             ),
           );
-          if (ok) await db.markMessMemberSynced(id);
+          if (ok) {
+            await db.markMessMemberSynced(id);
+          } else if (AppPlatform.requiresNetwork) {
+            throw StateError(kWebApiSaveFailedMessage);
+          }
         }
-      } catch (_) {
+      } catch (e) {
+        if (AppPlatform.requiresNetwork) {
+          if (e is StateError) rethrow;
+          throw StateError(kWebApiSaveFailedMessage);
+        }
         /* Keep local pending row for later full sync. */
       }
+    } else if (AppPlatform.requiresNetwork) {
+      throw StateError('Please login to save on Web POS.');
     }
     return id;
   }
@@ -434,6 +444,9 @@ class MessController extends Notifier<AsyncValue<void>> {
     String? studentYear,
     String? company,
   }) async {
+    if (AppPlatform.requiresNetwork && !await ensureOnline()) {
+      throw StateError(kOnlineRequiredMessage);
+    }
     final db = ref.read(appDatabaseProvider);
     await db.updateLocalMessMember(
       memberId: memberId,
@@ -471,9 +484,20 @@ class MessController extends Notifier<AsyncValue<void>> {
               memberNetworkStatus: member.memberNetworkStatus,
             ),
           );
-          if (ok) await db.markMessMemberSynced(memberId);
+          if (ok) {
+            await db.markMessMemberSynced(memberId);
+          } else if (AppPlatform.requiresNetwork) {
+            throw StateError(kWebApiSaveFailedMessage);
+          }
         }
-      } catch (_) {}
+      } catch (e) {
+        if (AppPlatform.requiresNetwork) {
+          if (e is StateError) rethrow;
+          throw StateError(kWebApiSaveFailedMessage);
+        }
+      }
+    } else if (AppPlatform.requiresNetwork) {
+      throw StateError('Please login to save on Web POS.');
     }
   }
 
@@ -509,8 +533,19 @@ class MessController extends Notifier<AsyncValue<void>> {
           tokenDate: token.tokenDate,
           tokenNetworkStatus: token.tokenNetworkStatus ?? '',
         );
-        if (ok) await db.markMessTokenSynced(token.tokenId);
-      } catch (_) {}
+        if (ok) {
+          await db.markMessTokenSynced(token.tokenId);
+        } else if (AppPlatform.requiresNetwork) {
+          throw StateError(kWebApiSaveFailedMessage);
+        }
+      } catch (e) {
+        if (AppPlatform.requiresNetwork) {
+          if (e is StateError) rethrow;
+          throw StateError(kWebApiSaveFailedMessage);
+        }
+      }
+    } else if (AppPlatform.requiresNetwork) {
+      throw StateError('Please login to save on Web POS.');
     }
     final payload = MessTokenQrHelper.buildPayload(
       tokenCode: code,
@@ -554,8 +589,19 @@ class MessController extends Notifier<AsyncValue<void>> {
           tokenDate: token.tokenDate,
           tokenNetworkStatus: token.tokenNetworkStatus ?? '',
         );
-        if (ok) await db.markMessTokenSynced(token.tokenId);
-      } catch (_) {}
+        if (ok) {
+          await db.markMessTokenSynced(token.tokenId);
+        } else if (AppPlatform.requiresNetwork) {
+          throw StateError(kWebApiSaveFailedMessage);
+        }
+      } catch (e) {
+        if (AppPlatform.requiresNetwork) {
+          if (e is StateError) rethrow;
+          throw StateError(kWebApiSaveFailedMessage);
+        }
+      }
+    } else if (AppPlatform.requiresNetwork) {
+      throw StateError('Please login to save on Web POS.');
     }
     final payload = MessTokenQrHelper.buildPayload(
       tokenCode: code,
@@ -566,21 +612,38 @@ class MessController extends Notifier<AsyncValue<void>> {
   }
 
   Future<MessToken?> verifyRaw(String rawOrCode) async {
+    if (AppPlatform.requiresNetwork && !await ensureOnline()) {
+      throw StateError(kOnlineRequiredMessage);
+    }
     final parsed = MessTokenQrHelper.parsePayload(rawOrCode.trim());
     final code = parsed?.first ?? rawOrCode.trim();
     if (code.isEmpty) return null;
     final db = ref.read(appDatabaseProvider);
-    final token = await db.verifyMessToken(code);
     final userId = ref.read(authControllerProvider).session?.userId;
-    if (token != null && userId != null && userId.isNotEmpty) {
+
+    /* Web: verify on server first so status is authoritative. */
+    if (AppPlatform.requiresNetwork) {
+      if (userId == null || userId.isEmpty) {
+        throw StateError('Please login to verify tokens on Web POS.');
+      }
+      final ok = await MessApi(ref.read(apiClientProvider)).verifyMessToken(
+        userId: userId,
+        tokenCode: code,
+      );
+      if (!ok) return null;
+    }
+
+    final token = await db.verifyMessToken(code);
+    if (token != null &&
+        userId != null &&
+        userId.isNotEmpty &&
+        !AppPlatform.requiresNetwork) {
       try {
         final ok = await MessApi(ref.read(apiClientProvider)).verifyMessToken(
           userId: userId,
           tokenCode: token.tokenCode,
-          verifiedDate: token.verifiedDate,
-          verifyNetworkStatus: token.verifyNetworkStatus ?? '',
         );
-        if (ok) await db.markMessTokenVerifySynced(token.tokenId);
+        if (ok) await db.markMessTokenSynced(token.tokenId);
       } catch (_) {}
     }
     return token;

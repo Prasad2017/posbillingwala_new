@@ -5,6 +5,7 @@ import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
+import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pos_billingwala_v2/features/expense/presentation/expense_page.dart';
@@ -35,6 +36,12 @@ class InventoryPageState extends ConsumerState<InventoryPage>
     );
     inventoryPageTabs.addListener(() {
       if (mounted) setState(() {});
+    });
+    Future.microtask(() async {
+      if (!AppPlatform.requiresNetwork) return;
+      try {
+        await ref.read(inventoryControllerProvider.notifier).syncAll();
+      } catch (_) {}
     });
   }
 

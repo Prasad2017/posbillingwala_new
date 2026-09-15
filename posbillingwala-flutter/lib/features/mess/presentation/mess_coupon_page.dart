@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
+import 'package:pos_billingwala_v2/core/network/online_guard.dart';
+import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/mess/data/mess_api.dart';
 import 'package:pos_billingwala_v2/features/print/domain/print_providers.dart';
@@ -60,6 +62,13 @@ class MessCouponPageState extends ConsumerState<MessCouponPage> {
       );
       return;
     }
+    if (AppPlatform.requiresNetwork && !await ensureOnline()) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text(kOnlineRequiredMessage)),
+      );
+      return;
+    }
     setState(() => busy = true);
     try {
       final db = ref.read(appDatabaseProvider);
@@ -88,6 +97,7 @@ class MessCouponPageState extends ConsumerState<MessCouponPage> {
           );
 
       final userId = ref.read(authControllerProvider).session?.userId;
+      var uploaded = false;
       if (userId != null && userId.isNotEmpty) {
         final row = await db.getMessInvoiceById(id);
         if (row != null) {
@@ -101,8 +111,18 @@ class MessCouponPageState extends ConsumerState<MessCouponPage> {
             messInvoiceNetworkStatus: row.messInvoiceNetworkStatus,
             messInvoiceStatus: '0',
           );
-          if (ok) await db.markMessInvoiceSynced(id);
+          if (ok) {
+            await db.markMessInvoiceSynced(id);
+            uploaded = true;
+          }
         }
+      }
+      if (AppPlatform.requiresNetwork && !uploaded) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text(kWebApiSaveFailedMessage)),
+        );
+        return;
       }
 
       if (!mounted) return;

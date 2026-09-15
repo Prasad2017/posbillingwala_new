@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:pos_billingwala_v2/core/constants/app_assets.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
+import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 import 'package:pos_billingwala_v2/core/widgets/app_module_icon.dart';
 import 'package:pos_billingwala_v2/core/widgets/app_svg.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
@@ -43,6 +44,9 @@ class MessPageState extends ConsumerState<MessPage>
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(messCommonQrProvider.notifier).load();
+      if (AppPlatform.requiresNetwork) {
+        ref.read(messControllerProvider.notifier).syncMembers();
+      }
     });
   }
 

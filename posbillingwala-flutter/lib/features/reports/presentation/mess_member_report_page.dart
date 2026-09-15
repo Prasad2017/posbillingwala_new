@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
+import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 import 'package:pos_billingwala_v2/features/mess/domain/mess_providers.dart';
 import 'package:pos_billingwala_v2/features/mess/presentation/mess_payments_page.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/report_widgets.dart';
@@ -23,6 +24,16 @@ class MessMemberReportPage extends ConsumerStatefulWidget {
 class MessMemberReportPageState extends ConsumerState<MessMemberReportPage> {
   final search = TextEditingController();
   String query = '';
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      if (AppPlatform.requiresNetwork) {
+        ref.read(messControllerProvider.notifier).syncMembers();
+      }
+    });
+  }
 
   @override
   void dispose() {

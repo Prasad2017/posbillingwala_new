@@ -6,6 +6,8 @@ import 'package:pos_billingwala_v2/core/constants/app_assets.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
+import 'package:pos_billingwala_v2/core/network/online_guard.dart';
+import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 import 'package:pos_billingwala_v2/features/reports/domain/reports_providers.dart';
 import 'package:pos_billingwala_v2/features/sync/data/invoice_sync_api.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
@@ -213,6 +215,28 @@ class InvoiceDetailPage extends ConsumerWidget {
                     await ref
                         .read(appDatabaseProvider)
                         .refundInvoiceLocally(invoice.invoiceId);
+                    if (AppPlatform.requiresNetwork) {
+                      final sync = await ref
+                          .read(invoiceSyncControllerProvider.notifier)
+                          .uploadPending(onlyInvoiceId: invoice.invoiceId);
+                      if (sync.failed > 0 || sync.uploaded < 1) {
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              sync.message?.trim().isNotEmpty == true
+                                  ? sync.message!
+                                  : kWebApiSaveFailedMessage,
+                            ),
+                          ),
+                        );
+                        return;
+                      }
+                    } else if (await isDeviceOnline()) {
+                      await ref
+                          .read(invoiceSyncControllerProvider.notifier)
+                          .uploadPending(onlyInvoiceId: invoice.invoiceId);
+                    }
                     ref.invalidate(invoiceDetailProvider(invoiceId));
                     if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(

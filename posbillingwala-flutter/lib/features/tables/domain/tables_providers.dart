@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
 import 'package:pos_billingwala_v2/core/network/online_guard.dart';
+import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/masters/data/masters_api.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/billing_session.dart';
@@ -203,9 +204,20 @@ class TablesController extends Notifier<AsyncValue<void>> {
   }
 
   Future<void> uploadDiningSessionIfOnline(DiningSession session) async {
+    await requireOnlineForWeb();
     final userId = ref.read(authControllerProvider).session?.userId;
-    if (userId == null || userId.isEmpty) return;
-    if (!await isDeviceOnline()) return;
+    if (userId == null || userId.isEmpty) {
+      if (AppPlatform.requiresNetwork) {
+        throw StateError('Please login to save table session on Web POS.');
+      }
+      return;
+    }
+    if (!await isDeviceOnline()) {
+      if (AppPlatform.requiresNetwork) {
+        throw StateError(kOnlineRequiredMessage);
+      }
+      return;
+    }
     try {
       final dto = DiningSessionDto(
         sessionId: session.sessionId,
@@ -230,9 +242,15 @@ class TablesController extends Notifier<AsyncValue<void>> {
         await ref
             .read(appDatabaseProvider)
             .markDiningSessionSynced(session.sessionId);
+      } else if (AppPlatform.requiresNetwork) {
+        throw StateError(kWebApiSaveFailedMessage);
       }
-    } catch (_) {
-      /* Keep pending for reconnect / Sync button. */
+    } catch (e) {
+      if (AppPlatform.requiresNetwork) {
+        if (e is StateError) rethrow;
+        throw StateError(kWebApiSaveFailedMessage);
+      }
+      /* Mobile: keep pending for reconnect / Sync button. */
     }
   }
 
@@ -313,6 +331,10 @@ class TablesController extends Notifier<AsyncValue<void>> {
           toTable: toTable,
           items: items,
         );
+    final session = await ref
+        .read(appDatabaseProvider)
+        .openOrGetDiningSession(toTable);
+    await uploadDiningSessionIfOnline(session);
   }
 
   Future<void> updateSessionMeta({

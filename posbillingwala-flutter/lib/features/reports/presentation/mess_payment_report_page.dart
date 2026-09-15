@@ -4,15 +4,33 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
+import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
+import 'package:pos_billingwala_v2/features/mess/domain/mess_providers.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/report_widgets.dart';
 import 'package:pos_billingwala_v2/l10n/app_strings.dart';
 
 /* WithTable member payment report (all local mess payments). */
-class MessPaymentReportPage extends ConsumerWidget {
+class MessPaymentReportPage extends ConsumerStatefulWidget {
   const MessPaymentReportPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MessPaymentReportPage> createState() =>
+      MessPaymentReportPageState();
+}
+
+class MessPaymentReportPageState extends ConsumerState<MessPaymentReportPage> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      if (AppPlatform.requiresNetwork) {
+        ref.read(messControllerProvider.notifier).syncMembers();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return FutureBuilder(
       future: ref.read(appDatabaseProvider).getLocalMessPayments(),
       builder: (context, snap) {

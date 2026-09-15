@@ -315,6 +315,13 @@ class CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
           ok = false;
         }
       }
+      if (AppPlatform.requiresNetwork && !ok) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text(kWebApiSaveFailedMessage)),
+        );
+        return;
+      }
       await db.upsertLocalCompany(dto);
       await ref.read(shopReceiptProfileProvider.notifier).saveFromCompany(dto);
       if (logoPath.isNotEmpty) {
@@ -328,9 +335,7 @@ class CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
           content: Text(
             ok
                 ? 'Shop details saved'
-                : (AppPlatform.supportsOfflineBilling
-                    ? 'Saved offline — will sync when online'
-                    : 'Could not save — check internet and retry'),
+                : 'Saved offline — will sync when online',
           ),
         ),
       );

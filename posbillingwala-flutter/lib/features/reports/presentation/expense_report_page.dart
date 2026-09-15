@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
+import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 import 'package:pos_billingwala_v2/features/inventory/domain/inventory_providers.dart';
 import 'package:pos_billingwala_v2/features/reports/domain/report_export.dart';
 import 'package:pos_billingwala_v2/features/reports/domain/reports_providers.dart';
@@ -14,8 +15,24 @@ import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
 import 'package:pos_billingwala_v2/l10n/app_strings.dart';
 
 /* Expense-wise report with period filter and Excel share. */
-class ExpenseReportPage extends ConsumerWidget {
+class ExpenseReportPage extends ConsumerStatefulWidget {
   const ExpenseReportPage({super.key});
+
+  @override
+  ConsumerState<ExpenseReportPage> createState() => ExpenseReportPageState();
+}
+
+class ExpenseReportPageState extends ConsumerState<ExpenseReportPage> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() async {
+      if (!AppPlatform.requiresNetwork) return;
+      try {
+        await ref.read(inventoryControllerProvider.notifier).syncAll();
+      } catch (_) {}
+    });
+  }
 
   List<ShopExpense> inPeriod(
     List<ShopExpense> rows,
@@ -59,7 +76,7 @@ class ExpenseReportPage extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final period = ref.watch(reportPeriodProvider);
     final expensesAsync = ref.watch(expensesProvider);
     final currency = NumberFormat.currency(locale: 'en_IN', symbol: '₹');

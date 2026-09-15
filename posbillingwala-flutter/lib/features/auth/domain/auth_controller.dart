@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
 import 'package:pos_billingwala_v2/core/network/api_client.dart';
 import 'package:pos_billingwala_v2/core/network/online_guard.dart';
+import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 import 'package:pos_billingwala_v2/features/auth/data/auth_api.dart';
 import 'package:pos_billingwala_v2/features/auth/data/auth_repository.dart';
 import 'package:pos_billingwala_v2/features/auth/data/device_identity_service.dart';
@@ -215,6 +216,31 @@ class AuthController extends Notifier<AuthState> {
     if (session == null) return false;
     final pin = newPin.trim();
     if (pin.length != 4 || int.tryParse(pin) == null) return false;
+
+    if (AppPlatform.requiresNetwork) {
+      await requireOnlineForWeb();
+      final device = await DeviceIdentityService().resolve();
+      final response = await AuthApi(ref.read(apiClientProvider)).updateMpin(
+        mpin: pin,
+        licenceKey: session.licenceKey,
+        deviceId: device.deviceId,
+        deviceName: device.deviceName,
+      );
+      if (!response.isSuccess) return false;
+    } else if (await isDeviceOnline()) {
+      try {
+        final device = await DeviceIdentityService().resolve();
+        await AuthApi(ref.read(apiClientProvider)).updateMpin(
+          mpin: pin,
+          licenceKey: session.licenceKey,
+          deviceId: device.deviceId,
+          deviceName: device.deviceName,
+        );
+      } catch (_) {
+        /* Mobile can keep local PIN if cloud update fails. */
+      }
+    }
+
     await SessionStore().updateAppPin(pin);
     final updated = session.copyWith(appPin: pin);
     await SessionStore().saveSession(updated);

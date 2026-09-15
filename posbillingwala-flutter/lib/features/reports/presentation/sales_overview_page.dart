@@ -7,6 +7,7 @@ import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
+import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/reports/domain/reports_providers.dart';
@@ -17,6 +18,17 @@ final overviewWindowProvider = StreamProvider<List<Invoice>>((ref) {
   final now = DateTime.now();
   final start = DateTime(now.year, now.month - 1, 1);
   final end = DateTime(now.year, now.month + 1, 1);
+  if (AppPlatform.requiresNetwork) {
+    return Stream.fromFuture(
+      loadPeriodInvoicesFromApi(
+        userId: ref.read(authControllerProvider).session?.userId,
+        client: ref.read(apiClientProvider),
+        db: ref.read(appDatabaseProvider),
+        start: start,
+        end: end,
+      ),
+    );
+  }
   return ref.watch(appDatabaseProvider).watchInvoicesInRange(start, end);
 });
 

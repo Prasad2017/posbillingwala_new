@@ -60,6 +60,12 @@ class SplitBillPageState extends ConsumerState<SplitBillPage> {
           amount: share,
         );
       }
+      final session = await db.getDiningSessionById(widget.sessionId);
+      if (session != null) {
+        await ref
+            .read(tablesControllerProvider.notifier)
+            .uploadDiningSessionIfOnline(session);
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -69,6 +75,11 @@ class SplitBillPageState extends ConsumerState<SplitBillPage> {
         ),
       );
       Navigator.pop(context, true);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$e')),
+      );
     } finally {
       if (mounted) setState(() => busy = false);
     }

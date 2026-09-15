@@ -256,6 +256,14 @@ class MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
         }
       }
 
+      if (AppPlatform.requiresNetwork && !success) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text(kWebApiSaveFailedMessage)),
+        );
+        return;
+      }
+
       await db.upsertLocalMessPayment(
         memberId: '${selected!.memberId}',
         memberName: selected!.memberName,
@@ -281,7 +289,7 @@ class MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
                 ? 'Payment saved'
                 : (AppPlatform.supportsOfflineBilling
                     ? 'Saved offline — will sync when online'
-                    : 'Could not save payment — check internet and retry'),
+                    : kWebApiSaveFailedMessage),
           ),
         ),
       );
