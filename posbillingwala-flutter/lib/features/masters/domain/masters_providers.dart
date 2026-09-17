@@ -53,34 +53,38 @@ final productsProvider = StreamProvider<List<Product>>((ref) {
       .watchProducts(categoryId: categoryId);
 });
 
-/* Unfiltered product stream — used by home catalog KPIs. */
+/* Unfiltered product stream — product pickers / combo forms. */
 final allProductsProvider = StreamProvider<List<Product>>((ref) {
   return ref.watch(mastersRepositoryProvider).watchProducts();
 });
 
+final catalogCategoryCountProvider = StreamProvider<int>((ref) {
+  return ref.watch(appDatabaseProvider).watchCountActiveCategories();
+});
+
+final catalogSubcategoryCountProvider = StreamProvider<int>((ref) {
+  return ref.watch(appDatabaseProvider).watchCountActiveSubcategories();
+});
+
+final catalogProductCountProvider = StreamProvider<int>((ref) {
+  return ref.watch(appDatabaseProvider).watchCountActiveProducts();
+});
+
+final catalogComboCountProvider = StreamProvider<int>((ref) {
+  return ref.watch(appDatabaseProvider).watchCountActiveCombos();
+});
+
 final catalogCountsProvider = Provider<
     ({int categories, int products, int combos, int subcategories})>((ref) {
-  final categories = ref.watch(categoriesProvider).maybeWhen(
-        data: (rows) => rows.length,
-        orElse: () => 0,
-      );
-  final subcategories = ref.watch(subcategoriesProvider).maybeWhen(
-        data: (rows) => rows.length,
-        orElse: () => 0,
-      );
-  final products = ref.watch(allProductsProvider).maybeWhen(
-        data: (rows) => rows.length,
-        orElse: () => 0,
-      );
-  final combos = ref.watch(combosListProvider).maybeWhen(
-        data: (rows) => rows.length,
+  int countOf(AsyncValue<int> value) => value.maybeWhen(
+        data: (n) => n,
         orElse: () => 0,
       );
   return (
-    categories: categories,
-    products: products,
-    combos: combos,
-    subcategories: subcategories,
+    categories: countOf(ref.watch(catalogCategoryCountProvider)),
+    products: countOf(ref.watch(catalogProductCountProvider)),
+    combos: countOf(ref.watch(catalogComboCountProvider)),
+    subcategories: countOf(ref.watch(catalogSubcategoryCountProvider)),
   );
 });
 

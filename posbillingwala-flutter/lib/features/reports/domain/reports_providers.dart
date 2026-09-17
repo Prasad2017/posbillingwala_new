@@ -179,6 +179,23 @@ class SalesSummary {
     );
   }
 
+  factory SalesSummary.fromAggregate(InvoiceSalesAggregate row) {
+    if (row.billCount <= 0) return SalesSummary.empty;
+    return SalesSummary(
+      billCount: row.billCount,
+      totalSales: r(row.totalSales),
+      subTotal: r(row.subTotal),
+      gstTotal: r(row.gstTotal),
+      discountTotal: r(row.discountTotal),
+      cashTotal: r(row.cashTotal),
+      upiTotal: r(row.upiTotal),
+      posCount: row.posCount,
+      takeawayCount: row.takeawayCount,
+      tableCount: row.tableCount,
+      avgBill: r(row.totalSales / row.billCount),
+    );
+  }
+
   static double r(double v) => double.parse(v.toStringAsFixed(2));
 }
 
@@ -393,11 +410,19 @@ final todayInvoicesProvider = StreamProvider<List<Invoice>>((ref) {
 });
 
 final todaySalesSummaryProvider = Provider<SalesSummary>((ref) {
-  final invoices = ref.watch(todayInvoicesProvider).maybeWhen(
-        data: (rows) => rows,
-        orElse: () => const <Invoice>[],
+  return ref.watch(todaySalesAggregateProvider).maybeWhen(
+        data: SalesSummary.fromAggregate,
+        orElse: () => SalesSummary.empty,
       );
-  return SalesSummary.fromInvoices(invoices);
+});
+
+final todaySalesAggregateProvider = StreamProvider<InvoiceSalesAggregate>((ref) {
+  final now = DateTime.now();
+  final start = DateTime(now.year, now.month, now.day);
+  return ref.watch(appDatabaseProvider).watchSalesAggregate(
+        start: start,
+        end: start.add(const Duration(days: 1)),
+      );
 });
 
 final yesterdayInvoicesProvider = StreamProvider<List<Invoice>>((ref) {
@@ -409,11 +434,22 @@ final yesterdayInvoicesProvider = StreamProvider<List<Invoice>>((ref) {
 });
 
 final yesterdaySalesSummaryProvider = Provider<SalesSummary>((ref) {
-  final invoices = ref.watch(yesterdayInvoicesProvider).maybeWhen(
-        data: (rows) => rows,
-        orElse: () => const <Invoice>[],
+  return ref.watch(yesterdaySalesAggregateProvider).maybeWhen(
+        data: SalesSummary.fromAggregate,
+        orElse: () => SalesSummary.empty,
       );
-  return SalesSummary.fromInvoices(invoices);
+});
+
+final yesterdaySalesAggregateProvider =
+    StreamProvider<InvoiceSalesAggregate>((ref) {
+  final now = DateTime.now();
+  final start = DateTime(now.year, now.month, now.day)
+      .subtract(const Duration(days: 1));
+  final end = DateTime(now.year, now.month, now.day);
+  return ref.watch(appDatabaseProvider).watchSalesAggregate(
+        start: start,
+        end: end,
+      );
 });
 
 final monthInvoicesProvider = StreamProvider<List<Invoice>>((ref) {
@@ -426,11 +462,22 @@ final monthInvoicesProvider = StreamProvider<List<Invoice>>((ref) {
 });
 
 final monthSalesSummaryProvider = Provider<SalesSummary>((ref) {
-  final invoices = ref.watch(monthInvoicesProvider).maybeWhen(
-        data: (rows) => rows,
-        orElse: () => const <Invoice>[],
+  return ref.watch(monthSalesAggregateProvider).maybeWhen(
+        data: SalesSummary.fromAggregate,
+        orElse: () => SalesSummary.empty,
       );
-  return SalesSummary.fromInvoices(invoices);
+});
+
+final monthSalesAggregateProvider = StreamProvider<InvoiceSalesAggregate>((ref) {
+  final now = DateTime.now();
+  final start = DateTime(now.year, now.month, 1);
+  final end = (now.month == 12)
+      ? DateTime(now.year + 1, 1, 1)
+      : DateTime(now.year, now.month + 1, 1);
+  return ref.watch(appDatabaseProvider).watchSalesAggregate(
+        start: start,
+        end: end,
+      );
 });
 
 final invoiceDetailProvider =

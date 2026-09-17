@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pos_billingwala_v2/app/app.dart';
-import 'package:pos_billingwala_v2/core/logging/file_log_store.dart';
-import 'package:pos_billingwala_v2/core/security/screenshot_config.dart';
-import 'package:pos_billingwala_v2/features/notifications/domain/fcm_service.dart';
+import 'package:pos_billingwala_v2/core/startup/app_startup.dart';
 import 'package:pos_billingwala_v2/language/locale_catalog.dart';
 
 Future<void> main() async {
@@ -19,16 +17,16 @@ Future<void> main() async {
       systemNavigationBarDividerColor: Colors.transparent,
     ),
   );
-  await LocaleCatalog.load();
-  await ScreenshotConfig.apply();
-  await FileLogStore.init();
-  try {
-    await FcmService().initialize();
-  } catch (_) {}
+  /* English is enough to paint the first frame; HI/MR load after. */
+  await LocaleCatalog.loadEnglish();
 
   runApp(
     const ProviderScope(
       child: PosBillingwalaApp(),
     ),
   );
+
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    AppStartup.scheduleHeavyServices();
+  });
 }

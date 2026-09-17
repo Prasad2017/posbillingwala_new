@@ -101,7 +101,9 @@ class SqlFileLogInterceptor extends QueryInterceptor {
     required Future<T> Function() run,
     String Function(T value)? summarize,
   }) async {
-    if (!AppConfig.enableLogging || _shouldSkip(sql)) return run();
+    if (!AppConfig.enableVerboseIoLogging || _shouldSkip(sql, kind)) {
+      return run();
+    }
     try {
       final result = await run();
       FileLogStore.logDbQuery(
@@ -122,7 +124,8 @@ class SqlFileLogInterceptor extends QueryInterceptor {
     }
   }
 
-  static bool _shouldSkip(String sql) {
+  static bool _shouldSkip(String sql, String kind) {
+    if (kind == 'SELECT') return true;
     final s = sql.trim().toLowerCase();
     return s.contains('sqlite_master') ||
         s.contains('sqlite_schema') ||

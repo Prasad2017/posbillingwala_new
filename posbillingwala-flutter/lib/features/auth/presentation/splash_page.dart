@@ -30,21 +30,29 @@ class SplashPageState extends ConsumerState<SplashPage> {
   @override
   void initState() {
     super.initState();
-    Future<void>.delayed(const Duration(milliseconds: 1200), () async {
+    /* Native launch splash already branded — start session immediately. */
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      if (!kDebugMode) {
-        await promptPlayUpdateIfNeeded();
-      }
-      if (!mounted) return;
-      if (AppPlatform.requiresNetwork && !await ensureOnline()) {
-        if (!mounted) return;
-        setState(() => webOfflineMessage = kOnlineRequiredMessage);
-        ref.read(authControllerProvider.notifier).bootstrap();
-        return;
-      }
-      if (!mounted) return;
-      ref.read(authControllerProvider.notifier).bootstrap();
+      startBootstrap();
     });
+    if (!kDebugMode) {
+      /* Non-blocking; InAppUpdateHost also listens after first frame. */
+      Future<void>.delayed(const Duration(milliseconds: 1500), () {
+        if (!mounted) return;
+        promptPlayUpdateIfNeeded();
+      });
+    }
+  }
+
+  Future<void> startBootstrap() async {
+    if (AppPlatform.requiresNetwork && !await ensureOnline()) {
+      if (!mounted) return;
+      setState(() => webOfflineMessage = kOnlineRequiredMessage);
+      ref.read(authControllerProvider.notifier).bootstrap();
+      return;
+    }
+    if (!mounted) return;
+    ref.read(authControllerProvider.notifier).bootstrap();
   }
 
   Future<void> promptPlayUpdateIfNeeded() async {
@@ -169,9 +177,12 @@ class SplashPageState extends ConsumerState<SplashPage> {
             fit: BoxFit.cover,
             width: double.infinity,
             height: double.infinity,
+            filterQuality: FilterQuality.low,
+            gaplessPlayback: true,
             errorBuilder: (_, _, _) => Image.asset(
               AppAssets.appLogo,
               fit: BoxFit.contain,
+              filterQuality: FilterQuality.low,
             ),
           ),
           SafeArea(

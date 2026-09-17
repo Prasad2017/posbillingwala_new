@@ -8,6 +8,7 @@ import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/theme/app_typography.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
+import 'package:pos_billingwala_v2/core/utils/money_format.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/masters/domain/masters_providers.dart';
 import 'package:pos_billingwala_v2/features/masters/domain/product_units.dart';
@@ -92,7 +93,6 @@ class PosPageState extends ConsumerState<PosPage> {
         ref.read(billingSessionProvider.notifier).usePos();
       });
     }
-    posPageSearchController.addListener(() => setState(() {}));
   }
 
   @override
@@ -110,7 +110,7 @@ class PosPageState extends ConsumerState<PosPage> {
     final cartSummary = ref.watch(cartSummaryProvider);
     final selectedCategoryId = ref.watch(posSelectedCategoryIdProvider);
     final selectedSubcategoryId = ref.watch(posSelectedSubcategoryIdProvider);
-    final currency = NumberFormat.currency(locale: 'en_IN', symbol: '₹');
+    final currency = MoneyFormat.inr;
     final showSideCart = context.showPosSideCart;
     final persistentCart = context.showPosPersistentCart;
 
@@ -383,11 +383,14 @@ class CatalogPane extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final query = searchController.text.trim().toLowerCase();
     final combosAsync = ref.watch(posCombosProvider);
     final subsAsync = ref.watch(posSubcategoriesProvider);
 
-    return Column(
+    return ListenableBuilder(
+      listenable: searchController,
+      builder: (context, _) {
+        final query = searchController.text.trim().toLowerCase();
+        return Column(
       children: [
         if (session.tableNumber != null || session.customerName != null)
           Padding(
@@ -590,6 +593,7 @@ class CatalogPane extends ConsumerWidget {
                     }
                     return ListView.separated(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                      addAutomaticKeepAlives: false,
                       itemCount: filtered.length,
                       separatorBuilder: (_, _) => const SizedBox(height: 8),
                       itemBuilder: (context, index) {
@@ -651,6 +655,7 @@ class CatalogPane extends ConsumerWidget {
                                 : 1.55;
                         return GridView.builder(
                           padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
+                          addAutomaticKeepAlives: false,
                           gridDelegate:
                               SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: crossAxisCount,
@@ -674,6 +679,8 @@ class CatalogPane extends ConsumerWidget {
                 ),
         ),
       ],
+    );
+      },
     );
   }
 }
@@ -811,7 +818,8 @@ class ProductCard extends ConsumerWidget {
         ? '₹ ${product.productPrice.toStringAsFixed(1)}'
         : '₹ ${product.productPrice.toStringAsFixed(1)}/$unit';
 
-    return Material(
+    return RepaintBoundary(
+      child: Material(
       color: Colors.white,
       borderRadius: BorderRadius.circular(14),
       elevation: 0,
@@ -884,6 +892,7 @@ class ProductCard extends ConsumerWidget {
           ),
         ),
       ),
+    ),
     );
   }
 }
@@ -1114,7 +1123,7 @@ class CartSheetBody extends ConsumerWidget {
     return CartPane(
       session: session,
       cartAsync: ref.watch(cartItemsProvider),
-      currency: NumberFormat.currency(locale: 'en_IN', symbol: 'Rs. '),
+      currency: MoneyFormat.inrRs,
     );
   }
 }

@@ -11,14 +11,25 @@ class LocaleCatalog {
 
   static bool get isLoaded => _loaded;
 
-  static Future<void> load() async {
-    if (_loaded) return;
+  /* First-paint path: English only. */
+  static Future<void> loadEnglish() async {
+    if (_byLang.containsKey('en')) return;
+    await _loadLang('en');
+  }
+
+  /* Remaining locales after the first frame. */
+  static Future<void> loadRemaining() async {
     await Future.wait([
-      _loadLang('en'),
-      _loadLang('hi'),
-      _loadLang('mr'),
+      if (!_byLang.containsKey('hi')) _loadLang('hi'),
+      if (!_byLang.containsKey('mr')) _loadLang('mr'),
     ]);
     _loaded = true;
+  }
+
+  static Future<void> load() async {
+    if (_loaded) return;
+    await loadEnglish();
+    await loadRemaining();
   }
 
   static Future<void> _loadLang(String lang) async {

@@ -30,7 +30,7 @@ class WebCloudRefreshListener {
     lifecycle = AppLifecycleListener(onResume: () => unawaited(refresh()));
     timer?.cancel();
     timer = Timer.periodic(pollInterval, (_) => unawaited(refresh()));
-    unawaited(refresh());
+    unawaited(Future<void>.delayed(const Duration(seconds: 2), refresh));
   }
 
   Future<void> refresh({bool force = false}) async {

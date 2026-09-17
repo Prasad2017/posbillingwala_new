@@ -15,7 +15,7 @@ abstract final class FileLogStore {
 
   static const String folderBrand = 'Pos Billingwala';
   static const String folderLogs = 'Logs';
-  static const int maxBodyChars = 120000;
+  static const int maxBodyChars = 8000;
 
   static Directory? _logsDir;
   static Future<void>? _initFuture;
@@ -166,6 +166,9 @@ abstract final class FileLogStore {
   }
 
   static void _enqueue(String kind, String text) {
+    if (_writeQueue.length > 80) {
+      _writeQueue.removeRange(0, _writeQueue.length - 80);
+    }
     _writeQueue.add(() => _appendRaw(kind, text));
     _drain();
   }
@@ -190,7 +193,7 @@ abstract final class FileLogStore {
     if (dir == null) return;
     final day = DateFormat('yyyy-MM-dd').format(DateTime.now());
     final file = File('${dir.path}${Platform.pathSeparator}${kind}_$day.log');
-    await file.writeAsString(text, mode: FileMode.append, flush: true);
+    await file.writeAsString(text, mode: FileMode.append);
   }
 
   static String _pretty(Object? value) {

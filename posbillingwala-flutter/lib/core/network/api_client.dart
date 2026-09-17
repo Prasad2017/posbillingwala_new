@@ -63,30 +63,43 @@ class ApiClient {
         onRequest: (options, handler) {
           options.extra['screenName'] ??= ScreenContext.screenName;
           options.extra['requestStartedAt'] = DateTime.now().toIso8601String();
-          AppLogger.info(
-            'API → ${options.method} ${options.uri}\n'
-            'screen=${options.extra['screenName']}\n'
-            'headers=${_safeHeaders(options.headers)}\n'
-            'data=${options.data}',
-          );
+          if (AppConfig.enableVerboseIoLogging) {
+            AppLogger.info(
+              'API → ${options.method} ${options.uri}\n'
+              'screen=${options.extra['screenName']}\n'
+              'headers=${_safeHeaders(options.headers)}\n'
+              'data=${options.data}',
+            );
+          } else {
+            AppLogger.info(
+              'API → ${options.method} ${options.uri} '
+              'screen=${options.extra['screenName']}',
+            );
+          }
           handler.next(options);
         },
         onResponse: (response, handler) {
           final opts = response.requestOptions;
           final apiLabel = _apiLabel(opts);
-          AppLogger.info(
-            'API ← ${response.statusCode} ${opts.uri}\n'
-            'screen=${opts.extra['screenName']}\n'
-            'body=${response.data}',
-          );
-          FileLogStore.logApi(
-            method: opts.method,
-            api: apiLabel,
-            request: _requestPayload(opts),
-            response: response.data,
-            statusCode: response.statusCode,
-            screenName: opts.extra['screenName']?.toString(),
-          );
+          if (AppConfig.enableVerboseIoLogging) {
+            AppLogger.info(
+              'API ← ${response.statusCode} ${opts.uri}\n'
+              'screen=${opts.extra['screenName']}\n'
+              'body=${response.data}',
+            );
+            FileLogStore.logApi(
+              method: opts.method,
+              api: apiLabel,
+              request: _requestPayload(opts),
+              response: response.data,
+              statusCode: response.statusCode,
+              screenName: opts.extra['screenName']?.toString(),
+            );
+          } else {
+            AppLogger.info(
+              'API ← ${response.statusCode} ${opts.uri}',
+            );
+          }
           handler.next(response);
         },
         onError: (error, handler) {

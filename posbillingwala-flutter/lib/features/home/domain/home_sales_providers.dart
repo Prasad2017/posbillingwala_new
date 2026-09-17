@@ -31,16 +31,16 @@ class HomeSalesPeriodNotifier extends Notifier<HomeSalesPeriod> {
   }
 }
 
-final allTimeInvoicesProvider = StreamProvider<List<Invoice>>((ref) {
-  return ref.watch(appDatabaseProvider).watchAllBillableInvoices();
+final allTimeSalesAggregateProvider =
+    StreamProvider<InvoiceSalesAggregate>((ref) {
+  return ref.watch(appDatabaseProvider).watchSalesAggregate();
 });
 
 final allTimeSalesSummaryProvider = Provider<SalesSummary>((ref) {
-  final invoices = ref.watch(allTimeInvoicesProvider).maybeWhen(
-        data: (rows) => rows,
-        orElse: () => const <Invoice>[],
+  return ref.watch(allTimeSalesAggregateProvider).maybeWhen(
+        data: SalesSummary.fromAggregate,
+        orElse: () => SalesSummary.empty,
       );
-  return SalesSummary.fromInvoices(invoices);
 });
 
 /* Cloud overview (Android `getHomeSalesOverview`) — cache first, then network. */

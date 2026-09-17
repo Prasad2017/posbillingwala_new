@@ -63,7 +63,9 @@ class ConnectivitySyncListener {
       status.setOnline(online);
       wasOffline = !online;
       if (online) {
-        unawaited(syncNow(force: true, reason: 'start'));
+        Future<void>.delayed(const Duration(seconds: 2), () {
+          unawaited(syncNow(force: true, reason: 'start'));
+        });
       }
     });
 

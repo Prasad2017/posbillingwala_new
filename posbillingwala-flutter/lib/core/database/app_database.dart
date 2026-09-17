@@ -16,6 +16,75 @@ import 'package:pos_billingwala_v2/features/print/domain/shop_receipt_profile.da
 
 part 'app_database.g.dart';
 
+/* SQLite SUM/COUNT row for home and report KPI cards. */
+class InvoiceSalesAggregate {
+  const InvoiceSalesAggregate({
+    required this.billCount,
+    required this.totalSales,
+    required this.subTotal,
+    required this.gstTotal,
+    required this.discountTotal,
+    required this.cashTotal,
+    required this.upiTotal,
+    required this.takeawayCount,
+    required this.tableCount,
+  });
+
+  final int billCount;
+  final double totalSales;
+  final double subTotal;
+  final double gstTotal;
+  final double discountTotal;
+  final double cashTotal;
+  final double upiTotal;
+  final int takeawayCount;
+  final int tableCount;
+
+  int get posCount {
+    final remaining = billCount - takeawayCount - tableCount;
+    return remaining < 0 ? 0 : remaining;
+  }
+
+  static const empty = InvoiceSalesAggregate(
+    billCount: 0,
+    totalSales: 0,
+    subTotal: 0,
+    gstTotal: 0,
+    discountTotal: 0,
+    cashTotal: 0,
+    upiTotal: 0,
+    takeawayCount: 0,
+    tableCount: 0,
+  );
+
+  factory InvoiceSalesAggregate.fromRow(QueryRow? row) {
+    if (row == null) return InvoiceSalesAggregate.empty;
+    return InvoiceSalesAggregate(
+      billCount: _asInt(row.data['bill_count']),
+      totalSales: _asDouble(row.data['total_sales']),
+      subTotal: _asDouble(row.data['sub_total']),
+      gstTotal: _asDouble(row.data['gst_total']),
+      discountTotal: _asDouble(row.data['discount_total']),
+      cashTotal: _asDouble(row.data['cash_total']),
+      upiTotal: _asDouble(row.data['upi_total']),
+      takeawayCount: _asInt(row.data['takeaway_count']),
+      tableCount: _asInt(row.data['table_count']),
+    );
+  }
+
+  static int _asInt(Object? value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse('$value') ?? 0;
+  }
+
+  static double _asDouble(Object? value) {
+    if (value is double) return value;
+    if (value is num) return value.toDouble();
+    return double.tryParse('$value') ?? 0;
+  }
+}
+
 @DriftDatabase(
   tables: [
     FoodTypes,
@@ -62,12 +131,13 @@ class AppDatabase extends _$AppDatabase {
   String get activeBranchId => scopeBranch;
 
   @override
-  int get schemaVersion => 22;
+  int get schemaVersion => 23;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (m) async {
           await m.createAll();
+          await ensurePerformanceIndexes();
         },
         onUpgrade: (m, from, to) async {
           if (from < 2) {
@@ -289,8 +359,51 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(inventoryMovements, inventoryMovements.inventoryNote);
             await m.addColumn(inventoryMovements, inventoryMovements.unitCost);
           }
+          if (from < 23) {
+            await ensurePerformanceIndexes();
+          }
         },
       );
+
+  /* Speeds catalog filters and home/report invoice date scans. */
+  Future<void> ensurePerformanceIndexes() async {
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS idx_invoices_branch_date '
+      'ON invoices (branch_id, invoice_date)',
+    );
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS idx_invoices_order_status '
+      'ON invoices (invoice_order_status, branch_id)',
+    );
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS idx_products_active_cat '
+      'ON products (product_deleted_status, category_id, subcategory_id)',
+    );
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS idx_products_name '
+      'ON products (product_name)',
+    );
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS idx_categories_deleted_sort '
+      'ON product_categories (category_deleted_status, category_sort_order)',
+    );
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS idx_subcategories_cat '
+      'ON product_subcategories (category_id, subcategory_deleted_status)',
+    );
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS idx_cart_scope '
+      'ON cart_items (cart_scope)',
+    );
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS idx_invoice_items_number '
+      'ON invoice_items (invoice_number)',
+    );
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS idx_combos_active '
+      'ON combos (combo_deleted_status, combo_active_status)',
+    );
+  }
 
   /* Cart + invoice line qty: int → real (KG / Gram decimal billing). */
   Future<void> migrateDecimalQuantities() async {
@@ -2031,14 +2144,96 @@ WHERE cart_id = 0;
   }
 
   Future<int> countActiveCombos() async {
-    final rows = await (select(combos)
-          ..where(
-            (t) =>
-                t.comboDeletedStatus.equals('0') &
-                t.comboActiveStatus.equals('1'),
-          ))
-        .get();
-    return rows.length;
+    final countExp = combos.comboId.count();
+    final query = selectOnly(combos)
+      ..addColumns([countExp])
+      ..where(
+        combos.comboDeletedStatus.equals('0') &
+            combos.comboActiveStatus.equals('1'),
+      );
+    final row = await query.getSingle();
+    return row.read(countExp) ?? 0;
+  }
+
+  Stream<int> watchCountActiveProducts() {
+    final countExp = products.productId.count();
+    final query = selectOnly(products)
+      ..addColumns([countExp])
+      ..where(products.productDeletedStatus.equals('0'));
+    return query.watch().map((rows) => rows.first.read(countExp) ?? 0);
+  }
+
+  Stream<int> watchCountActiveCategories() {
+    final countExp = productCategories.categoryId.count();
+    final query = selectOnly(productCategories)
+      ..addColumns([countExp])
+      ..where(productCategories.categoryDeletedStatus.equals('0'));
+    return query.watch().map((rows) => rows.first.read(countExp) ?? 0);
+  }
+
+  Stream<int> watchCountActiveSubcategories() {
+    final countExp = productSubcategories.subcategoryId.count();
+    final query = selectOnly(productSubcategories)
+      ..addColumns([countExp])
+      ..where(productSubcategories.subcategoryDeletedStatus.equals('0'));
+    return query.watch().map((rows) => rows.first.read(countExp) ?? 0);
+  }
+
+  Stream<int> watchCountActiveCombos() {
+    final countExp = combos.comboId.count();
+    final query = selectOnly(combos)
+      ..addColumns([countExp])
+      ..where(
+        combos.comboDeletedStatus.equals('0') &
+            combos.comboActiveStatus.equals('1'),
+      );
+    return query.watch().map((rows) => rows.first.read(countExp) ?? 0);
+  }
+
+  /* Home KPIs: SUM/COUNT in SQLite instead of loading every invoice row. */
+  Stream<InvoiceSalesAggregate> watchSalesAggregate({
+    DateTime? start,
+    DateTime? end,
+  }) {
+    final where = StringBuffer(
+      "LOWER(IFNULL(invoice_order_status, 'completed')) "
+      "NOT IN ('refunded', 'cancelled')",
+    );
+    final vars = <Variable>[];
+    if (scopeBranch.isNotEmpty) {
+      where.write(" AND (branch_id = ? OR branch_id = '')");
+      vars.add(Variable.withString(scopeBranch));
+    }
+    if (start != null) {
+      where.write(' AND invoice_date >= ?');
+      vars.add(Variable.withDateTime(start));
+    }
+    if (end != null) {
+      where.write(' AND invoice_date < ?');
+      vars.add(Variable.withDateTime(end));
+    }
+
+    return customSelect(
+      '''
+SELECT
+  COUNT(*) AS bill_count,
+  IFNULL(SUM(total_amount), 0) AS total_sales,
+  IFNULL(SUM(sub_total), 0) AS sub_total,
+  IFNULL(SUM(total_gst_amount), 0) AS gst_total,
+  IFNULL(SUM(discount), 0) AS discount_total,
+  IFNULL(SUM(cash_amount), 0) AS cash_total,
+  IFNULL(SUM(upi_amount), 0) AS upi_total,
+  SUM(CASE WHEN invoice_type = 'take_away' THEN 1 ELSE 0 END) AS takeaway_count,
+  SUM(CASE WHEN invoice_type = 'table_wise' THEN 1 ELSE 0 END) AS table_count
+FROM invoices
+WHERE $where
+''',
+      variables: vars,
+      readsFrom: {invoices},
+    ).watch().map((rows) {
+      final row = rows.isEmpty ? null : rows.first;
+      return InvoiceSalesAggregate.fromRow(row);
+    });
   }
 
   Future<int> countActiveProducts() async {

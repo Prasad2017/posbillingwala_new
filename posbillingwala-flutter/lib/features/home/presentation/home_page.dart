@@ -10,6 +10,7 @@ import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/permissions/app_permission_service.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
+import 'package:pos_billingwala_v2/core/utils/money_format.dart';
 import 'package:pos_billingwala_v2/core/widgets/app_svg.dart';
 import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
@@ -47,23 +48,19 @@ class HomePageState extends ConsumerState<HomePage> {
   String printerChip = 'Checking…';
   String? homePageCloseTimeLabel;
   String? homePageOpenTimeLabel;
-  DateTime homePageNow = DateTime.now();
-  Timer? clock;
 
   @override
   void initState() {
     super.initState();
-    clock = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!mounted) return;
-      setState(() => homePageNow = DateTime.now());
-    });
     if (!permissionsPrompted) {
       permissionsPrompted = true;
       Future.microtask(() async {
-        /* Pull catalog if local DB was emptied by a prior wrong-id sync. */
-        await ref
-            .read(catalogBootstrapListenerProvider)
-            .ensureCatalogIfEmpty(force: true);
+        /* Catalog recover in parallel — do not block printer / permissions. */
+        unawaited(
+          ref
+              .read(catalogBootstrapListenerProvider)
+              .ensureCatalogIfEmpty(force: true),
+        );
         final service = const AppPermissionService();
         if (!await service.arePrintPermissionsGranted) {
           await service.requestAll();
@@ -91,12 +88,6 @@ class HomePageState extends ConsumerState<HomePage> {
         await refreshHoursLabels();
       });
     }
-  }
-
-  @override
-  void dispose() {
-    clock?.cancel();
-    super.dispose();
   }
 
   Future<void> refreshHoursLabels() async {
@@ -143,7 +134,7 @@ class HomePageState extends ConsumerState<HomePage> {
   }
 
   String homePageGreeting() {
-    final hour = homePageNow.hour;
+    final hour = DateTime.now().hour;
     if (hour < 12) return 'Good Morning';
     if (hour < 17) return 'Good Afternoon';
     return 'Good Evening';
@@ -177,9 +168,7 @@ class HomePageState extends ConsumerState<HomePage> {
     final kpis = ref.watch(homeDashboardKpisProvider);
     final period = ref.watch(homeSalesPeriodProvider);
     final localCatalog = ref.watch(catalogCountsProvider);
-    final currency = NumberFormat.currency(locale: 'en_IN', symbol: '₹ ');
-    final nowLabel =
-        DateFormat('EEE, dd MMM yyyy | hh:mm:ss a').format(homePageNow);
+    final currency = MoneyFormat.inrSpaced;
 
     final flagsMissing = session == null || anyBilling(session);
     final perms = ref.watch(permissionControllerProvider);
@@ -286,12 +275,15 @@ class HomePageState extends ConsumerState<HomePage> {
           }
           ref.invalidate(categoriesProvider);
           ref.invalidate(subcategoriesProvider);
-          ref.invalidate(allProductsProvider);
-          ref.invalidate(combosListProvider);
-          ref.invalidate(todayInvoicesProvider);
-          ref.invalidate(yesterdayInvoicesProvider);
-          ref.invalidate(monthInvoicesProvider);
-          ref.invalidate(allTimeInvoicesProvider);
+          ref.invalidate(catalogCategoryCountProvider);
+          ref.invalidate(catalogSubcategoryCountProvider);
+          ref.invalidate(catalogProductCountProvider);
+          ref.invalidate(catalogComboCountProvider);
+          ref.invalidate(catalogCountsProvider);
+          ref.invalidate(todaySalesAggregateProvider);
+          ref.invalidate(yesterdaySalesAggregateProvider);
+          ref.invalidate(monthSalesAggregateProvider);
+          ref.invalidate(allTimeSalesAggregateProvider);
           ref.invalidate(homeSalesOverviewProvider);
           ref.invalidate(shopOpenNowProvider);
           await refreshPrinterChip();
@@ -306,7 +298,6 @@ class HomePageState extends ConsumerState<HomePage> {
                 greeting: '${homePageGreeting()} 👋',
                 shopName: shopName.isEmpty ? 'Your shop' : shopName,
                 shopImageUrl: ApiConstants.mediaUrl(session?.shopImage),
-                nowLabel: nowLabel,
                 unread: unread,
                 printerOnline: printerOnline,
                 printerLabel: printerChip,
@@ -695,13 +686,52 @@ class EscPosUsbHint {
       settings.billUsbIdentifier.trim().isNotEmpty;
 }
 
+class HomeLiveClock extends StatefulWidget {
+  const HomeLiveClock({super.key});
+
+  @override
+  State<HomeLiveClock> createState() => HomeLiveClockState();
+}
+
+class HomeLiveClockState extends State<HomeLiveClock> {
+  static final format = DateFormat('EEE, dd MMM yyyy | hh:mm:ss a');
+  Timer? timer;
+  DateTime now = DateTime.now();
+
+  @override
+  void initState() {
+    super.initState();
+    timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() => now = DateTime.now());
+    });
+  }
+
+  @override
+  void dispose() {
+    timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      format.format(now),
+      style: const TextStyle(
+        color: Color(0xE6FFFFFF),
+        fontSize: 12.5,
+        fontWeight: FontWeight.w500,
+      ),
+    );
+  }
+}
+
 class HomeHeader extends ConsumerWidget {
-  const HomeHeader({super.key, 
+  const HomeHeader({super.key,
     required this.topInset,
     required this.greeting,
     required this.shopName,
     this.shopImageUrl,
-    required this.nowLabel,
     required this.unread,
     required this.printerOnline,
     required this.printerLabel,
@@ -716,7 +746,6 @@ class HomeHeader extends ConsumerWidget {
   final String greeting;
   final String shopName;
   final String? shopImageUrl;
-  final String nowLabel;
   final int unread;
   final bool printerOnline;
   final String printerLabel;
@@ -919,15 +948,8 @@ class HomeHeader extends ConsumerWidget {
                 color: Color(0xCCFFFFFF),
               ),
               const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  nowLabel,
-                  style: const TextStyle(
-                    color: Color(0xE6FFFFFF),
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+              const Expanded(
+                child: HomeLiveClock(),
               ),
               const SizedBox(width: 8),
               const GrowthDecoBadge(),
