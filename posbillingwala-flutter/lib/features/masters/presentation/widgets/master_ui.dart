@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
+import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 
 /* Shared Master Data list/form chrome matching the reference screens. */
 abstract final class MasterUi {
@@ -142,6 +143,7 @@ class MasterDropdown<T> extends StatelessWidget {
     required this.itemLabel,
     required this.onChanged,
     this.hint,
+    this.label,
   });
 
   final T? value;
@@ -149,46 +151,19 @@ class MasterDropdown<T> extends StatelessWidget {
   final String Function(T) itemLabel;
   final ValueChanged<T?> onChanged;
   final String? hint;
+  final String? label;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(MasterUi.fieldRadius),
-        border: Border.all(color: AppColors.border.withValues(alpha: .9)),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<T>(
-          value: value,
-          isExpanded: true,
-          hint: hint == null
-              ? null
-              : Text(
-                  hint!,
-                  style: TextStyle(
-                    fontFamily: AppFonts.family,
-                    color: AppColors.navy.withValues(alpha: .38),
-                  ),
-                ),
-          icon: const Icon(
-            Icons.keyboard_arrow_down_rounded,
-            color: AppColors.primary,
-          ),
-          style: const TextStyle(
-            fontFamily: AppFonts.family,
-            fontSize: 14.5,
-            color: AppColors.navy,
-            fontWeight: FontWeight.w500,
-          ),
-          items: [
-            for (final item in items)
-              DropdownMenuItem(value: item, child: Text(itemLabel(item))),
-          ],
-          onChanged: onChanged,
-        ),
-      ),
+    return AppDropdownFormField<T>(
+      label: label ?? hint ?? 'Select',
+      hint: hint,
+      showLabel: label != null,
+      items: items,
+      itemLabel: itemLabel,
+      value: value,
+      onChanged: onChanged,
+      enableSearch: items.length > 6,
     );
   }
 }

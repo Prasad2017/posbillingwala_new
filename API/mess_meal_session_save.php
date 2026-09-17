@@ -17,6 +17,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $userId = isset($_POST['userId']) ? trim((string) $_POST['userId']) : '';
 pos_require_auth($con, $userId, $response);
+require_once __DIR__ . '/pos_staff.php';
+pos_require_permission($con, $userId, 'mess.manage');
 
 $sessionId = isset($_POST['sessionId']) ? trim((string) $_POST['sessionId']) : '';
 $sessionName = isset($_POST['sessionName']) ? trim((string) $_POST['sessionName']) : '';

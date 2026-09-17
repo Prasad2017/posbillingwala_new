@@ -4,9 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
-import 'package:pos_billingwala_v2/features/inventory/domain/inventory_providers.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
+import 'package:pos_billingwala_v2/features/inventory/domain/inventory_providers.dart';
 
 /* Full-page Add Expense form matching the reference layout. */
 class AddExpensePage extends ConsumerStatefulWidget {

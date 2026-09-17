@@ -6,6 +6,8 @@ import 'package:drift_flutter/drift_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:pos_billingwala_v2/core/database/branch_scope.dart';
 import 'package:pos_billingwala_v2/core/database/tables.dart';
+import 'package:pos_billingwala_v2/core/logging/sql_file_log_interceptor.dart';
+import 'package:pos_billingwala_v2/core/constants/app_config.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/user_session.dart';
 import 'package:pos_billingwala_v2/features/company/data/company_dtos.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/payment_mode.dart';
@@ -60,7 +62,7 @@ class AppDatabase extends _$AppDatabase {
   String get activeBranchId => scopeBranch;
 
   @override
-  int get schemaVersion => 18;
+  int get schemaVersion => 22;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -270,8 +272,167 @@ class AppDatabase extends _$AppDatabase {
           if (from < 18) {
             await migrateCartIdPrimaryKey();
           }
+          if (from < 19) {
+            await m.addColumn(products, products.productImage);
+          }
+          if (from < 20) {
+            await m.addColumn(invoices, invoices.createdByStaffId);
+            await m.addColumn(invoices, invoices.createdByStaffName);
+          }
+          if (from < 21) {
+            await m.addColumn(products, products.productMrp);
+            await migrateDecimalQuantities();
+          }
+          if (from < 22) {
+            await m.addColumn(products, products.priceIncludesGst);
+            await m.addColumn(inventoryMovements, inventoryMovements.movementType);
+            await m.addColumn(inventoryMovements, inventoryMovements.inventoryNote);
+            await m.addColumn(inventoryMovements, inventoryMovements.unitCost);
+          }
         },
       );
+
+  /* Cart + invoice line qty: int → real (KG / Gram decimal billing). */
+  Future<void> migrateDecimalQuantities() async {
+    await customStatement('''
+CREATE TABLE IF NOT EXISTS cart_items_v21 (
+  cart_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  product_id INTEGER NOT NULL,
+  cart_scope TEXT NOT NULL DEFAULT '',
+  portion_id INTEGER NOT NULL DEFAULT 0,
+  product_name TEXT NOT NULL DEFAULT '',
+  category_id INTEGER NULL,
+  category_name TEXT NULL,
+  product_code TEXT NULL,
+  unit_price REAL NOT NULL DEFAULT 0.0,
+  product_old_price REAL NULL,
+  product_new_price REAL NULL,
+  gst_percent REAL NOT NULL DEFAULT 0.0,
+  product_cgst REAL NOT NULL DEFAULT 0.0,
+  product_sgst REAL NOT NULL DEFAULT 0.0,
+  quantity REAL NOT NULL DEFAULT 1.0,
+  printed_quantity REAL NOT NULL DEFAULT 0.0,
+  kot_printed TEXT NOT NULL DEFAULT '0',
+  product_unit TEXT NULL,
+  portion_name TEXT NULL,
+  snapshot_product_name TEXT NULL,
+  snapshot_line_price REAL NULL,
+  snapshot_combo_components TEXT NULL,
+  cart_discount REAL NOT NULL DEFAULT 0.0,
+  cart_discount_type TEXT NOT NULL DEFAULT 'Amount',
+  cart_packing_charge REAL NOT NULL DEFAULT 0.0,
+  cart_packing_charge_type TEXT NOT NULL DEFAULT 'Percentage',
+  no_of_table TEXT NOT NULL DEFAULT '',
+  cart_order_status TEXT NULL,
+  cart_status TEXT NOT NULL DEFAULT '1',
+  user_id TEXT NULL,
+  dining_session_id INTEGER NULL,
+  order_round_id INTEGER NULL,
+  line_type TEXT NOT NULL DEFAULT 'product',
+  combo_id INTEGER NULL,
+  combo_network_status TEXT NULL,
+  updated_at INTEGER NOT NULL
+)''');
+    try {
+      await customStatement('''
+INSERT INTO cart_items_v21 (
+  cart_id, product_id, cart_scope, portion_id, product_name, category_id,
+  category_name, product_code, unit_price, product_old_price, product_new_price,
+  gst_percent, product_cgst, product_sgst, quantity, printed_quantity,
+  kot_printed, product_unit, portion_name, snapshot_product_name,
+  snapshot_line_price, snapshot_combo_components, cart_discount,
+  cart_discount_type, cart_packing_charge, cart_packing_charge_type,
+  no_of_table, cart_order_status, cart_status, user_id, dining_session_id,
+  order_round_id, line_type, combo_id, combo_network_status, updated_at
+)
+SELECT
+  cart_id, product_id, cart_scope, portion_id, product_name, category_id,
+  category_name, product_code, unit_price, product_old_price, product_new_price,
+  gst_percent, product_cgst, product_sgst,
+  CAST(quantity AS REAL), CAST(printed_quantity AS REAL),
+  kot_printed, product_unit, portion_name, snapshot_product_name,
+  snapshot_line_price, snapshot_combo_components, cart_discount,
+  cart_discount_type, cart_packing_charge, cart_packing_charge_type,
+  no_of_table, cart_order_status, cart_status, user_id, dining_session_id,
+  order_round_id, line_type, combo_id, combo_network_status, updated_at
+FROM cart_items
+''');
+    } catch (_) {
+      /* Empty / schema mismatch — start fresh cart. */
+    }
+    await customStatement('DROP TABLE IF EXISTS cart_items');
+    await customStatement('ALTER TABLE cart_items_v21 RENAME TO cart_items');
+
+    await customStatement('''
+CREATE TABLE IF NOT EXISTS invoice_items_v21 (
+  invoice_item_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  organization_id TEXT NOT NULL DEFAULT '',
+  branch_id TEXT NOT NULL DEFAULT '',
+  device_id TEXT NOT NULL DEFAULT '',
+  invoice_number TEXT NOT NULL,
+  product_id INTEGER NULL,
+  product_name TEXT NOT NULL DEFAULT '',
+  product_code TEXT NULL,
+  product_price REAL NOT NULL DEFAULT 0.0,
+  product_quantity REAL NOT NULL DEFAULT 1.0,
+  product_cgst REAL NOT NULL DEFAULT 0.0,
+  product_sgst REAL NOT NULL DEFAULT 0.0,
+  product_unit TEXT NULL,
+  category_name TEXT NULL,
+  portion_id INTEGER NULL,
+  portion_name TEXT NULL,
+  snapshot_product_name TEXT NULL,
+  snapshot_line_price REAL NULL,
+  snapshot_combo_components TEXT NULL,
+  combo_id INTEGER NULL,
+  invoice_item_type TEXT NOT NULL DEFAULT 'product',
+  product_status TEXT NOT NULL DEFAULT 'completed',
+  invoice_item_network_status TEXT NULL,
+  invoice_item_sync_status TEXT NOT NULL DEFAULT '0'
+)''');
+    try {
+      await customStatement('''
+INSERT INTO invoice_items_v21 SELECT
+  invoice_item_id, organization_id, branch_id, device_id, invoice_number,
+  product_id, product_name, product_code, product_price,
+  CAST(product_quantity AS REAL), product_cgst, product_sgst, product_unit,
+  category_name, portion_id, portion_name, snapshot_product_name,
+  snapshot_line_price, snapshot_combo_components, combo_id, invoice_item_type,
+  product_status, invoice_item_network_status, invoice_item_sync_status
+FROM invoice_items
+''');
+    } catch (_) {}
+    await customStatement('DROP TABLE IF EXISTS invoice_items');
+    await customStatement(
+      'ALTER TABLE invoice_items_v21 RENAME TO invoice_items',
+    );
+
+    await customStatement('''
+CREATE TABLE IF NOT EXISTS kot_items_v21 (
+  kot_item_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  organization_id TEXT NOT NULL DEFAULT '',
+  branch_id TEXT NOT NULL DEFAULT '',
+  device_id TEXT NOT NULL DEFAULT '',
+  kot_id INTEGER NOT NULL,
+  cart_id INTEGER NULL,
+  product_id INTEGER NULL,
+  product_name TEXT NOT NULL DEFAULT '',
+  product_quantity REAL NOT NULL DEFAULT 1.0,
+  portion_name TEXT NULL,
+  product_unit TEXT NULL
+)''');
+    try {
+      await customStatement('''
+INSERT INTO kot_items_v21 SELECT
+  kot_item_id, organization_id, branch_id, device_id, kot_id, cart_id,
+  product_id, product_name, CAST(product_quantity AS REAL), portion_name,
+  product_unit
+FROM kot_items
+''');
+    } catch (_) {}
+    await customStatement('DROP TABLE IF EXISTS kot_items');
+    await customStatement('ALTER TABLE kot_items_v21 RENAME TO kot_items');
+  }
 
   /* Android `cartId INTEGER PRIMARY KEY AUTOINCREMENT`. */
   Future<void> migrateCartIdPrimaryKey() async {
@@ -358,13 +519,15 @@ WHERE cart_id = 0;
   }
 
   static QueryExecutor appDatabaseOpen() {
-    return driftDatabase(
+    final base = driftDatabase(
       name: 'pos_billingwala_v2',
       web: DriftWebOptions(
         sqlite3Wasm: Uri.parse('sqlite3.wasm'),
         driftWorker: Uri.parse('drift_worker.js'),
       ),
     );
+    if (!AppConfig.enableLogging) return base;
+    return base.interceptWith(SqlFileLogInterceptor());
   }
 
   void setBranchScope({
@@ -861,8 +1024,11 @@ WHERE cart_id = 0;
     int? categoryId,
     String? categoryName,
     String? productCode,
+    String? productImage,
     double productPrice = 0,
+    double productMrp = 0,
     String openPrice = '0',
+    String priceIncludesGst = '0',
     String? productUnit,
     double productCgst = 0,
     double productSgst = 0,
@@ -881,8 +1047,11 @@ WHERE cart_id = 0;
         categoryName: Value(categoryName),
         subcategoryId: Value(subcategoryId),
         productCode: Value(productCode),
+        productImage: Value(productImage),
         productPrice: Value(productPrice),
+        productMrp: Value(productMrp > 0 ? productMrp : productPrice),
         openPrice: Value(openPrice),
+        priceIncludesGst: Value(priceIncludesGst == '1' ? '1' : '0'),
         productUnit: Value(productUnit),
         productCgst: Value(productCgst),
         productSgst: Value(productSgst),
@@ -929,10 +1098,14 @@ WHERE cart_id = 0;
     required int productId,
     required String productName,
     required double productPrice,
+    double productMrp = 0,
     int? categoryId,
     String? categoryName,
     String? productCode,
+    String? productImage,
+    bool clearProductImage = false,
     String openPrice = '0',
+    String priceIncludesGst = '0',
     String? productUnit,
     double productCgst = 0,
     double productSgst = 0,
@@ -946,11 +1119,18 @@ WHERE cart_id = 0;
       ProductsCompanion(
         productName: Value(productName),
         productPrice: Value(productPrice),
+        productMrp: Value(productMrp > 0 ? productMrp : productPrice),
         categoryId: Value(categoryId),
         categoryName: Value(categoryName),
         subcategoryId: Value(subcategoryId),
         productCode: Value(productCode),
+        productImage: clearProductImage
+            ? const Value(null)
+            : (productImage == null
+                ? const Value.absent()
+                : Value(productImage)),
         openPrice: Value(openPrice),
+        priceIncludesGst: Value(priceIncludesGst == '1' ? '1' : '0'),
         productUnit: Value(productUnit),
         productCgst: Value(productCgst),
         productSgst: Value(productSgst),
@@ -1138,7 +1318,7 @@ WHERE cart_id = 0;
                 branchMatches(t.branchId),
           ))
         .get();
-    final totals = <String, ({int qty, double amount, String type})>{};
+    final totals = <String, ({double qty, double amount, String type})>{};
     for (final inv in headers) {
       final lines = await getInvoiceItems(inv.invoiceNumber);
       for (final line in lines) {
@@ -2587,7 +2767,7 @@ WHERE cart_id = 0;
     required int invoiceId,
     required String productName,
     required double productPrice,
-    required int quantity,
+    required double quantity,
     int? productId,
     String? productCode,
     String? categoryName,
@@ -2633,7 +2813,7 @@ WHERE cart_id = 0;
 
   Future<void> updateInvoiceItemQuantity({
     required int invoiceItemId,
-    required int quantity,
+    required double quantity,
     double? productPrice,
   }) async {
     if (quantity <= 0) {
@@ -2674,7 +2854,7 @@ WHERE cart_id = 0;
     final remaining = await getInvoiceItems(invoiceNumber);
     var subtotal = 0.0;
     var taxTotal = 0.0;
-    var qtyTotal = 0;
+    var qtyTotal = 0.0;
     for (final row in remaining) {
       final lineBase = row.productPrice * row.productQuantity;
       subtotal += lineBase;
@@ -2701,7 +2881,7 @@ WHERE cart_id = 0;
         subTotal: Value(subtotal),
         totalGstAmount: Value(taxTotal),
         totalAmount: Value(total),
-        itemCount: Value(qtyTotal),
+        itemCount: Value(qtyTotal.round()),
         invoiceSyncStatus: const Value('0'),
         cashAmount: Value(
           invoice.paymentMode == 'UPI' ? 0 : total,
@@ -2823,14 +3003,14 @@ WHERE cart_id = 0;
     ProductPortion? portion,
     double? shopGstPercentFallback,
     double? unitPriceOverride,
-    int quantity = 1,
+    double quantity = 1,
   }) async {
     final productGst = product.productCgst + product.productSgst;
     final gstPercent = productGst > 0
         ? productGst
         : (shopGstPercentFallback ?? 0);
     final portionId = portion?.portionId ?? 0;
-    final qty = quantity < 1 ? 1 : quantity;
+    final qty = quantity <= 0 ? 1.0 : quantity;
     final existing = await (select(cartItems)
           ..where(
             (t) =>
@@ -3087,7 +3267,7 @@ WHERE cart_id = 0;
 
   Future<void> changeCartQuantity(
     int productId,
-    int quantity, {
+    double quantity, {
     String cartScope = '',
     int portionId = 0,
     double? unitPrice,
@@ -3943,6 +4123,8 @@ WHERE cart_id = 0;
     double packingCharge = 0,
     String packingChargeType = 'Amount',
     bool updateInventory = true,
+    int? createdByStaffId,
+    String? createdByStaffName,
   }) async {
     /* WithTable BluetoothPrint always deducts when stock exists; the printer */
     /* productQuantityUpdate switch is stored but not applied at save. */
@@ -3953,7 +4135,7 @@ WHERE cart_id = 0;
 
     var subtotal = 0.0;
     var taxTotal = 0.0;
-    var qtyTotal = 0;
+    var qtyTotal = 0.0;
     for (final item in items) {
       final lineBase = item.unitPrice * item.quantity;
       subtotal += lineBase;
@@ -4007,7 +4189,11 @@ WHERE cart_id = 0;
             customerAddress: Value(customerAddress),
             diningSessionId: Value(diningSessionId),
             billPrintStatus: const Value(''),
-            itemCount: Value(qtyTotal),
+            createdByStaffId: Value(createdByStaffId),
+            createdByStaffName: Value(
+              (createdByStaffName ?? '').trim(),
+            ),
+            itemCount: Value(qtyTotal.round()),
           ),
         ),
       );
@@ -4072,7 +4258,7 @@ WHERE cart_id = 0;
                 productNameSnapshot: Value(c.productNameSnapshot),
                 portionId: Value(c.portionId),
                 portionNameSnapshot: Value(c.portionNameSnapshot),
-                quantity: Value(c.quantity * item.quantity),
+                quantity: Value((c.quantity * item.quantity).round()),
                 sortOrder: Value(sort++),
                 invoiceComboItemNetworkStatus: Value(
                   appDatabaseNetworkStatus(prefix: 'ici_'),
@@ -4189,6 +4375,9 @@ WHERE cart_id = 0;
     required int productId,
     required String productName,
     required double quantity,
+    String movementType = 'purchase',
+    String note = '',
+    double unitCost = 0,
     DateTime? at,
   }) async {
     if (quantity <= 0) throw StateError('Quantity must be positive');
@@ -4203,6 +4392,50 @@ WHERE cart_id = 0;
           productInventoryQuantity: Value(quantity),
           afterSaleInventoryQuantity: Value(remaining),
           saleInventoryQuantity: const Value(0),
+          movementType: Value(movementType),
+          inventoryNote: Value(note.trim()),
+          unitCost: Value(unitCost < 0 ? 0 : unitCost),
+          inventoryDate: when,
+          inventoryNetworkStatus: appDatabaseNetworkStatus(),
+          inventorySyncStatus: const Value('0'),
+        ),
+      ),
+    );
+    return (select(inventoryMovements)
+          ..where((t) => t.inventoryId.equals(id)))
+        .getSingle();
+  }
+
+  /* Waste / spoilage / damage — stock out without a sale. */
+  Future<InventoryMovement> addWasteOut({
+    required int productId,
+    required String productName,
+    required double quantity,
+    String reason = '',
+    DateTime? at,
+  }) async {
+    if (quantity <= 0) throw StateError('Quantity must be positive');
+    final when = at ?? DateTime.now();
+    final previous = await getCurrentStock(productId);
+    if (previous <= 0) {
+      throw StateError('No stock available for this product');
+    }
+    if (quantity > previous) {
+      throw StateError(
+        'Waste qty ($quantity) exceeds available stock ($previous)',
+      );
+    }
+    final remaining = previous - quantity;
+    final id = await into(inventoryMovements).insert(
+      stampInventory(
+        InventoryMovementsCompanion.insert(
+          productId: productId,
+          productName: Value(productName),
+          productInventoryQuantity: const Value(0),
+          afterSaleInventoryQuantity: Value(remaining),
+          saleInventoryQuantity: Value(quantity),
+          movementType: const Value('waste'),
+          inventoryNote: Value(reason.trim()),
           inventoryDate: when,
           inventoryNetworkStatus: appDatabaseNetworkStatus(),
           inventorySyncStatus: const Value('0'),
@@ -4250,6 +4483,7 @@ WHERE cart_id = 0;
           productInventoryQuantity: const Value(0),
           afterSaleInventoryQuantity: Value(remaining),
           saleInventoryQuantity: Value(quantity),
+          movementType: const Value('sale'),
           inventoryDate: when,
           inventoryNetworkStatus: appDatabaseNetworkStatus(),
           inventorySyncStatus: const Value('0'),
@@ -4647,7 +4881,7 @@ class ProductSalesRow {
   });
 
   final String productName;
-  final int totalQuantity;
+  final double totalQuantity;
   final double totalAmount;
   final String itemType;
 }

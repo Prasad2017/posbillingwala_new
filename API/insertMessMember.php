@@ -16,6 +16,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $memberNetworkStatus = isset($_POST['memberNetworkStatus']) ? $_POST['memberNetworkStatus'] : '';
     $memberStatus = isset($_POST['memberStatus']) ? $_POST['memberStatus'] : 'active';
     $userId = isset($_POST['userId']) ? $_POST['userId'] : '';
+    $__postedUserId = $userId;
+    pos_require_auth($con, $__postedUserId, isset($response) ? $response : array('status'=>'0','message'=>'Unauthorized'));
+    require_once __DIR__ . '/pos_staff.php';
+    pos_require_permission($con, $userId, 'mess.manage');
     $registrationNo = isset($_POST['registrationNo']) ? mess_normalize_registration($_POST['registrationNo']) : '';
     $memberType = isset($_POST['memberType']) ? strtolower(trim((string) $_POST['memberType'])) : 'student';
     if ($memberType !== 'working') {

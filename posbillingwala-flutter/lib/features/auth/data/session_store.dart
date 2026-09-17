@@ -1,6 +1,6 @@
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/session_keys.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/user_session.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SessionStore {
   Future<UserSession?> readSession() async {
@@ -41,6 +41,11 @@ class SessionStore {
       SessionKeys.organizationId,
       SessionKeys.branchId,
       SessionKeys.branchLabel,
+      SessionKeys.userManagementEnabled,
+      SessionKeys.maxUsers,
+      SessionKeys.maxDevices,
+      SessionKeys.maxPrinters,
+      SessionKeys.permissionVersion,
     ]) {
       map[key] = prefs.getString(key);
     }

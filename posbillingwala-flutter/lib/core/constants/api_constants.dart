@@ -126,6 +126,37 @@ abstract final class ApiEndpoints {
   static const String createSupportTicket = 'createSupportTicket.php';
   static const String replySupportTicket = 'replySupportTicket.php';
   static const String reportErrorLog = 'reportErrorLog.php';
+
+  /* Staff / devices / printers / print jobs */
+  static const String staffLogin = 'staffLogin.php';
+  static const String getStaffList = 'getStaffList.php';
+  static const String getStaff = 'getStaff.php';
+  static const String insertStaff = 'insertStaff.php';
+  static const String updateStaff = 'updateStaff.php';
+  static const String deactivateStaff = 'deactivateStaff.php';
+  static const String changeStaffRole = 'changeStaffRole.php';
+  static const String resetStaffPin = 'resetStaffPin.php';
+  static const String getRoleDefaults = 'getRoleDefaults.php';
+  static const String getEffectivePermissions = 'getEffectivePermissions.php';
+  static const String updateStaffSalary = 'updateStaffSalary.php';
+  static const String getSalaryList = 'getSalaryList.php';
+  static const String saveSalaryPayment = 'saveSalaryPayment.php';
+  static const String registerPosDevice = 'registerPosDevice.php';
+  static const String getPosDeviceList = 'getPosDeviceList.php';
+  static const String revokePosDevice = 'revokePosDevice.php';
+  static const String getStorePrinterList = 'getStorePrinterList.php';
+  static const String insertStorePrinter = 'insertStorePrinter.php';
+  static const String updateStorePrinter = 'updateStorePrinter.php';
+  static const String disableStorePrinter = 'disableStorePrinter.php';
+  static const String getPrinterRouteList = 'getPrinterRouteList.php';
+  static const String savePrinterRoutes = 'savePrinterRoutes.php';
+  static const String createPrintJob = 'createPrintJob.php';
+  static const String getPrintJob = 'getPrintJob.php';
+  static const String getPrintJobList = 'getPrintJobList.php';
+  static const String acknowledgePrintJob = 'acknowledgePrintJob.php';
+  static const String retryPrintJob = 'retryPrintJob.php';
+  static const String claimPrintJobs = 'claimPrintJobs.php';
+  static const String registerPrintHost = 'registerPrintHost.php';
 }
 
 /* JSON list / payload keys returned by PHP endpoints */

@@ -237,12 +237,16 @@ class InvoiceSyncController extends Notifier<AsyncValue<InvoiceSyncResult?>> {
       }
 
       final companions = validHeaders.map((e) {
-        final count = itemsByNumber[e.invoiceNumber]?.fold<int>(
+        final count = (itemsByNumber[e.invoiceNumber]?.fold<double>(
               0,
               (sum, item) =>
-                  sum + (item.productQuantity.present ? item.productQuantity.value : 1),
+                  sum +
+                  (item.productQuantity.present
+                      ? item.productQuantity.value
+                      : 1),
             ) ??
-            0;
+            0)
+            .round();
         return e.toCompanion().copyWith(itemCount: Value(count));
       }).toList();
 

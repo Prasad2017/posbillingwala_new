@@ -22,7 +22,7 @@ if (!function_exists('log_sanitize_text')) {
         $text = preg_replace('/("?(?:authorization|auth[_-]?token|refresh[_-]?token|access[_-]?token)"?\s*[:=]\s*"?)([^"&\s,}]+)/i', '$1********', $text);
 
         // JSON-style secrets
-        $jsonKeys = 'password|mpin|otp|token|authorization|refresh_token|access_token|aadhaar|aadhar|card_number|cardNumber|cvv|secret|api_key|apiKey|app_licence_key|licence_key|license_key';
+        $jsonKeys = 'password|mpin|otp|token|authorization|refresh_token|access_token|aadhaar|aadhar|card_number|cardNumber|cvv|secret|api_key|apiKey|app_licence_key|licence_key|license_key|pin|appLoginPin|pinHash|confirmPin';
         $text = preg_replace(
             '/("(?:' . $jsonKeys . ')"\s*:\s*")([^"]*)(")/i',
             '$1******$3',
@@ -30,7 +30,7 @@ if (!function_exists('log_sanitize_text')) {
         );
 
         // Form / query secrets
-        $formKeys = 'password|mpin|otp|token|authorization|refresh_token|access_token|aadhaar|aadhar|card_number|cvv|secret|api_key|app_licence_key|licence_key|license_key|authToken';
+        $formKeys = 'password|mpin|otp|token|authorization|refresh_token|access_token|aadhaar|aadhar|card_number|cvv|secret|api_key|app_licence_key|licence_key|license_key|authToken|pin|appLoginPin|pinHash|confirmPin';
         $text = preg_replace(
             '/((?:' . $formKeys . ')=)([^&\s]*)/i',
             '$1******',

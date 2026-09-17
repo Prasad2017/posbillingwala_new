@@ -6,11 +6,10 @@ import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
-import 'package:pos_billingwala_v2/core/widgtes/widgtes.dart';
+import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
+import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/masters/domain/masters_providers.dart';
 import 'package:pos_billingwala_v2/features/masters/presentation/widgets/master_ui.dart';
-import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
-import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
 
 class ProductPortionsPage extends ConsumerStatefulWidget {
   const ProductPortionsPage({super.key, required this.productId});
@@ -69,7 +68,7 @@ class ProductPortionsPageState extends ConsumerState<ProductPortionsPage> {
     }
     setState(() => busy = true);
     try {
-      await ref.read(appDatabaseProvider).insertLocalPortion(
+      await ref.read(mastersSyncControllerProvider.notifier).createPortion(
             productId: widget.productId,
             portionName: selected.portionName,
             portionPrice: price,
@@ -92,7 +91,9 @@ class ProductPortionsPageState extends ConsumerState<ProductPortionsPage> {
       confirmVariant: AppButtonVariant.danger,
     );
     if (!ok) return;
-    await ref.read(appDatabaseProvider).softDeletePortion(portion.portionId);
+    await ref
+        .read(mastersSyncControllerProvider.notifier)
+        .deletePortion(portion.portionId);
     await reload();
   }
 

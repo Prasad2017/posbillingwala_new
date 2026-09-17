@@ -6,6 +6,7 @@ import 'package:pos_billingwala_v2/core/network/online_guard.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/masters/data/masters_api.dart';
+import 'package:pos_billingwala_v2/features/masters/domain/masters_providers.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/billing_session.dart';
 import 'package:pos_billingwala_v2/features/tables/data/dining_session_api.dart';
 
@@ -19,6 +20,7 @@ class FloorTableView {
     this.openSession,
     this.joinedLabel,
     this.isJoinedSecondary = false,
+    this.tableTypeName = '',
   });
 
   final PosTable table;
@@ -27,6 +29,7 @@ class FloorTableView {
   final DiningSession? openSession;
   final String? joinedLabel;
   final bool isJoinedSecondary;
+  final String tableTypeName;
 
   String get statusLabel {
     switch (status) {
@@ -77,6 +80,14 @@ final floorTablesProvider = Provider<List<FloorTableView>>((ref) {
         data: (rows) => rows,
         orElse: () => const <CartItem>[],
       );
+  final typeRows = ref.watch(tableTypesProvider).maybeWhen(
+        data: (rows) => rows,
+        orElse: () => const <TableType>[],
+      );
+  final typeNameById = <int, String>{
+    for (final t in typeRows)
+      if (t.tableTypeName.trim().isNotEmpty) t.tableTypeId: t.tableTypeName.trim(),
+  };
   final db = ref.watch(appDatabaseProvider);
 
   final totals = <String, double>{};
@@ -94,6 +105,12 @@ final floorTablesProvider = Provider<List<FloorTableView>>((ref) {
     }
   }
 
+  String typeNameFor(PosTable table) {
+    final id = table.tableTypeId;
+    if (id == null) return '';
+    return typeNameById[id] ?? '';
+  }
+
   return tables.map((table) {
     final override = table.statusOverride?.toUpperCase();
     if (override == 'BLOCKED') {
@@ -101,6 +118,7 @@ final floorTablesProvider = Provider<List<FloorTableView>>((ref) {
         table: table,
         status: FloorTableStatus.blocked,
         currentAmount: 0,
+        tableTypeName: typeNameFor(table),
       );
     }
     if (override == 'RESERVED') {
@@ -108,6 +126,7 @@ final floorTablesProvider = Provider<List<FloorTableView>>((ref) {
         table: table,
         status: FloorTableStatus.reserved,
         currentAmount: 0,
+        tableTypeName: typeNameFor(table),
       );
     }
 
@@ -149,6 +168,7 @@ final floorTablesProvider = Provider<List<FloorTableView>>((ref) {
       openSession: session,
       joinedLabel: joinedLabel,
       isJoinedSecondary: isSecondary,
+      tableTypeName: typeNameFor(table),
     );
   }).toList();
 });

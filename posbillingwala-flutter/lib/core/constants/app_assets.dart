@@ -92,7 +92,6 @@ abstract final class AppAssets {
   static const svgCloudDownload = '$svg/ic_cloud_download.svg';
   static const svgCloudUpload = '$svg/ic_cloud_upload.svg';
   static const svgLogout = '$svg/ic_logout.svg';
-  static const svgMic = '$svg/ic_mic.svg';
   static const svgFilter = '$svg/ic_filter.svg';
   static const svgCalendar = '$svg/ic_calendar.svg';
   static const svgClock = '$svg/ic_clock.svg';

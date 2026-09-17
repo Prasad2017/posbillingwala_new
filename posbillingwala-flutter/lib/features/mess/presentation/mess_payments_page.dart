@@ -12,10 +12,9 @@ import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/mess/data/mess_api.dart';
 import 'package:pos_billingwala_v2/features/mess/domain/mess_dtos.dart';
 import 'package:pos_billingwala_v2/features/mess/domain/mess_providers.dart';
-import 'package:pos_billingwala_v2/core/widgtes/widgtes.dart';
+import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
-import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
-import 'package:pos_billingwala_v2/l10n/app_strings.dart';
+import 'package:pos_billingwala_v2/language/app_strings.dart';
 
 class MessPaymentsPage extends ConsumerStatefulWidget {
   const MessPaymentsPage({super.key, this.member});

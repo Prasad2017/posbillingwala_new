@@ -25,6 +25,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $userId = isset($_POST['userId']) ? trim((string) $_POST['userId']) : '';
 pos_require_auth($con, $userId, $response);
+require_once __DIR__ . '/pos_staff.php';
+pos_require_permission($con, $userId, 'mess.manage');
 
 $mode = isset($_POST['payerMode']) ? $_POST['payerMode'] : 'user';
 $mode = mess_normalize_payer_mode($mode);

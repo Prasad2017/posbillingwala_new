@@ -26,6 +26,7 @@ import com.posbillingwala.dealer.Activity.MainActivity;
 import com.posbillingwala.dealer.Extra.BottomSheetUi;
 import com.posbillingwala.dealer.Extra.LicenceValidityTiers;
 import com.posbillingwala.dealer.Fragment.CustomerDetails;
+import com.posbillingwala.dealer.Fragment.StoreOpsFragment;
 import com.posbillingwala.dealer.Model.AllApiResponse;
 import com.posbillingwala.dealer.Model.LicenseResponse;
 import com.posbillingwala.dealer.R;
@@ -124,6 +125,15 @@ public class LicenseAdapter extends RecyclerView.Adapter<LicenseAdapter.MyViewHo
                     holder.binding.amount.setError("Please fill this");
                 }
             }
+        });
+        holder.binding.storeOps.setOnClickListener(v -> {
+            String title = licenseResponse.getShopName1();
+            if (title == null || title.trim().isEmpty()) {
+                title = licenseResponse.getBranchLabel();
+            }
+            ((MainActivity) context).loadFragment(
+                    StoreOpsFragment.newInstance(licenseResponse.getLicensesId(), title == null ? "" : title),
+                    true);
         });
 
         licenseKeyStatus = licenseResponse.getLicenseStatus();

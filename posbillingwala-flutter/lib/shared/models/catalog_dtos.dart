@@ -88,8 +88,11 @@ class ProductDto {
     this.categoryName,
     this.subcategoryId,
     this.productCode,
+    this.productImage,
     this.productPrice = 0,
+    this.productMrp = 0,
     this.openPrice = '0',
+    this.priceIncludesGst = '0',
     this.productUnit,
     this.productCgst = 0,
     this.productSgst = 0,
@@ -104,8 +107,11 @@ class ProductDto {
   final String? categoryName;
   final int? subcategoryId;
   final String? productCode;
+  final String? productImage;
   final double productPrice;
+  final double productMrp;
   final String openPrice;
+  final String priceIncludesGst;
   final String? productUnit;
   final double productCgst;
   final double productSgst;
@@ -119,7 +125,14 @@ class ProductDto {
     return productPrice + (productPrice * tax / 100);
   }
 
+  static String normalizeOpenPrice(Object? raw) {
+    final v = (parseString(raw) ?? '').trim().toLowerCase();
+    return (v == '1' || v == 'on' || v == 'true' || v == 'yes') ? '1' : '0';
+  }
+
   factory ProductDto.fromJson(Map<String, dynamic> json) {
+    final price = parseMoney(json['productPrice']);
+    final mrp = parseMoney(json['productMrp']);
     return ProductDto(
       productId: parseInt(json['productId']) ?? 0,
       productName: parseString(json['productName']) ?? '',
@@ -127,8 +140,11 @@ class ProductDto {
       categoryName: parseString(json['categoryName']),
       subcategoryId: parseInt(json['subcategoryId']),
       productCode: parseString(json['productCode']),
-      productPrice: parseMoney(json['productPrice']),
-      openPrice: parseString(json['openPrice']) ?? '0',
+      productImage: parseString(json['productImage']),
+      productPrice: price,
+      productMrp: mrp > 0 ? mrp : price,
+      openPrice: normalizeOpenPrice(json['openPrice']),
+      priceIncludesGst: normalizeOpenPrice(json['priceIncludesGst']),
       productUnit: parseString(json['productUnit']),
       productCgst: parseMoney(json['productCGST']),
       productSgst: parseMoney(json['productSGST']),
@@ -145,8 +161,11 @@ class ProductDto {
         'categoryName': categoryName,
         'subcategoryId': subcategoryId,
         'productCode': productCode,
+        'productImage': productImage,
         'productPrice': productPrice,
+        'productMrp': productMrp,
         'openPrice': openPrice,
+        'priceIncludesGst': priceIncludesGst,
         'productUnit': productUnit,
         'productCGST': productCgst,
         'productSGST': productSgst,

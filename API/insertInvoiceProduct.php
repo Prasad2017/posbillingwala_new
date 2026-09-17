@@ -1,7 +1,9 @@
 <?php
 include_once('config.php');
 require_once __DIR__ . '/pos_auth_guard.php';
-pos_require_auth($con);
+require_once __DIR__ . '/pos_staff.php';
+$licenceId = pos_require_auth($con);
+pos_require_permission($con, $licenceId, 'bill.create');
 
 $response = array();
 if($_SERVER['REQUEST_METHOD']=='POST'){

@@ -12,6 +12,8 @@ $i=0;
         $userId = $_GET['userId'];
         $__postedUserId = isset($_GET['userId']) ? $_GET['userId'] : (isset($userId) ? $userId : '');
         pos_require_auth($con, $__postedUserId, isset($response) ? $response : array('status'=>'0','message'=>'Unauthorized'));
+        require_once __DIR__ . '/pos_staff.php';
+        pos_require_permission($con, $userId, 'expense.view');
 
         
         date_default_timezone_set("Asia/Calcutta");

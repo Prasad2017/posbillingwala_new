@@ -54,7 +54,33 @@ Old APKs can keep syncing; new APK unlocks subcategory chips, portions, Food/Bev
 
 `p4_2_trial_limits_note.sql` is documentation-only (no DDL). Trial limits are enforced in PHP (`insertInvoice.php`, auth responses).
 
-After migrations, deploy updated PHP endpoints for catalog sync (`getSubcategoryList`, `getPortionList`, `insertSubcategory`, `insertPortion`, etc.) and auth (`auth_tokens.php`, login token issuance).
+### P29 — Multi-user / printers (additive)
+
+Run after `server_upgrade_all.sql`:
+
+```text
+API/migrations/p29_multi_user_printers.sql
+```
+
+Adds `licenses.userManagementEnabled` (default 0), staff/permissions/devices/printers/print jobs/audit tables. Existing shops stay single-user until Admin enables User Management.
+
+### P30 — Bluetooth / USB + paper size (additive)
+
+Run after P29 (or skip if you re-import the updated `p29_multi_user_printers.sql`):
+
+```text
+API/migrations/p30_printer_connection.sql
+```
+
+Adds `store_printers` Bluetooth/USB/paperSize columns if missing, and `company_printer_setting.paperSize`, `kotPaperSize`, `billConnectionType`, `kotConnectionType`, USB identifier/name fields. Defaults: Bluetooth + 2-Inch. Bill and KOT paper sizes are stored separately. APIs also add these columns on first printer request.
+
+### P31 — Product images (additive)
+
+```text
+API/migrations/p31_product_image.sql
+```
+
+Adds nullable `products.productImage` (`MEDIUMTEXT`) for optional product photos (relative media path or compressed data URL). POS shows a thumbnail only when this field is non-empty.
 
 ## After removing the old production dump from git
 

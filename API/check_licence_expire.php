@@ -3,6 +3,8 @@ include_once('config.php');
 include_once('licence_expiry.php');
 require_once __DIR__ . '/licence_payload.php';
 require_once __DIR__ . '/pos_auth_guard.php';
+require_once __DIR__ . '/pos_schema.php';
+require_once __DIR__ . '/pos_devices.php';
 
 mysqli_query($con, 'set names utf8');
 header('Access-Control-Allow-Origin: *');
@@ -27,13 +29,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             "SELECT `licenses`.*, `users`.`shopName`, `users`.`shopImage`, `users`.`reportPin`, `users`.`is_active` AS userActive
              FROM `licenses`
              LEFT JOIN `users` ON `users`.`id` = `licenses`.`userId`
-             WHERE `licenses`.`id`=? AND `licenses`.`android_device_id`=? AND `licenses`.`licenseStatus`='active'",
-            'ss',
-            $licenceId,
-            $android_device_id
+             WHERE `licenses`.`id`=? AND `licenses`.`licenseStatus`='active'",
+            's',
+            $licenceId
         );
 
-        if ($check !== null && licence_is_user_active(isset($check['userActive']) ? $check['userActive'] : null)) {
+        if ($check !== null && licence_is_user_active(isset($check['userActive']) ? $check['userActive'] : null)
+            && pos_device_authorized($con, $check, $android_device_id)) {
             $check = licence_sync_trial_consumed_state($con, $check);
 
             if (!licence_trial_allows_login($con, $check)) {
@@ -62,6 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $response['totalSaleData'] = $check['total_sale_data'];
                 $response['todaySaleData'] = $check['today_sale_data'];
                 $response = licence_append_trial_response($con, $response, $check);
+                $response = licence_append_user_management_response($con, $response, $check['id']);
                 $response = licence_append_signed_payload($con, $response, $check, $android_device_id);
                 auth_token_append_response($con, $response, 'pos_licence', $check['id'], $android_device_id, $check['expiryDate']);
                 require_once __DIR__ . '/pos_presence.php';

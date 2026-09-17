@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 
 /* Width classes for phone → tablet → desktop/web (see POS_UPGRADE_PLAN §4.3). */
 enum AppWidthClass {
@@ -35,9 +36,31 @@ abstract final class AppBreakpoints {
   static AppWidthClass ofConstraints(BoxConstraints constraints) =>
       ofWidth(constraints.maxWidth);
 
-  /* POS / Tables / Takeaway: persistent side cart from expanded up. */
-  static bool isPosSideCart(AppWidthClass w) =>
+  /* POS / Tables / Takeaway: persistent side cart. */
+  /* Web: always-on cart (side-by-side except compact, which stacks). */
+  /* Android/iOS: side cart from expanded tablet width up. */
+  static bool isPosSideCart(AppWidthClass w) {
+    if (AppPlatform.useDesktopShell) {
+      return w != AppWidthClass.compact;
+    }
+    return w.index >= AppWidthClass.expanded.index;
+  }
+
+  static bool isPosPersistentCart(AppWidthClass w) =>
+      AppPlatform.useDesktopShell ||
       w.index >= AppWidthClass.expanded.index;
+
+  static double posSideCartWidth(AppWidthClass w) {
+    if (AppPlatform.useDesktopShell) {
+      return switch (w) {
+        AppWidthClass.compact => 280,
+        AppWidthClass.medium => 320,
+        AppWidthClass.expanded => 360,
+        AppWidthClass.large => 400,
+      };
+    }
+    return w == AppWidthClass.large ? 400 : 360;
+  }
 
   /* Home / hub module grids: 2 → 3 → 4. */
   static int moduleColumnsFor(AppWidthClass w) => switch (w) {
@@ -109,4 +132,6 @@ extension AppBreakpointsContext on BuildContext {
       widthClass.index >= AppWidthClass.expanded.index;
   bool get isLargeWidth => widthClass == AppWidthClass.large;
   bool get showPosSideCart => AppBreakpoints.isPosSideCart(widthClass);
+  bool get showPosPersistentCart =>
+      AppBreakpoints.isPosPersistentCart(widthClass);
 }

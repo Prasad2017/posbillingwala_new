@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:pos_billingwala_v2/core/constants/app_config.dart';
+import 'package:pos_billingwala_v2/core/logging/app_logger.dart';
 
 /* Applies [AppConfig.allowScreenshot] to the native window (Android FLAG_SECURE). */
 abstract final class ScreenshotConfig {
@@ -18,7 +19,7 @@ abstract final class ScreenshotConfig {
         AppConfig.allowScreenshot,
       );
     } catch (error) {
-      debugPrint('ScreenshotConfig.apply: $error');
+      AppLogger.error('ScreenshotConfig.apply', error);
     }
   }
 }

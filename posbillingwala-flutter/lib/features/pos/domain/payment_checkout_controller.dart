@@ -8,6 +8,7 @@ import 'package:pos_billingwala_v2/features/auth/domain/license_validator.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/billing_session.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/payment_mode.dart';
 import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
+import 'package:pos_billingwala_v2/features/staff/data/staff_store.dart';
 
 class PaymentCheckoutState {
   const PaymentCheckoutState({
@@ -35,11 +36,15 @@ class PaymentCheckoutState {
   final SavedInvoiceResult? result;
 
   double discountValue(double subtotal) {
-    if (discount <= 0) return 0;
+    if (discount <= 0 || subtotal <= 0) return 0;
+    final double raw;
     if (discountType.toLowerCase().startsWith('p')) {
-      return double.parse((subtotal * discount / 100).toStringAsFixed(2));
+      raw = subtotal * discount.clamp(0, 100) / 100;
+    } else {
+      raw = discount;
     }
-    return double.parse(discount.toStringAsFixed(2));
+    /* Discount amount can never exceed subtotal. */
+    return double.parse(raw.clamp(0, subtotal).toStringAsFixed(2));
   }
 
   double packingValue(double subtotal) {
@@ -53,9 +58,10 @@ class PaymentCheckoutState {
   double payableTotal({required double subtotal, required double taxTotal}) {
     final disc = discountValue(subtotal);
     final pack = packingValue(subtotal);
-    return double.parse(
-      (subtotal + taxTotal + pack - disc).clamp(0, double.infinity).toStringAsFixed(2),
-    );
+    final raw =
+        (subtotal + taxTotal + pack - disc).clamp(0, double.infinity).toDouble();
+    /* Match Android CreatePos / BluetoothPrint — bill total rounds up to ₹. */
+    return raw.ceilToDouble();
   }
 
   PaymentCheckoutState copyWith({
@@ -139,9 +145,17 @@ class PaymentCheckoutController extends Notifier<PaymentCheckoutState> {
     );
   }
 
-  void setDiscount(double value, {String? type}) {
+  void setDiscount(double value, {String? type, double? subtotal}) {
+    final nextType = type ?? state.discountType;
+    final isPercent = nextType.toLowerCase().startsWith('p');
+    var next = value < 0 ? 0.0 : value;
+    if (isPercent) {
+      next = next.clamp(0, 100).toDouble();
+    } else if (subtotal != null) {
+      next = next.clamp(0, subtotal).toDouble();
+    }
     state = state.copyWith(
-      discount: value < 0 ? 0 : double.parse(value.toStringAsFixed(2)),
+      discount: double.parse(next.toStringAsFixed(2)),
       discountType: type,
       clearError: true,
     );
@@ -209,6 +223,8 @@ class PaymentCheckoutController extends Notifier<PaymentCheckoutState> {
       final prefix = printer.invoicePrefix.trim().isNotEmpty
           ? printer.invoicePrefix.trim()
           : session.invoicePrefix;
+      final staff = await StaffStore().read();
+      final staffId = int.tryParse(staff?.id ?? '');
       final result = await ref.read(appDatabaseProvider).saveInvoiceFromCart(
             tender: tender,
             invoiceType: session.invoiceType,
@@ -225,6 +241,8 @@ class PaymentCheckoutController extends Notifier<PaymentCheckoutState> {
             packingCharge: state.packingCharge,
             packingChargeType: state.packingChargeType,
             updateInventory: printer.productQuantityUpdate,
+            createdByStaffId: staffId,
+            createdByStaffName: staff?.name,
           );
       state = state.copyWith(busy: false, result: result);
       return result;

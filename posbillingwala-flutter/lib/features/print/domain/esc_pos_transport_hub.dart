@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:pos_billingwala_v2/core/logging/app_logger.dart';
 import 'package:unified_esc_pos_printer/unified_esc_pos_printer.dart';
 
 /* USB (+ optional BLE) ESC/POS connection via [PrinterManager]. */
@@ -39,7 +40,7 @@ class EscPosTransportHub {
         types: const {PrinterConnectionType.usb},
       );
     } catch (e) {
-      debugPrint('USB scan failed: $e');
+      AppLogger.error('USB scan failed', e);
       return const [];
     }
   }
@@ -54,7 +55,7 @@ class EscPosTransportHub {
         types: const {PrinterConnectionType.ble},
       );
     } catch (e) {
-      debugPrint('BLE scan failed: $e');
+      AppLogger.error('BLE scan failed', e);
       return const [];
     }
   }
@@ -105,7 +106,7 @@ class EscPosTransportHub {
       await escPosTransportHubManager.printBytes(bytes);
       return true;
     } catch (e) {
-      debugPrint('USB/BLE write failed: $e');
+      AppLogger.error('USB/BLE write failed', e);
       try {
         await escPosTransportHubManager.disconnect();
       } catch (_) {}
@@ -133,7 +134,7 @@ class EscPosTransportHub {
       connected = device;
       return true;
     } catch (e) {
-      debugPrint('Printer connect failed: $e');
+      AppLogger.error('Printer connect failed', e);
       connected = null;
       return false;
     }

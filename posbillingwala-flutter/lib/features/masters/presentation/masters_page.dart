@@ -5,12 +5,10 @@ import 'package:intl/intl.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
+import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
+import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/masters/domain/masters_providers.dart';
 import 'package:pos_billingwala_v2/features/print/domain/print_providers.dart';
-import 'package:pos_billingwala_v2/core/widgtes/widgtes.dart';
-import 'package:pos_billingwala_v2/core/widgets/app_module_icon.dart';
-import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
-import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
 
 class MastersPage extends ConsumerWidget {
   const MastersPage({super.key, this.initialTab = 0});
@@ -74,23 +72,6 @@ class MastersPage extends ConsumerWidget {
                     .read(mastersSyncControllerProvider.notifier)
                     .uploadPending(),
             icon: const Icon(Icons.cloud_upload_rounded),
-          ),
-          IconButton(
-            tooltip: 'Download from cloud',
-            onPressed: isSyncing
-                ? null
-                : () =>
-                    ref.read(mastersSyncControllerProvider.notifier).syncNow(),
-            icon: isSyncing
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : const Icon(Icons.cloud_download_rounded),
           ),
           PopupMenuButton<String>(
             onSelected: (value) async {
@@ -173,28 +154,6 @@ class MastersPage extends ConsumerWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 6),
-                Container(
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryLight,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: IconButton(
-                    tooltip: isSyncing ? 'Syncing' : 'Sync catalog',
-                    onPressed: isSyncing
-                        ? null
-                        : () => ref
-                            .read(mastersSyncControllerProvider.notifier)
-                            .syncNow(),
-                    icon: isSyncing
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.sync_rounded),
-                  ),
-                ),
               ],
             ),
           ),
@@ -204,7 +163,7 @@ class MastersPage extends ConsumerWidget {
               data: (categories) {
                 if (categories.isEmpty) {
                   return const Center(
-                    child: Text('No categories — tap Sync to download'),
+                    child: Text('No categories — fetch data from Settings'),
                   );
                 }
                 return ListView(
@@ -440,50 +399,26 @@ Future<void> printCatalog(BuildContext context, WidgetRef ref) async {
 
 Future<void> showAddCategoryDialog(BuildContext context, WidgetRef ref) async {
   final controller = TextEditingController();
-  final foodTypes = ref.read(foodTypesProvider).maybeWhen(
-        data: (v) => v,
-        orElse: () => const <FoodType>[],
-      );
-  FoodType? selected = foodTypes.isEmpty ? null : foodTypes.first;
   final ok = await showDialog<bool>(
     context: context,
-    builder: (context) => StatefulBuilder(
-      builder: (context, setLocal) => AlertDialog(
-        title: const Text('Add Category'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AppTextField(
-              controller: controller,
-              label: 'Category name',
-            ),
-            if (foodTypes.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              AppDropdownFormField<FoodType>(
-                label: 'Food type',
-                items: foodTypes,
-                itemLabel: (f) => f.foodTypeName,
-                value: selected,
-                onChanged: (v) => setLocal(() => selected = v),
-              ),
-            ],
-          ],
-        ),
-        actions: [
-          AppButton(
-            label: 'Add Category',
-            onPressed: () => Navigator.pop(context, true),
-          ),
-        ],
+    builder: (context) => AlertDialog(
+      title: const Text('Add Category'),
+      content: AppTextField(
+        controller: controller,
+        label: 'Category name',
       ),
+      actions: [
+        AppButton(
+          label: 'Add Category',
+          onPressed: () => Navigator.pop(context, true),
+        ),
+      ],
     ),
   );
   if (ok == true && controller.text.trim().isNotEmpty) {
-    await ref.read(mastersSyncControllerProvider.notifier).createCategory(
-          controller.text.trim(),
-          foodTypeId: selected?.foodTypeId,
-          foodTypeCode: selected?.foodTypeCode,
-        );
+    await ref
+        .read(mastersSyncControllerProvider.notifier)
+        .createCategory(controller.text.trim());
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Category saved')),
@@ -1033,62 +968,34 @@ Future<void> showEditCategoryDialog(
   ProductCategory category,
 ) async {
   final controller = TextEditingController(text: category.categoryName);
-  final foodTypes = ref.read(foodTypesProvider).maybeWhen(
-        data: (v) => v,
-        orElse: () => const <FoodType>[],
-      );
-  FoodType? selected;
-  for (final t in foodTypes) {
-    if (t.foodTypeId == category.foodTypeId) selected = t;
-  }
-  selected ??= foodTypes.isEmpty ? null : foodTypes.first;
   final action = await showDialog<String>(
     context: context,
-    builder: (context) => StatefulBuilder(
-      builder: (context, setLocal) => AlertDialog(
-        title: const Text('Edit category'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AppTextField(
-              controller: controller,
-              label: 'Category name',
-            ),
-            if (foodTypes.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              AppDropdownFormField<FoodType>(
-                label: 'Food type',
-                items: foodTypes,
-                itemLabel: (f) => f.foodTypeName,
-                value: selected,
-                onChanged: (v) => setLocal(() => selected = v),
-              ),
-            ],
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, 'delete'),
-            child: const Text('Delete'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, 'cancel'),
-            child: const Text('Cancel'),
-          ),
-          AppButton(
-            label: 'Save',
-            onPressed: () => Navigator.pop(context, 'save'),
-          ),
-        ],
+    builder: (context) => AlertDialog(
+      title: const Text('Edit category'),
+      content: AppTextField(
+        controller: controller,
+        label: 'Category name',
       ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, 'delete'),
+          child: const Text('Delete'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(context, 'cancel'),
+          child: const Text('Cancel'),
+        ),
+        AppButton(
+          label: 'Save',
+          onPressed: () => Navigator.pop(context, 'save'),
+        ),
+      ],
     ),
   );
   if (action == 'save' && controller.text.trim().isNotEmpty) {
     await ref.read(mastersSyncControllerProvider.notifier).updateCategory(
           categoryId: category.categoryId,
           name: controller.text.trim(),
-          foodTypeId: selected?.foodTypeId,
-          foodTypeCode: selected?.foodTypeCode,
         );
   } else if (action == 'delete') {
     await ref

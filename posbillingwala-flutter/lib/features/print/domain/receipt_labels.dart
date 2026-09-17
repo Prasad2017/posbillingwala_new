@@ -1,4 +1,4 @@
-import 'package:pos_billingwala_v2/l10n/ui_catalog.dart';
+import 'package:pos_billingwala_v2/language/locale_catalog.dart';
 
 /* Thermal receipt labels matching WithTable `strings_ui.xml`. */
 class ReceiptLabels {
@@ -41,7 +41,7 @@ class ReceiptLabels {
   final String kot;
 
   factory ReceiptLabels.fromLang(String lang) {
-    String t(String key) => UiCatalog.get(lang, key);
+    String t(String key) => LocaleCatalog.get(lang, key);
     return ReceiptLabels(
       originalCopy: t('ui__original_copy_'),
       duplicateCopy: t('ui__duplicate_copy_'),

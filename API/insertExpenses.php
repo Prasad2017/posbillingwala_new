@@ -45,6 +45,8 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
       exit;
   }
   $userId = $ctx['licenseId'];
+  require_once __DIR__ . '/pos_staff.php';
+  pos_require_permission($con, $userId, 'expense.manage');
   $orgId = $ctx['triplet']['organization_id'];
   $branchId = $ctx['triplet']['branch_id'];
   $deviceId = $ctx['triplet']['device_id'];

@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
-import 'package:pos_billingwala_v2/core/widgtes/widgtes.dart';
+import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/masters/domain/masters_providers.dart';
 import 'package:pos_billingwala_v2/features/masters/presentation/widgets/master_ui.dart';
-import 'package:pos_billingwala_v2/l10n/app_strings.dart';
+import 'package:pos_billingwala_v2/language/app_strings.dart';
 
 /* WithTable ComboMaster list. */
 class CombosPage extends ConsumerStatefulWidget {

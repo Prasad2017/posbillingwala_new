@@ -124,6 +124,7 @@
 								</div>
 							</div>
 							@include('partials.license-fields', ['license' => $data])
+							@include('partials.store-ops')
 							<div class="col-lg-4">
 								<label for="inputEmailAddress18" class="form-label">Shop Image Preview</label><br>
 								<img id="output" @if($data->shopImage!=null) src="{{url('storage/app')}}/{{$data->shopImage}}" @endif style="width: 150px;height: 150px;">

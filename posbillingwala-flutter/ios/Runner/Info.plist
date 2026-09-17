@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>POS Billingwala</string>
+	<string>Billingwala</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -67,24 +67,22 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>POS Billingwala uses the local network to print bills and KOT on Wi‑Fi thermal printers.</string>
+	<string>Billingwala uses the local network to print bills and KOT on Wi‑Fi thermal printers.</string>
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_ipp._tcp</string>
 		<string>_printer._tcp</string>
 	</array>
 	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>POS Billingwala needs Bluetooth to find and print on nearby thermal printers.</string>
+	<string>Billingwala needs Bluetooth to find and print on nearby thermal printers.</string>
 	<key>NSBluetoothPeripheralUsageDescription</key>
-	<string>POS Billingwala needs Bluetooth to connect to thermal bill and KOT printers.</string>
+	<string>Billingwala needs Bluetooth to connect to thermal bill and KOT printers.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>POS Billingwala uses the camera to scan mess QR codes and capture the shop logo.</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>POS Billingwala uses the microphone for voice product search on the billing screen.</string>
+	<string>Billingwala uses the camera to scan mess QR codes and capture the shop logo.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>POS Billingwala saves Mess QR images to your photo library when you choose Save.</string>
+	<string>Billingwala saves Mess QR images to your photo library when you choose Save.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>POS Billingwala needs photo access to pick a shop logo and save Mess QR images.</string>
+	<string>Billingwala needs photo access to pick a shop logo and save Mess QR images.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Location helps discover nearby Bluetooth printers on some devices.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
@@ -93,8 +91,6 @@
 	<array>
 		<string>remote-notification</string>
 	</array>
-	<key>GADApplicationIdentifier</key>
-	<string>ca-app-pub-2325627373654257~2682249830</string>
 	<key>FirebaseAppDelegateProxyEnabled</key>
 	<true/>
 </dict>

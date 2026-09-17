@@ -9,7 +9,7 @@ import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
 import 'package:pos_billingwala_v2/features/inventory/domain/inventory_providers.dart';
 import 'package:pos_billingwala_v2/features/masters/presentation/widgets/master_ui.dart';
-import 'package:pos_billingwala_v2/l10n/app_strings.dart';
+import 'package:pos_billingwala_v2/language/app_strings.dart';
 
 /* Expense management list matching the reference table layout. */
 class ExpensePage extends ConsumerWidget {
@@ -17,8 +17,6 @@ class ExpensePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final busy = ref.watch(inventoryControllerProvider).isLoading;
-
     ref.listen(inventoryControllerProvider, (prev, next) {
       next.whenOrNull(
         data: (msg) {
@@ -42,28 +40,6 @@ class ExpensePage extends ConsumerWidget {
           onPressed: () => context.pop(),
         ),
         actions: [
-          IconButton(
-            tooltip: 'Sync expenses',
-            onPressed: busy
-                ? null
-                : () =>
-                    ref.read(inventoryControllerProvider.notifier).syncAll(),
-            style: IconButton.styleFrom(
-              backgroundColor: Colors.white.withValues(alpha: .18),
-              foregroundColor: Colors.white,
-            ),
-            icon: busy
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : const Icon(Icons.cloud_sync_rounded, size: 20),
-          ),
-          const SizedBox(width: 6),
           Padding(
             padding: const EdgeInsets.only(right: 10),
             child: TextButton(

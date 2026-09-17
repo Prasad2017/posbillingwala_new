@@ -14,6 +14,8 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
   $userId = $_POST['userId'];
   $__postedUserId = isset($_POST['userId']) ? $_POST['userId'] : (isset($userId) ? $userId : '');
   pos_require_auth($con, $__postedUserId, isset($response) ? $response : array('status'=>'0','message'=>'Unauthorized'));
+  require_once __DIR__ . '/pos_staff.php';
+  pos_require_permission($con, $userId, 'product.create');
 
   $foodTypeId = isset($_POST['foodTypeId']) ? $_POST['foodTypeId'] : '';
   $foodTypeCode = isset($_POST['foodTypeCode']) ? $_POST['foodTypeCode'] : '';

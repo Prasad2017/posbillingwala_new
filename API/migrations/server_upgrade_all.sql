@@ -144,6 +144,19 @@ SET @sql = (
 );
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
+-- Optional product image (path or data URL)
+SET @sql = (
+  SELECT IF(
+    (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = 'products'
+       AND COLUMN_NAME = 'productImage') > 0,
+    'SELECT ''OK: products.productImage already exists'' AS msg',
+    'ALTER TABLE `products` ADD COLUMN `productImage` MEDIUMTEXT DEFAULT NULL AFTER `productName`'
+  )
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
 -- Packing charge on invoice (same pattern as discount: value + Percentage/Amount)
 SET @sql = (
   SELECT IF(
@@ -1409,6 +1422,8 @@ SELECT
   (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'products' AND COLUMN_NAME = 'openPrice') AS products_openPrice_ok,
   (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'products' AND COLUMN_NAME = 'productImage') AS products_productImage_ok,
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'invoice_final_product' AND COLUMN_NAME = 'portionId') AS invoice_portionId_ok,
   (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'invoice_final_product' AND COLUMN_NAME = 'snapshotLinePrice') AS invoice_snapshot_ok,
@@ -1633,6 +1648,95 @@ PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql = (SELECT IF((SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'mess_member' AND COLUMN_NAME = 'company') > 0, 'SELECT 1', 'ALTER TABLE `mess_member` ADD COLUMN `company` VARCHAR(255) NULL'));
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
+-- p32: invoice billed-by + staff salary
+SET @sql = (
+  SELECT IF(
+    (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = 'invoice'
+       AND COLUMN_NAME = 'createdByStaffId') > 0,
+    'SELECT ''OK: invoice.createdByStaffId already exists'' AS msg',
+    'ALTER TABLE `invoice` ADD COLUMN `createdByStaffId` INT NULL DEFAULT NULL AFTER `device_id`, ADD COLUMN `createdByStaffName` VARCHAR(120) NOT NULL DEFAULT \'\' AFTER `createdByStaffId`'
+  )
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = (
+  SELECT IF(
+    (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = 'pos_staff'
+       AND COLUMN_NAME = 'monthlySalary') > 0,
+    'SELECT ''OK: pos_staff.monthlySalary already exists'' AS msg',
+    'ALTER TABLE `pos_staff` ADD COLUMN `monthlySalary` DECIMAL(12,2) NOT NULL DEFAULT 0 AFTER `status`'
+  )
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+CREATE TABLE IF NOT EXISTS `pos_salary_payment` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `licenseId` int(11) NOT NULL,
+  `staffId` int(11) NOT NULL,
+  `salaryMonth` char(7) NOT NULL,
+  `amount` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `paidOn` date NOT NULL,
+  `note` varchar(255) NOT NULL DEFAULT '',
+  `createdAt` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_salary_staff_month` (`staffId`, `salaryMonth`),
+  KEY `idx_salary_license_month` (`licenseId`, `salaryMonth`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- p33: product MRP + decimal inventory quantities
+SET @sql = (
+  SELECT IF(
+    (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = 'products'
+       AND COLUMN_NAME = 'productMrp') > 0,
+    'SELECT ''OK: products.productMrp already exists'' AS msg',
+    'ALTER TABLE `products` ADD COLUMN `productMrp` DECIMAL(16,2) NOT NULL DEFAULT 0 AFTER `productPrice`'
+  )
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = (
+  SELECT IF(
+    (SELECT DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = 'inventory'
+       AND COLUMN_NAME = 'productInventoryQuantity') = 'decimal',
+    'SELECT ''OK: inventory.productInventoryQuantity already decimal'' AS msg',
+    'ALTER TABLE `inventory` MODIFY COLUMN `productInventoryQuantity` DECIMAL(16,3) NOT NULL DEFAULT 0, MODIFY COLUMN `afterSaleInventoryQuantity` DECIMAL(16,3) NOT NULL DEFAULT 0, MODIFY COLUMN `saleInventoryQuantity` DECIMAL(16,3) NOT NULL DEFAULT 0'
+  )
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- p34: inventory purchase/waste + product priceIncludesGst
+SET @sql = (
+  SELECT IF(
+    (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = 'inventory'
+       AND COLUMN_NAME = 'movementType') > 0,
+    'SELECT ''OK: inventory.movementType already exists'' AS msg',
+    'ALTER TABLE `inventory` ADD COLUMN `movementType` VARCHAR(20) NOT NULL DEFAULT ''purchase'' AFTER `saleInventoryQuantity`, ADD COLUMN `inventoryNote` VARCHAR(255) NOT NULL DEFAULT '''' AFTER `movementType`, ADD COLUMN `unitCost` DECIMAL(16,2) NOT NULL DEFAULT 0 AFTER `inventoryNote`'
+  )
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = (
+  SELECT IF(
+    (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = 'products'
+       AND COLUMN_NAME = 'priceIncludesGst') > 0,
+    'SELECT ''OK: products.priceIncludesGst already exists'' AS msg',
+    'ALTER TABLE `products` ADD COLUMN `priceIncludesGst` VARCHAR(10) NOT NULL DEFAULT ''0'' AFTER `openPrice`'
+  )
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
 -- Business data still there (compare to first SELECT — counts must match)
 SELECT
   (SELECT COUNT(*) FROM `categories`) AS categories_after,
@@ -1644,5 +1748,11 @@ SELECT
   (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES
    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'mess_shop_setting') AS mess_shop_setting_ok,
   (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
-   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'mess_member' AND COLUMN_NAME = 'member_type') AS mess_member_type_ok;
+   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'mess_member' AND COLUMN_NAME = 'member_type') AS mess_member_type_ok,
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'products' AND COLUMN_NAME = 'productMrp') AS products_productMrp_ok,
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'inventory' AND COLUMN_NAME = 'movementType') AS inventory_movementType_ok,
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'products' AND COLUMN_NAME = 'priceIncludesGst') AS products_priceIncludesGst_ok;
 -- before and after counts for categories/products/invoice/licenses/users must be EQUAL

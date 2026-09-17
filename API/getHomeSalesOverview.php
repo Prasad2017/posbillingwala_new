@@ -30,6 +30,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 $userId = isset($_GET['userId']) ? trim($_GET['userId']) : '';
 $period = isset($_GET['period']) ? trim($_GET['period']) : 'today';
 $licenseId = pos_require_auth($con, $userId, $response);
+require_once __DIR__ . '/pos_staff.php';
+pos_require_permission($con, $licenseId, 'dashboard.view');
 
 mysqli_query($con, 'set names utf8');
 

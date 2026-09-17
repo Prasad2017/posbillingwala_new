@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:pos_billingwala_v2/core/logging/app_logger.dart';
 import 'package:pos_billingwala_v2/features/print/domain/bluetooth_printer_hub.dart';
 
 /* Android MethodChannel to WithTable [BluetoothPrintService] + WoosimService. */
@@ -22,7 +23,7 @@ class WoosimPrintChannel {
       });
       return ok == true;
     } catch (e) {
-      debugPrint('Woosim connect failed: $e');
+      AppLogger.error('Woosim connect failed', e);
       return false;
     }
   }
@@ -36,7 +37,7 @@ class WoosimPrintChannel {
       });
       return ok == true;
     } catch (e) {
-      debugPrint('Woosim write failed: $e');
+      AppLogger.error('Woosim write failed', e);
       return false;
     }
   }
@@ -46,7 +47,7 @@ class WoosimPrintChannel {
     try {
       await methodChannel.invokeMethod<void>('disconnect', {'kind': kind.name});
     } catch (error) {
-      debugPrint('Woosim disconnect: $error');
+      AppLogger.warning('Woosim disconnect', error);
     }
   }
 
@@ -58,7 +59,7 @@ class WoosimPrintChannel {
       });
       return ok == true;
     } catch (error) {
-      debugPrint('Woosim isReady: $error');
+      AppLogger.warning('Woosim isReady', error);
       return false;
     }
   }

@@ -1,11 +1,11 @@
 import 'package:dio/dio.dart';
 import 'package:intl/intl.dart';
+import 'package:pos_billingwala_v2/core/constants/api_constants.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/network/api_client.dart';
 import 'package:pos_billingwala_v2/core/network/api_response.dart';
-import 'package:pos_billingwala_v2/features/sync/domain/cloud_invoice_dto.dart';
-import 'package:pos_billingwala_v2/core/constants/api_constants.dart';
 import 'package:pos_billingwala_v2/core/utils/json_parsers.dart';
+import 'package:pos_billingwala_v2/features/sync/domain/cloud_invoice_dto.dart';
 
 class SalesReportSummary {
   const SalesReportSummary({
@@ -90,6 +90,10 @@ class InvoiceSyncApi {
         'organizationId': invoice.organizationId,
         'branchId': invoice.branchId,
         'deviceId': invoice.deviceId,
+        if (invoice.createdByStaffId != null)
+          'createdByStaffId': '${invoice.createdByStaffId}',
+        if (invoice.createdByStaffName.trim().isNotEmpty)
+          'createdByStaffName': invoice.createdByStaffName,
       },
     );
     return isApiSuccess(data);

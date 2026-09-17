@@ -7,10 +7,8 @@ import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
 import 'package:pos_billingwala_v2/features/tables/domain/tables_providers.dart';
-import 'package:pos_billingwala_v2/core/widgtes/widgtes.dart';
-import 'package:pos_billingwala_v2/core/widgets/app_module_icon.dart';
+import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
-import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
 
 /* Split an open dine-in bill into shares (equal / by item / by amount). */
 class SplitBillPage extends ConsumerStatefulWidget {

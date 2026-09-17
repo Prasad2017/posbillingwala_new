@@ -5,10 +5,15 @@ import 'package:pos_billingwala_v2/core/constants/app_assets.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/network/online_guard.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
-import 'package:pos_billingwala_v2/core/widgtes/widgtes.dart';
+import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
+import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
+import 'package:pos_billingwala_v2/core/theme/app_typography.dart';
+import 'package:pos_billingwala_v2/core/constants/app_constants.dart';
+import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
+import 'package:pos_billingwala_v2/features/auth/presentation/web_auth_shell.dart';
 import 'package:pos_billingwala_v2/features/settings/domain/in_app_update_service.dart';
-import 'package:pos_billingwala_v2/l10n/app_strings.dart';
+import 'package:pos_billingwala_v2/language/app_strings.dart';
 
 /* Matches `docs/layout/activity_splash_screen.xml`: */
 /* full-bleed splash branding + bottom indeterminate progress only. */
@@ -69,6 +74,91 @@ class SplashPageState extends ConsumerState<SplashPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (AppPlatform.useDesktopShell) {
+      return webSplash(context);
+    }
+    return mobileSplash();
+  }
+
+  Widget webSplash(BuildContext context) {
+    final showInlineLogo =
+        context.widthClass.index < AppWidthClass.expanded.index;
+    return WebAuthShell(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (showInlineLogo) ...[
+            const BrandLogo(width: 160),
+            const SizedBox(height: 28),
+          ],
+          const Text(
+            'Starting POS',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontFamily: AppFonts.family,
+              fontWeight: FontWeight.w800,
+              fontSize: 26,
+              color: AppColors.navy,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '${AppConstants.appName} · Web',
+            textAlign: TextAlign.center,
+            style: AppTypography.body(),
+          ),
+          const SizedBox(height: 32),
+          if (webOfflineMessage != null) ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AppColors.danger.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: AppColors.danger.withValues(alpha: 0.25),
+                ),
+              ),
+              child: Text(
+                webOfflineMessage!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: AppColors.danger,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            FilledButton(
+              onPressed: retryWebOnline,
+              child: const Text('Retry'),
+            ),
+          ] else
+            const ClipRRect(
+              borderRadius: BorderRadius.all(Radius.circular(4)),
+              child: LinearProgressIndicator(
+                minHeight: 4,
+                backgroundColor: Color(0x14000000),
+                color: AppColors.primary,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> retryWebOnline() async {
+    setState(() => webOfflineMessage = null);
+    if (!await ensureOnline()) {
+      if (!mounted) return;
+      setState(() => webOfflineMessage = kOnlineRequiredMessage);
+      return;
+    }
+    if (!mounted) return;
+    ref.read(authControllerProvider.notifier).bootstrap();
+  }
+
+  Widget mobileSplash() {
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
@@ -88,7 +178,7 @@ class SplashPageState extends ConsumerState<SplashPage> {
             child: Align(
               alignment: Alignment.bottomCenter,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 0, 24, 40),
+                padding: const EdgeInsets.fromLTRB(32, 0, 32, 28),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -111,31 +201,19 @@ class SplashPageState extends ConsumerState<SplashPage> {
                         ),
                       ),
                       TextButton(
-                        onPressed: () async {
-                          setState(() => webOfflineMessage = null);
-                          if (!await ensureOnline()) {
-                            if (!mounted) return;
-                            setState(
-                              () => webOfflineMessage = kOnlineRequiredMessage,
-                            );
-                            return;
-                          }
-                          if (!mounted) return;
-                          ref.read(authControllerProvider.notifier).bootstrap();
-                        },
+                        onPressed: retryWebOnline,
                         child: const Text('Retry'),
                       ),
                       const SizedBox(height: 12),
                     ] else
-                      const SizedBox(
-                        width: 42,
-                        height: 42,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 3,
+                      const ClipRRect(
+                        borderRadius: BorderRadius.all(Radius.circular(4)),
+                        child: LinearProgressIndicator(
+                          minHeight: 4,
+                          backgroundColor: Color(0x22000000),
                           color: AppColors.navy,
                         ),
                       ),
-                    const SizedBox(height: 150),
                   ],
                 ),
               ),

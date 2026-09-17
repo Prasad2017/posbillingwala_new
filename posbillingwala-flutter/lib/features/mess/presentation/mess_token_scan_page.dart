@@ -4,9 +4,8 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:pos_billingwala_v2/core/constants/app_assets.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/theme/app_typography.dart';
-import 'package:pos_billingwala_v2/core/widgets/app_svg.dart';
-import 'package:pos_billingwala_v2/core/widgtes/widgtes.dart';
-import 'package:pos_billingwala_v2/l10n/app_strings.dart';
+import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
+import 'package:pos_billingwala_v2/language/app_strings.dart';
 import 'package:pos_billingwala_v2/features/mess/domain/mess_providers.dart';
 
 /* Matches `activity_mess_token_scan.xml`: intro + Start QR scanner, then camera. */

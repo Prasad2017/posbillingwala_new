@@ -8,6 +8,10 @@
     $di = old('dine_in', isset($license) ? $license->dineIn : 0);
     $ta = old('take_away', isset($license) ? $license->takeAway : 1);
     $ms = old('mess', isset($license) ? ($license->mess ?? 0) : 0);
+    $um = old('user_management_enabled', isset($license) ? ($license->userManagementEnabled ?? 0) : 0);
+    $maxUsers = old('max_users', isset($license) ? ($license->maxUsers ?? 10) : 10);
+    $maxDevices = old('max_devices', isset($license) ? ($license->maxDevices ?? 5) : 5);
+    $maxPrinters = old('max_printers', isset($license) ? ($license->maxPrinters ?? 0) : 0);
 
     $regularTiers = ['183', '365', '1095', '1825', '10958'];
     $lvStr = (string) $lv;
@@ -116,6 +120,39 @@
             <option value="1" @if((string)$ms === '1') selected @endif>Yes</option>
             <option value="0" @if((string)$ms === '0') selected @endif>No</option>
         </select>
+    </div>
+</div>
+
+<div class="col-lg-4">
+    <label class="form-label" for="user_management_enabled">User Management</label>
+    <div class="input-group pb-input-group">
+        <span class="input-group-text bg-transparent"><i class='bx bx-group'></i></span>
+        <select class="form-select" id="user_management_enabled" name="user_management_enabled">
+            <option value="0" @if((string)$um === '0') selected @endif>Off (single user)</option>
+            <option value="1" @if((string)$um === '1') selected @endif>On (staff PIN login)</option>
+        </select>
+    </div>
+    <small class="text-secondary">One licence stays one store. Existing shops stay Off until you enable this.</small>
+</div>
+<div class="col-lg-4">
+    <label class="form-label" for="max_users">Max Users</label>
+    <div class="input-group pb-input-group">
+        <span class="input-group-text bg-transparent"><i class='bx bx-user'></i></span>
+        <input type="number" min="1" name="max_users" id="max_users" class="form-control border-start-0" value="{{ $maxUsers }}">
+    </div>
+</div>
+<div class="col-lg-4">
+    <label class="form-label" for="max_devices">Max Devices</label>
+    <div class="input-group pb-input-group">
+        <span class="input-group-text bg-transparent"><i class='bx bx-mobile'></i></span>
+        <input type="number" min="1" name="max_devices" id="max_devices" class="form-control border-start-0" value="{{ $maxDevices }}">
+    </div>
+</div>
+<div class="col-lg-4">
+    <label class="form-label" for="max_printers">Max Printers (0 = no cap)</label>
+    <div class="input-group pb-input-group">
+        <span class="input-group-text bg-transparent"><i class='bx bx-printer'></i></span>
+        <input type="number" min="0" name="max_printers" id="max_printers" class="form-control border-start-0" value="{{ $maxPrinters }}">
     </div>
 </div>
 

@@ -1,6 +1,7 @@
 <?php	
 include_once('config.php');
 require_once __DIR__ . '/pos_auth_guard.php';
+require_once __DIR__ . '/pos_schema.php';
 require_once __DIR__ . '/dine_in_helpers.php';
 
 $i=0;
@@ -15,6 +16,7 @@ $i=0;
         pos_require_auth($con, $__postedUserId, isset($response) ? $response : array('status'=>'0','message'=>'Unauthorized'));
 
         dine_in_ensure_printer_kot_columns($con);
+        pos_schema_ensure($con);
         
         date_default_timezone_set("Asia/Calcutta");
         $date = date("Y-m-d");
@@ -51,6 +53,16 @@ $i=0;
         $getdata["kotCopies"]=isset($row['kotCopies']) && $row['kotCopies']!=='' ? $row['kotCopies'] : "1";
         $getdata["kotAutoPrint"]=isset($row['kotAutoPrint']) && $row['kotAutoPrint']!=='' ? $row['kotAutoPrint'] : "off";
         $getdata["kotPreview"]=isset($row['kotPreview']) && $row['kotPreview']!=='' ? $row['kotPreview'] : "on";
+        $getdata["paperSize"]=isset($row['paperSize']) ? pos_normalize_paper_size($row['paperSize']) : "2-Inch";
+        $getdata["kotPaperSize"]=isset($row['kotPaperSize']) && $row['kotPaperSize']!==''
+            ? pos_normalize_paper_size($row['kotPaperSize'])
+            : $getdata["paperSize"];
+        $getdata["billConnectionType"]=isset($row['billConnectionType']) ? pos_normalize_connection_type($row['billConnectionType']) : "BLUETOOTH";
+        $getdata["kotConnectionType"]=isset($row['kotConnectionType']) ? pos_normalize_connection_type($row['kotConnectionType']) : "BLUETOOTH";
+        $getdata["billUsbIdentifier"]=isset($row['billUsbIdentifier']) && $row['billUsbIdentifier']!=null ? $row['billUsbIdentifier'] : "";
+        $getdata["billUsbName"]=isset($row['billUsbName']) && $row['billUsbName']!=null ? $row['billUsbName'] : "";
+        $getdata["kotUsbIdentifier"]=isset($row['kotUsbIdentifier']) && $row['kotUsbIdentifier']!=null ? $row['kotUsbIdentifier'] : "";
+        $getdata["kotUsbName"]=isset($row['kotUsbName']) && $row['kotUsbName']!=null ? $row['kotUsbName'] : "";
         $getdata["settingStatus"]=$row['settingStatus'];
        
         header('Content-type: application/json; charset=utf-8');

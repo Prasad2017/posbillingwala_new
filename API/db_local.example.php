@@ -12,7 +12,12 @@ $dbName = 'spllmgkn_posbill';
 // Default fallback: API/license_signing_private.pem
 // $licenseSigningPrivateKeyPath = '/secure/path/license_signing_private.pem';
 
-// Required for API/cron/expireLicenses.php (or set env CRON_SECRET).
+// Cron HTTP auth (optional). Default: plain URL cron works (no secret required).
+// To harden expireLicenses / notifyExpiringLicenses:
+//   $cronRequireSecret = true;
+//   $cronSecret = 'change-me-to-a-long-random-string';
+// Then call with ?secret=… or header X-Cron-Secret.
+// $cronRequireSecret = false;
 // $cronSecret = 'change-me-to-a-long-random-string';
 
 // ---------------------------------------------------------------------------

@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.posbillingwala.owner.Activity.MainActivity;
 import com.posbillingwala.owner.Extra.ReportUiHelper;
 import com.posbillingwala.owner.Extra.RowDividerUi;
+import com.posbillingwala.owner.Fragment.StoreOpsFragment;
 import com.posbillingwala.owner.Fragment.UserProfile;
 import com.posbillingwala.owner.Model.AllApiResponse;
 import com.posbillingwala.owner.Model.LicenseResponse;
@@ -95,6 +96,15 @@ public class LicenseAdapter extends RecyclerView.Adapter<LicenseAdapter.MyViewHo
             String total = holder.binding.totalSaleData.isChecked() ? "1" : "0";
             String today = holder.binding.todaySaleData.isChecked() ? "1" : "0";
             updateSaleData(licenseResponse, total, today);
+        });
+        holder.binding.storeOps.setOnClickListener(v -> {
+            String title = licenseResponse.getShopName1();
+            if (title == null || title.trim().isEmpty()) {
+                title = licenseResponse.getBranchLabel();
+            }
+            ((MainActivity) context).loadFragment(
+                    StoreOpsFragment.newInstance(licenseResponse.getLicensesId(), title == null ? "" : title),
+                    true);
         });
     }
 

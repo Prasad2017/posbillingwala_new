@@ -13,6 +13,9 @@ import 'package:pos_billingwala_v2/features/mess/domain/mess_dtos.dart';
 import 'package:pos_billingwala_v2/features/mess/domain/mess_providers.dart';
 import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
 import 'package:pos_billingwala_v2/features/print/domain/shop_receipt_profile.dart';
+import 'package:pos_billingwala_v2/features/sync/domain/cloud_screen_prefetch.dart';
+import 'package:pos_billingwala_v2/features/sync/domain/cloud_screen_push.dart';
+import 'package:pos_billingwala_v2/features/sync/domain/fetch_local_counts.dart';
 import 'package:pos_billingwala_v2/features/sync/domain/sync_progress.dart';
 import 'package:pos_billingwala_v2/features/sync/domain/sync_providers.dart';
 import 'package:pos_billingwala_v2/features/tables/data/dining_session_api.dart';
@@ -63,6 +66,7 @@ class FullSyncResult {
     this.diningDownloaded = 0,
     this.companySynced = false,
     this.failed = 0,
+    this.localCounts,
   });
 
   final String message;
@@ -76,6 +80,8 @@ class FullSyncResult {
   final int diningDownloaded;
   final bool companySynced;
   final int failed;
+  /* Populated after download/fetch — rows currently stored in Drift. */
+  final FetchLocalCounts? localCounts;
 }
 
 /* Android-parity sync orchestrator: */
@@ -88,7 +94,7 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
   Future<FullSyncResult> syncEverything() =>
       run(FullSyncMode.both, trackProgress: false);
 
-  /* Web background refresh: upload pending then download without UI loading. */
+  /* Background refresh: upload pending then download all data without UI loading. */
   Future<FullSyncResult> syncEverythingSilent() =>
       run(FullSyncMode.both, trackProgress: false, silent: true);
 
@@ -211,6 +217,7 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
     var diningUploaded = 0;
     var diningDownloaded = 0;
     var companySynced = false;
+    FetchLocalCounts? localCounts;
 
     final doUpload =
         mode == FullSyncMode.uploadOnly || mode == FullSyncMode.both;
@@ -224,12 +231,15 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
 
       progress?.markRunning(masterStepIds);
       try {
-        mastersUploaded = await ref
-            .read(mastersRepositoryProvider)
-            .uploadPendingMasters(
-              ownerId: ownerId,
-              licenceUserId: userId,
-            );
+        mastersUploaded = 0;
+        for (var round = 0; round < 20; round++) {
+          final n = await ref.read(mastersRepositoryProvider).uploadPendingMasters(
+                ownerId: ownerId,
+                licenceUserId: userId,
+              );
+          mastersUploaded += n;
+          if (n == 0) break;
+        }
         notes.add('masters↑$mastersUploaded');
         progress?.markComplete(masterStepIds);
       } catch (_) {
@@ -251,12 +261,19 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
 
       progress?.markRunning(invoiceStepIds);
       try {
-        final upload =
-            await ref.read(invoiceSyncControllerProvider.notifier).uploadPending();
-        invoicesUploaded = upload.uploaded;
-        failed += upload.failed;
+        invoicesUploaded = 0;
+        var invoiceFailed = 0;
+        for (var round = 0; round < 40; round++) {
+          final upload = await ref
+              .read(invoiceSyncControllerProvider.notifier)
+              .uploadPending();
+          invoicesUploaded += upload.uploaded;
+          invoiceFailed += upload.failed;
+          if (upload.uploaded == 0) break;
+        }
+        failed += invoiceFailed;
         notes.add('bills↑$invoicesUploaded');
-        if (upload.failed > 0) {
+        if (invoiceFailed > 0) {
           progress?.markError(invoiceStepIds);
         } else {
           progress?.markComplete(invoiceStepIds);
@@ -269,7 +286,12 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
 
       progress?.markRunning(messStepIds);
       try {
-        messUploaded = await uploadPendingMess(userId, db);
+        messUploaded = 0;
+        for (var round = 0; round < 20; round++) {
+          final n = await uploadPendingMess(userId, db);
+          messUploaded += n;
+          if (n == 0) break;
+        }
         notes.add('mess↑$messUploaded');
         progress?.markComplete(messStepIds);
       } catch (_) {
@@ -278,30 +300,69 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
         progress?.markError(messStepIds);
       }
 
+      progress?.markRunning(const ['dining_sessions']);
       try {
-        diningUploaded = await uploadPendingDining(userId, db);
+        diningUploaded = 0;
+        for (var round = 0; round < 20; round++) {
+          final n = await uploadPendingDining(userId, db);
+          diningUploaded += n;
+          if (n == 0) break;
+        }
         notes.add('dining↑$diningUploaded');
+        progress?.markComplete(const ['dining_sessions']);
       } catch (_) {
         failed++;
         notes.add('dining↑ error');
+        progress?.markError(const ['dining_sessions']);
       }
 
       progress?.markRunning(inventoryStepIds);
       try {
-        await ref.read(inventoryControllerProvider.notifier).syncAll();
-        inventorySynced = true;
-        notes.add('inventory↑ ok');
+        if (mode == FullSyncMode.uploadOnly) {
+          await ref
+              .read(inventoryControllerProvider.notifier)
+              .uploadPendingIfOnline();
+          inventorySynced = true;
+          notes.add('inventory↑ ok');
+        } else {
+          await ref.read(inventoryControllerProvider.notifier).syncAll();
+          inventorySynced = true;
+          notes.add('inventory↑ ok');
+        }
         progress?.markComplete(inventoryStepIds);
       } catch (_) {
         failed++;
         notes.add('inventory↑ error');
         progress?.markError(inventoryStepIds);
       }
+
+      /* Screen prefs / cached API screens with save endpoints. */
+      const screenUploadIds = [
+        'mess_shop_payer',
+        'meal_sessions',
+        'store_printers',
+        'printer_routes',
+      ];
+      progress?.markRunning([screenUploadIds.first]);
+      try {
+        final screenPush = await CloudScreenPush.run(ref, userId: userId);
+        failed += screenPush.failed;
+        notes.add('screens↑${screenPush.totalRows}');
+        await progress?.completeSequentially(
+          screenUploadIds,
+          error: screenPush.failed > 0,
+        );
+      } catch (_) {
+        failed++;
+        notes.add('screens↑ error');
+        await progress?.completeSequentially(screenUploadIds, error: true);
+      }
     }
 
     /* ---- DOWNLOAD (server → local) — same spirit as Android NetworkDataFetcher */
     if (doDownload) {
       const masterFetchIds = [
+        'food_types',
         'categories',
         'subcategories',
         'products',
@@ -310,7 +371,6 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
         'combos',
         'combo_items',
       ];
-      /* Food types are also replaced inside syncFromCloud (no separate UI step). */
       progress?.markRunning([masterFetchIds.first]);
       try {
         await ref.read(mastersRepositoryProvider).syncFromCloud(
@@ -392,9 +452,12 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
       try {
         diningDownloaded = await downloadDining(userId, db);
         notes.add('dining↓$diningDownloaded');
+        progress?.markRunning(const ['dining_sessions']);
+        progress?.markComplete(const ['dining_sessions']);
       } catch (_) {
         failed++;
         notes.add('dining↓ error');
+        progress?.markError(const ['dining_sessions']);
       }
 
       progress?.markRunning([companyStepIds.first]);
@@ -408,6 +471,52 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
         notes.add('company↓ error');
         await progress?.completeSequentially(companyStepIds, error: true);
       }
+
+      /* API-only screens — always on download so every screen has local data. */
+      const screenFetchIds = [
+        'staff',
+        'salary',
+        'role_defaults',
+        'meal_sessions',
+        'meal_tokens',
+        'pending_meal_tokens',
+        'mess_shop_payer',
+        'mess_common_qr',
+        'store_printers',
+        'printer_routes',
+        'print_jobs',
+        'support_tickets',
+        'pos_devices',
+        'home_overview',
+      ];
+      progress?.markRunning([screenFetchIds.first]);
+      try {
+        final screenPrefetch = await CloudScreenPrefetch.run(
+          ref,
+          userId: userId,
+        );
+        failed += screenPrefetch.failed;
+        notes.add('screens↓${screenPrefetch.totalRows}');
+        await progress?.completeSequentially(
+          screenFetchIds,
+          error: screenPrefetch.failed > 0,
+        );
+      } catch (_) {
+        failed++;
+        notes.add('screens↓ error');
+        await progress?.completeSequentially(screenFetchIds, error: true);
+      }
+
+      try {
+        localCounts = await FetchLocalCounts.load(db);
+        notes.add('local ${localCounts.totalSaved} rows');
+      } catch (_) {
+        notes.add('local counts skip');
+      }
+
+      try {
+        invalidateAfterCloudFetch(ref);
+      } catch (_) {}
     }
 
     final label = switch (mode) {
@@ -430,6 +539,7 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
       diningDownloaded: diningDownloaded,
       companySynced: companySynced,
       failed: failed,
+      localCounts: localCounts,
     );
     if (!silent) state = AsyncData(result);
     progress?.finish(failed: failed, hadPending: hadPending);
@@ -570,7 +680,7 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
   Future<int> downloadDining(String userId, AppDatabase db) async {
     final diningApi = DiningSessionApi(ref.read(apiClientProvider));
     final cloudSessions =
-        await diningApi.fetchDiningSessions(userId, openOnly: true);
+        await diningApi.fetchDiningSessions(userId, openOnly: false);
     final companions = cloudSessions
         .where((e) => e.primaryTableNumber.trim().isNotEmpty)
         .map(
@@ -734,6 +844,14 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
         kotAutoPrint: settings.kotAutoPrint ? '1' : '0',
         kotPreview: settings.kotPreview ? '1' : '0',
         kotCopies: '${settings.kotCopies}',
+        paperSize: settings.paperSize.dbValue,
+        kotPaperSize: settings.kotPaperSize.dbValue,
+        billConnectionType: settings.billTransport.dbValue,
+        kotConnectionType: settings.kotTransport.dbValue,
+        billUsbIdentifier: settings.billUsbIdentifier,
+        billUsbName: settings.billUsbName,
+        kotUsbIdentifier: settings.kotUsbIdentifier,
+        kotUsbName: settings.kotUsbName,
       ),
     );
     return companyOk || printerOk;

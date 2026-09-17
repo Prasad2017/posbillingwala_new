@@ -7,13 +7,13 @@ import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
 import 'package:pos_billingwala_v2/core/network/online_guard.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
-import 'package:pos_billingwala_v2/core/widgtes/widgtes.dart';
+import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/print/domain/print_providers.dart';
 import 'package:pos_billingwala_v2/features/reports/domain/reports_providers.dart';
 import 'package:pos_billingwala_v2/features/sync/data/invoice_sync_api.dart';
 import 'package:pos_billingwala_v2/features/sync/domain/sync_providers.dart';
-import 'package:pos_billingwala_v2/l10n/app_strings.dart';
+import 'package:pos_billingwala_v2/language/app_strings.dart';
 
 Future<void> _pushInvoiceEditToApi(WidgetRef ref, int invoiceId) async {
   if (!AppPlatform.requiresNetwork) {
@@ -238,7 +238,7 @@ Future<void> editLine(
     priceCtrl.dispose();
     return;
   }
-  final qty = int.tryParse(qtyCtrl.text.trim()) ?? 0;
+  final qty = double.tryParse(qtyCtrl.text.trim()) ?? 0;
   final price = double.tryParse(priceCtrl.text.trim());
   qtyCtrl.dispose();
   priceCtrl.dispose();
@@ -353,7 +353,7 @@ Future<void> editInvoicePageAddProduct(
     qtyCtrl.dispose();
     return;
   }
-  var qty = int.tryParse(qtyCtrl.text.trim()) ?? 1;
+  var qty = double.tryParse(qtyCtrl.text.trim()) ?? 1;
   if (qty <= 0) qty = 1;
   qtyCtrl.dispose();
 

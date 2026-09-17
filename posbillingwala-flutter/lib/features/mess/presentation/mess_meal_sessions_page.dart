@@ -2,17 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pos_billingwala_v2/core/constants/app_assets.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
+import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/theme/app_typography.dart';
-import 'package:pos_billingwala_v2/core/widgets/app_module_icon.dart';
-import 'package:pos_billingwala_v2/core/widgets/app_states.dart';
-import 'package:pos_billingwala_v2/core/widgets/app_svg.dart';
-import 'package:pos_billingwala_v2/core/widgtes/widgtes.dart';
-import 'package:pos_billingwala_v2/l10n/app_strings.dart';
+import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/mess/data/mess_api.dart';
 import 'package:pos_billingwala_v2/features/mess/domain/mess_dtos.dart';
-import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
-import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
+import 'package:pos_billingwala_v2/features/sync/domain/cloud_screen_cache.dart';
+import 'package:pos_billingwala_v2/language/app_strings.dart';
 
 class MessMealSessionsPage extends ConsumerStatefulWidget {
   const MessMealSessionsPage({super.key});
@@ -38,11 +35,21 @@ class MessMealSessionsPageState extends ConsumerState<MessMealSessionsPage> {
     final userId = ref.read(authControllerProvider).session?.userId;
     if (userId == null || userId.isEmpty) {
       setState(
-        () => messMealSessionsPageSessions = AsyncError('Login required', StackTrace.current),
+        () => messMealSessionsPageSessions =
+            AsyncError('Login required', StackTrace.current),
       );
       return;
     }
     setState(() => messMealSessionsPageSessions = const AsyncLoading());
+    final cached =
+        await CloudScreenCache.loadMapList(CloudScreenCache.mealSessions);
+    if (cached.isNotEmpty && mounted) {
+      setState(
+        () => messMealSessionsPageSessions = AsyncData(
+          cached.map(MessMealSessionDto.fromJson).toList(),
+        ),
+      );
+    }
     final result = await AsyncValue.guard(() async {
       return MessApi(ref.read(apiClientProvider)).fetchMealSessions(userId);
     });

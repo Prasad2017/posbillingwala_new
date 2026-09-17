@@ -12,11 +12,9 @@ import 'package:pos_billingwala_v2/features/reports/domain/reports_providers.dar
 import 'package:pos_billingwala_v2/features/sync/data/invoice_sync_api.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/sync/domain/sync_providers.dart';
-import 'package:pos_billingwala_v2/core/widgtes/widgtes.dart';
-import 'package:pos_billingwala_v2/core/widgets/app_module_icon.dart';
-import 'package:pos_billingwala_v2/l10n/app_strings.dart';
+import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
+import 'package:pos_billingwala_v2/language/app_strings.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
-import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
 
 class InvoiceDetailPage extends ConsumerWidget {
   const InvoiceDetailPage({super.key, required this.invoiceId});
@@ -103,6 +101,15 @@ class InvoiceDetailPage extends ConsumerWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(timeFormat.format(invoice.invoiceDate)),
+                      if (invoice.createdByStaffName.trim().isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          'Billed by: ${invoice.createdByStaffName.trim()}',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                        ),
+                      ],
                       const SizedBox(height: 8),
                       Text(
                         typeLabel(invoice.invoiceType, strings),
@@ -394,7 +401,7 @@ class InvoiceDetailPage extends ConsumerWidget {
                                     return;
                                   }
                                   final qty =
-                                      int.tryParse(qtyCtrl.text.trim()) ?? 0;
+                                      double.tryParse(qtyCtrl.text.trim()) ?? 0;
                                   final price =
                                       double.tryParse(priceCtrl.text.trim());
                                   qtyCtrl.dispose();
@@ -551,7 +558,7 @@ Future<void> addInvoiceProduct(
     qtyCtrl.dispose();
     return;
   }
-  final qty = int.tryParse(qtyCtrl.text.trim()) ?? 1;
+  final qty = double.tryParse(qtyCtrl.text.trim()) ?? 1;
   qtyCtrl.dispose();
   try {
     await ref.read(appDatabaseProvider).addInvoiceItemLine(

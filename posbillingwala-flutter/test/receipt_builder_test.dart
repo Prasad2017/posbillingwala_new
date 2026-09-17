@@ -1,11 +1,11 @@
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/features/print/domain/esc_pos_encoder.dart';
 import 'package:pos_billingwala_v2/features/print/domain/print_image_encoder.dart';
 import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
 import 'package:pos_billingwala_v2/features/print/domain/receipt_builder.dart';
-import 'package:pos_billingwala_v2/core/database/app_database.dart';
 
 void main() {
   test('esc pos encoder emits init and text bytes', () {
@@ -42,6 +42,7 @@ void main() {
       diningSessionId: null,
       billPrintStatus: '',
       itemCount: 1,
+      createdByStaffName: '',
       createdAt: DateTime(2026, 9, 9, 10, 30),
       organizationId: '',
       branchId: '',
@@ -108,6 +109,7 @@ void main() {
       diningSessionId: null,
       billPrintStatus: '',
       itemCount: 1,
+      createdByStaffName: '',
       createdAt: DateTime(2026, 9, 9, 10, 30),
       organizationId: '',
       branchId: '',

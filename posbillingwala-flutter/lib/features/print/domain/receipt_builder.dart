@@ -1,5 +1,6 @@
 import 'package:intl/intl.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
+import 'package:pos_billingwala_v2/features/masters/domain/product_units.dart';
 import 'package:pos_billingwala_v2/features/print/domain/esc_pos_encoder.dart';
 import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
 import 'package:pos_billingwala_v2/features/print/domain/receipt_labels.dart';
@@ -27,6 +28,9 @@ class ReceiptBuilder {
   static const upiQrMarker = '<<<UPI_QR>>>';
 
   String rupee(num value) => '₹${money.format(value)}';
+
+  String qtyLabel(num qty, {String? unit}) =>
+      ProductUnits.formatQty(qty.toDouble(), unit: unit);
 
   /* Unicode-safe thermal bytes (any language + ₹) via bitmap, like Android. */
   Future<List<int>> billPrintBytes({
@@ -72,7 +76,7 @@ class ReceiptBuilder {
   Future<List<int>> testPrintBytes(String label) {
     final width = settings.charsPerLine;
     final text = StringBuffer()
-      ..writeln(receiptBuilderCenter('POS Billingwala', width))
+      ..writeln(receiptBuilderCenter('Billingwala', width))
       ..writeln(receiptBuilderCenter('टेस्ट प्रिंट / Test', width))
       ..writeln('-' * width)
       ..writeln(label)
@@ -117,7 +121,7 @@ class ReceiptBuilder {
         : [
             (shopName?.trim().isNotEmpty ?? false)
                 ? shopName!.trim()
-                : 'POS Billingwala',
+                : 'Billingwala',
           ];
 
     final meta = <String>[
@@ -126,6 +130,10 @@ class ReceiptBuilder {
     ];
     if (invoice.noOfTable.trim().isNotEmpty) {
       meta.add('Table No: ${invoice.noOfTable}');
+    }
+    final billedBy = invoice.createdByStaffName.trim();
+    if (billedBy.isNotEmpty) {
+      meta.add('Billed by: $billedBy');
     }
     if (settings.customerUse) {
       final name = invoice.customerName?.trim();
@@ -246,7 +254,7 @@ class ReceiptBuilder {
       ..writeln('-' * width);
     for (final item in ticket.items) {
       buf.writeln(
-        pair(item.productName, 'X${item.productQuantity}', width),
+        pair(item.productName, 'X${qtyLabel(item.productQuantity, unit: item.productUnit)}', width),
       );
     }
     buf.writeln('-' * width);
@@ -266,7 +274,10 @@ class ReceiptBuilder {
       ..text(ticket.kot.kitchenName)
       ..separator();
     for (final item in ticket.items) {
-      encoder.line(item.productName, 'X${item.productQuantity}');
+      encoder.line(
+        item.productName,
+        'X${qtyLabel(item.productQuantity, unit: item.productUnit)}',
+      );
     }
     encoder
       ..separator()
@@ -277,7 +288,7 @@ class ReceiptBuilder {
   List<int> testEscPos(String label) {
     return (EscPosEncoder(charsPerLine: settings.charsPerLine)
           ..init()
-          ..text('POS Billingwala', boldStyle: true, center: true)
+          ..text('Billingwala', boldStyle: true, center: true)
           ..text('Test print', center: true)
           ..separator()
           ..text(label)

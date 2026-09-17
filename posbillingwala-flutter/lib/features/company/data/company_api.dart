@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
+import 'package:pos_billingwala_v2/core/constants/api_constants.dart';
 import 'package:pos_billingwala_v2/core/network/api_client.dart';
 import 'package:pos_billingwala_v2/core/network/api_response.dart';
 import 'package:pos_billingwala_v2/features/company/data/company_dtos.dart';
-import 'package:pos_billingwala_v2/core/constants/api_constants.dart';
 
 class CompanyApi {
   CompanyApi(this.client);
@@ -99,6 +99,14 @@ class CompanyApi {
         'kotCopies': setting.kotCopies,
         'kotAutoPrint': setting.kotAutoPrint,
         'kotPreview': setting.kotPreview,
+        'paperSize': setting.paperSize,
+        'kotPaperSize': setting.kotPaperSize,
+        'billConnectionType': setting.billConnectionType,
+        'kotConnectionType': setting.kotConnectionType,
+        'billUsbIdentifier': setting.billUsbIdentifier,
+        'billUsbName': setting.billUsbName,
+        'kotUsbIdentifier': setting.kotUsbIdentifier,
+        'kotUsbName': setting.kotUsbName,
       },
     );
     return isApiSuccess(data);

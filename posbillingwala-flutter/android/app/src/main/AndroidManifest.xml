@@ -19,8 +19,6 @@
 
     <!-- Camera (QR / logo / scan flows) -->
     <uses-permission android:name="android.permission.CAMERA"/>
-    <!-- Voice product search -->
-    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <!-- Gallery save (Mess QR) / logo pick -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
@@ -40,7 +38,7 @@
         android:required="false"/>
 
     <application
-        android:label="POS Billingwala"
+        android:label="Billingwala"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
@@ -61,9 +59,6 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <meta-data
-            android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-2325627373654257~2682249830"/>
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />

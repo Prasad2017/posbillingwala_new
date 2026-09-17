@@ -4,8 +4,8 @@ import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/theme/app_dimensions.dart';
 import 'package:pos_billingwala_v2/core/theme/app_typography.dart';
 import 'package:pos_billingwala_v2/core/widgets/app_svg.dart';
-import 'package:pos_billingwala_v2/core/widgtes/app_button.dart';
-import 'package:pos_billingwala_v2/core/widgtes/three_dots_loader.dart';
+import 'package:pos_billingwala_v2/core/widgets/app_button.dart';
+import 'package:pos_billingwala_v2/core/widgets/three_dots_loader.dart';
 
 class AppEmptyState extends StatelessWidget {
   const AppEmptyState({

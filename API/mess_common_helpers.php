@@ -562,6 +562,7 @@ if (!function_exists('mess_notify_pos_token_created')) {
             'date' => (string) $tokenRow['token_date'],
             'createdAt' => (string) $tokenRow['created_at'],
             'printStatus' => (string) $tokenRow['print_status'],
+            'memberName' => (string) (isset($tokenRow['member_name']) ? $tokenRow['member_name'] : ''),
         );
 
         if (function_exists('fcm_send_data_only')) {

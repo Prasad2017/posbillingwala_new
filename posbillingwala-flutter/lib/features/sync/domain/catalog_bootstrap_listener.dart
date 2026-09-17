@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
+import 'package:pos_billingwala_v2/core/logging/app_logger.dart';
 import 'package:pos_billingwala_v2/core/network/online_guard.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/masters/domain/masters_providers.dart';
@@ -45,7 +45,7 @@ class CatalogBootstrapListener {
     running = true;
     attemptedThisSession = true;
     try {
-      debugPrint(
+      AppLogger.info(
         'Catalog empty (cats=$categories products=$products) — '
         'syncing with ownerId=$ownerId licenceId=${session.licenceUserId}',
       );
@@ -53,13 +53,13 @@ class CatalogBootstrapListener {
             ownerId: ownerId,
             licenceUserId: session.licenceUserId,
           );
-      debugPrint(
+      AppLogger.info(
         'Catalog bootstrap done: cats=${result.categoryCount} '
         'products=${result.productCount} portions=${result.portionCount} '
         'tables=${result.tableCount}',
       );
     } catch (e, st) {
-      debugPrint('Catalog bootstrap failed: $e\n$st');
+      AppLogger.error('Catalog bootstrap failed', e, st);
       /* Allow retry on next Home open if this attempt failed. */
       attemptedThisSession = false;
     } finally {

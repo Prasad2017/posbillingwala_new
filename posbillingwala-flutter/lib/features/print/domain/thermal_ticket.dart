@@ -104,7 +104,7 @@ class ThermalLine {
   });
 
   final String name;
-  final int qty;
+  final num qty;
   final String rate;
   final String amount;
 }

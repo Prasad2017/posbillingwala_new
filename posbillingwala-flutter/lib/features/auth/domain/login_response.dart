@@ -34,6 +34,11 @@ class LoginResponse {
     this.issuedAt,
     this.offlineGraceUntil,
     this.trialConsumed,
+    this.userManagementEnabled,
+    this.maxUsers,
+    this.maxDevices,
+    this.maxPrinters,
+    this.permissionVersion,
   });
 
   final String status;
@@ -70,6 +75,11 @@ class LoginResponse {
   final String? issuedAt;
   final String? offlineGraceUntil;
   final String? trialConsumed;
+  final String? userManagementEnabled;
+  final String? maxUsers;
+  final String? maxDevices;
+  final String? maxPrinters;
+  final String? permissionVersion;
 
   bool get isSuccess => status == '1';
 
@@ -111,6 +121,11 @@ class LoginResponse {
       issuedAt: s(json['issuedAt']),
       offlineGraceUntil: s(json['offlineGraceUntil']),
       trialConsumed: s(json['trialConsumed']),
+      userManagementEnabled: s(json['userManagementEnabled']),
+      maxUsers: s(json['maxUsers']),
+      maxDevices: s(json['maxDevices']),
+      maxPrinters: s(json['maxPrinters']),
+      permissionVersion: s(json['permissionVersion']),
     );
   }
 
@@ -149,6 +164,11 @@ class LoginResponse {
         'issuedAt': issuedAt,
         'offlineGraceUntil': offlineGraceUntil,
         'trialConsumed': trialConsumed,
+        'userManagementEnabled': userManagementEnabled,
+        'maxUsers': maxUsers,
+        'maxDevices': maxDevices,
+        'maxPrinters': maxPrinters,
+        'permissionVersion': permissionVersion,
       };
 }
 

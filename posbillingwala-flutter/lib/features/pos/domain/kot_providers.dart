@@ -4,12 +4,12 @@ import 'package:pos_billingwala_v2/core/database/database_provider.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/billing_session.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/pos_providers.dart';
 
-final unprintedCartCountProvider = Provider<int>((ref) {
+final unprintedCartCountProvider = Provider<double>((ref) {
   final cart = ref.watch(cartItemsProvider).maybeWhen(
         data: (items) => items,
         orElse: () => const <CartItem>[],
       );
-  var count = 0;
+  var count = 0.0;
   for (final item in cart) {
     final delta = item.quantity - item.printedQuantity;
     if (delta > 0) count += delta;

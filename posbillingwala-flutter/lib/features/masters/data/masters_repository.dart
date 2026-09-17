@@ -194,8 +194,17 @@ class MastersRepository {
               subcategoryId: Value(e.subcategoryId),
               productCode: Value(e.productCode),
               productName: Value(e.productName),
+              productImage: Value(
+                (e.productImage?.trim().isNotEmpty ?? false)
+                    ? e.productImage!.trim()
+                    : null,
+              ),
               productPrice: Value(e.productPrice),
-              openPrice: Value(e.openPrice),
+              productMrp: Value(e.productMrp > 0 ? e.productMrp : e.productPrice),
+              openPrice: Value(ProductDto.normalizeOpenPrice(e.openPrice)),
+              priceIncludesGst: Value(
+                ProductDto.normalizeOpenPrice(e.priceIncludesGst),
+              ),
               productUnit: Value(e.productUnit),
               productCgst: Value(e.productCgst),
               productSgst: Value(e.productSgst),
@@ -433,13 +442,18 @@ class MastersRepository {
         productCode: product.productCode ?? '',
         productName: product.productName,
         productPrice: product.productPrice.toStringAsFixed(2),
+        productMrp: product.productMrp.toStringAsFixed(2),
         productUnit: product.productUnit ?? '',
         productCgst: product.productCgst.toStringAsFixed(2),
         productSgst: product.productSgst.toStringAsFixed(2),
         productNetworkStatus: network,
         productDeletedStatus: product.productDeletedStatus,
         subcategoryId: '${product.subcategoryId ?? 0}',
-        openPrice: product.openPrice,
+        openPrice: ProductDto.normalizeOpenPrice(product.openPrice) == '1'
+            ? 'on'
+            : 'off',
+        priceIncludesGst: ProductDto.normalizeOpenPrice(product.priceIncludesGst),
+        productImage: product.productImage ?? '',
       );
       if (ok) {
         await db.markProductSynced(product.productId);
@@ -674,10 +688,13 @@ class MastersRepository {
     required String userId,
     required String productName,
     required double productPrice,
+    double productMrp = 0,
     int? categoryId,
     String? categoryName,
     String? productCode,
+    String? productImage,
     String openPrice = '0',
+    String priceIncludesGst = '0',
     String? productUnit,
     double productCgst = 0,
     double productSgst = 0,
@@ -688,12 +705,17 @@ class MastersRepository {
     final id = await db.insertLocalProduct(
       productName: productName.trim(),
       productPrice: productPrice,
+      productMrp: productMrp,
       categoryId: categoryId,
       categoryName: categoryName,
       productCode: productCode?.trim().isEmpty == true
           ? null
           : productCode?.trim(),
+      productImage: productImage?.trim().isEmpty == true
+          ? null
+          : productImage?.trim(),
       openPrice: openPrice,
+      priceIncludesGst: priceIncludesGst,
       productUnit: productUnit,
       productCgst: productCgst,
       productSgst: productSgst,
@@ -775,10 +797,14 @@ class MastersRepository {
     required int productId,
     required String productName,
     required double productPrice,
+    double productMrp = 0,
     int? categoryId,
     String? categoryName,
     String? productCode,
+    String? productImage,
+    bool clearProductImage = false,
     String openPrice = '0',
+    String priceIncludesGst = '0',
     String? productUnit,
     double productCgst = 0,
     double productSgst = 0,
@@ -790,12 +816,16 @@ class MastersRepository {
       productId: productId,
       productName: productName.trim(),
       productPrice: productPrice,
+      productMrp: productMrp,
       categoryId: categoryId,
       categoryName: categoryName,
       productCode: productCode?.trim().isEmpty == true
           ? null
           : productCode?.trim(),
+      productImage: productImage,
+      clearProductImage: clearProductImage,
       openPrice: openPrice,
+      priceIncludesGst: priceIncludesGst,
       productUnit: productUnit,
       productCgst: productCgst,
       productSgst: productSgst,
@@ -811,6 +841,37 @@ class MastersRepository {
   }) async {
     await _requireOnlineIfWeb();
     await db.softDeleteProduct(productId);
+    await _pushPendingToApi(userId, uploadNow: uploadNow);
+  }
+
+  Future<int> createPortion({
+    required String userId,
+    required int productId,
+    required String portionName,
+    required double portionPrice,
+    int portionSortOrder = 1,
+    int? portionMasterId,
+    bool uploadNow = true,
+  }) async {
+    await _requireOnlineIfWeb();
+    final id = await db.insertLocalPortion(
+      productId: productId,
+      portionName: portionName.trim(),
+      portionPrice: portionPrice,
+      portionSortOrder: portionSortOrder,
+      portionMasterId: portionMasterId,
+    );
+    await _pushPendingToApi(userId, uploadNow: uploadNow);
+    return id;
+  }
+
+  Future<void> deletePortion({
+    required String userId,
+    required int portionId,
+    bool uploadNow = true,
+  }) async {
+    await _requireOnlineIfWeb();
+    await db.softDeletePortion(portionId);
     await _pushPendingToApi(userId, uploadNow: uploadNow);
   }
 

@@ -6,5 +6,8 @@ abstract final class AppConfig {
   static const bool enableInAppUpdate = true;
 
   /* true = screenshots allowed; false = block capture (FLAG_SECURE). */
-  static const bool allowScreenshot = false;
+  static const bool allowScreenshot = true;
+
+  /* true = console + Documents/Pos Billingwala/Logs file output; false = silent. */
+  static const bool enableLogging = true;
 }

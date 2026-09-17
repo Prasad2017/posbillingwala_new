@@ -5,13 +5,13 @@ import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
+import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
+import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
 import 'package:pos_billingwala_v2/features/reports/domain/report_export.dart';
-import 'package:pos_billingwala_v2/l10n/app_strings.dart';
 import 'package:pos_billingwala_v2/features/reports/domain/reports_providers.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/report_period_controls.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/report_widgets.dart';
-import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
-import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
+import 'package:pos_billingwala_v2/language/app_strings.dart';
 
 class ProductWiseReportPage extends ConsumerStatefulWidget {
   const ProductWiseReportPage({super.key, this.initialType = 'all'});
@@ -163,7 +163,7 @@ class ProductWiseReportPageState extends ConsumerState<ProductWiseReportPage> {
                   child: Center(child: Text(AppStrings.of(ref).noBillsPeriod)),
                 );
               }
-              final totalQty = rows.fold<int>(0, (s, r) => s + r.totalQuantity);
+              final totalQty = rows.fold<double>(0, (s, r) => s + r.totalQuantity);
               final totalAmt =
                   rows.fold<double>(0, (s, r) => s + r.totalAmount);
               final topRows = rows.take(6).toList();

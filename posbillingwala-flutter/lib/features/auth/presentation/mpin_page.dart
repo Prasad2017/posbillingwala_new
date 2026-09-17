@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pinput/pinput.dart';
 import 'package:pos_billingwala_v2/core/constants/app_assets.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/theme/app_typography.dart';
-import 'package:pos_billingwala_v2/core/widgets/app_svg.dart';
-import 'package:pos_billingwala_v2/core/widgets/brand_logo.dart';
-import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
-import 'package:pos_billingwala_v2/core/widgtes/widgtes.dart';
-import 'package:pos_billingwala_v2/features/ads/ad_banner.dart';
-import 'package:pos_billingwala_v2/features/ads/ad_config.dart';
+import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
+import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
+import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/auth/presentation/device_conflict_dialog.dart';
-import 'package:pos_billingwala_v2/l10n/app_strings.dart';
+import 'package:pos_billingwala_v2/features/auth/presentation/web_auth_shell.dart';
+import 'package:pos_billingwala_v2/language/app_strings.dart';
 
 /* Matches `docs/layout/activity_login_mpin.xml`. */
 class MpinPage extends ConsumerStatefulWidget {
@@ -23,39 +22,63 @@ class MpinPage extends ConsumerStatefulWidget {
 }
 
 class MpinPageState extends ConsumerState<MpinPage> {
-  final controllers = List.generate(4, (_) => TextEditingController());
-  final focusNodes = List.generate(4, (_) => FocusNode());
+  final pinController = TextEditingController();
+  final pinFocus = FocusNode();
+  final pinKey = GlobalKey<FormState>();
 
   @override
   void initState() {
     super.initState();
-    for (final node in focusNodes) {
-      node.addListener(() {
-        if (mounted) setState(() {});
-      });
-    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(authControllerProvider.notifier).setDeviceConflictHandler(
             (message) => showDeviceConflictDialog(context, message),
           );
-      focusNodes.first.requestFocus();
+      pinFocus.requestFocus();
     });
   }
 
   @override
   void dispose() {
-    for (final c in controllers) {
-      c.dispose();
-    }
-    for (final n in focusNodes) {
-      n.dispose();
-    }
+    pinController.dispose();
+    pinFocus.dispose();
     super.dispose();
   }
 
-  String get mpin => controllers.map((c) => c.text).join();
+  PinTheme get defaultPinTheme => PinTheme(
+        width: 58,
+        height: 58,
+        textStyle: AppTypography.screenTitle(color: AppColors.primary),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppColors.border, width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+      );
 
-  Future<void> submit() async {
+  PinTheme get focusedPinTheme => defaultPinTheme.copyWith(
+        decoration: defaultPinTheme.decoration!.copyWith(
+          border: Border.all(color: AppColors.primary, width: 2),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.12),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+      );
+
+  PinTheme get submittedPinTheme => focusedPinTheme;
+
+  Future<void> submit([String? value]) async {
+    final mpin = (value ?? pinController.text).trim();
     if (mpin.length != 4) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Enter your 4-digit PB-PIN')),
@@ -66,21 +89,111 @@ class MpinPageState extends ConsumerState<MpinPage> {
     final ok =
         await ref.read(authControllerProvider.notifier).loginWithMpin(mpin);
     if (!ok && mounted) {
-      for (final c in controllers) {
-        c.clear();
-      }
-      focusNodes.first.requestFocus();
+      pinController.clear();
+      pinFocus.requestFocus();
     }
   }
 
-  void onDigitChanged(int index, String value) {
-    setState(() {});
-    if (value.length == 1 && index < 3) {
-      focusNodes[index + 1].requestFocus();
-    } else if (value.isEmpty && index > 0) {
-      focusNodes[index - 1].requestFocus();
-    }
-    if (mpin.length == 4) submit();
+  Widget pinFields({required bool busy}) {
+    return Pinput(
+      length: 4,
+      controller: pinController,
+      focusNode: pinFocus,
+      enabled: !busy,
+      obscureText: true,
+      obscuringCharacter: '•',
+      keyboardType: TextInputType.number,
+      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+      defaultPinTheme: defaultPinTheme,
+      focusedPinTheme: focusedPinTheme,
+      submittedPinTheme: submittedPinTheme,
+      separatorBuilder: (index) => const SizedBox(width: 12),
+      hapticFeedbackType: HapticFeedbackType.lightImpact,
+      cursor: Container(
+        width: 2,
+        height: 22,
+        color: AppColors.primary,
+      ),
+      onCompleted: submit,
+      onSubmitted: submit,
+    );
+  }
+
+  Widget pinCard({
+    required AuthState auth,
+    required AppStrings strings,
+  }) {
+    return AppCard(
+      child: Column(
+        children: [
+          SizedBox(
+            width: 72,
+            height: 72,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: AppColors.border,
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.10),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: const Center(
+                child: AppSvg(
+                  AppAssets.svgLock,
+                  width: 28,
+                  height: 28,
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text('Enter PB-PIN', style: AppTypography.sectionTitle()),
+          const SizedBox(height: 6),
+          Text(
+            'Enter the 4-digit PIN for this device.',
+            textAlign: TextAlign.center,
+            style: AppTypography.bodySmall(),
+          ),
+          const SizedBox(height: 24),
+          Form(
+            key: pinKey,
+            child: pinFields(busy: auth.busy),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const AppSvg(
+                AppAssets.svgLock,
+                width: 14,
+                height: 14,
+                color: AppColors.primary,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'Your data is safe with us',
+                style: AppTypography.caption(),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          AppButton(
+            label: auth.busy ? strings.pleaseWait : strings.login,
+            isLoading: auth.busy,
+            onPressed: auth.busy ? null : submit,
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -97,6 +210,41 @@ class MpinPageState extends ConsumerState<MpinPage> {
         );
       }
     });
+
+    if (AppPlatform.useDesktopShell) {
+      final showInlineLogo =
+          context.widthClass.index < AppWidthClass.expanded.index;
+      return WebAuthShell(
+        child: Column(
+          children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: auth.busy
+                    ? null
+                    : () =>
+                        ref.read(authControllerProvider.notifier).clearLicence(),
+                icon: const Icon(Icons.arrow_back_rounded, size: 18),
+                label: const Text('Change licence'),
+              ),
+            ),
+            if (showInlineLogo) ...[
+              const BrandLogo(width: 140),
+              const SizedBox(height: 16),
+            ],
+            Text(strings.welcomeBack, style: AppTypography.screenTitle()),
+            const SizedBox(height: 8),
+            Text(
+              'Enter the 4-digit PB-PIN for this store.',
+              textAlign: TextAlign.center,
+              style: AppTypography.body(),
+            ),
+            const SizedBox(height: 24),
+            pinCard(auth: auth, strings: strings),
+          ],
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -123,176 +271,39 @@ class MpinPageState extends ConsumerState<MpinPage> {
               child: ResponsiveContent(
                 padding: EdgeInsets.zero,
                 child: Column(
-                children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: IconButton(
-                      tooltip: 'Change licence',
-                      onPressed: auth.busy
-                          ? null
-                          : () => ref
-                              .read(authControllerProvider.notifier)
-                              .clearLicence(),
-                      icon: const AppSvg(
-                        AppAssets.svgBack,
-                        width: 22,
-                        height: 22,
-                        color: AppColors.primary,
+                  children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: IconButton(
+                        tooltip: 'Change licence',
+                        onPressed: auth.busy
+                            ? null
+                            : () => ref
+                                .read(authControllerProvider.notifier)
+                                .clearLicence(),
+                        icon: const AppSvg(
+                          AppAssets.svgBack,
+                          width: 22,
+                          height: 22,
+                          color: AppColors.primary,
+                        ),
                       ),
                     ),
-                  ),
-                  const BrandLogo(width: 180),
-                  const SizedBox(height: 20),
-                  Text(strings.welcomeBack, style: AppTypography.screenTitle()),
-                  const SizedBox(height: 8),
-                  Text(
-                    strings.signInSubtitle,
-                    textAlign: TextAlign.center,
-                    style: AppTypography.body(),
-                  ),
-                  const SizedBox(height: 24),
-                  AppCard(
-                    child: Column(
-                      children: [
-                        SizedBox(
-                          width: 72,
-                          height: 72,
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: AppColors.border,
-                                width: 1.5,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.primary.withValues(
-                                    alpha: 0.10,
-                                  ),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: const Center(
-                              child: AppSvg(
-                                AppAssets.svgLock,
-                                width: 28,
-                                height: 28,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Enter PB-PIN',
-                          style: AppTypography.sectionTitle(),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'Enter the 4-digit PIN for this device.',
-                          textAlign: TextAlign.center,
-                          style: AppTypography.bodySmall(),
-                        ),
-                        const SizedBox(height: 24),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: List.generate(4, (index) {
-                            final filled =
-                                controllers[index].text.isNotEmpty;
-                            final focused = focusNodes[index].hasFocus;
-                            return Padding(
-                              padding: EdgeInsets.only(
-                                left: index == 0 ? 0 : 12,
-                              ),
-                              child: SizedBox(
-                                width: 58,
-                                height: 58,
-                                child: DecoratedBox(
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(18),
-                                    border: Border.all(
-                                      color: filled || focused
-                                          ? AppColors.primary
-                                          : AppColors.border,
-                                      width: filled || focused ? 2 : 1.5,
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: AppColors.primary.withValues(
-                                          alpha: filled ? 0.12 : 0.06,
-                                        ),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 3),
-                                      ),
-                                    ],
-                                  ),
-                                  child: TextField(
-                                    controller: controllers[index],
-                                    focusNode: focusNodes[index],
-                                    textAlign: TextAlign.center,
-                                    keyboardType: TextInputType.number,
-                                    obscureText: true,
-                                    maxLength: 1,
-                                    cursorColor: AppColors.primary,
-                                    style: AppTypography.screenTitle(
-                                      color: AppColors.primary,
-                                    ),
-                                    inputFormatters: [
-                                      FilteringTextInputFormatter.digitsOnly,
-                                    ],
-                                    decoration: const InputDecoration(
-                                      counterText: '',
-                                      border: InputBorder.none,
-                                      enabledBorder: InputBorder.none,
-                                      focusedBorder: InputBorder.none,
-                                      disabledBorder: InputBorder.none,
-                                      errorBorder: InputBorder.none,
-                                      focusedErrorBorder: InputBorder.none,
-                                      filled: false,
-                                      isCollapsed: true,
-                                      contentPadding: EdgeInsets.zero,
-                                    ),
-                                    onChanged: (value) =>
-                                        onDigitChanged(index, value),
-                                  ),
-                                ),
-                              ),
-                            );
-                          }),
-                        ),
-                        const SizedBox(height: 14),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            AppSvg(
-                              AppAssets.svgLock,
-                              width: 14,
-                              height: 14,
-                              color: AppColors.primary,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              'Your data is safe with us',
-                              style: AppTypography.caption(),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                        AppButton(
-                          label: auth.busy ? strings.pleaseWait : strings.login,
-                          isLoading: auth.busy,
-                          onPressed: auth.busy ? null : submit,
-                        ),
-                        const SizedBox(height: 16),
-                        const AdBanner(slot: AdSlot.login),
-                      ],
+                    const BrandLogo(width: 180),
+                    const SizedBox(height: 20),
+                    Text(
+                      strings.welcomeBack,
+                      style: AppTypography.screenTitle(),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 8),
+                    Text(
+                      strings.signInSubtitle,
+                      textAlign: TextAlign.center,
+                      style: AppTypography.body(),
+                    ),
+                    const SizedBox(height: 24),
+                    pinCard(auth: auth, strings: strings),
+                  ],
                 ),
               ),
             ),

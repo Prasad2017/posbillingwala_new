@@ -3,6 +3,7 @@ package com.posbillingwala.pos_billingwala_v2.print;
 import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothSocket;
 import android.content.Context;
 import android.os.Handler;
@@ -61,9 +62,13 @@ public class BluetoothPrintService {
     private volatile boolean intentionalDisconnect;
 
     public BluetoothPrintService(Context context, Handler handler) {
-        adapter = BluetoothAdapter.getDefaultAdapter();
         this.handler = handler;
         this.appContext = context != null ? context.getApplicationContext() : null;
+        Context ctx = this.appContext != null ? this.appContext : context;
+        BluetoothManager manager = ctx != null
+                ? (BluetoothManager) ctx.getSystemService(Context.BLUETOOTH_SERVICE)
+                : null;
+        this.adapter = manager != null ? manager.getAdapter() : null;
     }
 
     public void setConnectionListener(ConnectionListener listener) {

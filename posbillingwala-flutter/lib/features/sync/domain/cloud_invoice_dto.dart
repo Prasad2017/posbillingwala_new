@@ -30,6 +30,8 @@ class CloudInvoiceDto {
     this.branchId,
     this.deviceId,
     this.userId,
+    this.createdByStaffId,
+    this.createdByStaffName,
   });
 
   final String invoiceNumber;
@@ -58,6 +60,8 @@ class CloudInvoiceDto {
   final String? branchId;
   final String? deviceId;
   final String? userId;
+  final int? createdByStaffId;
+  final String? createdByStaffName;
 
   factory CloudInvoiceDto.fromJson(Map<String, dynamic> json) {
     final date = parseInvoiceDate(json['invoiceDate']) ?? DateTime.now();
@@ -96,6 +100,8 @@ class CloudInvoiceDto {
       branchId: emptyToNull(parseString(json['branchId'])),
       deviceId: emptyToNull(parseString(json['deviceId'])),
       userId: emptyToNull(parseString(json['userId'])),
+      createdByStaffId: parseInt(json['createdByStaffId']),
+      createdByStaffName: emptyToNull(parseString(json['createdByStaffName'])),
     );
   }
 
@@ -159,6 +165,8 @@ class CloudInvoiceDto {
       branchId: Value(branchId ?? ''),
       deviceId: Value(deviceId ?? ''),
       userId: Value(userId),
+      createdByStaffId: Value(createdByStaffId),
+      createdByStaffName: Value(createdByStaffName ?? ''),
     );
   }
 
@@ -187,7 +195,7 @@ class CloudInvoiceItemDto {
   final String productName;
   final String invoiceItemNetworkStatus;
   final double productPrice;
-  final int productQuantity;
+  final double productQuantity;
   final double productCgst;
   final double productSgst;
   final String? productUnit;
@@ -201,12 +209,13 @@ class CloudInvoiceItemDto {
         ? parseString(json['invoiceProductStatus'])!.trim()
         : (parseString(json['invoiceProductNetworkStatus'])?.trim() ?? '');
 
+    final qty = parseCloudMoney(json['productQuantity']);
     return CloudInvoiceItemDto(
       invoiceNumber: parseString(json['invoiceNumber'])?.trim() ?? '',
       productName: parseString(json['productName'])?.trim() ?? '',
       invoiceItemNetworkStatus: network,
       productPrice: parseCloudMoney(json['productPrice']),
-      productQuantity: parseInt(json['productQuantity']) ?? 1,
+      productQuantity: qty > 0 ? qty : 1,
       productCgst: parseCloudMoney(json['productCGST']),
       productSgst: parseCloudMoney(json['productSGST']),
       productUnit: parseString(json['productUnit']),

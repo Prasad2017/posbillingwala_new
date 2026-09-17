@@ -11,6 +11,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $userId = isset($_POST['userId']) ? trim($_POST['userId']) : '';
   $__postedUserId = isset($_POST['userId']) ? $_POST['userId'] : (isset($userId) ? $userId : '');
   pos_require_auth($con, $__postedUserId, isset($response) ? $response : array('status'=>'0','message'=>'Unauthorized'));
+    require_once __DIR__ . '/pos_staff.php';
+    pos_require_permission($con, $userId, 'mess.manage');
 
     $tokenCode = isset($_POST['tokenCode']) ? trim($_POST['tokenCode']) : '';
     $memberId = isset($_POST['memberId']) ? trim($_POST['memberId']) : '';
@@ -22,8 +24,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $tokenDate = isset($_POST['tokenDate']) ? trim($_POST['tokenDate']) : '';
     $tokenNetworkStatus = isset($_POST['tokenNetworkStatus']) ? trim($_POST['tokenNetworkStatus']) : '';
 
-    if ($userId === '' || $tokenCode === '' || $memberName === '' || $messType === '' || $tokenDate === '' || $tokenNetworkStatus === '') {
-        $response['message'] = 'Missing required fields';
+    if ($userId === '' || $tokenCode === '' || $memberName === '' || $memberMobile === '' || $messType === '' || $tokenDate === '' || $tokenNetworkStatus === '') {
+        $response['message'] = 'Member name and mobile number are required';
     } else {
         date_default_timezone_set('Asia/Kolkata');
 

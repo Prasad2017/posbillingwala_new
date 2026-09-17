@@ -4,6 +4,7 @@ package com.posbillingwala.admin.Retrofit;
 import com.posbillingwala.admin.Model.AllApiResponse;
 import com.posbillingwala.admin.Model.CatalogImportHistoryResponse;
 import com.posbillingwala.admin.Model.CatalogImportPreviewResponse;
+import com.posbillingwala.admin.Model.StoreOpsResponse;
 
 import okhttp3.MultipartBody;
 import okhttp3.RequestBody;
@@ -442,6 +443,11 @@ public interface ApiInterface {
                                           @Part("customerId") RequestBody customerId,
                                           @Part("licenceId") RequestBody licenceId,
                                           @Part MultipartBody.Part importFile);
+
+    @FormUrlEncoded
+    @POST("getStoreOpsSummary.php")
+    Call<StoreOpsResponse> getStoreOpsSummary(@Field("userId") String userId,
+                                              @Field("licenseId") String licenseId);
 
 
 }

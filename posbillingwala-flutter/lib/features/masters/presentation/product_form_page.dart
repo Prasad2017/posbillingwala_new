@@ -1,27 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
-import 'package:pos_billingwala_v2/features/masters/domain/masters_providers.dart';
-import 'package:pos_billingwala_v2/features/masters/presentation/widgets/master_ui.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
+import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
+import 'package:pos_billingwala_v2/features/inventory/domain/inventory_providers.dart';
+import 'package:pos_billingwala_v2/features/masters/domain/masters_providers.dart';
+import 'package:pos_billingwala_v2/features/masters/domain/product_units.dart';
+import 'package:pos_billingwala_v2/features/masters/presentation/product_image_thumb.dart';
+import 'package:pos_billingwala_v2/features/masters/presentation/widgets/master_ui.dart';
 
-const productUnits = [
-  'Pcs',
-  'Kg',
-  'Plate',
-  'Glass',
-  'Bowl',
-  'Packet',
-  'Litre',
-  'Dozen',
-  'GRAM',
-];
-
+const productUnits = ProductUnits.list;
 class ProductFormPage extends ConsumerStatefulWidget {
   const ProductFormPage({super.key, this.productId});
 
@@ -35,6 +29,8 @@ class ProductFormPageState extends ConsumerState<ProductFormPage> {
   final codeCtrl = TextEditingController();
   final nameCtrl = TextEditingController();
   final priceCtrl = TextEditingController();
+  final mrpCtrl = TextEditingController();
+  final stockCtrl = TextEditingController();
   final cgstCtrl = TextEditingController(text: '0');
   final sgstCtrl = TextEditingController(text: '0');
   final portionPriceCtrl = TextEditingController();
@@ -42,10 +38,18 @@ class ProductFormPageState extends ConsumerState<ProductFormPage> {
   ProductCategory? productFormPageCategory;
   ProductSubcategory? productFormPageSubcategory;
   PortionMaster? productFormPagePortionMaster;
+  /* Stable ids so selection survives async category list reloads. */
+  int? selectedCategoryId;
+  String? selectedCategoryLabel;
+  int? selectedSubcategoryId;
   String unit = productUnits.first;
   bool productFormPageOpenPrice = false;
+  bool priceIncludesGst = false;
   bool busy = false;
   bool loaded = false;
+  bool addCategorySeeded = false;
+  String? productImageValue;
+  bool productImageDirty = false;
   final inlinePortions = <({PortionMaster master, double price})>[];
 
   bool get isEdit => widget.productId != null;
@@ -55,46 +59,111 @@ class ProductFormPageState extends ConsumerState<ProductFormPage> {
     codeCtrl.dispose();
     nameCtrl.dispose();
     priceCtrl.dispose();
+    mrpCtrl.dispose();
+    stockCtrl.dispose();
     cgstCtrl.dispose();
     sgstCtrl.dispose();
     portionPriceCtrl.dispose();
     super.dispose();
   }
 
+  void selectCategory(ProductCategory? category) {
+    productFormPageCategory = category;
+    selectedCategoryId = category?.categoryId;
+    selectedCategoryLabel = category?.categoryName;
+    productFormPageSubcategory = null;
+    selectedSubcategoryId = null;
+  }
+
+  void selectSubcategory(ProductSubcategory? subcategory) {
+    productFormPageSubcategory = subcategory;
+    selectedSubcategoryId = subcategory?.subcategoryId;
+  }
+
+  /* Bind category/subcategory objects from stable ids once lists are ready. */
+  bool bindCategorySelection(
+    List<ProductCategory> categories,
+    List<ProductSubcategory> subs,
+  ) {
+    var changed = false;
+    if (selectedCategoryId != null) {
+      ProductCategory? match;
+      for (final c in categories) {
+        if (c.categoryId == selectedCategoryId) {
+          match = c;
+          break;
+        }
+      }
+      if (match != null) {
+        if (productFormPageCategory?.categoryId != match.categoryId) {
+          productFormPageCategory = match;
+          changed = true;
+        }
+        selectedCategoryLabel = match.categoryName;
+      }
+    }
+    if (selectedSubcategoryId != null) {
+      ProductSubcategory? match;
+      for (final s in subs) {
+        if (s.subcategoryId == selectedSubcategoryId &&
+            (selectedCategoryId == null ||
+                s.categoryId == selectedCategoryId)) {
+          match = s;
+          break;
+        }
+      }
+      if (match != null &&
+          productFormPageSubcategory?.subcategoryId != match.subcategoryId) {
+        productFormPageSubcategory = match;
+        changed = true;
+      }
+    } else if (productFormPageSubcategory != null) {
+      productFormPageSubcategory = null;
+      changed = true;
+    }
+    return changed;
+  }
+
   void hydrate(Product product, List<ProductCategory> categories,
       List<ProductSubcategory> subs) {
-    if (loaded) return;
-    loaded = true;
-    codeCtrl.text = product.productCode ?? '';
-    nameCtrl.text = product.productName;
-    priceCtrl.text = product.productPrice.toStringAsFixed(
-      product.productPrice % 1 == 0 ? 0 : 2,
-    );
-    cgstCtrl.text = product.productCgst.toStringAsFixed(
-      product.productCgst % 1 == 0 ? 0 : 1,
-    );
-    sgstCtrl.text = product.productSgst.toStringAsFixed(
-      product.productSgst % 1 == 0 ? 0 : 1,
-    );
-    productFormPageOpenPrice = product.openPrice == '1';
-    unit = (product.productUnit ?? '').trim().isEmpty
-        ? productUnits.first
-        : product.productUnit!;
-    if (!productUnits.contains(unit)) {
-      unit = productUnits.first;
+    if (!loaded) {
+      loaded = true;
+      codeCtrl.text = product.productCode ?? '';
+      nameCtrl.text = product.productName;
+      final exclusive = product.productPrice;
+      final includes = product.priceIncludesGst == '1';
+      final taxPct = product.productCgst + product.productSgst;
+      final displayPrice = includes && taxPct > 0
+          ? exclusive * (1 + taxPct / 100)
+          : exclusive;
+      priceCtrl.text = displayPrice.toStringAsFixed(
+        displayPrice % 1 == 0 ? 0 : 2,
+      );
+      mrpCtrl.text = product.productMrp > 0
+          ? product.productMrp.toStringAsFixed(
+              product.productMrp % 1 == 0 ? 0 : 2,
+            )
+          : '';
+      cgstCtrl.text = product.productCgst.toStringAsFixed(
+        product.productCgst % 1 == 0 ? 0 : 1,
+      );
+      sgstCtrl.text = product.productSgst.toStringAsFixed(
+        product.productSgst % 1 == 0 ? 0 : 1,
+      );
+      productFormPageOpenPrice = product.openPrice == '1';
+      priceIncludesGst = product.priceIncludesGst == '1';
+      productImageValue = (product.productImage?.trim().isNotEmpty ?? false)
+          ? product.productImage!.trim()
+          : null;
+      productImageDirty = false;
+      unit = ProductUnits.normalize(product.productUnit);
+      selectedCategoryId = product.categoryId;
+      selectedCategoryLabel = (product.categoryName?.trim().isNotEmpty ?? false)
+          ? product.categoryName!.trim()
+          : null;
+      selectedSubcategoryId = product.subcategoryId;
     }
-    for (final c in categories) {
-      if (c.categoryId == product.categoryId) {
-        productFormPageCategory = c;
-        break;
-      }
-    }
-    for (final s in subs) {
-      if (s.subcategoryId == product.subcategoryId) {
-        productFormPageSubcategory = s;
-        break;
-      }
-    }
+    bindCategorySelection(categories, subs);
   }
 
   Future<void> addInlinePortion() async {
@@ -121,6 +190,28 @@ class ProductFormPageState extends ConsumerState<ProductFormPage> {
     });
   }
 
+  Future<void> pickProductImage(ImageSource source) async {
+    final picked = await ImagePicker().pickImage(
+      source: source,
+      maxWidth: 480,
+      maxHeight: 480,
+      imageQuality: 70,
+    );
+    if (picked == null) return;
+    final encoded = await encodePickedProductImage(picked);
+    if (!mounted) return;
+    if (encoded == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not use that image (try a smaller photo)')),
+      );
+      return;
+    }
+    setState(() {
+      productImageValue = encoded;
+      productImageDirty = true;
+    });
+  }
+
   Future<void> save() async {
     final name = nameCtrl.text.trim();
     if (name.isEmpty) {
@@ -129,20 +220,47 @@ class ProductFormPageState extends ConsumerState<ProductFormPage> {
       );
       return;
     }
-    if (productFormPageCategory == null) {
+    if (productFormPageCategory == null && selectedCategoryId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Select a category')),
       );
       return;
     }
+    final categoryId =
+        productFormPageCategory?.categoryId ?? selectedCategoryId!;
+    final categoryName = productFormPageCategory?.categoryName ??
+        selectedCategoryLabel ??
+        '';
+    if (categoryName.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Select a category')),
+      );
+      return;
+    }
+    final subcategoryId = productFormPageSubcategory?.subcategoryId ??
+        selectedSubcategoryId;
     final price = productFormPageOpenPrice
         ? 0.0
         : (double.tryParse(priceCtrl.text.trim()) ?? -1);
     if (!productFormPageOpenPrice && price < 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter a valid product price')),
+        const SnackBar(content: Text('Enter a valid selling price')),
       );
       return;
+    }
+    final mrp = double.tryParse(mrpCtrl.text.trim()) ?? 0;
+    final openingStock = double.tryParse(stockCtrl.text.trim()) ?? 0;
+    final cgst = double.tryParse(cgstCtrl.text.trim()) ?? 0;
+    final sgst = double.tryParse(sgstCtrl.text.trim()) ?? 0;
+    /* Always persist exclusive selling price for billing. */
+    var exclusivePrice = price;
+    if (!productFormPageOpenPrice && priceIncludesGst) {
+      final tax = cgst + sgst;
+      if (tax > 0) {
+        exclusivePrice = double.parse(
+          (price / (1 + tax / 100)).toStringAsFixed(2),
+        );
+      }
     }
 
     setState(() => busy = true);
@@ -152,32 +270,39 @@ class ProductFormPageState extends ConsumerState<ProductFormPage> {
         await sync.updateProduct(
           productId: widget.productId!,
           name: name,
-          price: price,
-          categoryId: productFormPageCategory!.categoryId,
-          categoryName: productFormPageCategory!.categoryName,
+          price: exclusivePrice,
+          mrp: mrp,
+          categoryId: categoryId,
+          categoryName: categoryName,
           productCode: codeCtrl.text.trim().isEmpty
               ? null
               : codeCtrl.text.trim(),
+          productImage: productImageDirty ? productImageValue : null,
+          clearProductImage: productImageDirty && productImageValue == null,
           openPrice: productFormPageOpenPrice ? '1' : '0',
+          priceIncludesGst: priceIncludesGst ? '1' : '0',
           productUnit: unit,
-          productCgst: double.tryParse(cgstCtrl.text.trim()) ?? 0,
-          productSgst: double.tryParse(sgstCtrl.text.trim()) ?? 0,
-          subcategoryId: productFormPageSubcategory?.subcategoryId,
+          productCgst: cgst,
+          productSgst: sgst,
+          subcategoryId: subcategoryId,
         );
       } else {
         final id = await sync.createProduct(
           name: name,
-          price: price,
-          categoryId: productFormPageCategory!.categoryId,
-          categoryName: productFormPageCategory!.categoryName,
+          price: exclusivePrice,
+          mrp: mrp,
+          categoryId: categoryId,
+          categoryName: categoryName,
           productCode: codeCtrl.text.trim().isEmpty
               ? null
               : codeCtrl.text.trim(),
+          productImage: productImageValue,
           openPrice: productFormPageOpenPrice ? '1' : '0',
+          priceIncludesGst: priceIncludesGst ? '1' : '0',
           productUnit: unit,
-          productCgst: double.tryParse(cgstCtrl.text.trim()) ?? 0,
-          productSgst: double.tryParse(sgstCtrl.text.trim()) ?? 0,
-          subcategoryId: productFormPageSubcategory?.subcategoryId,
+          productCgst: cgst,
+          productSgst: sgst,
+          subcategoryId: subcategoryId,
         );
         final db = ref.read(appDatabaseProvider);
         var sort = 1;
@@ -189,6 +314,28 @@ class ProductFormPageState extends ConsumerState<ProductFormPage> {
             portionSortOrder: sort++,
             portionMasterId: portion.master.portionMasterId,
           );
+        }
+        if (openingStock > 0) {
+          await db.addStockIn(
+            productId: id,
+            productName: name,
+            quantity: openingStock,
+            movementType: 'opening',
+            note: 'Opening stock',
+          );
+        }
+        /* Push portions + inventory after local create. */
+        final userId =
+            ref.read(authControllerProvider).session?.catalogOwnerId ?? '';
+        if (userId.isNotEmpty) {
+          await ref
+              .read(mastersRepositoryProvider)
+              .uploadPendingMasters(ownerId: userId);
+        }
+        if (openingStock > 0) {
+          await ref
+              .read(inventoryControllerProvider.notifier)
+              .uploadPendingIfOnline();
         }
       }
       ref.invalidate(catalogCountsProvider);
@@ -232,36 +379,78 @@ class ProductFormPageState extends ConsumerState<ProductFormPage> {
         }
       }
       if (existing != null) {
-        hydrate(existing, categories, allSubs);
+        final product = existing;
+        final needsHydrate = !loaded;
+        final needsBind = selectedCategoryId != null &&
+            (productFormPageCategory == null ||
+                productFormPageCategory!.categoryId != selectedCategoryId) &&
+            categories.isNotEmpty;
+        if (needsHydrate || needsBind) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            setState(() => hydrate(product, categories, allSubs));
+          });
+        } else {
+          bindCategorySelection(categories, allSubs);
+        }
       }
-    } else if (productFormPageCategory == null && categories.isNotEmpty) {
+    } else if (!addCategorySeeded &&
+        selectedCategoryId == null &&
+        categories.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted || productFormPageCategory != null) return;
+        if (!mounted || addCategorySeeded || selectedCategoryId != null) {
+          return;
+        }
         setState(() {
-          productFormPageCategory = categories.first;
+          addCategorySeeded = true;
+          selectCategory(categories.first);
           productFormPagePortionMaster =
               portionMasters.isNotEmpty ? portionMasters.first : null;
         });
       });
+    } else {
+      bindCategorySelection(categories, allSubs);
     }
 
-    final category = productFormPageCategory != null &&
-            categories.any((c) => c.categoryId == productFormPageCategory!.categoryId)
-        ? categories.firstWhere((c) => c.categoryId == productFormPageCategory!.categoryId)
-        : (categories.isNotEmpty ? categories.first : null);
-    final subs = category == null
+    /* Always resolve dropdown value from the live items list by id — never
+       silently swap to another category. */
+    ProductCategory? category;
+    if (selectedCategoryId != null) {
+      for (final c in categories) {
+        if (c.categoryId == selectedCategoryId) {
+          category = c;
+          break;
+        }
+      }
+    }
+    category ??= productFormPageCategory;
+    final selectedLabel = category?.categoryName ?? selectedCategoryLabel;
+
+    final subs = selectedCategoryId == null
         ? const <ProductSubcategory>[]
-        : allSubs.where((s) => s.categoryId == category.categoryId).toList();
-    final subcategory = productFormPageSubcategory != null &&
-            subs.any((s) => s.subcategoryId == productFormPageSubcategory!.subcategoryId)
-        ? subs.firstWhere((s) => s.subcategoryId == productFormPageSubcategory!.subcategoryId)
-        : null;
+        : allSubs
+            .where((s) => s.categoryId == selectedCategoryId)
+            .toList();
+    ProductSubcategory? subcategory;
+    if (selectedSubcategoryId != null) {
+      for (final s in subs) {
+        if (s.subcategoryId == selectedSubcategoryId) {
+          subcategory = s;
+          break;
+        }
+      }
+    }
+    subcategory ??= productFormPageSubcategory;
     final portionMaster = productFormPagePortionMaster != null &&
             portionMasters.any(
-              (m) => m.portionMasterId == productFormPagePortionMaster!.portionMasterId,
+              (m) =>
+                  m.portionMasterId ==
+                  productFormPagePortionMaster!.portionMasterId,
             )
         ? portionMasters.firstWhere(
-            (m) => m.portionMasterId == productFormPagePortionMaster!.portionMasterId,
+            (m) =>
+                m.portionMasterId ==
+                productFormPagePortionMaster!.portionMasterId,
           )
         : (portionMasters.isNotEmpty ? portionMasters.first : null);
 
@@ -287,16 +476,52 @@ class ProductFormPageState extends ConsumerState<ProductFormPage> {
           const SizedBox(height: 10),
           MasterCard(
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (selectedLabel != null && selectedLabel.isNotEmpty) ...[
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryLight.withValues(alpha: .7),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: AppColors.primary.withValues(alpha: .25),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.category_rounded,
+                          size: 18,
+                          color: AppColors.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Category: $selectedLabel',
+                            style: const TextStyle(
+                              fontFamily: AppFonts.family,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.navy,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
                 MasterDropdown<ProductCategory>(
                   value: category,
                   items: categories,
                   hint: 'Select category',
                   itemLabel: (c) => c.categoryName,
-                  onChanged: (v) => setState(() {
-                    productFormPageCategory = v;
-                    productFormPageSubcategory = null;
-                  }),
+                  onChanged: (v) => setState(() => selectCategory(v)),
                 ),
                 const SizedBox(height: 12),
                 MasterDropdown<ProductSubcategory>(
@@ -304,7 +529,7 @@ class ProductFormPageState extends ConsumerState<ProductFormPage> {
                   items: subs,
                   hint: 'None',
                   itemLabel: (s) => s.subcategoryName,
-                  onChanged: (v) => setState(() => productFormPageSubcategory = v),
+                  onChanged: (v) => setState(() => selectSubcategory(v)),
                 ),
               ],
             ),
@@ -382,6 +607,96 @@ class ProductFormPageState extends ConsumerState<ProductFormPage> {
             ),
           ],
           const SizedBox(height: 18),
+          const MasterSectionLabel('Product Image (Optional)'),
+          const SizedBox(height: 10),
+          MasterCard(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (hasProductImage(productImageValue))
+                  ProductImageThumb(value: productImageValue, size: 72, radius: 12)
+                else
+                  Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFE2E8F2)),
+                    ),
+                    child: Icon(
+                      Icons.image_outlined,
+                      color: AppColors.navy.withValues(alpha: .35),
+                    ),
+                  ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        hasProductImage(productImageValue)
+                            ? 'Image ready — shown on billing only for this product'
+                            : 'No image — billing cards stay text-only',
+                        style: TextStyle(
+                          fontFamily: AppFonts.family,
+                          fontSize: 13,
+                          color: AppColors.navy.withValues(alpha: .7),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: busy
+                                  ? null
+                                  : () => pickProductImage(ImageSource.gallery),
+                              icon: const Icon(
+                                Icons.photo_library_outlined,
+                                size: 18,
+                              ),
+                              label: const Text('Gallery'),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: busy
+                                  ? null
+                                  : () => pickProductImage(ImageSource.camera),
+                              icon: const Icon(
+                                Icons.photo_camera_outlined,
+                                size: 18,
+                              ),
+                              label: const Text('Camera'),
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (hasProductImage(productImageValue))
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton(
+                            onPressed: busy
+                                ? null
+                                : () => setState(() {
+                                      productImageValue = null;
+                                      productImageDirty = true;
+                                    }),
+                            child: const Text(
+                              'Remove',
+                              style: TextStyle(color: AppColors.red),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
           const MasterSectionLabel('Product Details'),
           const SizedBox(height: 10),
           MasterCard(
@@ -423,9 +738,44 @@ class ProductFormPageState extends ConsumerState<ProductFormPage> {
                 ),
                 if (!productFormPageOpenPrice) ...[
                   const SizedBox(height: 4),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text(
+                      'Price includes GST',
+                      style: TextStyle(
+                        fontFamily: AppFonts.family,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14.5,
+                        color: AppColors.navy,
+                      ),
+                    ),
+                    subtitle: Text(
+                      priceIncludesGst
+                          ? 'Entered selling price is with GST; system stores exclusive price for billing'
+                          : 'Entered selling price is without GST; tax added on bill',
+                      style: TextStyle(
+                        fontFamily: AppFonts.family,
+                        fontSize: 12,
+                        color: AppColors.navy.withValues(alpha: .45),
+                      ),
+                    ),
+                    value: priceIncludesGst,
+                    activeThumbColor: AppColors.primary,
+                    onChanged: (v) => setState(() => priceIncludesGst = v),
+                  ),
+                  const SizedBox(height: 4),
+                  MasterOutlinedField(
+                    controller: mrpCtrl,
+                    hint: 'MRP (optional)',
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                  ),
+                  const SizedBox(height: 12),
                   MasterOutlinedField(
                     controller: priceCtrl,
-                    hint: 'Product Price (without GST)',
+                    hint: priceIncludesGst
+                        ? 'Selling Price (with GST)*'
+                        : 'Selling Price (without GST)*',
                     keyboardType:
                         const TextInputType.numberWithOptions(decimal: true),
                   ),
@@ -439,6 +789,15 @@ class ProductFormPageState extends ConsumerState<ProductFormPage> {
                     if (v != null) setState(() => unit = v);
                   },
                 ),
+                if (!isEdit) ...[
+                  const SizedBox(height: 12),
+                  MasterOutlinedField(
+                    controller: stockCtrl,
+                    hint: 'Opening Stock (optional)',
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                  ),
+                ],
               ],
             ),
           ),

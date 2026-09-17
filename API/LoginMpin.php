@@ -3,6 +3,8 @@ include_once "config.php";
 include_once "licence_expiry.php";
 require_once __DIR__ . '/licence_payload.php';
 require_once __DIR__ . '/auth_tokens.php';
+require_once __DIR__ . '/pos_schema.php';
+require_once __DIR__ . '/pos_devices.php';
 mysqli_query($con, "set names utf8");
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Headers: Authorization, Content-Type, Accept, X-Requested-With");
@@ -43,7 +45,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             } elseif (!licence_enforce_expiry($con, $check)) {
                 $response["status"] = "0";
                 $response["message"] = "licence key expired or user disable. Please contact our customer care or dealer";
-            } elseif ($check["android_device_id"] == $android_device_id) {
+            } elseif (pos_device_authorized($con, $check, $android_device_id)) {
                     $response["status"] = "1";
                     $response["message"] = "Login successfully.";
 
@@ -64,11 +66,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $response["totalSaleData"] = $check["total_sale_data"];
                     $response["todaySaleData"] = $check["today_sale_data"];
                     $response = licence_append_trial_response($con, $response, $check);
+                    $response = licence_append_user_management_response($con, $response, $check['id']);
                     $response = licence_append_signed_payload($con, $response, $check, $android_device_id);
                     auth_token_append_response($con, $response, 'pos_licence', $check['id'], $android_device_id, $check['expiryDate']);
                     require_once __DIR__ . '/pos_presence.php';
                     licence_touch_last_login($con, (int) $check['id']);
-                } elseif ($check["android_device_id"] == null) {
+                } elseif ($check["android_device_id"] == null || pos_device_can_bind_additional($con, $check['id'], $android_device_id)) {
                     $response["status"] = "2";
                     $response["message"] = "Login Failed";
                 } else {

@@ -57,14 +57,15 @@ public final class MessMealTokenPrintWorker {
 
     public static void enqueueFromFcm(Context context, String tokenId, String tokenNumber,
                                       String registrationNo, String mealSession, String date,
-                                      String createdAt, String printStatus) {
+                                      String createdAt, String printStatus, String memberName) {
         Context app = context.getApplicationContext();
         POSBillingWalaDatabase db = new POSBillingWalaDatabase(app);
         String status = "PRINT_PENDING";
         if ("PRINT_FAILED".equalsIgnoreCase(printStatus)) {
             status = "PRINT_FAILED";
         }
-        db.upsertMessMealTokenQueue(tokenId, tokenNumber, registrationNo, mealSession, date, "", createdAt, status);
+        db.upsertMessMealTokenQueue(tokenId, tokenNumber, registrationNo, mealSession, date,
+                memberName != null ? memberName : "", createdAt, status);
         kick(app);
     }
 
@@ -95,10 +96,12 @@ public final class MessMealTokenPrintWorker {
                         POSBillingWalaDatabase db = new POSBillingWalaDatabase(app);
                         for (MessMealTokenItem t : response.body().messMealTokens) {
                             if (t == null || t.tokenId == null) continue;
+                            String mobile = t.memberMobile != null && !t.memberMobile.trim().isEmpty()
+                                    ? t.memberMobile.trim() : t.registrationNo;
                             db.upsertMessMealTokenQueue(
                                     t.tokenId,
                                     t.tokenNumber,
-                                    t.registrationNo,
+                                    mobile,
                                     t.mealSession,
                                     t.date,
                                     t.memberName,
@@ -134,10 +137,12 @@ public final class MessMealTokenPrintWorker {
                 String mealSession = c.getString(c.getColumnIndex("mealSession"));
                 String tokenDate = c.getString(c.getColumnIndex("tokenDate"));
                 String createdAt = c.getString(c.getColumnIndex("createdAt"));
+                String memberName = c.getString(c.getColumnIndex("memberName"));
                 c.close();
 
                 db.updateMessMealTokenQueueStatus(publicId, "PRINTING");
-                boolean printed = printSlip(app, tokenNumber, registrationNo, mealSession, tokenDate, createdAt);
+                boolean printed = printSlip(app, tokenNumber, registrationNo, mealSession,
+                        tokenDate, createdAt, memberName);
                 if (printed) {
                     db.updateMessMealTokenQueueStatus(publicId, "PRINTED");
                     ackServer(app, publicId, "SUCCESS");
@@ -156,7 +161,8 @@ public final class MessMealTokenPrintWorker {
     }
 
     private static boolean printSlip(Context app, String tokenNumber, String registrationNo,
-                                     String mealSession, String tokenDate, String createdAt) {
+                                     String mealSession, String tokenDate, String createdAt,
+                                     String memberName) {
         try {
             POSBillingWalaDatabase db = new POSBillingWalaDatabase(app);
             List<PrinterSettingResponse> printers = db.getPrinterSettingDetails();
@@ -168,7 +174,8 @@ public final class MessMealTokenPrintWorker {
                 return false;
             }
 
-            Bitmap slip = buildSlipBitmap(tokenNumber, registrationNo, mealSession, tokenDate, createdAt);
+            Bitmap slip = buildSlipBitmap(tokenNumber, registrationNo, mealSession, tokenDate,
+                    createdAt, memberName);
             PrintImage printImage = new PrintImage(slip);
             printImage.PrepareImage(PrintImage.dither.floyd_steinberg, 128);
             byte[] bytes = printImage.getPrintImageData();
@@ -208,9 +215,10 @@ public final class MessMealTokenPrintWorker {
     }
 
     private static Bitmap buildSlipBitmap(String tokenNumber, String registrationNo,
-                                          String mealSession, String tokenDate, String createdAt) {
+                                          String mealSession, String tokenDate, String createdAt,
+                                          String memberName) {
         int width = 384;
-        int height = 480;
+        int height = 560;
         Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bmp);
         canvas.drawColor(Color.WHITE);
@@ -248,7 +256,9 @@ public final class MessMealTokenPrintWorker {
         y += 50;
         canvas.drawText("Token: " + nullSafe(tokenNumber), cx, y, big);
         y += 42;
-        canvas.drawText("Reg. No: " + nullSafe(registrationNo), cx, y, body);
+        canvas.drawText("Name: " + nullSafe(memberName), cx, y, body);
+        y += 32;
+        canvas.drawText("Mobile: " + nullSafe(registrationNo), cx, y, body);
         y += 32;
         canvas.drawText("Meal: " + nullSafe(mealSession), cx, y, body);
         y += 32;

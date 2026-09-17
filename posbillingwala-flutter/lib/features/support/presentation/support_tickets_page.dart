@@ -3,16 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pos_billingwala_v2/core/constants/app_assets.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
+import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/theme/app_typography.dart';
-import 'package:pos_billingwala_v2/core/widgtes/widgtes.dart';
-import 'package:pos_billingwala_v2/core/widgets/app_states.dart';
-import 'package:pos_billingwala_v2/core/widgets/app_svg.dart';
+import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/support/data/support_api.dart';
 import 'package:pos_billingwala_v2/features/support/data/support_dtos.dart';
 import 'package:pos_billingwala_v2/features/support/presentation/support_widgets.dart';
-import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
-import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
+import 'package:pos_billingwala_v2/features/sync/domain/cloud_screen_cache.dart';
 
 class SupportTicketsPage extends ConsumerStatefulWidget {
   const SupportTicketsPage({super.key});
@@ -68,6 +66,15 @@ class SupportTicketsPageState extends ConsumerState<SupportTicketsPage> {
       error = null;
     });
     try {
+      final cached =
+          await CloudScreenCache.loadMapList(CloudScreenCache.supportTickets);
+      if (cached.isNotEmpty && mounted) {
+        setState(() {
+          supportTicketsPageTickets =
+              cached.map(SupportTicketDto.fromJson).toList();
+          loading = false;
+        });
+      }
       final api = SupportApi(ref.read(apiClientProvider));
       final tickets = await api.getSupportTickets(userId);
       if (!mounted) return;

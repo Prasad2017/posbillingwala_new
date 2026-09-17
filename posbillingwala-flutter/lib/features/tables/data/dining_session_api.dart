@@ -1,9 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:intl/intl.dart';
+import 'package:pos_billingwala_v2/core/constants/api_constants.dart';
 import 'package:pos_billingwala_v2/core/network/api_client.dart';
 import 'package:pos_billingwala_v2/core/network/api_response.dart';
 import 'package:pos_billingwala_v2/core/utils/json_parsers.dart';
-import 'package:pos_billingwala_v2/core/constants/api_constants.dart';
 
 class DiningSessionDto {
   const DiningSessionDto({

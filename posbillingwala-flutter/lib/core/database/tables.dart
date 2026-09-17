@@ -70,7 +70,12 @@ class Products extends Table {
   IntColumn get subcategoryId => integer().nullable()();
   TextColumn get productCode => text().nullable()();
   TextColumn get productName => text().withDefault(const Constant(''))();
+  TextColumn get productImage => text().nullable()();
   RealColumn get productPrice => real().withDefault(const Constant(0))();
+  /* MRP (label price); selling price remains productPrice. */
+  RealColumn get productMrp => real().withDefault(const Constant(0))();
+  /* `1` = user entered selling price including GST; stored productPrice is always exclusive. */
+  TextColumn get priceIncludesGst => text().withDefault(const Constant('0'))();
   TextColumn get openPrice => text().withDefault(const Constant('0'))();
   TextColumn get productUnit => text().nullable()();
   RealColumn get productCgst => real().withDefault(const Constant(0))();
@@ -177,9 +182,9 @@ class CartItems extends Table {
   RealColumn get gstPercent => real().withDefault(const Constant(0))();
   RealColumn get productCgst => real().withDefault(const Constant(0))();
   RealColumn get productSgst => real().withDefault(const Constant(0))();
-  IntColumn get quantity => integer().withDefault(const Constant(1))();
+  RealColumn get quantity => real().withDefault(const Constant(1.0))();
   /* Qty already sent to kitchen via KOT (delta = quantity - printedQuantity). */
-  IntColumn get printedQuantity => integer().withDefault(const Constant(0))();
+  RealColumn get printedQuantity => real().withDefault(const Constant(0.0))();
   /* Android `kotPrinted` flag (`0`/`1`). */
   TextColumn get kotPrinted => text().withDefault(const Constant('0'))();
   TextColumn get productUnit => text().nullable()();
@@ -277,6 +282,9 @@ class Invoices extends Table with BranchColumns {
   TextColumn get billPrintStatus => text().withDefault(const Constant(''))();
   /* Android `invoice.userId` (licence / shop user). */
   TextColumn get userId => text().nullable()();
+  /* Staff who created the bill (User Management). */
+  IntColumn get createdByStaffId => integer().nullable()();
+  TextColumn get createdByStaffName => text().withDefault(const Constant(''))();
   IntColumn get itemCount => integer().withDefault(const Constant(0))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
@@ -289,7 +297,7 @@ class InvoiceItems extends Table with BranchColumns {
   TextColumn get productName => text().withDefault(const Constant(''))();
   TextColumn get productCode => text().nullable()();
   RealColumn get productPrice => real().withDefault(const Constant(0))();
-  IntColumn get productQuantity => integer().withDefault(const Constant(1))();
+  RealColumn get productQuantity => real().withDefault(const Constant(1.0))();
   RealColumn get productCgst => real().withDefault(const Constant(0))();
   RealColumn get productSgst => real().withDefault(const Constant(0))();
   TextColumn get productUnit => text().nullable()();
@@ -456,7 +464,7 @@ class KotItems extends Table with BranchColumns {
   IntColumn get cartId => integer().nullable()();
   IntColumn get productId => integer().nullable()();
   TextColumn get productName => text().withDefault(const Constant(''))();
-  IntColumn get productQuantity => integer().withDefault(const Constant(1))();
+  RealColumn get productQuantity => real().withDefault(const Constant(1.0))();
   TextColumn get portionName => text().nullable()();
   TextColumn get productUnit => text().nullable()();
 }
@@ -592,9 +600,15 @@ class InventoryMovements extends Table with BranchColumns {
   /* Remaining balance after this movement. */
   RealColumn get afterSaleInventoryQuantity =>
       real().withDefault(const Constant(0))();
-  /* Qty sold on this movement (0 on stock-in). */
+  /* Qty sold / wasted / adjusted out on this movement (0 on stock-in). */
   RealColumn get saleInventoryQuantity =>
       real().withDefault(const Constant(0))();
+  /* purchase | waste | sale | opening | adjust */
+  TextColumn get movementType =>
+      text().withDefault(const Constant('purchase'))();
+  /* Supplier / bill no / waste reason. */
+  TextColumn get inventoryNote => text().withDefault(const Constant(''))();
+  RealColumn get unitCost => real().withDefault(const Constant(0))();
   DateTimeColumn get inventoryDate => dateTime()();
   TextColumn get inventoryNetworkStatus => text()();
   TextColumn get inventorySyncStatus =>

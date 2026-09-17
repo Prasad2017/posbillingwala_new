@@ -1,10 +1,10 @@
 import 'package:dio/dio.dart';
 import 'package:intl/intl.dart';
+import 'package:pos_billingwala_v2/core/constants/api_constants.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/network/api_client.dart';
 import 'package:pos_billingwala_v2/core/network/api_response.dart';
 import 'package:pos_billingwala_v2/shared/models/inventory_dtos.dart';
-import 'package:pos_billingwala_v2/core/constants/api_constants.dart';
 
 class InventoryExpenseApi {
   InventoryExpenseApi(this.client);
@@ -21,10 +21,13 @@ class InventoryExpenseApi {
         'userId': userId,
         'productId': '${row.productId}',
         'productInventoryQuantity':
-            row.productInventoryQuantity.toStringAsFixed(2),
+            row.productInventoryQuantity.toStringAsFixed(3),
         'afterSaleInventoryQuantity':
-            row.afterSaleInventoryQuantity.toStringAsFixed(2),
-        'saleInventoryQuantity': row.saleInventoryQuantity.toStringAsFixed(2),
+            row.afterSaleInventoryQuantity.toStringAsFixed(3),
+        'saleInventoryQuantity': row.saleInventoryQuantity.toStringAsFixed(3),
+        'movementType': row.movementType,
+        'inventoryNote': row.inventoryNote,
+        'unitCost': row.unitCost.toStringAsFixed(2),
         'inventoryDate': DateFormat('yyyy-MM-dd').format(row.inventoryDate),
         'inventoryNetworkStatus': row.inventoryNetworkStatus,
       },

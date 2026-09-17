@@ -95,9 +95,9 @@ if (!function_exists('licence_build_payload_data')) {
             return null;
         }
 
-        // Device must match bound device for signed payload
-        $boundDevice = isset($licenseRow['android_device_id']) ? trim((string) $licenseRow['android_device_id']) : '';
-        if ($boundDevice === '' || $boundDevice !== $deviceId) {
+        // Device must match bound device, or an authorized extra device when UM is on
+        require_once __DIR__ . '/pos_devices.php';
+        if (!pos_device_authorized($con, $licenseRow, $deviceId)) {
             return null;
         }
 
@@ -133,6 +133,7 @@ if (!function_exists('licence_build_payload_data')) {
             'takeAway' => isset($licenseRow['takeAway']) ? (int) $licenseRow['takeAway'] : 1,
             'dineIn' => isset($licenseRow['dineIn']) ? (int) $licenseRow['dineIn'] : 1,
             'mess' => isset($licenseRow['mess']) ? (int) $licenseRow['mess'] : 0,
+            'userManagementEnabled' => isset($licenseRow['userManagementEnabled']) ? (int) $licenseRow['userManagementEnabled'] : 0,
         );
     }
 }

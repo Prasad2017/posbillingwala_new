@@ -1,8 +1,12 @@
 import 'package:dio/dio.dart';
 import 'package:pos_billingwala_v2/core/constants/api_constants.dart';
+import 'package:pos_billingwala_v2/core/constants/app_config.dart';
+import 'package:pos_billingwala_v2/core/logging/app_logger.dart';
+import 'package:pos_billingwala_v2/core/logging/file_log_store.dart';
+import 'package:pos_billingwala_v2/core/logging/screen_context.dart';
 import 'package:pos_billingwala_v2/features/auth/data/auth_token_refresh.dart';
 
-/* HTTP client for POS Billingwala API (form-urlencoded endpoints). */
+/* HTTP client for Billingwala API (form-urlencoded endpoints). */
 /* */
 /* On 401, silently refreshes the Bearer token (WithTable OkHttp authenticator) */
 /* and retries the request once. */
@@ -28,6 +32,7 @@ class ApiClient {
                     status != 401,
               ),
             ) {
+    installLoggingInterceptor();
     installAuthRefreshInterceptor();
   }
 
@@ -41,6 +46,112 @@ class ApiClient {
     } else {
       apiClientDio.options.headers['Authorization'] = 'Bearer $token';
     }
+  }
+
+  void setStaffId(String? staffId) {
+    if (staffId == null || staffId.isEmpty) {
+      apiClientDio.options.headers.remove('X-Pos-Staff-Id');
+    } else {
+      apiClientDio.options.headers['X-Pos-Staff-Id'] = staffId;
+    }
+  }
+
+  void installLoggingInterceptor() {
+    if (!AppConfig.enableLogging) return;
+    apiClientDio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) {
+          options.extra['screenName'] ??= ScreenContext.screenName;
+          options.extra['requestStartedAt'] = DateTime.now().toIso8601String();
+          AppLogger.info(
+            'API → ${options.method} ${options.uri}\n'
+            'screen=${options.extra['screenName']}\n'
+            'headers=${_safeHeaders(options.headers)}\n'
+            'data=${options.data}',
+          );
+          handler.next(options);
+        },
+        onResponse: (response, handler) {
+          final opts = response.requestOptions;
+          final apiLabel = _apiLabel(opts);
+          AppLogger.info(
+            'API ← ${response.statusCode} ${opts.uri}\n'
+            'screen=${opts.extra['screenName']}\n'
+            'body=${response.data}',
+          );
+          FileLogStore.logApi(
+            method: opts.method,
+            api: apiLabel,
+            request: _requestPayload(opts),
+            response: response.data,
+            statusCode: response.statusCode,
+            screenName: opts.extra['screenName']?.toString(),
+          );
+          handler.next(response);
+        },
+        onError: (error, handler) {
+          final opts = error.requestOptions;
+          final apiLabel = _apiLabel(opts);
+          AppLogger.error(
+            'API ✕ ${error.response?.statusCode ?? '-'} '
+            '${opts.uri}\n'
+            'screen=${opts.extra['screenName']}\n'
+            'body=${error.response?.data}\n'
+            'message=${error.message}',
+            error,
+          );
+          FileLogStore.logApi(
+            method: opts.method,
+            api: apiLabel,
+            request: _requestPayload(opts),
+            response: error.response?.data,
+            statusCode: error.response?.statusCode,
+            error: error.message,
+            screenName: opts.extra['screenName']?.toString(),
+          );
+          handler.next(error);
+        },
+      ),
+    );
+  }
+
+  static String _apiLabel(RequestOptions opts) {
+    final segments = opts.uri.path.split('/').where((s) => s.isNotEmpty);
+    final name = segments.isEmpty ? '' : segments.last;
+    if (name.isNotEmpty) {
+      return '$name (${opts.uri})';
+    }
+    return opts.uri.toString();
+  }
+
+  static Object? _requestPayload(RequestOptions opts) {
+    Object? body = opts.data;
+    if (body is FormData) {
+      final fields = <String, dynamic>{};
+      for (final e in body.fields) {
+        fields[e.key] = e.value;
+      }
+      for (final f in body.files) {
+        fields[f.key] = '(file:${f.value.filename ?? 'unknown'})';
+      }
+      body = fields;
+    }
+    return {
+      'url': opts.uri.toString(),
+      'method': opts.method,
+      'headers': _safeHeaders(opts.headers),
+      'query': opts.queryParameters,
+      'body': body,
+    };
+  }
+
+  static Map<String, dynamic> _safeHeaders(Map<String, dynamic> headers) {
+    final copy = Map<String, dynamic>.from(headers);
+    final auth = copy['Authorization'];
+    if (auth is String && auth.isNotEmpty) {
+      copy['Authorization'] = 'Bearer ***';
+    }
+    return copy;
   }
 
   void installAuthRefreshInterceptor() {

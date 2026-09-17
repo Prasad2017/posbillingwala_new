@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:in_app_update/in_app_update.dart';
 import 'package:pos_billingwala_v2/features/settings/domain/in_app_update_service.dart';
-import 'package:pos_billingwala_v2/l10n/app_strings.dart';
+import 'package:pos_billingwala_v2/language/app_strings.dart';
 
 /* Listens for a finished flexible Play update and offers Restart. */
 class InAppUpdateHost extends ConsumerStatefulWidget {

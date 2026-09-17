@@ -243,17 +243,29 @@
             android:textSize="@dimen/text_body" />
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/updateSaleData"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/button_height"
-        android:layout_marginTop="@dimen/spacing_sm"
-        android:background="@drawable/bg_button_primary"
-        android:fontFamily="@font/poppinsmedium"
-        android:gravity="center"
-        android:text="UPDATE"
-        android:textColor="@color/white"
-        android:textSize="@dimen/text_button" />
+        <TextView
+            android:id="@+id/updateSaleData"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/button_height"
+            android:layout_marginTop="@dimen/spacing_sm"
+            android:background="@drawable/bg_button_primary"
+            android:fontFamily="@font/poppinsmedium"
+            android:gravity="center"
+            android:text="UPDATE"
+            android:textColor="@color/white"
+            android:textSize="@dimen/text_button" />
+
+        <TextView
+            android:id="@+id/storeOps"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/button_height"
+            android:layout_marginTop="@dimen/spacing_sm"
+            android:background="@drawable/bg_button_outline"
+            android:fontFamily="@font/poppinsmedium"
+            android:gravity="center"
+            android:text="Users / Devices / Printers"
+            android:textColor="@color/colorPrimary"
+            android:textSize="@dimen/text_button" />
 
     <View
         android:id="@+id/licenseDivider"

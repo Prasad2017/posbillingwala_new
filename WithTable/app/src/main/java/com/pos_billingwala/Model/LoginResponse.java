@@ -107,6 +107,9 @@ public class LoginResponse {
     @SerializedName("trialConsumed")
     @Expose
     public String trialConsumed;
+    @SerializedName("userManagementEnabled")
+    @Expose
+    public String userManagementEnabled;
 
 
     public String getStatus() {
@@ -379,5 +382,13 @@ public class LoginResponse {
 
     public void setTrialConsumed(String trialConsumed) {
         this.trialConsumed = trialConsumed;
+    }
+
+    public String getUserManagementEnabled() {
+        return userManagementEnabled;
+    }
+
+    public void setUserManagementEnabled(String userManagementEnabled) {
+        this.userManagementEnabled = userManagementEnabled;
     }
 }

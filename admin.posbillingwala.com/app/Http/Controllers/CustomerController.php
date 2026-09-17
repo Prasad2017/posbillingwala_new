@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Auth;
 use DataTables;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class CustomerController extends Controller
 {
@@ -72,7 +74,8 @@ class CustomerController extends Controller
                 \Log::error('customers/edit dealers query failed: ' . $e->getMessage());
                 $dealers = User::where('role_id', 2)->orderBy('name', 'ASC')->get();
             }
-    		return view('customers.edit',compact('data','dealers'));
+    		$storeOps = $this->storeOpsForLicense($data->licenseId ?? $data->id);
+    		return view('customers.edit',compact('data','dealers','storeOps'));
     	}
         else
         {
@@ -135,6 +138,10 @@ class CustomerController extends Controller
         $license->takeAway = $request->take_away ?? 1;
         $license->dineIn = $request->dine_in ?? 0;
         $license->mess = $request->mess ?? 0;
+        $license->userManagementEnabled = (int) ($request->user_management_enabled ?? 0);
+        $license->maxUsers = max(1, (int) ($request->max_users ?? 10));
+        $license->maxDevices = max(1, (int) ($request->max_devices ?? 5));
+        $license->maxPrinters = max(0, (int) ($request->max_printers ?? 0));
         $license->mpin = LicenceDefaults::defaultMpin();
         $license->save();
 
@@ -204,6 +211,10 @@ class CustomerController extends Controller
             $license->takeAway = $request->take_away ?? $license->takeAway;
             $license->dineIn = $request->dine_in ?? $license->dineIn;
             $license->mess = $request->mess ?? $license->mess;
+            $license->userManagementEnabled = (int) ($request->user_management_enabled ?? $license->userManagementEnabled ?? 0);
+            $license->maxUsers = max(1, (int) ($request->max_users ?? $license->maxUsers ?? 10));
+            $license->maxDevices = max(1, (int) ($request->max_devices ?? $license->maxDevices ?? 5));
+            $license->maxPrinters = max(0, (int) ($request->max_printers ?? $license->maxPrinters ?? 0));
             $license->save();
         }
 
@@ -315,6 +326,10 @@ class CustomerController extends Controller
         $license->takeAway = $request->take_away ?? 1;
         $license->dineIn = $request->dine_in ?? 0;
         $license->mess = $request->mess ?? 0;
+        $license->userManagementEnabled = (int) ($request->user_management_enabled ?? 0);
+        $license->maxUsers = max(1, (int) ($request->max_users ?? 10));
+        $license->maxDevices = max(1, (int) ($request->max_devices ?? 5));
+        $license->maxPrinters = max(0, (int) ($request->max_printers ?? 0));
         $license->mpin = LicenceDefaults::defaultMpin();
         $license->save();
 
@@ -333,7 +348,8 @@ class CustomerController extends Controller
         $data = License::find($id);
         if($data)
         {
-            return view('customers.edit-license',compact('data'));
+            $storeOps = $this->storeOpsForLicense($data->id);
+            return view('customers.edit-license',compact('data','storeOps'));
         }
         return abort(404);
     }
@@ -368,6 +384,10 @@ class CustomerController extends Controller
             $license->takeAway = $request->take_away ?? $license->takeAway;
             $license->dineIn = $request->dine_in ?? $license->dineIn;
             $license->mess = $request->mess ?? $license->mess;
+            $license->userManagementEnabled = (int) ($request->user_management_enabled ?? $license->userManagementEnabled ?? 0);
+            $license->maxUsers = max(1, (int) ($request->max_users ?? $license->maxUsers ?? 10));
+            $license->maxDevices = max(1, (int) ($request->max_devices ?? $license->maxDevices ?? 5));
+            $license->maxPrinters = max(0, (int) ($request->max_printers ?? $license->maxPrinters ?? 0));
             $license->save(); 
         }
         return redirect('customers/edit/'.$license->userId)->with('success','App license key updated successfully');
@@ -387,5 +407,36 @@ class CustomerController extends Controller
         }
         $data->save();
         return redirect('customers/edit/'.$data->userId)->with('success','App license key status changed successfully');
+    }
+
+    private function storeOpsForLicense($licenseId)
+    {
+        $empty = array(
+            'staff' => collect(),
+            'devices' => collect(),
+            'printers' => collect(),
+            'routes' => collect(),
+        );
+        if (empty($licenseId)) {
+            return $empty;
+        }
+        try {
+            return array(
+                'staff' => DB::table('pos_staff')->where('licenseId', $licenseId)
+                    ->orderBy('name')->get(['id', 'name', 'mobileNumber', 'role', 'status', 'lastLoginAt']),
+                'devices' => DB::table('pos_devices')->where('licenseId', $licenseId)
+                    ->orderByDesc('lastSeenAt')->get(['deviceId', 'deviceName', 'platform', 'status', 'isPrintHost', 'lastSeenAt']),
+                'printers' => DB::table('store_printers')->where('licenseId', $licenseId)
+                    ->orderBy('printerName')->get(
+                        Schema::hasColumn('store_printers', 'paperSize')
+                            ? ['id', 'printerName', 'connectionType', 'paperSize', 'purpose', 'enabled', 'status']
+                            : ['id', 'printerName', 'connectionType', 'purpose', 'enabled', 'status']
+                    ),
+                'routes' => DB::table('printer_routes')->where('licenseId', $licenseId)
+                    ->orderBy('id')->get(['printerId', 'documentType', 'foodTypeCode', 'categoryId']),
+            );
+        } catch (\Throwable $e) {
+            return $empty;
+        }
     }
 }

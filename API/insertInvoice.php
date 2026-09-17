@@ -35,11 +35,60 @@ function invoice_ensure_cash_upi_columns($con)
         if ($upi) {
             mysqli_free_result($upi);
         }
+        $staffIdCol = db_safe_query($con, "SHOW COLUMNS FROM `invoice` LIKE 'createdByStaffId'");
+        if ($staffIdCol && mysqli_num_rows($staffIdCol) === 0) {
+            db_safe_query(
+                $con,
+                "ALTER TABLE `invoice` ADD COLUMN `createdByStaffId` INT NULL DEFAULT NULL AFTER `device_id`, ADD COLUMN `createdByStaffName` VARCHAR(120) NOT NULL DEFAULT '' AFTER `createdByStaffId`"
+            );
+        }
+        if ($staffIdCol) {
+            mysqli_free_result($staffIdCol);
+        }
         dine_in_ensure_invoice_columns($con);
     } catch (Throwable $e) {
         // Ignore schema probe failures — request can still proceed.
     }
     $ensured = true;
+}
+
+function invoice_apply_created_by_staff($con, $invoiceId, $licenseId)
+{
+    if ($con === null || (int) $invoiceId <= 0) {
+        return;
+    }
+    require_once __DIR__ . '/pos_staff.php';
+    $staffId = 0;
+    if (isset($_POST['createdByStaffId']) && trim((string) $_POST['createdByStaffId']) !== '') {
+        $staffId = (int) $_POST['createdByStaffId'];
+    }
+    if ($staffId <= 0) {
+        $staffId = pos_posted_staff_id();
+    }
+    $staffName = isset($_POST['createdByStaffName']) ? trim((string) $_POST['createdByStaffName']) : '';
+    if ($staffId > 0 && $staffName === '') {
+        $row = db_stmt_fetch_one(
+            $con,
+            'SELECT `name` FROM `pos_staff` WHERE `id`=? AND `licenseId`=? LIMIT 1',
+            'ii',
+            $staffId,
+            (int) $licenseId
+        );
+        if ($row !== null) {
+            $staffName = (string) $row['name'];
+        }
+    }
+    if ($staffId <= 0 && $staffName === '') {
+        return;
+    }
+    db_stmt_execute(
+        $con,
+        'UPDATE `invoice` SET `createdByStaffId`=?, `createdByStaffName`=? WHERE `invoiceId`=?',
+        'isi',
+        $staffId > 0 ? $staffId : 0,
+        $staffName,
+        (int) $invoiceId
+    );
 }
 
 $response = array();
@@ -69,6 +118,8 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
   }
 
   $userId = $ctx['licenseId'];
+  require_once __DIR__ . '/pos_staff.php';
+  pos_require_permission($con, $userId, 'bill.create');
 
   $orgId = $ctx['triplet']['organization_id'];
 
@@ -246,6 +297,7 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
                        $response["status"] = '1';
 
                        $response["message"] = "update successful!";
+                       invoice_apply_created_by_staff($con, $invoiceId, $userId);
 
   
 
@@ -370,6 +422,7 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
                        $response["status"] = '1';
 
                        $response["message"] = "insert successful!";
+                       invoice_apply_created_by_staff($con, $insertId, $userId);
 
   
 

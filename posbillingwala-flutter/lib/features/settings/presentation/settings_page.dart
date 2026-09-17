@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:pos_billingwala_v2/core/constants/app_assets.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
-import 'package:pos_billingwala_v2/core/widgets/app_svg.dart';
-import 'package:pos_billingwala_v2/core/permissions/app_permission_service.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
+import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
+import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/company/data/company_api.dart';
 import 'package:pos_billingwala_v2/features/company/data/company_dtos.dart';
@@ -15,11 +13,9 @@ import 'package:pos_billingwala_v2/features/print/domain/esc_pos_transport_hub.d
 import 'package:pos_billingwala_v2/features/print/domain/print_providers.dart';
 import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
 import 'package:pos_billingwala_v2/features/print/domain/sample_receipt_data.dart';
-import 'package:pos_billingwala_v2/l10n/app_strings.dart';
 import 'package:pos_billingwala_v2/features/print/presentation/printer_device_picker_page.dart';
-import 'package:pos_billingwala_v2/core/widgtes/widgtes.dart';
-import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
-import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
+import 'package:pos_billingwala_v2/features/print/presentation/paper_size_preview.dart';
+import 'package:pos_billingwala_v2/language/app_strings.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
@@ -29,8 +25,6 @@ class SettingsPage extends ConsumerStatefulWidget {
 }
 
 class SettingsPageState extends ConsumerState<SettingsPage> {
-  static const settingsPagePermissions = AppPermissionService();
-
   late final TextEditingController settingsPageBillMac;
   late final TextEditingController settingsPageKotMac;
   late final TextEditingController host;
@@ -43,11 +37,9 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
   late final TextEditingController settingsPageKotPrefix;
   late final TextEditingController settingsPageKotCopies;
   bool companyBusy = false;
-  bool permissionBusy = false;
   bool btBusy = false;
-  String btStatus = 'Checkingâ€¦';
+  String btStatus = 'Checking…';
   String usbStatus = 'USB idle';
-  Map<Permission, PermissionStatus> permissionStatuses = const {};
   final hub = BluetoothPrinterHub.instance;
   final usbHub = EscPosTransportHub.instance;
 
@@ -68,7 +60,6 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
     settingsPageKotCopies = TextEditingController(text: '${settings.kotCopies}');
     Future.microtask(() async {
       await loadPrinterCloud();
-      await refreshPermissions();
       await syncHubAndAutoConnect();
       await refreshBtStatus();
     });
@@ -127,20 +118,29 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
     });
   }
 
-  Future<void> pickPrinter(PrinterChannelKind channel) async {
+  Future<bool> pickPrinter(PrinterChannelKind channel) async {
     final settings = ref.read(printerSettingsProvider);
-    final initial = channel == PrinterChannelKind.bill
-        ? settings.billTransport
-        : settings.kotTransport;
+    final initial = localTransport(
+      channel == PrinterChannelKind.bill
+          ? settings.billTransport
+          : settings.kotTransport,
+    );
     final picked = await Navigator.of(context).push<PickedPrinter>(
       MaterialPageRoute(
         builder: (_) => PrinterDevicePickerPage(
           channel: channel,
-          initialTransport: initial,
+          initialTransport: initial == PosPrinterTransport.usb
+              ? PosPrinterTransport.usb
+              : PosPrinterTransport.bluetooth,
+          showNetwork: false,
+          lockToInitialTransport: true,
+          title: initial == PosPrinterTransport.usb
+              ? 'Select USB printer'
+              : 'Select Bluetooth printer',
         ),
       ),
     );
-    if (picked == null || !mounted) return;
+    if (picked == null || !mounted) return false;
 
     if (channel == PrinterChannelKind.bill) {
       if (picked.transport == PosPrinterTransport.bluetooth) {
@@ -210,7 +210,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
       name: updated.usbNameFor(isKot: channel == PrinterChannelKind.kot),
     );
     await refreshBtStatus();
-    if (!mounted) return;
+    if (!mounted) return false;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -218,36 +218,49 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
         ),
       ),
     );
+    return true;
   }
 
   Future<void> connectChannel(PrinterChannelKind channel) async {
     setState(() => btBusy = true);
     try {
       await settingsPageSave(showSnack: false);
-      final settings = ref.read(printerSettingsProvider);
-      final transport = channel == PrinterChannelKind.bill
-          ? settings.billTransport
-          : settings.kotTransport;
+      var settings = ref.read(printerSettingsProvider);
+      final transport = localTransport(
+        channel == PrinterChannelKind.bill
+            ? settings.billTransport
+            : settings.kotTransport,
+      );
 
       var ok = false;
       switch (transport) {
         case PosPrinterTransport.bluetooth:
-          final mac = channel == PrinterChannelKind.bill
+          var mac = channel == PrinterChannelKind.bill
               ? settingsPageBillMac.text.trim()
               : settingsPageKotMac.text.trim();
           if (mac.isEmpty) {
-            await pickPrinter(channel);
-            return;
+            final picked = await pickPrinter(channel);
+            if (!picked || !mounted) return;
+            mac = channel == PrinterChannelKind.bill
+                ? settingsPageBillMac.text.trim()
+                : settingsPageKotMac.text.trim();
           }
+          if (mac.isEmpty) return;
           ok = await hub.connect(channel, address: mac, fromUser: true);
         case PosPrinterTransport.usb:
-          final id = settings.usbIdFor(
+          settings = ref.read(printerSettingsProvider);
+          var id = settings.usbIdFor(
             isKot: channel == PrinterChannelKind.kot,
           );
           if (id.isEmpty) {
-            await pickPrinter(channel);
-            return;
+            final picked = await pickPrinter(channel);
+            if (!picked || !mounted) return;
+            settings = ref.read(printerSettingsProvider);
+            id = settings.usbIdFor(
+              isKot: channel == PrinterChannelKind.kot,
+            );
           }
+          if (id.isEmpty) return;
           ok = await usbHub.connectUsb(
             identifier: id,
             name: settings.usbNameFor(
@@ -255,7 +268,8 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
             ),
           );
         case PosPrinterTransport.network:
-          ok = settings.networkHost.trim().isNotEmpty;
+          await pickPrinter(channel);
+          return;
       }
 
       if (!mounted) return;
@@ -264,7 +278,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
           content: Text(
             ok
                 ? '${transport.label} printer ready'
-                : 'Connect failed â€” pick a printer',
+                : 'Connect failed — pick a ${transport.label} printer',
           ),
         ),
       );
@@ -279,9 +293,11 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
     setState(() => btBusy = true);
     try {
       final settings = ref.read(printerSettingsProvider);
-      final transport = channel == PrinterChannelKind.bill
-          ? settings.billTransport
-          : settings.kotTransport;
+      final transport = localTransport(
+        channel == PrinterChannelKind.bill
+            ? settings.billTransport
+            : settings.kotTransport,
+      );
       if (transport == PosPrinterTransport.usb) {
         await usbHub.clearSavedUsb();
       } else {
@@ -326,48 +342,6 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
     await refreshBtStatus();
   }
 
-  Future<void> refreshPermissions() async {
-    final statuses = await settingsPagePermissions.checkAll();
-    if (!mounted) return;
-    setState(() => permissionStatuses = statuses);
-  }
-
-  Future<void> requestPermissions() async {
-    setState(() => permissionBusy = true);
-    try {
-      final statuses = await settingsPagePermissions.requestAll();
-      final blocked = statuses.values.any((s) => s.isPermanentlyDenied);
-      if (!mounted) return;
-      setState(() {
-        permissionStatuses = statuses;
-        permissionBusy = false;
-      });
-      if (blocked) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text(
-              'Some permissions are blocked. Open system settings to enable them.',
-            ),
-            action: SnackBarAction(
-              label: 'Open',
-              onPressed: settingsPagePermissions.openAppSettingsPage,
-            ),
-          ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Permissions updated')),
-        );
-      }
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => permissionBusy = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Permission request failed: $e')),
-      );
-    }
-  }
-
   @override
   void dispose() {
     settingsPageBillMac.dispose();
@@ -395,12 +369,26 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
         final p = printers.first;
         final current = ref.read(printerSettingsProvider);
         final updated = current.copyWith(
+          paperSize: PrinterPaperSizeX.fromDb(p.paperSize),
+          kotPaperSize: PrinterPaperSizeX.fromDb(
+            p.kotPaperSize.isEmpty ? p.paperSize : p.kotPaperSize,
+          ),
+          billTransport: PosPrinterTransportX.fromLocalStorage(p.billConnectionType),
+          kotTransport: PosPrinterTransportX.fromLocalStorage(p.kotConnectionType),
           billBluetoothAddress: p.bluetoothAddress.isNotEmpty
               ? p.bluetoothAddress
               : current.billBluetoothAddress,
           kotBluetoothAddress: p.bluetoothKotAddress.isNotEmpty
               ? p.bluetoothKotAddress
               : current.kotBluetoothAddress,
+          billUsbIdentifier: p.billUsbIdentifier.isNotEmpty
+              ? p.billUsbIdentifier
+              : current.billUsbIdentifier,
+          billUsbName: p.billUsbName.isNotEmpty ? p.billUsbName : current.billUsbName,
+          kotUsbIdentifier: p.kotUsbIdentifier.isNotEmpty
+              ? p.kotUsbIdentifier
+              : current.kotUsbIdentifier,
+          kotUsbName: p.kotUsbName.isNotEmpty ? p.kotUsbName : current.kotUsbName,
           feedLines: int.tryParse(p.printerFeedLines) ?? current.feedLines,
           kotFeedLines:
               int.tryParse(p.kotPrinterFeedLines) ?? current.kotFeedLines,
@@ -481,6 +469,14 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
         kotAutoPrint: settings.kotAutoPrint ? '1' : '0',
         kotPreview: settings.kotPreview ? '1' : '0',
         kotCopies: '${settings.kotCopies}',
+        paperSize: settings.paperSize.dbValue,
+        kotPaperSize: settings.kotPaperSize.dbValue,
+        billConnectionType: settings.billTransport.dbValue,
+        kotConnectionType: settings.kotTransport.dbValue,
+        billUsbIdentifier: settings.billUsbIdentifier,
+        billUsbName: settings.billUsbName,
+        kotUsbIdentifier: settings.kotUsbIdentifier,
+        kotUsbName: settings.kotUsbName,
       );
       await ref
           .read(appDatabaseProvider)
@@ -545,12 +541,6 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
     }
   }
 
-  String settingsPagePaperLabel(PrinterPaperSize size) =>
-      size == PrinterPaperSize.inch3 ? '3-Inch' : '2-Inch';
-
-  PrinterPaperSize paperFromLabel(String? label) =>
-      label == '3-Inch' ? PrinterPaperSize.inch3 : PrinterPaperSize.inch2;
-
   Future<void> updateSettings() async {
     await savePrinterCloud();
   }
@@ -581,10 +571,132 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
     return parts.join(' · ');
   }
 
+  PosPrinterTransport localTransport(PosPrinterTransport value) =>
+      value == PosPrinterTransport.usb
+          ? PosPrinterTransport.usb
+          : PosPrinterTransport.bluetooth;
+
+  bool isChannelConnected(
+    PrinterChannelKind channel,
+    PrinterSettings settings,
+  ) {
+    final transport = localTransport(
+      channel == PrinterChannelKind.bill
+          ? settings.billTransport
+          : settings.kotTransport,
+    );
+    switch (transport) {
+      case PosPrinterTransport.usb:
+        final id = settings.usbIdFor(isKot: channel == PrinterChannelKind.kot);
+        return id.isNotEmpty &&
+            usbHub.isConnected &&
+            (usbHub.savedUsbId.isEmpty ||
+                usbHub.savedUsbId.toLowerCase() == id.toLowerCase());
+      case PosPrinterTransport.bluetooth:
+        final mac = channel == PrinterChannelKind.bill
+            ? settings.billBluetoothAddress.trim()
+            : settings.kotBluetoothAddress.trim();
+        if (mac.isEmpty || hub.connectedAddress.isEmpty) return false;
+        return hub.connectedAddress.toLowerCase() == mac.toLowerCase();
+      case PosPrinterTransport.network:
+        return false;
+    }
+  }
+
+  Widget typeAndSizeBlock({
+    required String stringsPaper2,
+    required String stringsPaper3,
+    required PosPrinterTransport transport,
+    required PrinterPaperSize paperSize,
+    required String statusLine,
+    required bool connected,
+    required ValueChanged<PosPrinterTransport> onTransport,
+    required ValueChanged<PrinterPaperSize> onPaper,
+    required VoidCallback onConnect,
+    required VoidCallback onDisconnect,
+  }) {
+    final type = localTransport(transport);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text(
+          'Printer type',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 8),
+        SegmentedButton<PosPrinterTransport>(
+          segments: const [
+            ButtonSegment(
+              value: PosPrinterTransport.bluetooth,
+              icon: Icon(Icons.bluetooth_rounded),
+              label: Text('Bluetooth'),
+            ),
+            ButtonSegment(
+              value: PosPrinterTransport.usb,
+              icon: Icon(Icons.usb_rounded),
+              label: Text('USB'),
+            ),
+          ],
+          selected: {type},
+          onSelectionChanged: (v) => onTransport(v.first),
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          'Page size',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 8),
+        SegmentedButton<PrinterPaperSize>(
+          segments: [
+            ButtonSegment(
+              value: PrinterPaperSize.inch2,
+              label: Text(stringsPaper2),
+            ),
+            ButtonSegment(
+              value: PrinterPaperSize.inch3,
+              label: Text(stringsPaper3),
+            ),
+          ],
+          selected: {paperSize},
+          onSelectionChanged: (v) => onPaper(v.first),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          statusLine.isEmpty
+              ? (type == PosPrinterTransport.usb
+                  ? 'Tap Connect to pick a USB printer'
+                  : 'Tap Connect to pick a Bluetooth printer')
+              : statusLine,
+          style: const TextStyle(
+            fontSize: 13,
+            color: AppColors.textSecondary,
+          ),
+        ),
+        const SizedBox(height: 10),
+        AppButton(
+          label: connected ? 'Disconnect' : 'Connect',
+          icon: connected
+              ? Icons.link_off_rounded
+              : (type == PosPrinterTransport.usb
+                  ? Icons.usb_rounded
+                  : Icons.bluetooth_rounded),
+          variant: connected
+              ? AppButtonVariant.outlined
+              : AppButtonVariant.primary,
+          onPressed: btBusy
+              ? null
+              : (connected ? onDisconnect : onConnect),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final settings = ref.watch(printerSettingsProvider);
-    final paperLabel = settingsPagePaperLabel(settings.paperSize);
+    final strings = AppStrings.of(ref);
+    final billPicked = billStatusLine(settings);
+    final kotPicked = kotStatusLine(settings);
 
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -617,49 +729,41 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
             AppBreakpoints.pagePaddingFor(context.widthClass),
             24),
               children: [
-                AppCard(
-                  padding: EdgeInsets.zero,
-                  child: ListTile(
-                    leading: const Icon(
-                      Icons.storefront_rounded,
-                      color: AppColors.primary,
-                    ),
-                    title: const Text(
-                      'Shop Details',
-                      style: TextStyle(fontWeight: FontWeight.w800),
-                    ),
-                    subtitle: const Text('Company profile used on bills'),
-                    trailing: const Icon(Icons.chevron_right_rounded),
-                    onTap: () => context.push('/settings/company'),
-                  ),
-                ),
-                const SizedBox(height: 12),
                 PrinterSectionCard(
                   accent: AppColors.purple,
                   icon: Icons.print_rounded,
-                  title: 'PRINTER SETTING',
+                  title: 'BILL SETTING',
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      PrinterConnectRow(
-                        label: 'Bill Printer Name',
-                        value: paperLabel,
-                        busy: btBusy,
-                        onPaperChanged: (v) {
-                          if (v == null) return;
+                      typeAndSizeBlock(
+                        stringsPaper2: strings.paper2Inch,
+                        stringsPaper3: strings.paper3Inch,
+                        transport: settings.billTransport,
+                        paperSize: settings.paperSize,
+                        statusLine: billPicked,
+                        connected: isChannelConnected(
+                          PrinterChannelKind.bill,
+                          settings,
+                        ),
+                        onTransport: (v) {
                           ref.read(printerSettingsProvider.notifier).update(
-                                settings.copyWith(
-                                  paperSize: paperFromLabel(v),
-                                ),
+                                settings.copyWith(billTransport: v),
+                              );
+                        },
+                        onPaper: (v) {
+                          ref.read(printerSettingsProvider.notifier).update(
+                                settings.copyWith(paperSize: v),
                               );
                         },
                         onConnect: () =>
                             connectChannel(PrinterChannelKind.bill),
-                        onPick: () => pickPrinter(PrinterChannelKind.bill),
+                        onDisconnect: () =>
+                            disconnectChannel(PrinterChannelKind.bill),
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        billStatusLine(settings),
+                        '$btStatus · $usbStatus',
                         style: const TextStyle(
                           fontSize: 12,
                           color: AppColors.textSecondary,
@@ -670,6 +774,12 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                         controller: settingsPageInvoicePrefix,
                         label: 'Sales Invoice Prefix',
                         hint: 'PB',
+                      ),
+                      const SizedBox(height: 12),
+                      AppTextField(
+                        controller: settingsPageInvoiceTitle,
+                        label: 'Invoice title',
+                        hint: 'TAX INVOICE',
                       ),
                       const SizedBox(height: 12),
                       AppTextField(
@@ -699,29 +809,30 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                         },
                       ),
                       const SizedBox(height: 8),
-                      PrinterConnectRow(
-                        label: 'KOT Print Printer Name',
-                        value: paperLabel,
-                        busy: btBusy,
-                        onPaperChanged: (v) {
-                          if (v == null) return;
+                      typeAndSizeBlock(
+                        stringsPaper2: strings.paper2Inch,
+                        stringsPaper3: strings.paper3Inch,
+                        transport: settings.kotTransport,
+                        paperSize: settings.kotPaperSize,
+                        statusLine: kotPicked,
+                        connected: isChannelConnected(
+                          PrinterChannelKind.kot,
+                          settings,
+                        ),
+                        onTransport: (v) {
                           ref.read(printerSettingsProvider.notifier).update(
-                                settings.copyWith(
-                                  paperSize: paperFromLabel(v),
-                                ),
+                                settings.copyWith(kotTransport: v),
+                              );
+                        },
+                        onPaper: (v) {
+                          ref.read(printerSettingsProvider.notifier).update(
+                                settings.copyWith(kotPaperSize: v),
                               );
                         },
                         onConnect: () =>
                             connectChannel(PrinterChannelKind.kot),
-                        onPick: () => pickPrinter(PrinterChannelKind.kot),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        kotStatusLine(settings),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
-                        ),
+                        onDisconnect: () =>
+                            disconnectChannel(PrinterChannelKind.kot),
                       ),
                       const SizedBox(height: 14),
                       AppTextField(
@@ -898,172 +1009,38 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                Theme(
-                  data: Theme.of(context)
-                      .copyWith(dividerColor: Colors.transparent),
-                  child: AppCard(
-                    child: ExpansionTile(
-                      tilePadding: EdgeInsets.zero,
-                      childrenPadding: EdgeInsets.zero,
-                      initiallyExpanded: false,
-                      title: const Text(
-                        'Connection & permissions',
-                        style: TextStyle(fontWeight: FontWeight.w800),
+                PrinterSectionCard(
+                  accent: AppColors.teal,
+                  icon: Icons.print_outlined,
+                  title: 'EXTRA PRINTERS',
+                  child: Column(
+                    children: [
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: const Icon(Icons.print_outlined),
+                        title: const Text('Kitchen / extra printers'),
+                        subtitle: const Text(
+                          'Add more Bluetooth or USB printers',
+                        ),
+                        trailing: const Icon(Icons.chevron_right_rounded),
+                        onTap: () => context.push('/settings/printers'),
                       ),
-                      subtitle: Text(
-                        '$btStatus · $usbStatus',
-                        style: const TextStyle(fontSize: 12),
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: const Icon(Icons.alt_route),
+                        title: const Text('Printer routing'),
+                        subtitle: const Text('Send KOT / bill to a printer'),
+                        trailing: const Icon(Icons.chevron_right_rounded),
+                        onTap: () => context.push('/settings/printer-routing'),
                       ),
-                      children: [
-                        ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          dense: true,
-                          leading: AppSvgIconChip(
-                            assetPath: AppAssets.svgPrint,
-                            color: AppColors.primary,
-                            size: 40,
-                          ),
-                          title: const Text(
-                            'Status',
-                            style: TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                          subtitle: Text('$btStatus\n$usbStatus'),
-                          trailing: IconButton(
-                            tooltip: 'Refresh',
-                            onPressed: btBusy ? null : refreshBtStatus,
-                            icon: const AppSvg(
-                              AppAssets.svgRefresh,
-                              width: 20,
-                              height: 20,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        ),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            AppButton(
-                              label: 'Pick bill printer',
-                              icon: Icons.devices_rounded,
-                              expanded: false,
-                              onPressed: btBusy
-                                  ? null
-                                  : () =>
-                                      pickPrinter(PrinterChannelKind.bill),
-                            ),
-                            AppButton(
-                              label: 'Pick KOT printer',
-                              icon: Icons.devices_rounded,
-                              variant: AppButtonVariant.outlined,
-                              expanded: false,
-                              onPressed: btBusy
-                                  ? null
-                                  : () =>
-                                      pickPrinter(PrinterChannelKind.kot),
-                            ),
-                            TextButton(
-                              onPressed: btBusy
-                                  ? null
-                                  : () => disconnectChannel(
-                                        PrinterChannelKind.bill,
-                                      ),
-                              child: const Text('Disconnect bill'),
-                            ),
-                            TextButton(
-                              onPressed: btBusy
-                                  ? null
-                                  : () => disconnectChannel(
-                                        PrinterChannelKind.kot,
-                                      ),
-                              child: const Text('Disconnect KOT'),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        AppTextField(
-                          controller: settingsPageBillMac,
-                          label: 'Bill Bluetooth MAC (optional)',
-                          hint: 'AA:BB:CC:DD:EE:FF',
-                        ),
-                        const SizedBox(height: 12),
-                        AppTextField(
-                          controller: settingsPageKotMac,
-                          label: 'KOT Bluetooth MAC (optional)',
-                          hint: 'Uses bill printer if empty',
-                        ),
-                        const SizedBox(height: 12),
-                        AppTextField(
-                          controller: host,
-                          label: 'Network printer IP (optional)',
-                          hint: '192.168.1.50',
-                        ),
-                        const SizedBox(height: 12),
-                        AppTextField(
-                          controller: settingsPagePort,
-                          label: 'Network port',
-                          hint: '9100',
-                          keyboardType: TextInputType.number,
-                        ),
-                        const SizedBox(height: 12),
-                        AppTextField(
-                          controller: settingsPageInvoiceTitle,
-                          label: 'Invoice title',
-                          hint: 'TAX INVOICE',
-                        ),
-                        const SizedBox(height: 12),
-                        if (permissionStatuses.isEmpty)
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 8),
-                            child: Text('Checking permissions…'),
-                          )
-                        else
-                          ...permissionStatuses.entries.map((entry) {
-                            final allowed = entry.value.isGranted ||
-                                entry.value.isLimited ||
-                                entry.value.isProvisional;
-                            return ListTile(
-                              contentPadding: EdgeInsets.zero,
-                              dense: true,
-                              leading: Icon(
-                                allowed
-                                    ? Icons.check_circle_rounded
-                                    : Icons.error_outline_rounded,
-                                color: allowed
-                                    ? AppColors.success
-                                    : AppColors.warning,
-                              ),
-                              title: Text(settingsPagePermissions.labelFor(entry.key)),
-                              trailing: Text(
-                                settingsPagePermissions.statusLabel(entry.value),
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  color: allowed
-                                      ? AppColors.success
-                                      : AppColors.warning,
-                                ),
-                              ),
-                            );
-                          }),
-                        AppButton(
-                          label: 'Allow location, camera, Bluetooth',
-                          icon: Icons.security_rounded,
-                          isLoading: permissionBusy,
-                          onPressed: requestPermissions,
-                        ),
-                        TextButton(
-                          onPressed: settingsPagePermissions.openAppSettingsPage,
-                          child: const Text('Open system app settings'),
-                        ),
-                        AppButton(
-                          label: 'Load from cloud',
-                          icon: Icons.cloud_download_rounded,
-                          variant: AppButtonVariant.outlined,
-                          isLoading: companyBusy,
-                          onPressed: loadPrinterCloud,
-                        ),
-                      ],
-                    ),
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: const Icon(Icons.queue),
+                        title: const Text('Print queue'),
+                        trailing: const Icon(Icons.chevron_right_rounded),
+                        onTap: () => context.push('/settings/print-queue'),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -1134,66 +1111,6 @@ class PrinterSectionCard extends StatelessWidget {
           child,
         ],
       ),
-    );
-  }
-}
-
-class PrinterConnectRow extends StatelessWidget {
-  const PrinterConnectRow({super.key, 
-    required this.label,
-    required this.value,
-    required this.busy,
-    required this.onPaperChanged,
-    required this.onConnect,
-    required this.onPick,
-  });
-
-  final String label;
-  final String value;
-  final bool busy;
-  final ValueChanged<String?> onPaperChanged;
-  final VoidCallback onConnect;
-  final VoidCallback onPick;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: GestureDetector(
-            onLongPress: busy ? null : onPick,
-            child: StringDropdownField(
-              label: label,
-              value: value,
-              options: const ['2-Inch', '3-Inch'],
-              enableSearch: false,
-              onChanged: onPaperChanged,
-            ),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: FilledButton(
-            onPressed: busy ? null : onConnect,
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: const Text(
-              'Connect',
-              style: TextStyle(fontWeight: FontWeight.w700),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }
@@ -1299,56 +1216,29 @@ class LivePaperPreviews extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final strings = AppStrings.of(ref);
     final service = ref.watch(printServiceProvider);
     final sample = SampleReceiptData.sampleBill();
     final shop = ref.watch(authControllerProvider).session?.shopName;
-    final inch2 = service.billPreviewText(
+    final settings = ref.watch(printerSettingsProvider);
+    final bill = service.billPreviewText(
       invoice: sample.invoice,
       items: sample.items,
       shopName: shop,
-      paperSize: PrinterPaperSize.inch2,
+      paperSize: settings.paperSize,
     );
-    final inch3 = service.billPreviewText(
-      invoice: sample.invoice,
-      items: sample.items,
-      shopName: shop,
-      paperSize: PrinterPaperSize.inch3,
-    );
-    final kot = service.previewText(PrinterChannelKind.kot, shopName: shop);
-    Widget card(String title, String text) {
-      return Container(
-        width: double.infinity,
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFFE2E8F2)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
-            const SizedBox(height: 6),
-            SelectableText(
-              text,
-              style: const TextStyle(
-                fontFamily: 'monospace',
-                fontSize: 10,
-                height: 1.3,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
+    final kot = service.kotPreviewText(paperSize: settings.kotPaperSize);
     return Column(
       children: [
-        card(strings.paper2Inch, inch2),
-        card(strings.paper3Inch, inch3),
-        card(strings.sendKot, kot),
+        PaperSizePreviewCard(
+          title: 'Bill · ${settings.paperSize.dbValue}',
+          text: bill,
+          paperSize: settings.paperSize,
+        ),
+        PaperSizePreviewCard(
+          title: 'KOT · ${settings.kotPaperSize.dbValue}',
+          text: kot,
+          paperSize: settings.kotPaperSize,
+        ),
       ],
     );
   }

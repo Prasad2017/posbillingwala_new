@@ -1,7 +1,7 @@
-import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:pos_billingwala_v2/app/app.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -17,7 +17,7 @@ void main() {
       ),
     );
 
-    expect(find.text('POS Billingwala'), findsWidgets);
+    expect(find.text('Billingwala'), findsWidgets);
 
     // Splash delay + SharedPreferences bootstrap + redirect frames.
     await tester.pump(const Duration(milliseconds: 700));

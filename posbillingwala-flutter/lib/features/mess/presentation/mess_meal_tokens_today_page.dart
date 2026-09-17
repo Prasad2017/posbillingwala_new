@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
+import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/auth/data/device_identity_service.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/mess/data/mess_api.dart';
 import 'package:pos_billingwala_v2/features/mess/domain/mess_dtos.dart';
+import 'package:pos_billingwala_v2/features/mess/presentation/mess_token_qr_page.dart';
 import 'package:pos_billingwala_v2/features/print/domain/print_providers.dart';
 import 'package:pos_billingwala_v2/features/print/domain/print_service.dart';
-import 'package:pos_billingwala_v2/core/widgtes/widgtes.dart';
-import 'package:pos_billingwala_v2/l10n/app_strings.dart';
+import 'package:pos_billingwala_v2/features/sync/domain/cloud_screen_cache.dart';
+import 'package:pos_billingwala_v2/language/app_strings.dart';
 
 class MessMealTokensTodayPage extends ConsumerStatefulWidget {
   const MessMealTokensTodayPage({super.key});
@@ -38,6 +40,17 @@ class MessMealTokensTodayPageState
       return;
     }
     setState(() => state = const AsyncLoading());
+    final cached =
+        await CloudScreenCache.loadMapList(CloudScreenCache.mealTokensToday);
+    if (cached.isNotEmpty && mounted) {
+      setState(
+        () => state = AsyncData(
+          MessMealTokenTodayResult(
+            tokens: cached.map(MessMealTokenDto.fromJson).toList(),
+          ),
+        ),
+      );
+    }
     final next = await AsyncValue.guard(
       () => MessApi(ref.read(apiClientProvider)).fetchMealTokensToday(userId),
     );
@@ -48,14 +61,26 @@ class MessMealTokensTodayPageState
   Future<void> printToken(MessMealTokenDto token) async {
     final userId = ref.read(authControllerProvider).session?.userId;
     if (userId == null) return;
+    final memberName = token.memberName.trim();
+    final memberMobile = messTokenDigits(token.memberMobile).isNotEmpty
+        ? messTokenDigits(token.memberMobile)
+        : messTokenDigits(token.registrationNo);
+    if (!messTokenHasRequiredIdentity(memberName, memberMobile)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppStrings.of(ref).tokenPrintNameMobileRequired),
+        ),
+      );
+      return;
+    }
     setState(() => busy = true);
     try {
       final text = StringBuffer()
         ..writeln('MESS MEAL TOKEN')
         ..writeln(token.tokenNumber)
         ..writeln(token.mealSession)
-        ..writeln(token.memberName)
-        ..writeln(token.registrationNo)
+        ..writeln(memberName)
+        ..writeln(memberMobile)
         ..writeln(token.date)
         ..writeln();
       final printResult = await ref.read(printServiceProvider).printRawText(
@@ -187,6 +212,10 @@ class MessMealTokensTodayPageState
                               subtitle: Text(
                                 [
                                   if (t.memberName.isNotEmpty) t.memberName,
+                                  if (t.memberMobile.isNotEmpty)
+                                    t.memberMobile
+                                  else if (t.registrationNo.isNotEmpty)
+                                    t.registrationNo,
                                   if (t.mealSession.isNotEmpty) t.mealSession,
                                   if (t.printStatus.isNotEmpty) t.printStatus,
                                 ].join(' · '),

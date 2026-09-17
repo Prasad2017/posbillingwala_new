@@ -1,18 +1,22 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
+import 'package:pos_billingwala_v2/core/widgets/web_app_shell.dart';
+import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/auth/presentation/login_page.dart';
 import 'package:pos_billingwala_v2/features/auth/presentation/mpin_page.dart';
 import 'package:pos_billingwala_v2/features/auth/presentation/register_page.dart';
 import 'package:pos_billingwala_v2/features/auth/presentation/splash_page.dart';
-import 'package:pos_billingwala_v2/features/home/presentation/home_page.dart';
 import 'package:pos_billingwala_v2/features/expense/presentation/add_expense_page.dart';
 import 'package:pos_billingwala_v2/features/expense/presentation/expense_page.dart';
+import 'package:pos_billingwala_v2/features/home/presentation/home_page.dart';
 import 'package:pos_billingwala_v2/features/inventory/presentation/add_inventory_page.dart';
 import 'package:pos_billingwala_v2/features/inventory/presentation/inventory_page.dart';
 import 'package:pos_billingwala_v2/features/masters/presentation/categories_page.dart';
+import 'package:pos_billingwala_v2/features/masters/presentation/combo_form_page.dart';
+import 'package:pos_billingwala_v2/features/masters/presentation/combos_page.dart';
 import 'package:pos_billingwala_v2/features/masters/presentation/masters_hub_page.dart';
 import 'package:pos_billingwala_v2/features/masters/presentation/masters_page.dart';
 import 'package:pos_billingwala_v2/features/masters/presentation/portion_masters_page.dart';
@@ -21,16 +25,25 @@ import 'package:pos_billingwala_v2/features/masters/presentation/product_portion
 import 'package:pos_billingwala_v2/features/masters/presentation/products_page.dart';
 import 'package:pos_billingwala_v2/features/masters/presentation/subcategories_page.dart';
 import 'package:pos_billingwala_v2/features/masters/presentation/table_master_page.dart';
-import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/features/mess/presentation/mess_meal_sessions_page.dart';
 import 'package:pos_billingwala_v2/features/mess/presentation/mess_meal_tokens_today_page.dart';
 import 'package:pos_billingwala_v2/features/mess/presentation/mess_page.dart';
 import 'package:pos_billingwala_v2/features/mess/presentation/mess_payments_page.dart';
 import 'package:pos_billingwala_v2/features/mess/presentation/mess_token_scan_page.dart';
 import 'package:pos_billingwala_v2/features/notifications/presentation/notifications_page.dart';
-import 'package:pos_billingwala_v2/features/pos/presentation/pos_page.dart';
 import 'package:pos_billingwala_v2/features/pos/presentation/payment_page.dart';
+import 'package:pos_billingwala_v2/features/pos/presentation/pos_page.dart';
+import 'package:pos_billingwala_v2/features/print/domain/bluetooth_printer_hub.dart';
+import 'package:pos_billingwala_v2/features/print/domain/store_printer.dart';
+import 'package:pos_billingwala_v2/features/print/presentation/bill_print_preview_page.dart';
+import 'package:pos_billingwala_v2/features/print/presentation/device_list_page.dart';
+import 'package:pos_billingwala_v2/features/print/presentation/print_queue_page.dart';
+import 'package:pos_billingwala_v2/features/print/presentation/printer_form_page.dart';
+import 'package:pos_billingwala_v2/features/print/presentation/printer_list_page.dart';
+import 'package:pos_billingwala_v2/features/print/presentation/printer_routing_page.dart';
+import 'package:pos_billingwala_v2/features/print/presentation/test_invoice_preview_page.dart';
 import 'package:pos_billingwala_v2/features/reports/domain/reports_providers.dart';
+import 'package:pos_billingwala_v2/features/reports/presentation/edit_invoice_page.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/expense_report_page.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/invoice_detail_page.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/mess_member_report_page.dart';
@@ -39,16 +52,10 @@ import 'package:pos_billingwala_v2/features/reports/presentation/operational_rep
 import 'package:pos_billingwala_v2/features/reports/presentation/product_wise_report_page.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/reports_hub_page.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/reports_page.dart';
-import 'package:pos_billingwala_v2/features/masters/presentation/combo_form_page.dart';
-import 'package:pos_billingwala_v2/features/masters/presentation/combos_page.dart';
-import 'package:pos_billingwala_v2/features/reports/presentation/edit_invoice_page.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/sales_dashboard_page.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/sales_list_page.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/sales_overview_page.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/table_list_report_page.dart';
-import 'package:pos_billingwala_v2/features/print/domain/bluetooth_printer_hub.dart';
-import 'package:pos_billingwala_v2/features/print/presentation/bill_print_preview_page.dart';
-import 'package:pos_billingwala_v2/features/print/presentation/test_invoice_preview_page.dart';
 import 'package:pos_billingwala_v2/features/settings/presentation/about_page.dart';
 import 'package:pos_billingwala_v2/features/settings/presentation/business_hours_page.dart';
 import 'package:pos_billingwala_v2/features/settings/presentation/change_pin_page.dart';
@@ -56,14 +63,24 @@ import 'package:pos_billingwala_v2/features/settings/presentation/company_settin
 import 'package:pos_billingwala_v2/features/settings/presentation/settings_hub_page.dart';
 import 'package:pos_billingwala_v2/features/settings/presentation/settings_page.dart';
 import 'package:pos_billingwala_v2/features/settings/presentation/share_app_page.dart';
+import 'package:pos_billingwala_v2/features/staff/domain/permission_controller.dart';
+import 'package:pos_billingwala_v2/features/staff/presentation/staff_detail_page.dart';
+import 'package:pos_billingwala_v2/features/staff/presentation/staff_form_page.dart';
+import 'package:pos_billingwala_v2/features/staff/presentation/staff_list_page.dart';
+import 'package:pos_billingwala_v2/features/staff/presentation/staff_login_page.dart';
+import 'package:pos_billingwala_v2/features/staff/presentation/salary_page.dart';
+import 'package:pos_billingwala_v2/features/reports/presentation/staff_wise_report_page.dart';
 import 'package:pos_billingwala_v2/features/support/presentation/create_support_ticket_page.dart';
 import 'package:pos_billingwala_v2/features/support/presentation/support_page.dart';
 import 'package:pos_billingwala_v2/features/support/presentation/support_ticket_detail_page.dart';
 import 'package:pos_billingwala_v2/features/support/presentation/support_tickets_page.dart';
+import 'package:pos_billingwala_v2/features/sync/presentation/fetch_result_page.dart';
 import 'package:pos_billingwala_v2/features/sync/presentation/sync_page.dart';
 import 'package:pos_billingwala_v2/features/tables/presentation/split_bill_page.dart';
 import 'package:pos_billingwala_v2/features/tables/presentation/tables_page.dart';
 import 'package:pos_billingwala_v2/features/takeaway/presentation/takeaway_page.dart';
+import 'package:pos_billingwala_v2/core/logging/screen_context.dart';
+import 'package:pos_billingwala_v2/core/logging/screen_route_observer.dart';
 
 /* Global navigator key for FCM deep links and context-free navigation. */
 final rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -75,14 +92,20 @@ class GoRouterRefresh extends ChangeNotifier {
 final routerProvider = Provider<GoRouter>((ref) {
   final refresh = GoRouterRefresh();
   ref.listen<AuthState>(authControllerProvider, (_, _) => refresh.ping());
+  ref.listen(permissionControllerProvider, (_, _) => refresh.ping());
   ref.onDispose(refresh.dispose);
 
   return GoRouter(
     navigatorKey: rootNavigatorKey,
     initialLocation: '/splash',
     refreshListenable: refresh,
-    debugLogDiagnostics: kDebugMode,
+    debugLogDiagnostics: false,
+    observers: [ScreenRouteObserver()],
     redirect: (context, state) {
+      ScreenContext.update(
+        name: state.name ?? state.matchedLocation,
+        path: state.matchedLocation,
+      );
       final auth = ref.read(authControllerProvider);
       final loc = state.matchedLocation;
 
@@ -90,7 +113,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isLogin = loc == '/login';
       final isMpin = loc == '/mpin';
       final isRegister = loc == '/register';
-      final isAuthRoute = isLogin || isMpin || isRegister || isSplash;
+      final isStaffLogin = loc == '/staff-login';
+      final isAuthRoute = isLogin || isMpin || isRegister || isSplash || isStaffLogin;
 
       switch (auth.status) {
         case AuthStatus.unknown:
@@ -103,9 +127,14 @@ final routerProvider = Provider<GoRouter>((ref) {
           /* Keep registration/login reachable for licence recovery or account changes. */
           if (isLogin || isRegister) return null;
           return '/mpin';
+        case AuthStatus.needsStaffLogin:
+          /* Optional staff route only — licence flow uses owner MPIN. */
+          if (isStaffLogin) return null;
+          if (isLogin || isRegister || isMpin) return null;
+          return '/mpin';
         case AuthStatus.authenticated:
           if (isAuthRoute) return '/';
-          return null;
+          return staffRoutePermissionRedirect(ref, loc);
       }
     },
     routes: [
@@ -129,6 +158,17 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'register',
         builder: (context, state) => const RegisterPage(),
       ),
+      GoRoute(
+        path: '/staff-login',
+        name: 'staff-login',
+        builder: (context, state) => const StaffLoginPage(),
+      ),
+      ShellRoute(
+        builder: (context, state, child) {
+          if (!AppPlatform.useDesktopShell) return child;
+          return WebAppShell(child: child);
+        },
+        routes: [
       GoRoute(
         path: '/',
         name: 'home',
@@ -293,7 +333,21 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/inventory/add',
         name: 'inventory-add',
-        builder: (context, state) => const AddInventoryPage(),
+        builder: (context, state) {
+          final mode = state.uri.queryParameters['mode'];
+          return AddInventoryPage(
+            mode: mode == 'waste'
+                ? StockMovementMode.waste
+                : StockMovementMode.purchase,
+          );
+        },
+      ),
+      GoRoute(
+        path: '/inventory/waste',
+        name: 'inventory-waste',
+        builder: (context, state) => const AddInventoryPage(
+          mode: StockMovementMode.waste,
+        ),
       ),
       GoRoute(
         path: '/expenses',
@@ -410,6 +464,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const ExpenseReportPage(),
       ),
       GoRoute(
+        path: '/reports/staff-wise',
+        name: 'reports-staff-wise',
+        builder: (context, state) => const StaffWiseReportPage(),
+      ),
+      GoRoute(
         path: '/reports/products',
         name: 'reports-products',
         builder: (context, state) {
@@ -455,6 +514,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
+        path: '/sync/fetch-result',
+        name: 'sync-fetch-result',
+        builder: (context, state) => const FetchResultPage(),
+      ),
+      GoRoute(
         path: '/notifications',
         name: 'notifications',
         builder: (context, state) => const NotificationsPage(),
@@ -495,6 +559,63 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const ChangePinPage(),
       ),
       GoRoute(
+        path: '/settings/users',
+        name: 'settings-users',
+        builder: (context, state) => const StaffListPage(),
+      ),
+      GoRoute(
+        path: '/settings/salary',
+        name: 'settings-salary',
+        builder: (context, state) => const SalaryPage(),
+      ),
+      GoRoute(
+        path: '/settings/users/add',
+        name: 'settings-users-add',
+        builder: (context, state) => const StaffFormPage(),
+      ),
+      GoRoute(
+        path: '/settings/users/:id/edit',
+        name: 'settings-users-edit',
+        builder: (context, state) => StaffFormPage(staffId: state.pathParameters['id']),
+      ),
+      GoRoute(
+        path: '/settings/users/:id',
+        name: 'settings-users-detail',
+        builder: (context, state) => StaffDetailPage(staffId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/settings/printers',
+        name: 'settings-printers',
+        builder: (context, state) => const PrinterListPage(),
+      ),
+      GoRoute(
+        path: '/settings/printers/add',
+        name: 'settings-printers-add',
+        builder: (context, state) => const PrinterFormPage(),
+      ),
+      GoRoute(
+        path: '/settings/printers/edit',
+        name: 'settings-printers-edit',
+        builder: (context, state) => PrinterFormPage(
+          existing: state.extra is StorePrinter ? state.extra as StorePrinter : null,
+        ),
+      ),
+      GoRoute(
+        path: '/settings/printer-routing',
+        name: 'settings-printer-routing',
+        builder: (context, state) => const PrinterRoutingPage(),
+      ),
+      GoRoute(
+        path: '/settings/print-queue',
+        name: 'settings-print-queue',
+        builder: (context, state) => const PrintQueuePage(),
+      ),
+      GoRoute(
+        path: '/settings/pos-devices',
+        name: 'settings-pos-devices',
+        builder: (context, state) => const DeviceListPage(),
+      ),
+      GoRoute(
         path: '/settings/test-print',
         name: 'test-print-preview',
         builder: (context, state) {
@@ -528,6 +649,8 @@ final routerProvider = Provider<GoRouter>((ref) {
           return SupportTicketDetailPage(ticketId: ticketId);
         },
       ),
+        ],
+      ),
     ],
     errorBuilder: (context, state) => Scaffold(
       appBar: AppBar(title: const Text('Not found')),
@@ -535,3 +658,32 @@ final routerProvider = Provider<GoRouter>((ref) {
     ),
   );
 });
+
+String? staffRoutePermissionRedirect(Ref ref, String loc) {
+  const prefixes = <String, String>{
+    '/pos/payment': 'bill.create',
+    '/tables/payment': 'bill.create',
+    '/takeaway/payment': 'bill.create',
+    '/pos': 'billing.create',
+    '/tables': 'table.view',
+    '/takeaway': 'takeaway.view',
+    '/mess': 'mess.view',
+    '/reports': 'report.view',
+    '/inventory': 'inventory.view',
+    '/expenses': 'expense.view',
+    '/masters': 'product.view',
+    '/settings/users': 'user.view',
+    '/settings/salary': 'user.view',
+    '/settings/printers': 'printer.view',
+    '/settings/pos-devices': 'device.view',
+  };
+  for (final entry in prefixes.entries) {
+    if (loc == entry.key || loc.startsWith('${entry.key}/')) {
+      if (!ref.read(permissionControllerProvider).allows(entry.value)) {
+        return '/';
+      }
+      return null;
+    }
+  }
+  return null;
+}

@@ -51,6 +51,12 @@ public class MessWalkInTokenActivity extends BaseActivity implements View.OnClic
 
         String mobile = binding.walkInMobile.getText() != null
                 ? binding.walkInMobile.getText().toString().trim() : "";
+        if (mobile.length() != 10) {
+            binding.walkInMobile.setError(getString(R.string.toast_please_enter_member_mobile_number));
+            binding.walkInMobile.requestFocus();
+            return;
+        }
+
         String amount = binding.walkInAmount.getText() != null
                 ? binding.walkInAmount.getText().toString().trim() : "0";
         if (TextUtils.isEmpty(amount)) {

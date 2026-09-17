@@ -66,6 +66,7 @@ class SampleReceiptData {
       customerName: 'नमस्ते ग्राहक',
       customerMobile: '9999999999',
       billPrintStatus: '',
+      createdByStaffName: 'Staff Demo',
       itemCount: 2,
       createdAt: at,
       organizationId: '',
@@ -75,14 +76,16 @@ class SampleReceiptData {
     return (invoice: invoice, items: items);
   }
 
-  static KotTicket sampleKot({DateTime? now}) {
+  static KotTicket sampleKot({DateTime? now, String prefix = ''}) {
     final at = now ?? DateTime.now();
+    final p = prefix.trim();
+    final kotNumber = p.isEmpty ? 'KOT-TEST' : '$p-TEST';
     return KotTicket(
       kot: Kot(
         kotId: -1,
         sessionId: -1,
         orderRoundId: -1,
-        kotNumber: 'KOT-TEST',
+        kotNumber: kotNumber,
         tableNumber: '1',
         printStatus: 'pending',
         kitchenName: 'Main Kitchen',

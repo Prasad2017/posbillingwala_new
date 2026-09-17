@@ -1,11 +1,11 @@
 {
-    "name": "POS Billingwala",
+    "name": "Billingwala",
     "short_name": "Billingwala",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "POS Billingwala — Flutter POS for Android, iOS, and Web",
+    "background_color": "#F7F9FC",
+    "theme_color": "#0756C9",
+    "description": "Billingwala — Flutter POS for Android, iOS, and Web",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

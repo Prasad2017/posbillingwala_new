@@ -27,4 +27,9 @@ class SessionKeys {
   static const organizationId = 'organizationId';
   static const branchId = 'branchId';
   static const branchLabel = 'branchLabel';
+  static const userManagementEnabled = 'userManagementEnabled';
+  static const maxUsers = 'maxUsers';
+  static const maxDevices = 'maxDevices';
+  static const maxPrinters = 'maxPrinters';
+  static const permissionVersion = 'permissionVersion';
 }

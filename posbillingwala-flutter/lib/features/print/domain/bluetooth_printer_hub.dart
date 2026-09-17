@@ -2,9 +2,10 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:print_bluetooth_thermal/print_bluetooth_thermal.dart';
+import 'package:pos_billingwala_v2/core/logging/app_logger.dart';
 import 'package:pos_billingwala_v2/core/permissions/app_permission_service.dart';
 import 'package:pos_billingwala_v2/features/print/domain/woosim_print_channel.dart';
+import 'package:print_bluetooth_thermal/print_bluetooth_thermal.dart';
 
 enum PrinterChannelKind { bill, kot }
 
@@ -74,7 +75,7 @@ class BluetoothPrinterHub {
     try {
       return await PrintBluetoothThermal.pairedBluetooths;
     } catch (e) {
-      debugPrint('pairedDevices failed: $e');
+      AppLogger.error('pairedDevices failed', e);
       return const [];
     }
   }
@@ -158,7 +159,7 @@ class BluetoothPrinterHub {
         await PrintBluetoothThermal.disconnect;
       }
     } catch (error) {
-      debugPrint('BT disconnect: $error');
+      AppLogger.warning('BT disconnect', error);
     }
     connectedAddress = '';
   }
@@ -190,6 +191,18 @@ class BluetoothPrinterHub {
     return isLinkedTo(mac);
   }
 
+  Future<bool> writeToMac(String mac, List<int> bytes) async {
+    final savedBill = billAddress;
+    final savedKot = kotAddress;
+    try {
+      billAddress = normalizeMac(mac);
+      return await write(PrinterChannelKind.bill, bytes);
+    } finally {
+      billAddress = savedBill;
+      kotAddress = savedKot;
+    }
+  }
+
   Future<bool> write(PrinterChannelKind kind, List<int> bytes) async {
     if (bytes.isEmpty) return false;
     if (WoosimPrintChannel.isSupported) {
@@ -214,7 +227,9 @@ class BluetoothPrinterHub {
     }
     final ready = await ensureReady(kind);
     if (!ready) {
-      debugPrint('BT write skipped: printer not ready (${addressFor(kind)})');
+      AppLogger.warning(
+        'BT write skipped: printer not ready (${addressFor(kind)})',
+      );
       scheduleReconnect(kind);
       return false;
     }
@@ -223,7 +238,7 @@ class BluetoothPrinterHub {
       /* (Uint8List arrives as typed data and the Kotlin cast returns null → false). */
       final payload = List<int>.from(bytes);
       final ok = await PrintBluetoothThermal.writeBytes(payload);
-      debugPrint(
+      AppLogger.info(
         'BT write channel=${kind.name} bytes=${payload.length} ok=$ok '
         'mac=$connectedAddress',
       );
@@ -237,7 +252,7 @@ class BluetoothPrinterHub {
       }
       return ok;
     } catch (e) {
-      debugPrint('BT write failed: $e');
+      AppLogger.error('BT write failed', e);
       connectedAddress = '';
       scheduleReconnect(kind);
       return false;
@@ -304,7 +319,7 @@ class BluetoothPrinterHub {
           try {
             await PrintBluetoothThermal.disconnect;
           } catch (error) {
-            debugPrint('BT drop previous link: $error');
+            AppLogger.warning('BT drop previous link', error);
           }
           connectedAddress = '';
           await Future<void>.delayed(const Duration(milliseconds: 350));
@@ -330,7 +345,7 @@ class BluetoothPrinterHub {
       }
       return false;
     } catch (e) {
-      debugPrint('BT connect failed: $e');
+      AppLogger.error('BT connect failed', e);
       connectedAddress = '';
       scheduleReconnectForAddress(mac);
       return false;
@@ -356,7 +371,7 @@ class BluetoothPrinterHub {
     reconnectTimer = Timer(delay, () async {
       if (!await isBluetoothOn()) return;
       if (await isLinkedTo(mac)) return;
-      debugPrint('BT auto-reconnect → $mac');
+      AppLogger.info('BT auto-reconnect → $mac');
       await connectInternal(mac, fromUser: false);
     });
   }

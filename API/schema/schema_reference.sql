@@ -1,4 +1,4 @@
-﻿-- P5-5: Schema-only reference (no customer/licence data).
+-- P5-5: Schema-only reference (no customer/licence data).
 -- Generated from production dump structure; use API/migrations/ for additive upgrades.
 -- Do NOT commit full database dumps to the repo.
 
@@ -81,9 +81,12 @@ CREATE TABLE `inventory` (
   `inventoryId` int(11) NOT NULL,
   `userId` int(11) NOT NULL,
   `productId` int(11) NOT NULL,
-  `productInventoryQuantity` int(11) NOT NULL,
-  `afterSaleInventoryQuantity` int(11) NOT NULL,
-  `saleInventoryQuantity` int(11) NOT NULL,
+  `productInventoryQuantity` decimal(16,3) NOT NULL DEFAULT 0.000,
+  `afterSaleInventoryQuantity` decimal(16,3) NOT NULL DEFAULT 0.000,
+  `saleInventoryQuantity` decimal(16,3) NOT NULL DEFAULT 0.000,
+  `movementType` varchar(20) NOT NULL DEFAULT 'purchase',
+  `inventoryNote` varchar(255) NOT NULL DEFAULT '',
+  `unitCost` decimal(16,2) NOT NULL DEFAULT 0.00,
   `inventoryDate` text NOT NULL,
   `inventoryNetworkStatus` text NOT NULL,
   `inventoryStatus` text NOT NULL
@@ -92,6 +95,8 @@ CREATE TABLE `inventory` (
 CREATE TABLE `invoice` (
   `invoiceId` int(11) NOT NULL,
   `licenseId` int(11) NOT NULL,
+  `createdByStaffId` int(11) DEFAULT NULL,
+  `createdByStaffName` varchar(120) NOT NULL DEFAULT '',
   `noOfTable` text NOT NULL,
   `invoiceType` text NOT NULL,
   `invoiceNumber` text NOT NULL,
@@ -219,8 +224,12 @@ CREATE TABLE `products` (
   `categoryId` int(11) NOT NULL,
   `productCode` text NOT NULL,
   `productName` text CHARACTER SET utf8mb3 COLLATE utf8mb3_bin DEFAULT NULL,
+  `productImage` mediumtext DEFAULT NULL,
   `productUnit` text CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NOT NULL,
   `productPrice` float(16,2) NOT NULL,
+  `productMrp` decimal(16,2) NOT NULL DEFAULT 0.00,
+  `openPrice` varchar(10) NOT NULL DEFAULT 'off',
+  `priceIncludesGst` varchar(10) NOT NULL DEFAULT '0',
   `productCGST` int(11) DEFAULT NULL,
   `productSGST` int(11) DEFAULT NULL,
   `productStatus` text NOT NULL DEFAULT 'active',

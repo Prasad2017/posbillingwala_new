@@ -4,13 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
-import 'package:pos_billingwala_v2/features/pos/domain/kot_providers.dart';
-import 'package:pos_billingwala_v2/features/print/domain/print_providers.dart';
-import 'package:pos_billingwala_v2/core/widgtes/widgtes.dart';
-import 'package:pos_billingwala_v2/l10n/app_strings.dart';
-import 'package:pos_billingwala_v2/core/widgets/app_module_icon.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
-import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
+import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
+import 'package:pos_billingwala_v2/features/pos/domain/kot_providers.dart';
+import 'package:pos_billingwala_v2/features/print/domain/print_job_dispatcher.dart';
+import 'package:pos_billingwala_v2/language/app_strings.dart';
 
 /* On-screen KOT ticket (Bluetooth thermal print via ESC/POS when MAC set). */
 class KotPreviewPage extends ConsumerWidget {
@@ -145,8 +143,7 @@ class KotPreviewPage extends ConsumerWidget {
             icon: Icons.print_rounded,
             expanded: false,
             onPressed: () async {
-              final result =
-                  await ref.read(printServiceProvider).printKot(ticket);
+              final result = await PrintJobDispatcher(ref).printKotRouted(ticket);
               await ref
                   .read(kotControllerProvider.notifier)
                   .markPrinted(ticket.kot.kotId);

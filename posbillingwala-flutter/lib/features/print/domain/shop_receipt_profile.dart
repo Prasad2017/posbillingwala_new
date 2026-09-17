@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pos_billingwala_v2/features/company/data/company_dtos.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /* Local snapshot of shop identity used on thermal bills (Android ShopHeader). */
 class ShopReceiptProfile {

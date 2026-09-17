@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
-import 'package:pos_billingwala_v2/core/widgtes/widgtes.dart';
+import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/tables/domain/tables_providers.dart';
-import 'package:pos_billingwala_v2/l10n/app_strings.dart';
+import 'package:pos_billingwala_v2/language/app_strings.dart';
 
 FloorTableView? floorForTable(WidgetRef ref, String? tableNumber) {
   if (tableNumber == null || tableNumber.isEmpty) return null;
@@ -86,8 +86,7 @@ Future<void> editDiningGuestsWaiter(
   );
   final guestCount = int.tryParse(guests.text.trim()) ?? session.guestCount;
   final waiterName = waiter.text.trim();
-  guests.dispose();
-  waiter.dispose();
+  disposeTextControllers([guests, waiter]);
   if (ok != true) return;
   await ref.read(tablesControllerProvider.notifier).updateSessionMeta(
         sessionId: session.sessionId,

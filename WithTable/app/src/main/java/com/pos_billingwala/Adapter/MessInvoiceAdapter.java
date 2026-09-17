@@ -262,6 +262,17 @@ public class MessInvoiceAdapter extends RecyclerView.Adapter<MessInvoiceAdapter.
     }
 
     private void openMemberQrToken(MemberResponse memberResponse, int existingCouponCount) {
+        String name = memberResponse.getMemberName() != null ? memberResponse.getMemberName().trim() : "";
+        String mobile = memberResponse.getMemberMobileNumber() != null
+                ? memberResponse.getMemberMobileNumber().trim() : "";
+        if (name.isEmpty()) {
+            Toast.makeText(context, context.getString(R.string.toast_please_enter_member_name), Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (mobile.isEmpty()) {
+            Toast.makeText(context, context.getString(R.string.toast_please_enter_member_mobile_number), Toast.LENGTH_SHORT).show();
+            return;
+        }
         String tokenCode = MessTokenQrHelper.generateTokenCode();
         String messType = MessTokenQrHelper.resolveMessType();
         if (existingCouponCount == 1) {

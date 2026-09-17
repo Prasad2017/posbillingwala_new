@@ -164,10 +164,13 @@ class MastersSyncController extends Notifier<AsyncValue<MastersSyncResult?>> {
   Future<int> createProduct({
     required String name,
     required double price,
+    double mrp = 0,
     int? categoryId,
     String? categoryName,
     String? productCode,
+    String? productImage,
     String openPrice = '0',
+    String priceIncludesGst = '0',
     String? productUnit,
     double productCgst = 0,
     double productSgst = 0,
@@ -179,10 +182,13 @@ class MastersSyncController extends Notifier<AsyncValue<MastersSyncResult?>> {
           userId: userId,
           productName: name,
           productPrice: price,
+          productMrp: mrp,
           categoryId: categoryId,
           categoryName: categoryName,
           productCode: productCode,
+          productImage: productImage,
           openPrice: openPrice,
+          priceIncludesGst: priceIncludesGst,
           productUnit: productUnit,
           productCgst: productCgst,
           productSgst: productSgst,
@@ -220,10 +226,14 @@ class MastersSyncController extends Notifier<AsyncValue<MastersSyncResult?>> {
     required int productId,
     required String name,
     required double price,
+    double mrp = 0,
     int? categoryId,
     String? categoryName,
     String? productCode,
+    String? productImage,
+    bool clearProductImage = false,
     String openPrice = '0',
+    String priceIncludesGst = '0',
     String? productUnit,
     double productCgst = 0,
     double productSgst = 0,
@@ -236,10 +246,14 @@ class MastersSyncController extends Notifier<AsyncValue<MastersSyncResult?>> {
           productId: productId,
           productName: name,
           productPrice: price,
+          productMrp: mrp,
           categoryId: categoryId,
           categoryName: categoryName,
           productCode: productCode,
+          productImage: productImage,
+          clearProductImage: clearProductImage,
           openPrice: openPrice,
+          priceIncludesGst: priceIncludesGst,
           productUnit: productUnit,
           productCgst: productCgst,
           productSgst: productSgst,
@@ -253,6 +267,34 @@ class MastersSyncController extends Notifier<AsyncValue<MastersSyncResult?>> {
     return ref.read(mastersRepositoryProvider).deleteProduct(
           userId: userId,
           productId: productId,
+        );
+  }
+
+  Future<int> createPortion({
+    required int productId,
+    required String portionName,
+    required double portionPrice,
+    int portionSortOrder = 1,
+    int? portionMasterId,
+  }) {
+    final userId =
+        ref.read(authControllerProvider).session?.catalogOwnerId ?? '';
+    return ref.read(mastersRepositoryProvider).createPortion(
+          userId: userId,
+          productId: productId,
+          portionName: portionName,
+          portionPrice: portionPrice,
+          portionSortOrder: portionSortOrder,
+          portionMasterId: portionMasterId,
+        );
+  }
+
+  Future<void> deletePortion(int portionId) {
+    final userId =
+        ref.read(authControllerProvider).session?.catalogOwnerId ?? '';
+    return ref.read(mastersRepositoryProvider).deletePortion(
+          userId: userId,
+          portionId: portionId,
         );
   }
 

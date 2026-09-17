@@ -55,7 +55,8 @@ public class PosFirebaseMessagingService extends FirebaseMessagingService {
                     data != null ? data.get("mealSession") : null,
                     data != null ? data.get("date") : null,
                     data != null ? data.get("createdAt") : null,
-                    data != null ? data.get("printStatus") : null
+                    data != null ? data.get("printStatus") : null,
+                    data != null ? data.get("memberName") : null
             );
             return;
         }

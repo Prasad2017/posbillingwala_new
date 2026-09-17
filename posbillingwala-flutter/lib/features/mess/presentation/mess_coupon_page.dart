@@ -10,11 +10,9 @@ import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/mess/data/mess_api.dart';
 import 'package:pos_billingwala_v2/features/print/domain/print_providers.dart';
 import 'package:pos_billingwala_v2/features/print/domain/print_service.dart';
-import 'package:pos_billingwala_v2/core/widgtes/widgtes.dart';
-import 'package:pos_billingwala_v2/core/widgets/app_module_icon.dart';
+import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
-import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
-import 'package:pos_billingwala_v2/l10n/app_strings.dart';
+import 'package:pos_billingwala_v2/language/app_strings.dart';
 
 /* Android InvoiceMess / CouponBluetoothPrint — paper meal coupon. */
 class MessCouponPage extends ConsumerStatefulWidget {
@@ -80,7 +78,7 @@ class MessCouponPageState extends ConsumerState<MessCouponPage> {
       );
       final now = DateFormat('dd MMM yyyy, hh:mm a').format(DateTime.now());
       final shop = ref.read(authControllerProvider).session?.shopName ??
-          'POS Billingwala';
+          'Billingwala';
       final text = StringBuffer()
         ..writeln(shop)
         ..writeln('MESS COUPON')

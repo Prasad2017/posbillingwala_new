@@ -7,14 +7,11 @@ import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
-import 'package:pos_billingwala_v2/core/widgets/app_states.dart';
-import 'package:pos_billingwala_v2/core/widgets/app_svg.dart';
-import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
-import 'package:pos_billingwala_v2/core/widgtes/widgtes.dart';
+import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/masters/domain/masters_providers.dart';
 import 'package:pos_billingwala_v2/features/tables/domain/tables_providers.dart';
-import 'package:pos_billingwala_v2/l10n/app_strings.dart';
 import 'package:pos_billingwala_v2/features/tables/presentation/table_ops.dart';
+import 'package:pos_billingwala_v2/language/app_strings.dart';
 
 class TablesPage extends ConsumerStatefulWidget {
   const TablesPage({super.key});
@@ -31,9 +28,7 @@ class TablesPageState extends ConsumerState<TablesPage> {
     final floor = ref.watch(floorTablesProvider);
     final strings = AppStrings.of(ref);
     final areasAsync = ref.watch(diningAreasProvider);
-    final syncState = ref.watch(tablesControllerProvider);
     final currency = NumberFormat.currency(locale: 'en_IN', symbol: '₹');
-    final isSyncing = syncState.isLoading;
     final areas = areasAsync.maybeWhen(data: (v) => v, orElse: () => const <DiningArea>[]);
 
     ref.listen(tablesControllerProvider, (prev, next) {
@@ -53,30 +48,6 @@ class TablesPageState extends ConsumerState<TablesPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(strings.dineInTables),
-        actions: [
-          IconButton(
-            tooltip: strings.syncTables,
-            onPressed: isSyncing
-                ? null
-                : () =>
-                    ref.read(tablesControllerProvider.notifier).syncTables(),
-            icon: isSyncing
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : const AppSvg(
-                    AppAssets.svgCloudDownload,
-                    width: 22,
-                    height: 22,
-                    color: Colors.white,
-                  ),
-          ),
-        ],
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -129,12 +100,6 @@ class TablesPageState extends ConsumerState<TablesPage> {
                     title: strings.noTablesYet,
                     message: strings.noTablesHint,
                     iconAsset: AppAssets.svgTable,
-                    actionLabel: isSyncing ? null : strings.syncTables,
-                    onAction: isSyncing
-                        ? null
-                        : () => ref
-                            .read(tablesControllerProvider.notifier)
-                            .syncTables(),
                   )
                 : LayoutBuilder(
                     builder: (context, constraints) {
@@ -176,8 +141,7 @@ class TablesPageState extends ConsumerState<TablesPage> {
                         final canvasH = constraints.maxHeight < 520
                             ? 520.0
                             : constraints.maxHeight;
-                        const cardW = 128.0;
-                        const cardH = 118.0;
+                        const cardW = 148.0;
                         double left(double? v) {
                           final n = v ?? 0;
                           final span = canvasW - cardW;
@@ -187,7 +151,7 @@ class TablesPageState extends ConsumerState<TablesPage> {
 
                         double top(double? v) {
                           final n = v ?? 0;
-                          final span = canvasH - cardH;
+                          final span = canvasH - 140;
                           if (maxY <= 1.5) return n.clamp(0.0, 1.0) * span;
                           return (n / maxY).clamp(0.0, 1.0) * span;
                         }
@@ -206,7 +170,6 @@ class TablesPageState extends ConsumerState<TablesPage> {
                                     left: left(item.table.positionX),
                                     top: top(item.table.positionY),
                                     width: cardW,
-                                    height: cardH,
                                     child: card(item),
                                   ),
                               ],
@@ -215,29 +178,27 @@ class TablesPageState extends ConsumerState<TablesPage> {
                         );
                       }
 
+                      final pad = AppBreakpoints.pagePaddingFor(widthClass);
+                      final gap = 12.0;
+                      final cardWidth =
+                          (constraints.maxWidth - (pad * 2) - (gap * (cols - 1))) /
+                              cols;
+
                       return ResponsiveScrollShell(
                         dashboard: true,
-                        child: GridView.builder(
-                          padding: EdgeInsets.fromLTRB(
-                            AppBreakpoints.pagePaddingFor(widthClass),
-                            0,
-                            AppBreakpoints.pagePaddingFor(widthClass),
-                            24,
+                        child: SingleChildScrollView(
+                          padding: EdgeInsets.fromLTRB(pad, 0, pad, 24),
+                          child: Wrap(
+                            spacing: gap,
+                            runSpacing: gap,
+                            children: [
+                              for (final item in filtered)
+                                SizedBox(
+                                  width: cardWidth,
+                                  child: card(item),
+                                ),
+                            ],
                           ),
-                          gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: cols,
-                            mainAxisSpacing: 12,
-                            crossAxisSpacing: 12,
-                            childAspectRatio:
-                                widthClass == AppWidthClass.compact
-                                    ? 1.05
-                                    : 1.15,
-                          ),
-                          itemCount: filtered.length,
-                          itemBuilder: (context, index) {
-                            return card(filtered[index]);
-                          },
                         ),
                       );
                     },
@@ -758,13 +719,24 @@ class TableCard extends StatelessWidget {
     final name = table.displayName.trim().isEmpty
         ? 'Table ${table.tableNumber}'
         : table.displayName;
+    final typeLabel = floor.tableTypeName.trim();
+    final meta = floor.joinedLabel ??
+        (table.capacity > 0
+            ? 'Seats ${table.capacity}'
+            : 'Table ${table.tableNumber}');
 
     return Container(
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(color: fg.withValues(alpha: .18)),
-        boxShadow: [BoxShadow(color: fg.withValues(alpha: .06), blurRadius: 16, offset: const Offset(0, 6))],
+        boxShadow: [
+          BoxShadow(
+            color: fg.withValues(alpha: .06),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Material(
         color: Colors.transparent,
@@ -776,73 +748,90 @@ class TableCard extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(14),
             child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  AppSvg(
-                    AppAssets.svgTable,
-                    width: 22,
-                    height: 22,
-                    color: fg,
-                  ),
-                  const Spacer(),
-                  AppStatusBadge(
-                    label: floor.statusLabel,
-                    color: fg,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    AppSvg(
+                      AppAssets.svgTable,
+                      width: 22,
+                      height: 22,
+                      color: fg,
+                    ),
+                    const Spacer(),
+                    AppStatusBadge(
+                      label: floor.statusLabel,
+                      color: fg,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  name,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.navy,
+                      ),
+                ),
+                if (typeLabel.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    typeLabel,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: Theme.of(context).textTheme.bodySmall?.fontFamily,
+                      color: fg,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12.5,
+                    ),
                   ),
                 ],
-              ),
-              const Spacer(),
-              Text(
-                name,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                floor.joinedLabel ??
-                    (table.capacity > 0
-                        ? 'Seats ${table.capacity}'
-                        : 'Table ${table.tableNumber}'),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              if (floor.openSession != null) ...[
                 const SizedBox(height: 4),
                 Text(
-                  '${floor.openSession!.guestCount} guest'
-                  '${floor.openSession!.guestCount == 1 ? '' : 's'}'
-                  '${(floor.openSession!.waiterName ?? '').trim().isEmpty ? '' : ' · ${floor.openSession!.waiterName}'}',
-                  maxLines: 1,
+                  meta,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
                 ),
-              ],
-              if (floor.currentAmount > 0) ...[
-                const SizedBox(height: 8),
-                Text(
-                  currency.format(floor.currentAmount),
-                  style: TextStyle(
-                    color: fg,
-                    fontWeight: FontWeight.w800,
+                if (floor.openSession != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    '${floor.openSession!.guestCount} guest'
+                    '${floor.openSession!.guestCount == 1 ? '' : 's'}'
+                    '${(floor.openSession!.waiterName ?? '').trim().isEmpty ? '' : ' · ${floor.openSession!.waiterName}'}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
                   ),
-                ),
-              ] else if (floor.isJoinedSecondary) ...[
-                const SizedBox(height: 8),
-                Text(
-                  'Joined → T${floor.billingTableNumber}',
-                  style: TextStyle(
-                    color: fg,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 12,
+                ],
+                if (floor.currentAmount > 0) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    currency.format(floor.currentAmount),
+                    style: TextStyle(
+                      color: fg,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
-                ),
+                ] else if (floor.isJoinedSecondary) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'Joined → T${floor.billingTableNumber}',
+                    style: TextStyle(
+                      color: fg,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
               ],
-            ],
-          ),
+            ),
           ),
         ),
       ),

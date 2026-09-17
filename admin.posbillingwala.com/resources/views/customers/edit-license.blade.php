@@ -51,6 +51,7 @@
 								</div>
 							</div>
 							@include('partials.license-fields', ['license' => $data])
+							@include('partials.store-ops')
 							<div class="col-12">
 								<button type="submit" class="btn btn-primary px-5">Update</button>
 							</div>

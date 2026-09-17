@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:pos_billingwala_v2/core/constants/api_constants.dart';
 import 'package:pos_billingwala_v2/core/constants/app_assets.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
-import 'package:pos_billingwala_v2/core/constants/api_constants.dart';
 import 'package:pos_billingwala_v2/core/permissions/app_permission_service.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
@@ -20,13 +20,17 @@ import 'package:pos_billingwala_v2/features/notifications/domain/notification_pr
 import 'package:pos_billingwala_v2/features/pos/domain/billing_session.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/pos_providers.dart';
 import 'package:pos_billingwala_v2/features/print/domain/bluetooth_printer_hub.dart';
+import 'package:pos_billingwala_v2/features/print/domain/print_host_service.dart';
 import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
 import 'package:pos_billingwala_v2/features/reports/domain/reports_providers.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/report_pin_gate.dart';
 import 'package:pos_billingwala_v2/features/settings/domain/business_hours.dart';
+import 'package:pos_billingwala_v2/features/staff/domain/permission_controller.dart';
+import 'package:pos_billingwala_v2/features/sync/domain/auto_sync_status.dart';
 import 'package:pos_billingwala_v2/features/sync/domain/catalog_bootstrap_listener.dart';
+import 'package:pos_billingwala_v2/features/sync/domain/connectivity_sync_listener.dart';
 import 'package:pos_billingwala_v2/features/sync/domain/web_cloud_refresh_listener.dart';
-import 'package:pos_billingwala_v2/l10n/app_strings.dart';
+import 'package:pos_billingwala_v2/language/app_strings.dart';
 
 /* Home dashboard — layout aligned to the product reference design. */
 class HomePage extends ConsumerStatefulWidget {
@@ -74,6 +78,8 @@ class HomePageState extends ConsumerState<HomePage> {
         if (!mounted) return;
         await refreshPrinterChip();
         await refreshHoursLabels();
+        await ref.read(permissionControllerProvider.notifier).hydrate();
+        ref.read(printHostControllerProvider).start();
         if (!mounted) return;
         if (const bool.fromEnvironment('AUTO_TEST_PRINT')) {
           context.go('/settings/test-print?mode=invoice');
@@ -147,7 +153,11 @@ class HomePageState extends ConsumerState<HomePage> {
     ref.read(billingSessionProvider.notifier).usePos();
     await ref.read(posCartControllerProvider.notifier).clear();
     if (!mounted) return;
-    context.push('/pos');
+    if (AppPlatform.useDesktopShell) {
+      context.go('/pos');
+    } else {
+      context.push('/pos');
+    }
   }
 
   void moduleLocked(BuildContext context) {
@@ -172,10 +182,15 @@ class HomePageState extends ConsumerState<HomePage> {
         DateFormat('EEE, dd MMM yyyy | hh:mm:ss a').format(homePageNow);
 
     final flagsMissing = session == null || anyBilling(session);
-    final allowFast = flagsMissing || session.fastBilling;
-    final allowDine = flagsMissing || session.dineIn;
-    final allowTake = flagsMissing || session.takeAway;
-    final allowMess = flagsMissing || session.mess;
+    final perms = ref.watch(permissionControllerProvider);
+    final allowFast =
+        (flagsMissing || session.fastBilling) && perms.allows('billing.create');
+    final allowDine =
+        (flagsMissing || session.dineIn) && perms.allows('table.view');
+    final allowTake =
+        (flagsMissing || session.takeAway) && perms.allows('takeaway.view');
+    final allowMess =
+        (flagsMissing || session.mess) && perms.allows('mess.view');
     final showTotalSales =
         session == null || session.totalSaleData || session.todaySaleData;
     final showTodaySales = session == null || session.todaySaleData;
@@ -186,6 +201,75 @@ class HomePageState extends ConsumerState<HomePage> {
         printerChip == 'USB ready' ||
         printerChip == 'Network';
 
+    final dashboard = HomeDashboardBody(
+      showTotalSales: showTotalSales,
+      showTodaySales: showTodaySales,
+      salesMonth: salesMonth,
+      onToggleSalesPeriod: () =>
+          ref.read(homeSalesPeriodProvider.notifier).toggle(),
+      primaryTitle: kpis.primaryTitle,
+      primaryAmount: homePageHidePrimarySales
+          ? '••••••'
+          : currency.format(kpis.primarySales),
+      todayAmount: homePageHideTodaySales
+          ? '••••••'
+          : currency.format(kpis.todaySales),
+      growthText: kpis.growthText,
+      growthUp: kpis.growthUp,
+      hidePrimarySales: homePageHidePrimarySales,
+      hideTodaySales: homePageHideTodaySales,
+      onToggleHidePrimary: () => setState(
+        () => homePageHidePrimarySales = !homePageHidePrimarySales,
+      ),
+      onToggleHideToday: () => setState(
+        () => homePageHideTodaySales = !homePageHideTodaySales,
+      ),
+      onOpenReports: () => pushReportsUnlocked(context, ref),
+      categoriesCount: localCatalog.categories,
+      productsCount: kpis.products,
+      combosCount: kpis.combos,
+      subcategoriesCount: kpis.subcategories,
+      allowFast: allowFast,
+      allowDine: allowDine,
+      allowTake: allowTake,
+      allowMess: allowMess,
+      onModuleLocked: () => moduleLocked(context),
+      onFastBilling: openFastBilling,
+      onDineIn: () => AppPlatform.useDesktopShell
+          ? context.go('/tables')
+          : context.push('/tables'),
+      onTakeAway: () => AppPlatform.useDesktopShell
+          ? context.go('/takeaway')
+          : context.push('/takeaway'),
+      onMess: () => pushReportsUnlocked(
+        context,
+        ref,
+        route: '/mess',
+      ),
+    );
+
+    if (AppPlatform.useDesktopShell) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF7F9FC),
+        body: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: ResponsiveContent(
+                dashboard: true,
+                padding: EdgeInsets.fromLTRB(
+                  AppBreakpoints.pagePaddingFor(context.widthClass),
+                  24,
+                  AppBreakpoints.pagePaddingFor(context.widthClass),
+                  32,
+                ),
+                child: dashboard,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFF7F9FC),
       body: RefreshIndicator(
@@ -194,6 +278,11 @@ class HomePageState extends ConsumerState<HomePage> {
             await ref
                 .read(webCloudRefreshListenerProvider)
                 .refresh(force: true);
+          } else if (AppPlatform.supportsOfflineSync) {
+            await ref.read(connectivitySyncListenerProvider).syncNow(
+                  force: true,
+                  reason: 'pull-to-refresh',
+                );
           }
           ref.invalidate(categoriesProvider);
           ref.invalidate(subcategoriesProvider);
@@ -248,49 +337,7 @@ class HomePageState extends ConsumerState<HomePage> {
                       AppBreakpoints.pagePaddingFor(context.widthClass),
                       28,
                     ),
-                    child: HomeDashboardBody(
-                      showTotalSales: showTotalSales,
-                      showTodaySales: showTodaySales,
-                      salesMonth: salesMonth,
-                      onToggleSalesPeriod: () =>
-                          ref.read(homeSalesPeriodProvider.notifier).toggle(),
-                      primaryTitle: kpis.primaryTitle,
-                      primaryAmount: homePageHidePrimarySales
-                          ? '••••••'
-                          : currency.format(kpis.primarySales),
-                      todayAmount: homePageHideTodaySales
-                          ? '••••••'
-                          : currency.format(kpis.todaySales),
-                      growthText: kpis.growthText,
-                      growthUp: kpis.growthUp,
-                      hidePrimarySales: homePageHidePrimarySales,
-                      hideTodaySales: homePageHideTodaySales,
-                      onToggleHidePrimary: () => setState(
-                        () => homePageHidePrimarySales = !homePageHidePrimarySales,
-                      ),
-                      onToggleHideToday: () => setState(
-                        () => homePageHideTodaySales = !homePageHideTodaySales,
-                      ),
-                      onOpenReports: () =>
-                          pushReportsUnlocked(context, ref),
-                      categoriesCount: localCatalog.categories,
-                      productsCount: kpis.products,
-                      combosCount: kpis.combos,
-                      subcategoriesCount: kpis.subcategories,
-                      allowFast: allowFast,
-                      allowDine: allowDine,
-                      allowTake: allowTake,
-                      allowMess: allowMess,
-                      onModuleLocked: () => moduleLocked(context),
-                      onFastBilling: openFastBilling,
-                      onDineIn: () => context.push('/tables'),
-                      onTakeAway: () => context.push('/takeaway'),
-                      onMess: () => pushReportsUnlocked(
-                        context,
-                        ref,
-                        route: '/mess',
-                      ),
-                    ),
+                    child: dashboard,
                   ),
                 ),
               ),
@@ -364,6 +411,9 @@ class HomeDashboardBody extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final strings = AppStrings.of(ref);
+    final perms = ref.watch(permissionControllerProvider);
+    final allowCatalog = perms.allows('product.view');
+    final allowReports = perms.allows('report.view');
     final widthClass = context.widthClass;
     final billingCols = AppBreakpoints.moduleColumnsFor(widthClass);
     final billingTiles = <Widget>[
@@ -371,7 +421,7 @@ class HomeDashboardBody extends ConsumerWidget {
         title: strings.fastBilling,
         subtitle: 'Quick billing for walk-in customers',
         icon: Icons.receipt_long_rounded,
-        colors: const [Color(0xFF4C8DFF), Color(0xFF076BF5)],
+        colors: const [AppColors.primaryBright, AppColors.primary],
         onTap: () {
           if (!allowFast) {
             onModuleLocked();
@@ -384,7 +434,7 @@ class HomeDashboardBody extends ConsumerWidget {
         title: strings.dineIn,
         subtitle: 'Create bill for dine-in customers',
         icon: Icons.table_restaurant_rounded,
-        colors: const [Color(0xFF2ECF8A), Color(0xFF16A36A)],
+        colors: const [AppColors.green, Color(0xFF15803D)],
         onTap: () {
           if (!allowDine) {
             onModuleLocked();
@@ -397,7 +447,7 @@ class HomeDashboardBody extends ConsumerWidget {
         title: strings.takeAway,
         subtitle: 'Create bill for takeaway orders',
         icon: Icons.shopping_bag_rounded,
-        colors: const [Color(0xFFFFB347), Color(0xFFFF8A00)],
+        colors: const [AppColors.orangeLight, AppColors.orange],
         onTap: () {
           if (!allowTake) {
             onModuleLocked();
@@ -410,7 +460,7 @@ class HomeDashboardBody extends ConsumerWidget {
         title: strings.mess,
         subtitle: 'Manage mess billing easily',
         icon: Icons.restaurant_rounded,
-        colors: const [Color(0xFF9B7BFF), Color(0xFF7C4DFF)],
+        colors: const [AppColors.cyan, AppColors.primaryDark],
         onTap: () async {
           if (!allowMess) {
             onModuleLocked();
@@ -486,7 +536,7 @@ class HomeDashboardBody extends ConsumerWidget {
                     growthUp: growthUp,
                     hidden: hidePrimarySales,
                     onToggleHide: onToggleHidePrimary,
-                    onTap: onOpenReports,
+                    onTap: allowReports ? onOpenReports : onModuleLocked,
                   ),
                 ),
               if (showTotalSales && showTodaySales) const SizedBox(width: 12),
@@ -501,7 +551,7 @@ class HomeDashboardBody extends ConsumerWidget {
                     growthUp: growthUp,
                     hidden: hideTodaySales,
                     onToggleHide: onToggleHideToday,
-                    onTap: onOpenReports,
+                    onTap: allowReports ? onOpenReports : onModuleLocked,
                   ),
                 ),
             ],
@@ -526,7 +576,13 @@ class HomeDashboardBody extends ConsumerWidget {
                 value: '$categoriesCount',
                 color: AppColors.primary,
                 soft: const Color(0xFFE8F1FF),
-                onTap: () => context.push('/masters/categories'),
+                onTap: () {
+                  if (!allowCatalog) {
+                    onModuleLocked();
+                    return;
+                  }
+                  context.push('/masters/categories');
+                },
               ),
               CatalogTile(
                 icon: Icons.grid_view_rounded,
@@ -534,7 +590,13 @@ class HomeDashboardBody extends ConsumerWidget {
                 value: '$subcategoriesCount',
                 color: AppColors.purple,
                 soft: const Color(0xFFF3EEFF),
-                onTap: () => context.push('/masters/subcategories'),
+                onTap: () {
+                  if (!allowCatalog) {
+                    onModuleLocked();
+                    return;
+                  }
+                  context.push('/masters/subcategories');
+                },
               ),
               CatalogTile(
                 icon: Icons.inventory_2_rounded,
@@ -542,7 +604,13 @@ class HomeDashboardBody extends ConsumerWidget {
                 value: '$productsCount',
                 color: AppColors.green,
                 soft: const Color(0xFFE8F8F0),
-                onTap: () => context.push('/masters/products'),
+                onTap: () {
+                  if (!allowCatalog) {
+                    onModuleLocked();
+                    return;
+                  }
+                  context.push('/masters/products');
+                },
               ),
               CatalogTile(
                 icon: Icons.layers_rounded,
@@ -550,7 +618,13 @@ class HomeDashboardBody extends ConsumerWidget {
                 value: '$combosCount',
                 color: AppColors.orange,
                 soft: const Color(0xFFFFF3E8),
-                onTap: () => context.push('/masters/catalog?tab=combos'),
+                onTap: () {
+                  if (!allowCatalog) {
+                    onModuleLocked();
+                    return;
+                  }
+                  context.push('/masters/catalog?tab=combos');
+                },
               ),
             ];
             final compact = context.widthClass == AppWidthClass.compact;
@@ -603,12 +677,14 @@ class HomeDashboardBody extends ConsumerWidget {
             crossAxisCount: billingCols.clamp(2, 4),
             mainAxisSpacing: 12,
             crossAxisSpacing: 12,
-            childAspectRatio: widthClass == AppWidthClass.compact ? 1.35 : 1.55,
+            childAspectRatio: widthClass == AppWidthClass.compact ? 1.5 : 1.7,
           ),
           itemBuilder: (context, index) => billingTiles[index],
         ),
-        const SizedBox(height: 20),
-        const PromoBanner(),
+        if (!AppPlatform.useDesktopShell) ...[
+          const SizedBox(height: 20),
+          const PromoBanner(),
+        ],
       ],
     );
   }
@@ -659,9 +735,9 @@ class HomeHeader extends ConsumerWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Color(0xFF076BF5),
-            Color(0xFF3B5BDB),
-            Color(0xFF5B4BCC),
+            AppColors.primaryBright,
+            AppColors.primary,
+            AppColors.primaryDark,
           ],
         ),
       ),
@@ -827,6 +903,10 @@ class HomeHeader extends ConsumerWidget {
                   ),
                 ),
               ),
+              if (AppPlatform.supportsOfflineSync) ...[
+                const SizedBox(width: 8),
+                const HomeSyncStatusChip(),
+              ],
             ],
           ),
           const SizedBox(height: 12),
@@ -878,6 +958,40 @@ class HeaderIconButton extends StatelessWidget {
           height: 40,
           child: Center(child: child),
         ),
+      ),
+    );
+  }
+}
+
+class HomeSyncStatusChip extends ConsumerWidget {
+  const HomeSyncStatusChip({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final sync = ref.watch(autoSyncStatusProvider);
+    return InkWell(
+      onTap: sync.online
+          ? () {
+              unawaited(
+                ref.read(connectivitySyncListenerProvider).syncNow(
+                      force: true,
+                      reason: 'home-chip',
+                    ),
+              );
+            }
+          : null,
+      borderRadius: BorderRadius.circular(20),
+      child: StatusPill(
+        online: sync.chipHealthy,
+        label: sync.chipLabel,
+        solid: !sync.online || sync.lastError != null,
+        icon: !sync.online
+            ? Icons.cloud_off_rounded
+            : sync.syncing
+                ? Icons.cloud_sync_rounded
+                : sync.pendingCount > 0
+                    ? Icons.cloud_upload_rounded
+                    : Icons.cloud_done_rounded,
       ),
     );
   }
@@ -1015,98 +1129,92 @@ class SalesCard extends StatelessWidget {
     final soft = Color.lerp(Colors.white, color, 0.12)!;
     final softer = Color.lerp(Colors.white, color, 0.05)!;
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(22),
-        child: Ink(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(22),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [softer, soft],
-            ),
-            border: Border.all(color: color.withValues(alpha: 0.14)),
-            boxShadow: [
-              BoxShadow(
-                color: color.withValues(alpha: 0.12),
-                blurRadius: 16,
-                offset: const Offset(0, 6),
-              ),
-            ],
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(22),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [softer, soft],
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(22),
-            child: Stack(
-              children: [
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  height: 36,
-                  child: CustomPaint(
-                    painter: WavePainter(color.withValues(alpha: 0.22)),
-                  ),
+          border: Border.all(
+            color: color.withValues(alpha: 0.28),
+            width: 1,
+          ),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(22),
+          child: Stack(
+            children: [
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                height: 36,
+                child: CustomPaint(
+                  painter: WavePainter(color.withValues(alpha: 0.22)),
                 ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 12, 8, 14),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 34,
-                            height: 34,
-                            decoration: BoxDecoration(
-                              color: color.withValues(alpha: 0.15),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(icon, size: 18, color: color),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 12, 8, 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 34,
+                          height: 34,
+                          decoration: BoxDecoration(
+                            color: color.withValues(alpha: 0.15),
+                            shape: BoxShape.circle,
                           ),
-                          const Spacer(),
-                          IconButton(
-                            visualDensity: VisualDensity.compact,
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(
-                              minWidth: 28,
-                              minHeight: 28,
-                            ),
-                            onPressed: onToggleHide,
-                            icon: Icon(
-                              hidden
-                                  ? Icons.visibility_off_outlined
-                                  : Icons.visibility_outlined,
-                              size: 18,
-                              color: Colors.black45,
-                            ),
+                          child: Icon(icon, size: 18, color: color),
+                        ),
+                        const Spacer(),
+                        IconButton(
+                          visualDensity: VisualDensity.compact,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                            minWidth: 28,
+                            minHeight: 28,
                           ),
-                        ],
+                          onPressed: onToggleHide,
+                          icon: Icon(
+                            hidden
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined,
+                            size: 18,
+                            color: Colors.black45,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        color: Colors.black54,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
                       ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      amount,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 17,
+                        color: AppColors.navy,
+                      ),
+                    ),
+                    if (growthLabel != null) ...[
                       const SizedBox(height: 8),
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          color: Colors.black54,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        amount,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 17,
-                          color: AppColors.navy,
-                        ),
-                      ),
-                      if (growthLabel != null) ...[
-                        const SizedBox(height: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 8,
@@ -1135,7 +1243,6 @@ class SalesCard extends StatelessWidget {
             ),
           ),
         ),
-      ),
     );
   }
 }
@@ -1196,64 +1303,64 @@ class CatalogTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
-        child: Ink(
-          padding: const EdgeInsets.fromLTRB(10, 14, 10, 12),
-          decoration: BoxDecoration(
-            color: soft,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: color.withValues(alpha: 0.12)),
-            boxShadow: [
-              BoxShadow(
-                color: color.withValues(alpha: 0.08),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+        decoration: BoxDecoration(
+          color: soft,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: color.withValues(alpha: 0.28),
+            width: 1,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.7),
-                  borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.7),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, size: 18, color: color),
                 ),
-                child: Icon(icon, size: 20, color: color),
-              ),
-              const SizedBox(height: 10),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  value,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 20,
-                    color: color,
+                const SizedBox(width: 8),
+                Expanded(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      value,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 20,
+                        color: color,
+                      ),
+                    ),
                   ),
                 ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 11,
+                color: Colors.black54,
+                fontWeight: FontWeight.w600,
+                height: 1.2,
               ),
-              const SizedBox(height: 2),
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 10.5,
-                  color: Colors.black54,
-                  fontWeight: FontWeight.w600,
-                  height: 1.2,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
         ),
       ),
     );
@@ -1277,69 +1384,67 @@ class BillingTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-          child: Ink(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: colors,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: colors.last.withValues(alpha: 0.28),
-                blurRadius: 14,
-                offset: const Offset(0, 6),
-              ),
-            ],
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: colors,
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(icon, size: 20, color: colors.last),
+          border: Border.all(
+            color: colors.last.withValues(alpha: 0.45),
+            width: 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  const Spacer(),
-                  Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.22),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.arrow_forward_rounded,
-                      size: 16,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-              const Spacer(),
-              Text(
-                title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 14,
+                  child: Icon(icon, size: 18, color: colors.last),
                 ),
+                const Spacer(),
+                Container(
+                  width: 26,
+                  height: 26,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.22),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.arrow_forward_rounded,
+                    size: 14,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+                fontSize: 13.5,
               ),
-              const SizedBox(height: 2),
-              Text(
+            ),
+            const SizedBox(height: 2),
+            Expanded(
+              child: Text(
                 subtitle,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -1350,8 +1455,8 @@ class BillingTile extends StatelessWidget {
                   fontWeight: FontWeight.w500,
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -1366,9 +1471,12 @@ class PromoBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF6E8),
+        color: const Color(0xFFFFF4E8),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFFFE2B8)),
+        border: Border.all(
+          color: AppColors.orange.withValues(alpha: 0.28),
+          width: 1,
+        ),
       ),
       child: Row(
         children: [
@@ -1434,7 +1542,7 @@ class PromoBanner extends StatelessWidget {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE8F3FF),
+                      color: AppColors.primarySoft,
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: const Text(

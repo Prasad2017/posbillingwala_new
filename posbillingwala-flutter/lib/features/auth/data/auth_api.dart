@@ -1,9 +1,9 @@
 import 'package:dio/dio.dart';
+import 'package:pos_billingwala_v2/core/constants/api_constants.dart';
 import 'package:pos_billingwala_v2/core/network/api_client.dart';
 import 'package:pos_billingwala_v2/core/network/api_response.dart';
 import 'package:pos_billingwala_v2/features/auth/data/device_identity_service.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/login_response.dart';
-import 'package:pos_billingwala_v2/core/constants/api_constants.dart';
 
 class AuthApi {
   AuthApi(this.client);

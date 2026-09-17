@@ -61,6 +61,19 @@ class InventoryController extends Notifier<AsyncValue<String?>> {
     required int productId,
     required String productName,
     required double quantity,
+  }) =>
+      addPurchase(
+        productId: productId,
+        productName: productName,
+        quantity: quantity,
+      );
+
+  Future<void> addPurchase({
+    required int productId,
+    required String productName,
+    required double quantity,
+    String note = '',
+    double unitCost = 0,
   }) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
@@ -71,9 +84,34 @@ class InventoryController extends Notifier<AsyncValue<String?>> {
             productId: productId,
             productName: productName,
             quantity: quantity,
+            movementType: 'purchase',
+            note: note,
+            unitCost: unitCost,
           );
       await uploadPendingIfOnline();
-      return 'Stock added';
+      return 'Purchase saved';
+    });
+  }
+
+  Future<void> addWaste({
+    required int productId,
+    required String productName,
+    required double quantity,
+    String reason = '',
+  }) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      if (AppPlatform.requiresNetwork && !await ensureOnline()) {
+        throw StateError(kOnlineRequiredMessage);
+      }
+      await ref.read(appDatabaseProvider).addWasteOut(
+            productId: productId,
+            productName: productName,
+            quantity: quantity,
+            reason: reason,
+          );
+      await uploadPendingIfOnline();
+      return 'Waste recorded';
     });
   }
 

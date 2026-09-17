@@ -15,15 +15,20 @@ class WoosimTicket extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final is2Inch = widthMm <= 50;
     final mm = widthMm;
     const black = Color(0xFF000000);
+    final shopSize = is2Inch ? 14.0 : 18.0;
+    final bodySize = is2Inch ? 12.0 : 16.0;
+    final rateW = is2Inch ? 48.0 : 64.0;
+    final amountW = is2Inch ? 56.0 : 72.0;
     TextStyle pop({
-      double size = 16,
+      double? size,
       FontWeight weight = FontWeight.w500,
     }) =>
         TextStyle(
           fontFamily: AppFonts.family,
-          fontSize: size,
+          fontSize: size ?? bodySize,
           height: 1.2,
           color: black,
           fontWeight: weight,
@@ -50,7 +55,7 @@ class WoosimTicket extends StatelessWidget {
                 child: Text(
                   line,
                   textAlign: TextAlign.center,
-                  style: pop(size: 18, weight: FontWeight.w700),
+                  style: pop(size: shopSize, weight: FontWeight.w700),
                 ),
               ),
             for (final line in ticket.metaLines)
@@ -78,7 +83,7 @@ class WoosimTicket extends StatelessWidget {
                     ),
                   ),
                   SizedBox(
-                    width: 64,
+                    width: rateW,
                     child: Text(
                       ticket.colRate,
                       textAlign: TextAlign.center,
@@ -86,7 +91,7 @@ class WoosimTicket extends StatelessWidget {
                     ),
                   ),
                   SizedBox(
-                    width: 72,
+                    width: amountW,
                     child: Text(
                       ticket.colAmount,
                       textAlign: TextAlign.end,
@@ -108,11 +113,11 @@ class WoosimTicket extends StatelessWidget {
                   children: [
                     Expanded(child: Text('X${item.qty}')),
                     SizedBox(
-                      width: 64,
+                      width: rateW,
                       child: Text(item.rate, textAlign: TextAlign.center),
                     ),
                     SizedBox(
-                      width: 72,
+                      width: amountW,
                       child: Text(item.amount, textAlign: TextAlign.end),
                     ),
                   ],

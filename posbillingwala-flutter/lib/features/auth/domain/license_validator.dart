@@ -4,9 +4,9 @@ import 'dart:typed_data';
 import 'package:asn1lib/asn1lib.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:pointycastle/export.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/session_keys.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /* Offline RSA licence validation (Android [LicenseValidator] parity). */
 class LicenseValidator {

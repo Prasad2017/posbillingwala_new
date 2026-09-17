@@ -1,11 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
+import 'package:pos_billingwala_v2/features/print/domain/print_job_dispatcher.dart';
 import 'package:pos_billingwala_v2/features/print/domain/print_service.dart';
 import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
 import 'package:pos_billingwala_v2/features/print/domain/receipt_labels.dart';
 import 'package:pos_billingwala_v2/features/print/domain/shop_receipt_profile.dart';
-import 'package:pos_billingwala_v2/l10n/app_strings.dart';
+import 'package:pos_billingwala_v2/language/app_strings.dart';
 
 final printServiceProvider = Provider<PrintService>((ref) {
   return PrintService(
@@ -33,22 +34,22 @@ Future<PrintResult> printInvoiceById(
   }
   final items = await db.getInvoiceItems(invoice.invoiceNumber);
   final shopName = ref.read(authControllerProvider).session?.shopName;
-  final service = ref.read(printServiceProvider);
   final profile = ref.read(shopReceiptProfileProvider);
-  final result = await service.printBill(
+  final dispatcher = PrintJobDispatcher(ref);
+  final resolvedShop =
+      profile.companyName.isNotEmpty ? profile.companyName : shopName;
+  final result = await dispatcher.printBillRouted(
     invoice: invoice,
     items: items,
-    shopName: profile.companyName.isNotEmpty ? profile.companyName : shopName,
-    preferShare: preferShare,
+    shopName: resolvedShop,
     duplicate: duplicate,
   );
   final settings = ref.read(printerSettingsProvider);
   if (alsoDuplicate || (!duplicate && settings.duplicateBillUse)) {
-    await service.printBill(
+    await dispatcher.printBillRouted(
       invoice: invoice,
       items: items,
-      shopName: profile.companyName.isNotEmpty ? profile.companyName : shopName,
-      preferShare: preferShare,
+      shopName: resolvedShop,
       duplicate: true,
     );
   }

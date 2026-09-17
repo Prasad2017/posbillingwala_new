@@ -51,6 +51,8 @@ $response['startDate'] = $startDate;
 $response['endDate'] = $endDate;
 
 $licenceId = pos_require_auth($con, $postedUserId, $response);
+require_once __DIR__ . '/pos_staff.php';
+pos_require_permission($con, $licenceId, 'report.view');
 mysqli_query($con, 'set names utf8');
 
 $readCtx = branch_pos_prepare_read($con, $postedUserId, $postedUserId, $response);
@@ -83,6 +85,7 @@ $upiTotal = 0.0;
 $posCount = 0;
 $takeawayCount = 0;
 $tableCount = 0;
+$staffWise = array();
 
 if ($result = mysqli_query($con, $sql)) {
     while ($row = mysqli_fetch_assoc($result)) {
@@ -111,6 +114,8 @@ if ($result = mysqli_query($con, $sql)) {
         $getdata['invoiceDate'] = $row['invoiceDate'];
         $getdata['invoiceOrderStatus'] = $row['invoiceOrderStatus'];
         $getdata['invoiceNetworkStatus'] = $row['invoiceNetworkStatus'];
+        $getdata['createdByStaffId'] = isset($row['createdByStaffId']) ? (string) $row['createdByStaffId'] : '';
+        $getdata['createdByStaffName'] = isset($row['createdByStaffName']) ? (string) $row['createdByStaffName'] : '';
         if (function_exists('branch_append_scope_to_invoice_row')) {
             branch_append_scope_to_invoice_row($getdata, $row);
         }
@@ -124,6 +129,24 @@ if ($result = mysqli_query($con, $sql)) {
         $cashTotal += floatval(isset($row['cashAmount']) ? $row['cashAmount'] : 0);
         $upiTotal += floatval(isset($row['upiAmount']) ? $row['upiAmount'] : 0);
 
+        $staffKey = isset($row['createdByStaffId']) && (int) $row['createdByStaffId'] > 0
+            ? (string) $row['createdByStaffId']
+            : '_none';
+        if (!isset($staffWise[$staffKey])) {
+            $staffWise[$staffKey] = array(
+                'staffId' => $staffKey === '_none' ? '' : $staffKey,
+                'staffName' => $staffKey === '_none'
+                    ? 'Unassigned'
+                    : (isset($row['createdByStaffName']) && trim((string) $row['createdByStaffName']) !== ''
+                        ? (string) $row['createdByStaffName']
+                        : 'Staff #' . $staffKey),
+                'billCount' => 0,
+                'totalSales' => 0.0,
+            );
+        }
+        $staffWise[$staffKey]['billCount']++;
+        $staffWise[$staffKey]['totalSales'] += floatval($row['totalAmount']);
+
         $type = isset($row['invoiceType']) ? strtolower(trim($row['invoiceType'])) : '';
         if ($type === 'take_away') {
             $takeawayCount++;
@@ -134,6 +157,16 @@ if ($result = mysqli_query($con, $sql)) {
         }
     }
 }
+
+$staffWiseOut = array();
+foreach ($staffWise as $row) {
+    $row['totalSales'] = number_format($row['totalSales'], 2, '.', '');
+    $row['billCount'] = (string) $row['billCount'];
+    $staffWiseOut[] = $row;
+}
+usort($staffWiseOut, function ($a, $b) {
+    return floatval($b['totalSales']) <=> floatval($a['totalSales']);
+});
 
 $response['status'] = '1';
 $response['message'] = 'ok';
@@ -150,6 +183,7 @@ $response['tableCount'] = (string) $tableCount;
 $response['avgBill'] = $billCount > 0
     ? number_format($totalSales / $billCount, 2, '.', '')
     : '0.00';
+$response['staffWise'] = $staffWiseOut;
 /* licence id used for auth (unused in body; keeps static analyzers quiet) */
 unset($licenceId);
 

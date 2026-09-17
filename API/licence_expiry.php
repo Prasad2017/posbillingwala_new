@@ -284,6 +284,21 @@ if (!function_exists('licence_on_device_bind')) {
         $trialStartedAt = isset($row['trialStartedAt']) ? $row['trialStartedAt'] : null;
         $deviceBoundAt = isset($row['deviceBoundAt']) ? $row['deviceBoundAt'] : null;
 
+        require_once __DIR__ . '/pos_devices.php';
+        $primary = isset($row['android_device_id']) ? trim((string) $row['android_device_id']) : '';
+        if (!$isFirstBind && $primary !== '' && $primary !== $deviceId && pos_um_enabled($con, $row['id'])) {
+            $reg = pos_device_register($con, $row['id'], $deviceId, $deviceName);
+            if (empty($reg['ok'])) {
+                $response['message'] = isset($reg['message']) ? $reg['message'] : 'Device limit reached';
+                return $response;
+            }
+            $response['status'] = '1';
+            $response['message'] = 'Additional device registered';
+            $response['expiryDate'] = $expiryDate;
+            $response['isTrial'] = licence_is_trial($row) ? '1' : '0';
+            return $response;
+        }
+
         if ($isFirstBind && licence_is_trial($row)) {
             $trialDays = licence_trial_days();
             $expiryDate = date('Y-m-d', strtotime($today . ' +' . $trialDays . ' day'));

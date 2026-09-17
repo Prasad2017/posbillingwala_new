@@ -1,5 +1,5 @@
 name: pos_billingwala_v2
-description: "POS Billingwala Version 2 - Flutter POS for Android, iOS, and Web"
+description: "Billingwala Version 2 - Flutter POS for Android, iOS, and Web"
 publish_to: 'none'
 version: 2.0.1+76
 
@@ -17,7 +17,7 @@ dependencies:
   flutter_riverpod: ^3.4.3
   dio: ^5.11.1
   shared_preferences: ^2.5.5
-  intl: ^0.20.2
+  intl: ^0.20.3
   connectivity_plus: ^7.3.1
   device_info_plus: ^13.2.0
   drift: ^2.35.0
@@ -38,11 +38,10 @@ dependencies:
   pointycastle: ^4.0.0
   asn1lib: ^1.6.5
   image_picker: ^1.2.3
-  speech_to_text: ^7.4.0
   flutter_svg: ^2.3.0
-  google_mobile_ads: ^9.1.0
   flutter_launcher_icons: ^0.14.4
   in_app_update: ^5.0.0
+  pinput: ^6.0.2
 
 dev_dependencies:
   flutter_test:
@@ -58,6 +57,7 @@ flutter:
     - assets/images/png/
     - assets/images/svg/
     - assets/font/
+    - assets/locale/
     - assets/license_signing_public.pem
   fonts:
     - family: Poppins

@@ -5,9 +5,8 @@ import 'package:pos_billingwala_v2/features/print/domain/bluetooth_printer_hub.d
 import 'package:pos_billingwala_v2/features/print/domain/esc_pos_transport_hub.dart';
 import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
 import 'package:unified_esc_pos_printer/unified_esc_pos_printer.dart' as esc;
-import 'package:pos_billingwala_v2/core/widgtes/widgtes.dart';
+import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
-import 'package:pos_billingwala_v2/core/widgets/app_module_icon.dart';
 
 /* Result returned when the user picks a printer for bill/KOT. */
 class PickedPrinter {
@@ -36,10 +35,16 @@ class PrinterDevicePickerPage extends StatefulWidget {
     super.key,
     required this.channel,
     this.initialTransport = PosPrinterTransport.bluetooth,
+    this.showNetwork = true,
+    this.lockToInitialTransport = false,
+    this.title,
   });
 
   final PrinterChannelKind channel;
   final PosPrinterTransport initialTransport;
+  final bool showNetwork;
+  final bool lockToInitialTransport;
+  final String? title;
 
   @override
   State<PrinterDevicePickerPage> createState() =>
@@ -63,10 +68,20 @@ class PrinterDevicePickerPageState extends State<PrinterDevicePickerPage>
   @override
   void initState() {
     super.initState();
+    final tabCount = widget.lockToInitialTransport
+        ? 1
+        : (widget.showNetwork ? 3 : 2);
+    var resolved = widget.initialTransport;
+    if (!widget.showNetwork && resolved == PosPrinterTransport.network) {
+      resolved = PosPrinterTransport.bluetooth;
+    }
+    var initial = widget.lockToInitialTransport
+        ? 0
+        : resolved.index.clamp(0, tabCount - 1);
     printerDevicePickerPageTabs = TabController(
-      length: 3,
+      length: tabCount,
       vsync: this,
-      initialIndex: widget.initialTransport.index.clamp(0, 2),
+      initialIndex: initial,
     );
     printerDevicePickerPageTabs.addListener(() {
       if (!printerDevicePickerPageTabs.indexIsChanging) loadCurrentTab();
@@ -83,6 +98,14 @@ class PrinterDevicePickerPageState extends State<PrinterDevicePickerPage>
   }
 
   Future<void> loadCurrentTab() async {
+    if (widget.lockToInitialTransport) {
+      if (widget.initialTransport == PosPrinterTransport.usb) {
+        await loadUsb();
+      } else {
+        await loadBluetooth();
+      }
+      return;
+    }
     final index = printerDevicePickerPageTabs.index;
     if (index == 0) {
       await loadBluetooth();
@@ -225,21 +248,31 @@ class PrinterDevicePickerPageState extends State<PrinterDevicePickerPage>
 
   @override
   Widget build(BuildContext context) {
-    final title = widget.channel == PrinterChannelKind.bill
-        ? 'Select bill printer'
-        : 'Select KOT printer';
+    final title = widget.title ??
+        (widget.channel == PrinterChannelKind.bill
+            ? 'Select bill printer'
+            : 'Select KOT printer');
+    final lockedUsb = widget.lockToInitialTransport &&
+        widget.initialTransport == PosPrinterTransport.usb;
+    final lockedBt = widget.lockToInitialTransport && !lockedUsb;
+    final tabs = <Tab>[
+      if (!lockedUsb) const Tab(text: 'Bluetooth'),
+      if (!lockedBt) const Tab(text: 'USB'),
+      if (widget.showNetwork && !widget.lockToInitialTransport)
+        const Tab(text: 'Network'),
+    ];
+    final views = <Widget>[
+      if (!lockedUsb) bluetoothTab(),
+      if (!lockedBt) usbTab(),
+      if (widget.showNetwork && !widget.lockToInitialTransport) networkTab(),
+    ];
 
     return Scaffold(
       appBar: AppBar(
         title: Text(title),
-        bottom: TabBar(
-          controller: printerDevicePickerPageTabs,
-          tabs: const [
-            Tab(text: 'Bluetooth'),
-            Tab(text: 'USB'),
-            Tab(text: 'Network'),
-          ],
-        ),
+        bottom: tabs.length > 1
+            ? TabBar(controller: printerDevicePickerPageTabs, tabs: tabs)
+            : null,
         actions: [
           IconButton(
             tooltip: 'Refresh',
@@ -256,18 +289,22 @@ class PrinterDevicePickerPageState extends State<PrinterDevicePickerPage>
             color: AppColors.primary.withValues(alpha: .08),
             borderRadius: BorderRadius.circular(20),
           ),
-          child: const Row(
+          child: Row(
             children: [
               AppModuleIcon(
-                icon: Icons.print_rounded,
+                icon: lockedUsb ? Icons.usb_rounded : Icons.print_rounded,
                 color: AppColors.primary,
                 size: 50,
               ),
-              SizedBox(width: 12),
+              const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'Connect your billing printer',
-                  style: TextStyle(
+                  lockedUsb
+                      ? 'Connect a USB / OTG thermal printer'
+                      : lockedBt
+                          ? 'Connect a Bluetooth thermal printer'
+                          : 'Connect your billing printer',
+                  style: const TextStyle(
                     fontWeight: FontWeight.w900,
                     color: AppColors.navy,
                   ),
@@ -277,79 +314,95 @@ class PrinterDevicePickerPageState extends State<PrinterDevicePickerPage>
           ),
         ),
         Expanded(
-          child: TabBarView(
-            controller: printerDevicePickerPageTabs,
-            children: [
-              deviceList(
-                loading: printerDevicePickerPageLoading && printerDevicePickerPageTabs.index == 0,
-                error: printerDevicePickerPageTabs.index == 0 ? printerDevicePickerPageError : null,
-                emptyAction: loadBluetooth,
-                children: btDevices
-                    .map(
-                      (d) => ListTile(
-                        leading: const Icon(Icons.bluetooth_rounded),
-                        title: Text(
-                          d.name.isEmpty ? 'Bluetooth printer' : d.name,
-                        ),
-                        subtitle: Text(d.macAdress),
-                        trailing: const Icon(Icons.chevron_right_rounded),
-                        onTap: () => selectBluetooth(d),
-                      ),
-                    )
-                    .toList(),
-              ),
-              deviceList(
-                loading: printerDevicePickerPageLoading && printerDevicePickerPageTabs.index == 1,
-                error: printerDevicePickerPageTabs.index == 1 ? printerDevicePickerPageError : null,
-                emptyAction: loadUsb,
-                children: usbDevices
-                    .map(
-                      (d) => ListTile(
-                        leading: const Icon(Icons.usb_rounded),
-                        title: Text(d.name.isEmpty ? 'USB printer' : d.name),
-                        subtitle: Text(
-                          d is esc.UsbPrinterDevice
-                              ? d.identifier
-                              : d.connectionType.name,
-                        ),
-                        trailing: const Icon(Icons.chevron_right_rounded),
-                        onTap: () => selectUsb(d),
-                      ),
-                    )
-                    .toList(),
-              ),
-              ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  const Text(
-                    'Works with any Wi‑Fi / LAN ESC/POS printer on port 9100 (or custom).',
-                  ),
-                  const SizedBox(height: 16),
-                  AppTextField(
-                    controller: hostCtrl,
-                    label: 'IP / host',
-                    hint: '192.168.1.50',
-                  ),
-                  const SizedBox(height: 12),
-                  AppTextField(
-                    controller: portCtrl,
-                    label: 'Port',
-                    hint: '9100',
-                    keyboardType: TextInputType.number,
-                  ),
-                  const SizedBox(height: 16),
-                  AppButton(
-                    label: 'Use this network printer',
-                    icon: Icons.wifi_rounded,
-                    onPressed: selectNetwork,
-                    expanded: false,
-                  ),
-                ],
-              ),
-            ],
-          ),
+          child: tabs.length == 1
+              ? views.first
+              : TabBarView(
+                  controller: printerDevicePickerPageTabs,
+                  children: views,
+                ),
         ),
       ]),
+    );
+  }
+
+  Widget bluetoothTab() {
+    return deviceList(
+      loading: printerDevicePickerPageLoading &&
+          (widget.lockToInitialTransport ||
+              printerDevicePickerPageTabs.index == 0),
+      error: (widget.lockToInitialTransport ||
+              printerDevicePickerPageTabs.index == 0)
+          ? printerDevicePickerPageError
+          : null,
+      emptyAction: loadBluetooth,
+      children: btDevices
+          .map(
+            (d) => ListTile(
+              leading: const Icon(Icons.bluetooth_rounded),
+              title: Text(d.name.isEmpty ? 'Bluetooth printer' : d.name),
+              subtitle: Text(d.macAdress),
+              trailing: const Icon(Icons.chevron_right_rounded),
+              onTap: () => selectBluetooth(d),
+            ),
+          )
+          .toList(),
+    );
+  }
+
+  Widget usbTab() {
+    return deviceList(
+      loading: printerDevicePickerPageLoading &&
+          (widget.lockToInitialTransport ||
+              printerDevicePickerPageTabs.index == 1),
+      error: (widget.lockToInitialTransport ||
+              printerDevicePickerPageTabs.index == 1)
+          ? printerDevicePickerPageError
+          : null,
+      emptyAction: loadUsb,
+      children: usbDevices
+          .map(
+            (d) => ListTile(
+              leading: const Icon(Icons.usb_rounded),
+              title: Text(d.name.isEmpty ? 'USB printer' : d.name),
+              subtitle: Text(
+                d is esc.UsbPrinterDevice ? d.identifier : d.connectionType.name,
+              ),
+              trailing: const Icon(Icons.chevron_right_rounded),
+              onTap: () => selectUsb(d),
+            ),
+          )
+          .toList(),
+    );
+  }
+
+  Widget networkTab() {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        const Text(
+          'Works with any Wi‑Fi / LAN ESC/POS printer on port 9100 (or custom).',
+        ),
+        const SizedBox(height: 16),
+        AppTextField(
+          controller: hostCtrl,
+          label: 'IP / host',
+          hint: '192.168.1.50',
+        ),
+        const SizedBox(height: 12),
+        AppTextField(
+          controller: portCtrl,
+          label: 'Port',
+          hint: '9100',
+          keyboardType: TextInputType.number,
+        ),
+        const SizedBox(height: 16),
+        AppButton(
+          label: 'Use this network printer',
+          icon: Icons.wifi_rounded,
+          onPressed: selectNetwork,
+          expanded: false,
+        ),
+      ],
     );
   }
 

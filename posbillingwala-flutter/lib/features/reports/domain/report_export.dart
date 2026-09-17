@@ -155,7 +155,7 @@ Future<void> shareProductSalesCsv({
   final table = <List<String>>[
     const ['SR', 'Product', 'Qty', 'Amount'],
   ];
-  var totalQty = 0;
+  var totalQty = 0.0;
   var totalAmt = 0.0;
   for (var i = 0; i < rows.length; i++) {
     final row = rows[i];

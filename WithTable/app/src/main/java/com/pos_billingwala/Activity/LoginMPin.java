@@ -48,6 +48,7 @@ import com.pos_billingwala.Extra.LicenceScopeGuard;
 import com.pos_billingwala.Extra.LicenseModules;
 import com.pos_billingwala.Extra.LicenseSession;
 import com.pos_billingwala.Extra.Observability;
+import com.pos_billingwala.Extra.UserManagementGuard;
 import com.pos_billingwala.Model.LoginResponse;
 import com.pos_billingwala.R;
 import com.pos_billingwala.Retrofit.Api;
@@ -375,6 +376,11 @@ public class LoginMPin extends BaseActivity implements View.OnClickListener {
             public void onResponse(@NonNull Call<LoginResponse> call, @NonNull Response<LoginResponse> response) {
                 if (response.isSuccessful()) {
                     if (response.body().getStatus().equalsIgnoreCase("1")) {
+
+                        if (UserManagementGuard.blockIfEnabled(LoginMPin.this, response.body())) {
+                            pDialog.dismiss();
+                            return;
+                        }
 
                         pDialog.dismiss();
 

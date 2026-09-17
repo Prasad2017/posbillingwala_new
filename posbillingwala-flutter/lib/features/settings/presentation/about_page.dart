@@ -4,22 +4,17 @@ import 'package:pos_billingwala_v2/core/constants/app_assets.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/constants/app_constants.dart';
 import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
+import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/theme/app_typography.dart';
-import 'package:pos_billingwala_v2/core/widgets/app_svg.dart';
-import 'package:pos_billingwala_v2/core/widgets/brand_logo.dart';
-import 'package:pos_billingwala_v2/core/widgtes/widgtes.dart';
-import 'package:pos_billingwala_v2/features/ads/ad_banner.dart';
-import 'package:pos_billingwala_v2/features/ads/ad_config.dart';
+import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/support/presentation/support_widgets.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
-import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
 
 class AboutPage extends StatelessWidget {
   const AboutPage({super.key});
 
   static const aboutPageTagline =
-      'POS BillingWala is your complete billing solution to manage sales, '
+      'Billingwala is your complete billing solution to manage sales, '
       'inventory, customers and reports easily. Simple, Fast and Reliable – '
       'All in One App.';
 
@@ -152,8 +147,6 @@ class AboutPage extends StatelessWidget {
           DeveloperCard(phone: phone, onCall: () => openPhone(context)),
           const SizedBox(height: 14),
           RateUsCard(onRate: () => rateUs(context)),
-          const SizedBox(height: 16),
-          const Center(child: AdBanner(slot: AdSlot.about)),
         ],
       ),
       ),

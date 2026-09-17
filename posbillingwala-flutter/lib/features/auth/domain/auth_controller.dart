@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
+import 'package:pos_billingwala_v2/core/logging/app_logger.dart';
 import 'package:pos_billingwala_v2/core/network/api_client.dart';
 import 'package:pos_billingwala_v2/core/network/online_guard.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
@@ -7,13 +8,18 @@ import 'package:pos_billingwala_v2/features/auth/data/auth_api.dart';
 import 'package:pos_billingwala_v2/features/auth/data/auth_repository.dart';
 import 'package:pos_billingwala_v2/features/auth/data/device_identity_service.dart';
 import 'package:pos_billingwala_v2/features/auth/data/session_store.dart';
+import 'package:pos_billingwala_v2/features/auth/domain/license_validator.dart';
+import 'package:pos_billingwala_v2/features/auth/domain/login_response.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/user_session.dart';
 import 'package:pos_billingwala_v2/features/notifications/domain/fcm_service.dart';
+import 'package:pos_billingwala_v2/features/staff/data/staff_api.dart';
+import 'package:pos_billingwala_v2/features/staff/data/staff_store.dart';
 
 enum AuthStatus {
   unknown,
   unauthenticated,
   needsMpin,
+  needsStaffLogin,
   authenticated,
 }
 
@@ -80,7 +86,10 @@ class AuthController extends Notifier<AuthState> {
     }
     /* Bind Drift branch filters before MPIN so cold-start queries stay scoped. */
     await bindBranchScope(session);
-    /* Stronger than Android: require PB-PIN unlock each cold start. */
+    if (session.authToken != null && session.authToken!.isNotEmpty) {
+      ref.read(apiClientProvider).setAuthToken(session.authToken);
+    }
+    /* Owner unlock (PB-PIN) on every cold start — not staff login. */
     state = AuthState(status: AuthStatus.needsMpin, session: session);
   }
 
@@ -103,21 +112,20 @@ class AuthController extends Notifier<AuthState> {
         );
         return false;
       }
+      AppLogger.info('loginWithLicence start keyLen=${licenceKey.trim().length}');
       final session = await repo.loginWithLicence(
         licenceKey: licenceKey,
         onDeviceConflict: conflictHandler,
       );
       ref.read(apiClientProvider).setAuthToken(session.authToken);
       await bindBranchScope(session);
-      state = AuthState(
-        status: AuthStatus.authenticated,
-        session: session,
-      );
-      /* Fire-and-forget FCM registration. */
+      /* Licence bind done — next screen is owner PB-PIN login. */
+      state = AuthState(status: AuthStatus.needsMpin, session: session);
       FcmService(apiClient: ref.read(apiClientProvider))
           .registerForUser(session.userId);
       return true;
     } on AuthException catch (e) {
+      AppLogger.error('loginWithLicence AuthException', e);
       state = state.copyWith(
         busy: false,
         errorMessage: e.message,
@@ -125,6 +133,7 @@ class AuthController extends Notifier<AuthState> {
       );
       return false;
     } catch (e) {
+      AppLogger.error('loginWithLicence failed', e);
       state = state.copyWith(
         busy: false,
         errorMessage: 'Something went wrong.\n$e',
@@ -149,6 +158,8 @@ class AuthController extends Notifier<AuthState> {
         mpin: mpin,
         onDeviceConflict: conflictHandler,
       );
+      await StaffStore().clear();
+      ref.read(apiClientProvider).setStaffId(null);
       ref.read(apiClientProvider).setAuthToken(session.authToken);
       await bindBranchScope(session);
       state = AuthState(
@@ -175,7 +186,7 @@ class AuthController extends Notifier<AuthState> {
     }
   }
 
-  /* Soft logout: keep licence on device and require PB-PIN unlock. */
+  /* Soft logout: keep licence on device and require owner PB-PIN unlock. */
   Future<void> logout() async {
     final session = state.session;
     final userId = session?.userId;
@@ -183,6 +194,9 @@ class AuthController extends Notifier<AuthState> {
       await FcmService(apiClient: ref.read(apiClientProvider))
           .clearForUser(userId);
     }
+    await StaffStore().clear();
+    ref.read(apiClientProvider).setStaffId(null);
+
     await repo.lockSession();
     ref.read(apiClientProvider).setAuthToken(null);
 
@@ -194,6 +208,82 @@ class AuthController extends Notifier<AuthState> {
     state = AuthState(status: AuthStatus.needsMpin, session: locked);
   }
 
+  Future<bool> loginWithStaff({
+    required String mobileNumber,
+    required String pin,
+  }) async {
+    final existing = state.session;
+    state = state.copyWith(busy: true, clearError: true);
+    try {
+      if (!await ensureOnline()) {
+        state = state.copyWith(
+          busy: false,
+          errorMessage: kOnlineRequiredMessage,
+          status: existing == null
+              ? AuthStatus.unauthenticated
+              : AuthStatus.needsMpin,
+        );
+        return false;
+      }
+      final device = await DeviceIdentityService().resolve();
+      final result = await StaffApi(ref.read(apiClientProvider)).login(
+        userId: existing?.licenceUserId,
+        mobileNumber: mobileNumber,
+        pin: pin,
+        deviceId: device.deviceId,
+        deviceName: device.deviceName,
+      );
+
+      var session = existing;
+      if (result.coldLogin || session == null) {
+        final login = LoginResponse.fromJson(result.raw);
+        if (!login.isSuccess ||
+            (login.licenceId?.isEmpty ?? true) ||
+            (login.licenceKey?.isEmpty ?? true)) {
+          throw Exception(login.message ?? 'Staff login failed');
+        }
+        session = UserSession.fromLogin(login);
+        await SessionStore().saveSession(session);
+        await LicenseValidator.saveFromLogin(
+          licensePayload: login.licensePayload,
+          licenseSignature: login.licenseSignature,
+          issuedAt: login.issuedAt,
+          offlineGraceUntil: login.offlineGraceUntil,
+          trialConsumed: login.trialConsumed,
+          organizationId: login.organizationId,
+          branchId: login.branchId,
+          branchLabel: login.branchLabel,
+          deviceId: device.deviceId,
+        );
+        ref.read(apiClientProvider).setAuthToken(session.authToken);
+        await bindBranchScope(session);
+        FcmService(apiClient: ref.read(apiClientProvider))
+            .registerForUser(session.userId);
+      }
+
+      await StaffStore().save(
+        staff: result.staff,
+        permissionVersion: result.permissionVersion,
+        sessionId: result.sessionId,
+      );
+      ref.read(apiClientProvider).setStaffId(result.staff.id);
+      state = AuthState(
+        status: AuthStatus.authenticated,
+        session: session,
+      );
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        busy: false,
+        errorMessage: e.toString().replaceFirst('Exception: ', ''),
+        status: existing == null
+            ? AuthStatus.unauthenticated
+            : AuthStatus.needsMpin,
+      );
+      return false;
+    }
+  }
+
   /* Hard logout: wipe local licence/session and return to licence login. */
   Future<void> clearLicence() async {
     final session = state.session;
@@ -203,7 +293,9 @@ class AuthController extends Notifier<AuthState> {
           .clearForUser(userId);
     }
     await repo.clearSession(licenceKey: session?.licenceKey);
+    await StaffStore().clear();
     ref.read(apiClientProvider).setAuthToken(null);
+    ref.read(apiClientProvider).setStaffId(null);
     state = const AuthState(status: AuthStatus.unauthenticated);
   }
 

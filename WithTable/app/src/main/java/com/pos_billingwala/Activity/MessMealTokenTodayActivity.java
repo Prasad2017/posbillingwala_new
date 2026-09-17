@@ -74,7 +74,9 @@ public class MessMealTokenTodayActivity extends BaseActivity {
                                     if ("PRINT_PENDING".equalsIgnoreCase(localStatus)
                                             || "PRINT_FAILED".equalsIgnoreCase(localStatus)
                                             || "CREATED".equalsIgnoreCase(localStatus)) {
-                                        db.upsertMessMealTokenQueue(t.tokenId, t.tokenNumber, t.registrationNo,
+                                        String mobile = t.memberMobile != null && !t.memberMobile.trim().isEmpty()
+                                                ? t.memberMobile.trim() : t.registrationNo;
+                                        db.upsertMessMealTokenQueue(t.tokenId, t.tokenNumber, mobile,
                                                 t.mealSession, t.date, t.memberName, t.createdAt, "PRINT_PENDING");
                                     }
                                 }
@@ -150,7 +152,9 @@ public class MessMealTokenTodayActivity extends BaseActivity {
             holder.btnCancel.setEnabled(canRetry);
             holder.btnRetry.setOnClickListener(v -> {
                 POSBillingWalaDatabase db = new POSBillingWalaDatabase(MessMealTokenTodayActivity.this);
-                db.upsertMessMealTokenQueue(item.tokenId, item.tokenNumber, item.registrationNo,
+                String mobile = item.memberMobile != null && !item.memberMobile.trim().isEmpty()
+                        ? item.memberMobile.trim() : item.registrationNo;
+                db.upsertMessMealTokenQueue(item.tokenId, item.tokenNumber, mobile,
                         item.mealSession, item.date, item.memberName, item.createdAt, "PRINT_PENDING");
                 MessMealTokenPrintWorker.kick(MessMealTokenTodayActivity.this);
                 Toast.makeText(MessMealTokenTodayActivity.this, R.string.ui_retry_print, Toast.LENGTH_SHORT).show();

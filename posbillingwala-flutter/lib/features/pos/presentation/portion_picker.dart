@@ -4,9 +4,10 @@ import 'package:intl/intl.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
-import 'package:pos_billingwala_v2/core/widgtes/widgtes.dart';
+import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
+import 'package:pos_billingwala_v2/features/masters/domain/product_units.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/pos_providers.dart';
-import 'package:pos_billingwala_v2/l10n/app_strings.dart';
+import 'package:pos_billingwala_v2/language/app_strings.dart';
 
 /* Matches `dialog_select_portion.xml`: product name, portion tabs, qty stepper, */
 /* Dismiss + Add to cart. */
@@ -48,7 +49,8 @@ Future<void> addProductWithPortionPicker(
   ];
 
   var selectedIndex = 0;
-  var qty = 1;
+  var qty = 1.0;
+  final step = ProductUnits.stepFor(product.productUnit);
 
   final confirmed = await showDialog<bool>(
     context: context,
@@ -108,7 +110,7 @@ Future<void> addProductWithPortionPicker(
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                 child: Text(
-                  strings.quantity,
+                  '${strings.quantity} (${ProductUnits.normalize(product.productUnit)})',
                   style: const TextStyle(fontSize: 14),
                 ),
               ),
@@ -118,9 +120,13 @@ Future<void> addProductWithPortionPicker(
                   children: [
                     QtyBox(
                       label: '−',
-                      onTap: qty <= 1
+                      onTap: qty <= step
                           ? null
-                          : () => setLocal(() => qty -= 1),
+                          : () => setLocal(() {
+                                qty = double.parse(
+                                  (qty - step).toStringAsFixed(3),
+                                );
+                              }),
                     ),
                     Expanded(
                       child: Container(
@@ -131,7 +137,10 @@ Future<void> addProductWithPortionPicker(
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          '$qty',
+                          ProductUnits.formatQty(
+                            qty,
+                            unit: product.productUnit,
+                          ),
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
@@ -141,7 +150,9 @@ Future<void> addProductWithPortionPicker(
                     ),
                     QtyBox(
                       label: '+',
-                      onTap: () => setLocal(() => qty += 1),
+                      onTap: () => setLocal(() {
+                        qty = double.parse((qty + step).toStringAsFixed(3));
+                      }),
                     ),
                   ],
                 ),
@@ -222,13 +233,15 @@ Future<void> promptOpenPriceAndAdd(
   WidgetRef ref,
   Product product, {
   ProductPortion? portion,
-  int initialQty = 1,
+  double initialQty = 1,
 }) async {
   final base = portion?.portionPrice ?? product.productPrice;
   final priceCtrl = TextEditingController(
     text: base > 0 ? base.toStringAsFixed(2) : '',
   );
-  final qtyCtrl = TextEditingController(text: '$initialQty');
+  final qtyCtrl = TextEditingController(
+    text: ProductUnits.formatQty(initialQty, unit: product.productUnit),
+  );
 
   final ok = await showDialog<bool>(
     context: context,
@@ -260,7 +273,7 @@ Future<void> promptOpenPriceAndAdd(
             child: AppTextField(
               controller: qtyCtrl,
               label: AppStrings.of(ref).quantity,
-              keyboardType: TextInputType.number,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
             ),
           ),
           SizedBox(
@@ -289,7 +302,7 @@ Future<void> promptOpenPriceAndAdd(
   );
 
   final price = double.tryParse(priceCtrl.text.trim()) ?? 0;
-  final qty = int.tryParse(qtyCtrl.text.trim()) ?? 1;
+  final qty = double.tryParse(qtyCtrl.text.trim()) ?? 1;
   priceCtrl.dispose();
   qtyCtrl.dispose();
   if (ok != true || !context.mounted) return;
@@ -303,7 +316,7 @@ Future<void> promptOpenPriceAndAdd(
         product,
         portion: portion,
         unitPriceOverride: price,
-        quantity: qty < 1 ? 1 : qty,
+        quantity: qty <= 0 ? 1 : qty,
       );
 }
 
@@ -313,7 +326,9 @@ Future<void> editCartLineDialog(
   WidgetRef ref,
   CartItem item,
 ) async {
-  final qtyCtrl = TextEditingController(text: '${item.quantity}');
+  final qtyCtrl = TextEditingController(
+    text: ProductUnits.formatQty(item.quantity, unit: item.productUnit),
+  );
   final priceCtrl = TextEditingController(
     text: item.unitPrice.toStringAsFixed(2),
   );
@@ -346,7 +361,7 @@ Future<void> editCartLineDialog(
             child: AppTextField(
               controller: qtyCtrl,
               label: AppStrings.of(ref).quantity,
-              keyboardType: TextInputType.number,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
             ),
           ),
           SizedBox(
@@ -373,7 +388,7 @@ Future<void> editCartLineDialog(
       ),
     ),
   );
-  final qty = int.tryParse(qtyCtrl.text.trim()) ?? item.quantity;
+  final qty = double.tryParse(qtyCtrl.text.trim()) ?? item.quantity;
   final price = double.tryParse(priceCtrl.text.trim());
   qtyCtrl.dispose();
   priceCtrl.dispose();

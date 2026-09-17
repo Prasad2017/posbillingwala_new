@@ -1,27 +1,26 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gal/gal.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:pos_billingwala_v2/core/constants/app_assets.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
-import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
-import 'package:pos_billingwala_v2/core/widgets/app_module_icon.dart';
-import 'package:pos_billingwala_v2/core/widgets/app_svg.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
+import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
+import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
+import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/mess/domain/mess_providers.dart';
 import 'package:pos_billingwala_v2/features/mess/presentation/mess_coupon_page.dart';
 import 'package:pos_billingwala_v2/features/mess/presentation/mess_token_qr_page.dart';
 import 'package:pos_billingwala_v2/features/print/domain/print_providers.dart';
+import 'package:pos_billingwala_v2/language/app_strings.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
-import 'dart:ui' as ui;
-import 'package:pos_billingwala_v2/core/widgtes/widgtes.dart';
-import 'package:pos_billingwala_v2/l10n/app_strings.dart';
-import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
-import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
 
 class MessPage extends ConsumerStatefulWidget {
   const MessPage({super.key});
@@ -59,9 +58,6 @@ class MessPageState extends ConsumerState<MessPage>
 
   @override
   Widget build(BuildContext context) {
-    final syncState = ref.watch(messControllerProvider);
-    final isSyncing = syncState.isLoading;
-
     ref.listen(messControllerProvider, (prev, next) {
       next.whenOrNull(
         error: (error, _) {
@@ -75,24 +71,6 @@ class MessPageState extends ConsumerState<MessPage>
     return Scaffold(
       appBar: AppBar(
         title: Text(AppStrings.of(ref).mess),
-        actions: [
-          IconButton(
-            tooltip: 'Sync members',
-            onPressed: isSyncing
-                ? null
-                : () => ref.read(messControllerProvider.notifier).syncMembers(),
-            icon: isSyncing
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : const Icon(Icons.cloud_download_rounded),
-          ),
-        ],
       ),
       body: Column(
         children: [
@@ -203,6 +181,18 @@ class MessPageState extends ConsumerState<MessPage>
       initial: member,
     );
     if (result == null || !context.mounted) return;
+    if (result.name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppStrings.of(ref).nameRequired)),
+      );
+      return;
+    }
+    if (messTokenDigits(result.mobile).length != 10) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppStrings.of(ref).mobileRequired)),
+      );
+      return;
+    }
     await ref.read(messControllerProvider.notifier).updateLocalMember(
           memberId: member.memberId,
           name: result.name,
@@ -231,6 +221,12 @@ class MessPageState extends ConsumerState<MessPage>
     if (result.name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppStrings.of(ref).nameRequired)),
+      );
+      return;
+    }
+    if (messTokenDigits(result.mobile).length != 10) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppStrings.of(ref).mobileRequired)),
       );
       return;
     }
@@ -346,8 +342,11 @@ Future<MessMemberFormResult?> showMemberFormDialog(
                 const SizedBox(height: 12),
                 AppTextField(
                   controller: mobileCtrl,
-                  label: 'Mobile',
+                  label: 'Mobile*',
                   keyboardType: TextInputType.phone,
+                  maxLength: 10,
+                  showCounter: false,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 ),
                 const SizedBox(height: 12),
                 AppTextField(
@@ -410,7 +409,21 @@ Future<MessMemberFormResult?> showMemberFormDialog(
           actions: [
             AppButton(
               label: title.startsWith('Add') ? 'Add Member' : 'Update Member',
-              onPressed: () => Navigator.pop(context, true),
+              onPressed: () {
+                if (nameCtrl.text.trim().isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Name is required')),
+                  );
+                  return;
+                }
+                if (messTokenDigits(mobileCtrl.text).length != 10) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Mobile number is required')),
+                  );
+                  return;
+                }
+                Navigator.pop(context, true);
+              },
             ),
           ],
         );
@@ -663,6 +676,18 @@ class MembersTabState extends ConsumerState<MembersTab> {
     WidgetRef ref,
     MessMember member,
   ) async {
+    if (!messTokenHasRequiredIdentity(
+      member.memberName,
+      member.memberMobileNumber,
+    )) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppStrings.of(ref).tokenPrintNameMobileRequired),
+        ),
+      );
+      return;
+    }
     try {
       final result = await ref
           .read(messControllerProvider.notifier)
@@ -673,8 +698,10 @@ class MembersTabState extends ConsumerState<MembersTab> {
           builder: (_) => MessTokenQrPage(
             title: 'Member token',
             subtitle: member.memberName,
+            memberMobile: member.memberMobileNumber,
             payload: result.payload,
             tokenCode: result.token.tokenCode,
+            messType: result.token.messType,
           ),
         ),
       );
@@ -756,6 +783,7 @@ class TokensTab extends ConsumerWidget {
                 final mobileCtrl = TextEditingController();
                 final amountCtrl = TextEditingController(text: '0');
                 var messType = 'Lunch';
+                String? formError;
                 final ok = await showDialog<bool>(
                   context: context,
                   builder: (context) => StatefulBuilder(
@@ -778,9 +806,24 @@ class TokensTab extends ConsumerWidget {
                             const SizedBox(height: 12),
                             AppTextField(
                               controller: mobileCtrl,
-                              label: 'Mobile (optional)',
+                              label: 'Mobile *',
                               keyboardType: TextInputType.phone,
+                              maxLength: 10,
+                              showCounter: false,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                              ],
                             ),
+                            if (formError != null) ...[
+                              const SizedBox(height: 8),
+                              Text(
+                                formError!,
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.error,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
                             const SizedBox(height: 12),
                             AppTextField(
                               controller: amountCtrl,
@@ -810,7 +853,21 @@ class TokensTab extends ConsumerWidget {
                         AppButton(
                           label: 'Issue QR token & print',
                           expanded: false,
-                          onPressed: () => Navigator.pop(context, true),
+                          onPressed: () {
+                            if (nameCtrl.text.trim().isEmpty) {
+                              setLocal(() {
+                                formError = AppStrings.of(ref).nameRequired;
+                              });
+                              return;
+                            }
+                            if (messTokenDigits(mobileCtrl.text).length != 10) {
+                              setLocal(() {
+                                formError = AppStrings.of(ref).mobileRequired;
+                              });
+                              return;
+                            }
+                            Navigator.pop(context, true);
+                          },
                         ),
                       ],
                     ),
@@ -830,9 +887,12 @@ class TokensTab extends ConsumerWidget {
                   MaterialPageRoute(
                     builder: (_) => MessTokenQrPage(
                       title: 'Walk-in token',
-                      subtitle: result.token.memberName ?? 'Walk-in',
+                      subtitle: result.token.memberName ?? nameCtrl.text.trim(),
+                      memberMobile: result.token.memberMobile ??
+                          messTokenDigits(mobileCtrl.text),
                       payload: result.payload,
                       tokenCode: result.token.tokenCode,
+                      messType: messType,
                     ),
                   ),
                 );

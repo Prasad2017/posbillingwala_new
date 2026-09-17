@@ -8,16 +8,14 @@ import 'package:pos_billingwala_v2/core/database/database_provider.dart';
 import 'package:pos_billingwala_v2/core/network/online_guard.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
-import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
-import 'package:pos_billingwala_v2/core/widgtes/widgtes.dart';
-import 'package:pos_billingwala_v2/features/ads/ad_banner.dart';
-import 'package:pos_billingwala_v2/features/ads/ad_config.dart';
+import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/report_pin_gate.dart';
+import 'package:pos_billingwala_v2/features/settings/domain/in_app_update_service.dart';
+import 'package:pos_billingwala_v2/features/staff/domain/permission_controller.dart';
 import 'package:pos_billingwala_v2/features/sync/domain/full_sync_controller.dart';
 import 'package:pos_billingwala_v2/features/sync/domain/sync_progress.dart';
-import 'package:pos_billingwala_v2/features/settings/domain/in_app_update_service.dart';
-import 'package:pos_billingwala_v2/l10n/app_strings.dart';
+import 'package:pos_billingwala_v2/language/app_strings.dart';
 
 /* Settings hub — card groups matching the Settings reference UI. */
 class SettingsHubPage extends ConsumerWidget {
@@ -222,6 +220,11 @@ class SettingsHubPage extends ConsumerWidget {
     if (!context.mounted) return;
     Navigator.of(context, rootNavigator: true).pop();
 
+    if (result.localCounts != null) {
+      await context.push('/sync/fetch-result');
+      return;
+    }
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -237,71 +240,110 @@ class SettingsHubPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final strings = AppStrings.of(ref);
     final topInset = MediaQuery.paddingOf(context).top;
+    final perms = ref.watch(permissionControllerProvider);
 
     final billingItems = <SettingsItem>[
-      SettingsItem(
-        icon: Icons.receipt_long_rounded,
-        color: AppColors.purple,
-        title: strings.invoiceDetails,
-        subtitle: 'Bill format, reprints & invoice list.',
-        onTap: () => pushReportsUnlocked(
-          context,
-          ref,
-          route: '/reports/invoices',
+      if (perms.allows('bill.view'))
+        SettingsItem(
+          icon: Icons.receipt_long_rounded,
+          color: AppColors.purple,
+          title: strings.invoiceDetails,
+          subtitle: 'Bill format, reprints & invoice list.',
+          onTap: () => pushReportsUnlocked(
+            context,
+            ref,
+            route: '/reports/invoices',
+          ),
         ),
-      ),
-      SettingsItem(
-        icon: Icons.bar_chart_rounded,
-        color: AppColors.green,
-        title: strings.reports,
-        subtitle: 'Sales, product & payment reports.',
-        onTap: () => pushReportsUnlocked(context, ref),
-      ),
-      SettingsItem(
-        icon: Icons.inventory_2_rounded,
-        color: AppColors.primary,
-        title: strings.masterData,
-        subtitle: 'Categories, products & combos',
-        onTap: () => context.push('/masters'),
-      ),
+      if (perms.allows('report.view'))
+        SettingsItem(
+          icon: Icons.bar_chart_rounded,
+          color: AppColors.green,
+          title: strings.reports,
+          subtitle: 'Sales, product & payment reports.',
+          onTap: () => pushReportsUnlocked(context, ref),
+        ),
+      if (perms.allows('product.view'))
+        SettingsItem(
+          icon: Icons.inventory_2_rounded,
+          color: AppColors.primary,
+          title: strings.masterData,
+          subtitle: 'Categories, products & combos',
+          onTap: () => context.push('/masters'),
+        ),
     ];
 
     final storeItems = <SettingsItem>[
-      SettingsItem(
-        icon: Icons.storefront_rounded,
-        color: AppColors.orange,
-        title: strings.shopDetails,
-        subtitle: 'Business profile & cloud company',
-        onTap: () => context.push('/settings/company'),
-      ),
-      SettingsItem(
-        icon: Icons.print_rounded,
-        color: AppColors.primary,
-        title: strings.printerDetails,
-        subtitle: 'Bluetooth / USB / Network & test print',
-        onTap: () => context.push('/settings/devices'),
-      ),
-      SettingsItem(
-        icon: Icons.schedule_rounded,
-        color: AppColors.green,
-        title: strings.businessHours,
-        subtitle: 'Opening and closing times',
-        onTap: () => context.push('/settings/business-hours'),
-      ),
-      SettingsItem(
-        icon: Icons.warehouse_rounded,
-        color: AppColors.teal,
-        title: strings.inventory,
-        subtitle: 'Stock ledger',
-        onTap: () => context.push('/inventory'),
-      ),
-      SettingsItem(
-        icon: Icons.account_balance_wallet_rounded,
-        color: const Color(0xFFE91E63),
-        title: strings.expenses,
-        subtitle: 'Shop expenses',
-        onTap: () => context.push('/expenses'),
-      ),
+      if (perms.allows('settings.view'))
+        SettingsItem(
+          icon: Icons.storefront_rounded,
+          color: AppColors.orange,
+          title: strings.shopDetails,
+          subtitle: 'Business profile & cloud company',
+          onTap: () => context.push('/settings/company'),
+        ),
+      if (perms.allows('printer.view'))
+        SettingsItem(
+          icon: Icons.print_rounded,
+          color: AppColors.primary,
+          title: strings.printerDetails,
+          subtitle: AppPlatform.isWeb
+              ? 'Bill / KOT · paper size · bill format'
+              : 'Bluetooth / USB · 2-Inch / 3-Inch',
+          onTap: () => context.push('/settings/devices'),
+        ),
+      if ((ref.watch(authControllerProvider).session?.userManagementEnabled ??
+              false) &&
+          perms.allows('user.view'))
+        SettingsItem(
+          icon: Icons.people_alt_rounded,
+          color: AppColors.purple,
+          title: 'Users',
+          subtitle: 'Staff, roles and permissions',
+          onTap: () => context.push('/settings/users'),
+        ),
+      if ((ref.watch(authControllerProvider).session?.userManagementEnabled ??
+              false) &&
+          perms.allows('user.view'))
+        SettingsItem(
+          icon: Icons.payments_rounded,
+          color: AppColors.green,
+          title: 'Salary',
+          subtitle: 'Monthly salary and payments',
+          onTap: () => context.push('/settings/salary'),
+        ),
+      if (perms.allows('device.view'))
+        SettingsItem(
+          icon: Icons.phonelink_setup_rounded,
+          color: AppColors.orange,
+          title: 'Devices',
+          subtitle: 'Authorized POS devices for this store',
+          onTap: () => context.push('/settings/pos-devices'),
+        ),
+      if (perms.allows('settings.view'))
+        SettingsItem(
+          icon: Icons.schedule_rounded,
+          color: AppColors.green,
+          title: strings.businessHours,
+          subtitle: 'Opening and closing times',
+          onTap: () => context.push('/settings/business-hours'),
+        ),
+      if (perms.allows('inventory.view'))
+        SettingsItem(
+          icon: Icons.warehouse_rounded,
+          color: AppColors.teal,
+          title: strings.inventory,
+          subtitle: 'Stock ledger',
+          onTap: () => context.push('/inventory'),
+        ),
+      if (perms.allows('expense.view'))
+        SettingsItem(
+          icon: Icons.account_balance_wallet_rounded,
+          color: const Color(0xFFE91E63),
+          title: strings.expenses,
+          subtitle: 'Shop expenses',
+          onTap: () => context.push('/expenses'),
+        ),
     ];
 
     final cloudItems = <SettingsItem>[
@@ -383,13 +425,15 @@ class SettingsHubPage extends ConsumerWidget {
         icon: Icons.logout_rounded,
         color: AppColors.red,
         title: 'Logout',
-        subtitle: 'Lock app — unlock with PB-PIN',
+        subtitle: 'Lock app — unlock with PIN',
         onTap: () async {
+          final um = ref.read(authControllerProvider).session?.userManagementEnabled ?? false;
           final ok = await showAppConfirmBottomSheet(
             context: context,
-            title: 'Logout',
-            message:
-                'Lock this app? You will need your PB-PIN to sign in again.',
+            title: um ? 'Switch user' : 'Logout',
+            message: um
+                ? 'Return to staff PIN login? Licence stays on this device.'
+                : 'Lock this app? You will need your PB-PIN to sign in again.',
             confirmLabel: 'Logout',
             confirmVariant: AppButtonVariant.danger,
             icon: Icons.logout_rounded,
@@ -406,10 +450,17 @@ class SettingsHubPage extends ConsumerWidget {
       body: Column(
         children: [
           SettingsHeader(
-            topInset: topInset,
+            topInset: AppPlatform.useDesktopShell ? 12 : topInset,
             title: strings.settings,
             subtitle: 'Manage your business, devices and app preferences',
-            onBack: () => context.pop(),
+            onBack: () {
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go('/');
+              }
+            },
+            showBack: !AppPlatform.useDesktopShell,
           ),
           Expanded(
             child: ResponsiveScrollShell(
@@ -506,8 +557,6 @@ class SettingsHubPage extends ConsumerWidget {
                       items: accountItems,
                     ),
                   ],
-                  const SizedBox(height: 16),
-                  const Center(child: AdBanner(slot: AdSlot.settings)),
                   const SizedBox(height: 22),
                   Text(
                     AppConstants.appVersionLabel,
@@ -521,7 +570,7 @@ class SettingsHubPage extends ConsumerWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Developed by POS Billingwala',
+                    'Developed by Billingwala',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontFamily: AppFonts.family,
@@ -557,20 +606,55 @@ class SettingsItem {
 }
 
 class SettingsHeader extends StatelessWidget {
-  const SettingsHeader({super.key, 
+  const SettingsHeader({
+    super.key,
     required this.topInset,
     required this.title,
     required this.subtitle,
     required this.onBack,
+    this.showBack = true,
   });
 
   final double topInset;
   final String title;
   final String subtitle;
   final VoidCallback onBack;
+  final bool showBack;
 
   @override
   Widget build(BuildContext context) {
+    if (!showBack) {
+      return Padding(
+        padding: EdgeInsets.fromLTRB(24, topInset + 8, 24, 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                fontFamily: AppFonts.family,
+                color: AppColors.navy,
+                fontWeight: FontWeight.w800,
+                fontSize: 26,
+                height: 1.1,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              subtitle,
+              style: const TextStyle(
+                fontFamily: AppFonts.family,
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w400,
+                fontSize: 13.5,
+                height: 1.35,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return ClipPath(
       clipper: const HeaderCurveClipper(),
       child: Container(
@@ -580,9 +664,9 @@ class SettingsHeader extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Color(0xFF0559E8),
-              Color(0xFF076BF5),
-              Color(0xFF1A4FD8),
+              AppColors.primaryDark,
+              AppColors.primary,
+              AppColors.primaryBright,
             ],
           ),
         ),

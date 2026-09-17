@@ -7,10 +7,16 @@ import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/features/print/domain/bluetooth_printer_hub.dart';
 import 'package:pos_billingwala_v2/features/print/domain/print_providers.dart';
 import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
-import 'package:pos_billingwala_v2/core/widgtes/widgtes.dart';
-import 'package:pos_billingwala_v2/core/widgets/app_module_icon.dart';
+import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
-import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
+import 'package:pos_billingwala_v2/language/app_strings.dart';
+
+String messTokenDigits(String? value) =>
+    (value ?? '').replaceAll(RegExp(r'\D'), '');
+
+bool messTokenHasRequiredIdentity(String? name, String? mobile) {
+  return (name ?? '').trim().isNotEmpty && messTokenDigits(mobile).length == 10;
+}
 
 class MessTokenQrPage extends ConsumerWidget {
   const MessTokenQrPage({
@@ -20,6 +26,7 @@ class MessTokenQrPage extends ConsumerWidget {
     required this.subtitle,
     this.tokenCode,
     this.messType,
+    this.memberMobile,
   });
 
   final String title;
@@ -27,14 +34,26 @@ class MessTokenQrPage extends ConsumerWidget {
   final String subtitle;
   final String? tokenCode;
   final String? messType;
+  final String? memberMobile;
 
   Future<void> messTokenQrPagePrint(BuildContext context, WidgetRef ref) async {
+    if (!messTokenHasRequiredIdentity(subtitle, memberMobile)) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppStrings.of(ref).tokenPrintNameMobileRequired),
+        ),
+      );
+      return;
+    }
     final width = ref.read(printerSettingsProvider).charsPerLine;
     final time = DateFormat('dd-MM-yyyy HH:mm').format(DateTime.now());
+    final mobile = messTokenDigits(memberMobile);
     final buf = StringBuffer()
       ..writeln(messTokenQrPageCenter('MESS TOKEN', width))
       ..writeln('-' * width)
-      ..writeln(subtitle)
+      ..writeln(subtitle.trim())
+      ..writeln(mobile)
       ..writeln(messType ?? 'Meal')
       ..writeln('Code: ${tokenCode ?? '-'}')
       ..writeln(time)
@@ -104,6 +123,16 @@ class MessTokenQrPage extends ConsumerWidget {
                           fontWeight: FontWeight.w800,
                         ),
                   ),
+                  if ((memberMobile ?? '').trim().isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      messTokenDigits(memberMobile),
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                  ],
                   const SizedBox(height: 20),
                   QrImageView(
                     data: payload,

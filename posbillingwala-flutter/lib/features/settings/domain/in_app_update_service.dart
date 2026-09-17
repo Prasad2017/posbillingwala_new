@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:in_app_update/in_app_update.dart';
 import 'package:pos_billingwala_v2/core/constants/app_config.dart';
 import 'package:pos_billingwala_v2/core/constants/app_constants.dart';
+import 'package:pos_billingwala_v2/core/logging/app_logger.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 enum InAppUpdateStatus {
@@ -36,7 +37,13 @@ class InAppUpdateService {
         const Duration(seconds: 8),
       );
     } catch (error) {
-      debugPrint('InAppUpdate checkInfo: $error');
+      /* Sideloaded / debug builds are not Play-owned — expected, not a crash. */
+      final msg = error.toString();
+      if (msg.contains('ERROR_APP_NOT_OWNED') || msg.contains('-10')) {
+        AppLogger.info('InAppUpdate skipped (app not from Play)');
+      } else {
+        AppLogger.warning('InAppUpdate checkInfo', error);
+      }
       return null;
     }
   }
@@ -60,7 +67,7 @@ class InAppUpdateService {
       }
       return const InAppUpdateOutcome(InAppUpdateStatus.notAvailable);
     } catch (error) {
-      debugPrint('InAppUpdate checkAvailability: $error');
+      AppLogger.error('InAppUpdate checkAvailability', error);
       return const InAppUpdateOutcome(InAppUpdateStatus.failed);
     }
   }
@@ -111,7 +118,7 @@ class InAppUpdateService {
           return const InAppUpdateOutcome(InAppUpdateStatus.failed);
       }
     } catch (error) {
-      debugPrint('InAppUpdate startUpdate: $error');
+      AppLogger.error('InAppUpdate startUpdate', error);
       await openPlayStore();
       return const InAppUpdateOutcome(InAppUpdateStatus.failed);
     }
@@ -122,7 +129,7 @@ class InAppUpdateService {
     try {
       await InAppUpdate.completeFlexibleUpdate();
     } catch (error) {
-      debugPrint('InAppUpdate completeFlexibleUpdate: $error');
+      AppLogger.error('InAppUpdate completeFlexibleUpdate', error);
     }
   }
 

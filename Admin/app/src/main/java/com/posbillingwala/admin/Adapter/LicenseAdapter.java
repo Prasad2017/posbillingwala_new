@@ -23,6 +23,7 @@ import com.posbillingwala.admin.Extra.BottomSheetUi;
 import com.posbillingwala.admin.Extra.LicenceValidityTiers;
 import com.posbillingwala.admin.Extra.LicenseStatusHelper;
 import com.posbillingwala.admin.Fragment.CustomerDetails;
+import com.posbillingwala.admin.Fragment.StoreOpsFragment;
 import com.posbillingwala.admin.Model.AllApiResponse;
 import com.posbillingwala.admin.Model.LicenseResponse;
 import com.posbillingwala.admin.R;
@@ -168,6 +169,15 @@ public class LicenseAdapter extends RecyclerView.Adapter<LicenseAdapter.MyViewHo
                     "Confirm", "Cancel", true, () -> updateCustomerLicenceDetails(
                             licenseResponse, licenseValidity, licenseType, amount,
                             holder.binding.registrationDate.getText().toString()));
+        });
+        holder.binding.storeOps.setOnClickListener(v -> {
+            String title = licenseResponse.getShopName1();
+            if (title == null || title.trim().isEmpty()) {
+                title = licenseResponse.getBranchLabel();
+            }
+            ((MainActivity) context).loadFragment(
+                    StoreOpsFragment.newInstance(licenseResponse.getLicensesId(), title == null ? "" : title),
+                    true);
         });
     }
 

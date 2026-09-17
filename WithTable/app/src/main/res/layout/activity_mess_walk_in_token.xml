@@ -68,8 +68,10 @@
                     android:id="@+id/walkInMobile"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="@string/ui_mobile_optional"
-                    android:inputType="phone" />
+                    android:digits="0123456789"
+                    android:hint="@string/ui_member_mobile_required"
+                    android:inputType="phone"
+                    android:maxLength="10" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout

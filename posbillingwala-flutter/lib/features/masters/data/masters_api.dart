@@ -1,9 +1,9 @@
 import 'package:dio/dio.dart';
+import 'package:pos_billingwala_v2/core/constants/api_constants.dart';
 import 'package:pos_billingwala_v2/core/network/api_client.dart';
 import 'package:pos_billingwala_v2/core/network/api_response.dart';
 import 'package:pos_billingwala_v2/shared/models/catalog_dtos.dart';
 import 'package:pos_billingwala_v2/shared/models/combo_dtos.dart';
-import 'package:pos_billingwala_v2/core/constants/api_constants.dart';
 
 class MastersApi {
   MastersApi(this.client);
@@ -246,6 +246,7 @@ class MastersApi {
     required String productCode,
     required String productName,
     required String productPrice,
+    String productMrp = '0',
     required String productUnit,
     required String productCgst,
     required String productSgst,
@@ -253,6 +254,8 @@ class MastersApi {
     String productDeletedStatus = '0',
     String subcategoryId = '0',
     String openPrice = '0',
+    String priceIncludesGst = '0',
+    String productImage = '',
   }) async {
     final data = await mastersApiPost(
       ApiEndpoints.insertProduct,
@@ -263,6 +266,7 @@ class MastersApi {
         'productCode': productCode,
         'productName': productName,
         'productPrice': productPrice,
+        'productMrp': productMrp,
         'productUnit': productUnit,
         'productCGST': productCgst,
         'productSGST': productSgst,
@@ -270,6 +274,8 @@ class MastersApi {
         'productDeletedStatus': productDeletedStatus,
         'subcategoryId': subcategoryId,
         'openPrice': openPrice,
+        'priceIncludesGst': priceIncludesGst,
+        'productImage': productImage,
       },
     );
     return isApiSuccess(data);

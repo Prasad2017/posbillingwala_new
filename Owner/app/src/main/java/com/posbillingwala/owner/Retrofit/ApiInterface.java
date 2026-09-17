@@ -6,6 +6,7 @@ import com.posbillingwala.owner.Model.CatalogImportHistoryResponse;
 import com.posbillingwala.owner.Model.CatalogImportPreviewResponse;
 import com.posbillingwala.owner.Model.CatalogPushResponse;
 import com.posbillingwala.owner.Model.LoginResponse;
+import com.posbillingwala.owner.Model.StoreOpsResponse;
 
 import okhttp3.MultipartBody;
 import okhttp3.RequestBody;
@@ -300,5 +301,10 @@ public interface ApiInterface {
     Call<AllApiResponse> registerFcmToken(@Field("userId") String userId,
                                           @Field("android_device_id") String androidDeviceId,
                                           @Field("fcm_token") String fcmToken);
+
+    @FormUrlEncoded
+    @POST("getStoreOpsSummary.php")
+    Call<StoreOpsResponse> getStoreOpsSummary(@Field("userId") String userId,
+                                              @Field("licenseId") String licenseId);
 
 }

@@ -25,6 +25,8 @@ if ($ctx === null) {
     echo json_encode($response);
     exit;
 }
+require_once __DIR__ . '/pos_staff.php';
+pos_require_permission($con, $ctx['licenseId'], 'table.manage');
 
 $userId = $ctx['licenseId'];
 $orgId = $ctx['triplet']['organization_id'];

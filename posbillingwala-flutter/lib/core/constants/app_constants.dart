@@ -1,7 +1,7 @@
 class AppConstants {
   AppConstants._();
 
-  static const String appName = 'POS Billingwala';
+  static const String appName = 'Billingwala';
   static const String appVersionLabel = 'Version 2';
   static const String appVersionBadge = 'V 2.0.1';
   static const String website = 'https://www.posbillingwala.com';

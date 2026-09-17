@@ -20,6 +20,14 @@ if (!function_exists('dine_in_ensure_printer_kot_columns')) {
             'kotCopies' => "ALTER TABLE `company_printer_setting` ADD COLUMN `kotCopies` VARCHAR(8) NULL DEFAULT '1'",
             'kotAutoPrint' => "ALTER TABLE `company_printer_setting` ADD COLUMN `kotAutoPrint` VARCHAR(10) NULL DEFAULT 'off'",
             'kotPreview' => "ALTER TABLE `company_printer_setting` ADD COLUMN `kotPreview` VARCHAR(10) NULL DEFAULT 'on'",
+            'paperSize' => "ALTER TABLE `company_printer_setting` ADD COLUMN `paperSize` VARCHAR(16) NOT NULL DEFAULT '2-Inch'",
+            'kotPaperSize' => "ALTER TABLE `company_printer_setting` ADD COLUMN `kotPaperSize` VARCHAR(16) NOT NULL DEFAULT '2-Inch'",
+            'billConnectionType' => "ALTER TABLE `company_printer_setting` ADD COLUMN `billConnectionType` VARCHAR(16) NOT NULL DEFAULT 'BLUETOOTH'",
+            'kotConnectionType' => "ALTER TABLE `company_printer_setting` ADD COLUMN `kotConnectionType` VARCHAR(16) NOT NULL DEFAULT 'BLUETOOTH'",
+            'billUsbIdentifier' => "ALTER TABLE `company_printer_setting` ADD COLUMN `billUsbIdentifier` VARCHAR(191) NULL DEFAULT NULL",
+            'billUsbName' => "ALTER TABLE `company_printer_setting` ADD COLUMN `billUsbName` VARCHAR(128) NULL DEFAULT NULL",
+            'kotUsbIdentifier' => "ALTER TABLE `company_printer_setting` ADD COLUMN `kotUsbIdentifier` VARCHAR(191) NULL DEFAULT NULL",
+            'kotUsbName' => "ALTER TABLE `company_printer_setting` ADD COLUMN `kotUsbName` VARCHAR(128) NULL DEFAULT NULL",
         );
         foreach ($cols as $name => $alter) {
             try {

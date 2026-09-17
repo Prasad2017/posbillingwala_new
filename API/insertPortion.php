@@ -21,6 +21,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $userId = isset($_POST['userId']) ? trim((string) $_POST['userId']) : '';
   $__postedUserId = isset($_POST['userId']) ? $_POST['userId'] : (isset($userId) ? $userId : '');
   pos_require_auth($con, $__postedUserId, isset($response) ? $response : array('status'=>'0','message'=>'Unauthorized'));
+  require_once __DIR__ . '/pos_staff.php';
+  pos_require_permission($con, $userId, 'product.create');
 
 $productId = isset($_POST['productId']) ? trim((string) $_POST['productId']) : '';
 $productNetworkStatus = isset($_POST['productNetworkStatus']) ? trim((string) $_POST['productNetworkStatus']) : '';

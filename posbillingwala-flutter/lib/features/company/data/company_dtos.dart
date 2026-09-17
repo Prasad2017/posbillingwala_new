@@ -149,6 +149,14 @@ class CompanyPrinterSettingDto {
     this.kotAutoPrint = '0',
     this.kotPreview = '1',
     this.settingStatus = '1',
+    this.paperSize = '2-Inch',
+    this.kotPaperSize = '2-Inch',
+    this.billConnectionType = 'BLUETOOTH',
+    this.kotConnectionType = 'BLUETOOTH',
+    this.billUsbIdentifier = '',
+    this.billUsbName = '',
+    this.kotUsbIdentifier = '',
+    this.kotUsbName = '',
   });
 
   final int? settingId;
@@ -172,6 +180,14 @@ class CompanyPrinterSettingDto {
   final String kotAutoPrint;
   final String kotPreview;
   final String settingStatus;
+  final String paperSize;
+  final String kotPaperSize;
+  final String billConnectionType;
+  final String kotConnectionType;
+  final String billUsbIdentifier;
+  final String billUsbName;
+  final String kotUsbIdentifier;
+  final String kotUsbName;
 
   factory CompanyPrinterSettingDto.fromJson(Map<String, dynamic> json) {
     return CompanyPrinterSettingDto(
@@ -196,6 +212,16 @@ class CompanyPrinterSettingDto {
       kotAutoPrint: parseString(json['kotAutoPrint']) ?? '0',
       kotPreview: parseString(json['kotPreview']) ?? '1',
       settingStatus: parseString(json['settingStatus']) ?? '1',
+      paperSize: parseString(json['paperSize']) ?? '2-Inch',
+      kotPaperSize: parseString(json['kotPaperSize']) ??
+          parseString(json['paperSize']) ??
+          '2-Inch',
+      billConnectionType: parseString(json['billConnectionType']) ?? 'BLUETOOTH',
+      kotConnectionType: parseString(json['kotConnectionType']) ?? 'BLUETOOTH',
+      billUsbIdentifier: parseString(json['billUsbIdentifier']) ?? '',
+      billUsbName: parseString(json['billUsbName']) ?? '',
+      kotUsbIdentifier: parseString(json['kotUsbIdentifier']) ?? '',
+      kotUsbName: parseString(json['kotUsbName']) ?? '',
     );
   }
 
@@ -221,5 +247,13 @@ class CompanyPrinterSettingDto {
         'kotAutoPrint': kotAutoPrint,
         'kotPreview': kotPreview,
         'settingStatus': settingStatus,
+        'paperSize': paperSize,
+        'kotPaperSize': kotPaperSize,
+        'billConnectionType': billConnectionType,
+        'kotConnectionType': kotConnectionType,
+        'billUsbIdentifier': billUsbIdentifier,
+        'billUsbName': billUsbName,
+        'kotUsbIdentifier': kotUsbIdentifier,
+        'kotUsbName': kotUsbName,
       };
 }

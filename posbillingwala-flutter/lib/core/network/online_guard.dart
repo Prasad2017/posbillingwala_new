@@ -1,9 +1,13 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 
-/* Returns true when the device reports a usable network interface. */
-Future<bool> isDeviceOnline() async {
-  final results = await Connectivity().checkConnectivity();
+final deviceOnlineProvider = StreamProvider<bool>((ref) async* {
+  yield await isDeviceOnline();
+  yield* Connectivity().onConnectivityChanged.map(connectivityResultsOnline);
+});
+
+bool connectivityResultsOnline(List<ConnectivityResult> results) {
   return results.any(
     (r) =>
         r == ConnectivityResult.mobile ||
@@ -12,6 +16,11 @@ Future<bool> isDeviceOnline() async {
         r == ConnectivityResult.vpn ||
         r == ConnectivityResult.other,
   );
+}
+
+/* Returns true when the device reports a usable network interface. */
+Future<bool> isDeviceOnline() async {
+  return connectivityResultsOnline(await Connectivity().checkConnectivity());
 }
 
 /* On web ([AppPlatform.requiresNetwork]), blocks when offline. */

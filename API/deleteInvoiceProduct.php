@@ -7,6 +7,8 @@ $response = array();
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     mysqli_query($con, 'set names utf8');
     $licenceId = pos_require_auth($con);
+    require_once __DIR__ . '/pos_staff.php';
+    pos_require_permission($con, $licenceId, 'bill.edit');
     $invoiceNumber = isset($_POST['invoiceNumber']) ? trim((string) $_POST['invoiceNumber']) : '';
     $networkStatus = isset($_POST['invoiceProductNetworkStatus']) ? trim((string) $_POST['invoiceProductNetworkStatus']) : '';
 

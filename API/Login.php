@@ -2,6 +2,8 @@
 	include_once('config.php');
 	include_once('licence_expiry.php');
 	require_once __DIR__ . '/auth_tokens.php';
+	require_once __DIR__ . '/pos_schema.php';
+	require_once __DIR__ . '/pos_devices.php';
 	mysqli_query($con, 'set names utf8');
 	header('Access-Control-Allow-Origin: *');
     header('Access-Control-Allow-Headers: Authorization, Content-Type, Accept, X-Requested-With');
@@ -44,7 +46,7 @@
 				    } else if (!licence_enforce_expiry($con, $check)) {
 				        $response["status"] = '0';
 					    $response["message"] = "licence key expired or user disable. Please contact our customer care or dealer";
-				    } else if($check['android_device_id'] == $android_device_id) {
+				    } else if (pos_device_authorized($con, $check, $android_device_id)) {
 				        
 				        $response["status"] = '1';
 				        $response["message"] = "Login successfully.";
@@ -67,11 +69,12 @@
 						$response["todaySaleData"] = $check['today_sale_data'];
 						
 						$response = licence_append_trial_response($con, $response, $check);
+						$response = licence_append_user_management_response($con, $response, $check['id']);
 						auth_token_append_response($con, $response, 'pos_licence', $check['id'], $android_device_id, $check['expiryDate']);
 						require_once __DIR__ . '/pos_presence.php';
 						licence_touch_last_login($con, (int) $check['id']);
 						
-				    } else if($check['android_device_id'] == null) {
+				    } else if($check['android_device_id'] == null || pos_device_can_bind_additional($con, $check['id'], $android_device_id)) {
 				        $response["status"] = '2';
 					    $response["message"] = "Login Failed";
 				    } else {

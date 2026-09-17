@@ -23,12 +23,35 @@ extension PosPrinterTransportX on PosPrinterTransport {
   static PosPrinterTransport fromStorage(String? value) {
     switch (value) {
       case 'usb':
+      case 'USB':
         return PosPrinterTransport.usb;
       case 'network':
+      case 'WIFI':
+      case 'NETWORK':
         return PosPrinterTransport.network;
       case 'bluetooth':
+      case 'BLUETOOTH':
+      case 'BT':
       default:
         return PosPrinterTransport.bluetooth;
+    }
+  }
+
+  /* Bill/KOT company printers are Bluetooth or USB only. */
+  static PosPrinterTransport fromLocalStorage(String? value) {
+    return fromStorage(value) == PosPrinterTransport.usb
+        ? PosPrinterTransport.usb
+        : PosPrinterTransport.bluetooth;
+  }
+
+  String get dbValue {
+    switch (this) {
+      case PosPrinterTransport.usb:
+        return 'USB';
+      case PosPrinterTransport.network:
+        return 'WIFI';
+      case PosPrinterTransport.bluetooth:
+        return 'BLUETOOTH';
     }
   }
 
@@ -47,6 +70,7 @@ extension PosPrinterTransportX on PosPrinterTransport {
 class PrinterSettings {
   const PrinterSettings({
     this.paperSize = PrinterPaperSize.inch2,
+    this.kotPaperSize = PrinterPaperSize.inch2,
     this.billTransport = PosPrinterTransport.bluetooth,
     this.kotTransport = PosPrinterTransport.bluetooth,
     this.billBluetoothAddress = '',
@@ -76,6 +100,7 @@ class PrinterSettings {
   });
 
   final PrinterPaperSize paperSize;
+  final PrinterPaperSize kotPaperSize;
   final PosPrinterTransport billTransport;
   final PosPrinterTransport kotTransport;
   final String billBluetoothAddress;
@@ -104,34 +129,35 @@ class PrinterSettings {
   final bool kotPreview;
   final int kotCopies;
 
-  int get charsPerLine => paperSize == PrinterPaperSize.inch3 ? 48 : 32;
+  int get charsPerLine => charsPerLineFor(isKot: false);
 
-  PosPrinterTransport transportFor({required bool isKot}) =>
-      isKot ? kotTransport : billTransport;
+  int get kotCharsPerLine => charsPerLineFor(isKot: true);
 
-  String bluetoothFor({required bool isKot}) {
-    if (isKot && kotBluetoothAddress.trim().isNotEmpty) {
-      return kotBluetoothAddress.trim();
-    }
-    return billBluetoothAddress.trim();
+  int charsPerLineFor({required bool isKot}) =>
+      paperSizeFor(isKot: isKot) == PrinterPaperSize.inch3 ? 48 : 32;
+
+  PrinterPaperSize paperSizeFor({required bool isKot}) =>
+      isKot ? kotPaperSize : paperSize;
+
+  PosPrinterTransport transportFor({required bool isKot}) {
+    final t = isKot ? kotTransport : billTransport;
+    return t == PosPrinterTransport.usb
+        ? PosPrinterTransport.usb
+        : PosPrinterTransport.bluetooth;
   }
 
-  String usbIdFor({required bool isKot}) {
-    if (isKot && kotUsbIdentifier.trim().isNotEmpty) {
-      return kotUsbIdentifier.trim();
-    }
-    return billUsbIdentifier.trim();
-  }
+  String bluetoothFor({required bool isKot}) =>
+      (isKot ? kotBluetoothAddress : billBluetoothAddress).trim();
 
-  String usbNameFor({required bool isKot}) {
-    if (isKot && kotUsbName.trim().isNotEmpty) {
-      return kotUsbName.trim();
-    }
-    return billUsbName.trim();
-  }
+  String usbIdFor({required bool isKot}) =>
+      (isKot ? kotUsbIdentifier : billUsbIdentifier).trim();
+
+  String usbNameFor({required bool isKot}) =>
+      (isKot ? kotUsbName : billUsbName).trim();
 
   PrinterSettings copyWith({
     PrinterPaperSize? paperSize,
+    PrinterPaperSize? kotPaperSize,
     PosPrinterTransport? billTransport,
     PosPrinterTransport? kotTransport,
     String? billBluetoothAddress,
@@ -161,6 +187,7 @@ class PrinterSettings {
   }) {
     return PrinterSettings(
       paperSize: paperSize ?? this.paperSize,
+      kotPaperSize: kotPaperSize ?? this.kotPaperSize,
       billTransport: billTransport ?? this.billTransport,
       kotTransport: kotTransport ?? this.kotTransport,
       billBluetoothAddress:
@@ -195,11 +222,22 @@ class PrinterSettings {
 
 enum PrinterPaperSize { inch2, inch3 }
 
+extension PrinterPaperSizeX on PrinterPaperSize {
+  String get dbValue => this == PrinterPaperSize.inch3 ? '3-Inch' : '2-Inch';
+
+  static PrinterPaperSize fromDb(String? raw) {
+    final n = (raw ?? '').toLowerCase().replaceAll(' ', '');
+    if (n.contains('3')) return PrinterPaperSize.inch3;
+    return PrinterPaperSize.inch2;
+  }
+}
+
 class PrinterSettingsStore {
   static Future<PrinterSettings> Function(PrinterSettings prefs)? dbOverlay;
   static Future<void> Function(PrinterSettings settings)? dbPersist;
 
   static const paperKey = 'printer_paper_size';
+  static const kotPaperKey = 'printer_kot_paper_size';
   static const billTransportKey = 'printer_bill_transport';
   static const kotTransportKey = 'printer_kot_transport';
   static const billMacKey = 'printer_bill_mac';
@@ -232,12 +270,19 @@ class PrinterSettingsStore {
     final paper = prefs.getString(paperKey) == '3-Inch'
         ? PrinterPaperSize.inch3
         : PrinterPaperSize.inch2;
+    final kotPaperRaw = prefs.getString(kotPaperKey);
+    final kotPaper = kotPaperRaw == null
+        ? paper
+        : (kotPaperRaw == '3-Inch'
+            ? PrinterPaperSize.inch3
+            : PrinterPaperSize.inch2);
     var loaded = PrinterSettings(
       paperSize: paper,
+      kotPaperSize: kotPaper,
       billTransport:
-          PosPrinterTransportX.fromStorage(prefs.getString(billTransportKey)),
+          PosPrinterTransportX.fromLocalStorage(prefs.getString(billTransportKey)),
       kotTransport:
-          PosPrinterTransportX.fromStorage(prefs.getString(kotTransportKey)),
+          PosPrinterTransportX.fromLocalStorage(prefs.getString(kotTransportKey)),
       billBluetoothAddress: prefs.getString(billMacKey) ?? '',
       kotBluetoothAddress: prefs.getString(kotMacKey) ?? '',
       billUsbIdentifier: prefs.getString(billUsbKey) ?? '',
@@ -275,6 +320,10 @@ class PrinterSettingsStore {
     await prefs.setString(
       paperKey,
       settings.paperSize == PrinterPaperSize.inch3 ? '3-Inch' : '2-Inch',
+    );
+    await prefs.setString(
+      kotPaperKey,
+      settings.kotPaperSize == PrinterPaperSize.inch3 ? '3-Inch' : '2-Inch',
     );
     await prefs.setString(
       billTransportKey,

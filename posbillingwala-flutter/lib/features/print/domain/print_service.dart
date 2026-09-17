@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
+import 'package:pos_billingwala_v2/core/logging/app_logger.dart';
 import 'package:pos_billingwala_v2/features/print/domain/bluetooth_printer_hub.dart';
 import 'package:pos_billingwala_v2/features/print/domain/esc_pos_transport_hub.dart';
 import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
@@ -49,7 +50,7 @@ class PrintService {
       discount: 'DISCOUNT',
       packing: 'PACKING',
       totalAmount: 'TOTAL AMOUNT',
-      poweredBy: 'Powered by POS Billingwala',
+      poweredBy: 'Powered by Billingwala',
       website: 'www.posbillingwala.com',
       customerName: 'Customer Name',
       customerMobile: 'Customer Mobile',
@@ -69,8 +70,13 @@ class PrintService {
   final ShopReceiptProfile shopProfile;
   final ReceiptLabels labels;
 
-  ReceiptBuilder get builder =>
-      ReceiptBuilder(settings, shopProfile: shopProfile, labels: labels);
+  ReceiptBuilder get builder => builderFor(isKot: false);
+
+  ReceiptBuilder builderFor({required bool isKot}) => ReceiptBuilder(
+        settings.copyWith(paperSize: settings.paperSizeFor(isKot: isKot)),
+        shopProfile: shopProfile,
+        labels: labels,
+      );
 
   ThermalTicket billTicket({
     required Invoice invoice,
@@ -108,6 +114,20 @@ class PrintService {
     );
   }
 
+  String kotPreviewText({
+    KotTicket? ticket,
+    PrinterPaperSize? paperSize,
+  }) {
+    final previewSettings = paperSize == null
+        ? settings.copyWith(paperSize: settings.kotPaperSize)
+        : settings.copyWith(paperSize: paperSize);
+    return ReceiptBuilder(
+      previewSettings,
+      shopProfile: shopProfile,
+      labels: labels,
+    ).kotText(ticket ?? SampleReceiptData.sampleKot(prefix: settings.kotPrefix));
+  }
+
   Future<PrintResult> printBill({
     required Invoice invoice,
     required List<InvoiceItem> items,
@@ -142,8 +162,9 @@ class PrintService {
     bool preferShare = false,
   }) async {
     syncSavedEndpoints(isKot: true);
-    final text = builder.kotText(ticket);
-    final bytes = await builder.kotPrintBytes(ticket);
+    final kotBuilder = builderFor(isKot: true);
+    final text = kotBuilder.kotText(ticket);
+    final bytes = await kotBuilder.kotPrintBytes(ticket);
     return dispatch(
       text: text,
       bytes: bytes,
@@ -156,7 +177,9 @@ class PrintService {
   /* Sample invoice / KOT (same lines as Android printer-settings test). */
   Future<PrintResult> printTest(PrinterChannelKind channel, {String? shopName}) {
     if (channel == PrinterChannelKind.kot) {
-      return printKot(SampleReceiptData.sampleKot());
+      return printKot(
+        SampleReceiptData.sampleKot(prefix: settings.kotPrefix),
+      );
     }
     final sample = SampleReceiptData.sampleBill();
     return printBill(
@@ -168,13 +191,14 @@ class PrintService {
 
   String previewText(PrinterChannelKind channel, {String? shopName}) {
     if (channel == PrinterChannelKind.kot) {
-      return builder.kotText(SampleReceiptData.sampleKot());
+      return kotPreviewText();
     }
     final sample = SampleReceiptData.sampleBill();
-    return builder.billText(
+    return billPreviewText(
       invoice: sample.invoice,
       items: sample.items,
       shopName: shopName,
+      paperSize: settings.paperSize,
     );
   }
 
@@ -185,7 +209,9 @@ class PrintService {
     String label = 'Receipt',
   }) async {
     syncSavedEndpoints(isKot: channel == PrinterChannelKind.kot);
-    final bytes = await builder.rawPrintBytes(text);
+    final bytes = await builderFor(
+      isKot: channel == PrinterChannelKind.kot,
+    ).rawPrintBytes(text);
     return dispatch(
       text: text,
       bytes: bytes,
@@ -206,15 +232,14 @@ class PrintService {
     );
   }
 
-  Future<bool> printNetwork(List<int> bytes) async {
-    final host = settings.networkHost.trim();
-    if (host.isEmpty) return false;
-    final port = settings.networkPort <= 0 ? 9100 : settings.networkPort;
+  Future<bool> printNetworkTo(String host, int port, List<int> bytes) async {
+    if (host.trim().isEmpty) return false;
+    final resolvedPort = port <= 0 ? 9100 : port;
     Socket? socket;
     try {
       socket = await Socket.connect(
-        host,
-        port,
+        host.trim(),
+        resolvedPort,
         timeout: const Duration(seconds: 5),
       );
       socket.add(bytes);
@@ -223,6 +248,74 @@ class PrintService {
     } finally {
       await socket?.close();
     }
+  }
+
+  Future<bool> printNetwork(List<int> bytes) async {
+    return printNetworkTo(settings.networkHost, settings.networkPort, bytes);
+  }
+
+  Future<PrintResult> dispatchToEndpoint({
+    required String text,
+    required List<int> bytes,
+    required String label,
+    required PosPrinterTransport transport,
+    String bluetoothAddress = '',
+    String usbIdentifier = '',
+    String usbName = '',
+    String networkHost = '',
+    int networkPort = 9100,
+  }) async {
+    if (kIsWeb) {
+      await shareReceiptAsImage(text: text, label: label);
+      return PrintResult(
+        outcome: PrintOutcome.shared,
+        text: text,
+        message: '$label queued for share (web has no local thermal printer)',
+      );
+    }
+    try {
+      switch (transport) {
+        case PosPrinterTransport.bluetooth:
+          final mac = bluetoothAddress.trim();
+          if (mac.isEmpty) break;
+          final sent = await hub.writeToMac(mac, bytes);
+          if (sent) {
+            return PrintResult(
+              outcome: PrintOutcome.bluetoothPrinted,
+              text: text,
+              message: '$label sent to Bluetooth printer',
+            );
+          }
+        case PosPrinterTransport.usb:
+          if (usbIdentifier.trim().isEmpty) break;
+          usbHub.updateSavedUsb(identifier: usbIdentifier, name: usbName);
+          final sent = await usbHub.writeBytes(bytes);
+          if (sent) {
+            return PrintResult(
+              outcome: PrintOutcome.usbPrinted,
+              text: text,
+              message: '$label sent to USB printer',
+            );
+          }
+        case PosPrinterTransport.network:
+          if (networkHost.trim().isEmpty) break;
+          final ok = await printNetworkTo(networkHost, networkPort, bytes);
+          if (ok) {
+            return PrintResult(
+              outcome: PrintOutcome.networkPrinted,
+              text: text,
+              message: '$label sent to $networkHost:$networkPort',
+            );
+          }
+      }
+    } catch (e) {
+      AppLogger.error('dispatchToEndpoint failed', e);
+    }
+    return PrintResult(
+      outcome: PrintOutcome.failed,
+      text: text,
+      message: '$label failed — printer not reachable',
+    );
   }
 
   Future<PrintResult> dispatch({
@@ -236,7 +329,7 @@ class PrintService {
       final isKot = channel == PrinterChannelKind.kot;
       final transport = settings.transportFor(isKot: isKot);
 
-      /* Preferred transport for this channel. */
+      /* Only the type chosen for this Bill / KOT printer. */
       final preferred = await tryTransport(
         transport: transport,
         channel: channel,
@@ -247,24 +340,10 @@ class PrintService {
       );
       if (preferred != null) return preferred;
 
-      /* Fallbacks so a misconfigured type still prints if another path works. */
-      for (final alt in PosPrinterTransport.values) {
-        if (alt == transport) continue;
-        final result = await tryTransport(
-          transport: alt,
-          channel: channel,
-          isKot: isKot,
-          bytes: bytes,
-          text: text,
-          label: label,
-        );
-        if (result != null) return result;
-      }
-
       return PrintResult(
         outcome: PrintOutcome.failed,
         text: text,
-        message: '$label failed — printer not reachable',
+        message: '$label failed — ${transport.label} printer not reachable',
       );
     }
 
@@ -335,7 +414,7 @@ class PrintService {
           );
       }
     } catch (e) {
-      debugPrint('Transport $transport failed: $e');
+      AppLogger.error('Transport $transport failed', e);
       return null;
     }
   }

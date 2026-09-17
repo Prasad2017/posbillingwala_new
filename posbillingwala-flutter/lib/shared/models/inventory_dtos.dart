@@ -9,6 +9,9 @@ class InventoryDto {
     this.productInventoryQuantity = 0,
     this.afterSaleInventoryQuantity = 0,
     this.saleInventoryQuantity = 0,
+    this.movementType = 'purchase',
+    this.inventoryNote = '',
+    this.unitCost = 0,
     required this.inventoryDate,
     required this.inventoryNetworkStatus,
     this.inventoryId,
@@ -20,12 +23,21 @@ class InventoryDto {
   final double productInventoryQuantity;
   final double afterSaleInventoryQuantity;
   final double saleInventoryQuantity;
+  final String movementType;
+  final String inventoryNote;
+  final double unitCost;
   final DateTime inventoryDate;
   final String inventoryNetworkStatus;
 
   factory InventoryDto.fromJson(Map<String, dynamic> json) {
     final network = parseString(json['inventoryNetworkStatus'])?.trim() ??
         'inv_${parseString(json['inventoryId']) ?? DateTime.now().millisecondsSinceEpoch}';
+    var type = (parseString(json['movementType']) ?? 'purchase').trim();
+    if (type.isEmpty) {
+      final inQty = parseMoney(json['productInventoryQuantity']);
+      final outQty = parseMoney(json['saleInventoryQuantity']);
+      type = outQty > 0 && inQty <= 0 ? 'sale' : 'purchase';
+    }
     return InventoryDto(
       inventoryId: parseInt(json['inventoryId']),
       productId: parseInt(json['productId']) ?? 0,
@@ -34,6 +46,9 @@ class InventoryDto {
       afterSaleInventoryQuantity:
           parseMoney(json['afterSaleInventoryQuantity']),
       saleInventoryQuantity: parseMoney(json['saleInventoryQuantity']),
+      movementType: type,
+      inventoryNote: parseString(json['inventoryNote']) ?? '',
+      unitCost: parseMoney(json['unitCost']),
       inventoryDate: parseInvoiceDate(json['inventoryDate']) ?? DateTime.now(),
       inventoryNetworkStatus: network,
     );
@@ -46,6 +61,9 @@ class InventoryDto {
         'productInventoryQuantity': productInventoryQuantity,
         'afterSaleInventoryQuantity': afterSaleInventoryQuantity,
         'saleInventoryQuantity': saleInventoryQuantity,
+        'movementType': movementType,
+        'inventoryNote': inventoryNote,
+        'unitCost': unitCost,
         'inventoryDate': inventoryDate.toIso8601String(),
         'inventoryNetworkStatus': inventoryNetworkStatus,
       };
@@ -60,6 +78,9 @@ class InventoryDto {
       productInventoryQuantity: Value(productInventoryQuantity),
       afterSaleInventoryQuantity: Value(afterSaleInventoryQuantity),
       saleInventoryQuantity: Value(saleInventoryQuantity),
+      movementType: Value(movementType),
+      inventoryNote: Value(inventoryNote),
+      unitCost: Value(unitCost),
       inventoryDate: inventoryDate,
       inventoryNetworkStatus: inventoryNetworkStatus,
       inventorySyncStatus: const Value('1'),

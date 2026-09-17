@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
-import 'package:pos_billingwala_v2/core/widgtes/widgtes.dart';
+import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
+import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
+import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/print/domain/bluetooth_printer_hub.dart';
+import 'package:pos_billingwala_v2/features/print/domain/esc_pos_transport_hub.dart';
 import 'package:pos_billingwala_v2/features/print/domain/print_providers.dart';
 import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
-import 'package:pos_billingwala_v2/features/print/presentation/bluetooth_device_picker_page.dart';
-import 'package:pos_billingwala_v2/l10n/app_strings.dart';
-import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
-import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
+import 'package:pos_billingwala_v2/features/print/domain/sample_receipt_data.dart';
+import 'package:pos_billingwala_v2/features/print/presentation/paper_size_preview.dart';
+import 'package:pos_billingwala_v2/features/print/presentation/printer_device_picker_page.dart';
+import 'package:pos_billingwala_v2/language/app_strings.dart';
 
 /* Matches `activity_test_invoice_bluetooth_print.xml`: */
 /* preview card + bottom Connect / Test Print. */
@@ -37,12 +39,6 @@ class TestInvoicePreviewPageState extends ConsumerState<TestInvoicePreviewPage> 
   String? get testInvoicePreviewPageShopName =>
       ref.read(authControllerProvider).session?.shopName;
 
-  String get testInvoicePreviewPagePreviewText =>
-      ref.read(printServiceProvider).previewText(
-            widget.channel,
-            shopName: testInvoicePreviewPageShopName,
-          );
-
   Future<void> testInvoicePreviewPagePrint() async {
     setState(() => printing = true);
     try {
@@ -65,33 +61,85 @@ class TestInvoicePreviewPageState extends ConsumerState<TestInvoicePreviewPage> 
   }
 
   Future<void> testInvoicePreviewPageConnect() async {
-    final settings = ref.read(printerSettingsProvider);
-    final mac = isKot
-        ? settings.kotBluetoothAddress
-        : settings.billBluetoothAddress;
-    if (mac.trim().isEmpty) {
-      await Navigator.of(context).push(
-        MaterialPageRoute<void>(
-          builder: (_) => BluetoothDevicePickerPage(
+    var settings = ref.read(printerSettingsProvider);
+    final transport = settings.transportFor(isKot: isKot);
+    var mac = settings.bluetoothFor(isKot: isKot);
+    var usbId = settings.usbIdFor(isKot: isKot);
+    var usbName = settings.usbNameFor(isKot: isKot);
+
+    if ((transport == PosPrinterTransport.usb && usbId.isEmpty) ||
+        (transport == PosPrinterTransport.bluetooth && mac.isEmpty)) {
+      final picked = await Navigator.of(context).push<PickedPrinter>(
+        MaterialPageRoute(
+          builder: (_) => PrinterDevicePickerPage(
             channel: widget.channel,
-            title: 'Select device',
+            initialTransport: transport,
+            showNetwork: false,
+            lockToInitialTransport: true,
+            title: transport == PosPrinterTransport.usb
+                ? 'Select USB printer'
+                : 'Select Bluetooth printer',
           ),
         ),
       );
-      if (mounted) setState(() {});
-      return;
+      if (picked == null || !mounted) return;
+      final current = ref.read(printerSettingsProvider);
+      settings = isKot
+          ? current.copyWith(
+              kotTransport: picked.transport,
+              kotBluetoothAddress:
+                  picked.transport == PosPrinterTransport.bluetooth
+                      ? picked.bluetoothMac
+                      : current.kotBluetoothAddress,
+              kotUsbIdentifier: picked.transport == PosPrinterTransport.usb
+                  ? picked.usbIdentifier
+                  : current.kotUsbIdentifier,
+              kotUsbName: picked.transport == PosPrinterTransport.usb
+                  ? picked.usbName
+                  : current.kotUsbName,
+            )
+          : current.copyWith(
+              billTransport: picked.transport,
+              billBluetoothAddress:
+                  picked.transport == PosPrinterTransport.bluetooth
+                      ? picked.bluetoothMac
+                      : current.billBluetoothAddress,
+              billUsbIdentifier: picked.transport == PosPrinterTransport.usb
+                  ? picked.usbIdentifier
+                  : current.billUsbIdentifier,
+              billUsbName: picked.transport == PosPrinterTransport.usb
+                  ? picked.usbName
+                  : current.billUsbName,
+            );
+      await ref.read(printerSettingsProvider.notifier).update(settings);
+      mac = settings.bluetoothFor(isKot: isKot);
+      usbId = settings.usbIdFor(isKot: isKot);
+      usbName = settings.usbNameFor(isKot: isKot);
     }
+
     setState(() => connecting = true);
     try {
-      final ok = await BluetoothPrinterHub.instance.connect(
-        widget.channel,
-        address: mac,
-        fromUser: true,
-      );
+      var ok = false;
+      if (transport == PosPrinterTransport.usb) {
+        ok = await EscPosTransportHub.instance.connectUsb(
+          identifier: usbId,
+          name: usbName,
+        );
+      } else {
+        ok = await BluetoothPrinterHub.instance.connect(
+          widget.channel,
+          address: mac,
+          fromUser: true,
+        );
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(ok ? 'Printer connected' : 'Could not connect'),
+          content: Text(
+            ok
+                ? '${transport.label} printer connected'
+                : 'Could not connect ${transport.label} printer',
+          ),
         ),
       );
     } finally {
@@ -113,9 +161,13 @@ class TestInvoicePreviewPageState extends ConsumerState<TestInvoicePreviewPage> 
   Widget build(BuildContext context) {
     final settings = ref.watch(printerSettingsProvider);
     final strings = AppStrings.of(ref);
-    final chars = settings.charsPerLine;
-    final text = testInvoicePreviewPagePreviewText;
+    final service = ref.watch(printServiceProvider);
+    final shop = testInvoicePreviewPageShopName;
     final connected = BluetoothPrinterHub.instance.isReady;
+    final sample = isKot
+        ? service.kotPreviewText(paperSize: settings.kotPaperSize)
+        : null;
+    final bill = SampleReceiptData.sampleBill();
 
     return Scaffold(
       appBar: AppBar(title: Text(testInvoicePreviewPageTitle)),
@@ -130,60 +182,57 @@ class TestInvoicePreviewPageState extends ConsumerState<TestInvoicePreviewPage> 
         children: [
           Text(
             connected
-                ? 'Printer ready — review sample layout then Test Print.'
-                : 'Connect a printer, then Test Print to verify layout.',
+                ? (isKot
+                    ? 'Printer ready — KOT layout follows your KOT paper size, prefix & copies.'
+                    : 'Printer ready — layout follows your paper size, customer, payment & logo options.')
+                : (isKot
+                    ? 'Preview uses your KOT options (paper size, prefix, copies). Connect to Test Print.'
+                    : 'Preview uses your printer options (paper size, customer, payment, logo). Connect to Test Print.'),
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Colors.black54,
                 ),
           ),
-          const SizedBox(height: 16),
-          Center(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                maxWidth: chars <= 32 ? 280 : 360,
-              ),
-              child: AppCard(
-                padding: EdgeInsets.zero,
-                child: Material(
-                  color: Colors.white,
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 16,
-                    ),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.black12),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const Text(
-                          'TEST COPY',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        SelectableText(
-                          text,
-                          style: TextStyle(
-                            fontFamily: AppFonts.family,
-                            fontSize: chars <= 32 ? 12.5 : 11.5,
-                            height: 1.35,
-                            color: Colors.black87,
-                            letterSpacing: 0.2,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+          const SizedBox(height: 8),
+          Text(
+            isKot
+                ? [
+                    settings.kotPaperSize.dbValue,
+                    if (settings.kotPrefix.trim().isNotEmpty)
+                      'Prefix ${settings.kotPrefix.trim()}',
+                    'Copies ${settings.kotCopies}',
+                    if (settings.kotEnable) 'KOT ON' else 'KOT OFF',
+                    if (settings.kotAutoPrint) 'Auto print ON' else 'Auto print OFF',
+                    if (settings.kotPreview) 'Preview ON' else 'Preview OFF',
+                  ].join(' · ')
+                : [
+                    settings.paperSize.dbValue,
+                    if (settings.customerUse) 'Customer ON' else 'Customer OFF',
+                    if (settings.paymentUse) 'Payment ON' else 'Payment OFF',
+                    if (settings.logoUse) 'Logo ON' else 'Logo OFF',
+                  ].join(' · '),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w600,
                 ),
-              ),
-            ),
           ),
+          const SizedBox(height: 16),
+          if (isKot)
+            PaperSizePreviewCard(
+              title: 'KOT · ${settings.kotPaperSize.dbValue}',
+              text: sample!,
+              paperSize: settings.kotPaperSize,
+            )
+          else
+            PaperSizePreviewCard(
+              title: 'Bill · ${settings.paperSize.dbValue}',
+              text: service.billPreviewText(
+                invoice: bill.invoice,
+                items: bill.items,
+                shopName: shop,
+                paperSize: settings.paperSize,
+              ),
+              paperSize: settings.paperSize,
+            ),
         ],
       ),
       ),

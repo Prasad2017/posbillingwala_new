@@ -20,11 +20,15 @@ $today = date('Y-m-d');
 if ($deviceId !== '') {
     $rows = db_stmt_fetch_all(
         $con,
-        "SELECT * FROM mess_meal_token
-         WHERE userId = ? AND token_date = ?
-           AND print_status IN ('PRINT_PENDING','PRINT_FAILED','CREATED')
-           AND (print_device_id IS NULL OR print_device_id = '' OR print_device_id = ?)
-         ORDER BY id ASC",
+        "SELECT t.*,
+                m.member_mobile_number AS member_mobile,
+                m.member_altenet_mobile_number AS member_alt_mobile
+         FROM mess_meal_token t
+         LEFT JOIN mess_member m ON m.id = t.member_id
+         WHERE t.userId = ? AND t.token_date = ?
+           AND t.print_status IN ('PRINT_PENDING','PRINT_FAILED','CREATED')
+           AND (t.print_device_id IS NULL OR t.print_device_id = '' OR t.print_device_id = ?)
+         ORDER BY t.id ASC",
         'iss',
         (int) $userId,
         $today,
@@ -33,10 +37,14 @@ if ($deviceId !== '') {
 } else {
     $rows = db_stmt_fetch_all(
         $con,
-        "SELECT * FROM mess_meal_token
-         WHERE userId = ? AND token_date = ?
-           AND print_status IN ('PRINT_PENDING','PRINT_FAILED','CREATED')
-         ORDER BY id ASC",
+        "SELECT t.*,
+                m.member_mobile_number AS member_mobile,
+                m.member_altenet_mobile_number AS member_alt_mobile
+         FROM mess_meal_token t
+         LEFT JOIN mess_member m ON m.id = t.member_id
+         WHERE t.userId = ? AND t.token_date = ?
+           AND t.print_status IN ('PRINT_PENDING','PRINT_FAILED','CREATED')
+         ORDER BY t.id ASC",
         'is',
         (int) $userId,
         $today
@@ -45,6 +53,14 @@ if ($deviceId !== '') {
 
 $tokens = array();
 foreach ($rows as $row) {
+    $memberMobile = '';
+    if (!empty($row['member_mobile'])) {
+        $memberMobile = trim((string) $row['member_mobile']);
+    } elseif (!empty($row['member_alt_mobile'])) {
+        $memberMobile = trim((string) $row['member_alt_mobile']);
+    } elseif (!empty($row['registration_no'])) {
+        $memberMobile = trim((string) $row['registration_no']);
+    }
     $tokens[] = array(
         'tokenId' => $row['public_id'],
         'tokenNumber' => $row['token_number'],
@@ -54,6 +70,7 @@ foreach ($rows as $row) {
         'printStatus' => $row['print_status'],
         'createdAt' => $row['created_at'],
         'memberName' => $row['member_name'],
+        'memberMobile' => $memberMobile,
     );
 }
 

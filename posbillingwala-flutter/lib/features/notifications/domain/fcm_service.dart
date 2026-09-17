@@ -4,8 +4,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:pos_billingwala_v2/core/network/api_client.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
+import 'package:pos_billingwala_v2/core/logging/app_logger.dart';
+import 'package:pos_billingwala_v2/core/network/api_client.dart';
 import 'package:pos_billingwala_v2/features/auth/data/device_identity_service.dart';
 import 'package:pos_billingwala_v2/features/notifications/data/fcm_api.dart';
 import 'package:pos_billingwala_v2/features/notifications/domain/in_app_notification_store.dart';
@@ -45,7 +46,7 @@ class FcmService {
     try {
       await Firebase.initializeApp();
     } catch (e) {
-      debugPrint('Firebase init skipped/failed: $e');
+      AppLogger.warning('Firebase init skipped/failed', e);
       return;
     }
 
@@ -134,7 +135,7 @@ class FcmService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('fcm_last_user_id', userId);
     } catch (e) {
-      debugPrint('FCM register failed: $e');
+      AppLogger.error('FCM register failed', e);
     }
   }
 
@@ -151,7 +152,7 @@ class FcmService {
       await prefs.remove('fcm_last_user_id');
       await FirebaseMessaging.instance.deleteToken();
     } catch (e) {
-      debugPrint('FCM clear failed: $e');
+      AppLogger.error('FCM clear failed', e);
     }
   }
 
@@ -169,7 +170,7 @@ class FcmService {
 
     final title = (message.notification?.title ??
             data['title'] ??
-            (type == 'license_expiring' ? 'Licence expiring' : 'POS Billingwala'))
+            (type == 'license_expiring' ? 'Licence expiring' : 'Billingwala'))
         .toString();
     final body = (message.notification?.body ??
             data['body'] ??
@@ -237,6 +238,7 @@ class FcmService {
       'createdAt': data['createdAt']?.toString() ??
           DateTime.now().toIso8601String(),
       'printStatus': data['printStatus']?.toString() ?? 'RECEIVED',
+      'memberName': data['memberName']?.toString() ?? '',
     };
     list.insert(0, entry);
     await prefs.setString(

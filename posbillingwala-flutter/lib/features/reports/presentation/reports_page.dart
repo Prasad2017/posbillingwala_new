@@ -10,7 +10,7 @@ import 'package:pos_billingwala_v2/features/reports/domain/report_export.dart';
 import 'package:pos_billingwala_v2/features/reports/domain/reports_providers.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/report_period_controls.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/report_widgets.dart';
-import 'package:pos_billingwala_v2/l10n/app_strings.dart';
+import 'package:pos_billingwala_v2/language/app_strings.dart';
 
 class ReportsPage extends ConsumerWidget {
   const ReportsPage({super.key});

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pos_billingwala_v2/core/logging/app_logger.dart';
 import 'package:pos_billingwala_v2/core/network/online_guard.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
@@ -57,7 +58,7 @@ class WebCloudRefreshListener {
           .syncEverythingSilent();
       lastRefreshAt = DateTime.now();
     } catch (e, st) {
-      debugPrint('Web cloud refresh failed: $e\n$st');
+      AppLogger.error('Web cloud refresh failed', e, st);
     } finally {
       running = false;
     }

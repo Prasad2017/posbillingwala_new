@@ -49,7 +49,7 @@ import java.util.List;
 @SuppressLint({"SetTextI18n", "StaticFieldLeak"})
 public class MessTokenBluetoothPrint extends BaseActivity implements View.OnClickListener {
 
-    public static TextView twoShopName, twoShopDetails, twoInvoiceDetails, twoInvoiceMemberName, twoTokenTypeLabel, twoTokenCode;
+    public static TextView twoShopName, twoShopDetails, twoInvoiceDetails, twoInvoiceMemberName, twoInvoiceMemberMobile, twoTokenTypeLabel, twoTokenCode;
     public static ImageView twoCompanyLogo, twoQrCode;
     public static NestedScrollView twoNestedScrollView;
 
@@ -108,6 +108,7 @@ public class MessTokenBluetoothPrint extends BaseActivity implements View.OnClic
         twoShopDetails = findViewById(R.id.twoShopDetails);
         twoInvoiceDetails = findViewById(R.id.twoInvoiceDetails);
         twoInvoiceMemberName = findViewById(R.id.twoInvoiceMemberName);
+        twoInvoiceMemberMobile = findViewById(R.id.twoInvoiceMemberMobile);
         twoTokenTypeLabel = findViewById(R.id.twoTokenTypeLabel);
         twoQrCode = findViewById(R.id.twoQrCode);
         twoTokenCode = findViewById(R.id.twoTokenCode);
@@ -127,11 +128,12 @@ public class MessTokenBluetoothPrint extends BaseActivity implements View.OnClic
     }
 
     private void renderTokenPreview() {
-        if (tokenCode == null || memberName == null) {
+        if (tokenCode == null) {
             return;
         }
 
-        twoInvoiceMemberName.setText(memberName);
+        twoInvoiceMemberName.setText(memberName != null ? memberName.trim() : "");
+        twoInvoiceMemberMobile.setText(memberMobile != null ? memberMobile.trim() : "");
         twoInvoiceDetails.setText(messType + "\n" + tokenDate);
         twoTokenTypeLabel.setText("MESS QR TOKEN");
         twoTokenCode.setText("Token: " + tokenCode.substring(0, Math.min(8, tokenCode.length())).toUpperCase());
@@ -146,6 +148,14 @@ public class MessTokenBluetoothPrint extends BaseActivity implements View.OnClic
     @Override
     public void onClick(View view) {
         if (view.getId() == R.id.printInvoiceCardView) {
+            if (memberName == null || memberName.trim().isEmpty()) {
+                Toast.makeText(this, getString(R.string.toast_please_enter_member_name), Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (memberMobile == null || memberMobile.trim().isEmpty()) {
+                Toast.makeText(this, getString(R.string.toast_please_enter_member_mobile_number), Toast.LENGTH_SHORT).show();
+                return;
+            }
             if (printerSettingResponseList.isEmpty()) {
                 Toast.makeText(this, getString(R.string.toast_please_select_printer_from_setting), Toast.LENGTH_SHORT).show();
                 return;

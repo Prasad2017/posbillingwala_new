@@ -186,6 +186,14 @@ try {
     if ($storedReg === '') {
         $storedReg = $mobileIn !== '' ? $mobileIn : $reg;
     }
+    $memberName = trim($memberName);
+    if ($memberName === '' || $storedReg === '') {
+        mysqli_rollback($con);
+        $out['message'] = 'Member name and mobile number are required to print this token.';
+        echo json_encode($out);
+        mysqli_close($con);
+        exit;
+    }
     // Keep member registration_no in sync with mobile when blank.
     if (mess_normalize_registration(isset($member['registration_no']) ? $member['registration_no'] : '') === ''
         && $storedReg !== '') {

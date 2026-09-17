@@ -332,7 +332,9 @@ class MessController extends Notifier<AsyncValue<void>> {
       await db.enqueueMessMealToken(
         serverPublicId: id,
         tokenNumber: token.tokenNumber,
-        registrationNo: token.registrationNo,
+        registrationNo: token.registrationNo.trim().isNotEmpty
+            ? token.registrationNo
+            : token.memberMobile,
         mealSession: token.mealSession,
         tokenDate: token.date,
         memberName: token.memberName,

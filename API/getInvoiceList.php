@@ -19,6 +19,8 @@ if ($_SERVER['REQUEST_METHOD'] == "GET") {
         exit;
     }
     $userId = $readCtx['targetBranchId'];
+    require_once __DIR__ . '/pos_staff.php';
+    pos_require_permission($con, $userId, 'bill.view');
     $userIdEsc = mysqli_real_escape_string($con, (string) $userId);
 
     date_default_timezone_set("Asia/Calcutta");

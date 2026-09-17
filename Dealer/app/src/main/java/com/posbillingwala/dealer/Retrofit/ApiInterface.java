@@ -4,6 +4,7 @@ package com.posbillingwala.dealer.Retrofit;
 import com.posbillingwala.dealer.Model.AllApiResponse;
 import com.posbillingwala.dealer.Model.CatalogImportHistoryResponse;
 import com.posbillingwala.dealer.Model.CatalogImportPreviewResponse;
+import com.posbillingwala.dealer.Model.StoreOpsResponse;
 
 import okhttp3.MultipartBody;
 import okhttp3.RequestBody;
@@ -310,5 +311,10 @@ public interface ApiInterface {
     Call<AllApiResponse> registerFcmToken(@Field("userId") String userId,
                                           @Field("android_device_id") String androidDeviceId,
                                           @Field("fcm_token") String fcmToken);
+
+    @FormUrlEncoded
+    @POST("getStoreOpsSummary.php")
+    Call<StoreOpsResponse> getStoreOpsSummary(@Field("userId") String userId,
+                                              @Field("licenseId") String licenseId);
 
 }

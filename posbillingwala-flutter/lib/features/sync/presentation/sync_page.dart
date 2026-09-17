@@ -6,8 +6,7 @@ import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
 import 'package:pos_billingwala_v2/core/network/online_guard.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
-import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
-import 'package:pos_billingwala_v2/core/widgtes/widgtes.dart';
+import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/sync/domain/full_sync_controller.dart';
 import 'package:pos_billingwala_v2/features/sync/domain/sync_progress.dart';
 
@@ -61,7 +60,11 @@ class SyncPageState extends ConsumerState<SyncPage> {
 
     final full = ref.read(fullSyncControllerProvider.notifier);
     if (syncPageMode == SyncScreenMode.fetch) {
-      await full.resetAndFetchWithProgress();
+      final result = await full.resetAndFetchWithProgress();
+      if (!mounted) return;
+      if (result.localCounts != null) {
+        context.pushReplacement('/sync/fetch-result');
+      }
     } else {
       await full.uploadWithProgress();
     }
@@ -70,7 +73,11 @@ class SyncPageState extends ConsumerState<SyncPage> {
   @override
   Widget build(BuildContext context) {
     final progress = ref.watch(syncProgressProvider);
+    final syncResult = ref.watch(fullSyncControllerProvider).asData?.value;
     final canLeave = !progress.isRunning;
+    final showSavedData = syncPageMode == SyncScreenMode.fetch &&
+        syncResult?.localCounts != null &&
+        canLeave;
 
     return PopScope(
       canPop: canLeave,
@@ -163,8 +170,16 @@ class SyncPageState extends ConsumerState<SyncPage> {
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                 child: AppButton(
-                  label: 'Done',
-                  onPressed: canLeave ? () => context.pop() : null,
+                  label: showSavedData ? 'View saved data' : 'Done',
+                  onPressed: canLeave
+                      ? () {
+                          if (showSavedData) {
+                            context.pushReplacement('/sync/fetch-result');
+                          } else {
+                            context.pop();
+                          }
+                        }
+                      : null,
                 ),
               ),
             ),

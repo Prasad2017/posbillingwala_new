@@ -1,8 +1,8 @@
 package com.posbillingwala.pos_billingwala_v2.print
 
 import android.app.Activity
-import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
@@ -15,7 +15,7 @@ import io.flutter.plugin.common.MethodChannel
 /** Android print path matching WithTable [BluetoothPrinterChannel] + WoosimService. */
 class WoosimPrintPlugin(
     private val context: Context,
-) : MethodCallHandler {
+) : MethodChannel.MethodCallHandler {
 
     private val bill = Session("bill", context)
     private val kot = Session("kot", context)
@@ -68,7 +68,9 @@ class WoosimPrintPlugin(
         fun connect(mac: String): Boolean {
             val address = mac.trim()
             if (address.isEmpty()) return false
-            val adapter = BluetoothAdapter.getDefaultAdapter() ?: return false
+            val adapter = (app.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager)
+                ?.adapter
+                ?: return false
             if (!adapter.isEnabled) return false
             ensureService()
             val service = printService ?: return false

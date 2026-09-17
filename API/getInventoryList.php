@@ -12,6 +12,8 @@ $i=0;
         $userId = $_GET['userId'];
         $__postedUserId = isset($_GET['userId']) ? $_GET['userId'] : (isset($userId) ? $userId : '');
         pos_require_auth($con, $__postedUserId, isset($response) ? $response : array('status'=>'0','message'=>'Unauthorized'));
+        require_once __DIR__ . '/pos_staff.php';
+        pos_require_permission($con, $userId, 'inventory.view');
 
         
         date_default_timezone_set("Asia/Calcutta");
@@ -33,9 +35,12 @@ $i=0;
         $getdata["productInventoryQuantity"]=$row['productInventoryQuantity'];
         $getdata["afterSaleInventoryQuantity"]=$row['afterSaleInventoryQuantity'];
         $getdata["saleInventoryQuantity"]=$row['saleInventoryQuantity'];
-        $getdta["inventoryDate"]=$row['inventoryDate'];
-        $getdta["inventoryNetworkStatus"]=$row['inventoryNetworkStatus'];
-        $getdta["inventoryStatus"]=$row['inventoryStatus'];
+        $getdata["movementType"]=isset($row['movementType']) && $row['movementType'] !== '' ? $row['movementType'] : 'purchase';
+        $getdata["inventoryNote"]=isset($row['inventoryNote']) ? $row['inventoryNote'] : '';
+        $getdata["unitCost"]=isset($row['unitCost']) ? $row['unitCost'] : '0';
+        $getdata["inventoryDate"]=$row['inventoryDate'];
+        $getdata["inventoryNetworkStatus"]=$row['inventoryNetworkStatus'];
+        $getdata["inventoryStatus"]=$row['inventoryStatus'];
        
         header('Content-type: application/json; charset=utf-8');
     

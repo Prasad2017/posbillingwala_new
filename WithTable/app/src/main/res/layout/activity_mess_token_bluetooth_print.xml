@@ -86,6 +86,15 @@
                 android:textSize="14dp" />
 
             <TextView
+                android:id="@+id/twoInvoiceMemberMobile"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/poppinsregular"
+                android:gravity="center"
+                android:textColor="@color/black"
+                android:textSize="12dp" />
+
+            <TextView
                 android:id="@+id/twoInvoiceDetails"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

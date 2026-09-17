@@ -6,6 +6,7 @@ import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/home/data/home_sales_api.dart';
 import 'package:pos_billingwala_v2/features/masters/domain/masters_providers.dart';
 import 'package:pos_billingwala_v2/features/reports/domain/reports_providers.dart';
+import 'package:pos_billingwala_v2/features/sync/domain/cloud_screen_cache.dart';
 
 /* Home period filter — Android `SALES_FILTER_TODAY` / `SALES_FILTER_MONTH`. */
 /* - today → primary card = all-time total sales */
@@ -42,19 +43,30 @@ final allTimeSalesSummaryProvider = Provider<SalesSummary>((ref) {
   return SalesSummary.fromInvoices(invoices);
 });
 
-/* Cloud overview (Android `getHomeSalesOverview`) — null when offline / failed. */
+/* Cloud overview (Android `getHomeSalesOverview`) — cache first, then network. */
 final homeSalesOverviewProvider =
     FutureProvider.autoDispose<HomeSalesOverview?>((ref) async {
   final userId = ref.watch(authControllerProvider).session?.userId;
   if (userId == null || userId.isEmpty) return null;
-  if (!await isDeviceOnline()) return null;
 
   final period = ref.watch(homeSalesPeriodProvider);
+  final cacheKey = period == HomeSalesPeriod.month
+      ? CloudScreenCache.homeOverviewMonth
+      : CloudScreenCache.homeOverviewToday;
+  final cached = await CloudScreenCache.loadMap(cacheKey);
+  HomeSalesOverview? cachedOverview;
+  if (cached != null) {
+    cachedOverview = HomeSalesOverview.fromJson(cached);
+  }
+
+  if (!await isDeviceOnline()) return cachedOverview;
+
   final api = HomeSalesApi(ref.read(apiClientProvider));
-  return api.fetchOverview(
+  final live = await api.fetchOverview(
     userId: userId,
     period: period == HomeSalesPeriod.month ? 'month' : 'today',
   );
+  return live ?? cachedOverview;
 });
 
 /* Display model for home Sales Overview + catalog KPI tiles. */
