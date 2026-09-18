@@ -32,7 +32,14 @@ Future<T?> showAppBottomSheet<T>({
             Row(
               children: [
                 if (icon != null) ...[
-                  Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: ctx.primary.withValues(alpha: .10), borderRadius: BorderRadius.circular(14)), child: Icon(icon, color: ctx.primary)),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: ctx.primary.withValues(alpha: .10),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Icon(icon, color: ctx.primary),
+                  ),
                   const SizedBox(width: 10),
                 ],
                 Expanded(

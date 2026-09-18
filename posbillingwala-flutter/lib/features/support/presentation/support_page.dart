@@ -62,42 +62,43 @@ class SupportPageState extends ConsumerState<SupportPage> {
               24,
             ),
             children: [
-            SupportOnlineBanner(online: supportPageOnline),
-            const SizedBox(height: 14),
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: AppColors.border),
+              SupportOnlineBanner(online: supportPageOnline),
+              const SizedBox(height: 14),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Column(
+                  children: [
+                    SupportNavTile(
+                      title: 'Create Support Ticket',
+                      subtitle:
+                          "Need help? Create a new support ticket and we'll get back to you.",
+                      icon: Icons.confirmation_number_outlined,
+                      iconColor: AppColors.primary,
+                      iconBg: AppColors.primaryLight,
+                      onTap: () => context.push('/support/create'),
+                    ),
+                    SupportNavTile(
+                      title: 'My Support Tickets',
+                      subtitle:
+                          'View your previous tickets and check their status.',
+                      icon: Icons.folder_open_rounded,
+                      iconColor: AppColors.green,
+                      iconBg: AppColors.green.withValues(alpha: 0.12),
+                      showDivider: true,
+                      onTap: () => context.push('/support/tickets'),
+                    ),
+                  ],
+                ),
               ),
-              child: Column(
-                children: [
-                  SupportNavTile(
-                    title: 'Create Support Ticket',
-                    subtitle:
-                        "Need help? Create a new support ticket and we'll get back to you.",
-                    icon: Icons.confirmation_number_outlined,
-                    iconColor: AppColors.primary,
-                    iconBg: AppColors.primaryLight,
-                    onTap: () => context.push('/support/create'),
-                  ),
-                  SupportNavTile(
-                    title: 'My Support Tickets',
-                    subtitle: 'View your previous tickets and check their status.',
-                    icon: Icons.folder_open_rounded,
-                    iconColor: AppColors.green,
-                    iconBg: AppColors.green.withValues(alpha: 0.12),
-                    showDivider: true,
-                    onTap: () => context.push('/support/tickets'),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 14),
-            const SupportUrgentHelpCard(),
-            const SizedBox(height: 14),
-            const SupportHoursCard(),
-          ],
+              const SizedBox(height: 14),
+              const SupportUrgentHelpCard(),
+              const SizedBox(height: 14),
+              const SupportHoursCard(),
+            ],
           ),
         ),
       ),

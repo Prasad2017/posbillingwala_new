@@ -7,6 +7,8 @@ class WidgetStrings {
   static const noResultsFound = 'No results found';
 
   static String enterFieldHint(String label) => 'Enter $label';
+
   static String selectFieldHint(String label) => 'Select $label';
+
   static String selectedCount(int count) => '$count selected';
 }

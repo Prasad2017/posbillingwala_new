@@ -8,9 +8,17 @@ import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/masters/data/masters_api.dart';
 import 'package:pos_billingwala_v2/features/masters/domain/masters_providers.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/billing_session.dart';
+import 'package:pos_billingwala_v2/features/staff/data/staff_store.dart';
 import 'package:pos_billingwala_v2/features/tables/data/dining_session_api.dart';
 
-enum FloorTableStatus { available, running, hold, billRequest, blocked, reserved }
+enum FloorTableStatus {
+  available,
+  running,
+  hold,
+  billRequest,
+  blocked,
+  reserved,
+}
 
 class FloorTableView {
   const FloorTableView({
@@ -68,25 +76,22 @@ final allCartItemsProvider = StreamProvider<List<CartItem>>((ref) {
 });
 
 final floorTablesProvider = Provider<List<FloorTableView>>((ref) {
-  final tables = ref.watch(posTablesProvider).maybeWhen(
-        data: (rows) => rows,
-        orElse: () => const <PosTable>[],
-      );
-  final sessions = ref.watch(openDiningSessionsProvider).maybeWhen(
-        data: (rows) => rows,
-        orElse: () => const <DiningSession>[],
-      );
-  final cart = ref.watch(allCartItemsProvider).maybeWhen(
-        data: (rows) => rows,
-        orElse: () => const <CartItem>[],
-      );
-  final typeRows = ref.watch(tableTypesProvider).maybeWhen(
-        data: (rows) => rows,
-        orElse: () => const <TableType>[],
-      );
+  final tables = ref
+      .watch(posTablesProvider)
+      .maybeWhen(data: (rows) => rows, orElse: () => const <PosTable>[]);
+  final sessions = ref
+      .watch(openDiningSessionsProvider)
+      .maybeWhen(data: (rows) => rows, orElse: () => const <DiningSession>[]);
+  final cart = ref
+      .watch(allCartItemsProvider)
+      .maybeWhen(data: (rows) => rows, orElse: () => const <CartItem>[]);
+  final typeRows = ref
+      .watch(tableTypesProvider)
+      .maybeWhen(data: (rows) => rows, orElse: () => const <TableType>[]);
   final typeNameById = <int, String>{
     for (final t in typeRows)
-      if (t.tableTypeName.trim().isNotEmpty) t.tableTypeId: t.tableTypeName.trim(),
+      if (t.tableTypeName.trim().isNotEmpty)
+        t.tableTypeId: t.tableTypeName.trim(),
   };
   final db = ref.watch(appDatabaseProvider);
 
@@ -142,8 +147,8 @@ final floorTablesProvider = Provider<List<FloorTableView>>((ref) {
     final joinedLabel = joined.length > 1
         ? joined.map((e) => 'T$e').join(' + ')
         : null;
-    final isSecondary = session != null &&
-        session.primaryTableNumber != table.tableNumber;
+    final isSecondary =
+        session != null && session.primaryTableNumber != table.tableNumber;
 
     FloorTableStatus status;
     if (session == null && amount <= 0) {
@@ -256,8 +261,9 @@ class TablesController extends Notifier<AsyncValue<void>> {
         sessionVersion: session.sessionVersion,
         sessionNetworkStatus: session.sessionNetworkStatus,
       );
-      final ok = await DiningSessionApi(ref.read(apiClientProvider))
-          .insertDiningSession(userId: userId, session: dto);
+      final ok = await DiningSessionApi(
+        ref.read(apiClientProvider),
+      ).insertDiningSession(userId: userId, session: dto);
       if (ok) {
         await ref
             .read(appDatabaseProvider)
@@ -281,14 +287,21 @@ class TablesController extends Notifier<AsyncValue<void>> {
     }
 
     final db = ref.read(appDatabaseProvider);
-    final session =
-        await db.openOrGetDiningSession(floor.billingTableNumber);
+    final staff = await StaffStore().read();
+    final waiter = staff?.name.trim();
+    final session = await db.openOrGetDiningSession(
+      floor.billingTableNumber,
+      waiterName: (waiter != null && waiter.isNotEmpty) ? waiter : null,
+    );
     await uploadDiningSessionIfOnline(session);
-    final label = floor.joinedLabel ??
+    final label =
+        floor.joinedLabel ??
         (floor.table.displayName.isEmpty
             ? floor.table.tableNumber
             : floor.table.displayName);
-    ref.read(billingSessionProvider.notifier).startTableBilling(
+    ref
+        .read(billingSessionProvider.notifier)
+        .startTableBilling(
           tableNumber: session.primaryTableNumber,
           tableName: label,
           diningSessionId: session.sessionId,
@@ -300,10 +313,9 @@ class TablesController extends Notifier<AsyncValue<void>> {
     required String primaryTable,
     required String secondaryTable,
   }) async {
-    final session = await ref.read(appDatabaseProvider).joinTables(
-          primaryTable: primaryTable,
-          secondaryTable: secondaryTable,
-        );
+    final session = await ref
+        .read(appDatabaseProvider)
+        .joinTables(primaryTable: primaryTable, secondaryTable: secondaryTable);
     await uploadDiningSessionIfOnline(session);
     return session;
   }
@@ -320,10 +332,7 @@ class TablesController extends Notifier<AsyncValue<void>> {
     required String toTable,
   }) async {
     final db = ref.read(appDatabaseProvider);
-    await db.transferTable(
-      fromTable: fromTable,
-      toTable: toTable,
-    );
+    await db.transferTable(fromTable: fromTable, toTable: toTable);
     final session = await db.openOrGetDiningSession(toTable);
     await uploadDiningSessionIfOnline(session);
   }
@@ -333,10 +342,7 @@ class TablesController extends Notifier<AsyncValue<void>> {
     required String status,
   }) async {
     final db = ref.read(appDatabaseProvider);
-    await db.setDiningSessionStatus(
-      sessionId: sessionId,
-      status: status,
-    );
+    await db.setDiningSessionStatus(sessionId: sessionId, status: status);
     final session = await db.getDiningSessionById(sessionId);
     if (session != null) await uploadDiningSessionIfOnline(session);
   }
@@ -346,7 +352,9 @@ class TablesController extends Notifier<AsyncValue<void>> {
     required String toTable,
     required List<CartItem> items,
   }) async {
-    await ref.read(appDatabaseProvider).moveCartItemsToTable(
+    await ref
+        .read(appDatabaseProvider)
+        .moveCartItemsToTable(
           fromTable: fromTable,
           toTable: toTable,
           items: items,
@@ -374,6 +382,4 @@ class TablesController extends Notifier<AsyncValue<void>> {
 }
 
 final tablesControllerProvider =
-    NotifierProvider<TablesController, AsyncValue<void>>(
-  TablesController.new,
-);
+    NotifierProvider<TablesController, AsyncValue<void>>(TablesController.new);

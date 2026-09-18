@@ -24,17 +24,20 @@ class ProductWiseReportPage extends ConsumerStatefulWidget {
 }
 
 class ProductWiseReportPageState extends ConsumerState<ProductWiseReportPage> {
-  late String typeFilter; /* all | product | combo */
+  late String typeFilter;
+
+  /* all | product | combo */
   bool productWiseReportPageLeastSold = false;
-  AsyncValue<List<ProductSalesRow>> productWiseReportPageRows = const AsyncLoading();
+  AsyncValue<List<ProductSalesRow>> productWiseReportPageRows =
+      const AsyncLoading();
 
   @override
   void initState() {
     super.initState();
     typeFilter =
         widget.initialType == 'combo' || widget.initialType == 'product'
-            ? widget.initialType
-            : 'all';
+        ? widget.initialType
+        : 'all';
     Future.microtask(load);
   }
 
@@ -49,7 +52,9 @@ class ProductWiseReportPageState extends ConsumerState<ProductWiseReportPage> {
         end: end,
         includeItems: true,
       );
-      return ref.read(appDatabaseProvider).getProductWiseSales(
+      return ref
+          .read(appDatabaseProvider)
+          .getProductWiseSales(
             start: start,
             end: end,
             invoiceItemType: typeFilter == 'all' ? null : typeFilter,
@@ -99,176 +104,185 @@ class ProductWiseReportPageState extends ConsumerState<ProductWiseReportPage> {
       body: ResponsiveScrollShell(
         dashboard: true,
         child: ListView(
-        padding: EdgeInsets.fromLTRB(
+          padding: EdgeInsets.fromLTRB(
             AppBreakpoints.pagePaddingFor(context.widthClass),
             12,
             AppBreakpoints.pagePaddingFor(context.widthClass),
-            28),
-        children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: ReportPeriodPill(
-              label: reportPeriodDisplayLabel(period) == 'Today'
-                  ? 'All Records'
-                  : reportPeriodDisplayLabel(period),
-              onTap: () => showReportPeriodFilterMenu(context, ref),
-            ),
+            28,
           ),
-          const SizedBox(height: 12),
-          SizedBox(
-            height: 40,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: [
-                for (final entry in const [
-                  (false, 'Top sellers'),
-                  (true, 'Least sold'),
-                ])
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: FilterChip(
-                      label: Text(entry.$2),
-                      selected: productWiseReportPageLeastSold == entry.$1,
-                      onSelected: (_) {
-                        setState(() => productWiseReportPageLeastSold = entry.$1);
-                        load();
-                      },
-                    ),
-                  ),
-                for (final entry in const [
-                  ('all', 'All'),
-                  ('product', 'Products'),
-                  ('combo', 'Combos'),
-                ])
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: FilterChip(
-                      label: Text(entry.$2),
-                      selected: typeFilter == entry.$1,
-                      onSelected: (_) {
-                        setState(() => typeFilter = entry.$1);
-                        load();
-                      },
-                    ),
-                  ),
-              ],
+          children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: ReportPeriodPill(
+                label: reportPeriodDisplayLabel(period) == 'Today'
+                    ? 'All Records'
+                    : reportPeriodDisplayLabel(period),
+                onTap: () => showReportPeriodFilterMenu(context, ref),
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
-          productWiseReportPageRows.when(
-            data: (rows) {
-              if (rows.isEmpty) {
-                return ReportSurfaceCard(
-                  padding: const EdgeInsets.all(28),
-                  child: Center(child: Text(AppStrings.of(ref).noBillsPeriod)),
-                );
-              }
-              final totalQty = rows.fold<double>(0, (s, r) => s + r.totalQuantity);
-              final totalAmt =
-                  rows.fold<double>(0, (s, r) => s + r.totalAmount);
-              final topRows = rows.take(6).toList();
-              final topSlices = [
-                for (var i = 0; i < topRows.length; i++)
-                  ReportSlice(
-                    label: topRows[i].productName,
-                    value: topRows[i].totalAmount,
-                    color: [
-                      AppColors.primary,
-                      AppColors.green,
-                      AppColors.orange,
-                      AppColors.purple,
-                      AppColors.teal,
-                      const Color(0xFFE6A100),
-                    ][i % 6],
-                  ),
-              ];
-
-              return Column(
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 40,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
                 children: [
-                  ReportKpiGrid(
-                    items: [
-                      ReportKpiData(
-                        label: 'Items',
-                        value: '${rows.length}',
+                  for (final entry in const [
+                    (false, 'Top sellers'),
+                    (true, 'Least sold'),
+                  ])
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: FilterChip(
+                        label: Text(entry.$2),
+                        selected: productWiseReportPageLeastSold == entry.$1,
+                        onSelected: (_) {
+                          setState(
+                            () => productWiseReportPageLeastSold = entry.$1,
+                          );
+                          load();
+                        },
                       ),
-                      ReportKpiData(
-                        label: 'TOTAL AMOUNT',
-                        value: currency.format(totalAmt),
+                    ),
+                  for (final entry in const [
+                    ('all', 'All'),
+                    ('product', 'Products'),
+                    ('combo', 'Combos'),
+                  ])
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: FilterChip(
+                        label: Text(entry.$2),
+                        selected: typeFilter == entry.$1,
+                        onSelected: (_) {
+                          setState(() => typeFilter = entry.$1);
+                          load();
+                        },
                       ),
-                      ReportKpiData(
-                        label: 'Total Qty',
-                        value: '$totalQty',
-                      ),
-                      ReportKpiData(
-                        label: 'Avg / Item',
-                        value: currency.format(
-                          rows.isEmpty ? 0 : totalAmt / rows.length,
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            productWiseReportPageRows.when(
+              data: (rows) {
+                if (rows.isEmpty) {
+                  return ReportSurfaceCard(
+                    padding: const EdgeInsets.all(28),
+                    child: Center(
+                      child: Text(AppStrings.of(ref).noBillsPeriod),
+                    ),
+                  );
+                }
+                final totalQty = rows.fold<double>(
+                  0,
+                  (s, r) => s + r.totalQuantity,
+                );
+                final totalAmt = rows.fold<double>(
+                  0,
+                  (s, r) => s + r.totalAmount,
+                );
+                final topRows = rows.take(6).toList();
+                final topSlices = [
+                  for (var i = 0; i < topRows.length; i++)
+                    ReportSlice(
+                      label: topRows[i].productName,
+                      value: topRows[i].totalAmount,
+                      color: [
+                        AppColors.primary,
+                        AppColors.green,
+                        AppColors.orange,
+                        AppColors.purple,
+                        AppColors.teal,
+                        const Color(0xFFE6A100),
+                      ][i % 6],
+                    ),
+                ];
+
+                return Column(
+                  children: [
+                    ReportKpiGrid(
+                      items: [
+                        ReportKpiData(label: 'Items', value: '${rows.length}'),
+                        ReportKpiData(
+                          label: 'TOTAL AMOUNT',
+                          value: currency.format(totalAmt),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  ReportDonutBreakdown(
-                    title: productWiseReportPageLeastSold ? 'Least Sold Mix' : 'Top Sellers Mix',
-                    slices: topSlices,
-                    centerValue: currency.format(totalAmt),
-                  ),
-                  const SizedBox(height: 14),
-                  ReportSurfaceCard(
-                    padding: const EdgeInsets.fromLTRB(4, 12, 4, 4),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-                          child: Text(
-                            productWiseReportPageLeastSold ? 'Least Sold Items' : 'Product Sales',
-                            style: const TextStyle(
-                              fontFamily: AppFonts.family,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 16,
-                              color: AppColors.navy,
-                            ),
+                        ReportKpiData(label: 'Total Qty', value: '$totalQty'),
+                        ReportKpiData(
+                          label: 'Avg / Item',
+                          value: currency.format(
+                            rows.isEmpty ? 0 : totalAmt / rows.length,
                           ),
                         ),
-                        for (var i = 0; i < rows.length; i++) ...[
-                          if (i > 0)
-                            Divider(
-                              height: 1,
-                              color: AppColors.border.withValues(alpha: .7),
-                            ),
-                          ProductRow(
-                            index: i + 1,
-                            row: rows[i],
-                            currency: currency,
-                          ),
-                        ],
                       ],
                     ),
-                  ),
-                ],
-              );
-            },
-            loading: () => const Padding(
-              padding: EdgeInsets.all(40),
-              child: Center(child: CircularProgressIndicator()),
+                    const SizedBox(height: 14),
+                    ReportDonutBreakdown(
+                      title: productWiseReportPageLeastSold
+                          ? 'Least Sold Mix'
+                          : 'Top Sellers Mix',
+                      slices: topSlices,
+                      centerValue: currency.format(totalAmt),
+                    ),
+                    const SizedBox(height: 14),
+                    ReportSurfaceCard(
+                      padding: const EdgeInsets.fromLTRB(4, 12, 4, 4),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                            child: Text(
+                              productWiseReportPageLeastSold
+                                  ? 'Least Sold Items'
+                                  : 'Product Sales',
+                              style: const TextStyle(
+                                fontFamily: AppFonts.family,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 16,
+                                color: AppColors.navy,
+                              ),
+                            ),
+                          ),
+                          for (var i = 0; i < rows.length; i++) ...[
+                            if (i > 0)
+                              Divider(
+                                height: 1,
+                                color: AppColors.border.withValues(alpha: .7),
+                              ),
+                            ProductRow(
+                              index: i + 1,
+                              row: rows[i],
+                              currency: currency,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              },
+              loading: () => const Padding(
+                padding: EdgeInsets.all(40),
+                child: Center(child: CircularProgressIndicator()),
+              ),
+              error: (e, _) => ReportSurfaceCard(
+                padding: EdgeInsets.all(
+                  AppBreakpoints.pagePaddingFor(context.widthClass),
+                ),
+                child: Text('$e'),
+              ),
             ),
-            error: (e, _) => ReportSurfaceCard(
-              padding: EdgeInsets.all(
-            AppBreakpoints.pagePaddingFor(context.widthClass),
-          ),
-              child: Text('$e'),
-            ),
-          ),
-        ],
-      ),
+          ],
+        ),
       ),
     );
   }
 }
 
 class ProductRow extends StatelessWidget {
-  const ProductRow({super.key, 
+  const ProductRow({
+    super.key,
     required this.index,
     required this.row,
     required this.currency,

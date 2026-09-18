@@ -1,6 +1,7 @@
 package com.pos_billingwala.NetworkToOffline.WorkerClass;
 
 import android.content.Context;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.work.Data;
@@ -57,12 +58,12 @@ public class CategoryWorker extends Worker {
                                 category.getCategoryNetworkStatus(), foodTypeId, sortOrder);
                     }
                 }
+                return Result.success();
             }
-            return Result.success();
+            return Result.retry();
         } catch (Exception e) {
-            e.printStackTrace();
-            return Result.failure();
+            Log.e("CategoryWorker", "doWork failed", e);
+            return Result.retry();
         }
     }
 }
-

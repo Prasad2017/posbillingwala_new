@@ -5,12 +5,12 @@ import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
+import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/masters/domain/masters_providers.dart';
 import 'package:pos_billingwala_v2/features/masters/presentation/widgets/master_ui.dart';
 import 'package:pos_billingwala_v2/features/tables/domain/tables_providers.dart';
-import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 
 class TableMasterPage extends ConsumerStatefulWidget {
   const TableMasterPage({super.key});
@@ -31,7 +31,11 @@ class TableMasterPageState extends ConsumerState<TableMasterPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          MasterOutlinedField(controller: name, hint: 'Area name'),
+          MasterOutlinedField(
+            required: true,
+            controller: name,
+            hint: 'Area name',
+          ),
           const SizedBox(height: 18),
           Row(
             children: [
@@ -67,10 +71,9 @@ class TableMasterPageState extends ConsumerState<TableMasterPage> {
         );
       } else {
         final userId = ref.read(authControllerProvider).session?.userId ?? '';
-        await ref.read(mastersRepositoryProvider).createDiningArea(
-              userId: userId,
-              areaName: value,
-            );
+        await ref
+            .read(mastersRepositoryProvider)
+            .createDiningArea(userId: userId, areaName: value);
       }
     } catch (e) {
       if (!mounted) return;
@@ -103,7 +106,11 @@ class TableMasterPageState extends ConsumerState<TableMasterPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          MasterOutlinedField(controller: name, hint: 'Type name'),
+          MasterOutlinedField(
+            required: true,
+            controller: name,
+            hint: 'Type name',
+          ),
           const SizedBox(height: 12),
           MasterOutlinedField(
             controller: seats,
@@ -146,10 +153,9 @@ class TableMasterPageState extends ConsumerState<TableMasterPage> {
         );
       } else {
         final userId = ref.read(authControllerProvider).session?.userId ?? '';
-        await ref.read(mastersRepositoryProvider).createTableType(
-              userId: userId,
-              tableTypeName: typeName,
-            );
+        await ref
+            .read(mastersRepositoryProvider)
+            .createTableType(userId: userId, tableTypeName: typeName);
       }
     } catch (e) {
       if (!mounted) return;
@@ -172,14 +178,12 @@ class TableMasterPageState extends ConsumerState<TableMasterPage> {
   }
 
   Future<void> addTable({PosTable? existing}) async {
-    final areas = ref.read(diningAreasProvider).maybeWhen(
-          data: (v) => v,
-          orElse: () => const <DiningArea>[],
-        );
-    final types = ref.read(tableTypesProvider).maybeWhen(
-          data: (v) => v,
-          orElse: () => const <TableType>[],
-        );
+    final areas = ref
+        .read(diningAreasProvider)
+        .maybeWhen(data: (v) => v, orElse: () => const <DiningArea>[]);
+    final types = ref
+        .read(tableTypesProvider)
+        .maybeWhen(data: (v) => v, orElse: () => const <TableType>[]);
     final floor = ref.read(floorTablesProvider);
     final nextNo = existing?.tableNumber ?? '${floor.length + 1}';
 
@@ -189,9 +193,7 @@ class TableMasterPageState extends ConsumerState<TableMasterPage> {
           ? existing!.displayName
           : 'T$nextNo',
     );
-    final seats = TextEditingController(
-      text: '${existing?.capacity ?? 2}',
-    );
+    final seats = TextEditingController(text: '${existing?.capacity ?? 2}');
     DiningArea? area;
     if (existing?.areaId != null) {
       for (final a in areas) {
@@ -221,6 +223,7 @@ class TableMasterPageState extends ConsumerState<TableMasterPage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             MasterOutlinedField(
+              required: true,
               controller: number,
               hint: 'Table No',
               keyboardType: TextInputType.number,
@@ -284,9 +287,7 @@ class TableMasterPageState extends ConsumerState<TableMasterPage> {
     );
 
     final tableNo = number.text.trim();
-    final display = name.text.trim().isEmpty
-        ? 'T$tableNo'
-        : name.text.trim();
+    final display = name.text.trim().isEmpty ? 'T$tableNo' : name.text.trim();
     final capacity = int.tryParse(seats.text.trim()) ?? 2;
     number.dispose();
     name.dispose();
@@ -318,7 +319,7 @@ class TableMasterPageState extends ConsumerState<TableMasterPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(existing == null ? 'Table saved' : 'Table updated'),
+          content: Text('Table saved'),
         ),
       );
     } catch (e) {
@@ -426,27 +427,28 @@ class TableMasterPageState extends ConsumerState<TableMasterPage> {
                           ),
                         )
                       : ResponsiveScrollShell(
-        dashboard: true,
-        child: ListView.separated(
-                          padding: EdgeInsets.fromLTRB(
-            AppBreakpoints.pagePaddingFor(context.widthClass),
-            0,
-            AppBreakpoints.pagePaddingFor(context.widthClass),
-            16),
-                          itemCount: rows.length,
-                          separatorBuilder: (_, _) =>
-                              const SizedBox(height: 10),
-                          itemBuilder: (context, i) {
-                            final a = rows[i];
-                            return MasterEntityCard(
-                              title: a.areaName,
-                              subtitle: 'Floor area filter',
-                              onEdit: () => addArea(existing: a),
-                              onRemove: () => removeArea(a),
-                            );
-                          },
+                          dashboard: true,
+                          child: ListView.separated(
+                            padding: EdgeInsets.fromLTRB(
+                              AppBreakpoints.pagePaddingFor(context.widthClass),
+                              0,
+                              AppBreakpoints.pagePaddingFor(context.widthClass),
+                              16,
+                            ),
+                            itemCount: rows.length,
+                            separatorBuilder: (_, _) =>
+                                const SizedBox(height: 10),
+                            itemBuilder: (context, i) {
+                              final a = rows[i];
+                              return MasterEntityCard(
+                                title: a.areaName,
+                                subtitle: 'Floor area filter',
+                                onEdit: () => addArea(existing: a),
+                                onRemove: () => removeArea(a),
+                              );
+                            },
+                          ),
                         ),
-      ),
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
                   error: (e, _) => Center(child: Text('$e')),
@@ -460,27 +462,28 @@ class TableMasterPageState extends ConsumerState<TableMasterPage> {
                           ),
                         )
                       : ResponsiveScrollShell(
-        dashboard: true,
-        child: ListView.separated(
-                          padding: EdgeInsets.fromLTRB(
-            AppBreakpoints.pagePaddingFor(context.widthClass),
-            0,
-            AppBreakpoints.pagePaddingFor(context.widthClass),
-            16),
-                          itemCount: rows.length,
-                          separatorBuilder: (_, _) =>
-                              const SizedBox(height: 10),
-                          itemBuilder: (context, i) {
-                            final t = rows[i];
-                            return MasterEntityCard(
-                              title: t.tableTypeName,
-                              subtitle: typeSubtitle(t),
-                              onEdit: () => addType(existing: t),
-                              onRemove: () => removeType(t),
-                            );
-                          },
+                          dashboard: true,
+                          child: ListView.separated(
+                            padding: EdgeInsets.fromLTRB(
+                              AppBreakpoints.pagePaddingFor(context.widthClass),
+                              0,
+                              AppBreakpoints.pagePaddingFor(context.widthClass),
+                              16,
+                            ),
+                            itemCount: rows.length,
+                            separatorBuilder: (_, _) =>
+                                const SizedBox(height: 10),
+                            itemBuilder: (context, i) {
+                              final t = rows[i];
+                              return MasterEntityCard(
+                                title: t.tableTypeName,
+                                subtitle: typeSubtitle(t),
+                                onEdit: () => addType(existing: t),
+                                onRemove: () => removeType(t),
+                              );
+                            },
+                          ),
                         ),
-      ),
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
                   error: (e, _) => Center(child: Text('$e')),
@@ -493,29 +496,31 @@ class TableMasterPageState extends ConsumerState<TableMasterPage> {
                         ),
                       )
                     : ResponsiveScrollShell(
-        dashboard: true,
-        child: ListView.separated(
-                        padding: EdgeInsets.fromLTRB(
-            AppBreakpoints.pagePaddingFor(context.widthClass),
-            0,
-            AppBreakpoints.pagePaddingFor(context.widthClass),
-            16),
-                        itemCount: floor.length,
-                        separatorBuilder: (_, _) => const SizedBox(height: 10),
-                        itemBuilder: (context, i) {
-                          final t = floor[i].table;
-                          final title = t.displayName.isEmpty
-                              ? 'T${t.tableNumber}'
-                              : '${t.displayName} · No ${t.tableNumber}';
-                          return MasterEntityCard(
-                            title: title,
-                            subtitle: tableSubtitle(t, areaNames),
-                            onEdit: () => addTable(existing: t),
-                            onRemove: () => removeTable(t),
-                          );
-                        },
+                        dashboard: true,
+                        child: ListView.separated(
+                          padding: EdgeInsets.fromLTRB(
+                            AppBreakpoints.pagePaddingFor(context.widthClass),
+                            0,
+                            AppBreakpoints.pagePaddingFor(context.widthClass),
+                            16,
+                          ),
+                          itemCount: floor.length,
+                          separatorBuilder: (_, _) =>
+                              const SizedBox(height: 10),
+                          itemBuilder: (context, i) {
+                            final t = floor[i].table;
+                            final title = t.displayName.isEmpty
+                                ? 'T${t.tableNumber}'
+                                : '${t.displayName} · No ${t.tableNumber}';
+                            return MasterEntityCard(
+                              title: title,
+                              subtitle: tableSubtitle(t, areaNames),
+                              onEdit: () => addTable(existing: t),
+                              onRemove: () => removeTable(t),
+                            );
+                          },
+                        ),
                       ),
-      ),
               ],
             ),
           ),
@@ -564,7 +569,8 @@ class TableMasterPageState extends ConsumerState<TableMasterPage> {
 }
 
 class MasterEntityCard extends StatelessWidget {
-  const MasterEntityCard({super.key, 
+  const MasterEntityCard({
+    super.key,
     required this.title,
     required this.subtitle,
     required this.onEdit,

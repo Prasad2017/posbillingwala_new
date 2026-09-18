@@ -21,7 +21,7 @@ class PosBillingwalaApp extends ConsumerWidget {
     final router = ref.watch(routerProvider);
     /* Recover empty catalog after wrong-id sync / first login. */
     ref.watch(catalogBootstrapListenerProvider);
-    /* Mobile: always-on auto-sync when internet is available. */
+    /* Mobile: offline-first UI; auto-sync to cloud every 2 minutes when online. */
     if (AppPlatform.supportsOfflineSync) {
       ref.watch(connectivitySyncListenerProvider);
     }
@@ -36,11 +36,7 @@ class PosBillingwalaApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       locale: locale,
-      supportedLocales: const [
-        Locale('en'),
-        Locale('hi'),
-        Locale('mr'),
-      ],
+      supportedLocales: const [Locale('en'), Locale('hi'), Locale('mr')],
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
@@ -55,9 +51,7 @@ class PosBillingwalaApp extends ConsumerWidget {
             child: SafeArea(
               child: ColoredBox(
                 color: Colors.white,
-                child: InAppUpdateHost(
-                  child: child ?? const SizedBox.shrink(),
-                ),
+                child: InAppUpdateHost(child: child ?? const SizedBox.shrink()),
               ),
             ),
           ),

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/staff/domain/permission_catalog.dart';
@@ -28,6 +27,8 @@ class StaffFormPageState extends ConsumerState<StaffFormPage> {
   bool loading = false;
   bool dirty = false;
 
+  static const _fieldGap = SizedBox(height: 14);
+
   bool get isEdit => widget.staffId != null;
 
   @override
@@ -49,8 +50,9 @@ class StaffFormPageState extends ConsumerState<StaffFormPage> {
   Future<void> loadDefaults() async {
     final session = ref.read(authControllerProvider).session;
     if (session == null) return;
-    final data =
-        await ref.read(staffApiProvider).roleDefaults(session.licenceUserId, role);
+    final data = await ref
+        .read(staffApiProvider)
+        .roleDefaults(session.licenceUserId, role);
     final raw = data['defaults'];
     final map = <String, int>{};
     if (raw is Map) {
@@ -101,7 +103,9 @@ class StaffFormPageState extends ConsumerState<StaffFormPage> {
     setState(() => loading = true);
     try {
       if (isEdit) {
-        await ref.read(staffApiProvider).update(
+        await ref
+            .read(staffApiProvider)
+            .update(
               userId: session.licenceUserId,
               id: widget.staffId!,
               name: name.text.trim(),
@@ -110,7 +114,9 @@ class StaffFormPageState extends ConsumerState<StaffFormPage> {
               overrides: overrides,
             );
       } else {
-        await ref.read(staffApiProvider).create(
+        await ref
+            .read(staffApiProvider)
+            .create(
               userId: session.licenceUserId,
               name: name.text.trim(),
               mobileNumber: mobile.text.trim(),
@@ -151,23 +157,29 @@ class StaffFormPageState extends ConsumerState<StaffFormPage> {
 
   @override
   Widget build(BuildContext context) {
+    final modules = posPermissionCatalog.entries.toList();
     return Scaffold(
       appBar: AppBar(title: Text(isEdit ? 'Edit User' : 'Add User')),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
         children: [
-          TextField(controller: name, decoration: const InputDecoration(labelText: 'Name *')),
-          TextField(
+          AppTextField(required: true, controller: name, label: 'Name'),
+          _fieldGap,
+          AppTextField(
+            required: true,
             controller: mobile,
+            label: 'Mobile Number',
             keyboardType: TextInputType.phone,
             maxLength: 10,
+            showCounter: false,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            decoration: const InputDecoration(labelText: 'Mobile Number *'),
           ),
-          TextField(controller: address, decoration: const InputDecoration(labelText: 'Address')),
-          const SizedBox(height: 12),
+          _fieldGap,
+          AppTextField(controller: address, label: 'Address'),
+          _fieldGap,
           AppDropdownFormField<String>(
-            label: 'Role *',
+            required: true,
+            label: 'Role',
             items: posFixedRoles.keys.toList(),
             itemLabel: (key) => posFixedRoles[key] ?? key,
             value: role,
@@ -183,73 +195,88 @@ class StaffFormPageState extends ConsumerState<StaffFormPage> {
                   },
           ),
           if (!isEdit) ...[
-            TextField(
+            _fieldGap,
+            AppTextField(
+              required: true,
               controller: pin,
+              label: 'App Login PIN',
               obscureText: true,
               keyboardType: TextInputType.number,
               maxLength: 6,
+              showCounter: false,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration: const InputDecoration(labelText: 'App Login PIN *'),
             ),
-            TextField(
+            _fieldGap,
+            AppTextField(
+              required: true,
               controller: confirmPin,
+              label: 'Confirm PIN',
               obscureText: true,
               keyboardType: TextInputType.number,
               maxLength: 6,
+              showCounter: false,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration: const InputDecoration(labelText: 'Confirm PIN *'),
             ),
           ],
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              const Text('PERMISSIONS', style: TextStyle(fontWeight: FontWeight.w700)),
-              const Spacer(),
-              TextButton(onPressed: resetDefaults, child: const Text('Reset to Role Defaults')),
-            ],
+          const SizedBox(height: 22),
+          AppSectionHeader(
+            title: 'Permissions',
+            action: 'Reset to Role Defaults',
+            onAction: resetDefaults,
           ),
-          for (final module in posPermissionCatalog.entries)
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(module.key.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.w700)),
-                        const Spacer(),
-                        TextButton(
-                          onPressed: () {
-                            for (final action in module.value) {
-                              toggle('${module.key}.$action', true);
-                            }
-                          },
-                          child: const Text('All'),
+          const SizedBox(height: 12),
+          for (var i = 0; i < modules.length; i++) ...[
+            if (i > 0) const SizedBox(height: 12),
+            AppCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          modules[i].key.toUpperCase(),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                            letterSpacing: 0.4,
+                          ),
                         ),
-                        TextButton(
-                          onPressed: () {
-                            for (final action in module.value) {
-                              toggle('${module.key}.$action', false);
-                            }
-                          },
-                          child: const Text('Clear'),
-                        ),
-                      ],
-                    ),
-                    for (final action in module.value)
-                      SwitchListTile(
-                        dense: true,
-                        title: Text(action.replaceAll('_', ' ')),
-                        value: effective('${module.key}.$action'),
-                        activeThumbColor: AppColors.navy,
-                        onChanged: (v) => toggle('${module.key}.$action', v),
                       ),
-                  ],
-                ),
+                      TextButton(
+                        onPressed: () {
+                          for (final action in modules[i].value) {
+                            toggle('${modules[i].key}.$action', true);
+                          }
+                        },
+                        child: const Text('All'),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          for (final action in modules[i].value) {
+                            toggle('${modules[i].key}.$action', false);
+                          }
+                        },
+                        child: const Text('Clear'),
+                      ),
+                    ],
+                  ),
+                  for (var j = 0; j < modules[i].value.length; j++)
+                    AppSwitchTile(
+                      dense: true,
+                      title: modules[i].value[j].replaceAll('_', ' '),
+                      value: effective(
+                        '${modules[i].key}.${modules[i].value[j]}',
+                      ),
+                      showDivider: j < modules[i].value.length - 1,
+                      onChanged: (v) =>
+                          toggle('${modules[i].key}.${modules[i].value[j]}', v),
+                    ),
+                ],
               ),
             ),
-          const SizedBox(height: 12),
+          ],
+          const SizedBox(height: 20),
           AppButton(
             label: loading ? 'Saving…' : 'Save User',
             onPressed: loading ? null : save,

@@ -8,8 +8,7 @@ import 'package:pos_billingwala_v2/language/app_strings.dart';
 
 /* Android `report_password_dialog` — unlock Reports. */
 Future<bool> showReportPinGate(BuildContext context, WidgetRef ref) async {
-  final expected =
-      ref.read(authControllerProvider).session?.reportPin?.trim();
+  final expected = ref.read(authControllerProvider).session?.reportPin?.trim();
   final pin = (expected == null || expected.isEmpty) ? '9082' : expected;
   final controller = TextEditingController();
 
@@ -47,8 +46,9 @@ Future<bool> showReportPinGate(BuildContext context, WidgetRef ref) async {
           ),
           const SizedBox(height: 16),
           AppTextField(
+            required: true,
             controller: controller,
-            label: 'Enter PIN*',
+            label: 'Enter PIN',
             hint: 'PIN',
             keyboardType: TextInputType.number,
             obscureText: true,
@@ -68,7 +68,8 @@ Future<bool> showReportPinGate(BuildContext context, WidgetRef ref) async {
                 child: AppButton(
                   label: 'Continue',
                   onPressed: () {
-                    final match = controller.text.trim().toLowerCase() ==
+                    final match =
+                        controller.text.trim().toLowerCase() ==
                         pin.toLowerCase();
                     Navigator.pop(sheetContext, match);
                   },

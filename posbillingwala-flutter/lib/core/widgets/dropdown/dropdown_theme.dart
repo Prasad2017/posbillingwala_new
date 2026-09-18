@@ -1,18 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
+import 'package:pos_billingwala_v2/core/widgets/app_text_field.dart';
 import 'package:pos_billingwala_v2/core/widgets/widget_theme.dart';
 
 InputDecoration appDropdownDecoration(
   BuildContext context, {
-  required String label,
+  String? label,
   String? hint,
+  bool required = false,
+  bool? showLabel,
 }) {
   final bodyStyle = Theme.of(context).textTheme.bodyMedium;
+  final visible = showLabel ?? (label?.trim().isNotEmpty ?? false);
 
   return InputDecoration(
-    labelText: label,
-    floatingLabelBehavior: FloatingLabelBehavior.auto,
-    hintText: hint,
+    labelText: visible ? label : null,
+    floatingLabelBehavior:
+        visible ? FloatingLabelBehavior.auto : FloatingLabelBehavior.never,
+    labelStyle: const TextStyle(
+      fontSize: AppTextField.labelFontSize,
+      fontWeight: FontWeight.w500,
+    ),
+    floatingLabelStyle: const TextStyle(
+      fontSize: AppTextField.labelFontSize,
+      fontWeight: FontWeight.w600,
+    ),
+    hintText: hint ??
+        (label != null && label.trim().isNotEmpty ? 'Select $label' : null),
     hintStyle: bodyStyle?.copyWith(color: context.textSecondary),
     filled: true,
     fillColor: context.subtleBackground,

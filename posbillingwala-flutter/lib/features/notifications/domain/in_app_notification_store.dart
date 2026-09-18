@@ -34,14 +34,14 @@ class InAppNotification {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'title': title,
-        'body': body,
-        'type': type,
-        'createdAt': createdAt.toIso8601String(),
-        'read': read,
-        'url': url,
-      };
+    'id': id,
+    'title': title,
+    'body': body,
+    'type': type,
+    'createdAt': createdAt.toIso8601String(),
+    'read': read,
+    'url': url,
+  };
 
   factory InAppNotification.fromJson(Map<String, dynamic> json) {
     return InAppNotification(
@@ -49,7 +49,8 @@ class InAppNotification {
       title: json['title']?.toString() ?? 'Notification',
       body: json['body']?.toString() ?? '',
       type: json['type']?.toString() ?? 'promotional',
-      createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
+      createdAt:
+          DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
           DateTime.now(),
       read: json['read'] == true,
       url: json['url']?.toString(),

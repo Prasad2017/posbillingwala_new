@@ -5,10 +5,10 @@ import 'package:go_router/go_router.dart';
 import 'package:pos_billingwala_v2/core/constants/app_assets.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/constants/app_constants.dart';
+import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/theme/app_dimensions.dart';
 import 'package:pos_billingwala_v2/core/theme/app_typography.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
-import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/auth/presentation/device_conflict_dialog.dart';
@@ -36,7 +36,9 @@ class LoginPageState extends ConsumerState<LoginPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(authControllerProvider.notifier).setDeviceConflictHandler(
+      ref
+          .read(authControllerProvider.notifier)
+          .setDeviceConflictHandler(
             (message) => showDeviceConflictDialog(context, message),
           );
     });
@@ -53,9 +55,9 @@ class LoginPageState extends ConsumerState<LoginPage> {
   Future<void> submitLicence() async {
     if (!formKey.currentState!.validate()) return;
     FocusScope.of(context).unfocus();
-    final ok = await ref.read(authControllerProvider.notifier).loginWithLicence(
-          licenceController.text.trim(),
-        );
+    final ok = await ref
+        .read(authControllerProvider.notifier)
+        .loginWithLicence(licenceController.text.trim());
     if (!ok || !mounted) return;
     if (ref.read(authControllerProvider).status == AuthStatus.needsMpin) {
       context.go('/mpin');
@@ -65,7 +67,9 @@ class LoginPageState extends ConsumerState<LoginPage> {
   Future<void> submitStaff() async {
     if (!formKey.currentState!.validate()) return;
     FocusScope.of(context).unfocus();
-    final ok = await ref.read(authControllerProvider.notifier).loginWithStaff(
+    final ok = await ref
+        .read(authControllerProvider.notifier)
+        .loginWithStaff(
           mobileNumber: mobileController.text.trim(),
           pin: pinController.text.trim(),
         );
@@ -80,7 +84,9 @@ class LoginPageState extends ConsumerState<LoginPage> {
       await showDialog<void>(
         context: context,
         builder: (context) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
           title: Text(strings.forgotLicence),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -195,6 +201,7 @@ class LoginPageState extends ConsumerState<LoginPage> {
         ),
         const SizedBox(height: 10),
         AppTextField(
+          required: true,
           controller: mobileController,
           hint: '10-digit mobile',
           keyboardType: TextInputType.phone,
@@ -216,6 +223,7 @@ class LoginPageState extends ConsumerState<LoginPage> {
         ),
         const SizedBox(height: 10),
         AppTextField(
+          required: true,
           controller: pinController,
           hint: 'Staff PIN',
           obscureText: true,
@@ -257,6 +265,7 @@ class LoginPageState extends ConsumerState<LoginPage> {
         ),
         const SizedBox(height: 10),
         AppTextField(
+          required: true,
           controller: licenceController,
           hint: strings.licenceKeyHint,
           prefixSvg: AppAssets.svgKey,
@@ -306,9 +315,9 @@ class LoginPageState extends ConsumerState<LoginPage> {
       if (next.errorMessage != null &&
           next.errorMessage != prev?.errorMessage &&
           next.errorMessage != 'Device binding cancelled') {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(next.errorMessage!)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(next.errorMessage!)));
       }
     });
 
@@ -419,10 +428,7 @@ class LoginPageState extends ConsumerState<LoginPage> {
               const Center(child: BrandLogo(width: 150)),
               const SizedBox(height: 24),
             ],
-            Text(
-              strings.welcomeBack,
-              style: AppTypography.screenTitle(),
-            ),
+            Text(strings.welcomeBack, style: AppTypography.screenTitle()),
             const SizedBox(height: 8),
             Text(
               _mode == _LoginMode.staff

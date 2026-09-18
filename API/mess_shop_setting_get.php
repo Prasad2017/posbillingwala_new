@@ -18,9 +18,9 @@ $response = array(
 mess_common_ensure_schema($con);
 
 $userId = isset($_REQUEST['userId']) ? trim((string) $_REQUEST['userId']) : '';
-pos_require_auth($con, $userId, $response);
+$licenceId = pos_require_auth($con, $userId, $response);
 
-$mode = mess_get_payer_mode($con, (int) $userId);
+$mode = mess_get_payer_mode($con, (int) $licenceId);
 $response['status'] = '1';
 $response['message'] = 'ok';
 $response['payerMode'] = $mode;

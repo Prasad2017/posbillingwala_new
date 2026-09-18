@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
+import 'package:pos_billingwala_v2/core/network/online_guard.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/auth/data/device_identity_service.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
@@ -39,9 +40,9 @@ class MessMealTokensTodayPageState
       });
       return;
     }
-    setState(() => state = const AsyncLoading());
-    final cached =
-        await CloudScreenCache.loadMapList(CloudScreenCache.mealTokensToday);
+    final cached = await CloudScreenCache.loadMapList(
+      CloudScreenCache.mealTokensToday,
+    );
     if (cached.isNotEmpty && mounted) {
       setState(
         () => state = AsyncData(
@@ -50,11 +51,15 @@ class MessMealTokensTodayPageState
           ),
         ),
       );
+    } else if (mounted) {
+      setState(() => state = const AsyncLoading());
     }
+    if (!await isDeviceOnline()) return;
     final next = await AsyncValue.guard(
       () => MessApi(ref.read(apiClientProvider)).fetchMealTokensToday(userId),
     );
     if (!mounted) return;
+    if (next.hasError && state.hasValue) return;
     setState(() => state = next);
   }
 
@@ -83,12 +88,12 @@ class MessMealTokensTodayPageState
         ..writeln(memberMobile)
         ..writeln(token.date)
         ..writeln();
-      final printResult = await ref.read(printServiceProvider).printRawText(
-            text.toString(),
-            label: 'Mess meal token',
-          );
+      final printResult = await ref
+          .read(printServiceProvider)
+          .printRawText(text.toString(), label: 'Mess meal token');
       final device = await DeviceIdentityService().resolve();
-      final ok = printResult.outcome != PrintOutcome.failed &&
+      final ok =
+          printResult.outcome != PrintOutcome.failed &&
           printResult.outcome != PrintOutcome.previewOnly;
       await MessApi(ref.read(apiClientProvider)).ackMealTokenPrint(
         userId: userId,
@@ -99,7 +104,9 @@ class MessMealTokensTodayPageState
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(printResult.message ?? printResult.outcome.name)),
+        SnackBar(
+          content: Text(printResult.message ?? printResult.outcome.name),
+        ),
       );
       await load();
     } catch (e) {
@@ -110,7 +117,9 @@ class MessMealTokensTodayPageState
     }
   }
 
-  Future<void> messMealTokensTodayPageCancelToken(MessMealTokenDto token) async {
+  Future<void> messMealTokensTodayPageCancelToken(
+    MessMealTokenDto token,
+  ) async {
     final userId = ref.read(authControllerProvider).session?.userId;
     if (userId == null) return;
     final confirm = await showDialog<bool>(
@@ -133,10 +142,9 @@ class MessMealTokensTodayPageState
     if (confirm != true) return;
     setState(() => busy = true);
     try {
-      await MessApi(ref.read(apiClientProvider)).cancelMealToken(
-        userId: userId,
-        tokenId: token.tokenId,
-      );
+      await MessApi(
+        ref.read(apiClientProvider),
+      ).cancelMealToken(userId: userId, tokenId: token.tokenId);
       await load();
     } catch (e) {
       if (!mounted) return;
@@ -163,13 +171,13 @@ class MessMealTokensTodayPageState
           final countsText = data.sessionCounts.isEmpty
               ? ''
               : data.sessionCounts
-                  .map(
-                    (c) =>
-                        '${c.sessionName}: Gen ${c.generated} · '
-                        'Printed ${c.printed} · Pending ${c.pending} · '
-                        'Failed ${c.failed}',
-                  )
-                  .join('\n');
+                    .map(
+                      (c) =>
+                          '${c.sessionName}: Gen ${c.generated} · '
+                          'Printed ${c.printed} · Pending ${c.pending} · '
+                          'Failed ${c.failed}',
+                    )
+                    .join('\n');
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -194,8 +202,9 @@ class MessMealTokensTodayPageState
                             padding: EdgeInsets.zero,
                             child: ListTile(
                               leading: CircleAvatar(
-                                backgroundColor:
-                                    AppColors.primary.withValues(alpha: 0.12),
+                                backgroundColor: AppColors.primary.withValues(
+                                  alpha: 0.12,
+                                ),
                                 child: const Icon(
                                   Icons.confirmation_number_outlined,
                                   color: AppColors.primary,
@@ -225,14 +234,19 @@ class MessMealTokensTodayPageState
                                 children: [
                                   IconButton(
                                     tooltip: 'Print',
-                                    onPressed:
-                                        busy ? null : () => printToken(t),
+                                    onPressed: busy
+                                        ? null
+                                        : () => printToken(t),
                                     icon: const Icon(Icons.print_rounded),
                                   ),
                                   IconButton(
                                     tooltip: 'Cancel',
-                                    onPressed:
-                                        busy ? null : () => messMealTokensTodayPageCancelToken(t),
+                                    onPressed: busy
+                                        ? null
+                                        : () =>
+                                              messMealTokensTodayPageCancelToken(
+                                                t,
+                                              ),
                                     icon: const Icon(Icons.cancel_outlined),
                                   ),
                                 ],
@@ -254,11 +268,7 @@ class MessMealTokensTodayPageState
               children: [
                 Text('$e', textAlign: TextAlign.center),
                 const SizedBox(height: 12),
-                AppButton(
-                  label: 'Retry',
-                  expanded: false,
-                  onPressed: load,
-                ),
+                AppButton(label: 'Retry', expanded: false, onPressed: load),
               ],
             ),
           ),

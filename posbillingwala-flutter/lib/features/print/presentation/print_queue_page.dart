@@ -23,7 +23,9 @@ class PrintQueuePageState extends ConsumerState<PrintQueuePage> {
   Future<void> load() async {
     final session = ref.read(authControllerProvider).session;
     if (session == null) return;
-    final list = await ref.read(storePrinterApiProvider).queue(session.licenceUserId);
+    final list = await ref
+        .read(storePrinterApiProvider)
+        .queue(session.licenceUserId);
     if (!mounted) return;
     setState(() {
       jobs = list;
@@ -50,9 +52,13 @@ class PrintQueuePageState extends ConsumerState<PrintQueuePage> {
                     trailing: status == 'FAILED'
                         ? TextButton(
                             onPressed: () async {
-                              final session = ref.read(authControllerProvider).session;
+                              final session = ref
+                                  .read(authControllerProvider)
+                                  .session;
                               if (session == null) return;
-                              await ref.read(storePrinterApiProvider).retry(
+                              await ref
+                                  .read(storePrinterApiProvider)
+                                  .retry(
                                     session.licenceUserId,
                                     job['id'].toString(),
                                   );

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:print_bluetooth_thermal/print_bluetooth_thermal.dart';
+import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/permissions/app_permission_service.dart';
+import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/print/domain/bluetooth_printer_hub.dart';
 import 'package:pos_billingwala_v2/features/print/domain/esc_pos_transport_hub.dart';
 import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
+import 'package:print_bluetooth_thermal/print_bluetooth_thermal.dart';
 import 'package:unified_esc_pos_printer/unified_esc_pos_printer.dart' as esc;
-import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
-import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 
 /* Result returned when the user picks a printer for bill/KOT. */
 class PickedPrinter {
@@ -120,7 +120,8 @@ class PrinterDevicePickerPageState extends State<PrinterDevicePickerPage>
       printerDevicePickerPageError = null;
     });
     try {
-      final allowed = await printerDevicePickerPagePermissions.ensurePrintPermissions();
+      final allowed = await printerDevicePickerPagePermissions
+          .ensurePrintPermissions();
       if (!allowed) {
         setState(() {
           printerDevicePickerPageLoading = false;
@@ -231,9 +232,9 @@ class PrinterDevicePickerPageState extends State<PrinterDevicePickerPage>
     final host = hostCtrl.text.trim();
     final port = int.tryParse(portCtrl.text.trim()) ?? 9100;
     if (host.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter printer IP / host')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Enter printer IP / host')));
       return;
     }
     Navigator.pop(
@@ -248,11 +249,13 @@ class PrinterDevicePickerPageState extends State<PrinterDevicePickerPage>
 
   @override
   Widget build(BuildContext context) {
-    final title = widget.title ??
+    final title =
+        widget.title ??
         (widget.channel == PrinterChannelKind.bill
             ? 'Select bill printer'
             : 'Select KOT printer');
-    final lockedUsb = widget.lockToInitialTransport &&
+    final lockedUsb =
+        widget.lockToInitialTransport &&
         widget.initialTransport == PosPrinterTransport.usb;
     final lockedBt = widget.lockToInitialTransport && !lockedUsb;
     final tabs = <Tab>[
@@ -281,56 +284,60 @@ class PrinterDevicePickerPageState extends State<PrinterDevicePickerPage>
           ),
         ],
       ),
-      body: Column(children: [
-        Container(
-          margin: const EdgeInsets.fromLTRB(16, 10, 16, 4),
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: .08),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Row(
-            children: [
-              AppModuleIcon(
-                icon: lockedUsb ? Icons.usb_rounded : Icons.print_rounded,
-                color: AppColors.primary,
-                size: 50,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  lockedUsb
-                      ? 'Connect a USB / OTG thermal printer'
-                      : lockedBt
-                          ? 'Connect a Bluetooth thermal printer'
-                          : 'Connect your billing printer',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.navy,
+      body: Column(
+        children: [
+          Container(
+            margin: const EdgeInsets.fromLTRB(16, 10, 16, 4),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: .08),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              children: [
+                AppModuleIcon(
+                  icon: lockedUsb ? Icons.usb_rounded : Icons.print_rounded,
+                  color: AppColors.primary,
+                  size: 50,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    lockedUsb
+                        ? 'Connect a USB / OTG thermal printer'
+                        : lockedBt
+                        ? 'Connect a Bluetooth thermal printer'
+                        : 'Connect your billing printer',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.navy,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        Expanded(
-          child: tabs.length == 1
-              ? views.first
-              : TabBarView(
-                  controller: printerDevicePickerPageTabs,
-                  children: views,
-                ),
-        ),
-      ]),
+          Expanded(
+            child: tabs.length == 1
+                ? views.first
+                : TabBarView(
+                    controller: printerDevicePickerPageTabs,
+                    children: views,
+                  ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget bluetoothTab() {
     return deviceList(
-      loading: printerDevicePickerPageLoading &&
+      loading:
+          printerDevicePickerPageLoading &&
           (widget.lockToInitialTransport ||
               printerDevicePickerPageTabs.index == 0),
-      error: (widget.lockToInitialTransport ||
+      error:
+          (widget.lockToInitialTransport ||
               printerDevicePickerPageTabs.index == 0)
           ? printerDevicePickerPageError
           : null,
@@ -351,10 +358,12 @@ class PrinterDevicePickerPageState extends State<PrinterDevicePickerPage>
 
   Widget usbTab() {
     return deviceList(
-      loading: printerDevicePickerPageLoading &&
+      loading:
+          printerDevicePickerPageLoading &&
           (widget.lockToInitialTransport ||
               printerDevicePickerPageTabs.index == 1),
-      error: (widget.lockToInitialTransport ||
+      error:
+          (widget.lockToInitialTransport ||
               printerDevicePickerPageTabs.index == 1)
           ? printerDevicePickerPageError
           : null,
@@ -365,7 +374,9 @@ class PrinterDevicePickerPageState extends State<PrinterDevicePickerPage>
               leading: const Icon(Icons.usb_rounded),
               title: Text(d.name.isEmpty ? 'USB printer' : d.name),
               subtitle: Text(
-                d is esc.UsbPrinterDevice ? d.identifier : d.connectionType.name,
+                d is esc.UsbPrinterDevice
+                    ? d.identifier
+                    : d.connectionType.name,
               ),
               trailing: const Icon(Icons.chevron_right_rounded),
               onTap: () => selectUsb(d),
@@ -384,6 +395,7 @@ class PrinterDevicePickerPageState extends State<PrinterDevicePickerPage>
         ),
         const SizedBox(height: 16),
         AppTextField(
+          required: true,
           controller: hostCtrl,
           label: 'IP / host',
           hint: '192.168.1.50',
@@ -421,17 +433,14 @@ class PrinterDevicePickerPageState extends State<PrinterDevicePickerPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              error ?? 'No devices found',
-              textAlign: TextAlign.center,
-            ),
+            Text(error ?? 'No devices found', textAlign: TextAlign.center),
             const SizedBox(height: 16),
             AppButton(
-            label: 'Retry',
-            icon: Icons.refresh_rounded,
-            onPressed: emptyAction,
-            expanded: false,
-          ),
+              label: 'Retry',
+              icon: Icons.refresh_rounded,
+              onPressed: emptyAction,
+              expanded: false,
+            ),
           ],
         ),
       );

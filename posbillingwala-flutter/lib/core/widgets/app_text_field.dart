@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pos_billingwala_v2/core/widgets/app_svg.dart';
-import 'package:pos_billingwala_v2/core/widgets/widget_strings.dart';
 import 'package:pos_billingwala_v2/core/widgets/widget_theme.dart';
 
 class AppTextField extends StatefulWidget {
@@ -31,6 +30,8 @@ class AppTextField extends StatefulWidget {
     this.focusNode,
     this.textCapitalization = TextCapitalization.none,
     this.textAlign = TextAlign.start,
+    /* Marks the field as mandatory (validation / UX). Labels always show when set. */
+    this.required = false,
   });
 
   final TextEditingController? controller;
@@ -38,6 +39,7 @@ class AppTextField extends StatefulWidget {
   final String? hint;
   final String? helperText;
   final IconData? prefixIcon;
+
   /* Optional SVG asset path (preferred over [prefixIcon] when set). */
   final String? prefixSvg;
   final String? prefixText;
@@ -58,6 +60,9 @@ class AppTextField extends StatefulWidget {
   final FocusNode? focusNode;
   final TextCapitalization textCapitalization;
   final TextAlign textAlign;
+  final bool required;
+
+  static const labelFontSize = 14.0;
 
   @override
   State<AppTextField> createState() => AppTextFieldState();
@@ -65,6 +70,7 @@ class AppTextField extends StatefulWidget {
 
 class AppTextFieldState extends State<AppTextField> {
   late bool obscure;
+
   /* Always own the field controller so parent dispose-during-route-pop
    * cannot crash TextFormField with "used after being disposed". */
   late final TextEditingController owned;
@@ -151,13 +157,19 @@ class AppTextFieldState extends State<AppTextField> {
     widget.onChanged?.call(owned.text);
   }
 
+  String? cleanLabel() {
+    final raw = widget.label?.trim();
+    if (raw == null || raw.isEmpty) return null;
+    return raw.replaceFirst(RegExp(r'\s*\*+\s*$'), '').trim();
+  }
+
   @override
   Widget build(BuildContext context) {
     final prefixColor = context.textPrimary;
-    final hint = widget.hint ??
-        (widget.label != null
-            ? WidgetStrings.enterFieldHint(widget.label!)
-            : null);
+    final cleaned = cleanLabel();
+    /* Always show floating label when [label] is provided (size 14). */
+    final labelText = cleaned;
+    final hint = widget.hint ?? cleaned;
 
     return TextFormField(
       controller: owned,
@@ -184,16 +196,25 @@ class AppTextFieldState extends State<AppTextField> {
               required int currentLength,
               required bool isFocused,
               required int? maxLength,
-            }) =>
-              null,
+            }) => null,
       inputFormatters: widget.inputFormatters,
       onFieldSubmitted: widget.onSubmitted,
       readOnly: widget.readOnly,
       style: TextStyle(color: context.textPrimary),
       decoration: InputDecoration(
-        labelText: widget.label,
+        labelText: labelText,
         hintText: hint,
-        floatingLabelBehavior: FloatingLabelBehavior.auto,
+        floatingLabelBehavior: labelText != null
+            ? FloatingLabelBehavior.auto
+            : FloatingLabelBehavior.never,
+        labelStyle: const TextStyle(
+          fontSize: AppTextField.labelFontSize,
+          fontWeight: FontWeight.w500,
+        ),
+        floatingLabelStyle: const TextStyle(
+          fontSize: AppTextField.labelFontSize,
+          fontWeight: FontWeight.w600,
+        ),
         helperText: widget.helperText,
         alignLabelWithHint: widget.maxLines > 1,
         prefixIcon: widget.prefixSvg != null
@@ -207,8 +228,8 @@ class AppTextFieldState extends State<AppTextField> {
                 ),
               )
             : widget.prefixIcon != null
-                ? Icon(widget.prefixIcon, size: 20, color: prefixColor)
-                : null,
+            ? Icon(widget.prefixIcon, size: 20, color: prefixColor)
+            : null,
         prefixText: widget.prefixText,
         prefixStyle: TextStyle(
           color: prefixColor,

@@ -48,10 +48,7 @@ class MessApi {
         'userId': userId,
         'messLabel': messLabel,
         'branchLabel': branchLabel,
-        ...DeviceApiFields.asForm(
-          deviceId: deviceId,
-          deviceName: deviceName,
-        ),
+        ...DeviceApiFields.asForm(deviceId: deviceId, deviceName: deviceName),
       },
     );
     final raw = data['qr'];
@@ -72,10 +69,7 @@ class MessApi {
         'userId': userId,
         'messLabel': messLabel,
         'branchLabel': branchLabel,
-        ...DeviceApiFields.asForm(
-          deviceId: deviceId,
-          deviceName: deviceName,
-        ),
+        ...DeviceApiFields.asForm(deviceId: deviceId, deviceName: deviceName),
       },
     );
     final raw = data['qr'];
@@ -94,10 +88,7 @@ class MessApi {
       data: {
         'userId': userId,
         'status': status,
-        ...DeviceApiFields.asForm(
-          deviceId: deviceId,
-          deviceName: deviceName,
-        ),
+        ...DeviceApiFields.asForm(deviceId: deviceId, deviceName: deviceName),
       },
     );
     return isApiSuccess(data);
@@ -111,6 +102,7 @@ class MessApi {
       ApiEndpoints.insertMessMember,
       data: {
         'userId': userId,
+        if (member.memberId > 0) 'memberId': '${member.memberId}',
         'memberName': member.memberName,
         'memberMobileNumber': member.memberMobileNumber ?? '',
         'memberAltenetMobileNumber': member.memberAltenetMobileNumber ?? '',
@@ -192,10 +184,7 @@ class MessApi {
   }) async {
     final data = await messApiPost(
       ApiEndpoints.messShopSettingSave,
-      data: {
-        'userId': userId,
-        'payerMode': payerMode,
-      },
+      data: {'userId': userId, 'payerMode': payerMode},
     );
     return isApiSuccess(data);
   }
@@ -207,10 +196,7 @@ class MessApi {
   }) async {
     final data = await messApiGet(
       ApiEndpoints.messMealTokenPending,
-      query: {
-        'userId': userId,
-        'android_device_id': deviceId,
-      },
+      query: {'userId': userId, 'android_device_id': deviceId},
     );
     return mapJsonList(
       data[ApiResponseKeys.messMealTokens] ??
@@ -262,7 +248,8 @@ class MessApi {
       ApiEndpoints.getMessMemberPaymentList,
       query: {'userId': userId},
     );
-    final raw = data[ApiResponseKeys.messPaymentResponse] ??
+    final raw =
+        data[ApiResponseKeys.messPaymentResponse] ??
         data[ApiResponseKeys.memberResponse] ??
         data['payments'];
     return mapJsonList(raw, MessMemberPaymentDto.fromJson);
@@ -341,10 +328,7 @@ class MessApi {
         'userId': userId,
         'tokenId': tokenId,
         'result': result,
-        ...DeviceApiFields.asForm(
-          deviceId: deviceId,
-          deviceName: deviceName,
-        ),
+        ...DeviceApiFields.asForm(deviceId: deviceId, deviceName: deviceName),
       },
     );
     return isApiSuccess(data);
@@ -356,10 +340,7 @@ class MessApi {
   }) async {
     final data = await messApiPost(
       ApiEndpoints.messMealTokenCancel,
-      data: {
-        'userId': userId,
-        'tokenId': tokenId,
-      },
+      data: {'userId': userId, 'tokenId': tokenId},
     );
     return isApiSuccess(data);
   }
@@ -413,10 +394,14 @@ class MessApi {
     String path, {
     Map<String, dynamic>? data,
   }) async {
+    /* form-urlencoded matches PHP $_POST reliably (multipart broke some saves). */
     final response = await client.dio.post<dynamic>(
       path,
-      data: data == null ? null : FormData.fromMap(data),
-      options: Options(responseType: ResponseType.json),
+      data: data,
+      options: Options(
+        contentType: Headers.formUrlEncodedContentType,
+        responseType: ResponseType.json,
+      ),
     );
     return asJsonMap(response.data);
   }

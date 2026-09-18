@@ -8,13 +8,13 @@ abstract final class ApiConstants {
   /* `--dart-define=API_BASE_URL=http://10.0.2.2/androidApp/` */
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://posbillingwala.com/androidApp/',
+    defaultValue: 'http://posbillingwala.com/androidApp/',
   );
 
   /* Shop / media assets (`BuildConfig.MEDIA_BASE_URL`). */
   static const String mediaBaseUrl = String.fromEnvironment(
     'MEDIA_BASE_URL',
-    defaultValue: 'https://posbillingwala.com/storage/app/',
+    defaultValue: 'http://posbillingwala.com/storage/app/',
   );
 
   /* Resolves a relative shop/company image path to an absolute URL. */

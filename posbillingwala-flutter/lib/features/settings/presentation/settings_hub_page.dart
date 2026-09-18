@@ -10,9 +10,11 @@ import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
+import 'package:pos_billingwala_v2/features/auth/domain/licence_display.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/report_pin_gate.dart';
 import 'package:pos_billingwala_v2/features/settings/domain/in_app_update_service.dart';
 import 'package:pos_billingwala_v2/features/staff/domain/permission_controller.dart';
+import 'package:pos_billingwala_v2/features/support/presentation/support_widgets.dart';
 import 'package:pos_billingwala_v2/features/sync/domain/full_sync_controller.dart';
 import 'package:pos_billingwala_v2/features/sync/domain/sync_progress.dart';
 import 'package:pos_billingwala_v2/language/app_strings.dart';
@@ -35,16 +37,16 @@ class SettingsHubPage extends ConsumerWidget {
     final outcome = await inAppUpdateService.checkAvailability();
     if (!context.mounted) return;
     if (outcome.status == InAppUpdateStatus.notAvailable) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(strings.appUpdateNotAvailable)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(strings.appUpdateNotAvailable)));
       return;
     }
     if (outcome.status == InAppUpdateStatus.failed &&
         InAppUpdateService.isAndroidPlay) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(strings.appFailedToUpdate)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(strings.appFailedToUpdate)));
       return;
     }
     if (outcome.status == InAppUpdateStatus.available ||
@@ -63,9 +65,9 @@ class SettingsHubPage extends ConsumerWidget {
       );
       if (!context.mounted) return;
       if (started.status == InAppUpdateStatus.failed) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(strings.appFailedToUpdate)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(strings.appFailedToUpdate)));
       }
       return;
     }
@@ -107,9 +109,9 @@ class SettingsHubPage extends ConsumerWidget {
 
     await ref.read(appLocaleProvider.notifier).setLanguage(selected);
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(AppStrings.of(ref).languageApplied)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(AppStrings.of(ref).languageApplied)));
   }
 
   Future<void> confirmFetchFromCloud(
@@ -118,9 +120,9 @@ class SettingsHubPage extends ConsumerWidget {
   ) async {
     if (!await ensureOnline()) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(kOnlineRequiredMessage)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text(kOnlineRequiredMessage)));
       return;
     }
     if (!context.mounted) return;
@@ -153,9 +155,9 @@ class SettingsHubPage extends ConsumerWidget {
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Data fetching started')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Data fetching started')));
 
     showDialog<void>(
       context: context,
@@ -166,7 +168,10 @@ class SettingsHubPage extends ConsumerWidget {
           child: Consumer(
             builder: (context, ref, _) {
               final progress = ref.watch(syncProgressProvider);
-              final current = progress.currentIndex.clamp(1, progress.totalCount);
+              final current = progress.currentIndex.clamp(
+                1,
+                progress.totalCount,
+              );
               final total = progress.totalCount;
               return AlertDialog(
                 shape: RoundedRectangleBorder(
@@ -249,11 +254,8 @@ class SettingsHubPage extends ConsumerWidget {
           color: AppColors.purple,
           title: strings.invoiceDetails,
           subtitle: 'Bill format, reprints & invoice list.',
-          onTap: () => pushReportsUnlocked(
-            context,
-            ref,
-            route: '/reports/invoices',
-          ),
+          onTap: () =>
+              pushReportsUnlocked(context, ref, route: '/reports/invoices'),
         ),
       if (perms.allows('report.view'))
         SettingsItem(
@@ -413,27 +415,45 @@ class SettingsHubPage extends ConsumerWidget {
         ),
     ];
 
+    final session = ref.watch(authControllerProvider).session;
     final accountItems = <SettingsItem>[
+      SettingsItem(
+        icon: LicenceDisplay.isTestingLicence(session)
+            ? Icons.science_outlined
+            : Icons.verified_outlined,
+        color: LicenceDisplay.isTestingLicence(session)
+            ? const Color(0xFFB45309)
+            : AppColors.primary,
+        title: LicenceDisplay.planLabel(session),
+        subtitle: LicenceDisplay.subtitle(session),
+        onTap: () {
+          if (LicenceDisplay.isTestingLicence(session)) {
+            callSupport(context);
+          }
+        },
+      ),
       SettingsItem(
         icon: Icons.pin_rounded,
         color: AppColors.primary,
         title: 'Change App Login PB-PIN',
-        subtitle: 'Unlock with PB-PIN next launch',
+        subtitle: 'Used after Logout to unlock the app',
         onTap: () => context.push('/settings/change-pin'),
       ),
       SettingsItem(
         icon: Icons.logout_rounded,
         color: AppColors.red,
         title: 'Logout',
-        subtitle: 'Lock app — unlock with PIN',
+        subtitle: 'Lock app — next open asks for PB-PIN',
         onTap: () async {
-          final um = ref.read(authControllerProvider).session?.userManagementEnabled ?? false;
+          final um =
+              ref.read(authControllerProvider).session?.userManagementEnabled ??
+              false;
           final ok = await showAppConfirmBottomSheet(
             context: context,
             title: um ? 'Switch user' : 'Logout',
             message: um
-                ? 'Return to staff PIN login? Licence stays on this device.'
-                : 'Lock this app? You will need your PB-PIN to sign in again.',
+                ? 'Return to staff / PB-PIN login? Licence stays on this device.'
+                : 'Lock this app? You will need your PB-PIN next time.',
             confirmLabel: 'Logout',
             confirmVariant: AppButtonVariant.danger,
             icon: Icons.logout_rounded,
@@ -473,8 +493,7 @@ class SettingsHubPage extends ConsumerWidget {
                   28,
                 ),
                 children: [
-                  if (AppBreakpoints.settingsColumnsFor(context.widthClass) >
-                      1)
+                  if (AppBreakpoints.settingsColumnsFor(context.widthClass) > 1)
                     ResponsiveSplit(
                       breakpoint: AppWidthClass.large,
                       primary: Column(
@@ -803,7 +822,8 @@ class HeaderCurveClipper extends CustomClipper<Path> {
 }
 
 class SettingsSectionCard extends StatelessWidget {
-  const SettingsSectionCard({super.key, 
+  const SettingsSectionCard({
+    super.key,
     required this.accent,
     required this.headerIcon,
     required this.title,

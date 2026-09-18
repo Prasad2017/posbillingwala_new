@@ -80,9 +80,9 @@ class ReportsPage extends ConsumerWidget {
             onPressed: filtered.isEmpty
                 ? null
                 : () => shareInvoicesCsv(
-                      invoices: filtered,
-                      title: 'Invoices — ${period.label}',
-                    ),
+                    invoices: filtered,
+                    title: 'Invoices — ${period.label}',
+                  ),
             icon: const Icon(Icons.ios_share_rounded),
           ),
           IconButton(
@@ -102,98 +102,74 @@ class ReportsPage extends ConsumerWidget {
             28,
           ),
           children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: ReportPeriodPill(
-              label: period.kind == ReportPeriodKind.today &&
-                      period.label == 'Today'
-                  ? 'All Records'
-                  : reportPeriodDisplayLabel(period),
-              onTap: () => showPeriodMenu(context, ref),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: ReportPeriodPill(
+                label:
+                    period.kind == ReportPeriodKind.today &&
+                        period.label == 'Today'
+                    ? 'All Records'
+                    : reportPeriodDisplayLabel(period),
+                onTap: () => showPeriodMenu(context, ref),
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            height: 40,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: [
-                for (final entry in const [
-                  (ReportPaymentFilter.all, 'All'),
-                  (ReportPaymentFilter.cash, 'Cash'),
-                  (ReportPaymentFilter.upi, 'UPI'),
-                  (ReportPaymentFilter.cashPlusUpi, 'Cash+UPI'),
-                ])
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: FilterChip(
-                      label: Text(entry.$2),
-                      selected: paymentFilter == entry.$1,
-                      onSelected: (_) => ref
-                          .read(reportPaymentFilterProvider.notifier)
-                          .select(entry.$1),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 40,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: [
+                  for (final entry in const [
+                    (ReportPaymentFilter.all, 'All'),
+                    (ReportPaymentFilter.cash, 'Cash'),
+                    (ReportPaymentFilter.upi, 'UPI'),
+                    (ReportPaymentFilter.cashPlusUpi, 'Cash+UPI'),
+                  ])
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: FilterChip(
+                        label: Text(entry.$2),
+                        selected: paymentFilter == entry.$1,
+                        onSelected: (_) => ref
+                            .read(reportPaymentFilterProvider.notifier)
+                            .select(entry.$1),
+                      ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
-          ReportKpiGrid(
-            items: [
-              ReportKpiData(
-                label: 'Total Bills',
-                value: '${summary.billCount}',
-              ),
-              ReportKpiData(
-                label: 'TOTAL AMOUNT',
-                value: currency.format(summary.totalSales),
-              ),
-              ReportKpiData(
-                label: 'Avg. Bill Value',
-                value: currency.format(summary.avgBill),
-              ),
-              ReportKpiData(
-                label: 'Categories',
-                value: '$categories',
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          ReportDonutBreakdown(
-            title: 'Billing Wise Details',
-            slices: slices,
-            centerValue: currency.format(summary.totalSales),
-          ),
-          const SizedBox(height: 14),
-          ReportSurfaceCard(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Amount Breakdown',
-                  style: TextStyle(
-                    fontFamily: AppFonts.family,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 16,
-                    color: AppColors.navy,
-                  ),
+            const SizedBox(height: 12),
+            ReportKpiGrid(
+              items: [
+                ReportKpiData(
+                  label: 'Total Bills',
+                  value: '${summary.billCount}',
                 ),
-                const SizedBox(height: 12),
-                AmountBars(slices: slices.where((s) => s.value > 0).toList()),
+                ReportKpiData(
+                  label: 'TOTAL AMOUNT',
+                  value: currency.format(summary.totalSales),
+                ),
+                ReportKpiData(
+                  label: 'Avg. Bill Value',
+                  value: currency.format(summary.avgBill),
+                ),
+                ReportKpiData(label: 'Categories', value: '$categories'),
               ],
             ),
-          ),
-          const SizedBox(height: 14),
-          ReportSurfaceCard(
-            padding: const EdgeInsets.fromLTRB(4, 12, 4, 4),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(12, 0, 12, 8),
-                  child: Text(
-                    'Invoice Sale',
+            const SizedBox(height: 14),
+            ReportDonutBreakdown(
+              title: 'Billing Wise Details',
+              slices: slices,
+              centerValue: currency.format(summary.totalSales),
+            ),
+            const SizedBox(height: 14),
+            ReportSurfaceCard(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Amount Breakdown',
                     style: TextStyle(
                       fontFamily: AppFonts.family,
                       fontWeight: FontWeight.w800,
@@ -201,50 +177,74 @@ class ReportsPage extends ConsumerWidget {
                       color: AppColors.navy,
                     ),
                   ),
-                ),
-                invoicesAsync.when(
-                  data: (_) {
-                    if (filtered.isEmpty) {
-                      return Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Center(child: Text(AppStrings.of(ref).noBillsPeriod)),
-                      );
-                    }
-                    final rows = filtered.take(40).toList();
-                    return Column(
-                      children: [
-                        for (var i = 0; i < rows.length; i++) ...[
-                          if (i > 0)
-                            Divider(
-                              height: 1,
-                              color: AppColors.border.withValues(alpha: .7),
-                            ),
-                          ReportInvoiceRow(
-                            index: i + 1,
-                            invoice: rows[i],
-                            currency: currency,
-                            denseDate: true,
-                            onTap: () => context.push(
-                              '/reports/invoice/${rows[i].invoiceId}',
-                            ),
-                          ),
-                        ],
-                      ],
-                    );
-                  },
-                  loading: () => const Padding(
-                    padding: EdgeInsets.all(24),
-                    child: Center(child: CircularProgressIndicator()),
-                  ),
-                  error: (e, _) => Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text('$e'),
-                  ),
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  AmountBars(slices: slices.where((s) => s.value > 0).toList()),
+                ],
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 14),
+            ReportSurfaceCard(
+              padding: const EdgeInsets.fromLTRB(4, 12, 4, 4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(12, 0, 12, 8),
+                    child: Text(
+                      'Invoice Sale',
+                      style: TextStyle(
+                        fontFamily: AppFonts.family,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                        color: AppColors.navy,
+                      ),
+                    ),
+                  ),
+                  invoicesAsync.when(
+                    data: (_) {
+                      if (filtered.isEmpty) {
+                        return Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Center(
+                            child: Text(AppStrings.of(ref).noBillsPeriod),
+                          ),
+                        );
+                      }
+                      final rows = filtered.take(40).toList();
+                      return Column(
+                        children: [
+                          for (var i = 0; i < rows.length; i++) ...[
+                            if (i > 0)
+                              Divider(
+                                height: 1,
+                                color: AppColors.border.withValues(alpha: .7),
+                              ),
+                            ReportInvoiceRow(
+                              index: i + 1,
+                              invoice: rows[i],
+                              currency: currency,
+                              denseDate: true,
+                              onTap: () => context.push(
+                                '/reports/invoice/${rows[i].invoiceId}',
+                              ),
+                            ),
+                          ],
+                        ],
+                      );
+                    },
+                    loading: () => const Padding(
+                      padding: EdgeInsets.all(24),
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
+                    error: (e, _) => Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text('$e'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );

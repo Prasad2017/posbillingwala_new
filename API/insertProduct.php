@@ -27,6 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $productNetworkStatus = isset($_POST['productNetworkStatus']) ? trim((string)$_POST['productNetworkStatus']) : '';
     $productDeletedStatus = isset($_POST['productDeletedStatus']) ? $_POST['productDeletedStatus'] : '0';
     $subcategoryId = isset($_POST['subcategoryId']) ? trim((string)$_POST['subcategoryId']) : '';
+    $subcategoryNetworkStatus = isset($_POST['subcategoryNetworkStatus']) ? trim((string)$_POST['subcategoryNetworkStatus']) : '';
     if ($subcategoryId === '' || $subcategoryId === '0' || $subcategoryId === 'null') {
         $subcategoryId = '';
     }
@@ -145,6 +146,37 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 
     $categoryIdEsc = (string)$resolvedCategoryId;
+    if ($subcategoryNetworkStatus !== '') {
+        $subNetEsc = mysqli_real_escape_string($con, $subcategoryNetworkStatus);
+        $bySubNet = mysqli_query(
+            $con,
+            "SELECT `subcategoryId` FROM `product_subcategories`
+             WHERE `userId`='$userIdEsc' AND `subcategoryNetworkStatus`='$subNetEsc'
+             LIMIT 1"
+        );
+        if ($bySubNet && ($rowSubNet = mysqli_fetch_assoc($bySubNet))) {
+            $subcategoryId = (string)$rowSubNet['subcategoryId'];
+        }
+        if ($bySubNet) {
+            mysqli_free_result($bySubNet);
+        }
+    }
+    if ($subcategoryId !== '') {
+        $subEscCheck = mysqli_real_escape_string($con, $subcategoryId);
+        $ownedSub = mysqli_query(
+            $con,
+            "SELECT `subcategoryId` FROM `product_subcategories`
+             WHERE `userId`='$userIdEsc' AND `subcategoryId`='$subEscCheck'
+             LIMIT 1"
+        );
+        if (!$ownedSub || !mysqli_fetch_assoc($ownedSub)) {
+            $subcategoryId = '';
+        }
+        if ($ownedSub) {
+            mysqli_free_result($ownedSub);
+        }
+    }
+    $subcategoryEsc = mysqli_real_escape_string($con, $subcategoryId);
     $subSqlSet = ($subcategoryId !== '')
         ? ", `subcategoryId`='$subcategoryEsc'"
         : ", `subcategoryId`=NULL";

@@ -87,11 +87,12 @@ class InAppUpdateService {
         await InAppUpdate.completeFlexibleUpdate();
         return const InAppUpdateOutcome(InAppUpdateStatus.downloaded);
       }
-      final inProgress = info.updateAvailability ==
+      final inProgress =
+          info.updateAvailability ==
           UpdateAvailability.developerTriggeredUpdateInProgress;
       final available =
           info.updateAvailability == UpdateAvailability.updateAvailable ||
-              inProgress;
+          inProgress;
       if (!available) {
         return const InAppUpdateOutcome(InAppUpdateStatus.notAvailable);
       }

@@ -26,8 +26,9 @@ final pendingInvoicesProvider = StreamProvider<List<Invoice>>((ref) {
   return ref.watch(appDatabaseProvider).watchPendingSyncInvoices();
 });
 
-final syncPendingSnapshotProvider =
-    FutureProvider<SyncPendingSnapshot>((ref) async {
+final syncPendingSnapshotProvider = FutureProvider<SyncPendingSnapshot>((
+  ref,
+) async {
   /* Refresh when pending invoices change. */
   ref.watch(pendingInvoicesProvider);
   return ref.read(appDatabaseProvider).getSyncPendingSnapshot();
@@ -38,7 +39,7 @@ class InvoiceSyncController extends Notifier<AsyncValue<InvoiceSyncResult?>> {
   AsyncValue<InvoiceSyncResult?> build() => const AsyncData(null);
 
   Future<InvoiceSyncResult> uploadPending({int? onlyInvoiceId}) async {
-    final userId = ref.read(authControllerProvider).session?.userId;
+    final userId = ref.read(authControllerProvider).session?.licenceUserId;
     if (userId == null || userId.isEmpty) {
       const result = InvoiceSyncResult(
         uploaded: 0,
@@ -98,10 +99,10 @@ class InvoiceSyncController extends Notifier<AsyncValue<InvoiceSyncResult?>> {
       final items = onlyInvoiceId == null
           ? await db.getPendingUnsyncedInvoiceItems()
           : pending.isEmpty
-              ? const <InvoiceItem>[]
-              : (await db.getInvoiceItems(pending.first.invoiceNumber))
-                  .where((e) => e.invoiceItemSyncStatus != '1')
-                  .toList();
+          ? const <InvoiceItem>[]
+          : (await db.getInvoiceItems(
+              pending.first.invoiceNumber,
+            )).where((e) => e.invoiceItemSyncStatus != '1').toList();
 
       for (final item in items) {
         try {
@@ -136,8 +137,7 @@ class InvoiceSyncController extends Notifier<AsyncValue<InvoiceSyncResult?>> {
           final ok = await api.uploadInvoiceComboItem(item: combo);
           if (!ok) {
             failed++;
-            lastError =
-                'Combo line upload failed for ${combo.invoiceNumber}';
+            lastError = 'Combo line upload failed for ${combo.invoiceNumber}';
             continue;
           }
           await db.markInvoiceComboItemSynced(combo.invoiceComboItemId);
@@ -174,7 +174,7 @@ class InvoiceSyncController extends Notifier<AsyncValue<InvoiceSyncResult?>> {
         message: failed == 0
             ? (uploaded == 0 ? 'Nothing pending' : 'Uploaded $uploaded bill(s)')
             : 'Uploaded $uploaded, failed $failed'
-                '${lastError == null ? '' : ': $lastError'}',
+                  '${lastError == null ? '' : ': $lastError'}',
       );
       state = AsyncData(result);
       return result;
@@ -189,9 +189,10 @@ class InvoiceSyncController extends Notifier<AsyncValue<InvoiceSyncResult?>> {
     }
   }
 
-  /* Downloads invoices (+ lines) from cloud and upserts as synced. */
+  /* Downloads invoices (+ lines) from cloud and upserts as synced.
+   * Always licence-wide — never staff-filtered (staffScope omitted). */
   Future<InvoiceSyncResult> downloadInvoices({String? invoiceDate}) async {
-    final userId = ref.read(authControllerProvider).session?.userId;
+    final userId = ref.read(authControllerProvider).session?.licenceUserId;
     if (userId == null || userId.isEmpty) {
       const result = InvoiceSyncResult(
         uploaded: 0,
@@ -211,6 +212,7 @@ class InvoiceSyncController extends Notifier<AsyncValue<InvoiceSyncResult?>> {
       final headers = await api.fetchInvoices(
         userId,
         invoiceDate: invoiceDate,
+        staffScope: false,
       );
       final lines = await api.fetchInvoiceItems(userId);
       List<CloudInvoiceComboItemDto> comboLines = const [];
@@ -237,16 +239,17 @@ class InvoiceSyncController extends Notifier<AsyncValue<InvoiceSyncResult?>> {
       }
 
       final companions = validHeaders.map((e) {
-        final count = (itemsByNumber[e.invoiceNumber]?.fold<double>(
-              0,
-              (sum, item) =>
-                  sum +
-                  (item.productQuantity.present
-                      ? item.productQuantity.value
-                      : 1),
-            ) ??
-            0)
-            .round();
+        final count =
+            (itemsByNumber[e.invoiceNumber]?.fold<double>(
+                      0,
+                      (sum, item) =>
+                          sum +
+                          (item.productQuantity.present
+                              ? item.productQuantity.value
+                              : 1),
+                    ) ??
+                    0)
+                .round();
         return e.toCompanion().copyWith(itemCount: Value(count));
       }).toList();
 
@@ -269,9 +272,9 @@ class InvoiceSyncController extends Notifier<AsyncValue<InvoiceSyncResult?>> {
         message: downloaded == 0
             ? 'No cloud bills to import'
             : 'Downloaded $downloaded bill(s)'
-                ' (${resultUpsert.inserted} new, ${resultUpsert.updated} updated'
-                '${resultUpsert.skipped > 0 ? ', ${resultUpsert.skipped} skipped' : ''}'
-                '${resultUpsert.comboItems > 0 ? ', ${resultUpsert.comboItems} combo lines' : ''})',
+                  ' (${resultUpsert.inserted} new, ${resultUpsert.updated} updated'
+                  '${resultUpsert.skipped > 0 ? ', ${resultUpsert.skipped} skipped' : ''}'
+                  '${resultUpsert.comboItems > 0 ? ', ${resultUpsert.comboItems} combo lines' : ''})',
       );
       state = AsyncData(result);
       return result;
@@ -305,5 +308,5 @@ class InvoiceSyncController extends Notifier<AsyncValue<InvoiceSyncResult?>> {
 
 final invoiceSyncControllerProvider =
     NotifierProvider<InvoiceSyncController, AsyncValue<InvoiceSyncResult?>>(
-  InvoiceSyncController.new,
-);
+      InvoiceSyncController.new,
+    );

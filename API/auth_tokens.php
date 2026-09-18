@@ -11,6 +11,50 @@ if (!defined('AUTH_TOKEN_TTL_DAYS')) {
     define('AUTH_TOKEN_TTL_DAYS', 90);
 }
 
+if (!function_exists('auth_token_is_required')) {
+    /**
+     * Bearer tokens are required only when enabled in db_local.php:
+     *   $db_local = true;
+     *   $requireAuthToken = true;   // optional alias
+     * Default: not required — APIs work without Authorization.
+     * If a token is sent, it is still validated.
+     *
+     * @return bool
+     */
+    function auth_token_is_required()
+    {
+        if (defined('AUTH_TOKEN_REQUIRED')) {
+            return (bool) AUTH_TOKEN_REQUIRED;
+        }
+        if (isset($GLOBALS['requireAuthToken'])) {
+            return (bool) $GLOBALS['requireAuthToken'];
+        }
+        if (isset($GLOBALS['db_local'])) {
+            return (bool) $GLOBALS['db_local'];
+        }
+        return false;
+    }
+}
+
+if (!function_exists('auth_posted_user_id')) {
+    /**
+     * @return string
+     */
+    function auth_posted_user_id($postedUserId = null)
+    {
+        if ($postedUserId !== null) {
+            return trim((string) $postedUserId);
+        }
+        if (isset($_POST['userId'])) {
+            return trim((string) $_POST['userId']);
+        }
+        if (isset($_GET['userId'])) {
+            return trim((string) $_GET['userId']);
+        }
+        return '';
+    }
+}
+
 if (!function_exists('auth_token_expires_at_from_licence_date')) {
     /**
      * Licence expiry is a date (Y-m-d). Token stays valid through end of that day.
@@ -298,7 +342,7 @@ if (!function_exists('auth_resolve_actor_from_request')) {
 
 if (!function_exists('auth_pos_licence_id_from_request')) {
     /**
-     * Require valid pos_licence Bearer token.
+     * Resolve POS licence id. Bearer token is required only when $db_local is true.
      * Posted userId (if any) must match the licence id OR that licence's owner (organization) id.
      *
      * @param mysqli $con
@@ -307,9 +351,13 @@ if (!function_exists('auth_pos_licence_id_from_request')) {
      */
     function auth_pos_licence_id_from_request($con, $postedUserId)
     {
+        $posted = auth_posted_user_id($postedUserId);
         $plainToken = auth_token_from_request();
         if ($plainToken === null || $plainToken === '') {
-            return null;
+            if (auth_token_is_required()) {
+                return null;
+            }
+            return $posted === '' ? null : $posted;
         }
 
         $actor = auth_token_resolve($con, $plainToken);
@@ -318,7 +366,6 @@ if (!function_exists('auth_pos_licence_id_from_request')) {
         }
 
         $licenceId = (string) $actor['actor_id'];
-        $posted = trim((string) $postedUserId);
         if ($posted === '') {
             return $licenceId;
         }
@@ -343,8 +390,9 @@ if (!function_exists('auth_pos_licence_id_from_request')) {
 
 if (!function_exists('auth_user_id_from_request')) {
     /**
-     * Resolve owner/dealer/admin user id from Bearer token (required).
-     * Posted userId must match token actor when provided.
+     * Resolve owner/dealer/admin user id.
+     * Bearer token is required only when $db_local is true; otherwise posted userId is used.
+     * Posted userId must match token actor when a token is provided.
      *
      * @param mysqli $con
      * @param string $postedUserId
@@ -353,9 +401,13 @@ if (!function_exists('auth_user_id_from_request')) {
      */
     function auth_user_id_from_request($con, $postedUserId, $expectedActorType)
     {
+        $posted = auth_posted_user_id($postedUserId);
         $plainToken = auth_token_from_request();
         if ($plainToken === null || $plainToken === '') {
-            return null;
+            if (auth_token_is_required()) {
+                return null;
+            }
+            return $posted === '' ? null : $posted;
         }
 
         $actor = auth_token_resolve($con, $plainToken);
@@ -364,7 +416,6 @@ if (!function_exists('auth_user_id_from_request')) {
         }
 
         $actorId = (string) $actor['actor_id'];
-        $posted = trim((string) $postedUserId);
         if ($posted !== '' && $posted !== $actorId) {
             return null;
         }
@@ -375,7 +426,8 @@ if (!function_exists('auth_user_id_from_request')) {
 
 if (!function_exists('auth_actor_token_valid')) {
     /**
-     * Require a valid Bearer token for the expected actor type.
+     * Validate Bearer token for the expected actor type.
+     * When $db_local is not true, a missing token is allowed.
      *
      * @param mysqli $con
      * @param string $expectedActorType
@@ -385,7 +437,7 @@ if (!function_exists('auth_actor_token_valid')) {
     {
         $plainToken = auth_token_from_request();
         if ($plainToken === null || $plainToken === '') {
-            return false;
+            return !auth_token_is_required();
         }
 
         $actor = auth_token_resolve($con, $plainToken);
@@ -395,7 +447,7 @@ if (!function_exists('auth_actor_token_valid')) {
 
 if (!function_exists('auth_actor_token_valid_or_legacy')) {
     /**
-     * @deprecated Legacy name — now requires a valid token (no empty-token bypass).
+     * Same as auth_actor_token_valid — missing token allowed unless $db_local is true.
      */
     function auth_actor_token_valid_or_legacy($con, $expectedActorType)
     {

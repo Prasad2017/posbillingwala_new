@@ -39,16 +39,16 @@ class SupportTicketDto {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'ticketNo': ticketNo,
-        'appName': appName,
-        'category': category,
-        'subject': subject,
-        'description': description,
-        'status': status,
-        'createdAt': createdAt,
-        'shopName': shopName,
-      };
+    'id': id,
+    'ticketNo': ticketNo,
+    'appName': appName,
+    'category': category,
+    'subject': subject,
+    'description': description,
+    'status': status,
+    'createdAt': createdAt,
+    'shopName': shopName,
+  };
 }
 
 class SupportMessageDto {
@@ -74,11 +74,11 @@ class SupportMessageDto {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'sender': sender,
-        'message': message,
-        'createdAt': createdAt,
-      };
+    'id': id,
+    'sender': sender,
+    'message': message,
+    'createdAt': createdAt,
+  };
 
   bool get isFromUser => sender.toLowerCase() == 'you';
 }
@@ -120,11 +120,11 @@ class SupportTicketDetailsDto {
   }
 
   Map<String, dynamic> toJson() => {
-        'ticketNo': ticketNo,
-        'subject': subject,
-        'description': description,
-        'ticketStatus': status,
-        'createdAt': createdAt,
-        'ticketMessages': messages.map((e) => e.toJson()).toList(),
-      };
+    'ticketNo': ticketNo,
+    'subject': subject,
+    'description': description,
+    'ticketStatus': status,
+    'createdAt': createdAt,
+    'ticketMessages': messages.map((e) => e.toJson()).toList(),
+  };
 }

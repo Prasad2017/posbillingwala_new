@@ -59,7 +59,9 @@ class PermissionController extends Notifier<PermissionState> {
     required String permissionVersion,
     required String sessionId,
   }) async {
-    await ref.read(staffStoreProvider).save(
+    await ref
+        .read(staffStoreProvider)
+        .save(
           staff: staff,
           permissionVersion: permissionVersion,
           sessionId: sessionId,
@@ -77,10 +79,9 @@ class PermissionController extends Notifier<PermissionState> {
     final staff = state.staff;
     if (session == null || staff == null) return;
     try {
-      final latest = await ref.read(staffApiProvider).effective(
-            session.licenceUserId,
-            staff.id,
-          );
+      final latest = await ref
+          .read(staffApiProvider)
+          .effective(session.licenceUserId, staff.id);
       await applyLogin(
         staff: latest,
         permissionVersion: state.permissionVersion,
@@ -95,15 +96,15 @@ class PermissionController extends Notifier<PermissionState> {
     state = PermissionState(
       userManagementEnabled:
           ref.read(authControllerProvider).session?.userManagementEnabled ??
-              false,
+          false,
     );
   }
 }
 
 final permissionControllerProvider =
     NotifierProvider<PermissionController, PermissionState>(
-  PermissionController.new,
-);
+      PermissionController.new,
+    );
 
 bool staffCan(WidgetRef ref, String key) =>
     ref.read(permissionControllerProvider).allows(key);

@@ -104,9 +104,9 @@ class SupportTicketDetailPageState
       if (!mounted) return;
       if (result.isSuccess) {
         replyController.clear();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result.message ?? 'Reply sent')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(result.message ?? 'Reply sent')));
         await reload();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -115,9 +115,7 @@ class SupportTicketDetailPageState
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$e')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
     } finally {
       if (mounted) setState(() => sending = false);
     }
@@ -190,10 +188,7 @@ class SupportTicketDetailPageState
                   children: [
                     Text(error!, textAlign: TextAlign.center),
                     const SizedBox(height: 12),
-                    AppButton(
-                      label: 'Retry',
-                      onPressed: reload,
-                    ),
+                    AppButton(label: 'Retry', onPressed: reload),
                   ],
                 ),
               ),
@@ -206,181 +201,200 @@ class SupportTicketDetailPageState
                       : ResponsiveScrollShell(
                           dashboard: true,
                           child: ListView(
-                          controller: scrollController,
-                          padding: EdgeInsets.fromLTRB(
-                            AppBreakpoints.pagePaddingFor(context.widthClass),
-                            16,
-                            AppBreakpoints.pagePaddingFor(context.widthClass),
-                            16,
-                          ),
-                          children: [
-                            SupportOnlineBanner(
-                              online: supportTicketDetailPageOnline,
-                              title: 'How support tickets work',
+                            controller: scrollController,
+                            padding: EdgeInsets.fromLTRB(
+                              AppBreakpoints.pagePaddingFor(context.widthClass),
+                              16,
+                              AppBreakpoints.pagePaddingFor(context.widthClass),
+                              16,
                             ),
-                            if (closed) ...[
-                              const SizedBox(height: 12),
-                              Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: AppColors.danger.withValues(alpha: 0.08),
-                                  borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(
-                                    color: AppColors.danger.withValues(alpha: 0.35),
-                                  ),
-                                ),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Icon(
-                                      Icons.lock_rounded,
-                                      color: AppColors.danger,
-                                      size: 20,
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: Text(
-                                        'Status: Closed — this ticket is closed. Open a new ticket if you need more help.',
-                                        style: AppTypography.bodySmall(
-                                          color: AppColors.danger,
-                                        ).copyWith(fontWeight: FontWeight.w600),
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                            children: [
+                              SupportOnlineBanner(
+                                online: supportTicketDetailPageOnline,
+                                title: 'How support tickets work',
                               ),
-                            ],
-                            if (details != null) ...[
-                              const SizedBox(height: 12),
-                              Container(
-                                padding: const EdgeInsets.all(14),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: AppColors.border),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      width: 42,
-                                      height: 42,
-                                      decoration: BoxDecoration(
-                                        color: AppColors.primaryLight,
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      alignment: Alignment.center,
-                                      child: const Icon(
-                                        Icons.confirmation_number_outlined,
-                                        color: AppColors.primary,
-                                        size: 22,
+                              if (closed) ...[
+                                const SizedBox(height: 12),
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.danger.withValues(
+                                      alpha: 0.08,
+                                    ),
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(
+                                      color: AppColors.danger.withValues(
+                                        alpha: 0.35,
                                       ),
                                     ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            (details.ticketNo ?? '').isNotEmpty
-                                                ? details.ticketNo!
-                                                : 'Ticket',
-                                            style: AppTypography.cardTitle(),
-                                          ),
-                                          if (details.subject.isNotEmpty) ...[
-                                            const SizedBox(height: 2),
-                                            Text(
-                                              details.subject,
-                                              style: AppTypography.bodySmall(),
-                                            ),
-                                          ],
-                                        ],
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Icon(
+                                        Icons.lock_rounded,
+                                        color: AppColors.danger,
+                                        size: 20,
                                       ),
-                                    ),
-                                    if (details.status.isNotEmpty)
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 10,
-                                          vertical: 5,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: statusColor.withValues(
-                                            alpha: 0.12,
-                                          ),
-                                          borderRadius:
-                                              BorderRadius.circular(999),
-                                        ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
                                         child: Text(
-                                          details.status,
-                                          style: TextStyle(
-                                            color: statusColor,
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 12,
-                                          ),
+                                          'Status: Closed — this ticket is closed. Open a new ticket if you need more help.',
+                                          style:
+                                              AppTypography.bodySmall(
+                                                color: AppColors.danger,
+                                              ).copyWith(
+                                                fontWeight: FontWeight.w600,
+                                              ),
                                         ),
                                       ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                            const SizedBox(height: 18),
-                            Row(
-                              children: [
-                                Text(
-                                  'Conversation',
-                                  style: AppTypography.sectionTitle()
-                                      .copyWith(fontSize: 16),
-                                ),
-                                const Spacer(),
-                                InkWell(
-                                  onTap: () => setState(
-                                    () => oldestFirst = !oldestFirst,
-                                  ),
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 4,
-                                      vertical: 4,
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Text(
-                                          oldestFirst
-                                              ? 'Oldest first'
-                                              : 'Newest first',
-                                          style: AppTypography.bodySmall(),
-                                        ),
-                                        const SizedBox(width: 4),
-                                        const Icon(
-                                          Icons.filter_list_rounded,
-                                          size: 16,
-                                          color: AppColors.textSecondary,
-                                        ),
-                                      ],
-                                    ),
+                                    ],
                                   ),
                                 ),
                               ],
-                            ),
-                            const SizedBox(height: 10),
-                            if (supportTicketDetailPageLines.isEmpty)
-                              const Padding(
-                                padding: EdgeInsets.symmetric(vertical: 32),
-                                child: Center(child: Text('No messages yet')),
-                              )
-                            else
-                              ...supportTicketDetailPageLines.asMap().entries.map((entry) {
-                                final index = entry.key;
-                                final line = entry.value;
-                                final isLast = index == supportTicketDetailPageLines.length - 1;
-                                return MessageBubble(
-                                  line: line,
-                                  showConnector: !isLast,
-                                );
-                              }),
-                          ],
+                              if (details != null) ...[
+                                const SizedBox(height: 12),
+                                Container(
+                                  padding: const EdgeInsets.all(14),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(color: AppColors.border),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 42,
+                                        height: 42,
+                                        decoration: BoxDecoration(
+                                          color: AppColors.primaryLight,
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                        alignment: Alignment.center,
+                                        child: const Icon(
+                                          Icons.confirmation_number_outlined,
+                                          color: AppColors.primary,
+                                          size: 22,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              (details.ticketNo ?? '')
+                                                      .isNotEmpty
+                                                  ? details.ticketNo!
+                                                  : 'Ticket',
+                                              style: AppTypography.cardTitle(),
+                                            ),
+                                            if (details.subject.isNotEmpty) ...[
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                details.subject,
+                                                style:
+                                                    AppTypography.bodySmall(),
+                                              ),
+                                            ],
+                                          ],
+                                        ),
+                                      ),
+                                      if (details.status.isNotEmpty)
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 5,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: statusColor.withValues(
+                                              alpha: 0.12,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              999,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            details.status,
+                                            style: TextStyle(
+                                              color: statusColor,
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                              const SizedBox(height: 18),
+                              Row(
+                                children: [
+                                  Text(
+                                    'Conversation',
+                                    style: AppTypography.sectionTitle()
+                                        .copyWith(fontSize: 16),
+                                  ),
+                                  const Spacer(),
+                                  InkWell(
+                                    onTap: () => setState(
+                                      () => oldestFirst = !oldestFirst,
+                                    ),
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 4,
+                                        vertical: 4,
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Text(
+                                            oldestFirst
+                                                ? 'Oldest first'
+                                                : 'Newest first',
+                                            style: AppTypography.bodySmall(),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          const Icon(
+                                            Icons.filter_list_rounded,
+                                            size: 16,
+                                            color: AppColors.textSecondary,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                              if (supportTicketDetailPageLines.isEmpty)
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 32),
+                                  child: Center(child: Text('No messages yet')),
+                                )
+                              else
+                                ...supportTicketDetailPageLines
+                                    .asMap()
+                                    .entries
+                                    .map((entry) {
+                                      final index = entry.key;
+                                      final line = entry.value;
+                                      final isLast =
+                                          index ==
+                                          supportTicketDetailPageLines.length -
+                                              1;
+                                      return MessageBubble(
+                                        line: line,
+                                        showConnector: !isLast,
+                                      );
+                                    }),
+                            ],
+                          ),
                         ),
-                      ),
                 ),
                 SafeArea(
                   top: false,
@@ -388,9 +402,7 @@ class SupportTicketDetailPageState
                     padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
                     decoration: const BoxDecoration(
                       color: Colors.white,
-                      border: Border(
-                        top: BorderSide(color: AppColors.border),
-                      ),
+                      border: Border(top: BorderSide(color: AppColors.border)),
                     ),
                     child: closed
                         ? Column(
@@ -456,8 +468,7 @@ class SupportTicketDetailPageState
                                     child: AppButton(
                                       label: 'Send',
                                       isLoading: sending,
-                                      onPressed:
-                                          sending ? null : sendReply,
+                                      onPressed: sending ? null : sendReply,
                                     ),
                                   ),
                                 ],
@@ -487,7 +498,8 @@ class ChatLine {
 }
 
 class MessageBubble extends StatelessWidget {
-  const MessageBubble({super.key, 
+  const MessageBubble({
+    super.key,
     required this.line,
     required this.showConnector,
   });
@@ -500,8 +512,7 @@ class MessageBubble extends StatelessWidget {
     final initial = line.senderLabel.trim().isEmpty
         ? '?'
         : line.senderLabel.trim()[0].toUpperCase();
-    final avatarColor =
-        line.isSupport ? AppColors.green : AppColors.primary;
+    final avatarColor = line.isSupport ? AppColors.green : AppColors.primary;
 
     return IntrinsicHeight(
       child: Row(
@@ -547,7 +558,8 @@ class MessageBubble extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    line.isSupport && line.senderLabel.toLowerCase() == 'support'
+                    line.isSupport &&
+                            line.senderLabel.toLowerCase() == 'support'
                         ? 'Support team'
                         : line.senderLabel,
                     style: const TextStyle(

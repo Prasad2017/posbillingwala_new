@@ -84,22 +84,22 @@ class StorePrinter {
   }
 
   Map<String, dynamic> toForm() => {
-        'printerName': printerName,
-        'connectionType': connectionType,
-        'ipAddress': ipAddress,
-        'port': '$port',
-        'bluetoothAddress': bluetoothAddress,
-        'usbIdentifier': usbIdentifier,
-        'usbName': usbName,
-        'paperSize': paperSize,
-        'purpose': purpose,
-        'area': area,
-        'deviceId': deviceId,
-        'enabled': enabled ? '1' : '0',
-        'isDefault': isDefault ? '1' : '0',
-        'isBackup': isBackup ? '1' : '0',
-        'primaryPrinterId': primaryPrinterId,
-      };
+    'printerName': printerName,
+    'connectionType': connectionType,
+    'ipAddress': ipAddress,
+    'port': '$port',
+    'bluetoothAddress': bluetoothAddress,
+    'usbIdentifier': usbIdentifier,
+    'usbName': usbName,
+    'paperSize': paperSize,
+    'purpose': purpose,
+    'area': area,
+    'deviceId': deviceId,
+    'enabled': enabled ? '1' : '0',
+    'isDefault': isDefault ? '1' : '0',
+    'isBackup': isBackup ? '1' : '0',
+    'primaryPrinterId': primaryPrinterId,
+  };
 }
 
 class PrinterRouteRule {
@@ -125,9 +125,9 @@ class PrinterRouteRule {
   }
 
   Map<String, dynamic> toJson() => {
-        'printerId': printerId,
-        'documentType': documentType,
-        'foodTypeCode': foodTypeCode,
-        'categoryId': categoryId,
-      };
+    'printerId': printerId,
+    'documentType': documentType,
+    'foodTypeCode': foodTypeCode,
+    'categoryId': categoryId,
+  };
 }

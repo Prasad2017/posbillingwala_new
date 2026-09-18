@@ -58,19 +58,22 @@ class BillingSession {
       title: title ?? this.title,
       billingRoute: billingRoute ?? this.billingRoute,
       paymentRoute: paymentRoute ?? this.paymentRoute,
-      customerName:
-          clearCustomer ? null : (customerName ?? this.customerName),
-      customerPhone:
-          clearCustomer ? null : (customerPhone ?? this.customerPhone),
-      customerEmail:
-          clearCustomer ? null : (customerEmail ?? this.customerEmail),
-      customerAddress:
-          clearCustomer ? null : (customerAddress ?? this.customerAddress),
+      customerName: clearCustomer ? null : (customerName ?? this.customerName),
+      customerPhone: clearCustomer
+          ? null
+          : (customerPhone ?? this.customerPhone),
+      customerEmail: clearCustomer
+          ? null
+          : (customerEmail ?? this.customerEmail),
+      customerAddress: clearCustomer
+          ? null
+          : (customerAddress ?? this.customerAddress),
       invoicePrefix: invoicePrefix ?? this.invoicePrefix,
       cartScope: cartScope ?? this.cartScope,
       tableNumber: clearTable ? null : (tableNumber ?? this.tableNumber),
-      diningSessionId:
-          clearTable ? null : (diningSessionId ?? this.diningSessionId),
+      diningSessionId: clearTable
+          ? null
+          : (diningSessionId ?? this.diningSessionId),
     );
   }
 }
@@ -129,8 +132,9 @@ class BillingSessionController extends Notifier<BillingSession> {
       customerName: name != null ? trimOrNull(name) : state.customerName,
       customerPhone: phone != null ? trimOrNull(phone) : state.customerPhone,
       customerEmail: email != null ? trimOrNull(email) : state.customerEmail,
-      customerAddress:
-          address != null ? trimOrNull(address) : state.customerAddress,
+      customerAddress: address != null
+          ? trimOrNull(address)
+          : state.customerAddress,
       invoicePrefix: state.invoicePrefix,
       cartScope: state.cartScope,
       tableNumber: state.tableNumber,
@@ -147,5 +151,5 @@ class BillingSessionController extends Notifier<BillingSession> {
 
 final billingSessionProvider =
     NotifierProvider<BillingSessionController, BillingSession>(
-  BillingSessionController.new,
-);
+      BillingSessionController.new,
+    );

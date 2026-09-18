@@ -15,9 +15,7 @@ class AuthTokenRefresh {
   static Future<bool>? inFlight;
 
   /* Returns true when a fresh Bearer token was saved. */
-  static Future<bool> tryRefresh({
-    void Function(String? token)? onTokenSaved,
-  }) {
+  static Future<bool> tryRefresh({void Function(String? token)? onTokenSaved}) {
     return synchronized(() async {
       final now = DateTime.now();
       if (lastAttempt != null &&
@@ -57,10 +55,7 @@ class AuthTokenRefresh {
 
         final response = await dio.post<dynamic>(
           ApiEndpoints.refreshAuthToken,
-          data: {
-            'app_licence_key': licenceKey,
-            'android_device_id': deviceId,
-          },
+          data: {'app_licence_key': licenceKey, 'android_device_id': deviceId},
           options: Options(contentType: Headers.formUrlEncodedContentType),
         );
 

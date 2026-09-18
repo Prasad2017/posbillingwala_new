@@ -11,7 +11,8 @@ class StringDropdownField extends StatelessWidget {
     required this.options,
     required this.onChanged,
     this.enableSearch = false,
-    this.showLabel = true,
+    this.showLabel,
+    this.required = false,
     this.validator,
   });
 
@@ -21,11 +22,13 @@ class StringDropdownField extends StatelessWidget {
   final List<String> options;
   final ValueChanged<String?> onChanged;
   final bool enableSearch;
-  final bool showLabel;
+  final bool? showLabel;
+  final bool required;
   final String? Function(String?)? validator;
 
   @override
   Widget build(BuildContext context) {
+    final visibleLabel = showLabel ?? label.trim().isNotEmpty;
     return NullableTextDropdownFormField(
       label: label,
       hint: hint,
@@ -35,9 +38,10 @@ class StringDropdownField extends StatelessWidget {
         context,
         label: label,
         hint: hint,
+        showLabel: visibleLabel,
       ),
       enableSearch: enableSearch || options.length > 6,
-      showLabel: showLabel,
+      showLabel: visibleLabel,
       validator: validator,
       onChanged: onChanged,
     );

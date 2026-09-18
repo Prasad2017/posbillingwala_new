@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pos_billingwala_v2/core/logging/app_logger.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/mess/data/mess_api.dart';
 import 'package:pos_billingwala_v2/features/mess/domain/mess_payer_mode.dart';
@@ -10,10 +11,13 @@ import 'package:pos_billingwala_v2/features/sync/domain/cloud_screen_cache.dart'
 class CloudScreenPushResult {
   const CloudScreenPushResult({
     required this.counts,
+    required this.stepOk,
     this.failed = 0,
   });
 
   final Map<String, int> counts;
+  /* Sync progress step id → whether that step succeeded (empty = success). */
+  final Map<String, bool> stepOk;
   final int failed;
 
   int get totalRows =>
@@ -29,6 +33,7 @@ abstract final class CloudScreenPush {
     required String userId,
   }) async {
     final counts = <String, int>{};
+    final stepOk = <String, bool>{};
     var failed = 0;
     final client = ref.read(apiClientProvider);
     final messApi = MessApi(client);
@@ -46,58 +51,122 @@ abstract final class CloudScreenPush {
           mode,
         );
         counts[CloudScreenCache.messShopPayerMode] = 1;
+        stepOk['mess_shop_payer'] = true;
+        AppLogger.info('Sync↑ mess_shop_payer OK mode=$mode');
       } else {
         failed++;
         counts[CloudScreenCache.messShopPayerMode] = 0;
+        stepOk['mess_shop_payer'] = false;
+        AppLogger.warning('Sync↑ mess_shop_payer FAIL mode=$mode');
       }
-    } catch (_) {
+    } catch (e) {
       failed++;
       counts[CloudScreenCache.messShopPayerMode] = 0;
+      stepOk['mess_shop_payer'] = false;
+      AppLogger.error('Sync↑ mess_shop_payer exception', e);
     }
 
     try {
-      final sessions =
-          await CloudScreenCache.loadMapList(CloudScreenCache.mealSessions);
-      var saved = 0;
-      for (final row in sessions) {
-        final sessionId = row['sessionId']?.toString() ?? '';
-        final sessionName = row['sessionName']?.toString() ?? '';
-        if (sessionName.trim().isEmpty) continue;
-        final ok = await messApi.saveMealSession(
-          userId: userId,
-          sessionId: sessionId,
-          sessionName: sessionName,
-          startTime: row['startTime']?.toString() ?? '',
-          endTime: row['endTime']?.toString() ?? '',
-          tokenPrefix: row['tokenPrefix']?.toString() ?? '',
-          isActive: row['isActive']?.toString() ?? '1',
-          menuNotes: row['menuNotes']?.toString() ?? '',
-          sortOrder: row['sortOrder']?.toString() ?? '0',
-        );
-        if (ok) {
-          saved++;
-        } else {
-          failed++;
+      var sessions = await CloudScreenCache.loadMapList(
+        CloudScreenCache.mealSessions,
+      );
+      /* If cache empty, pull cloud first so sync has something meaningful. */
+      if (sessions.isEmpty) {
+        try {
+          final cloud = await messApi.fetchMealSessions(userId);
+          if (cloud.isNotEmpty) {
+            sessions = cloud
+                .map(
+                  (e) => {
+                    'sessionId': e.sessionId,
+                    'sessionName': e.sessionName,
+                    'startTime': e.startTime,
+                    'endTime': e.endTime,
+                    'tokenPrefix': e.tokenPrefix,
+                    'isActive': e.isActive,
+                    'menuNotes': e.menuNotes,
+                    'sortOrder': e.sortOrder,
+                  },
+                )
+                .toList();
+            await CloudScreenCache.saveJson(
+              CloudScreenCache.mealSessions,
+              sessions,
+            );
+          }
+        } catch (e) {
+          AppLogger.warning('Sync↑ meal_sessions prefetch skip: $e');
         }
       }
-      counts[CloudScreenCache.mealSessions] = saved;
-    } catch (_) {
+
+      if (sessions.isEmpty) {
+        counts[CloudScreenCache.mealSessions] = 0;
+        stepOk['meal_sessions'] = true;
+        AppLogger.info('Sync↑ meal_sessions OK (nothing to upload)');
+      } else {
+        var saved = 0;
+        var rowFailed = 0;
+        for (final row in sessions) {
+          final rawId = row['sessionId']?.toString().trim() ?? '';
+          /* Only numeric server ids; sess_* local placeholders → insert. */
+          final sessionId = int.tryParse(rawId) != null ? rawId : '';
+          final sessionName = row['sessionName']?.toString() ?? '';
+          final startTime = row['startTime']?.toString() ?? '';
+          final endTime = row['endTime']?.toString() ?? '';
+          if (sessionName.trim().isEmpty) continue;
+          if (startTime.trim().isEmpty || endTime.trim().isEmpty) continue;
+          final ok = await messApi.saveMealSession(
+            userId: userId,
+            sessionId: sessionId,
+            sessionName: sessionName,
+            startTime: startTime,
+            endTime: endTime,
+            tokenPrefix: row['tokenPrefix']?.toString() ?? '',
+            isActive: row['isActive']?.toString() ?? '1',
+            menuNotes: row['menuNotes']?.toString() ?? '',
+            sortOrder: row['sortOrder']?.toString() ?? '0',
+          );
+          if (ok) {
+            saved++;
+          } else {
+            rowFailed++;
+            AppLogger.warning(
+              'Sync↑ meal_session FAIL name=$sessionName id=$rawId',
+            );
+          }
+        }
+        counts[CloudScreenCache.mealSessions] = saved;
+        if (rowFailed > 0) {
+          failed += rowFailed;
+          stepOk['meal_sessions'] = false;
+        } else {
+          stepOk['meal_sessions'] = true;
+          AppLogger.info('Sync↑ meal_sessions OK saved=$saved');
+        }
+      }
+    } catch (e) {
       failed++;
       counts[CloudScreenCache.mealSessions] = 0;
+      stepOk['meal_sessions'] = false;
+      AppLogger.error('Sync↑ meal_sessions exception', e);
     }
 
     try {
-      final printers =
-          await CloudScreenCache.loadMapList(CloudScreenCache.storePrinters);
-      var saved = 0;
-      for (final row in printers) {
-        final id = row['id']?.toString().trim() ?? '';
-        final name = row['printerName']?.toString().trim() ?? '';
-        if (name.isEmpty) continue;
-        try {
-          await printerApi.save(
-            userId,
-            {
+      final printers = await CloudScreenCache.loadMapList(
+        CloudScreenCache.storePrinters,
+      );
+      if (printers.isEmpty) {
+        counts[CloudScreenCache.storePrinters] = 0;
+        stepOk['store_printers'] = true;
+      } else {
+        var saved = 0;
+        var rowFailed = 0;
+        for (final row in printers) {
+          final id = row['id']?.toString().trim() ?? '';
+          final name = row['printerName']?.toString().trim() ?? '';
+          if (name.isEmpty) continue;
+          try {
+            await printerApi.save(userId, {
               'printerName': name,
               'connectionType': row['connectionType']?.toString() ?? 'BT',
               'ipAddress': row['ipAddress']?.toString() ?? '',
@@ -113,38 +182,55 @@ abstract final class CloudScreenPush {
               'isDefault': row['isDefault']?.toString() ?? '0',
               'isBackup': row['isBackup']?.toString() ?? '0',
               'primaryPrinterId': row['primaryPrinterId']?.toString() ?? '',
-            },
-            id: id.isEmpty ? null : id,
-          );
-          saved++;
-        } catch (_) {
-          failed++;
+            }, id: id.isEmpty ? null : id);
+            saved++;
+          } catch (e) {
+            rowFailed++;
+            AppLogger.warning('Sync↑ store_printer FAIL $name: $e');
+          }
+        }
+        counts[CloudScreenCache.storePrinters] = saved;
+        if (rowFailed > 0) {
+          failed += rowFailed;
+          stepOk['store_printers'] = false;
+        } else {
+          stepOk['store_printers'] = true;
         }
       }
-      counts[CloudScreenCache.storePrinters] = saved;
-    } catch (_) {
+    } catch (e) {
       failed++;
       counts[CloudScreenCache.storePrinters] = 0;
+      stepOk['store_printers'] = false;
+      AppLogger.error('Sync↑ store_printers exception', e);
     }
 
     try {
-      final rawRoutes =
-          await CloudScreenCache.loadMapList(CloudScreenCache.printerRoutes);
+      final rawRoutes = await CloudScreenCache.loadMapList(
+        CloudScreenCache.printerRoutes,
+      );
       final routes = rawRoutes
           .map(PrinterRouteRule.fromJson)
           .where((e) => e.printerId.trim().isNotEmpty)
           .toList();
-      if (routes.isNotEmpty) {
+      if (routes.isEmpty) {
+        counts[CloudScreenCache.printerRoutes] = 0;
+        stepOk['printer_routes'] = true;
+      } else {
         await printerApi.saveRoutes(userId, routes);
         counts[CloudScreenCache.printerRoutes] = routes.length;
-      } else {
-        counts[CloudScreenCache.printerRoutes] = 0;
+        stepOk['printer_routes'] = true;
       }
-    } catch (_) {
+    } catch (e) {
       failed++;
       counts[CloudScreenCache.printerRoutes] = 0;
+      stepOk['printer_routes'] = false;
+      AppLogger.error('Sync↑ printer_routes exception', e);
     }
 
-    return CloudScreenPushResult(counts: counts, failed: failed);
+    return CloudScreenPushResult(
+      counts: counts,
+      stepOk: stepOk,
+      failed: failed,
+    );
   }
 }

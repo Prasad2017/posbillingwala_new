@@ -71,17 +71,15 @@ void main() {
       ),
     ];
 
-    final text = ReceiptBuilder(const PrinterSettings()).billText(
-      invoice: invoice,
-      items: items,
-      shopName: 'Demo Cafe',
-    );
+    final text = ReceiptBuilder(
+      const PrinterSettings(),
+    ).billText(invoice: invoice, items: items, shopName: 'Demo Cafe');
     expect(text, contains('Demo Cafe'));
     expect(text, contains('PB/09-09/00001'));
     expect(text, contains('Tea'));
     expect(text, contains('TOTAL'));
     expect(text, contains('₹105.00'));
-    expect(text, contains('Cash'));
+    expect(text, contains('SUB TOTAL'));
   });
 
   test('receipt text keeps unicode product names and rupee', () {
@@ -138,11 +136,9 @@ void main() {
       ),
     ];
 
-    final text = ReceiptBuilder(const PrinterSettings()).billText(
-      invoice: invoice,
-      items: items,
-      shopName: 'डेमो कॅफे',
-    );
+    final text = ReceiptBuilder(
+      const PrinterSettings(),
+    ).billText(invoice: invoice, items: items, shopName: 'डेमो कॅफे');
     expect(text, contains('डेमो कॅफे'));
     expect(text, contains('चहा'));
     expect(text, contains('राम'));
@@ -157,11 +153,7 @@ void main() {
       rgba[i + 2] = 0;
       rgba[i + 3] = 255;
     }
-    final bytes = PrintImageEncoder.encodeRgba(
-      rgba: rgba,
-      width: 8,
-      height: 8,
-    );
+    final bytes = PrintImageEncoder.encodeRgba(rgba: rgba, width: 8, height: 8);
     expect(bytes.take(4).toList(), [0x1d, 0x76, 0x30, 0x00]);
   });
 }

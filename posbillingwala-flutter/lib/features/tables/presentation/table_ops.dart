@@ -33,9 +33,9 @@ Future<void> printLatestInvoiceDuplicate(
   }
   if (!context.mounted) return;
   if (invoice == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(AppStrings.of(ref).noPreviousBill)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(AppStrings.of(ref).noPreviousBill)));
     return;
   }
   context.push('/print/bill/${invoice.invoiceId}?duplicate=1');
@@ -88,15 +88,17 @@ Future<void> editDiningGuestsWaiter(
   final waiterName = waiter.text.trim();
   disposeTextControllers([guests, waiter]);
   if (ok != true) return;
-  await ref.read(tablesControllerProvider.notifier).updateSessionMeta(
+  await ref
+      .read(tablesControllerProvider.notifier)
+      .updateSessionMeta(
         sessionId: session.sessionId,
         guestCount: guestCount,
         waiterName: waiterName,
       );
   if (!context.mounted) return;
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text(AppStrings.of(ref).tableDetailsSaved)),
-  );
+  ScaffoldMessenger.of(
+    context,
+  ).showSnackBar(SnackBar(content: Text(AppStrings.of(ref).tableDetailsSaved)));
 }
 
 Future<void> showPosTableOverflow(
@@ -195,9 +197,9 @@ Future<void> handleTableOpsAction(
         .read(tablesControllerProvider.notifier)
         .splitJoined(floor.openSession!.sessionId);
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Joined tables split')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Joined tables split')));
     return;
   }
 
@@ -211,38 +213,44 @@ Future<void> handleTableOpsAction(
   }
 
   if (action == 'hold' && floor.openSession != null) {
-    await ref.read(tablesControllerProvider.notifier).setSessionStatus(
+    await ref
+        .read(tablesControllerProvider.notifier)
+        .setSessionStatus(
           sessionId: floor.openSession!.sessionId,
           status: 'HOLD',
         );
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Table on hold')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Table on hold')));
     return;
   }
 
   if (action == 'resume' && floor.openSession != null) {
-    await ref.read(tablesControllerProvider.notifier).setSessionStatus(
+    await ref
+        .read(tablesControllerProvider.notifier)
+        .setSessionStatus(
           sessionId: floor.openSession!.sessionId,
           status: 'RUNNING',
         );
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Table resumed')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Table resumed')));
     return;
   }
 
   if (action == 'bill' && floor.openSession != null) {
-    await ref.read(tablesControllerProvider.notifier).setSessionStatus(
+    await ref
+        .read(tablesControllerProvider.notifier)
+        .setSessionStatus(
           sessionId: floor.openSession!.sessionId,
           status: 'BILL_REQUEST',
         );
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Bill requested')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Bill requested')));
     return;
   }
 
@@ -281,7 +289,9 @@ Future<void> handleTableOpsAction(
     if (target == null || !context.mounted) return;
     try {
       if (action == 'transfer') {
-        await ref.read(tablesControllerProvider.notifier).transferTable(
+        await ref
+            .read(tablesControllerProvider.notifier)
+            .transferTable(
               fromTable: floor.billingTableNumber,
               toTable: target.table.tableNumber,
             );
@@ -291,9 +301,9 @@ Future<void> handleTableOpsAction(
             .getCartItems(cartScope: floor.billingTableNumber);
         if (items.isEmpty) {
           if (!context.mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No items to move')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('No items to move')));
           return;
         }
         if (!context.mounted) return;
@@ -304,7 +314,9 @@ Future<void> handleTableOpsAction(
           builder: (context) => MoveItemsSheet(items: items),
         );
         if (selected == null || selected.isEmpty || !context.mounted) return;
-        await ref.read(tablesControllerProvider.notifier).moveItems(
+        await ref
+            .read(tablesControllerProvider.notifier)
+            .moveItems(
               fromTable: floor.billingTableNumber,
               toTable: target.table.tableNumber,
               items: selected,
@@ -360,7 +372,9 @@ Future<void> handleTableOpsAction(
       ),
     );
     if (secondary == null || !context.mounted) return;
-    await ref.read(tablesControllerProvider.notifier).joinTables(
+    await ref
+        .read(tablesControllerProvider.notifier)
+        .joinTables(
           primaryTable: floor.billingTableNumber,
           secondaryTable: secondary.table.tableNumber,
         );

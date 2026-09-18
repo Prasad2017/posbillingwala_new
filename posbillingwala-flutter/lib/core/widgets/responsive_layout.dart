@@ -22,23 +22,20 @@ class ResponsiveContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final w = context.widthClass;
-    final resolvedMax = maxWidth ??
+    final resolvedMax =
+        maxWidth ??
         (dashboard
             ? AppBreakpoints.dashboardMaxWidthFor(w)
             : AppBreakpoints.contentMaxWidthFor(w));
-    final resolvedPadding = padding ??
-        EdgeInsets.symmetric(
-          horizontal: AppBreakpoints.pagePaddingFor(w),
-        );
+    final resolvedPadding =
+        padding ??
+        EdgeInsets.symmetric(horizontal: AppBreakpoints.pagePaddingFor(w));
 
     return Align(
       alignment: alignment,
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: resolvedMax),
-        child: Padding(
-          padding: resolvedPadding,
-          child: child,
-        ),
+        child: Padding(padding: resolvedPadding, child: child),
       ),
     );
   }
@@ -73,7 +70,8 @@ class ResponsivePageBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final w = context.widthClass;
     final hPad = AppBreakpoints.pagePaddingFor(w);
-    final resolvedPadding = padding ??
+    final resolvedPadding =
+        padding ??
         EdgeInsets.fromLTRB(hPad, AppDimensions.lg, hPad, AppDimensions.xxl);
 
     return LayoutBuilder(
@@ -113,7 +111,8 @@ class ResponsiveScrollShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final w = context.widthClass;
-    final resolvedMax = maxWidth ??
+    final resolvedMax =
+        maxWidth ??
         (dashboard
             ? AppBreakpoints.dashboardMaxWidthFor(w)
             : AppBreakpoints.contentMaxWidthFor(w));

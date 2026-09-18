@@ -35,32 +35,24 @@ public class BluetoothPrintService {
 
     private static final String TAG = "BluetoothPrintService";
     private static final UUID SPP_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
-    /** Discovery cancel is async; a short wait avoids SDP handshake timeouts. */
+    /**
+     * Discovery cancel is async; a short wait avoids SDP handshake timeouts.
+     */
     private static final long DISCOVERY_SETTLE_MS = 400L;
-    /** Stack must release the RFCOMM channel after a failed connect() before retry. */
+    /**
+     * Stack must release the RFCOMM channel after a failed connect() before retry.
+     */
     private static final long RETRY_SETTLE_MS = 450L;
-
-    public interface ConnectionListener {
-        void onConnected(BluetoothDevice device);
-
-        void onConnectionFailed();
-
-        void onConnectionLost();
-    }
-
     private final BluetoothAdapter adapter;
     private final Handler handler;
     private final Context appContext;
     private ConnectionListener connectionListener;
-
     private int state = STATE_NONE;
     private String connectedDeviceAddress = "";
     private String pendingDeviceAddress = "";
-
     private ConnectThread connectThread;
     private ConnectedThread connectedThread;
     private volatile boolean intentionalDisconnect;
-
     public BluetoothPrintService(Context context, Handler handler) {
         this.handler = handler;
         this.appContext = context != null ? context.getApplicationContext() : null;
@@ -71,6 +63,79 @@ public class BluetoothPrintService {
         this.adapter = manager != null ? manager.getAdapter() : null;
     }
 
+    private static void addStrategy(List<SocketStrategy> list, SocketStrategy strategy) {
+        if (strategy != null) {
+            list.add(strategy);
+        }
+    }
+
+    private static SocketStrategy uuidStrategy(BluetoothDevice device, UUID uuid, boolean secure, String label) {
+        return new SocketStrategy(label, () -> {
+            try {
+                return secure
+                        ? device.createRfcommSocketToServiceRecord(uuid)
+                        : device.createInsecureRfcommSocketToServiceRecord(uuid);
+            } catch (IOException e) {
+                Log.w(TAG, "open " + label + " failed", e);
+                return null;
+            }
+        });
+    }
+
+    private static SocketStrategy reflectionStrategy(BluetoothDevice device, String methodName, int channel) {
+        return new SocketStrategy(methodName + "(ch=" + channel + ")", () ->
+                reflectionSocket(device, methodName, channel));
+    }
+
+    private static BluetoothSocket reflectionSocket(BluetoothDevice device, String methodName, int channel) {
+        if (device == null) {
+            return null;
+        }
+        try {
+            Method method = device.getClass().getMethod(methodName, int.class);
+            return (BluetoothSocket) method.invoke(device, channel);
+        } catch (Exception e) {
+            Log.w(TAG, methodName + " ch=" + channel + " failed", e);
+            return null;
+        }
+    }
+
+    private static void sleepQuietly(long ms) {
+        try {
+            Thread.sleep(ms);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    private static void closeQuietly(java.io.Closeable closeable) {
+        if (closeable == null) {
+            return;
+        }
+        try {
+            closeable.close();
+        } catch (Exception ignored) {
+        }
+    }
+
+    private static void closeQuietly(BluetoothSocket socket) {
+        if (socket == null) {
+            return;
+        }
+        try {
+            socket.close();
+        } catch (Exception ignored) {
+        }
+    }
+
+    private static String safeAddress(BluetoothDevice device) {
+        try {
+            return device != null && device.getAddress() != null ? device.getAddress() : "";
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
     public void setConnectionListener(ConnectionListener listener) {
         this.connectionListener = listener;
     }
@@ -78,6 +143,10 @@ public class BluetoothPrintService {
     public synchronized int getState() {
         return state;
     }
+
+    // -------------------------------------------------------------------------
+    // Threads
+    // -------------------------------------------------------------------------
 
     public synchronized String getConnectedDeviceAddress() {
         return connectedDeviceAddress != null ? connectedDeviceAddress : "";
@@ -91,6 +160,10 @@ public class BluetoothPrintService {
             return false;
         }
     }
+
+    // -------------------------------------------------------------------------
+    // Socket helpers
+    // -------------------------------------------------------------------------
 
     public synchronized void start() {
         cancelConnectThread();
@@ -215,9 +288,203 @@ public class BluetoothPrintService {
         return thread.write(out);
     }
 
+    /**
+     * Thermal printers often fail SDP UUID connect with
+     * "read failed, socket might closed or timeout, read ret: -1".
+     * Channel-1 reflection sockets skip SDP. Insecure is required for most ESC/POS printers.
+     */
+    private List<SocketStrategy> buildStrategies(BluetoothDevice device, boolean preferSecure) {
+        List<SocketStrategy> strategies = new ArrayList<>();
+        if (device == null) {
+            return strategies;
+        }
+
+        SocketStrategy insecureSpp = uuidStrategy(device, SPP_UUID, false, "Insecure-SPP");
+        SocketStrategy secureSpp = uuidStrategy(device, SPP_UUID, true, "Secure-SPP");
+        SocketStrategy insecureCh1 = reflectionStrategy(device, "createInsecureRfcommSocket", 1);
+        SocketStrategy secureCh1 = reflectionStrategy(device, "createRfcommSocket", 1);
+
+        if (preferSecure) {
+            addStrategy(strategies, secureSpp);
+            addStrategy(strategies, insecureSpp);
+            addStrategy(strategies, secureCh1);
+            addStrategy(strategies, insecureCh1);
+        } else {
+            addStrategy(strategies, insecureSpp);
+            addStrategy(strategies, insecureCh1);
+            addStrategy(strategies, secureSpp);
+            addStrategy(strategies, secureCh1);
+        }
+
+        ParcelUuid[] advertised = null;
+        try {
+            advertised = device.getUuids();
+        } catch (Exception e) {
+            Log.w(TAG, "getUuids failed", e);
+        }
+        if (advertised != null) {
+            for (ParcelUuid parcelUuid : advertised) {
+                if (parcelUuid == null || parcelUuid.getUuid() == null) {
+                    continue;
+                }
+                UUID uuid = parcelUuid.getUuid();
+                if (SPP_UUID.equals(uuid)) {
+                    continue;
+                }
+                addStrategy(strategies, uuidStrategy(device, uuid, false, "Insecure-" + uuid));
+                addStrategy(strategies, uuidStrategy(device, uuid, true, "Secure-" + uuid));
+            }
+        }
+
+        addStrategy(strategies, reflectionStrategy(device, "createInsecureRfcommSocket", 2));
+        addStrategy(strategies, reflectionStrategy(device, "createRfcommSocket", 2));
+        return strategies;
+    }
+
+    private BluetoothDevice resolveDevice(BluetoothDevice device) {
+        if (device == null || adapter == null) {
+            return device;
+        }
+        try {
+            String address = device.getAddress();
+            if (address != null && !address.isEmpty()) {
+                return adapter.getRemoteDevice(address);
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "resolveDevice failed, using original", e);
+        }
+        return device;
+    }
+
+    private synchronized void notifyConnected(BluetoothDevice device) {
+        ConnectionListener listener = connectionListener;
+        if (listener != null) {
+            try {
+                listener.onConnected(device);
+            } catch (Exception e) {
+                Log.e(TAG, "listener onConnected failed", e);
+            }
+        }
+    }
+
+    private synchronized void notifyConnectionFailed() {
+        connectedDeviceAddress = "";
+        pendingDeviceAddress = "";
+        state = STATE_LISTEN;
+        ConnectionListener listener = connectionListener;
+        if (listener != null) {
+            try {
+                listener.onConnectionFailed();
+            } catch (Exception e) {
+                Log.e(TAG, "listener onConnectionFailed failed", e);
+            }
+        } else {
+            postToast("Unable to connect printer");
+        }
+    }
+
+    /**
+     * Avoid re-entering cancelConnectedThread from the connected worker thread.
+     */
+    private void signalConnectionLostFromWorker() {
+        if (intentionalDisconnect) {
+            return;
+        }
+        if (handler != null) {
+            handler.post(this::notifyConnectionLost);
+        } else {
+            notifyConnectionLost();
+        }
+    }
+
+    private synchronized void notifyConnectionLost() {
+        if (state == STATE_NONE || intentionalDisconnect) {
+            intentionalDisconnect = false;
+            return;
+        }
+        connectedDeviceAddress = "";
+        cancelConnectedThread();
+        state = STATE_LISTEN;
+        ConnectionListener listener = connectionListener;
+        if (listener != null) {
+            try {
+                listener.onConnectionLost();
+            } catch (Exception e) {
+                Log.e(TAG, "listener onConnectionLost failed", e);
+            }
+        } else {
+            postToast("Printer connection lost");
+        }
+    }
+
+    private void postToast(String text) {
+        if (appContext == null || text == null || text.isEmpty()) {
+            return;
+        }
+        if (handler != null) {
+            handler.post(() -> Toast.makeText(appContext, text, Toast.LENGTH_SHORT).show());
+        }
+    }
+
+    private synchronized void cancelConnectThread() {
+        if (connectThread != null) {
+            connectThread.cancel();
+            connectThread = null;
+        }
+    }
+
     // -------------------------------------------------------------------------
-    // Threads
+    // Notifications
     // -------------------------------------------------------------------------
+
+    private synchronized void cancelConnectedThread() {
+        if (connectedThread != null) {
+            intentionalDisconnect = true;
+            connectedThread.cancel();
+            connectedThread = null;
+        }
+    }
+
+    public interface ConnectionListener {
+        void onConnected(BluetoothDevice device);
+
+        void onConnectionFailed();
+
+        void onConnectionLost();
+    }
+
+    private interface SocketOpener {
+        BluetoothSocket open();
+    }
+
+    private static final class SocketStrategy {
+        final String label;
+        final SocketOpener opener;
+
+        SocketStrategy(String label, SocketOpener opener) {
+            this.label = label;
+            this.opener = opener;
+        }
+
+        BluetoothSocket open() {
+            try {
+                return opener.open();
+            } catch (Exception e) {
+                Log.w(TAG, "strategy open failed: " + label, e);
+                return null;
+            }
+        }
+    }
+
+    private static final class ConnectResult {
+        final BluetoothSocket socket;
+        final String socketType;
+
+        ConnectResult(BluetoothSocket socket, String socketType) {
+            this.socket = socket;
+            this.socketType = socketType;
+        }
+    }
 
     private class ConnectThread extends Thread {
 
@@ -391,271 +658,6 @@ public class BluetoothPrintService {
             closeQuietly(in);
             closeQuietly(out);
             closeQuietly(socket);
-        }
-    }
-
-    // -------------------------------------------------------------------------
-    // Socket helpers
-    // -------------------------------------------------------------------------
-
-    /**
-     * Thermal printers often fail SDP UUID connect with
-     * "read failed, socket might closed or timeout, read ret: -1".
-     * Channel-1 reflection sockets skip SDP. Insecure is required for most ESC/POS printers.
-     */
-    private List<SocketStrategy> buildStrategies(BluetoothDevice device, boolean preferSecure) {
-        List<SocketStrategy> strategies = new ArrayList<>();
-        if (device == null) {
-            return strategies;
-        }
-
-        SocketStrategy insecureSpp = uuidStrategy(device, SPP_UUID, false, "Insecure-SPP");
-        SocketStrategy secureSpp = uuidStrategy(device, SPP_UUID, true, "Secure-SPP");
-        SocketStrategy insecureCh1 = reflectionStrategy(device, "createInsecureRfcommSocket", 1);
-        SocketStrategy secureCh1 = reflectionStrategy(device, "createRfcommSocket", 1);
-
-        if (preferSecure) {
-            addStrategy(strategies, secureSpp);
-            addStrategy(strategies, insecureSpp);
-            addStrategy(strategies, secureCh1);
-            addStrategy(strategies, insecureCh1);
-        } else {
-            addStrategy(strategies, insecureSpp);
-            addStrategy(strategies, insecureCh1);
-            addStrategy(strategies, secureSpp);
-            addStrategy(strategies, secureCh1);
-        }
-
-        ParcelUuid[] advertised = null;
-        try {
-            advertised = device.getUuids();
-        } catch (Exception e) {
-            Log.w(TAG, "getUuids failed", e);
-        }
-        if (advertised != null) {
-            for (ParcelUuid parcelUuid : advertised) {
-                if (parcelUuid == null || parcelUuid.getUuid() == null) {
-                    continue;
-                }
-                UUID uuid = parcelUuid.getUuid();
-                if (SPP_UUID.equals(uuid)) {
-                    continue;
-                }
-                addStrategy(strategies, uuidStrategy(device, uuid, false, "Insecure-" + uuid));
-                addStrategy(strategies, uuidStrategy(device, uuid, true, "Secure-" + uuid));
-            }
-        }
-
-        addStrategy(strategies, reflectionStrategy(device, "createInsecureRfcommSocket", 2));
-        addStrategy(strategies, reflectionStrategy(device, "createRfcommSocket", 2));
-        return strategies;
-    }
-
-    private static void addStrategy(List<SocketStrategy> list, SocketStrategy strategy) {
-        if (strategy != null) {
-            list.add(strategy);
-        }
-    }
-
-    private static SocketStrategy uuidStrategy(BluetoothDevice device, UUID uuid, boolean secure, String label) {
-        return new SocketStrategy(label, () -> {
-            try {
-                return secure
-                        ? device.createRfcommSocketToServiceRecord(uuid)
-                        : device.createInsecureRfcommSocketToServiceRecord(uuid);
-            } catch (IOException e) {
-                Log.w(TAG, "open " + label + " failed", e);
-                return null;
-            }
-        });
-    }
-
-    private static SocketStrategy reflectionStrategy(BluetoothDevice device, String methodName, int channel) {
-        return new SocketStrategy(methodName + "(ch=" + channel + ")", () ->
-                reflectionSocket(device, methodName, channel));
-    }
-
-    private BluetoothDevice resolveDevice(BluetoothDevice device) {
-        if (device == null || adapter == null) {
-            return device;
-        }
-        try {
-            String address = device.getAddress();
-            if (address != null && !address.isEmpty()) {
-                return adapter.getRemoteDevice(address);
-            }
-        } catch (Exception e) {
-            Log.w(TAG, "resolveDevice failed, using original", e);
-        }
-        return device;
-    }
-
-    private static BluetoothSocket reflectionSocket(BluetoothDevice device, String methodName, int channel) {
-        if (device == null) {
-            return null;
-        }
-        try {
-            Method method = device.getClass().getMethod(methodName, int.class);
-            return (BluetoothSocket) method.invoke(device, channel);
-        } catch (Exception e) {
-            Log.w(TAG, methodName + " ch=" + channel + " failed", e);
-            return null;
-        }
-    }
-
-    private static void sleepQuietly(long ms) {
-        try {
-            Thread.sleep(ms);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-    }
-
-    private static final class SocketStrategy {
-        final String label;
-        final SocketOpener opener;
-
-        SocketStrategy(String label, SocketOpener opener) {
-            this.label = label;
-            this.opener = opener;
-        }
-
-        BluetoothSocket open() {
-            try {
-                return opener.open();
-            } catch (Exception e) {
-                Log.w(TAG, "strategy open failed: " + label, e);
-                return null;
-            }
-        }
-    }
-
-    private interface SocketOpener {
-        BluetoothSocket open();
-    }
-
-    private static final class ConnectResult {
-        final BluetoothSocket socket;
-        final String socketType;
-
-        ConnectResult(BluetoothSocket socket, String socketType) {
-            this.socket = socket;
-            this.socketType = socketType;
-        }
-    }
-
-    private static void closeQuietly(java.io.Closeable closeable) {
-        if (closeable == null) {
-            return;
-        }
-        try {
-            closeable.close();
-        } catch (Exception ignored) {
-        }
-    }
-
-    private static void closeQuietly(BluetoothSocket socket) {
-        if (socket == null) {
-            return;
-        }
-        try {
-            socket.close();
-        } catch (Exception ignored) {
-        }
-    }
-
-    private static String safeAddress(BluetoothDevice device) {
-        try {
-            return device != null && device.getAddress() != null ? device.getAddress() : "";
-        } catch (Exception e) {
-            return "";
-        }
-    }
-
-    // -------------------------------------------------------------------------
-    // Notifications
-    // -------------------------------------------------------------------------
-
-    private synchronized void notifyConnected(BluetoothDevice device) {
-        ConnectionListener listener = connectionListener;
-        if (listener != null) {
-            try {
-                listener.onConnected(device);
-            } catch (Exception e) {
-                Log.e(TAG, "listener onConnected failed", e);
-            }
-        }
-    }
-
-    private synchronized void notifyConnectionFailed() {
-        connectedDeviceAddress = "";
-        pendingDeviceAddress = "";
-        state = STATE_LISTEN;
-        ConnectionListener listener = connectionListener;
-        if (listener != null) {
-            try {
-                listener.onConnectionFailed();
-            } catch (Exception e) {
-                Log.e(TAG, "listener onConnectionFailed failed", e);
-            }
-        } else {
-            postToast("Unable to connect printer");
-        }
-    }
-
-    /** Avoid re-entering cancelConnectedThread from the connected worker thread. */
-    private void signalConnectionLostFromWorker() {
-        if (intentionalDisconnect) {
-            return;
-        }
-        if (handler != null) {
-            handler.post(this::notifyConnectionLost);
-        } else {
-            notifyConnectionLost();
-        }
-    }
-
-    private synchronized void notifyConnectionLost() {
-        if (state == STATE_NONE || intentionalDisconnect) {
-            intentionalDisconnect = false;
-            return;
-        }
-        connectedDeviceAddress = "";
-        cancelConnectedThread();
-        state = STATE_LISTEN;
-        ConnectionListener listener = connectionListener;
-        if (listener != null) {
-            try {
-                listener.onConnectionLost();
-            } catch (Exception e) {
-                Log.e(TAG, "listener onConnectionLost failed", e);
-            }
-        } else {
-            postToast("Printer connection lost");
-        }
-    }
-
-    private void postToast(String text) {
-        if (appContext == null || text == null || text.isEmpty()) {
-            return;
-        }
-        if (handler != null) {
-            handler.post(() -> Toast.makeText(appContext, text, Toast.LENGTH_SHORT).show());
-        }
-    }
-
-    private synchronized void cancelConnectThread() {
-        if (connectThread != null) {
-            connectThread.cancel();
-            connectThread = null;
-        }
-    }
-
-    private synchronized void cancelConnectedThread() {
-        if (connectedThread != null) {
-            intentionalDisconnect = true;
-            connectedThread.cancel();
-            connectedThread = null;
         }
     }
 }

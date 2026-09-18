@@ -24,13 +24,15 @@ class StaffApi {
   }
 
   Future<
-      ({
-        StaffUser staff,
-        String permissionVersion,
-        String sessionId,
-        bool coldLogin,
-        Map<String, dynamic> raw,
-      })> login({
+    ({
+      StaffUser staff,
+      String permissionVersion,
+      String sessionId,
+      bool coldLogin,
+      Map<String, dynamic> raw,
+    })
+  >
+  login({
     String? userId,
     required String mobileNumber,
     required String pin,
@@ -50,10 +52,13 @@ class StaffApi {
       throw Exception(data['message']?.toString() ?? 'Staff login failed');
     }
     return (
-      staff: StaffUser.fromJson(Map<String, dynamic>.from(data['staff'] as Map)),
+      staff: StaffUser.fromJson(
+        Map<String, dynamic>.from(data['staff'] as Map),
+      ),
       permissionVersion: data['permissionVersion']?.toString() ?? '1',
       sessionId: data['staffSessionId']?.toString() ?? '',
-      coldLogin: data['coldLogin']?.toString() == '1' ||
+      coldLogin:
+          data['coldLogin']?.toString() == '1' ||
           (userId == null || userId.isEmpty),
       raw: data,
     );
@@ -65,7 +70,10 @@ class StaffApi {
   }
 
   Future<StaffUser> get(String userId, String id) async {
-    final data = await post(ApiEndpoints.getStaff, {'userId': userId, 'id': id});
+    final data = await post(ApiEndpoints.getStaff, {
+      'userId': userId,
+      'id': id,
+    });
     if (data['staff'] is! Map) {
       throw Exception(data['message']?.toString() ?? 'User not found');
     }
@@ -173,8 +181,12 @@ class StaffApi {
       'staffId': staffId,
     });
     if (data['staff'] is Map) {
-      return StaffUser.fromJson(Map<String, dynamic>.from(data['staff'] as Map));
+      return StaffUser.fromJson(
+        Map<String, dynamic>.from(data['staff'] as Map),
+      );
     }
-    throw Exception(data['message']?.toString() ?? 'Unable to load permissions');
+    throw Exception(
+      data['message']?.toString() ?? 'Unable to load permissions',
+    );
   }
 }

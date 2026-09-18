@@ -29,18 +29,12 @@ class MessPage extends ConsumerStatefulWidget {
   ConsumerState<MessPage> createState() => MessPageState();
 }
 
-class MessPageState extends ConsumerState<MessPage>
-    with SingleTickerProviderStateMixin {
-  late final TabController messPageTabs;
+class MessPageState extends ConsumerState<MessPage> {
   final messPageVerifyController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    messPageTabs = TabController(length: 3, vsync: this);
-    messPageTabs.addListener(() {
-      if (mounted) setState(() {});
-    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(messCommonQrProvider.notifier).load();
       if (AppPlatform.requiresNetwork) {
@@ -51,7 +45,6 @@ class MessPageState extends ConsumerState<MessPage>
 
   @override
   void dispose() {
-    messPageTabs.dispose();
     messPageVerifyController.dispose();
     super.dispose();
   }
@@ -61,9 +54,9 @@ class MessPageState extends ConsumerState<MessPage>
     ref.listen(messControllerProvider, (prev, next) {
       next.whenOrNull(
         error: (error, _) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('$error')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('$error')));
         },
       );
     });
@@ -71,6 +64,19 @@ class MessPageState extends ConsumerState<MessPage>
     return Scaffold(
       appBar: AppBar(
         title: Text(AppStrings.of(ref).mess),
+        actions: [
+          TextButton.icon(
+            onPressed: () => messPageAddMember(context),
+            icon: const Icon(Icons.person_add_alt_1_rounded, color: Colors.white),
+            label: Text(
+              AppStrings.of(ref).addMember,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -78,6 +84,7 @@ class MessPageState extends ConsumerState<MessPage>
             padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
             child: Column(
               children: [
+                /* All menu cards first (2×2). */
                 Row(
                   children: [
                     Expanded(
@@ -85,7 +92,7 @@ class MessPageState extends ConsumerState<MessPage>
                         label: 'Member List',
                         color: AppColors.primary,
                         svgPath: AppAssets.svgPerson,
-                        onTap: () => messPageTabs.animateTo(0),
+                        onTap: () => context.push('/mess/members'),
                       ),
                     ),
                     Expanded(
@@ -93,25 +100,10 @@ class MessPageState extends ConsumerState<MessPage>
                         label: 'QR Management',
                         color: AppColors.purple,
                         svgPath: AppAssets.svgQr,
-                        onTap: () => messPageTabs.animateTo(2),
+                        onTap: () => context.push('/mess/qr'),
                       ),
                     ),
                   ],
-                ),
-                SwitchListTile.adaptive(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(AppStrings.of(ref).institutePays),
-                  subtitle: const Text(
-                    'When on, mess coupons bill the institute (server setting)',
-                  ),
-                  value: ref.watch(messInstitutePayProvider).asData?.value ??
-                      false,
-                  onChanged: (v) async {
-                    await ref
-                        .read(messControllerProvider.notifier)
-                        .setShopPayerMode(v);
-                    ref.invalidate(messInstitutePayProvider);
-                  },
                 ),
                 Row(
                   children: [
@@ -133,44 +125,33 @@ class MessPageState extends ConsumerState<MessPage>
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
-          Material(
-            color: Colors.white,
-            child: TabBar(
-              controller: messPageTabs,
-              labelColor: AppColors.primary,
-              unselectedLabelColor: AppColors.textSecondary,
-              tabs: const [
-                Tab(text: 'Members'),
-                Tab(text: 'Tokens'),
-                Tab(text: 'Common QR'),
+                /* Institute pays below cards. */
+                SwitchListTile.adaptive(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+                  title: Text(AppStrings.of(ref).institutePays),
+                  subtitle: const Text(
+                    'When on, mess coupons bill the institute (server setting)',
+                  ),
+                  value:
+                      ref.watch(messInstitutePayProvider).asData?.value ??
+                      false,
+                  onChanged: (v) async {
+                    await ref
+                        .read(messControllerProvider.notifier)
+                        .setShopPayerMode(v);
+                    ref.invalidate(messInstitutePayProvider);
+                  },
+                ),
               ],
             ),
           ),
           const Divider(height: 1),
+          /* Tokens only — Member List / QR Management open from cards. */
           Expanded(
-            child: TabBarView(
-              controller: messPageTabs,
-              children: [
-                MembersTab(
-                  onEditMember: (m) => editMember(context, m),
-                ),
-                TokensTab(verifyController: messPageVerifyController),
-                const CommonQrTab(),
-              ],
-            ),
+            child: TokensTab(verifyController: messPageVerifyController),
           ),
         ],
       ),
-      floatingActionButton: messPageTabs.index == 0
-          ? FloatingActionButton.extended(
-              onPressed: () => messPageAddMember(context),
-              icon: const Icon(Icons.person_add_alt_1_rounded),
-              label: Text(AppStrings.of(ref).addMember),
-            )
-          : null,
     );
   }
 
@@ -182,9 +163,9 @@ class MessPageState extends ConsumerState<MessPage>
     );
     if (result == null || !context.mounted) return;
     if (result.name.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppStrings.of(ref).nameRequired)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(AppStrings.of(ref).nameRequired)));
       return;
     }
     if (messTokenDigits(result.mobile).length != 10) {
@@ -193,7 +174,9 @@ class MessPageState extends ConsumerState<MessPage>
       );
       return;
     }
-    await ref.read(messControllerProvider.notifier).updateLocalMember(
+    await ref
+        .read(messControllerProvider.notifier)
+        .updateLocalMember(
           memberId: member.memberId,
           name: result.name,
           mobile: result.mobile,
@@ -207,9 +190,9 @@ class MessPageState extends ConsumerState<MessPage>
           company: result.company,
         );
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(AppStrings.of(ref).memberUpdated)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(AppStrings.of(ref).memberUpdated)));
   }
 
   Future<void> messPageAddMember(BuildContext context) async {
@@ -219,9 +202,9 @@ class MessPageState extends ConsumerState<MessPage>
     );
     if (result == null || !context.mounted) return;
     if (result.name.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppStrings.of(ref).nameRequired)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(AppStrings.of(ref).nameRequired)));
       return;
     }
     if (messTokenDigits(result.mobile).length != 10) {
@@ -231,24 +214,27 @@ class MessPageState extends ConsumerState<MessPage>
       return;
     }
 
-    final memberId =
-        await ref.read(messControllerProvider.notifier).addLocalMember(
-              name: result.name,
-              mobile: result.mobile,
-              altMobile: result.altMobile,
-              address: result.address,
-              registrationNo: result.registrationNo,
-              memberType: result.memberType,
-              rollNo: result.rollNo,
-              college: result.college,
-              studentYear: result.studentYear,
-              company: result.company,
-            );
+    final memberId = await ref
+        .read(messControllerProvider.notifier)
+        .addLocalMember(
+          name: result.name,
+          mobile: result.mobile,
+          altMobile: result.altMobile,
+          address: result.address,
+          registrationNo: result.registrationNo,
+          memberType: result.memberType,
+          rollNo: result.rollNo,
+          college: result.college,
+          studentYear: result.studentYear,
+          company: result.company,
+        );
     /* Inventory AddMessMember also collects first payment amounts/days. */
     if (result.messAmount != null || result.messPaidAmount != null) {
       final month = DateFormat('yyyy-MM').format(DateTime.now());
       final network = 'pay_${DateTime.now().millisecondsSinceEpoch}';
-      await ref.read(appDatabaseProvider).upsertLocalMessPayment(
+      await ref
+          .read(appDatabaseProvider)
+          .upsertLocalMessPayment(
             memberId: '$memberId',
             memberName: result.name,
             messAmount: result.messAmount ?? 0,
@@ -259,12 +245,11 @@ class MessPageState extends ConsumerState<MessPage>
           );
     }
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(AppStrings.of(ref).memberSaved)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(AppStrings.of(ref).memberSaved)));
   }
 }
-
 
 class MessMemberFormResult {
   const MessMemberFormResult({
@@ -305,10 +290,12 @@ Future<MessMemberFormResult?> showMemberFormDialog(
 }) async {
   final isAdd = initial == null;
   final nameCtrl = TextEditingController(text: initial?.memberName ?? '');
-  final mobileCtrl =
-      TextEditingController(text: initial?.memberMobileNumber ?? '');
-  final altCtrl =
-      TextEditingController(text: initial?.memberAltenetMobileNumber ?? '');
+  final mobileCtrl = TextEditingController(
+    text: initial?.memberMobileNumber ?? '',
+  );
+  final altCtrl = TextEditingController(
+    text: initial?.memberAltenetMobileNumber ?? '',
+  );
   final addressCtrl = TextEditingController(text: initial?.memberAddress ?? '');
   final regCtrl = TextEditingController(text: initial?.registrationNo ?? '');
   final rollCtrl = TextEditingController(text: initial?.rollNo ?? '');
@@ -338,11 +325,16 @@ Future<MessMemberFormResult?> showMemberFormDialog(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                AppTextField(controller: nameCtrl, label: 'Member name*'),
+                AppTextField(
+                  required: true,
+                  controller: nameCtrl,
+                  label: 'Member name',
+                ),
                 const SizedBox(height: 12),
                 AppTextField(
+                  required: true,
                   controller: mobileCtrl,
-                  label: 'Mobile*',
+                  label: 'Mobile',
                   keyboardType: TextInputType.phone,
                   maxLength: 10,
                   showCounter: false,
@@ -362,7 +354,8 @@ Future<MessMemberFormResult?> showMemberFormDialog(
                 ),
                 const SizedBox(height: 12),
                 AppDropdownFormField<String>(
-                  label: 'Member Type*',
+                  required: true,
+                  label: 'Member Type',
                   items: types,
                   itemLabel: (t) => t[0].toUpperCase() + t.substring(1),
                   value: memberType,
@@ -383,24 +376,29 @@ Future<MessMemberFormResult?> showMemberFormDialog(
                 if (isAdd) ...[
                   const SizedBox(height: 12),
                   StringDropdownField(
-                    label: 'Mess Days*',
+                    required: true,
+                    label: 'Mess Days',
                     value: messDays,
                     options: const ['15', '30', '45', '60'],
                     onChanged: (v) => setLocal(() => messDays = v ?? '30'),
                   ),
                   const SizedBox(height: 12),
                   AppTextField(
+                    required: true,
                     controller: messAmtCtrl,
                     label: 'Total amount',
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   AppTextField(
+                    required: true,
                     controller: paidAmtCtrl,
                     label: 'Paid amount',
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                   ),
                 ],
               ],
@@ -473,7 +471,8 @@ Future<MessMemberFormResult?> showMemberFormDialog(
 }
 
 class MessMenuCard extends StatelessWidget {
-  const MessMenuCard({super.key, 
+  const MessMenuCard({
+    super.key,
     required this.label,
     required this.color,
     required this.svgPath,
@@ -497,23 +496,24 @@ class MessMenuCard extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(12),
           child: SizedBox(
-            height: 96,
+            height: 108,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                AppSvg(svgPath, width: 28, height: 28, color: color),
+                AppSvg(svgPath, width: 30, height: 30, color: color),
                 const SizedBox(height: 8),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
                   child: Text(
                     label,
                     textAlign: TextAlign.center,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
-                      color: color,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 13,
+                      height: 1.2,
+                      color: AppColors.navy,
                     ),
                   ),
                 ),
@@ -527,9 +527,7 @@ class MessMenuCard extends StatelessWidget {
 }
 
 class MembersTab extends ConsumerStatefulWidget {
-  const MembersTab({super.key, 
-    required this.onEditMember,
-  });
+  const MembersTab({super.key, required this.onEditMember});
 
   final void Function(MessMember member) onEditMember;
 
@@ -585,7 +583,7 @@ class MembersTabState extends ConsumerState<MembersTab> {
                       ),
                     )
                   : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 88),
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                       itemCount: filtered.length,
                       separatorBuilder: (_, _) => const SizedBox(height: 8),
                       itemBuilder: (context, index) {
@@ -595,17 +593,19 @@ class MembersTabState extends ConsumerState<MembersTab> {
                           child: ListTile(
                             leading: AppModuleIcon(
                               icon: Icons.person_rounded,
-                              color: member.memberType
-                                      .toLowerCase()
-                                      .contains('staff')
+                              color:
+                                  member.memberType.toLowerCase().contains(
+                                    'staff',
+                                  )
                                   ? AppColors.purple
                                   : AppColors.teal,
                               size: 48,
                             ),
                             title: Text(
                               member.memberName,
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.w700),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                             subtitle: Text(
                               [
@@ -630,8 +630,7 @@ class MembersTabState extends ConsumerState<MembersTab> {
                                 ),
                                 IconButton(
                                   tooltip: 'Edit',
-                                  onPressed: () =>
-                                      widget.onEditMember(member),
+                                  onPressed: () => widget.onEditMember(member),
                                   icon: const Icon(Icons.edit_outlined),
                                 ),
                                 IconButton(
@@ -707,9 +706,7 @@ class MembersTabState extends ConsumerState<MembersTab> {
       );
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$e')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
     }
   }
 }
@@ -732,14 +729,14 @@ class TokensTab extends ConsumerWidget {
             children: [
               Expanded(
                 child: AppTextField(
-                      controller: verifyController,
-                      label: 'Scan / paste QR or token code',
-                    ),
+                  controller: verifyController,
+                  label: 'Scan / paste QR or token code',
+                ),
               ),
               const SizedBox(width: 8),
               AppButton(
-            label: 'Verify',
-            onPressed: () async {
+                label: 'Verify',
+                onPressed: () async {
                   final token = await ref
                       .read(messControllerProvider.notifier)
                       .verifyRaw(verifyController.text);
@@ -759,7 +756,7 @@ class TokensTab extends ConsumerWidget {
                   );
                   verifyController.clear();
                 },
-          ),
+              ),
               const SizedBox(width: 8),
               IconButton.filledTonal(
                 tooltip: 'Camera scan',
@@ -781,7 +778,7 @@ class TokensTab extends ConsumerWidget {
               onPressed: () async {
                 final nameCtrl = TextEditingController();
                 final mobileCtrl = TextEditingController();
-                final amountCtrl = TextEditingController(text: '0');
+                final amountCtrl = TextEditingController();
                 var messType = 'Lunch';
                 String? formError;
                 final ok = await showDialog<bool>(
@@ -800,13 +797,15 @@ class TokensTab extends ConsumerWidget {
                             ),
                             const SizedBox(height: 16),
                             AppTextField(
+                              required: true,
                               controller: nameCtrl,
-                              label: 'Customer name *',
+                              label: 'Customer name',
                             ),
                             const SizedBox(height: 12),
                             AppTextField(
+                              required: true,
                               controller: mobileCtrl,
-                              label: 'Mobile *',
+                              label: 'Mobile',
                               keyboardType: TextInputType.phone,
                               maxLength: 10,
                               showCounter: false,
@@ -830,8 +829,8 @@ class TokensTab extends ConsumerWidget {
                               label: 'Amount collected (optional)',
                               keyboardType:
                                   const TextInputType.numberWithOptions(
-                                decimal: true,
-                              ),
+                                    decimal: true,
+                                  ),
                             ),
                             const SizedBox(height: 12),
                             StringDropdownField(
@@ -888,7 +887,8 @@ class TokensTab extends ConsumerWidget {
                     builder: (_) => MessTokenQrPage(
                       title: 'Walk-in token',
                       subtitle: result.token.memberName ?? nameCtrl.text.trim(),
-                      memberMobile: result.token.memberMobile ??
+                      memberMobile:
+                          result.token.memberMobile ??
                           messTokenDigits(mobileCtrl.text),
                       payload: result.payload,
                       tokenCode: result.token.tokenCode,
@@ -915,8 +915,8 @@ class TokensTab extends ConsumerWidget {
                   final token = tokens[index];
                   final verified = token.tokenState == 'verified';
                   return AppCard(
-            padding: EdgeInsets.zero,
-            child: ListTile(
+                    padding: EdgeInsets.zero,
+                    child: ListTile(
                       leading: Icon(
                         verified
                             ? Icons.verified_rounded
@@ -933,8 +933,9 @@ class TokensTab extends ConsumerWidget {
                       trailing: Text(
                         verified ? 'Verified' : 'Active',
                         style: TextStyle(
-                          color:
-                              verified ? AppColors.success : AppColors.warning,
+                          color: verified
+                              ? AppColors.success
+                              : AppColors.warning,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -976,10 +977,9 @@ class CommonQrTabState extends ConsumerState<CommonQrTab> {
   }
 
   Future<void> printUrl(WidgetRef ref, BuildContext context, String url) async {
-    final result = await ref.read(printServiceProvider).printRawText(
-          'Mess Common QR\n\n$url\n',
-          label: 'Mess QR',
-        );
+    final result = await ref
+        .read(printServiceProvider)
+        .printRawText('Mess Common QR\n\n$url\n', label: 'Mess QR');
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(result.message ?? result.outcome.name)),
@@ -1003,16 +1003,19 @@ class CommonQrTabState extends ConsumerState<CommonQrTab> {
       if (!granted) {
         throw StateError('Gallery permission denied');
       }
-      await Gal.putImageBytes(bytes, name: 'mess_qr_${DateTime.now().millisecondsSinceEpoch}');
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppStrings.of(ref).qrSaved)),
+      await Gal.putImageBytes(
+        bytes,
+        name: 'mess_qr_${DateTime.now().millisecondsSinceEpoch}',
       );
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(AppStrings.of(ref).qrSaved)));
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Save failed: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Save failed: $e')));
     }
   }
 
@@ -1030,15 +1033,46 @@ class CommonQrTabState extends ConsumerState<CommonQrTab> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  Container(
+                    width: 88,
+                    height: 88,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Icon(
+                      Icons.qr_code_2_rounded,
+                      size: 48,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
                   const Text(
                     'Mess Token QR',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.navy,
+                    ),
                   ),
-                  const SizedBox(height: 16),
-                  AppButton(
-                    label: 'Generate',
-                    onPressed: () => controller.generate(),
-                    expanded: false,
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Generate a shared QR code for mess check-in.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: AppButton(
+                      label: 'Generate QR Code',
+                      icon: Icons.qr_code_2_rounded,
+                      onPressed: () => controller.generate(),
+                    ),
                   ),
                 ],
               ),
@@ -1053,91 +1087,87 @@ class CommonQrTabState extends ConsumerState<CommonQrTab> {
         ].join(' · ');
 
         return ResponsiveScrollShell(
-        dashboard: true,
-        child: ListView(
-          padding: EdgeInsets.all(
-            AppBreakpoints.pagePaddingFor(context.widthClass) + 8,
-          ),
-          children: [
-            const Text(
-              'Mess Token QR',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+          dashboard: true,
+          child: ListView(
+            padding: EdgeInsets.all(
+              AppBreakpoints.pagePaddingFor(context.widthClass) + 8,
             ),
-            const SizedBox(height: 16),
-            Center(
-              child: RepaintBoundary(
-                key: qrKey,
-                child: QrImageView(
-                  data: qr.qrUrl,
-                  size: 240,
-                  backgroundColor: Colors.white,
+            children: [
+              const Text(
+                'Mess Token QR',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 16),
+              Center(
+                child: RepaintBoundary(
+                  key: qrKey,
+                  child: QrImageView(
+                    data: qr.qrUrl,
+                    size: 240,
+                    backgroundColor: Colors.white,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              qr.status,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: active ? AppColors.success : AppColors.danger,
+              const SizedBox(height: 12),
+              Text(
+                qr.status,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: active ? AppColors.success : AppColors.danger,
+                ),
               ),
-            ),
-            if (meta.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Text(meta, textAlign: TextAlign.center),
-            ],
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Expanded(
-                  child: AppButton(
-                    label: 'Generate',
-                    onPressed: () => controller.generate(),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: AppButton(
-                    label: 'Share',
-                    variant: AppButtonVariant.outlined,
-                    onPressed: () => shareUrl(context, qr.qrUrl),
-                  ),
-                ),
+              if (meta.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(meta, textAlign: TextAlign.center),
               ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: AppButton(
-                    label: 'Download',
-                    variant: AppButtonVariant.outlined,
-                    onPressed: () => saveToGallery(context),
-                  ),
+              const SizedBox(height: 20),
+              SizedBox(
+                height: 52,
+                child: AppButton(
+                  label: 'Generate New QR',
+                  icon: Icons.qr_code_2_rounded,
+                  onPressed: () => controller.generate(),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: AppButton(
-                    label: 'Print QR',
-                    variant: AppButtonVariant.outlined,
-                    onPressed: () => printUrl(ref, context, qr.qrUrl),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: AppButton(
+                      label: 'Share',
+                      variant: AppButtonVariant.outlined,
+                      onPressed: () => shareUrl(context, qr.qrUrl),
+                    ),
                   ),
-                ),
-              ],
-            ),
-            if (active) ...[
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: AppButton(
+                      label: 'Download',
+                      variant: AppButtonVariant.outlined,
+                      onPressed: () => saveToGallery(context),
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 8),
               AppButton(
-                label: 'Deactivate',
+                label: 'Print QR',
                 variant: AppButtonVariant.outlined,
-                onPressed: () => controller.setStatus('INACTIVE'),
+                onPressed: () => printUrl(ref, context, qr.qrUrl),
               ),
+              if (active) ...[
+                const SizedBox(height: 8),
+                AppButton(
+                  label: 'Deactivate',
+                  variant: AppButtonVariant.outlined,
+                  onPressed: () => controller.setStatus('INACTIVE'),
+                ),
+              ],
             ],
-          ],
-        ),
-      );
+          ),
+        );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(
@@ -1149,10 +1179,10 @@ class CommonQrTabState extends ConsumerState<CommonQrTab> {
               Text('$e', textAlign: TextAlign.center),
               const SizedBox(height: 12),
               AppButton(
-            label: 'Retry',
-            onPressed: () => controller.load(),
-            expanded: false,
-          ),
+                label: 'Retry',
+                onPressed: () => controller.load(),
+                expanded: false,
+              ),
             ],
           ),
         ),

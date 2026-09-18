@@ -43,7 +43,8 @@ class BluetoothDevicePickerPageState extends State<BluetoothDevicePickerPage> {
       error = null;
     });
     try {
-      final allowed = await bluetoothDevicePickerPagePermissions.ensurePrintPermissions();
+      final allowed = await bluetoothDevicePickerPagePermissions
+          .ensurePrintPermissions();
       if (!allowed) {
         setState(() {
           loading = false;
@@ -101,7 +102,8 @@ class BluetoothDevicePickerPageState extends State<BluetoothDevicePickerPage> {
 
   @override
   Widget build(BuildContext context) {
-    final title = widget.title ??
+    final title =
+        widget.title ??
         (widget.channel == PrinterChannelKind.bill
             ? 'Select bill printer'
             : 'Select KOT printer');
@@ -129,54 +131,53 @@ class BluetoothDevicePickerPageState extends State<BluetoothDevicePickerPage> {
             child: loading
                 ? const AppLoadingState(message: 'Scanning paired devices…')
                 : bluetoothDevicePickerPageDevices.isEmpty
-                    ? AppErrorState(
-                        title: 'No printers found',
-                        message: error ?? 'Pair a printer and try again.',
-                        onRetry: bluetoothDevicePickerPageLoad,
-                      )
-                    : ListView.separated(
-                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                        itemCount: bluetoothDevicePickerPageDevices.length,
-                        separatorBuilder: (_, _) => const SizedBox(height: 8),
-                        itemBuilder: (context, index) {
-                          final d = bluetoothDevicePickerPageDevices[index];
-                          final connected =
-                              hub.connectedAddress == d.macAdress;
-                          return AppCard(
-                            accentColor: connected
+                ? AppErrorState(
+                    title: 'No printers found',
+                    message: error ?? 'Pair a printer and try again.',
+                    onRetry: bluetoothDevicePickerPageLoad,
+                  )
+                : ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                    itemCount: bluetoothDevicePickerPageDevices.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 8),
+                    itemBuilder: (context, index) {
+                      final d = bluetoothDevicePickerPageDevices[index];
+                      final connected = hub.connectedAddress == d.macAdress;
+                      return AppCard(
+                        accentColor: connected
+                            ? AppColors.success
+                            : AppColors.primary,
+                        padding: EdgeInsets.zero,
+                        onTap: () => select(d),
+                        child: ListTile(
+                          leading: AppModuleIcon(
+                            svgPath: AppAssets.svgPrint,
+                            color: connected
                                 ? AppColors.success
                                 : AppColors.primary,
-                            padding: EdgeInsets.zero,
-                            onTap: () => select(d),
-                            child: ListTile(
-                              leading: AppModuleIcon(
-                                svgPath: AppAssets.svgPrint,
-                                color: connected
-                                    ? AppColors.success
-                                    : AppColors.primary,
-                                size: 48,
-                              ),
-                              title: Text(
-                                d.name.isEmpty ? 'Unknown printer' : d.name,
-                                style: AppTypography.cardTitle(),
-                              ),
-                              subtitle: Text(d.macAdress),
-                              trailing: connected
-                                  ? const AppStatusBadge(
-                                      label: 'Connected',
-                                      color: AppColors.success,
-                                      filled: true,
-                                    )
-                                  : const AppSvg(
-                                      AppAssets.svgChevron,
-                                      width: 18,
-                                      height: 18,
-                                      color: AppColors.textSecondary,
-                                    ),
-                            ),
-                          );
-                        },
-                      ),
+                            size: 48,
+                          ),
+                          title: Text(
+                            d.name.isEmpty ? 'Unknown printer' : d.name,
+                            style: AppTypography.cardTitle(),
+                          ),
+                          subtitle: Text(d.macAdress),
+                          trailing: connected
+                              ? const AppStatusBadge(
+                                  label: 'Connected',
+                                  color: AppColors.success,
+                                  filled: true,
+                                )
+                              : const AppSvg(
+                                  AppAssets.svgChevron,
+                                  width: 18,
+                                  height: 18,
+                                  color: AppColors.textSecondary,
+                                ),
+                        ),
+                      );
+                    },
+                  ),
           ),
         ],
       ),

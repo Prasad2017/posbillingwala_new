@@ -21,8 +21,8 @@ class PosSelectedCategoryId extends Notifier<int?> {
 
 final posSelectedSubcategoryIdProvider =
     NotifierProvider<PosSelectedSubcategoryId, int?>(
-  PosSelectedSubcategoryId.new,
-);
+      PosSelectedSubcategoryId.new,
+    );
 
 class PosSelectedSubcategoryId extends Notifier<int?> {
   @override
@@ -38,8 +38,9 @@ class PosSelectedSubcategoryId extends Notifier<int?> {
   void select(int? id) => state = id;
 }
 
-final posSubcategoriesProvider =
-    StreamProvider<List<ProductSubcategory>>((ref) {
+final posSubcategoriesProvider = StreamProvider<List<ProductSubcategory>>((
+  ref,
+) {
   final categoryId = ref.watch(posSelectedCategoryIdProvider);
   if (categoryId == null) {
     return Stream.value(const <ProductSubcategory>[]);
@@ -52,10 +53,9 @@ final posSubcategoriesProvider =
 final posProductsProvider = StreamProvider<List<Product>>((ref) {
   final categoryId = ref.watch(posSelectedCategoryIdProvider);
   final subcategoryId = ref.watch(posSelectedSubcategoryIdProvider);
-  return ref.watch(mastersRepositoryProvider).watchProducts(
-        categoryId: categoryId,
-        subcategoryId: subcategoryId,
-      );
+  return ref
+      .watch(mastersRepositoryProvider)
+      .watchProducts(categoryId: categoryId, subcategoryId: subcategoryId);
 });
 
 final posCombosProvider = StreamProvider<List<Combo>>((ref) {
@@ -87,16 +87,18 @@ class CartSummary {
   final double grandTotal;
 
   bool get isEmpty => itemKinds == 0;
+
   bool get hasCgst => cgstTotal > 0.005;
+
   bool get hasSgst => sgstTotal > 0.005;
+
   bool get hasTax => taxTotal > 0.005;
 }
 
 final cartSummaryProvider = Provider<CartSummary>((ref) {
-  final cart = ref.watch(cartItemsProvider).maybeWhen(
-        data: (items) => items,
-        orElse: () => const <CartItem>[],
-      );
+  final cart = ref
+      .watch(cartItemsProvider)
+      .maybeWhen(data: (items) => items, orElse: () => const <CartItem>[]);
   final gstEnabled = ref.watch(shopReceiptProfileProvider).gstEnabled;
   var subtotal = 0.0;
   var cgstTotal = 0.0;
@@ -146,6 +148,7 @@ class PosCartController extends Notifier<void> {
   void build() {}
 
   AppDatabase get db => ref.read(appDatabaseProvider);
+
   BillingSession get session => ref.read(billingSessionProvider);
 
   Future<void> addProduct(

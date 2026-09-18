@@ -126,10 +126,7 @@ void main() {
     await db.addProductToCart(tea);
 
     final result = await db.saveInvoiceFromCart(
-      tender: PaymentTender.resolve(
-        mode: PaymentMode.cash,
-        totalAmount: 210,
-      ),
+      tender: PaymentTender.resolve(mode: PaymentMode.cash, totalAmount: 210),
     );
 
     expect(result.invoiceNumber, contains('PB/'));
@@ -246,10 +243,7 @@ void main() {
     expect(first.kot.kotNumber, 'KOT-001');
     expect(first.roundNumber, 1);
     expect(first.items.single.productQuantity, 2);
-    expect(
-      (await db.getCartItems(cartScope: '2')).single.printedQuantity,
-      2,
-    );
+    expect((await db.getCartItems(cartScope: '2')).single.printedQuantity, 2);
 
     await db.changeCartQuantity(10, 5, cartScope: '2');
     final second = await db.createKotFromUnprintedCart(
@@ -314,7 +308,11 @@ void main() {
       productSyncStatus: '1',
     );
 
-    await db.addProductToCart(tea, cartScope: '1', diningSessionId: primary.sessionId);
+    await db.addProductToCart(
+      tea,
+      cartScope: '1',
+      diningSessionId: primary.sessionId,
+    );
     await db.addProductToCart(coffee, cartScope: '2');
 
     final joined = await db.joinTables(primaryTable: '1', secondaryTable: '2');
@@ -323,10 +321,7 @@ void main() {
     final primaryCart = await db.getCartItems(cartScope: '1');
     expect(primaryCart.length, 2);
     expect(await db.getOpenSessionForTable('2'), isNotNull);
-    expect(
-      (await db.getOpenSessionForTable('2'))!.primaryTableNumber,
-      '1',
-    );
+    expect((await db.getOpenSessionForTable('2'))!.primaryTableNumber, '1');
   });
 
   test('marks invoices pending then synced', () async {
@@ -407,7 +402,10 @@ void main() {
 
     final second = await db.upsertCloudInvoices(
       headers: [
-        header.copyWith(totalAmount: const Value(90), upiAmount: const Value(90)),
+        header.copyWith(
+          totalAmount: const Value(90),
+          upiAmount: const Value(90),
+        ),
       ],
       itemsByNumber: {
         'PB/CLOUD/1': [
@@ -423,7 +421,10 @@ void main() {
       },
     );
     expect(second.updated, 1);
-    expect((await db.getInvoiceByNetworkStatus('cloudkey001'))!.totalAmount, 90);
+    expect(
+      (await db.getInvoiceByNetworkStatus('cloudkey001'))!.totalAmount,
+      90,
+    );
   });
 
   test('stock in accumulates and sale deducts inventory', () async {
@@ -473,37 +474,75 @@ void main() {
     expect(verified.verifiedDate, isNotNull);
   });
 
-  test('adds combo to cart with negative productId and skips inventory', () async {
-    await db.replaceCombos([
-      CombosCompanion.insert(
-        comboId: const Value(5),
-        comboName: const Value('Thali'),
-        comboPrice: const Value(120),
-        comboCgst: const Value(2.5),
-        comboSgst: const Value(2.5),
-        comboWithGstPrice: const Value(126),
-        comboNetworkStatus: const Value('cmb_5'),
-      ),
-    ]);
-    final combo = (await db.watchActiveCombos().first).first;
-    await db.addComboToCart(combo);
-    await db.addComboToCart(combo);
+  test(
+    'adds combo to cart with negative productId and skips inventory',
+    () async {
+      await db.replaceCombos([
+        CombosCompanion.insert(
+          comboId: const Value(5),
+          comboName: const Value('Thali'),
+          comboPrice: const Value(120),
+          comboCgst: const Value(2.5),
+          comboSgst: const Value(2.5),
+          comboWithGstPrice: const Value(126),
+          comboNetworkStatus: const Value('cmb_5'),
+        ),
+      ]);
+      final combo = (await db.watchActiveCombos().first).first;
+      await db.addComboToCart(combo);
+      await db.addComboToCart(combo);
 
-    final cart = await db.watchCartItems().first;
-    expect(cart.length, 1);
-    expect(cart.first.productId, -5);
-    expect(cart.first.lineType, 'combo');
-    expect(cart.first.quantity, 2);
-    expect(cart.first.unitPrice, 126);
+      final cart = await db.watchCartItems().first;
+      expect(cart.length, 1);
+      expect(cart.first.productId, -5);
+      expect(cart.first.lineType, 'combo');
+      expect(cart.first.quantity, 2);
+      expect(cart.first.unitPrice, 126);
 
-    final result = await db.saveInvoiceFromCart(
-      tender: PaymentTender.resolve(
-        mode: PaymentMode.cash,
-        totalAmount: 264.6,
-      ),
+      final result = await db.saveInvoiceFromCart(
+        tender: PaymentTender.resolve(
+          mode: PaymentMode.cash,
+          totalAmount: 264.6,
+        ),
+      );
+      final lines = await db.getInvoiceItems(result.invoiceNumber);
+      expect(lines.single.invoiceItemType, 'combo');
+      expect(await db.getPendingInventory(), isEmpty);
+    },
+  );
+
+  test('combo items store product network keys and stay pending until synced', () async {
+    final productId = await db.insertLocalProduct(
+      productName: 'Tea',
+      productPrice: 20,
     );
-    final lines = await db.getInvoiceItems(result.invoiceNumber);
-    expect(lines.single.invoiceItemType, 'combo');
-    expect(await db.getPendingInventory(), isEmpty);
+    final product = await db.getProduct(productId);
+    expect(product?.productNetworkStatus, isNotNull);
+    expect(product!.productNetworkStatus, isNotEmpty);
+
+    final comboId = await db.insertLocalCombo(
+      comboName: 'Breakfast',
+      comboPrice: 50,
+    );
+    await db.replaceLocalComboItems(
+      comboId: comboId,
+      items: [(productId: productId, quantity: 2)],
+    );
+
+    final items = await db.getComboItemsForCombo(comboId);
+    expect(items.length, 1);
+    expect(items.single.productId, productId);
+    expect(items.single.productNetworkStatus, product.productNetworkStatus);
+    expect(items.single.comboItemSyncStatus, '0');
+    expect((await db.getPendingComboItems()).length, 1);
+
+    await db.replaceLocalComboItems(
+      comboId: comboId,
+      items: [(productId: productId, quantity: 1)],
+    );
+    final afterReplace = await db.getComboItemsForCombo(comboId);
+    expect(afterReplace.length, 1);
+    expect(afterReplace.single.comboItemQuantity, 1);
+    expect((await db.getPendingComboItems()).length, greaterThanOrEqualTo(1));
   });
 }

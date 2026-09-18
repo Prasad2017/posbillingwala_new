@@ -30,7 +30,9 @@ class MpinPageState extends ConsumerState<MpinPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(authControllerProvider.notifier).setDeviceConflictHandler(
+      ref
+          .read(authControllerProvider.notifier)
+          .setDeviceConflictHandler(
             (message) => showDeviceConflictDialog(context, message),
           );
       pinFocus.requestFocus();
@@ -45,35 +47,35 @@ class MpinPageState extends ConsumerState<MpinPage> {
   }
 
   PinTheme get defaultPinTheme => PinTheme(
-        width: 58,
-        height: 58,
-        textStyle: AppTypography.screenTitle(color: AppColors.primary),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppColors.border, width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.06),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
-            ),
-          ],
+    width: 58,
+    height: 58,
+    textStyle: AppTypography.screenTitle(color: AppColors.primary),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(18),
+      border: Border.all(color: AppColors.border, width: 1.5),
+      boxShadow: [
+        BoxShadow(
+          color: AppColors.primary.withValues(alpha: 0.06),
+          blurRadius: 8,
+          offset: const Offset(0, 3),
         ),
-      );
+      ],
+    ),
+  );
 
   PinTheme get focusedPinTheme => defaultPinTheme.copyWith(
-        decoration: defaultPinTheme.decoration!.copyWith(
-          border: Border.all(color: AppColors.primary, width: 2),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.12),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
-            ),
-          ],
+    decoration: defaultPinTheme.decoration!.copyWith(
+      border: Border.all(color: AppColors.primary, width: 2),
+      boxShadow: [
+        BoxShadow(
+          color: AppColors.primary.withValues(alpha: 0.12),
+          blurRadius: 8,
+          offset: const Offset(0, 3),
         ),
-      );
+      ],
+    ),
+  );
 
   PinTheme get submittedPinTheme => focusedPinTheme;
 
@@ -86,8 +88,9 @@ class MpinPageState extends ConsumerState<MpinPage> {
       return;
     }
     FocusScope.of(context).unfocus();
-    final ok =
-        await ref.read(authControllerProvider.notifier).loginWithMpin(mpin);
+    final ok = await ref
+        .read(authControllerProvider.notifier)
+        .loginWithMpin(mpin);
     if (!ok && mounted) {
       pinController.clear();
       pinFocus.requestFocus();
@@ -109,20 +112,13 @@ class MpinPageState extends ConsumerState<MpinPage> {
       submittedPinTheme: submittedPinTheme,
       separatorBuilder: (index) => const SizedBox(width: 12),
       hapticFeedbackType: HapticFeedbackType.lightImpact,
-      cursor: Container(
-        width: 2,
-        height: 22,
-        color: AppColors.primary,
-      ),
+      cursor: Container(width: 2, height: 22, color: AppColors.primary),
       onCompleted: submit,
       onSubmitted: submit,
     );
   }
 
-  Widget pinCard({
-    required AuthState auth,
-    required AppStrings strings,
-  }) {
+  Widget pinCard({required AuthState auth, required AppStrings strings}) {
     return AppCard(
       child: Column(
         children: [
@@ -133,10 +129,7 @@ class MpinPageState extends ConsumerState<MpinPage> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppColors.border,
-                  width: 1.5,
-                ),
+                border: Border.all(color: AppColors.border, width: 1.5),
                 boxShadow: [
                   BoxShadow(
                     color: AppColors.primary.withValues(alpha: 0.10),
@@ -179,10 +172,7 @@ class MpinPageState extends ConsumerState<MpinPage> {
                 color: AppColors.primary,
               ),
               const SizedBox(width: 6),
-              Text(
-                'Your data is safe with us',
-                style: AppTypography.caption(),
-              ),
+              Text('Your data is safe with us', style: AppTypography.caption()),
             ],
           ),
           const SizedBox(height: 20),
@@ -205,9 +195,9 @@ class MpinPageState extends ConsumerState<MpinPage> {
       if (next.errorMessage != null &&
           next.errorMessage != prev?.errorMessage &&
           next.errorMessage != 'Device binding cancelled') {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(next.errorMessage!)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(next.errorMessage!)));
       }
     });
 
@@ -222,8 +212,9 @@ class MpinPageState extends ConsumerState<MpinPage> {
               child: TextButton.icon(
                 onPressed: auth.busy
                     ? null
-                    : () =>
-                        ref.read(authControllerProvider.notifier).clearLicence(),
+                    : () => ref
+                          .read(authControllerProvider.notifier)
+                          .clearLicence(),
                 icon: const Icon(Icons.arrow_back_rounded, size: 18),
                 label: const Text('Change licence'),
               ),
@@ -279,8 +270,8 @@ class MpinPageState extends ConsumerState<MpinPage> {
                         onPressed: auth.busy
                             ? null
                             : () => ref
-                                .read(authControllerProvider.notifier)
-                                .clearLicence(),
+                                  .read(authControllerProvider.notifier)
+                                  .clearLicence(),
                         icon: const AppSvg(
                           AppAssets.svgBack,
                           width: 22,

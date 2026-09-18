@@ -2,7 +2,8 @@
 require_once __DIR__ . '/../auth_tokens.php';
 
 /**
- * Require valid owner Bearer token.
+ * Require valid owner Bearer token when $db_local is true.
+ * Without that flag, requests work with posted userId only.
  */
 function owner_require_auth($con, $unauthorizedPayload = null)
 {

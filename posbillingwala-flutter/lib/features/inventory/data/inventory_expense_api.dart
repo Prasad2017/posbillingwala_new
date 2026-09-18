@@ -20,10 +20,10 @@ class InventoryExpenseApi {
       fields: {
         'userId': userId,
         'productId': '${row.productId}',
-        'productInventoryQuantity':
-            row.productInventoryQuantity.toStringAsFixed(3),
-        'afterSaleInventoryQuantity':
-            row.afterSaleInventoryQuantity.toStringAsFixed(3),
+        'productInventoryQuantity': row.productInventoryQuantity
+            .toStringAsFixed(3),
+        'afterSaleInventoryQuantity': row.afterSaleInventoryQuantity
+            .toStringAsFixed(3),
         'saleInventoryQuantity': row.saleInventoryQuantity.toStringAsFixed(3),
         'movementType': row.movementType,
         'inventoryNote': row.inventoryNote,

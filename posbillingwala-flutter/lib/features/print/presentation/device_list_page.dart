@@ -27,15 +27,19 @@ class DeviceListPageState extends ConsumerState<DeviceListPage> {
   Future<void> load() async {
     final session = ref.read(authControllerProvider).session;
     if (session == null) return;
-    final cached =
-        await CloudScreenCache.loadMapList(CloudScreenCache.posDevices);
+    final cached = await CloudScreenCache.loadMapList(
+      CloudScreenCache.posDevices,
+    );
     if (cached.isNotEmpty && mounted) {
       setState(() {
         devices = cached;
         loading = false;
       });
     }
-    final response = await ref.read(apiClientProvider).dio.post<dynamic>(
+    final response = await ref
+        .read(apiClientProvider)
+        .dio
+        .post<dynamic>(
           ApiEndpoints.getPosDeviceList,
           data: {'userId': session.licenceUserId},
           options: Options(contentType: Headers.formUrlEncodedContentType),
@@ -45,7 +49,10 @@ class DeviceListPageState extends ConsumerState<DeviceListPage> {
     if (!mounted) return;
     setState(() {
       devices = raw is List
-          ? raw.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList()
+          ? raw
+                .whereType<Map>()
+                .map((e) => Map<String, dynamic>.from(e))
+                .toList()
           : const [];
       loading = false;
     });
@@ -53,7 +60,9 @@ class DeviceListPageState extends ConsumerState<DeviceListPage> {
 
   @override
   Widget build(BuildContext context) {
-    final canManage = ref.watch(permissionControllerProvider).allows('device.manage');
+    final canManage = ref
+        .watch(permissionControllerProvider)
+        .allows('device.manage');
     return Scaffold(
       appBar: AppBar(title: const Text('Devices')),
       body: loading
@@ -70,15 +79,23 @@ class DeviceListPageState extends ConsumerState<DeviceListPage> {
                   trailing: canManage
                       ? TextButton(
                           onPressed: () async {
-                            final session = ref.read(authControllerProvider).session;
+                            final session = ref
+                                .read(authControllerProvider)
+                                .session;
                             if (session == null) return;
-                            await ref.read(apiClientProvider).dio.post<dynamic>(
+                            await ref
+                                .read(apiClientProvider)
+                                .dio
+                                .post<dynamic>(
                                   ApiEndpoints.revokePosDevice,
                                   data: {
                                     'userId': session.licenceUserId,
                                     'id': device['id'],
                                   },
-                                  options: Options(contentType: Headers.formUrlEncodedContentType),
+                                  options: Options(
+                                    contentType:
+                                        Headers.formUrlEncodedContentType,
+                                  ),
                                 );
                             await load();
                           },

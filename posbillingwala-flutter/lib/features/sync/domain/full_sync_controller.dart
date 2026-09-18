@@ -6,6 +6,7 @@ import 'package:pos_billingwala_v2/core/database/database_provider.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/company/data/company_api.dart';
 import 'package:pos_billingwala_v2/features/company/data/company_dtos.dart';
+import 'package:pos_billingwala_v2/features/company/data/company_logo.dart';
 import 'package:pos_billingwala_v2/features/inventory/domain/inventory_providers.dart';
 import 'package:pos_billingwala_v2/features/masters/domain/masters_providers.dart';
 import 'package:pos_billingwala_v2/features/mess/data/mess_api.dart';
@@ -80,6 +81,7 @@ class FullSyncResult {
   final int diningDownloaded;
   final bool companySynced;
   final int failed;
+
   /* Populated after download/fetch — rows currently stored in Drift. */
   final FetchLocalCounts? localCounts;
 }
@@ -114,7 +116,7 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
     final progress = ref.read(syncProgressProvider.notifier);
     progress.begin(SyncScreenMode.fetch);
 
-    final userId = ref.read(authControllerProvider).session?.userId;
+    final userId = ref.read(authControllerProvider).session?.licenceUserId;
     if (userId == null || userId.isEmpty) {
       progress.setBlocked(
         headline: 'Please login first',
@@ -125,8 +127,9 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
       return result;
     }
 
-    final pendingBills =
-        await ref.read(appDatabaseProvider).countPendingSyncInvoices();
+    final pendingBills = await ref
+        .read(appDatabaseProvider)
+        .countPendingSyncInvoices();
     if (pendingBills > 0) {
       progress.setBlocked(
         headline: 'Unsynced bills found',
@@ -155,7 +158,7 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
 
   /* Android Home "Fetch Data": confirm wipe → reset local ops tables → download. */
   Future<FullSyncResult> resetAndFetchAll() async {
-    final userId = ref.read(authControllerProvider).session?.userId;
+    final userId = ref.read(authControllerProvider).session?.licenceUserId;
     if (userId == null || userId.isEmpty) {
       const result = FullSyncResult(message: 'Please login first', failed: 1);
       state = const AsyncData(result);
@@ -164,8 +167,7 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
     state = const AsyncLoading();
     try {
       await ref.read(appDatabaseProvider).resetOperationalDataForFetch();
-      final result =
-          await run(FullSyncMode.downloadOnly, trackProgress: false);
+      final result = await run(FullSyncMode.downloadOnly, trackProgress: false);
       return result;
     } catch (e) {
       final result = FullSyncResult(message: '$e', failed: 1);
@@ -183,6 +185,7 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
     bool silent = false,
   }) async {
     final session = ref.read(authControllerProvider).session;
+    /* Sync is always licence-wide (never staff-filtered). */
     final userId = session?.licenceUserId;
     final ownerId = session?.catalogOwnerId;
     if (userId == null ||
@@ -233,10 +236,9 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
       try {
         mastersUploaded = 0;
         for (var round = 0; round < 20; round++) {
-          final n = await ref.read(mastersRepositoryProvider).uploadPendingMasters(
-                ownerId: ownerId,
-                licenceUserId: userId,
-              );
+          final n = await ref
+              .read(mastersRepositoryProvider)
+              .uploadPendingMasters(ownerId: ownerId, licenceUserId: userId);
           mastersUploaded += n;
           if (n == 0) break;
         }
@@ -348,10 +350,14 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
         final screenPush = await CloudScreenPush.run(ref, userId: userId);
         failed += screenPush.failed;
         notes.add('screens↑${screenPush.totalRows}');
-        await progress?.completeSequentially(
-          screenUploadIds,
-          error: screenPush.failed > 0,
-        );
+        for (final id in screenUploadIds) {
+          final ok = screenPush.stepOk[id] ?? true;
+          if (ok) {
+            progress?.markComplete([id]);
+          } else {
+            progress?.markError([id]);
+          }
+        }
       } catch (_) {
         failed++;
         notes.add('screens↑ error');
@@ -373,10 +379,9 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
       ];
       progress?.markRunning([masterFetchIds.first]);
       try {
-        await ref.read(mastersRepositoryProvider).syncFromCloud(
-              ownerId: ownerId,
-              licenceUserId: userId,
-            );
+        await ref
+            .read(mastersRepositoryProvider)
+            .syncFromCloud(ownerId: ownerId, licenceUserId: userId);
         notes.add('masters↓ ok');
         await progress?.completeSequentially(masterFetchIds);
       } catch (_) {
@@ -497,10 +502,14 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
         );
         failed += screenPrefetch.failed;
         notes.add('screens↓${screenPrefetch.totalRows}');
-        await progress?.completeSequentially(
-          screenFetchIds,
-          error: screenPrefetch.failed > 0,
-        );
+        for (final id in screenFetchIds) {
+          final ok = screenPrefetch.stepOk[id] ?? true;
+          if (ok) {
+            progress?.markComplete([id]);
+          } else {
+            progress?.markError([id]);
+          }
+        }
       } catch (_) {
         failed++;
         notes.add('screens↓ error');
@@ -631,8 +640,9 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
         userId: userId,
         memberName: coupon.memberName,
         messType: coupon.messType,
-        messInvoiceDate:
-            DateFormat('yyyy-MM-dd HH:mm:ss').format(coupon.messInvoiceDate),
+        messInvoiceDate: DateFormat(
+          'yyyy-MM-dd HH:mm:ss',
+        ).format(coupon.messInvoiceDate),
         messInvoiceNetworkStatus: coupon.messInvoiceNetworkStatus,
         messInvoiceStatus: '0',
       );
@@ -679,8 +689,10 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
 
   Future<int> downloadDining(String userId, AppDatabase db) async {
     final diningApi = DiningSessionApi(ref.read(apiClientProvider));
-    final cloudSessions =
-        await diningApi.fetchDiningSessions(userId, openOnly: false);
+    final cloudSessions = await diningApi.fetchDiningSessions(
+      userId,
+      openOnly: false,
+    );
     final companions = cloudSessions
         .where((e) => e.primaryTableNumber.trim().isNotEmpty)
         .map(
@@ -714,15 +726,35 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
 
     if (companies.isNotEmpty) {
       final company = companies.first;
-      await db.upsertLocalCompany(company);
-      await ref.read(shopReceiptProfileProvider.notifier).saveFromCompany(company);
+      final pending = await ref
+          .read(shopReceiptProfileProvider.notifier)
+          .isPendingUpload();
+      final local = await db.getLocalCompany();
+      final cloudEmpty =
+          company.companyName.trim().isEmpty &&
+          (company.shopName1 ?? '').trim().isEmpty;
+      final localHas =
+          local != null &&
+          ((local.companyName ?? '').trim().isNotEmpty ||
+              (local.shopName1 ?? '').trim().isNotEmpty);
+      /* Keep local edits until they successfully upload. */
+      if (pending || (cloudEmpty && localHas)) {
+        /* Skip applying cloud company. */
+      } else {
+        await db.upsertLocalCompany(company);
+        await ref
+            .read(shopReceiptProfileProvider.notifier)
+            .saveFromCompany(company);
+      }
     }
 
     if (printers.isNotEmpty) {
       final p = printers.first;
       await db.upsertLocalCompanyPrinterSettings(p);
       final current = ref.read(printerSettingsProvider);
-      await ref.read(printerSettingsProvider.notifier).update(
+      await ref
+          .read(printerSettingsProvider.notifier)
+          .update(
             current.copyWith(
               billBluetoothAddress: p.bluetoothAddress.isNotEmpty
                   ? p.bluetoothAddress
@@ -730,8 +762,7 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
               kotBluetoothAddress: p.bluetoothKotAddress.isNotEmpty
                   ? p.bluetoothKotAddress
                   : current.kotBluetoothAddress,
-              feedLines:
-                  int.tryParse(p.printerFeedLines) ?? current.feedLines,
+              feedLines: int.tryParse(p.printerFeedLines) ?? current.feedLines,
               kotFeedLines:
                   int.tryParse(p.kotPrinterFeedLines) ?? current.kotFeedLines,
               invoiceTitle: p.invoiceTitle.isNotEmpty
@@ -743,13 +774,15 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
               invoicePrefix: p.invoicePrefix.isNotEmpty
                   ? p.invoicePrefix
                   : current.invoicePrefix,
-              kotPrefix: p.kotPrefix.isNotEmpty ? p.kotPrefix : current.kotPrefix,
-              customerUse: p.customerUse == '1',
-              paymentUse: p.paymentUse == '1',
-              duplicateBillUse: p.duplicateBillUse == '1',
-              logoUse: p.logoUse == '1',
+              kotPrefix: p.kotPrefix.isNotEmpty
+                  ? p.kotPrefix
+                  : current.kotPrefix,
+              customerUse: printerFlagOn(p.customerUse),
+              paymentUse: printerFlagOn(p.paymentUse),
+              duplicateBillUse: printerFlagOn(p.duplicateBillUse),
+              logoUse: printerFlagOn(p.logoUse),
               kotEnable: p.kotEnable != '0' && p.kotEnable != 'off',
-              productQuantityUpdate: p.productQuantityUpdate == '1',
+              productQuantityUpdate: printerFlagOn(p.productQuantityUpdate),
               kotAutoPrint: p.kotAutoPrint == '1' || p.kotAutoPrint == 'on',
               kotPreview: p.kotPreview != '0' && p.kotPreview != 'off',
               kotCopies: int.tryParse(p.kotCopies) ?? current.kotCopies,
@@ -759,6 +792,40 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
     return true;
   }
 
+  /* Drift row → API DTO (full shop details for upload). */
+  CompanyDto companyDtoFromLocal(Company row) {
+    return CompanyDto(
+      companyId: row.companyId,
+      companyName: row.companyName ?? '',
+      cashierName: row.cashierName,
+      companyMobile: row.companyMobile,
+      companyAddress: row.companyAddress,
+      shopName1: row.shopName1,
+      shopName2: row.shopName2,
+      addressLine1: row.addressLine1,
+      addressLine2: row.addressLine2,
+      addressLine3: row.addressLine3,
+      phoneNo1: row.phoneNo1,
+      phoneNo2: row.phoneNo2,
+      currencyName: row.currencyName,
+      countryName: row.countryName,
+      stateName: row.stateName,
+      tableStatus: row.tableStatus,
+      noOfTable: row.noOfTable,
+      gstStatus: row.gstStatus,
+      gstNumber: row.gstNumber,
+      shopCgst: row.shopCgst,
+      shopSgst: row.shopSgst,
+      panNumber: row.panNumber,
+      companyFssis: row.companyFssis,
+      companyLogo: row.companyLogo,
+      paymentLogo: row.paymentLogo,
+      openingMinutes: row.openingMinutes,
+      closingMinutes: row.closingMinutes,
+      companyStatus: row.companyStatus,
+    );
+  }
+
   Future<bool> uploadCompanyAndPrinter(String userId) async {
     final api = CompanyApi(ref.read(apiClientProvider));
     final db = ref.read(appDatabaseProvider);
@@ -766,64 +833,106 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
     final settings = ref.read(printerSettingsProvider);
     final profile = ref.read(shopReceiptProfileProvider);
 
-    /* Prefer local Drift snapshot, then prefs profile, then cloud/session. */
+    /* Offline-first: Drift is source of truth. Prefs only if no local row. */
     final localCompany = await db.getLocalCompany();
-    final companies = await api.getCompanyList(userId);
-    final base = companies.isNotEmpty
-        ? companies.first
-        : CompanyDto(companyName: session?.shopName ?? '');
-    final companyDto = CompanyDto(
-      companyId: localCompany?.companyId ?? base.companyId,
-      companyName: profile.companyName.isNotEmpty
-          ? profile.companyName
-          : (base.companyName.isNotEmpty
-              ? base.companyName
-              : (session?.shopName ?? '')),
-      companyMobile: profile.companyMobile.isNotEmpty
-          ? profile.companyMobile
-          : base.companyMobile,
-      companyAddress: profile.companyAddress.isNotEmpty
-          ? profile.companyAddress
-          : base.companyAddress,
-      shopName1:
-          profile.shopName1.isNotEmpty ? profile.shopName1 : base.shopName1,
-      shopName2:
-          profile.shopName2.isNotEmpty ? profile.shopName2 : base.shopName2,
-      addressLine1: profile.addressLine1.isNotEmpty
-          ? profile.addressLine1
-          : base.addressLine1,
-      addressLine2: profile.addressLine2.isNotEmpty
-          ? profile.addressLine2
-          : base.addressLine2,
-      addressLine3: profile.addressLine3.isNotEmpty
-          ? profile.addressLine3
-          : base.addressLine3,
-      phoneNo1: profile.phoneNo1.isNotEmpty ? profile.phoneNo1 : base.phoneNo1,
-      phoneNo2: profile.phoneNo2.isNotEmpty ? profile.phoneNo2 : base.phoneNo2,
-      gstStatus: profile.gstEnabled ? '1' : (base.gstStatus ?? '0'),
-      gstNumber:
-          profile.gstNumber.isNotEmpty ? profile.gstNumber : base.gstNumber,
-      panNumber:
-          profile.panNumber.isNotEmpty ? profile.panNumber : base.panNumber,
-      companyFssis: profile.companyFssis.isNotEmpty
-          ? profile.companyFssis
-          : base.companyFssis,
-      paymentLogo: profile.paymentLogo.isNotEmpty
-          ? profile.paymentLogo
-          : base.paymentLogo,
-      shopCgst: profile.shopCgst.isNotEmpty ? profile.shopCgst : base.shopCgst,
-      shopSgst: profile.shopSgst.isNotEmpty ? profile.shopSgst : base.shopSgst,
-      cashierName: profile.cashierName.isNotEmpty
-          ? profile.cashierName
-          : base.cashierName,
-    );
-    await db.upsertLocalCompany(companyDto);
+    CompanyDto companyDto;
+    if (localCompany != null) {
+      companyDto = companyDtoFromLocal(localCompany);
+    } else {
+      companyDto = CompanyDto(
+        companyName: profile.companyName.isNotEmpty
+            ? profile.companyName
+            : (profile.shopName1.isNotEmpty
+                  ? profile.shopName1
+                  : (session?.shopName ?? '')),
+        companyMobile: profile.companyMobile.isNotEmpty
+            ? profile.companyMobile
+            : profile.phoneNo1,
+        companyAddress: profile.companyAddress.isNotEmpty
+            ? profile.companyAddress
+            : [
+                profile.addressLine1,
+                profile.addressLine2,
+                profile.addressLine3,
+              ].where((e) => e.isNotEmpty).join(', '),
+        shopName1: profile.shopName1,
+        shopName2: profile.shopName2,
+        addressLine1: profile.addressLine1,
+        addressLine2: profile.addressLine2,
+        addressLine3: profile.addressLine3,
+        phoneNo1: profile.phoneNo1,
+        phoneNo2: profile.phoneNo2,
+        gstStatus: profile.gstEnabled ? '1' : '0',
+        gstNumber: profile.gstNumber,
+        panNumber: profile.panNumber,
+        companyFssis: profile.companyFssis,
+        paymentLogo: profile.paymentLogo,
+        shopCgst: profile.shopCgst,
+        shopSgst: profile.shopSgst,
+        cashierName: profile.cashierName,
+      );
+      if (companyDto.companyName.trim().isNotEmpty ||
+          (companyDto.shopName1 ?? '').trim().isNotEmpty) {
+        await db.upsertLocalCompany(companyDto);
+      }
+    }
+
+    /* Always attach local shop logo file for cloud `companyLogo`. */
+    final logoPath = profile.logoLocalPath.trim().isNotEmpty
+        ? profile.logoLocalPath
+        : null;
+    final logoData = await encodeShopLogoFile(logoPath) ??
+        (companyDto.companyLogo != null &&
+                companyDto.companyLogo!.startsWith('data:image')
+            ? companyDto.companyLogo
+            : null);
+    if (logoData != null && logoData.isNotEmpty) {
+      companyDto = CompanyDto(
+        companyId: companyDto.companyId,
+        companyLogo: logoData,
+        companyName: companyDto.companyName,
+        cashierName: companyDto.cashierName,
+        companyMobile: companyDto.companyMobile,
+        companyAddress: companyDto.companyAddress,
+        shopName1: companyDto.shopName1,
+        shopName2: companyDto.shopName2,
+        addressLine1: companyDto.addressLine1,
+        addressLine2: companyDto.addressLine2,
+        addressLine3: companyDto.addressLine3,
+        phoneNo1: companyDto.phoneNo1,
+        phoneNo2: companyDto.phoneNo2,
+        currencyName: companyDto.currencyName,
+        countryName: companyDto.countryName,
+        stateName: companyDto.stateName,
+        tableStatus: companyDto.tableStatus,
+        noOfTable: companyDto.noOfTable,
+        gstStatus: companyDto.gstStatus,
+        gstNumber: companyDto.gstNumber,
+        shopCgst: companyDto.shopCgst,
+        shopSgst: companyDto.shopSgst,
+        panNumber: companyDto.panNumber,
+        companyFssis: companyDto.companyFssis,
+        paymentLogo: companyDto.paymentLogo,
+        openingMinutes: companyDto.openingMinutes,
+        closingMinutes: companyDto.closingMinutes,
+        companyStatus: companyDto.companyStatus,
+      );
+      await db.upsertLocalCompany(companyDto);
+    }
+
     await db.upsertLocalCompanyPrinterFromSettings(settings);
 
-    final companyOk = await api.insertCompanyDetail(
-      userId: userId,
-      company: companyDto,
-    );
+    final hasShop =
+        companyDto.companyName.trim().isNotEmpty ||
+        (companyDto.shopName1 ?? '').trim().isNotEmpty;
+    final companyOk = hasShop
+        ? await api.insertCompanyDetail(userId: userId, company: companyDto)
+        : false;
+    if (companyOk) {
+      await ref
+          .read(shopReceiptProfileProvider.notifier)
+          .setPendingUpload(false);
+    }
     final printerOk = await api.insertCompanyPrinterSetting(
       userId: userId,
       setting: CompanyPrinterSettingDto(
@@ -835,12 +944,14 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
         invoiceTermsCondition: settings.invoiceTerms,
         invoicePrefix: settings.invoicePrefix,
         kotPrefix: settings.kotPrefix,
-        customerUse: settings.customerUse ? '1' : '0',
-        paymentUse: settings.paymentUse ? '1' : '0',
-        duplicateBillUse: settings.duplicateBillUse ? '1' : '0',
-        logoUse: settings.logoUse ? '1' : '0',
+        customerUse: printerFlagValue(settings.customerUse),
+        paymentUse: printerFlagValue(settings.paymentUse),
+        duplicateBillUse: printerFlagValue(settings.duplicateBillUse),
+        logoUse: printerFlagValue(settings.logoUse),
         kotEnable: settings.kotEnable ? '1' : '0',
-        productQuantityUpdate: settings.productQuantityUpdate ? '1' : '0',
+        productQuantityUpdate: printerFlagValue(
+          settings.productQuantityUpdate,
+        ),
         kotAutoPrint: settings.kotAutoPrint ? '1' : '0',
         kotPreview: settings.kotPreview ? '1' : '0',
         kotCopies: '${settings.kotCopies}',
@@ -860,5 +971,5 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
 
 final fullSyncControllerProvider =
     NotifierProvider<FullSyncController, AsyncValue<FullSyncResult?>>(
-  FullSyncController.new,
-);
+      FullSyncController.new,
+    );

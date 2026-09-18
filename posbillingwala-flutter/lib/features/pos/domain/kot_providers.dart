@@ -5,10 +5,9 @@ import 'package:pos_billingwala_v2/features/pos/domain/billing_session.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/pos_providers.dart';
 
 final unprintedCartCountProvider = Provider<double>((ref) {
-  final cart = ref.watch(cartItemsProvider).maybeWhen(
-        data: (items) => items,
-        orElse: () => const <CartItem>[],
-      );
+  final cart = ref
+      .watch(cartItemsProvider)
+      .maybeWhen(data: (items) => items, orElse: () => const <CartItem>[]);
   var count = 0.0;
   for (final item in cart) {
     final delta = item.quantity - item.printedQuantity;
@@ -31,7 +30,9 @@ class KotController extends Notifier<AsyncValue<KotTicket?>> {
 
     state = const AsyncLoading();
     try {
-      final ticket = await ref.read(appDatabaseProvider).createKotFromUnprintedCart(
+      final ticket = await ref
+          .read(appDatabaseProvider)
+          .createKotFromUnprintedCart(
             sessionId: diningSessionId,
             tableNumber: tableNumber,
             cartScope: session.cartScope,
@@ -50,6 +51,4 @@ class KotController extends Notifier<AsyncValue<KotTicket?>> {
 }
 
 final kotControllerProvider =
-    NotifierProvider<KotController, AsyncValue<KotTicket?>>(
-  KotController.new,
-);
+    NotifierProvider<KotController, AsyncValue<KotTicket?>>(KotController.new);

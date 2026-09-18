@@ -20,12 +20,14 @@ if ($_SERVER['REQUEST_METHOD'] == "GET") {
     }
     $userId = $readCtx['targetBranchId'];
     require_once __DIR__ . '/pos_staff.php';
+    require_once __DIR__ . '/invoice_sales_filter.php';
     pos_require_permission($con, $userId, 'bill.view');
     $userIdEsc = mysqli_real_escape_string($con, (string) $userId);
 
     date_default_timezone_set("Asia/Calcutta");
 
     $scopeWhere = "(`branch_id`='$userIdEsc' OR (`branch_id` IS NULL AND `licenseId`='$userIdEsc'))";
+    $staffScope = invoice_and_staff_scope($con, '');
 
     /* Date range for Web POS reports (startDate/endDate inclusive, Y-m-d). */
     if ($startDate !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $startDate)
@@ -35,12 +37,14 @@ if ($_SERVER['REQUEST_METHOD'] == "GET") {
         $sth = "SELECT * FROM `invoice` WHERE $scopeWhere"
              . " AND DATE(`invoiceDate`) >= '$startEsc'"
              . " AND DATE(`invoiceDate`) <= '$endEsc'"
+             . $staffScope
              . " ORDER BY `invoiceDate` DESC";
     } elseif ($invoiceDate !== '') {
         $invoiceDateEsc = mysqli_real_escape_string($con, $invoiceDate);
-        $sth = "SELECT * FROM `invoice` WHERE $scopeWhere AND `invoiceDate` LIKE '%$invoiceDateEsc%'";
+        $sth = "SELECT * FROM `invoice` WHERE $scopeWhere AND `invoiceDate` LIKE '%$invoiceDateEsc%'"
+             . $staffScope;
     } else {
-        $sth = "SELECT * FROM `invoice` WHERE $scopeWhere";
+        $sth = "SELECT * FROM `invoice` WHERE $scopeWhere" . $staffScope;
     }
 
     if ($result = mysqli_query($con, $sth)) {

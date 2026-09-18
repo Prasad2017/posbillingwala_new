@@ -34,11 +34,7 @@ class ReportSectionLabel extends StatelessWidget {
 
 /* Pill used under AppBar for period / store context. */
 class ReportPeriodPill extends StatelessWidget {
-  const ReportPeriodPill({
-    super.key,
-    required this.label,
-    this.onTap,
-  });
+  const ReportPeriodPill({super.key, required this.label, this.onTap});
 
   final String label;
   final VoidCallback? onTap;
@@ -183,8 +179,8 @@ class ReportKpiCard extends StatelessWidget {
     final changeColor = change == null
         ? AppColors.textSecondary
         : change >= 0
-            ? AppColors.green
-            : AppColors.red;
+        ? AppColors.green
+        : AppColors.red;
     final changeText = change == null
         ? null
         : '${change >= 0 ? '' : ''}${change.toStringAsFixed(0)}%';
@@ -348,11 +344,7 @@ class ReportDonutBreakdown extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           for (final slice in paintSlices)
-            LegendRow(
-              slice: slice,
-              total: total,
-              currency: currency,
-            ),
+            LegendRow(slice: slice, total: total, currency: currency),
         ],
       ),
     );
@@ -360,7 +352,8 @@ class ReportDonutBreakdown extends StatelessWidget {
 }
 
 class LegendRow extends StatelessWidget {
-  const LegendRow({super.key, 
+  const LegendRow({
+    super.key,
     required this.slice,
     required this.total,
     required this.currency,
@@ -740,7 +733,11 @@ List<ReportSlice> paymentSlices(SalesSummary summary, List<Invoice> invoices) {
       .where((e) => e.paymentMode == 'Cash+UPI')
       .fold<double>(0, (s, e) => s + e.totalAmount);
   return [
-    ReportSlice(label: 'Cash', value: summary.cashTotal, color: AppColors.primary),
+    ReportSlice(
+      label: 'Cash',
+      value: summary.cashTotal,
+      color: AppColors.primary,
+    ),
     ReportSlice(label: 'UPI', value: summary.upiTotal, color: AppColors.green),
     if (cashUpi > 0)
       ReportSlice(label: 'Cash+UPI', value: cashUpi, color: AppColors.purple),

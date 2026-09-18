@@ -36,8 +36,7 @@ class MessMemberDto {
       memberId: parseInt(json['memberId']) ?? 0,
       memberName: parseString(json['memberName'])?.trim() ?? '',
       memberMobileNumber: parseString(json['memberMobileNumber']),
-      memberAltenetMobileNumber:
-          parseString(json['memberAltenetMobileNumber']),
+      memberAltenetMobileNumber: parseString(json['memberAltenetMobileNumber']),
       memberAddress: parseString(json['memberAddress']),
       registrationNo: parseString(json['registrationNo']),
       memberType: parseString(json['memberType'])?.trim().isNotEmpty == true
@@ -53,20 +52,20 @@ class MessMemberDto {
   }
 
   Map<String, dynamic> toJson() => {
-        'memberId': memberId,
-        'memberName': memberName,
-        'memberMobileNumber': memberMobileNumber,
-        'memberAltenetMobileNumber': memberAltenetMobileNumber,
-        'memberAddress': memberAddress,
-        'registrationNo': registrationNo,
-        'memberType': memberType,
-        'rollNo': rollNo,
-        'college': college,
-        'studentYear': studentYear,
-        'company': company,
-        'memberStatus': memberStatus,
-        'memberNetworkStatus': memberNetworkStatus,
-      };
+    'memberId': memberId,
+    'memberName': memberName,
+    'memberMobileNumber': memberMobileNumber,
+    'memberAltenetMobileNumber': memberAltenetMobileNumber,
+    'memberAddress': memberAddress,
+    'registrationNo': registrationNo,
+    'memberType': memberType,
+    'rollNo': rollNo,
+    'college': college,
+    'studentYear': studentYear,
+    'company': company,
+    'memberStatus': memberStatus,
+    'memberNetworkStatus': memberNetworkStatus,
+  };
 }
 
 class MessCommonQrDto {
@@ -95,12 +94,12 @@ class MessCommonQrDto {
   }
 
   Map<String, dynamic> toJson() => {
-        'publicToken': publicToken,
-        'qrUrl': qrUrl,
-        'messLabel': messLabel,
-        'branchLabel': branchLabel,
-        'status': status,
-      };
+    'publicToken': publicToken,
+    'qrUrl': qrUrl,
+    'messLabel': messLabel,
+    'branchLabel': branchLabel,
+    'status': status,
+  };
 }
 
 class MessMealSessionDto {

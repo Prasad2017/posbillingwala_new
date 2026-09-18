@@ -9,7 +9,7 @@ import 'package:unified_esc_pos_printer/unified_esc_pos_printer.dart';
 /* (FTDI / CP210x / PL2303 / CH34x) — any ESC/POS thermal model. */
 class EscPosTransportHub {
   EscPosTransportHub({PrinterManager? manager})
-      : escPosTransportHubManager = manager ?? PrinterManager();
+    : escPosTransportHubManager = manager ?? PrinterManager();
 
   static final EscPosTransportHub instance = EscPosTransportHub();
 
@@ -19,8 +19,11 @@ class EscPosTransportHub {
   String escPosTransportHubSavedUsbName = '';
 
   PrinterDevice? get connectedDevice => connected;
+
   bool get isConnected => escPosTransportHubManager.isConnected;
+
   String get savedUsbId => escPosTransportHubSavedUsbId;
+
   String get savedUsbName => escPosTransportHubSavedUsbName;
 
   void updateSavedUsb({required String identifier, String name = ''}) {
@@ -31,7 +34,11 @@ class EscPosTransportHub {
   Future<List<PrinterDevice>> scanUsb({
     Duration timeout = const Duration(seconds: 4),
   }) async {
-    if (kIsWeb || !(Platform.isAndroid || Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
+    if (kIsWeb ||
+        !(Platform.isAndroid ||
+            Platform.isWindows ||
+            Platform.isLinux ||
+            Platform.isMacOS)) {
       return const [];
     }
     try {
@@ -69,9 +76,13 @@ class EscPosTransportHub {
     escPosTransportHubSavedUsbId = id;
     if (name.trim().isNotEmpty) escPosTransportHubSavedUsbName = name.trim();
 
-    final platform = Platform.isAndroid ? UsbPlatform.android : UsbPlatform.desktop;
+    final platform = Platform.isAndroid
+        ? UsbPlatform.android
+        : UsbPlatform.desktop;
     final device = UsbPrinterDevice(
-      name: escPosTransportHubSavedUsbName.isEmpty ? 'USB Printer' : escPosTransportHubSavedUsbName,
+      name: escPosTransportHubSavedUsbName.isEmpty
+          ? 'USB Printer'
+          : escPosTransportHubSavedUsbName,
       identifier: id,
       usbPlatform: platform,
     );
@@ -90,10 +101,14 @@ class EscPosTransportHub {
     if (escPosTransportHubSavedUsbId.isEmpty) return false;
     if (escPosTransportHubManager.isConnected &&
         connected is UsbPrinterDevice &&
-        (connected as UsbPrinterDevice).identifier == escPosTransportHubSavedUsbId) {
+        (connected as UsbPrinterDevice).identifier ==
+            escPosTransportHubSavedUsbId) {
       return true;
     }
-    return connectUsb(identifier: escPosTransportHubSavedUsbId, name: escPosTransportHubSavedUsbName);
+    return connectUsb(
+      identifier: escPosTransportHubSavedUsbId,
+      name: escPosTransportHubSavedUsbName,
+    );
   }
 
   Future<bool> writeBytes(List<int> bytes) async {

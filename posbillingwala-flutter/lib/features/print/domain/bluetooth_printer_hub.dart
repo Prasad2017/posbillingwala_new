@@ -4,24 +4,23 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:pos_billingwala_v2/core/logging/app_logger.dart';
 import 'package:pos_billingwala_v2/core/permissions/app_permission_service.dart';
-import 'package:pos_billingwala_v2/features/print/domain/woosim_print_channel.dart';
 import 'package:print_bluetooth_thermal/print_bluetooth_thermal.dart';
 
 enum PrinterChannelKind { bill, kot }
 
-/* Android-parity Bluetooth printer session manager. */
+/* Shared Bluetooth printer hub for Android + iOS. */
 /* */
-/* Mirrors [BluetoothPrinterChannel] in WithTable: */
+/* Same path on both platforms via [print_bluetooth_thermal]: */
 /* - Separate bill / KOT saved MACs */
-/* - One RFCOMM link via [print_bluetooth_thermal] (plugin is single-connection) */
-/* - Same MAC for bill+KOT → reuse connection (no second socket) */
+/* - One RFCOMM link (plugin is single-connection) */
+/* - Same MAC for bill+KOT → reuse connection */
 /* - Different MACs → disconnect then reconnect before write */
-/* - Skip connect when already linked to the same address */
-/* - Soft auto-reconnect with backoff after failed writes / disconnects */
+/* - Soft auto-reconnect with backoff after failed writes */
+/* */
+/* Bill bytes are always the shared ESC/POS raster from ReceiptBuilder */
+/* (Unicode / multi-language user data) — no Android-only Woosim path. */
 class BluetoothPrinterHub {
-  BluetoothPrinterHub({
-    this.permissions = const AppPermissionService(),
-  });
+  BluetoothPrinterHub({this.permissions = const AppPermissionService()});
 
   static final BluetoothPrinterHub instance = BluetoothPrinterHub();
 
@@ -40,12 +39,13 @@ class BluetoothPrinterHub {
   Timer? reconnectTimer;
 
   bool get isConnecting => connecting;
+
   bool get isReady => connectedAddress.isNotEmpty;
 
-  void updateSavedAddresses({
-    required String billMac,
-    required String kotMac,
-  }) {
+  bool get supportsBluetooth =>
+      !kIsWeb && (Platform.isAndroid || Platform.isIOS);
+
+  void updateSavedAddresses({required String billMac, required String kotMac}) {
     billAddress = normalizeMac(billMac);
     kotAddress = normalizeMac(kotMac);
   }
@@ -60,7 +60,7 @@ class BluetoothPrinterHub {
   }
 
   Future<bool> isBluetoothOn() async {
-    if (kIsWeb || !(Platform.isAndroid || Platform.isIOS)) return false;
+    if (!supportsBluetooth) return false;
     try {
       return await PrintBluetoothThermal.bluetoothEnabled;
     } catch (error) {
@@ -69,7 +69,7 @@ class BluetoothPrinterHub {
   }
 
   Future<List<BluetoothInfo>> pairedDevices() async {
-    if (kIsWeb || !(Platform.isAndroid || Platform.isIOS)) return const [];
+    if (!supportsBluetooth) return const [];
     final allowed = await permissions.ensurePrintPermissions();
     if (!allowed) return const [];
     try {
@@ -81,13 +81,7 @@ class BluetoothPrinterHub {
   }
 
   Future<bool> connectionStatus() async {
-    if (kIsWeb || !Platform.isAndroid) return false;
-    if (WoosimPrintChannel.isSupported) {
-      final bill = await WoosimPrintChannel.instance.isReady(PrinterChannelKind.bill);
-      final kot = await WoosimPrintChannel.instance.isReady(PrinterChannelKind.kot);
-      if (!bill && !kot) connectedAddress = '';
-      return bill || kot;
-    }
+    if (!supportsBluetooth) return false;
     try {
       final linked = await PrintBluetoothThermal.connectionStatus;
       if (!linked) {
@@ -100,7 +94,7 @@ class BluetoothPrinterHub {
     }
   }
 
-  /* Silent auto-connect (Home / Settings load), same as Android autoConnect. */
+  /* Silent auto-connect (Home / Settings load). */
   Future<void> autoConnect(PrinterChannelKind kind) async {
     final mac = addressFor(kind);
     if (mac.isEmpty) return;
@@ -153,11 +147,7 @@ class BluetoothPrinterHub {
 
     persistentSession = false;
     try {
-      if (WoosimPrintChannel.isSupported) {
-        await WoosimPrintChannel.instance.disconnect(kind);
-      } else {
-        await PrintBluetoothThermal.disconnect;
-      }
+      await PrintBluetoothThermal.disconnect;
     } catch (error) {
       AppLogger.warning('BT disconnect', error);
     }
@@ -182,7 +172,6 @@ class BluetoothPrinterHub {
     while (DateTime.now().isBefore(deadline)) {
       if (await isLinkedTo(mac)) return true;
       if (!connecting && !await isLinkedTo(mac)) {
-        /* One more attempt before giving up. */
         final retry = await connectInternal(mac, fromUser: false);
         if (!retry) return await isLinkedTo(mac);
       }
@@ -205,26 +194,8 @@ class BluetoothPrinterHub {
 
   Future<bool> write(PrinterChannelKind kind, List<int> bytes) async {
     if (bytes.isEmpty) return false;
-    if (WoosimPrintChannel.isSupported) {
-      final mac = addressFor(kind);
-      if (mac.isEmpty) return false;
-      final connected = await WoosimPrintChannel.instance.connect(kind, mac);
-      if (!connected) {
-        scheduleReconnect(kind);
-        return false;
-      }
-      connectedAddress = mac;
-      final ok = await WoosimPrintChannel.instance.write(kind, bytes);
-      if (!ok) {
-        connectedAddress = '';
-        scheduleReconnect(kind);
-      } else {
-        cancelReconnect();
-        reconnectBackoff = reconnectDelay;
-        persistentSession = true;
-      }
-      return ok;
-    }
+    if (!supportsBluetooth) return false;
+
     final ready = await ensureReady(kind);
     if (!ready) {
       AppLogger.warning(
@@ -234,8 +205,7 @@ class BluetoothPrinterHub {
       return false;
     }
     try {
-      /* print_bluetooth_thermal Android expects List<Int>, not Uint8List */
-      /* (Uint8List arrives as typed data and the Kotlin cast returns null → false). */
+      /* Android expects List<int>, not Uint8List (typed data cast fails). */
       final payload = List<int>.from(bytes);
       final ok = await PrintBluetoothThermal.writeBytes(payload);
       AppLogger.info(
@@ -263,8 +233,6 @@ class BluetoothPrinterHub {
     final linked = await connectionStatus();
     if (!linked) return false;
     if (connectedAddress.isEmpty) {
-      /* Plugin connected but we lost tracked MAC — treat as linked only if */
-      /* caller reconnects explicitly. Force reconnect for safety. */
       return false;
     }
     return connectedAddress.toLowerCase() == mac.toLowerCase();
@@ -273,8 +241,8 @@ class BluetoothPrinterHub {
   Future<bool> connectInternal(String address, {required bool fromUser}) async {
     final mac = normalizeMac(address);
     if (mac.isEmpty) return false;
+    if (!supportsBluetooth) return false;
 
-    /* Already on the right printer — Android skips reconnect. */
     if (await isLinkedTo(mac)) {
       persistentSession = true;
       cancelReconnect();
@@ -283,7 +251,6 @@ class BluetoothPrinterHub {
     }
 
     if (connecting) {
-      /* Wait briefly for in-flight connect to the same MAC. */
       final deadline = DateTime.now().add(const Duration(seconds: 8));
       while (connecting && DateTime.now().isBefore(deadline)) {
         await Future<void>.delayed(const Duration(milliseconds: 150));
@@ -293,25 +260,6 @@ class BluetoothPrinterHub {
 
     connecting = true;
     try {
-      if (WoosimPrintChannel.isSupported) {
-        final kind = kotAddress.isNotEmpty &&
-                mac.toLowerCase() == kotAddress.toLowerCase()
-            ? PrinterChannelKind.kot
-            : PrinterChannelKind.bill;
-        final ok = await WoosimPrintChannel.instance.connect(kind, mac);
-        if (ok) {
-          connectedAddress = mac;
-          persistentSession = true;
-          cancelReconnect();
-          reconnectBackoff = reconnectDelay;
-          return true;
-        }
-        connectedAddress = '';
-        if (persistentSession || fromUser) {
-          scheduleReconnectForAddress(mac);
-        }
-        return false;
-      }
       final currentlyLinked = await PrintBluetoothThermal.connectionStatus;
       if (currentlyLinked) {
         final same = connectedAddress.toLowerCase() == mac.toLowerCase();
@@ -365,8 +313,10 @@ class BluetoothPrinterHub {
     reconnectTimer?.cancel();
     final delay = reconnectBackoff;
     reconnectBackoff = Duration(
-      milliseconds: (reconnectBackoff.inMilliseconds * 2)
-          .clamp(0, reconnectMaxDelay.inMilliseconds),
+      milliseconds: (reconnectBackoff.inMilliseconds * 2).clamp(
+        0,
+        reconnectMaxDelay.inMilliseconds,
+      ),
     );
     reconnectTimer = Timer(delay, () async {
       if (!await isBluetoothOn()) return;

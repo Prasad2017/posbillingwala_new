@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../auth_tokens.php';
 
 /**
- * Require valid dealer Bearer token (mandatory).
+ * Require valid dealer Bearer token when $db_local is true.
  */
 function dealer_require_auth($con, $unauthorizedPayload = null)
 {

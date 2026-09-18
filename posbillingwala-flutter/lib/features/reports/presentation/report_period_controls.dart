@@ -12,7 +12,15 @@ Future<void> pickReportMonth(BuildContext context, WidgetRef ref) async {
       : now;
   final picked = await showDatePicker(
     context: context,
-    builder: (context, child) => Theme(data: Theme.of(context).copyWith(colorScheme: Theme.of(context).colorScheme.copyWith(primary: AppColors.primary, secondary: AppColors.red)), child: child!),
+    builder: (context, child) => Theme(
+      data: Theme.of(context).copyWith(
+        colorScheme: Theme.of(context).colorScheme.copyWith(
+          primary: AppColors.primary,
+          secondary: AppColors.red,
+        ),
+      ),
+      child: child!,
+    ),
     initialDate: DateTime(initial.year, initial.month, 1),
     firstDate: DateTime(now.year - 3, 1, 1),
     lastDate: DateTime(now.year, now.month, 1),
@@ -68,11 +76,18 @@ Future<void> showReportPeriodFilterMenu(
         value: 'day',
         child: Row(
           children: [
-            const Icon(Icons.calendar_month_rounded, color: Colors.white, size: 18),
+            const Icon(
+              Icons.calendar_month_rounded,
+              color: Colors.white,
+              size: 18,
+            ),
             const SizedBox(width: 10),
             Text(
               AppStrings.of(ref).dayWise,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ],
         ),
@@ -81,11 +96,18 @@ Future<void> showReportPeriodFilterMenu(
         value: 'month',
         child: Row(
           children: [
-            const Icon(Icons.calendar_month_rounded, color: Colors.white, size: 18),
+            const Icon(
+              Icons.calendar_month_rounded,
+              color: Colors.white,
+              size: 18,
+            ),
             const SizedBox(width: 10),
             Text(
               AppStrings.of(ref).monthWise,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ],
         ),
@@ -94,11 +116,18 @@ Future<void> showReportPeriodFilterMenu(
         value: 'year',
         child: Row(
           children: [
-            const Icon(Icons.calendar_month_rounded, color: Colors.white, size: 18),
+            const Icon(
+              Icons.calendar_month_rounded,
+              color: Colors.white,
+              size: 18,
+            ),
             const SizedBox(width: 10),
             Text(
               AppStrings.of(ref).yearWise,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ],
         ),

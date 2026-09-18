@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -12,12 +13,15 @@ import 'package:pos_billingwala_v2/core/database/database_provider.dart';
 import 'package:pos_billingwala_v2/core/network/online_guard.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
+import 'package:pos_billingwala_v2/core/utils/money_format.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/company/data/company_api.dart';
 import 'package:pos_billingwala_v2/features/company/data/company_dtos.dart';
+import 'package:pos_billingwala_v2/features/company/data/company_logo.dart';
 import 'package:pos_billingwala_v2/features/masters/presentation/widgets/master_ui.dart';
 import 'package:pos_billingwala_v2/features/print/domain/shop_receipt_profile.dart';
+import 'package:pos_billingwala_v2/features/sync/domain/connectivity_sync_listener.dart';
 
 /* Company / shop profile only (Android Shop Details parity). */
 class CompanySettingsPage extends ConsumerStatefulWidget {
@@ -76,8 +80,8 @@ class CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
     companySettingsPageGstNumber = TextEditingController();
     companySettingsPagePanNumber = TextEditingController();
     companySettingsPageCompanyFssis = TextEditingController();
-    companySettingsPageShopCgst = TextEditingController(text: '0');
-    companySettingsPageShopSgst = TextEditingController(text: '0');
+    companySettingsPageShopCgst = TextEditingController();
+    companySettingsPageShopSgst = TextEditingController();
     companySettingsPageCurrencyName = TextEditingController(text: 'INR');
     companySettingsPageCountryName = TextEditingController(text: 'India');
     companySettingsPageStateName = TextEditingController();
@@ -117,7 +121,7 @@ class CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
     super.dispose();
   }
 
-  CompanyDto buildDto() {
+  CompanyDto buildDto({int? companyId, String? companyLogo}) {
     final shop1 = companySettingsPageShopName1.text.trim();
     final phone1 = companySettingsPagePhoneNo1.text.trim();
     final address = [
@@ -126,24 +130,31 @@ class CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
       companySettingsPageAddressLine3.text.trim(),
     ].where((e) => e.isNotEmpty).join(', ');
     return CompanyDto(
-      companyName: shop1.isNotEmpty ? shop1 : companySettingsPageCompanyName.text.trim(),
+      companyId: companyId,
+      companyLogo: companyLogo,
+      companyName: shop1.isNotEmpty
+          ? shop1
+          : companySettingsPageCompanyName.text.trim(),
       shopName1: shop1,
       shopName2: companySettingsPageShopName2.text.trim(),
       cashierName: companySettingsPageCashierName.text.trim(),
-      companyMobile: phone1.isNotEmpty ? phone1 : companySettingsPageCompanyMobile.text.trim(),
-      companyAddress:
-          address.isNotEmpty ? address : companySettingsPageCompanyAddress.text.trim(),
+      companyMobile: phone1.isNotEmpty
+          ? phone1
+          : companySettingsPageCompanyMobile.text.trim(),
+      companyAddress: address.isNotEmpty
+          ? address
+          : companySettingsPageCompanyAddress.text.trim(),
       addressLine1: companySettingsPageAddressLine1.text.trim(),
       addressLine2: companySettingsPageAddressLine2.text.trim(),
       addressLine3: companySettingsPageAddressLine3.text.trim(),
       phoneNo1: phone1,
       phoneNo2: companySettingsPagePhoneNo2.text.trim(),
       gstStatus: gstEnabled ? '1' : '0',
-      gstNumber: companySettingsPageGstNumber.text.trim(),
+      gstNumber: gstEnabled ? companySettingsPageGstNumber.text.trim() : '',
       panNumber: companySettingsPagePanNumber.text.trim(),
       companyFssis: companySettingsPageCompanyFssis.text.trim(),
-      shopCgst: companySettingsPageShopCgst.text.trim(),
-      shopSgst: companySettingsPageShopSgst.text.trim(),
+      shopCgst: gstEnabled ? companySettingsPageShopCgst.text.trim() : '0',
+      shopSgst: gstEnabled ? companySettingsPageShopSgst.text.trim() : '0',
       currencyName: companySettingsPageCurrencyName.text.trim(),
       countryName: companySettingsPageCountryName.text.trim(),
       stateName: companySettingsPageStateName.text.trim(),
@@ -167,22 +178,35 @@ class CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
     companySettingsPageAddressLine3.text = c.addressLine3 ?? '';
     companySettingsPagePhoneNo1.text = c.phoneNo1 ?? '';
     companySettingsPagePhoneNo2.text = c.phoneNo2 ?? '';
-    gstEnabled = c.gstStatus == '1' || c.gstStatus?.toLowerCase() == 'true';
+    gstEnabled = c.gstStatus == '1' ||
+        c.gstStatus?.toLowerCase() == 'true' ||
+        c.gstStatus?.toLowerCase() == 'yes' ||
+        c.gstStatus?.toLowerCase() == 'on';
     companySettingsPageGstNumber.text = c.gstNumber ?? '';
     companySettingsPagePanNumber.text = c.panNumber ?? '';
     companySettingsPageCompanyFssis.text = c.companyFssis ?? '';
-    companySettingsPageShopCgst.text = c.shopCgst ?? '0';
-    companySettingsPageShopSgst.text = c.shopSgst ?? '0';
+    companySettingsPageShopCgst.text = textOrEmpty(c.shopCgst);
+    companySettingsPageShopSgst.text = textOrEmpty(c.shopSgst);
     companySettingsPageCurrencyName.text = c.currencyName ?? 'INR';
     companySettingsPageCountryName.text = c.countryName ?? 'India';
     companySettingsPageStateName.text = c.stateName ?? '';
     companySettingsPageNoOfTable.text = c.noOfTable ?? '';
-    useTable = c.tableStatus == null ||
+    useTable =
+        c.tableStatus == null ||
         c.tableStatus == '1' ||
         c.tableStatus?.toLowerCase() == 'true';
     companySettingsPagePaymentLogo.text = c.paymentLogo ?? '';
     companySettingsPageOpeningMinutes.text = c.openingMinutes ?? '';
     companySettingsPageClosingMinutes.text = c.closingMinutes ?? '';
+    unawaited(restoreLogoFromCloud(c.companyLogo));
+  }
+
+  Future<void> restoreLogoFromCloud(String? companyLogo) async {
+    if (logoPath.isNotEmpty && File(logoPath).existsSync()) return;
+    final path = await materializeShopLogo(companyLogo);
+    if (path == null || !mounted) return;
+    await ref.read(shopReceiptProfileProvider.notifier).saveLogoPath(path);
+    if (mounted) setState(() => logoPath = path);
   }
 
   Future<void> load() async {
@@ -194,26 +218,30 @@ class CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
       final local = await db.getLocalCompany();
       if (local != null && mounted) {
         setState(() => applyDto(companyRowToDto(local)));
-      } else {
         final profile = ref.read(shopReceiptProfileProvider);
-        if (mounted && profile.companyName.isNotEmpty) {
-          setState(() {
-            companySettingsPageCompanyName.text = profile.companyName;
-            companySettingsPageShopName1.text = profile.shopName1;
-            companySettingsPageAddressLine1.text = profile.addressLine1;
-            companySettingsPagePhoneNo1.text = profile.phoneNo1;
-            companySettingsPageGstNumber.text = profile.gstNumber;
-            logoPath = profile.logoLocalPath;
-          });
-        }
+        setState(() => logoPath = profile.logoLocalPath);
+        /* Offline-first: keep local. Cloud arrives via auto-sync into Drift. */
+        return;
+      }
+
+      final profile = ref.read(shopReceiptProfileProvider);
+      if (mounted && profile.companyName.isNotEmpty) {
+        setState(() {
+          companySettingsPageCompanyName.text = profile.companyName;
+          companySettingsPageShopName1.text = profile.shopName1;
+          companySettingsPageAddressLine1.text = profile.addressLine1;
+          companySettingsPagePhoneNo1.text = profile.phoneNo1;
+          companySettingsPageGstNumber.text = profile.gstNumber;
+          logoPath = profile.logoLocalPath;
+        });
       }
 
       if (!await ensureOnline()) {
-        final profile = ref.read(shopReceiptProfileProvider);
         if (mounted) setState(() => logoPath = profile.logoLocalPath);
         return;
       }
 
+      /* First-time only: seed local from cloud when Drift is empty. */
       final api = CompanyApi(ref.read(apiClientProvider));
       final companies = await api.getCompanyList(userId);
       if (companies.isNotEmpty && mounted) {
@@ -222,8 +250,8 @@ class CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
         await ref
             .read(shopReceiptProfileProvider.notifier)
             .saveFromCompany(companies.first);
-        final profile = ref.read(shopReceiptProfileProvider);
-        setState(() => logoPath = profile.logoLocalPath);
+        final saved = ref.read(shopReceiptProfileProvider);
+        setState(() => logoPath = saved.logoLocalPath);
       }
     } catch (_) {
       /* Keep local / profile fields. */
@@ -268,45 +296,68 @@ class CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
   Future<void> pickLogo(ImageSource source) async {
     final picked = await ImagePicker().pickImage(
       source: source,
-      maxWidth: 800,
-      maxHeight: 800,
-      imageQuality: 85,
+      maxWidth: 512,
+      maxHeight: 512,
+      imageQuality: 70,
     );
     if (picked == null) return;
     final docs = await getApplicationDocumentsDirectory();
     final dest = File('${docs.path}/shop_logo.jpg');
     await File(picked.path).copy(dest.path);
     await ref.read(shopReceiptProfileProvider.notifier).saveLogoPath(dest.path);
+    if (AppPlatform.supportsOfflineSync) {
+      await ref
+          .read(shopReceiptProfileProvider.notifier)
+          .setPendingUpload(true);
+    }
     if (!mounted) return;
     setState(() => logoPath = dest.path);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Shop logo saved for bills')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Shop logo saved')));
   }
 
   Future<void> companySettingsPageSave() async {
     final userId = ref.read(authControllerProvider).session?.userId;
     if (userId == null || userId.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please login first')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please login first')));
       return;
     }
     if (AppPlatform.requiresNetwork && !await ensureOnline()) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(kOnlineRequiredMessage)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text(kOnlineRequiredMessage)));
       return;
     }
     setState(() => busy = true);
     try {
       final db = ref.read(appDatabaseProvider);
-      final dto = buildDto();
+      final existing = await db.getLocalCompany();
+      final pathForLogo = logoPath.trim().isNotEmpty
+          ? logoPath
+          : ref.read(shopReceiptProfileProvider).logoLocalPath;
+      final encodedLogo = await encodeShopLogoFile(pathForLogo);
+      final existingLogo = existing?.companyLogo?.trim();
+      final logoForSave = encodedLogo ??
+          ((existingLogo != null &&
+                  existingLogo.isNotEmpty &&
+                  existingLogo.startsWith('data:image'))
+              ? existingLogo
+              : null);
+      final dto = buildDto(
+        companyId: existing?.companyId,
+        companyLogo: logoForSave,
+      );
+
       var ok = false;
       if (await isDeviceOnline()) {
         try {
-          ok = await CompanyApi(ref.read(apiClientProvider)).insertCompanyDetail(
+          ok = await CompanyApi(
+            ref.read(apiClientProvider),
+          ).insertCompanyDetail(
             userId: userId,
             company: dto,
           );
@@ -314,13 +365,17 @@ class CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
           ok = false;
         }
       }
+
+      /* Web must reach cloud before any local write. */
       if (AppPlatform.requiresNetwork && !ok) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text(kWebApiSaveFailedMessage)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text(kWebApiSaveFailedMessage)));
         return;
       }
+
+      /* Mobile: always persist local (offline-first), then sync if cloud failed. */
       await db.upsertLocalCompany(dto);
       await ref.read(shopReceiptProfileProvider.notifier).saveFromCompany(dto);
       if (logoPath.isNotEmpty) {
@@ -328,15 +383,25 @@ class CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
             .read(shopReceiptProfileProvider.notifier)
             .saveLogoPath(logoPath);
       }
+
+      if (ok) {
+        await ref
+            .read(shopReceiptProfileProvider.notifier)
+            .setPendingUpload(false);
+      } else if (AppPlatform.supportsOfflineSync) {
+        await ref
+            .read(shopReceiptProfileProvider.notifier)
+            .setPendingUpload(true);
+        unawaited(
+          ref
+              .read(connectivitySyncListenerProvider)
+              .syncNow(force: true, reason: 'shop-details'),
+        );
+      }
+
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            ok
-                ? 'Shop details saved'
-                : 'Saved offline — will sync when online',
-          ),
-        ),
+        const SnackBar(content: Text('Shop details saved')),
       );
     } catch (e) {
       if (!mounted) return;
@@ -351,6 +416,7 @@ class CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
     String label, {
     TextInputType? keyboardType,
     int maxLines = 1,
+    bool required = false,
   }) {
     return TextField(
       controller: c,
@@ -364,12 +430,16 @@ class CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
         fontWeight: FontWeight.w500,
       ),
       decoration: InputDecoration(
+        /* Floating label on all shop-detail fields (size 14). */
         labelText: label,
+        hintText: label,
         floatingLabelBehavior: FloatingLabelBehavior.auto,
         filled: true,
         fillColor: Colors.white,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 14,
+        ),
         labelStyle: TextStyle(
           fontFamily: AppFonts.family,
           color: AppColors.navy.withValues(alpha: .45),
@@ -380,7 +450,7 @@ class CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
           fontFamily: AppFonts.family,
           color: AppColors.primary,
           fontWeight: FontWeight.w500,
-          fontSize: 13,
+          fontSize: 14,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(MasterUi.fieldRadius),
@@ -398,10 +468,7 @@ class CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
     );
   }
 
-  Widget section({
-    required String title,
-    required List<Widget> children,
-  }) {
+  Widget section({required String title, required List<Widget> children}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -427,26 +494,11 @@ class CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
     required bool value,
     required ValueChanged<bool> onChanged,
   }) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontFamily: AppFonts.family,
-              fontWeight: FontWeight.w600,
-              fontSize: 14.5,
-              color: AppColors.navy,
-            ),
-          ),
-        ),
-        Switch.adaptive(
-          value: value,
-          activeThumbColor: Colors.white,
-          activeTrackColor: AppColors.green,
-          onChanged: onChanged,
-        ),
-      ],
+    return AppSwitchTile(
+      title: label,
+      value: value,
+      showDivider: false,
+      onChanged: onChanged,
     );
   }
 
@@ -466,12 +518,10 @@ class CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
       'BDT',
       'LKR',
     ];
-    final current =
-        companySettingsPageCurrencyName.text.trim().isEmpty ? 'INR' : companySettingsPageCurrencyName.text.trim();
-    final options = {
-      ...defaults,
-      if (current.isNotEmpty) current,
-    }.toList();
+    final current = companySettingsPageCurrencyName.text.trim().isEmpty
+        ? 'INR'
+        : companySettingsPageCurrencyName.text.trim();
+    final options = {...defaults, if (current.isNotEmpty) current}.toList();
 
     return StringDropdownField(
       label: 'Invoice Currency',
@@ -504,15 +554,13 @@ class CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
                   borderRadius: BorderRadius.circular(MasterUi.fieldRadius),
                   child: Ink(
                     decoration: BoxDecoration(
-                      borderRadius:
-                          BorderRadius.circular(MasterUi.fieldRadius),
+                      borderRadius: BorderRadius.circular(MasterUi.fieldRadius),
                       border: Border.all(
                         color: AppColors.border.withValues(alpha: .9),
                       ),
                     ),
                     child: ClipRRect(
-                      borderRadius:
-                          BorderRadius.circular(MasterUi.fieldRadius),
+                      borderRadius: BorderRadius.circular(MasterUi.fieldRadius),
                       child: hasLogo
                           ? Image.file(logoFile, fit: BoxFit.contain)
                           : Image.asset(
@@ -532,8 +580,7 @@ class CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
                   elevation: 2,
                   child: InkWell(
                     customBorder: const CircleBorder(),
-                    onTap:
-                        busy ? null : () => pickLogo(ImageSource.gallery),
+                    onTap: busy ? null : () => pickLogo(ImageSource.gallery),
                     child: const SizedBox(
                       width: 40,
                       height: 40,
@@ -611,115 +658,129 @@ class CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
                       28,
                     ),
                     children: [
-                    logoCard(),
-                    const SizedBox(height: 18),
-                    section(
-                      title: 'Shop Identity',
-                      children: [
-                        field(companySettingsPageShopName1, 'Shop Name 1'),
-                        field(companySettingsPageShopName2, 'Shop Name 2'),
-                        field(companySettingsPageAddressLine1, 'Address Line 1'),
-                        field(companySettingsPageAddressLine2, 'Address Line 2'),
-                        field(companySettingsPageAddressLine3, 'Address Line 3'),
-                      ],
-                    ),
-                    const SizedBox(height: 18),
-                    section(
-                      title: 'Contact',
-                      children: [
-                        field(
-                          companySettingsPagePhoneNo1,
-                          'Phone No. 1',
-                          keyboardType: TextInputType.phone,
-                        ),
-                        field(
-                          companySettingsPagePhoneNo2,
-                          'Phone No. 2',
-                          keyboardType: TextInputType.phone,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 18),
-                    section(
-                      title: 'Operations',
-                      children: [
-                        currencyDropdown(),
-                        toggleRow(
-                          label: 'Use Table',
-                          value: useTable,
-                          onChanged: (v) => setState(() => useTable = v),
-                        ),
-                        if (useTable)
+                      logoCard(),
+                      const SizedBox(height: 18),
+                      section(
+                        title: 'Shop Identity',
+                        children: [
+                          field(companySettingsPageShopName1, 'Shop Name 1'),
+                          field(companySettingsPageShopName2, 'Shop Name 2'),
                           field(
-                            companySettingsPageNoOfTable,
-                            'No of Table',
-                            keyboardType: TextInputType.number,
+                            companySettingsPageAddressLine1,
+                            'Address Line 1',
                           ),
-                      ],
-                    ),
-                    const SizedBox(height: 18),
-                    section(
-                      title: 'Tax & Compliance',
-                      children: [
-                        field(companySettingsPageCountryName, 'Country Name'),
-                        field(companySettingsPageStateName, 'State Name'),
-                        toggleRow(
-                          label: 'GST',
-                          value: gstEnabled,
-                          onChanged: (v) => setState(() => gstEnabled = v),
-                        ),
-                        field(companySettingsPageGstNumber, 'GST Number'),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: field(
-                                companySettingsPageShopCgst,
-                                'Shop CGST',
-                                keyboardType:
-                                    const TextInputType.numberWithOptions(
-                                  decimal: true,
-                                ),
-                              ),
+                          field(
+                            companySettingsPageAddressLine2,
+                            'Address Line 2',
+                          ),
+                          field(
+                            companySettingsPageAddressLine3,
+                            'Address Line 3',
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+                      section(
+                        title: 'Contact',
+                        children: [
+                          field(
+                            companySettingsPagePhoneNo1,
+                            'Phone No. 1',
+                            keyboardType: TextInputType.phone,
+                          ),
+                          field(
+                            companySettingsPagePhoneNo2,
+                            'Phone No. 2',
+                            keyboardType: TextInputType.phone,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+                      section(
+                        title: 'Operations',
+                        children: [
+                          currencyDropdown(),
+                          toggleRow(
+                            label: 'Use Table',
+                            value: useTable,
+                            onChanged: (v) => setState(() => useTable = v),
+                          ),
+                          if (useTable)
+                            field(
+                              companySettingsPageNoOfTable,
+                              'No of Table',
+                              keyboardType: TextInputType.number,
                             ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: field(
-                                companySettingsPageShopSgst,
-                                'Shop SGST',
-                                keyboardType:
-                                    const TextInputType.numberWithOptions(
-                                  decimal: true,
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+                      section(
+                        title: 'Tax & Compliance',
+                        children: [
+                          field(companySettingsPageCountryName, 'Country Name'),
+                          field(companySettingsPageStateName, 'State Name'),
+                          toggleRow(
+                            label: 'GST',
+                            value: gstEnabled,
+                            onChanged: (v) => setState(() => gstEnabled = v),
+                          ),
+                          if (gstEnabled) ...[
+                            field(companySettingsPageGstNumber, 'GST Number'),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: field(
+                                    companySettingsPageShopCgst,
+                                    'Shop CGST',
+                                    keyboardType:
+                                        const TextInputType.numberWithOptions(
+                                          decimal: true,
+                                        ),
+                                  ),
                                 ),
-                              ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: field(
+                                    companySettingsPageShopSgst,
+                                    'Shop SGST',
+                                    keyboardType:
+                                        const TextInputType.numberWithOptions(
+                                          decimal: true,
+                                        ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
-                        ),
-                        field(companySettingsPagePanNumber, 'PAN Number'),
-                        field(companySettingsPageCompanyFssis, 'shop FSSAI Number'),
-                      ],
-                    ),
-                    const SizedBox(height: 18),
-                    section(
-                      title: 'Payment UPI',
-                      children: [
-                        field(
-                          companySettingsPagePaymentLogo,
-                          'UPI ID (e.g. shopname@upi)',
-                          keyboardType: TextInputType.emailAddress,
-                        ),
-                        Text(
-                          'When Payment QR is enabled in printer settings, a QR for the bill amount is generated from this UPI ID',
-                          style: TextStyle(
-                            fontFamily: AppFonts.family,
-                            fontSize: 12,
-                            height: 1.35,
-                            color: AppColors.navy.withValues(alpha: .48),
+                          field(companySettingsPagePanNumber, 'PAN Number'),
+                          field(
+                            companySettingsPageCompanyFssis,
+                            'shop FSSAI Number',
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+                      section(
+                        title: 'Payment UPI',
+                        children: [
+                          field(
+                            companySettingsPagePaymentLogo,
+                            'UPI ID (e.g. shopname@upi)',
+                            keyboardType: TextInputType.emailAddress,
+                          ),
+                          Text(
+                            'When Payment QR is enabled in printer settings, a QR for the bill amount is generated from this UPI ID',
+                            style: TextStyle(
+                              fontFamily: AppFonts.family,
+                              fontSize: 12,
+                              height: 1.35,
+                              color: AppColors.navy.withValues(alpha: .48),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
                 if (busy)
                   const Positioned.fill(

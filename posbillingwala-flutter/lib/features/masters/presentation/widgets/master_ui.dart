@@ -50,12 +50,11 @@ class MasterCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Keep fill on Material so ListTile ink is not covered by a colored DecoratedBox.
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white,
         borderRadius: BorderRadius.circular(MasterUi.cardRadius),
-        border: Border.all(color: AppColors.border.withValues(alpha: .8)),
         boxShadow: [
           BoxShadow(
             color: AppColors.navy.withValues(alpha: .04),
@@ -64,8 +63,15 @@ class MasterCard extends StatelessWidget {
           ),
         ],
       ),
-      clipBehavior: Clip.antiAlias,
-      child: Padding(padding: padding, child: child),
+      child: Material(
+        color: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(MasterUi.cardRadius),
+          side: BorderSide(color: AppColors.border.withValues(alpha: .8)),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Padding(padding: padding, child: child),
+      ),
     );
   }
 }
@@ -75,6 +81,8 @@ class MasterOutlinedField extends StatelessWidget {
     super.key,
     required this.controller,
     required this.hint,
+    this.label,
+    this.required = false,
     this.keyboardType,
     this.enabled = true,
     this.onChanged,
@@ -82,7 +90,10 @@ class MasterOutlinedField extends StatelessWidget {
   });
 
   final TextEditingController controller;
+  /* Floating label text; defaults to [hint] when [label] is null. */
   final String hint;
+  final String? label;
+  final bool required;
   final TextInputType? keyboardType;
   final bool enabled;
   final ValueChanged<String>? onChanged;
@@ -90,6 +101,7 @@ class MasterOutlinedField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final labelText = (label ?? hint).trim();
     return TextField(
       controller: controller,
       enabled: enabled,
@@ -103,7 +115,22 @@ class MasterOutlinedField extends StatelessWidget {
         fontWeight: FontWeight.w500,
       ),
       decoration: InputDecoration(
-        hintText: hint,
+        labelText: labelText.isEmpty ? null : labelText,
+        floatingLabelBehavior: labelText.isEmpty
+            ? FloatingLabelBehavior.never
+            : FloatingLabelBehavior.auto,
+        labelStyle: TextStyle(
+          fontFamily: AppFonts.family,
+          color: AppColors.navy.withValues(alpha: .45),
+          fontWeight: FontWeight.w500,
+          fontSize: 14,
+        ),
+        floatingLabelStyle: const TextStyle(
+          fontFamily: AppFonts.family,
+          color: AppColors.primary,
+          fontWeight: FontWeight.w600,
+          fontSize: 14,
+        ),
         hintStyle: TextStyle(
           fontFamily: AppFonts.family,
           color: AppColors.navy.withValues(alpha: .38),
@@ -112,8 +139,10 @@ class MasterOutlinedField extends StatelessWidget {
         ),
         filled: true,
         fillColor: Colors.white,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 14,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(MasterUi.fieldRadius),
           borderSide: BorderSide(color: AppColors.border.withValues(alpha: .9)),
@@ -144,6 +173,7 @@ class MasterDropdown<T> extends StatelessWidget {
     required this.onChanged,
     this.hint,
     this.label,
+    this.required = false,
   });
 
   final T? value;
@@ -152,13 +182,14 @@ class MasterDropdown<T> extends StatelessWidget {
   final ValueChanged<T?> onChanged;
   final String? hint;
   final String? label;
+  final bool required;
 
   @override
   Widget build(BuildContext context) {
     return AppDropdownFormField<T>(
       label: label ?? hint ?? 'Select',
       hint: hint,
-      showLabel: label != null,
+      required: required,
       items: items,
       itemLabel: itemLabel,
       value: value,
@@ -360,11 +391,7 @@ class MasterListRow extends StatelessWidget {
 }
 
 class MasterLinkButton extends StatelessWidget {
-  const MasterLinkButton({
-    super.key,
-    required this.label,
-    required this.onTap,
-  });
+  const MasterLinkButton({super.key, required this.label, required this.onTap});
 
   final String label;
   final VoidCallback onTap;
@@ -447,11 +474,7 @@ class MasterPillTabs extends StatelessWidget {
 }
 
 class MasterEmptyState extends StatelessWidget {
-  const MasterEmptyState({
-    super.key,
-    required this.title,
-    this.subtitle,
-  });
+  const MasterEmptyState({super.key, required this.title, this.subtitle});
 
   final String title;
   final String? subtitle;

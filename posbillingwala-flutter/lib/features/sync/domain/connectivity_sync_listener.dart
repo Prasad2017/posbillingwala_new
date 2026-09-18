@@ -14,11 +14,10 @@ import 'package:pos_billingwala_v2/features/sync/domain/full_sync_controller.dar
 import 'package:pos_billingwala_v2/features/sync/domain/sync_progress.dart';
 import 'package:pos_billingwala_v2/features/sync/domain/sync_providers.dart';
 
-/* Android / iOS: always-on auto-sync of ALL data when internet is available. */
+/* Android / iOS: offline-first. UI always reads Drift; cloud is background only. */
 /* */
-/* Triggers: reconnect, app resume, login, after a bill, periodic while online. */
-/* Every run: upload pending then non-destructive download of masters, bills, */
-/* mess, dining, inventory, expenses, company/printer. Never wipe-and-fetch. */
+/* When online: upload pending then merge-download every [pollInterval] (2 min), */
+/* plus reconnect, app resume, login, and after a bill. Never wipe-and-fetch. */
 class ConnectivitySyncListener {
   ConnectivitySyncListener(this.connectivitySyncListenerRef);
 
@@ -31,7 +30,7 @@ class ConnectivitySyncListener {
   bool running = false;
   DateTime? lastSyncAt;
 
-  static const pollInterval = Duration(minutes: 3);
+  static const pollInterval = Duration(minutes: 2);
   static const minSyncGap = Duration(seconds: 20);
   static const checkoutRetryDelay = Duration(seconds: 8);
 
@@ -51,10 +50,7 @@ class ConnectivitySyncListener {
       final reconnect = wasOffline;
       wasOffline = false;
       unawaited(
-        syncNow(
-          force: reconnect,
-          reason: reconnect ? 'reconnect' : 'online',
-        ),
+        syncNow(force: reconnect, reason: reconnect ? 'reconnect' : 'online'),
       );
     });
 
@@ -92,19 +88,18 @@ class ConnectivitySyncListener {
     }
   }
 
-  Future<void> syncNow({
-    bool force = false,
-    String reason = '',
-  }) async {
+  Future<void> syncNow({bool force = false, String reason = ''}) async {
     if (!AppPlatform.supportsOfflineSync) return;
     if (running) return;
 
     final auth = connectivitySyncListenerRef.read(authControllerProvider);
     if (auth.status != AuthStatus.authenticated) return;
-    final userId = auth.session?.userId;
+    final userId = auth.session?.licenceUserId;
     if (userId == null || userId.isEmpty) return;
 
-    if (connectivitySyncListenerRef.read(paymentCheckoutControllerProvider).busy) {
+    if (connectivitySyncListenerRef
+        .read(paymentCheckoutControllerProvider)
+        .busy) {
       retryTimer?.cancel();
       retryTimer = Timer(checkoutRetryDelay, () {
         unawaited(syncNow(force: force, reason: 'after-checkout'));
@@ -145,21 +140,21 @@ class ConnectivitySyncListener {
           .getSyncPendingSnapshot();
       if (result.failed > 0) {
         status.setError(result.message, pendingCount: snap.total);
-        AppLogger.warning(
-          'Auto-sync finished with issues: ${result.message}',
-        );
+        AppLogger.warning('Auto-sync finished with issues: ${result.message}');
       } else {
         status.setSuccess(pendingCount: snap.total);
       }
     } catch (e) {
       AppLogger.error('Auto-sync failed', e);
-      int pending =
-          connectivitySyncListenerRef.read(autoSyncStatusProvider).pendingCount;
+      int pending = connectivitySyncListenerRef
+          .read(autoSyncStatusProvider)
+          .pendingCount;
       try {
-        pending = (await connectivitySyncListenerRef
-                .read(appDatabaseProvider)
-                .getSyncPendingSnapshot())
-            .total;
+        pending =
+            (await connectivitySyncListenerRef
+                    .read(appDatabaseProvider)
+                    .getSyncPendingSnapshot())
+                .total;
       } catch (_) {}
       status.setError('$e', pendingCount: pending);
     } finally {

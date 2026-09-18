@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../auth_tokens.php';
 
 /**
- * Require valid admin Bearer token (mandatory).
+ * Require valid admin Bearer token when $db_local is true.
  */
 function admin_require_auth($con, $unauthorizedPayload = null)
 {

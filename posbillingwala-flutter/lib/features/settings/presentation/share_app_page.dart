@@ -35,11 +35,13 @@ class ShareAppPage extends StatelessWidget {
   }
 
   Future<void> copyLink(BuildContext context) async {
-    await Clipboard.setData(const ClipboardData(text: shareAppPagePlayStoreLink));
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Play Store link copied')),
+    await Clipboard.setData(
+      const ClipboardData(text: shareAppPagePlayStoreLink),
     );
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Play Store link copied')));
   }
 
   void showQr(BuildContext context) {
@@ -47,10 +49,7 @@ class ShareAppPage extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text(
-          'Invite with QR Code',
-          style: AppTypography.sectionTitle(),
-        ),
+        title: Text('Invite with QR Code', style: AppTypography.sectionTitle()),
         content: SizedBox(
           width: 260,
           child: Column(
@@ -84,34 +83,32 @@ class ShareAppPage extends StatelessWidget {
       backgroundColor: const Color(0xFFF3F7FC),
       body: Column(
         children: [
-          ShareHeader(
-            topInset: topInset,
-            onBack: () => context.pop(),
-          ),
+          ShareHeader(topInset: topInset, onBack: () => context.pop()),
           Expanded(
             child: ResponsiveScrollShell(
-        dashboard: true,
-        child: ListView(
-              padding: EdgeInsets.fromLTRB(
-            AppBreakpoints.pagePaddingFor(context.widthClass),
-            4,
-            AppBreakpoints.pagePaddingFor(context.widthClass),
-            28),
-              children: [
-                const LoveCard(),
-                const SizedBox(height: 14),
-                ShareLinkCard(
-                  playStoreLink: shareAppPagePlayStoreLink,
-                  onCopy: () => copyLink(context),
-                  onShare: () => shareAppPageShare(context),
+              dashboard: true,
+              child: ListView(
+                padding: EdgeInsets.fromLTRB(
+                  AppBreakpoints.pagePaddingFor(context.widthClass),
+                  4,
+                  AppBreakpoints.pagePaddingFor(context.widthClass),
+                  28,
                 ),
-                const SizedBox(height: 14),
-                QrInviteCard(onShowQr: () => showQr(context)),
-                const SizedBox(height: 14),
-                const WhyShareCard(),
-              ],
+                children: [
+                  const LoveCard(),
+                  const SizedBox(height: 14),
+                  ShareLinkCard(
+                    playStoreLink: shareAppPagePlayStoreLink,
+                    onCopy: () => copyLink(context),
+                    onShare: () => shareAppPageShare(context),
+                  ),
+                  const SizedBox(height: 14),
+                  QrInviteCard(onShowQr: () => showQr(context)),
+                  const SizedBox(height: 14),
+                  const WhyShareCard(),
+                ],
+              ),
             ),
-      ),
           ),
         ],
       ),
@@ -120,10 +117,7 @@ class ShareAppPage extends StatelessWidget {
 }
 
 class ShareHeader extends StatelessWidget {
-  const ShareHeader({super.key, 
-    required this.topInset,
-    required this.onBack,
-  });
+  const ShareHeader({super.key, required this.topInset, required this.onBack});
 
   final double topInset;
   final VoidCallback onBack;
@@ -266,7 +260,8 @@ class LoveCard extends StatelessWidget {
 }
 
 class ShareLinkCard extends StatelessWidget {
-  const ShareLinkCard({super.key, 
+  const ShareLinkCard({
+    super.key,
     required this.playStoreLink,
     required this.onCopy,
     required this.onShare,
@@ -524,7 +519,8 @@ class WhyShareCard extends StatelessWidget {
 }
 
 class BenefitItem extends StatelessWidget {
-  const BenefitItem({super.key, 
+  const BenefitItem({
+    super.key,
     required this.svgPath,
     required this.bgColor,
     required this.title,
@@ -544,10 +540,7 @@ class BenefitItem extends StatelessWidget {
           width: 52,
           height: 52,
           alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: bgColor,
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: bgColor, shape: BoxShape.circle),
           child: AppSvg(svgPath, width: 28, height: 28),
         ),
         const SizedBox(height: 10),

@@ -105,11 +105,7 @@ class FetchResultPage extends ConsumerWidget {
 }
 
 class _SummaryCard extends StatelessWidget {
-  const _SummaryCard({
-    required this.total,
-    required this.failed,
-    this.message,
-  });
+  const _SummaryCard({required this.total, required this.failed, this.message});
 
   final int total;
   final int failed;
@@ -144,9 +140,7 @@ class _SummaryCard extends StatelessWidget {
               shape: BoxShape.circle,
             ),
             child: Icon(
-              failed > 0
-                  ? Icons.cloud_done_outlined
-                  : Icons.storage_rounded,
+              failed > 0 ? Icons.cloud_done_outlined : Icons.storage_rounded,
               color: accent,
             ),
           ),
@@ -246,8 +240,10 @@ class _CountGroupCard extends StatelessWidget {
                     ),
                   ),
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: rows[i].count > 0
                           ? AppColors.primarySoft

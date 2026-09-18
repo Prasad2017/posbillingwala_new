@@ -41,6 +41,7 @@ ReceiptBuilder receiptBuilderFor(PrintService service, StorePrinter printer) {
 
 class PrintJobDispatcher {
   PrintJobDispatcher(this.ref);
+
   final WidgetRef ref;
 
   Future<PrintResult> printKotRouted(KotTicket ticket) async {
@@ -81,7 +82,8 @@ class PrintJobDispatcher {
         final builder = receiptBuilderFor(service, printer);
         final text = builder.kotText(subset);
         final bytes = await builder.kotPrintBytes(subset);
-        final local = printer.deviceId.isEmpty || printer.deviceId == device.deviceId;
+        final local =
+            printer.deviceId.isEmpty || printer.deviceId == device.deviceId;
         if (local && !kIsWeb) {
           last = await service.dispatchToEndpoint(
             text: text,
@@ -94,7 +96,7 @@ class PrintJobDispatcher {
             networkHost: printer.ipAddress,
             networkPort: printer.port,
           );
-        final created = await api.createJob(session.licenceUserId, {
+          final created = await api.createJob(session.licenceUserId, {
             'printerId': printer.id,
             'documentType': 'KOT',
             'documentId': '${ticket.kot.kotId}',
@@ -144,7 +146,7 @@ class PrintJobDispatcher {
     final session = ref.read(authControllerProvider).session;
     final service = ref.read(printServiceProvider);
     if (session == null) {
-        return await service.printBill(
+      return await service.printBill(
         invoice: invoice,
         items: items,
         shopName: shopName,
@@ -152,17 +154,26 @@ class PrintJobDispatcher {
       );
     }
     try {
-      final printers = await ref.read(storePrinterApiProvider).list(session.licenceUserId);
-      final billPrinters = printers.where((p) => p.enabled && (p.purpose == 'BILL' || p.area == 'COUNTER')).toList();
+      final printers = await ref
+          .read(storePrinterApiProvider)
+          .list(session.licenceUserId);
+      final billPrinters = printers
+          .where(
+            (p) => p.enabled && (p.purpose == 'BILL' || p.area == 'COUNTER'),
+          )
+          .toList();
       if (billPrinters.isEmpty) {
         return await service.printBill(
-        invoice: invoice,
-        items: items,
-        shopName: shopName,
-        duplicate: duplicate,
-      );
+          invoice: invoice,
+          items: items,
+          shopName: shopName,
+          duplicate: duplicate,
+        );
       }
-      var printer = billPrinters.firstWhere((p) => p.isDefault, orElse: () => billPrinters.first);
+      var printer = billPrinters.firstWhere(
+        (p) => p.isDefault,
+        orElse: () => billPrinters.first,
+      );
       final device = await DeviceIdentityService().resolve();
       final builder = receiptBuilderFor(service, printer);
       final text = builder.billText(
@@ -177,7 +188,8 @@ class PrintJobDispatcher {
         shopName: shopName,
         duplicate: duplicate,
       );
-      final local = printer.deviceId.isEmpty || printer.deviceId == device.deviceId;
+      final local =
+          printer.deviceId.isEmpty || printer.deviceId == device.deviceId;
       if (local && !kIsWeb) {
         return await service.dispatchToEndpoint(
           text: text,
@@ -196,7 +208,8 @@ class PrintJobDispatcher {
         'documentType': 'BILL',
         'documentId': '${invoice.invoiceId}',
         'payload': jsonEncode({'text': text}),
-        'idempotencyKey': 'bill:${invoice.invoiceId}:${printer.id}:${duplicate ? 'dup' : 'orig'}',
+        'idempotencyKey':
+            'bill:${invoice.invoiceId}:${printer.id}:${duplicate ? 'dup' : 'orig'}',
         'android_device_id': device.deviceId,
       });
       return PrintResult(
@@ -206,7 +219,7 @@ class PrintJobDispatcher {
       );
     } catch (e) {
       AppLogger.warning('printBillRouted fallback', e);
-        return await service.printBill(
+      return await service.printBill(
         invoice: invoice,
         items: items,
         shopName: shopName,
@@ -246,13 +259,13 @@ class PrintJobDispatcher {
       }
     }
     match ??= routes.cast<PrinterRouteRule?>().firstWhere(
-          (r) =>
-              r != null &&
-              r.documentType == documentType &&
-              r.foodTypeCode.isNotEmpty &&
-              r.foodTypeCode.toLowerCase() == foodType,
-          orElse: () => null,
-        );
+      (r) =>
+          r != null &&
+          r.documentType == documentType &&
+          r.foodTypeCode.isNotEmpty &&
+          r.foodTypeCode.toLowerCase() == foodType,
+      orElse: () => null,
+    );
     if (match != null) {
       for (final printer in printers) {
         if (printer.id == match.printerId) return printer;

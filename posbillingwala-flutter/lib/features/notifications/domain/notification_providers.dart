@@ -9,8 +9,8 @@ final fcmServiceProvider = Provider<FcmService>((ref) {
 
 final inAppNotificationsProvider =
     NotifierProvider<InAppNotificationsController, List<InAppNotification>>(
-  InAppNotificationsController.new,
-);
+      InAppNotificationsController.new,
+    );
 
 class InAppNotificationsController extends Notifier<List<InAppNotification>> {
   final store = InAppNotificationStore();

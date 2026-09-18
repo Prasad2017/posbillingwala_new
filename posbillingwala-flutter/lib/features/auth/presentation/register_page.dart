@@ -4,9 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:pos_billingwala_v2/core/constants/app_assets.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/constants/app_constants.dart';
-import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/theme/app_typography.dart';
+import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/auth/presentation/web_auth_shell.dart';
@@ -40,7 +40,9 @@ class RegisterPageState extends ConsumerState<RegisterPage> {
     if (!formKey.currentState!.validate()) return;
     setState(() => busy = true);
     try {
-      final result = await ref.read(authRepositoryProvider).registerTrial(
+      final result = await ref
+          .read(authRepositoryProvider)
+          .registerTrial(
             name: registerPageName.text,
             contactNumber: contact.text,
             address: registerPageAddress.text,
@@ -67,8 +69,9 @@ class RegisterPageState extends ConsumerState<RegisterPage> {
         context: context,
         barrierDismissible: false,
         builder: (context) => AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
           title: const Text('Trial account created'),
           content: Text(
             'Licence key: ${result.licenceKey}\n'
@@ -94,9 +97,9 @@ class RegisterPageState extends ConsumerState<RegisterPage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Registration failed.\n$e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Registration failed.\n$e')));
       }
     } finally {
       if (mounted) setState(() => busy = false);
@@ -133,6 +136,7 @@ class RegisterPageState extends ConsumerState<RegisterPage> {
           ),
           const SizedBox(height: 20),
           AppTextField(
+            required: true,
             controller: registerPageName,
             label: 'Your name',
             prefixSvg: AppAssets.svgPerson,
@@ -142,6 +146,7 @@ class RegisterPageState extends ConsumerState<RegisterPage> {
           ),
           const SizedBox(height: 12),
           AppTextField(
+            required: true,
             controller: contact,
             label: 'Contact number',
             prefixSvg: AppAssets.svgPhone,
@@ -152,6 +157,7 @@ class RegisterPageState extends ConsumerState<RegisterPage> {
           ),
           const SizedBox(height: 12),
           AppTextField(
+            required: true,
             controller: registerPageShop,
             label: 'Shop name',
             prefixSvg: AppAssets.svgBusiness,
@@ -161,6 +167,7 @@ class RegisterPageState extends ConsumerState<RegisterPage> {
           ),
           const SizedBox(height: 12),
           AppTextField(
+            required: true,
             controller: registerPageAddress,
             label: 'Address',
             prefixSvg: AppAssets.svgLocation,
@@ -225,10 +232,7 @@ class RegisterPageState extends ConsumerState<RegisterPage> {
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-          child: ResponsiveContent(
-            padding: EdgeInsets.zero,
-            child: form,
-          ),
+          child: ResponsiveContent(padding: EdgeInsets.zero, child: form),
         ),
       ),
     );

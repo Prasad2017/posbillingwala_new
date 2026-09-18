@@ -61,22 +61,22 @@ class DiningSessionDto {
   }
 
   Map<String, dynamic> toJson() => {
-        'sessionId': sessionId,
-        'localSessionId': localSessionId,
-        'primaryTableNumber': primaryTableNumber,
-        'joinedTableNumbers': joinedTableNumbers,
-        'sessionStatus': sessionStatus,
-        'guestCount': guestCount,
-        'startedAt': startedAt?.toIso8601String(),
-        'closedAt': closedAt?.toIso8601String(),
-        'customerName': customerName,
-        'customerMobile': customerMobile,
-        'waiterName': waiterName,
-        'unpaidInvoiceNumber': unpaidInvoiceNumber,
-        'paidAmount': paidAmount,
-        'sessionVersion': sessionVersion,
-        'sessionNetworkStatus': sessionNetworkStatus,
-      };
+    'sessionId': sessionId,
+    'localSessionId': localSessionId,
+    'primaryTableNumber': primaryTableNumber,
+    'joinedTableNumbers': joinedTableNumbers,
+    'sessionStatus': sessionStatus,
+    'guestCount': guestCount,
+    'startedAt': startedAt?.toIso8601String(),
+    'closedAt': closedAt?.toIso8601String(),
+    'customerName': customerName,
+    'customerMobile': customerMobile,
+    'waiterName': waiterName,
+    'unpaidInvoiceNumber': unpaidInvoiceNumber,
+    'paidAmount': paidAmount,
+    'sessionVersion': sessionVersion,
+    'sessionNetworkStatus': sessionNetworkStatus,
+  };
 }
 
 class DiningSessionApi {
@@ -103,8 +103,9 @@ class DiningSessionApi {
         'startedAt': session.startedAt == null
             ? ''
             : dt.format(session.startedAt!),
-        'closedAt':
-            session.closedAt == null ? '' : dt.format(session.closedAt!),
+        'closedAt': session.closedAt == null
+            ? ''
+            : dt.format(session.closedAt!),
         'customerName': session.customerName ?? '',
         'customerMobile': session.customerMobile ?? '',
         'waiterName': session.waiterName ?? '',
@@ -123,10 +124,7 @@ class DiningSessionApi {
   }) async {
     final data = await diningSessionApiGet(
       ApiEndpoints.getDiningSessionList,
-      query: {
-        'userId': userId,
-        'openOnly': openOnly ? '1' : '0',
-      },
+      query: {'userId': userId, 'openOnly': openOnly ? '1' : '0'},
     );
     return mapJsonList(
       data[ApiResponseKeys.diningSessionResponse],

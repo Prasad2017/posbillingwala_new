@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
 import 'package:pos_billingwala_v2/core/constants/app_assets.dart';
@@ -64,11 +65,13 @@ class ReceiptRasterizer {
       widthPx: widthPx,
       useAssetLogoFallback: useAssetLogoFallback,
     );
-    final logoDrawH =
-        logoImage == null ? 0.0 : logoImage.height.toDouble() + 12;
+    final logoDrawH = logoImage == null
+        ? 0.0
+        : logoImage.height.toDouble() + 12;
 
     final marker = qrMarker?.trim() ?? '';
-    final hasInlineQr = marker.isNotEmpty &&
+    final hasInlineQr =
+        marker.isNotEmpty &&
         text.contains(marker) &&
         qrPayload != null &&
         qrPayload.trim().isNotEmpty;
@@ -87,26 +90,16 @@ class ReceiptRasterizer {
       }
     }
 
-    const style = TextStyle(
-      color: Color(0xFF000000),
-      fontFamily: AppFonts.family,
-      fontSize: 22,
-      height: 1.25,
-      fontWeight: FontWeight.w500,
-    );
-    const boldStyle = TextStyle(
-      color: Color(0xFF000000),
-      fontFamily: AppFonts.family,
-      fontSize: 22,
-      height: 1.25,
-      fontWeight: FontWeight.w700,
-    );
+    /* Shared with invoice preview — Poppins + Indic fallbacks so user data */
+    /* (EN / MR / HI / …) prints identically on Android, iOS, and web share. */
+    final style = AppFonts.printBody();
+    final boldStyle = AppFonts.printBold();
 
     final topPainter = TextPainter(
       text: TextSpan(text: topText, style: style),
       textAlign: TextAlign.left,
       textDirection: TextDirection.ltr,
-      locale: const Locale('en', 'IN'),
+      locale: const Locale('hi', 'IN'),
     )..layout(maxWidth: widthPx - 16.0);
 
     TextPainter? bottomPainter;
@@ -115,7 +108,7 @@ class ReceiptRasterizer {
         text: TextSpan(text: bottomText, style: boldStyle),
         textAlign: TextAlign.left,
         textDirection: TextDirection.ltr,
-        locale: const Locale('en', 'IN'),
+        locale: const Locale('hi', 'IN'),
       )..layout(maxWidth: widthPx - 16.0);
     }
 
@@ -186,7 +179,7 @@ class ReceiptRasterizer {
   }) async {
     final targetWidth = (widthPx * 0.45).round().clamp(64, widthPx - 32);
     final filePath = logoPath?.trim() ?? '';
-    if (filePath.isNotEmpty) {
+    if (filePath.isNotEmpty && !kIsWeb) {
       try {
         final file = File(filePath);
         if (await file.exists()) {

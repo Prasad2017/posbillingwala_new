@@ -36,8 +36,9 @@ Future<PrintResult> printInvoiceById(
   final shopName = ref.read(authControllerProvider).session?.shopName;
   final profile = ref.read(shopReceiptProfileProvider);
   final dispatcher = PrintJobDispatcher(ref);
-  final resolvedShop =
-      profile.companyName.isNotEmpty ? profile.companyName : shopName;
+  final resolvedShop = profile.companyName.isNotEmpty
+      ? profile.companyName
+      : shopName;
   final result = await dispatcher.printBillRouted(
     invoice: invoice,
     items: items,

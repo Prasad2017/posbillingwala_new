@@ -36,7 +36,13 @@ pos_require_permission($con, $licenseId, 'dashboard.view');
 mysqli_query($con, 'set names utf8');
 
 try {
-    $overview = licence_home_sales_overview($con, $licenseId, $period);
+    /* staffScope=1 → staff-only KPIs; sync / default → full licence. */
+    $staffScope = isset($_GET['staffScope']) ? strtolower(trim((string) $_GET['staffScope'])) : '';
+    $staffId = 0;
+    if ($staffScope === '1' || $staffScope === 'true' || $staffScope === 'yes') {
+        $staffId = pos_posted_staff_id();
+    }
+    $overview = licence_home_sales_overview($con, $licenseId, $period, $staffId);
     $response = array_merge($response, $overview);
     $response['status'] = 'true';
 } catch (Throwable $e) {

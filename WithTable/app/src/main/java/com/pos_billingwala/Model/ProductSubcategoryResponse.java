@@ -14,6 +14,9 @@ public class ProductSubcategoryResponse {
     @SerializedName("categoryId")
     @Expose
     private String categoryId;
+    @SerializedName("categoryNetworkStatus")
+    @Expose
+    private String categoryNetworkStatus;
     @SerializedName("subcategoryName")
     @Expose
     private String subcategoryName;
@@ -44,6 +47,14 @@ public class ProductSubcategoryResponse {
 
     public void setCategoryId(String categoryId) {
         this.categoryId = categoryId;
+    }
+
+    public String getCategoryNetworkStatus() {
+        return categoryNetworkStatus;
+    }
+
+    public void setCategoryNetworkStatus(String categoryNetworkStatus) {
+        this.categoryNetworkStatus = categoryNetworkStatus;
     }
 
     public String getSubcategoryName() {

@@ -1,6 +1,7 @@
 package com.pos_billingwala.NetworkToOffline.WorkerClass;
 
 import android.content.Context;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.work.Worker;
@@ -42,11 +43,12 @@ public class ComboWorker extends Worker {
                         database.insertCombo(combo);
                     }
                 }
+                return Result.success();
             }
-            return Result.success();
+            return Result.retry();
         } catch (Exception e) {
-            e.printStackTrace();
-            return Result.failure();
+            Log.e("ComboWorker", "doWork failed", e);
+            return Result.retry();
         }
     }
 }

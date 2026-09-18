@@ -18,6 +18,7 @@ final overviewWindowProvider = StreamProvider<List<Invoice>>((ref) {
   final now = DateTime.now();
   final start = DateTime(now.year, now.month - 1, 1);
   final end = DateTime(now.year, now.month + 1, 1);
+  final staffId = resolvedStaffFilter(ref);
   if (AppPlatform.requiresNetwork) {
     return Stream.fromFuture(
       loadPeriodInvoicesFromApi(
@@ -26,10 +27,13 @@ final overviewWindowProvider = StreamProvider<List<Invoice>>((ref) {
         db: ref.read(appDatabaseProvider),
         start: start,
         end: end,
+        createdByStaffId: staffId,
       ),
     );
   }
-  return ref.watch(appDatabaseProvider).watchInvoicesInRange(start, end);
+  return ref
+      .watch(appDatabaseProvider)
+      .watchInvoicesInRange(start, end, createdByStaffId: staffId);
 });
 
 /* WithTable `SalesOverview` — monthly snapshot KPIs (not dashboard charts). */
@@ -42,13 +46,15 @@ class SalesOverviewPage extends ConsumerWidget {
     final start = DateTime(now.year, now.month, 1);
     final end = DateTime(now.year, now.month + 1, 1);
     final prevStart = DateTime(now.year, now.month - 1, 1);
-    final rows = ref.watch(overviewWindowProvider).maybeWhen(
-          data: (v) => v,
-          orElse: () => const <Invoice>[],
-        );
+    final rows = ref
+        .watch(overviewWindowProvider)
+        .maybeWhen(data: (v) => v, orElse: () => const <Invoice>[]);
     final summary = SalesSummary.fromInvoices(
       rows
-          .where((i) => !i.invoiceDate.isBefore(start) && i.invoiceDate.isBefore(end))
+          .where(
+            (i) =>
+                !i.invoiceDate.isBefore(start) && i.invoiceDate.isBefore(end),
+          )
           .toList(),
     );
     final prevSummary = SalesSummary.fromInvoices(
@@ -102,7 +108,10 @@ class SalesOverviewPage extends ConsumerWidget {
                 ReportKpiData(
                   label: 'Total Sales',
                   value: currency.format(summary.totalSales),
-                  changePercent: pct(summary.totalSales, prevSummary.totalSales),
+                  changePercent: pct(
+                    summary.totalSales,
+                    prevSummary.totalSales,
+                  ),
                 ),
                 ReportKpiData(
                   label: 'Net Sales',

@@ -40,23 +40,40 @@ ImageProvider? productImageProvider(String? value) {
 
 bool hasProductImage(String? value) => productImageProvider(value) != null;
 
-/* Compact thumbnail — renders nothing when [value] is empty/invalid. */
+/* Compact thumbnail — optional placeholder when [value] is empty/invalid. */
 class ProductImageThumb extends StatelessWidget {
   const ProductImageThumb({
     super.key,
     required this.value,
     this.size = 48,
     this.radius = 10,
+    this.showPlaceholder = false,
   });
 
   final String? value;
   final double size;
   final double radius;
+  final bool showPlaceholder;
 
   @override
   Widget build(BuildContext context) {
     final provider = productImageProvider(value);
-    if (provider == null) return const SizedBox.shrink();
+    if (provider == null) {
+      if (!showPlaceholder) return const SizedBox.shrink();
+      return Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: const Color(0xFFE8EEF7),
+          borderRadius: BorderRadius.circular(radius),
+        ),
+        child: Icon(
+          Icons.fastfood_rounded,
+          size: size * 0.45,
+          color: const Color(0xFF64748B),
+        ),
+      );
+    }
     return ClipRRect(
       borderRadius: BorderRadius.circular(radius),
       child: Image(
@@ -66,7 +83,20 @@ class ProductImageThumb extends StatelessWidget {
         fit: BoxFit.cover,
         gaplessPlayback: true,
         filterQuality: FilterQuality.low,
-        errorBuilder: (_, _, _) => const SizedBox.shrink(),
+        errorBuilder: (_, _, _) {
+          if (!showPlaceholder) return const SizedBox.shrink();
+          return Container(
+            width: size,
+            height: size,
+            color: const Color(0xFFE8EEF7),
+            alignment: Alignment.center,
+            child: Icon(
+              Icons.fastfood_rounded,
+              size: size * 0.45,
+              color: const Color(0xFF64748B),
+            ),
+          );
+        },
       ),
     );
   }
@@ -82,8 +112,8 @@ Future<String?> encodePickedProductImage(XFile picked) async {
     final mime = (name.endsWith('.png') || path.endsWith('.png'))
         ? 'image/png'
         : (name.endsWith('.webp') || path.endsWith('.webp'))
-            ? 'image/webp'
-            : 'image/jpeg';
+        ? 'image/webp'
+        : 'image/jpeg';
     return 'data:$mime;base64,$b64';
   } catch (_) {
     return null;

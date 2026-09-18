@@ -52,10 +52,10 @@ final messInstitutePayProvider = FutureProvider<bool>((ref) async {
 
 final messPaymentsProvider =
     StreamProvider.family<List<MessMemberPayment>, String?>((ref, memberId) {
-  return ref
-      .watch(appDatabaseProvider)
-      .watchMessMemberPayments(memberId: memberId);
-});
+      return ref
+          .watch(appDatabaseProvider)
+          .watchMessMemberPayments(memberId: memberId);
+    });
 
 final todayMessTokensProvider = StreamProvider<List<MessToken>>((ref) {
   return ref.watch(appDatabaseProvider).watchTodayMessTokens();
@@ -63,8 +63,8 @@ final todayMessTokensProvider = StreamProvider<List<MessToken>>((ref) {
 
 final messCommonQrProvider =
     NotifierProvider<MessCommonQrController, AsyncValue<MessCommonQrDto?>>(
-  MessCommonQrController.new,
-);
+      MessCommonQrController.new,
+    );
 
 class MessCommonQrController extends Notifier<AsyncValue<MessCommonQrDto?>> {
   @override
@@ -158,7 +158,9 @@ class MessController extends Notifier<AsyncValue<void>> {
     state = await AsyncValue.guard(() async {
       final api = MessApi(ref.read(apiClientProvider));
       final members = await api.fetchMembers(userId);
-      await ref.read(appDatabaseProvider).replaceMessMembers(
+      await ref
+          .read(appDatabaseProvider)
+          .replaceMessMembers(
             members
                 .where((e) => e.memberId > 0 && e.memberName.trim().isNotEmpty)
                 .map(
@@ -166,8 +168,9 @@ class MessController extends Notifier<AsyncValue<void>> {
                     memberId: Value(e.memberId),
                     memberName: Value(e.memberName),
                     memberMobileNumber: Value(e.memberMobileNumber),
-                    memberAltenetMobileNumber:
-                        Value(e.memberAltenetMobileNumber),
+                    memberAltenetMobileNumber: Value(
+                      e.memberAltenetMobileNumber,
+                    ),
                     memberAddress: Value(e.memberAddress),
                     registrationNo: Value(e.registrationNo),
                     memberType: Value(e.memberType),
@@ -191,8 +194,9 @@ class MessController extends Notifier<AsyncValue<void>> {
             userId: userId,
             memberName: coupon.memberName,
             messType: coupon.messType,
-            messInvoiceDate: DateFormat('yyyy-MM-dd HH:mm:ss')
-                .format(coupon.messInvoiceDate),
+            messInvoiceDate: DateFormat(
+              'yyyy-MM-dd HH:mm:ss',
+            ).format(coupon.messInvoiceDate),
             messInvoiceNetworkStatus: coupon.messInvoiceNetworkStatus,
             messInvoiceStatus: '0',
           );
@@ -216,8 +220,8 @@ class MessController extends Notifier<AsyncValue<void>> {
                         DateTime.tryParse(e.messInvoiceDate) ?? DateTime.now(),
                     messInvoiceNetworkStatus:
                         e.messInvoiceNetworkStatus?.trim().isNotEmpty == true
-                            ? e.messInvoiceNetworkStatus!
-                            : 'mi_${e.invoiceId}',
+                        ? e.messInvoiceNetworkStatus!
+                        : 'mi_${e.invoiceId}',
                     messInvoiceStatus: Value(
                       e.messInvoiceStatus.isEmpty ? '1' : e.messInvoiceStatus,
                     ),
@@ -250,8 +254,8 @@ class MessController extends Notifier<AsyncValue<void>> {
                       : DateFormat('yyyy-MM').format(DateTime.now()),
                   paymentNetworkStatus:
                       e.paymentNetworkStatus?.trim().isNotEmpty == true
-                          ? e.paymentNetworkStatus!.trim()
-                          : 'pay_${e.paymentId}',
+                      ? e.paymentNetworkStatus!.trim()
+                      : 'pay_${e.paymentId}',
                   paymentStatus: Value(
                     e.paymentStatus.isEmpty ? '1' : e.paymentStatus,
                   ),
@@ -349,17 +353,17 @@ class MessController extends Notifier<AsyncValue<void>> {
   }
 
   Future<void> setShopPayerMode(bool institutePay) async {
-    final mode =
-        institutePay ? MessPayerMode.modeInstitute : MessPayerMode.modeUser;
+    final mode = institutePay
+        ? MessPayerMode.modeInstitute
+        : MessPayerMode.modeUser;
     await MessPayerMode.setLocal(mode);
     final userId = ref.read(authControllerProvider).session?.userId;
     if (userId == null || userId.isEmpty) return;
     if (!await ensureOnline()) return;
     try {
-      await MessApi(ref.read(apiClientProvider)).saveShopPayerMode(
-        userId: userId,
-        payerMode: mode,
-      );
+      await MessApi(
+        ref.read(apiClientProvider),
+      ).saveShopPayerMode(userId: userId, payerMode: mode);
     } catch (_) {}
   }
 
@@ -396,24 +400,25 @@ class MessController extends Notifier<AsyncValue<void>> {
       try {
         final member = await db.getMessMember(id);
         if (member != null) {
-          final ok = await MessApi(ref.read(apiClientProvider)).insertMessMember(
-            userId: userId,
-            member: MessMemberDto(
-              memberId: member.memberId,
-              memberName: member.memberName,
-              memberMobileNumber: member.memberMobileNumber,
-              memberAltenetMobileNumber: member.memberAltenetMobileNumber,
-              memberAddress: member.memberAddress,
-              registrationNo: member.registrationNo,
-              memberType: member.memberType,
-              rollNo: member.rollNo,
-              college: member.college,
-              studentYear: member.studentYear,
-              company: member.company,
-              memberStatus: member.memberStatus,
-              memberNetworkStatus: member.memberNetworkStatus,
-            ),
-          );
+          final ok = await MessApi(ref.read(apiClientProvider))
+              .insertMessMember(
+                userId: userId,
+                member: MessMemberDto(
+                  memberId: member.memberId,
+                  memberName: member.memberName,
+                  memberMobileNumber: member.memberMobileNumber,
+                  memberAltenetMobileNumber: member.memberAltenetMobileNumber,
+                  memberAddress: member.memberAddress,
+                  registrationNo: member.registrationNo,
+                  memberType: member.memberType,
+                  rollNo: member.rollNo,
+                  college: member.college,
+                  studentYear: member.studentYear,
+                  company: member.company,
+                  memberStatus: member.memberStatus,
+                  memberNetworkStatus: member.memberNetworkStatus,
+                ),
+              );
           if (ok) {
             await db.markMessMemberSynced(id);
           } else if (AppPlatform.requiresNetwork) {
@@ -468,24 +473,25 @@ class MessController extends Notifier<AsyncValue<void>> {
       try {
         final member = await db.getMessMember(memberId);
         if (member != null) {
-          final ok = await MessApi(ref.read(apiClientProvider)).insertMessMember(
-            userId: userId,
-            member: MessMemberDto(
-              memberId: member.memberId,
-              memberName: member.memberName,
-              memberMobileNumber: member.memberMobileNumber,
-              memberAltenetMobileNumber: member.memberAltenetMobileNumber,
-              memberAddress: member.memberAddress,
-              registrationNo: member.registrationNo,
-              memberType: member.memberType,
-              rollNo: member.rollNo,
-              college: member.college,
-              studentYear: member.studentYear,
-              company: member.company,
-              memberStatus: member.memberStatus,
-              memberNetworkStatus: member.memberNetworkStatus,
-            ),
-          );
+          final ok = await MessApi(ref.read(apiClientProvider))
+              .insertMessMember(
+                userId: userId,
+                member: MessMemberDto(
+                  memberId: member.memberId,
+                  memberName: member.memberName,
+                  memberMobileNumber: member.memberMobileNumber,
+                  memberAltenetMobileNumber: member.memberAltenetMobileNumber,
+                  memberAddress: member.memberAddress,
+                  registrationNo: member.registrationNo,
+                  memberType: member.memberType,
+                  rollNo: member.rollNo,
+                  college: member.college,
+                  studentYear: member.studentYear,
+                  company: member.company,
+                  memberStatus: member.memberStatus,
+                  memberNetworkStatus: member.memberNetworkStatus,
+                ),
+              );
           if (ok) {
             await db.markMessMemberSynced(memberId);
           } else if (AppPlatform.requiresNetwork) {
@@ -628,10 +634,9 @@ class MessController extends Notifier<AsyncValue<void>> {
       if (userId == null || userId.isEmpty) {
         throw StateError('Please login to verify tokens on Web POS.');
       }
-      final ok = await MessApi(ref.read(apiClientProvider)).verifyMessToken(
-        userId: userId,
-        tokenCode: code,
-      );
+      final ok = await MessApi(
+        ref.read(apiClientProvider),
+      ).verifyMessToken(userId: userId, tokenCode: code);
       if (!ok) return null;
     }
 
@@ -641,11 +646,10 @@ class MessController extends Notifier<AsyncValue<void>> {
         userId.isNotEmpty &&
         !AppPlatform.requiresNetwork) {
       try {
-        final ok = await MessApi(ref.read(apiClientProvider)).verifyMessToken(
-          userId: userId,
-          tokenCode: token.tokenCode,
-        );
-        if (ok) await db.markMessTokenSynced(token.tokenId);
+        final ok = await MessApi(
+          ref.read(apiClientProvider),
+        ).verifyMessToken(userId: userId, tokenCode: token.tokenCode);
+        if (ok) await db.markMessTokenVerifySynced(token.tokenId);
       } catch (_) {}
     }
     return token;

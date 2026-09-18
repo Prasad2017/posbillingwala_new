@@ -15,14 +15,14 @@ import 'package:pos_billingwala_v2/language/app_strings.dart';
 
 final productPortionsMapProvider =
     StreamProvider<Map<int, List<ProductPortion>>>((ref) {
-  return ref.watch(appDatabaseProvider).watchActivePortions().map((rows) {
-    final map = <int, List<ProductPortion>>{};
-    for (final p in rows) {
-      map.putIfAbsent(p.productId, () => []).add(p);
-    }
-    return map;
-  });
-});
+      return ref.watch(appDatabaseProvider).watchActivePortions().map((rows) {
+        final map = <int, List<ProductPortion>>{};
+        for (final p in rows) {
+          map.putIfAbsent(p.productId, () => []).add(p);
+        }
+        return map;
+      });
+    });
 
 class ProductsPage extends ConsumerStatefulWidget {
   const ProductsPage({super.key});
@@ -43,9 +43,9 @@ class ProductsPageState extends ConsumerState<ProductsPage> {
 
   Future<void> printCatalog(List<Product> products) async {
     if (products.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No products to print')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('No products to print')));
       return;
     }
     final currency = NumberFormat.currency(locale: 'en_IN', symbol: '₹');
@@ -59,10 +59,9 @@ class ProductsPageState extends ConsumerState<ProductsPage> {
     }
     buf.writeln('-' * 32);
     buf.writeln('Total items: ${products.length}');
-    final result = await ref.read(printServiceProvider).printRawText(
-          buf.toString(),
-          label: 'Product catalog',
-        );
+    final result = await ref
+        .read(printServiceProvider)
+        .printRawText(buf.toString(), label: 'Product catalog');
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(result.message ?? result.outcome.name)),
@@ -88,7 +87,9 @@ class ProductsPageState extends ConsumerState<ProductsPage> {
   @override
   Widget build(BuildContext context) {
     final productsAsync = ref.watch(productsProvider);
-    final portionsMap = ref.watch(productPortionsMapProvider).maybeWhen(
+    final portionsMap = ref
+        .watch(productPortionsMapProvider)
+        .maybeWhen(
           data: (v) => v,
           orElse: () => const <int, List<ProductPortion>>{},
         );
@@ -126,8 +127,10 @@ class ProductsPageState extends ConsumerState<ProductsPage> {
               style: TextButton.styleFrom(
                 backgroundColor: Colors.white,
                 foregroundColor: AppColors.primary,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -157,104 +160,107 @@ class ProductsPageState extends ConsumerState<ProductsPage> {
                 }).toList();
 
           return ResponsiveScrollShell(
-        dashboard: true,
-        child: ListView(
-            padding: EdgeInsets.fromLTRB(
-            AppBreakpoints.pagePaddingFor(context.widthClass),
-            14,
-            AppBreakpoints.pagePaddingFor(context.widthClass),
-            28),
-            children: [
-              TextField(
-                controller: searchCtrl,
-                onChanged: (v) => setState(() => query = v),
-                style: const TextStyle(
-                  fontFamily: AppFonts.family,
-                  fontSize: 14,
-                  color: AppColors.navy,
-                ),
-                decoration: InputDecoration(
-                  hintText: 'search product by name, category',
-                  hintStyle: TextStyle(
+            dashboard: true,
+            child: ListView(
+              padding: EdgeInsets.fromLTRB(
+                AppBreakpoints.pagePaddingFor(context.widthClass),
+                14,
+                AppBreakpoints.pagePaddingFor(context.widthClass),
+                28,
+              ),
+              children: [
+                TextField(
+                  controller: searchCtrl,
+                  onChanged: (v) => setState(() => query = v),
+                  style: const TextStyle(
                     fontFamily: AppFonts.family,
-                    color: AppColors.navy.withValues(alpha: .38),
+                    fontSize: 14,
+                    color: AppColors.navy,
                   ),
-                  prefixIcon: Icon(
-                    Icons.search_rounded,
-                    color: AppColors.navy.withValues(alpha: .45),
-                  ),
-                  filled: true,
-                  fillColor: Colors.white,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: AppColors.border.withValues(alpha: .9),
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: AppColors.border.withValues(alpha: .9),
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                      color: AppColors.primary,
-                      width: 1.3,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              MasterSectionLabel(
-                'Product List',
-                trailing: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryLight,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    '${products.length} Products',
-                    style: const TextStyle(
+                  decoration: InputDecoration(
+                    hintText: 'search product by name, category',
+                    hintStyle: TextStyle(
                       fontFamily: AppFonts.family,
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 11.5,
+                      color: AppColors.navy.withValues(alpha: .38),
+                    ),
+                    prefixIcon: Icon(
+                      Icons.search_rounded,
+                      color: AppColors.navy.withValues(alpha: .45),
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: AppColors.border.withValues(alpha: .9),
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: AppColors.border.withValues(alpha: .9),
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: AppColors.primary,
+                        width: 1.3,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 10),
-              if (products.isEmpty)
-                const MasterCard(
-                  child: MasterEmptyState(
-                    title: 'No products found',
-                    subtitle: 'Tap Add Product to create a menu item.',
-                  ),
-                )
-              else
-                for (final product in products) ...[
-                  ProductCard(
-                    product: product,
-                    priceLabel: currency.format(product.productPrice),
-                    portions: portionsMap[product.productId] ?? const [],
-                    onEdit: () => context.push(
-                      '/masters/products/form?id=${product.productId}',
+                const SizedBox(height: 16),
+                MasterSectionLabel(
+                  'Product List',
+                  trailing: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
                     ),
-                    onDelete: () => delete(product),
-                    onPortions: () => context.push(
-                      '/masters/products/portions?id=${product.productId}',
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryLight,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '${products.length} Products',
+                      style: const TextStyle(
+                        fontFamily: AppFonts.family,
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 11.5,
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 10),
-                ],
-            ],
-          ),
-      );
+                ),
+                const SizedBox(height: 10),
+                if (products.isEmpty)
+                  const MasterCard(
+                    child: MasterEmptyState(
+                      title: 'No products found',
+                      subtitle: 'Tap Add Product to create a menu item.',
+                    ),
+                  )
+                else
+                  for (final product in products) ...[
+                    ProductCard(
+                      product: product,
+                      priceLabel: currency.format(product.productPrice),
+                      portions: portionsMap[product.productId] ?? const [],
+                      onEdit: () => context.push(
+                        '/masters/products/form?id=${product.productId}',
+                      ),
+                      onDelete: () => delete(product),
+                      onPortions: () => context.push(
+                        '/masters/products/portions?id=${product.productId}',
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+              ],
+            ),
+          );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('$e')),
@@ -264,7 +270,8 @@ class ProductsPageState extends ConsumerState<ProductsPage> {
 }
 
 class ProductCard extends StatelessWidget {
-  const ProductCard({super.key, 
+  const ProductCard({
+    super.key,
     required this.product,
     required this.priceLabel,
     required this.portions,
@@ -283,8 +290,9 @@ class ProductCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final trimmed = product.productName.trim();
-    final initial =
-        trimmed.isEmpty ? '?' : trimmed.substring(0, 1).toUpperCase();
+    final initial = trimmed.isEmpty
+        ? '?'
+        : trimmed.substring(0, 1).toUpperCase();
     final meta = [
       if ((product.productCode ?? '').trim().isNotEmpty)
         '#${product.productCode}',
@@ -399,9 +407,9 @@ class ProductCard extends StatelessWidget {
                       portions.isEmpty
                           ? 'Not configured'
                           : portions
-                              .map((p) => p.portionName)
-                              .where((n) => n.trim().isNotEmpty)
-                              .join(', '),
+                                .map((p) => p.portionName)
+                                .where((n) => n.trim().isNotEmpty)
+                                .join(', '),
                       style: TextStyle(
                         fontFamily: AppFonts.family,
                         fontSize: 12.5,
@@ -448,6 +456,7 @@ class ProductCard extends StatelessWidget {
 
 class TaxChip extends StatelessWidget {
   const TaxChip({super.key, required this.label});
+
   final String label;
 
   @override

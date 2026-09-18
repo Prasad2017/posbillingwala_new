@@ -41,9 +41,9 @@ class ChangePinPageState extends ConsumerState<ChangePinPage> {
       return;
     }
     if (next.length != 4 || int.tryParse(next) == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('New PIN must be 4 digits')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('New PIN must be 4 digits')));
       return;
     }
     if (next != confirm) {
@@ -55,18 +55,19 @@ class ChangePinPageState extends ConsumerState<ChangePinPage> {
 
     setState(() => busy = true);
     try {
-      final ok =
-          await ref.read(authControllerProvider.notifier).updateAppPin(next);
+      final ok = await ref
+          .read(authControllerProvider.notifier)
+          .updateAppPin(next);
       if (!mounted) return;
       if (ok) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('PB-PIN updated')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('PB-PIN updated')));
         Navigator.of(context).pop();
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Unable to update PIN')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Unable to update PIN')));
       }
     } finally {
       if (mounted) setState(() => busy = false);
@@ -84,37 +85,50 @@ class ChangePinPageState extends ConsumerState<ChangePinPage> {
       body: ResponsiveScrollShell(
         dashboard: true,
         child: ListView(
-        padding: EdgeInsets.all(
+          padding: EdgeInsets.all(
             AppBreakpoints.pagePaddingFor(context.widthClass),
           ),
-        children: [
-          const Center(
-            child: AppModuleIcon(
-              icon: Icons.lock_reset_rounded,
-              color: AppColors.red,
-              size: 72,
-            ),
-          ),
-          const SizedBox(height: 14),
-          const Center(
-            child: Text(
-              'Keep your billing secure',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w900,
-                color: AppColors.navy,
+          children: [
+            const Center(
+              child: AppModuleIcon(
+                icon: Icons.lock_reset_rounded,
+                color: AppColors.red,
+                size: 72,
               ),
             ),
-          ),
-          const SizedBox(height: 20),
-          AppCard(
-            accentColor: AppColors.primary,
-            child: Column(
-              children: [
-                if (hasPin) ...[
+            const SizedBox(height: 14),
+            const Center(
+              child: Text(
+                'Keep your billing secure',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.navy,
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            AppCard(
+              accentColor: AppColors.primary,
+              child: Column(
+                children: [
+                  if (hasPin) ...[
+                    AppTextField(
+                      required: true,
+                      controller: changePinPageCurrent,
+                      label: 'Current PB-PIN',
+                      obscureText: true,
+                      keyboardType: TextInputType.number,
+                      maxLength: 4,
+                      showCounter: false,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                   AppTextField(
-                    controller: changePinPageCurrent,
-                    label: 'Current PB-PIN',
+                    required: true,
+                    controller: changePinPageNext,
+                    label: 'New PB-PIN',
                     obscureText: true,
                     keyboardType: TextInputType.number,
                     maxLength: 4,
@@ -122,37 +136,27 @@ class ChangePinPageState extends ConsumerState<ChangePinPage> {
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   ),
                   const SizedBox(height: 12),
+                  AppTextField(
+                    required: true,
+                    controller: changePinPageConfirm,
+                    label: 'Confirm new PB-PIN',
+                    obscureText: true,
+                    keyboardType: TextInputType.number,
+                    maxLength: 4,
+                    showCounter: false,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  ),
+                  const SizedBox(height: 16),
+                  AppButton(
+                    label: 'Update PIN',
+                    isLoading: busy,
+                    onPressed: save,
+                  ),
                 ],
-                AppTextField(
-                  controller: changePinPageNext,
-                  label: 'New PB-PIN',
-                  obscureText: true,
-                  keyboardType: TextInputType.number,
-                  maxLength: 4,
-                  showCounter: false,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                ),
-                const SizedBox(height: 12),
-                AppTextField(
-                  controller: changePinPageConfirm,
-                  label: 'Confirm new PB-PIN',
-                  obscureText: true,
-                  keyboardType: TextInputType.number,
-                  maxLength: 4,
-                  showCounter: false,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                ),
-                const SizedBox(height: 16),
-                AppButton(
-                  label: 'Update PIN',
-                  isLoading: busy,
-                  onPressed: save,
-                ),
-              ],
+              ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
       ),
     );
   }

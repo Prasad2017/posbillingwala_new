@@ -36,8 +36,8 @@ class SyncPageState extends ConsumerState<SyncPage> {
 
   String get syncPageTitle => syncPageMode == SyncScreenMode.fetch
       ? (AppPlatform.requiresNetwork
-          ? 'Refresh Data From Cloud'
-          : 'Fetch Data From Cloud')
+            ? 'Refresh Data From Cloud'
+            : 'Fetch Data From Cloud')
       : 'Offline Data Synchronize with Cloud';
 
   @override
@@ -51,7 +51,9 @@ class SyncPageState extends ConsumerState<SyncPage> {
     started = true;
 
     if (!await ensureOnline()) {
-      ref.read(syncProgressProvider.notifier).setBlocked(
+      ref
+          .read(syncProgressProvider.notifier)
+          .setBlocked(
             headline: 'Internet required',
             subtitle: kOnlineRequiredMessage,
           );
@@ -75,7 +77,8 @@ class SyncPageState extends ConsumerState<SyncPage> {
     final progress = ref.watch(syncProgressProvider);
     final syncResult = ref.watch(fullSyncControllerProvider).asData?.value;
     final canLeave = !progress.isRunning;
-    final showSavedData = syncPageMode == SyncScreenMode.fetch &&
+    final showSavedData =
+        syncPageMode == SyncScreenMode.fetch &&
         syncResult?.localCounts != null &&
         canLeave;
 
@@ -110,58 +113,59 @@ class SyncPageState extends ConsumerState<SyncPage> {
                     12,
                   ),
                   children: [
-                  StatusCard(
-                    headline: progress.headline ??
-                        (syncPageMode == SyncScreenMode.upload
-                            ? 'Preparing upload…'
-                            : 'Preparing fetch…'),
-                    subtitle: progress.subtitle ?? '',
-                    isRunning: progress.isRunning,
-                    failed: progress.failed,
-                  ),
-                  const SizedBox(height: 18),
-                  const Text(
-                    'TABLES',
-                    style: TextStyle(
-                      fontFamily: AppFonts.family,
-                      color: AppColors.textSecondary,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12,
-                      letterSpacing: 0.8,
+                    StatusCard(
+                      headline:
+                          progress.headline ??
+                          (syncPageMode == SyncScreenMode.upload
+                              ? 'Preparing upload…'
+                              : 'Preparing fetch…'),
+                      subtitle: progress.subtitle ?? '',
+                      isRunning: progress.isRunning,
+                      failed: progress.failed,
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(
-                        color: AppColors.border.withValues(alpha: .7),
+                    const SizedBox(height: 18),
+                    const Text(
+                      'TABLES',
+                      style: TextStyle(
+                        fontFamily: AppFonts.family,
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                        letterSpacing: 0.8,
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.navy.withValues(alpha: .05),
-                          blurRadius: 14,
-                          offset: const Offset(0, 6),
+                    ),
+                    const SizedBox(height: 10),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: AppColors.border.withValues(alpha: .7),
                         ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        for (var i = 0; i < progress.steps.length; i++) ...[
-                          if (i > 0)
-                            Divider(
-                              height: 1,
-                              thickness: 1,
-                              color: AppColors.border.withValues(alpha: .65),
-                              indent: 56,
-                            ),
-                          TableStatusRow(step: progress.steps[i]),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.navy.withValues(alpha: .05),
+                            blurRadius: 14,
+                            offset: const Offset(0, 6),
+                          ),
                         ],
-                      ],
+                      ),
+                      child: Column(
+                        children: [
+                          for (var i = 0; i < progress.steps.length; i++) ...[
+                            if (i > 0)
+                              Divider(
+                                height: 1,
+                                thickness: 1,
+                                color: AppColors.border.withValues(alpha: .65),
+                                indent: 56,
+                              ),
+                            TableStatusRow(step: progress.steps[i]),
+                          ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
                 ),
               ),
             ),
@@ -191,7 +195,8 @@ class SyncPageState extends ConsumerState<SyncPage> {
 }
 
 class StatusCard extends StatelessWidget {
-  const StatusCard({super.key, 
+  const StatusCard({
+    super.key,
     required this.headline,
     required this.subtitle,
     required this.isRunning,
@@ -208,8 +213,8 @@ class StatusCard extends StatelessWidget {
     final accent = failed > 0
         ? AppColors.red
         : isRunning
-            ? AppColors.primary
-            : AppColors.green;
+        ? AppColors.primary
+        : AppColors.green;
 
     return Container(
       width: double.infinity,
@@ -294,30 +299,26 @@ class TableStatusRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final (icon, color, statusLabel) = switch (step.status) {
       SyncTableStatus.complete => (
-          Icons.check_rounded,
-          AppColors.green,
-          'Complete',
-        ),
+        Icons.check_rounded,
+        AppColors.green,
+        'Complete',
+      ),
       SyncTableStatus.running => (
-          Icons.sync_rounded,
-          AppColors.primary,
-          'Syncing',
-        ),
-      SyncTableStatus.error => (
-          Icons.close_rounded,
-          AppColors.red,
-          'Failed',
-        ),
+        Icons.sync_rounded,
+        AppColors.primary,
+        'Syncing',
+      ),
+      SyncTableStatus.error => (Icons.close_rounded, AppColors.red, 'Failed'),
       SyncTableStatus.skipped => (
-          Icons.remove_rounded,
-          AppColors.textSecondary,
-          'Skipped',
-        ),
+        Icons.remove_rounded,
+        AppColors.textSecondary,
+        'Skipped',
+      ),
       SyncTableStatus.pending => (
-          Icons.radio_button_unchecked_rounded,
-          AppColors.textSecondary,
-          'Pending',
-        ),
+        Icons.radio_button_unchecked_rounded,
+        AppColors.textSecondary,
+        'Pending',
+      ),
     };
 
     return Padding(

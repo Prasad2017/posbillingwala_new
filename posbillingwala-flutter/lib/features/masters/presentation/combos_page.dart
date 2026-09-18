@@ -101,7 +101,9 @@ class CombosPageState extends ConsumerState<CombosPage> {
                                 );
                                 if (!ok) return;
                                 await ref
-                                    .read(mastersSyncControllerProvider.notifier)
+                                    .read(
+                                      mastersSyncControllerProvider.notifier,
+                                    )
                                     .deleteCombo(combo.comboId);
                               },
                             ),

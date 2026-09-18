@@ -57,95 +57,99 @@ class NotificationsPageState extends ConsumerState<NotificationsPage> {
             AppBreakpoints.pagePaddingFor(context.widthClass),
           ),
           children: [
-          if (messTokens.isNotEmpty) ...[
-            Text("Pending mess meal tokens",
-                style: AppTypography.sectionTitle()),
+            if (messTokens.isNotEmpty) ...[
+              Text(
+                "Pending mess meal tokens",
+                style: AppTypography.sectionTitle(),
+              ),
+              const SizedBox(height: 8),
+              ...messTokens
+                  .take(20)
+                  .map(
+                    (t) => AppCard(
+                      accentColor: AppColors.orange,
+                      color: AppColors.warning.withValues(alpha: 0.12),
+                      padding: EdgeInsets.zero,
+                      child: ListTile(
+                        leading: const AppModuleIcon(
+                          svgPath: AppAssets.svgQr,
+                          color: AppColors.orange,
+                          size: 48,
+                        ),
+                        title: Text(
+                          t['tokenNumber']?.toString().isNotEmpty == true
+                              ? t['tokenNumber'].toString()
+                              : 'Meal token',
+                          style: AppTypography.cardTitle(),
+                        ),
+                        subtitle: Text(
+                          [
+                            if ((t['mealSession']?.toString() ?? '').isNotEmpty)
+                              t['mealSession'],
+                            if ((t['registrationNo']?.toString() ?? '')
+                                .isNotEmpty)
+                              t['registrationNo'],
+                          ].join(' • '),
+                        ),
+                      ),
+                    ),
+                  ),
+              const SizedBox(height: 16),
+            ],
+            Text('Alerts', style: AppTypography.sectionTitle()),
             const SizedBox(height: 8),
-            ...messTokens.take(20).map(
-                  (t) => AppCard(
-                    accentColor: AppColors.orange,
-                    color: AppColors.warning.withValues(alpha: 0.12),
-                    padding: EdgeInsets.zero,
-                    child: ListTile(
-                      leading: const AppModuleIcon(
-                        svgPath: AppAssets.svgQr,
-                        color: AppColors.orange,
-                        size: 48,
-                      ),
-                      title: Text(
-                        t['tokenNumber']?.toString().isNotEmpty == true
-                            ? t['tokenNumber'].toString()
-                            : 'Meal token',
-                        style: AppTypography.cardTitle(),
-                      ),
-                      subtitle: Text(
-                        [
-                          if ((t['mealSession']?.toString() ?? '').isNotEmpty)
-                            t['mealSession'],
-                          if ((t['registrationNo']?.toString() ?? '')
-                              .isNotEmpty)
-                            t['registrationNo'],
-                        ].join(' • '),
+            if (items.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 24),
+                child: AppEmptyState(
+                  title: 'No notifications',
+                  message: 'Licence and promo pushes appear here.',
+                  iconAsset: AppAssets.svgNotification,
+                ),
+              )
+            else
+              ...items.map(
+                (n) => AppCard(
+                  accentColor: n.read ? AppColors.teal : AppColors.primary,
+                  color: n.read ? null : AppColors.primaryLight,
+                  padding: EdgeInsets.zero,
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 8,
+                    ),
+                    onTap: () async {
+                      await ref
+                          .read(inAppNotificationsProvider.notifier)
+                          .markRead(n.id);
+                      if (!context.mounted) return;
+                      await openNotificationTarget(
+                        context,
+                        type: n.type,
+                        url: n.url,
+                      );
+                    },
+                    leading: AppModuleIcon(
+                      svgPath: n.type == 'license_expiring'
+                          ? AppAssets.svgWarning
+                          : AppAssets.svgNotification,
+                      color: n.type == 'license_expiring'
+                          ? AppColors.orange
+                          : AppColors.primary,
+                      size: 48,
+                    ),
+                    title: Text(
+                      n.title,
+                      style: TextStyle(
+                        fontWeight: n.read ? FontWeight.w600 : FontWeight.w800,
                       ),
                     ),
+                    subtitle: Text('${n.body}\n${time.format(n.createdAt)}'),
+                    isThreeLine: true,
                   ),
                 ),
-            const SizedBox(height: 16),
+              ),
           ],
-          Text('Alerts', style: AppTypography.sectionTitle()),
-          const SizedBox(height: 8),
-          if (items.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 24),
-              child: AppEmptyState(
-                title: 'No notifications',
-                message: 'Licence and promo pushes appear here.',
-                iconAsset: AppAssets.svgNotification,
-              ),
-            )
-          else
-            ...items.map(
-              (n) => AppCard(
-                accentColor: n.read ? AppColors.teal : AppColors.primary,
-                color: n.read ? null : AppColors.primaryLight,
-                padding: EdgeInsets.zero,
-                child: ListTile(
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  onTap: () async {
-                    await ref
-                        .read(inAppNotificationsProvider.notifier)
-                        .markRead(n.id);
-                    if (!context.mounted) return;
-                    await openNotificationTarget(
-                      context,
-                      type: n.type,
-                      url: n.url,
-                    );
-                  },
-                  leading: AppModuleIcon(
-                    svgPath: n.type == 'license_expiring'
-                        ? AppAssets.svgWarning
-                        : AppAssets.svgNotification,
-                    color: n.type == 'license_expiring'
-                        ? AppColors.orange
-                        : AppColors.primary,
-                    size: 48,
-                  ),
-                  title: Text(
-                    n.title,
-                    style: TextStyle(
-                      fontWeight: n.read ? FontWeight.w600 : FontWeight.w800,
-                    ),
-                  ),
-                  subtitle: Text(
-                    '${n.body}\n${time.format(n.createdAt)}',
-                  ),
-                  isThreeLine: true,
-                ),
-              ),
-            ),
-        ],
         ),
       ),
     );

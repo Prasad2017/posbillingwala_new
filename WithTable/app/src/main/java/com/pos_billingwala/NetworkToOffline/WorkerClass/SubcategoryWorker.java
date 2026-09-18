@@ -1,6 +1,7 @@
 package com.pos_billingwala.NetworkToOffline.WorkerClass;
 
 import android.content.Context;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.work.Worker;
@@ -47,6 +48,7 @@ public class SubcategoryWorker extends Worker {
                         }
                         database.insertProductSubcategory(
                                 item.getCategoryId(),
+                                item.getCategoryNetworkStatus(),
                                 item.getSubcategoryName(),
                                 item.getSubcategoryDeletedStatus(),
                                 item.getSubcategoryNetworkStatus(),
@@ -54,11 +56,12 @@ public class SubcategoryWorker extends Worker {
                                 sortOrder);
                     }
                 }
+                return Result.success();
             }
-            return Result.success();
+            return Result.retry();
         } catch (Exception e) {
-            e.printStackTrace();
-            return Result.failure();
+            Log.e("SubcategoryWorker", "doWork failed", e);
+            return Result.retry();
         }
     }
 }

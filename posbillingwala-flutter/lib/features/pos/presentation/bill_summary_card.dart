@@ -145,7 +145,7 @@ class BillSummaryCard extends StatelessWidget {
                           width: 84,
                           child: EditableValueBox(
                             controller: discountController,
-                            hint: '0',
+                            hint: 'Amount',
                             suffix: isPercentDiscount ? '%' : null,
                             enabled: !checkout.busy,
                             onChanged: onDiscountChanged,
@@ -177,7 +177,7 @@ class BillSummaryCard extends StatelessWidget {
                       width: 96,
                       child: EditableValueBox(
                         controller: packingController,
-                        hint: '0',
+                        hint: 'Amount',
                         prefix: '₹',
                         enabled: !checkout.busy,
                         onChanged: onPackingChanged,
@@ -225,9 +225,7 @@ class BillSummaryCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                    if (summary.hasTax &&
-                        !summary.hasCgst &&
-                        !summary.hasSgst)
+                    if (summary.hasTax && !summary.hasCgst && !summary.hasSgst)
                       SummaryIconRow(
                         icon: Icons.percent_rounded,
                         iconColor: const Color(0xFF7C3AED),
@@ -319,7 +317,8 @@ class SummaryIconRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = labelStyle ??
+    final style =
+        labelStyle ??
         const TextStyle(
           fontWeight: FontWeight.w700,
           fontSize: 13.5,
@@ -452,9 +451,7 @@ class EditableValueBox extends StatelessWidget {
         enabled: enabled,
         textAlign: TextAlign.right,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        inputFormatters: [
-          FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-        ],
+        inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
         decoration: InputDecoration(
           isDense: true,
           filled: true,

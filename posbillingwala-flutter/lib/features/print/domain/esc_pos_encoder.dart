@@ -18,16 +18,14 @@ class EscPosEncoder {
   }
 
   void alignLeft() => raw(const [0x1B, 0x61, 0x00]);
+
   void alignCenter() => raw(const [0x1B, 0x61, 0x01]);
+
   void alignRight() => raw(const [0x1B, 0x61, 0x02]);
 
   void bold(bool on) => raw([0x1B, 0x45, on ? 0x01 : 0x00]);
 
-  void text(
-    String value, {
-    bool boldStyle = false,
-    bool center = false,
-  }) {
+  void text(String value, {bool boldStyle = false, bool center = false}) {
     if (center) {
       alignCenter();
     } else {

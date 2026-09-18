@@ -42,7 +42,8 @@ class HomeSalesOverview {
       totalProduct: parseInt(json['totalProduct']) ?? 0,
       totalCombo: parseInt(json['totalCombo']) ?? 0,
       period: parseString(json['period']) ?? 'today',
-      primarySalesLabel: parseString(json['primarySalesLabel']) ?? 'total_sales',
+      primarySalesLabel:
+          parseString(json['primarySalesLabel']) ?? 'total_sales',
     );
   }
 }
@@ -56,6 +57,7 @@ class HomeSalesApi {
   Future<HomeSalesOverview?> fetchOverview({
     required String userId,
     String period = 'today',
+    bool staffScope = false,
   }) async {
     if (userId.trim().isEmpty) return null;
     try {
@@ -64,6 +66,8 @@ class HomeSalesApi {
         queryParameters: {
           'userId': userId,
           'period': period == 'month' ? 'month' : 'today',
+          /* Sync omits — full licence KPIs. Staff home UI passes true. */
+          if (staffScope) 'staffScope': '1',
         },
         options: Options(
           contentType: Headers.formUrlEncodedContentType,

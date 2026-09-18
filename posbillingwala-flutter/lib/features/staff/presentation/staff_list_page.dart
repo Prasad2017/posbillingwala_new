@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
+import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/staff/domain/permission_controller.dart';
 import 'package:pos_billingwala_v2/features/staff/domain/staff_user.dart';
@@ -40,8 +41,7 @@ class StaffListPageState extends ConsumerState<StaffListPage> {
           loading = false;
         });
       }
-      final list =
-          await ref.read(staffApiProvider).list(session.licenceUserId);
+      final list = await ref.read(staffApiProvider).list(session.licenceUserId);
       if (!mounted) return;
       setState(() {
         users = list;
@@ -58,8 +58,11 @@ class StaffListPageState extends ConsumerState<StaffListPage> {
 
   @override
   Widget build(BuildContext context) {
-    final canCreate = ref.watch(permissionControllerProvider).allows('user.create');
+    final canCreate = ref
+        .watch(permissionControllerProvider)
+        .allows('user.create');
     return Scaffold(
+      backgroundColor: AppColors.surface,
       appBar: AppBar(title: const Text('Users')),
       floatingActionButton: canCreate
           ? FloatingActionButton(
@@ -73,38 +76,125 @@ class StaffListPageState extends ConsumerState<StaffListPage> {
       body: loading
           ? const Center(child: CircularProgressIndicator())
           : error != null
-              ? Center(child: Text(error!))
-              : RefreshIndicator(
-                  onRefresh: load,
-                  child: ListView.separated(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: users.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 8),
-                    itemBuilder: (context, index) {
-                      final user = users[index];
-                      return ListTile(
-                        tileColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        leading: CircleAvatar(
-                          backgroundColor: AppColors.navy,
-                          child: Text(
-                            user.name.isEmpty ? '?' : user.name[0].toUpperCase(),
-                            style: const TextStyle(color: Colors.white),
+          ? Center(child: Text(error!))
+          : users.isEmpty
+          ? const Center(child: Text('No users yet'))
+          : RefreshIndicator(
+              onRefresh: load,
+              child: ListView.separated(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
+                itemCount: users.length,
+                separatorBuilder: (_, _) => const SizedBox(height: 10),
+                itemBuilder: (context, index) {
+                  final user = users[index];
+                  final active =
+                      user.status.toUpperCase() == 'ACTIVE' ||
+                      user.status.toLowerCase() == 'active';
+                  return Material(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(14),
+                      onTap: () async {
+                        await context.push('/settings/users/${user.id}');
+                        await load();
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: AppColors.primary.withValues(alpha: 0.18),
+                            width: 1.5,
                           ),
                         ),
-                        title: Text(user.name),
-                        subtitle: Text('${user.roleLabel} · ${user.mobileNumber}'),
-                        trailing: Text(user.status),
-                        onTap: () async {
-                          await context.push('/settings/users/${user.id}');
-                          await load();
-                        },
-                      );
-                    },
-                  ),
-                ),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 22,
+                              backgroundColor: AppColors.navy,
+                              child: Text(
+                                user.name.isEmpty
+                                    ? '?'
+                                    : user.name[0].toUpperCase(),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    user.name,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontFamily: AppFonts.family,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 15,
+                                      color: AppColors.navy,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    '${user.roleLabel} · ${user.mobileNumber}',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontFamily: AppFonts.family,
+                                      fontSize: 12.5,
+                                      color: AppColors.navy.withValues(
+                                        alpha: 0.55,
+                                      ),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: active
+                                    ? const Color(0xFFE8F8EE)
+                                    : const Color(0xFFF3F4F6),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: active
+                                      ? AppColors.green.withValues(alpha: 0.35)
+                                      : const Color(0xFFD1D5DB),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Text(
+                                user.status.toUpperCase(),
+                                style: TextStyle(
+                                  fontFamily: AppFonts.family,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                  color: active
+                                      ? AppColors.green
+                                      : AppColors.textSecondary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
     );
   }
 }

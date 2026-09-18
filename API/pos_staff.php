@@ -212,12 +212,10 @@ if (!function_exists('pos_require_permission')) {
         }
         $staffId = pos_posted_staff_id();
         if ($staffId <= 0) {
-            if ($exitOnFail) {
-                header('Content-Type: application/json; charset=utf-8');
-                echo json_encode(array('status' => '0', 'message' => 'Staff login required'));
-                exit;
-            }
-            return null;
+            /* Owner PB-PIN / licence Bearer session has no X-Pos-Staff-Id.
+             * Treat as OWNER so sync + settings saves still work. Staff apps
+             * always send the header and stay permission-scoped. */
+            return array('id' => 0, 'role' => 'OWNER', 'status' => 'ACTIVE');
         }
         $staff = pos_staff_by_id($con, $licenseId, $staffId);
         if ($staff === null || strtoupper($staff['status']) !== 'ACTIVE') {

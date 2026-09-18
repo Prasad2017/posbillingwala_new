@@ -22,7 +22,8 @@ class AppButton extends StatelessWidget {
   final bool isLoading;
   final bool expanded;
 
-  Color get loaderColor => variant == AppButtonVariant.outlined ? AppColors.primary : Colors.white;
+  Color get loaderColor =>
+      variant == AppButtonVariant.outlined ? AppColors.primary : Colors.white;
 
   @override
   Widget build(BuildContext context) {
@@ -36,46 +37,58 @@ class AppButton extends StatelessWidget {
                 Icon(icon, size: 20),
                 const SizedBox(width: 8),
               ],
-              Flexible(child: Text(label, textAlign: TextAlign.center, overflow: TextOverflow.ellipsis)),
+              Flexible(
+                child: Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           );
 
     final onTap = isLoading ? null : onPressed;
     final button = switch (variant) {
       AppButtonVariant.primary => FilledButton(
-          onPressed: onTap,
-          style: FilledButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            elevation: 0,
-            padding: const EdgeInsets.symmetric(vertical: 15),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        onPressed: onTap,
+        style: FilledButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(vertical: 15),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
-          child: child,
         ),
+        child: child,
+      ),
       AppButtonVariant.danger => FilledButton(
-          onPressed: onTap,
-          style: FilledButton.styleFrom(
-            backgroundColor: AppColors.red,
-            elevation: 0,
-            padding: const EdgeInsets.symmetric(vertical: 15),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        onPressed: onTap,
+        style: FilledButton.styleFrom(
+          backgroundColor: AppColors.red,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(vertical: 15),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
-          child: child,
         ),
+        child: child,
+      ),
       AppButtonVariant.outlined => OutlinedButton(
-          onPressed: onTap,
-          style: OutlinedButton.styleFrom(
-            foregroundColor: AppColors.primary,
-            side: const BorderSide(color: Color(0xFFBFD5F5)),
-          ),
-          child: child,
+        onPressed: onTap,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.primary,
+          side: const BorderSide(color: Color(0xFFBFD5F5)),
         ),
+        child: child,
+      ),
     };
 
     return AnimatedScale(
       scale: onTap == null ? .98 : 1,
       duration: const Duration(milliseconds: 160),
-      child: expanded ? SizedBox(width: double.infinity, child: button) : button,
+      child: expanded
+          ? SizedBox(width: double.infinity, child: button)
+          : button,
     );
   }
 }

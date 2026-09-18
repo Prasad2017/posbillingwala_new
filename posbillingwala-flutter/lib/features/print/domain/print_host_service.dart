@@ -14,6 +14,7 @@ import 'package:pos_billingwala_v2/features/print/domain/store_printer.dart';
 
 class PrintHostController {
   PrintHostController(this.ref);
+
   final Ref ref;
   Timer? timer;
   bool running = false;
@@ -43,9 +44,14 @@ class PrintHostController {
       await api.heartbeat(
         auth.session!.licenceUserId,
         device.deviceId,
-        kIsWeb ? 'WEB' : (defaultTargetPlatform == TargetPlatform.iOS ? 'IOS' : 'ANDROID'),
+        kIsWeb
+            ? 'WEB'
+            : (defaultTargetPlatform == TargetPlatform.iOS ? 'IOS' : 'ANDROID'),
       );
-      final jobs = await api.claim(auth.session!.licenceUserId, device.deviceId);
+      final jobs = await api.claim(
+        auth.session!.licenceUserId,
+        device.deviceId,
+      );
       final service = ref.read(printServiceProvider);
       for (final job in jobs) {
         final id = job['id']?.toString() ?? '';
@@ -54,7 +60,9 @@ class PrintHostController {
         final printerJson = job['printer'];
         StorePrinter? printer;
         if (printerJson is Map) {
-          printer = StorePrinter.fromJson(Map<String, dynamic>.from(printerJson));
+          printer = StorePrinter.fromJson(
+            Map<String, dynamic>.from(printerJson),
+          );
         }
         final payload = job['payload']?.toString() ?? '';
         String text = payload;

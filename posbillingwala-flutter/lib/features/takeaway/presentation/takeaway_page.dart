@@ -67,10 +67,13 @@ class TakeawayPageState extends ConsumerState<TakeawayPage> {
     disposeTextControllers([nameCtrl, phoneCtrl]);
     if (ok != true || !mounted) return;
 
-    final parcel =
-        await ref.read(appDatabaseProvider).nextTakeAwayParcelNumber();
+    final parcel = await ref
+        .read(appDatabaseProvider)
+        .nextTakeAwayParcelNumber();
     if (!mounted) return;
-    ref.read(billingSessionProvider.notifier).startTakeaway(
+    ref
+        .read(billingSessionProvider.notifier)
+        .startTakeaway(
           customerName: customerName,
           customerPhone: customerPhone,
           parcelNumber: parcel,
@@ -79,18 +82,18 @@ class TakeawayPageState extends ConsumerState<TakeawayPage> {
   }
 
   void openParcelBilling(TakeawayParcel parcel) {
-    ref.read(billingSessionProvider.notifier).startTakeaway(
-          parcelNumber: parcel.parcelNumber,
-        );
+    ref
+        .read(billingSessionProvider.notifier)
+        .startTakeaway(parcelNumber: parcel.parcelNumber);
     context.push('/takeaway/billing');
   }
 
   void openParcelCart(TakeawayParcel parcel) {
-    ref.read(billingSessionProvider.notifier).startTakeaway(
-          parcelNumber: parcel.parcelNumber,
-        );
-    /* Same cart experience as Fast Billing cart icon / View Cart flow. */
-    context.push('/takeaway/billing?cart=1');
+    ref
+        .read(billingSessionProvider.notifier)
+        .startTakeaway(parcelNumber: parcel.parcelNumber);
+    /* Opens product menu; qty edits stay on product cards (no cart sheet). */
+    context.push('/takeaway/billing');
   }
 
   @override
@@ -139,18 +142,12 @@ class TakeawayPageState extends ConsumerState<TakeawayPage> {
               child: Column(
                 children: [
                   const ParcelTableHeader(),
-                  const Divider(
-                    height: 1,
-                    thickness: 1,
-                    color: Colors.black87,
-                  ),
+                  const Divider(height: 1, thickness: 1, color: Colors.black87),
                   Expanded(
                     child: ListView.separated(
                       padding: EdgeInsets.only(
                         bottom: 88,
-                        left: AppBreakpoints.pagePaddingFor(
-                          context.widthClass,
-                        ),
+                        left: AppBreakpoints.pagePaddingFor(context.widthClass),
                         right: AppBreakpoints.pagePaddingFor(
                           context.widthClass,
                         ),
@@ -222,7 +219,8 @@ class HeaderCell extends StatelessWidget {
 }
 
 class ParcelTableRow extends StatelessWidget {
-  const ParcelTableRow({super.key, 
+  const ParcelTableRow({
+    super.key,
     required this.index,
     required this.parcelNumber,
     required this.billAmount,
@@ -286,10 +284,7 @@ class ParcelTableRow extends StatelessWidget {
           IconButton(
             tooltip: 'View cart',
             onPressed: onOpenCart,
-            icon: const Icon(
-              Icons.print_outlined,
-              color: AppColors.primary,
-            ),
+            icon: const Icon(Icons.print_outlined, color: AppColors.primary),
           ),
         ],
       ),

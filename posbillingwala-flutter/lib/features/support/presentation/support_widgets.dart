@@ -26,7 +26,9 @@ Future<void> callSupport(BuildContext context) async {
   final ok = await launchUrl(uri);
   if (!ok && context.mounted) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Call ${formatSupportPhone(AppConstants.supportPhone)}')),
+      SnackBar(
+        content: Text('Call ${formatSupportPhone(AppConstants.supportPhone)}'),
+      ),
     );
   }
 }
@@ -84,7 +86,9 @@ class SupportOnlineBanner extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
+                  border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.15),
+                  ),
                 ),
                 alignment: Alignment.center,
                 child: Icon(
@@ -120,10 +124,7 @@ class SupportOnlineBanner extends StatelessWidget {
               children: [
                 Text(title, style: AppTypography.cardTitle()),
                 const SizedBox(height: 4),
-                Text(
-                  kSupportOnlineMessage,
-                  style: AppTypography.bodySmall(),
-                ),
+                Text(kSupportOnlineMessage, style: AppTypography.bodySmall()),
               ],
             ),
           ),
@@ -154,7 +155,9 @@ class SupportUrgentHelpCard extends StatelessWidget {
             decoration: BoxDecoration(
               color: Colors.white,
               shape: BoxShape.circle,
-              border: Border.all(color: AppColors.primary.withValues(alpha: 0.12)),
+              border: Border.all(
+                color: AppColors.primary.withValues(alpha: 0.12),
+              ),
             ),
             alignment: Alignment.center,
             child: const AppSvg(
@@ -183,10 +186,15 @@ class SupportUrgentHelpCard extends StatelessWidget {
                     onTap: () => callSupport(context),
                     borderRadius: BorderRadius.circular(999),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(999),
-                        border: Border.all(color: AppColors.primary.withValues(alpha: 0.45)),
+                        border: Border.all(
+                          color: AppColors.primary.withValues(alpha: 0.45),
+                        ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -200,8 +208,9 @@ class SupportUrgentHelpCard extends StatelessWidget {
                           const SizedBox(width: 8),
                           Text(
                             phone,
-                            style: AppTypography.bodySmall(color: AppColors.primaryDark)
-                                .copyWith(fontWeight: FontWeight.w700),
+                            style: AppTypography.bodySmall(
+                              color: AppColors.primaryDark,
+                            ).copyWith(fontWeight: FontWeight.w700),
                           ),
                         ],
                       ),
@@ -260,8 +269,9 @@ class SupportHoursCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   AppConstants.supportHoursTime,
-                  style: AppTypography.body(color: AppColors.navy)
-                      .copyWith(fontWeight: FontWeight.w700),
+                  style: AppTypography.body(
+                    color: AppColors.navy,
+                  ).copyWith(fontWeight: FontWeight.w700),
                 ),
               ],
             ),
@@ -297,7 +307,12 @@ class SupportNavTile extends StatelessWidget {
     return Column(
       children: [
         if (showDivider)
-          const Divider(height: 1, indent: 14, endIndent: 14, color: AppColors.border),
+          const Divider(
+            height: 1,
+            indent: 14,
+            endIndent: 14,
+            color: AppColors.border,
+          ),
         InkWell(
           onTap: onTap,
           child: Padding(

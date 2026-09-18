@@ -45,10 +45,7 @@ class ThermalTicket {
     for (final item in items) {
       buf.writeln(item.name);
       buf.writeln(
-        columns(
-          ['X${item.qty}', item.rate, item.amount],
-          [itemW, 8, 8],
-        ),
+        columns(['X${item.qty}', item.rate, item.amount], [itemW, 8, 8]),
       );
     }
     buf.writeln('-' * width);
@@ -104,7 +101,7 @@ class ThermalLine {
   });
 
   final String name;
-  final num qty;
+  final String qty;
   final String rate;
   final String amount;
 }

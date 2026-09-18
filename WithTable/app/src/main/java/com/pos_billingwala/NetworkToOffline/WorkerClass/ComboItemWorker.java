@@ -1,6 +1,7 @@
 package com.pos_billingwala.NetworkToOffline.WorkerClass;
 
 import android.content.Context;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.work.Worker;
@@ -39,11 +40,12 @@ public class ComboItemWorker extends Worker {
                 if (list != null && !list.isEmpty()) {
                     database.upsertComboItemsBatchFromCloud(list);
                 }
+                return Result.success();
             }
-            return Result.success();
+            return Result.retry();
         } catch (Exception e) {
-            e.printStackTrace();
-            return Result.failure();
+            Log.e("ComboItemWorker", "doWork failed", e);
+            return Result.retry();
         }
     }
 }

@@ -58,8 +58,9 @@ class PaymentCheckoutState {
   double payableTotal({required double subtotal, required double taxTotal}) {
     final disc = discountValue(subtotal);
     final pack = packingValue(subtotal);
-    final raw =
-        (subtotal + taxTotal + pack - disc).clamp(0, double.infinity).toDouble();
+    final raw = (subtotal + taxTotal + pack - disc)
+        .clamp(0, double.infinity)
+        .toDouble();
     /* Match Android CreatePos / BluetoothPrint — bill total rounds up to ₹. */
     return raw.ceilToDouble();
   }
@@ -125,8 +126,9 @@ class PaymentCheckoutController extends Notifier<PaymentCheckoutState> {
 
   void setCashAmount(double value, double totalAmount) {
     final cash = value < 0 ? 0.0 : value;
-    final remaining =
-        double.parse((totalAmount - cash).clamp(0, totalAmount).toStringAsFixed(2));
+    final remaining = double.parse(
+      (totalAmount - cash).clamp(0, totalAmount).toStringAsFixed(2),
+    );
     state = state.copyWith(
       cashAmount: double.parse(cash.toStringAsFixed(2)),
       upiAmount: remaining,
@@ -136,11 +138,24 @@ class PaymentCheckoutController extends Notifier<PaymentCheckoutState> {
 
   void setUpiAmount(double value, double totalAmount) {
     final upi = value < 0 ? 0.0 : value;
-    final remaining =
-        double.parse((totalAmount - upi).clamp(0, totalAmount).toStringAsFixed(2));
+    final remaining = double.parse(
+      (totalAmount - upi).clamp(0, totalAmount).toStringAsFixed(2),
+    );
     state = state.copyWith(
       upiAmount: double.parse(upi.toStringAsFixed(2)),
       cashAmount: remaining,
+      clearError: true,
+    );
+  }
+
+  void setSplitAmounts({
+    required double cash,
+    required double upi,
+  }) {
+    state = state.copyWith(
+      mode: PaymentMode.cashPlusUpi,
+      cashAmount: double.parse((cash < 0 ? 0 : cash).toStringAsFixed(2)),
+      upiAmount: double.parse((upi < 0 ? 0 : upi).toStringAsFixed(2)),
       clearError: true,
     );
   }
@@ -173,7 +188,10 @@ class PaymentCheckoutController extends Notifier<PaymentCheckoutState> {
     required double subtotal,
     required double taxTotal,
   }) async {
-    final totalAmount = state.payableTotal(subtotal: subtotal, taxTotal: taxTotal);
+    final totalAmount = state.payableTotal(
+      subtotal: subtotal,
+      taxTotal: taxTotal,
+    );
     state = state.copyWith(busy: true, clearError: true, clearResult: true);
     try {
       if (!await ensureOnline(force: AppPlatform.requiresNetwork)) {
@@ -200,8 +218,9 @@ class PaymentCheckoutController extends Notifier<PaymentCheckoutState> {
 
       final session = ref.read(billingSessionProvider);
       final printer = ref.read(printerSettingsProvider);
-      final invoiceCount =
-          await ref.read(appDatabaseProvider).countTotalInvoices();
+      final invoiceCount = await ref
+          .read(appDatabaseProvider)
+          .countTotalInvoices();
       final authSession = ref.read(authControllerProvider).session;
       final device = await DeviceIdentityService().resolve();
       final licence = await LicenseValidator.validate(
@@ -225,7 +244,9 @@ class PaymentCheckoutController extends Notifier<PaymentCheckoutState> {
           : session.invoicePrefix;
       final staff = await StaffStore().read();
       final staffId = int.tryParse(staff?.id ?? '');
-      final result = await ref.read(appDatabaseProvider).saveInvoiceFromCart(
+      final result = await ref
+          .read(appDatabaseProvider)
+          .saveInvoiceFromCart(
             tender: tender,
             invoiceType: session.invoiceType,
             invoicePrefix: prefix,
@@ -262,5 +283,5 @@ class PaymentCheckoutController extends Notifier<PaymentCheckoutState> {
 
 final paymentCheckoutControllerProvider =
     NotifierProvider<PaymentCheckoutController, PaymentCheckoutState>(
-  PaymentCheckoutController.new,
-);
+      PaymentCheckoutController.new,
+    );

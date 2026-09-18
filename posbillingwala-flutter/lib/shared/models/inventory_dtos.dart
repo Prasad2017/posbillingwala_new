@@ -30,7 +30,8 @@ class InventoryDto {
   final String inventoryNetworkStatus;
 
   factory InventoryDto.fromJson(Map<String, dynamic> json) {
-    final network = parseString(json['inventoryNetworkStatus'])?.trim() ??
+    final network =
+        parseString(json['inventoryNetworkStatus'])?.trim() ??
         'inv_${parseString(json['inventoryId']) ?? DateTime.now().millisecondsSinceEpoch}';
     var type = (parseString(json['movementType']) ?? 'purchase').trim();
     if (type.isEmpty) {
@@ -43,8 +44,9 @@ class InventoryDto {
       productId: parseInt(json['productId']) ?? 0,
       productName: parseString(json['productName']) ?? '',
       productInventoryQuantity: parseMoney(json['productInventoryQuantity']),
-      afterSaleInventoryQuantity:
-          parseMoney(json['afterSaleInventoryQuantity']),
+      afterSaleInventoryQuantity: parseMoney(
+        json['afterSaleInventoryQuantity'],
+      ),
       saleInventoryQuantity: parseMoney(json['saleInventoryQuantity']),
       movementType: type,
       inventoryNote: parseString(json['inventoryNote']) ?? '',
@@ -55,18 +57,18 @@ class InventoryDto {
   }
 
   Map<String, dynamic> toJson() => {
-        'inventoryId': inventoryId,
-        'productId': productId,
-        'productName': productName,
-        'productInventoryQuantity': productInventoryQuantity,
-        'afterSaleInventoryQuantity': afterSaleInventoryQuantity,
-        'saleInventoryQuantity': saleInventoryQuantity,
-        'movementType': movementType,
-        'inventoryNote': inventoryNote,
-        'unitCost': unitCost,
-        'inventoryDate': inventoryDate.toIso8601String(),
-        'inventoryNetworkStatus': inventoryNetworkStatus,
-      };
+    'inventoryId': inventoryId,
+    'productId': productId,
+    'productName': productName,
+    'productInventoryQuantity': productInventoryQuantity,
+    'afterSaleInventoryQuantity': afterSaleInventoryQuantity,
+    'saleInventoryQuantity': saleInventoryQuantity,
+    'movementType': movementType,
+    'inventoryNote': inventoryNote,
+    'unitCost': unitCost,
+    'inventoryDate': inventoryDate.toIso8601String(),
+    'inventoryNetworkStatus': inventoryNetworkStatus,
+  };
 
   InventoryMovementsCompanion toCompanion({String? productNameOverride}) {
     final name = (productNameOverride?.trim().isNotEmpty == true)
@@ -104,7 +106,8 @@ class ExpenseDto {
   final String expensesNetworkStatus;
 
   factory ExpenseDto.fromJson(Map<String, dynamic> json) {
-    final network = parseString(json['expensesNetworkStatus'])?.trim() ??
+    final network =
+        parseString(json['expensesNetworkStatus'])?.trim() ??
         'exp_${parseString(json['expensesId']) ?? DateTime.now().millisecondsSinceEpoch}';
     return ExpenseDto(
       expensesId: parseInt(json['expensesId']),
@@ -116,12 +119,12 @@ class ExpenseDto {
   }
 
   Map<String, dynamic> toJson() => {
-        'expensesId': expensesId,
-        'expensesName': expensesName,
-        'expensesAmount': expensesAmount,
-        'expensesDate': expensesDate.toIso8601String(),
-        'expensesNetworkStatus': expensesNetworkStatus,
-      };
+    'expensesId': expensesId,
+    'expensesName': expensesName,
+    'expensesAmount': expensesAmount,
+    'expensesDate': expensesDate.toIso8601String(),
+    'expensesNetworkStatus': expensesNetworkStatus,
+  };
 
   ShopExpensesCompanion toCompanion() {
     return ShopExpensesCompanion.insert(

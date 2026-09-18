@@ -16,9 +16,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $userId = isset($_POST['userId']) ? trim((string) $_POST['userId']) : '';
-pos_require_auth($con, $userId, $response);
+$licenceId = pos_require_auth($con, $userId, $response);
 require_once __DIR__ . '/pos_staff.php';
-pos_require_permission($con, $userId, 'mess.manage');
+pos_require_permission($con, $licenceId, 'mess.manage');
+$uid = (int) $licenceId;
 
 $sessionId = isset($_POST['sessionId']) ? trim((string) $_POST['sessionId']) : '';
 $sessionName = isset($_POST['sessionName']) ? trim((string) $_POST['sessionName']) : '';
@@ -30,6 +31,7 @@ $menuNotes = isset($_POST['menuNotes']) ? trim((string) $_POST['menuNotes']) : '
 $sortOrder = isset($_POST['sortOrder']) ? (int) $_POST['sortOrder'] : 0;
 
 if ($sessionName === '' || $startTime === '' || $endTime === '') {
+    error_log('mess_meal_session_save missing fields userId=' . $uid);
     $response['message'] = 'Missing session fields';
     echo json_encode($response);
     mysqli_close($con);
@@ -46,42 +48,51 @@ if ($tokenPrefix === '') {
     $tokenPrefix = 'T';
 }
 
-if ($sessionId !== '' && (int) $sessionId > 0) {
+$numericId = (ctype_digit($sessionId) && (int) $sessionId > 0) ? (int) $sessionId : 0;
+$didUpdate = false;
+
+if ($numericId > 0) {
     $owned = db_stmt_fetch_one(
         $con,
         'SELECT id FROM mess_meal_session WHERE id = ? AND userId = ? LIMIT 1',
         'ii',
-        (int) $sessionId,
-        (int) $userId
+        $numericId,
+        $uid
     );
-    if ($owned === null) {
-        $response['message'] = 'Session not found';
-        echo json_encode($response);
-        mysqli_close($con);
-        exit;
+    if ($owned !== null) {
+        $ok = db_stmt_execute(
+            $con,
+            'UPDATE mess_meal_session SET session_name = ?, start_time = ?, end_time = ?, token_prefix = ?, is_active = ?, menu_notes = ?, sort_order = ? WHERE id = ? AND userId = ?',
+            'ssssisiii',
+            $sessionName,
+            $startTime,
+            $endTime,
+            $tokenPrefix,
+            $isActive,
+            $menuNotes,
+            $sortOrder,
+            $numericId,
+            $uid
+        );
+        if (!$ok) {
+            error_log('mess_meal_session_save UPDATE fail id=' . $numericId . ' userId=' . $uid . ' err=' . mysqli_error($con));
+            $response['message'] = 'Unable to update session';
+            echo json_encode($response);
+            mysqli_close($con);
+            exit;
+        }
+        $response['sessionId'] = (string) $numericId;
+        $didUpdate = true;
     }
-    db_stmt_execute(
-        $con,
-        'UPDATE mess_meal_session SET session_name = ?, start_time = ?, end_time = ?, token_prefix = ?, is_active = ?, menu_notes = ?, sort_order = ? WHERE id = ? AND userId = ?',
-        'ssssisiii',
-        $sessionName,
-        $startTime,
-        $endTime,
-        $tokenPrefix,
-        $isActive,
-        $menuNotes,
-        $sortOrder,
-        (int) $sessionId,
-        (int) $userId
-    );
-    $response['sessionId'] = (string) (int) $sessionId;
-} else {
+}
+
+if (!$didUpdate) {
     $id = db_stmt_insert_id(
         $con,
         'INSERT INTO mess_meal_session (userId, session_name, start_time, end_time, token_prefix, is_active, menu_notes, sort_order)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
         'issssisi',
-        (int) $userId,
+        $uid,
         $sessionName,
         $startTime,
         $endTime,
@@ -90,9 +101,17 @@ if ($sessionId !== '' && (int) $sessionId > 0) {
         $menuNotes,
         $sortOrder
     );
-    $response['sessionId'] = $id ? (string) $id : '';
+    if (!$id) {
+        error_log('mess_meal_session_save INSERT fail userId=' . $uid . ' err=' . mysqli_error($con));
+        $response['message'] = 'Unable to create session';
+        echo json_encode($response);
+        mysqli_close($con);
+        exit;
+    }
+    $response['sessionId'] = (string) $id;
 }
 
+error_log('mess_meal_session_save OK userId=' . $uid . ' sessionId=' . $response['sessionId']);
 $response['status'] = '1';
 $response['message'] = 'saved';
 echo json_encode($response);

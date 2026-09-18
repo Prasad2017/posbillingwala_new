@@ -72,10 +72,9 @@ class AppTheme {
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
         systemOverlayStyle: lightSystemUi,
-        titleTextStyle: AppTypography.sectionTitle(color: Colors.white).copyWith(
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-        ),
+        titleTextStyle: AppTypography.sectionTitle(
+          color: Colors.white,
+        ).copyWith(fontSize: 20, fontWeight: FontWeight.w600),
         toolbarTextStyle: AppTypography.body(color: Colors.white),
       ),
       cardTheme: CardThemeData(
@@ -95,8 +94,9 @@ class AppTheme {
           minimumSize: const Size(0, 52),
           padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
           textStyle: AppTypography.button(),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -105,8 +105,9 @@ class AppTheme {
           minimumSize: const Size(0, 50),
           side: const BorderSide(color: Color(0xFFBFD5F5)),
           textStyle: AppTypography.button(color: AppColors.primary),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
@@ -129,13 +130,17 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: Colors.white,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 18,
+          vertical: 16,
+        ),
         labelStyle: AppTypography.body().copyWith(
+          fontSize: 14,
           fontWeight: FontWeight.w500,
           color: AppColors.navy.withValues(alpha: .7),
         ),
         floatingLabelStyle: AppTypography.bodySmall().copyWith(
+          fontSize: 14,
           fontWeight: FontWeight.w600,
           color: AppColors.primary,
         ),

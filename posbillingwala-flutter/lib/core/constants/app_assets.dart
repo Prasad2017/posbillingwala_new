@@ -138,4 +138,3 @@ abstract final class AppAssets {
   static const svgAboutDisclaimerCard = '$svg/bg_about_disclaimer_card.svg';
   static const svgAboutDeveloperIcon = '$svg/bg_about_developer_icon.svg';
 }
-

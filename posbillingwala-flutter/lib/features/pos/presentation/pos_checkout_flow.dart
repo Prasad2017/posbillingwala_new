@@ -32,9 +32,9 @@ Future<void> startInlineCheckout(
 
   if (!ref.read(permissionControllerProvider).allows('bill.create')) {
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(AppStrings.of(ref).moduleLocked)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(AppStrings.of(ref).moduleLocked)));
     return;
   }
 
@@ -45,10 +45,9 @@ Future<void> startInlineCheckout(
   );
   final currency = NumberFormat.currency(locale: 'en_IN', symbol: '₹ ');
 
-  ref.read(paymentCheckoutControllerProvider.notifier).selectMode(
-        checkout.mode,
-        total,
-      );
+  ref
+      .read(paymentCheckoutControllerProvider.notifier)
+      .selectMode(checkout.mode, total);
 
   final confirmed = await showModalBottomSheet<bool>(
     context: context,
@@ -64,12 +63,10 @@ Future<void> startInlineCheckout(
         initialUpi: latest.upiAmount,
         onContinue: (mode, cash, upi) {
           final n = ref.read(paymentCheckoutControllerProvider.notifier);
-          n.selectMode(mode, total);
           if (mode == PaymentMode.cashPlusUpi) {
-            n.setCashAmount(cash, total);
-            if ((cash + upi - total).abs() > 0.05) {
-              n.setUpiAmount(upi, total);
-            }
+            n.setSplitAmounts(cash: cash, upi: upi);
+          } else {
+            n.selectMode(mode, total);
           }
           Navigator.pop(sheetContext, true);
         },
@@ -99,10 +96,7 @@ Future<void> completeInlineCheckout(
   final summary = ref.read(cartSummaryProvider);
   final result = await ref
       .read(paymentCheckoutControllerProvider.notifier)
-      .completePayment(
-        subtotal: summary.subtotal,
-        taxTotal: summary.taxTotal,
-      );
+      .completePayment(subtotal: summary.subtotal, taxTotal: summary.taxTotal);
   if (!context.mounted || result == null) return;
 
   final session = ref.read(billingSessionProvider);
@@ -121,8 +115,8 @@ Future<void> completeInlineCheckout(
             sync.message?.trim().isNotEmpty == true
                 ? sync.message!
                 : AppPlatform.requiresNetwork
-                    ? kWebApiSaveFailedMessage
-                    : 'Bill saved on device — cloud upload failed; will retry when online.',
+                ? kWebApiSaveFailedMessage
+                : 'Bill saved',
           ),
           backgroundColor: AppPlatform.requiresNetwork
               ? AppColors.danger
@@ -144,10 +138,9 @@ Future<void> completeInlineCheckout(
 
   if (AppPlatform.supportsOfflineSync) {
     unawaited(
-      ref.read(connectivitySyncListenerProvider).syncNow(
-            force: retryAutoSync,
-            reason: 'after-bill',
-          ),
+      ref
+          .read(connectivitySyncListenerProvider)
+          .syncNow(force: retryAutoSync, reason: 'after-bill'),
     );
   }
 

@@ -33,12 +33,14 @@ class PrinterRoutingPageState extends ConsumerState<PrinterRoutingPage> {
     final routes = await api.routes(session.licenceUserId);
     String idFor(String food, String doc) {
       for (final route in routes) {
-        if (route.documentType == doc && route.foodTypeCode.toLowerCase() == food) {
+        if (route.documentType == doc &&
+            route.foodTypeCode.toLowerCase() == food) {
           return route.printerId;
         }
       }
       return '';
     }
+
     if (!mounted) return;
     setState(() {
       printers = list;
@@ -59,15 +61,27 @@ class PrinterRoutingPageState extends ConsumerState<PrinterRoutingPage> {
     if (session == null) return;
     final routes = <PrinterRouteRule>[
       if (kitchenId.isNotEmpty)
-        PrinterRouteRule(printerId: kitchenId, documentType: 'KOT', foodTypeCode: 'food'),
+        PrinterRouteRule(
+          printerId: kitchenId,
+          documentType: 'KOT',
+          foodTypeCode: 'food',
+        ),
       if (barId.isNotEmpty)
-        PrinterRouteRule(printerId: barId, documentType: 'KOT', foodTypeCode: 'beverage'),
+        PrinterRouteRule(
+          printerId: barId,
+          documentType: 'KOT',
+          foodTypeCode: 'beverage',
+        ),
       if (billId.isNotEmpty)
         PrinterRouteRule(printerId: billId, documentType: 'BILL'),
     ];
-    await ref.read(storePrinterApiProvider).saveRoutes(session.licenceUserId, routes);
+    await ref
+        .read(storePrinterApiProvider)
+        .saveRoutes(session.licenceUserId, routes);
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Routing saved')));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Routing saved')));
   }
 
   @override

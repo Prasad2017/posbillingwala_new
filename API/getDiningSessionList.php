@@ -15,12 +15,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     exit;
 }
 
-$userId = isset($_GET['userId']) ? $_GET['userId'] : '';
-pos_require_auth($con, $userId, array('status' => '0', 'message' => 'Unauthorized'));
+$postedUserId = isset($_GET['userId']) ? $_GET['userId'] : '';
+$userId = pos_require_auth($con, $postedUserId, array('status' => '0', 'message' => 'Unauthorized'));
 dine_in_ensure_schema($con);
 
 $openOnly = isset($_GET['openOnly']) && $_GET['openOnly'] === '1';
-$where = "`licenseId`='" . mysqli_real_escape_string($con, $userId) . "'";
+$where = "`licenseId`='" . mysqli_real_escape_string($con, (string) $userId) . "'";
 if ($openOnly) {
     $where .= " AND `sessionStatus` NOT IN ('CLOSED','SETTLED')";
 }

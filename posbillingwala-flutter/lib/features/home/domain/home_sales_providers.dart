@@ -15,8 +15,8 @@ enum HomeSalesPeriod { today, month }
 
 final homeSalesPeriodProvider =
     NotifierProvider<HomeSalesPeriodNotifier, HomeSalesPeriod>(
-  HomeSalesPeriodNotifier.new,
-);
+      HomeSalesPeriodNotifier.new,
+    );
 
 class HomeSalesPeriodNotifier extends Notifier<HomeSalesPeriod> {
   @override
@@ -31,13 +31,19 @@ class HomeSalesPeriodNotifier extends Notifier<HomeSalesPeriod> {
   }
 }
 
-final allTimeSalesAggregateProvider =
-    StreamProvider<InvoiceSalesAggregate>((ref) {
-  return ref.watch(appDatabaseProvider).watchSalesAggregate();
+final allTimeSalesAggregateProvider = StreamProvider<InvoiceSalesAggregate>((
+  ref,
+) {
+  final staffId = resolvedStaffFilter(ref);
+  return ref
+      .watch(appDatabaseProvider)
+      .watchSalesAggregate(createdByStaffId: staffId);
 });
 
 final allTimeSalesSummaryProvider = Provider<SalesSummary>((ref) {
-  return ref.watch(allTimeSalesAggregateProvider).maybeWhen(
+  return ref
+      .watch(allTimeSalesAggregateProvider)
+      .maybeWhen(
         data: SalesSummary.fromAggregate,
         orElse: () => SalesSummary.empty,
       );
@@ -46,28 +52,41 @@ final allTimeSalesSummaryProvider = Provider<SalesSummary>((ref) {
 /* Cloud overview (Android `getHomeSalesOverview`) — cache first, then network. */
 final homeSalesOverviewProvider =
     FutureProvider.autoDispose<HomeSalesOverview?>((ref) async {
-  final userId = ref.watch(authControllerProvider).session?.userId;
-  if (userId == null || userId.isEmpty) return null;
+      final userId = ref.watch(authControllerProvider).session?.licenceUserId;
+      if (userId == null || userId.isEmpty) return null;
 
-  final period = ref.watch(homeSalesPeriodProvider);
-  final cacheKey = period == HomeSalesPeriod.month
-      ? CloudScreenCache.homeOverviewMonth
-      : CloudScreenCache.homeOverviewToday;
-  final cached = await CloudScreenCache.loadMap(cacheKey);
-  HomeSalesOverview? cachedOverview;
-  if (cached != null) {
-    cachedOverview = HomeSalesOverview.fromJson(cached);
-  }
+      final period = ref.watch(homeSalesPeriodProvider);
+      final staffId = resolvedStaffFilter(ref);
+      final staffScoped = staffId != null && staffId > 0;
+      final cacheKey = period == HomeSalesPeriod.month
+          ? CloudScreenCache.homeOverviewMonth
+          : CloudScreenCache.homeOverviewToday;
+      /* Staff UI uses local aggregates; avoid showing full-licence cloud KPIs. */
+      if (!staffScoped) {
+        final cached = await CloudScreenCache.loadMap(cacheKey);
+        HomeSalesOverview? cachedOverview;
+        if (cached != null) {
+          cachedOverview = HomeSalesOverview.fromJson(cached);
+        }
 
-  if (!await isDeviceOnline()) return cachedOverview;
+        if (!await isDeviceOnline()) return cachedOverview;
 
-  final api = HomeSalesApi(ref.read(apiClientProvider));
-  final live = await api.fetchOverview(
-    userId: userId,
-    period: period == HomeSalesPeriod.month ? 'month' : 'today',
-  );
-  return live ?? cachedOverview;
-});
+        final api = HomeSalesApi(ref.read(apiClientProvider));
+        final live = await api.fetchOverview(
+          userId: userId,
+          period: period == HomeSalesPeriod.month ? 'month' : 'today',
+        );
+        return live ?? cachedOverview;
+      }
+
+      if (!await isDeviceOnline()) return null;
+      final api = HomeSalesApi(ref.read(apiClientProvider));
+      return api.fetchOverview(
+        userId: userId,
+        period: period == HomeSalesPeriod.month ? 'month' : 'today',
+        staffScope: true,
+      );
+    });
 
 /* Display model for home Sales Overview + catalog KPI tiles. */
 class HomeDashboardKpis {
@@ -103,10 +122,7 @@ final homeDashboardKpisProvider = Provider<HomeDashboardKpis>((ref) {
   final yesterday = ref.watch(yesterdaySalesSummaryProvider);
   final catalog = ref.watch(catalogCountsProvider);
 
-  final overview = overviewAsync.maybeWhen(
-    data: (v) => v,
-    orElse: () => null,
-  );
+  final overview = overviewAsync.maybeWhen(data: (v) => v, orElse: () => null);
 
   if (overview != null) {
     final parsed = parseTrend(overview.primarySalesTrend);
@@ -114,32 +130,31 @@ final homeDashboardKpisProvider = Provider<HomeDashboardKpis>((ref) {
       /* API already selects all-time vs month via `period`. */
       primarySales: overview.primarySales,
       todaySales: overview.todaySales,
-      primaryTitle:
-          period == HomeSalesPeriod.month ? 'Monthly Sales' : 'Total Sales',
+      primaryTitle: period == HomeSalesPeriod.month
+          ? 'Monthly Sales'
+          : 'Total Sales',
       growthText: parsed.$1,
       growthUp: parsed.$2,
       /* Prefer local catalog; fall back to cloud (web often has empty Drift). */
       subcategories: catalog.subcategories > 0
           ? catalog.subcategories
           : overview.totalSubcategory,
-      products:
-          catalog.products > 0 ? catalog.products : overview.totalProduct,
+      products: catalog.products > 0 ? catalog.products : overview.totalProduct,
       combos: catalog.combos > 0 ? catalog.combos : overview.totalCombo,
       fromCloud: true,
     );
   }
 
-  final primarySummary =
-      period == HomeSalesPeriod.month ? localMonth : localAll;
-  final growthPct = growthPercent(
-    localToday.totalSales,
-    yesterday.totalSales,
-  );
+  final primarySummary = period == HomeSalesPeriod.month
+      ? localMonth
+      : localAll;
+  final growthPct = growthPercent(localToday.totalSales, yesterday.totalSales);
   return HomeDashboardKpis(
     primarySales: primarySummary.totalSales,
     todaySales: localToday.totalSales,
-    primaryTitle:
-        period == HomeSalesPeriod.month ? 'Monthly Sales' : 'Total Sales',
+    primaryTitle: period == HomeSalesPeriod.month
+        ? 'Monthly Sales'
+        : 'Total Sales',
     growthText: growthLabel(growthPct),
     growthUp: (growthPct ?? 0) >= 0,
     subcategories: catalog.subcategories,

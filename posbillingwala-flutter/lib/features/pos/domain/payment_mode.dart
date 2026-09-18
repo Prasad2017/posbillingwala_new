@@ -5,6 +5,7 @@ enum PaymentMode {
   cashPlusUpi('Cash+UPI');
 
   const PaymentMode(this.label);
+
   final String label;
 
   static PaymentMode fromLabel(String? value) {
@@ -53,12 +54,11 @@ class PaymentTender {
   }
 
   bool isValidFor(double totalAmount) {
+    /* Cash / UPI always settle the full bill — no amount entry to verify. */
+    if (mode != PaymentMode.cashPlusUpi) return true;
     final total = double.parse(totalAmount.toStringAsFixed(2));
     final sum = double.parse((cashAmount + upiAmount).toStringAsFixed(2));
-    if (mode == PaymentMode.cashPlusUpi) {
-      return (sum - total).abs() <= 0.05 && cashAmount >= 0 && upiAmount >= 0;
-    }
-    return (sum - total).abs() <= 0.05;
+    return (sum - total).abs() <= 0.05 && cashAmount >= 0 && upiAmount >= 0;
   }
 }
 

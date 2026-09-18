@@ -11,11 +11,7 @@ void main() {
   });
 
   testWidgets('Splash then licence login gate', (tester) async {
-    await tester.pumpWidget(
-      const ProviderScope(
-        child: PosBillingwalaApp(),
-      ),
-    );
+    await tester.pumpWidget(const ProviderScope(child: PosBillingwalaApp()));
 
     expect(find.text('Billingwala'), findsWidgets);
 

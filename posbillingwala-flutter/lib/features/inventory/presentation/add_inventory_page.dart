@@ -80,10 +80,9 @@ class AddInventoryPageState extends ConsumerState<AddInventoryPage> {
 
   @override
   Widget build(BuildContext context) {
-    final products = ref.watch(allProductsProvider).maybeWhen(
-          data: (v) => v,
-          orElse: () => const <Product>[],
-        );
+    final products = ref
+        .watch(allProductsProvider)
+        .maybeWhen(data: (v) => v, orElse: () => const <Product>[]);
     selected ??= products.isEmpty ? null : products.first;
     final balances = ref.watch(stockBalancesProvider);
     double? available;
@@ -123,6 +122,7 @@ class AddInventoryPageState extends ConsumerState<AddInventoryPage> {
                   const Text('Sync Masters products first')
                 else
                   AppDropdownFormField<Product>(
+                    required: true,
                     label: 'Product',
                     items: products,
                     itemLabel: (p) =>
@@ -145,10 +145,12 @@ class AddInventoryPageState extends ConsumerState<AddInventoryPage> {
                 ],
                 const SizedBox(height: 12),
                 AppTextField(
+                  required: true,
                   controller: qtyCtrl,
                   label: isWaste ? 'Waste quantity' : 'Purchase quantity',
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   inputFormatters: [
                     FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                   ],
@@ -158,8 +160,9 @@ class AddInventoryPageState extends ConsumerState<AddInventoryPage> {
                   AppTextField(
                     controller: costCtrl,
                     label: 'Unit cost (optional)',
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     inputFormatters: [
                       FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                     ],

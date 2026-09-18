@@ -29,10 +29,7 @@ class AppPermissionService {
       ];
     }
     if (Platform.isIOS) {
-      return const [
-        Permission.bluetooth,
-        Permission.locationWhenInUse,
-      ];
+      return const [Permission.bluetooth, Permission.locationWhenInUse];
     }
     return const [];
   }
@@ -40,10 +37,7 @@ class AppPermissionService {
   /* Full set for Settings / first home open. */
   Future<List<Permission>> allRuntimePermissions() async {
     if (kIsWeb) return const [];
-    final list = <Permission>[
-      ...await printPermissions(),
-      Permission.camera,
-    ];
+    final list = <Permission>[...await printPermissions(), Permission.camera];
     if (Platform.isAndroid) {
       final sdk = (await DeviceInfoPlugin().androidInfo).version.sdkInt;
       if (sdk >= 33) {

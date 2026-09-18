@@ -20,6 +20,11 @@ $dbName = 'spllmgkn_posbill';
 // $cronRequireSecret = false;
 // $cronSecret = 'change-me-to-a-long-random-string';
 
+// API Bearer tokens (optional). Default: APIs work without Authorization.
+// Set true to require a login-issued Bearer token on protected endpoints.
+// $db_local = true;
+// $requireAuthToken = true;
+
 // ---------------------------------------------------------------------------
 // Firebase Cloud Messaging
 // MUST match WithTable/app/google-services.json:

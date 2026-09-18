@@ -23,11 +23,9 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 }
 
 class FcmService {
-  FcmService({
-    ApiClient? apiClient,
-    DeviceIdentityService? deviceIdentity,
-  })  : api = FcmApi(apiClient ?? ApiClient()),
-        fcmServiceDeviceIdentity = deviceIdentity ?? DeviceIdentityService();
+  FcmService({ApiClient? apiClient, DeviceIdentityService? deviceIdentity})
+    : api = FcmApi(apiClient ?? ApiClient()),
+      fcmServiceDeviceIdentity = deviceIdentity ?? DeviceIdentityService();
 
   final FcmApi api;
   final DeviceIdentityService fcmServiceDeviceIdentity;
@@ -55,7 +53,10 @@ class FcmService {
     const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosInit = DarwinInitializationSettings();
     await fcmServiceLocal.initialize(
-      settings: const InitializationSettings(android: androidInit, iOS: iosInit),
+      settings: const InitializationSettings(
+        android: androidInit,
+        iOS: iosInit,
+      ),
       onDidReceiveNotificationResponse: (response) {
         final payload = response.payload;
         if (payload == null || payload.isEmpty) return;
@@ -74,7 +75,8 @@ class FcmService {
     );
     await fcmServiceLocal
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
+          AndroidFlutterLocalNotificationsPlugin
+        >()
         ?.createNotificationChannel(channel);
 
     await FirebaseMessaging.instance.requestPermission(
@@ -168,20 +170,22 @@ class FcmService {
       return;
     }
 
-    final title = (message.notification?.title ??
-            data['title'] ??
-            (type == 'license_expiring' ? 'Licence expiring' : 'Billingwala'))
-        .toString();
-    final body = (message.notification?.body ??
-            data['body'] ??
-            data['message'] ??
-            '')
-        .toString();
+    final title =
+        (message.notification?.title ??
+                data['title'] ??
+                (type == 'license_expiring'
+                    ? 'Licence expiring'
+                    : 'Billingwala'))
+            .toString();
+    final body =
+        (message.notification?.body ?? data['body'] ?? data['message'] ?? '')
+            .toString();
 
     final store = InAppNotificationStore();
     await store.add(
       InAppNotification(
-        id: message.messageId ??
+        id:
+            message.messageId ??
             '${DateTime.now().millisecondsSinceEpoch}_$type',
         title: title,
         body: body,
@@ -235,8 +239,8 @@ class FcmService {
       'registrationNo': data['registrationNo']?.toString() ?? '',
       'mealSession': data['mealSession']?.toString() ?? '',
       'date': data['date']?.toString() ?? '',
-      'createdAt': data['createdAt']?.toString() ??
-          DateTime.now().toIso8601String(),
+      'createdAt':
+          data['createdAt']?.toString() ?? DateTime.now().toIso8601String(),
       'printStatus': data['printStatus']?.toString() ?? 'RECEIVED',
       'memberName': data['memberName']?.toString() ?? '',
     };

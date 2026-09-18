@@ -27,7 +27,6 @@ import 'package:pos_billingwala_v2/features/reports/domain/reports_providers.dar
 import 'package:pos_billingwala_v2/features/reports/presentation/report_pin_gate.dart';
 import 'package:pos_billingwala_v2/features/settings/domain/business_hours.dart';
 import 'package:pos_billingwala_v2/features/staff/domain/permission_controller.dart';
-import 'package:pos_billingwala_v2/features/sync/domain/auto_sync_status.dart';
 import 'package:pos_billingwala_v2/features/sync/domain/catalog_bootstrap_listener.dart';
 import 'package:pos_billingwala_v2/features/sync/domain/connectivity_sync_listener.dart';
 import 'package:pos_billingwala_v2/features/sync/domain/web_cloud_refresh_listener.dart';
@@ -94,7 +93,10 @@ class HomePageState extends ConsumerState<HomePage> {
     final hours = await BusinessHours.load();
     if (!mounted) return;
     setState(() {
-      homePageCloseTimeLabel = formatMinutesLabel(hours.close, prefix: 'Closes');
+      homePageCloseTimeLabel = formatMinutesLabel(
+        hours.close,
+        prefix: 'Closes',
+      );
       homePageOpenTimeLabel = formatMinutesLabel(hours.open, prefix: 'Opens');
     });
   }
@@ -118,7 +120,8 @@ class HomePageState extends ConsumerState<HomePage> {
       label = 'Not set';
     } else if (hub.isConnecting) {
       label = 'Connecting…';
-    } else if (await hub.connectionStatus() && hub.connectedAddress.isNotEmpty) {
+    } else if (await hub.connectionStatus() &&
+        hub.connectedAddress.isNotEmpty) {
       label = 'Connected';
     } else if (settings.billTransport == PosPrinterTransport.usb &&
         EscPosUsbHint.isLinked(settings)) {
@@ -135,9 +138,10 @@ class HomePageState extends ConsumerState<HomePage> {
 
   String homePageGreeting() {
     final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good Morning';
-    if (hour < 17) return 'Good Afternoon';
-    return 'Good Evening';
+    if (hour >= 5 && hour < 12) return 'Good Morning';
+    if (hour >= 12 && hour < 17) return 'Good Afternoon';
+    if (hour >= 17 && hour < 21) return 'Good Evening';
+    return 'Good Night';
   }
 
   Future<void> openFastBilling() async {
@@ -152,9 +156,9 @@ class HomePageState extends ConsumerState<HomePage> {
   }
 
   void moduleLocked(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(AppStrings.of(ref).moduleLocked)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(AppStrings.of(ref).moduleLocked)));
   }
 
   /* When no module flags are set (older sessions), treat as full licence. */
@@ -186,7 +190,8 @@ class HomePageState extends ConsumerState<HomePage> {
     final salesMonth = period == HomeSalesPeriod.month;
 
     final shopName = session?.shopName?.trim() ?? '';
-    final printerOnline = printerChip == 'Connected' ||
+    final printerOnline =
+        printerChip == 'Connected' ||
         printerChip == 'USB ready' ||
         printerChip == 'Network';
 
@@ -207,12 +212,10 @@ class HomePageState extends ConsumerState<HomePage> {
       growthUp: kpis.growthUp,
       hidePrimarySales: homePageHidePrimarySales,
       hideTodaySales: homePageHideTodaySales,
-      onToggleHidePrimary: () => setState(
-        () => homePageHidePrimarySales = !homePageHidePrimarySales,
-      ),
-      onToggleHideToday: () => setState(
-        () => homePageHideTodaySales = !homePageHideTodaySales,
-      ),
+      onToggleHidePrimary: () =>
+          setState(() => homePageHidePrimarySales = !homePageHidePrimarySales),
+      onToggleHideToday: () =>
+          setState(() => homePageHideTodaySales = !homePageHideTodaySales),
       onOpenReports: () => pushReportsUnlocked(context, ref),
       categoriesCount: localCatalog.categories,
       productsCount: kpis.products,
@@ -230,11 +233,7 @@ class HomePageState extends ConsumerState<HomePage> {
       onTakeAway: () => AppPlatform.useDesktopShell
           ? context.go('/takeaway')
           : context.push('/takeaway'),
-      onMess: () => pushReportsUnlocked(
-        context,
-        ref,
-        route: '/mess',
-      ),
+      onMess: () => context.push('/mess'),
     );
 
     if (AppPlatform.useDesktopShell) {
@@ -268,10 +267,9 @@ class HomePageState extends ConsumerState<HomePage> {
                 .read(webCloudRefreshListenerProvider)
                 .refresh(force: true);
           } else if (AppPlatform.supportsOfflineSync) {
-            await ref.read(connectivitySyncListenerProvider).syncNow(
-                  force: true,
-                  reason: 'pull-to-refresh',
-                );
+            await ref
+                .read(connectivitySyncListenerProvider)
+                .syncNow(force: true, reason: 'pull-to-refresh');
           }
           ref.invalidate(categoriesProvider);
           ref.invalidate(subcategoriesProvider);
@@ -341,7 +339,8 @@ class HomePageState extends ConsumerState<HomePage> {
 }
 
 class HomeDashboardBody extends ConsumerWidget {
-  const HomeDashboardBody({super.key, 
+  const HomeDashboardBody({
+    super.key,
     required this.showTotalSales,
     required this.showTodaySales,
     required this.salesMonth,
@@ -473,10 +472,10 @@ class HomeDashboardBody extends ConsumerWidget {
                 child: Text(
                   strings.salesOverview,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.navy,
-                        fontSize: 18,
-                      ),
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.navy,
+                    fontSize: 18,
+                  ),
                 ),
               ),
               InkWell(
@@ -552,10 +551,10 @@ class HomeDashboardBody extends ConsumerWidget {
         Text(
           strings.catalog,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w800,
-                color: AppColors.navy,
-                fontSize: 18,
-              ),
+            fontWeight: FontWeight.w800,
+            color: AppColors.navy,
+            fontSize: 18,
+          ),
         ),
         const SizedBox(height: 12),
         Builder(
@@ -654,10 +653,10 @@ class HomeDashboardBody extends ConsumerWidget {
         Text(
           'Start Billing',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w800,
-                color: AppColors.navy,
-                fontSize: 18,
-              ),
+            fontWeight: FontWeight.w800,
+            color: AppColors.navy,
+            fontSize: 18,
+          ),
         ),
         const SizedBox(height: 12),
         GridView.builder(
@@ -727,7 +726,8 @@ class HomeLiveClockState extends State<HomeLiveClock> {
 }
 
 class HomeHeader extends ConsumerWidget {
-  const HomeHeader({super.key,
+  const HomeHeader({
+    super.key,
     required this.topInset,
     required this.greeting,
     required this.shopName,
@@ -899,7 +899,9 @@ class HomeHeader extends ConsumerWidget {
           Row(
             children: [
               Flexible(
-                child: ref.watch(shopOpenNowProvider).when(
+                child: ref
+                    .watch(shopOpenNowProvider)
+                    .when(
                       data: (open) => StatusPill(
                         online: open,
                         label: open
@@ -932,10 +934,6 @@ class HomeHeader extends ConsumerWidget {
                   ),
                 ),
               ),
-              if (AppPlatform.supportsOfflineSync) ...[
-                const SizedBox(width: 8),
-                const HomeSyncStatusChip(),
-              ],
             ],
           ),
           const SizedBox(height: 12),
@@ -948,9 +946,7 @@ class HomeHeader extends ConsumerWidget {
                 color: Color(0xCCFFFFFF),
               ),
               const SizedBox(width: 6),
-              const Expanded(
-                child: HomeLiveClock(),
-              ),
+              const Expanded(child: HomeLiveClock()),
               const SizedBox(width: 8),
               const GrowthDecoBadge(),
             ],
@@ -975,52 +971,15 @@ class HeaderIconButton extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
-        child: SizedBox(
-          width: 40,
-          height: 40,
-          child: Center(child: child),
-        ),
-      ),
-    );
-  }
-}
-
-class HomeSyncStatusChip extends ConsumerWidget {
-  const HomeSyncStatusChip({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final sync = ref.watch(autoSyncStatusProvider);
-    return InkWell(
-      onTap: sync.online
-          ? () {
-              unawaited(
-                ref.read(connectivitySyncListenerProvider).syncNow(
-                      force: true,
-                      reason: 'home-chip',
-                    ),
-              );
-            }
-          : null,
-      borderRadius: BorderRadius.circular(20),
-      child: StatusPill(
-        online: sync.chipHealthy,
-        label: sync.chipLabel,
-        solid: !sync.online || sync.lastError != null,
-        icon: !sync.online
-            ? Icons.cloud_off_rounded
-            : sync.syncing
-                ? Icons.cloud_sync_rounded
-                : sync.pendingCount > 0
-                    ? Icons.cloud_upload_rounded
-                    : Icons.cloud_done_rounded,
+        child: SizedBox(width: 40, height: 40, child: Center(child: child)),
       ),
     );
   }
 }
 
 class StatusPill extends StatelessWidget {
-  const StatusPill({super.key, 
+  const StatusPill({
+    super.key,
     required this.online,
     required this.label,
     this.dark = false,
@@ -1061,9 +1020,7 @@ class StatusPill extends StatelessWidget {
             Icon(
               Icons.circle,
               size: 8,
-              color: online
-                  ? const Color(0xFF4ADE80)
-                  : const Color(0xFFF87171),
+              color: online ? const Color(0xFF4ADE80) : const Color(0xFFF87171),
             ),
             const SizedBox(width: 6),
           ],
@@ -1124,7 +1081,8 @@ class GrowthDecoBadge extends StatelessWidget {
 }
 
 class SalesCard extends StatelessWidget {
-  const SalesCard({super.key, 
+  const SalesCard({
+    super.key,
     required this.title,
     required this.amount,
     required this.color,
@@ -1162,10 +1120,7 @@ class SalesCard extends StatelessWidget {
             end: Alignment.bottomRight,
             colors: [softer, soft],
           ),
-          border: Border.all(
-            color: color.withValues(alpha: 0.28),
-            width: 1,
-          ),
+          border: Border.all(color: color.withValues(alpha: 0.28), width: 1),
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(22),
@@ -1237,34 +1192,32 @@ class SalesCard extends StatelessWidget {
                     ),
                     if (growthLabel != null) ...[
                       const SizedBox(height: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: growthUp
-                                ? AppColors.green
-                                : AppColors.red,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            growthLabel!,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                            ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: growthUp ? AppColors.green : AppColors.red,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          growthLabel!,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
-                      ],
+                      ),
                     ],
-                  ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
+      ),
     );
   }
 }
@@ -1307,7 +1260,8 @@ class WavePainter extends CustomPainter {
 }
 
 class CatalogTile extends StatelessWidget {
-  const CatalogTile({super.key, 
+  const CatalogTile({
+    super.key,
     required this.icon,
     required this.label,
     required this.value,
@@ -1333,10 +1287,7 @@ class CatalogTile extends StatelessWidget {
         decoration: BoxDecoration(
           color: soft,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: color.withValues(alpha: 0.28),
-            width: 1,
-          ),
+          border: Border.all(color: color.withValues(alpha: 0.28), width: 1),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1390,7 +1341,8 @@ class CatalogTile extends StatelessWidget {
 }
 
 class BillingTile extends StatelessWidget {
-  const BillingTile({super.key, 
+  const BillingTile({
+    super.key,
     required this.title,
     required this.subtitle,
     required this.icon,

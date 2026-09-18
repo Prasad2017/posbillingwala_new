@@ -49,15 +49,29 @@ if ($comboNetworkStatus !== '') {
         $userId,
         $comboNetworkStatus
     );
-    if ($combo !== null) {
-        $comboId = (string) $combo['comboId'];
+    if ($combo === null) {
+        $response['message'] = 'combo not found!';
+        echo json_encode($response);
+        exit;
     }
-}
-
-if ($comboId === '') {
-    $response['message'] = 'combo not found!';
-    echo json_encode($response);
-    exit;
+    $comboId = (string) $combo['comboId'];
+} else {
+    $ownedCombo = null;
+    if ($comboId !== '' && $comboId !== '0') {
+        $ownedCombo = db_stmt_fetch_one(
+            $con,
+            'SELECT `comboId` FROM `combos` WHERE `userId`=? AND `comboId`=? LIMIT 1',
+            'ss',
+            $userId,
+            $comboId
+        );
+    }
+    if ($ownedCombo === null) {
+        $response['message'] = 'combo not found!';
+        echo json_encode($response);
+        exit;
+    }
+    $comboId = (string) $ownedCombo['comboId'];
 }
 
 if ($productNetworkStatus !== '') {
@@ -68,12 +82,33 @@ if ($productNetworkStatus !== '') {
         $userId,
         $productNetworkStatus
     );
+    if ($prod === null && $comboItemStatus === 'active') {
+        $response['message'] = 'product not found!';
+        echo json_encode($response);
+        exit;
+    }
     if ($prod !== null) {
         $productId = (string) $prod['productId'];
     }
+} elseif ($productId !== '' && $productId !== '0') {
+    $ownedProduct = db_stmt_fetch_one(
+        $con,
+        'SELECT `productId` FROM `products` WHERE `userId`=? AND `productId`=? LIMIT 1',
+        'ss',
+        $userId,
+        $productId
+    );
+    if ($ownedProduct === null && $comboItemStatus === 'active') {
+        $response['message'] = 'product not found!';
+        echo json_encode($response);
+        exit;
+    }
+    if ($ownedProduct !== null) {
+        $productId = (string) $ownedProduct['productId'];
+    }
 }
 
-if ($productId === '' && $comboItemStatus === 'active') {
+if (($productId === '' || $productId === '0') && $comboItemStatus === 'active') {
     $response['message'] = 'product not found!';
     echo json_encode($response);
     exit;
@@ -82,10 +117,19 @@ if ($productId === '' && $comboItemStatus === 'active') {
 if ($portionNetworkStatus !== '') {
     $portion = db_stmt_fetch_one(
         $con,
-        'SELECT `portionId` FROM `product_portions` WHERE `portionNetworkStatus`=? LIMIT 1',
-        's',
+        'SELECT `portionId` FROM `product_portions` WHERE `userId`=? AND `portionNetworkStatus`=? LIMIT 1',
+        'ss',
+        $userId,
         $portionNetworkStatus
     );
+    if ($portion === null) {
+        $portion = db_stmt_fetch_one(
+            $con,
+            'SELECT `portionId` FROM `product_portions` WHERE `portionNetworkStatus`=? LIMIT 1',
+            's',
+            $portionNetworkStatus
+        );
+    }
     if ($portion !== null) {
         $portionId = (string) $portion['portionId'];
     }

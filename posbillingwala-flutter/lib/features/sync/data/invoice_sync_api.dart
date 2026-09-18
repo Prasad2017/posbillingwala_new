@@ -82,8 +82,9 @@ class InvoiceSyncApi {
         'upiAmount': invoice.upiAmount.toStringAsFixed(2),
         'diningSessionId': '${invoice.diningSessionId ?? ''}',
         'billPrintStatus': invoice.billPrintStatus,
-        'invoiceDate':
-            DateFormat('yyyy-MM-dd HH:mm:ss').format(invoice.invoiceDate),
+        'invoiceDate': DateFormat(
+          'yyyy-MM-dd HH:mm:ss',
+        ).format(invoice.invoiceDate),
         'invoiceType': invoice.invoiceType,
         'invoiceOrderStatus': invoice.invoiceOrderStatus,
         'invoiceNetworkStatus': invoice.invoiceNetworkStatus,
@@ -122,8 +123,8 @@ class InvoiceSyncApi {
         'portionName': item.portionName ?? '',
         'snapshotProductName':
             item.snapshotProductName?.trim().isNotEmpty == true
-                ? item.snapshotProductName!
-                : item.productName,
+            ? item.snapshotProductName!
+            : item.productName,
         'snapshotLinePrice': (item.snapshotLinePrice ?? item.productPrice)
             .toStringAsFixed(2),
         'invoiceItemType': item.invoiceItemType.trim().isEmpty
@@ -141,18 +142,16 @@ class InvoiceSyncApi {
   }
 
   /* Uploads one invoice combo component row (WithTable `saveInvoiceComboItem`). */
-  Future<bool> uploadInvoiceComboItem({
-    required InvoiceComboItem item,
-  }) async {
-    final network = item.invoiceComboItemNetworkStatus?.trim().isNotEmpty == true
+  Future<bool> uploadInvoiceComboItem({required InvoiceComboItem item}) async {
+    final network =
+        item.invoiceComboItemNetworkStatus?.trim().isNotEmpty == true
         ? item.invoiceComboItemNetworkStatus!
         : 'ici_${item.invoiceComboItemId}';
     final data = await invoiceSyncApiPost(
       ApiEndpoints.insertInvoiceComboItem,
       fields: {
         'invoiceNumber': item.invoiceNumber ?? '',
-        'invoiceProductNetworkStatus':
-            item.invoiceProductNetworkStatus ?? '',
+        'invoiceProductNetworkStatus': item.invoiceProductNetworkStatus ?? '',
         'comboNetworkStatus': item.comboNetworkStatus ?? '',
         'productId': item.productId == null ? '' : '${item.productId}',
         'productNetworkStatus': '',
@@ -173,9 +172,7 @@ class InvoiceSyncApi {
   }) async {
     final data = await invoiceSyncApiPost(
       ApiEndpoints.deleteInvoiceProduct,
-      fields: {
-        'invoiceProductNetworkStatus': invoiceProductNetworkStatus,
-      },
+      fields: {'invoiceProductNetworkStatus': invoiceProductNetworkStatus},
     );
     return isApiSuccess(data);
   }
@@ -185,6 +182,7 @@ class InvoiceSyncApi {
     String? invoiceDate,
     String? startDate,
     String? endDate,
+    bool staffScope = false,
   }) async {
     final data = await invoiceSyncApiGet(
       ApiEndpoints.getInvoiceList,
@@ -194,6 +192,8 @@ class InvoiceSyncApi {
           'invoiceDate': invoiceDate,
         if (startDate != null && startDate.isNotEmpty) 'startDate': startDate,
         if (endDate != null && endDate.isNotEmpty) 'endDate': endDate,
+        /* Sync omits this — always full licence. Reports pass true for staff. */
+        if (staffScope) 'staffScope': '1',
       },
     );
     return mapJsonList(
@@ -204,10 +204,11 @@ class InvoiceSyncApi {
 
   /* Web reports: range sales summary + invoice headers from cloud. */
   Future<({SalesReportSummary summary, List<CloudInvoiceDto> invoices})>
-      fetchPosSalesReport({
+  fetchPosSalesReport({
     required String userId,
     required String startDate,
     required String endDate,
+    bool staffScope = false,
   }) async {
     final data = await invoiceSyncApiGet(
       ApiEndpoints.getPosSalesReport,
@@ -215,6 +216,7 @@ class InvoiceSyncApi {
         'userId': userId,
         'startDate': startDate,
         'endDate': endDate,
+        if (staffScope) 'staffScope': '1',
       },
     );
     final status = '${data[ApiResponseKeys.status] ?? ''}'.toLowerCase();

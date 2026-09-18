@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class StaffSessionKeys {
   StaffSessionKeys._();
+
   static const staffId = 'staffId';
   static const staffName = 'staffName';
   static const staffMobile = 'staffMobile';

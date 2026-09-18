@@ -59,12 +59,14 @@ class InventoryPageState extends ConsumerState<InventoryPage>
       next.whenOrNull(
         data: (msg) {
           if (msg == null) return;
-          ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text(msg)));
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(msg)));
         },
         error: (e, _) {
-          ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text('$e')));
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('$e')));
         },
       );
     });
@@ -164,10 +166,7 @@ class InventoryPageState extends ConsumerState<InventoryPage>
       ),
       body: TabBarView(
         controller: inventoryPageTabs,
-        children: const [
-          StockTab(),
-          ExpensesTab(),
-        ],
+        children: const [StockTab(), ExpensesTab()],
       ),
     );
   }
@@ -206,8 +205,8 @@ class StockTabState extends ConsumerState<StockTab> {
         final filteredBalances = q.isEmpty
             ? balances
             : balances
-                .where((b) => b.productName.toLowerCase().contains(q))
-                .toList();
+                  .where((b) => b.productName.toLowerCase().contains(q))
+                  .toList();
         final filteredMoves = q.isEmpty
             ? rows
             : rows.where((row) {
@@ -281,8 +280,10 @@ class StockTabState extends ConsumerState<StockTab> {
               MasterSectionLabel(
                 'Current Stock',
                 trailing: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.primaryLight,
                     borderRadius: BorderRadius.circular(20),
@@ -364,7 +365,8 @@ class StockTabState extends ConsumerState<StockTab> {
 }
 
 class StockSummaryBar extends StatelessWidget {
-  const StockSummaryBar({super.key, 
+  const StockSummaryBar({
+    super.key,
     required this.productCount,
     required this.lowCount,
     required this.movementCount,
@@ -407,7 +409,8 @@ class StockSummaryBar extends StatelessWidget {
 }
 
 class SummaryChip extends StatelessWidget {
-  const SummaryChip({super.key, 
+  const SummaryChip({
+    super.key,
     required this.label,
     required this.value,
     required this.color,
@@ -541,18 +544,9 @@ class MovementTableHeader extends StatelessWidget {
       child: const Row(
         children: [
           Expanded(flex: 4, child: HeaderCell('Product / Type')),
-          Expanded(
-            flex: 2,
-            child: HeaderCell('In', align: TextAlign.center),
-          ),
-          Expanded(
-            flex: 2,
-            child: HeaderCell('Out', align: TextAlign.center),
-          ),
-          Expanded(
-            flex: 2,
-            child: HeaderCell('Bal', align: TextAlign.center),
-          ),
+          Expanded(flex: 2, child: HeaderCell('In', align: TextAlign.center)),
+          Expanded(flex: 2, child: HeaderCell('Out', align: TextAlign.center)),
+          Expanded(flex: 2, child: HeaderCell('Bal', align: TextAlign.center)),
         ],
       ),
     );

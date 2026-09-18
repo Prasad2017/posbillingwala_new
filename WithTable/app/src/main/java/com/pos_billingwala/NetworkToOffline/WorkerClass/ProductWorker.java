@@ -1,6 +1,7 @@
 package com.pos_billingwala.NetworkToOffline.WorkerClass;
 
 import android.content.Context;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.work.Data;
@@ -45,11 +46,12 @@ public class ProductWorker extends Worker {
                 if (productList != null && !productList.isEmpty()) {
                     database.addProductsBatchFromCloud(MainActivity.ownerId, productList);
                 }
+                return Result.success();
             }
-            return Result.success();
+            return Result.retry();
         } catch (Exception e) {
-            e.printStackTrace();
-            return Result.failure();
+            Log.e("ProductWorker", "doWork failed", e);
+            return Result.retry();
         }
     }
 }

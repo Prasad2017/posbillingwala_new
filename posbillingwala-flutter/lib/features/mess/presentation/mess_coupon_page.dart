@@ -5,13 +5,12 @@ import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
 import 'package:pos_billingwala_v2/core/network/online_guard.dart';
+import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
+import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/mess/data/mess_api.dart';
 import 'package:pos_billingwala_v2/features/print/domain/print_providers.dart';
-import 'package:pos_billingwala_v2/features/print/domain/print_service.dart';
-import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
-import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/language/app_strings.dart';
 
 /* Android InvoiceMess / CouponBluetoothPrint — paper meal coupon. */
@@ -56,15 +55,19 @@ class MessCouponPageState extends ConsumerState<MessCouponPage> {
   Future<void> issueAndPrint() async {
     if (messCouponPageUsed >= messCouponPageLimit) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Coupon limit $messCouponPageLimit reached for this member')),
+        SnackBar(
+          content: Text(
+            'Coupon limit $messCouponPageLimit reached for this member',
+          ),
+        ),
       );
       return;
     }
     if (AppPlatform.requiresNetwork && !await ensureOnline()) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(kOnlineRequiredMessage)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text(kOnlineRequiredMessage)));
       return;
     }
     setState(() => busy = true);
@@ -77,8 +80,8 @@ class MessCouponPageState extends ConsumerState<MessCouponPage> {
         messType: messCouponPageMessType,
       );
       final now = DateFormat('dd MMM yyyy, hh:mm a').format(DateTime.now());
-      final shop = ref.read(authControllerProvider).session?.shopName ??
-          'Billingwala';
+      final shop =
+          ref.read(authControllerProvider).session?.shopName ?? 'Billingwala';
       final text = StringBuffer()
         ..writeln(shop)
         ..writeln('MESS COUPON')
@@ -89,26 +92,26 @@ class MessCouponPageState extends ConsumerState<MessCouponPage> {
         ..writeln('MESS COUPON No: $couponNo')
         ..writeln('-' * 32)
         ..writeln();
-      final printResult = await ref.read(printServiceProvider).printRawText(
-            text.toString(),
-            label: 'Mess coupon',
-          );
+      await ref
+          .read(printServiceProvider)
+          .printRawText(text.toString(), label: 'Mess coupon');
 
       final userId = ref.read(authControllerProvider).session?.userId;
       var uploaded = false;
       if (userId != null && userId.isNotEmpty) {
         final row = await db.getMessInvoiceById(id);
         if (row != null) {
-          final ok =
-              await MessApi(ref.read(apiClientProvider)).insertMessInvoice(
-            userId: userId,
-            memberName: row.memberName,
-            messType: row.messType,
-            messInvoiceDate:
-                DateFormat('yyyy-MM-dd HH:mm:ss').format(row.messInvoiceDate),
-            messInvoiceNetworkStatus: row.messInvoiceNetworkStatus,
-            messInvoiceStatus: '0',
-          );
+          final ok = await MessApi(ref.read(apiClientProvider))
+              .insertMessInvoice(
+                userId: userId,
+                memberName: row.memberName,
+                messType: row.messType,
+                messInvoiceDate: DateFormat(
+                  'yyyy-MM-dd HH:mm:ss',
+                ).format(row.messInvoiceDate),
+                messInvoiceNetworkStatus: row.messInvoiceNetworkStatus,
+                messInvoiceStatus: '0',
+              );
           if (ok) {
             await db.markMessInvoiceSynced(id);
             uploaded = true;
@@ -117,21 +120,15 @@ class MessCouponPageState extends ConsumerState<MessCouponPage> {
       }
       if (AppPlatform.requiresNetwork && !uploaded) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text(kWebApiSaveFailedMessage)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text(kWebApiSaveFailedMessage)));
         return;
       }
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            printResult.outcome == PrintOutcome.failed
-                ? (printResult.message ?? 'Coupon saved (print failed)')
-                : 'Coupon #$couponNo issued',
-          ),
-        ),
+        const SnackBar(content: Text('Coupon saved')),
       );
       await loadCounts();
     } catch (e) {
@@ -149,61 +146,76 @@ class MessCouponPageState extends ConsumerState<MessCouponPage> {
       body: ResponsiveScrollShell(
         dashboard: true,
         child: ListView(
-        padding: EdgeInsets.all(
+          padding: EdgeInsets.all(
             AppBreakpoints.pagePaddingFor(context.widthClass),
           ),
-        children: [
-            const AppModuleIcon(icon: Icons.confirmation_number_rounded, color: AppColors.orange, size: 62),
+          children: [
+            const AppModuleIcon(
+              icon: Icons.confirmation_number_rounded,
+              color: AppColors.orange,
+              size: 62,
+            ),
             const SizedBox(height: 10),
-          AppCard(
-            accentColor: AppColors.teal,
-            padding: EdgeInsets.zero,
-            child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              leading: const AppModuleIcon(icon: Icons.person_rounded, color: AppColors.teal, size: 52),
-              title: Text(
-                widget.member.memberName,
-                style: const TextStyle(fontWeight: FontWeight.w800),
-              ),
-              subtitle: Text(
-                'Used $messCouponPageUsed / $messCouponPageLimit coupons',
+            AppCard(
+              accentColor: AppColors.teal,
+              padding: EdgeInsets.zero,
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 8,
+                ),
+                leading: const AppModuleIcon(
+                  icon: Icons.person_rounded,
+                  color: AppColors.teal,
+                  size: 52,
+                ),
+                title: Text(
+                  widget.member.memberName,
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+                subtitle: Text(
+                  'Used $messCouponPageUsed / $messCouponPageLimit coupons',
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 16),
-          const SizedBox(height: 4),
-          const AppModuleIcon(icon: Icons.restaurant_menu_rounded, color: AppColors.orange, size: 54),
-          const SizedBox(height: 8),
-          Text(
-            'Choose meal type',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            children: ['Lunch', 'Dinner', 'Breakfast', 'Snacks']
-                .map(
-                  (t) => ChoiceChip(
-                    label: Text(t),
-                    selected: messCouponPageMessType == t,
-                    onSelected: busy
-                        ? null
-                        : (_) => setState(() => messCouponPageMessType = t),
-                  ),
-                )
-                .toList(),
-          ),
-          const SizedBox(height: 24),
-          AppButton(
-            label: 'Print coupon',
-            isLoading: busy,
-            expanded: false,
-            onPressed: issueAndPrint,
-          ),
-        ],
-      ),
+            const SizedBox(height: 16),
+            const SizedBox(height: 4),
+            const AppModuleIcon(
+              icon: Icons.restaurant_menu_rounded,
+              color: AppColors.orange,
+              size: 54,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Choose meal type',
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              children: ['Lunch', 'Dinner', 'Breakfast', 'Snacks']
+                  .map(
+                    (t) => ChoiceChip(
+                      label: Text(t),
+                      selected: messCouponPageMessType == t,
+                      onSelected: busy
+                          ? null
+                          : (_) => setState(() => messCouponPageMessType = t),
+                    ),
+                  )
+                  .toList(),
+            ),
+            const SizedBox(height: 24),
+            AppButton(
+              label: 'Print coupon',
+              isLoading: busy,
+              expanded: false,
+              onPressed: issueAndPrint,
+            ),
+          ],
+        ),
       ),
     );
   }

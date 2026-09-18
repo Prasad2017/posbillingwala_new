@@ -5,17 +5,22 @@ import 'package:flutter/services.dart';
 import 'package:pos_billingwala_v2/core/logging/app_logger.dart';
 import 'package:pos_billingwala_v2/features/print/domain/bluetooth_printer_hub.dart';
 
-/* Android MethodChannel to WithTable [BluetoothPrintService] + WoosimService. */
+/* Legacy Android Woosim MethodChannel — kept for reference / optional debug. */
+/* Bill / KOT printing now uses [BluetoothPrinterHub] + print_bluetooth_thermal */
+/* on Android and iOS (same shared ESC/POS raster bytes). */
 class WoosimPrintChannel {
   WoosimPrintChannel();
 
   static const methodChannel = MethodChannel('pos_billingwala/woosim_print');
   static final WoosimPrintChannel instance = WoosimPrintChannel();
 
-  static bool get isSupported => !kIsWeb && Platform.isAndroid;
+  /* Disabled: Android uses the same Dart BT path as iOS. */
+  static bool get isSupported => false;
+
+  static bool get isAndroidNativeAvailable => !kIsWeb && Platform.isAndroid;
 
   Future<bool> connect(PrinterChannelKind kind, String mac) async {
-    if (!isSupported || mac.trim().isEmpty) return false;
+    if (!isAndroidNativeAvailable || mac.trim().isEmpty) return false;
     try {
       final ok = await methodChannel.invokeMethod<bool>('connect', {
         'kind': kind.name,
@@ -29,7 +34,7 @@ class WoosimPrintChannel {
   }
 
   Future<bool> write(PrinterChannelKind kind, List<int> bytes) async {
-    if (!isSupported || bytes.isEmpty) return false;
+    if (!isAndroidNativeAvailable || bytes.isEmpty) return false;
     try {
       final ok = await methodChannel.invokeMethod<bool>('write', {
         'kind': kind.name,
@@ -43,7 +48,7 @@ class WoosimPrintChannel {
   }
 
   Future<void> disconnect(PrinterChannelKind kind) async {
-    if (!isSupported) return;
+    if (!isAndroidNativeAvailable) return;
     try {
       await methodChannel.invokeMethod<void>('disconnect', {'kind': kind.name});
     } catch (error) {
@@ -52,7 +57,7 @@ class WoosimPrintChannel {
   }
 
   Future<bool> isReady(PrinterChannelKind kind) async {
-    if (!isSupported) return false;
+    if (!isAndroidNativeAvailable) return false;
     try {
       final ok = await methodChannel.invokeMethod<bool>('isReady', {
         'kind': kind.name,

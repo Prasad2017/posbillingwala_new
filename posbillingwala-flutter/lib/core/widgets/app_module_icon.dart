@@ -38,26 +38,22 @@ class AppModuleIcon extends StatelessWidget {
         child: svgPath != null
             ? Padding(
                 padding: EdgeInsets.all(size * 0.2),
-                child: AppSvg(
-                  svgPath!,
-                  color: color,
-                  fit: BoxFit.contain,
-                ),
+                child: AppSvg(svgPath!, color: color, fit: BoxFit.contain),
               )
             : assetPath != null
-                ? Padding(
-                    padding: EdgeInsets.all(size * 0.18),
-                    child: Image.asset(
-                      assetPath!,
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) => Icon(
-                        icon ?? Icons.image_outlined,
-                        color: color,
-                        size: size * 0.48,
-                      ),
-                    ),
-                  )
-                : Icon(icon, color: color, size: size * 0.48),
+            ? Padding(
+                padding: EdgeInsets.all(size * 0.18),
+                child: Image.asset(
+                  assetPath!,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) => Icon(
+                    icon ?? Icons.image_outlined,
+                    color: color,
+                    size: size * 0.48,
+                  ),
+                ),
+              )
+            : Icon(icon, color: color, size: size * 0.48),
       ),
     );
   }
@@ -89,10 +85,7 @@ class AppAssetImage extends StatelessWidget {
         width: width,
         height: height,
         child: const Center(
-          child: Text(
-            '•',
-            style: TextStyle(fontFamily: AppFonts.family),
-          ),
+          child: Text('•', style: TextStyle(fontFamily: AppFonts.family)),
         ),
       ),
     );

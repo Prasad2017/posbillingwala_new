@@ -50,34 +50,49 @@ if ($productNetworkStatus !== '') {
         $userId,
         $productNetworkStatus
     );
-    if ($prod !== null) {
-        $productId = (string) $prod['productId'];
+    if ($prod === null) {
+        $response['message'] = 'product not found!';
+        echo json_encode($response);
+        exit;
     }
+    $productId = (string) $prod['productId'];
+} else {
+    $owned = null;
+    if ($productId !== '' && $productId !== '0') {
+        $owned = db_stmt_fetch_one(
+            $con,
+            'SELECT `productId` FROM `products` WHERE `userId`=? AND `productId`=? LIMIT 1',
+            'ss',
+            $userId,
+            $productId
+        );
+    }
+    if ($owned === null) {
+        $response['message'] = 'product not found!';
+        echo json_encode($response);
+        exit;
+    }
+    $productId = (string) $owned['productId'];
 }
 
-if ($productId === '') {
-    $response['message'] = 'product not found!';
-    echo json_encode($response);
-    exit;
-}
-
-// Resolve Portion Master (preferred: id / network key; legacy: create/find by name)
+// Resolve Portion Master (preferred: network key, then id, then name)
 $master = null;
-if ($portionMasterId !== '') {
+if ($portionMasterNetworkStatus !== '') {
+    $master = db_stmt_fetch_one(
+        $con,
+        'SELECT * FROM `portion_master` WHERE `userId`=? AND `portionMasterNetworkStatus`=? LIMIT 1',
+        'ss',
+        $userId,
+        $portionMasterNetworkStatus
+    );
+}
+if ($master === null && $portionMasterId !== '' && $portionMasterId !== '0') {
     $master = db_stmt_fetch_one(
         $con,
         'SELECT * FROM `portion_master` WHERE `portionMasterId`=? AND `userId`=? LIMIT 1',
         'ss',
         $portionMasterId,
         $userId
-    );
-}
-if ($master === null && $portionMasterNetworkStatus !== '') {
-    $master = db_stmt_fetch_one(
-        $con,
-        'SELECT * FROM `portion_master` WHERE `portionMasterNetworkStatus`=? LIMIT 1',
-        's',
-        $portionMasterNetworkStatus
     );
 }
 if ($master === null && $portionName !== '') {

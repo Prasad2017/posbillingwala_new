@@ -2,9 +2,8 @@ import 'package:flutter/foundation.dart';
 
 /* Central platform capability gates (POS upgrade plan §5.4). */
 /* */
-/* - **Android / iOS:** online + offline. Local Drift always; when online also */
-/*   push/pull API. Auto-sync (upload then merge-download) whenever internet */
-/*   is available — reconnect, resume, periodic, after a bill. No user toggle. */
+/* - **Android / iOS:** offline-first. UI always reads local Drift; when online */
+/*   auto-sync push/pull every 2 minutes (also reconnect, resume, after bill). */
 /* - **Web:** online-only + API-first. Every write must reach the cloud API; */
 /*   Drift is a short-lived cache refreshed from the server. */
 abstract final class AppPlatform {

@@ -29,14 +29,17 @@ class TablesPageState extends ConsumerState<TablesPage> {
     final strings = AppStrings.of(ref);
     final areasAsync = ref.watch(diningAreasProvider);
     final currency = NumberFormat.currency(locale: 'en_IN', symbol: '₹');
-    final areas = areasAsync.maybeWhen(data: (v) => v, orElse: () => const <DiningArea>[]);
+    final areas = areasAsync.maybeWhen(
+      data: (v) => v,
+      orElse: () => const <DiningArea>[],
+    );
 
     ref.listen(tablesControllerProvider, (prev, next) {
       next.whenOrNull(
         error: (error, _) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('$error')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('$error')));
         },
       );
     });
@@ -46,9 +49,7 @@ class TablesPageState extends ConsumerState<TablesPage> {
         : floor.where((t) => t.table.areaId == selectedAreaId).toList();
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(strings.dineInTables),
-      ),
+      appBar: AppBar(title: Text(strings.dineInTables)),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -65,7 +66,9 @@ class TablesPageState extends ConsumerState<TablesPage> {
                   ),
                   ...areas.map(
                     (a) => AreaChip(
-                      label: a.areaName.isEmpty ? 'Area ${a.areaId}' : a.areaName,
+                      label: a.areaName.isEmpty
+                          ? 'Area ${a.areaId}'
+                          : a.areaName,
                       selected: selectedAreaId == a.areaId,
                       onTap: () => setState(() => selectedAreaId = a.areaId),
                     ),
@@ -78,8 +81,14 @@ class TablesPageState extends ConsumerState<TablesPage> {
             padding: const EdgeInsets.fromLTRB(12, 2, 12, 6),
             child: Row(
               children: [
-                LegendDot(label: strings.tableAvailable, color: AppColors.success),
-                LegendDot(label: strings.tableRunning, color: AppColors.warning),
+                LegendDot(
+                  label: strings.tableAvailable,
+                  color: AppColors.success,
+                ),
+                LegendDot(
+                  label: strings.tableRunning,
+                  color: AppColors.warning,
+                ),
                 LegendDot(label: strings.tableHold, color: AppColors.orange),
                 LegendDot(label: strings.tableBill, color: AppColors.purple),
                 LegendDot(label: strings.tableBlocked, color: AppColors.red),
@@ -91,7 +100,10 @@ class TablesPageState extends ConsumerState<TablesPage> {
             padding: const EdgeInsets.fromLTRB(14, 2, 14, 8),
             child: Text(
               strings.longPressTableHint,
-              style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+              style: const TextStyle(
+                fontSize: 11,
+                color: AppColors.textSecondary,
+              ),
             ),
           ),
           Expanded(
@@ -103,10 +115,10 @@ class TablesPageState extends ConsumerState<TablesPage> {
                   )
                 : LayoutBuilder(
                     builder: (context, constraints) {
-                      final widthClass =
-                          AppBreakpoints.ofWidth(constraints.maxWidth);
-                      final cols =
-                          AppBreakpoints.tableColumnsFor(widthClass);
+                      final widthClass = AppBreakpoints.ofWidth(
+                        constraints.maxWidth,
+                      );
+                      final cols = AppBreakpoints.tableColumnsFor(widthClass);
                       final useXy = filtered.any(
                         (t) =>
                             (t.table.positionX ?? 0) != 0 ||
@@ -117,12 +129,8 @@ class TablesPageState extends ConsumerState<TablesPage> {
                           floor: item,
                           currency: currency,
                           onTap: () => onTableTap(context, ref, item),
-                          onLongPress: () => onTableActions(
-                            context,
-                            ref,
-                            item,
-                            floor,
-                          ),
+                          onLongPress: () =>
+                              onTableActions(context, ref, item, floor),
                         );
                       }
 
@@ -181,8 +189,10 @@ class TablesPageState extends ConsumerState<TablesPage> {
                       final pad = AppBreakpoints.pagePaddingFor(widthClass);
                       final gap = 12.0;
                       final cardWidth =
-                          (constraints.maxWidth - (pad * 2) - (gap * (cols - 1))) /
-                              cols;
+                          (constraints.maxWidth -
+                              (pad * 2) -
+                              (gap * (cols - 1))) /
+                          cols;
 
                       return ResponsiveScrollShell(
                         dashboard: true,
@@ -193,10 +203,7 @@ class TablesPageState extends ConsumerState<TablesPage> {
                             runSpacing: gap,
                             children: [
                               for (final item in filtered)
-                                SizedBox(
-                                  width: cardWidth,
-                                  child: card(item),
-                                ),
+                                SizedBox(width: cardWidth, child: card(item)),
                             ],
                           ),
                         ),
@@ -228,9 +235,7 @@ class TablesPageState extends ConsumerState<TablesPage> {
       context.push('/tables/billing');
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$e')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
     }
   }
 
@@ -245,7 +250,8 @@ class TablesPageState extends ConsumerState<TablesPage> {
       return;
     }
 
-    final occupied = floor.status == FloorTableStatus.running ||
+    final occupied =
+        floor.status == FloorTableStatus.running ||
         floor.status == FloorTableStatus.hold ||
         floor.status == FloorTableStatus.billRequest;
     final strings = AppStrings.of(ref);
@@ -329,7 +335,9 @@ class TablesPageState extends ConsumerState<TablesPage> {
         context.push('/tables/payment');
       } catch (e) {
         if (!context.mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$e')));
       }
       return;
     }
@@ -424,9 +432,9 @@ class TablesPageState extends ConsumerState<TablesPage> {
           .read(tablesControllerProvider.notifier)
           .splitJoined(floor.openSession!.sessionId);
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Joined tables split')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Joined tables split')));
       return;
     }
 
@@ -440,38 +448,44 @@ class TablesPageState extends ConsumerState<TablesPage> {
     }
 
     if (action == 'hold' && floor.openSession != null) {
-      await ref.read(tablesControllerProvider.notifier).setSessionStatus(
+      await ref
+          .read(tablesControllerProvider.notifier)
+          .setSessionStatus(
             sessionId: floor.openSession!.sessionId,
             status: 'HOLD',
           );
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Table on hold')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Table on hold')));
       return;
     }
 
     if (action == 'resume' && floor.openSession != null) {
-      await ref.read(tablesControllerProvider.notifier).setSessionStatus(
+      await ref
+          .read(tablesControllerProvider.notifier)
+          .setSessionStatus(
             sessionId: floor.openSession!.sessionId,
             status: 'RUNNING',
           );
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Table resumed')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Table resumed')));
       return;
     }
 
     if (action == 'bill' && floor.openSession != null) {
-      await ref.read(tablesControllerProvider.notifier).setSessionStatus(
+      await ref
+          .read(tablesControllerProvider.notifier)
+          .setSessionStatus(
             sessionId: floor.openSession!.sessionId,
             status: 'BILL_REQUEST',
           );
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Bill requested')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Bill requested')));
       return;
     }
 
@@ -510,7 +524,9 @@ class TablesPageState extends ConsumerState<TablesPage> {
       if (target == null || !context.mounted) return;
       try {
         if (action == 'transfer') {
-          await ref.read(tablesControllerProvider.notifier).transferTable(
+          await ref
+              .read(tablesControllerProvider.notifier)
+              .transferTable(
                 fromTable: floor.billingTableNumber,
                 toTable: target.table.tableNumber,
               );
@@ -520,9 +536,9 @@ class TablesPageState extends ConsumerState<TablesPage> {
               .getCartItems(cartScope: floor.billingTableNumber);
           if (items.isEmpty) {
             if (!context.mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('No items to move')),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text('No items to move')));
             return;
           }
           if (!context.mounted) return;
@@ -533,7 +549,9 @@ class TablesPageState extends ConsumerState<TablesPage> {
             builder: (context) => MoveItemsSheet(items: items),
           );
           if (selected == null || selected.isEmpty || !context.mounted) return;
-          await ref.read(tablesControllerProvider.notifier).moveItems(
+          await ref
+              .read(tablesControllerProvider.notifier)
+              .moveItems(
                 fromTable: floor.billingTableNumber,
                 toTable: target.table.tableNumber,
                 items: selected,
@@ -551,9 +569,9 @@ class TablesPageState extends ConsumerState<TablesPage> {
         );
       } catch (e) {
         if (!context.mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$e')));
       }
       return;
     }
@@ -594,7 +612,9 @@ class TablesPageState extends ConsumerState<TablesPage> {
       if (secondary == null || !context.mounted) return;
 
       try {
-        await ref.read(tablesControllerProvider.notifier).joinTables(
+        await ref
+            .read(tablesControllerProvider.notifier)
+            .joinTables(
               primaryTable: floor.billingTableNumber,
               secondaryTable: secondary.table.tableNumber,
             );
@@ -608,16 +628,17 @@ class TablesPageState extends ConsumerState<TablesPage> {
         );
       } catch (e) {
         if (!context.mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$e')));
       }
     }
   }
 }
 
 class AreaChip extends StatelessWidget {
-  const AreaChip({super.key, 
+  const AreaChip({
+    super.key,
     required this.label,
     required this.selected,
     required this.onTap,
@@ -632,8 +653,18 @@ class AreaChip extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: ChoiceChip(
-        label: Text(label),
+        label: Text(
+          label,
+          style: TextStyle(
+            color: selected ? Colors.white : AppColors.navy,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
         selected: selected,
+        selectedColor: AppColors.navy,
+        backgroundColor: AppColors.primaryLight,
+        checkmarkColor: Colors.white,
+        side: BorderSide.none,
         onSelected: (_) => onTap(),
       ),
     );
@@ -667,7 +698,8 @@ class LegendDot extends StatelessWidget {
 }
 
 class TableCard extends StatelessWidget {
-  const TableCard({super.key, 
+  const TableCard({
+    super.key,
     required this.floor,
     required this.currency,
     required this.onTap,
@@ -679,37 +711,20 @@ class TableCard extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onLongPress;
 
-  Color get bg {
-    switch (floor.status) {
-      case FloorTableStatus.available:
-        return AppColors.success.withValues(alpha: 0.12);
-      case FloorTableStatus.running:
-        return AppColors.warning.withValues(alpha: 0.16);
-      case FloorTableStatus.hold:
-        return Colors.blueGrey.withValues(alpha: 0.16);
-      case FloorTableStatus.billRequest:
-        return AppColors.primary.withValues(alpha: 0.16);
-      case FloorTableStatus.blocked:
-        return AppColors.danger.withValues(alpha: 0.12);
-      case FloorTableStatus.reserved:
-        return AppColors.primaryLight;
-    }
-  }
-
-  Color get fg {
+  Color get statusColor {
     switch (floor.status) {
       case FloorTableStatus.available:
         return AppColors.success;
       case FloorTableStatus.running:
         return AppColors.warning;
       case FloorTableStatus.hold:
-        return Colors.blueGrey.shade700;
+        return AppColors.orange;
       case FloorTableStatus.billRequest:
-        return AppColors.primary;
+        return AppColors.purple;
       case FloorTableStatus.blocked:
-        return AppColors.danger;
+        return AppColors.red;
       case FloorTableStatus.reserved:
-        return AppColors.primary;
+        return AppColors.teal;
     }
   }
 
@@ -720,33 +735,32 @@ class TableCard extends StatelessWidget {
         ? 'Table ${table.tableNumber}'
         : table.displayName;
     final typeLabel = floor.tableTypeName.trim();
-    final meta = floor.joinedLabel ??
-        (table.capacity > 0
-            ? 'Seats ${table.capacity}'
-            : 'Table ${table.tableNumber}');
+    final seatsLabel = floor.joinedLabel ??
+        (table.capacity > 0 ? 'Seats ${table.capacity}' : null);
+    final color = statusColor;
 
     return Container(
       decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: fg.withValues(alpha: .18)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color, width: 2),
         boxShadow: [
           BoxShadow(
-            color: fg.withValues(alpha: .06),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
+            color: AppColors.navy.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(16),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
           onLongPress: onLongPress,
           child: Padding(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -757,22 +771,31 @@ class TableCard extends StatelessWidget {
                       AppAssets.svgTable,
                       width: 22,
                       height: 22,
-                      color: fg,
+                      color: color,
                     ),
                     const Spacer(),
-                    AppStatusBadge(
-                      label: floor.statusLabel,
-                      color: fg,
+                    Container(
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: color.withValues(alpha: 0.35),
+                          width: 2,
+                        ),
+                      ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 12),
                 Text(
                   name,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.navy,
-                      ),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 18,
+                    color: AppColors.navy,
+                  ),
                 ),
                 if (typeLabel.isNotEmpty) ...[
                   const SizedBox(height: 4),
@@ -780,54 +803,54 @@ class TableCard extends StatelessWidget {
                     typeLabel,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontFamily: Theme.of(context).textTheme.bodySmall?.fontFamily,
-                      color: fg,
+                    style: const TextStyle(
+                      color: AppColors.navy,
                       fontWeight: FontWeight.w700,
-                      fontSize: 12.5,
+                      fontSize: 13,
                     ),
                   ),
                 ],
-                const SizedBox(height: 4),
-                Text(
-                  meta,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                ),
-                if (floor.openSession != null) ...[
+                if ((seatsLabel != null && seatsLabel.isNotEmpty) ||
+                    floor.currentAmount > 0 ||
+                    floor.isJoinedSecondary) ...[
                   const SizedBox(height: 4),
-                  Text(
-                    '${floor.openSession!.guestCount} guest'
-                    '${floor.openSession!.guestCount == 1 ? '' : 's'}'
-                    '${(floor.openSession!.waiterName ?? '').trim().isEmpty ? '' : ' · ${floor.openSession!.waiterName}'}',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.textSecondary,
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      if (seatsLabel != null && seatsLabel.isNotEmpty)
+                        Expanded(
+                          child: Text(
+                            seatsLabel,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: AppColors.navy.withValues(alpha: 0.55),
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12.5,
+                            ),
+                          ),
+                        )
+                      else
+                        const Spacer(),
+                      if (floor.currentAmount > 0)
+                        Text(
+                          currency.format(floor.currentAmount),
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 14,
+                          ),
+                        )
+                      else if (floor.isJoinedSecondary)
+                        Text(
+                          'Joined → T${floor.billingTableNumber}',
+                          style: TextStyle(
+                            color: color,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                          ),
                         ),
-                  ),
-                ],
-                if (floor.currentAmount > 0) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    currency.format(floor.currentAmount),
-                    style: TextStyle(
-                      color: fg,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ] else if (floor.isJoinedSecondary) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    'Joined → T${floor.billingTableNumber}',
-                    style: TextStyle(
-                      color: fg,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12,
-                    ),
+                    ],
                   ),
                 ],
               ],

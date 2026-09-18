@@ -10,6 +10,7 @@ import 'package:pos_billingwala_v2/core/database/database_provider.dart';
 import 'package:pos_billingwala_v2/core/network/online_guard.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
+import 'package:pos_billingwala_v2/core/utils/money_format.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/billing_session.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/payment_checkout_controller.dart';
@@ -59,10 +60,9 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
       customerEmailController.text = session.customerEmail ?? '';
       customerAddressController.text = session.customerAddress ?? '';
       final summary = ref.read(cartSummaryProvider);
-      final total = ref.read(paymentCheckoutControllerProvider).payableTotal(
-            subtotal: summary.subtotal,
-            taxTotal: summary.taxTotal,
-          );
+      final total = ref
+          .read(paymentCheckoutControllerProvider)
+          .payableTotal(subtotal: summary.subtotal, taxTotal: summary.taxTotal);
       ref
           .read(paymentCheckoutControllerProvider.notifier)
           .setDiscount(0, type: 'Percent');
@@ -87,7 +87,9 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
   }
 
   void persistCustomer() {
-    ref.read(billingSessionProvider.notifier).updateCustomer(
+    ref
+        .read(billingSessionProvider.notifier)
+        .updateCustomer(
           name: customerNameController.text,
           phone: customerPhoneController.text,
           email: customerEmailController.text,
@@ -116,12 +118,14 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
 
   void syncControllers() {
     final state = ref.read(paymentCheckoutControllerProvider);
-    cashController.text = state.cashAmount.toStringAsFixed(2);
-    upiController.text = state.upiAmount.toStringAsFixed(2);
+    cashController.text = amountInputText(state.cashAmount);
+    upiController.text = amountInputText(state.upiAmount);
   }
 
-  double paymentPagePayable(CartSummary summary, PaymentCheckoutState checkout) =>
-      checkoutPayable(summary, checkout);
+  double paymentPagePayable(
+    CartSummary summary,
+    PaymentCheckoutState checkout,
+  ) => checkoutPayable(summary, checkout);
 
   Future<bool> confirmPaymentMode() async {
     final summary = ref.read(cartSummaryProvider);
@@ -142,12 +146,10 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
           initialUpi: checkout.upiAmount,
           onContinue: (mode, cash, upi) {
             final n = ref.read(paymentCheckoutControllerProvider.notifier);
-            n.selectMode(mode, total);
             if (mode == PaymentMode.cashPlusUpi) {
-              n.setCashAmount(cash, total);
-              if ((cash + upi - total).abs() > 0.05) {
-                n.setUpiAmount(upi, total);
-              }
+              n.setSplitAmounts(cash: cash, upi: upi);
+            } else {
+              n.selectMode(mode, total);
             }
             Navigator.pop(sheetContext, true);
           },
@@ -176,13 +178,13 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
             initialTransport: settings.billTransport == PosPrinterTransport.usb
                 ? PosPrinterTransport.usb
                 : settings.billTransport == PosPrinterTransport.network
-                    ? PosPrinterTransport.network
-                    : PosPrinterTransport.bluetooth,
+                ? PosPrinterTransport.network
+                : PosPrinterTransport.bluetooth,
             title: settings.billTransport == PosPrinterTransport.usb
                 ? 'Select USB printer'
                 : settings.billTransport == PosPrinterTransport.network
-                    ? 'Select network printer'
-                    : 'Select Bluetooth printer',
+                ? 'Select network printer'
+                : 'Select Bluetooth printer',
           ),
         ),
       );
@@ -225,8 +227,10 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
         }
         if (mac.isEmpty) return false;
         if (await hub.ensureReady(PrinterChannelKind.bill)) return true;
-        final connected =
-            await hub.connect(PrinterChannelKind.bill, address: mac);
+        final connected = await hub.connect(
+          PrinterChannelKind.bill,
+          address: mac,
+        );
         if (connected) return true;
         if (!await pickBillPrinter()) return false;
         settings = ref.read(printerSettingsProvider);
@@ -290,6 +294,20 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
     );
   }
 
+  /* Save Invoice: payment mode dialog → Continue → save only. */
+  Future<void> openSaveInvoiceFlow() async {
+    if (!await confirmPaymentMode()) return;
+    if (!mounted) return;
+    await complete(printAfterSave: false, preferShare: false);
+  }
+
+  /* Share Invoice: payment mode dialog → Continue → save then share. */
+  Future<void> openShareInvoiceFlow() async {
+    if (!await confirmPaymentMode()) return;
+    if (!mounted) return;
+    await complete(printAfterSave: false, preferShare: true);
+  }
+
   Future<void> complete({
     bool printAfterSave = false,
     bool preferShare = false,
@@ -298,9 +316,9 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
     final strings = AppStrings.of(ref);
     if (!ref.read(permissionControllerProvider).allows('bill.create')) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(strings.moduleLocked)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(strings.moduleLocked)));
       return;
     }
     persistCustomer();
@@ -322,7 +340,8 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
         preferShare: preferShare,
       );
       if (!mounted) return;
-      final printedOk = printResult.outcome != PrintOutcome.failed &&
+      final printedOk =
+          printResult.outcome != PrintOutcome.failed &&
           printResult.outcome != PrintOutcome.previewOnly;
       if (requirePrintSuccess && !printedOk) {
         await ref
@@ -376,8 +395,8 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
               sync.message?.trim().isNotEmpty == true
                   ? sync.message!
                   : AppPlatform.requiresNetwork
-                      ? kWebApiSaveFailedMessage
-                      : 'Bill saved on device — cloud upload failed; will retry when online.',
+                  ? kWebApiSaveFailedMessage
+                  : 'Bill saved',
             ),
             backgroundColor: AppPlatform.requiresNetwork
                 ? AppColors.danger
@@ -399,10 +418,9 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
 
     if (AppPlatform.supportsOfflineSync) {
       unawaited(
-        ref.read(connectivitySyncListenerProvider).syncNow(
-              force: retryAutoSync,
-              reason: 'after-bill',
-            ),
+        ref
+            .read(connectivitySyncListenerProvider)
+            .syncNow(force: retryAutoSync, reason: 'after-bill'),
       );
     }
 
@@ -423,13 +441,13 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
           if (!requirePrintSuccess)
             TextButton(
               onPressed: () async {
-                final printResult =
-                    await printInvoiceById(ref, result.invoiceId);
+                final printResult = await printInvoiceById(
+                  ref,
+                  result.invoiceId,
+                );
                 if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(printResult.message ?? 'Print done'),
-                  ),
+                  SnackBar(content: Text(printResult.message ?? 'Print done')),
                 );
               },
               child: Text(strings.printShare),
@@ -463,7 +481,8 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
     final checkout = ref.watch(paymentCheckoutControllerProvider);
     final session = ref.watch(billingSessionProvider);
     final printerSettings = ref.watch(printerSettingsProvider);
-    final showCustomer = printerSettings.customerUse ||
+    final showCustomer =
+        printerSettings.customerUse ||
         session.invoiceType == 'take_away' ||
         (session.customerName?.trim().isNotEmpty ?? false) ||
         (session.customerPhone?.trim().isNotEmpty ?? false) ||
@@ -475,20 +494,16 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
     ref.listen(paymentCheckoutControllerProvider, (prev, next) {
       if (next.errorMessage != null &&
           next.errorMessage != prev?.errorMessage) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(next.errorMessage!)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(next.errorMessage!)));
       }
     });
 
     if (summary.isEmpty && checkout.result == null) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text('Payment'),
-        ),
-        body: Center(
-          child: Text(AppStrings.of(ref).cartEmptyPay),
-        ),
+        appBar: AppBar(title: const Text('Payment')),
+        body: Center(child: Text(AppStrings.of(ref).cartEmptyPay)),
       );
     }
 
@@ -578,23 +593,14 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
               icon: const Icon(Icons.more_vert_rounded, color: Colors.white),
               onSelected: (value) async {
                 if (value == 'save') {
-                  await complete(printAfterSave: false);
+                  await openSaveInvoiceFlow();
                 } else if (value == 'share') {
-                  await complete(
-                    printAfterSave: false,
-                    preferShare: true,
-                  );
+                  await openShareInvoiceFlow();
                 }
               },
               itemBuilder: (context) => const [
-                PopupMenuItem(
-                  value: 'save',
-                  child: Text('Save Invoice'),
-                ),
-                PopupMenuItem(
-                  value: 'share',
-                  child: Text('Share Invoice'),
-                ),
+                PopupMenuItem(value: 'save', child: Text('Save Invoice')),
+                PopupMenuItem(value: 'share', child: Text('Share Invoice')),
               ],
             ),
           ],
@@ -813,8 +819,9 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
                       type: checkout.discountType,
                       subtotal: summary.subtotal,
                     );
-                    final clamped =
-                        ref.read(paymentCheckoutControllerProvider).discount;
+                    final clamped = ref
+                        .read(paymentCheckoutControllerProvider)
+                        .discount;
                     if ((clamped - d).abs() > 0.001) {
                       final text = clamped == clamped.roundToDouble()
                           ? clamped.toStringAsFixed(0)
@@ -836,17 +843,14 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
                   onDiscountTypeChanged: (type) {
                     final d =
                         double.tryParse(paymentPageDiscountController.text) ??
-                            0;
+                        0;
                     final n = ref.read(
                       paymentCheckoutControllerProvider.notifier,
                     );
-                    n.setDiscount(
-                      d,
-                      type: type,
-                      subtotal: summary.subtotal,
-                    );
-                    final clamped =
-                        ref.read(paymentCheckoutControllerProvider).discount;
+                    n.setDiscount(d, type: type, subtotal: summary.subtotal);
+                    final clamped = ref
+                        .read(paymentCheckoutControllerProvider)
+                        .discount;
                     if ((clamped - d).abs() > 0.001 &&
                         paymentPageDiscountController.text.isNotEmpty) {
                       final text = clamped == clamped.roundToDouble()
@@ -900,8 +904,9 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
                           style: FilledButton.styleFrom(
                             backgroundColor: Colors.white,
                             foregroundColor: AppColors.primary,
-                            disabledBackgroundColor:
-                                Colors.white.withValues(alpha: 0.7),
+                            disabledBackgroundColor: Colors.white.withValues(
+                              alpha: 0.7,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14),
                             ),
@@ -1082,4 +1087,3 @@ class CircleQtyButton extends StatelessWidget {
     );
   }
 }
-

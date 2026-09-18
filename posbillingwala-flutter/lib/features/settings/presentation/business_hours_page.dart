@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/company/data/company_api.dart';
 import 'package:pos_billingwala_v2/features/company/data/company_dtos.dart';
-import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /* Matches `dialog_business_hours.xml`: opening + closing time values only. */
 class BusinessHoursPage extends ConsumerStatefulWidget {
@@ -61,8 +61,9 @@ class BusinessHoursPageState extends ConsumerState<BusinessHoursPage> {
     final userId = ref.read(authControllerProvider).session?.userId;
     if (userId != null && userId.isNotEmpty) {
       try {
-        final companies =
-            await CompanyApi(ref.read(apiClientProvider)).getCompanyList(userId);
+        final companies = await CompanyApi(
+          ref.read(apiClientProvider),
+        ).getCompanyList(userId);
         if (companies.isNotEmpty) {
           final c = companies.first;
           final open = parseStored(c.openingMinutes);
@@ -78,12 +79,18 @@ class BusinessHoursPageState extends ConsumerState<BusinessHoursPage> {
   }
 
   Future<void> pickOpen() async {
-    final picked = await showTimePicker(context: context, initialTime: businessHoursPageOpen);
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: businessHoursPageOpen,
+    );
     if (picked != null) setState(() => businessHoursPageOpen = picked);
   }
 
   Future<void> pickClose() async {
-    final picked = await showTimePicker(context: context, initialTime: businessHoursPageClose);
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: businessHoursPageClose,
+    );
     if (picked != null) setState(() => businessHoursPageClose = picked);
   }
 
@@ -102,8 +109,9 @@ class BusinessHoursPageState extends ConsumerState<BusinessHoursPage> {
         try {
           final api = CompanyApi(ref.read(apiClientProvider));
           final companies = await api.getCompanyList(userId);
-          final base =
-              companies.isNotEmpty ? companies.first : const CompanyDto();
+          final base = companies.isNotEmpty
+              ? companies.first
+              : const CompanyDto();
           await api.insertCompanyDetail(
             userId: userId,
             company: CompanyDto(
@@ -141,9 +149,9 @@ class BusinessHoursPageState extends ConsumerState<BusinessHoursPage> {
       }
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Business hours saved')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Business hours saved')));
     } finally {
       if (mounted) setState(() => busy = false);
     }
@@ -164,35 +172,37 @@ class BusinessHoursPageState extends ConsumerState<BusinessHoursPage> {
       body: ResponsiveScrollShell(
         dashboard: true,
         child: ListView(
-        padding: EdgeInsets.all(
+          padding: EdgeInsets.all(
             AppBreakpoints.pagePaddingFor(context.widthClass),
           ),
-        children: [
-          ListTile(
-            title: const Text('Opening time'),
-            trailing: Text(
-              fmt(businessHoursPageOpen),
-              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+          children: [
+            ListTile(
+              title: const Text('Opening time'),
+              trailing: Text(
+                fmt(businessHoursPageOpen),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                ),
+              ),
+              onTap: pickOpen,
             ),
-            onTap: pickOpen,
-          ),
-          const Divider(height: 1),
-          ListTile(
-            title: const Text('Closing time'),
-            trailing: Text(
-              fmt(businessHoursPageClose),
-              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+            const Divider(height: 1),
+            ListTile(
+              title: const Text('Closing time'),
+              trailing: Text(
+                fmt(businessHoursPageClose),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                ),
+              ),
+              onTap: pickClose,
             ),
-            onTap: pickClose,
-          ),
-          const SizedBox(height: 24),
-          AppButton(
-            label: 'Save',
-            isLoading: busy,
-            onPressed: save,
-          ),
-        ],
-      ),
+            const SizedBox(height: 24),
+            AppButton(label: 'Save', isLoading: busy, onPressed: save),
+          ],
+        ),
       ),
     );
   }

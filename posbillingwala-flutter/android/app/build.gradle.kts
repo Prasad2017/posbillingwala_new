@@ -4,8 +4,8 @@ plugins {
     id("com.google.gms.google-services")
 }
 
-import java.util.Properties
-import java.io.FileInputStream
+import java . util . Properties
+        import java . io . FileInputStream
 
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
@@ -31,9 +31,9 @@ val releaseKeyAlias = releaseProp("RELEASE_KEY_ALIAS", "keyAlias")
 val releaseKeyPassword = releaseProp("RELEASE_KEY_PASSWORD", "keyPassword")
 val hasReleaseKeystore =
     !releaseStoreFilePath.isNullOrBlank() &&
-        !releaseStorePassword.isNullOrBlank() &&
-        !releaseKeyAlias.isNullOrBlank() &&
-        !releaseKeyPassword.isNullOrBlank()
+            !releaseStorePassword.isNullOrBlank() &&
+            !releaseKeyAlias.isNullOrBlank() &&
+            !releaseKeyPassword.isNullOrBlank()
 
 android {
     namespace = "com.posbillingwala.pos_billingwala_v2"

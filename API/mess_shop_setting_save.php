@@ -24,20 +24,24 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $userId = isset($_POST['userId']) ? trim((string) $_POST['userId']) : '';
-pos_require_auth($con, $userId, $response);
+$licenceId = pos_require_auth($con, $userId, $response);
 require_once __DIR__ . '/pos_staff.php';
-pos_require_permission($con, $userId, 'mess.manage');
+pos_require_permission($con, $licenceId, 'mess.manage');
 
 $mode = isset($_POST['payerMode']) ? $_POST['payerMode'] : 'user';
 $mode = mess_normalize_payer_mode($mode);
+$uid = (int) $licenceId;
 
-if (!mess_set_payer_mode($con, (int) $userId, $mode)) {
-    $response['message'] = 'Unable to save setting';
+if (!mess_set_payer_mode($con, $uid, $mode)) {
+    $err = mysqli_error($con);
+    error_log('mess_shop_setting_save FAIL userId=' . $uid . ' mode=' . $mode . ' err=' . $err);
+    $response['message'] = 'Unable to save setting' . ($err !== '' ? (': ' . $err) : '');
     echo json_encode($response);
     mysqli_close($con);
     exit;
 }
 
+error_log('mess_shop_setting_save OK userId=' . $uid . ' mode=' . $mode);
 $response['status'] = '1';
 $response['message'] = 'ok';
 $response['payerMode'] = $mode;

@@ -10,14 +10,14 @@ $response = array('status' => '0', 'message' => 'Invalid request', 'sessions' =>
 mess_common_ensure_schema($con);
 
 $userId = isset($_REQUEST['userId']) ? trim((string) $_REQUEST['userId']) : '';
-pos_require_auth($con, $userId, $response);
-mess_ensure_default_sessions($con, (int) $userId);
+$licenceId = pos_require_auth($con, $userId, $response);
+mess_ensure_default_sessions($con, (int) $licenceId);
 
 $rows = db_stmt_fetch_all(
     $con,
     'SELECT * FROM mess_meal_session WHERE userId = ? ORDER BY sort_order ASC, id ASC',
     'i',
-    (int) $userId
+    (int) $licenceId
 );
 
 $sessions = array();

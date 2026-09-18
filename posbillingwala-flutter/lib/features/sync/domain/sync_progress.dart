@@ -17,10 +17,7 @@ class SyncTableStep {
   final SyncTableStatus status;
   final String? message;
 
-  SyncTableStep copyWith({
-    SyncTableStatus? status,
-    String? message,
-  }) {
+  SyncTableStep copyWith({SyncTableStatus? status, String? message}) {
     return SyncTableStep(
       id: id,
       label: label,
@@ -93,74 +90,74 @@ class SyncProgressState {
   }
 
   static List<SyncTableStep> uploadSteps() => const [
-        SyncTableStep(id: 'categories', label: 'Categories'),
-        SyncTableStep(id: 'subcategories', label: 'Subcategories'),
-        SyncTableStep(id: 'products', label: 'Products'),
-        SyncTableStep(id: 'portion_master', label: 'Portion master'),
-        SyncTableStep(id: 'portions', label: 'Portions'),
-        SyncTableStep(id: 'combos', label: 'Combos'),
-        SyncTableStep(id: 'combo_items', label: 'Combo items'),
-        SyncTableStep(id: 'dining_areas', label: 'Dining areas'),
-        SyncTableStep(id: 'table_types', label: 'Table types'),
-        SyncTableStep(id: 'tables', label: 'Tables'),
-        SyncTableStep(id: 'printer_settings', label: 'Printer settings'),
-        SyncTableStep(id: 'shop_details', label: 'Shop details'),
-        SyncTableStep(id: 'invoice_item_deletes', label: 'Invoice item deletes'),
-        SyncTableStep(id: 'invoice_items', label: 'Invoice items'),
-        SyncTableStep(id: 'invoice_combo_items', label: 'Invoice combo items'),
-        SyncTableStep(id: 'invoices', label: 'Invoices'),
-        SyncTableStep(id: 'mess_members', label: 'Mess members'),
-        SyncTableStep(id: 'mess_payments', label: 'Mess payments'),
-        SyncTableStep(id: 'mess_invoices', label: 'Mess invoices'),
-        SyncTableStep(id: 'mess_tokens', label: 'Mess tokens'),
-        SyncTableStep(id: 'dining_sessions', label: 'Dining sessions'),
-        SyncTableStep(id: 'inventory', label: 'Inventory'),
-        SyncTableStep(id: 'expenses', label: 'Expenses'),
-        SyncTableStep(id: 'mess_shop_payer', label: 'Mess shop payer'),
-        SyncTableStep(id: 'meal_sessions', label: 'Meal sessions'),
-        SyncTableStep(id: 'store_printers', label: 'Store printers'),
-        SyncTableStep(id: 'printer_routes', label: 'Printer routes'),
-      ];
+    SyncTableStep(id: 'categories', label: 'Categories'),
+    SyncTableStep(id: 'subcategories', label: 'Subcategories'),
+    SyncTableStep(id: 'products', label: 'Products'),
+    SyncTableStep(id: 'portion_master', label: 'Portion master'),
+    SyncTableStep(id: 'portions', label: 'Portions'),
+    SyncTableStep(id: 'combos', label: 'Combos'),
+    SyncTableStep(id: 'combo_items', label: 'Combo items'),
+    SyncTableStep(id: 'dining_areas', label: 'Dining areas'),
+    SyncTableStep(id: 'table_types', label: 'Table types'),
+    SyncTableStep(id: 'tables', label: 'Tables'),
+    SyncTableStep(id: 'printer_settings', label: 'Printer settings'),
+    SyncTableStep(id: 'shop_details', label: 'Shop details'),
+    SyncTableStep(id: 'invoice_item_deletes', label: 'Invoice item deletes'),
+    SyncTableStep(id: 'invoice_items', label: 'Invoice items'),
+    SyncTableStep(id: 'invoice_combo_items', label: 'Invoice combo items'),
+    SyncTableStep(id: 'invoices', label: 'Invoices'),
+    SyncTableStep(id: 'mess_members', label: 'Mess members'),
+    SyncTableStep(id: 'mess_payments', label: 'Mess payments'),
+    SyncTableStep(id: 'mess_invoices', label: 'Mess invoices'),
+    SyncTableStep(id: 'mess_tokens', label: 'Mess tokens'),
+    SyncTableStep(id: 'dining_sessions', label: 'Dining sessions'),
+    SyncTableStep(id: 'inventory', label: 'Inventory'),
+    SyncTableStep(id: 'expenses', label: 'Expenses'),
+    SyncTableStep(id: 'mess_shop_payer', label: 'Mess shop payer'),
+    SyncTableStep(id: 'meal_sessions', label: 'Meal sessions'),
+    SyncTableStep(id: 'store_printers', label: 'Store printers'),
+    SyncTableStep(id: 'printer_routes', label: 'Printer routes'),
+  ];
 
   static List<SyncTableStep> fetchSteps() => const [
-        SyncTableStep(id: 'food_types', label: 'Food types'),
-        SyncTableStep(id: 'categories', label: 'Categories'),
-        SyncTableStep(id: 'subcategories', label: 'Subcategories'),
-        SyncTableStep(id: 'products', label: 'Products'),
-        SyncTableStep(id: 'portion_master', label: 'Portion master'),
-        SyncTableStep(id: 'portions', label: 'Portions'),
-        SyncTableStep(id: 'combos', label: 'Combos'),
-        SyncTableStep(id: 'combo_items', label: 'Combo items'),
-        SyncTableStep(id: 'dining_areas', label: 'Dining areas'),
-        SyncTableStep(id: 'table_types', label: 'Table types'),
-        SyncTableStep(id: 'tables', label: 'Tables'),
-        SyncTableStep(id: 'invoice_items', label: 'Invoice items'),
-        SyncTableStep(id: 'invoice_combo_items', label: 'Invoice combo items'),
-        SyncTableStep(id: 'invoices', label: 'Invoices'),
-        SyncTableStep(id: 'inventory', label: 'Inventory'),
-        SyncTableStep(id: 'expenses', label: 'Expenses'),
-        SyncTableStep(id: 'mess_members', label: 'Mess members'),
-        SyncTableStep(id: 'mess_payments', label: 'Mess payments'),
-        SyncTableStep(id: 'mess_invoices', label: 'Mess invoices'),
-        SyncTableStep(id: 'mess_tokens', label: 'Mess tokens'),
-        SyncTableStep(id: 'dining_sessions', label: 'Dining sessions'),
-        SyncTableStep(id: 'printer_settings', label: 'Printer settings'),
-        SyncTableStep(id: 'shop_details', label: 'Shop details'),
-        SyncTableStep(id: 'staff', label: 'Staff users'),
-        SyncTableStep(id: 'salary', label: 'Salary'),
-        SyncTableStep(id: 'role_defaults', label: 'Role defaults'),
-        SyncTableStep(id: 'meal_sessions', label: 'Meal sessions'),
-        SyncTableStep(id: 'meal_tokens', label: 'Meal tokens today'),
-        SyncTableStep(id: 'pending_meal_tokens', label: 'Pending meal tokens'),
-        SyncTableStep(id: 'mess_shop_payer', label: 'Mess shop payer'),
-        SyncTableStep(id: 'mess_common_qr', label: 'Mess common QR'),
-        SyncTableStep(id: 'store_printers', label: 'Store printers'),
-        SyncTableStep(id: 'printer_routes', label: 'Printer routes'),
-        SyncTableStep(id: 'print_jobs', label: 'Print jobs'),
-        SyncTableStep(id: 'support_tickets', label: 'Support tickets'),
-        SyncTableStep(id: 'pos_devices', label: 'POS devices'),
-        SyncTableStep(id: 'home_overview', label: 'Home overview'),
-      ];
+    SyncTableStep(id: 'food_types', label: 'Food types'),
+    SyncTableStep(id: 'categories', label: 'Categories'),
+    SyncTableStep(id: 'subcategories', label: 'Subcategories'),
+    SyncTableStep(id: 'products', label: 'Products'),
+    SyncTableStep(id: 'portion_master', label: 'Portion master'),
+    SyncTableStep(id: 'portions', label: 'Portions'),
+    SyncTableStep(id: 'combos', label: 'Combos'),
+    SyncTableStep(id: 'combo_items', label: 'Combo items'),
+    SyncTableStep(id: 'dining_areas', label: 'Dining areas'),
+    SyncTableStep(id: 'table_types', label: 'Table types'),
+    SyncTableStep(id: 'tables', label: 'Tables'),
+    SyncTableStep(id: 'invoice_items', label: 'Invoice items'),
+    SyncTableStep(id: 'invoice_combo_items', label: 'Invoice combo items'),
+    SyncTableStep(id: 'invoices', label: 'Invoices'),
+    SyncTableStep(id: 'inventory', label: 'Inventory'),
+    SyncTableStep(id: 'expenses', label: 'Expenses'),
+    SyncTableStep(id: 'mess_members', label: 'Mess members'),
+    SyncTableStep(id: 'mess_payments', label: 'Mess payments'),
+    SyncTableStep(id: 'mess_invoices', label: 'Mess invoices'),
+    SyncTableStep(id: 'mess_tokens', label: 'Mess tokens'),
+    SyncTableStep(id: 'dining_sessions', label: 'Dining sessions'),
+    SyncTableStep(id: 'printer_settings', label: 'Printer settings'),
+    SyncTableStep(id: 'shop_details', label: 'Shop details'),
+    SyncTableStep(id: 'staff', label: 'Staff users'),
+    SyncTableStep(id: 'salary', label: 'Salary'),
+    SyncTableStep(id: 'role_defaults', label: 'Role defaults'),
+    SyncTableStep(id: 'meal_sessions', label: 'Meal sessions'),
+    SyncTableStep(id: 'meal_tokens', label: 'Meal tokens today'),
+    SyncTableStep(id: 'pending_meal_tokens', label: 'Pending meal tokens'),
+    SyncTableStep(id: 'mess_shop_payer', label: 'Mess shop payer'),
+    SyncTableStep(id: 'mess_common_qr', label: 'Mess common QR'),
+    SyncTableStep(id: 'store_printers', label: 'Store printers'),
+    SyncTableStep(id: 'printer_routes', label: 'Printer routes'),
+    SyncTableStep(id: 'print_jobs', label: 'Print jobs'),
+    SyncTableStep(id: 'support_tickets', label: 'Support tickets'),
+    SyncTableStep(id: 'pos_devices', label: 'POS devices'),
+    SyncTableStep(id: 'home_overview', label: 'Home overview'),
+  ];
 
   factory SyncProgressState.initial(SyncScreenMode mode) {
     final isUpload = mode == SyncScreenMode.upload;
@@ -177,8 +174,7 @@ class SyncProgressState {
 
 class SyncProgressController extends Notifier<SyncProgressState> {
   @override
-  SyncProgressState build() =>
-      SyncProgressState.initial(SyncScreenMode.upload);
+  SyncProgressState build() => SyncProgressState.initial(SyncScreenMode.upload);
 
   void reset(SyncScreenMode mode) {
     state = SyncProgressState.initial(mode);
@@ -318,5 +314,5 @@ class SyncProgressController extends Notifier<SyncProgressState> {
 
 final syncProgressProvider =
     NotifierProvider<SyncProgressController, SyncProgressState>(
-  SyncProgressController.new,
-);
+      SyncProgressController.new,
+    );

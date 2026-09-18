@@ -7,12 +7,12 @@ $response = array('messTokenResponse' => array());
 mysqli_query($con, 'set names utf8mb4');
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    $userId = isset($_GET['userId']) ? trim($_GET['userId']) : '';
-        $__postedUserId = isset($_GET['userId']) ? $_GET['userId'] : (isset($userId) ? $userId : '');
-        pos_require_auth($con, $__postedUserId, isset($response) ? $response : array('status'=>'0','message'=>'Unauthorized'));
+    $__postedUserId = isset($_GET['userId']) ? trim($_GET['userId']) : '';
+    $userId = pos_require_auth($con, $__postedUserId, isset($response) ? $response : array('status'=>'0','message'=>'Unauthorized'));
 
 
     if ($userId !== '') {
+        $uid = (int) $userId;
         $stmt = mysqli_prepare(
             $con,
             'SELECT tokenId, tokenCode, memberId, memberName, memberMobile, memberType, messType,
@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         );
 
         if ($stmt) {
-            mysqli_stmt_bind_param($stmt, 'i', $userId);
+            mysqli_stmt_bind_param($stmt, 'i', $uid);
             if (mysqli_stmt_execute($stmt)) {
                 $result = mysqli_stmt_get_result($stmt);
                 while ($row = mysqli_fetch_assoc($result)) {

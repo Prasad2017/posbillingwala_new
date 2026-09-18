@@ -8,6 +8,7 @@ import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
 import 'package:pos_billingwala_v2/core/network/online_guard.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
+import 'package:pos_billingwala_v2/core/utils/money_format.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/mess/data/mess_api.dart';
 import 'package:pos_billingwala_v2/features/mess/domain/mess_dtos.dart';
@@ -32,7 +33,14 @@ class MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(refreshFromCloud);
+    /* Mobile: always read local Drift. Cloud merge is background sync only. */
+    Future.microtask(() async {
+      if (AppPlatform.requiresNetwork) {
+        await refreshFromCloud();
+      } else if (mounted) {
+        setState(() => cloudLoaded = true);
+      }
+    });
   }
 
   String? get memberIdFilter =>
@@ -46,13 +54,14 @@ class MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
       return;
     }
     try {
-      final cloud = await MessApi(ref.read(apiClientProvider))
-          .fetchMemberPayments(userId);
+      final cloud = await MessApi(
+        ref.read(apiClientProvider),
+      ).fetchMemberPayments(userId);
       final db = ref.read(appDatabaseProvider);
       if (cloud.isNotEmpty) {
-        final pending = await db.getPendingMessPayments();
-        await db.replaceMessMemberPayments([
-          ...cloud
+        /* replaceMessMemberPayments preserves local pending rows. */
+        await db.replaceMessMemberPayments(
+          cloud
               .where(
                 (e) =>
                     e.memberId.trim().isNotEmpty &&
@@ -71,28 +80,16 @@ class MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
                       : DateFormat('yyyy-MM').format(DateTime.now()),
                   paymentNetworkStatus:
                       e.paymentNetworkStatus?.trim().isNotEmpty == true
-                          ? e.paymentNetworkStatus!.trim()
-                          : 'pay_${e.paymentId}',
+                      ? e.paymentNetworkStatus!.trim()
+                      : 'pay_${e.paymentId}',
                   paymentStatus: Value(
                     e.paymentStatus.isEmpty ? '1' : e.paymentStatus,
                   ),
                   paymentSyncStatus: const Value('1'),
                 ),
-              ),
-          ...pending.map(
-            (e) => MessMemberPaymentsCompanion.insert(
-              memberId: e.memberId,
-              memberName: Value(e.memberName),
-              paymentMessAmount: Value(e.paymentMessAmount),
-              paymentPaidAmount: Value(e.paymentPaidAmount),
-              messTotalDays: Value(e.messTotalDays),
-              paymentDate: e.paymentDate,
-              paymentNetworkStatus: e.paymentNetworkStatus,
-              paymentStatus: Value(e.paymentStatus),
-              paymentSyncStatus: const Value('0'),
-            ),
-          ),
-        ]);
+              )
+              .toList(),
+        );
       }
     } catch (_) {
       /* Keep local Drift rows. */
@@ -115,12 +112,11 @@ class MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
   }
 
   Future<void> messPaymentsPageAddPayment() async {
-    final members = ref.read(messMembersProvider).maybeWhen(
-          data: (v) => v,
-          orElse: () => const <MessMember>[],
-        );
-    MessMember? selected = widget.member ??
-        (members.isNotEmpty ? members.first : null);
+    final members = ref
+        .read(messMembersProvider)
+        .maybeWhen(data: (v) => v, orElse: () => const <MessMember>[]);
+    MessMember? selected =
+        widget.member ?? (members.isNotEmpty ? members.first : null);
     if (selected == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppStrings.of(ref).addAMemberFirst)),
@@ -133,20 +129,22 @@ class MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
     var days = '30';
     final month = DateFormat('yyyy-MM').format(DateTime.now());
     final nameCtrl = TextEditingController(text: selected.memberName);
-    final mobileCtrl =
-        TextEditingController(text: selected.memberMobileNumber ?? '');
+    final mobileCtrl = TextEditingController(
+      text: selected.memberMobileNumber ?? '',
+    );
 
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setLocal) => AlertDialog(
-        title: Text(AppStrings.of(ref).addPayment),
+          title: Text(AppStrings.of(ref).addPayment),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (widget.member == null)
                   AppDropdownFormField<MessMember>(
+                    required: true,
                     label: 'Member',
                     items: members,
                     itemLabel: (m) => m.memberName,
@@ -158,12 +156,14 @@ class MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
                     }),
                   ),
                 AppTextField(
+                  required: true,
                   controller: nameCtrl,
                   label: 'Member name',
                   enabled: widget.member == null,
                 ),
                 const SizedBox(height: 12),
                 AppTextField(
+                  required: true,
                   controller: mobileCtrl,
                   label: 'Mobile',
                   enabled: widget.member == null,
@@ -171,6 +171,7 @@ class MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
                 ),
                 const SizedBox(height: 12),
                 StringDropdownField(
+                  required: true,
                   label: 'Mess days',
                   value: days,
                   options: const ['15', '30', '45', '60'],
@@ -178,30 +179,36 @@ class MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
                 ),
                 const SizedBox(height: 12),
                 AppTextField(
-                      controller: messAmt,
-                      label: 'Total amount',
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      inputFormatters: [
+                  required: true,
+                  controller: messAmt,
+                  label: 'Total amount',
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  inputFormatters: [
                     FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                   ],
-                    ),
+                ),
                 const SizedBox(height: 12),
                 AppTextField(
-                      controller: paidAmt,
-                      label: 'Paid amount',
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      inputFormatters: [
+                  required: true,
+                  controller: paidAmt,
+                  label: 'Paid amount',
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  inputFormatters: [
                     FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                   ],
-                    ),
+                ),
               ],
             ),
           ),
           actions: [
             AppButton(
-            label: 'Add Payment',
-            onPressed: () => Navigator.pop(context, true),
-          ),
+              label: 'Add Payment',
+              onPressed: () => Navigator.pop(context, true),
+            ),
           ],
         ),
       ),
@@ -213,9 +220,9 @@ class MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
 
     if (AppPlatform.requiresNetwork && !await ensureOnline()) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(kOnlineRequiredMessage)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text(kOnlineRequiredMessage)));
       return;
     }
 
@@ -239,17 +246,17 @@ class MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
       var success = false;
       if (await isDeviceOnline()) {
         try {
-          success =
-              await MessApi(ref.read(apiClientProvider)).insertMemberPayment(
-            userId: userId,
-            memberId: '${selected!.memberId}',
-            memberName: selected!.memberName,
-            paymentMessAmount: messAmt.text.trim(),
-            paymentPaidAmount: paidAmt.text.trim(),
-            messTotalDays: days,
-            paymentDate: month,
-            paymentNetworkStatus: network,
-          );
+          success = await MessApi(ref.read(apiClientProvider))
+              .insertMemberPayment(
+                userId: userId,
+                memberId: '${selected!.memberId}',
+                memberName: selected!.memberName,
+                paymentMessAmount: messAmt.text.trim(),
+                paymentPaidAmount: paidAmt.text.trim(),
+                messTotalDays: days,
+                paymentDate: month,
+                paymentNetworkStatus: network,
+              );
         } catch (_) {
           success = false;
         }
@@ -257,9 +264,9 @@ class MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
 
       if (AppPlatform.requiresNetwork && !success) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text(kWebApiSaveFailedMessage)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text(kWebApiSaveFailedMessage)));
         return;
       }
 
@@ -281,17 +288,15 @@ class MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
         }
       }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            success
-                ? 'Payment saved'
-                : (AppPlatform.supportsOfflineBilling
-                    ? 'Saved offline — will sync when online'
-                    : kWebApiSaveFailedMessage),
-          ),
-        ),
-      );
+      if (!success && !AppPlatform.supportsOfflineBilling) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text(kWebApiSaveFailedMessage)),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Payment saved')),
+        );
+      }
     } finally {
       if (mounted) setState(() => busy = false);
     }
@@ -303,15 +308,16 @@ class MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
 
   Future<void> editPayment(MessMemberPaymentDto payment) async {
     final messAmt = TextEditingController(
-      text: payment.paymentMessAmount.toStringAsFixed(2),
+      text: amountInputText(payment.paymentMessAmount),
     );
     final paidAmt = TextEditingController(
-      text: payment.paymentPaidAmount.toStringAsFixed(2),
+      text: amountInputText(payment.paymentPaidAmount),
     );
     final pendingCtrl = TextEditingController(
-      text: (payment.paymentMessAmount - payment.paymentPaidAmount)
-          .clamp(0, double.infinity)
-          .toStringAsFixed(2),
+      text: amountInputText(
+        (payment.paymentMessAmount - payment.paymentPaidAmount)
+            .clamp(0, double.infinity),
+      ),
     );
     var days = payment.messTotalDays.trim().isEmpty
         ? '30'
@@ -323,7 +329,9 @@ class MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
     void syncPending(void Function(void Function()) setLocal) {
       final mess = double.tryParse(messAmt.text.trim()) ?? 0;
       final paid = double.tryParse(paidAmt.text.trim()) ?? 0;
-      pendingCtrl.text = (mess - paid).clamp(0, double.infinity).toStringAsFixed(2);
+      pendingCtrl.text = amountInputText(
+        (mess - paid).clamp(0, double.infinity),
+      );
       setLocal(() {});
     }
 
@@ -342,17 +350,20 @@ class MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
                   subtitle: Text(payment.paymentDate),
                 ),
                 StringDropdownField(
-                  label: 'Mess Days*',
+                  required: true,
+                  label: 'Mess Days',
                   value: days,
                   options: const ['15', '30', '45', '60'],
                   onChanged: (v) => setLocal(() => days = v ?? '30'),
                 ),
                 const SizedBox(height: 12),
                 AppTextField(
+                  required: true,
                   controller: messAmt,
                   label: 'Mess amount',
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   inputFormatters: [
                     FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                   ],
@@ -360,10 +371,12 @@ class MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
                 ),
                 const SizedBox(height: 12),
                 AppTextField(
+                  required: true,
                   controller: paidAmt,
                   label: 'Paid amount',
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   inputFormatters: [
                     FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                   ],
@@ -429,13 +442,14 @@ class MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
           paidAmount: paidAmount,
           messTotalDays: days,
           paymentDate: payment.paymentDate,
-          paymentNetworkStatus: payment.paymentNetworkStatus ??
+          paymentNetworkStatus:
+              payment.paymentNetworkStatus ??
               'pay_${DateTime.now().millisecondsSinceEpoch}',
         );
       }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppStrings.of(ref).paymentUpdated)),
+        const SnackBar(content: Text('Payment saved')),
       );
     } finally {
       if (mounted) setState(() => busy = false);
@@ -468,72 +482,77 @@ class MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
         icon: const Icon(Icons.payments_rounded),
         label: Text(AppStrings.of(ref).addPayment),
       ),
-      body: Column(children: [
-        Expanded(
-          child: (!cloudLoaded && paymentsAsync.isLoading)
-              ? const Center(child: CircularProgressIndicator())
-              : paymentsAsync.when(
-                  data: (rows) {
-                    final dtos = rows.map(toDto).toList();
-                    if (dtos.isEmpty) {
-                      return Center(child: Text(AppStrings.of(ref).noPaymentsYet));
-                    }
-                    return ResponsiveScrollShell(
-                      dashboard: true,
-                      child: ListView.separated(
-                        padding: EdgeInsets.fromLTRB(
-                          AppBreakpoints.pagePaddingFor(context.widthClass),
-                          12,
-                          AppBreakpoints.pagePaddingFor(context.widthClass),
-                          88,
+      body: Column(
+        children: [
+          Expanded(
+            child: (!cloudLoaded && paymentsAsync.isLoading)
+                ? const Center(child: CircularProgressIndicator())
+                : paymentsAsync.when(
+                    data: (rows) {
+                      final dtos = rows.map(toDto).toList();
+                      if (dtos.isEmpty) {
+                        return Center(
+                          child: Text(AppStrings.of(ref).noPaymentsYet),
+                        );
+                      }
+                      return ResponsiveScrollShell(
+                        dashboard: true,
+                        child: ListView.separated(
+                          padding: EdgeInsets.fromLTRB(
+                            AppBreakpoints.pagePaddingFor(context.widthClass),
+                            12,
+                            AppBreakpoints.pagePaddingFor(context.widthClass),
+                            88,
+                          ),
+                          itemCount: dtos.length,
+                          separatorBuilder: (_, _) => const SizedBox(height: 8),
+                          itemBuilder: (context, index) {
+                            final p = dtos[index];
+                            final color = index.isEven
+                                ? AppColors.green
+                                : AppColors.orange;
+                            return AppCard(
+                              accentColor: color,
+                              padding: EdgeInsets.zero,
+                              child: ListTile(
+                                leading: const CircleAvatar(
+                                  backgroundColor: AppColors.primaryLight,
+                                  child: Icon(
+                                    Icons.payments,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                                title: Text(
+                                  p.memberName,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  '${p.paymentDate} • ${p.messTotalDays} days • '
+                                  'Mess ${currency.format(p.paymentMessAmount)}',
+                                ),
+                                trailing: Text(
+                                  currency.format(p.paymentPaidAmount),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                                onTap: busy ? null : () => editPayment(p),
+                              ),
+                            );
+                          },
                         ),
-                        itemCount: dtos.length,
-                        separatorBuilder: (_, _) => const SizedBox(height: 8),
-                        itemBuilder: (context, index) {
-                          final p = dtos[index];
-                          final color =
-                              index.isEven ? AppColors.green : AppColors.orange;
-                          return AppCard(
-                            accentColor: color,
-                            padding: EdgeInsets.zero,
-                            child: ListTile(
-                              leading: const CircleAvatar(
-                                backgroundColor: AppColors.primaryLight,
-                                child: Icon(
-                                  Icons.payments,
-                                  color: AppColors.primary,
-                                ),
-                              ),
-                              title: Text(
-                                p.memberName,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              subtitle: Text(
-                                '${p.paymentDate} • ${p.messTotalDays} days • '
-                                'Mess ${currency.format(p.paymentMessAmount)}',
-                              ),
-                              trailing: Text(
-                                currency.format(p.paymentPaidAmount),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.primary,
-                                ),
-                              ),
-                              onTap: busy ? null : () => editPayment(p),
-                            ),
-                          );
-                        },
-                      ),
-                    );
-                  },
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Center(child: Text('$e')),
-                ),
-        ),
-      ]),
+                      );
+                    },
+                    loading: () =>
+                        const Center(child: CircularProgressIndicator()),
+                    error: (e, _) => Center(child: Text('$e')),
+                  ),
+          ),
+        ],
+      ),
     );
   }
 }

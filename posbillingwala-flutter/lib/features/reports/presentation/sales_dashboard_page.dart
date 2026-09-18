@@ -48,7 +48,11 @@ class SalesDashboardPage extends ConsumerWidget {
               (ReportPeriodKind.today, 'Today', Icons.today_rounded),
               (ReportPeriodKind.month, 'This Month', Icons.calendar_view_month),
               (ReportPeriodKind.day, 'Pick a Day', Icons.event_rounded),
-              (ReportPeriodKind.year, 'This Year', Icons.calendar_today_rounded),
+              (
+                ReportPeriodKind.year,
+                'This Year',
+                Icons.calendar_today_rounded,
+              ),
             ])
               ListTile(
                 leading: Icon(entry.$3, color: AppColors.primary),
@@ -113,207 +117,209 @@ class SalesDashboardPage extends ConsumerWidget {
             32,
           ),
           children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: ReportPeriodPill(
-              label: periodLabel,
-              onTap: () => pickPeriod(context, ref),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: ReportPeriodPill(
+                label: periodLabel,
+                onTap: () => pickPeriod(context, ref),
+              ),
             ),
-          ),
-          const SizedBox(height: 14),
-          trendAsync.when(
-            data: (points) {
-              final prev = points.length >= 2
-                  ? points[points.length - 2].total
-                  : 0.0;
-              final salesPct = pctChange(summary.totalSales, prev);
-              final billsPrev = points.length >= 2 ? 1.0 : 0.0;
-              final billsPct = pctChange(
-                summary.billCount.toDouble(),
-                billsPrev,
-              );
-              return ReportKpiGrid(
+            const SizedBox(height: 14),
+            trendAsync.when(
+              data: (points) {
+                final prev = points.length >= 2
+                    ? points[points.length - 2].total
+                    : 0.0;
+                final salesPct = pctChange(summary.totalSales, prev);
+                final billsPrev = points.length >= 2 ? 1.0 : 0.0;
+                final billsPct = pctChange(
+                  summary.billCount.toDouble(),
+                  billsPrev,
+                );
+                return ReportKpiGrid(
+                  items: [
+                    ReportKpiData(
+                      label: 'Total Sales',
+                      value: currency.format(summary.totalSales),
+                      changePercent: salesPct,
+                    ),
+                    ReportKpiData(
+                      label: 'Net Sales',
+                      value: currency.format(
+                        summary.totalSales - summary.discountTotal,
+                      ),
+                      changePercent: salesPct,
+                    ),
+                    ReportKpiData(
+                      label: 'Total Bills',
+                      value: '${summary.billCount}',
+                      changePercent: billsPct,
+                    ),
+                    ReportKpiData(
+                      label: 'Avg. Bill Value',
+                      value: currency.format(summary.avgBill),
+                      changePercent: salesPct,
+                    ),
+                  ],
+                );
+              },
+              loading: () => ReportKpiGrid(
                 items: [
                   ReportKpiData(
                     label: 'Total Sales',
                     value: currency.format(summary.totalSales),
-                    changePercent: salesPct,
                   ),
                   ReportKpiData(
                     label: 'Net Sales',
                     value: currency.format(
                       summary.totalSales - summary.discountTotal,
                     ),
-                    changePercent: salesPct,
                   ),
                   ReportKpiData(
                     label: 'Total Bills',
                     value: '${summary.billCount}',
-                    changePercent: billsPct,
                   ),
                   ReportKpiData(
                     label: 'Avg. Bill Value',
                     value: currency.format(summary.avgBill),
-                    changePercent: salesPct,
                   ),
                 ],
-              );
-            },
-            loading: () => ReportKpiGrid(
-              items: [
-                ReportKpiData(
-                  label: 'Total Sales',
-                  value: currency.format(summary.totalSales),
-                ),
-                ReportKpiData(
-                  label: 'Net Sales',
-                  value: currency.format(
-                    summary.totalSales - summary.discountTotal,
+              ),
+              error: (_, _) => ReportKpiGrid(
+                items: [
+                  ReportKpiData(
+                    label: 'Total Sales',
+                    value: currency.format(summary.totalSales),
                   ),
-                ),
-                ReportKpiData(
-                  label: 'Total Bills',
-                  value: '${summary.billCount}',
-                ),
-                ReportKpiData(
-                  label: 'Avg. Bill Value',
-                  value: currency.format(summary.avgBill),
-                ),
-              ],
+                  ReportKpiData(
+                    label: 'Net Sales',
+                    value: currency.format(
+                      summary.totalSales - summary.discountTotal,
+                    ),
+                  ),
+                  ReportKpiData(
+                    label: 'Total Bills',
+                    value: '${summary.billCount}',
+                  ),
+                  ReportKpiData(
+                    label: 'Avg. Bill Value',
+                    value: currency.format(summary.avgBill),
+                  ),
+                ],
+              ),
             ),
-            error: (_, _) => ReportKpiGrid(
-              items: [
-                ReportKpiData(
-                  label: 'Total Sales',
-                  value: currency.format(summary.totalSales),
-                ),
-                ReportKpiData(
-                  label: 'Net Sales',
-                  value: currency.format(
-                    summary.totalSales - summary.discountTotal,
+            const SizedBox(height: 16),
+            ReportSurfaceCard(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Sales Trend',
+                    style: TextStyle(
+                      fontFamily: AppFonts.family,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 16,
+                      color: AppColors.navy,
+                    ),
                   ),
-                ),
-                ReportKpiData(
-                  label: 'Total Bills',
-                  value: '${summary.billCount}',
-                ),
-                ReportKpiData(
-                  label: 'Avg. Bill Value',
-                  value: currency.format(summary.avgBill),
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  trendAsync.when(
+                    data: (points) => ReportLineTrend(
+                      values: points.map((e) => e.total).toList(),
+                      labels: points
+                          .map((e) => dayLabel.format(e.date))
+                          .toList(),
+                    ),
+                    loading: () => const SizedBox(
+                      height: 180,
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
+                    error: (e, _) => Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text('$e'),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
-          ReportSurfaceCard(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Sales Trend',
-                  style: TextStyle(
-                    fontFamily: AppFonts.family,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 16,
-                    color: AppColors.navy,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                trendAsync.when(
-                  data: (points) => ReportLineTrend(
-                    values: points.map((e) => e.total).toList(),
-                    labels: points.map((e) => dayLabel.format(e.date)).toList(),
-                  ),
-                  loading: () => const SizedBox(
-                    height: 180,
-                    child: Center(child: CircularProgressIndicator()),
-                  ),
-                  error: (e, _) => Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text('$e'),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          ReportSurfaceCard(
-            padding: const EdgeInsets.fromLTRB(4, 12, 4, 4),
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 0, 4, 4),
-                  child: Row(
-                    children: [
-                      const Expanded(
-                        child: Text(
-                          'Recent Bills',
-                          style: TextStyle(
-                            fontFamily: AppFonts.family,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 16,
-                            color: AppColors.navy,
+            const SizedBox(height: 16),
+            ReportSurfaceCard(
+              padding: const EdgeInsets.fromLTRB(4, 12, 4, 4),
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 0, 4, 4),
+                    child: Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Recent Bills',
+                            style: TextStyle(
+                              fontFamily: AppFonts.family,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 16,
+                              color: AppColors.navy,
+                            ),
                           ),
                         ),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          ref
-                              .read(reportInvoiceTypeFilterProvider.notifier)
-                              .select(ReportInvoiceTypeFilter.all);
-                          ref
-                              .read(reportPaymentFilterProvider.notifier)
-                              .select(ReportPaymentFilter.all);
-                          context.push('/reports/invoices');
-                        },
-                        child: Text(AppStrings.of(ref).viewAll),
-                      ),
-                    ],
-                  ),
-                ),
-                Builder(
-                  builder: (context) {
-                    final invoices = invoicesAsync;
-                    final recent = invoices.take(8).toList();
-                    if (recent.isEmpty) {
-                      return Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Text(AppStrings.of(ref).noBillsPeriod),
-                      );
-                    }
-                    return Column(
-                      children: [
-                        for (var i = 0; i < recent.length; i++) ...[
-                          if (i > 0)
-                            Divider(
-                              height: 1,
-                              color: AppColors.border.withValues(alpha: .7),
-                            ),
-                          ReportInvoiceRow(
-                            index: i + 1,
-                            invoice: recent[i],
-                            currency: currency,
-                            showPaymentTag: true,
-                            denseDate: true,
-                            onTap: () => context.push(
-                              '/reports/invoice/${recent[i].invoiceId}',
-                            ),
-                          ),
-                        ],
+                        TextButton(
+                          onPressed: () {
+                            ref
+                                .read(reportInvoiceTypeFilterProvider.notifier)
+                                .select(ReportInvoiceTypeFilter.all);
+                            ref
+                                .read(reportPaymentFilterProvider.notifier)
+                                .select(ReportPaymentFilter.all);
+                            context.push('/reports/invoices');
+                          },
+                          child: Text(AppStrings.of(ref).viewAll),
+                        ),
                       ],
-                    );
-                  },
-                ),
-              ],
+                    ),
+                  ),
+                  Builder(
+                    builder: (context) {
+                      final invoices = invoicesAsync;
+                      final recent = invoices.take(8).toList();
+                      if (recent.isEmpty) {
+                        return Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Text(AppStrings.of(ref).noBillsPeriod),
+                        );
+                      }
+                      return Column(
+                        children: [
+                          for (var i = 0; i < recent.length; i++) ...[
+                            if (i > 0)
+                              Divider(
+                                height: 1,
+                                color: AppColors.border.withValues(alpha: .7),
+                              ),
+                            ReportInvoiceRow(
+                              index: i + 1,
+                              invoice: recent[i],
+                              currency: currency,
+                              showPaymentTag: true,
+                              denseDate: true,
+                              onTap: () => context.push(
+                                '/reports/invoice/${recent[i].invoiceId}',
+                              ),
+                            ),
+                          ],
+                        ],
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
-          ReportDonutBreakdown(
-            title: 'Top by Payment Mode',
-            slices: paymentSlices(summary, invoicesAsync),
-          ),
-        ],
+            const SizedBox(height: 16),
+            ReportDonutBreakdown(
+              title: 'Top by Payment Mode',
+              slices: paymentSlices(summary, invoicesAsync),
+            ),
+          ],
         ),
       ),
     );

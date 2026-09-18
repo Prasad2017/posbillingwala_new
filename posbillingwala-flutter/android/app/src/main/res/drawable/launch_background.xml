@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Matches Flutter SplashPage: full-bleed splash_branding on white. -->
+<?xml version="1.0" encoding="utf-8"?><!-- Matches Flutter SplashPage: full-bleed splash_branding on white. -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:drawable="@android:color/white" />
     <item>

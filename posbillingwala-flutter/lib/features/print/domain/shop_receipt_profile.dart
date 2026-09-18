@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pos_billingwala_v2/features/company/data/company_dtos.dart';
+import 'package:pos_billingwala_v2/features/company/data/company_logo.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /* Local snapshot of shop identity used on thermal bills (Android ShopHeader). */
@@ -37,11 +38,13 @@ class ShopReceiptProfile {
   final String gstNumber;
   final String panNumber;
   final String companyFssis;
+
   /* Android stores UPI VPA in `paymentLogo` when it looks like `name@bank`. */
   final String paymentLogo;
   final String shopName1;
   final String shopName2;
   final String cashierName;
+
   /* Local filesystem path for shop logo used on thermal bills. */
   final String logoLocalPath;
   final String shopCgst;
@@ -73,7 +76,9 @@ class ShopReceiptProfile {
     }
 
     /* Primary title: shopName1 else companyName (do not stack both). */
-    final title = shopName1.trim().isNotEmpty ? shopName1.trim() : companyName.trim();
+    final title = shopName1.trim().isNotEmpty
+        ? shopName1.trim()
+        : companyName.trim();
     add(title);
     add(shopName2);
     add(addressLine1);
@@ -117,7 +122,10 @@ class ShopReceiptProfile {
       cashierName: c.cashierName ?? '',
       shopCgst: c.shopCgst ?? '',
       shopSgst: c.shopSgst ?? '',
-      gstEnabled: c.gstStatus == '1' || c.gstStatus?.toLowerCase() == 'yes',
+      gstEnabled: c.gstStatus == '1' ||
+          c.gstStatus?.toLowerCase() == 'yes' ||
+          c.gstStatus?.toLowerCase() == 'on' ||
+          c.gstStatus?.toLowerCase() == 'true',
     );
   }
 
@@ -168,6 +176,7 @@ class ShopReceiptProfile {
 
 class ShopReceiptProfileStore {
   static const prefix = 'shop_receipt_';
+  static const pendingUploadKey = '${prefix}pending_upload';
 
   Future<ShopReceiptProfile> load() async {
     final p = await SharedPreferences.getInstance();
@@ -216,12 +225,22 @@ class ShopReceiptProfileStore {
     await p.setString('${prefix}shopSgst', profile.shopSgst);
     await p.setBool('${prefix}gstEnabled', profile.gstEnabled);
   }
+
+  Future<bool> isPendingUpload() async {
+    final p = await SharedPreferences.getInstance();
+    return p.getBool(pendingUploadKey) ?? false;
+  }
+
+  Future<void> setPendingUpload(bool pending) async {
+    final p = await SharedPreferences.getInstance();
+    await p.setBool(pendingUploadKey, pending);
+  }
 }
 
 final shopReceiptProfileProvider =
     NotifierProvider<ShopReceiptProfileController, ShopReceiptProfile>(
-  ShopReceiptProfileController.new,
-);
+      ShopReceiptProfileController.new,
+    );
 
 class ShopReceiptProfileController extends Notifier<ShopReceiptProfile> {
   final store = ShopReceiptProfileStore();
@@ -243,15 +262,23 @@ class ShopReceiptProfileController extends Notifier<ShopReceiptProfile> {
 
   Future<void> saveFromCompany(CompanyDto company) async {
     final current = await store.load();
-    final next = ShopReceiptProfile.fromCompany(company).copyWith(
-      logoLocalPath: current.logoLocalPath,
-    );
+    var logoPath = current.logoLocalPath;
+    final materialized = await materializeShopLogo(company.companyLogo);
+    if (materialized != null) logoPath = materialized;
+    final next = ShopReceiptProfile.fromCompany(
+      company,
+    ).copyWith(logoLocalPath: logoPath);
     await save(next);
   }
 
   Future<void> saveLogoPath(String path) async {
     await save(state.copyWith(logoLocalPath: path));
   }
+
+  Future<bool> isPendingUpload() => store.isPendingUpload();
+
+  Future<void> setPendingUpload(bool pending) =>
+      store.setPendingUpload(pending);
 }
 
 /* Android PaymentUpiQrHelper.buildUpiPayUri */

@@ -7,8 +7,8 @@ import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
-import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
-import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
+import 'package:pos_billingwala_v2/core/utils/money_format.dart';
+import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/inventory/domain/inventory_providers.dart';
 import 'package:pos_billingwala_v2/features/masters/domain/masters_providers.dart';
 import 'package:pos_billingwala_v2/features/masters/domain/product_units.dart';
@@ -16,6 +16,7 @@ import 'package:pos_billingwala_v2/features/masters/presentation/product_image_t
 import 'package:pos_billingwala_v2/features/masters/presentation/widgets/master_ui.dart';
 
 const productUnits = ProductUnits.list;
+
 class ProductFormPage extends ConsumerStatefulWidget {
   const ProductFormPage({super.key, this.productId});
 
@@ -31,13 +32,14 @@ class ProductFormPageState extends ConsumerState<ProductFormPage> {
   final priceCtrl = TextEditingController();
   final mrpCtrl = TextEditingController();
   final stockCtrl = TextEditingController();
-  final cgstCtrl = TextEditingController(text: '0');
-  final sgstCtrl = TextEditingController(text: '0');
+  final cgstCtrl = TextEditingController();
+  final sgstCtrl = TextEditingController();
   final portionPriceCtrl = TextEditingController();
 
   ProductCategory? productFormPageCategory;
   ProductSubcategory? productFormPageSubcategory;
   PortionMaster? productFormPagePortionMaster;
+
   /* Stable ids so selection survives async category list reloads. */
   int? selectedCategoryId;
   String? selectedCategoryLabel;
@@ -124,8 +126,11 @@ class ProductFormPageState extends ConsumerState<ProductFormPage> {
     return changed;
   }
 
-  void hydrate(Product product, List<ProductCategory> categories,
-      List<ProductSubcategory> subs) {
+  void hydrate(
+    Product product,
+    List<ProductCategory> categories,
+    List<ProductSubcategory> subs,
+  ) {
     if (!loaded) {
       loaded = true;
       codeCtrl.text = product.productCode ?? '';
@@ -144,12 +149,8 @@ class ProductFormPageState extends ConsumerState<ProductFormPage> {
               product.productMrp % 1 == 0 ? 0 : 2,
             )
           : '';
-      cgstCtrl.text = product.productCgst.toStringAsFixed(
-        product.productCgst % 1 == 0 ? 0 : 1,
-      );
-      sgstCtrl.text = product.productSgst.toStringAsFixed(
-        product.productSgst % 1 == 0 ? 0 : 1,
-      );
+      cgstCtrl.text = amountInputText(product.productCgst);
+      sgstCtrl.text = amountInputText(product.productSgst);
       productFormPageOpenPrice = product.openPrice == '1';
       priceIncludesGst = product.priceIncludesGst == '1';
       productImageValue = (product.productImage?.trim().isNotEmpty ?? false)
@@ -169,9 +170,9 @@ class ProductFormPageState extends ConsumerState<ProductFormPage> {
   Future<void> addInlinePortion() async {
     final master = productFormPagePortionMaster;
     if (master == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Select a portion')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Select a portion')));
       return;
     }
     final price = double.tryParse(portionPriceCtrl.text.trim());
@@ -202,7 +203,9 @@ class ProductFormPageState extends ConsumerState<ProductFormPage> {
     if (!mounted) return;
     if (encoded == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not use that image (try a smaller photo)')),
+        const SnackBar(
+          content: Text('Could not use that image (try a smaller photo)'),
+        ),
       );
       return;
     }
@@ -215,30 +218,29 @@ class ProductFormPageState extends ConsumerState<ProductFormPage> {
   Future<void> save() async {
     final name = nameCtrl.text.trim();
     if (name.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Product name is required')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Product name is required')));
       return;
     }
     if (productFormPageCategory == null && selectedCategoryId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Select a category')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Select a category')));
       return;
     }
     final categoryId =
         productFormPageCategory?.categoryId ?? selectedCategoryId!;
-    final categoryName = productFormPageCategory?.categoryName ??
-        selectedCategoryLabel ??
-        '';
+    final categoryName =
+        productFormPageCategory?.categoryName ?? selectedCategoryLabel ?? '';
     if (categoryName.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Select a category')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Select a category')));
       return;
     }
-    final subcategoryId = productFormPageSubcategory?.subcategoryId ??
-        selectedSubcategoryId;
+    final subcategoryId =
+        productFormPageSubcategory?.subcategoryId ?? selectedSubcategoryId;
     final price = productFormPageOpenPrice
         ? 0.0
         : (double.tryParse(priceCtrl.text.trim()) ?? -1);
@@ -303,18 +305,17 @@ class ProductFormPageState extends ConsumerState<ProductFormPage> {
           productCgst: cgst,
           productSgst: sgst,
           subcategoryId: subcategoryId,
+          portions: [
+            for (var i = 0; i < inlinePortions.length; i++)
+              (
+                portionName: inlinePortions[i].master.portionName,
+                portionPrice: inlinePortions[i].price,
+                portionSortOrder: i + 1,
+                portionMasterId: inlinePortions[i].master.portionMasterId,
+              ),
+          ],
         );
         final db = ref.read(appDatabaseProvider);
-        var sort = 1;
-        for (final portion in inlinePortions) {
-          await db.insertLocalPortion(
-            productId: id,
-            portionName: portion.master.portionName,
-            portionPrice: portion.price,
-            portionSortOrder: sort++,
-            portionMasterId: portion.master.portionMasterId,
-          );
-        }
         if (openingStock > 0) {
           await db.addStockIn(
             productId: id,
@@ -323,14 +324,6 @@ class ProductFormPageState extends ConsumerState<ProductFormPage> {
             movementType: 'opening',
             note: 'Opening stock',
           );
-        }
-        /* Push portions + inventory after local create. */
-        final userId =
-            ref.read(authControllerProvider).session?.catalogOwnerId ?? '';
-        if (userId.isNotEmpty) {
-          await ref
-              .read(mastersRepositoryProvider)
-              .uploadPendingMasters(ownerId: userId);
         }
         if (openingStock > 0) {
           await ref
@@ -341,9 +334,7 @@ class ProductFormPageState extends ConsumerState<ProductFormPage> {
       ref.invalidate(catalogCountsProvider);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(isEdit ? 'Product updated' : 'Product saved'),
-        ),
+        SnackBar(content: Text('Product saved')),
       );
       context.pop();
     } finally {
@@ -353,24 +344,20 @@ class ProductFormPageState extends ConsumerState<ProductFormPage> {
 
   @override
   Widget build(BuildContext context) {
-    final categories = ref.watch(categoriesProvider).maybeWhen(
-          data: (v) => v,
-          orElse: () => const <ProductCategory>[],
-        );
-    final allSubs = ref.watch(subcategoriesProvider).maybeWhen(
-          data: (v) => v,
-          orElse: () => const <ProductSubcategory>[],
-        );
-    final portionMasters = ref.watch(portionMastersProvider).maybeWhen(
-          data: (v) => v,
-          orElse: () => const <PortionMaster>[],
-        );
+    final categories = ref
+        .watch(categoriesProvider)
+        .maybeWhen(data: (v) => v, orElse: () => const <ProductCategory>[]);
+    final allSubs = ref
+        .watch(subcategoriesProvider)
+        .maybeWhen(data: (v) => v, orElse: () => const <ProductSubcategory>[]);
+    final portionMasters = ref
+        .watch(portionMastersProvider)
+        .maybeWhen(data: (v) => v, orElse: () => const <PortionMaster>[]);
 
     if (isEdit) {
-      final products = ref.watch(productsProvider).maybeWhen(
-            data: (v) => v,
-            orElse: () => const <Product>[],
-          );
+      final products = ref
+          .watch(productsProvider)
+          .maybeWhen(data: (v) => v, orElse: () => const <Product>[]);
       Product? existing;
       for (final p in products) {
         if (p.productId == widget.productId) {
@@ -381,7 +368,8 @@ class ProductFormPageState extends ConsumerState<ProductFormPage> {
       if (existing != null) {
         final product = existing;
         final needsHydrate = !loaded;
-        final needsBind = selectedCategoryId != null &&
+        final needsBind =
+            selectedCategoryId != null &&
             (productFormPageCategory == null ||
                 productFormPageCategory!.categoryId != selectedCategoryId) &&
             categories.isNotEmpty;
@@ -404,8 +392,9 @@ class ProductFormPageState extends ConsumerState<ProductFormPage> {
         setState(() {
           addCategorySeeded = true;
           selectCategory(categories.first);
-          productFormPagePortionMaster =
-              portionMasters.isNotEmpty ? portionMasters.first : null;
+          productFormPagePortionMaster = portionMasters.isNotEmpty
+              ? portionMasters.first
+              : null;
         });
       });
     } else {
@@ -428,9 +417,7 @@ class ProductFormPageState extends ConsumerState<ProductFormPage> {
 
     final subs = selectedCategoryId == null
         ? const <ProductSubcategory>[]
-        : allSubs
-            .where((s) => s.categoryId == selectedCategoryId)
-            .toList();
+        : allSubs.where((s) => s.categoryId == selectedCategoryId).toList();
     ProductSubcategory? subcategory;
     if (selectedSubcategoryId != null) {
       for (final s in subs) {
@@ -441,7 +428,8 @@ class ProductFormPageState extends ConsumerState<ProductFormPage> {
       }
     }
     subcategory ??= productFormPageSubcategory;
-    final portionMaster = productFormPagePortionMaster != null &&
+    final portionMaster =
+        productFormPagePortionMaster != null &&
             portionMasters.any(
               (m) =>
                   m.portionMasterId ==
@@ -466,375 +454,361 @@ class ProductFormPageState extends ConsumerState<ProductFormPage> {
       body: ResponsiveScrollShell(
         dashboard: true,
         child: ListView(
-        padding: EdgeInsets.fromLTRB(
+          padding: EdgeInsets.fromLTRB(
             AppBreakpoints.pagePaddingFor(context.widthClass),
             16,
             AppBreakpoints.pagePaddingFor(context.widthClass),
-            28),
-        children: [
-          const MasterSectionLabel('Product Category*'),
-          const SizedBox(height: 10),
-          MasterCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (selectedLabel != null && selectedLabel.isNotEmpty) ...[
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryLight.withValues(alpha: .7),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: AppColors.primary.withValues(alpha: .25),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.category_rounded,
-                          size: 18,
-                          color: AppColors.primary,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'Category: $selectedLabel',
-                            style: const TextStyle(
-                              fontFamily: AppFonts.family,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.navy,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                ],
-                MasterDropdown<ProductCategory>(
-                  value: category,
-                  items: categories,
-                  hint: 'Select category',
-                  itemLabel: (c) => c.categoryName,
-                  onChanged: (v) => setState(() => selectCategory(v)),
-                ),
-                const SizedBox(height: 12),
-                MasterDropdown<ProductSubcategory>(
-                  value: subcategory,
-                  items: subs,
-                  hint: 'None',
-                  itemLabel: (s) => s.subcategoryName,
-                  onChanged: (v) => setState(() => selectSubcategory(v)),
-                ),
-              ],
-            ),
+            28,
           ),
-          if (!isEdit) ...[
-            const SizedBox(height: 18),
-            MasterSectionLabel(
-              'Portions (Optional)',
-              trailing: MasterLinkButton(
-                label: 'Manage Portion Master',
-                onTap: () => context.push('/masters/portion-masters'),
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Product price is used when no portions are added.',
-              style: TextStyle(
-                fontFamily: AppFonts.family,
-                fontSize: 12,
-                color: AppColors.navy.withValues(alpha: .45),
-              ),
-            ),
+          children: [
+            const MasterSectionLabel('Product Category*'),
             const SizedBox(height: 10),
             MasterCard(
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  MasterDropdown<PortionMaster>(
-                    value: portionMaster,
-                    items: portionMasters,
-                    hint: 'Select portion',
-                    itemLabel: (m) => m.portionName,
-                    onChanged: (v) => setState(() => productFormPagePortionMaster = v),
-                  ),
-                  const SizedBox(height: 12),
-                  MasterOutlinedField(
-                    controller: portionPriceCtrl,
-                    hint: 'Selling price for this product + portion',
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
-                  ),
-                  const SizedBox(height: 12),
-                  MasterPrimaryButton(
-                    label: 'Add Portion to Product',
-                    onPressed: addInlinePortion,
-                  ),
-                  if (inlinePortions.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    for (final p in inlinePortions)
-                      ListTile(
-                        dense: true,
-                        contentPadding: EdgeInsets.zero,
-                        title: Text(p.master.portionName),
-                        subtitle: Text('₹ ${p.price.toStringAsFixed(2)}'),
-                        trailing: IconButton(
-                          icon: const Icon(
-                            Icons.close_rounded,
-                            color: AppColors.red,
-                          ),
-                          onPressed: () => setState(
-                            () => inlinePortions.remove(p),
-                          ),
+                  if (selectedLabel != null && selectedLabel.isNotEmpty) ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryLight.withValues(alpha: .7),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: AppColors.primary.withValues(alpha: .25),
                         ),
                       ),
-                  ],
-                ],
-              ),
-            ),
-          ] else ...[
-            const SizedBox(height: 14),
-            MasterPrimaryButton(
-              label: 'Manage Portions',
-              onPressed: () => context.push(
-                '/masters/products/portions?id=${widget.productId}',
-              ),
-            ),
-          ],
-          const SizedBox(height: 18),
-          const MasterSectionLabel('Product Image (Optional)'),
-          const SizedBox(height: 10),
-          MasterCard(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (hasProductImage(productImageValue))
-                  ProductImageThumb(value: productImageValue, size: 72, radius: 12)
-                else
-                  Container(
-                    width: 72,
-                    height: 72,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF1F5F9),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFE2E8F2)),
-                    ),
-                    child: Icon(
-                      Icons.image_outlined,
-                      color: AppColors.navy.withValues(alpha: .35),
-                    ),
-                  ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        hasProductImage(productImageValue)
-                            ? 'Image ready — shown on billing only for this product'
-                            : 'No image — billing cards stay text-only',
-                        style: TextStyle(
-                          fontFamily: AppFonts.family,
-                          fontSize: 13,
-                          color: AppColors.navy.withValues(alpha: .7),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
+                      child: Row(
                         children: [
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: busy
-                                  ? null
-                                  : () => pickProductImage(ImageSource.gallery),
-                              icon: const Icon(
-                                Icons.photo_library_outlined,
-                                size: 18,
-                              ),
-                              label: const Text('Gallery'),
-                            ),
+                          const Icon(
+                            Icons.category_rounded,
+                            size: 18,
+                            color: AppColors.primary,
                           ),
                           const SizedBox(width: 8),
                           Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: busy
-                                  ? null
-                                  : () => pickProductImage(ImageSource.camera),
-                              icon: const Icon(
-                                Icons.photo_camera_outlined,
-                                size: 18,
+                            child: Text(
+                              'Category: $selectedLabel',
+                              style: const TextStyle(
+                                fontFamily: AppFonts.family,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.navy,
                               ),
-                              label: const Text('Camera'),
                             ),
                           ),
                         ],
                       ),
-                      if (hasProductImage(productImageValue))
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: TextButton(
-                            onPressed: busy
-                                ? null
-                                : () => setState(() {
-                                      productImageValue = null;
-                                      productImageDirty = true;
-                                    }),
-                            child: const Text(
-                              'Remove',
-                              style: TextStyle(color: AppColors.red),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  MasterDropdown<ProductCategory>(
+                    required: true,
+                    value: category,
+                    items: categories,
+                    hint: 'Select category',
+                    itemLabel: (c) => c.categoryName,
+                    onChanged: (v) => setState(() => selectCategory(v)),
+                  ),
+                  const SizedBox(height: 12),
+                  MasterDropdown<ProductSubcategory>(
+                    value: subcategory,
+                    items: subs,
+                    hint: 'None',
+                    itemLabel: (s) => s.subcategoryName,
+                    onChanged: (v) => setState(() => selectSubcategory(v)),
+                  ),
+                ],
+              ),
+            ),
+            if (!isEdit) ...[
+              const SizedBox(height: 18),
+              MasterSectionLabel(
+                'Portions (Optional)',
+                trailing: MasterLinkButton(
+                  label: 'Manage Portion Master',
+                  onTap: () => context.push('/masters/portion-masters'),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Product price is used when no portions are added.',
+                style: TextStyle(
+                  fontFamily: AppFonts.family,
+                  fontSize: 12,
+                  color: AppColors.navy.withValues(alpha: .45),
+                ),
+              ),
+              const SizedBox(height: 10),
+              MasterCard(
+                child: Column(
+                  children: [
+                    MasterDropdown<PortionMaster>(
+                      value: portionMaster,
+                      items: portionMasters,
+                      hint: 'Select portion',
+                      itemLabel: (m) => m.portionName,
+                      onChanged: (v) =>
+                          setState(() => productFormPagePortionMaster = v),
+                    ),
+                    const SizedBox(height: 12),
+                    MasterOutlinedField(
+                      controller: portionPriceCtrl,
+                      hint: 'Selling price for this product + portion',
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    MasterPrimaryButton(
+                      label: 'Add Portion to Product',
+                      onPressed: addInlinePortion,
+                    ),
+                    if (inlinePortions.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      for (final p in inlinePortions)
+                        ListTile(
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(p.master.portionName),
+                          subtitle: Text('₹ ${p.price.toStringAsFixed(2)}'),
+                          trailing: IconButton(
+                            icon: const Icon(
+                              Icons.close_rounded,
+                              color: AppColors.red,
                             ),
+                            onPressed: () =>
+                                setState(() => inlinePortions.remove(p)),
                           ),
                         ),
                     ],
-                  ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 18),
-          const MasterSectionLabel('Product Details'),
-          const SizedBox(height: 10),
-          MasterCard(
-            child: Column(
-              children: [
-                MasterOutlinedField(
-                  controller: codeCtrl,
-                  hint: 'Product Code',
-                  textCapitalization: TextCapitalization.characters,
+              ),
+            ] else ...[
+              const SizedBox(height: 14),
+              MasterPrimaryButton(
+                label: 'Manage Portions',
+                onPressed: () => context.push(
+                  '/masters/products/portions?id=${widget.productId}',
                 ),
-                const SizedBox(height: 12),
-                MasterOutlinedField(
-                  controller: nameCtrl,
-                  hint: 'Product Name',
-                ),
-                const SizedBox(height: 8),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text(
-                    'Open Price',
-                    style: TextStyle(
-                      fontFamily: AppFonts.family,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14.5,
-                      color: AppColors.navy,
-                    ),
-                  ),
-                  subtitle: Text(
-                    'Price is entered while billing (tap amount on cart)',
-                    style: TextStyle(
-                      fontFamily: AppFonts.family,
-                      fontSize: 12,
-                      color: AppColors.navy.withValues(alpha: .45),
-                    ),
-                  ),
-                  value: productFormPageOpenPrice,
-                  activeThumbColor: AppColors.primary,
-                  onChanged: (v) => setState(() => productFormPageOpenPrice = v),
-                ),
-                if (!productFormPageOpenPrice) ...[
-                  const SizedBox(height: 4),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text(
-                      'Price includes GST',
-                      style: TextStyle(
-                        fontFamily: AppFonts.family,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14.5,
-                        color: AppColors.navy,
+              ),
+            ],
+            const SizedBox(height: 18),
+            const MasterSectionLabel('Product Image (Optional)'),
+            const SizedBox(height: 10),
+            MasterCard(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (hasProductImage(productImageValue))
+                    ProductImageThumb(
+                      value: productImageValue,
+                      size: 72,
+                      radius: 12,
+                    )
+                  else
+                    Container(
+                      width: 72,
+                      height: 72,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFE2E8F2)),
+                      ),
+                      child: Icon(
+                        Icons.image_outlined,
+                        color: AppColors.navy.withValues(alpha: .35),
                       ),
                     ),
-                    subtitle: Text(
-                      priceIncludesGst
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          hasProductImage(productImageValue)
+                              ? 'Image ready — shown on billing only for this product'
+                              : 'No image — billing cards stay text-only',
+                          style: TextStyle(
+                            fontFamily: AppFonts.family,
+                            fontSize: 13,
+                            color: AppColors.navy.withValues(alpha: .7),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: busy
+                                    ? null
+                                    : () =>
+                                          pickProductImage(ImageSource.gallery),
+                                icon: const Icon(
+                                  Icons.photo_library_outlined,
+                                  size: 18,
+                                ),
+                                label: const Text('Gallery'),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: busy
+                                    ? null
+                                    : () =>
+                                          pickProductImage(ImageSource.camera),
+                                icon: const Icon(
+                                  Icons.photo_camera_outlined,
+                                  size: 18,
+                                ),
+                                label: const Text('Camera'),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (hasProductImage(productImageValue))
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: TextButton(
+                              onPressed: busy
+                                  ? null
+                                  : () => setState(() {
+                                      productImageValue = null;
+                                      productImageDirty = true;
+                                    }),
+                              child: const Text(
+                                'Remove',
+                                style: TextStyle(color: AppColors.red),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 18),
+            const MasterSectionLabel('Product Details'),
+            const SizedBox(height: 10),
+            MasterCard(
+              child: Column(
+                children: [
+                  MasterOutlinedField(
+                    controller: codeCtrl,
+                    hint: 'Product Code',
+                    textCapitalization: TextCapitalization.characters,
+                  ),
+                  const SizedBox(height: 12),
+                  MasterOutlinedField(
+                    required: true,
+                    controller: nameCtrl,
+                    hint: 'Product Name',
+                  ),
+                  const SizedBox(height: 8),
+                  AppSwitchTile(
+                    title: 'Open Price',
+                    subtitle:
+                        'Price is entered while billing (tap amount on cart)',
+                    value: productFormPageOpenPrice,
+                    showDivider: false,
+                    onChanged: (v) =>
+                        setState(() => productFormPageOpenPrice = v),
+                  ),
+                  if (!productFormPageOpenPrice) ...[
+                    const SizedBox(height: 4),
+                    AppSwitchTile(
+                      title: 'Price includes GST',
+                      subtitle: priceIncludesGst
                           ? 'Entered selling price is with GST; system stores exclusive price for billing'
                           : 'Entered selling price is without GST; tax added on bill',
-                      style: TextStyle(
-                        fontFamily: AppFonts.family,
-                        fontSize: 12,
-                        color: AppColors.navy.withValues(alpha: .45),
+                      value: priceIncludesGst,
+                      showDivider: false,
+                      onChanged: (v) => setState(() => priceIncludesGst = v),
+                    ),
+                    const SizedBox(height: 4),
+                    MasterOutlinedField(
+                      controller: mrpCtrl,
+                      hint: 'MRP (optional)',
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
                       ),
                     ),
-                    value: priceIncludesGst,
-                    activeThumbColor: AppColors.primary,
-                    onChanged: (v) => setState(() => priceIncludesGst = v),
-                  ),
-                  const SizedBox(height: 4),
-                  MasterOutlinedField(
-                    controller: mrpCtrl,
-                    hint: 'MRP (optional)',
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
-                  ),
+                    const SizedBox(height: 12),
+                    MasterOutlinedField(
+                      required: true,
+                      controller: priceCtrl,
+                      hint: priceIncludesGst
+                          ? 'Selling Price (with GST)'
+                          : 'Selling Price (without GST)',
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 12),
-                  MasterOutlinedField(
-                    controller: priceCtrl,
-                    hint: priceIncludesGst
-                        ? 'Selling Price (with GST)*'
-                        : 'Selling Price (without GST)*',
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
+                  MasterDropdown<String>(
+                    value: unit,
+                    items: productUnits,
+                    itemLabel: (u) => u,
+                    onChanged: (v) {
+                      if (v != null) setState(() => unit = v);
+                    },
+                  ),
+                  if (!isEdit) ...[
+                    const SizedBox(height: 12),
+                    MasterOutlinedField(
+                      controller: stockCtrl,
+                      hint: 'Opening Stock (optional)',
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 18),
+            const MasterSectionLabel('Tax / GST'),
+            const SizedBox(height: 10),
+            MasterCard(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: MasterOutlinedField(
+                      controller: cgstCtrl,
+                      hint: 'Product CGST',
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: MasterOutlinedField(
+                      controller: sgstCtrl,
+                      hint: 'Product SGST',
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                    ),
                   ),
                 ],
-                const SizedBox(height: 12),
-                MasterDropdown<String>(
-                  value: unit,
-                  items: productUnits,
-                  itemLabel: (u) => u,
-                  onChanged: (v) {
-                    if (v != null) setState(() => unit = v);
-                  },
-                ),
-                if (!isEdit) ...[
-                  const SizedBox(height: 12),
-                  MasterOutlinedField(
-                    controller: stockCtrl,
-                    hint: 'Opening Stock (optional)',
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
-                  ),
-                ],
-              ],
+              ),
             ),
-          ),
-          const SizedBox(height: 18),
-          const MasterSectionLabel('Tax / GST'),
-          const SizedBox(height: 10),
-          MasterCard(
-            child: Row(
-              children: [
-                Expanded(
-                  child: MasterOutlinedField(
-                    controller: cgstCtrl,
-                    hint: 'Product CGST',
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: MasterOutlinedField(
-                    controller: sgstCtrl,
-                    hint: 'Product SGST',
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
-                  ),
-                ),
-              ],
+            const SizedBox(height: 22),
+            MasterPrimaryButton(
+              label: isEdit ? 'Save Product' : 'Add Product',
+              isLoading: busy,
+              onPressed: busy ? null : save,
             ),
-          ),
-          const SizedBox(height: 22),
-          MasterPrimaryButton(
-            label: isEdit ? 'Save Product' : 'Add Product',
-            isLoading: busy,
-            onPressed: busy ? null : save,
-          ),
-        ],
-      ),
+          ],
+        ),
       ),
     );
   }

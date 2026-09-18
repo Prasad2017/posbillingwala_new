@@ -19,7 +19,10 @@ class LicenseModules {
   }
 
   static bool fastBilling(UserSession? s) => allow(s, (x) => x.fastBilling);
+
   static bool dineIn(UserSession? s) => allow(s, (x) => x.dineIn);
+
   static bool takeAway(UserSession? s) => allow(s, (x) => x.takeAway);
+
   static bool mess(UserSession? s) => allow(s, (x) => x.mess);
 }

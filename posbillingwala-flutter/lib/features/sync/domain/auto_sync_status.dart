@@ -59,10 +59,7 @@ class AutoSyncStatusController extends Notifier<AutoSyncStatus> {
   }
 
   void setSyncing(bool syncing) {
-    state = state.copyWith(
-      syncing: syncing,
-      clearError: syncing,
-    );
+    state = state.copyWith(syncing: syncing, clearError: syncing);
   }
 
   void setPendingCount(int count) {
@@ -90,5 +87,5 @@ class AutoSyncStatusController extends Notifier<AutoSyncStatus> {
 
 final autoSyncStatusProvider =
     NotifierProvider<AutoSyncStatusController, AutoSyncStatus>(
-  AutoSyncStatusController.new,
-);
+      AutoSyncStatusController.new,
+    );

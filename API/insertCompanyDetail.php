@@ -8,11 +8,11 @@ $response = array();
 if($_SERVER['REQUEST_METHOD']=='POST'){
      mysqli_query($con, 'set names utf8');
     
-  $userId = $_POST['userId'];
-  $__postedUserId = isset($_POST['userId']) ? $_POST['userId'] : (isset($userId) ? $userId : '');
-  pos_require_auth($con, $__postedUserId, isset($response) ? $response : array('status'=>'0','message'=>'Unauthorized'));
+  $__postedUserId = isset($_POST['userId']) ? $_POST['userId'] : '';
+  $userId = pos_require_auth($con, $__postedUserId, isset($response) ? $response : array('status'=>'0','message'=>'Unauthorized'));
   require_once __DIR__ . '/pos_staff.php';
   pos_require_permission($con, $userId, 'settings.manage');
+  $userIdEsc = mysqli_real_escape_string($con, (string) $userId);
 
   $companyName = isset($_POST['companyName']) ? $_POST['companyName'] : '';
   $cashierName = isset($_POST['cashierName']) ? $_POST['cashierName'] : '';
@@ -36,7 +36,7 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
   $gstNumber = isset($_POST['gstNumber']) ? $_POST['gstNumber'] : '';
   $panNumber = isset($_POST['panNumber']) ? $_POST['panNumber'] : '';
   $companyFssis = isset($_POST['companyFssis']) ? $_POST['companyFssis'] : '';
-  $companyLogo = isset($_POST['companyLogo']) ? $_POST['companyLogo'] : '';
+  $companyLogo = isset($_POST['companyLogo']) ? trim((string) $_POST['companyLogo']) : '';
   $paymentLogo = isset($_POST['paymentLogo']) ? $_POST['paymentLogo'] : '';
   $openingMinutes = company_normalize_minutes(isset($_POST['openingMinutes']) ? $_POST['openingMinutes'] : '');
   $closingMinutes = company_normalize_minutes(isset($_POST['closingMinutes']) ? $_POST['closingMinutes'] : '');
@@ -78,16 +78,20 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 	date_default_timezone_set('Asia/Kolkata');
     $date=date('Y-m-d');
     
-    $sql="SELECT * FROM `companys` WHERE `licenseId`='$userId'";
+    $sql="SELECT * FROM `companys` WHERE `licenseId`='$userIdEsc'";
 		    $res = mysqli_query($con, $sql);
 			$check = mysqli_fetch_array($res);
 		
-				if(isset($check))
+				if(isset($check) && $check)
 				{
 				    
 				    $companyId = $check['companyId'];
-				    $sql="UPDATE `companys` SET `companyLogo`='$companyLogo', `paymentLogo`='$paymentLogo', `companyName`='$companyName', `cashierName`='$cashierName', `companyMobile`='$companyMobile', `companyAddress`='$companyAddress', `shopName1`='$shopName1', `shopName2`='$shopName2', `addressLine1`='$addressLine1', `addressLine2`='$addressLine2', `addressLine3`='$addressLine3', `phoneNo1`='$phoneNo1', `phoneNo2`='$phoneNo2', `currencyName`='$currencyName', `countryName`='$countryName', `stateName`='$stateName',
-				          `tableStatus`='$tableStatus', `noOfTable`='$noOfTable', `gstStatus`='$gstStatus', `gstNumber`='$gstNumber', `shopCGST`='$shopCGST', `shopSGST`='$shopSGST', `panNumber`='$panNumber', `companyFssis`='$companyFssis'" . $hoursSqlFragment . " WHERE `companyId`='$companyId'";
+				    /* Keep existing logo when client did not send a new one. */
+				    $logoSql = ($companyLogo !== '')
+				        ? ("`companyLogo`='" . mysqli_real_escape_string($con, $companyLogo) . "', ")
+				        : '';
+				    $sql="UPDATE `companys` SET " . $logoSql . "`paymentLogo`='" . mysqli_real_escape_string($con, $paymentLogo) . "', `companyName`='" . mysqli_real_escape_string($con, $companyName) . "', `cashierName`='" . mysqli_real_escape_string($con, $cashierName) . "', `companyMobile`='" . mysqli_real_escape_string($con, $companyMobile) . "', `companyAddress`='" . mysqli_real_escape_string($con, $companyAddress) . "', `shopName1`='" . mysqli_real_escape_string($con, $shopName1) . "', `shopName2`='" . mysqli_real_escape_string($con, $shopName2) . "', `addressLine1`='" . mysqli_real_escape_string($con, $addressLine1) . "', `addressLine2`='" . mysqli_real_escape_string($con, $addressLine2) . "', `addressLine3`='" . mysqli_real_escape_string($con, $addressLine3) . "', `phoneNo1`='" . mysqli_real_escape_string($con, $phoneNo1) . "', `phoneNo2`='" . mysqli_real_escape_string($con, $phoneNo2) . "', `currencyName`='" . mysqli_real_escape_string($con, $currencyName) . "', `countryName`='" . mysqli_real_escape_string($con, $countryName) . "', `stateName`='" . mysqli_real_escape_string($con, $stateName) . "',
+				          `tableStatus`='" . mysqli_real_escape_string($con, $tableStatus) . "', `noOfTable`='" . mysqli_real_escape_string($con, $noOfTable) . "', `gstStatus`='" . mysqli_real_escape_string($con, $gstStatus) . "', `gstNumber`='" . mysqli_real_escape_string($con, $gstNumber) . "', `shopCGST`='" . mysqli_real_escape_string($con, $shopCGST) . "', `shopSGST`='" . mysqli_real_escape_string($con, $shopSGST) . "', `panNumber`='" . mysqli_real_escape_string($con, $panNumber) . "', `companyFssis`='" . mysqli_real_escape_string($con, $companyFssis) . "'" . $hoursSqlFragment . " WHERE `companyId`='$companyId'";
 
                  if(mysqli_query($con, $sql)){
 	
@@ -98,7 +102,7 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
                    else{
     
                         $response["status"] = '0';
-                        $response["message"] = "update failed!";
+                        $response["message"] = "update failed: " . mysqli_error($con);
  
                      }
 				    
@@ -114,7 +118,7 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
                  }
 
                  $sql="INSERT INTO `companys`(`licenseId`, `companyLogo`, `companyName`, `cashierName`, `companyMobile`, `companyAddress`, `shopName1`, `shopName2`, `addressLine1`, `addressLine2`, `addressLine3`, `phoneNo1`, `phoneNo2`, `currencyName`, `tableStatus`, `noOfTable`, `countryName`, `stateName`, `gstStatus`, `gstNumber`, `shopCGST`, `shopSGST`, `panNumber`, `companyFssis`, `paymentLogo`, `companyStatus`" . $hoursInsertCols . ") 
-                       VALUES ('$userId', '$companyLogo', '$companyName', '$cashierName', '$companyMobile', '$companyAddress', '$shopName1', '$shopName2', '$addressLine1', '$addressLine2', '$addressLine3', '$phoneNo1', '$phoneNo2', '$currencyName', '$tableStatus', '$noOfTable', '$countryName', '$stateName', '$gstStatus', '$gstNumber', '$shopCGST', '$shopSGST', '$panNumber', '$companyFssis', '$paymentLogo', 'active'" . $hoursInsertVals . ")";
+                       VALUES ('$userIdEsc', '" . mysqli_real_escape_string($con, $companyLogo) . "', '" . mysqli_real_escape_string($con, $companyName) . "', '" . mysqli_real_escape_string($con, $cashierName) . "', '" . mysqli_real_escape_string($con, $companyMobile) . "', '" . mysqli_real_escape_string($con, $companyAddress) . "', '" . mysqli_real_escape_string($con, $shopName1) . "', '" . mysqli_real_escape_string($con, $shopName2) . "', '" . mysqli_real_escape_string($con, $addressLine1) . "', '" . mysqli_real_escape_string($con, $addressLine2) . "', '" . mysqli_real_escape_string($con, $addressLine3) . "', '" . mysqli_real_escape_string($con, $phoneNo1) . "', '" . mysqli_real_escape_string($con, $phoneNo2) . "', '" . mysqli_real_escape_string($con, $currencyName) . "', '" . mysqli_real_escape_string($con, $tableStatus) . "', '" . mysqli_real_escape_string($con, $noOfTable) . "', '" . mysqli_real_escape_string($con, $countryName) . "', '" . mysqli_real_escape_string($con, $stateName) . "', '" . mysqli_real_escape_string($con, $gstStatus) . "', '" . mysqli_real_escape_string($con, $gstNumber) . "', '" . mysqli_real_escape_string($con, $shopCGST) . "', '" . mysqli_real_escape_string($con, $shopSGST) . "', '" . mysqli_real_escape_string($con, $panNumber) . "', '" . mysqli_real_escape_string($con, $companyFssis) . "', '" . mysqli_real_escape_string($con, $paymentLogo) . "', 'active'" . $hoursInsertVals . ")";
 
                  if(mysqli_query($con,$sql)){
 	

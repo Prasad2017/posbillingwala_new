@@ -9,8 +9,7 @@ extension AppWidgetTheme on BuildContext {
   Color get textSecondary =>
       Theme.of(this).colorScheme.onSurfaceVariant.withValues(alpha: 0.85);
 
-  Color get cardColor =>
-      Theme.of(this).cardTheme.color ?? AppColors.card;
+  Color get cardColor => Theme.of(this).cardTheme.color ?? AppColors.card;
 
   Color get borderColor => AppColors.border;
 

@@ -40,8 +40,8 @@ abstract final class FileLogStore {
       await _appendRaw(
         'session',
         '===== Log session started '
-        '${DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now())} =====\n'
-        'Logs folder: ${dir.path}\n',
+            '${DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now())} =====\n'
+            'Logs folder: ${dir.path}\n',
       );
       AppLogger.info('File logs → ${dir.path}');
     } catch (e, st) {

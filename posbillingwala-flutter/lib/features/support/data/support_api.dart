@@ -15,10 +15,7 @@ class SupportApi {
   }) async {
     final data = await supportApiGet(
       ApiEndpoints.getSupportTickets,
-      query: {
-        'userId': userId,
-        'status': status,
-      },
+      query: {'userId': userId, 'status': status},
     );
     return mapJsonList(
       data[ApiResponseKeys.tickets],
@@ -59,10 +56,7 @@ class SupportApi {
   ) async {
     final data = await supportApiGet(
       ApiEndpoints.getSupportTicketDetails,
-      query: {
-        'userId': userId,
-        'ticketId': ticketId,
-      },
+      query: {'userId': userId, 'ticketId': ticketId},
     );
     return SupportTicketDetailsDto.fromJson(data);
   }
@@ -74,11 +68,7 @@ class SupportApi {
   }) async {
     final data = await supportApiPost(
       ApiEndpoints.replySupportTicket,
-      fields: {
-        'userId': userId,
-        'ticketId': ticketId,
-        'message': message,
-      },
+      fields: {'userId': userId, 'ticketId': ticketId, 'message': message},
     );
     return StatusMessage.fromJson(data);
   }

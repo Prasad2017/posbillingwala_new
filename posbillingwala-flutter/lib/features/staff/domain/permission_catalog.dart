@@ -49,8 +49,7 @@ const posPermissionDependencies = <String, String>{
   'printer.test': 'printer.view',
 };
 
-String posRoleLabel(String role) =>
-    posFixedRoles[role.toUpperCase()] ?? role;
+String posRoleLabel(String role) => posFixedRoles[role.toUpperCase()] ?? role;
 
 String posPermissionLabel(String key) {
   final parts = key.split('.');

@@ -35,12 +35,14 @@ class CategoriesPageState extends ConsumerState<CategoriesPage> {
     }
     setState(() => busy = true);
     try {
-      await ref.read(mastersSyncControllerProvider.notifier).createCategory(name);
+      await ref
+          .read(mastersSyncControllerProvider.notifier)
+          .createCategory(name);
       nameCtrl.clear();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppStrings.of(ref).categorySaved)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(AppStrings.of(ref).categorySaved)));
     } finally {
       if (mounted) setState(() => busy = false);
     }
@@ -54,7 +56,11 @@ class CategoriesPageState extends ConsumerState<CategoriesPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          MasterOutlinedField(controller: controller, hint: 'Category Name'),
+          MasterOutlinedField(
+            required: true,
+            controller: controller,
+            hint: 'Category Name',
+          ),
           const SizedBox(height: 16),
           Row(
             children: [
@@ -79,10 +85,9 @@ class CategoriesPageState extends ConsumerState<CategoriesPage> {
     final name = controller.text.trim();
     controller.dispose();
     if (ok != true || name.isEmpty) return;
-    await ref.read(mastersSyncControllerProvider.notifier).updateCategory(
-          categoryId: category.categoryId,
-          name: name,
-        );
+    await ref
+        .read(mastersSyncControllerProvider.notifier)
+        .updateCategory(categoryId: category.categoryId, name: name);
   }
 
   Future<void> delete(ProductCategory category) async {
@@ -129,6 +134,7 @@ class CategoriesPageState extends ConsumerState<CategoriesPage> {
               child: Column(
                 children: [
                   MasterOutlinedField(
+                    required: true,
                     controller: nameCtrl,
                     hint: 'Category Name',
                   ),

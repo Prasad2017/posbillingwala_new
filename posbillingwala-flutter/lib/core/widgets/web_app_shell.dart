@@ -11,6 +11,7 @@ import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/user_session.dart';
 import 'package:pos_billingwala_v2/features/notifications/domain/notification_providers.dart';
+import 'package:pos_billingwala_v2/features/reports/presentation/report_pin_gate.dart';
 import 'package:pos_billingwala_v2/features/staff/domain/permission_controller.dart';
 import 'package:pos_billingwala_v2/features/sync/domain/web_cloud_refresh_listener.dart';
 
@@ -42,11 +43,7 @@ class WebNavDestination {
 }
 
 const webNavDestinations = <WebNavDestination>[
-  WebNavDestination(
-    label: 'Home',
-    icon: Icons.home_rounded,
-    route: '/',
-  ),
+  WebNavDestination(label: 'Home', icon: Icons.home_rounded, route: '/'),
   WebNavDestination(
     label: 'Billing',
     icon: Icons.point_of_sale_rounded,
@@ -126,10 +123,9 @@ class WebAppShell extends ConsumerWidget {
     if (!AppPlatform.useDesktopShell) return child;
 
     final wide = context.widthClass.index >= AppWidthClass.expanded.index;
-    final online = ref.watch(deviceOnlineProvider).maybeWhen(
-          data: (value) => value,
-          orElse: () => true,
-        );
+    final online = ref
+        .watch(deviceOnlineProvider)
+        .maybeWhen(data: (value) => value, orElse: () => true);
 
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -139,18 +135,18 @@ class WebAppShell extends ConsumerWidget {
               backgroundColor: AppColors.navy,
               title: const Text('Billingwala'),
             ),
-      drawer: wide ? null : Drawer(child: WebSideNav(location: GoRouterState.of(context).uri.path)),
+      drawer: wide
+          ? null
+          : Drawer(
+              child: WebSideNav(location: GoRouterState.of(context).uri.path),
+            ),
       body: Column(
         children: [
           if (!online) const WebOfflineBanner(),
           Expanded(
             child: Row(
               children: [
-                if (wide)
-                  const SizedBox(
-                    width: railWidth,
-                    child: WebSideNav(),
-                  ),
+                if (wide) const SizedBox(width: railWidth, child: WebSideNav()),
                 Expanded(child: child),
               ],
             ),
@@ -163,16 +159,16 @@ class WebAppShell extends ConsumerWidget {
   static Future<void> refreshCloud(BuildContext context, WidgetRef ref) async {
     if (!await isDeviceOnline()) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(kOnlineRequiredMessage)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text(kOnlineRequiredMessage)));
       return;
     }
     await ref.read(webCloudRefreshListenerProvider).refresh(force: true);
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Refreshed from cloud')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Refreshed from cloud')));
   }
 }
 
@@ -218,16 +214,15 @@ class WebSideNav extends ConsumerWidget {
     final session = ref.watch(authControllerProvider).session;
     final perms = ref.watch(permissionControllerProvider);
     final unread = ref.watch(unreadNotificationCountProvider);
-    final online = ref.watch(deviceOnlineProvider).maybeWhen(
-          data: (value) => value,
-          orElse: () => true,
-        );
+    final online = ref
+        .watch(deviceOnlineProvider)
+        .maybeWhen(data: (value) => value, orElse: () => true);
     final shopName = session?.displayName ?? 'Billingwala';
     final staffName = perms.staff?.name.trim().isNotEmpty == true
         ? perms.staff!.name.trim()
         : (session?.userName?.trim().isNotEmpty == true
-            ? session!.userName!.trim()
-            : 'Owner');
+              ? session!.userName!.trim()
+              : 'Owner');
     final staffRole = perms.staff?.roleLabel.trim().isNotEmpty == true
         ? perms.staff!.roleLabel.trim()
         : 'Licence';
@@ -314,8 +309,10 @@ class WebSideNav extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: .08),
                   borderRadius: BorderRadius.circular(12),
@@ -354,13 +351,16 @@ class WebSideNav extends ConsumerWidget {
                       label: item.label,
                       icon: item.icon,
                       selected: item.matches(loc),
-                      onTap: () {
+                      onTap: () async {
                         if (Scaffold.maybeOf(context)?.isDrawerOpen == true) {
                           Navigator.of(context).pop();
                         }
-                        if (!item.matches(loc)) {
-                          context.go(item.route);
+                        if (item.matches(loc)) return;
+                        if (item.route == '/reports') {
+                          await pushReportsUnlocked(context, ref);
+                          return;
                         }
+                        context.go(item.route);
                       },
                     ),
                 ],
@@ -418,9 +418,7 @@ class WebSideNav extends ConsumerWidget {
                         radius: 16,
                         backgroundColor: Colors.white.withValues(alpha: .12),
                         child: Text(
-                          staffName.isEmpty
-                              ? 'S'
-                              : staffName[0].toUpperCase(),
+                          staffName.isEmpty ? 'S' : staffName[0].toUpperCase(),
                           style: const TextStyle(
                             fontFamily: AppFonts.family,
                             color: Colors.white,

@@ -87,7 +87,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
     public static final String KOT_TABLE = "kot";
     public static final String KOT_ITEM_TABLE = "kot_item";
     // Database Version
-    public static final int DATABASE_VERSION = 30;
+    public static final int DATABASE_VERSION = 31;
 
     /** SQL suffix: only rows for the logged-in license branch. */
     private static String andBranchScope(String tableAlias) {
@@ -583,6 +583,18 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         // Additive only — never DROP production tables
         ensureAdditiveSchema(db);
+        /* Re-upload portions/combos with product/master network keys so */
+        /* other devices receive the complete menu instead of orphan rows. */
+        if (oldVersion < 31) {
+            try {
+                db.execSQL("UPDATE " + PORTION_MASTER_TABLE + " SET portionMasterStatus = 0");
+                db.execSQL("UPDATE " + PRODUCT_PORTION_TABLE + " SET portionStatus = 0");
+                db.execSQL("UPDATE " + COMBO_TABLE + " SET comboStatus = 0");
+                db.execSQL("UPDATE " + COMBO_ITEM_TABLE + " SET comboItemStatus = 0");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     @Override
@@ -1790,6 +1802,24 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
     public boolean insertProductSubcategory(String categoryId, String subcategoryName,
                                             String subcategoryDeletedStatus, String subcategoryNetworkStatus,
                                             int subcategoryStatus, int subcategorySortOrder) {
+        return insertProductSubcategory(categoryId, null, subcategoryName, subcategoryDeletedStatus,
+                subcategoryNetworkStatus, subcategoryStatus, subcategorySortOrder);
+    }
+
+    public boolean insertProductSubcategory(String categoryId, String categoryNetworkStatus,
+                                            String subcategoryName, String subcategoryDeletedStatus,
+                                            String subcategoryNetworkStatus, int subcategoryStatus,
+                                            int subcategorySortOrder) {
+        String localCategoryId = null;
+        if (categoryNetworkStatus != null && !categoryNetworkStatus.trim().isEmpty()) {
+            localCategoryId = getCategoryIdByNetworkStatus(categoryNetworkStatus);
+        }
+        if (localCategoryId == null || localCategoryId.trim().isEmpty()) {
+            localCategoryId = resolveLocalCategoryId(categoryId, null);
+        }
+        if (localCategoryId == null || localCategoryId.trim().isEmpty()) {
+            localCategoryId = categoryId;
+        }
         SQLiteDatabase db = this.getWritableDatabase();
         if (subcategoryNetworkStatus != null && !subcategoryNetworkStatus.trim().isEmpty()) {
             Cursor existing = null;
@@ -1801,7 +1831,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
                 if (existing.moveToFirst()) {
                     String existingId = existing.getString(0);
                     ContentValues update = new ContentValues();
-                    update.put("categoryId", categoryId);
+                    update.put("categoryId", localCategoryId);
                     update.put("subcategoryName", subcategoryName);
                     update.put("subcategoryDeletedStatus",
                             subcategoryDeletedStatus != null ? subcategoryDeletedStatus : "0");
@@ -1837,8 +1867,9 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
                 }
             }
         }
+
         ContentValues values = new ContentValues();
-        values.put("categoryId", categoryId);
+        values.put("categoryId", localCategoryId);
         values.put("subcategoryName", subcategoryName);
         values.put("subcategoryDeletedStatus",
                 subcategoryDeletedStatus != null ? subcategoryDeletedStatus : "0");
@@ -1846,12 +1877,12 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         values.put("subcategoryStatus", subcategoryStatus);
         int sortOrder = subcategorySortOrder;
         if (sortOrder < 0) {
-            sortOrder = getNextSubcategorySortOrder(db, categoryId);
+            sortOrder = getNextSubcategorySortOrder(db, localCategoryId);
         }
         values.put("subcategorySortOrder", sortOrder);
-        long rowId = db.insert(PRODUCT_SUBCATEGORY_TABLE, null, values);
+        db.insert(PRODUCT_SUBCATEGORY_TABLE, null, values);
         db.close();
-        return rowId != -1;
+        return true;
     }
 
     private int getNextSubcategorySortOrder(SQLiteDatabase db, String categoryId) {
@@ -2402,16 +2433,28 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             }
         } catch (NumberFormatException ignored) {
         }
-        String masterId = portion.getPortionMasterId();
-        String masterName = portion.getPortionName();
-        if ((masterId == null || masterId.trim().isEmpty())
-                && portion.getPortionMasterNetworkStatus() != null
-                && !portion.getPortionMasterNetworkStatus().trim().isEmpty()) {
-            ensurePortionMasterFromServer(masterName, "0", portion.getPortionMasterNetworkStatus());
-            masterId = resolveLocalPortionMasterId(null, masterName, portion.getPortionMasterNetworkStatus());
+        /* Local product/master PKs are autoincrement — always prefer *NetworkStatus. */
+        String productId = null;
+        if (portion.getProductNetworkStatus() != null
+                && !portion.getProductNetworkStatus().trim().isEmpty()) {
+            productId = getProductIdByNetworkStatus(portion.getProductNetworkStatus());
         }
+        if (productId == null || productId.trim().isEmpty()) {
+            productId = portion.getProductId();
+        }
+        if (productId == null || productId.trim().isEmpty()
+                || getProductDetail(productId).isEmpty()) {
+            return false;
+        }
+        String masterName = portion.getPortionName();
+        String masterNetwork = portion.getPortionMasterNetworkStatus();
+        if (masterNetwork != null && !masterNetwork.trim().isEmpty()) {
+            ensurePortionMasterFromServer(masterName, "0", masterNetwork);
+        }
+        String masterId = resolveLocalPortionMasterId(
+                portion.getPortionMasterId(), masterName, masterNetwork);
         return insertProductPortion(
-                portion.getProductId(),
+                productId,
                 masterId,
                 portion.getPortionName(),
                 portion.getPortionPrice(),
@@ -2730,6 +2773,108 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             cursor = db.rawQuery(
                     "SELECT productId FROM " + PRODUCT_TABLE + " WHERE productNetworkStatus = ? LIMIT 1",
                     new String[]{productNetworkStatus});
+            if (cursor.moveToFirst()) {
+                return cursor.getString(0);
+            }
+            return null;
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
+    /** Resolve local category PK after cloud fetch (autoincrement ≠ server categoryId). */
+    public String resolveLocalCategoryId(String serverCategoryId, String categoryName) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            if (categoryName != null && !categoryName.trim().isEmpty()) {
+                cursor = db.rawQuery(
+                        "SELECT categoryId FROM " + PRODUCT_CATEGORY_TABLE
+                                + " WHERE categoryName = ? AND IFNULL(categoryDeletedStatus,'0') = '0' LIMIT 1",
+                        new String[]{categoryName.trim()});
+                if (cursor.moveToFirst()) {
+                    return cursor.getString(0);
+                }
+                cursor.close();
+                cursor = null;
+            }
+            if (serverCategoryId != null && !serverCategoryId.trim().isEmpty()
+                    && !"0".equals(serverCategoryId.trim())) {
+                cursor = db.rawQuery(
+                        "SELECT categoryId FROM " + PRODUCT_CATEGORY_TABLE
+                                + " WHERE categoryId = ? LIMIT 1",
+                        new String[]{serverCategoryId.trim()});
+                if (cursor.moveToFirst()) {
+                    return cursor.getString(0);
+                }
+            }
+            return null;
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
+    public String getCategoryIdByNetworkStatus(String categoryNetworkStatus) {
+        if (categoryNetworkStatus == null || categoryNetworkStatus.trim().isEmpty()) {
+            return null;
+        }
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT categoryId FROM " + PRODUCT_CATEGORY_TABLE
+                            + " WHERE categoryNetworkStatus = ? LIMIT 1",
+                    new String[]{categoryNetworkStatus.trim()});
+            if (cursor.moveToFirst()) {
+                return cursor.getString(0);
+            }
+            return null;
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
+    public String getSubcategoryIdByNetworkStatus(String subcategoryNetworkStatus) {
+        if (subcategoryNetworkStatus == null || subcategoryNetworkStatus.trim().isEmpty()) {
+            return null;
+        }
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT subcategoryId FROM " + PRODUCT_SUBCATEGORY_TABLE
+                            + " WHERE subcategoryNetworkStatus = ? LIMIT 1",
+                    new String[]{subcategoryNetworkStatus.trim()});
+            if (cursor.moveToFirst()) {
+                return cursor.getString(0);
+            }
+            return null;
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
+    /** Keep server subcategoryId only when it already exists locally. */
+    public String resolveLocalSubcategoryId(String serverSubcategoryId) {
+        if (serverSubcategoryId == null || serverSubcategoryId.trim().isEmpty()
+                || "0".equals(serverSubcategoryId.trim())) {
+            return null;
+        }
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT subcategoryId FROM " + PRODUCT_SUBCATEGORY_TABLE
+                            + " WHERE subcategoryId = ? LIMIT 1",
+                    new String[]{serverSubcategoryId.trim()});
             if (cursor.moveToFirst()) {
                 return cursor.getString(0);
             }
@@ -4094,6 +4239,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         try {
             db.delete(PRODUCT_CATEGORY_TABLE, null, null);
             db.delete(PRODUCT_SUBCATEGORY_TABLE, null, null);
+            db.delete(PORTION_MASTER_TABLE, null, null);
             db.delete(PRODUCT_PORTION_TABLE, null, null);
             db.delete(PRODUCT_TABLE, null, null);
             db.delete(COMBO_ITEM_TABLE, null, null);
@@ -6903,20 +7049,32 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         if (item == null) {
             return;
         }
-        String comboId = item.getComboId();
-        if ((comboId == null || comboId.trim().isEmpty()) && item.getComboNetworkStatus() != null) {
+        /* Local combo/product/portion PKs are autoincrement — always prefer *NetworkStatus. */
+        String comboId = null;
+        if (item.getComboNetworkStatus() != null && !item.getComboNetworkStatus().trim().isEmpty()) {
             comboId = getComboIdByNetworkStatus(item.getComboNetworkStatus());
         }
-        String productId = item.getProductId();
-        if ((productId == null || productId.trim().isEmpty()) && item.getProductNetworkStatus() != null) {
+        if (comboId == null || comboId.trim().isEmpty()) {
+            comboId = item.getComboId();
+        }
+        String productId = null;
+        if (item.getProductNetworkStatus() != null && !item.getProductNetworkStatus().trim().isEmpty()) {
             productId = getProductIdByNetworkStatus(item.getProductNetworkStatus());
         }
-        String portionId = item.getPortionId();
-        if ((portionId == null || portionId.trim().isEmpty()) && item.getPortionNetworkStatus() != null
-                && !item.getPortionNetworkStatus().trim().isEmpty()) {
+        if (productId == null || productId.trim().isEmpty()) {
+            productId = item.getProductId();
+        }
+        String portionId = null;
+        if (item.getPortionNetworkStatus() != null && !item.getPortionNetworkStatus().trim().isEmpty()) {
             portionId = getPortionIdByNetworkStatus(item.getPortionNetworkStatus());
         }
-        if (comboId == null || productId == null) {
+        if (portionId == null || portionId.trim().isEmpty()) {
+            portionId = item.getPortionId();
+        }
+        if (comboId == null || comboId.trim().isEmpty() || getComboDetail(comboId) == null) {
+            return;
+        }
+        if (productId == null || productId.trim().isEmpty() || getProductDetail(productId).isEmpty()) {
             return;
         }
         SQLiteDatabase db = this.getWritableDatabase();
@@ -7201,18 +7359,26 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
                 || item.getInvoiceComboItemNetworkStatus().trim().isEmpty()) {
             return false;
         }
-        String comboId = item.getComboId();
-        if ((comboId == null || comboId.trim().isEmpty()) && item.getComboNetworkStatus() != null) {
+        String comboId = null;
+        if (item.getComboNetworkStatus() != null && !item.getComboNetworkStatus().trim().isEmpty()) {
             comboId = getComboIdByNetworkStatus(item.getComboNetworkStatus());
         }
-        String productId = item.getProductId();
-        if ((productId == null || productId.trim().isEmpty()) && item.getProductNetworkStatus() != null) {
+        if (comboId == null || comboId.trim().isEmpty()) {
+            comboId = item.getComboId();
+        }
+        String productId = null;
+        if (item.getProductNetworkStatus() != null && !item.getProductNetworkStatus().trim().isEmpty()) {
             productId = getProductIdByNetworkStatus(item.getProductNetworkStatus());
         }
-        String portionId = item.getPortionId();
-        if ((portionId == null || portionId.trim().isEmpty()) && item.getPortionNetworkStatus() != null
-                && !item.getPortionNetworkStatus().trim().isEmpty()) {
+        if (productId == null || productId.trim().isEmpty()) {
+            productId = item.getProductId();
+        }
+        String portionId = null;
+        if (item.getPortionNetworkStatus() != null && !item.getPortionNetworkStatus().trim().isEmpty()) {
             portionId = getPortionIdByNetworkStatus(item.getPortionNetworkStatus());
+        }
+        if (portionId == null || portionId.trim().isEmpty()) {
+            portionId = item.getPortionId();
         }
         SQLiteDatabase db = this.getWritableDatabase();
         Cursor existing = db.rawQuery(
@@ -7281,7 +7447,11 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
                 }
                 float productWithGSTPrice = price + (price * ((productCGSTAmount + productSGSTAmount) / 100));
 
-                contentValues.put("categoryId", product.getCategoryId());
+                String localCategoryId = resolveLocalCategoryId(
+                        product.getCategoryId(), product.getCategoryName());
+                String localSubcategoryId = resolveLocalSubcategoryId(product.getSubcategoryId());
+
+                contentValues.put("categoryId", localCategoryId != null ? localCategoryId : product.getCategoryId());
                 contentValues.put("categoryName", product.getCategoryName());
                 contentValues.put("productCode", product.getProductCode());
                 contentValues.put("productName", product.getProductName());
@@ -7294,7 +7464,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
                 contentValues.put("productStatus", 1);
                 contentValues.put("productDeletedStatus", product.getProductDeletedStatus());
                 contentValues.put("productNetworkStatus", product.getProductNetworkStatus());
-                putOptionalColumn(contentValues, "subcategoryId", product.getSubcategoryId());
+                putOptionalColumn(contentValues, "subcategoryId", localSubcategoryId);
                 db.insert(PRODUCT_TABLE, null, contentValues);
             }
             db.setTransactionSuccessful();

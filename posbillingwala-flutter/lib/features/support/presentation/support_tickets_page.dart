@@ -66,12 +66,14 @@ class SupportTicketsPageState extends ConsumerState<SupportTicketsPage> {
       error = null;
     });
     try {
-      final cached =
-          await CloudScreenCache.loadMapList(CloudScreenCache.supportTickets);
+      final cached = await CloudScreenCache.loadMapList(
+        CloudScreenCache.supportTickets,
+      );
       if (cached.isNotEmpty && mounted) {
         setState(() {
-          supportTicketsPageTickets =
-              cached.map(SupportTicketDto.fromJson).toList();
+          supportTicketsPageTickets = cached
+              .map(SupportTicketDto.fromJson)
+              .toList();
           loading = false;
         });
       }
@@ -115,110 +117,113 @@ class SupportTicketsPageState extends ConsumerState<SupportTicketsPage> {
           : RefreshIndicator(
               onRefresh: reload,
               child: ResponsiveScrollShell(
-        dashboard: true,
-        child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: EdgeInsets.fromLTRB(
-            AppBreakpoints.pagePaddingFor(context.widthClass),
-            16,
-            AppBreakpoints.pagePaddingFor(context.widthClass),
-            24),
-                children: [
-                  SupportOnlineBanner(
-                    online: supportTicketsPageOnline,
-                    title: 'Stay Connected',
+                dashboard: true,
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: EdgeInsets.fromLTRB(
+                    AppBreakpoints.pagePaddingFor(context.widthClass),
+                    16,
+                    AppBreakpoints.pagePaddingFor(context.widthClass),
+                    24,
                   ),
-                  const SizedBox(height: 14),
-                  AppButton(
-                    label: 'REFRESH TICKETS',
-                    icon: Icons.refresh_rounded,
-                    isLoading: loading,
-                    onPressed: loading ? null : reload,
-                  ),
-                  const SizedBox(height: 18),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'Your Tickets (${visible.length})',
-                          style: AppTypography.sectionTitle().copyWith(fontSize: 16),
+                  children: [
+                    SupportOnlineBanner(
+                      online: supportTicketsPageOnline,
+                      title: 'Stay Connected',
+                    ),
+                    const SizedBox(height: 14),
+                    AppButton(
+                      label: 'REFRESH TICKETS',
+                      icon: Icons.refresh_rounded,
+                      isLoading: loading,
+                      onPressed: loading ? null : reload,
+                    ),
+                    const SizedBox(height: 18),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Your Tickets (${visible.length})',
+                            style: AppTypography.sectionTitle().copyWith(
+                              fontSize: 16,
+                            ),
+                          ),
                         ),
-                      ),
-                      PopupMenuButton<String>(
-                        initialValue: statusFilter,
-                        onSelected: (v) => setState(() => statusFilter = v),
-                        itemBuilder: (context) => statusFilters
-                            .map(
-                              (s) => PopupMenuItem<String>(
-                                value: s,
-                                child: Text(s),
-                              ),
-                            )
-                            .toList(),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppColors.border),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                statusFilter == 'All Status'
-                                    ? 'Select Item'
-                                    : statusFilter,
-                                style: AppTypography.bodySmall(
-                                  color: AppColors.navy,
+                        PopupMenuButton<String>(
+                          initialValue: statusFilter,
+                          onSelected: (v) => setState(() => statusFilter = v),
+                          itemBuilder: (context) => statusFilters
+                              .map(
+                                (s) => PopupMenuItem<String>(
+                                  value: s,
+                                  child: Text(s),
                                 ),
-                              ),
-                              const SizedBox(width: 4),
-                              const Icon(
-                                Icons.keyboard_arrow_down_rounded,
-                                size: 18,
-                                color: AppColors.textSecondary,
-                              ),
-                            ],
+                              )
+                              .toList(),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: AppColors.border),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  statusFilter == 'All Status'
+                                      ? 'Select Item'
+                                      : statusFilter,
+                                  style: AppTypography.bodySmall(
+                                    color: AppColors.navy,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                const Icon(
+                                  Icons.keyboard_arrow_down_rounded,
+                                  size: 18,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  if (loading && supportTicketsPageTickets.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 40),
-                      child: Center(child: CircularProgressIndicator()),
-                    )
-                  else if (supportTicketsPageTickets.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 24),
-                      child: AppEmptyState(
-                        title: 'No support tickets yet',
-                        message: 'Create a ticket whenever you need help.',
-                        iconAsset: AppAssets.svgHeadset,
-                      ),
-                    )
-                  else if (visible.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 24),
-                      child: AppEmptyState(
-                        title: 'No tickets for this status',
-                        message: 'Try another filter.',
-                        iconAsset: AppAssets.svgFilter,
-                      ),
-                    )
-                  else
-                    ...visible.map((t) => TicketListCard(ticket: t)),
-                  const SizedBox(height: 14),
-                  const SupportUrgentHelpCard(),
-                ],
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    if (loading && supportTicketsPageTickets.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 40),
+                        child: Center(child: CircularProgressIndicator()),
+                      )
+                    else if (supportTicketsPageTickets.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.only(top: 24),
+                        child: AppEmptyState(
+                          title: 'No support tickets yet',
+                          message: 'Create a ticket whenever you need help.',
+                          iconAsset: AppAssets.svgHeadset,
+                        ),
+                      )
+                    else if (visible.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.only(top: 24),
+                        child: AppEmptyState(
+                          title: 'No tickets for this status',
+                          message: 'Try another filter.',
+                          iconAsset: AppAssets.svgFilter,
+                        ),
+                      )
+                    else
+                      ...visible.map((t) => TicketListCard(ticket: t)),
+                    const SizedBox(height: 14),
+                    const SupportUrgentHelpCard(),
+                  ],
+                ),
               ),
-      ),
             ),
     );
   }
@@ -237,8 +242,8 @@ class TicketListCard extends StatelessWidget {
         : (ticket.subject.isEmpty ? 'Ticket' : ticket.subject);
     final subtitle = ticket.subject.isEmpty
         ? (ticket.description.isEmpty
-            ? (ticket.category.isEmpty ? 'Support' : ticket.category)
-            : ticket.description)
+              ? (ticket.category.isEmpty ? 'Support' : ticket.category)
+              : ticket.description)
         : ticket.subject;
 
     return Padding(

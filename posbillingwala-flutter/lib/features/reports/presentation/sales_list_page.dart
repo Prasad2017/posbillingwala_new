@@ -111,7 +111,8 @@ class SalesListPage extends ConsumerWidget {
 }
 
 class SalesListCard extends ConsumerWidget {
-  const SalesListCard({super.key, 
+  const SalesListCard({
+    super.key,
     required this.invoice,
     required this.currency,
     required this.onOpen,

@@ -13,7 +13,8 @@ class AppDropdownFormField<T> extends StatelessWidget {
     required this.onChanged,
     this.itemComparer,
     this.enableSearch = false,
-    this.showLabel = true,
+    this.showLabel,
+    this.required = false,
     this.validator,
   });
 
@@ -25,11 +26,14 @@ class AppDropdownFormField<T> extends StatelessWidget {
   final ValueChanged<T?> onChanged;
   final bool Function(T a, T b)? itemComparer;
   final bool enableSearch;
-  final bool showLabel;
+  /* When null, label shows whenever [label] is non-empty. */
+  final bool? showLabel;
+  final bool required;
   final String? Function(T?)? validator;
 
   @override
   Widget build(BuildContext context) {
+    final visibleLabel = showLabel ?? label.trim().isNotEmpty;
     return FormField<T?>(
       initialValue: value,
       validator: validator,
@@ -46,7 +50,7 @@ class AppDropdownFormField<T> extends StatelessWidget {
               enableSearch:
                   enableSearch || items.length > kDropdownSearchMinOptionCount,
               value: value,
-              showLabel: showLabel,
+              showLabel: visibleLabel,
               hasError: state.hasError,
               onChanged: (selected) {
                 onChanged(selected);
@@ -62,8 +66,8 @@ class AppDropdownFormField<T> extends StatelessWidget {
                 child: Text(
                   state.errorText ?? '',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
+                    color: Theme.of(context).colorScheme.error,
+                  ),
                 ),
               ),
           ],

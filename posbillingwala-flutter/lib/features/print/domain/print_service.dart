@@ -9,6 +9,7 @@ import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
 import 'package:pos_billingwala_v2/features/print/domain/receipt_builder.dart';
 import 'package:pos_billingwala_v2/features/print/domain/receipt_image_share.dart';
 import 'package:pos_billingwala_v2/features/print/domain/receipt_labels.dart';
+import 'package:pos_billingwala_v2/features/print/domain/receipt_rasterizer.dart';
 import 'package:pos_billingwala_v2/features/print/domain/sample_receipt_data.dart';
 import 'package:pos_billingwala_v2/features/print/domain/shop_receipt_profile.dart';
 import 'package:pos_billingwala_v2/features/print/domain/thermal_ticket.dart';
@@ -23,11 +24,7 @@ enum PrintOutcome {
 }
 
 class PrintResult {
-  const PrintResult({
-    required this.outcome,
-    required this.text,
-    this.message,
-  });
+  const PrintResult({required this.outcome, required this.text, this.message});
 
   final PrintOutcome outcome;
   final String text;
@@ -61,8 +58,8 @@ class PrintService {
     ),
     BluetoothPrinterHub? hub,
     EscPosTransportHub? usbHub,
-  })  : hub = hub ?? BluetoothPrinterHub.instance,
-        usbHub = usbHub ?? EscPosTransportHub.instance;
+  }) : hub = hub ?? BluetoothPrinterHub.instance,
+       usbHub = usbHub ?? EscPosTransportHub.instance;
 
   final PrinterSettings settings;
   final BluetoothPrinterHub hub;
@@ -73,10 +70,10 @@ class PrintService {
   ReceiptBuilder get builder => builderFor(isKot: false);
 
   ReceiptBuilder builderFor({required bool isKot}) => ReceiptBuilder(
-        settings.copyWith(paperSize: settings.paperSizeFor(isKot: isKot)),
-        shopProfile: shopProfile,
-        labels: labels,
-      );
+    settings.copyWith(paperSize: settings.paperSizeFor(isKot: isKot)),
+    shopProfile: shopProfile,
+    labels: labels,
+  );
 
   ThermalTicket billTicket({
     required Invoice invoice,
@@ -111,13 +108,45 @@ class PrintService {
       items: items,
       shopName: shopName,
       duplicate: duplicate,
+    ).replaceAll(ReceiptBuilder.upiQrMarker, '[UPI QR]');
+  }
+
+  /* Full bill preview (logo + UPI QR) matching thermal raster output. */
+  Future<RenderedImage> billPreviewImage({
+    required Invoice invoice,
+    required List<InvoiceItem> items,
+    String? shopName,
+    bool duplicate = false,
+    PrinterPaperSize? paperSize,
+  }) {
+    final previewSettings = paperSize == null
+        ? settings
+        : settings.copyWith(paperSize: paperSize);
+    final builder = ReceiptBuilder(
+      previewSettings,
+      shopProfile: shopProfile,
+      labels: labels,
+    );
+    final upiUri = builder.upiUriFor(invoice);
+    final logoPath = previewSettings.logoUse
+        ? shopProfile.logoLocalPath
+        : null;
+    return builder.rasterizer.render(
+      builder.billText(
+        invoice: invoice,
+        items: items,
+        shopName: shopName,
+        duplicate: duplicate,
+      ),
+      ReceiptRasterizer.widthPxFor(previewSettings.paperSize),
+      qrPayload: upiUri,
+      logoPath: logoPath,
+      qrMarker: upiUri != null ? ReceiptBuilder.upiQrMarker : null,
+      useAssetLogoFallback: false,
     );
   }
 
-  String kotPreviewText({
-    KotTicket? ticket,
-    PrinterPaperSize? paperSize,
-  }) {
+  String kotPreviewText({KotTicket? ticket, PrinterPaperSize? paperSize}) {
     final previewSettings = paperSize == null
         ? settings.copyWith(paperSize: settings.kotPaperSize)
         : settings.copyWith(paperSize: paperSize);
@@ -125,7 +154,9 @@ class PrintService {
       previewSettings,
       shopProfile: shopProfile,
       labels: labels,
-    ).kotText(ticket ?? SampleReceiptData.sampleKot(prefix: settings.kotPrefix));
+    ).kotText(
+      ticket ?? SampleReceiptData.sampleKot(prefix: settings.kotPrefix),
+    );
   }
 
   Future<PrintResult> printBill({
@@ -175,17 +206,20 @@ class PrintService {
   }
 
   /* Sample invoice / KOT (same lines as Android printer-settings test). */
-  Future<PrintResult> printTest(PrinterChannelKind channel, {String? shopName}) {
+  Future<PrintResult> printTest(
+    PrinterChannelKind channel, {
+    String? shopName,
+  }) {
     if (channel == PrinterChannelKind.kot) {
-      return printKot(
-        SampleReceiptData.sampleKot(prefix: settings.kotPrefix),
-      );
+      return printKot(SampleReceiptData.sampleKot(prefix: settings.kotPrefix));
     }
     final sample = SampleReceiptData.sampleBill();
     return printBill(
       invoice: sample.invoice,
       items: sample.items,
-      shopName: shopName,
+      shopName: (shopName?.trim().isNotEmpty ?? false)
+          ? shopName
+          : SampleReceiptData.demoShopName,
     );
   }
 
@@ -197,7 +231,9 @@ class PrintService {
     return billPreviewText(
       invoice: sample.invoice,
       items: sample.items,
-      shopName: shopName,
+      shopName: (shopName?.trim().isNotEmpty ?? false)
+          ? shopName
+          : SampleReceiptData.demoShopName,
       paperSize: settings.paperSize,
     );
   }

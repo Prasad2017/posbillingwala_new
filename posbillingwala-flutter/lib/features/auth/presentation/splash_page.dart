@@ -74,9 +74,9 @@ class SplashPageState extends ConsumerState<SplashPage> {
       icon: Icons.system_update_rounded,
     );
     if (!mounted || !go) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(strings.dataUploadingOnServer)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(strings.dataUploadingOnServer)));
     await inAppUpdateService.startUpdate(preferImmediate: true);
   }
 
@@ -137,10 +137,7 @@ class SplashPageState extends ConsumerState<SplashPage> {
               ),
             ),
             const SizedBox(height: 16),
-            FilledButton(
-              onPressed: retryWebOnline,
-              child: const Text('Retry'),
-            ),
+            FilledButton(onPressed: retryWebOnline, child: const Text('Retry')),
           ] else
             const ClipRRect(
               borderRadius: BorderRadius.all(Radius.circular(4)),

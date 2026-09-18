@@ -637,9 +637,13 @@ public class OfflineNetworkData {
                             String portionPrice, String portionSortOrder, String portionDeletedStatus,
                             String portionNetworkStatus, String portionMasterId, String portionMasterNetworkStatus) {
 
+        String uploadProductId = (productNetworkStatus != null && !productNetworkStatus.trim().isEmpty())
+                ? "0" : productId;
+        String uploadMasterId = (portionMasterNetworkStatus != null && !portionMasterNetworkStatus.trim().isEmpty())
+                ? "0" : portionMasterId;
         Call<AllApiResponse> call = Api.getClient(activity).savePortion(
-                MainActivity.ownerId, productId, productNetworkStatus, portionName, portionPrice, portionSortOrder,
-                portionDeletedStatus, portionNetworkStatus, portionMasterId, portionMasterNetworkStatus);
+                MainActivity.ownerId, uploadProductId, productNetworkStatus, portionName, portionPrice, portionSortOrder,
+                portionDeletedStatus, portionNetworkStatus, uploadMasterId, portionMasterNetworkStatus);
         if (executeCall(call)) {
             posBillingWalaDatabase.updateSyncPortion(portionId, NAME_SYNCED_WITH_SERVER);
         }
@@ -660,9 +664,15 @@ public class OfflineNetworkData {
                               String productNetworkStatus, String portionId, String portionNetworkStatus,
                               String comboItemQuantity, String comboItemSortOrder, String comboItemDeletedStatus,
                               String comboItemNetworkStatus) {
+        String uploadComboId = (comboNetworkStatus != null && !comboNetworkStatus.trim().isEmpty())
+                ? "0" : comboId;
+        String uploadProductId = (productNetworkStatus != null && !productNetworkStatus.trim().isEmpty())
+                ? "0" : productId;
+        String uploadPortionId = (portionNetworkStatus != null && !portionNetworkStatus.trim().isEmpty())
+                ? "0" : portionId;
         Call<AllApiResponse> call = Api.getClient(activity).saveComboItem(
-                MainActivity.ownerId, comboId, comboNetworkStatus, productId, productNetworkStatus, portionId,
-                portionNetworkStatus, comboItemQuantity, comboItemSortOrder, comboItemDeletedStatus,
+                MainActivity.ownerId, uploadComboId, comboNetworkStatus, uploadProductId, productNetworkStatus,
+                uploadPortionId, portionNetworkStatus, comboItemQuantity, comboItemSortOrder, comboItemDeletedStatus,
                 comboItemNetworkStatus);
         if (executeCall(call)) {
             posBillingWalaDatabase.updateSyncComboItem(comboItemId, NAME_SYNCED_WITH_SERVER);

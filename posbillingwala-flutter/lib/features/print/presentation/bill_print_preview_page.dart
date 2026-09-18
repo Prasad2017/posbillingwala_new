@@ -64,19 +64,30 @@ class BillPrintPreviewPageState extends ConsumerState<BillPrintPreviewPage> {
           shopName: shopName,
           duplicate: widget.duplicate,
         );
-        final use3Inch = ref.watch(printerSettingsProvider).paperSize ==
+        final use3Inch =
+            ref.watch(printerSettingsProvider).paperSize ==
             PrinterPaperSize.inch3;
 
         return Scaffold(
           backgroundColor: const Color(0xFFF3F6FB),
           appBar: AppBar(
             title: Text(
-              widget.duplicate ? strings.duplicatePrint : strings.invoicePreview,
+              widget.duplicate
+                  ? strings.duplicatePrint
+                  : strings.invoicePreview,
             ),
           ),
           body: ListView(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
             children: [
+              Text(
+                'Product / customer names print as entered (English, Marathi, Hindi, …). '
+                'Android, iOS & web use the same receipt bitmap code.',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: Colors.black54),
+              ),
+              const SizedBox(height: 12),
               PreviewCard(
                 title: strings.paper2Inch,
                 child: SingleChildScrollView(
@@ -126,14 +137,14 @@ class BillPrintPreviewPageState extends ConsumerState<BillPrintPreviewPage> {
                       label: widget.duplicate ? 'Duplicate bill' : 'Invoice',
                     );
                     if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(strings.shared)),
-                    );
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text(strings.shared)));
                   } catch (e) {
                     if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('$e')),
-                    );
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text('$e')));
                   }
                 },
               ),

@@ -10,11 +10,8 @@ import 'package:pos_billingwala_v2/features/company/data/company_api.dart';
 import 'package:pos_billingwala_v2/features/company/data/company_dtos.dart';
 import 'package:pos_billingwala_v2/features/print/domain/bluetooth_printer_hub.dart';
 import 'package:pos_billingwala_v2/features/print/domain/esc_pos_transport_hub.dart';
-import 'package:pos_billingwala_v2/features/print/domain/print_providers.dart';
 import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
-import 'package:pos_billingwala_v2/features/print/domain/sample_receipt_data.dart';
 import 'package:pos_billingwala_v2/features/print/presentation/printer_device_picker_page.dart';
-import 'package:pos_billingwala_v2/features/print/presentation/paper_size_preview.dart';
 import 'package:pos_billingwala_v2/language/app_strings.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
@@ -47,17 +44,31 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
   void initState() {
     super.initState();
     final settings = ref.read(printerSettingsProvider);
-    settingsPageBillMac = TextEditingController(text: settings.billBluetoothAddress);
-    settingsPageKotMac = TextEditingController(text: settings.kotBluetoothAddress);
+    settingsPageBillMac = TextEditingController(
+      text: settings.billBluetoothAddress,
+    );
+    settingsPageKotMac = TextEditingController(
+      text: settings.kotBluetoothAddress,
+    );
     host = TextEditingController(text: settings.networkHost);
     settingsPagePort = TextEditingController(text: '${settings.networkPort}');
     settingsPageFeed = TextEditingController(text: '${settings.feedLines}');
-    settingsPageKotFeed = TextEditingController(text: '${settings.kotFeedLines}');
-    settingsPageInvoiceTitle = TextEditingController(text: settings.invoiceTitle);
-    settingsPageInvoiceTerms = TextEditingController(text: settings.invoiceTerms);
-    settingsPageInvoicePrefix = TextEditingController(text: settings.invoicePrefix);
+    settingsPageKotFeed = TextEditingController(
+      text: '${settings.kotFeedLines}',
+    );
+    settingsPageInvoiceTitle = TextEditingController(
+      text: settings.invoiceTitle,
+    );
+    settingsPageInvoiceTerms = TextEditingController(
+      text: settings.invoiceTerms,
+    );
+    settingsPageInvoicePrefix = TextEditingController(
+      text: settings.invoicePrefix,
+    );
     settingsPageKotPrefix = TextEditingController(text: settings.kotPrefix);
-    settingsPageKotCopies = TextEditingController(text: '${settings.kotCopies}');
+    settingsPageKotCopies = TextEditingController(
+      text: '${settings.kotCopies}',
+    );
     Future.microtask(() async {
       await loadPrinterCloud();
       await syncHubAndAutoConnect();
@@ -71,10 +82,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
       billMac: s.billBluetoothAddress,
       kotMac: s.kotBluetoothAddress,
     );
-    usbHub.updateSavedUsb(
-      identifier: s.billUsbIdentifier,
-      name: s.billUsbName,
-    );
+    usbHub.updateSavedUsb(identifier: s.billUsbIdentifier, name: s.billUsbName);
     if (s.billTransport == PosPrinterTransport.bluetooth) {
       await hub.autoConnect(PrinterChannelKind.bill);
     } else if (s.billTransport == PosPrinterTransport.usb &&
@@ -166,8 +174,8 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
             billTransport: picked.transport,
             billBluetoothAddress:
                 picked.transport == PosPrinterTransport.bluetooth
-                    ? picked.bluetoothMac
-                    : current.billBluetoothAddress,
+                ? picked.bluetoothMac
+                : current.billBluetoothAddress,
             billUsbIdentifier: picked.transport == PosPrinterTransport.usb
                 ? picked.usbIdentifier
                 : current.billUsbIdentifier,
@@ -185,8 +193,8 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
             kotTransport: picked.transport,
             kotBluetoothAddress:
                 picked.transport == PosPrinterTransport.bluetooth
-                    ? picked.bluetoothMac
-                    : current.kotBluetoothAddress,
+                ? picked.bluetoothMac
+                : current.kotBluetoothAddress,
             kotUsbIdentifier: picked.transport == PosPrinterTransport.usb
                 ? picked.usbIdentifier
                 : current.kotUsbIdentifier,
@@ -212,11 +220,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
     await refreshBtStatus();
     if (!mounted) return false;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '${picked.transport.label} printer selected',
-        ),
-      ),
+      SnackBar(content: Text('${picked.transport.label} printer selected')),
     );
     return true;
   }
@@ -249,23 +253,17 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
           ok = await hub.connect(channel, address: mac, fromUser: true);
         case PosPrinterTransport.usb:
           settings = ref.read(printerSettingsProvider);
-          var id = settings.usbIdFor(
-            isKot: channel == PrinterChannelKind.kot,
-          );
+          var id = settings.usbIdFor(isKot: channel == PrinterChannelKind.kot);
           if (id.isEmpty) {
             final picked = await pickPrinter(channel);
             if (!picked || !mounted) return;
             settings = ref.read(printerSettingsProvider);
-            id = settings.usbIdFor(
-              isKot: channel == PrinterChannelKind.kot,
-            );
+            id = settings.usbIdFor(isKot: channel == PrinterChannelKind.kot);
           }
           if (id.isEmpty) return;
           ok = await usbHub.connectUsb(
             identifier: id,
-            name: settings.usbNameFor(
-              isKot: channel == PrinterChannelKind.kot,
-            ),
+            name: settings.usbNameFor(isKot: channel == PrinterChannelKind.kot),
           );
         case PosPrinterTransport.network:
           await pickPrinter(channel);
@@ -305,7 +303,9 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
       }
       if (channel == PrinterChannelKind.bill) {
         settingsPageBillMac.clear();
-        await ref.read(printerSettingsProvider.notifier).update(
+        await ref
+            .read(printerSettingsProvider.notifier)
+            .update(
               settings.copyWith(
                 billBluetoothAddress: '',
                 billUsbIdentifier: '',
@@ -314,7 +314,9 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
             );
       } else {
         settingsPageKotMac.clear();
-        await ref.read(printerSettingsProvider.notifier).update(
+        await ref
+            .read(printerSettingsProvider.notifier)
+            .update(
               settings.copyWith(
                 kotBluetoothAddress: '',
                 kotUsbIdentifier: '',
@@ -324,22 +326,12 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
       }
       await refreshBtStatus();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Printer disconnected')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Printer disconnected')));
     } finally {
       if (mounted) setState(() => btBusy = false);
     }
-  }
-
-  Future<void> openTestPreview(PrinterChannelKind channel) async {
-    await settingsPageSave(showSnack: false);
-    if (!mounted) return;
-    final mode =
-        channel == PrinterChannelKind.kot ? 'kot' : 'invoice';
-    await context.push('/settings/test-print?mode=$mode');
-    if (!mounted) return;
-    await refreshBtStatus();
   }
 
   @override
@@ -373,8 +365,12 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
           kotPaperSize: PrinterPaperSizeX.fromDb(
             p.kotPaperSize.isEmpty ? p.paperSize : p.kotPaperSize,
           ),
-          billTransport: PosPrinterTransportX.fromLocalStorage(p.billConnectionType),
-          kotTransport: PosPrinterTransportX.fromLocalStorage(p.kotConnectionType),
+          billTransport: PosPrinterTransportX.fromLocalStorage(
+            p.billConnectionType,
+          ),
+          kotTransport: PosPrinterTransportX.fromLocalStorage(
+            p.kotConnectionType,
+          ),
           billBluetoothAddress: p.bluetoothAddress.isNotEmpty
               ? p.bluetoothAddress
               : current.billBluetoothAddress,
@@ -384,11 +380,15 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
           billUsbIdentifier: p.billUsbIdentifier.isNotEmpty
               ? p.billUsbIdentifier
               : current.billUsbIdentifier,
-          billUsbName: p.billUsbName.isNotEmpty ? p.billUsbName : current.billUsbName,
+          billUsbName: p.billUsbName.isNotEmpty
+              ? p.billUsbName
+              : current.billUsbName,
           kotUsbIdentifier: p.kotUsbIdentifier.isNotEmpty
               ? p.kotUsbIdentifier
               : current.kotUsbIdentifier,
-          kotUsbName: p.kotUsbName.isNotEmpty ? p.kotUsbName : current.kotUsbName,
+          kotUsbName: p.kotUsbName.isNotEmpty
+              ? p.kotUsbName
+              : current.kotUsbName,
           feedLines: int.tryParse(p.printerFeedLines) ?? current.feedLines,
           kotFeedLines:
               int.tryParse(p.kotPrinterFeedLines) ?? current.kotFeedLines,
@@ -398,10 +398,10 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
           invoiceTerms: p.invoiceTermsCondition.isNotEmpty
               ? p.invoiceTermsCondition
               : current.invoiceTerms,
-          customerUse: p.customerUse == '1',
-          paymentUse: p.paymentUse == '1',
-          duplicateBillUse: p.duplicateBillUse == '1',
-          logoUse: p.logoUse == '1',
+          customerUse: printerFlagOn(p.customerUse),
+          paymentUse: printerFlagOn(p.paymentUse),
+          duplicateBillUse: printerFlagOn(p.duplicateBillUse),
+          logoUse: printerFlagOn(p.logoUse),
           kotEnable: p.kotEnable != '0',
           productQuantityUpdate: p.productQuantityUpdate == '1',
           kotAutoPrint: p.kotAutoPrint == '1' || p.kotAutoPrint == 'on',
@@ -441,9 +441,9 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
   Future<void> savePrinterCloud() async {
     final userId = ref.read(authControllerProvider).session?.userId;
     if (userId == null || userId.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please login first')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please login first')));
       return;
     }
     setState(() => companyBusy = true);
@@ -460,12 +460,14 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
         invoiceTermsCondition: settings.invoiceTerms,
         invoicePrefix: settings.invoicePrefix,
         kotPrefix: settings.kotPrefix,
-        customerUse: settings.customerUse ? '1' : '0',
-        paymentUse: settings.paymentUse ? '1' : '0',
-        duplicateBillUse: settings.duplicateBillUse ? '1' : '0',
-        logoUse: settings.logoUse ? '1' : '0',
+        customerUse: printerFlagValue(settings.customerUse),
+        paymentUse: printerFlagValue(settings.paymentUse),
+        duplicateBillUse: printerFlagValue(settings.duplicateBillUse),
+        logoUse: printerFlagValue(settings.logoUse),
         kotEnable: settings.kotEnable ? '1' : '0',
-        productQuantityUpdate: settings.productQuantityUpdate ? '1' : '0',
+        productQuantityUpdate: printerFlagValue(
+          settings.productQuantityUpdate,
+        ),
         kotAutoPrint: settings.kotAutoPrint ? '1' : '0',
         kotPreview: settings.kotPreview ? '1' : '0',
         kotCopies: '${settings.kotCopies}',
@@ -481,25 +483,17 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
       await ref
           .read(appDatabaseProvider)
           .upsertLocalCompanyPrinterSettings(printerDto);
-      final printerOk = await api.insertCompanyPrinterSetting(
+      await api.insertCompanyPrinterSetting(
         userId: userId,
         setting: printerDto,
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            printerOk
-                ? 'Printer settings saved to cloud'
-                : 'Cloud save finished with issues',
-          ),
-        ),
+        const SnackBar(content: Text('Printer settings saved')),
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$e')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
     } finally {
       if (mounted) setState(() => companyBusy = false);
     }
@@ -507,10 +501,14 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
 
   Future<void> settingsPageSave({bool showSnack = true}) async {
     final current = ref.read(printerSettingsProvider);
-    final feed = int.tryParse(settingsPageFeed.text.trim()) ?? current.feedLines;
-    final kotFeed = int.tryParse(settingsPageKotFeed.text.trim()) ?? current.kotFeedLines;
-    final port = int.tryParse(settingsPagePort.text.trim()) ?? current.networkPort;
-    final copies = int.tryParse(settingsPageKotCopies.text.trim()) ?? current.kotCopies;
+    final feed =
+        int.tryParse(settingsPageFeed.text.trim()) ?? current.feedLines;
+    final kotFeed =
+        int.tryParse(settingsPageKotFeed.text.trim()) ?? current.kotFeedLines;
+    final port =
+        int.tryParse(settingsPagePort.text.trim()) ?? current.networkPort;
+    final copies =
+        int.tryParse(settingsPageKotCopies.text.trim()) ?? current.kotCopies;
     final updated = current.copyWith(
       billBluetoothAddress: settingsPageBillMac.text.trim(),
       kotBluetoothAddress: settingsPageKotMac.text.trim(),
@@ -535,14 +533,23 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
     );
     if (!mounted) return;
     if (showSnack) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Printer settings saved')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Printer settings saved')));
     }
   }
 
   Future<void> updateSettings() async {
     await savePrinterCloud();
+  }
+
+  Future<void> openTestPreview(PrinterChannelKind channel) async {
+    await settingsPageSave(showSnack: false);
+    if (!mounted) return;
+    final mode = channel == PrinterChannelKind.kot ? 'kot' : 'invoice';
+    await context.push('/settings/test-print?mode=$mode');
+    if (!mounted) return;
+    await refreshBtStatus();
   }
 
   String billStatusLine(PrinterSettings settings) {
@@ -573,8 +580,8 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
 
   PosPrinterTransport localTransport(PosPrinterTransport value) =>
       value == PosPrinterTransport.usb
-          ? PosPrinterTransport.usb
-          : PosPrinterTransport.bluetooth;
+      ? PosPrinterTransport.usb
+      : PosPrinterTransport.bluetooth;
 
   bool isChannelConnected(
     PrinterChannelKind channel,
@@ -641,10 +648,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
           onSelectionChanged: (v) => onTransport(v.first),
         ),
         const SizedBox(height: 16),
-        const Text(
-          'Page size',
-          style: TextStyle(fontWeight: FontWeight.w700),
-        ),
+        const Text('Page size', style: TextStyle(fontWeight: FontWeight.w700)),
         const SizedBox(height: 8),
         SegmentedButton<PrinterPaperSize>(
           segments: [
@@ -664,13 +668,10 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
         Text(
           statusLine.isEmpty
               ? (type == PosPrinterTransport.usb
-                  ? 'Tap Connect to pick a USB printer'
-                  : 'Tap Connect to pick a Bluetooth printer')
+                    ? 'Tap Connect to pick a USB printer'
+                    : 'Tap Connect to pick a Bluetooth printer')
               : statusLine,
-          style: const TextStyle(
-            fontSize: 13,
-            color: AppColors.textSecondary,
-          ),
+          style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
         ),
         const SizedBox(height: 10),
         AppButton(
@@ -678,14 +679,12 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
           icon: connected
               ? Icons.link_off_rounded
               : (type == PosPrinterTransport.usb
-                  ? Icons.usb_rounded
-                  : Icons.bluetooth_rounded),
+                    ? Icons.usb_rounded
+                    : Icons.bluetooth_rounded),
           variant: connected
               ? AppButtonVariant.outlined
               : AppButtonVariant.primary,
-          onPressed: btBusy
-              ? null
-              : (connected ? onDisconnect : onConnect),
+          onPressed: btBusy ? null : (connected ? onDisconnect : onConnect),
         ),
       ],
     );
@@ -721,331 +720,301 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
         children: [
           Expanded(
             child: ResponsiveScrollShell(
-        dashboard: true,
-        child: ListView(
-              padding: EdgeInsets.fromLTRB(
-            AppBreakpoints.pagePaddingFor(context.widthClass),
-            16,
-            AppBreakpoints.pagePaddingFor(context.widthClass),
-            24),
-              children: [
-                PrinterSectionCard(
-                  accent: AppColors.purple,
-                  icon: Icons.print_rounded,
-                  title: 'BILL SETTING',
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      typeAndSizeBlock(
-                        stringsPaper2: strings.paper2Inch,
-                        stringsPaper3: strings.paper3Inch,
-                        transport: settings.billTransport,
-                        paperSize: settings.paperSize,
-                        statusLine: billPicked,
-                        connected: isChannelConnected(
-                          PrinterChannelKind.bill,
-                          settings,
-                        ),
-                        onTransport: (v) {
-                          ref.read(printerSettingsProvider.notifier).update(
-                                settings.copyWith(billTransport: v),
-                              );
-                        },
-                        onPaper: (v) {
-                          ref.read(printerSettingsProvider.notifier).update(
-                                settings.copyWith(paperSize: v),
-                              );
-                        },
-                        onConnect: () =>
-                            connectChannel(PrinterChannelKind.bill),
-                        onDisconnect: () =>
-                            disconnectChannel(PrinterChannelKind.bill),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        '$btStatus · $usbStatus',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      AppTextField(
-                        controller: settingsPageInvoicePrefix,
-                        label: 'Sales Invoice Prefix',
-                        hint: 'PB',
-                      ),
-                      const SizedBox(height: 12),
-                      AppTextField(
-                        controller: settingsPageInvoiceTitle,
-                        label: 'Invoice title',
-                        hint: 'TAX INVOICE',
-                      ),
-                      const SizedBox(height: 12),
-                      AppTextField(
-                        controller: settingsPageFeed,
-                        label: 'Print Feed Lines',
-                        keyboardType: TextInputType.number,
-                      ),
-                    ],
-                  ),
+              dashboard: true,
+              child: ListView(
+                padding: EdgeInsets.fromLTRB(
+                  AppBreakpoints.pagePaddingFor(context.widthClass),
+                  16,
+                  AppBreakpoints.pagePaddingFor(context.widthClass),
+                  24,
                 ),
-                const SizedBox(height: 12),
-                PrinterSectionCard(
-                  accent: AppColors.purple,
-                  icon: Icons.print_rounded,
-                  title: 'KOT SETTING',
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      SettingSwitchTile(
-                        title: 'Enable KOT',
-                        value: settings.kotEnable,
-                        showDivider: false,
-                        onChanged: (value) {
-                          ref.read(printerSettingsProvider.notifier).update(
-                                settings.copyWith(kotEnable: value),
-                              );
-                        },
-                      ),
-                      const SizedBox(height: 8),
-                      typeAndSizeBlock(
-                        stringsPaper2: strings.paper2Inch,
-                        stringsPaper3: strings.paper3Inch,
-                        transport: settings.kotTransport,
-                        paperSize: settings.kotPaperSize,
-                        statusLine: kotPicked,
-                        connected: isChannelConnected(
-                          PrinterChannelKind.kot,
-                          settings,
-                        ),
-                        onTransport: (v) {
-                          ref.read(printerSettingsProvider.notifier).update(
-                                settings.copyWith(kotTransport: v),
-                              );
-                        },
-                        onPaper: (v) {
-                          ref.read(printerSettingsProvider.notifier).update(
-                                settings.copyWith(kotPaperSize: v),
-                              );
-                        },
-                        onConnect: () =>
-                            connectChannel(PrinterChannelKind.kot),
-                        onDisconnect: () =>
-                            disconnectChannel(PrinterChannelKind.kot),
-                      ),
-                      const SizedBox(height: 14),
-                      AppTextField(
-                        controller: settingsPageKotPrefix,
-                        label: 'KOT Prefix',
-                        hint: 'KOT',
-                      ),
-                      const SizedBox(height: 12),
-                      AppTextField(
-                        controller: settingsPageKotCopies,
-                        label: 'KOT Copies',
-                        keyboardType: TextInputType.number,
-                      ),
-                      const SizedBox(height: 12),
-                      AppTextField(
-                        controller: settingsPageKotFeed,
-                        label: 'KOT Print Feed Lines',
-                        keyboardType: TextInputType.number,
-                      ),
-                      const SizedBox(height: 4),
-                      SettingSwitchTile(
-                        title: 'Auto Print KOT',
-                        value: settings.kotAutoPrint,
-                        showDivider: true,
-                        onChanged: (value) {
-                          ref.read(printerSettingsProvider.notifier).update(
-                                settings.copyWith(kotAutoPrint: value),
-                              );
-                        },
-                      ),
-                      SettingSwitchTile(
-                        title: 'KOT Preview',
-                        value: settings.kotPreview,
-                        showDivider: false,
-                        onChanged: (value) {
-                          ref.read(printerSettingsProvider.notifier).update(
-                                settings.copyWith(kotPreview: value),
-                              );
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-                PrinterSectionCard(
-                  accent: AppColors.green,
-                  icon: Icons.settings_rounded,
-                  title: 'BILL OPTIONS',
-                  child: Column(
-                    children: [
-                      SettingSwitchTile(
-                        title: 'Use Logo on Bill',
-                        value: settings.logoUse,
-                        onChanged: (value) {
-                          ref.read(printerSettingsProvider.notifier).update(
-                                settings.copyWith(logoUse: value),
-                              );
-                        },
-                      ),
-                      SettingSwitchTile(
-                        title: 'Use Payment QR on Bill',
-                        value: settings.paymentUse,
-                        onChanged: (value) {
-                          ref.read(printerSettingsProvider.notifier).update(
-                                settings.copyWith(paymentUse: value),
-                              );
-                        },
-                      ),
-                      SettingSwitchTile(
-                        title: 'Use Customer Details on Bill',
-                        value: settings.customerUse,
-                        onChanged: (value) {
-                          ref.read(printerSettingsProvider.notifier).update(
-                                settings.copyWith(customerUse: value),
-                              );
-                        },
-                      ),
-                      SettingSwitchTile(
-                        title: 'Product Quantity Update',
-                        value: settings.productQuantityUpdate,
-                        onChanged: (value) {
-                          ref.read(printerSettingsProvider.notifier).update(
-                                settings.copyWith(
-                                  productQuantityUpdate: value,
-                                ),
-                              );
-                        },
-                      ),
-                      SettingSwitchTile(
-                        title: 'Duplicate Bill Copy (Invoice List)',
-                        value: settings.duplicateBillUse,
-                        subtitle:
-                            'When ON, bills printed from Invoice List are marked as Duplicate Copy. Does not affect new billing.',
-                        showDivider: false,
-                        onChanged: (value) {
-                          ref.read(printerSettingsProvider.notifier).update(
-                                settings.copyWith(duplicateBillUse: value),
-                              );
-                        },
-                      ),
-                      const Divider(height: 1, color: AppColors.border),
-                      SettingSwitchTile(
-                        title: 'Share / print prompt after save',
-                        value: settings.autoShareOnSave,
-                        showDivider: false,
-                        onChanged: (value) {
-                          ref.read(printerSettingsProvider.notifier).update(
-                                settings.copyWith(autoShareOnSave: value),
-                              );
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-                PrinterSectionCard(
-                  accent: AppColors.primary,
-                  icon: Icons.description_outlined,
-                  title: 'TERMS & CONDITIONS',
-                  child: AppTextField(
-                    controller: settingsPageInvoiceTerms,
-                    label: 'Invoice Terms & Conditions',
-                    hint: 'Invoice Terms & Conditions',
-                    maxLines: 4,
-                    minLines: 3,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                PrinterSectionCard(
-                  accent: AppColors.primary,
-                  icon: Icons.print_outlined,
-                  title: 'PRINT PREVIEW',
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const Text(
-                        'Test sample invoice or KOT on your printer',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: PreviewActionButton(
-                              icon: Icons.receipt_long_rounded,
-                              label: 'Invoice Preview',
-                              onPressed: btBusy
-                                  ? null
-                                  : () => openTestPreview(
-                                        PrinterChannelKind.bill,
-                                      ),
-                            ),
+                children: [
+                  PrinterSectionCard(
+                    accent: AppColors.purple,
+                    icon: Icons.print_rounded,
+                    title: 'BILL SETTING',
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        typeAndSizeBlock(
+                          stringsPaper2: strings.paper2Inch,
+                          stringsPaper3: strings.paper3Inch,
+                          transport: settings.billTransport,
+                          paperSize: settings.paperSize,
+                          statusLine: billPicked,
+                          connected: isChannelConnected(
+                            PrinterChannelKind.bill,
+                            settings,
                           ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: PreviewActionButton(
-                              icon: Icons.print_rounded,
-                              label: 'KOT Preview',
-                              onPressed: btBusy
-                                  ? null
-                                  : () => openTestPreview(
-                                        PrinterChannelKind.kot,
-                                      ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 14),
-                      const LivePaperPreviews(),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-                PrinterSectionCard(
-                  accent: AppColors.teal,
-                  icon: Icons.print_outlined,
-                  title: 'EXTRA PRINTERS',
-                  child: Column(
-                    children: [
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: const Icon(Icons.print_outlined),
-                        title: const Text('Kitchen / extra printers'),
-                        subtitle: const Text(
-                          'Add more Bluetooth or USB printers',
+                          onTransport: (v) {
+                            ref
+                                .read(printerSettingsProvider.notifier)
+                                .update(settings.copyWith(billTransport: v));
+                          },
+                          onPaper: (v) {
+                            ref
+                                .read(printerSettingsProvider.notifier)
+                                .update(settings.copyWith(paperSize: v));
+                          },
+                          onConnect: () =>
+                              connectChannel(PrinterChannelKind.bill),
+                          onDisconnect: () =>
+                              disconnectChannel(PrinterChannelKind.bill),
                         ),
-                        trailing: const Icon(Icons.chevron_right_rounded),
-                        onTap: () => context.push('/settings/printers'),
-                      ),
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: const Icon(Icons.alt_route),
-                        title: const Text('Printer routing'),
-                        subtitle: const Text('Send KOT / bill to a printer'),
-                        trailing: const Icon(Icons.chevron_right_rounded),
-                        onTap: () => context.push('/settings/printer-routing'),
-                      ),
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: const Icon(Icons.queue),
-                        title: const Text('Print queue'),
-                        trailing: const Icon(Icons.chevron_right_rounded),
-                        onTap: () => context.push('/settings/print-queue'),
-                      ),
-                    ],
+                        const SizedBox(height: 6),
+                        Text(
+                          '$btStatus · $usbStatus',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        AppTextField(
+                          controller: settingsPageInvoicePrefix,
+                          label: 'Sales Invoice Prefix',
+                          hint: 'PB',
+                        ),
+                        const SizedBox(height: 12),
+                        AppTextField(
+                          controller: settingsPageInvoiceTitle,
+                          label: 'Invoice title',
+                          hint: 'TAX INVOICE',
+                        ),
+                        const SizedBox(height: 12),
+                        AppTextField(
+                          controller: settingsPageFeed,
+                          label: 'Print Feed Lines',
+                          keyboardType: TextInputType.number,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  PrinterSectionCard(
+                    accent: AppColors.purple,
+                    icon: Icons.print_rounded,
+                    title: 'KOT SETTING',
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        SettingSwitchTile(
+                          title: 'Enable KOT',
+                          value: settings.kotEnable,
+                          showDivider: false,
+                          onChanged: (value) {
+                            ref
+                                .read(printerSettingsProvider.notifier)
+                                .update(settings.copyWith(kotEnable: value));
+                          },
+                        ),
+                        const SizedBox(height: 8),
+                        typeAndSizeBlock(
+                          stringsPaper2: strings.paper2Inch,
+                          stringsPaper3: strings.paper3Inch,
+                          transport: settings.kotTransport,
+                          paperSize: settings.kotPaperSize,
+                          statusLine: kotPicked,
+                          connected: isChannelConnected(
+                            PrinterChannelKind.kot,
+                            settings,
+                          ),
+                          onTransport: (v) {
+                            ref
+                                .read(printerSettingsProvider.notifier)
+                                .update(settings.copyWith(kotTransport: v));
+                          },
+                          onPaper: (v) {
+                            ref
+                                .read(printerSettingsProvider.notifier)
+                                .update(settings.copyWith(kotPaperSize: v));
+                          },
+                          onConnect: () =>
+                              connectChannel(PrinterChannelKind.kot),
+                          onDisconnect: () =>
+                              disconnectChannel(PrinterChannelKind.kot),
+                        ),
+                        const SizedBox(height: 14),
+                        AppTextField(
+                          controller: settingsPageKotPrefix,
+                          label: 'KOT Prefix',
+                          hint: 'KOT',
+                        ),
+                        const SizedBox(height: 12),
+                        AppTextField(
+                          controller: settingsPageKotCopies,
+                          label: 'KOT Copies',
+                          keyboardType: TextInputType.number,
+                        ),
+                        const SizedBox(height: 12),
+                        AppTextField(
+                          controller: settingsPageKotFeed,
+                          label: 'KOT Print Feed Lines',
+                          keyboardType: TextInputType.number,
+                        ),
+                        const SizedBox(height: 4),
+                        SettingSwitchTile(
+                          title: 'Auto Print KOT',
+                          value: settings.kotAutoPrint,
+                          showDivider: true,
+                          onChanged: (value) {
+                            ref
+                                .read(printerSettingsProvider.notifier)
+                                .update(settings.copyWith(kotAutoPrint: value));
+                          },
+                        ),
+                        SettingSwitchTile(
+                          title: 'KOT Preview',
+                          value: settings.kotPreview,
+                          showDivider: false,
+                          onChanged: (value) {
+                            ref
+                                .read(printerSettingsProvider.notifier)
+                                .update(settings.copyWith(kotPreview: value));
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  PrinterSectionCard(
+                    accent: AppColors.green,
+                    icon: Icons.settings_rounded,
+                    title: 'BILL OPTIONS',
+                    child: Column(
+                      children: [
+                        SettingSwitchTile(
+                          title: 'Use Logo on Bill',
+                          value: settings.logoUse,
+                          onChanged: (value) {
+                            ref
+                                .read(printerSettingsProvider.notifier)
+                                .update(settings.copyWith(logoUse: value));
+                          },
+                        ),
+                        SettingSwitchTile(
+                          title: 'Use Payment QR on Bill',
+                          value: settings.paymentUse,
+                          onChanged: (value) {
+                            ref
+                                .read(printerSettingsProvider.notifier)
+                                .update(settings.copyWith(paymentUse: value));
+                          },
+                        ),
+                        SettingSwitchTile(
+                          title: 'Use Customer Details on Bill',
+                          value: settings.customerUse,
+                          onChanged: (value) {
+                            ref
+                                .read(printerSettingsProvider.notifier)
+                                .update(settings.copyWith(customerUse: value));
+                          },
+                        ),
+                        SettingSwitchTile(
+                          title: 'Product Quantity Update',
+                          value: settings.productQuantityUpdate,
+                          onChanged: (value) {
+                            ref
+                                .read(printerSettingsProvider.notifier)
+                                .update(
+                                  settings.copyWith(
+                                    productQuantityUpdate: value,
+                                  ),
+                                );
+                          },
+                        ),
+                        SettingSwitchTile(
+                          title: 'Duplicate Bill Copy (Invoice List)',
+                          value: settings.duplicateBillUse,
+                          subtitle:
+                              'When ON, bills printed from Invoice List are marked as Duplicate Copy. Does not affect new billing.',
+                          showDivider: false,
+                          onChanged: (value) {
+                            ref
+                                .read(printerSettingsProvider.notifier)
+                                .update(
+                                  settings.copyWith(duplicateBillUse: value),
+                                );
+                          },
+                        ),
+                        const Divider(height: 1, color: AppColors.border),
+                        SettingSwitchTile(
+                          title: 'Share / print prompt after save',
+                          value: settings.autoShareOnSave,
+                          showDivider: false,
+                          onChanged: (value) {
+                            ref
+                                .read(printerSettingsProvider.notifier)
+                                .update(
+                                  settings.copyWith(autoShareOnSave: value),
+                                );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  PrinterSectionCard(
+                    accent: AppColors.primary,
+                    icon: Icons.description_outlined,
+                    title: 'TERMS & CONDITIONS',
+                    child: AppTextField(
+                      controller: settingsPageInvoiceTerms,
+                      label: 'Invoice Terms & Conditions',
+                      hint: 'Invoice Terms & Conditions',
+                      maxLines: 4,
+                      minLines: 3,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  PrinterSectionCard(
+                    accent: AppColors.primary,
+                    icon: Icons.print_outlined,
+                    title: 'PRINT PREVIEW',
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Text(
+                          'Open sample invoice or KOT on the next screen',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: PreviewActionButton(
+                                icon: Icons.receipt_long_rounded,
+                                label: 'Invoice Preview',
+                                onPressed: btBusy
+                                    ? null
+                                    : () => openTestPreview(
+                                          PrinterChannelKind.bill,
+                                        ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: PreviewActionButton(
+                                icon: Icons.print_rounded,
+                                label: 'KOT Preview',
+                                onPressed: btBusy
+                                    ? null
+                                    : () => openTestPreview(
+                                          PrinterChannelKind.kot,
+                                        ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-      ),
           ),
           SafeArea(
             top: false,
@@ -1066,7 +1035,8 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
 }
 
 class PrinterSectionCard extends StatelessWidget {
-  const PrinterSectionCard({super.key, 
+  const PrinterSectionCard({
+    super.key,
     required this.accent,
     required this.icon,
     required this.title,
@@ -1115,59 +1085,9 @@ class PrinterSectionCard extends StatelessWidget {
   }
 }
 
-class SettingSwitchTile extends StatelessWidget {
-  const SettingSwitchTile({super.key, 
-    required this.title,
-    required this.value,
-    required this.onChanged,
-    this.subtitle,
-    this.showDivider = true,
-  });
-
-  final String title;
-  final String? subtitle;
-  final bool value;
-  final ValueChanged<bool> onChanged;
-  final bool showDivider;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          title: Text(
-            title,
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 15,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          subtitle: subtitle == null
-              ? null
-              : Text(
-                  subtitle!,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
-                    height: 1.35,
-                  ),
-                ),
-          value: value,
-          activeThumbColor: Colors.white,
-          activeTrackColor: AppColors.green,
-          onChanged: onChanged,
-        ),
-        if (showDivider)
-          const Divider(height: 1, thickness: 1, color: AppColors.border),
-      ],
-    );
-  }
-}
-
 class PreviewActionButton extends StatelessWidget {
-  const PreviewActionButton({super.key, 
+  const PreviewActionButton({
+    super.key,
     required this.icon,
     required this.label,
     required this.onPressed,
@@ -1211,37 +1131,6 @@ class PreviewActionButton extends StatelessWidget {
   }
 }
 
-class LivePaperPreviews extends ConsumerWidget {
-  const LivePaperPreviews({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final service = ref.watch(printServiceProvider);
-    final sample = SampleReceiptData.sampleBill();
-    final shop = ref.watch(authControllerProvider).session?.shopName;
-    final settings = ref.watch(printerSettingsProvider);
-    final bill = service.billPreviewText(
-      invoice: sample.invoice,
-      items: sample.items,
-      shopName: shop,
-      paperSize: settings.paperSize,
-    );
-    final kot = service.kotPreviewText(paperSize: settings.kotPaperSize);
-    return Column(
-      children: [
-        PaperSizePreviewCard(
-          title: 'Bill · ${settings.paperSize.dbValue}',
-          text: bill,
-          paperSize: settings.paperSize,
-        ),
-        PaperSizePreviewCard(
-          title: 'KOT · ${settings.kotPaperSize.dbValue}',
-          text: kot,
-          paperSize: settings.kotPaperSize,
-        ),
-      ],
-    );
-  }
-}
-
+/* Kept for call-site compatibility — same as [AppSwitchTile]. */
+typedef SettingSwitchTile = AppSwitchTile;
 

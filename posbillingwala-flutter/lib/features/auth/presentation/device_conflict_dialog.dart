@@ -145,9 +145,9 @@ class DeviceConflictDialog extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       TextButton(
-                        onPressed: () => Navigator.of(context).pop(
-                          DeviceConflictAction.cancel,
-                        ),
+                        onPressed: () => Navigator.of(
+                          context,
+                        ).pop(DeviceConflictAction.cancel),
                         child: const Text(
                           'Cancel',
                           style: TextStyle(
@@ -158,9 +158,9 @@ class DeviceConflictDialog extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       FilledButton(
-                        onPressed: () => Navigator.of(context).pop(
-                          DeviceConflictAction.rebind,
-                        ),
+                        onPressed: () => Navigator.of(
+                          context,
+                        ).pop(DeviceConflictAction.rebind),
                         style: FilledButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           foregroundColor: Colors.white,
@@ -187,9 +187,9 @@ class DeviceConflictDialog extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       FilledButton(
-                        onPressed: () => Navigator.of(context).pop(
-                          DeviceConflictAction.rebind,
-                        ),
+                        onPressed: () => Navigator.of(
+                          context,
+                        ).pop(DeviceConflictAction.rebind),
                         style: FilledButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           foregroundColor: Colors.white,
@@ -208,9 +208,9 @@ class DeviceConflictDialog extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       TextButton(
-                        onPressed: () => Navigator.of(context).pop(
-                          DeviceConflictAction.cancel,
-                        ),
+                        onPressed: () => Navigator.of(
+                          context,
+                        ).pop(DeviceConflictAction.cancel),
                         child: const Text(
                           'No, keep other device',
                           style: TextStyle(

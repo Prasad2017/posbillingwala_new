@@ -28,10 +28,9 @@ class StaffLoginPageState extends ConsumerState<StaffLoginPage> {
   }
 
   Future<void> submit() async {
-    final ok = await ref.read(authControllerProvider.notifier).loginWithStaff(
-          mobileNumber: mobile.text.trim(),
-          pin: pin.text.trim(),
-        );
+    final ok = await ref
+        .read(authControllerProvider.notifier)
+        .loginWithStaff(mobileNumber: mobile.text.trim(), pin: pin.text.trim());
     if (!ok && mounted) {
       pin.clear();
     }
@@ -65,28 +64,26 @@ class StaffLoginPageState extends ConsumerState<StaffLoginPage> {
             : const TextStyle(color: Colors.black54),
       ),
       const SizedBox(height: 28),
-      TextField(
+      AppTextField(
+        required: true,
         controller: mobile,
+        label: 'Mobile Number',
         autofocus: AppPlatform.useDesktopShell,
         keyboardType: TextInputType.phone,
         maxLength: 10,
+        showCounter: false,
         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        decoration: const InputDecoration(
-          labelText: 'Mobile Number',
-          counterText: '',
-        ),
       ),
       const SizedBox(height: 12),
-      TextField(
+      AppTextField(
+        required: true,
         controller: pin,
+        label: 'App PIN',
         obscureText: true,
         keyboardType: TextInputType.number,
         maxLength: 6,
+        showCounter: false,
         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        decoration: const InputDecoration(
-          labelText: 'App PIN',
-          counterText: '',
-        ),
         onSubmitted: (_) => submit(),
       ),
       if (auth.errorMessage != null) ...[
@@ -117,10 +114,7 @@ class StaffLoginPageState extends ConsumerState<StaffLoginPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(24),
-          children: children,
-        ),
+        child: ListView(padding: const EdgeInsets.all(24), children: children),
       ),
     );
   }

@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
+import 'package:pos_billingwala_v2/core/logging/app_logger.dart';
 import 'package:pos_billingwala_v2/core/network/online_guard.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 import 'package:pos_billingwala_v2/features/masters/data/masters_api.dart';
@@ -35,21 +36,14 @@ class MastersSyncResult {
 }
 
 class MastersRepository {
-  MastersRepository({
-    required this.api,
-    required this.db,
-  });
+  MastersRepository({required this.api, required this.db});
 
   final MastersApi api;
   final AppDatabase db;
 
-  Stream<List<ProductCategory>> watchCategories() =>
-      db.watchActiveCategories();
+  Stream<List<ProductCategory>> watchCategories() => db.watchActiveCategories();
 
-  Stream<List<Product>> watchProducts({
-    int? categoryId,
-    int? subcategoryId,
-  }) =>
+  Stream<List<Product>> watchProducts({int? categoryId, int? subcategoryId}) =>
       db.watchActiveProducts(
         categoryId: categoryId,
         subcategoryId: subcategoryId,
@@ -100,14 +94,31 @@ class MastersRepository {
       subcategories = await api.fetchSubcategories(catalogId);
     } catch (_) {}
     final products = await api.fetchProducts(catalogId);
+    /* Portion masters must load before product portions (Android PortionWorker). */
+    var portionMastersFetched = false;
+    List<PortionMasterDto> portionMasters = const [];
+    try {
+      portionMasters = await api.fetchPortionMasters(catalogId);
+      portionMastersFetched = true;
+    } catch (e, st) {
+      AppLogger.warning('Portion master download skipped', e, st);
+    }
     final portions = await api.fetchPortions(catalogId);
+    var combosFetched = false;
+    var comboItemsFetched = false;
     List<ComboDto> combos = const [];
     List<ComboItemDto> comboItems = const [];
     try {
       combos = await api.fetchCombos(catalogId);
+      combosFetched = true;
+    } catch (e, st) {
+      AppLogger.warning('Combo download skipped', e, st);
+    }
+    try {
       comboItems = await api.fetchComboItems(catalogId);
-    } catch (_) {
-      /* Combo endpoints may be unavailable on older servers. */
+      comboItemsFetched = true;
+    } catch (e, st) {
+      AppLogger.warning('Combo item download skipped', e, st);
     }
     /* Floor masters are keyed by licenceId (WithTable PosTableWorker). */
     List<PosTableDto> tables = const [];
@@ -118,15 +129,11 @@ class MastersRepository {
     }
     List<DiningAreaDto> diningAreas = const [];
     List<TableTypeDto> tableTypes = const [];
-    List<PortionMasterDto> portionMasters = const [];
     try {
       diningAreas = await api.fetchDiningAreas(opsId);
     } catch (_) {}
     try {
       tableTypes = await api.fetchTableTypes(opsId);
-    } catch (_) {}
-    try {
-      portionMasters = await api.fetchPortionMasters(catalogId);
     } catch (_) {}
 
     await db.replaceFoodTypes(
@@ -200,7 +207,9 @@ class MastersRepository {
                     : null,
               ),
               productPrice: Value(e.productPrice),
-              productMrp: Value(e.productMrp > 0 ? e.productMrp : e.productPrice),
+              productMrp: Value(
+                e.productMrp > 0 ? e.productMrp : e.productPrice,
+              ),
               openPrice: Value(ProductDto.normalizeOpenPrice(e.openPrice)),
               priceIncludesGst: Value(
                 ProductDto.normalizeOpenPrice(e.priceIncludesGst),
@@ -218,14 +227,58 @@ class MastersRepository {
           .toList(),
     );
 
+    if (portionMastersFetched) {
+      await db.replacePortionMasters(
+        portionMasters
+            .where((e) => e.portionMasterId > 0)
+            .map(
+              (e) => PortionMastersCompanion.insert(
+                portionMasterId: Value(e.portionMasterId),
+                portionName: Value(e.portionName),
+                portionMasterDeletedStatus: Value(e.portionMasterDeletedStatus),
+                portionMasterNetworkStatus: Value(e.portionMasterNetworkStatus),
+                portionMasterSyncStatus: const Value('1'),
+              ),
+            )
+            .toList(),
+      );
+    }
+
+    final productIdByNetwork = <String, int>{
+      for (final p in products)
+        if ((p.productNetworkStatus ?? '').trim().isNotEmpty)
+          p.productNetworkStatus!.trim(): p.productId,
+    };
+    final productIds = {for (final p in products) p.productId};
+    final masterIdByNetwork = <String, int>{
+      for (final m in portionMasters)
+        if ((m.portionMasterNetworkStatus ?? '').trim().isNotEmpty)
+          m.portionMasterNetworkStatus!.trim(): m.portionMasterId,
+    };
+
     await db.replacePortions(
       portions
-          .where((e) => e.portionId > 0 && e.productId > 0)
-          .map(
-            (e) => ProductPortionsCompanion.insert(
+          .where((e) => e.portionId > 0)
+          .map((e) {
+            final mappedProductId = _remapId(
+              postedId: e.productId,
+              networkKey: e.productNetworkStatus,
+              knownIds: productIds,
+              idByNetwork: productIdByNetwork,
+            );
+            if (mappedProductId <= 0) return null;
+            final mappedMasterId = _remapId(
+              postedId: e.portionMasterId ?? 0,
+              networkKey: e.portionMasterNetworkStatus,
+              knownIds: {for (final m in portionMasters) m.portionMasterId},
+              idByNetwork: masterIdByNetwork,
+            );
+            return ProductPortionsCompanion.insert(
               portionId: Value(e.portionId),
-              productId: e.productId,
-              portionMasterId: Value(e.portionMasterId),
+              productId: mappedProductId,
+              portionMasterId: mappedMasterId > 0
+                  ? Value(mappedMasterId)
+                  : Value(e.portionMasterId),
               portionName: Value(e.portionName),
               portionPrice: Value(e.portionPrice),
               portionSortOrder: Value(e.portionSortOrder),
@@ -233,12 +286,13 @@ class MastersRepository {
               portionNetworkStatus: Value(e.portionNetworkStatus),
               portionStatus: const Value('1'),
               portionSyncStatus: const Value('1'),
-            ),
-          )
+            );
+          })
+          .whereType<ProductPortionsCompanion>()
           .toList(),
     );
 
-    if (combos.isNotEmpty) {
+    if (combosFetched) {
       await db.replaceCombos(
         combos
             .where((e) => e.comboId > 0)
@@ -260,14 +314,40 @@ class MastersRepository {
             )
             .toList(),
       );
+    }
+    if (comboItemsFetched && combosFetched) {
+      final comboIdByNetwork = <String, int>{
+        for (final c in combos)
+          if ((c.comboNetworkStatus ?? '').trim().isNotEmpty)
+            c.comboNetworkStatus!.trim(): c.comboId,
+      };
+      final comboIds = {for (final c in combos) c.comboId};
       await db.replaceComboItems(
         comboItems
-            .where((e) => e.comboItemId > 0 && e.comboId > 0)
-            .map(
-              (e) => ComboItemsCompanion.insert(
+            .where(
+              (e) =>
+                  e.comboItemId > 0 &&
+                  e.comboItemDeletedStatus != '1',
+            )
+            .map((e) {
+              final mappedComboId = _remapId(
+                postedId: e.comboId,
+                networkKey: e.comboNetworkStatus,
+                knownIds: comboIds,
+                idByNetwork: comboIdByNetwork,
+              );
+              if (mappedComboId <= 0) return null;
+              final mappedProductId = _remapId(
+                postedId: e.productId ?? 0,
+                networkKey: e.productNetworkStatus,
+                knownIds: productIds,
+                idByNetwork: productIdByNetwork,
+              );
+              if (mappedProductId <= 0) return null;
+              return ComboItemsCompanion.insert(
                 comboItemId: Value(e.comboItemId),
-                comboId: e.comboId,
-                productId: Value(e.productId),
+                comboId: mappedComboId,
+                productId: Value(mappedProductId),
                 portionId: Value(e.portionId),
                 comboItemQuantity: Value(e.comboItemQuantity),
                 comboItemSortOrder: Value(e.comboItemSortOrder),
@@ -277,8 +357,9 @@ class MastersRepository {
                 productNetworkStatus: Value(e.productNetworkStatus),
                 portionNetworkStatus: Value(e.portionNetworkStatus),
                 comboItemSyncStatus: const Value('1'),
-              ),
-            )
+              );
+            })
+            .whereType<ComboItemsCompanion>()
             .toList(),
       );
     }
@@ -347,30 +428,14 @@ class MastersRepository {
       );
     }
 
-    if (portionMasters.isNotEmpty) {
-      await db.replacePortionMasters(
-        portionMasters
-            .where((e) => e.portionMasterId > 0)
-            .map(
-              (e) => PortionMastersCompanion.insert(
-                portionMasterId: Value(e.portionMasterId),
-                portionName: Value(e.portionName),
-                portionMasterDeletedStatus: Value(e.portionMasterDeletedStatus),
-                portionMasterNetworkStatus: Value(e.portionMasterNetworkStatus),
-                portionMasterSyncStatus: const Value('1'),
-              ),
-            )
-            .toList(),
-      );
-    }
-
     return MastersSyncResult(
       foodTypeCount: foodTypes.length,
       categoryCount: categories.length,
       productCount: products.length,
       portionCount: portions.length,
-      tableCount:
-          tables.isNotEmpty ? tables.length : await db.countActivePosTables(),
+      tableCount: tables.isNotEmpty
+          ? tables.length
+          : await db.countActivePosTables(),
       comboCount: combos.length,
       subcategoryCount: subcategories.length,
       diningAreaCount: diningAreas.length,
@@ -387,10 +452,9 @@ class MastersRepository {
     String? licenceUserId,
   }) async {
     final catalogId = ownerId.trim();
-    final opsId =
-        (licenceUserId ?? ownerId).trim().isNotEmpty
-            ? (licenceUserId ?? ownerId).trim()
-            : catalogId;
+    final opsId = (licenceUserId ?? ownerId).trim().isNotEmpty
+        ? (licenceUserId ?? ownerId).trim()
+        : catalogId;
     if (catalogId.isEmpty) return 0;
     var uploaded = 0;
 
@@ -413,13 +477,19 @@ class MastersRepository {
     }
 
     for (final sub in await db.getPendingSubcategories()) {
-      final network = sub.subcategoryNetworkStatus?.trim().isNotEmpty == true
-          ? sub.subcategoryNetworkStatus!
-          : 'sub_${sub.subcategoryId}';
+      final network = _networkOr(sub.subcategoryNetworkStatus, 'sub_${sub.subcategoryId}');
+      var categoryNetwork = sub.categoryNetworkStatus ?? '';
+      if (categoryNetwork.trim().isEmpty && sub.categoryId != null) {
+        final category =
+            await (db.select(db.productCategories)
+                  ..where((t) => t.categoryId.equals(sub.categoryId!)))
+                .getSingleOrNull();
+        categoryNetwork = category?.categoryNetworkStatus ?? '';
+      }
       final ok = await api.insertSubcategory(
         userId: catalogId,
         categoryId: '${sub.categoryId ?? 0}',
-        categoryNetworkStatus: sub.categoryNetworkStatus ?? '',
+        categoryNetworkStatus: categoryNetwork,
         subcategoryName: sub.subcategoryName,
         subcategoryNetworkStatus: network,
         subcategoryDeletedStatus: sub.subcategoryDeletedStatus,
@@ -432,9 +502,18 @@ class MastersRepository {
     }
 
     for (final product in await db.getPendingProducts()) {
-      final network = product.productNetworkStatus?.trim().isNotEmpty == true
-          ? product.productNetworkStatus!
-          : 'prd_${product.productId}';
+      final network = _networkOr(
+        product.productNetworkStatus,
+        'prd_${product.productId}',
+      );
+      var subcategoryNetwork = '';
+      if (product.subcategoryId != null && product.subcategoryId! > 0) {
+        final sub =
+            await (db.select(db.productSubcategories)
+                  ..where((t) => t.subcategoryId.equals(product.subcategoryId!)))
+                .getSingleOrNull();
+        subcategoryNetwork = sub?.subcategoryNetworkStatus ?? '';
+      }
       final ok = await api.insertProduct(
         userId: catalogId,
         categoryId: '${product.categoryId ?? 0}',
@@ -449,10 +528,13 @@ class MastersRepository {
         productNetworkStatus: network,
         productDeletedStatus: product.productDeletedStatus,
         subcategoryId: '${product.subcategoryId ?? 0}',
+        subcategoryNetworkStatus: subcategoryNetwork,
         openPrice: ProductDto.normalizeOpenPrice(product.openPrice) == '1'
             ? 'on'
             : 'off',
-        priceIncludesGst: ProductDto.normalizeOpenPrice(product.priceIncludesGst),
+        priceIncludesGst: ProductDto.normalizeOpenPrice(
+          product.priceIncludesGst,
+        ),
         productImage: product.productImage ?? '',
       );
       if (ok) {
@@ -498,8 +580,8 @@ class MastersRepository {
     for (final master in await db.getPendingPortionMasters()) {
       final network =
           master.portionMasterNetworkStatus?.trim().isNotEmpty == true
-              ? master.portionMasterNetworkStatus!
-              : 'pm_${master.portionMasterId}';
+          ? master.portionMasterNetworkStatus!
+          : 'pm_${master.portionMasterId}';
       final ok = await api.insertPortionMaster(
         userId: catalogId,
         portionName: master.portionName,
@@ -513,22 +595,36 @@ class MastersRepository {
     }
 
     for (final portion in await db.getPendingPortions()) {
-      final network = portion.portionNetworkStatus?.trim().isNotEmpty == true
-          ? portion.portionNetworkStatus!
-          : 'por_${portion.portionId}';
-      final product = await (db.select(db.products)
-            ..where((t) => t.productId.equals(portion.productId)))
-          .getSingleOrNull();
+      final network = _networkOr(
+        portion.portionNetworkStatus,
+        'por_${portion.portionId}',
+      );
+      final product = await (db.select(
+        db.products,
+      )..where((t) => t.productId.equals(portion.productId))).getSingleOrNull();
+      String masterNetwork = '';
+      if (portion.portionMasterId != null && portion.portionMasterId! > 0) {
+        final master =
+            await (db.select(db.portionMasters)..where(
+                  (t) => t.portionMasterId.equals(portion.portionMasterId!),
+                ))
+                .getSingleOrNull();
+        masterNetwork = master?.portionMasterNetworkStatus ?? '';
+      }
+      final productNetwork = product?.productNetworkStatus ?? '';
       final ok = await api.insertPortion(
         userId: catalogId,
-        productId: '${portion.productId}',
-        productNetworkStatus: product?.productNetworkStatus ?? '',
+        productId: productNetwork.isNotEmpty ? '0' : '${portion.productId}',
+        productNetworkStatus: productNetwork,
         portionName: portion.portionName,
         portionPrice: portion.portionPrice.toStringAsFixed(2),
         portionSortOrder: '${portion.portionSortOrder}',
         portionNetworkStatus: network,
         portionDeletedStatus: portion.portionDeletedStatus,
-        portionMasterId: '${portion.portionMasterId ?? 0}',
+        portionMasterId: masterNetwork.isNotEmpty
+            ? '0'
+            : '${portion.portionMasterId ?? 0}',
+        portionMasterNetworkStatus: masterNetwork,
       );
       if (ok) {
         await db.markPortionSynced(portion.portionId);
@@ -537,9 +633,10 @@ class MastersRepository {
     }
 
     for (final combo in await db.getPendingCombos()) {
-      final network = combo.comboNetworkStatus?.trim().isNotEmpty == true
-          ? combo.comboNetworkStatus!
-          : 'cmb_${combo.comboId}';
+      final network = _networkOr(
+        combo.comboNetworkStatus,
+        'cmb_${combo.comboId}',
+      );
       final withGst = combo.comboWithGstPrice > 0
           ? combo.comboWithGstPrice
           : combo.comboPrice;
@@ -557,25 +654,52 @@ class MastersRepository {
         comboSortOrder: '${combo.comboSortOrder}',
       );
       if (ok) {
-        final items = await db.getComboItemsForCombo(combo.comboId);
-        for (final item in items) {
-          if (item.comboItemSyncStatus == '1') continue;
-          await api.insertComboItem(
-            userId: catalogId,
-            comboId: '${combo.comboId}',
-            comboNetworkStatus: network,
-            productId: '${item.productId ?? 0}',
-            productNetworkStatus: item.productNetworkStatus ?? '',
-            portionId: '${item.portionId ?? 0}',
-            portionNetworkStatus: item.portionNetworkStatus ?? '',
-            comboItemQuantity: '${item.comboItemQuantity}',
-            comboItemSortOrder: '${item.comboItemSortOrder}',
-            comboItemNetworkStatus: item.comboItemNetworkStatus ??
-                'cbi_${item.comboItemId}',
-            comboItemDeletedStatus: item.comboItemDeletedStatus,
-          );
-        }
         await db.markComboSynced(combo.comboId);
+        uploaded++;
+      }
+    }
+
+    for (final item in await db.getPendingComboItems()) {
+      final combo = await (db.select(
+        db.combos,
+      )..where((t) => t.comboId.equals(item.comboId))).getSingleOrNull();
+      final comboNetwork = _networkOr(
+        item.comboNetworkStatus ?? combo?.comboNetworkStatus,
+        'cmb_${item.comboId}',
+      );
+      String productNetwork = item.productNetworkStatus ?? '';
+      if (productNetwork.trim().isEmpty && item.productId != null) {
+        final product = await db.getProduct(item.productId!);
+        productNetwork = product?.productNetworkStatus ?? '';
+      }
+      String portionNetwork = item.portionNetworkStatus ?? '';
+      if (portionNetwork.trim().isEmpty &&
+          item.portionId != null &&
+          item.portionId! > 0) {
+        final portion =
+            await (db.select(db.productPortions)
+                  ..where((t) => t.portionId.equals(item.portionId!)))
+                .getSingleOrNull();
+        portionNetwork = portion?.portionNetworkStatus ?? '';
+      }
+      final ok = await api.insertComboItem(
+        userId: catalogId,
+        comboId: comboNetwork.isNotEmpty ? '0' : '${item.comboId}',
+        comboNetworkStatus: comboNetwork,
+        productId: productNetwork.isNotEmpty ? '0' : '${item.productId ?? 0}',
+        productNetworkStatus: productNetwork,
+        portionId: portionNetwork.isNotEmpty ? '0' : '${item.portionId ?? 0}',
+        portionNetworkStatus: portionNetwork,
+        comboItemQuantity: '${item.comboItemQuantity}',
+        comboItemSortOrder: '${item.comboItemSortOrder}',
+        comboItemNetworkStatus: _networkOr(
+          item.comboItemNetworkStatus,
+          'cbi_${item.comboItemId}',
+        ),
+        comboItemDeletedStatus: item.comboItemDeletedStatus,
+      );
+      if (ok) {
+        await db.markComboItemSynced(item.comboItemId);
         uploaded++;
       }
     }
@@ -639,8 +763,9 @@ class MastersRepository {
     bool uploadNow = true,
   }) async {
     await _requireOnlineIfWeb();
-    final id =
-        await db.insertLocalTableType(tableTypeName: tableTypeName.trim());
+    final id = await db.insertLocalTableType(
+      tableTypeName: tableTypeName.trim(),
+    );
     await _pushPendingToApi(userId, uploadNow: uploadNow);
     return id;
   }
@@ -651,8 +776,9 @@ class MastersRepository {
     bool uploadNow = true,
   }) async {
     await _requireOnlineIfWeb();
-    final id =
-        await db.insertLocalPortionMaster(portionName: portionName.trim());
+    final id = await db.insertLocalPortionMaster(
+      portionName: portionName.trim(),
+    );
     await _pushPendingToApi(userId, uploadNow: uploadNow);
     return id;
   }
@@ -699,6 +825,15 @@ class MastersRepository {
     double productCgst = 0,
     double productSgst = 0,
     int? subcategoryId,
+    List<
+      ({
+        String portionName,
+        double portionPrice,
+        int portionSortOrder,
+        int? portionMasterId,
+      })
+    >
+    portions = const [],
     bool uploadNow = true,
   }) async {
     await _requireOnlineIfWeb();
@@ -721,6 +856,16 @@ class MastersRepository {
       productSgst: productSgst,
       subcategoryId: subcategoryId,
     );
+    for (final portion in portions) {
+      if (portion.portionName.trim().isEmpty) continue;
+      await db.insertLocalPortion(
+        productId: id,
+        portionName: portion.portionName.trim(),
+        portionPrice: portion.portionPrice,
+        portionSortOrder: portion.portionSortOrder,
+        portionMasterId: portion.portionMasterId,
+      );
+    }
     await _pushPendingToApi(userId, uploadNow: uploadNow);
     return id;
   }
@@ -941,10 +1086,7 @@ class MastersRepository {
   Future<void> _requireOnlineIfWeb() => requireOnlineForWeb();
 
   /* Web: every local catalog write must reach insert* APIs immediately. */
-  Future<void> _pushPendingToApi(
-    String userId, {
-    bool uploadNow = true,
-  }) async {
+  Future<void> _pushPendingToApi(String userId, {bool uploadNow = true}) async {
     if (!uploadNow) {
       if (AppPlatform.requiresNetwork) {
         throw StateError(kOnlineRequiredMessage);
@@ -958,7 +1100,10 @@ class MastersRepository {
       }
       return;
     }
-    await uploadPendingMasters(ownerId: ownerId);
+    for (var round = 0; round < 20; round++) {
+      final n = await uploadPendingMasters(ownerId: ownerId);
+      if (n == 0) break;
+    }
     if (!AppPlatform.requiresNetwork) return;
     final left = await _pendingCatalogCount();
     if (left > 0) {
@@ -973,9 +1118,30 @@ class MastersRepository {
         (await len(db.getPendingProducts())) +
         (await len(db.getPendingPortions())) +
         (await len(db.getPendingCombos())) +
+        (await len(db.getPendingComboItems())) +
         (await len(db.getPendingDiningAreas())) +
         (await len(db.getPendingTableTypes())) +
         (await len(db.getPendingPortionMasters())) +
         (await len(db.getPendingPosTables()));
+  }
+
+  String _networkOr(String? value, String fallback) {
+    final trimmed = value?.trim() ?? '';
+    return trimmed.isNotEmpty ? trimmed : fallback;
+  }
+
+  int _remapId({
+    required int postedId,
+    required String? networkKey,
+    required Set<int> knownIds,
+    required Map<String, int> idByNetwork,
+  }) {
+    if (postedId > 0 && knownIds.contains(postedId)) return postedId;
+    final key = networkKey?.trim() ?? '';
+    if (key.isNotEmpty) {
+      final mapped = idByNetwork[key];
+      if (mapped != null && mapped > 0) return mapped;
+    }
+    return 0;
   }
 }

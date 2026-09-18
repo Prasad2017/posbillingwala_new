@@ -31,6 +31,7 @@ class WoosimPrintPlugin(
                     Handler(Looper.getMainLooper()).post { result.success(ok) }
                 }, "woosim-$kind-connect").start()
             }
+
             "write" -> {
                 val bytes = call.argument<ByteArray>("bytes")
                 Thread({
@@ -38,10 +39,12 @@ class WoosimPrintPlugin(
                     Handler(Looper.getMainLooper()).post { result.success(ok) }
                 }, "woosim-$kind-write").start()
             }
+
             "disconnect" -> {
                 session.disconnect()
                 result.success(true)
             }
+
             "isReady" -> result.success(session.isReady())
             else -> result.notImplemented()
         }

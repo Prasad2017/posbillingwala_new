@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
+import 'package:pos_billingwala_v2/core/utils/money_format.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/masters/domain/masters_providers.dart';
 import 'package:pos_billingwala_v2/features/masters/presentation/widgets/master_ui.dart';
@@ -21,8 +22,8 @@ class ComboFormPageState extends ConsumerState<ComboFormPage> {
   final comboFormPageCode = TextEditingController();
   final comboFormPageName = TextEditingController();
   final comboFormPagePrice = TextEditingController();
-  final cgst = TextEditingController(text: '0');
-  final sgst = TextEditingController(text: '0');
+  final cgst = TextEditingController();
+  final sgst = TextEditingController();
   final search = TextEditingController();
   final selected = <int, int>{};
   var comboFormPageActive = true;
@@ -48,12 +49,13 @@ class ComboFormPageState extends ConsumerState<ComboFormPage> {
     loaded = true;
     comboFormPageCode.text = combo.comboCode ?? '';
     comboFormPageName.text = combo.comboName;
-    comboFormPagePrice.text = combo.comboPrice.toStringAsFixed(2);
-    cgst.text = combo.comboCgst.toStringAsFixed(1);
-    sgst.text = combo.comboSgst.toStringAsFixed(1);
+    comboFormPagePrice.text = amountInputText(combo.comboPrice);
+    cgst.text = amountInputText(combo.comboCgst);
+    sgst.text = amountInputText(combo.comboSgst);
     comboFormPageActive = combo.comboActiveStatus == '1';
-    final items =
-        await ref.read(appDatabaseProvider).getComboItemsForCombo(combo.comboId);
+    final items = await ref
+        .read(appDatabaseProvider)
+        .getComboItemsForCombo(combo.comboId);
     if (!mounted) return;
     setState(() {
       for (final item in items) {
@@ -103,7 +105,7 @@ class ComboFormPageState extends ConsumerState<ComboFormPage> {
       }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(isEdit ? 'Combo updated' : 'Combo saved')),
+        SnackBar(content: Text(isEdit ? 'Combo saved' : 'Combo saved')),
       );
       context.pop();
     } finally {
@@ -113,15 +115,13 @@ class ComboFormPageState extends ConsumerState<ComboFormPage> {
 
   @override
   Widget build(BuildContext context) {
-    final products = ref.watch(allProductsProvider).maybeWhen(
-          data: (v) => v,
-          orElse: () => const <Product>[],
-        );
+    final products = ref
+        .watch(allProductsProvider)
+        .maybeWhen(data: (v) => v, orElse: () => const <Product>[]);
     if (isEdit) {
-      final combos = ref.watch(combosListProvider).maybeWhen(
-            data: (v) => v,
-            orElse: () => const <Combo>[],
-          );
+      final combos = ref
+          .watch(combosListProvider)
+          .maybeWhen(data: (v) => v, orElse: () => const <Combo>[]);
       Combo? match;
       for (final c in combos) {
         if (c.comboId == widget.comboId) match = c;
@@ -140,9 +140,7 @@ class ComboFormPageState extends ConsumerState<ComboFormPage> {
 
     return Scaffold(
       backgroundColor: MasterUi.bg,
-      appBar: AppBar(
-        title: Text(isEdit ? 'Update Combo' : 'Add Combo'),
-      ),
+      appBar: AppBar(title: Text(isEdit ? 'Update Combo' : 'Add Combo')),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
         children: [
@@ -152,9 +150,14 @@ class ComboFormPageState extends ConsumerState<ComboFormPage> {
             textCapitalization: TextCapitalization.characters,
           ),
           const SizedBox(height: 12),
-          AppTextField(controller: comboFormPageName, label: 'Combo name'),
+          AppTextField(
+            required: true,
+            controller: comboFormPageName,
+            label: 'Combo name',
+          ),
           const SizedBox(height: 12),
           AppTextField(
+            required: true,
             controller: comboFormPagePrice,
             label: 'Combo selling price',
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -166,8 +169,9 @@ class ComboFormPageState extends ConsumerState<ComboFormPage> {
                 child: AppTextField(
                   controller: cgst,
                   label: 'CGST',
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                 ),
               ),
               const SizedBox(width: 10),
@@ -175,16 +179,17 @@ class ComboFormPageState extends ConsumerState<ComboFormPage> {
                 child: AppTextField(
                   controller: sgst,
                   label: 'SGST',
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                 ),
               ),
             ],
           ),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Combo active on POS'),
+          AppSwitchTile(
+            title: 'Combo active on POS',
             value: comboFormPageActive,
+            showDivider: false,
             onChanged: (v) => setState(() => comboFormPageActive = v),
           ),
           const SizedBox(height: 8),
@@ -246,9 +251,8 @@ class ComboFormPageState extends ConsumerState<ComboFormPage> {
                         ),
                         IconButton(
                           icon: const Icon(Icons.add),
-                          onPressed: () => setState(
-                            () => selected[p.productId] = qty + 1,
-                          ),
+                          onPressed: () =>
+                              setState(() => selected[p.productId] = qty + 1),
                         ),
                       ],
                     )
@@ -257,9 +261,7 @@ class ComboFormPageState extends ConsumerState<ComboFormPage> {
           }),
           const SizedBox(height: 16),
           AppButton(
-            label: busy
-                ? 'Saving…'
-                : (isEdit ? 'Save Combo' : 'Create Combo'),
+            label: busy ? 'Saving…' : (isEdit ? 'Save Combo' : 'Create Combo'),
             onPressed: busy ? null : save,
           ),
         ],

@@ -131,239 +131,226 @@ class AppDatabase extends _$AppDatabase {
   String get activeBranchId => scopeBranch;
 
   @override
-  int get schemaVersion => 23;
+  int get schemaVersion => 24;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-        onCreate: (m) async {
-          await m.createAll();
-          await ensurePerformanceIndexes();
-        },
-        onUpgrade: (m, from, to) async {
-          if (from < 2) {
-            await m.createTable(cartItems);
-          }
-          if (from < 3) {
-            await m.createTable(invoices);
-            await m.createTable(invoiceItems);
-          }
-          if (from < 4) {
-            await m.addColumn(invoices, invoices.customerName);
-            await m.addColumn(invoices, invoices.customerMobile);
-          }
-          if (from < 5) {
-            await m.addColumn(invoices, invoices.diningSessionId);
-            await m.createTable(posTables);
-            await m.createTable(diningSessions);
-            /* Cart PK changed to (productId, cartScope) — recreate safely. */
-            await m.deleteTable('cart_items');
-            await m.createTable(cartItems);
-          }
-          if (from < 6) {
-            await m.addColumn(cartItems, cartItems.printedQuantity);
-            await m.addColumn(
-              diningSessions,
-              diningSessions.joinedTableNumbers,
-            );
-            await m.createTable(orderRounds);
-            await m.createTable(kots);
-            await m.createTable(kotItems);
-            await m.createTable(messMembers);
-            await m.createTable(messTokens);
-          }
-          if (from < 7) {
-            await m.addColumn(invoices, invoices.invoiceSyncStatus);
-            await m.addColumn(
-              invoiceItems,
-              invoiceItems.invoiceItemNetworkStatus,
-            );
-            await m.addColumn(
-              invoiceItems,
-              invoiceItems.invoiceItemSyncStatus,
-            );
-          }
-          if (from < 8) {
-            await m.createTable(inventoryMovements);
-            await m.createTable(shopExpenses);
-          }
-          if (from < 9) {
-            await m.addColumn(
-              productCategories,
-              productCategories.categorySyncStatus,
-            );
-            await m.addColumn(products, products.productSyncStatus);
-            await m.addColumn(
-              productPortions,
-              productPortions.portionSyncStatus,
-            );
-            await m.addColumn(
-              diningSessions,
-              diningSessions.sessionNetworkStatus,
-            );
-            await m.addColumn(
-              diningSessions,
-              diningSessions.sessionSyncStatus,
-            );
-            await m.addColumn(
-              diningSessions,
-              diningSessions.sessionVersion,
-            );
-            await m.addColumn(messMembers, messMembers.memberSyncStatus);
-            await m.addColumn(messTokens, messTokens.tokenSyncStatus);
-            await m.addColumn(cartItems, cartItems.lineType);
-            await m.addColumn(cartItems, cartItems.comboId);
-            await m.addColumn(cartItems, cartItems.comboNetworkStatus);
-            await m.createTable(combos);
-            await m.createTable(comboItems);
-          }
-          if (from < 10) {
-            /* Cart PK adds portionId — recreate empty cart safely. */
-            await m.deleteTable('cart_items');
-            await m.createTable(cartItems);
-            await m.createTable(messMemberPayments);
-          }
-          if (from < 11) {
-            await m.createTable(productSubcategories);
-          }
-          if (from < 12) {
-            await m.createTable(diningAreas);
-            await m.createTable(tableTypes);
-            await m.createTable(portionMasters);
-          }
-          if (from < 13) {
-            await m.createTable(messInvoices);
-          }
-          if (from < 14) {
-            await m.addColumn(invoices, invoices.organizationId);
-            await m.addColumn(invoices, invoices.branchId);
-            await m.addColumn(invoices, invoices.deviceId);
-            await m.addColumn(invoiceItems, invoiceItems.organizationId);
-            await m.addColumn(invoiceItems, invoiceItems.branchId);
-            await m.addColumn(invoiceItems, invoiceItems.deviceId);
-            await m.addColumn(posTables, posTables.organizationId);
-            await m.addColumn(posTables, posTables.branchId);
-            await m.addColumn(posTables, posTables.deviceId);
-            await m.addColumn(diningAreas, diningAreas.organizationId);
-            await m.addColumn(diningAreas, diningAreas.branchId);
-            await m.addColumn(diningAreas, diningAreas.deviceId);
-            await m.addColumn(tableTypes, tableTypes.organizationId);
-            await m.addColumn(tableTypes, tableTypes.branchId);
-            await m.addColumn(tableTypes, tableTypes.deviceId);
-            await m.addColumn(diningSessions, diningSessions.organizationId);
-            await m.addColumn(diningSessions, diningSessions.branchId);
-            await m.addColumn(diningSessions, diningSessions.deviceId);
-            await m.addColumn(orderRounds, orderRounds.organizationId);
-            await m.addColumn(orderRounds, orderRounds.branchId);
-            await m.addColumn(orderRounds, orderRounds.deviceId);
-            await m.addColumn(kots, kots.organizationId);
-            await m.addColumn(kots, kots.branchId);
-            await m.addColumn(kots, kots.deviceId);
-            await m.addColumn(kotItems, kotItems.organizationId);
-            await m.addColumn(kotItems, kotItems.branchId);
-            await m.addColumn(kotItems, kotItems.deviceId);
-            await m.addColumn(
-              inventoryMovements,
-              inventoryMovements.organizationId,
-            );
-            await m.addColumn(inventoryMovements, inventoryMovements.branchId);
-            await m.addColumn(inventoryMovements, inventoryMovements.deviceId);
-            await m.addColumn(shopExpenses, shopExpenses.organizationId);
-            await m.addColumn(shopExpenses, shopExpenses.branchId);
-            await m.addColumn(shopExpenses, shopExpenses.deviceId);
-          }
-          if (from < 15) {
-            await m.addColumn(invoices, invoices.customerEmail);
-            await m.addColumn(invoices, invoices.customerAddress);
-          }
-          if (from < 16) {
-            /* Align Drift schema with Android POSBillingWalaDatabase (v30). */
-            await m.addColumn(products, products.userId);
-            await m.addColumn(combos, combos.comboStatus);
-            await m.addColumn(comboItems, comboItems.comboItemStatus);
+    onCreate: (m) async {
+      await m.createAll();
+      await ensurePerformanceIndexes();
+    },
+    onUpgrade: (m, from, to) async {
+      if (from < 2) {
+        await m.createTable(cartItems);
+      }
+      if (from < 3) {
+        await m.createTable(invoices);
+        await m.createTable(invoiceItems);
+      }
+      if (from < 4) {
+        await m.addColumn(invoices, invoices.customerName);
+        await m.addColumn(invoices, invoices.customerMobile);
+      }
+      if (from < 5) {
+        await m.addColumn(invoices, invoices.diningSessionId);
+        await m.createTable(posTables);
+        await m.createTable(diningSessions);
+        /* Cart PK changed to (productId, cartScope) — recreate safely. */
+        await m.deleteTable('cart_items');
+        await m.createTable(cartItems);
+      }
+      if (from < 6) {
+        await m.addColumn(cartItems, cartItems.printedQuantity);
+        await m.addColumn(diningSessions, diningSessions.joinedTableNumbers);
+        await m.createTable(orderRounds);
+        await m.createTable(kots);
+        await m.createTable(kotItems);
+        await m.createTable(messMembers);
+        await m.createTable(messTokens);
+      }
+      if (from < 7) {
+        await m.addColumn(invoices, invoices.invoiceSyncStatus);
+        await m.addColumn(invoiceItems, invoiceItems.invoiceItemNetworkStatus);
+        await m.addColumn(invoiceItems, invoiceItems.invoiceItemSyncStatus);
+      }
+      if (from < 8) {
+        await m.createTable(inventoryMovements);
+        await m.createTable(shopExpenses);
+      }
+      if (from < 9) {
+        await m.addColumn(
+          productCategories,
+          productCategories.categorySyncStatus,
+        );
+        await m.addColumn(products, products.productSyncStatus);
+        await m.addColumn(productPortions, productPortions.portionSyncStatus);
+        await m.addColumn(diningSessions, diningSessions.sessionNetworkStatus);
+        await m.addColumn(diningSessions, diningSessions.sessionSyncStatus);
+        await m.addColumn(diningSessions, diningSessions.sessionVersion);
+        await m.addColumn(messMembers, messMembers.memberSyncStatus);
+        await m.addColumn(messTokens, messTokens.tokenSyncStatus);
+        await m.addColumn(cartItems, cartItems.lineType);
+        await m.addColumn(cartItems, cartItems.comboId);
+        await m.addColumn(cartItems, cartItems.comboNetworkStatus);
+        await m.createTable(combos);
+        await m.createTable(comboItems);
+      }
+      if (from < 10) {
+        /* Cart PK adds portionId — recreate empty cart safely. */
+        await m.deleteTable('cart_items');
+        await m.createTable(cartItems);
+        await m.createTable(messMemberPayments);
+      }
+      if (from < 11) {
+        await m.createTable(productSubcategories);
+      }
+      if (from < 12) {
+        await m.createTable(diningAreas);
+        await m.createTable(tableTypes);
+        await m.createTable(portionMasters);
+      }
+      if (from < 13) {
+        await m.createTable(messInvoices);
+      }
+      if (from < 14) {
+        await m.addColumn(invoices, invoices.organizationId);
+        await m.addColumn(invoices, invoices.branchId);
+        await m.addColumn(invoices, invoices.deviceId);
+        await m.addColumn(invoiceItems, invoiceItems.organizationId);
+        await m.addColumn(invoiceItems, invoiceItems.branchId);
+        await m.addColumn(invoiceItems, invoiceItems.deviceId);
+        await m.addColumn(posTables, posTables.organizationId);
+        await m.addColumn(posTables, posTables.branchId);
+        await m.addColumn(posTables, posTables.deviceId);
+        await m.addColumn(diningAreas, diningAreas.organizationId);
+        await m.addColumn(diningAreas, diningAreas.branchId);
+        await m.addColumn(diningAreas, diningAreas.deviceId);
+        await m.addColumn(tableTypes, tableTypes.organizationId);
+        await m.addColumn(tableTypes, tableTypes.branchId);
+        await m.addColumn(tableTypes, tableTypes.deviceId);
+        await m.addColumn(diningSessions, diningSessions.organizationId);
+        await m.addColumn(diningSessions, diningSessions.branchId);
+        await m.addColumn(diningSessions, diningSessions.deviceId);
+        await m.addColumn(orderRounds, orderRounds.organizationId);
+        await m.addColumn(orderRounds, orderRounds.branchId);
+        await m.addColumn(orderRounds, orderRounds.deviceId);
+        await m.addColumn(kots, kots.organizationId);
+        await m.addColumn(kots, kots.branchId);
+        await m.addColumn(kots, kots.deviceId);
+        await m.addColumn(kotItems, kotItems.organizationId);
+        await m.addColumn(kotItems, kotItems.branchId);
+        await m.addColumn(kotItems, kotItems.deviceId);
+        await m.addColumn(
+          inventoryMovements,
+          inventoryMovements.organizationId,
+        );
+        await m.addColumn(inventoryMovements, inventoryMovements.branchId);
+        await m.addColumn(inventoryMovements, inventoryMovements.deviceId);
+        await m.addColumn(shopExpenses, shopExpenses.organizationId);
+        await m.addColumn(shopExpenses, shopExpenses.branchId);
+        await m.addColumn(shopExpenses, shopExpenses.deviceId);
+      }
+      if (from < 15) {
+        await m.addColumn(invoices, invoices.customerEmail);
+        await m.addColumn(invoices, invoices.customerAddress);
+      }
+      if (from < 16) {
+        /* Align Drift schema with Android POSBillingWalaDatabase (v30). */
+        await m.addColumn(products, products.userId);
+        await m.addColumn(combos, combos.comboStatus);
+        await m.addColumn(comboItems, comboItems.comboItemStatus);
 
-            await m.addColumn(cartItems, cartItems.productOldPrice);
-            await m.addColumn(cartItems, cartItems.productNewPrice);
-            await m.addColumn(cartItems, cartItems.productCgst);
-            await m.addColumn(cartItems, cartItems.productSgst);
-            await m.addColumn(cartItems, cartItems.kotPrinted);
-            await m.addColumn(cartItems, cartItems.portionName);
-            await m.addColumn(cartItems, cartItems.snapshotProductName);
-            await m.addColumn(cartItems, cartItems.snapshotLinePrice);
-            await m.addColumn(cartItems, cartItems.snapshotComboComponents);
-            await m.addColumn(cartItems, cartItems.cartDiscount);
-            await m.addColumn(cartItems, cartItems.cartDiscountType);
-            await m.addColumn(cartItems, cartItems.cartPackingCharge);
-            await m.addColumn(cartItems, cartItems.cartPackingChargeType);
-            await m.addColumn(cartItems, cartItems.noOfTable);
-            await m.addColumn(cartItems, cartItems.cartOrderStatus);
-            await m.addColumn(cartItems, cartItems.cartStatus);
-            await m.addColumn(cartItems, cartItems.userId);
-            await m.addColumn(cartItems, cartItems.orderRoundId);
+        await m.addColumn(cartItems, cartItems.productOldPrice);
+        await m.addColumn(cartItems, cartItems.productNewPrice);
+        await m.addColumn(cartItems, cartItems.productCgst);
+        await m.addColumn(cartItems, cartItems.productSgst);
+        await m.addColumn(cartItems, cartItems.kotPrinted);
+        await m.addColumn(cartItems, cartItems.portionName);
+        await m.addColumn(cartItems, cartItems.snapshotProductName);
+        await m.addColumn(cartItems, cartItems.snapshotLinePrice);
+        await m.addColumn(cartItems, cartItems.snapshotComboComponents);
+        await m.addColumn(cartItems, cartItems.cartDiscount);
+        await m.addColumn(cartItems, cartItems.cartDiscountType);
+        await m.addColumn(cartItems, cartItems.cartPackingCharge);
+        await m.addColumn(cartItems, cartItems.cartPackingChargeType);
+        await m.addColumn(cartItems, cartItems.noOfTable);
+        await m.addColumn(cartItems, cartItems.cartOrderStatus);
+        await m.addColumn(cartItems, cartItems.cartStatus);
+        await m.addColumn(cartItems, cartItems.userId);
+        await m.addColumn(cartItems, cartItems.orderRoundId);
 
-            await m.addColumn(invoices, invoices.billPrintStatus);
-            await m.addColumn(invoiceItems, invoiceItems.portionId);
-            await m.addColumn(invoiceItems, invoiceItems.portionName);
-            await m.addColumn(invoiceItems, invoiceItems.snapshotProductName);
-            await m.addColumn(invoiceItems, invoiceItems.snapshotLinePrice);
-            await m.addColumn(
-              invoiceItems,
-              invoiceItems.snapshotComboComponents,
-            );
-            await m.addColumn(invoiceItems, invoiceItems.comboId);
+        await m.addColumn(invoices, invoices.billPrintStatus);
+        await m.addColumn(invoiceItems, invoiceItems.portionId);
+        await m.addColumn(invoiceItems, invoiceItems.portionName);
+        await m.addColumn(invoiceItems, invoiceItems.snapshotProductName);
+        await m.addColumn(invoiceItems, invoiceItems.snapshotLinePrice);
+        await m.addColumn(invoiceItems, invoiceItems.snapshotComboComponents);
+        await m.addColumn(invoiceItems, invoiceItems.comboId);
 
-            await m.addColumn(posTables, posTables.tableTypeId);
-            await m.addColumn(posTables, posTables.positionX);
-            await m.addColumn(posTables, posTables.positionY);
-            await m.addColumn(posTables, posTables.posTableStatus);
-            await m.addColumn(tableTypes, tableTypes.defaultCapacity);
+        await m.addColumn(posTables, posTables.tableTypeId);
+        await m.addColumn(posTables, posTables.positionX);
+        await m.addColumn(posTables, posTables.positionY);
+        await m.addColumn(posTables, posTables.posTableStatus);
+        await m.addColumn(tableTypes, tableTypes.defaultCapacity);
 
-            await m.addColumn(diningSessions, diningSessions.waiterName);
-            await m.addColumn(
-              diningSessions,
-              diningSessions.unpaidInvoiceNumber,
-            );
+        await m.addColumn(diningSessions, diningSessions.waiterName);
+        await m.addColumn(diningSessions, diningSessions.unpaidInvoiceNumber);
 
-            await m.addColumn(kotItems, kotItems.cartId);
+        await m.addColumn(kotItems, kotItems.cartId);
 
-            await m.addColumn(messTokens, messTokens.tokenStatus);
-            await m.addColumn(messTokens, messTokens.verifyNetworkStatus);
-            await m.addColumn(messTokens, messTokens.verifyStatus);
+        await m.addColumn(messTokens, messTokens.tokenStatus);
+        await m.addColumn(messTokens, messTokens.verifyNetworkStatus);
+        await m.addColumn(messTokens, messTokens.verifyStatus);
 
-            await m.createTable(cartComboItems);
-            await m.createTable(invoiceComboItems);
-            await m.createTable(invoiceProductDeleteQueue);
-            await m.createTable(messMealTokenQueue);
-            await m.createTable(companies);
-            await m.createTable(companyPrinterSettings);
-          }
-          if (from < 17) {
-            await m.addColumn(invoices, invoices.userId);
-          }
-          if (from < 18) {
-            await migrateCartIdPrimaryKey();
-          }
-          if (from < 19) {
-            await m.addColumn(products, products.productImage);
-          }
-          if (from < 20) {
-            await m.addColumn(invoices, invoices.createdByStaffId);
-            await m.addColumn(invoices, invoices.createdByStaffName);
-          }
-          if (from < 21) {
-            await m.addColumn(products, products.productMrp);
-            await migrateDecimalQuantities();
-          }
-          if (from < 22) {
-            await m.addColumn(products, products.priceIncludesGst);
-            await m.addColumn(inventoryMovements, inventoryMovements.movementType);
-            await m.addColumn(inventoryMovements, inventoryMovements.inventoryNote);
-            await m.addColumn(inventoryMovements, inventoryMovements.unitCost);
-          }
-          if (from < 23) {
-            await ensurePerformanceIndexes();
-          }
-        },
-      );
+        await m.createTable(cartComboItems);
+        await m.createTable(invoiceComboItems);
+        await m.createTable(invoiceProductDeleteQueue);
+        await m.createTable(messMealTokenQueue);
+        await m.createTable(companies);
+        await m.createTable(companyPrinterSettings);
+      }
+      if (from < 17) {
+        await m.addColumn(invoices, invoices.userId);
+      }
+      if (from < 18) {
+        await migrateCartIdPrimaryKey();
+      }
+      if (from < 19) {
+        await m.addColumn(products, products.productImage);
+      }
+      if (from < 20) {
+        await m.addColumn(invoices, invoices.createdByStaffId);
+        await m.addColumn(invoices, invoices.createdByStaffName);
+      }
+      if (from < 21) {
+        await m.addColumn(products, products.productMrp);
+        await migrateDecimalQuantities();
+      }
+      if (from < 22) {
+        await m.addColumn(products, products.priceIncludesGst);
+        await m.addColumn(inventoryMovements, inventoryMovements.movementType);
+        await m.addColumn(inventoryMovements, inventoryMovements.inventoryNote);
+        await m.addColumn(inventoryMovements, inventoryMovements.unitCost);
+      }
+      if (from < 23) {
+        await ensurePerformanceIndexes();
+      }
+      if (from < 24) {
+        /* Re-upload portions/combos with product/master network keys so */
+        /* other devices receive the complete menu instead of orphan rows. */
+        await customStatement(
+          "UPDATE product_portions SET portion_sync_status = '0'",
+        );
+        await customStatement(
+          "UPDATE portion_masters SET portion_master_sync_status = '0'",
+        );
+        await customStatement("UPDATE combos SET combo_sync_status = '0'");
+        await customStatement(
+          "UPDATE combo_items SET combo_item_sync_status = '0'",
+        );
+      }
+    },
+  );
 
   /* Speeds catalog filters and home/report invoice date scans. */
   Future<void> ensurePerformanceIndexes() async {
@@ -672,7 +659,8 @@ WHERE cart_id = 0;
 
     final bound = await BranchScope.readBound();
     final licenceKey = session.licenceKey.trim();
-    final licenceChanged = bound.boundLicence.isNotEmpty &&
+    final licenceChanged =
+        bound.boundLicence.isNotEmpty &&
         licenceKey.isNotEmpty &&
         bound.boundLicence != licenceKey;
     final branchChanged =
@@ -685,10 +673,7 @@ WHERE cart_id = 0;
       await claimUnscopedRowsForBranch(branchId);
     }
 
-    await BranchScope.persistBound(
-      licenceKey: licenceKey,
-      branchId: branchId,
-    );
+    await BranchScope.persistBound(licenceKey: licenceKey, branchId: branchId);
     await BranchScope.mirrorSessionPrefs(session);
   }
 
@@ -696,6 +681,17 @@ WHERE cart_id = 0;
     if (scopeBranch.isEmpty) return const Constant(true);
     /* Include unscoped rows so cloud imports / pre-scope data still appear. */
     return col.equals(scopeBranch) | col.equals('');
+  }
+
+  /* Staff login: only their bills. Owner/licence: no extra filter. */
+  Expression<bool> invoiceStaffMatches(
+    $InvoicesTable t, {
+    int? createdByStaffId,
+  }) {
+    if (createdByStaffId == null || createdByStaffId <= 0) {
+      return const Constant(true);
+    }
+    return t.createdByStaffId.equals(createdByStaffId);
   }
 
   /* Android parity: `IFNULL(invoiceOrderStatus,'completed') != 'refunded'` */
@@ -709,131 +705,108 @@ WHERE cart_id = 0;
       value.present && value.value.trim().isNotEmpty;
 
   InvoicesCompanion stampInvoice(InvoicesCompanion c) => c.copyWith(
-        organizationId: valueNonEmpty(c.organizationId)
-            ? c.organizationId
-            : Value(scopeOrg),
-        branchId:
-            valueNonEmpty(c.branchId) ? c.branchId : Value(scopeBranch),
-        deviceId:
-            valueNonEmpty(c.deviceId) ? c.deviceId : Value(scopeDevice),
-        userId: (c.userId.present &&
-                (c.userId.value ?? '').trim().isNotEmpty)
-            ? c.userId
-            : Value(scopeUserId.isEmpty ? null : scopeUserId),
-      );
+    organizationId: valueNonEmpty(c.organizationId)
+        ? c.organizationId
+        : Value(scopeOrg),
+    branchId: valueNonEmpty(c.branchId) ? c.branchId : Value(scopeBranch),
+    deviceId: valueNonEmpty(c.deviceId) ? c.deviceId : Value(scopeDevice),
+    userId: (c.userId.present && (c.userId.value ?? '').trim().isNotEmpty)
+        ? c.userId
+        : Value(scopeUserId.isEmpty ? null : scopeUserId),
+  );
 
-  InvoiceItemsCompanion stampInvoiceItem(InvoiceItemsCompanion c) =>
-      c.copyWith(
-        organizationId: valueNonEmpty(c.organizationId)
-            ? c.organizationId
-            : Value(scopeOrg),
-        branchId:
-            valueNonEmpty(c.branchId) ? c.branchId : Value(scopeBranch),
-        deviceId:
-            valueNonEmpty(c.deviceId) ? c.deviceId : Value(scopeDevice),
-      );
+  InvoiceItemsCompanion stampInvoiceItem(InvoiceItemsCompanion c) => c.copyWith(
+    organizationId: valueNonEmpty(c.organizationId)
+        ? c.organizationId
+        : Value(scopeOrg),
+    branchId: valueNonEmpty(c.branchId) ? c.branchId : Value(scopeBranch),
+    deviceId: valueNonEmpty(c.deviceId) ? c.deviceId : Value(scopeDevice),
+  );
 
   PosTablesCompanion stampPosTable(PosTablesCompanion c) => c.copyWith(
-        organizationId: valueNonEmpty(c.organizationId)
-            ? c.organizationId
-            : Value(scopeOrg),
-        branchId:
-            valueNonEmpty(c.branchId) ? c.branchId : Value(scopeBranch),
-        deviceId:
-            valueNonEmpty(c.deviceId) ? c.deviceId : Value(scopeDevice),
-      );
+    organizationId: valueNonEmpty(c.organizationId)
+        ? c.organizationId
+        : Value(scopeOrg),
+    branchId: valueNonEmpty(c.branchId) ? c.branchId : Value(scopeBranch),
+    deviceId: valueNonEmpty(c.deviceId) ? c.deviceId : Value(scopeDevice),
+  );
 
   DiningAreasCompanion stampDiningArea(DiningAreasCompanion c) => c.copyWith(
-        organizationId: valueNonEmpty(c.organizationId)
-            ? c.organizationId
-            : Value(scopeOrg),
-        branchId:
-            valueNonEmpty(c.branchId) ? c.branchId : Value(scopeBranch),
-        deviceId:
-            valueNonEmpty(c.deviceId) ? c.deviceId : Value(scopeDevice),
-      );
+    organizationId: valueNonEmpty(c.organizationId)
+        ? c.organizationId
+        : Value(scopeOrg),
+    branchId: valueNonEmpty(c.branchId) ? c.branchId : Value(scopeBranch),
+    deviceId: valueNonEmpty(c.deviceId) ? c.deviceId : Value(scopeDevice),
+  );
 
   TableTypesCompanion stampTableType(TableTypesCompanion c) => c.copyWith(
-        organizationId: valueNonEmpty(c.organizationId)
-            ? c.organizationId
-            : Value(scopeOrg),
-        branchId:
-            valueNonEmpty(c.branchId) ? c.branchId : Value(scopeBranch),
-        deviceId:
-            valueNonEmpty(c.deviceId) ? c.deviceId : Value(scopeDevice),
-      );
+    organizationId: valueNonEmpty(c.organizationId)
+        ? c.organizationId
+        : Value(scopeOrg),
+    branchId: valueNonEmpty(c.branchId) ? c.branchId : Value(scopeBranch),
+    deviceId: valueNonEmpty(c.deviceId) ? c.deviceId : Value(scopeDevice),
+  );
 
   DiningSessionsCompanion stampDiningSession(DiningSessionsCompanion c) =>
       c.copyWith(
         organizationId: valueNonEmpty(c.organizationId)
             ? c.organizationId
             : Value(scopeOrg),
-        branchId:
-            valueNonEmpty(c.branchId) ? c.branchId : Value(scopeBranch),
-        deviceId:
-            valueNonEmpty(c.deviceId) ? c.deviceId : Value(scopeDevice),
+        branchId: valueNonEmpty(c.branchId) ? c.branchId : Value(scopeBranch),
+        deviceId: valueNonEmpty(c.deviceId) ? c.deviceId : Value(scopeDevice),
       );
 
   OrderRoundsCompanion stampOrderRound(OrderRoundsCompanion c) => c.copyWith(
-        organizationId: valueNonEmpty(c.organizationId)
-            ? c.organizationId
-            : Value(scopeOrg),
-        branchId:
-            valueNonEmpty(c.branchId) ? c.branchId : Value(scopeBranch),
-        deviceId:
-            valueNonEmpty(c.deviceId) ? c.deviceId : Value(scopeDevice),
-      );
+    organizationId: valueNonEmpty(c.organizationId)
+        ? c.organizationId
+        : Value(scopeOrg),
+    branchId: valueNonEmpty(c.branchId) ? c.branchId : Value(scopeBranch),
+    deviceId: valueNonEmpty(c.deviceId) ? c.deviceId : Value(scopeDevice),
+  );
 
   KotsCompanion stampKot(KotsCompanion c) => c.copyWith(
-        organizationId: valueNonEmpty(c.organizationId)
-            ? c.organizationId
-            : Value(scopeOrg),
-        branchId:
-            valueNonEmpty(c.branchId) ? c.branchId : Value(scopeBranch),
-        deviceId:
-            valueNonEmpty(c.deviceId) ? c.deviceId : Value(scopeDevice),
-      );
+    organizationId: valueNonEmpty(c.organizationId)
+        ? c.organizationId
+        : Value(scopeOrg),
+    branchId: valueNonEmpty(c.branchId) ? c.branchId : Value(scopeBranch),
+    deviceId: valueNonEmpty(c.deviceId) ? c.deviceId : Value(scopeDevice),
+  );
 
   KotItemsCompanion stampKotItem(KotItemsCompanion c) => c.copyWith(
-        organizationId: valueNonEmpty(c.organizationId)
-            ? c.organizationId
-            : Value(scopeOrg),
-        branchId:
-            valueNonEmpty(c.branchId) ? c.branchId : Value(scopeBranch),
-        deviceId:
-            valueNonEmpty(c.deviceId) ? c.deviceId : Value(scopeDevice),
-      );
+    organizationId: valueNonEmpty(c.organizationId)
+        ? c.organizationId
+        : Value(scopeOrg),
+    branchId: valueNonEmpty(c.branchId) ? c.branchId : Value(scopeBranch),
+    deviceId: valueNonEmpty(c.deviceId) ? c.deviceId : Value(scopeDevice),
+  );
 
   InventoryMovementsCompanion stampInventory(InventoryMovementsCompanion c) =>
       c.copyWith(
         organizationId: valueNonEmpty(c.organizationId)
             ? c.organizationId
             : Value(scopeOrg),
-        branchId:
-            valueNonEmpty(c.branchId) ? c.branchId : Value(scopeBranch),
-        deviceId:
-            valueNonEmpty(c.deviceId) ? c.deviceId : Value(scopeDevice),
+        branchId: valueNonEmpty(c.branchId) ? c.branchId : Value(scopeBranch),
+        deviceId: valueNonEmpty(c.deviceId) ? c.deviceId : Value(scopeDevice),
       );
 
   ShopExpensesCompanion stampExpense(ShopExpensesCompanion c) => c.copyWith(
-        organizationId: valueNonEmpty(c.organizationId)
-            ? c.organizationId
-            : Value(scopeOrg),
-        branchId:
-            valueNonEmpty(c.branchId) ? c.branchId : Value(scopeBranch),
-        deviceId:
-            valueNonEmpty(c.deviceId) ? c.deviceId : Value(scopeDevice),
-      );
+    organizationId: valueNonEmpty(c.organizationId)
+        ? c.organizationId
+        : Value(scopeOrg),
+    branchId: valueNonEmpty(c.branchId) ? c.branchId : Value(scopeBranch),
+    deviceId: valueNonEmpty(c.deviceId) ? c.deviceId : Value(scopeDevice),
+  );
 
   Future<bool> hasInvoicesForOtherBranch(String branchId) async {
     if (branchId.trim().isEmpty) return false;
-    final row = await (select(invoices)
-          ..where(
-            (t) =>
-                t.branchId.isNotValue('') & t.branchId.isNotValue(branchId),
-          )
-          ..limit(1))
-        .getSingleOrNull();
+    final row =
+        await (select(invoices)
+              ..where(
+                (t) =>
+                    t.branchId.isNotValue('') & t.branchId.isNotValue(branchId),
+              )
+              ..limit(1))
+            .getSingleOrNull();
     return row != null;
   }
 
@@ -841,22 +814,19 @@ WHERE cart_id = 0;
   Future<void> purgeLocalDataNotMatchingBranch(String branchId) async {
     if (branchId.trim().isEmpty) return;
     await transaction(() async {
-      final foreign = await (select(invoices)
-            ..where(
-              (t) =>
-                  t.branchId.equals('') | t.branchId.isNotValue(branchId),
-            ))
-          .get();
+      final foreign =
+          await (select(invoices)..where(
+                (t) => t.branchId.equals('') | t.branchId.isNotValue(branchId),
+              ))
+              .get();
       for (final inv in foreign) {
-        await (delete(invoiceItems)
-              ..where((t) => t.invoiceNumber.equals(inv.invoiceNumber)))
-            .go();
+        await (delete(
+          invoiceItems,
+        )..where((t) => t.invoiceNumber.equals(inv.invoiceNumber))).go();
       }
-      await (delete(invoices)
-            ..where(
-              (t) =>
-                  t.branchId.equals('') | t.branchId.isNotValue(branchId),
-            ))
+      await (delete(invoices)..where(
+            (t) => t.branchId.equals('') | t.branchId.isNotValue(branchId),
+          ))
           .go();
     });
   }
@@ -866,10 +836,10 @@ WHERE cart_id = 0;
     if (branchId.trim().isEmpty) return;
     final stamp = InvoicesCompanion(branchId: Value(branchId));
     final itemStamp = InvoiceItemsCompanion(branchId: Value(branchId));
-    await (update(invoices)..where((t) => t.branchId.equals('')))
-        .write(stamp);
-    await (update(invoiceItems)..where((t) => t.branchId.equals('')))
-        .write(itemStamp);
+    await (update(invoices)..where((t) => t.branchId.equals(''))).write(stamp);
+    await (update(
+      invoiceItems,
+    )..where((t) => t.branchId.equals(''))).write(itemStamp);
     /* Also claim operational tables so pre-v14 rows remain visible. */
     await (update(posTables)..where((t) => t.branchId.equals(''))).write(
       PosTablesCompanion(branchId: Value(branchId)),
@@ -880,8 +850,9 @@ WHERE cart_id = 0;
     await (update(tableTypes)..where((t) => t.branchId.equals(''))).write(
       TableTypesCompanion(branchId: Value(branchId)),
     );
-    await (update(diningSessions)..where((t) => t.branchId.equals('')))
-        .write(DiningSessionsCompanion(branchId: Value(branchId)));
+    await (update(diningSessions)..where((t) => t.branchId.equals(''))).write(
+      DiningSessionsCompanion(branchId: Value(branchId)),
+    );
     await (update(orderRounds)..where((t) => t.branchId.equals(''))).write(
       OrderRoundsCompanion(branchId: Value(branchId)),
     );
@@ -960,9 +931,9 @@ WHERE cart_id = 0;
   }
 
   Future<int> nextLocalSubcategoryId() async {
-    final row = await (selectOnly(productSubcategories)
-          ..addColumns([productSubcategories.subcategoryId.max()]))
-        .getSingle();
+    final row = await (selectOnly(
+      productSubcategories,
+    )..addColumns([productSubcategories.subcategoryId.max()])).getSingle();
     return (row.read(productSubcategories.subcategoryId.max()) ?? 0) + 1;
   }
 
@@ -990,9 +961,9 @@ WHERE cart_id = 0;
   }
 
   Future<void> softDeleteSubcategory(int subcategoryId) async {
-    await (update(productSubcategories)
-          ..where((t) => t.subcategoryId.equals(subcategoryId)))
-        .write(
+    await (update(
+      productSubcategories,
+    )..where((t) => t.subcategoryId.equals(subcategoryId))).write(
       const ProductSubcategoriesCompanion(
         subcategoryDeletedStatus: Value('1'),
         subcategorySyncStatus: Value('0'),
@@ -1005,31 +976,36 @@ WHERE cart_id = 0;
     required String subcategoryName,
     int? categoryId,
   }) async {
-    await (update(productSubcategories)
-          ..where((t) => t.subcategoryId.equals(subcategoryId)))
-        .write(
+    await (update(
+      productSubcategories,
+    )..where((t) => t.subcategoryId.equals(subcategoryId))).write(
       ProductSubcategoriesCompanion(
         subcategoryName: Value(subcategoryName),
-        categoryId: categoryId == null ? const Value.absent() : Value(categoryId),
+        categoryId: categoryId == null
+            ? const Value.absent()
+            : Value(categoryId),
         subcategorySyncStatus: const Value('0'),
       ),
     );
   }
 
   Future<void> markSubcategorySynced(int subcategoryId) async {
-    await (update(productSubcategories)
-          ..where((t) => t.subcategoryId.equals(subcategoryId)))
-        .write(
+    await (update(
+      productSubcategories,
+    )..where((t) => t.subcategoryId.equals(subcategoryId))).write(
       const ProductSubcategoriesCompanion(subcategorySyncStatus: Value('1')),
     );
   }
 
   Future<int> countActiveSubcategories() async {
     final count = countAll();
-    final row = await (selectOnly(productSubcategories)
-          ..addColumns([count])
-          ..where(productSubcategories.subcategoryDeletedStatus.equals('0')))
-        .getSingle();
+    final row =
+        await (selectOnly(productSubcategories)
+              ..addColumns([count])
+              ..where(
+                productSubcategories.subcategoryDeletedStatus.equals('0'),
+              ))
+            .getSingle();
     return row.read(count) ?? 0;
   }
 
@@ -1076,36 +1052,37 @@ WHERE cart_id = 0;
   }
 
   Future<int> nextLocalCategoryId() async {
-    final row = await (selectOnly(productCategories)
-          ..addColumns([productCategories.categoryId.max()]))
-        .getSingle();
+    final row = await (selectOnly(
+      productCategories,
+    )..addColumns([productCategories.categoryId.max()])).getSingle();
     return (row.read(productCategories.categoryId.max()) ?? 0) + 1;
   }
 
   Future<int> nextLocalProductId() async {
-    final row = await (selectOnly(products)
-          ..addColumns([products.productId.max()]))
-        .getSingle();
+    final row = await (selectOnly(
+      products,
+    )..addColumns([products.productId.max()])).getSingle();
     return (row.read(products.productId.max()) ?? 0) + 1;
   }
 
   Future<int> nextLocalPortionId() async {
-    final row = await (selectOnly(productPortions)
-          ..addColumns([productPortions.portionId.max()]))
-        .getSingle();
+    final row = await (selectOnly(
+      productPortions,
+    )..addColumns([productPortions.portionId.max()])).getSingle();
     return (row.read(productPortions.portionId.max()) ?? 0) + 1;
   }
 
   Future<int> nextLocalComboId() async {
-    final row = await (selectOnly(combos)..addColumns([combos.comboId.max()]))
-        .getSingle();
+    final row = await (selectOnly(
+      combos,
+    )..addColumns([combos.comboId.max()])).getSingle();
     return (row.read(combos.comboId.max()) ?? 0) + 1;
   }
 
   Future<int> nextLocalComboItemId() async {
-    final row = await (selectOnly(comboItems)
-          ..addColumns([comboItems.comboItemId.max()]))
-        .getSingle();
+    final row = await (selectOnly(
+      comboItems,
+    )..addColumns([comboItems.comboItemId.max()])).getSingle();
     return (row.read(comboItems.comboItemId.max()) ?? 0) + 1;
   }
 
@@ -1183,23 +1160,26 @@ WHERE cart_id = 0;
     int? foodTypeId,
     String? foodTypeCode,
   }) async {
-    await (update(productCategories)
-          ..where((t) => t.categoryId.equals(categoryId)))
-        .write(
+    await (update(
+      productCategories,
+    )..where((t) => t.categoryId.equals(categoryId))).write(
       ProductCategoriesCompanion(
         categoryName: Value(categoryName),
-        foodTypeId: foodTypeId == null ? const Value.absent() : Value(foodTypeId),
-        foodTypeCode:
-            foodTypeCode == null ? const Value.absent() : Value(foodTypeCode),
+        foodTypeId: foodTypeId == null
+            ? const Value.absent()
+            : Value(foodTypeId),
+        foodTypeCode: foodTypeCode == null
+            ? const Value.absent()
+            : Value(foodTypeCode),
         categorySyncStatus: const Value('0'),
       ),
     );
   }
 
   Future<void> softDeleteCategory(int categoryId) async {
-    await (update(productCategories)
-          ..where((t) => t.categoryId.equals(categoryId)))
-        .write(
+    await (update(
+      productCategories,
+    )..where((t) => t.categoryId.equals(categoryId))).write(
       const ProductCategoriesCompanion(
         categoryDeletedStatus: Value('1'),
         categorySyncStatus: Value('0'),
@@ -1227,8 +1207,7 @@ WHERE cart_id = 0;
     final withGst = productCgst + productSgst <= 0
         ? productPrice
         : productPrice + (productPrice * (productCgst + productSgst) / 100);
-    await (update(products)..where((t) => t.productId.equals(productId)))
-        .write(
+    await (update(products)..where((t) => t.productId.equals(productId))).write(
       ProductsCompanion(
         productName: Value(productName),
         productPrice: Value(productPrice),
@@ -1240,8 +1219,8 @@ WHERE cart_id = 0;
         productImage: clearProductImage
             ? const Value(null)
             : (productImage == null
-                ? const Value.absent()
-                : Value(productImage)),
+                  ? const Value.absent()
+                  : Value(productImage)),
         openPrice: Value(openPrice),
         priceIncludesGst: Value(priceIncludesGst == '1' ? '1' : '0'),
         productUnit: Value(productUnit),
@@ -1254,8 +1233,7 @@ WHERE cart_id = 0;
   }
 
   Future<void> softDeleteProduct(int productId) async {
-    await (update(products)..where((t) => t.productId.equals(productId)))
-        .write(
+    await (update(products)..where((t) => t.productId.equals(productId))).write(
       const ProductsCompanion(
         productDeletedStatus: Value('1'),
         productSyncStatus: Value('0'),
@@ -1285,8 +1263,9 @@ WHERE cart_id = 0;
     String? studentYear,
     String? company,
   }) async {
-    await (update(messMembers)..where((t) => t.memberId.equals(memberId)))
-        .write(
+    await (update(
+      messMembers,
+    )..where((t) => t.memberId.equals(memberId))).write(
       MessMembersCompanion(
         memberName: Value(memberName),
         memberMobileNumber: Value(mobile),
@@ -1393,10 +1372,25 @@ WHERE cart_id = 0;
     required int comboId,
     required List<({int productId, int quantity})> items,
   }) async {
-    await (delete(comboItems)..where((t) => t.comboId.equals(comboId))).go();
+    final combo = await (select(
+      combos,
+    )..where((t) => t.comboId.equals(comboId))).getSingleOrNull();
+    final comboNetwork = combo?.comboNetworkStatus;
+    /* Keep prior rows as pending deletes so the server deactivates them. */
+    await (update(comboItems)..where(
+          (t) =>
+              t.comboId.equals(comboId) & t.comboItemDeletedStatus.equals('0'),
+        ))
+        .write(
+          const ComboItemsCompanion(
+            comboItemDeletedStatus: Value('1'),
+            comboItemSyncStatus: Value('0'),
+          ),
+        );
     var sort = 0;
     for (final item in items) {
       if (item.quantity <= 0) continue;
+      final product = await getProduct(item.productId);
       final id = await nextLocalComboItemId();
       await into(comboItems).insert(
         ComboItemsCompanion.insert(
@@ -1405,7 +1399,11 @@ WHERE cart_id = 0;
           productId: Value(item.productId),
           comboItemQuantity: Value(item.quantity),
           comboItemSortOrder: Value(sort++),
-          comboItemNetworkStatus: Value(appDatabaseNetworkStatus(prefix: 'cbi_')),
+          comboItemNetworkStatus: Value(
+            appDatabaseNetworkStatus(prefix: 'cbi_'),
+          ),
+          comboNetworkStatus: Value(comboNetwork),
+          productNetworkStatus: Value(product?.productNetworkStatus),
           comboItemSyncStatus: const Value('0'),
         ),
         mode: InsertMode.insertOrReplace,
@@ -1422,15 +1420,15 @@ WHERE cart_id = 0;
     String? invoiceItemType,
     bool leastSold = false,
   }) async {
-    final headers = await (select(invoices)
-          ..where(
-            (t) =>
-                t.invoiceDate.isBiggerOrEqualValue(start) &
-                t.invoiceDate.isSmallerThanValue(end) &
-                isBillableInvoice(t) &
-                branchMatches(t.branchId),
-          ))
-        .get();
+    final headers =
+        await (select(invoices)..where(
+              (t) =>
+                  t.invoiceDate.isBiggerOrEqualValue(start) &
+                  t.invoiceDate.isSmallerThanValue(end) &
+                  isBillableInvoice(t) &
+                  branchMatches(t.branchId),
+            ))
+            .get();
     final totals = <String, ({double qty, double amount, String type})>{};
     for (final inv in headers) {
       final lines = await getInvoiceItems(inv.invoiceNumber);
@@ -1446,28 +1444,25 @@ WHERE cart_id = 0;
         final qty = line.productQuantity + (prev?.qty ?? 0);
         final amount =
             (line.productPrice * line.productQuantity) + (prev?.amount ?? 0);
-        totals[key] = (
-          qty: qty,
-          amount: amount,
-          type: line.invoiceItemType,
-        );
+        totals[key] = (qty: qty, amount: amount, type: line.invoiceItemType);
       }
     }
-    final rows = totals.entries
-        .map(
-          (e) => ProductSalesRow(
-            productName: e.key,
-            totalQuantity: e.value.qty,
-            totalAmount: e.value.amount,
-            itemType: e.value.type,
-          ),
-        )
-        .toList()
-      ..sort(
-        (a, b) => leastSold
-            ? a.totalQuantity.compareTo(b.totalQuantity)
-            : b.totalQuantity.compareTo(a.totalQuantity),
-      );
+    final rows =
+        totals.entries
+            .map(
+              (e) => ProductSalesRow(
+                productName: e.key,
+                totalQuantity: e.value.qty,
+                totalAmount: e.value.amount,
+                itemType: e.value.type,
+              ),
+            )
+            .toList()
+          ..sort(
+            (a, b) => leastSold
+                ? a.totalQuantity.compareTo(b.totalQuantity)
+                : b.totalQuantity.compareTo(a.totalQuantity),
+          );
     return rows;
   }
 
@@ -1510,6 +1505,14 @@ WHERE cart_id = 0;
     return (select(combos)
           ..where((t) => t.comboSyncStatus.equals('0'))
           ..orderBy([(t) => OrderingTerm.asc(t.comboId)])
+          ..limit(limit))
+        .get();
+  }
+
+  Future<List<ComboItem>> getPendingComboItems({int limit = 200}) {
+    return (select(comboItems)
+          ..where((t) => t.comboItemSyncStatus.equals('0'))
+          ..orderBy([(t) => OrderingTerm.asc(t.comboItemId)])
           ..limit(limit))
         .get();
   }
@@ -1560,30 +1563,28 @@ WHERE cart_id = 0;
   }
 
   Future<void> markCategorySynced(int categoryId) async {
-    await (update(productCategories)
-          ..where((t) => t.categoryId.equals(categoryId)))
-        .write(
+    await (update(
+      productCategories,
+    )..where((t) => t.categoryId.equals(categoryId))).write(
       const ProductCategoriesCompanion(categorySyncStatus: Value('1')),
     );
   }
 
   Future<void> markProductSynced(int productId) async {
-    await (update(products)..where((t) => t.productId.equals(productId)))
-        .write(const ProductsCompanion(productSyncStatus: Value('1')));
-  }
-
-  Future<void> markPortionSynced(int portionId) async {
-    await (update(productPortions)
-          ..where((t) => t.portionId.equals(portionId)))
-        .write(
-      const ProductPortionsCompanion(portionSyncStatus: Value('1')),
+    await (update(products)..where((t) => t.productId.equals(productId))).write(
+      const ProductsCompanion(productSyncStatus: Value('1')),
     );
   }
 
+  Future<void> markPortionSynced(int portionId) async {
+    await (update(productPortions)..where((t) => t.portionId.equals(portionId)))
+        .write(const ProductPortionsCompanion(portionSyncStatus: Value('1')));
+  }
+
   Future<void> softDeletePortion(int portionId) async {
-    await (update(productPortions)
-          ..where((t) => t.portionId.equals(portionId)))
-        .write(
+    await (update(
+      productPortions,
+    )..where((t) => t.portionId.equals(portionId))).write(
       const ProductPortionsCompanion(
         portionDeletedStatus: Value('1'),
         portionSyncStatus: Value('0'),
@@ -1592,36 +1593,45 @@ WHERE cart_id = 0;
   }
 
   Future<void> markComboSynced(int comboId) async {
-    await transaction(() async {
-      await (update(combos)..where((t) => t.comboId.equals(comboId)))
-          .write(const CombosCompanion(comboSyncStatus: Value('1')));
-      await (update(comboItems)..where((t) => t.comboId.equals(comboId)))
-          .write(const ComboItemsCompanion(comboItemSyncStatus: Value('1')));
-    });
+    await (update(combos)..where((t) => t.comboId.equals(comboId))).write(
+      const CombosCompanion(comboSyncStatus: Value('1')),
+    );
+  }
+
+  Future<void> markComboItemSynced(int comboItemId) async {
+    await (update(
+      comboItems,
+    )..where((t) => t.comboItemId.equals(comboItemId))).write(
+      const ComboItemsCompanion(comboItemSyncStatus: Value('1')),
+    );
   }
 
   Future<Product?> getProduct(int productId) {
-    return (select(products)..where((t) => t.productId.equals(productId)))
-        .getSingleOrNull();
+    return (select(
+      products,
+    )..where((t) => t.productId.equals(productId))).getSingleOrNull();
   }
 
   Future<List<ComboItem>> getComboItemsForCombo(int comboId) {
     return (select(comboItems)
-          ..where((t) => t.comboId.equals(comboId))
+          ..where(
+            (t) =>
+                t.comboId.equals(comboId) &
+                t.comboItemDeletedStatus.equals('0'),
+          )
           ..orderBy([(t) => OrderingTerm.asc(t.comboItemSortOrder)]))
         .get();
   }
 
   Future<void> markDiningSessionSynced(int sessionId) async {
     await (update(diningSessions)..where((t) => t.sessionId.equals(sessionId)))
-        .write(
-      const DiningSessionsCompanion(sessionSyncStatus: Value('1')),
-    );
+        .write(const DiningSessionsCompanion(sessionSyncStatus: Value('1')));
   }
 
   Future<DiningSession?> getDiningSessionById(int sessionId) {
-    return (select(diningSessions)..where((t) => t.sessionId.equals(sessionId)))
-        .getSingleOrNull();
+    return (select(
+      diningSessions,
+    )..where((t) => t.sessionId.equals(sessionId))).getSingleOrNull();
   }
 
   Future<void> markMessMemberSynced(int memberId) async {
@@ -1630,8 +1640,9 @@ WHERE cart_id = 0;
   }
 
   Future<void> markMessTokenSynced(int tokenId) async {
-    await (update(messTokens)..where((t) => t.tokenId.equals(tokenId)))
-        .write(const MessTokensCompanion(tokenSyncStatus: Value('1')));
+    await (update(messTokens)..where((t) => t.tokenId.equals(tokenId))).write(
+      const MessTokensCompanion(tokenSyncStatus: Value('1')),
+    );
   }
 
   /* Upsert cloud dining sessions keyed by [sessionNetworkStatus] when present. */
@@ -1646,16 +1657,18 @@ WHERE cart_id = 0;
             : null;
         DiningSession? existing;
         if (network != null && network.trim().isNotEmpty) {
-          existing = await (select(diningSessions)
-                ..where((t) => t.sessionNetworkStatus.equals(network))
-                ..limit(1))
-              .getSingleOrNull();
+          existing =
+              await (select(diningSessions)
+                    ..where((t) => t.sessionNetworkStatus.equals(network))
+                    ..limit(1))
+                  .getSingleOrNull();
         }
         if (existing == null && row.sessionId.present) {
-          existing = await (select(diningSessions)
-                ..where((t) => t.sessionId.equals(row.sessionId.value))
-                ..limit(1))
-              .getSingleOrNull();
+          existing =
+              await (select(diningSessions)
+                    ..where((t) => t.sessionId.equals(row.sessionId.value))
+                    ..limit(1))
+                  .getSingleOrNull();
         }
 
         final companion = DiningSessionsCompanion(
@@ -1715,10 +1728,7 @@ WHERE cart_id = 0;
     await transaction(() async {
       await delete(posTables).go();
       await batch(
-        (b) => b.insertAll(
-          posTables,
-          rows.map(stampPosTable).toList(),
-        ),
+        (b) => b.insertAll(posTables, rows.map(stampPosTable).toList()),
       );
     });
   }
@@ -1727,10 +1737,7 @@ WHERE cart_id = 0;
     await transaction(() async {
       await delete(diningAreas).go();
       await batch(
-        (b) => b.insertAll(
-          diningAreas,
-          rows.map(stampDiningArea).toList(),
-        ),
+        (b) => b.insertAll(diningAreas, rows.map(stampDiningArea).toList()),
       );
     });
   }
@@ -1739,10 +1746,7 @@ WHERE cart_id = 0;
     await transaction(() async {
       await delete(tableTypes).go();
       await batch(
-        (b) => b.insertAll(
-          tableTypes,
-          rows.map(stampTableType).toList(),
-        ),
+        (b) => b.insertAll(tableTypes, rows.map(stampTableType).toList()),
       );
     });
   }
@@ -1756,9 +1760,7 @@ WHERE cart_id = 0;
 
   Stream<List<DiningArea>> watchActiveDiningAreas() {
     return (select(diningAreas)
-          ..where(
-            (t) => t.areaActive.equals('1') & branchMatches(t.branchId),
-          )
+          ..where((t) => t.areaActive.equals('1') & branchMatches(t.branchId))
           ..orderBy([
             (t) => OrderingTerm.asc(t.areaSortOrder),
             (t) => OrderingTerm.asc(t.areaName),
@@ -1769,8 +1771,7 @@ WHERE cart_id = 0;
   Stream<List<TableType>> watchActiveTableTypes() {
     return (select(tableTypes)
           ..where(
-            (t) =>
-                t.tableTypeActive.equals('1') & branchMatches(t.branchId),
+            (t) => t.tableTypeActive.equals('1') & branchMatches(t.branchId),
           )
           ..orderBy([
             (t) => OrderingTerm.asc(t.tableTypeSortOrder),
@@ -1810,8 +1811,7 @@ WHERE cart_id = 0;
     return (select(tableTypes)
           ..where(
             (t) =>
-                t.tableTypeSyncStatus.equals('0') &
-                branchMatches(t.branchId),
+                t.tableTypeSyncStatus.equals('0') & branchMatches(t.branchId),
           )
           ..orderBy([(t) => OrderingTerm.asc(t.tableTypeId)])
           ..limit(limit))
@@ -1827,23 +1827,23 @@ WHERE cart_id = 0;
   }
 
   Future<int> nextLocalDiningAreaId() async {
-    final row = await (selectOnly(diningAreas)
-          ..addColumns([diningAreas.areaId.max()]))
-        .getSingle();
+    final row = await (selectOnly(
+      diningAreas,
+    )..addColumns([diningAreas.areaId.max()])).getSingle();
     return (row.read(diningAreas.areaId.max()) ?? 0) + 1;
   }
 
   Future<int> nextLocalTableTypeId() async {
-    final row = await (selectOnly(tableTypes)
-          ..addColumns([tableTypes.tableTypeId.max()]))
-        .getSingle();
+    final row = await (selectOnly(
+      tableTypes,
+    )..addColumns([tableTypes.tableTypeId.max()])).getSingle();
     return (row.read(tableTypes.tableTypeId.max()) ?? 0) + 1;
   }
 
   Future<int> nextLocalPortionMasterId() async {
-    final row = await (selectOnly(portionMasters)
-          ..addColumns([portionMasters.portionMasterId.max()]))
-        .getSingle();
+    final row = await (selectOnly(
+      portionMasters,
+    )..addColumns([portionMasters.portionMasterId.max()])).getSingle();
     return (row.read(portionMasters.portionMasterId.max()) ?? 0) + 1;
   }
 
@@ -1912,23 +1912,21 @@ WHERE cart_id = 0;
 
   Future<void> markTableTypeSynced(int tableTypeId) async {
     await (update(tableTypes)..where((t) => t.tableTypeId.equals(tableTypeId)))
-        .write(
-      const TableTypesCompanion(tableTypeSyncStatus: Value('1')),
-    );
+        .write(const TableTypesCompanion(tableTypeSyncStatus: Value('1')));
   }
 
   Future<void> markPortionMasterSynced(int portionMasterId) async {
-    await (update(portionMasters)
-          ..where((t) => t.portionMasterId.equals(portionMasterId)))
-        .write(
+    await (update(
+      portionMasters,
+    )..where((t) => t.portionMasterId.equals(portionMasterId))).write(
       const PortionMastersCompanion(portionMasterSyncStatus: Value('1')),
     );
   }
 
   Future<void> softDeletePortionMaster(int portionMasterId) async {
-    await (update(portionMasters)
-          ..where((t) => t.portionMasterId.equals(portionMasterId)))
-        .write(
+    await (update(
+      portionMasters,
+    )..where((t) => t.portionMasterId.equals(portionMasterId))).write(
       const PortionMastersCompanion(
         portionMasterDeletedStatus: Value('1'),
         portionMasterSyncStatus: Value('0'),
@@ -1940,9 +1938,9 @@ WHERE cart_id = 0;
     required int portionMasterId,
     required String portionName,
   }) async {
-    await (update(portionMasters)
-          ..where((t) => t.portionMasterId.equals(portionMasterId)))
-        .write(
+    await (update(
+      portionMasters,
+    )..where((t) => t.portionMasterId.equals(portionMasterId))).write(
       PortionMastersCompanion(
         portionName: Value(portionName),
         portionMasterSyncStatus: const Value('0'),
@@ -1975,8 +1973,9 @@ WHERE cart_id = 0;
     required int tableTypeId,
     required String tableTypeName,
   }) async {
-    await (update(tableTypes)..where((t) => t.tableTypeId.equals(tableTypeId)))
-        .write(
+    await (update(
+      tableTypes,
+    )..where((t) => t.tableTypeId.equals(tableTypeId))).write(
       TableTypesCompanion(
         tableTypeName: Value(tableTypeName),
         tableTypeSyncStatus: const Value('0'),
@@ -1985,8 +1984,9 @@ WHERE cart_id = 0;
   }
 
   Future<void> deactivateTableType(int tableTypeId) async {
-    await (update(tableTypes)..where((t) => t.tableTypeId.equals(tableTypeId)))
-        .write(
+    await (update(
+      tableTypes,
+    )..where((t) => t.tableTypeId.equals(tableTypeId))).write(
       const TableTypesCompanion(
         tableTypeActive: Value('0'),
         tableTypeSyncStatus: Value('0'),
@@ -2025,9 +2025,9 @@ WHERE cart_id = 0;
     int? areaId,
     int? sortOrder,
   }) async {
-    final maxRow = await (selectOnly(posTables)
-          ..addColumns([posTables.tableId.max()]))
-        .getSingle();
+    final maxRow = await (selectOnly(
+      posTables,
+    )..addColumns([posTables.tableId.max()])).getSingle();
     final id = (maxRow.read(posTables.tableId.max()) ?? 0) + 1;
     await into(posTables).insert(
       stampPosTable(
@@ -2194,6 +2194,7 @@ WHERE cart_id = 0;
   Stream<InvoiceSalesAggregate> watchSalesAggregate({
     DateTime? start,
     DateTime? end,
+    int? createdByStaffId,
   }) {
     final where = StringBuffer(
       "LOWER(IFNULL(invoice_order_status, 'completed')) "
@@ -2203,6 +2204,10 @@ WHERE cart_id = 0;
     if (scopeBranch.isNotEmpty) {
       where.write(" AND (branch_id = ? OR branch_id = '')");
       vars.add(Variable.withString(scopeBranch));
+    }
+    if (createdByStaffId != null && createdByStaffId > 0) {
+      where.write(' AND created_by_staff_id = ?');
+      vars.add(Variable.withInt(createdByStaffId));
     }
     if (start != null) {
       where.write(' AND invoice_date >= ?');
@@ -2256,9 +2261,7 @@ WHERE $where
 
   Stream<List<PosTable>> watchActivePosTables() {
     return (select(posTables)
-          ..where(
-            (t) => t.tableActive.equals('1') & branchMatches(t.branchId),
-          )
+          ..where((t) => t.tableActive.equals('1') & branchMatches(t.branchId))
           ..orderBy([
             (t) => OrderingTerm.asc(t.sortOrder),
             (t) => OrderingTerm.asc(t.tableNumber),
@@ -2271,8 +2274,7 @@ WHERE $where
     final query = selectOnly(posTables)
       ..addColumns([countExp])
       ..where(
-        posTables.tableActive.equals('1') &
-            branchMatches(posTables.branchId),
+        posTables.tableActive.equals('1') & branchMatches(posTables.branchId),
       );
     final row = await query.getSingle();
     return row.read(countExp) ?? 0;
@@ -2327,24 +2329,24 @@ WHERE $where
       t.sessionStatus.equals('PARTIALLY_PAID');
 
   Future<DiningSession?> getOpenSessionForTable(String tableNumber) async {
-    final primary = await (select(diningSessions)
-          ..where(
-            (t) =>
-                t.primaryTableNumber.equals(tableNumber) &
-                isOpenSession(t) &
-                branchMatches(t.branchId),
-          )
-          ..orderBy([(t) => OrderingTerm.desc(t.startedAt)])
-          ..limit(1))
-        .getSingleOrNull();
+    final primary =
+        await (select(diningSessions)
+              ..where(
+                (t) =>
+                    t.primaryTableNumber.equals(tableNumber) &
+                    isOpenSession(t) &
+                    branchMatches(t.branchId),
+              )
+              ..orderBy([(t) => OrderingTerm.desc(t.startedAt)])
+              ..limit(1))
+            .getSingleOrNull();
     if (primary != null) return primary;
 
-    final open = await (select(diningSessions)
-          ..where((t) => isOpenSession(t) & branchMatches(t.branchId)))
-        .get();
+    final open = await (select(
+      diningSessions,
+    )..where((t) => isOpenSession(t) & branchMatches(t.branchId))).get();
     for (final session in open) {
-      if (parseJoinedTables(session.joinedTableNumbers)
-          .contains(tableNumber)) {
+      if (parseJoinedTables(session.joinedTableNumbers).contains(tableNumber)) {
         return session;
       }
     }
@@ -2360,14 +2362,15 @@ WHERE $where
     if (existing != null) {
       if (waiterName != null &&
           waiterName.trim().isNotEmpty &&
-          (existing.waiterName == null || existing.waiterName!.trim().isEmpty)) {
+          (existing.waiterName == null ||
+              existing.waiterName!.trim().isEmpty)) {
         await updateDiningSessionMeta(
           existing.sessionId,
           waiterName: waiterName.trim(),
         );
-        return (select(diningSessions)
-              ..where((t) => t.sessionId.equals(existing.sessionId)))
-            .getSingle();
+        return (select(
+          diningSessions,
+        )..where((t) => t.sessionId.equals(existing.sessionId))).getSingle();
       }
       return existing;
     }
@@ -2378,16 +2381,17 @@ WHERE $where
           primaryTableNumber: tableNumber,
           guestCount: Value(guestCount),
           startedAt: DateTime.now(),
-          waiterName: Value(waiterName?.trim().isEmpty == true
-              ? null
-              : waiterName?.trim()),
+          waiterName: Value(
+            waiterName?.trim().isEmpty == true ? null : waiterName?.trim(),
+          ),
           sessionNetworkStatus: Value(appDatabaseNetworkStatus(prefix: 'ds_')),
           sessionSyncStatus: const Value('0'),
         ),
       ),
     );
-    return (select(diningSessions)..where((t) => t.sessionId.equals(id)))
-        .getSingle();
+    return (select(
+      diningSessions,
+    )..where((t) => t.sessionId.equals(id))).getSingle();
   }
 
   Future<void> updateDiningSessionMeta(
@@ -2397,8 +2401,9 @@ WHERE $where
     String? unpaidInvoiceNumber,
     bool clearUnpaidInvoiceNumber = false,
   }) async {
-    await (update(diningSessions)..where((t) => t.sessionId.equals(sessionId)))
-        .write(
+    await (update(
+      diningSessions,
+    )..where((t) => t.sessionId.equals(sessionId))).write(
       DiningSessionsCompanion(
         waiterName: waiterName == null
             ? const Value.absent()
@@ -2409,12 +2414,12 @@ WHERE $where
         unpaidInvoiceNumber: clearUnpaidInvoiceNumber
             ? const Value(null)
             : unpaidInvoiceNumber == null
-                ? const Value.absent()
-                : Value(
-                    unpaidInvoiceNumber.trim().isEmpty
-                        ? null
-                        : unpaidInvoiceNumber.trim(),
-                  ),
+            ? const Value.absent()
+            : Value(
+                unpaidInvoiceNumber.trim().isEmpty
+                    ? null
+                    : unpaidInvoiceNumber.trim(),
+              ),
         sessionSyncStatus: const Value('0'),
       ),
     );
@@ -2422,14 +2427,13 @@ WHERE $where
 
   Future<void> markDiningSessionPending(int sessionId) async {
     await (update(diningSessions)..where((t) => t.sessionId.equals(sessionId)))
-        .write(
-      const DiningSessionsCompanion(sessionSyncStatus: Value('0')),
-    );
+        .write(const DiningSessionsCompanion(sessionSyncStatus: Value('0')));
   }
 
   Future<void> settleDiningSession(int sessionId) async {
-    await (update(diningSessions)..where((t) => t.sessionId.equals(sessionId)))
-        .write(
+    await (update(
+      diningSessions,
+    )..where((t) => t.sessionId.equals(sessionId))).write(
       DiningSessionsCompanion(
         sessionStatus: const Value('SETTLED'),
         closedAt: Value(DateTime.now()),
@@ -2442,13 +2446,14 @@ WHERE $where
     required int sessionId,
     required double amount,
   }) async {
-    final session = await (select(diningSessions)
-          ..where((t) => t.sessionId.equals(sessionId)))
-        .getSingleOrNull();
+    final session = await (select(
+      diningSessions,
+    )..where((t) => t.sessionId.equals(sessionId))).getSingleOrNull();
     if (session == null) return;
     final paid = session.paidAmount + amount;
-    await (update(diningSessions)..where((t) => t.sessionId.equals(sessionId)))
-        .write(
+    await (update(
+      diningSessions,
+    )..where((t) => t.sessionId.equals(sessionId))).write(
       DiningSessionsCompanion(
         paidAmount: Value(double.parse(paid.toStringAsFixed(2))),
         sessionStatus: const Value('PARTIALLY_PAID'),
@@ -2472,17 +2477,16 @@ WHERE $where
       final secondary = await getOpenSessionForTable(secondaryTable);
 
       /* Move / merge secondary cart into primary scope. */
-      final secondaryItems =
-          await getCartItems(cartScope: secondaryTable);
+      final secondaryItems = await getCartItems(cartScope: secondaryTable);
       for (final item in secondaryItems) {
-        final existing = await (select(cartItems)
-              ..where(
-                (t) =>
-                    t.productId.equals(item.productId) &
-                    t.cartScope.equals(primaryTable) &
-                    t.portionId.equals(item.portionId),
-              ))
-            .getSingleOrNull();
+        final existing =
+            await (select(cartItems)..where(
+                  (t) =>
+                      t.productId.equals(item.productId) &
+                      t.cartScope.equals(primaryTable) &
+                      t.portionId.equals(item.portionId),
+                ))
+                .getSingleOrNull();
         if (existing == null) {
           await into(cartItems).insert(
             CartItemsCompanion.insert(
@@ -2505,23 +2509,22 @@ WHERE $where
             ),
           );
         } else {
-          await (update(cartItems)
-                ..where(
-                  (t) =>
-                      t.productId.equals(item.productId) &
-                      t.cartScope.equals(primaryTable) &
-                      t.portionId.equals(item.portionId),
-                ))
+          await (update(cartItems)..where(
+                (t) =>
+                    t.productId.equals(item.productId) &
+                    t.cartScope.equals(primaryTable) &
+                    t.portionId.equals(item.portionId),
+              ))
               .write(
-            CartItemsCompanion(
-              quantity: Value(existing.quantity + item.quantity),
-              printedQuantity: Value(
-                existing.printedQuantity + item.printedQuantity,
-              ),
-              diningSessionId: Value(primary.sessionId),
-              updatedAt: Value(DateTime.now()),
-            ),
-          );
+                CartItemsCompanion(
+                  quantity: Value(existing.quantity + item.quantity),
+                  printedQuantity: Value(
+                    existing.printedQuantity + item.printedQuantity,
+                  ),
+                  diningSessionId: Value(primary.sessionId),
+                  updatedAt: Value(DateTime.now()),
+                ),
+              );
         }
       }
       await clearCart(cartScope: secondaryTable);
@@ -2537,19 +2540,18 @@ WHERE $where
         secondaryTable,
       }..remove(primary.primaryTableNumber);
 
-      await (update(diningSessions)
-            ..where((t) => t.sessionId.equals(primary.sessionId)))
-          .write(
+      await (update(
+        diningSessions,
+      )..where((t) => t.sessionId.equals(primary.sessionId))).write(
         DiningSessionsCompanion(
           joinedTableNumbers: Value(encodeJoinedTables(joined)),
         ),
       );
 
-      if (secondary != null &&
-          secondary.sessionId != primary.sessionId) {
-        await (update(diningSessions)
-              ..where((t) => t.sessionId.equals(secondary.sessionId)))
-            .write(
+      if (secondary != null && secondary.sessionId != primary.sessionId) {
+        await (update(
+          diningSessions,
+        )..where((t) => t.sessionId.equals(secondary.sessionId))).write(
           DiningSessionsCompanion(
             sessionStatus: const Value('CLOSED'),
             closedAt: Value(DateTime.now()),
@@ -2558,9 +2560,9 @@ WHERE $where
         );
       }
 
-      return (select(diningSessions)
-            ..where((t) => t.sessionId.equals(primary.sessionId)))
-          .getSingle();
+      return (select(
+        diningSessions,
+      )..where((t) => t.sessionId.equals(primary.sessionId))).getSingle();
     });
   }
 
@@ -2630,8 +2632,7 @@ WHERE $where
         ),
       );
 
-      await (update(orderRounds)
-            ..where((t) => t.orderRoundId.equals(roundId)))
+      await (update(orderRounds)..where((t) => t.orderRoundId.equals(roundId)))
           .write(OrderRoundsCompanion(kotId: Value(kotId)));
 
       final lines = <KotItem>[];
@@ -2651,53 +2652,51 @@ WHERE $where
           ),
         );
         lines.add(
-          await (select(kotItems)
-                ..where((t) => t.kotItemId.equals(kotItemId)))
-              .getSingle(),
+          await (select(
+            kotItems,
+          )..where((t) => t.kotItemId.equals(kotItemId))).getSingle(),
         );
 
-        await (update(cartItems)
-              ..where(
-                (t) =>
-                    t.productId.equals(item.productId) &
-                    t.cartScope.equals(scope) &
-                    t.portionId.equals(item.portionId),
-              ))
+        await (update(cartItems)..where(
+              (t) =>
+                  t.productId.equals(item.productId) &
+                  t.cartScope.equals(scope) &
+                  t.portionId.equals(item.portionId),
+            ))
             .write(
-          CartItemsCompanion(
-            printedQuantity: Value(item.quantity),
-            orderRoundId: Value(roundId),
-            kotPrinted: const Value('1'),
-            updatedAt: Value(now),
-          ),
-        );
+              CartItemsCompanion(
+                printedQuantity: Value(item.quantity),
+                orderRoundId: Value(roundId),
+                kotPrinted: const Value('1'),
+                updatedAt: Value(now),
+              ),
+            );
       }
 
-      final kot = await (select(kots)..where((t) => t.kotId.equals(kotId)))
-          .getSingle();
+      final kot = await (select(
+        kots,
+      )..where((t) => t.kotId.equals(kotId))).getSingle();
       return KotTicket(kot: kot, items: lines, roundNumber: roundNumber);
     });
   }
 
   Future<void> markKotPrinted(int kotId, {bool failed = false}) async {
     await (update(kots)..where((t) => t.kotId.equals(kotId))).write(
-      KotsCompanion(
-        printStatus: Value(failed ? 'FAILED' : 'PRINTED'),
-      ),
+      KotsCompanion(printStatus: Value(failed ? 'FAILED' : 'PRINTED')),
     );
   }
 
   Future<KotTicket?> getKotTicket(int kotId) async {
-    final kot =
-        await (select(kots)..where((t) => t.kotId.equals(kotId)))
-            .getSingleOrNull();
+    final kot = await (select(
+      kots,
+    )..where((t) => t.kotId.equals(kotId))).getSingleOrNull();
     if (kot == null) return null;
-    final items = await (select(kotItems)
-          ..where((t) => t.kotId.equals(kotId)))
-        .get();
-    final round = await (select(orderRounds)
-          ..where((t) => t.orderRoundId.equals(kot.orderRoundId)))
-        .getSingleOrNull();
+    final items = await (select(
+      kotItems,
+    )..where((t) => t.kotId.equals(kotId))).get();
+    final round = await (select(
+      orderRounds,
+    )..where((t) => t.orderRoundId.equals(kot.orderRoundId))).getSingleOrNull();
     return KotTicket(
       kot: kot,
       items: items,
@@ -2714,8 +2713,52 @@ WHERE $where
 
   Future<void> replaceMessMembers(List<MessMembersCompanion> rows) async {
     await transaction(() async {
+      final pending = await (select(
+        messMembers,
+      )..where((t) => t.memberSyncStatus.equals('0'))).get();
+      final pendingIds = pending.map((e) => e.memberId).toSet();
+      final pendingNetworks = pending
+          .map((e) => (e.memberNetworkStatus ?? '').trim())
+          .where((s) => s.isNotEmpty)
+          .toSet();
+
       await delete(messMembers).go();
-      await batch((b) => b.insertAll(messMembers, rows));
+
+      final cloudKeep = rows.where((r) {
+        final id = r.memberId.present ? r.memberId.value : null;
+        final net = r.memberNetworkStatus.present
+            ? (r.memberNetworkStatus.value ?? '').trim()
+            : '';
+        if (id != null && pendingIds.contains(id)) return false;
+        if (net.isNotEmpty && pendingNetworks.contains(net)) return false;
+        return true;
+      }).toList();
+
+      final pendingRows = pending
+          .map(
+            (e) => MessMembersCompanion.insert(
+              memberId: Value(e.memberId),
+              memberName: Value(e.memberName),
+              memberMobileNumber: Value(e.memberMobileNumber),
+              memberAltenetMobileNumber: Value(e.memberAltenetMobileNumber),
+              memberAddress: Value(e.memberAddress),
+              registrationNo: Value(e.registrationNo),
+              memberType: Value(e.memberType),
+              rollNo: Value(e.rollNo),
+              college: Value(e.college),
+              studentYear: Value(e.studentYear),
+              company: Value(e.company),
+              memberStatus: Value(e.memberStatus),
+              memberNetworkStatus: Value(e.memberNetworkStatus),
+              memberSyncStatus: const Value('0'),
+            ),
+          )
+          .toList();
+
+      final all = [...cloudKeep, ...pendingRows];
+      if (all.isNotEmpty) {
+        await batch((b) => b.insertAll(messMembers, all));
+      }
     });
   }
 
@@ -2727,8 +2770,9 @@ WHERE $where
   }
 
   Future<MessMember?> getMessMember(int memberId) {
-    return (select(messMembers)..where((t) => t.memberId.equals(memberId)))
-        .getSingleOrNull();
+    return (select(
+      messMembers,
+    )..where((t) => t.memberId.equals(memberId))).getSingleOrNull();
   }
 
   Future<int> upsertLocalMessMember({
@@ -2745,12 +2789,12 @@ WHERE $where
   }) async {
     final network = 'local_${DateTime.now().millisecondsSinceEpoch}';
     /* Negative local ids avoid colliding with server ids until sync assigns one. */
-    final minId = await (selectOnly(messMembers)
-          ..addColumns([messMembers.memberId.min()]))
-        .getSingle();
+    final minId = await (selectOnly(
+      messMembers,
+    )..addColumns([messMembers.memberId.min()])).getSingle();
     final nextLocalId = ((minId.read(messMembers.memberId.min()) ?? 0) < 0
-            ? (minId.read(messMembers.memberId.min())! - 1)
-            : -1);
+        ? (minId.read(messMembers.memberId.min())! - 1)
+        : -1);
 
     await into(messMembers).insert(
       MessMembersCompanion.insert(
@@ -2802,8 +2846,9 @@ WHERE $where
   }
 
   Future<MessToken?> getMessTokenByCode(String tokenCode) {
-    return (select(messTokens)..where((t) => t.tokenCode.equals(tokenCode)))
-        .getSingleOrNull();
+    return (select(
+      messTokens,
+    )..where((t) => t.tokenCode.equals(tokenCode))).getSingleOrNull();
   }
 
   Future<MessToken?> verifyMessToken(String tokenCode) async {
@@ -2811,8 +2856,9 @@ WHERE $where
     if (token == null) return null;
     if (token.tokenState == 'verified') return token;
 
-    await (update(messTokens)..where((t) => t.tokenId.equals(token.tokenId)))
-        .write(
+    await (update(
+      messTokens,
+    )..where((t) => t.tokenId.equals(token.tokenId))).write(
       MessTokensCompanion(
         tokenState: const Value('verified'),
         verifiedDate: Value(DateTime.now()),
@@ -2828,8 +2874,7 @@ WHERE $where
   Future<List<MessToken>> getPendingMessTokenVerifies({int limit = 100}) {
     return (select(messTokens)
           ..where(
-            (t) =>
-                t.tokenState.equals('verified') & t.verifyStatus.equals('0'),
+            (t) => t.tokenState.equals('verified') & t.verifyStatus.equals('0'),
           )
           ..orderBy([(t) => OrderingTerm.asc(t.tokenId)])
           ..limit(limit))
@@ -2847,9 +2892,9 @@ WHERE $where
   /* Enqueues cloud line-delete when [invoiceItemNetworkStatus] is present. */
   Future<void> deleteInvoiceItemAndRecompute(int invoiceItemId) async {
     await transaction(() async {
-      final item = await (select(invoiceItems)
-            ..where((t) => t.invoiceItemId.equals(invoiceItemId)))
-          .getSingleOrNull();
+      final item = await (select(
+        invoiceItems,
+      )..where((t) => t.invoiceItemId.equals(invoiceItemId))).getSingleOrNull();
       if (item == null) return;
 
       final invoice = await getInvoiceByNumber(item.invoiceNumber);
@@ -2870,18 +2915,17 @@ WHERE $where
           invoiceNumber: item.invoiceNumber,
           invoiceProductNetworkStatus: network,
         );
-        await (delete(invoiceComboItems)
-              ..where(
-                (t) =>
-                    t.invoiceNumber.equals(item.invoiceNumber) &
-                    t.invoiceProductNetworkStatus.equals(network),
-              ))
+        await (delete(invoiceComboItems)..where(
+              (t) =>
+                  t.invoiceNumber.equals(item.invoiceNumber) &
+                  t.invoiceProductNetworkStatus.equals(network),
+            ))
             .go();
       }
 
-      await (delete(invoiceItems)
-            ..where((t) => t.invoiceItemId.equals(invoiceItemId)))
-          .go();
+      await (delete(
+        invoiceItems,
+      )..where((t) => t.invoiceItemId.equals(invoiceItemId))).go();
 
       await recomputeInvoiceTotals(invoice.invoiceId, item.invoiceNumber);
     });
@@ -2891,13 +2935,15 @@ WHERE $where
     required String invoiceNumber,
     required String invoiceProductNetworkStatus,
   }) async {
-    final existing = await (select(invoiceProductDeleteQueue)
-          ..where(
-            (t) => t.invoiceProductNetworkStatus
-                .equals(invoiceProductNetworkStatus),
-          )
-          ..limit(1))
-        .getSingleOrNull();
+    final existing =
+        await (select(invoiceProductDeleteQueue)
+              ..where(
+                (t) => t.invoiceProductNetworkStatus.equals(
+                  invoiceProductNetworkStatus,
+                ),
+              )
+              ..limit(1))
+            .getSingleOrNull();
     if (existing != null) return;
     await into(invoiceProductDeleteQueue).insert(
       InvoiceProductDeleteQueueCompanion.insert(
@@ -2907,8 +2953,9 @@ WHERE $where
     );
   }
 
-  Future<List<InvoiceProductDeleteQueueData>>
-      getPendingInvoiceProductDeletes({int limit = 100}) {
+  Future<List<InvoiceProductDeleteQueueData>> getPendingInvoiceProductDeletes({
+    int limit = 100,
+  }) {
     return (select(invoiceProductDeleteQueue)
           ..orderBy([(t) => OrderingTerm.asc(t.deleteId)])
           ..limit(limit))
@@ -2916,19 +2963,18 @@ WHERE $where
   }
 
   Future<void> removeInvoiceProductDelete(int deleteId) async {
-    await (delete(invoiceProductDeleteQueue)
-          ..where((t) => t.deleteId.equals(deleteId)))
-        .go();
+    await (delete(
+      invoiceProductDeleteQueue,
+    )..where((t) => t.deleteId.equals(deleteId))).go();
   }
 
   Future<void> removeInvoiceProductDeleteByNetworkStatus(
     String invoiceProductNetworkStatus,
   ) async {
-    await (delete(invoiceProductDeleteQueue)
-          ..where(
-            (t) => t.invoiceProductNetworkStatus
-                .equals(invoiceProductNetworkStatus),
-          ))
+    await (delete(invoiceProductDeleteQueue)..where(
+          (t) =>
+              t.invoiceProductNetworkStatus.equals(invoiceProductNetworkStatus),
+        ))
         .go();
   }
 
@@ -3015,9 +3061,9 @@ WHERE $where
       throw StateError('Quantity must be at least 1');
     }
     await transaction(() async {
-      final item = await (select(invoiceItems)
-            ..where((t) => t.invoiceItemId.equals(invoiceItemId)))
-          .getSingleOrNull();
+      final item = await (select(
+        invoiceItems,
+      )..where((t) => t.invoiceItemId.equals(invoiceItemId))).getSingleOrNull();
       if (item == null) return;
       final invoice = await getInvoiceByNumber(item.invoiceNumber);
       if (invoice == null) return;
@@ -3025,9 +3071,9 @@ WHERE $where
           invoice.invoiceOrderStatus == 'refunded') {
         throw StateError('Cannot edit voided / refunded bills');
       }
-      await (update(invoiceItems)
-            ..where((t) => t.invoiceItemId.equals(invoiceItemId)))
-          .write(
+      await (update(
+        invoiceItems,
+      )..where((t) => t.invoiceItemId.equals(invoiceItemId))).write(
         InvoiceItemsCompanion(
           productQuantity: Value(quantity),
           productPrice: productPrice == null
@@ -3064,37 +3110,32 @@ WHERE $where
     final packingValue = invoice.packingChargeType.toLowerCase().startsWith('p')
         ? subtotal * invoice.packingCharge / 100
         : invoice.packingCharge;
-    final total = double.parse(
-      (subtotal + taxTotal + packingValue - discountValue)
-          .clamp(0, double.infinity)
-          .toStringAsFixed(2),
-    );
+    final total = (subtotal + taxTotal + packingValue - discountValue)
+        .clamp(0, double.infinity)
+        .toDouble()
+        .ceilToDouble();
 
-    await (update(invoices)..where((t) => t.invoiceId.equals(invoiceId)))
-        .write(
+    await (update(invoices)..where((t) => t.invoiceId.equals(invoiceId))).write(
       InvoicesCompanion(
         subTotal: Value(subtotal),
         totalGstAmount: Value(taxTotal),
         totalAmount: Value(total),
         itemCount: Value(qtyTotal.round()),
         invoiceSyncStatus: const Value('0'),
-        cashAmount: Value(
-          invoice.paymentMode == 'UPI' ? 0 : total,
-        ),
+        cashAmount: Value(invoice.paymentMode == 'UPI' ? 0 : total),
         upiAmount: Value(
           invoice.paymentMode == 'Cash'
               ? 0
               : invoice.paymentMode == 'UPI'
-                  ? total
-                  : invoice.upiAmount,
+              ? total
+              : invoice.upiAmount,
         ),
       ),
     );
   }
 
   Future<void> voidInvoiceLocally(int invoiceId) async {
-    await (update(invoices)..where((t) => t.invoiceId.equals(invoiceId)))
-        .write(
+    await (update(invoices)..where((t) => t.invoiceId.equals(invoiceId))).write(
       const InvoicesCompanion(
         invoiceOrderStatus: Value('cancelled'),
         invoiceSyncStatus: Value('0'),
@@ -3103,8 +3144,7 @@ WHERE $where
   }
 
   Future<void> refundInvoiceLocally(int invoiceId) async {
-    await (update(invoices)..where((t) => t.invoiceId.equals(invoiceId)))
-        .write(
+    await (update(invoices)..where((t) => t.invoiceId.equals(invoiceId))).write(
       const InvoicesCompanion(
         invoiceOrderStatus: Value('refunded'),
         invoiceSyncStatus: Value('0'),
@@ -3127,11 +3167,10 @@ WHERE $where
   }
 
   Stream<List<CartItem>> watchAllCartItems() {
-    return (select(cartItems)
-          ..orderBy([
-            (t) => OrderingTerm.desc(t.updatedAt),
-            (t) => OrderingTerm.asc(t.productName),
-          ]))
+    return (select(cartItems)..orderBy([
+          (t) => OrderingTerm.desc(t.updatedAt),
+          (t) => OrderingTerm.asc(t.productName),
+        ]))
         .watch();
   }
 
@@ -3160,8 +3199,7 @@ WHERE $where
     final map = <String, double>{};
     for (final item in items) {
       if (item.cartScope.isEmpty) continue;
-      final line =
-          item.unitPrice * item.quantity * (1 + item.gstPercent / 100);
+      final line = item.unitPrice * item.quantity * (1 + item.gstPercent / 100);
       map[item.cartScope] = (map[item.cartScope] ?? 0) + line;
     }
     return {
@@ -3206,14 +3244,14 @@ WHERE $where
         : (shopGstPercentFallback ?? 0);
     final portionId = portion?.portionId ?? 0;
     final qty = quantity <= 0 ? 1.0 : quantity;
-    final existing = await (select(cartItems)
-          ..where(
-            (t) =>
-                t.productId.equals(product.productId) &
-                t.cartScope.equals(cartScope) &
-                t.portionId.equals(portionId),
-          ))
-        .getSingleOrNull();
+    final existing =
+        await (select(cartItems)..where(
+              (t) =>
+                  t.productId.equals(product.productId) &
+                  t.cartScope.equals(cartScope) &
+                  t.portionId.equals(portionId),
+            ))
+            .getSingleOrNull();
 
     final unitPrice =
         unitPriceOverride ?? portion?.portionPrice ?? product.productPrice;
@@ -3252,9 +3290,9 @@ WHERE $where
       return;
     }
 
-    await (update(cartItems)
-          ..where((t) => t.cartId.equals(existing.cartId)))
-        .write(
+    await (update(
+      cartItems,
+    )..where((t) => t.cartId.equals(existing.cartId))).write(
       CartItemsCompanion(
         quantity: Value(existing.quantity + qty),
         unitPrice: Value(unitPrice),
@@ -3276,14 +3314,14 @@ WHERE $where
     int? diningSessionId,
   }) async {
     final cartProductId = -combo.comboId;
-    final existing = await (select(cartItems)
-          ..where(
-            (t) =>
-                t.productId.equals(cartProductId) &
-                t.cartScope.equals(cartScope) &
-                t.portionId.equals(0),
-          ))
-        .getSingleOrNull();
+    final existing =
+        await (select(cartItems)..where(
+              (t) =>
+                  t.productId.equals(cartProductId) &
+                  t.cartScope.equals(cartScope) &
+                  t.portionId.equals(0),
+            ))
+            .getSingleOrNull();
 
     final unitPrice = combo.comboWithGstPrice > 0
         ? combo.comboWithGstPrice
@@ -3326,9 +3364,9 @@ WHERE $where
         components: components,
       );
     } else {
-      await (update(cartItems)
-            ..where((t) => t.cartId.equals(existing.cartId)))
-          .write(
+      await (update(
+        cartItems,
+      )..where((t) => t.cartId.equals(existing.cartId))).write(
         CartItemsCompanion(
           quantity: Value(existing.quantity + 1),
           snapshotComboComponents: Value(snapshotJson),
@@ -3359,10 +3397,11 @@ WHERE $where
           : await getProduct(c.productId!);
       String? portionName;
       if (c.portionId != null) {
-        final portion = await (select(productPortions)
-              ..where((t) => t.portionId.equals(c.portionId!))
-              ..limit(1))
-            .getSingleOrNull();
+        final portion =
+            await (select(productPortions)
+                  ..where((t) => t.portionId.equals(c.portionId!))
+                  ..limit(1))
+                .getSingleOrNull();
         portionName = portion?.portionName;
       }
       rows.add({
@@ -3398,10 +3437,11 @@ WHERE $where
           : await getProduct(c.productId!);
       String? portionName;
       if (c.portionId != null) {
-        final portion = await (select(productPortions)
-              ..where((t) => t.portionId.equals(c.portionId!))
-              ..limit(1))
-            .getSingleOrNull();
+        final portion =
+            await (select(productPortions)
+                  ..where((t) => t.portionId.equals(c.portionId!))
+                  ..limit(1))
+                .getSingleOrNull();
         portionName = portion?.portionName;
       }
       await into(cartComboItems).insert(
@@ -3427,13 +3467,12 @@ WHERE $where
     required String cartScope,
     required int parentPortionId,
   }) async {
-    await (delete(cartComboItems)
-          ..where(
-            (t) =>
-                t.productId.equals(productId) &
-                t.cartScope.equals(cartScope) &
-                t.parentPortionId.equals(parentPortionId),
-          ))
+    await (delete(cartComboItems)..where(
+          (t) =>
+              t.productId.equals(productId) &
+              t.cartScope.equals(cartScope) &
+              t.parentPortionId.equals(parentPortionId),
+        ))
         .go();
   }
 
@@ -3476,21 +3515,22 @@ WHERE $where
       return;
     }
 
-    final existing = await (select(cartItems)
-          ..where(
-            (t) =>
-                t.productId.equals(productId) &
-                t.cartScope.equals(cartScope) &
-                t.portionId.equals(portionId),
-          ))
-        .getSingleOrNull();
+    final existing =
+        await (select(cartItems)..where(
+              (t) =>
+                  t.productId.equals(productId) &
+                  t.cartScope.equals(cartScope) &
+                  t.portionId.equals(portionId),
+            ))
+            .getSingleOrNull();
     if (existing == null) return;
     final printed = existing.printedQuantity > quantity
         ? quantity
         : existing.printedQuantity;
 
-    await (update(cartItems)..where((t) => t.cartId.equals(existing.cartId)))
-        .write(
+    await (update(
+      cartItems,
+    )..where((t) => t.cartId.equals(existing.cartId))).write(
       CartItemsCompanion(
         quantity: Value(quantity),
         printedQuantity: Value(printed),
@@ -3505,37 +3545,37 @@ WHERE $where
     String cartScope = '',
     int portionId = 0,
   }) async {
-    final existing = await (select(cartItems)
-          ..where(
-            (t) =>
-                t.productId.equals(productId) &
-                t.cartScope.equals(cartScope) &
-                t.portionId.equals(portionId),
-          ))
-        .getSingleOrNull();
+    final existing =
+        await (select(cartItems)..where(
+              (t) =>
+                  t.productId.equals(productId) &
+                  t.cartScope.equals(cartScope) &
+                  t.portionId.equals(portionId),
+            ))
+            .getSingleOrNull();
     if (existing != null) {
-      await (delete(cartComboItems)
-            ..where((t) => t.cartId.equals(existing.cartId)))
-          .go();
+      await (delete(
+        cartComboItems,
+      )..where((t) => t.cartId.equals(existing.cartId))).go();
     }
     await deleteCartComboItemsForLine(
       productId: productId,
       cartScope: cartScope,
       parentPortionId: portionId,
     );
-    await (delete(cartItems)
-          ..where(
-            (t) =>
-                t.productId.equals(productId) &
-                t.cartScope.equals(cartScope) &
-                t.portionId.equals(portionId),
-          ))
+    await (delete(cartItems)..where(
+          (t) =>
+              t.productId.equals(productId) &
+              t.cartScope.equals(cartScope) &
+              t.portionId.equals(portionId),
+        ))
         .go();
   }
 
   Future<void> clearCart({String cartScope = ''}) async {
-    await (delete(cartComboItems)..where((t) => t.cartScope.equals(cartScope)))
-        .go();
+    await (delete(
+      cartComboItems,
+    )..where((t) => t.cartScope.equals(cartScope))).go();
     await (delete(cartItems)..where((t) => t.cartScope.equals(cartScope))).go();
   }
 
@@ -3559,8 +3599,9 @@ WHERE $where
 
       final items = await getCartItems(cartScope: fromTable);
       for (final item in items) {
-        await (update(cartItems)..where((t) => t.cartId.equals(item.cartId)))
-            .write(
+        await (update(
+          cartItems,
+        )..where((t) => t.cartId.equals(item.cartId))).write(
           CartItemsCompanion(
             cartScope: Value(toTable),
             noOfTable: Value(toTable),
@@ -3573,21 +3614,22 @@ WHERE $where
             .write(CartComboItemsCompanion(cartScope: Value(toTable)));
       }
 
-      await (update(kots)..where((t) => t.tableNumber.equals(fromTable)))
-          .write(KotsCompanion(tableNumber: Value(toTable)));
+      await (update(kots)..where((t) => t.tableNumber.equals(fromTable))).write(
+        KotsCompanion(tableNumber: Value(toTable)),
+      );
 
-      await (update(diningSessions)
-            ..where((t) => t.sessionId.equals(session.sessionId)))
-          .write(
+      await (update(
+        diningSessions,
+      )..where((t) => t.sessionId.equals(session.sessionId))).write(
         DiningSessionsCompanion(
           primaryTableNumber: Value(toTable),
           sessionSyncStatus: const Value('0'),
           sessionVersion: Value(session.sessionVersion + 1),
         ),
       );
-      return (await (select(diningSessions)
-            ..where((t) => t.sessionId.equals(session.sessionId)))
-          .getSingle());
+      return (await (select(
+        diningSessions,
+      )..where((t) => t.sessionId.equals(session.sessionId))).getSingle());
     });
   }
 
@@ -3595,8 +3637,9 @@ WHERE $where
     required int sessionId,
     required String status,
   }) async {
-    await (update(diningSessions)..where((t) => t.sessionId.equals(sessionId)))
-        .write(
+    await (update(
+      diningSessions,
+    )..where((t) => t.sessionId.equals(sessionId))).write(
       DiningSessionsCompanion(
         sessionStatus: Value(status),
         sessionSyncStatus: const Value('0'),
@@ -3617,14 +3660,14 @@ WHERE $where
     await transaction(() async {
       final target = await openOrGetDiningSession(toTable);
       for (final item in items) {
-        final existing = await (select(cartItems)
-              ..where(
-                (t) =>
-                    t.productId.equals(item.productId) &
-                    t.cartScope.equals(toTable) &
-                    t.portionId.equals(item.portionId),
-              ))
-            .getSingleOrNull();
+        final existing =
+            await (select(cartItems)..where(
+                  (t) =>
+                      t.productId.equals(item.productId) &
+                      t.cartScope.equals(toTable) &
+                      t.portionId.equals(item.portionId),
+                ))
+                .getSingleOrNull();
         if (existing == null) {
           await into(cartItems).insert(
             CartItemsCompanion.insert(
@@ -3647,23 +3690,22 @@ WHERE $where
             ),
           );
         } else {
-          await (update(cartItems)
-                ..where(
-                  (t) =>
-                      t.productId.equals(item.productId) &
-                      t.cartScope.equals(toTable) &
-                      t.portionId.equals(item.portionId),
-                ))
+          await (update(cartItems)..where(
+                (t) =>
+                    t.productId.equals(item.productId) &
+                    t.cartScope.equals(toTable) &
+                    t.portionId.equals(item.portionId),
+              ))
               .write(
-            CartItemsCompanion(
-              quantity: Value(existing.quantity + item.quantity),
-              printedQuantity: Value(
-                existing.printedQuantity + item.printedQuantity,
-              ),
-              diningSessionId: Value(target.sessionId),
-              updatedAt: Value(DateTime.now()),
-            ),
-          );
+                CartItemsCompanion(
+                  quantity: Value(existing.quantity + item.quantity),
+                  printedQuantity: Value(
+                    existing.printedQuantity + item.printedQuantity,
+                  ),
+                  diningSessionId: Value(target.sessionId),
+                  updatedAt: Value(DateTime.now()),
+                ),
+              );
         }
         await removeCartItem(
           item.productId,
@@ -3703,9 +3745,9 @@ WHERE $where
     required double paidAmount,
     required String messTotalDays,
   }) {
-    return (update(messMemberPayments)
-          ..where((t) => t.localPaymentId.equals(localPaymentId)))
-        .write(
+    return (update(
+      messMemberPayments,
+    )..where((t) => t.localPaymentId.equals(localPaymentId))).write(
       MessMemberPaymentsCompanion(
         paymentMessAmount: Value(messAmount),
         paymentPaidAmount: Value(paidAmount),
@@ -3742,17 +3784,51 @@ WHERE $where
   }
 
   Future<void> markMessPaymentSynced(int localPaymentId) async {
-    await (update(messMemberPayments)
-          ..where((t) => t.localPaymentId.equals(localPaymentId)))
-        .write(
+    await (update(
+      messMemberPayments,
+    )..where((t) => t.localPaymentId.equals(localPaymentId))).write(
       const MessMemberPaymentsCompanion(paymentSyncStatus: Value('1')),
     );
   }
 
   Future<void> replaceMessInvoices(List<MessInvoicesCompanion> rows) async {
     await transaction(() async {
+      final pending = await (select(
+        messInvoices,
+      )..where((t) => t.messInvoiceStatus.equals('0'))).get();
+      final pendingNetworks = pending
+          .map((e) => e.messInvoiceNetworkStatus.trim())
+          .where((s) => s.isNotEmpty)
+          .toSet();
+
       await delete(messInvoices).go();
-      await batch((b) => b.insertAll(messInvoices, rows));
+
+      final cloudKeep = rows.where((r) {
+        final net = r.messInvoiceNetworkStatus.present
+            ? r.messInvoiceNetworkStatus.value.trim()
+            : '';
+        if (net.isNotEmpty && pendingNetworks.contains(net)) return false;
+        return true;
+      }).toList();
+
+      final pendingRows = pending
+          .map(
+            (e) => MessInvoicesCompanion.insert(
+              invoiceId: Value(e.invoiceId),
+              memberId: Value(e.memberId),
+              memberName: Value(e.memberName),
+              messType: Value(e.messType),
+              messInvoiceDate: e.messInvoiceDate,
+              messInvoiceNetworkStatus: e.messInvoiceNetworkStatus,
+              messInvoiceStatus: const Value('0'),
+            ),
+          )
+          .toList();
+
+      final all = [...cloudKeep, ...pendingRows];
+      if (all.isNotEmpty) {
+        await batch((b) => b.insertAll(messInvoices, all));
+      }
     });
   }
 
@@ -3760,28 +3836,112 @@ WHERE $where
     List<MessMemberPaymentsCompanion> rows,
   ) async {
     await transaction(() async {
+      final pending = await (select(
+        messMemberPayments,
+      )..where((t) => t.paymentSyncStatus.equals('0'))).get();
+      final pendingNetworks = pending
+          .map((e) => e.paymentNetworkStatus.trim())
+          .where((s) => s.isNotEmpty)
+          .toSet();
+
       await delete(messMemberPayments).go();
-      if (rows.isNotEmpty) {
-        await batch((b) => b.insertAll(messMemberPayments, rows));
+
+      final cloudKeep = rows.where((r) {
+        final net = r.paymentNetworkStatus.present
+            ? r.paymentNetworkStatus.value.trim()
+            : '';
+        if (net.isNotEmpty && pendingNetworks.contains(net)) return false;
+        return true;
+      }).toList();
+
+      final pendingRows = pending
+          .map(
+            (e) => MessMemberPaymentsCompanion.insert(
+              memberId: e.memberId,
+              memberName: Value(e.memberName),
+              paymentMessAmount: Value(e.paymentMessAmount),
+              paymentPaidAmount: Value(e.paymentPaidAmount),
+              messTotalDays: Value(e.messTotalDays),
+              paymentDate: e.paymentDate,
+              paymentNetworkStatus: e.paymentNetworkStatus,
+              paymentStatus: Value(e.paymentStatus),
+              paymentSyncStatus: const Value('0'),
+            ),
+          )
+          .toList();
+
+      final all = [...cloudKeep, ...pendingRows];
+      if (all.isNotEmpty) {
+        await batch((b) => b.insertAll(messMemberPayments, all));
       }
     });
   }
 
   Future<void> replaceMessTokens(List<MessTokensCompanion> rows) async {
     await transaction(() async {
+      final pending = await (select(messTokens)..where(
+            (t) =>
+                t.tokenSyncStatus.equals('0') | t.verifyStatus.equals('0'),
+          ))
+          .get();
+      final pendingCodes = pending
+          .map((e) => e.tokenCode.trim())
+          .where((s) => s.isNotEmpty)
+          .toSet();
+      final pendingNetworks = pending
+          .map((e) => (e.tokenNetworkStatus ?? '').trim())
+          .where((s) => s.isNotEmpty)
+          .toSet();
+
       await delete(messTokens).go();
-      if (rows.isNotEmpty) {
-        await batch((b) => b.insertAll(messTokens, rows));
+
+      final cloudKeep = rows.where((r) {
+        final code = r.tokenCode.present ? r.tokenCode.value.trim() : '';
+        final net = r.tokenNetworkStatus.present
+            ? (r.tokenNetworkStatus.value ?? '').trim()
+            : '';
+        if (code.isNotEmpty && pendingCodes.contains(code)) return false;
+        if (net.isNotEmpty && pendingNetworks.contains(net)) return false;
+        return true;
+      }).toList();
+
+      final pendingRows = pending
+          .map(
+            (e) => MessTokensCompanion.insert(
+              tokenId: Value(e.tokenId),
+              tokenCode: e.tokenCode,
+              memberId: Value(e.memberId),
+              memberName: Value(e.memberName),
+              memberMobile: Value(e.memberMobile),
+              memberType: Value(e.memberType),
+              messType: Value(e.messType),
+              tokenAmount: Value(e.tokenAmount),
+              tokenDate: e.tokenDate,
+              verifiedDate: Value(e.verifiedDate),
+              tokenState: Value(e.tokenState),
+              tokenNetworkStatus: Value(e.tokenNetworkStatus),
+              tokenStatus: Value(e.tokenStatus),
+              tokenSyncStatus: Value(e.tokenSyncStatus),
+              verifyNetworkStatus: Value(e.verifyNetworkStatus),
+              verifyStatus: Value(e.verifyStatus),
+            ),
+          )
+          .toList();
+
+      final all = [...cloudKeep, ...pendingRows];
+      if (all.isNotEmpty) {
+        await batch((b) => b.insertAll(messTokens, all));
       }
     });
   }
 
   Future<int> countMessCouponsForMember(String memberName) async {
     final count = countAll();
-    final row = await (selectOnly(messInvoices)
-          ..addColumns([count])
-          ..where(messInvoices.memberName.equals(memberName)))
-        .getSingle();
+    final row =
+        await (selectOnly(messInvoices)
+              ..addColumns([count])
+              ..where(messInvoices.memberName.equals(memberName)))
+            .getSingle();
     return row.read(count) ?? 0;
   }
 
@@ -3812,14 +3972,13 @@ WHERE $where
 
   Future<void> markMessInvoiceSynced(int invoiceId) async {
     await (update(messInvoices)..where((t) => t.invoiceId.equals(invoiceId)))
-        .write(
-      const MessInvoicesCompanion(messInvoiceStatus: Value('1')),
-    );
+        .write(const MessInvoicesCompanion(messInvoiceStatus: Value('1')));
   }
 
   Future<MessInvoice?> getMessInvoiceById(int invoiceId) {
-    return (select(messInvoices)..where((t) => t.invoiceId.equals(invoiceId)))
-        .getSingleOrNull();
+    return (select(
+      messInvoices,
+    )..where((t) => t.invoiceId.equals(invoiceId))).getSingleOrNull();
   }
 
   Stream<List<MessInvoice>> watchMessInvoices({String? memberName}) {
@@ -3833,10 +3992,11 @@ WHERE $where
 
   Future<int> countTotalInvoices() async {
     final count = countAll();
-    final row = await (selectOnly(invoices)
-          ..addColumns([count])
-          ..where(branchMatches(invoices.branchId)))
-        .getSingle();
+    final row =
+        await (selectOnly(invoices)
+              ..addColumns([count])
+              ..where(branchMatches(invoices.branchId)))
+            .getSingle();
     return row.read(count) ?? 0;
   }
 
@@ -3844,63 +4004,85 @@ WHERE $where
     required String memberId,
     required String paymentDate,
   }) async {
-    final row = await (select(messMemberPayments)
-          ..where(
-            (t) =>
-                t.memberId.equals(memberId) & t.paymentDate.equals(paymentDate),
-          )
-          ..limit(1))
-        .getSingleOrNull();
+    final row =
+        await (select(messMemberPayments)
+              ..where(
+                (t) =>
+                    t.memberId.equals(memberId) &
+                    t.paymentDate.equals(paymentDate),
+              )
+              ..limit(1))
+            .getSingleOrNull();
     return row != null;
   }
 
-  Stream<List<Invoice>> watchRecentInvoices({int limit = 50}) {
+  Stream<List<Invoice>> watchRecentInvoices({
+    int limit = 50,
+    int? createdByStaffId,
+  }) {
     return (select(invoices)
-          ..where((t) => branchMatches(t.branchId))
+          ..where(
+            (t) =>
+                branchMatches(t.branchId) &
+                invoiceStaffMatches(t, createdByStaffId: createdByStaffId),
+          )
           ..orderBy([(t) => OrderingTerm.desc(t.createdAt)])
           ..limit(limit))
         .watch();
   }
 
-  Stream<List<Invoice>> watchTodayInvoices() {
+  Stream<List<Invoice>> watchTodayInvoices({int? createdByStaffId}) {
     final now = DateTime.now();
     final start = DateTime(now.year, now.month, now.day);
     final end = start.add(const Duration(days: 1));
-    return watchInvoicesInRange(start, end);
+    return watchInvoicesInRange(
+      start,
+      end,
+      createdByStaffId: createdByStaffId,
+    );
   }
 
   /* All non-refunded / non-cancelled bills (Android home "Total Sales"). */
-  Stream<List<Invoice>> watchAllBillableInvoices() {
+  Stream<List<Invoice>> watchAllBillableInvoices({int? createdByStaffId}) {
     return (select(invoices)
           ..where(
-            (t) => isBillableInvoice(t) & branchMatches(t.branchId),
+            (t) =>
+                isBillableInvoice(t) &
+                branchMatches(t.branchId) &
+                invoiceStaffMatches(t, createdByStaffId: createdByStaffId),
           )
           ..orderBy([(t) => OrderingTerm.desc(t.invoiceDate)]))
         .watch();
   }
 
-  Stream<List<Invoice>> watchInvoicesInRange(DateTime start, DateTime end) {
+  Stream<List<Invoice>> watchInvoicesInRange(
+    DateTime start,
+    DateTime end, {
+    int? createdByStaffId,
+  }) {
     return (select(invoices)
           ..where(
             (t) =>
                 t.invoiceDate.isBiggerOrEqualValue(start) &
                 t.invoiceDate.isSmallerThanValue(end) &
                 isBillableInvoice(t) &
-                branchMatches(t.branchId),
+                branchMatches(t.branchId) &
+                invoiceStaffMatches(t, createdByStaffId: createdByStaffId),
           )
           ..orderBy([(t) => OrderingTerm.desc(t.invoiceDate)]))
         .watch();
   }
 
   Future<Invoice?> getInvoiceById(int invoiceId) {
-    return (select(invoices)..where((t) => t.invoiceId.equals(invoiceId)))
-        .getSingleOrNull();
+    return (select(
+      invoices,
+    )..where((t) => t.invoiceId.equals(invoiceId))).getSingleOrNull();
   }
 
   Future<Invoice?> getInvoiceByNumber(String invoiceNumber) {
-    return (select(invoices)
-          ..where((t) => t.invoiceNumber.equals(invoiceNumber)))
-        .getSingleOrNull();
+    return (select(
+      invoices,
+    )..where((t) => t.invoiceNumber.equals(invoiceNumber))).getSingleOrNull();
   }
 
   Future<Invoice?> getInvoiceByNetworkStatus(String networkStatus) {
@@ -3911,14 +4093,14 @@ WHERE $where
   }
 
   Future<List<InvoiceItem>> getInvoiceItems(String invoiceNumber) {
-    return (select(invoiceItems)
-          ..where((t) => t.invoiceNumber.equals(invoiceNumber)))
-        .get();
+    return (select(
+      invoiceItems,
+    )..where((t) => t.invoiceNumber.equals(invoiceNumber))).get();
   }
 
   /* Upserts cloud invoices as already-synced so they are not re-uploaded. */
   Future<({int inserted, int updated, int skipped, int comboItems})>
-      upsertCloudInvoices({
+  upsertCloudInvoices({
     required List<InvoicesCompanion> headers,
     required Map<String, List<InvoiceItemsCompanion>> itemsByNumber,
     List<InvoiceComboItemsCompanion> comboItems = const [],
@@ -3935,8 +4117,9 @@ WHERE $where
         final network = header.invoiceNetworkStatus.present
             ? header.invoiceNetworkStatus.value
             : '';
-        final number =
-            header.invoiceNumber.present ? header.invoiceNumber.value : '';
+        final number = header.invoiceNumber.present
+            ? header.invoiceNumber.value
+            : '';
         if (network.isEmpty || number.isEmpty) {
           skipped++;
           continue;
@@ -3952,18 +4135,18 @@ WHERE $where
 
         final existing = existingByNetwork ?? await getInvoiceByNumber(number);
         if (existing == null) {
-          await (delete(invoiceItems)
-                ..where((t) => t.invoiceNumber.equals(number)))
-              .go();
-          await (delete(invoiceComboItems)
-                ..where((t) => t.invoiceNumber.equals(number)))
-              .go();
+          await (delete(
+            invoiceItems,
+          )..where((t) => t.invoiceNumber.equals(number))).go();
+          await (delete(
+            invoiceComboItems,
+          )..where((t) => t.invoiceNumber.equals(number))).go();
           await into(invoices).insert(stampInvoice(header));
           inserted++;
         } else {
-          await (update(invoices)
-                ..where((t) => t.invoiceId.equals(existing.invoiceId)))
-              .write(
+          await (update(
+            invoices,
+          )..where((t) => t.invoiceId.equals(existing.invoiceId))).write(
             stampInvoice(
               header.copyWith(
                 /* Keep local auto-id; force synced. */
@@ -3971,20 +4154,20 @@ WHERE $where
               ),
             ),
           );
-          await (delete(invoiceItems)
-                ..where((t) => t.invoiceNumber.equals(existing.invoiceNumber)))
-              .go();
-          await (delete(invoiceComboItems)
-                ..where((t) => t.invoiceNumber.equals(existing.invoiceNumber)))
-              .go();
+          await (delete(
+            invoiceItems,
+          )..where((t) => t.invoiceNumber.equals(existing.invoiceNumber))).go();
+          await (delete(
+            invoiceComboItems,
+          )..where((t) => t.invoiceNumber.equals(existing.invoiceNumber))).go();
           /* If cloud renamed number (rare), also clear old number lines already done. */
           if (existing.invoiceNumber != number) {
-            await (delete(invoiceItems)
-                  ..where((t) => t.invoiceNumber.equals(number)))
-                .go();
-            await (delete(invoiceComboItems)
-                  ..where((t) => t.invoiceNumber.equals(number)))
-                .go();
+            await (delete(
+              invoiceItems,
+            )..where((t) => t.invoiceNumber.equals(number))).go();
+            await (delete(
+              invoiceComboItems,
+            )..where((t) => t.invoiceNumber.equals(number))).go();
           }
           updated++;
         }
@@ -3993,10 +4176,8 @@ WHERE $where
         final lines = itemsByNumber[number] ?? const <InvoiceItemsCompanion>[];
         if (lines.isNotEmpty) {
           await batch(
-            (b) => b.insertAll(
-              invoiceItems,
-              lines.map(stampInvoiceItem).toList(),
-            ),
+            (b) =>
+                b.insertAll(invoiceItems, lines.map(stampInvoiceItem).toList()),
           );
         }
       }
@@ -4004,8 +4185,9 @@ WHERE $where
       if (comboItems.isNotEmpty && touchedNumbers.isNotEmpty) {
         final toInsert = <InvoiceComboItemsCompanion>[];
         for (final row in comboItems) {
-          final number =
-              row.invoiceNumber.present ? row.invoiceNumber.value : null;
+          final number = row.invoiceNumber.present
+              ? row.invoiceNumber.value
+              : null;
           if (number == null || number.isEmpty) continue;
           if (!touchedNumbers.contains(number)) continue;
           toInsert.add(row);
@@ -4048,16 +4230,17 @@ WHERE $where
   String appDatabaseNetworkStatus({String prefix = ''}) {
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
     final rand = Random();
-    final body = List.generate(10, (_) => chars[rand.nextInt(chars.length)])
-        .join();
+    final body = List.generate(
+      10,
+      (_) => chars[rand.nextInt(chars.length)],
+    ).join();
     return prefix.isEmpty ? body : '$prefix$body';
   }
 
   Future<List<Invoice>> getPendingSyncInvoices({int limit = 50}) {
     return (select(invoices)
           ..where(
-            (t) =>
-                t.invoiceSyncStatus.equals('0') & branchMatches(t.branchId),
+            (t) => t.invoiceSyncStatus.equals('0') & branchMatches(t.branchId),
           )
           ..orderBy([(t) => OrderingTerm.asc(t.createdAt)])
           ..limit(limit))
@@ -4067,8 +4250,7 @@ WHERE $where
   Stream<List<Invoice>> watchPendingSyncInvoices() {
     return (select(invoices)
           ..where(
-            (t) =>
-                t.invoiceSyncStatus.equals('0') & branchMatches(t.branchId),
+            (t) => t.invoiceSyncStatus.equals('0') & branchMatches(t.branchId),
           )
           ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
         .watch();
@@ -4093,7 +4275,8 @@ WHERE $where
       categories: await len(getPendingCategories()),
       products: await len(getPendingProducts()),
       portions: await len(getPendingPortions()),
-      combos: await len(getPendingCombos()),
+      combos:
+          await len(getPendingCombos()) + await len(getPendingComboItems()),
       subcategories: await len(getPendingSubcategories()),
       messMembers: await len(getPendingMessMembers()),
       messTokens: await len(getPendingMessTokens()),
@@ -4144,18 +4327,21 @@ WHERE $where
 
   Future<List<DailySalesPoint>> getDailySalesLastDays(int days) async {
     final now = DateTime.now();
-    final startDay = DateTime(now.year, now.month, now.day)
-        .subtract(Duration(days: days - 1));
+    final startDay = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).subtract(Duration(days: days - 1));
     final end = startDay.add(Duration(days: days));
-    final rows = await (select(invoices)
-          ..where(
-            (t) =>
-                t.invoiceDate.isBiggerOrEqualValue(startDay) &
-                t.invoiceDate.isSmallerThanValue(end) &
-                isBillableInvoice(t) &
-                branchMatches(t.branchId),
-          ))
-        .get();
+    final rows =
+        await (select(invoices)..where(
+              (t) =>
+                  t.invoiceDate.isBiggerOrEqualValue(startDay) &
+                  t.invoiceDate.isSmallerThanValue(end) &
+                  isBillableInvoice(t) &
+                  branchMatches(t.branchId),
+            ))
+            .get();
     final byDay = <String, double>{};
     for (var i = 0; i < days; i++) {
       final d = startDay.add(Duration(days: i));
@@ -4174,8 +4360,7 @@ WHERE $where
         DailySalesPoint(
           date: startDay.add(Duration(days: i)),
           total: double.parse(
-            (byDay[
-                        '${startDay.add(Duration(days: i)).year}-${startDay.add(Duration(days: i)).month.toString().padLeft(2, '0')}-${startDay.add(Duration(days: i)).day.toString().padLeft(2, '0')}'] ??
+            (byDay['${startDay.add(Duration(days: i)).year}-${startDay.add(Duration(days: i)).month.toString().padLeft(2, '0')}-${startDay.add(Duration(days: i)).day.toString().padLeft(2, '0')}'] ??
                     0)
                 .toStringAsFixed(2),
           ),
@@ -4184,9 +4369,9 @@ WHERE $where
   }
 
   Future<void> updateCategorySortOrder(int categoryId, int sortOrder) async {
-    await (update(productCategories)
-          ..where((t) => t.categoryId.equals(categoryId)))
-        .write(
+    await (update(
+      productCategories,
+    )..where((t) => t.categoryId.equals(categoryId))).write(
       ProductCategoriesCompanion(
         categorySortOrder: Value(sortOrder),
         categorySyncStatus: const Value('0'),
@@ -4198,9 +4383,9 @@ WHERE $where
     int subcategoryId,
     int sortOrder,
   ) async {
-    await (update(productSubcategories)
-          ..where((t) => t.subcategoryId.equals(subcategoryId)))
-        .write(
+    await (update(
+      productSubcategories,
+    )..where((t) => t.subcategoryId.equals(subcategoryId))).write(
       ProductSubcategoriesCompanion(
         subcategorySortOrder: Value(sortOrder),
         subcategorySyncStatus: const Value('0'),
@@ -4221,13 +4406,13 @@ WHERE $where
       );
     }
     await transaction(() async {
-      final headers = await (select(invoices)
-            ..where((t) => branchMatches(t.branchId)))
-          .get();
+      final headers = await (select(
+        invoices,
+      )..where((t) => branchMatches(t.branchId))).get();
       for (final inv in headers) {
-        await (delete(invoiceItems)
-              ..where((t) => t.invoiceNumber.equals(inv.invoiceNumber)))
-            .go();
+        await (delete(
+          invoiceItems,
+        )..where((t) => t.invoiceNumber.equals(inv.invoiceNumber))).go();
       }
       await (delete(invoices)..where((t) => branchMatches(t.branchId))).go();
     });
@@ -4254,9 +4439,7 @@ WHERE $where
   Future<void> markInvoiceItemSynced(int invoiceItemId) async {
     await (update(invoiceItems)
           ..where((t) => t.invoiceItemId.equals(invoiceItemId)))
-        .write(
-      const InvoiceItemsCompanion(invoiceItemSyncStatus: Value('1')),
-    );
+        .write(const InvoiceItemsCompanion(invoiceItemSyncStatus: Value('1')));
   }
 
   Future<void> markInvoiceSynced(int invoiceId) async {
@@ -4265,14 +4448,14 @@ WHERE $where
       if (invoice == null) return;
       await (update(invoices)..where((t) => t.invoiceId.equals(invoiceId)))
           .write(const InvoicesCompanion(invoiceSyncStatus: Value('1')));
-      await (update(invoiceItems)
-            ..where((t) => t.invoiceNumber.equals(invoice.invoiceNumber)))
-          .write(
+      await (update(
+        invoiceItems,
+      )..where((t) => t.invoiceNumber.equals(invoice.invoiceNumber))).write(
         const InvoiceItemsCompanion(invoiceItemSyncStatus: Value('1')),
       );
-      await (update(invoiceComboItems)
-            ..where((t) => t.invoiceNumber.equals(invoice.invoiceNumber)))
-          .write(
+      await (update(
+        invoiceComboItems,
+      )..where((t) => t.invoiceNumber.equals(invoice.invoiceNumber))).write(
         const InvoiceComboItemsCompanion(invoiceComboItemStatus: Value('1')),
       );
     });
@@ -4294,9 +4477,9 @@ WHERE $where
   }
 
   Future<void> markInvoiceComboItemSynced(int invoiceComboItemId) async {
-    await (update(invoiceComboItems)
-          ..where((t) => t.invoiceComboItemId.equals(invoiceComboItemId)))
-        .write(
+    await (update(
+      invoiceComboItems,
+    )..where((t) => t.invoiceComboItemId.equals(invoiceComboItemId))).write(
       const InvoiceComboItemsCompanion(invoiceComboItemStatus: Value('1')),
     );
   }
@@ -4334,8 +4517,15 @@ WHERE $where
     for (final item in items) {
       final lineBase = item.unitPrice * item.quantity;
       subtotal += lineBase;
-      taxTotal += lineBase * item.gstPercent / 100;
       qtyTotal += item.quantity;
+      /* Same tax rules as [cartSummaryProvider] (cgst+sgst, else gst%). */
+      final cgstRate = item.productCgst;
+      final sgstRate = item.productSgst;
+      if (cgstRate > 0 || sgstRate > 0) {
+        taxTotal += lineBase * (cgstRate + sgstRate) / 100;
+      } else if (item.gstPercent > 0) {
+        taxTotal += lineBase * item.gstPercent / 100;
+      }
     }
     subtotal = double.parse(subtotal.toStringAsFixed(2));
     taxTotal = double.parse(taxTotal.toStringAsFixed(2));
@@ -4345,13 +4535,20 @@ WHERE $where
     final packingValue = packingChargeType.toLowerCase().startsWith('p')
         ? double.parse((subtotal * packingCharge / 100).toStringAsFixed(2))
         : double.parse(packingCharge.toStringAsFixed(2));
-    final totalAmount = double.parse(
-      (subtotal + taxTotal + packingValue - discountValue)
-          .clamp(0, double.infinity)
-          .toStringAsFixed(2),
-    );
+    final rawTotal = (subtotal + taxTotal + packingValue - discountValue)
+        .clamp(0, double.infinity)
+        .toDouble();
+    /* Match payment UI / Android CreatePos — bill total rounds up to ₹. */
+    final totalAmount = rawTotal.ceilToDouble();
 
-    if (!tender.isValidFor(totalAmount)) {
+    /* Cash/UPI always take the final bill total; only SPLIT must match entered amounts. */
+    final settled = PaymentTender.resolve(
+      mode: tender.mode,
+      totalAmount: totalAmount,
+      cashAmount: tender.cashAmount,
+      upiAmount: tender.upiAmount,
+    );
+    if (!settled.isValidFor(totalAmount)) {
       throw StateError('Cash + UPI amounts must equal bill total');
     }
 
@@ -4372,9 +4569,9 @@ WHERE $where
             packingCharge: Value(packingCharge),
             packingChargeType: Value(packingChargeType),
             totalAmount: Value(totalAmount),
-            paymentMode: Value(tender.mode.label),
-            cashAmount: Value(tender.cashAmount),
-            upiAmount: Value(tender.upiAmount),
+            paymentMode: Value(settled.mode.label),
+            cashAmount: Value(settled.cashAmount),
+            upiAmount: Value(settled.upiAmount),
             invoiceNetworkStatus: appDatabaseNetworkStatus(),
             invoiceSyncStatus: const Value('0'),
             noOfTable: Value(tableNumber ?? ''),
@@ -4385,9 +4582,7 @@ WHERE $where
             diningSessionId: Value(diningSessionId),
             billPrintStatus: const Value(''),
             createdByStaffId: Value(createdByStaffId),
-            createdByStaffName: Value(
-              (createdByStaffName ?? '').trim(),
-            ),
+            createdByStaffName: Value((createdByStaffName ?? '').trim()),
             itemCount: Value(qtyTotal.round()),
           ),
         ),
@@ -4471,36 +4666,36 @@ WHERE $where
       /* gate save on that switch. */
       final deductLikeAndroid = updateInventory || true;
       if (deductLikeAndroid) {
-      for (final item in items) {
-        final comboLine = item.lineType == 'combo' || item.comboId != null;
-        if (comboLine) {
-          final comboLines = await getCartComboItemsForLine(
-            productId: item.productId,
-            cartScope: cartScope,
-            parentPortionId: item.portionId,
-            cartId: item.cartId,
-          );
-          final comboQty = item.quantity < 1 ? 1 : item.quantity;
-          for (final c in comboLines) {
-            final pid = c.componentProductId;
-            if (pid == null || pid <= 0) continue;
-            final componentQty = c.quantity < 1 ? 1 : c.quantity;
+        for (final item in items) {
+          final comboLine = item.lineType == 'combo' || item.comboId != null;
+          if (comboLine) {
+            final comboLines = await getCartComboItemsForLine(
+              productId: item.productId,
+              cartScope: cartScope,
+              parentPortionId: item.portionId,
+              cartId: item.cartId,
+            );
+            final comboQty = item.quantity < 1 ? 1 : item.quantity;
+            for (final c in comboLines) {
+              final pid = c.componentProductId;
+              if (pid == null || pid <= 0) continue;
+              final componentQty = c.quantity < 1 ? 1 : c.quantity;
+              await deductInventoryForSaleIfTracked(
+                productId: pid,
+                productName: c.productNameSnapshot ?? item.productName,
+                quantity: (comboQty * componentQty).toDouble(),
+                at: now,
+              );
+            }
+          } else if (item.productId > 0) {
             await deductInventoryForSaleIfTracked(
-              productId: pid,
-              productName: c.productNameSnapshot ?? item.productName,
-              quantity: (comboQty * componentQty).toDouble(),
+              productId: item.productId,
+              productName: item.productName,
+              quantity: item.quantity.toDouble(),
               at: now,
             );
           }
-        } else if (item.productId > 0) {
-          await deductInventoryForSaleIfTracked(
-            productId: item.productId,
-            productName: item.productName,
-            quantity: item.quantity.toDouble(),
-            at: now,
-          );
         }
-      }
       }
 
       await clearCart(cartScope: cartScope);
@@ -4516,7 +4711,7 @@ WHERE $where
         invoiceId: invoiceId,
         invoiceNumber: invoiceNumber,
         totalAmount: totalAmount,
-        paymentMode: tender.mode.label,
+        paymentMode: settled.mode.label,
       );
     });
   }
@@ -4524,8 +4719,7 @@ WHERE $where
   Future<InventoryMovement?> getLatestInventory(int productId) {
     return (select(inventoryMovements)
           ..where(
-            (t) =>
-                t.productId.equals(productId) & branchMatches(t.branchId),
+            (t) => t.productId.equals(productId) & branchMatches(t.branchId),
           )
           ..orderBy([(t) => OrderingTerm.desc(t.inventoryId)])
           ..limit(1))
@@ -4549,8 +4743,7 @@ WHERE $where
     return (select(inventoryMovements)
           ..where(
             (t) =>
-                t.inventorySyncStatus.equals('0') &
-                branchMatches(t.branchId),
+                t.inventorySyncStatus.equals('0') & branchMatches(t.branchId),
           )
           ..orderBy([(t) => OrderingTerm.asc(t.inventoryId)])
           ..limit(limit))
@@ -4558,11 +4751,11 @@ WHERE $where
   }
 
   Future<void> markInventorySynced(int inventoryId) async {
-    await (update(inventoryMovements)
-          ..where((t) => t.inventoryId.equals(inventoryId)))
-        .write(const InventoryMovementsCompanion(
-      inventorySyncStatus: Value('1'),
-    ));
+    await (update(
+      inventoryMovements,
+    )..where((t) => t.inventoryId.equals(inventoryId))).write(
+      const InventoryMovementsCompanion(inventorySyncStatus: Value('1')),
+    );
   }
 
   /* Stock-in: remaining = previous remaining + qty (fixes Android restock=0 bug). */
@@ -4596,9 +4789,9 @@ WHERE $where
         ),
       ),
     );
-    return (select(inventoryMovements)
-          ..where((t) => t.inventoryId.equals(id)))
-        .getSingle();
+    return (select(
+      inventoryMovements,
+    )..where((t) => t.inventoryId.equals(id))).getSingle();
   }
 
   /* Waste / spoilage / damage — stock out without a sale. */
@@ -4637,9 +4830,9 @@ WHERE $where
         ),
       ),
     );
-    return (select(inventoryMovements)
-          ..where((t) => t.inventoryId.equals(id)))
-        .getSingle();
+    return (select(
+      inventoryMovements,
+    )..where((t) => t.inventoryId.equals(id))).getSingle();
   }
 
   /* WithTable: skip products that were never stocked (`getInventoryDetails` empty). */
@@ -4685,9 +4878,9 @@ WHERE $where
         ),
       ),
     );
-    return (select(inventoryMovements)
-          ..where((t) => t.inventoryId.equals(id)))
-        .getSingle();
+    return (select(
+      inventoryMovements,
+    )..where((t) => t.inventoryId.equals(id))).getSingle();
   }
 
   Future<InventoryMovement?> getInventoryByNetworkStatus(String network) {
@@ -4697,7 +4890,9 @@ WHERE $where
         .getSingleOrNull();
   }
 
-  Future<int> upsertCloudInventory(List<InventoryMovementsCompanion> rows) async {
+  Future<int> upsertCloudInventory(
+    List<InventoryMovementsCompanion> rows,
+  ) async {
     var count = 0;
     await transaction(() async {
       for (final row in rows) {
@@ -4708,9 +4903,7 @@ WHERE $where
         final existing = await getInventoryByNetworkStatus(network);
         if (existing != null) continue;
         await into(inventoryMovements).insert(
-          stampInventory(
-            row.copyWith(inventorySyncStatus: const Value('1')),
-          ),
+          stampInventory(row.copyWith(inventorySyncStatus: const Value('1'))),
         );
         count++;
       }
@@ -4741,8 +4934,7 @@ WHERE $where
   Future<List<ShopExpense>> getPendingExpenses({int limit = 100}) {
     return (select(shopExpenses)
           ..where(
-            (t) =>
-                t.expensesSyncStatus.equals('0') & branchMatches(t.branchId),
+            (t) => t.expensesSyncStatus.equals('0') & branchMatches(t.branchId),
           )
           ..orderBy([(t) => OrderingTerm.asc(t.expensesId)])
           ..limit(limit))
@@ -4773,8 +4965,9 @@ WHERE $where
         ),
       ),
     );
-    return (select(shopExpenses)..where((t) => t.expensesId.equals(id)))
-        .getSingle();
+    return (select(
+      shopExpenses,
+    )..where((t) => t.expensesId.equals(id))).getSingle();
   }
 
   Future<ShopExpense?> getExpenseByNetworkStatus(String network) {
@@ -4795,9 +4988,7 @@ WHERE $where
         final existing = await getExpenseByNetworkStatus(network);
         if (existing != null) continue;
         await into(shopExpenses).insert(
-          stampExpense(
-            row.copyWith(expensesSyncStatus: const Value('1')),
-          ),
+          stampExpense(row.copyWith(expensesSyncStatus: const Value('1'))),
         );
         count++;
       }
@@ -4953,9 +5144,9 @@ WHERE $where
           printerFeedLines: Value(dto.printerFeedLines),
           kotPrinterFeedLines: Value(dto.kotPrinterFeedLines),
           settingStatus: Value(dto.settingStatus),
-          kotEnable: Value(dto.kotEnable == '1' || dto.kotEnable == 'on'
-              ? 'on'
-              : 'off'),
+          kotEnable: Value(
+            dto.kotEnable == '1' || dto.kotEnable == 'on' ? 'on' : 'off',
+          ),
           kotPrefix: Value(dto.kotPrefix),
           kotCopies: Value(dto.kotCopies),
           kotAutoPrint: Value(
@@ -4979,11 +5170,13 @@ WHERE $where
         invoicePrefix: settings.invoicePrefix,
         invoiceTitle: settings.invoiceTitle,
         invoiceTermsCondition: settings.invoiceTerms,
-        logoUse: settings.logoUse ? '1' : '0',
-        paymentUse: settings.paymentUse ? '1' : '0',
-        customerUse: settings.customerUse ? '1' : '0',
-        productQuantityUpdate: settings.productQuantityUpdate ? '1' : '0',
-        duplicateBillUse: settings.duplicateBillUse ? '1' : '0',
+        logoUse: printerFlagValue(settings.logoUse),
+        paymentUse: printerFlagValue(settings.paymentUse),
+        customerUse: printerFlagValue(settings.customerUse),
+        productQuantityUpdate: printerFlagValue(
+          settings.productQuantityUpdate,
+        ),
+        duplicateBillUse: printerFlagValue(settings.duplicateBillUse),
         bluetoothAddress: settings.billBluetoothAddress,
         bluetoothKotAddress: settings.kotBluetoothAddress,
         printerFeedLines: '${settings.feedLines}',
@@ -5011,14 +5204,16 @@ WHERE $where
   }) async {
     final id = serverPublicId.trim();
     if (id.isEmpty) return;
-    final existing = await (select(messMealTokenQueue)
-          ..where((t) => t.serverPublicId.equals(id))
-          ..limit(1))
-        .getSingleOrNull();
+    final existing =
+        await (select(messMealTokenQueue)
+              ..where((t) => t.serverPublicId.equals(id))
+              ..limit(1))
+            .getSingleOrNull();
     final now = DateTime.now().toIso8601String();
     if (existing != null) {
-      await (update(messMealTokenQueue)..where((t) => t.id.equals(existing.id)))
-          .write(
+      await (update(
+        messMealTokenQueue,
+      )..where((t) => t.id.equals(existing.id))).write(
         MessMealTokenQueueCompanion(
           tokenNumber: Value(tokenNumber ?? existing.tokenNumber),
           registrationNo: Value(registrationNo ?? existing.registrationNo),

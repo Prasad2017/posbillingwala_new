@@ -6,13 +6,16 @@ import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/inventory/data/inventory_expense_api.dart';
 
-final inventoryMovementsProvider =
-    StreamProvider<List<InventoryMovement>>((ref) {
+final inventoryMovementsProvider = StreamProvider<List<InventoryMovement>>((
+  ref,
+) {
   return ref.watch(appDatabaseProvider).watchInventoryMovements();
 });
 
 final stockBalancesProvider = Provider<List<ProductStockBalance>>((ref) {
-  final movements = ref.watch(inventoryMovementsProvider).maybeWhen(
+  final movements = ref
+      .watch(inventoryMovementsProvider)
+      .maybeWhen(
         data: (rows) => rows,
         orElse: () => const <InventoryMovement>[],
       );
@@ -21,19 +24,20 @@ final stockBalancesProvider = Provider<List<ProductStockBalance>>((ref) {
   for (final row in movements) {
     latestByProduct.putIfAbsent(row.productId, () => row);
   }
-  final balances = latestByProduct.values
-      .map(
-        (row) => ProductStockBalance(
-          productId: row.productId,
-          productName: row.productName.isEmpty
-              ? 'Product ${row.productId}'
-              : row.productName,
-          remaining: row.afterSaleInventoryQuantity,
-          lowStock: row.afterSaleInventoryQuantity < 6,
-        ),
-      )
-      .toList()
-    ..sort((a, b) => a.productName.compareTo(b.productName));
+  final balances =
+      latestByProduct.values
+          .map(
+            (row) => ProductStockBalance(
+              productId: row.productId,
+              productName: row.productName.isEmpty
+                  ? 'Product ${row.productId}'
+                  : row.productName,
+              remaining: row.afterSaleInventoryQuantity,
+              lowStock: row.afterSaleInventoryQuantity < 6,
+            ),
+          )
+          .toList()
+        ..sort((a, b) => a.productName.compareTo(b.productName));
   return balances;
 });
 
@@ -42,10 +46,9 @@ final expensesProvider = StreamProvider<List<ShopExpense>>((ref) {
 });
 
 final expensesTotalProvider = Provider<double>((ref) {
-  final rows = ref.watch(expensesProvider).maybeWhen(
-        data: (rows) => rows,
-        orElse: () => const <ShopExpense>[],
-      );
+  final rows = ref
+      .watch(expensesProvider)
+      .maybeWhen(data: (rows) => rows, orElse: () => const <ShopExpense>[]);
   var total = 0.0;
   for (final row in rows) {
     total += row.expensesAmount;
@@ -61,12 +64,11 @@ class InventoryController extends Notifier<AsyncValue<String?>> {
     required int productId,
     required String productName,
     required double quantity,
-  }) =>
-      addPurchase(
-        productId: productId,
-        productName: productName,
-        quantity: quantity,
-      );
+  }) => addPurchase(
+    productId: productId,
+    productName: productName,
+    quantity: quantity,
+  );
 
   Future<void> addPurchase({
     required int productId,
@@ -80,7 +82,9 @@ class InventoryController extends Notifier<AsyncValue<String?>> {
       if (AppPlatform.requiresNetwork && !await ensureOnline()) {
         throw StateError(kOnlineRequiredMessage);
       }
-      await ref.read(appDatabaseProvider).addStockIn(
+      await ref
+          .read(appDatabaseProvider)
+          .addStockIn(
             productId: productId,
             productName: productName,
             quantity: quantity,
@@ -104,14 +108,16 @@ class InventoryController extends Notifier<AsyncValue<String?>> {
       if (AppPlatform.requiresNetwork && !await ensureOnline()) {
         throw StateError(kOnlineRequiredMessage);
       }
-      await ref.read(appDatabaseProvider).addWasteOut(
+      await ref
+          .read(appDatabaseProvider)
+          .addWasteOut(
             productId: productId,
             productName: productName,
             quantity: quantity,
             reason: reason,
           );
       await uploadPendingIfOnline();
-      return 'Waste recorded';
+      return 'Waste saved';
     });
   }
 
@@ -124,10 +130,9 @@ class InventoryController extends Notifier<AsyncValue<String?>> {
       if (AppPlatform.requiresNetwork && !await ensureOnline()) {
         throw StateError(kOnlineRequiredMessage);
       }
-      await ref.read(appDatabaseProvider).addExpense(
-            name: name,
-            amount: amount,
-          );
+      await ref
+          .read(appDatabaseProvider)
+          .addExpense(name: name, amount: amount);
       await uploadPendingIfOnline();
       return 'Expense saved';
     });
@@ -194,16 +199,14 @@ class InventoryController extends Notifier<AsyncValue<String?>> {
       }
 
       final cloudInventory = await api.fetchInventory(userId);
-      final products =
-          await ref.read(appDatabaseProvider).watchActiveProducts().first;
-      final nameById = {
-        for (final p in products) p.productId: p.productName,
-      };
+      final products = await ref
+          .read(appDatabaseProvider)
+          .watchActiveProducts()
+          .first;
+      final nameById = {for (final p in products) p.productId: p.productName};
       final invCompanions = cloudInventory
           .where((e) => e.productId > 0)
-          .map(
-            (e) => e.toCompanion(productNameOverride: nameById[e.productId]),
-          )
+          .map((e) => e.toCompanion(productNameOverride: nameById[e.productId]))
           .toList();
       final invDownloaded = await db.upsertCloudInventory(invCompanions);
 
@@ -227,5 +230,5 @@ class InventoryController extends Notifier<AsyncValue<String?>> {
 
 final inventoryControllerProvider =
     NotifierProvider<InventoryController, AsyncValue<String?>>(
-  InventoryController.new,
-);
+      InventoryController.new,
+    );

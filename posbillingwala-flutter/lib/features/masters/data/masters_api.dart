@@ -201,10 +201,7 @@ class MastersApi {
       ApiEndpoints.getComboList,
       query: {'userId': userId},
     );
-    return mapJsonList(
-      data[ApiResponseKeys.comboResponse],
-      ComboDto.fromJson,
-    );
+    return mapJsonList(data[ApiResponseKeys.comboResponse], ComboDto.fromJson);
   }
 
   Future<List<ComboItemDto>> fetchComboItems(String userId) async {
@@ -212,8 +209,8 @@ class MastersApi {
       ApiEndpoints.getComboItemList,
       query: {'userId': userId},
     );
-    final raw = data[ApiResponseKeys.comboItemResponse] ??
-        data['comboItemResponse'];
+    final raw =
+        data[ApiResponseKeys.comboItemResponse] ?? data['comboItemResponse'];
     return mapJsonList(raw, ComboItemDto.fromJson);
   }
 
@@ -253,6 +250,7 @@ class MastersApi {
     required String productNetworkStatus,
     String productDeletedStatus = '0',
     String subcategoryId = '0',
+    String subcategoryNetworkStatus = '',
     String openPrice = '0',
     String priceIncludesGst = '0',
     String productImage = '',
@@ -273,6 +271,7 @@ class MastersApi {
         'productNetworkStatus': productNetworkStatus,
         'productDeletedStatus': productDeletedStatus,
         'subcategoryId': subcategoryId,
+        'subcategoryNetworkStatus': subcategoryNetworkStatus,
         'openPrice': openPrice,
         'priceIncludesGst': priceIncludesGst,
         'productImage': productImage,

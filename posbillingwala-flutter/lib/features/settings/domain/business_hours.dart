@@ -11,10 +11,7 @@ class BusinessHours {
   /* Minutes from midnight, or null if unset (treat as always open). */
   static Future<({int? open, int? close})> load() async {
     final prefs = await SharedPreferences.getInstance();
-    return (
-      open: prefs.getInt(openKey),
-      close: prefs.getInt(closeKey),
-    );
+    return (open: prefs.getInt(openKey), close: prefs.getInt(closeKey));
   }
 
   /* When either bound is null, the shop is treated as always open. */

@@ -9,17 +9,16 @@ import 'package:pos_billingwala_v2/features/print/domain/esc_pos_transport_hub.d
 import 'package:pos_billingwala_v2/features/print/domain/print_providers.dart';
 import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
 import 'package:pos_billingwala_v2/features/print/domain/sample_receipt_data.dart';
+import 'package:pos_billingwala_v2/features/print/domain/shop_receipt_profile.dart';
+import 'package:pos_billingwala_v2/features/print/presentation/bill_print_preview_page.dart';
 import 'package:pos_billingwala_v2/features/print/presentation/paper_size_preview.dart';
 import 'package:pos_billingwala_v2/features/print/presentation/printer_device_picker_page.dart';
+import 'package:pos_billingwala_v2/features/print/presentation/woosim_ticket.dart';
 import 'package:pos_billingwala_v2/language/app_strings.dart';
 
-/* Matches `activity_test_invoice_bluetooth_print.xml`: */
-/* preview card + bottom Connect / Test Print. */
+/* Matches Android test invoice: 2-Inch + 3-Inch layout previews + Connect / Test Print. */
 class TestInvoicePreviewPage extends ConsumerStatefulWidget {
-  const TestInvoicePreviewPage({
-    super.key,
-    required this.channel,
-  });
+  const TestInvoicePreviewPage({super.key, required this.channel});
 
   final PrinterChannelKind channel;
 
@@ -28,13 +27,15 @@ class TestInvoicePreviewPage extends ConsumerStatefulWidget {
       TestInvoicePreviewPageState();
 }
 
-class TestInvoicePreviewPageState extends ConsumerState<TestInvoicePreviewPage> {
+class TestInvoicePreviewPageState
+    extends ConsumerState<TestInvoicePreviewPage> {
   bool printing = false;
   bool connecting = false;
 
   bool get isKot => widget.channel == PrinterChannelKind.kot;
 
-  String get testInvoicePreviewPageTitle => isKot ? 'KOT Preview' : 'Invoice Preview';
+  String get testInvoicePreviewPageTitle =>
+      isKot ? 'KOT Preview' : 'Invoice Preview';
 
   String? get testInvoicePreviewPageShopName =>
       ref.read(authControllerProvider).session?.shopName;
@@ -42,19 +43,18 @@ class TestInvoicePreviewPageState extends ConsumerState<TestInvoicePreviewPage> 
   Future<void> testInvoicePreviewPagePrint() async {
     setState(() => printing = true);
     try {
-      final result = await ref.read(printServiceProvider).printTest(
-            widget.channel,
-            shopName: testInvoicePreviewPageShopName,
-          );
+      final result = await ref
+          .read(printServiceProvider)
+          .printTest(widget.channel, shopName: testInvoicePreviewPageShopName);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(result.message ?? result.outcome.name)),
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Print failed: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Print failed: $e')));
     } finally {
       if (mounted) setState(() => printing = false);
     }
@@ -89,8 +89,8 @@ class TestInvoicePreviewPageState extends ConsumerState<TestInvoicePreviewPage> 
               kotTransport: picked.transport,
               kotBluetoothAddress:
                   picked.transport == PosPrinterTransport.bluetooth
-                      ? picked.bluetoothMac
-                      : current.kotBluetoothAddress,
+                  ? picked.bluetoothMac
+                  : current.kotBluetoothAddress,
               kotUsbIdentifier: picked.transport == PosPrinterTransport.usb
                   ? picked.usbIdentifier
                   : current.kotUsbIdentifier,
@@ -102,8 +102,8 @@ class TestInvoicePreviewPageState extends ConsumerState<TestInvoicePreviewPage> 
               billTransport: picked.transport,
               billBluetoothAddress:
                   picked.transport == PosPrinterTransport.bluetooth
-                      ? picked.bluetoothMac
-                      : current.billBluetoothAddress,
+                  ? picked.bluetoothMac
+                  : current.billBluetoothAddress,
               billUsbIdentifier: picked.transport == PosPrinterTransport.usb
                   ? picked.usbIdentifier
                   : current.billUsbIdentifier,
@@ -160,81 +160,133 @@ class TestInvoicePreviewPageState extends ConsumerState<TestInvoicePreviewPage> 
   @override
   Widget build(BuildContext context) {
     final settings = ref.watch(printerSettingsProvider);
+    final profile = ref.watch(shopReceiptProfileProvider);
     final strings = AppStrings.of(ref);
     final service = ref.watch(printServiceProvider);
     final shop = testInvoicePreviewPageShopName;
     final connected = BluetoothPrinterHub.instance.isReady;
-    final sample = isKot
-        ? service.kotPreviewText(paperSize: settings.kotPaperSize)
-        : null;
-    final bill = SampleReceiptData.sampleBill();
+    final activePaper = isKot ? settings.kotPaperSize : settings.paperSize;
+
+    final sampleBill = SampleReceiptData.sampleBill();
+    final shopName = (shop?.trim().isNotEmpty ?? false)
+        ? shop
+        : SampleReceiptData.demoShopName;
+    final ticket = isKot
+        ? null
+        : service.billTicket(
+            invoice: sampleBill.invoice,
+            items: sampleBill.items,
+            shopName: shopName,
+          );
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF3F6FB),
       appBar: AppBar(title: Text(testInvoicePreviewPageTitle)),
       body: ResponsiveScrollShell(
         dashboard: true,
         child: ListView(
-        padding: EdgeInsets.fromLTRB(
+          padding: EdgeInsets.fromLTRB(
             AppBreakpoints.pagePaddingFor(context.widthClass),
             16,
             AppBreakpoints.pagePaddingFor(context.widthClass),
-            24),
-        children: [
-          Text(
-            connected
-                ? (isKot
-                    ? 'Printer ready — KOT layout follows your KOT paper size, prefix & copies.'
-                    : 'Printer ready — layout follows your paper size, customer, payment & logo options.')
-                : (isKot
-                    ? 'Preview uses your KOT options (paper size, prefix, copies). Connect to Test Print.'
-                    : 'Preview uses your printer options (paper size, customer, payment, logo). Connect to Test Print.'),
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.black54,
-                ),
+            24,
           ),
-          const SizedBox(height: 8),
-          Text(
-            isKot
-                ? [
-                    settings.kotPaperSize.dbValue,
-                    if (settings.kotPrefix.trim().isNotEmpty)
-                      'Prefix ${settings.kotPrefix.trim()}',
-                    'Copies ${settings.kotCopies}',
-                    if (settings.kotEnable) 'KOT ON' else 'KOT OFF',
-                    if (settings.kotAutoPrint) 'Auto print ON' else 'Auto print OFF',
-                    if (settings.kotPreview) 'Preview ON' else 'Preview OFF',
-                  ].join(' · ')
-                : [
-                    settings.paperSize.dbValue,
-                    if (settings.customerUse) 'Customer ON' else 'Customer OFF',
-                    if (settings.paymentUse) 'Payment ON' else 'Payment OFF',
-                    if (settings.logoUse) 'Logo ON' else 'Logo OFF',
-                  ].join(' · '),
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w600,
-                ),
-          ),
-          const SizedBox(height: 16),
-          if (isKot)
-            PaperSizePreviewCard(
-              title: 'KOT · ${settings.kotPaperSize.dbValue}',
-              text: sample!,
-              paperSize: settings.kotPaperSize,
-            )
-          else
-            PaperSizePreviewCard(
-              title: 'Bill · ${settings.paperSize.dbValue}',
-              text: service.billPreviewText(
-                invoice: bill.invoice,
-                items: bill.items,
-                shopName: shop,
-                paperSize: settings.paperSize,
-              ),
-              paperSize: settings.paperSize,
+          children: [
+            Text(
+              connected
+                  ? (isKot
+                        ? 'Printer ready — compare 2″ and 3″ KOT layouts below.'
+                        : 'Printer ready — compare 2″ and 3″ bill layouts below.')
+                  : (isKot
+                        ? 'Preview shows 2-Inch and 3-Inch KOT. Connect to Test Print.'
+                        : 'Preview shows 2-Inch and 3-Inch invoice. Connect to Test Print.'),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
             ),
-        ],
-      ),
+            const SizedBox(height: 8),
+            Text(
+              isKot
+                  ? [
+                      'Active ${settings.kotPaperSize.dbValue}',
+                      if (settings.kotPrefix.trim().isNotEmpty)
+                        'Prefix ${settings.kotPrefix.trim()}',
+                      'Copies ${settings.kotCopies}',
+                    ].join(' · ')
+                  : [
+                      'Active ${settings.paperSize.dbValue}',
+                      if (settings.customerUse)
+                        'Customer ON'
+                      else
+                        'Customer OFF',
+                      if (settings.paymentUse)
+                        profile.hasUpiId
+                            ? 'Payment QR ON'
+                            : 'Payment ON (set UPI in Shop Details)'
+                      else
+                        'Payment OFF',
+                      if (settings.logoUse)
+                        (profile.logoLocalPath.trim().isNotEmpty
+                            ? 'Logo ON'
+                            : 'Logo ON (no shop logo file)')
+                      else
+                        'Logo OFF',
+                      if (profile.gstEnabled) 'GST ON' else 'GST OFF',
+                    ].join(' · '),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 16),
+            if (isKot) ...[
+              PaperSizePreviewCard(
+                title:
+                    '${strings.paper2Inch}${activePaper == PrinterPaperSize.inch2 ? ' · Active' : ''}',
+                text: service.kotPreviewText(
+                  paperSize: PrinterPaperSize.inch2,
+                ),
+                paperSize: PrinterPaperSize.inch2,
+              ),
+              PaperSizePreviewCard(
+                title:
+                    '${strings.paper3Inch}${activePaper == PrinterPaperSize.inch3 ? ' · Active' : ''}',
+                text: service.kotPreviewText(
+                  paperSize: PrinterPaperSize.inch3,
+                ),
+                paperSize: PrinterPaperSize.inch3,
+              ),
+            ] else ...[
+              PreviewCard(
+                title:
+                    '${strings.paper2Inch}${activePaper == PrinterPaperSize.inch2 ? ' · Active' : ''}',
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: WoosimTicket(
+                    ticket: ticket!,
+                    widthMm: 48,
+                    showLogo: settings.logoUse,
+                    logoPath: profile.logoLocalPath,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              PreviewCard(
+                title:
+                    '${strings.paper3Inch}${activePaper == PrinterPaperSize.inch3 ? ' · Active' : ''}',
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: WoosimTicket(
+                    ticket: ticket,
+                    widthMm: 72,
+                    showLogo: settings.logoUse,
+                    logoPath: profile.logoLocalPath,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
       bottomNavigationBar: SafeArea(
         child: Padding(

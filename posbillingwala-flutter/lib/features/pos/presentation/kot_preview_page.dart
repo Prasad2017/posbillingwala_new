@@ -55,46 +55,59 @@ class KotPreviewPage extends ConsumerWidget {
       body: ResponsiveScrollShell(
         dashboard: true,
         child: ListView(
-        padding: EdgeInsets.all(
-          AppBreakpoints.pagePaddingFor(context.widthClass) + 4,
-        ),
-        children: [
-          AppCard(
-            accentColor: AppColors.orange,
-            padding: const EdgeInsets.all(20),
-            child: Column(
+          padding: EdgeInsets.all(
+            AppBreakpoints.pagePaddingFor(context.widthClass) + 4,
+          ),
+          children: [
+            AppCard(
+              accentColor: AppColors.orange,
+              padding: const EdgeInsets.all(20),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const AppModuleIcon(icon: Icons.restaurant_menu_rounded, color: AppColors.orange, size: 58),
+                  const AppModuleIcon(
+                    icon: Icons.restaurant_menu_rounded,
+                    color: AppColors.orange,
+                    size: 58,
+                  ),
                   const SizedBox(height: 10),
-                  Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), decoration: BoxDecoration(color: AppColors.orange.withValues(alpha: .10), borderRadius: BorderRadius.circular(20)), child: Text(
-                    'KITCHEN ORDER',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 2,
-                        ),
-                  )),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.orange.withValues(alpha: .10),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      'KITCHEN ORDER',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 2,
+                          ),
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   Text(
                     ticket.kot.kotNumber,
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w800,
-                        ),
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   MetaRow(label: 'Table', value: 'T${ticket.kot.tableNumber}'),
                   MetaRow(label: 'Round', value: '${ticket.roundNumber}'),
-                  MetaRow(
-                    label: 'Kitchen',
-                    value: ticket.kot.kitchenName,
-                  ),
+                  MetaRow(label: 'Kitchen', value: ticket.kot.kitchenName),
                   MetaRow(
                     label: 'Date',
-                    value: DateFormat('dd-MM-yyyy HH:mm')
-                        .format(ticket.kot.createdAt),
+                    value: DateFormat(
+                      'dd-MM-yyyy HH:mm',
+                    ).format(ticket.kot.createdAt),
                   ),
                   const Divider(height: 28),
                   ...ticket.items.map(
@@ -105,17 +118,13 @@ class KotPreviewPage extends ConsumerWidget {
                           Expanded(
                             child: Text(
                               item.productName,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleMedium
+                              style: Theme.of(context).textTheme.titleMedium
                                   ?.copyWith(fontWeight: FontWeight.w700),
                             ),
                           ),
                           Text(
                             'x${item.productQuantity}',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
+                            style: Theme.of(context).textTheme.titleMedium
                                 ?.copyWith(
                                   fontWeight: FontWeight.w900,
                                   color: AppColors.primary,
@@ -131,44 +140,46 @@ class KotPreviewPage extends ConsumerWidget {
                     'Otherwise Print/Share sends the ticket text.',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),
-          ),
-          const SizedBox(height: 16),
-          AppButton(
-            label: 'Print / Share KOT',
-            icon: Icons.print_rounded,
-            expanded: false,
-            onPressed: () async {
-              final result = await PrintJobDispatcher(ref).printKotRouted(ticket);
-              await ref
-                  .read(kotControllerProvider.notifier)
-                  .markPrinted(ticket.kot.kotId);
-              if (!context.mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(result.message ?? 'KOT printed')),
-              );
-              Navigator.of(context).pop(true);
-            },
-          ),
-          const SizedBox(height: 8),
-          AppButton(
-            label: 'Done',
-            onPressed: () async {
-              await ref
-                  .read(kotControllerProvider.notifier)
-                  .markPrinted(ticket.kot.kotId);
-              if (!context.mounted) return;
-              Navigator.of(context).pop(true);
-            },
-            variant: AppButtonVariant.outlined,
-            expanded: false,
-          ),
-        ],
-      ),
+            ),
+            const SizedBox(height: 16),
+            AppButton(
+              label: 'Print / Share KOT',
+              icon: Icons.print_rounded,
+              expanded: false,
+              onPressed: () async {
+                final result = await PrintJobDispatcher(
+                  ref,
+                ).printKotRouted(ticket);
+                await ref
+                    .read(kotControllerProvider.notifier)
+                    .markPrinted(ticket.kot.kotId);
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(result.message ?? 'KOT printed')),
+                );
+                Navigator.of(context).pop(true);
+              },
+            ),
+            const SizedBox(height: 8),
+            AppButton(
+              label: 'Done',
+              onPressed: () async {
+                await ref
+                    .read(kotControllerProvider.notifier)
+                    .markPrinted(ticket.kot.kotId);
+                if (!context.mounted) return;
+                Navigator.of(context).pop(true);
+              },
+              variant: AppButtonVariant.outlined,
+              expanded: false,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -191,17 +202,16 @@ class MetaRow extends StatelessWidget {
             child: Text(
               label,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           ),
           Expanded(
             child: Text(
               value,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(fontWeight: FontWeight.w700),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
             ),
           ),
         ],

@@ -47,8 +47,7 @@ abstract final class AppBreakpoints {
   }
 
   static bool isPosPersistentCart(AppWidthClass w) =>
-      AppPlatform.useDesktopShell ||
-      w.index >= AppWidthClass.expanded.index;
+      AppPlatform.useDesktopShell || w.index >= AppWidthClass.expanded.index;
 
   static double posSideCartWidth(AppWidthClass w) {
     if (AppPlatform.useDesktopShell) {
@@ -64,35 +63,35 @@ abstract final class AppBreakpoints {
 
   /* Home / hub module grids: 2 → 3 → 4. */
   static int moduleColumnsFor(AppWidthClass w) => switch (w) {
-        AppWidthClass.compact => 2,
-        AppWidthClass.medium => 3,
-        AppWidthClass.expanded => 4,
-        AppWidthClass.large => 4,
-      };
+    AppWidthClass.compact => 2,
+    AppWidthClass.medium => 3,
+    AppWidthClass.expanded => 4,
+    AppWidthClass.large => 4,
+  };
 
   /* POS product catalog: 2 → 3 → 4 → 5. */
   static int productColumnsFor(AppWidthClass w) => switch (w) {
-        AppWidthClass.compact => 2,
-        AppWidthClass.medium => 3,
-        AppWidthClass.expanded => 4,
-        AppWidthClass.large => 5,
-      };
+    AppWidthClass.compact => 2,
+    AppWidthClass.medium => 3,
+    AppWidthClass.expanded => 4,
+    AppWidthClass.large => 5,
+  };
 
   /* Tables floor grid: 2 → 3 → 4 → 5. */
   static int tableColumnsFor(AppWidthClass w) => switch (w) {
-        AppWidthClass.compact => 2,
-        AppWidthClass.medium => 3,
-        AppWidthClass.expanded => 4,
-        AppWidthClass.large => 5,
-      };
+    AppWidthClass.compact => 2,
+    AppWidthClass.medium => 3,
+    AppWidthClass.expanded => 4,
+    AppWidthClass.large => 5,
+  };
 
   /* Reports / masters card grids: 1 → 2 → 3. */
   static int cardColumnsFor(AppWidthClass w) => switch (w) {
-        AppWidthClass.compact => 1,
-        AppWidthClass.medium => 2,
-        AppWidthClass.expanded => 2,
-        AppWidthClass.large => 3,
-      };
+    AppWidthClass.compact => 1,
+    AppWidthClass.medium => 2,
+    AppWidthClass.expanded => 2,
+    AppWidthClass.large => 3,
+  };
 
   /* Settings groups: single column until large, then 2. */
   static int settingsColumnsFor(AppWidthClass w) =>
@@ -100,38 +99,42 @@ abstract final class AppBreakpoints {
 
   /* Readable content max width by class (auth / settings forms). */
   static double contentMaxWidthFor(AppWidthClass w) => switch (w) {
-        AppWidthClass.compact => 560,
-        AppWidthClass.medium => 720,
-        AppWidthClass.expanded => 960,
-        AppWidthClass.large => 1200,
-      };
+    AppWidthClass.compact => 560,
+    AppWidthClass.medium => 720,
+    AppWidthClass.expanded => 960,
+    AppWidthClass.large => 1200,
+  };
 
   /* Hub / dashboard pages can stretch wider than forms. */
   static double dashboardMaxWidthFor(AppWidthClass w) => switch (w) {
-        AppWidthClass.compact => 560,
-        AppWidthClass.medium => 900,
-        AppWidthClass.expanded => 1100,
-        AppWidthClass.large => 1400,
-      };
+    AppWidthClass.compact => 560,
+    AppWidthClass.medium => 900,
+    AppWidthClass.expanded => 1100,
+    AppWidthClass.large => 1400,
+  };
 
   /* Horizontal page padding scales up slightly on wide screens. */
   static double pagePaddingFor(AppWidthClass w) => switch (w) {
-        AppWidthClass.compact => 16,
-        AppWidthClass.medium => 20,
-        AppWidthClass.expanded => 24,
-        AppWidthClass.large => 28,
-      };
+    AppWidthClass.compact => 16,
+    AppWidthClass.medium => 20,
+    AppWidthClass.expanded => 24,
+    AppWidthClass.large => 28,
+  };
 }
 
 extension AppBreakpointsContext on BuildContext {
   AppWidthClass get widthClass => AppBreakpoints.of(this);
 
   bool get isCompactWidth => widthClass == AppWidthClass.compact;
+
   bool get isMediumWidth => widthClass == AppWidthClass.medium;
-  bool get isExpandedWidth =>
-      widthClass.index >= AppWidthClass.expanded.index;
+
+  bool get isExpandedWidth => widthClass.index >= AppWidthClass.expanded.index;
+
   bool get isLargeWidth => widthClass == AppWidthClass.large;
+
   bool get showPosSideCart => AppBreakpoints.isPosSideCart(widthClass);
+
   bool get showPosPersistentCart =>
       AppBreakpoints.isPosPersistentCart(widthClass);
 }

@@ -874,9 +874,10 @@ if (!function_exists('licence_home_sales_overview')) {
      * @param string $period today|month
      * @return array
      */
-    function licence_home_sales_overview($con, $licenseId, $period = 'today')
+    function licence_home_sales_overview($con, $licenseId, $period = 'today', $staffId = 0)
     {
         require_once __DIR__ . '/db_prepared.php';
+        require_once __DIR__ . '/invoice_sales_filter.php';
 
         $period = strtolower(trim((string) $period));
         if ($period !== 'month') {
@@ -888,36 +889,40 @@ if (!function_exists('licence_home_sales_overview')) {
         $monthPrefix = date('Y-m');
         $prevMonthPrefix = date('Y-m', strtotime('-1 month'));
 
+        $staffSql = ((int) $staffId > 0)
+            ? (' AND `createdByStaffId`=' . (int) $staffId)
+            : '';
+
         $allTimeSales = db_stmt_scalar_string(
             $con,
-            'SELECT COALESCE(SUM(`totalAmount`), 0) FROM `invoice` WHERE `licenseId` = ?' . invoice_and_not_refunded(''),
+            'SELECT COALESCE(SUM(`totalAmount`), 0) FROM `invoice` WHERE `licenseId` = ?' . invoice_and_not_refunded('') . $staffSql,
             's',
             (string) $licenseId
         );
         $todaySales = db_stmt_scalar_string(
             $con,
-            'SELECT COALESCE(SUM(`totalAmount`), 0) FROM `invoice` WHERE `licenseId` = ? AND `invoiceDate` LIKE CONCAT(\'%\', ?, \'%\')' . invoice_and_not_refunded(''),
+            'SELECT COALESCE(SUM(`totalAmount`), 0) FROM `invoice` WHERE `licenseId` = ? AND `invoiceDate` LIKE CONCAT(\'%\', ?, \'%\')' . invoice_and_not_refunded('') . $staffSql,
             'ss',
             (string) $licenseId,
             (string) $today
         );
         $yesterdaySales = db_stmt_scalar_string(
             $con,
-            'SELECT COALESCE(SUM(`totalAmount`), 0) FROM `invoice` WHERE `licenseId` = ? AND `invoiceDate` LIKE CONCAT(\'%\', ?, \'%\')' . invoice_and_not_refunded(''),
+            'SELECT COALESCE(SUM(`totalAmount`), 0) FROM `invoice` WHERE `licenseId` = ? AND `invoiceDate` LIKE CONCAT(\'%\', ?, \'%\')' . invoice_and_not_refunded('') . $staffSql,
             'ss',
             (string) $licenseId,
             (string) $yesterday
         );
         $monthSales = db_stmt_scalar_string(
             $con,
-            'SELECT COALESCE(SUM(`totalAmount`), 0) FROM `invoice` WHERE `licenseId` = ? AND `invoiceDate` LIKE CONCAT(?, \'%\')' . invoice_and_not_refunded(''),
+            'SELECT COALESCE(SUM(`totalAmount`), 0) FROM `invoice` WHERE `licenseId` = ? AND `invoiceDate` LIKE CONCAT(?, \'%\')' . invoice_and_not_refunded('') . $staffSql,
             'ss',
             (string) $licenseId,
             (string) $monthPrefix
         );
         $prevMonthSales = db_stmt_scalar_string(
             $con,
-            'SELECT COALESCE(SUM(`totalAmount`), 0) FROM `invoice` WHERE `licenseId` = ? AND `invoiceDate` LIKE CONCAT(?, \'%\')' . invoice_and_not_refunded(''),
+            'SELECT COALESCE(SUM(`totalAmount`), 0) FROM `invoice` WHERE `licenseId` = ? AND `invoiceDate` LIKE CONCAT(?, \'%\')' . invoice_and_not_refunded('') . $staffSql,
             'ss',
             (string) $licenseId,
             (string) $prevMonthPrefix

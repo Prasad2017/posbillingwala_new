@@ -55,7 +55,10 @@ class AuthRepository {
       throw AuthException('Please enter your licence key');
     }
 
-    var check = await api.loginCheck(licenceKey: key, deviceId: device.deviceId);
+    var check = await api.loginCheck(
+      licenceKey: key,
+      deviceId: device.deviceId,
+    );
 
     if (check.status == '2') {
       final rebound = await api.updateLicenceKey(
@@ -104,7 +107,9 @@ class AuthRepository {
       throw AuthException(expire.message ?? 'Licence check failed');
     }
     if (!isLicenceValid(expire.licenceKeyExpireDate)) {
-      throw AuthException('Your licence has expired. Please renew to continue.');
+      throw AuthException(
+        'Your licence has expired. Please renew to continue.',
+      );
     }
 
     final session = UserSession.fromLogin(expire);
@@ -190,7 +195,9 @@ class AuthRepository {
       throw AuthException(response.message ?? 'Invalid PB-PIN');
     }
     if (!isLicenceValid(response.licenceKeyExpireDate)) {
-      throw AuthException('Your licence has expired. Please renew to continue.');
+      throw AuthException(
+        'Your licence has expired. Please renew to continue.',
+      );
     }
 
     final session = UserSession.fromLogin(response);
@@ -224,9 +231,9 @@ class AuthRepository {
       localInvoiceCount: 0,
     );
     if (!result.valid) {
-      throw AuthException(result.message.isEmpty
-          ? 'Licence validation failed'
-          : result.message);
+      throw AuthException(
+        result.message.isEmpty ? 'Licence validation failed' : result.message,
+      );
     }
   }
 

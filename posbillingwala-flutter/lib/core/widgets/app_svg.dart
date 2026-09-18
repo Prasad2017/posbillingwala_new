@@ -31,10 +31,7 @@ class AppSvg extends StatelessWidget {
       colorFilter: color == null
           ? null
           : ColorFilter.mode(color!, BlendMode.srcIn),
-      placeholderBuilder: (_) => SizedBox(
-        width: width,
-        height: height,
-      ),
+      placeholderBuilder: (_) => SizedBox(width: width, height: height),
     );
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
+import 'package:pos_billingwala_v2/core/utils/money_format.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/payment_mode.dart';
 import 'package:pos_billingwala_v2/language/app_strings.dart';
@@ -46,9 +47,7 @@ class PaymentModeChip extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
-                selected
-                    ? Icons.radio_button_checked
-                    : Icons.radio_button_off,
+                selected ? Icons.radio_button_checked : Icons.radio_button_off,
                 size: 16,
                 color: selected ? AppColors.navy : AppColors.textSecondary,
               ),
@@ -105,10 +104,10 @@ class PaymentModeSheetState extends ConsumerState<PaymentModeSheet> {
     super.initState();
     paymentPageMode = widget.initialMode;
     cashController = TextEditingController(
-      text: widget.initialCash.toStringAsFixed(2),
+      text: amountInputText(widget.initialCash),
     );
     upiController = TextEditingController(
-      text: widget.initialUpi.toStringAsFixed(2),
+      text: amountInputText(widget.initialUpi),
     );
   }
 
@@ -120,7 +119,9 @@ class PaymentModeSheetState extends ConsumerState<PaymentModeSheet> {
   }
 
   double get paymentPageCash => double.tryParse(cashController.text) ?? 0;
+
   double get paymentPageUpi => double.tryParse(upiController.text) ?? 0;
+
   double get settlement =>
       double.parse((paymentPageCash + paymentPageUpi).toStringAsFixed(2));
 
@@ -132,16 +133,8 @@ class PaymentModeSheetState extends ConsumerState<PaymentModeSheet> {
   void paymentPageSelectMode(PaymentMode mode) {
     setState(() {
       paymentPageMode = mode;
-      if (mode == PaymentMode.cash) {
-        cashController.text = widget.totalAmount.toStringAsFixed(2);
-        upiController.text = '0.00';
-      } else if (mode == PaymentMode.upi) {
-        cashController.text = '0.00';
-        upiController.text = widget.totalAmount.toStringAsFixed(2);
-      } else {
-        cashController.text = '0.00';
-        upiController.text = '0.00';
-      }
+      cashController.clear();
+      upiController.clear();
     });
   }
 
@@ -171,10 +164,7 @@ class PaymentModeSheetState extends ConsumerState<PaymentModeSheet> {
             const SizedBox(height: 10),
             Text(
               'Total Amount: ${widget.currency.format(widget.totalAmount)}',
-              style: const TextStyle(
-                fontWeight: FontWeight.w800,
-                fontSize: 16,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
             ),
             const SizedBox(height: 16),
             Row(
@@ -196,33 +186,33 @@ class PaymentModeSheetState extends ConsumerState<PaymentModeSheet> {
               Row(
                 children: [
                   Expanded(
-                    child: TextField(
+                    child: AppTextField(
+                      required: true,
                       controller: cashController,
+                      label: strings.cashAmount,
+                      hint: strings.cashAmount,
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                       ),
                       inputFormatters: [
                         FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                       ],
-                      decoration: InputDecoration(
-                        labelText: strings.cashAmount,
-                      ),
                       onChanged: (_) => setState(() {}),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: TextField(
+                    child: AppTextField(
+                      required: true,
                       controller: upiController,
+                      label: strings.upiAmount,
+                      hint: strings.upiAmount,
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                       ),
                       inputFormatters: [
                         FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                       ],
-                      decoration: InputDecoration(
-                        labelText: strings.upiAmount,
-                      ),
                       onChanged: (_) => setState(() {}),
                     ),
                   ),
@@ -268,10 +258,10 @@ class PaymentModeSheetState extends ConsumerState<PaymentModeSheet> {
                     onPressed: !settlementOk
                         ? null
                         : () => widget.onContinue(
-                              paymentPageMode,
-                              paymentPageCash,
-                              paymentPageUpi,
-                            ),
+                            paymentPageMode,
+                            paymentPageCash,
+                            paymentPageUpi,
+                          ),
                   ),
                 ),
               ],

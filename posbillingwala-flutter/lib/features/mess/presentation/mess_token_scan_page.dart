@@ -58,22 +58,23 @@ class MessTokenScanPageState extends ConsumerState<MessTokenScanPage> {
     last = raw;
     setState(() => busy = true);
     try {
-      final token =
-          await ref.read(messControllerProvider.notifier).verifyRaw(raw);
+      final token = await ref
+          .read(messControllerProvider.notifier)
+          .verifyRaw(raw);
       if (!mounted) return;
       if (token == null) {
         throw StateError('Token not found');
       }
       final label = 'Verified: ${token.memberName ?? token.tokenCode}';
       setState(() => resultText = label);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(label)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(label)));
       Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
       setState(() => resultText = '$e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$e')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
       await Future<void>.delayed(const Duration(seconds: 2));
       last = null;
     } finally {
@@ -89,7 +90,10 @@ class MessTokenScanPageState extends ConsumerState<MessTokenScanPage> {
         body: Stack(
           fit: StackFit.expand,
           children: [
-            MobileScanner(controller: messTokenScanPageController!, onDetect: messTokenScanPageOnDetect),
+            MobileScanner(
+              controller: messTokenScanPageController!,
+              onDetect: messTokenScanPageOnDetect,
+            ),
             const ScannerOverlay(),
             SafeArea(
               child: Padding(
@@ -118,7 +122,8 @@ class MessTokenScanPageState extends ConsumerState<MessTokenScanPage> {
                           shape: const CircleBorder(),
                           child: IconButton(
                             tooltip: 'Toggle torch',
-                            onPressed: () => messTokenScanPageController?.toggleTorch(),
+                            onPressed: () =>
+                                messTokenScanPageController?.toggleTorch(),
                             icon: const Icon(
                               Icons.flashlight_on_rounded,
                               color: Colors.white,
@@ -178,10 +183,7 @@ class MessTokenScanPageState extends ConsumerState<MessTokenScanPage> {
               style: TextStyle(fontSize: 15),
             ),
             const SizedBox(height: 24),
-            AppButton(
-              label: 'Start QR scanner',
-              onPressed: startScanner,
-            ),
+            AppButton(label: 'Start QR scanner', onPressed: startScanner),
             if (resultText != null) ...[
               const SizedBox(height: 24),
               Text(
@@ -238,13 +240,25 @@ class CornerFramePainter extends CustomPainter {
     canvas.drawLine(cut.topRight, cut.topRight + const Offset(-len, 0), stroke);
     canvas.drawLine(cut.topRight, cut.topRight + const Offset(0, len), stroke);
     canvas.drawLine(
-        cut.bottomLeft, cut.bottomLeft + const Offset(len, 0), stroke);
+      cut.bottomLeft,
+      cut.bottomLeft + const Offset(len, 0),
+      stroke,
+    );
     canvas.drawLine(
-        cut.bottomLeft, cut.bottomLeft + const Offset(0, -len), stroke);
+      cut.bottomLeft,
+      cut.bottomLeft + const Offset(0, -len),
+      stroke,
+    );
     canvas.drawLine(
-        cut.bottomRight, cut.bottomRight + const Offset(-len, 0), stroke);
+      cut.bottomRight,
+      cut.bottomRight + const Offset(-len, 0),
+      stroke,
+    );
     canvas.drawLine(
-        cut.bottomRight, cut.bottomRight + const Offset(0, -len), stroke);
+      cut.bottomRight,
+      cut.bottomRight + const Offset(0, -len),
+      stroke,
+    );
   }
 
   @override

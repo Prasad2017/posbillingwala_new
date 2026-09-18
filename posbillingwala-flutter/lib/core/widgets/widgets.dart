@@ -9,6 +9,7 @@ export 'app_page_chrome.dart';
 export 'app_section_header.dart';
 export 'app_states.dart';
 export 'app_svg.dart';
+export 'app_switch_tile.dart';
 export 'app_text_field.dart';
 export 'brand_logo.dart';
 export 'donut_chart.dart';

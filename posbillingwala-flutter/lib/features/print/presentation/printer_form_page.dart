@@ -23,9 +23,15 @@ class PrinterFormPage extends ConsumerStatefulWidget {
 }
 
 class PrinterFormPageState extends ConsumerState<PrinterFormPage> {
-  late final name = TextEditingController(text: widget.existing?.printerName ?? '');
-  late final bt = TextEditingController(text: widget.existing?.bluetoothAddress ?? '');
-  late final usb = TextEditingController(text: widget.existing?.usbIdentifier ?? '');
+  late final name = TextEditingController(
+    text: widget.existing?.printerName ?? '',
+  );
+  late final bt = TextEditingController(
+    text: widget.existing?.bluetoothAddress ?? '',
+  );
+  late final usb = TextEditingController(
+    text: widget.existing?.usbIdentifier ?? '',
+  );
   String connection = 'BLUETOOTH';
   String paperSize = '2-Inch';
   String purpose = 'KOT';
@@ -59,14 +65,16 @@ class PrinterFormPageState extends ConsumerState<PrinterFormPage> {
   }
 
   Future<void> pickDevice() async {
-    final channel =
-        purpose == 'BILL' ? PrinterChannelKind.bill : PrinterChannelKind.kot;
+    final channel = purpose == 'BILL'
+        ? PrinterChannelKind.bill
+        : PrinterChannelKind.kot;
     final picked = await Navigator.of(context).push<PickedPrinter>(
       MaterialPageRoute(
         builder: (_) => PrinterDevicePickerPage(
           channel: channel,
-          initialTransport:
-              isUsb ? PosPrinterTransport.usb : PosPrinterTransport.bluetooth,
+          initialTransport: isUsb
+              ? PosPrinterTransport.usb
+              : PosPrinterTransport.bluetooth,
           showNetwork: false,
           lockToInitialTransport: true,
           title: isUsb ? 'Select USB printer' : 'Select Bluetooth printer',
@@ -91,15 +99,15 @@ class PrinterFormPageState extends ConsumerState<PrinterFormPage> {
     final session = ref.read(authControllerProvider).session;
     if (session == null) return;
     if (name.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter printer name')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Enter printer name')));
       return;
     }
     if (isUsb && usb.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Select a USB printer')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Select a USB printer')));
       return;
     }
     if (!isUsb && bt.text.trim().isEmpty) {
@@ -111,21 +119,17 @@ class PrinterFormPageState extends ConsumerState<PrinterFormPage> {
     setState(() => saving = true);
     try {
       final device = await DeviceIdentityService().resolve();
-      await ref.read(storePrinterApiProvider).save(
-            session.licenceUserId,
-            {
-              'printerName': name.text.trim(),
-              'connectionType': connection,
-              'bluetoothAddress': bt.text.trim(),
-              'usbIdentifier': usb.text.trim(),
-              'usbName': usbName,
-              'paperSize': paperSize,
-              'purpose': purpose,
-              'area': area,
-              'deviceId': bindThisDevice ? device.deviceId : '',
-            },
-            id: widget.existing?.id,
-          );
+      await ref.read(storePrinterApiProvider).save(session.licenceUserId, {
+        'printerName': name.text.trim(),
+        'connectionType': connection,
+        'bluetoothAddress': bt.text.trim(),
+        'usbIdentifier': usb.text.trim(),
+        'usbName': usbName,
+        'paperSize': paperSize,
+        'purpose': purpose,
+        'area': area,
+        'deviceId': bindThisDevice ? device.deviceId : '',
+      }, id: widget.existing?.id);
       if (mounted) Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
@@ -154,7 +158,9 @@ class PrinterFormPageState extends ConsumerState<PrinterFormPage> {
       text: 'TEST $paperSize',
       bytes: bytes,
       label: 'Test print',
-      transport: isUsb ? PosPrinterTransport.usb : PosPrinterTransport.bluetooth,
+      transport: isUsb
+          ? PosPrinterTransport.usb
+          : PosPrinterTransport.bluetooth,
       bluetoothAddress: bt.text.trim(),
       usbIdentifier: usb.text.trim(),
       usbName: usbName,
@@ -179,6 +185,7 @@ class PrinterFormPageState extends ConsumerState<PrinterFormPage> {
         padding: const EdgeInsets.all(16),
         children: [
           AppTextField(
+            required: true,
             controller: name,
             label: 'Printer name',
             hint: 'Kitchen printer',
@@ -230,8 +237,8 @@ class PrinterFormPageState extends ConsumerState<PrinterFormPage> {
             subtitle: Text(
               selectedLabel.isEmpty
                   ? (isUsb
-                      ? 'Tap to scan USB / OTG printers'
-                      : 'Tap to pick a paired Bluetooth printer')
+                        ? 'Tap to scan USB / OTG printers'
+                        : 'Tap to pick a paired Bluetooth printer')
                   : selectedLabel,
             ),
             trailing: const Icon(Icons.chevron_right_rounded),
@@ -254,13 +261,7 @@ class PrinterFormPageState extends ConsumerState<PrinterFormPage> {
           const SizedBox(height: 8),
           AppDropdownFormField<String>(
             label: 'Area',
-            items: const [
-              'KITCHEN',
-              'BAR',
-              'COUNTER',
-              'PACKING',
-              'TAKEAWAY',
-            ],
+            items: const ['KITCHEN', 'BAR', 'COUNTER', 'PACKING', 'TAKEAWAY'],
             itemLabel: (v) => switch (v) {
               'KITCHEN' => 'Kitchen',
               'BAR' => 'Bar',
@@ -272,11 +273,11 @@ class PrinterFormPageState extends ConsumerState<PrinterFormPage> {
             value: area,
             onChanged: (v) => setState(() => area = v ?? area),
           ),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('This device is the print host'),
-            subtitle: const Text('Leave off for a waiter device with no printer'),
+          AppSwitchTile(
+            title: 'This device is the print host',
+            subtitle: 'Leave off for a waiter device with no printer',
             value: bindThisDevice,
+            showDivider: false,
             onChanged: (v) => setState(() => bindThisDevice = v),
           ),
           AppButton(

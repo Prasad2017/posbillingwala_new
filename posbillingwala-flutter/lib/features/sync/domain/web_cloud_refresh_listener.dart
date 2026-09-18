@@ -39,7 +39,7 @@ class WebCloudRefreshListener {
 
     final auth = webCloudRefreshListenerRef.read(authControllerProvider);
     if (auth.status != AuthStatus.authenticated) return;
-    final userId = auth.session?.userId;
+    final userId = auth.session?.licenceUserId;
     if (userId == null || userId.isEmpty) return;
 
     if (!force &&

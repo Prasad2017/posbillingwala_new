@@ -713,9 +713,14 @@ public class UserSynchronizeData {
     public void savePortion(String portionId, String productId, String productNetworkStatus, String portionName,
                             String portionPrice, String portionSortOrder, String portionDeletedStatus,
                             String portionNetworkStatus, String portionMasterId, String portionMasterNetworkStatus) {
+        /* Prefer network keys on upload so server never trusts device-local PKs. */
+        String uploadProductId = (productNetworkStatus != null && !productNetworkStatus.trim().isEmpty())
+                ? "0" : productId;
+        String uploadMasterId = (portionMasterNetworkStatus != null && !portionMasterNetworkStatus.trim().isEmpty())
+                ? "0" : portionMasterId;
         if (executeCall(Api.getClient(context).savePortion(
-                MainActivity.ownerId, productId, productNetworkStatus, portionName, portionPrice, portionSortOrder,
-                portionDeletedStatus, portionNetworkStatus, portionMasterId, portionMasterNetworkStatus))) {
+                MainActivity.ownerId, uploadProductId, productNetworkStatus, portionName, portionPrice, portionSortOrder,
+                portionDeletedStatus, portionNetworkStatus, uploadMasterId, portionMasterNetworkStatus))) {
             posBillingWalaDatabase.updateSyncPortion(portionId, NAME_SYNCED_WITH_SERVER);
         }
     }
@@ -734,9 +739,15 @@ public class UserSynchronizeData {
                               String productNetworkStatus, String portionId, String portionNetworkStatus,
                               String comboItemQuantity, String comboItemSortOrder, String comboItemDeletedStatus,
                               String comboItemNetworkStatus) {
+        String uploadComboId = (comboNetworkStatus != null && !comboNetworkStatus.trim().isEmpty())
+                ? "0" : comboId;
+        String uploadProductId = (productNetworkStatus != null && !productNetworkStatus.trim().isEmpty())
+                ? "0" : productId;
+        String uploadPortionId = (portionNetworkStatus != null && !portionNetworkStatus.trim().isEmpty())
+                ? "0" : portionId;
         if (executeCall(Api.getClient(context).saveComboItem(
-                MainActivity.ownerId, comboId, comboNetworkStatus, productId, productNetworkStatus, portionId,
-                portionNetworkStatus, comboItemQuantity, comboItemSortOrder, comboItemDeletedStatus,
+                MainActivity.ownerId, uploadComboId, comboNetworkStatus, uploadProductId, productNetworkStatus,
+                uploadPortionId, portionNetworkStatus, comboItemQuantity, comboItemSortOrder, comboItemDeletedStatus,
                 comboItemNetworkStatus))) {
             posBillingWalaDatabase.updateSyncComboItem(comboItemId, NAME_SYNCED_WITH_SERVER);
         }

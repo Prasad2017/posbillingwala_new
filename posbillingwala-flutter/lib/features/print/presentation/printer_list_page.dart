@@ -30,8 +30,9 @@ class PrinterListPageState extends ConsumerState<PrinterListPage> {
     if (session == null) return;
     setState(() => loading = true);
     try {
-      final cached =
-          await CloudScreenCache.loadMapList(CloudScreenCache.storePrinters);
+      final cached = await CloudScreenCache.loadMapList(
+        CloudScreenCache.storePrinters,
+      );
       if (cached.isNotEmpty && mounted) {
         setState(() {
           printers = cached.map(StorePrinter.fromJson).toList();
@@ -39,8 +40,9 @@ class PrinterListPageState extends ConsumerState<PrinterListPage> {
           error = null;
         });
       }
-      final list =
-          await ref.read(storePrinterApiProvider).list(session.licenceUserId);
+      final list = await ref
+          .read(storePrinterApiProvider)
+          .list(session.licenceUserId);
       if (!mounted) return;
       setState(() {
         printers = list;
@@ -58,7 +60,9 @@ class PrinterListPageState extends ConsumerState<PrinterListPage> {
 
   @override
   Widget build(BuildContext context) {
-    final canManage = ref.watch(permissionControllerProvider).allows('printer.manage');
+    final canManage = ref
+        .watch(permissionControllerProvider)
+        .allows('printer.manage');
     return Scaffold(
       appBar: AppBar(
         title: const Text('Extra printers'),
@@ -85,36 +89,39 @@ class PrinterListPageState extends ConsumerState<PrinterListPage> {
       body: loading
           ? const Center(child: CircularProgressIndicator())
           : error != null
-              ? Center(child: Text(error!))
-              : RefreshIndicator(
-                  onRefresh: load,
-                  child: ListView.builder(
-                    itemCount: printers.isEmpty ? 1 : printers.length,
-                    itemBuilder: (context, index) {
-                      if (printers.isEmpty) {
-                        return const Padding(
-                          padding: EdgeInsets.all(24),
-                          child: Text(
-                            'No extra printers yet. Tap + to add a kitchen or packing printer.',
-                            textAlign: TextAlign.center,
-                          ),
-                        );
-                      }
-                      final printer = printers[index];
-                      return ListTile(
-                        title: Text(printer.printerName),
-                        subtitle: Text(
-                          '${printer.connectionLabel} · ${printer.paperSizeLabel} · ${printer.purpose} · ${printer.area}',
-                        ),
-                        trailing: printer.enabled ? null : const Text('Off'),
-                        onTap: () async {
-                          await context.push('/settings/printers/edit', extra: printer);
-                          await load();
-                        },
+          ? Center(child: Text(error!))
+          : RefreshIndicator(
+              onRefresh: load,
+              child: ListView.builder(
+                itemCount: printers.isEmpty ? 1 : printers.length,
+                itemBuilder: (context, index) {
+                  if (printers.isEmpty) {
+                    return const Padding(
+                      padding: EdgeInsets.all(24),
+                      child: Text(
+                        'No extra printers yet. Tap + to add a kitchen or packing printer.',
+                        textAlign: TextAlign.center,
+                      ),
+                    );
+                  }
+                  final printer = printers[index];
+                  return ListTile(
+                    title: Text(printer.printerName),
+                    subtitle: Text(
+                      '${printer.connectionLabel} · ${printer.paperSizeLabel} · ${printer.purpose} · ${printer.area}',
+                    ),
+                    trailing: printer.enabled ? null : const Text('Off'),
+                    onTap: () async {
+                      await context.push(
+                        '/settings/printers/edit',
+                        extra: printer,
                       );
+                      await load();
                     },
-                  ),
-                ),
+                  );
+                },
+              ),
+            ),
     );
   }
 }

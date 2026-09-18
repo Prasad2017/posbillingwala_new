@@ -47,37 +47,37 @@ class FetchLocalCounts {
     final categories = await db.countActiveCategories();
     final subcategories = await db.countActiveSubcategories();
     final products = await db.countActiveProducts();
-    final portions = await (db.select(db.productPortions)
-          ..where((t) => t.portionDeletedStatus.equals('0')))
-        .get()
-        .then((r) => r.length);
-    final portionMasters = await (db.select(db.portionMasters)
-          ..where((t) => t.portionMasterDeletedStatus.equals('0')))
-        .get()
-        .then((r) => r.length);
+    final portions =
+        await (db.select(db.productPortions)
+              ..where((t) => t.portionDeletedStatus.equals('0')))
+            .get()
+            .then((r) => r.length);
+    final portionMasters =
+        await (db.select(db.portionMasters)
+              ..where((t) => t.portionMasterDeletedStatus.equals('0')))
+            .get()
+            .then((r) => r.length);
     final combos = await db.countActiveCombos();
-    final comboItems = await (db.select(db.comboItems)
-          ..where((t) => t.comboItemDeletedStatus.equals('0')))
-        .get()
-        .then((r) => r.length);
-    final diningAreas = await (db.select(db.diningAreas)
-          ..where((t) => t.areaActive.equals('1')))
-        .get()
-        .then((r) => r.length);
-    final tableTypes = await (db.select(db.tableTypes)
-          ..where((t) => t.tableTypeActive.equals('1')))
-        .get()
-        .then((r) => r.length);
+    final comboItems =
+        await (db.select(db.comboItems)
+              ..where((t) => t.comboItemDeletedStatus.equals('0')))
+            .get()
+            .then((r) => r.length);
+    final diningAreas = await (db.select(
+      db.diningAreas,
+    )..where((t) => t.areaActive.equals('1'))).get().then((r) => r.length);
+    final tableTypes = await (db.select(
+      db.tableTypes,
+    )..where((t) => t.tableTypeActive.equals('1'))).get().then((r) => r.length);
     final tables = await db.countActivePosTables();
     final invoices = await db.countTotalInvoices();
     final invoiceItems = await tableCount(db.invoiceItems);
     final invoiceComboItems = await tableCount(db.invoiceComboItems);
     final inventory = await tableCount(db.inventoryMovements);
     final expenses = await tableCount(db.shopExpenses);
-    final messMembers = await (db.select(db.messMembers)
-          ..where((t) => t.memberStatus.equals('1')))
-        .get()
-        .then((r) => r.length);
+    final messMembers = await (db.select(
+      db.messMembers,
+    )..where((t) => t.memberStatus.equals('1'))).get().then((r) => r.length);
     final messPayments = await tableCount(db.messMemberPayments);
     final messInvoices = await tableCount(db.messInvoices);
     final messTokens = await tableCount(db.messTokens);
@@ -101,11 +101,7 @@ class FetchLocalCounts {
           count: diningAreas,
           group: 'Tables',
         ),
-        FetchCountRow(
-          label: 'Table types',
-          count: tableTypes,
-          group: 'Tables',
-        ),
+        FetchCountRow(label: 'Table types', count: tableTypes, group: 'Tables'),
         FetchCountRow(label: 'POS tables', count: tables, group: 'Tables'),
         FetchCountRow(label: 'Invoices', count: invoices, group: 'Sales'),
         FetchCountRow(
@@ -124,11 +120,7 @@ class FetchLocalCounts {
           group: 'Ops',
         ),
         FetchCountRow(label: 'Expenses', count: expenses, group: 'Ops'),
-        FetchCountRow(
-          label: 'Mess members',
-          count: messMembers,
-          group: 'Mess',
-        ),
+        FetchCountRow(label: 'Mess members', count: messMembers, group: 'Mess'),
         FetchCountRow(
           label: 'Mess payments',
           count: messPayments,
@@ -139,11 +131,7 @@ class FetchLocalCounts {
           count: messInvoices,
           group: 'Mess',
         ),
-        FetchCountRow(
-          label: 'Mess tokens',
-          count: messTokens,
-          group: 'Mess',
-        ),
+        FetchCountRow(label: 'Mess tokens', count: messTokens, group: 'Mess'),
         FetchCountRow(
           label: 'Dining sessions',
           count: diningSessions,
@@ -226,7 +214,8 @@ class FetchLocalCounts {
         ),
         FetchCountRow(
           label: 'Home overview',
-          count: (screenCounts[CloudScreenCache.homeOverviewToday] ?? 0) +
+          count:
+              (screenCounts[CloudScreenCache.homeOverviewToday] ?? 0) +
               (screenCounts[CloudScreenCache.homeOverviewMonth] ?? 0),
           group: 'Screens',
         ),

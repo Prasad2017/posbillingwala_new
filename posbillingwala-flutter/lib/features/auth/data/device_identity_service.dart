@@ -6,10 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class DeviceIdentity {
-  const DeviceIdentity({
-    required this.deviceId,
-    required this.deviceName,
-  });
+  const DeviceIdentity({required this.deviceId, required this.deviceName});
 
   final String deviceId;
   final String deviceName;
@@ -20,11 +17,9 @@ class DeviceIdentity {
 /* Does **not** use the Android-only `android_id` package. A stable UUID is */
 /* persisted when the OS does not expose a reliable hardware id. */
 class DeviceIdentityService {
-  DeviceIdentityService({
-    DeviceInfoPlugin? plugin,
-    SharedPreferences? prefs,
-  })  : deviceIdentityServicePlugin = plugin ?? DeviceInfoPlugin(),
-        prefsOverride = prefs;
+  DeviceIdentityService({DeviceInfoPlugin? plugin, SharedPreferences? prefs})
+    : deviceIdentityServicePlugin = plugin ?? DeviceInfoPlugin(),
+      prefsOverride = prefs;
 
   static const prefsKey = 'pb_device_id_v1';
 
@@ -79,9 +74,9 @@ class DeviceIdentityService {
   String randomUuid() {
     final r = Random.secure();
     String hex(int bytes) => List.generate(
-          bytes,
-          (_) => r.nextInt(256).toRadixString(16).padLeft(2, '0'),
-        ).join();
+      bytes,
+      (_) => r.nextInt(256).toRadixString(16).padLeft(2, '0'),
+    ).join();
     return '${hex(4)}-${hex(2)}-${hex(2)}-${hex(2)}-${hex(6)}';
   }
 }
@@ -101,9 +96,7 @@ class DeviceApiFields {
     bool includeDeviceIdAlias = true,
     bool includeDeviceName = true,
   }) {
-    final map = <String, String>{
-      'android_device_id': deviceId,
-    };
+    final map = <String, String>{'android_device_id': deviceId};
     if (includeAndroidIdAlias) {
       map['androidId'] = deviceId;
     }

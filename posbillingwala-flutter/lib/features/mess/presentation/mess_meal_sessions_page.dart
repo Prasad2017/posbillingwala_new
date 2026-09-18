@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pos_billingwala_v2/core/constants/app_assets.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
+import 'package:pos_billingwala_v2/core/network/online_guard.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/theme/app_typography.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
@@ -19,10 +20,16 @@ class MessMealSessionsPage extends ConsumerStatefulWidget {
       MessMealSessionsPageState();
 }
 
-Color sessionColor(int index) => [AppColors.orange, AppColors.purple, AppColors.teal, AppColors.primary][index % 4];
+Color sessionColor(int index) => [
+  AppColors.orange,
+  AppColors.purple,
+  AppColors.teal,
+  AppColors.primary,
+][index % 4];
 
 class MessMealSessionsPageState extends ConsumerState<MessMealSessionsPage> {
-  AsyncValue<List<MessMealSessionDto>> messMealSessionsPageSessions = const AsyncLoading();
+  AsyncValue<List<MessMealSessionDto>> messMealSessionsPageSessions =
+      const AsyncLoading();
   bool saving = false;
 
   @override
@@ -35,25 +42,32 @@ class MessMealSessionsPageState extends ConsumerState<MessMealSessionsPage> {
     final userId = ref.read(authControllerProvider).session?.userId;
     if (userId == null || userId.isEmpty) {
       setState(
-        () => messMealSessionsPageSessions =
-            AsyncError('Login required', StackTrace.current),
+        () => messMealSessionsPageSessions = AsyncError(
+          'Login required',
+          StackTrace.current,
+        ),
       );
       return;
     }
-    setState(() => messMealSessionsPageSessions = const AsyncLoading());
-    final cached =
-        await CloudScreenCache.loadMapList(CloudScreenCache.mealSessions);
+    final cached = await CloudScreenCache.loadMapList(
+      CloudScreenCache.mealSessions,
+    );
     if (cached.isNotEmpty && mounted) {
       setState(
         () => messMealSessionsPageSessions = AsyncData(
           cached.map(MessMealSessionDto.fromJson).toList(),
         ),
       );
+    } else if (mounted) {
+      setState(() => messMealSessionsPageSessions = const AsyncLoading());
     }
+    if (!await isDeviceOnline()) return;
     final result = await AsyncValue.guard(() async {
       return MessApi(ref.read(apiClientProvider)).fetchMealSessions(userId);
     });
     if (!mounted) return;
+    /* Keep cache if cloud fetch fails. */
+    if (result.hasError && messMealSessionsPageSessions.hasValue) return;
     setState(() => messMealSessionsPageSessions = result);
   }
 
@@ -68,20 +82,20 @@ class MessMealSessionsPageState extends ConsumerState<MessMealSessionsPage> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setLocal) => AlertDialog(
-          title: Text(session.sessionId.isEmpty ? 'Add session' : 'Edit session'),
+          title: Text(
+            session.sessionId.isEmpty ? 'Add session' : 'Edit session',
+          ),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 AppTextField(
-                      controller: nameCtrl,
-                      label: 'Session name',
-                    ),
+                  required: true,
+                  controller: nameCtrl,
+                  label: 'Session name',
+                ),
                 const SizedBox(height: 12),
-                AppTextField(
-                      controller: prefixCtrl,
-                      label: 'Token prefix',
-                    ),
+                AppTextField(controller: prefixCtrl, label: 'Token prefix'),
                 const SizedBox(height: 12),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
@@ -129,10 +143,10 @@ class MessMealSessionsPageState extends ConsumerState<MessMealSessionsPage> {
                     }
                   },
                 ),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(AppStrings.of(ref).active),
+                AppSwitchTile(
+                  title: AppStrings.of(ref).active,
                   value: active,
+                  showDivider: false,
                   onChanged: (v) => setLocal(() => active = v),
                 ),
               ],
@@ -144,9 +158,9 @@ class MessMealSessionsPageState extends ConsumerState<MessMealSessionsPage> {
               child: Text(AppStrings.of(ref).cancel),
             ),
             AppButton(
-            label: 'Save',
-            onPressed: () => Navigator.pop(context, true),
-          ),
+              label: 'Save',
+              onPressed: () => Navigator.pop(context, true),
+            ),
           ],
         ),
       ),
@@ -157,24 +171,24 @@ class MessMealSessionsPageState extends ConsumerState<MessMealSessionsPage> {
     if (userId == null) return;
     setState(() => saving = true);
     try {
-      final success = await MessApi(ref.read(apiClientProvider)).saveMealSession(
-        userId: userId,
-        sessionId: session.sessionId.isEmpty
-            ? 'sess_${DateTime.now().millisecondsSinceEpoch}'
-            : session.sessionId,
-        sessionName: nameCtrl.text.trim(),
-        startTime: start,
-        endTime: end,
-        tokenPrefix: prefixCtrl.text.trim(),
-        isActive: active ? '1' : '0',
-        menuNotes: session.menuNotes,
-        sortOrder: session.sortOrder,
-      );
+      final success = await MessApi(ref.read(apiClientProvider))
+          .saveMealSession(
+            userId: userId,
+            sessionId: session.sessionId.isEmpty ||
+                    int.tryParse(session.sessionId) == null
+                ? ''
+                : session.sessionId,
+            sessionName: nameCtrl.text.trim(),
+            startTime: start,
+            endTime: end,
+            tokenPrefix: prefixCtrl.text.trim(),
+            isActive: active ? '1' : '0',
+            menuNotes: session.menuNotes,
+            sortOrder: session.sortOrder,
+          );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(success ? 'Session saved' : 'Save failed'),
-        ),
+        SnackBar(content: Text(success ? 'Session saved' : 'Save failed')),
       );
       if (success) await load();
     } finally {
@@ -187,18 +201,13 @@ class MessMealSessionsPageState extends ConsumerState<MessMealSessionsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(AppStrings.of(ref).mealSessions),
-      ),
+      appBar: AppBar(title: Text(AppStrings.of(ref).mealSessions)),
       floatingActionButton: FloatingActionButton(
         onPressed: saving
             ? null
             : () => edit(
-                  const MessMealSessionDto(
-                    sessionId: '',
-                    sessionName: '',
-                  ),
-                ),
+                const MessMealSessionDto(sessionId: '', sessionName: ''),
+              ),
         child: const Icon(Icons.add),
       ),
       body: Column(
@@ -215,68 +224,72 @@ class MessMealSessionsPageState extends ConsumerState<MessMealSessionsPage> {
                     onAction: saving
                         ? null
                         : () => edit(
-                              const MessMealSessionDto(
-                                sessionId: '',
-                                sessionName: '',
-                              ),
+                            const MessMealSessionDto(
+                              sessionId: '',
+                              sessionName: '',
                             ),
+                          ),
                   );
                 }
                 return ResponsiveScrollShell(
-        dashboard: true,
-        child: ListView.separated(
-                  padding: EdgeInsets.fromLTRB(
-            AppBreakpoints.pagePaddingFor(context.widthClass),
-            12,
-            AppBreakpoints.pagePaddingFor(context.widthClass),
-            88),
-                  itemCount: rows.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 8),
-                  itemBuilder: (context, index) {
-                    final s = rows[index];
-                    final color = sessionColor(index);
-                    return AppCard(
-                      accentColor: color,
-                      padding: EdgeInsets.zero,
-                      child: ListTile(
-                        leading: AppModuleIcon(
-                          svgPath: AppAssets.svgClock,
-                          color: color,
-                          size: 48,
+                  dashboard: true,
+                  child: ListView.separated(
+                    padding: EdgeInsets.fromLTRB(
+                      AppBreakpoints.pagePaddingFor(context.widthClass),
+                      12,
+                      AppBreakpoints.pagePaddingFor(context.widthClass),
+                      88,
+                    ),
+                    itemCount: rows.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 8),
+                    itemBuilder: (context, index) {
+                      final s = rows[index];
+                      final color = sessionColor(index);
+                      return AppCard(
+                        accentColor: color,
+                        padding: EdgeInsets.zero,
+                        child: ListTile(
+                          leading: AppModuleIcon(
+                            svgPath: AppAssets.svgClock,
+                            color: color,
+                            size: 48,
+                          ),
+                          title: Text(
+                            s.sessionName,
+                            style: AppTypography.cardTitle(),
+                          ),
+                          subtitle: Text(
+                            '${s.startTime} – ${s.endTime}'
+                            '${s.tokenPrefix.isNotEmpty ? ' • ${s.tokenPrefix}' : ''}',
+                          ),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              AppStatusBadge(
+                                label: s.active ? 'Active' : 'Inactive',
+                                color: s.active
+                                    ? AppColors.success
+                                    : AppColors.textSecondary,
+                              ),
+                              const SizedBox(width: 8),
+                              const AppSvg(
+                                AppAssets.svgEdit,
+                                width: 18,
+                                height: 18,
+                                color: AppColors.textSecondary,
+                              ),
+                            ],
+                          ),
+                          onTap: () => edit(s),
                         ),
-                        title: Text(s.sessionName, style: AppTypography.cardTitle()),
-                        subtitle: Text(
-                          '${s.startTime} – ${s.endTime}'
-                          '${s.tokenPrefix.isNotEmpty ? ' • ${s.tokenPrefix}' : ''}',
-                        ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            AppStatusBadge(
-                              label: s.active ? 'Active' : 'Inactive',
-                              color: s.active ? AppColors.success : AppColors.textSecondary,
-                            ),
-                            const SizedBox(width: 8),
-                            const AppSvg(
-                              AppAssets.svgEdit,
-                              width: 18,
-                              height: 18,
-                              color: AppColors.textSecondary,
-                            ),
-                          ],
-                        ),
-                        onTap: () => edit(s),
-                      ),
-                    );
-                  },
-                ),
-      );
+                      );
+                    },
+                  ),
+                );
               },
-              loading: () => const AppLoadingState(message: 'Loading sessions…'),
-              error: (e, _) => AppErrorState(
-                message: '$e',
-                onRetry: load,
-              ),
+              loading: () =>
+                  const AppLoadingState(message: 'Loading sessions…'),
+              error: (e, _) => AppErrorState(message: '$e', onRetry: load),
             ),
           ),
         ],

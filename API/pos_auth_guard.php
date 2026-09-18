@@ -2,8 +2,9 @@
 require_once __DIR__ . '/auth_tokens.php';
 
 /**
- * Require valid POS Bearer token. Returns authenticated licence id.
- * Posted userId (licence or owner org) is validated against the token.
+ * Require valid POS Bearer token when $db_local is true.
+ * Returns authenticated licence id (from token, or posted userId when token is optional).
+ * Posted userId (licence or owner org) is validated against the token when present.
  *
  * @param mysqli $con
  * @param string|null $postedUserId

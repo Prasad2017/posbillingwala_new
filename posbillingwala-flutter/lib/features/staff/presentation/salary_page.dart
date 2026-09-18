@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,7 +8,6 @@ import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/network/api_response.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
-import 'package:dio/dio.dart';
 import 'package:pos_billingwala_v2/features/sync/domain/cloud_screen_cache.dart';
 
 class SalaryRow {
@@ -82,8 +82,9 @@ class SalaryPageState extends ConsumerState<SalaryPage> {
       error = null;
     });
     try {
-      final cached =
-          await CloudScreenCache.loadMapList(CloudScreenCache.salary);
+      final cached = await CloudScreenCache.loadMapList(
+        CloudScreenCache.salary,
+      );
       if (cached.isNotEmpty && mounted) {
         final list = cached.map(SalaryRow.fromJson).toList();
         setState(() {
@@ -140,19 +141,19 @@ class SalaryPageState extends ConsumerState<SalaryPage> {
   }
 
   Future<void> editSalary(SalaryRow row) async {
-    final controller =
-        TextEditingController(text: row.monthlySalary.toStringAsFixed(0));
+    final controller = TextEditingController(
+      text: row.monthlySalary.toStringAsFixed(0),
+    );
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text('Salary — ${row.staffName}'),
-        content: TextField(
+        content: AppTextField(
+          required: true,
           controller: controller,
+          label: 'Monthly salary (₹)',
           keyboardType: TextInputType.number,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          decoration: const InputDecoration(
-            labelText: 'Monthly salary (₹)',
-          ),
         ),
         actions: [
           TextButton(
@@ -339,15 +340,21 @@ class SalaryPageState extends ConsumerState<SalaryPage> {
                                 Chip(
                                   label: Text(row.isPaid ? 'Paid' : 'Pending'),
                                   backgroundColor: row.isPaid
-                                      ? AppColors.success.withValues(alpha: 0.15)
-                                      : AppColors.warning.withValues(alpha: 0.15),
+                                      ? AppColors.success.withValues(
+                                          alpha: 0.15,
+                                        )
+                                      : AppColors.warning.withValues(
+                                          alpha: 0.15,
+                                        ),
                                 ),
                               ],
                             ),
                             const SizedBox(height: 8),
                             Text(
                               'Salary: ${money.format(row.monthlySalary)}',
-                              style: const TextStyle(fontWeight: FontWeight.w600),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                             if (row.isPaid && row.paidOn.isNotEmpty)
                               Text('Paid on ${row.paidOn}'),
@@ -358,14 +365,17 @@ class SalaryPageState extends ConsumerState<SalaryPage> {
                                   child: AppButton(
                                     label: 'Set salary',
                                     variant: AppButtonVariant.outlined,
-                                    onPressed:
-                                        busy ? null : () => editSalary(row),
+                                    onPressed: busy
+                                        ? null
+                                        : () => editSalary(row),
                                   ),
                                 ),
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: AppButton(
-                                    label: row.isPaid ? 'Update paid' : 'Mark paid',
+                                    label: row.isPaid
+                                        ? 'Update paid'
+                                        : 'Mark paid',
                                     onPressed: busy || row.monthlySalary <= 0
                                         ? null
                                         : () => markPaid(row),

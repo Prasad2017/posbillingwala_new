@@ -4,12 +4,12 @@ import 'package:go_router/go_router.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
+import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
+import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
 import 'package:pos_billingwala_v2/features/mess/domain/mess_providers.dart';
 import 'package:pos_billingwala_v2/features/mess/presentation/mess_payments_page.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/report_widgets.dart';
-import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
-import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
 import 'package:pos_billingwala_v2/language/app_strings.dart';
 
 /* Mess member list → open payment history (refreshed reports UI). */
@@ -88,98 +88,101 @@ class MessMemberReportPageState extends ConsumerState<MessMemberReportPage> {
           }
 
           return ResponsiveScrollShell(
-        dashboard: true,
-        child: ListView(
-            padding: EdgeInsets.fromLTRB(
-            AppBreakpoints.pagePaddingFor(context.widthClass),
-            12,
-            AppBreakpoints.pagePaddingFor(context.widthClass),
-            88),
-            children: [
-              ReportSurfaceCard(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                child: TextField(
-                  controller: search,
-                  onChanged: (v) => setState(() => query = v),
-                  decoration: InputDecoration(
-                    hintText: 'Search member, mobile, type…',
-                    border: InputBorder.none,
-                    prefixIcon: Icon(
-                      Icons.search_rounded,
-                      color: AppColors.navy.withValues(alpha: .45),
+            dashboard: true,
+            child: ListView(
+              padding: EdgeInsets.fromLTRB(
+                AppBreakpoints.pagePaddingFor(context.widthClass),
+                12,
+                AppBreakpoints.pagePaddingFor(context.widthClass),
+                88,
+              ),
+              children: [
+                ReportSurfaceCard(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
+                  child: TextField(
+                    controller: search,
+                    onChanged: (v) => setState(() => query = v),
+                    decoration: InputDecoration(
+                      hintText: 'Search member, mobile, type…',
+                      border: InputBorder.none,
+                      prefixIcon: Icon(
+                        Icons.search_rounded,
+                        color: AppColors.navy.withValues(alpha: .45),
+                      ),
+                      suffixIcon: query.isEmpty
+                          ? null
+                          : IconButton(
+                              onPressed: () {
+                                search.clear();
+                                setState(() => query = '');
+                              },
+                              icon: const Icon(Icons.close_rounded),
+                            ),
                     ),
-                    suffixIcon: query.isEmpty
-                        ? null
-                        : IconButton(
-                            onPressed: () {
-                              search.clear();
-                              setState(() => query = '');
+                  ),
+                ),
+                const SizedBox(height: 14),
+                ReportKpiGrid(
+                  items: [
+                    ReportKpiData(label: 'Members', value: '${members.length}'),
+                    ReportKpiData(
+                      label: 'Showing',
+                      value: '${filtered.length}',
+                    ),
+                    ReportKpiData(
+                      label: 'Member Types',
+                      value: '${types.length}',
+                    ),
+                    ReportKpiData(
+                      label: 'With Mobile',
+                      value:
+                          '${members.where((m) => (m.memberMobileNumber ?? '').trim().isNotEmpty).length}',
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                if (filtered.isEmpty)
+                  ReportSurfaceCard(
+                    padding: const EdgeInsets.all(28),
+                    child: Center(
+                      child: Text(AppStrings.of(ref).noMessMembers),
+                    ),
+                  )
+                else
+                  ReportSurfaceCard(
+                    child: Column(
+                      children: [
+                        for (var i = 0; i < filtered.length; i++) ...[
+                          if (i > 0)
+                            Divider(
+                              height: 1,
+                              thickness: 1,
+                              color: AppColors.border.withValues(alpha: .7),
+                              indent: 72,
+                              endIndent: 16,
+                            ),
+                          MemberRow(
+                            member: filtered[i],
+                            color: i.isEven ? AppColors.teal : AppColors.purple,
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: (_) =>
+                                      MessPaymentsPage(member: filtered[i]),
+                                ),
+                              );
                             },
-                            icon: const Icon(Icons.close_rounded),
                           ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 14),
-              ReportKpiGrid(
-                items: [
-                  ReportKpiData(
-                    label: 'Members',
-                    value: '${members.length}',
-                  ),
-                  ReportKpiData(
-                    label: 'Showing',
-                    value: '${filtered.length}',
-                  ),
-                  ReportKpiData(
-                    label: 'Member Types',
-                    value: '${types.length}',
-                  ),
-                  ReportKpiData(
-                    label: 'With Mobile',
-                    value:
-                        '${members.where((m) => (m.memberMobileNumber ?? '').trim().isNotEmpty).length}',
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              if (filtered.isEmpty)
-                ReportSurfaceCard(
-                  padding: const EdgeInsets.all(28),
-                  child: Center(child: Text(AppStrings.of(ref).noMessMembers)),
-                )
-              else
-                ReportSurfaceCard(
-                  child: Column(
-                    children: [
-                      for (var i = 0; i < filtered.length; i++) ...[
-                        if (i > 0)
-                          Divider(
-                            height: 1,
-                            thickness: 1,
-                            color: AppColors.border.withValues(alpha: .7),
-                            indent: 72,
-                            endIndent: 16,
-                          ),
-                        MemberRow(
-                          member: filtered[i],
-                          color: i.isEven ? AppColors.teal : AppColors.purple,
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute<void>(
-                                builder: (_) =>
-                                    MessPaymentsPage(member: filtered[i]),
-                              ),
-                            );
-                          },
-                        ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
-                ),
-            ],
-          ),
-      );
+              ],
+            ),
+          );
         },
       ),
     );
@@ -187,7 +190,8 @@ class MessMemberReportPageState extends ConsumerState<MessMemberReportPage> {
 }
 
 class MemberRow extends StatelessWidget {
-  const MemberRow({super.key, 
+  const MemberRow({
+    super.key,
     required this.member,
     required this.color,
     required this.onTap,

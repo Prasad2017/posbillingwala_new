@@ -6,6 +6,7 @@ abstract final class ScreenContext {
   static String _routePath = '/';
 
   static String get screenName => _screenName;
+
   static String get routePath => _routePath;
 
   static void update({String? name, String? path}) {

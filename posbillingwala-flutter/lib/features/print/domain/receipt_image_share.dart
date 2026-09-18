@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
 import 'package:share_plus/share_plus.dart';
 
 /* Android `BluetoothPrint.convertLayout` analogue: screenshot the ticket widget. */
@@ -27,14 +28,21 @@ Future<void> shareTicketWidgetAsImage({
 }
 
 Future<void> sharePngBytes(Uint8List bytes, String label) async {
+  final safeName =
+      '${label.replaceAll(RegExp(r'[^a-zA-Z0-9_-]'), '_').toLowerCase()}_'
+      '${DateTime.now().millisecondsSinceEpoch}.png';
   if (kIsWeb) {
-    await SharePlus.instance.share(ShareParams(text: label, subject: label));
+    await SharePlus.instance.share(
+      ShareParams(
+        files: [XFile.fromData(bytes, mimeType: 'image/png', name: safeName)],
+        subject: label,
+        text: label,
+      ),
+    );
     return;
   }
   final dir = await getTemporaryDirectory();
-  final file = File(
-    '${dir.path}/${label.replaceAll(' ', '_').toLowerCase()}_${DateTime.now().millisecondsSinceEpoch}.png',
-  );
+  final file = File('${dir.path}/$safeName');
   await file.writeAsBytes(bytes, flush: true);
   await SharePlus.instance.share(
     ShareParams(
@@ -45,15 +53,12 @@ Future<void> sharePngBytes(Uint8List bytes, String label) async {
   );
 }
 
-/* Fallback: paint receipt text to a PNG (used when no widget is on screen). */
+/* Fallback: paint receipt text to a PNG with the same font stack as */
+/* [ReceiptRasterizer] (Unicode / Marathi / Hindi user data). */
 Future<void> shareReceiptAsImage({
   required String text,
   String label = 'Invoice',
 }) async {
-  if (kIsWeb) {
-    await SharePlus.instance.share(ShareParams(text: text, subject: label));
-    return;
-  }
   final bytes = await renderReceiptPng(text);
   await sharePngBytes(bytes, label);
 }
@@ -64,14 +69,10 @@ Future<Uint8List> renderReceiptPng(String text) async {
   final painter = TextPainter(
     text: TextSpan(
       text: text,
-      style: const TextStyle(
-        fontFamily: 'monospace',
-        fontSize: 22,
-        height: 1.28,
-        color: Color(0xFF111111),
-      ),
+      style: AppFonts.printBody(fontSize: 22, height: 1.28),
     ),
     textDirection: TextDirection.ltr,
+    locale: const Locale('hi', 'IN'),
   )..layout(maxWidth: width - pad * 2);
 
   final height = (painter.height + pad * 2).clamp(200.0, 8000.0);

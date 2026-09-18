@@ -20,6 +20,7 @@ class ReceiptBuilder {
   final ShopReceiptProfile shopProfile;
   final ReceiptLabels labels;
   final money = NumberFormat('#0.00');
+
   /* Android bill date format. */
   final receiptBuilderDate = DateFormat('yyyy-MM-dd HH:mm:ss');
   final rasterizer = const ReceiptRasterizer();
@@ -52,7 +53,7 @@ class ReceiptBuilder {
       qrPayload: upiUri,
       logoPath: logoPath,
       qrMarker: upiUri != null ? upiQrMarker : null,
-      useAssetLogoFallback: settings.logoUse,
+      useAssetLogoFallback: false,
     );
   }
 
@@ -96,13 +97,15 @@ class ReceiptBuilder {
     final amount = invoice.totalAmount > 0
         ? invoice.totalAmount
         : (invoice.upiAmount > 0 ? invoice.upiAmount : 0.0);
+    /* Android PaymentUpiQrHelper: QR only when payable amount > 0. */
+    if (amount <= 0) return null;
     return buildUpiPayUri(
       upiId: shopProfile.upiId,
       payeeName: shopProfile.shopName1.trim().isNotEmpty
           ? shopProfile.shopName1.trim()
           : (shopProfile.companyName.isNotEmpty
-              ? shopProfile.companyName
-              : 'Merchant'),
+                ? shopProfile.companyName
+                : 'Merchant'),
       amount: amount,
       note: invoice.invoiceNumber,
     );
@@ -136,29 +139,21 @@ class ReceiptBuilder {
       meta.add('Billed by: $billedBy');
     }
     if (settings.customerUse) {
-      final name = invoice.customerName?.trim();
-      final mobile = invoice.customerMobile?.trim();
-      final email = invoice.customerEmail?.trim();
-      final address = invoice.customerAddress?.trim();
-      meta.add(
-        '${labels.customerName}: ${name == null || name.isEmpty ? 'NA' : name}',
-      );
-      meta.add(
-        '${labels.customerMobile}: ${mobile == null || mobile.isEmpty ? 'NA' : mobile}',
-      );
-      if (email != null && email.isNotEmpty) {
-        meta.add('${labels.customerEmail}: $email');
-      }
-      meta.add(
-        '${labels.customerAddress}: ${address == null || address.isEmpty ? 'NA' : address}',
-      );
+      final name = invoice.customerName?.trim() ?? '';
+      final mobile = invoice.customerMobile?.trim() ?? '';
+      final email = invoice.customerEmail?.trim() ?? '';
+      final address = invoice.customerAddress?.trim() ?? '';
+      if (name.isNotEmpty) meta.add('${labels.customerName}: $name');
+      if (mobile.isNotEmpty) meta.add('${labels.customerMobile}: $mobile');
+      if (email.isNotEmpty) meta.add('${labels.customerEmail}: $email');
+      if (address.isNotEmpty) meta.add('${labels.customerAddress}: $address');
     }
 
     final lines = [
       for (final item in items)
         ThermalLine(
           name: item.productName,
-          qty: item.productQuantity,
+          qty: qtyLabel(item.productQuantity, unit: item.productUnit),
           rate: money.format(item.productPrice),
           amount: money.format(item.productPrice * item.productQuantity),
         ),
@@ -188,7 +183,9 @@ class ReceiptBuilder {
       pairs.add(('CGST', rupee(half)));
       pairs.add(('SGST', rupee(half)));
     }
-    pairs.add((labels.discount, rupee(invoice.discount)));
+    if (invoice.discount > 0) {
+      pairs.add((labels.discount, rupee(invoice.discount)));
+    }
     if (invoice.packingCharge > 0) {
       pairs.add((labels.packing, rupee(invoice.packingCharge)));
     }
@@ -227,11 +224,11 @@ class ReceiptBuilder {
     required List<InvoiceItem> items,
     String? shopName,
   }) {
-    final text = billText(invoice: invoice, items: items)
-        .replaceAll(upiQrMarker, '')
-        .replaceAll('₹', 'Rs.');
-    final encoder = EscPosEncoder(charsPerLine: settings.charsPerLine)
-      ..init();
+    final text = billText(
+      invoice: invoice,
+      items: items,
+    ).replaceAll(upiQrMarker, '').replaceAll('₹', 'Rs.');
+    final encoder = EscPosEncoder(charsPerLine: settings.charsPerLine)..init();
     for (final line in text.split('\n')) {
       if (line.trim().isEmpty) continue;
       encoder.text(line);
@@ -247,14 +244,20 @@ class ReceiptBuilder {
       ..writeln(receiptBuilderCenter(ticket.kot.kotNumber, width))
       ..writeln('-' * width)
       ..writeln('KOT: ${ticket.kot.kotNumber}')
-      ..writeln('${labels.date}: ${receiptBuilderDate.format(ticket.kot.createdAt)}')
+      ..writeln(
+        '${labels.date}: ${receiptBuilderDate.format(ticket.kot.createdAt)}',
+      )
       ..writeln('Table No: ${ticket.kot.tableNumber}')
       ..writeln('Round: ${ticket.roundNumber}')
       ..writeln(ticket.kot.kitchenName)
       ..writeln('-' * width);
     for (final item in ticket.items) {
       buf.writeln(
-        pair(item.productName, 'X${qtyLabel(item.productQuantity, unit: item.productUnit)}', width),
+        pair(
+          item.productName,
+          'X${qtyLabel(item.productQuantity, unit: item.productUnit)}',
+          width,
+        ),
       );
     }
     buf.writeln('-' * width);

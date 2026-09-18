@@ -36,8 +36,9 @@ final portionMastersProvider = StreamProvider<List<PortionMaster>>((ref) {
   return ref.watch(mastersRepositoryProvider).watchPortionMasters();
 });
 
-final selectedCategoryIdProvider =
-    NotifierProvider<SelectedCategoryId, int?>(SelectedCategoryId.new);
+final selectedCategoryIdProvider = NotifierProvider<SelectedCategoryId, int?>(
+  SelectedCategoryId.new,
+);
 
 class SelectedCategoryId extends Notifier<int?> {
   @override
@@ -74,19 +75,19 @@ final catalogComboCountProvider = StreamProvider<int>((ref) {
   return ref.watch(appDatabaseProvider).watchCountActiveCombos();
 });
 
-final catalogCountsProvider = Provider<
-    ({int categories, int products, int combos, int subcategories})>((ref) {
-  int countOf(AsyncValue<int> value) => value.maybeWhen(
-        data: (n) => n,
-        orElse: () => 0,
+final catalogCountsProvider =
+    Provider<({int categories, int products, int combos, int subcategories})>((
+      ref,
+    ) {
+      int countOf(AsyncValue<int> value) =>
+          value.maybeWhen(data: (n) => n, orElse: () => 0);
+      return (
+        categories: countOf(ref.watch(catalogCategoryCountProvider)),
+        products: countOf(ref.watch(catalogProductCountProvider)),
+        combos: countOf(ref.watch(catalogComboCountProvider)),
+        subcategories: countOf(ref.watch(catalogSubcategoryCountProvider)),
       );
-  return (
-    categories: countOf(ref.watch(catalogCategoryCountProvider)),
-    products: countOf(ref.watch(catalogProductCountProvider)),
-    combos: countOf(ref.watch(catalogComboCountProvider)),
-    subcategories: countOf(ref.watch(catalogSubcategoryCountProvider)),
-  );
-});
+    });
 
 final combosListProvider = StreamProvider<List<Combo>>((ref) {
   return ref.watch(appDatabaseProvider).watchActiveCombos();
@@ -110,10 +111,9 @@ class MastersSyncController extends Notifier<AsyncValue<MastersSyncResult?>> {
 
     state = const AsyncLoading();
     state = await AsyncValue.guard(() {
-      return ref.read(mastersRepositoryProvider).syncFromCloud(
-            ownerId: ownerId,
-            licenceUserId: licenceId ?? ownerId,
-          );
+      return ref
+          .read(mastersRepositoryProvider)
+          .syncFromCloud(ownerId: ownerId, licenceUserId: licenceId ?? ownerId);
     });
   }
 
@@ -130,10 +130,9 @@ class MastersSyncController extends Notifier<AsyncValue<MastersSyncResult?>> {
     }
     state = const AsyncLoading();
     try {
-      final count = await ref.read(mastersRepositoryProvider).uploadPendingMasters(
-            ownerId: ownerId,
-            licenceUserId: licenceId,
-          );
+      final count = await ref
+          .read(mastersRepositoryProvider)
+          .uploadPendingMasters(ownerId: ownerId, licenceUserId: licenceId);
       state = AsyncData(
         MastersSyncResult(
           foodTypeCount: 0,
@@ -157,7 +156,9 @@ class MastersSyncController extends Notifier<AsyncValue<MastersSyncResult?>> {
   }) async {
     final userId =
         ref.read(authControllerProvider).session?.catalogOwnerId ?? '';
-    await ref.read(mastersRepositoryProvider).createCategory(
+    await ref
+        .read(mastersRepositoryProvider)
+        .createCategory(
           userId: userId,
           categoryName: name,
           foodTypeId: foodTypeId,
@@ -179,10 +180,21 @@ class MastersSyncController extends Notifier<AsyncValue<MastersSyncResult?>> {
     double productCgst = 0,
     double productSgst = 0,
     int? subcategoryId,
+    List<
+      ({
+        String portionName,
+        double portionPrice,
+        int portionSortOrder,
+        int? portionMasterId,
+      })
+    >
+    portions = const [],
   }) async {
     final userId =
         ref.read(authControllerProvider).session?.catalogOwnerId ?? '';
-    return ref.read(mastersRepositoryProvider).createProduct(
+    return ref
+        .read(mastersRepositoryProvider)
+        .createProduct(
           userId: userId,
           productName: name,
           productPrice: price,
@@ -197,6 +209,7 @@ class MastersSyncController extends Notifier<AsyncValue<MastersSyncResult?>> {
           productCgst: productCgst,
           productSgst: productSgst,
           subcategoryId: subcategoryId,
+          portions: portions,
         );
   }
 
@@ -208,7 +221,9 @@ class MastersSyncController extends Notifier<AsyncValue<MastersSyncResult?>> {
   }) {
     final userId =
         ref.read(authControllerProvider).session?.catalogOwnerId ?? '';
-    return ref.read(mastersRepositoryProvider).updateCategory(
+    return ref
+        .read(mastersRepositoryProvider)
+        .updateCategory(
           userId: userId,
           categoryId: categoryId,
           categoryName: name,
@@ -220,10 +235,9 @@ class MastersSyncController extends Notifier<AsyncValue<MastersSyncResult?>> {
   Future<void> deleteCategory(int categoryId) {
     final userId =
         ref.read(authControllerProvider).session?.catalogOwnerId ?? '';
-    return ref.read(mastersRepositoryProvider).deleteCategory(
-          userId: userId,
-          categoryId: categoryId,
-        );
+    return ref
+        .read(mastersRepositoryProvider)
+        .deleteCategory(userId: userId, categoryId: categoryId);
   }
 
   Future<void> updateProduct({
@@ -245,7 +259,9 @@ class MastersSyncController extends Notifier<AsyncValue<MastersSyncResult?>> {
   }) {
     final userId =
         ref.read(authControllerProvider).session?.catalogOwnerId ?? '';
-    return ref.read(mastersRepositoryProvider).updateProduct(
+    return ref
+        .read(mastersRepositoryProvider)
+        .updateProduct(
           userId: userId,
           productId: productId,
           productName: name,
@@ -268,10 +284,9 @@ class MastersSyncController extends Notifier<AsyncValue<MastersSyncResult?>> {
   Future<void> deleteProduct(int productId) {
     final userId =
         ref.read(authControllerProvider).session?.catalogOwnerId ?? '';
-    return ref.read(mastersRepositoryProvider).deleteProduct(
-          userId: userId,
-          productId: productId,
-        );
+    return ref
+        .read(mastersRepositoryProvider)
+        .deleteProduct(userId: userId, productId: productId);
   }
 
   Future<int> createPortion({
@@ -283,7 +298,9 @@ class MastersSyncController extends Notifier<AsyncValue<MastersSyncResult?>> {
   }) {
     final userId =
         ref.read(authControllerProvider).session?.catalogOwnerId ?? '';
-    return ref.read(mastersRepositoryProvider).createPortion(
+    return ref
+        .read(mastersRepositoryProvider)
+        .createPortion(
           userId: userId,
           productId: productId,
           portionName: portionName,
@@ -296,10 +313,9 @@ class MastersSyncController extends Notifier<AsyncValue<MastersSyncResult?>> {
   Future<void> deletePortion(int portionId) {
     final userId =
         ref.read(authControllerProvider).session?.catalogOwnerId ?? '';
-    return ref.read(mastersRepositoryProvider).deletePortion(
-          userId: userId,
-          portionId: portionId,
-        );
+    return ref
+        .read(mastersRepositoryProvider)
+        .deletePortion(userId: userId, portionId: portionId);
   }
 
   Future<void> createCombo({
@@ -313,7 +329,9 @@ class MastersSyncController extends Notifier<AsyncValue<MastersSyncResult?>> {
   }) {
     final userId =
         ref.read(authControllerProvider).session?.catalogOwnerId ?? '';
-    return ref.read(mastersRepositoryProvider).createCombo(
+    return ref
+        .read(mastersRepositoryProvider)
+        .createCombo(
           userId: userId,
           comboName: name,
           comboPrice: price,
@@ -337,7 +355,9 @@ class MastersSyncController extends Notifier<AsyncValue<MastersSyncResult?>> {
   }) {
     final userId =
         ref.read(authControllerProvider).session?.catalogOwnerId ?? '';
-    return ref.read(mastersRepositoryProvider).updateCombo(
+    return ref
+        .read(mastersRepositoryProvider)
+        .updateCombo(
           userId: userId,
           comboId: comboId,
           comboName: name,
@@ -353,14 +373,13 @@ class MastersSyncController extends Notifier<AsyncValue<MastersSyncResult?>> {
   Future<void> deleteCombo(int comboId) {
     final userId =
         ref.read(authControllerProvider).session?.catalogOwnerId ?? '';
-    return ref.read(mastersRepositoryProvider).deleteCombo(
-          userId: userId,
-          comboId: comboId,
-        );
+    return ref
+        .read(mastersRepositoryProvider)
+        .deleteCombo(userId: userId, comboId: comboId);
   }
 }
 
 final mastersSyncControllerProvider =
     NotifierProvider<MastersSyncController, AsyncValue<MastersSyncResult?>>(
-  MastersSyncController.new,
-);
+      MastersSyncController.new,
+    );

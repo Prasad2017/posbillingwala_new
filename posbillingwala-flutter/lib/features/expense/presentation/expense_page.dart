@@ -21,12 +21,14 @@ class ExpensePage extends ConsumerWidget {
       next.whenOrNull(
         data: (msg) {
           if (msg == null) return;
-          ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text(msg)));
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(msg)));
         },
         error: (e, _) {
-          ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text('$e')));
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('$e')));
         },
       );
     });
@@ -47,8 +49,10 @@ class ExpensePage extends ConsumerWidget {
               style: TextButton.styleFrom(
                 backgroundColor: Colors.white,
                 foregroundColor: AppColors.navy,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -104,43 +108,43 @@ class ExpenseListBody extends ConsumerWidget {
               28,
             ),
             children: [
-            MasterCard(
-              padding: EdgeInsets.zero,
-              child: rows.isEmpty
-                  ? const MasterEmptyState(
-                      title: 'No expenses yet',
-                      subtitle: 'Tap Add Expense to record a shop cost.',
-                    )
-                  : Column(
-                      children: [
-                        const ExpenseTableHeader(),
-                        const Divider(height: 1, thickness: 1),
-                        for (var i = 0; i < rows.length; i++) ...[
-                          if (i > 0)
-                            Divider(
-                              height: 1,
-                              thickness: 1,
-                              color: AppColors.border.withValues(alpha: .7),
+              MasterCard(
+                padding: EdgeInsets.zero,
+                child: rows.isEmpty
+                    ? const MasterEmptyState(
+                        title: 'No expenses yet',
+                        subtitle: 'Tap Add Expense to record a shop cost.',
+                      )
+                    : Column(
+                        children: [
+                          const ExpenseTableHeader(),
+                          const Divider(height: 1, thickness: 1),
+                          for (var i = 0; i < rows.length; i++) ...[
+                            if (i > 0)
+                              Divider(
+                                height: 1,
+                                thickness: 1,
+                                color: AppColors.border.withValues(alpha: .7),
+                              ),
+                            ExpenseTableRow(
+                              index: i + 1,
+                              row: rows[i],
+                              dateFmt: dateFmt,
+                              currency: currency,
                             ),
-                          ExpenseTableRow(
-                            index: i + 1,
-                            row: rows[i],
-                            dateFmt: dateFmt,
-                            currency: currency,
+                          ],
+                          Divider(
+                            height: 1,
+                            thickness: 1,
+                            color: AppColors.border.withValues(alpha: .9),
+                          ),
+                          ExpenseTotalRow(
+                            totalLabel: totalCurrency.format(total),
                           ),
                         ],
-                        Divider(
-                          height: 1,
-                          thickness: 1,
-                          color: AppColors.border.withValues(alpha: .9),
-                        ),
-                        ExpenseTotalRow(
-                          totalLabel: totalCurrency.format(total),
-                        ),
-                      ],
-                    ),
-            ),
-          ],
+                      ),
+              ),
+            ],
           ),
         );
       },
@@ -158,18 +162,9 @@ class ExpenseTableHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
       child: const Row(
         children: [
-          SizedBox(
-            width: 42,
-            child: HeaderCell('Sr No.'),
-          ),
-          Expanded(
-            flex: 3,
-            child: HeaderCell('Expense Date'),
-          ),
-          Expanded(
-            flex: 4,
-            child: HeaderCell('Expense Name'),
-          ),
+          SizedBox(width: 42, child: HeaderCell('Sr No.')),
+          Expanded(flex: 3, child: HeaderCell('Expense Date')),
+          Expanded(flex: 4, child: HeaderCell('Expense Name')),
           Expanded(
             flex: 3,
             child: HeaderCell('AMOUNT', align: TextAlign.right),
@@ -202,7 +197,8 @@ class HeaderCell extends StatelessWidget {
 }
 
 class ExpenseTableRow extends StatelessWidget {
-  const ExpenseTableRow({super.key, 
+  const ExpenseTableRow({
+    super.key,
     required this.index,
     required this.row,
     required this.dateFmt,
@@ -216,8 +212,9 @@ class ExpenseTableRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final name =
-        row.expensesName.trim().isEmpty ? 'Expense' : row.expensesName.trim();
+    final name = row.expensesName.trim().isEmpty
+        ? 'Expense'
+        : row.expensesName.trim();
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 14, 12, 14),

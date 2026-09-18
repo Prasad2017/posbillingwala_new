@@ -1,12 +1,16 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/* How the bill/KOT printer is reached. Works with any ESC/POS model. */
-enum PosPrinterTransport {
-  bluetooth,
-  usb,
-  network,
+/* Android stores logo/payment/customer as on/off; Flutter also accepts 1/0. */
+bool printerFlagOn(String? value) {
+  final v = (value ?? '').trim().toLowerCase();
+  return v == '1' || v == 'on' || v == 'true' || v == 'yes';
 }
+
+String printerFlagValue(bool on) => on ? 'on' : 'off';
+
+/* How the bill/KOT printer is reached. Works with any ESC/POS model. */
+enum PosPrinterTransport { bluetooth, usb, network }
 
 extension PosPrinterTransportX on PosPrinterTransport {
   String get label {
@@ -105,6 +109,7 @@ class PrinterSettings {
   final PosPrinterTransport kotTransport;
   final String billBluetoothAddress;
   final String kotBluetoothAddress;
+
   /* Android USB id `vendorId:productId`, or desktop serial path. */
   final String billUsbIdentifier;
   final String kotUsbIdentifier;
@@ -190,8 +195,7 @@ class PrinterSettings {
       kotPaperSize: kotPaperSize ?? this.kotPaperSize,
       billTransport: billTransport ?? this.billTransport,
       kotTransport: kotTransport ?? this.kotTransport,
-      billBluetoothAddress:
-          billBluetoothAddress ?? this.billBluetoothAddress,
+      billBluetoothAddress: billBluetoothAddress ?? this.billBluetoothAddress,
       kotBluetoothAddress: kotBluetoothAddress ?? this.kotBluetoothAddress,
       billUsbIdentifier: billUsbIdentifier ?? this.billUsbIdentifier,
       kotUsbIdentifier: kotUsbIdentifier ?? this.kotUsbIdentifier,
@@ -274,15 +278,17 @@ class PrinterSettingsStore {
     final kotPaper = kotPaperRaw == null
         ? paper
         : (kotPaperRaw == '3-Inch'
-            ? PrinterPaperSize.inch3
-            : PrinterPaperSize.inch2);
+              ? PrinterPaperSize.inch3
+              : PrinterPaperSize.inch2);
     var loaded = PrinterSettings(
       paperSize: paper,
       kotPaperSize: kotPaper,
-      billTransport:
-          PosPrinterTransportX.fromLocalStorage(prefs.getString(billTransportKey)),
-      kotTransport:
-          PosPrinterTransportX.fromLocalStorage(prefs.getString(kotTransportKey)),
+      billTransport: PosPrinterTransportX.fromLocalStorage(
+        prefs.getString(billTransportKey),
+      ),
+      kotTransport: PosPrinterTransportX.fromLocalStorage(
+        prefs.getString(kotTransportKey),
+      ),
       billBluetoothAddress: prefs.getString(billMacKey) ?? '',
       kotBluetoothAddress: prefs.getString(kotMacKey) ?? '',
       billUsbIdentifier: prefs.getString(billUsbKey) ?? '',
@@ -329,10 +335,7 @@ class PrinterSettingsStore {
       billTransportKey,
       settings.billTransport.storageValue,
     );
-    await prefs.setString(
-      kotTransportKey,
-      settings.kotTransport.storageValue,
-    );
+    await prefs.setString(kotTransportKey, settings.kotTransport.storageValue);
     await prefs.setString(billMacKey, settings.billBluetoothAddress.trim());
     await prefs.setString(kotMacKey, settings.kotBluetoothAddress.trim());
     await prefs.setString(billUsbKey, settings.billUsbIdentifier.trim());
@@ -348,7 +351,9 @@ class PrinterSettingsStore {
     await prefs.setString(invoiceTermsKey, settings.invoiceTerms.trim());
     await prefs.setString(
       invoicePrefixKey,
-      settings.invoicePrefix.trim().isEmpty ? 'PB' : settings.invoicePrefix.trim(),
+      settings.invoicePrefix.trim().isEmpty
+          ? 'PB'
+          : settings.invoicePrefix.trim(),
     );
     await prefs.setString(
       kotPrefixKey,
@@ -372,8 +377,8 @@ class PrinterSettingsStore {
 
 final printerSettingsProvider =
     NotifierProvider<PrinterSettingsController, PrinterSettings>(
-  PrinterSettingsController.new,
-);
+      PrinterSettingsController.new,
+    );
 
 class PrinterSettingsController extends Notifier<PrinterSettings> {
   final store = PrinterSettingsStore();

@@ -28,29 +28,30 @@ class SubcategoriesPageState extends ConsumerState<SubcategoriesPage> {
   }
 
   Future<void> add() async {
-    final categories = ref.read(categoriesProvider).maybeWhen(
-          data: (v) => v,
-          orElse: () => const <ProductCategory>[],
-        );
+    final categories = ref
+        .read(categoriesProvider)
+        .maybeWhen(data: (v) => v, orElse: () => const <ProductCategory>[]);
     if (categories.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Add categories first')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Add categories first')));
       return;
     }
     final selected = selectedCategory ?? categories.first;
     final name = subcategoriesPageNameCtrl.text.trim();
     if (name.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter subcategory name')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Enter subcategory name')));
       return;
     }
     final userId =
         ref.read(authControllerProvider).session?.catalogOwnerId ?? '';
     setState(() => busy = true);
     try {
-      await ref.read(mastersRepositoryProvider).createSubcategory(
+      await ref
+          .read(mastersRepositoryProvider)
+          .createSubcategory(
             userId: userId,
             subcategoryName: name,
             categoryId: selected.categoryId,
@@ -58,19 +59,18 @@ class SubcategoriesPageState extends ConsumerState<SubcategoriesPage> {
           );
       subcategoriesPageNameCtrl.clear();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Subcategory saved')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Subcategory saved')));
     } finally {
       if (mounted) setState(() => busy = false);
     }
   }
 
   Future<void> edit(ProductSubcategory row) async {
-    final categories = ref.read(categoriesProvider).maybeWhen(
-          data: (v) => v,
-          orElse: () => const <ProductCategory>[],
-        );
+    final categories = ref
+        .read(categoriesProvider)
+        .maybeWhen(data: (v) => v, orElse: () => const <ProductCategory>[]);
     if (categories.isEmpty) return;
     var selected = categories.firstWhere(
       (c) => c.categoryId == row.categoryId,
@@ -94,6 +94,7 @@ class SubcategoriesPageState extends ConsumerState<SubcategoriesPage> {
             ),
             const SizedBox(height: 12),
             MasterOutlinedField(
+              required: true,
               controller: nameCtrl,
               hint: 'Subcategory Name',
             ),
@@ -122,7 +123,9 @@ class SubcategoriesPageState extends ConsumerState<SubcategoriesPage> {
     final name = nameCtrl.text.trim();
     nameCtrl.dispose();
     if (ok != true || name.isEmpty) return;
-    await ref.read(appDatabaseProvider).updateLocalSubcategory(
+    await ref
+        .read(appDatabaseProvider)
+        .updateLocalSubcategory(
           subcategoryId: row.subcategoryId,
           subcategoryName: name,
           categoryId: selected.categoryId,
@@ -147,14 +150,14 @@ class SubcategoriesPageState extends ConsumerState<SubcategoriesPage> {
   @override
   Widget build(BuildContext context) {
     final rowsAsync = ref.watch(subcategoriesProvider);
-    final categories = ref.watch(categoriesProvider).maybeWhen(
-          data: (v) => v,
-          orElse: () => const <ProductCategory>[],
-        );
+    final categories = ref
+        .watch(categoriesProvider)
+        .maybeWhen(data: (v) => v, orElse: () => const <ProductCategory>[]);
     final categoryNames = {
       for (final c in categories) c.categoryId: c.categoryName,
     };
-    final selected = selectedCategory != null &&
+    final selected =
+        selectedCategory != null &&
             categories.any((c) => c.categoryId == selectedCategory!.categoryId)
         ? categories.firstWhere(
             (c) => c.categoryId == selectedCategory!.categoryId,
@@ -173,79 +176,82 @@ class SubcategoriesPageState extends ConsumerState<SubcategoriesPage> {
       body: ResponsiveScrollShell(
         dashboard: true,
         child: ListView(
-        padding: EdgeInsets.fromLTRB(
+          padding: EdgeInsets.fromLTRB(
             AppBreakpoints.pagePaddingFor(context.widthClass),
             16,
             AppBreakpoints.pagePaddingFor(context.widthClass),
-            28),
-        children: [
-          const MasterSectionLabel('Subcategory Detail'),
-          const SizedBox(height: 10),
-          MasterCard(
-            child: Column(
-              children: [
-                MasterDropdown<ProductCategory>(
-                  value: selected,
-                  items: categories,
-                  hint: 'Select category',
-                  itemLabel: (c) => c.categoryName,
-                  onChanged: (v) => setState(() => selectedCategory = v),
-                ),
-                const SizedBox(height: 12),
-                MasterOutlinedField(
-                  controller: subcategoriesPageNameCtrl,
-                  hint: 'Subcategory Name',
-                ),
-                const SizedBox(height: 12),
-                MasterPrimaryButton(
-                  label: 'Add Subcategory',
-                  isLoading: busy,
-                  onPressed: busy ? null : add,
-                ),
-              ],
-            ),
+            28,
           ),
-          const SizedBox(height: 20),
-          const MasterSectionLabel('Subcategory List'),
-          const SizedBox(height: 10),
-          MasterCard(
-            padding: EdgeInsets.zero,
-            child: rowsAsync.when(
-              data: (rows) {
-                if (rows.isEmpty) {
-                  return const MasterEmptyState(
-                    title: 'No data found',
-                    subtitle: 'Add subcategories like Tea / Juice.',
+          children: [
+            const MasterSectionLabel('Subcategory Detail'),
+            const SizedBox(height: 10),
+            MasterCard(
+              child: Column(
+                children: [
+                  MasterDropdown<ProductCategory>(
+                    required: true,
+                    value: selected,
+                    items: categories,
+                    hint: 'Select category',
+                    itemLabel: (c) => c.categoryName,
+                    onChanged: (v) => setState(() => selectedCategory = v),
+                  ),
+                  const SizedBox(height: 12),
+                  MasterOutlinedField(
+                    required: true,
+                    controller: subcategoriesPageNameCtrl,
+                    hint: 'Subcategory Name',
+                  ),
+                  const SizedBox(height: 12),
+                  MasterPrimaryButton(
+                    label: 'Add Subcategory',
+                    isLoading: busy,
+                    onPressed: busy ? null : add,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            const MasterSectionLabel('Subcategory List'),
+            const SizedBox(height: 10),
+            MasterCard(
+              padding: EdgeInsets.zero,
+              child: rowsAsync.when(
+                data: (rows) {
+                  if (rows.isEmpty) {
+                    return const MasterEmptyState(
+                      title: 'No data found',
+                      subtitle: 'Add subcategories like Tea / Juice.',
+                    );
+                  }
+                  return Column(
+                    children: [
+                      for (var i = 0; i < rows.length; i++)
+                        MasterListRow(
+                          index: i + 1,
+                          title: rows[i].subcategoryName,
+                          subtitle: categoryNames[rows[i].categoryId],
+                          onEdit: () => edit(rows[i]),
+                          onDelete: () => delete(rows[i]),
+                          showDivider: i < rows.length - 1,
+                        ),
+                    ],
                   );
-                }
-                return Column(
-                  children: [
-                    for (var i = 0; i < rows.length; i++)
-                      MasterListRow(
-                        index: i + 1,
-                        title: rows[i].subcategoryName,
-                        subtitle: categoryNames[rows[i].categoryId],
-                        onEdit: () => edit(rows[i]),
-                        onDelete: () => delete(rows[i]),
-                        showDivider: i < rows.length - 1,
-                      ),
-                  ],
-                );
-              },
-              loading: () => const Padding(
-                padding: EdgeInsets.all(24),
-                child: Center(child: CircularProgressIndicator()),
-              ),
-              error: (e, _) => Padding(
-                padding: EdgeInsets.all(
-            AppBreakpoints.pagePaddingFor(context.widthClass),
-          ),
-                child: Text('$e'),
+                },
+                loading: () => const Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+                error: (e, _) => Padding(
+                  padding: EdgeInsets.all(
+                    AppBreakpoints.pagePaddingFor(context.widthClass),
+                  ),
+                  child: Text('$e'),
+                ),
               ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
       ),
     );
   }

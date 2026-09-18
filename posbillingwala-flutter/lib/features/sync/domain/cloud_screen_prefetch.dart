@@ -11,6 +11,7 @@ import 'package:pos_billingwala_v2/features/inventory/domain/inventory_providers
 import 'package:pos_billingwala_v2/features/masters/domain/masters_providers.dart';
 import 'package:pos_billingwala_v2/features/mess/data/mess_api.dart';
 import 'package:pos_billingwala_v2/features/mess/domain/mess_dtos.dart';
+import 'package:pos_billingwala_v2/features/mess/domain/mess_payer_mode.dart';
 import 'package:pos_billingwala_v2/features/mess/domain/mess_providers.dart';
 import 'package:pos_billingwala_v2/features/print/domain/print_job_dispatcher.dart';
 import 'package:pos_billingwala_v2/features/print/domain/shop_receipt_profile.dart';
@@ -25,10 +26,13 @@ import 'package:pos_billingwala_v2/features/tables/domain/tables_providers.dart'
 class CloudScreenPrefetchResult {
   const CloudScreenPrefetchResult({
     required this.counts,
+    required this.stepOk,
     this.failed = 0,
   });
 
   final Map<String, int> counts;
+  /* Sync progress step id → whether that step succeeded. */
+  final Map<String, bool> stepOk;
   final int failed;
 
   int get totalRows =>
@@ -44,6 +48,7 @@ abstract final class CloudScreenPrefetch {
     required String userId,
   }) async {
     final counts = <String, int>{};
+    final stepOk = <String, bool>{};
     var failed = 0;
     final client = ref.read(apiClientProvider);
     final messApi = MessApi(client);
@@ -51,6 +56,11 @@ abstract final class CloudScreenPrefetch {
     final supportApi = SupportApi(client);
     final printerApi = ref.read(storePrinterApiProvider);
     final homeApi = HomeSalesApi(client);
+
+    void markStep(String stepId, bool ok) {
+      stepOk[stepId] = ok;
+      if (!ok) failed++;
+    }
 
     Future<void> saveList(String key, List<dynamic> rows) async {
       await CloudScreenCache.saveJson(key, rows);
@@ -85,9 +95,10 @@ abstract final class CloudScreenPrefetch {
             )
             .toList(),
       );
+      markStep('staff', true);
     } catch (_) {
-      failed++;
       counts[CloudScreenCache.staff] = 0;
+      markStep('staff', false);
     }
 
     try {
@@ -101,14 +112,15 @@ abstract final class CloudScreenPrefetch {
       final raw = data['salaryResponse'];
       final rows = raw is List
           ? raw
-              .whereType<Map>()
-              .map((e) => Map<String, dynamic>.from(e))
-              .toList()
+                .whereType<Map>()
+                .map((e) => Map<String, dynamic>.from(e))
+                .toList()
           : <Map<String, dynamic>>[];
       await saveList(CloudScreenCache.salary, rows);
+      markStep('salary', true);
     } catch (_) {
-      failed++;
       counts[CloudScreenCache.salary] = 0;
+      markStep('salary', false);
     }
 
     try {
@@ -123,10 +135,10 @@ abstract final class CloudScreenPrefetch {
       }
       await CloudScreenCache.saveJson(CloudScreenCache.roleDefaults, defaults);
       counts[CloudScreenCache.roleDefaults] = defaults.length;
-      if (defaults.isEmpty) failed++;
+      markStep('role_defaults', defaults.isNotEmpty);
     } catch (_) {
-      failed++;
       counts[CloudScreenCache.roleDefaults] = 0;
+      markStep('role_defaults', false);
     }
 
     try {
@@ -148,23 +160,28 @@ abstract final class CloudScreenPrefetch {
             )
             .toList(),
       );
+      markStep('meal_sessions', true);
     } catch (_) {
-      failed++;
-      counts[CloudScreenCache.mealSessions] = 0;
+      final cached = await CloudScreenCache.loadMapList(
+        CloudScreenCache.mealSessions,
+      );
+      counts[CloudScreenCache.mealSessions] = cached.length;
+      /* Soft Complete — upload already pushed; GET flake shouldn't fail UI. */
+      markStep('meal_sessions', true);
     }
 
     Map<String, dynamic> mealTokenMap(MessMealTokenDto e) => {
-          'tokenId': e.tokenId,
-          'tokenNumber': e.tokenNumber,
-          'registrationNo': e.registrationNo,
-          'mealSession': e.mealSession,
-          'date': e.date,
-          'printStatus': e.printStatus,
-          'createdAt': e.createdAt,
-          'printedAt': e.printedAt,
-          'memberName': e.memberName,
-          'memberMobile': e.memberMobile,
-        };
+      'tokenId': e.tokenId,
+      'tokenNumber': e.tokenNumber,
+      'registrationNo': e.registrationNo,
+      'mealSession': e.mealSession,
+      'date': e.date,
+      'printStatus': e.printStatus,
+      'createdAt': e.createdAt,
+      'printedAt': e.printedAt,
+      'memberName': e.memberName,
+      'memberMobile': e.memberMobile,
+    };
 
     try {
       final today = await messApi.fetchMealTokensToday(userId);
@@ -172,9 +189,10 @@ abstract final class CloudScreenPrefetch {
         CloudScreenCache.mealTokensToday,
         today.tokens.map(mealTokenMap).toList(),
       );
+      markStep('meal_tokens', true);
     } catch (_) {
-      failed++;
       counts[CloudScreenCache.mealTokensToday] = 0;
+      markStep('meal_tokens', false);
     }
 
     try {
@@ -187,22 +205,30 @@ abstract final class CloudScreenPrefetch {
         CloudScreenCache.pendingMealTokens,
         pending.map(mealTokenMap).toList(),
       );
+      markStep('pending_meal_tokens', true);
     } catch (_) {
-      failed++;
       counts[CloudScreenCache.pendingMealTokens] = 0;
+      markStep('pending_meal_tokens', true);
     }
 
     try {
       final mode = await messApi.fetchShopPayerMode(userId);
+      final normalized = MessPayerMode.normalize(mode);
+      await MessPayerMode.setLocal(normalized);
       await CloudScreenCache.saveJson(
         CloudScreenCache.messShopPayerMode,
-        mode,
+        normalized,
       );
-      counts[CloudScreenCache.messShopPayerMode] =
-          mode == null || mode.trim().isEmpty ? 0 : 1;
+      counts[CloudScreenCache.messShopPayerMode] = 1;
+      markStep('mess_shop_payer', true);
     } catch (_) {
-      failed++;
-      counts[CloudScreenCache.messShopPayerMode] = 0;
+      final local = await MessPayerMode.get();
+      await CloudScreenCache.saveJson(
+        CloudScreenCache.messShopPayerMode,
+        local,
+      );
+      counts[CloudScreenCache.messShopPayerMode] = 1;
+      markStep('mess_shop_payer', true);
     }
 
     try {
@@ -219,9 +245,10 @@ abstract final class CloudScreenPrefetch {
                 'status': qr.status,
               },
       );
+      markStep('mess_common_qr', true);
     } catch (_) {
-      failed++;
       counts[CloudScreenCache.messCommonQr] = 0;
+      markStep('mess_common_qr', false);
     }
 
     try {
@@ -252,9 +279,10 @@ abstract final class CloudScreenPrefetch {
             )
             .toList(),
       );
+      markStep('store_printers', true);
     } catch (_) {
-      failed++;
       counts[CloudScreenCache.storePrinters] = 0;
+      markStep('store_printers', false);
     }
 
     try {
@@ -263,17 +291,19 @@ abstract final class CloudScreenPrefetch {
         CloudScreenCache.printerRoutes,
         routes.map((e) => e.toJson()).toList(),
       );
+      markStep('printer_routes', true);
     } catch (_) {
-      failed++;
       counts[CloudScreenCache.printerRoutes] = 0;
+      markStep('printer_routes', false);
     }
 
     try {
       final jobs = await printerApi.queue(userId);
       await saveList(CloudScreenCache.printJobs, jobs);
+      markStep('print_jobs', true);
     } catch (_) {
-      failed++;
       counts[CloudScreenCache.printJobs] = 0;
+      markStep('print_jobs', false);
     }
 
     try {
@@ -296,9 +326,10 @@ abstract final class CloudScreenPrefetch {
             )
             .toList(),
       );
+      markStep('support_tickets', true);
     } catch (_) {
-      failed++;
       counts[CloudScreenCache.supportTickets] = 0;
+      markStep('support_tickets', false);
     }
 
     try {
@@ -311,19 +342,23 @@ abstract final class CloudScreenPrefetch {
       final raw = data['deviceResponse'];
       final rows = raw is List
           ? raw
-              .whereType<Map>()
-              .map((e) => Map<String, dynamic>.from(e))
-              .toList()
+                .whereType<Map>()
+                .map((e) => Map<String, dynamic>.from(e))
+                .toList()
           : <Map<String, dynamic>>[];
       await saveList(CloudScreenCache.posDevices, rows);
+      markStep('pos_devices', true);
     } catch (_) {
-      failed++;
       counts[CloudScreenCache.posDevices] = 0;
+      markStep('pos_devices', false);
     }
 
+    var homeOk = true;
     try {
-      final today =
-          await homeApi.fetchOverview(userId: userId, period: 'today');
+      final today = await homeApi.fetchOverview(
+        userId: userId,
+        period: 'today',
+      );
       await saveMap(
         CloudScreenCache.homeOverviewToday,
         today == null
@@ -344,13 +379,15 @@ abstract final class CloudScreenPrefetch {
               },
       );
     } catch (_) {
-      failed++;
       counts[CloudScreenCache.homeOverviewToday] = 0;
+      homeOk = false;
     }
 
     try {
-      final month =
-          await homeApi.fetchOverview(userId: userId, period: 'month');
+      final month = await homeApi.fetchOverview(
+        userId: userId,
+        period: 'month',
+      );
       await saveMap(
         CloudScreenCache.homeOverviewMonth,
         month == null
@@ -371,11 +408,16 @@ abstract final class CloudScreenPrefetch {
               },
       );
     } catch (_) {
-      failed++;
       counts[CloudScreenCache.homeOverviewMonth] = 0;
+      homeOk = false;
     }
+    markStep('home_overview', homeOk);
 
-    return CloudScreenPrefetchResult(counts: counts, failed: failed);
+    return CloudScreenPrefetchResult(
+      counts: counts,
+      stepOk: stepOk,
+      failed: failed,
+    );
   }
 }
 

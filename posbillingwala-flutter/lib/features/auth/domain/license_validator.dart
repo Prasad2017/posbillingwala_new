@@ -117,8 +117,7 @@ class LicenseValidator {
       return result;
     }
 
-    if (payload.trialConsumed == 1 ||
-        prefs.getString('trialConsumed') == '1') {
+    if (payload.trialConsumed == 1 || prefs.getString('trialConsumed') == '1') {
       result.message = 'Trial already used on this licence.';
       result.trialBillBlocked = true;
       return result;
@@ -171,7 +170,9 @@ class LicenseValidator {
   }
 
   static Future<RSAPublicKey> loadPublicKey() async {
-    final pem = await rootBundle.loadString('assets/license_signing_public.pem');
+    final pem = await rootBundle.loadString(
+      'assets/license_signing_public.pem',
+    );
     final b64 = pem
         .replaceAll('-----BEGIN PUBLIC KEY-----', '')
         .replaceAll('-----END PUBLIC KEY-----', '')
@@ -310,8 +311,7 @@ class SignedLicensePayload {
   final int mess;
 
   factory SignedLicensePayload.fromJson(Map<String, dynamic> json) {
-    int i(dynamic v) =>
-        v is int ? v : int.tryParse(v?.toString() ?? '') ?? 0;
+    int i(dynamic v) => v is int ? v : int.tryParse(v?.toString() ?? '') ?? 0;
     String s(dynamic v) => v?.toString() ?? '';
     return SignedLicensePayload(
       payloadVersion: i(json['payloadVersion']),

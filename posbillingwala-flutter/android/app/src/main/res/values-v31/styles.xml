@@ -7,6 +7,7 @@
         <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_icon_empty</item>
         <item name="android:windowFullscreen">false</item>
     </style>
+
     <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
         <item name="android:windowBackground">@android:color/white</item>
         <item name="android:statusBarColor">@android:color/transparent</item>

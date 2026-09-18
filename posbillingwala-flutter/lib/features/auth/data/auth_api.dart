@@ -14,18 +14,15 @@ class AuthApi {
     required String licenceKey,
     required String deviceId,
   }) {
-    return postForm(
-      ApiEndpoints.login,
-      {
-        'app_licence_key': licenceKey,
-        ...DeviceApiFields.asForm(
-          deviceId: deviceId,
-          includeAndroidIdAlias: false,
-          includeDeviceIdAlias: false,
-          includeDeviceName: false,
-        ),
-      },
-    );
+    return postForm(ApiEndpoints.login, {
+      'app_licence_key': licenceKey,
+      ...DeviceApiFields.asForm(
+        deviceId: deviceId,
+        includeAndroidIdAlias: false,
+        includeDeviceIdAlias: false,
+        includeDeviceName: false,
+      ),
+    });
   }
 
   Future<LoginResponse> updateLicenceKey({
@@ -33,17 +30,14 @@ class AuthApi {
     required String deviceId,
     required String deviceName,
   }) {
-    return postForm(
-      ApiEndpoints.updateAndroidKey,
-      {
-        'app_licence_key': licenceKey,
-        ...DeviceApiFields.asForm(
-          deviceId: deviceId,
-          deviceName: deviceName,
-          includeDeviceIdAlias: false,
-        ),
-      },
-    );
+    return postForm(ApiEndpoints.updateAndroidKey, {
+      'app_licence_key': licenceKey,
+      ...DeviceApiFields.asForm(
+        deviceId: deviceId,
+        deviceName: deviceName,
+        includeDeviceIdAlias: false,
+      ),
+    });
   }
 
   Future<LoginResponse> checkLicenceExpire({
@@ -51,18 +45,15 @@ class AuthApi {
     required String deviceId,
     required String deviceName,
   }) {
-    return postForm(
-      ApiEndpoints.checkLicenceExpire,
-      {
-        'userId': userId,
-        ...DeviceApiFields.asForm(
-          deviceId: deviceId,
-          deviceName: deviceName,
-          includeAndroidIdAlias: false,
-          includeDeviceIdAlias: false,
-        ),
-      },
-    );
+    return postForm(ApiEndpoints.checkLicenceExpire, {
+      'userId': userId,
+      ...DeviceApiFields.asForm(
+        deviceId: deviceId,
+        deviceName: deviceName,
+        includeAndroidIdAlias: false,
+        includeDeviceIdAlias: false,
+      ),
+    });
   }
 
   Future<LoginResponse> loginMpin({
@@ -71,18 +62,15 @@ class AuthApi {
     required String deviceId,
     required String deviceName,
   }) {
-    return postForm(
-      ApiEndpoints.loginMpin,
-      {
-        'mpin': mpin,
-        'app_licence_key': licenceKey,
-        ...DeviceApiFields.asForm(
-          deviceId: deviceId,
-          deviceName: deviceName,
-          includeDeviceIdAlias: false,
-        ),
-      },
-    );
+    return postForm(ApiEndpoints.loginMpin, {
+      'mpin': mpin,
+      'app_licence_key': licenceKey,
+      ...DeviceApiFields.asForm(
+        deviceId: deviceId,
+        deviceName: deviceName,
+        includeDeviceIdAlias: false,
+      ),
+    });
   }
 
   Future<LoginResponse> updateMpin({
@@ -91,18 +79,15 @@ class AuthApi {
     required String deviceId,
     required String deviceName,
   }) {
-    return postForm(
-      ApiEndpoints.updateMpin,
-      {
-        'mpin': mpin,
-        'app_licence_key': licenceKey,
-        ...DeviceApiFields.asForm(
-          deviceId: deviceId,
-          deviceName: deviceName,
-          includeDeviceIdAlias: false,
-        ),
-      },
-    );
+    return postForm(ApiEndpoints.updateMpin, {
+      'mpin': mpin,
+      'app_licence_key': licenceKey,
+      ...DeviceApiFields.asForm(
+        deviceId: deviceId,
+        deviceName: deviceName,
+        includeDeviceIdAlias: false,
+      ),
+    });
   }
 
   Future<bool> serverLogout({required String licenceKey}) async {
@@ -121,10 +106,7 @@ class AuthApi {
   }) async {
     final response = await client.dio.post<dynamic>(
       ApiEndpoints.refreshAuthToken,
-      data: {
-        'app_licence_key': licenceKey,
-        'android_device_id': deviceId,
-      },
+      data: {'app_licence_key': licenceKey, 'android_device_id': deviceId},
       options: Options(contentType: Headers.formUrlEncodedContentType),
     );
     final data = asJsonMap(response.data);

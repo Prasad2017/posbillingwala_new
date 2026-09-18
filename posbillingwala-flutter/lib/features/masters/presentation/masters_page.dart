@@ -6,6 +6,7 @@ import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
+import 'package:pos_billingwala_v2/core/utils/money_format.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/masters/domain/masters_providers.dart';
 import 'package:pos_billingwala_v2/features/print/domain/print_providers.dart';
@@ -46,14 +47,14 @@ class MastersPage extends ConsumerWidget {
           if (parts.isEmpty) {
             parts.add('Masters sync finished');
           }
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(parts.join(' • '))),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(parts.join(' • '))));
         },
         error: (error, _) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(error.toString())),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(error.toString())));
         },
       );
     });
@@ -69,8 +70,8 @@ class MastersPage extends ConsumerWidget {
             onPressed: isSyncing
                 ? null
                 : () => ref
-                    .read(mastersSyncControllerProvider.notifier)
-                    .uploadPending(),
+                      .read(mastersSyncControllerProvider.notifier)
+                      .uploadPending(),
             icon: const Icon(Icons.cloud_upload_rounded),
           ),
           PopupMenuButton<String>(
@@ -99,10 +100,7 @@ class MastersPage extends ConsumerWidget {
                 value: 'subcategories',
                 child: Text('Subcategories'),
               ),
-              PopupMenuItem(
-                value: 'portions',
-                child: Text('Portion masters'),
-              ),
+              PopupMenuItem(value: 'portions', child: Text('Portion masters')),
               PopupMenuItem(value: 'tables', child: Text('Table master')),
               PopupMenuItem(
                 value: 'print_catalog',
@@ -113,9 +111,7 @@ class MastersPage extends ConsumerWidget {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: isSyncing
-            ? null
-            : () => showAddProductDialog(context, ref),
+        onPressed: isSyncing ? null : () => showAddProductDialog(context, ref),
         icon: const Icon(Icons.add),
         label: const Text('Add product'),
       ),
@@ -169,7 +165,9 @@ class MastersPage extends ConsumerWidget {
                 return ListView(
                   scrollDirection: Axis.horizontal,
                   padding: EdgeInsets.symmetric(
-                    horizontal: AppBreakpoints.pagePaddingFor(context.widthClass),
+                    horizontal: AppBreakpoints.pagePaddingFor(
+                      context.widthClass,
+                    ),
                   ),
                   children: [
                     Padding(
@@ -182,98 +180,89 @@ class MastersPage extends ConsumerWidget {
                             .select(null),
                       ),
                     ),
-                    ...categories.asMap().entries.map(
-                      (entry) {
-                        final index = entry.key;
-                        final category = entry.value;
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: GestureDetector(
-                            onLongPress: () async {
-                              final action = await showAppBottomSheet<String>(
-                                context: context,
-                                title: category.categoryName,
-                                icon: Icons.category_outlined,
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
+                    ...categories.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final category = entry.value;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: GestureDetector(
+                          onLongPress: () async {
+                            final action = await showAppBottomSheet<String>(
+                              context: context,
+                              title: category.categoryName,
+                              icon: Icons.category_outlined,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  ListTile(
+                                    contentPadding: EdgeInsets.zero,
+                                    leading: const Icon(Icons.edit_outlined),
+                                    title: const Text('Edit category'),
+                                    onTap: () => Navigator.pop(context, 'edit'),
+                                  ),
+                                  if (index > 0)
                                     ListTile(
                                       contentPadding: EdgeInsets.zero,
-                                      leading: const Icon(Icons.edit_outlined),
-                                      title: const Text('Edit category'),
+                                      leading: const Icon(
+                                        Icons.arrow_back_rounded,
+                                      ),
+                                      title: const Text('Move earlier'),
                                       onTap: () =>
-                                          Navigator.pop(context, 'edit'),
+                                          Navigator.pop(context, 'left'),
                                     ),
-                                    if (index > 0)
-                                      ListTile(
-                                        contentPadding: EdgeInsets.zero,
-                                        leading: const Icon(
-                                          Icons.arrow_back_rounded,
-                                        ),
-                                        title: const Text('Move earlier'),
-                                        onTap: () =>
-                                            Navigator.pop(context, 'left'),
+                                  if (index < categories.length - 1)
+                                    ListTile(
+                                      contentPadding: EdgeInsets.zero,
+                                      leading: const Icon(
+                                        Icons.arrow_forward_rounded,
                                       ),
-                                    if (index < categories.length - 1)
-                                      ListTile(
-                                        contentPadding: EdgeInsets.zero,
-                                        leading: const Icon(
-                                          Icons.arrow_forward_rounded,
-                                        ),
-                                        title: const Text('Move later'),
-                                        onTap: () =>
-                                            Navigator.pop(context, 'right'),
-                                      ),
-                                  ],
-                                ),
+                                      title: const Text('Move later'),
+                                      onTap: () =>
+                                          Navigator.pop(context, 'right'),
+                                    ),
+                                ],
+                              ),
+                            );
+                            if (action == 'edit') {
+                              if (!context.mounted) return;
+                              await showEditCategoryDialog(
+                                context,
+                                ref,
+                                category,
                               );
-                              if (action == 'edit') {
-                                if (!context.mounted) return;
-                                await showEditCategoryDialog(
-                                  context,
-                                  ref,
-                                  category,
-                                );
-                              } else if (action == 'left' ||
-                                  action == 'right') {
-                                final swapWith = action == 'left'
-                                    ? categories[index - 1]
-                                    : categories[index + 1];
-                                final aOrder = category.categorySortOrder;
-                                final bOrder = swapWith.categorySortOrder;
-                                await ref
-                                    .read(appDatabaseProvider)
-                                    .updateCategorySortOrder(
-                                      category.categoryId,
-                                      bOrder == aOrder
-                                          ? aOrder - 1
-                                          : bOrder,
-                                    );
-                                await ref
-                                    .read(appDatabaseProvider)
-                                    .updateCategorySortOrder(
-                                      swapWith.categoryId,
-                                      aOrder == bOrder
-                                          ? bOrder + 1
-                                          : aOrder,
-                                    );
-                              }
-                            },
-                            child: FilterChip(
-                              avatar: category.categorySyncStatus == '0'
-                                  ? const Icon(Icons.cloud_off, size: 16)
-                                  : null,
-                              label: Text(category.categoryName),
-                              selected:
-                                  selectedCategoryId == category.categoryId,
-                              onSelected: (_) => ref
-                                  .read(selectedCategoryIdProvider.notifier)
-                                  .select(category.categoryId),
-                            ),
+                            } else if (action == 'left' || action == 'right') {
+                              final swapWith = action == 'left'
+                                  ? categories[index - 1]
+                                  : categories[index + 1];
+                              final aOrder = category.categorySortOrder;
+                              final bOrder = swapWith.categorySortOrder;
+                              await ref
+                                  .read(appDatabaseProvider)
+                                  .updateCategorySortOrder(
+                                    category.categoryId,
+                                    bOrder == aOrder ? aOrder - 1 : bOrder,
+                                  );
+                              await ref
+                                  .read(appDatabaseProvider)
+                                  .updateCategorySortOrder(
+                                    swapWith.categoryId,
+                                    aOrder == bOrder ? bOrder + 1 : aOrder,
+                                  );
+                            }
+                          },
+                          child: FilterChip(
+                            avatar: category.categorySyncStatus == '0'
+                                ? const Icon(Icons.cloud_off, size: 16)
+                                : null,
+                            label: Text(category.categoryName),
+                            selected: selectedCategoryId == category.categoryId,
+                            onSelected: (_) => ref
+                                .read(selectedCategoryIdProvider.notifier)
+                                .select(category.categoryId),
                           ),
-                        );
-                      },
-                    ),
+                        ),
+                      );
+                    }),
                   ],
                 );
               },
@@ -313,43 +302,43 @@ class MastersPage extends ConsumerWidget {
                             return ResponsiveScrollShell(
                               dashboard: true,
                               child: ListView.separated(
-                              padding: EdgeInsets.fromLTRB(
-                                AppBreakpoints.pagePaddingFor(
-                                  context.widthClass,
+                                padding: EdgeInsets.fromLTRB(
+                                  AppBreakpoints.pagePaddingFor(
+                                    context.widthClass,
+                                  ),
+                                  8,
+                                  AppBreakpoints.pagePaddingFor(
+                                    context.widthClass,
+                                  ),
+                                  88,
                                 ),
-                                8,
-                                AppBreakpoints.pagePaddingFor(
-                                  context.widthClass,
-                                ),
-                                88,
+                                itemCount: products.length,
+                                separatorBuilder: (_, _) =>
+                                    const SizedBox(height: 8),
+                                itemBuilder: (context, index) {
+                                  final product = products[index];
+                                  return ProductTile(
+                                    product: product,
+                                    priceLabel: currency.format(
+                                      product.productPrice,
+                                    ),
+                                    onEdit: () => showEditProductDialog(
+                                      context,
+                                      ref,
+                                      product,
+                                    ),
+                                    onDelete: () => confirmDeleteProduct(
+                                      context,
+                                      ref,
+                                      product,
+                                    ),
+                                  );
+                                },
                               ),
-                              itemCount: products.length,
-                              separatorBuilder: (_, _) =>
-                                  const SizedBox(height: 8),
-                              itemBuilder: (context, index) {
-                                final product = products[index];
-                                return ProductTile(
-                                  product: product,
-                                  priceLabel: currency
-                                      .format(product.productPrice),
-                                  onEdit: () => showEditProductDialog(
-                                    context,
-                                    ref,
-                                    product,
-                                  ),
-                                  onDelete: () => confirmDeleteProduct(
-                                    context,
-                                    ref,
-                                    product,
-                                  ),
-                                );
-                              },
-                            ),
                             );
                           },
-                          loading: () => const Center(
-                            child: CircularProgressIndicator(),
-                          ),
+                          loading: () =>
+                              const Center(child: CircularProgressIndicator()),
                           error: (e, _) => Center(child: Text('$e')),
                         ),
                         CombosTab(currency: currency),
@@ -367,12 +356,15 @@ class MastersPage extends ConsumerWidget {
 }
 
 Future<void> printCatalog(BuildContext context, WidgetRef ref) async {
-  final products = await ref.read(appDatabaseProvider).watchActiveProducts().first;
+  final products = await ref
+      .read(appDatabaseProvider)
+      .watchActiveProducts()
+      .first;
   if (products.isEmpty) {
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No products to print')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('No products to print')));
     }
     return;
   }
@@ -387,10 +379,9 @@ Future<void> printCatalog(BuildContext context, WidgetRef ref) async {
   }
   buf.writeln('-' * 32);
   buf.writeln('Total items: ${products.length}');
-  final result = await ref.read(printServiceProvider).printRawText(
-        buf.toString(),
-        label: 'Product catalog',
-      );
+  final result = await ref
+      .read(printServiceProvider)
+      .printRawText(buf.toString(), label: 'Product catalog');
   if (!context.mounted) return;
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(content: Text(result.message ?? result.outcome.name)),
@@ -404,6 +395,7 @@ Future<void> showAddCategoryDialog(BuildContext context, WidgetRef ref) async {
     builder: (context) => AlertDialog(
       title: const Text('Add Category'),
       content: AppTextField(
+        required: true,
         controller: controller,
         label: 'Category name',
       ),
@@ -420,9 +412,9 @@ Future<void> showAddCategoryDialog(BuildContext context, WidgetRef ref) async {
         .read(mastersSyncControllerProvider.notifier)
         .createCategory(controller.text.trim());
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Category saved')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Category saved')));
     }
   }
   controller.dispose();
@@ -443,26 +435,34 @@ Future<void> showAddProductDialog(BuildContext context, WidgetRef ref) async {
   final nameController = TextEditingController();
   final codeController = TextEditingController();
   final priceController = TextEditingController();
-  final cgstController = TextEditingController(text: '0');
-  final sgstController = TextEditingController(text: '0');
+  final cgstController = TextEditingController();
+  final sgstController = TextEditingController();
   final categories =
-      ref.read(categoriesProvider).maybeWhen(data: (v) => v, orElse: () => null) ??
-          const <ProductCategory>[];
+      ref
+          .read(categoriesProvider)
+          .maybeWhen(data: (v) => v, orElse: () => null) ??
+      const <ProductCategory>[];
   final allSubcats =
-      ref.read(subcategoriesProvider).maybeWhen(data: (v) => v, orElse: () => null) ??
-          const <ProductSubcategory>[];
-  int? categoryId = ref.read(selectedCategoryIdProvider) ??
+      ref
+          .read(subcategoriesProvider)
+          .maybeWhen(data: (v) => v, orElse: () => null) ??
+      const <ProductSubcategory>[];
+  int? categoryId =
+      ref.read(selectedCategoryIdProvider) ??
       (categories.isNotEmpty ? categories.first.categoryId : null);
   int? subcategoryId;
   String? productUnit = productUnits.first;
   var openPrice = false;
   final portionMasters =
-      ref.read(portionMastersProvider).maybeWhen(data: (v) => v, orElse: () => null) ??
-          const <PortionMaster>[];
+      ref
+          .read(portionMastersProvider)
+          .maybeWhen(data: (v) => v, orElse: () => null) ??
+      const <PortionMaster>[];
   final inlinePortions = <({PortionMaster master, double price})>[];
-  PortionMaster? pendingMaster =
-      portionMasters.isNotEmpty ? portionMasters.first : null;
-  final inlinePortionPriceCtrl = TextEditingController(text: '0');
+  PortionMaster? pendingMaster = portionMasters.isNotEmpty
+      ? portionMasters.first
+      : null;
+  final inlinePortionPriceCtrl = TextEditingController();
 
   ProductCategory? selectedCategory() {
     if (categoryId == null) return null;
@@ -502,26 +502,29 @@ Future<void> showAddProductDialog(BuildContext context, WidgetRef ref) async {
                 ),
                 const SizedBox(height: 12),
                 AppTextField(
+                  required: true,
                   controller: nameController,
-                  label: 'Product name*',
+                  label: 'Product name',
                 ),
                 const SizedBox(height: 12),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('Open Price'),
+                AppSwitchTile(
+                  title: 'Open Price',
                   subtitle: openPrice
-                      ? const Text('Price will be entered at billing time')
+                      ? 'Price will be entered at billing time'
                       : null,
                   value: openPrice,
+                  showDivider: false,
                   onChanged: (v) => setState(() => openPrice = v),
                 ),
                 if (!openPrice) ...[
                   const SizedBox(height: 12),
                   AppTextField(
+                    required: true,
                     controller: priceController,
-                    label: 'Price without GST*',
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
+                    label: 'Price without GST',
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                   ),
                 ],
                 const SizedBox(height: 12),
@@ -531,8 +534,9 @@ Future<void> showAddProductDialog(BuildContext context, WidgetRef ref) async {
                       child: AppTextField(
                         controller: cgstController,
                         label: 'CGST %',
-                        keyboardType:
-                            const TextInputType.numberWithOptions(decimal: true),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -540,15 +544,17 @@ Future<void> showAddProductDialog(BuildContext context, WidgetRef ref) async {
                       child: AppTextField(
                         controller: sgstController,
                         label: 'SGST %',
-                        keyboardType:
-                            const TextInputType.numberWithOptions(decimal: true),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 12),
                 AppDropdownFormField<ProductCategory>(
-                  label: 'Product Category*',
+                  required: true,
+                  label: 'Product Category',
                   items: categories,
                   itemLabel: (c) => c.categoryName,
                   value: selectedCategory(),
@@ -571,7 +577,8 @@ Future<void> showAddProductDialog(BuildContext context, WidgetRef ref) async {
                 ],
                 const SizedBox(height: 12),
                 AppDropdownFormField<String>(
-                  label: 'Product Unit*',
+                  required: true,
+                  label: 'Product Unit',
                   items: productUnits,
                   itemLabel: (u) => u,
                   value: productUnit,
@@ -588,6 +595,7 @@ Future<void> showAddProductDialog(BuildContext context, WidgetRef ref) async {
                   ),
                   const SizedBox(height: 8),
                   AppDropdownFormField<PortionMaster>(
+                    required: true,
                     label: 'Select Portion',
                     items: portionMasters,
                     itemLabel: (m) => m.portionName,
@@ -599,8 +607,9 @@ Future<void> showAddProductDialog(BuildContext context, WidgetRef ref) async {
                   AppTextField(
                     controller: inlinePortionPriceCtrl,
                     label: 'Portion price',
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Align(
@@ -612,12 +621,15 @@ Future<void> showAddProductDialog(BuildContext context, WidgetRef ref) async {
                       onPressed: () {
                         if (pendingMaster == null) return;
                         final price =
-                            double.tryParse(inlinePortionPriceCtrl.text.trim()) ??
-                                0;
+                            double.tryParse(
+                              inlinePortionPriceCtrl.text.trim(),
+                            ) ??
+                            0;
                         setState(() {
-                          inlinePortions.add(
-                            (master: pendingMaster!, price: price),
-                          );
+                          inlinePortions.add((
+                            master: pendingMaster!,
+                            price: price,
+                          ));
                           inlinePortionPriceCtrl.text = '0';
                         });
                       },
@@ -658,34 +670,33 @@ Future<void> showAddProductDialog(BuildContext context, WidgetRef ref) async {
         .where((c) => c.categoryId == categoryId)
         .map((c) => c.categoryName)
         .firstOrNull;
-    final productId =
-        await ref.read(mastersSyncControllerProvider.notifier).createProduct(
-              name: nameController.text.trim(),
-              price: price,
-              categoryId: categoryId,
-              categoryName: categoryName,
-              productCode: codeController.text.trim(),
-              openPrice: openPrice ? '1' : '0',
-              productUnit: productUnit,
-              productCgst: double.tryParse(cgstController.text.trim()) ?? 0,
-              productSgst: double.tryParse(sgstController.text.trim()) ?? 0,
-              subcategoryId: subcategoryId,
-            );
-    final db = ref.read(appDatabaseProvider);
-    var sort = 0;
-    for (final portion in inlinePortions) {
-      await db.insertLocalPortion(
-        productId: productId,
-        portionName: portion.master.portionName,
-        portionPrice: portion.price,
-        portionSortOrder: sort++,
-        portionMasterId: portion.master.portionMasterId,
-      );
-    }
+    await ref
+        .read(mastersSyncControllerProvider.notifier)
+        .createProduct(
+          name: nameController.text.trim(),
+          price: price,
+          categoryId: categoryId,
+          categoryName: categoryName,
+          productCode: codeController.text.trim(),
+          openPrice: openPrice ? '1' : '0',
+          productUnit: productUnit,
+          productCgst: double.tryParse(cgstController.text.trim()) ?? 0,
+          productSgst: double.tryParse(sgstController.text.trim()) ?? 0,
+          subcategoryId: subcategoryId,
+          portions: [
+            for (var i = 0; i < inlinePortions.length; i++)
+              (
+                portionName: inlinePortions[i].master.portionName,
+                portionPrice: inlinePortions[i].price,
+                portionSortOrder: i,
+                portionMasterId: inlinePortions[i].master.portionMasterId,
+              ),
+          ],
+        );
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Product saved')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Product saved')));
     }
   }
   nameController.dispose();
@@ -697,7 +708,8 @@ Future<void> showAddProductDialog(BuildContext context, WidgetRef ref) async {
 }
 
 class CountChip extends StatelessWidget {
-  const CountChip({super.key, 
+  const CountChip({
+    super.key,
     required this.label,
     required this.value,
     required this.icon,
@@ -727,8 +739,21 @@ class CountChip extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(value, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppColors.navy)),
-              Text(label, style: TextStyle(fontSize: 11, color: AppColors.navy.withValues(alpha: .58))),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 16,
+                  color: AppColors.navy,
+                ),
+              ),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: AppColors.navy.withValues(alpha: .58),
+                ),
+              ),
             ],
           ),
         ],
@@ -738,7 +763,8 @@ class CountChip extends StatelessWidget {
 }
 
 class ProductTile extends StatelessWidget {
-  const ProductTile({super.key, 
+  const ProductTile({
+    super.key,
     required this.product,
     required this.priceLabel,
     required this.onEdit,
@@ -911,8 +937,9 @@ class CombosTabState extends ConsumerState<CombosTab> {
                                 showEditComboDialog(context, ref, combo),
                             title: Text(
                               combo.comboName,
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.w700),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                             subtitle: Text(widget.currency.format(price)),
                             trailing: IconButton(
@@ -922,8 +949,7 @@ class CombosTabState extends ConsumerState<CombosTab> {
                                   context: context,
                                   builder: (context) => AlertDialog(
                                     title: const Text('Delete combo'),
-                                    content:
-                                        Text('Remove ${combo.comboName}?'),
+                                    content: Text('Remove ${combo.comboName}?'),
                                     actions: [
                                       TextButton(
                                         onPressed: () =>
@@ -940,8 +966,9 @@ class CombosTabState extends ConsumerState<CombosTab> {
                                 );
                                 if (ok == true) {
                                   await ref
-                                      .read(mastersSyncControllerProvider
-                                          .notifier)
+                                      .read(
+                                        mastersSyncControllerProvider.notifier,
+                                      )
                                       .deleteCombo(combo.comboId);
                                   ref.invalidate(catalogCountsProvider);
                                 }
@@ -973,6 +1000,7 @@ Future<void> showEditCategoryDialog(
     builder: (context) => AlertDialog(
       title: const Text('Edit category'),
       content: AppTextField(
+        required: true,
         controller: controller,
         label: 'Category name',
       ),
@@ -993,7 +1021,9 @@ Future<void> showEditCategoryDialog(
     ),
   );
   if (action == 'save' && controller.text.trim().isNotEmpty) {
-    await ref.read(mastersSyncControllerProvider.notifier).updateCategory(
+    await ref
+        .read(mastersSyncControllerProvider.notifier)
+        .updateCategory(
           categoryId: category.categoryId,
           name: controller.text.trim(),
         );
@@ -1013,20 +1043,26 @@ Future<void> showEditProductDialog(
   Product product,
 ) async {
   final nameController = TextEditingController(text: product.productName);
-  final codeController =
-      TextEditingController(text: product.productCode ?? '');
-  final priceController =
-      TextEditingController(text: product.productPrice.toStringAsFixed(2));
-  final cgstController =
-      TextEditingController(text: product.productCgst.toStringAsFixed(2));
-  final sgstController =
-      TextEditingController(text: product.productSgst.toStringAsFixed(2));
+  final codeController = TextEditingController(text: product.productCode ?? '');
+  final priceController = TextEditingController(
+    text: amountInputText(product.productPrice),
+  );
+  final cgstController = TextEditingController(
+    text: amountInputText(product.productCgst),
+  );
+  final sgstController = TextEditingController(
+    text: amountInputText(product.productSgst),
+  );
   final categories =
-      ref.read(categoriesProvider).maybeWhen(data: (v) => v, orElse: () => null) ??
-          const <ProductCategory>[];
+      ref
+          .read(categoriesProvider)
+          .maybeWhen(data: (v) => v, orElse: () => null) ??
+      const <ProductCategory>[];
   final allSubcats =
-      ref.read(subcategoriesProvider).maybeWhen(data: (v) => v, orElse: () => null) ??
-          const <ProductSubcategory>[];
+      ref
+          .read(subcategoriesProvider)
+          .maybeWhen(data: (v) => v, orElse: () => null) ??
+      const <ProductSubcategory>[];
   int? categoryId = product.categoryId;
   int? subcategoryId = product.subcategoryId;
   String? productUnit = product.productUnit?.trim().isNotEmpty == true
@@ -1067,15 +1103,18 @@ Future<void> showEditProductDialog(
                 ),
                 const SizedBox(height: 12),
                 AppTextField(
+                  required: true,
                   controller: nameController,
-                  label: 'Product name*',
+                  label: 'Product name',
                 ),
                 const SizedBox(height: 12),
                 AppTextField(
+                  required: true,
                   controller: priceController,
-                  label: 'Price*',
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                  label: 'Price',
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 Row(
@@ -1084,8 +1123,9 @@ Future<void> showEditProductDialog(
                       child: AppTextField(
                         controller: cgstController,
                         label: 'CGST %',
-                        keyboardType:
-                            const TextInputType.numberWithOptions(decimal: true),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -1093,25 +1133,25 @@ Future<void> showEditProductDialog(
                       child: AppTextField(
                         controller: sgstController,
                         label: 'SGST %',
-                        keyboardType:
-                            const TextInputType.numberWithOptions(decimal: true),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 12),
                 AppDropdownFormField<ProductCategory>(
-                  label: 'Product Category*',
+                  required: true,
+                  label: 'Product Category',
                   items: categories,
                   itemLabel: (c) => c.categoryName,
                   value: categoryId == null
                       ? null
-                      : categories
-                          .cast<ProductCategory?>()
-                          .firstWhere(
-                            (c) => c?.categoryId == categoryId,
-                            orElse: () => null,
-                          ),
+                      : categories.cast<ProductCategory?>().firstWhere(
+                          (c) => c?.categoryId == categoryId,
+                          orElse: () => null,
+                        ),
                   onChanged: (c) => setState(() {
                     categoryId = c?.categoryId;
                     subcategoryId = null;
@@ -1129,16 +1169,17 @@ Future<void> showEditProductDialog(
                 ),
                 const SizedBox(height: 12),
                 AppDropdownFormField<String>(
-                  label: 'Product Unit*',
+                  required: true,
+                  label: 'Product Unit',
                   items: units,
                   itemLabel: (u) => u,
                   value: productUnit,
                   onChanged: (u) => setState(() => productUnit = u),
                 ),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('Open Price'),
+                AppSwitchTile(
+                  title: 'Open Price',
                   value: openPrice,
+                  showDivider: false,
                   onChanged: (v) => setState(() => openPrice = v),
                 ),
                 const SizedBox(height: 8),
@@ -1176,7 +1217,9 @@ Future<void> showEditProductDialog(
         .where((c) => c.categoryId == categoryId)
         .map((c) => c.categoryName)
         .firstOrNull;
-    await ref.read(mastersSyncControllerProvider.notifier).updateProduct(
+    await ref
+        .read(mastersSyncControllerProvider.notifier)
+        .updateProduct(
           productId: product.productId,
           name: nameController.text.trim(),
           price: price,
@@ -1190,9 +1233,9 @@ Future<void> showEditProductDialog(
           subcategoryId: subcategoryId,
         );
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Product updated')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Product saved')));
     }
   }
   nameController.dispose();
@@ -1235,9 +1278,12 @@ Future<void> showManagePortionsDialog(
                     trailing: IconButton(
                       icon: const Icon(Icons.delete_outline),
                       onPressed: () async {
-                        await db.softDeletePortion(p.portionId);
-                        portions =
-                            await db.getPortionsForProduct(product.productId);
+                        await ref
+                            .read(mastersSyncControllerProvider.notifier)
+                            .deletePortion(p.portionId);
+                        portions = await db.getPortionsForProduct(
+                          product.productId,
+                        );
                         setLocal(() {});
                       },
                     ),
@@ -1254,14 +1300,16 @@ Future<void> showManagePortionsDialog(
           AppButton(
             label: 'Add Portion',
             onPressed: () async {
-              final masters = ref
+              final masters =
+                  ref
                       .read(portionMastersProvider)
                       .maybeWhen(data: (v) => v, orElse: () => null) ??
                   const <PortionMaster>[];
-              final priceCtrl = TextEditingController(text: '0');
-              final sortCtrl = TextEditingController(text: '0');
-              PortionMaster? selectedMaster =
-                  masters.isNotEmpty ? masters.first : null;
+              final priceCtrl = TextEditingController();
+              final sortCtrl = TextEditingController();
+              PortionMaster? selectedMaster = masters.isNotEmpty
+                  ? masters.first
+                  : null;
               final add = await showDialog<bool>(
                 context: context,
                 builder: (context) => StatefulBuilder(
@@ -1271,13 +1319,13 @@ Future<void> showManagePortionsDialog(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         AppDropdownFormField<PortionMaster>(
+                          required: true,
                           label: 'Select Portion',
                           items: masters,
                           itemLabel: (m) => m.portionName,
                           value: selectedMaster,
                           enableSearch: true,
-                          onChanged: (m) =>
-                              setInner(() => selectedMaster = m),
+                          onChanged: (m) => setInner(() => selectedMaster = m),
                         ),
                         const SizedBox(height: 12),
                         AppTextField(
@@ -1310,13 +1358,17 @@ Future<void> showManagePortionsDialog(
                 ),
               );
               if (add == true && selectedMaster != null) {
-                await db.insertLocalPortion(
-                  productId: product.productId,
-                  portionName: selectedMaster!.portionName,
-                  portionPrice: double.tryParse(priceCtrl.text.trim()) ?? 0,
-                  portionSortOrder: int.tryParse(sortCtrl.text.trim()) ?? 0,
-                  portionMasterId: selectedMaster!.portionMasterId,
-                );
+                await ref
+                    .read(mastersSyncControllerProvider.notifier)
+                    .createPortion(
+                      productId: product.productId,
+                      portionName: selectedMaster!.portionName,
+                      portionPrice:
+                          double.tryParse(priceCtrl.text.trim()) ?? 0,
+                      portionSortOrder:
+                          int.tryParse(sortCtrl.text.trim()) ?? 0,
+                      portionMasterId: selectedMaster!.portionMasterId,
+                    );
                 portions = await db.getPortionsForProduct(product.productId);
                 setLocal(() {});
               }
@@ -1346,9 +1398,9 @@ Future<void> confirmDeleteProduct(
           child: const Text('Cancel'),
         ),
         AppButton(
-            label: 'Delete',
-            onPressed: () => Navigator.pop(context, true),
-          ),
+          label: 'Delete',
+          onPressed: () => Navigator.pop(context, true),
+        ),
       ],
     ),
   );
@@ -1364,14 +1416,18 @@ Future<void> showAddComboDialog(BuildContext context, WidgetRef ref) async {
   final nameController = TextEditingController();
   final codeController = TextEditingController();
   final priceController = TextEditingController();
-  final cgstController = TextEditingController(text: '0');
-  final sgstController = TextEditingController(text: '0');
+  final cgstController = TextEditingController();
+  final sgstController = TextEditingController();
   final searchController = TextEditingController();
   final products =
-      ref.read(productsProvider).maybeWhen(data: (v) => v, orElse: () => null) ??
-          const <Product>[];
-  final allProducts =
-      await ref.read(appDatabaseProvider).watchActiveProducts().first;
+      ref
+          .read(productsProvider)
+          .maybeWhen(data: (v) => v, orElse: () => null) ??
+      const <Product>[];
+  final allProducts = await ref
+      .read(appDatabaseProvider)
+      .watchActiveProducts()
+      .first;
   final catalog = allProducts.isNotEmpty ? allProducts : products;
   final selected = <int, int>{};
   var activeOnPos = true;
@@ -1406,15 +1462,18 @@ Future<void> showAddComboDialog(BuildContext context, WidgetRef ref) async {
                   ),
                   const SizedBox(height: 12),
                   AppTextField(
+                    required: true,
                     controller: nameController,
                     label: 'Combo name',
                   ),
                   const SizedBox(height: 12),
                   AppTextField(
+                    required: true,
                     controller: priceController,
                     label: 'Combo selling price',
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Row(
@@ -1440,18 +1499,18 @@ Future<void> showAddComboDialog(BuildContext context, WidgetRef ref) async {
                       ),
                     ],
                   ),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('Combo active'),
+                  AppSwitchTile(
+                    title: 'Combo active',
                     value: activeOnPos,
+                    showDivider: false,
                     onChanged: (v) => setState(() => activeOnPos = v),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Combo items',
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Align(
@@ -1497,9 +1556,7 @@ Future<void> showAddComboDialog(BuildContext context, WidgetRef ref) async {
                     if (catalog.isEmpty)
                       const Text('No products — sync Masters first.')
                     else if (filtered.isEmpty)
-                      const Text(
-                        'No product found. Please add new product.',
-                      )
+                      const Text('No product found. Please add new product.')
                     else
                       ...filtered.take(40).map((p) {
                         final qty = selected[p.productId] ?? 0;
@@ -1565,7 +1622,9 @@ Future<void> showAddComboDialog(BuildContext context, WidgetRef ref) async {
     final items = selected.entries
         .map((e) => (productId: e.key, quantity: e.value))
         .toList();
-    await ref.read(mastersSyncControllerProvider.notifier).createCombo(
+    await ref
+        .read(mastersSyncControllerProvider.notifier)
+        .createCombo(
           name: nameController.text.trim(),
           price: price,
           comboCode: codeController.text.trim(),
@@ -1578,11 +1637,7 @@ Future<void> showAddComboDialog(BuildContext context, WidgetRef ref) async {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            items.isEmpty
-                ? 'Combo saved'
-                : 'Combo saved with ${items.length} items',
-          ),
+          content: Text('Combo saved'),
         ),
       );
     }
@@ -1603,20 +1658,24 @@ Future<void> showEditComboDialog(
   final nameController = TextEditingController(text: combo.comboName);
   final codeController = TextEditingController(text: combo.comboCode ?? '');
   final priceController = TextEditingController(
-    text: (combo.comboWithGstPrice > 0
-            ? combo.comboWithGstPrice
-            : combo.comboPrice)
-        .toStringAsFixed(2),
+    text: amountInputText(
+      combo.comboWithGstPrice > 0 ? combo.comboWithGstPrice : combo.comboPrice,
+    ),
   );
-  final cgstController =
-      TextEditingController(text: combo.comboCgst.toStringAsFixed(2));
-  final sgstController =
-      TextEditingController(text: combo.comboSgst.toStringAsFixed(2));
+  final cgstController = TextEditingController(
+    text: amountInputText(combo.comboCgst),
+  );
+  final sgstController = TextEditingController(
+    text: amountInputText(combo.comboSgst),
+  );
   final searchController = TextEditingController();
-  final allProducts =
-      await ref.read(appDatabaseProvider).watchActiveProducts().first;
-  final existing =
-      await ref.read(appDatabaseProvider).getComboItemsForCombo(combo.comboId);
+  final allProducts = await ref
+      .read(appDatabaseProvider)
+      .watchActiveProducts()
+      .first;
+  final existing = await ref
+      .read(appDatabaseProvider)
+      .getComboItemsForCombo(combo.comboId);
   final selected = <int, int>{
     for (final item in existing)
       if (item.productId != null && item.comboItemQuantity > 0)
@@ -1654,15 +1713,18 @@ Future<void> showEditComboDialog(
                   ),
                   const SizedBox(height: 12),
                   AppTextField(
+                    required: true,
                     controller: nameController,
                     label: 'Combo name',
                   ),
                   const SizedBox(height: 12),
                   AppTextField(
+                    required: true,
                     controller: priceController,
                     label: 'Combo selling price',
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Row(
@@ -1688,18 +1750,18 @@ Future<void> showEditComboDialog(
                       ),
                     ],
                   ),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('Combo active'),
+                  AppSwitchTile(
+                    title: 'Combo active',
                     value: activeOnPos,
+                    showDivider: false,
                     onChanged: (v) => setState(() => activeOnPos = v),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Combo items',
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Align(
@@ -1745,9 +1807,7 @@ Future<void> showEditComboDialog(
                     if (allProducts.isEmpty)
                       const Text('No products — sync Masters first.')
                     else if (filtered.isEmpty)
-                      const Text(
-                        'No product found. Please add new product.',
-                      )
+                      const Text('No product found. Please add new product.')
                     else
                       ...filtered.take(40).map((p) {
                         final qty = selected[p.productId] ?? 0;
@@ -1813,7 +1873,9 @@ Future<void> showEditComboDialog(
     final items = selected.entries
         .map((e) => (productId: e.key, quantity: e.value))
         .toList();
-    await ref.read(mastersSyncControllerProvider.notifier).updateCombo(
+    await ref
+        .read(mastersSyncControllerProvider.notifier)
+        .updateCombo(
           comboId: combo.comboId,
           name: nameController.text.trim(),
           price: price,
@@ -1824,9 +1886,9 @@ Future<void> showEditComboDialog(
           items: items,
         );
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Combo updated')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Combo saved')));
     }
   }
   nameController.dispose();
@@ -1836,5 +1898,3 @@ Future<void> showEditComboDialog(
   sgstController.dispose();
   searchController.dispose();
 }
-
-

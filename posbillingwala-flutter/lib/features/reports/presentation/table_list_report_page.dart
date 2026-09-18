@@ -58,7 +58,10 @@ class TableListReportPageState extends ConsumerState<TableListReportPage> {
               SizedBox(width: 10),
               Text(
                 'Day wise',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
           ),
@@ -71,7 +74,10 @@ class TableListReportPageState extends ConsumerState<TableListReportPage> {
               SizedBox(width: 10),
               Text(
                 'Month Wise',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
           ),
@@ -84,7 +90,10 @@ class TableListReportPageState extends ConsumerState<TableListReportPage> {
               SizedBox(width: 10),
               Text(
                 'Year Wise',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
           ),
@@ -125,12 +134,17 @@ class TableListReportPageState extends ConsumerState<TableListReportPage> {
     }
 
     final tableInvoices = filtered.where((inv) {
-      if (tableListReportPageTableNumber == null || tableListReportPageTableNumber!.trim().isEmpty) return true;
+      if (tableListReportPageTableNumber == null ||
+          tableListReportPageTableNumber!.trim().isEmpty) {
+        return true;
+      }
       return inv.noOfTable.trim() == tableListReportPageTableNumber!.trim();
     }).toList();
 
     final total = tableInvoices.fold<double>(0, (s, e) => s + e.totalAmount);
-    final title = tableListReportPageTableNumber == null || tableListReportPageTableNumber!.isEmpty
+    final title =
+        tableListReportPageTableNumber == null ||
+            tableListReportPageTableNumber!.isEmpty
         ? 'Invoice List'
         : 'Report of $tableListReportPageTableNumber';
 
@@ -144,10 +158,10 @@ class TableListReportPageState extends ConsumerState<TableListReportPage> {
             onPressed: tableInvoices.isEmpty
                 ? null
                 : () => shareInvoicesCsv(
-                      invoices: tableInvoices,
-                      title:
-                          'Table ${tableListReportPageTableNumber ?? 'all'} — ${period.label}',
-                    ),
+                    invoices: tableInvoices,
+                    title:
+                        'Table ${tableListReportPageTableNumber ?? 'all'} — ${period.label}',
+                  ),
             icon: const Icon(Icons.ios_share_rounded),
           ),
           IconButton(
@@ -172,6 +186,7 @@ class TableListReportPageState extends ConsumerState<TableListReportPage> {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
             child: AppDropdownFormField<PosTable>(
+              required: true,
               label: 'Select Table',
               items: tables,
               itemLabel: (t) => t.displayName.trim().isNotEmpty
@@ -179,98 +194,101 @@ class TableListReportPageState extends ConsumerState<TableListReportPage> {
                   : t.tableNumber,
               value: selected,
               enableSearch: true,
-              onChanged: (t) => setState(() => tableListReportPageTableNumber = t?.tableNumber),
+              onChanged: (t) => setState(
+                () => tableListReportPageTableNumber = t?.tableNumber,
+              ),
             ),
           ),
           Expanded(
             child: invoicesAsync.when(
               data: (_) {
                 if (tableInvoices.isEmpty) {
-                  return Center(
-                    child: Text(AppStrings.of(ref).noTableBills),
-                  );
+                  return Center(child: Text(AppStrings.of(ref).noTableBills));
                 }
                 return ResponsiveScrollShell(
-        dashboard: true,
-        child: ListView(
-                  padding: EdgeInsets.fromLTRB(
-            AppBreakpoints.pagePaddingFor(context.widthClass),
-            12,
-            AppBreakpoints.pagePaddingFor(context.widthClass),
-            24),
-                  children: [
-                    ReportSurfaceCard(
-                      padding: const EdgeInsets.fromLTRB(4, 12, 4, 4),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Padding(
-                            padding: EdgeInsets.fromLTRB(12, 0, 12, 8),
-                            child: Text(
-                              'Invoice List',
-                              style: TextStyle(
-                                fontFamily: AppFonts.family,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 16,
-                                color: AppColors.navy,
+                  dashboard: true,
+                  child: ListView(
+                    padding: EdgeInsets.fromLTRB(
+                      AppBreakpoints.pagePaddingFor(context.widthClass),
+                      12,
+                      AppBreakpoints.pagePaddingFor(context.widthClass),
+                      24,
+                    ),
+                    children: [
+                      ReportSurfaceCard(
+                        padding: const EdgeInsets.fromLTRB(4, 12, 4, 4),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.fromLTRB(12, 0, 12, 8),
+                              child: Text(
+                                'Invoice List',
+                                style: TextStyle(
+                                  fontFamily: AppFonts.family,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 16,
+                                  color: AppColors.navy,
+                                ),
                               ),
                             ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 10,
-                            ),
-                            color: AppColors.border.withValues(alpha: .35),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    'Sr No.   Invoice Date   Invoice Number',
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 10,
+                              ),
+                              color: AppColors.border.withValues(alpha: .35),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      'Sr No.   Invoice Date   Invoice Number',
+                                      style: TextStyle(
+                                        fontFamily: AppFonts.family,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.navy.withValues(
+                                          alpha: .55,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Text(
+                                    'AMOUNT',
                                     style: TextStyle(
                                       fontFamily: AppFonts.family,
                                       fontSize: 11,
                                       fontWeight: FontWeight.w600,
-                                      color: AppColors.navy
-                                          .withValues(alpha: .55),
+                                      color: AppColors.navy.withValues(
+                                        alpha: .55,
+                                      ),
                                     ),
                                   ),
-                                ),
-                                Text(
-                                  'AMOUNT',
-                                  style: TextStyle(
-                                    fontFamily: AppFonts.family,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color:
-                                        AppColors.navy.withValues(alpha: .55),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          for (var i = 0; i < tableInvoices.length; i++) ...[
-                            if (i > 0)
-                              Divider(
-                                height: 1,
-                                color: AppColors.border.withValues(alpha: .7),
-                              ),
-                            ReportInvoiceRow(
-                              index: i + 1,
-                              invoice: tableInvoices[i],
-                              currency: currency,
-                              denseDate: true,
-                              onTap: () => context.push(
-                                '/reports/invoice/${tableInvoices[i].invoiceId}',
+                                ],
                               ),
                             ),
+                            for (var i = 0; i < tableInvoices.length; i++) ...[
+                              if (i > 0)
+                                Divider(
+                                  height: 1,
+                                  color: AppColors.border.withValues(alpha: .7),
+                                ),
+                              ReportInvoiceRow(
+                                index: i + 1,
+                                invoice: tableInvoices[i],
+                                currency: currency,
+                                denseDate: true,
+                                onTap: () => context.push(
+                                  '/reports/invoice/${tableInvoices[i].invoiceId}',
+                                ),
+                              ),
+                            ],
                           ],
-                        ],
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-      );
+                    ],
+                  ),
+                );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) => Center(child: Text('$e')),

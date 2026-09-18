@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
+import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
+import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/print/domain/bluetooth_printer_hub.dart';
 import 'package:pos_billingwala_v2/features/print/domain/print_providers.dart';
 import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
-import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
-import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/language/app_strings.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 String messTokenDigits(String? value) =>
     (value ?? '').replaceAll(RegExp(r'\D'), '');
@@ -59,15 +59,17 @@ class MessTokenQrPage extends ConsumerWidget {
       ..writeln(time)
       ..writeln('-' * width)
       ..writeln(payload);
-    final result = await ref.read(printServiceProvider).printRawText(
+    final result = await ref
+        .read(printServiceProvider)
+        .printRawText(
           buf.toString(),
           channel: PrinterChannelKind.kot,
           label: 'Mess token',
         );
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(result.message ?? 'Print done')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(result.message ?? 'Print done')));
   }
 
   String messTokenQrPageCenter(String text, int width) {
@@ -103,25 +105,35 @@ class MessTokenQrPage extends ConsumerWidget {
       body: ResponsiveScrollShell(
         dashboard: true,
         child: ListView(
-        padding: EdgeInsets.all(
-          AppBreakpoints.pagePaddingFor(context.widthClass) + 8,
-        ),
-        children: [
-          Center(child: AppModuleIcon(icon: Icons.qr_code_2_rounded, color: AppColors.teal, size: 70)),
-          const SizedBox(height: 12),
-          AppCard(
-            accentColor: AppColors.primary,
-            padding: const EdgeInsets.all(24),
-            child: Column(
+          padding: EdgeInsets.all(
+            AppBreakpoints.pagePaddingFor(context.widthClass) + 8,
+          ),
+          children: [
+            Center(
+              child: AppModuleIcon(
+                icon: Icons.qr_code_2_rounded,
+                color: AppColors.teal,
+                size: 70,
+              ),
+            ),
+            const SizedBox(height: 12),
+            AppCard(
+              accentColor: AppColors.primary,
+              padding: const EdgeInsets.all(24),
+              child: Column(
                 children: [
-                  const AppModuleIcon(icon: Icons.qr_code_2_rounded, color: AppColors.primary, size: 58),
+                  const AppModuleIcon(
+                    icon: Icons.qr_code_2_rounded,
+                    color: AppColors.primary,
+                    size: 58,
+                  ),
                   const SizedBox(height: 12),
                   Text(
                     subtitle,
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                   if ((memberMobile ?? '').trim().isNotEmpty) ...[
                     const SizedBox(height: 4),
@@ -129,8 +141,8 @@ class MessTokenQrPage extends ConsumerWidget {
                       messTokenDigits(memberMobile),
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ],
                   const SizedBox(height: 20),
@@ -160,29 +172,28 @@ class MessTokenQrPage extends ConsumerWidget {
                     'Show this QR at the mess counter to verify the meal token.',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color:
-                              Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),
-          ),
-          const SizedBox(height: 16),
-          AppButton(
-            label: 'Print token',
-            icon: Icons.print_rounded,
-            expanded: false,
-            onPressed: () => messTokenQrPagePrint(context, ref),
-          ),
-          const SizedBox(height: 8),
-          AppButton(
-            label: 'Done',
-            onPressed: () => Navigator.of(context).pop(),
-            variant: AppButtonVariant.outlined,
-            expanded: false,
-          ),
-        ],
-      ),
+            ),
+            const SizedBox(height: 16),
+            AppButton(
+              label: 'Print token',
+              icon: Icons.print_rounded,
+              expanded: false,
+              onPressed: () => messTokenQrPagePrint(context, ref),
+            ),
+            const SizedBox(height: 8),
+            AppButton(
+              label: 'Done',
+              onPressed: () => Navigator.of(context).pop(),
+              variant: AppButtonVariant.outlined,
+              expanded: false,
+            ),
+          ],
+        ),
       ),
     );
   }

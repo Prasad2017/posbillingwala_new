@@ -6,10 +6,7 @@ Map<String, dynamic> asJsonMap(Object? data) {
   return const {};
 }
 
-List<T> mapJsonList<T>(
-  Object? raw,
-  T Function(Map<String, dynamic> json) map,
-) {
+List<T> mapJsonList<T>(Object? raw, T Function(Map<String, dynamic> json) map) {
   if (raw is! List) return const [];
   return raw
       .whereType<Map>()
@@ -22,10 +19,7 @@ bool isApiSuccess(Map<String, dynamic> json) {
 }
 
 class StatusMessage {
-  const StatusMessage({
-    required this.status,
-    this.message,
-  });
+  const StatusMessage({required this.status, this.message});
 
   final String status;
   final String? message;
@@ -39,8 +33,5 @@ class StatusMessage {
     );
   }
 
-  Map<String, dynamic> toJson() => {
-        'status': status,
-        'message': message,
-      };
+  Map<String, dynamic> toJson() => {'status': status, 'message': message};
 }

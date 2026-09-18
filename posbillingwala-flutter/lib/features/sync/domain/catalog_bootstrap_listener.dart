@@ -7,9 +7,9 @@ import 'package:pos_billingwala_v2/core/network/online_guard.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/masters/domain/masters_providers.dart';
 
-/* If local catalog was wiped by a wrong-id sync (licenceId instead of */
-/* ownerId), pull masters once after login so Categories/Products appear */
-/* without a manual Fetch Data. */
+/* Pull the latest catalog once after login so Categories, Items, */
+/* Portions, and Combos created on another device appear without a */
+/* manual Fetch Data or menu rebuild. */
 class CatalogBootstrapListener {
   CatalogBootstrapListener(this.catalogBootstrapListenerRef);
 
@@ -35,10 +35,6 @@ class CatalogBootstrapListener {
     final db = catalogBootstrapListenerRef.read(appDatabaseProvider);
     final categories = await db.countActiveCategories();
     final products = await db.countActiveProducts();
-    if (categories > 0 && products > 0) {
-      attemptedThisSession = true;
-      return;
-    }
 
     if (!await ensureOnline()) return;
 
@@ -46,10 +42,12 @@ class CatalogBootstrapListener {
     attemptedThisSession = true;
     try {
       AppLogger.info(
-        'Catalog empty (cats=$categories products=$products) — '
+        'Catalog bootstrap (cats=$categories products=$products) — '
         'syncing with ownerId=$ownerId licenceId=${session.licenceUserId}',
       );
-      final result = await catalogBootstrapListenerRef.read(mastersRepositoryProvider).syncFromCloud(
+      final result = await catalogBootstrapListenerRef
+          .read(mastersRepositoryProvider)
+          .syncFromCloud(
             ownerId: ownerId,
             licenceUserId: session.licenceUserId,
           );
@@ -68,8 +66,9 @@ class CatalogBootstrapListener {
   }
 }
 
-final catalogBootstrapListenerProvider =
-    Provider<CatalogBootstrapListener>((ref) {
+final catalogBootstrapListenerProvider = Provider<CatalogBootstrapListener>((
+  ref,
+) {
   final listener = CatalogBootstrapListener(ref);
   ref.listen<AuthState>(authControllerProvider, (prev, next) {
     if (next.status == AuthStatus.authenticated &&

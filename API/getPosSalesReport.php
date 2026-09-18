@@ -67,12 +67,14 @@ $endEsc = mysqli_real_escape_string($con, $endDate);
 
 $scopeWhere = "(`branch_id`='$branchEsc' OR (`branch_id` IS NULL AND `licenseId`='$branchEsc'))";
 $notRefunded = invoice_and_not_refunded('');
+$staffScope = invoice_and_staff_scope($con, '');
 
 $sql = "SELECT * FROM `invoice`"
      . " WHERE $scopeWhere"
      . " AND DATE(`invoiceDate`) >= '$startEsc'"
      . " AND DATE(`invoiceDate`) <= '$endEsc'"
      . $notRefunded
+     . $staffScope
      . " ORDER BY `invoiceDate` DESC";
 
 $billCount = 0;

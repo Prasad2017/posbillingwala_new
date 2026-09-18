@@ -24,11 +24,12 @@ class CompanyApi {
     required String userId,
     required CompanyDto company,
   }) async {
+    final logo = company.companyLogo ?? '';
     final data = await companyApiPost(
       ApiEndpoints.insertCompanyDetail,
       fields: {
         'userId': userId,
-        'companyLogo': company.companyLogo ?? '',
+        'companyLogo': logo,
         'companyName': company.companyName,
         'cashierName': company.cashierName ?? '',
         'companyMobile': company.companyMobile ?? '',
@@ -55,6 +56,13 @@ class CompanyApi {
         'openingMinutes': company.openingMinutes ?? '',
         'closingMinutes': company.closingMinutes ?? '',
       },
+      /* Logo data-URL can be large; allow slower upload. */
+      sendTimeout: logo.length > 50000
+          ? const Duration(seconds: 90)
+          : null,
+      receiveTimeout: logo.length > 50000
+          ? const Duration(seconds: 90)
+          : null,
     );
     return isApiSuccess(data);
   }
@@ -127,11 +135,17 @@ class CompanyApi {
   Future<Map<String, dynamic>> companyApiPost(
     String path, {
     required Map<String, dynamic> fields,
+    Duration? sendTimeout,
+    Duration? receiveTimeout,
   }) async {
     final response = await client.dio.post<dynamic>(
       path,
       data: FormData.fromMap(fields),
-      options: Options(responseType: ResponseType.json),
+      options: Options(
+        responseType: ResponseType.json,
+        sendTimeout: sendTimeout,
+        receiveTimeout: receiveTimeout,
+      ),
     );
     return asJsonMap(response.data);
   }

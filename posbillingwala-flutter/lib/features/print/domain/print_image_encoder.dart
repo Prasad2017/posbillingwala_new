@@ -110,8 +110,7 @@ class PrintImageEncoder {
 
     for (var y = 0; y < h - 1; y++) {
       for (var x = 0; x < w - 1; x++) {
-        pixels[x + y * bmWidth] =
-            tab[x + w * y] == 0 ? 0xff000000 : 0xffffffff;
+        pixels[x + y * bmWidth] = tab[x + w * y] == 0 ? 0xff000000 : 0xffffffff;
       }
     }
   }

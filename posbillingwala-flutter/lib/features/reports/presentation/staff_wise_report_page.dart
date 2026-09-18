@@ -21,8 +21,7 @@ class StaffSalesRow {
   final double totalSales;
 }
 
-final staffWiseSalesProvider =
-    Provider<AsyncValue<List<StaffSalesRow>>>((ref) {
+final staffWiseSalesProvider = Provider<AsyncValue<List<StaffSalesRow>>>((ref) {
   final invoicesAsync = ref.watch(periodInvoicesProvider);
   return invoicesAsync.when(
     loading: () => const AsyncLoading(),
@@ -38,8 +37,8 @@ final staffWiseSalesProvider =
         final name = invoice.createdByStaffName.trim().isNotEmpty
             ? invoice.createdByStaffName.trim()
             : (invoice.createdByStaffId == null || invoice.createdByStaffId == 0
-                ? 'Unassigned'
-                : 'Staff #$id');
+                  ? 'Unassigned'
+                  : 'Staff #$id');
         final key = id == '0' || id == 'null' ? '_none' : id;
         final existing = map[key];
         if (existing == null) {
@@ -94,8 +93,7 @@ class StaffWiseReportPage extends ConsumerWidget {
               return const Center(child: Text('No bills in this period'));
             }
             final totalBills = rows.fold<int>(0, (s, r) => s + r.billCount);
-            final totalSales =
-                rows.fold<double>(0, (s, r) => s + r.totalSales);
+            final totalSales = rows.fold<double>(0, (s, r) => s + r.totalSales);
             return ListView(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
               children: [
@@ -144,8 +142,9 @@ class StaffWiseReportPage extends ConsumerWidget {
                       child: Row(
                         children: [
                           CircleAvatar(
-                            backgroundColor:
-                                AppColors.primary.withValues(alpha: 0.12),
+                            backgroundColor: AppColors.primary.withValues(
+                              alpha: 0.12,
+                            ),
                             child: Text(
                               row.staffName.isNotEmpty
                                   ? row.staffName[0].toUpperCase()

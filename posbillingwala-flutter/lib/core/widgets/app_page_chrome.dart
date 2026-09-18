@@ -22,9 +22,8 @@ class AppPageAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool centerTitle;
 
   @override
-  Size get preferredSize => Size.fromHeight(
-        kToolbarHeight + (bottom?.preferredSize.height ?? 0),
-      );
+  Size get preferredSize =>
+      Size.fromHeight(kToolbarHeight + (bottom?.preferredSize.height ?? 0));
 
   @override
   Widget build(BuildContext context) {
@@ -112,7 +111,12 @@ class AppFeatureBanner extends StatelessWidget {
                 color: Colors.white.withValues(alpha: .18),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: AppSvg(svgPath!, width: 26, height: 26, color: Colors.white),
+              child: AppSvg(
+                svgPath!,
+                width: 26,
+                height: 26,
+                color: Colors.white,
+              ),
             ),
             const SizedBox(width: 12),
           ],
@@ -120,10 +124,16 @@ class AppFeatureBanner extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: AppTypography.sectionTitle(color: Colors.white)),
+                Text(
+                  title,
+                  style: AppTypography.sectionTitle(color: Colors.white),
+                ),
                 if (subtitle != null) ...[
                   const SizedBox(height: 4),
-                  Text(subtitle!, style: AppTypography.bodySmall(color: Colors.white70)),
+                  Text(
+                    subtitle!,
+                    style: AppTypography.bodySmall(color: Colors.white70),
+                  ),
                 ],
               ],
             ),

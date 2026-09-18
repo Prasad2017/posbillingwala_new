@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
 import 'package:pos_billingwala_v2/core/logging/app_logger.dart';
+import 'package:pos_billingwala_v2/core/logging/error_report_service.dart';
 import 'package:pos_billingwala_v2/core/network/api_client.dart';
 import 'package:pos_billingwala_v2/core/network/online_guard.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
@@ -71,10 +72,9 @@ class AuthController extends Notifier<AuthState> {
 
   Future<void> bindBranchScope(UserSession session) async {
     final device = await DeviceIdentityService().resolve();
-    await ref.read(appDatabaseProvider).applyLicenceScope(
-          session: session,
-          deviceId: device.deviceId,
-        );
+    await ref
+        .read(appDatabaseProvider)
+        .applyLicenceScope(session: session, deviceId: device.deviceId);
   }
 
   Future<void> bootstrap() async {
@@ -84,13 +84,24 @@ class AuthController extends Notifier<AuthState> {
       state = const AuthState(status: AuthStatus.unauthenticated);
       return;
     }
-    /* Bind Drift branch filters before MPIN so cold-start queries stay scoped. */
+    /* Bind Drift branch filters before UI so cold-start queries stay scoped. */
     await bindBranchScope(session);
-    if (session.authToken != null && session.authToken!.isNotEmpty) {
-      ref.read(apiClientProvider).setAuthToken(session.authToken);
+    await bindErrorReportSession(session);
+
+    final token = session.authToken?.trim() ?? '';
+    if (token.isEmpty) {
+      /* Soft-locked after logout — owner PB-PIN unlock only. */
+      state = AuthState(status: AuthStatus.needsMpin, session: session);
+      return;
     }
-    /* Owner unlock (PB-PIN) on every cold start — not staff login. */
-    state = AuthState(status: AuthStatus.needsMpin, session: session);
+
+    /* Stay signed in across app restarts; MPIN is not required again. */
+    ref.read(apiClientProvider).setAuthToken(token);
+    final staff = await StaffStore().read();
+    if (staff != null) {
+      ref.read(apiClientProvider).setStaffId(staff.id);
+    }
+    state = AuthState(status: AuthStatus.authenticated, session: session);
   }
 
   Future<DeviceConflictAction> Function(String message)? conflictHandler;
@@ -112,17 +123,21 @@ class AuthController extends Notifier<AuthState> {
         );
         return false;
       }
-      AppLogger.info('loginWithLicence start keyLen=${licenceKey.trim().length}');
+      AppLogger.info(
+        'loginWithLicence start keyLen=${licenceKey.trim().length}',
+      );
       final session = await repo.loginWithLicence(
         licenceKey: licenceKey,
         onDeviceConflict: conflictHandler,
       );
       ref.read(apiClientProvider).setAuthToken(session.authToken);
       await bindBranchScope(session);
-      /* Licence bind done — next screen is owner PB-PIN login. */
+      await bindErrorReportSession(session);
+      /* Licence bind done — ask PB-PIN once to finish login (same as after Logout). */
       state = AuthState(status: AuthStatus.needsMpin, session: session);
-      FcmService(apiClient: ref.read(apiClientProvider))
-          .registerForUser(session.userId);
+      FcmService(
+        apiClient: ref.read(apiClientProvider),
+      ).registerForUser(session.userId);
       return true;
     } on AuthException catch (e) {
       AppLogger.error('loginWithLicence AuthException', e);
@@ -162,12 +177,11 @@ class AuthController extends Notifier<AuthState> {
       ref.read(apiClientProvider).setStaffId(null);
       ref.read(apiClientProvider).setAuthToken(session.authToken);
       await bindBranchScope(session);
-      state = AuthState(
-        status: AuthStatus.authenticated,
-        session: session,
-      );
-      FcmService(apiClient: ref.read(apiClientProvider))
-          .registerForUser(session.userId);
+      await bindErrorReportSession(session);
+      state = AuthState(status: AuthStatus.authenticated, session: session);
+      FcmService(
+        apiClient: ref.read(apiClientProvider),
+      ).registerForUser(session.userId);
       return true;
     } on AuthException catch (e) {
       state = state.copyWith(
@@ -191,11 +205,13 @@ class AuthController extends Notifier<AuthState> {
     final session = state.session;
     final userId = session?.userId;
     if (userId != null && userId.isNotEmpty) {
-      await FcmService(apiClient: ref.read(apiClientProvider))
-          .clearForUser(userId);
+      await FcmService(
+        apiClient: ref.read(apiClientProvider),
+      ).clearForUser(userId);
     }
     await StaffStore().clear();
     ref.read(apiClientProvider).setStaffId(null);
+    ErrorReportService.setSession();
 
     await repo.lockSession();
     ref.read(apiClientProvider).setAuthToken(null);
@@ -257,8 +273,9 @@ class AuthController extends Notifier<AuthState> {
         );
         ref.read(apiClientProvider).setAuthToken(session.authToken);
         await bindBranchScope(session);
-        FcmService(apiClient: ref.read(apiClientProvider))
-            .registerForUser(session.userId);
+        FcmService(
+          apiClient: ref.read(apiClientProvider),
+        ).registerForUser(session.userId);
       }
 
       await StaffStore().save(
@@ -267,10 +284,8 @@ class AuthController extends Notifier<AuthState> {
         sessionId: result.sessionId,
       );
       ref.read(apiClientProvider).setStaffId(result.staff.id);
-      state = AuthState(
-        status: AuthStatus.authenticated,
-        session: session,
-      );
+      await bindErrorReportSession(session, device: device);
+      state = AuthState(status: AuthStatus.authenticated, session: session);
       return true;
     } catch (e) {
       state = state.copyWith(
@@ -289,14 +304,29 @@ class AuthController extends Notifier<AuthState> {
     final session = state.session;
     final userId = session?.userId;
     if (userId != null && userId.isNotEmpty) {
-      await FcmService(apiClient: ref.read(apiClientProvider))
-          .clearForUser(userId);
+      await FcmService(
+        apiClient: ref.read(apiClientProvider),
+      ).clearForUser(userId);
     }
     await repo.clearSession(licenceKey: session?.licenceKey);
     await StaffStore().clear();
     ref.read(apiClientProvider).setAuthToken(null);
     ref.read(apiClientProvider).setStaffId(null);
+    ErrorReportService.setSession();
     state = const AuthState(status: AuthStatus.unauthenticated);
+  }
+
+  Future<void> bindErrorReportSession(
+    UserSession session, {
+    DeviceIdentity? device,
+  }) async {
+    final resolved = device ?? await DeviceIdentityService().resolve();
+    ErrorReportService.setSession(
+      userId: session.userId,
+      shopName: session.shopName ?? session.displayName,
+      deviceId: resolved.deviceId,
+      deviceName: resolved.deviceName,
+    );
   }
 
   void clearError() {
@@ -341,5 +371,6 @@ class AuthController extends Notifier<AuthState> {
   }
 }
 
-final authControllerProvider =
-    NotifierProvider<AuthController, AuthState>(AuthController.new);
+final authControllerProvider = NotifierProvider<AuthController, AuthState>(
+  AuthController.new,
+);

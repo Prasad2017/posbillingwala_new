@@ -26,12 +26,12 @@ class FoodTypeDto {
   }
 
   Map<String, dynamic> toJson() => {
-        'foodTypeId': foodTypeId,
-        'foodTypeName': foodTypeName,
-        'foodTypeCode': foodTypeCode,
-        'foodTypeSortOrder': foodTypeSortOrder,
-        'foodTypeStatus': foodTypeStatus,
-      };
+    'foodTypeId': foodTypeId,
+    'foodTypeName': foodTypeName,
+    'foodTypeCode': foodTypeCode,
+    'foodTypeSortOrder': foodTypeSortOrder,
+    'foodTypeStatus': foodTypeStatus,
+  };
 }
 
 class CategoryDto {
@@ -69,15 +69,15 @@ class CategoryDto {
   }
 
   Map<String, dynamic> toJson() => {
-        'categoryId': categoryId,
-        'categoryName': categoryName,
-        'foodTypeId': foodTypeId,
-        'foodTypeCode': foodTypeCode,
-        'categorySortOrder': categorySortOrder,
-        'categoryDeletedStatus': categoryDeletedStatus,
-        'categoryNetworkStatus': categoryNetworkStatus,
-        'categoryStatus': categoryStatus,
-      };
+    'categoryId': categoryId,
+    'categoryName': categoryName,
+    'foodTypeId': foodTypeId,
+    'foodTypeCode': foodTypeCode,
+    'categorySortOrder': categorySortOrder,
+    'categoryDeletedStatus': categoryDeletedStatus,
+    'categoryNetworkStatus': categoryNetworkStatus,
+    'categoryStatus': categoryStatus,
+  };
 }
 
 class ProductDto {
@@ -155,24 +155,24 @@ class ProductDto {
   }
 
   Map<String, dynamic> toJson() => {
-        'productId': productId,
-        'productName': productName,
-        'categoryId': categoryId,
-        'categoryName': categoryName,
-        'subcategoryId': subcategoryId,
-        'productCode': productCode,
-        'productImage': productImage,
-        'productPrice': productPrice,
-        'productMrp': productMrp,
-        'openPrice': openPrice,
-        'priceIncludesGst': priceIncludesGst,
-        'productUnit': productUnit,
-        'productCGST': productCgst,
-        'productSGST': productSgst,
-        'productDeletedStatus': productDeletedStatus,
-        'productNetworkStatus': productNetworkStatus,
-        'productStatus': productStatus,
-      };
+    'productId': productId,
+    'productName': productName,
+    'categoryId': categoryId,
+    'categoryName': categoryName,
+    'subcategoryId': subcategoryId,
+    'productCode': productCode,
+    'productImage': productImage,
+    'productPrice': productPrice,
+    'productMrp': productMrp,
+    'openPrice': openPrice,
+    'priceIncludesGst': priceIncludesGst,
+    'productUnit': productUnit,
+    'productCGST': productCgst,
+    'productSGST': productSgst,
+    'productDeletedStatus': productDeletedStatus,
+    'productNetworkStatus': productNetworkStatus,
+    'productStatus': productStatus,
+  };
 }
 
 class PortionDto {
@@ -185,6 +185,8 @@ class PortionDto {
     this.portionSortOrder = 0,
     this.portionDeletedStatus = '0',
     this.portionNetworkStatus,
+    this.productNetworkStatus,
+    this.portionMasterNetworkStatus,
     this.portionStatus = '1',
   });
 
@@ -196,6 +198,8 @@ class PortionDto {
   final int portionSortOrder;
   final String portionDeletedStatus;
   final String? portionNetworkStatus;
+  final String? productNetworkStatus;
+  final String? portionMasterNetworkStatus;
   final String portionStatus;
 
   factory PortionDto.fromJson(Map<String, dynamic> json) {
@@ -208,21 +212,27 @@ class PortionDto {
       portionSortOrder: parseInt(json['portionSortOrder']) ?? 0,
       portionDeletedStatus: parseString(json['portionDeletedStatus']) ?? '0',
       portionNetworkStatus: parseString(json['portionNetworkStatus']),
+      productNetworkStatus: parseString(json['productNetworkStatus']),
+      portionMasterNetworkStatus: parseString(
+        json['portionMasterNetworkStatus'],
+      ),
       portionStatus: parseString(json['portionStatus']) ?? '1',
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'portionId': portionId,
-        'productId': productId,
-        'portionName': portionName,
-        'portionMasterId': portionMasterId,
-        'portionPrice': portionPrice,
-        'portionSortOrder': portionSortOrder,
-        'portionDeletedStatus': portionDeletedStatus,
-        'portionNetworkStatus': portionNetworkStatus,
-        'portionStatus': portionStatus,
-      };
+    'portionId': portionId,
+    'productId': productId,
+    'portionName': portionName,
+    'portionMasterId': portionMasterId,
+    'portionPrice': portionPrice,
+    'portionSortOrder': portionSortOrder,
+    'portionDeletedStatus': portionDeletedStatus,
+    'portionNetworkStatus': portionNetworkStatus,
+    'productNetworkStatus': productNetworkStatus,
+    'portionMasterNetworkStatus': portionMasterNetworkStatus,
+    'portionStatus': portionStatus,
+  };
 }
 
 class PosTableDto {
@@ -263,16 +273,16 @@ class PosTableDto {
   }
 
   Map<String, dynamic> toJson() => {
-        'tableId': tableId,
-        'tableNumber': tableNumber,
-        'tableName': tableName,
-        'capacity': capacity,
-        'areaId': areaId,
-        'tableActive': tableActive,
-        'sortOrder': sortOrder,
-        'statusOverride': statusOverride,
-        'posTableNetworkStatus': posTableNetworkStatus,
-      };
+    'tableId': tableId,
+    'tableNumber': tableNumber,
+    'tableName': tableName,
+    'capacity': capacity,
+    'areaId': areaId,
+    'tableActive': tableActive,
+    'sortOrder': sortOrder,
+    'statusOverride': statusOverride,
+    'posTableNetworkStatus': posTableNetworkStatus,
+  };
 }
 
 class SubcategoryDto {
@@ -384,8 +394,9 @@ class PortionMasterDto {
       portionName: parseString(json['portionName']) ?? '',
       portionMasterDeletedStatus:
           parseString(json['portionMasterDeletedStatus']) ?? '0',
-      portionMasterNetworkStatus:
-          parseString(json['portionMasterNetworkStatus']),
+      portionMasterNetworkStatus: parseString(
+        json['portionMasterNetworkStatus'],
+      ),
       portionMasterStatus: parseString(json['portionMasterStatus']) ?? '1',
     );
   }

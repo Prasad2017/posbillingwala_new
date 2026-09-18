@@ -15,6 +15,7 @@ function catalog_resolve_actor($con)
 
 /**
  * Require actor of expected type; returns actor row or exits with JSON error.
+ * Bearer token is required only when $db_local is true.
  *
  * @param mysqli $con
  * @param string $expectedType admin|dealer|owner
@@ -23,15 +24,26 @@ function catalog_resolve_actor($con)
 function catalog_require_actor($con, $expectedType)
 {
     $actor = catalog_resolve_actor($con);
-    if ($actor === null || $actor['actor_type'] !== $expectedType) {
-        catalog_json_response(array(
-            'success' => false,
-            'status' => 'false',
-            'message' => 'Unauthorized',
-        ), 401);
-        exit;
+    if ($actor !== null && $actor['actor_type'] === $expectedType) {
+        return $actor;
     }
-    return $actor;
+
+    if (($actor === null) && !auth_token_is_required()) {
+        $posted = auth_posted_user_id();
+        if ($posted !== '') {
+            return array(
+                'actor_type' => $expectedType,
+                'actor_id' => $posted,
+            );
+        }
+    }
+
+    catalog_json_response(array(
+        'success' => false,
+        'status' => 'false',
+        'message' => 'Unauthorized',
+    ), 401);
+    exit;
 }
 
 /**

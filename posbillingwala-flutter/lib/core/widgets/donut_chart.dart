@@ -42,15 +42,19 @@ class DonutChart extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (centerValue != null)
-                Text(centerValue!,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w900,
-                        )),
+                Text(
+                  centerValue!,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+                ),
               if (centerTitle != null)
-                Text(centerTitle!,
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: Colors.black54,
-                        )),
+                Text(
+                  centerTitle!,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelSmall?.copyWith(color: Colors.black54),
+                ),
             ],
           ),
         ],

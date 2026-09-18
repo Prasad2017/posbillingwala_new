@@ -25,13 +25,20 @@ class ReportsHubPage extends ConsumerWidget {
         .select(ReportPaymentFilter.all);
   }
 
-  Future<void> reportsHubPageClearAllInvoices(BuildContext context, WidgetRef ref) async {
+  Future<void> reportsHubPageClearAllInvoices(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
     final db = ref.read(appDatabaseProvider);
     final pending = await db.countPendingInvoiceSync();
     if (!context.mounted) return;
     if (pending > 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${AppStrings.of(ref).sync} $pending ${AppStrings.of(ref).syncPendingBills}')),
+        SnackBar(
+          content: Text(
+            '${AppStrings.of(ref).sync} $pending ${AppStrings.of(ref).syncPendingBills}',
+          ),
+        ),
       );
       return;
     }
@@ -51,9 +58,9 @@ class ReportsHubPage extends ConsumerWidget {
     ref.invalidate(monthInvoicesProvider);
     ref.invalidate(periodInvoicesProvider);
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(strings.allInvoicesCleared)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(strings.allInvoicesCleared)));
     }
   }
 

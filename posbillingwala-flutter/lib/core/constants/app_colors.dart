@@ -7,6 +7,7 @@ class AppColors {
   static const Color primary = Color(0xFF0756C9);
   static const Color primaryDark = Color(0xFF062B73);
   static const Color primaryBright = Color(0xFF168BFF);
+
   /* Soft wash for chips / pills / selected rows (derived from primary). */
   static const Color primarySoft = Color(0xFFE7F0FC);
   static const Color primaryLight = primarySoft;
@@ -40,7 +41,11 @@ class AppColors {
   static const Color textSecondary = Color(0xFF64748B);
   static const Color border = Color(0xFFE2E8F0);
 
-  static const List<Color> brandGradient = [primaryBright, primary, primaryDark];
+  static const List<Color> brandGradient = [
+    primaryBright,
+    primary,
+    primaryDark,
+  ];
   static const List<Color> warmGradient = [orangeLight, orange];
   static const List<Color> analyticsGradient = [primaryBright, primaryDark];
 }

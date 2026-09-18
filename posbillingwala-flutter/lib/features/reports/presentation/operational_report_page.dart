@@ -39,15 +39,16 @@ class OperationalReportPageState extends ConsumerState<OperationalReportPage> {
   @override
   void initState() {
     super.initState();
-    showTypeChips = widget.typeFilter == null ||
+    showTypeChips =
+        widget.typeFilter == null ||
         widget.typeFilter == ReportInvoiceTypeFilter.all;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(reportInvoiceTypeFilterProvider.notifier).select(
-            widget.typeFilter ?? ReportInvoiceTypeFilter.all,
-          );
-      ref.read(reportPaymentFilterProvider.notifier).select(
-            widget.paymentFilter ?? ReportPaymentFilter.all,
-          );
+      ref
+          .read(reportInvoiceTypeFilterProvider.notifier)
+          .select(widget.typeFilter ?? ReportInvoiceTypeFilter.all);
+      ref
+          .read(reportPaymentFilterProvider.notifier)
+          .select(widget.paymentFilter ?? ReportPaymentFilter.all);
     });
   }
 
@@ -169,9 +170,9 @@ class OperationalReportPageState extends ConsumerState<OperationalReportPage> {
             onPressed: filtered.isEmpty
                 ? null
                 : () => shareInvoicesCsv(
-                      invoices: filtered,
-                      title: '$title — ${period.label}',
-                    ),
+                    invoices: filtered,
+                    title: '$title — ${period.label}',
+                  ),
             icon: const Icon(Icons.ios_share_rounded),
           ),
           IconButton(
@@ -184,220 +185,223 @@ class OperationalReportPageState extends ConsumerState<OperationalReportPage> {
       body: ResponsiveScrollShell(
         dashboard: true,
         child: ListView(
-        padding: EdgeInsets.fromLTRB(
+          padding: EdgeInsets.fromLTRB(
             AppBreakpoints.pagePaddingFor(context.widthClass),
             12,
             AppBreakpoints.pagePaddingFor(context.widthClass),
-            28),
-        children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: ReportPeriodPill(
-              label: reportPeriodDisplayLabel(period) == 'Today'
-                  ? 'All Records'
-                  : reportPeriodDisplayLabel(period),
-              onTap: onFilterPressed,
-            ),
+            28,
           ),
-          if (showTypeChips) ...[
+          children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: ReportPeriodPill(
+                label: reportPeriodDisplayLabel(period) == 'Today'
+                    ? 'All Records'
+                    : reportPeriodDisplayLabel(period),
+                onTap: onFilterPressed,
+              ),
+            ),
+            if (showTypeChips) ...[
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 40,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    for (final entry in [
+                      (ReportInvoiceTypeFilter.all, strings.ui('ui_all')),
+                      (ReportInvoiceTypeFilter.pos, strings.fastBilling),
+                      (ReportInvoiceTypeFilter.table, strings.dineIn),
+                      (ReportInvoiceTypeFilter.takeaway, strings.takeAway),
+                      (ReportInvoiceTypeFilter.mess, strings.mess),
+                      (
+                        ReportInvoiceTypeFilter.discountOnly,
+                        strings.ui('ui_discount'),
+                      ),
+                      (
+                        ReportInvoiceTypeFilter.refundOnly,
+                        strings.refundWiseReport,
+                      ),
+                    ])
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: FilterChip(
+                          label: Text(entry.$2),
+                          selected: typeFilter == entry.$1,
+                          onSelected: (_) => ref
+                              .read(reportInvoiceTypeFilterProvider.notifier)
+                              .select(entry.$1),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+            if (!widget.paymentBreakdown) ...[
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 40,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    for (final entry in [
+                      (ReportPaymentFilter.all, strings.ui('ui_all')),
+                      (ReportPaymentFilter.cash, strings.cash),
+                      (ReportPaymentFilter.upi, strings.upi),
+                      (
+                        ReportPaymentFilter.cashPlusUpi,
+                        strings.ui('ui_cash_plus_upi'),
+                      ),
+                    ])
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: FilterChip(
+                          label: Text(entry.$2),
+                          selected: paymentFilter == entry.$1,
+                          onSelected: (_) => ref
+                              .read(reportPaymentFilterProvider.notifier)
+                              .select(entry.$1),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 12),
-            SizedBox(
-              height: 40,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                children: [
-                  for (final entry in [
-                    (ReportInvoiceTypeFilter.all, strings.ui('ui_all')),
-                    (ReportInvoiceTypeFilter.pos, strings.fastBilling),
-                    (ReportInvoiceTypeFilter.table, strings.dineIn),
-                    (ReportInvoiceTypeFilter.takeaway, strings.takeAway),
-                    (ReportInvoiceTypeFilter.mess, strings.mess),
-                    (ReportInvoiceTypeFilter.discountOnly, strings.ui('ui_discount')),
-                    (ReportInvoiceTypeFilter.refundOnly, strings.refundWiseReport),
-                  ])
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: FilterChip(
-                        label: Text(entry.$2),
-                        selected: typeFilter == entry.$1,
-                        onSelected: (_) => ref
-                            .read(reportInvoiceTypeFilterProvider.notifier)
-                            .select(entry.$1),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ],
-          if (!widget.paymentBreakdown) ...[
-            const SizedBox(height: 10),
-            SizedBox(
-              height: 40,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                children: [
-                  for (final entry in [
-                    (ReportPaymentFilter.all, strings.ui('ui_all')),
-                    (ReportPaymentFilter.cash, strings.cash),
-                    (ReportPaymentFilter.upi, strings.upi),
-                    (ReportPaymentFilter.cashPlusUpi, strings.ui('ui_cash_plus_upi')),
-                  ])
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: FilterChip(
-                        label: Text(entry.$2),
-                        selected: paymentFilter == entry.$1,
-                        onSelected: (_) => ref
-                            .read(reportPaymentFilterProvider.notifier)
-                            .select(entry.$1),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ],
-          const SizedBox(height: 12),
-          if (widget.paymentBreakdown)
-            ReportKpiGrid(
-              items: [
-                ReportKpiData(
-                  label: 'Subtotal',
-                  value: currency.format(summary.subTotal),
-                ),
-                ReportKpiData(
-                  label: 'CGST + SGST',
-                  value: currency.format(summary.gstTotal),
-                ),
-                ReportKpiData(
-                  label: 'Discount',
-                  value: currency.format(summary.discountTotal),
-                ),
-                ReportKpiData(
-                  label: 'TOTAL AMOUNT',
-                  value: currency.format(summary.totalSales),
-                ),
-              ],
-            )
-          else
-            ReportKpiGrid(
-              items: [
-                ReportKpiData(
-                  label: 'Total Bills',
-                  value: '${summary.billCount}',
-                ),
-                ReportKpiData(
-                  label: 'TOTAL AMOUNT',
-                  value: currency.format(summary.totalSales),
-                ),
-                ReportKpiData(
-                  label: 'Avg. Bill Value',
-                  value: currency.format(summary.avgBill),
-                ),
-                ReportKpiData(
-                  label: 'Categories',
-                  value: '$categories',
-                ),
-              ],
-            ),
-          const SizedBox(height: 14),
-          ReportDonutBreakdown(
-            title: widget.paymentBreakdown
-                ? 'Payment Wise Details'
-                : widget.typeFilter == ReportInvoiceTypeFilter.table
-                    ? 'Table Number'
-                    : 'Billing Wise Details',
-            slices: widget.typeFilter == ReportInvoiceTypeFilter.table
-                ? tableSlices(filtered)
-                : slices,
-            centerValue: currency.format(summary.totalSales),
-          ),
-          const SizedBox(height: 14),
-          ReportSurfaceCard(
-            padding: const EdgeInsets.fromLTRB(4, 12, 4, 4),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          widget.typeFilter == ReportInvoiceTypeFilter.table
-                              ? 'Table Summary'
-                              : 'Invoice Sale',
-                          style: const TextStyle(
-                            fontFamily: AppFonts.family,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 16,
-                            color: AppColors.navy,
-                          ),
-                        ),
-                      ),
-                      if (widget.typeFilter == ReportInvoiceTypeFilter.table)
-                        TextButton(
-                          onPressed: () =>
-                              context.push('/reports/table-list'),
-                          child: Text(AppStrings.of(ref).tableList),
-                        ),
-                    ],
+            if (widget.paymentBreakdown)
+              ReportKpiGrid(
+                items: [
+                  ReportKpiData(
+                    label: 'Subtotal',
+                    value: currency.format(summary.subTotal),
                   ),
-                ),
-                if (widget.typeFilter == ReportInvoiceTypeFilter.table)
-                  TableSummaryList(
-                    invoices: filtered,
-                    currency: currency,
-                  )
-                else
-                  invoicesAsync.when(
-                    data: (_) {
-                      if (filtered.isEmpty) {
-                        return Padding(
-                          padding: const EdgeInsets.all(24),
-                          child: Center(
-                            child: Text(AppStrings.of(ref).noBillsPeriod),
-                          ),
-                        );
-                      }
-                      final rows = filtered.take(50).toList();
-                      return Column(
-                        children: [
-                          for (var i = 0; i < rows.length; i++) ...[
-                            if (i > 0)
-                              Divider(
-                                height: 1,
-                                color:
-                                    AppColors.border.withValues(alpha: .7),
-                              ),
-                            ReportInvoiceRow(
-                              index: i + 1,
-                              invoice: rows[i],
-                              currency: currency,
-                              denseDate: true,
-                              onTap: () => context.push(
-                                '/reports/invoice/${rows[i].invoiceId}',
-                              ),
+                  ReportKpiData(
+                    label: 'CGST + SGST',
+                    value: currency.format(summary.gstTotal),
+                  ),
+                  ReportKpiData(
+                    label: 'Discount',
+                    value: currency.format(summary.discountTotal),
+                  ),
+                  ReportKpiData(
+                    label: 'TOTAL AMOUNT',
+                    value: currency.format(summary.totalSales),
+                  ),
+                ],
+              )
+            else
+              ReportKpiGrid(
+                items: [
+                  ReportKpiData(
+                    label: 'Total Bills',
+                    value: '${summary.billCount}',
+                  ),
+                  ReportKpiData(
+                    label: 'TOTAL AMOUNT',
+                    value: currency.format(summary.totalSales),
+                  ),
+                  ReportKpiData(
+                    label: 'Avg. Bill Value',
+                    value: currency.format(summary.avgBill),
+                  ),
+                  ReportKpiData(label: 'Categories', value: '$categories'),
+                ],
+              ),
+            const SizedBox(height: 14),
+            ReportDonutBreakdown(
+              title: widget.paymentBreakdown
+                  ? 'Payment Wise Details'
+                  : widget.typeFilter == ReportInvoiceTypeFilter.table
+                  ? 'Table Number'
+                  : 'Billing Wise Details',
+              slices: widget.typeFilter == ReportInvoiceTypeFilter.table
+                  ? tableSlices(filtered)
+                  : slices,
+              centerValue: currency.format(summary.totalSales),
+            ),
+            const SizedBox(height: 14),
+            ReportSurfaceCard(
+              padding: const EdgeInsets.fromLTRB(4, 12, 4, 4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            widget.typeFilter == ReportInvoiceTypeFilter.table
+                                ? 'Table Summary'
+                                : 'Invoice Sale',
+                            style: const TextStyle(
+                              fontFamily: AppFonts.family,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 16,
+                              color: AppColors.navy,
                             ),
-                          ],
-                        ],
-                      );
-                    },
-                    loading: () => const Padding(
-                      padding: EdgeInsets.all(24),
-                      child: Center(child: CircularProgressIndicator()),
-                    ),
-                    error: (e, _) => Padding(
-                      padding: EdgeInsets.all(
-            AppBreakpoints.pagePaddingFor(context.widthClass),
-          ),
-                      child: Text('$e'),
+                          ),
+                        ),
+                        if (widget.typeFilter == ReportInvoiceTypeFilter.table)
+                          TextButton(
+                            onPressed: () =>
+                                context.push('/reports/table-list'),
+                            child: Text(AppStrings.of(ref).tableList),
+                          ),
+                      ],
                     ),
                   ),
-              ],
+                  if (widget.typeFilter == ReportInvoiceTypeFilter.table)
+                    TableSummaryList(invoices: filtered, currency: currency)
+                  else
+                    invoicesAsync.when(
+                      data: (_) {
+                        if (filtered.isEmpty) {
+                          return Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Center(
+                              child: Text(AppStrings.of(ref).noBillsPeriod),
+                            ),
+                          );
+                        }
+                        final rows = filtered.take(50).toList();
+                        return Column(
+                          children: [
+                            for (var i = 0; i < rows.length; i++) ...[
+                              if (i > 0)
+                                Divider(
+                                  height: 1,
+                                  color: AppColors.border.withValues(alpha: .7),
+                                ),
+                              ReportInvoiceRow(
+                                index: i + 1,
+                                invoice: rows[i],
+                                currency: currency,
+                                denseDate: true,
+                                onTap: () => context.push(
+                                  '/reports/invoice/${rows[i].invoiceId}',
+                                ),
+                              ),
+                            ],
+                          ],
+                        );
+                      },
+                      loading: () => const Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Center(child: CircularProgressIndicator()),
+                      ),
+                      error: (e, _) => Padding(
+                        padding: EdgeInsets.all(
+                          AppBreakpoints.pagePaddingFor(context.widthClass),
+                        ),
+                        child: Text('$e'),
+                      ),
+                    ),
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
       ),
     );
   }
@@ -405,8 +409,7 @@ class OperationalReportPageState extends ConsumerState<OperationalReportPage> {
   List<ReportSlice> tableSlices(List<Invoice> filtered) {
     final map = <String, double>{};
     for (final inv in filtered) {
-      final key =
-          (inv.noOfTable.trim().isEmpty) ? '—' : inv.noOfTable.trim();
+      final key = (inv.noOfTable.trim().isEmpty) ? '—' : inv.noOfTable.trim();
       map[key] = (map[key] ?? 0) + inv.totalAmount;
     }
     final colors = [
@@ -433,7 +436,8 @@ class OperationalReportPageState extends ConsumerState<OperationalReportPage> {
 }
 
 class TableSummaryList extends ConsumerWidget {
-  const TableSummaryList({super.key, 
+  const TableSummaryList({
+    super.key,
     required this.invoices,
     required this.currency,
   });
@@ -445,8 +449,7 @@ class TableSummaryList extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final map = <String, double>{};
     for (final inv in invoices) {
-      final key =
-          (inv.noOfTable.trim().isEmpty) ? '—' : inv.noOfTable.trim();
+      final key = (inv.noOfTable.trim().isEmpty) ? '—' : inv.noOfTable.trim();
       map[key] = (map[key] ?? 0) + inv.totalAmount;
     }
     final entries = map.entries.toList()
@@ -492,10 +495,7 @@ class TableSummaryList extends ConsumerWidget {
         ),
         for (var i = 0; i < entries.length; i++) ...[
           if (i > 0)
-            Divider(
-              height: 1,
-              color: AppColors.border.withValues(alpha: .7),
-            ),
+            Divider(height: 1, color: AppColors.border.withValues(alpha: .7)),
           Material(
             color: Colors.transparent,
             child: InkWell(
@@ -503,8 +503,10 @@ class TableSummaryList extends ConsumerWidget {
                 '/reports/table-list?table=${Uri.encodeComponent(entries[i].key)}',
               ),
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 14,
+                ),
                 child: Row(
                   children: [
                     SizedBox(

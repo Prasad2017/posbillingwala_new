@@ -21,10 +21,7 @@ class AppCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final content = Padding(
-      padding: padding,
-      child: child,
-    );
+    final content = Padding(padding: padding, child: child);
 
     return Container(
       margin: margin ?? EdgeInsets.zero,

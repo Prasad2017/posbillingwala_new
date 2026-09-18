@@ -53,18 +53,18 @@ class ComboDto {
   }
 
   Map<String, dynamic> toJson() => {
-        'comboId': comboId,
-        'comboName': comboName,
-        'comboCode': comboCode,
-        'comboPrice': comboPrice,
-        'comboCGST': comboCgst,
-        'comboSGST': comboSgst,
-        'comboWithGSTPrice': resolvedWithGstPrice,
-        'comboActiveStatus': comboActiveStatus,
-        'comboDeletedStatus': comboDeletedStatus,
-        'comboNetworkStatus': comboNetworkStatus,
-        'comboSortOrder': comboSortOrder,
-      };
+    'comboId': comboId,
+    'comboName': comboName,
+    'comboCode': comboCode,
+    'comboPrice': comboPrice,
+    'comboCGST': comboCgst,
+    'comboSGST': comboSgst,
+    'comboWithGSTPrice': resolvedWithGstPrice,
+    'comboActiveStatus': comboActiveStatus,
+    'comboDeletedStatus': comboDeletedStatus,
+    'comboNetworkStatus': comboNetworkStatus,
+    'comboSortOrder': comboSortOrder,
+  };
 }
 
 class ComboItemDto {
@@ -118,18 +118,18 @@ class ComboItemDto {
   }
 
   Map<String, dynamic> toJson() => {
-        'comboItemId': comboItemId,
-        'comboId': comboId,
-        'productId': productId,
-        'portionId': portionId,
-        'comboItemQuantity': comboItemQuantity,
-        'comboItemSortOrder': comboItemSortOrder,
-        'comboItemDeletedStatus': comboItemDeletedStatus,
-        'comboItemNetworkStatus': comboItemNetworkStatus,
-        'comboNetworkStatus': comboNetworkStatus,
-        'productNetworkStatus': productNetworkStatus,
-        'portionNetworkStatus': portionNetworkStatus,
-        'productName': productName,
-        'portionName': portionName,
-      };
+    'comboItemId': comboItemId,
+    'comboId': comboId,
+    'productId': productId,
+    'portionId': portionId,
+    'comboItemQuantity': comboItemQuantity,
+    'comboItemSortOrder': comboItemSortOrder,
+    'comboItemDeletedStatus': comboItemDeletedStatus,
+    'comboItemNetworkStatus': comboItemNetworkStatus,
+    'comboNetworkStatus': comboNetworkStatus,
+    'productNetworkStatus': productNetworkStatus,
+    'portionNetworkStatus': portionNetworkStatus,
+    'productName': productName,
+    'portionName': portionName,
+  };
 }

@@ -3,8 +3,8 @@ import 'package:pos_billingwala_v2/core/constants/app_assets.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/theme/app_dimensions.dart';
 import 'package:pos_billingwala_v2/core/theme/app_typography.dart';
-import 'package:pos_billingwala_v2/core/widgets/app_svg.dart';
 import 'package:pos_billingwala_v2/core/widgets/app_button.dart';
+import 'package:pos_billingwala_v2/core/widgets/app_svg.dart';
 import 'package:pos_billingwala_v2/core/widgets/three_dots_loader.dart';
 
 class AppEmptyState extends StatelessWidget {
@@ -40,7 +40,11 @@ class AppEmptyState extends StatelessWidget {
               ),
               const SizedBox(height: AppDimensions.lg),
             ],
-            Text(title, textAlign: TextAlign.center, style: AppTypography.sectionTitle()),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: AppTypography.sectionTitle(),
+            ),
             if (message != null) ...[
               const SizedBox(height: AppDimensions.sm),
               Text(
@@ -87,12 +91,24 @@ class AppErrorState extends StatelessWidget {
               color: AppColors.danger,
             ),
             const SizedBox(height: AppDimensions.lg),
-            Text(title, textAlign: TextAlign.center, style: AppTypography.sectionTitle()),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: AppTypography.sectionTitle(),
+            ),
             const SizedBox(height: AppDimensions.sm),
-            Text(message, textAlign: TextAlign.center, style: AppTypography.body()),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: AppTypography.body(),
+            ),
             if (onRetry != null) ...[
               const SizedBox(height: AppDimensions.lg),
-              AppButton(label: 'Retry', onPressed: onRetry, icon: Icons.refresh_rounded),
+              AppButton(
+                label: 'Retry',
+                onPressed: onRetry,
+                icon: Icons.refresh_rounded,
+              ),
             ],
           ],
         ),
@@ -146,9 +162,7 @@ class AppStatusBadge extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: AppTypography.statusLabel(
-          color: filled ? Colors.white : color,
-        ),
+        style: AppTypography.statusLabel(color: filled ? Colors.white : color),
       ),
     );
   }

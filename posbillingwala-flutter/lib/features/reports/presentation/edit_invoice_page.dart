@@ -7,6 +7,7 @@ import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
 import 'package:pos_billingwala_v2/core/network/online_guard.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
+import 'package:pos_billingwala_v2/core/utils/money_format.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/print/domain/print_providers.dart';
@@ -75,7 +76,8 @@ class EditInvoicePage extends ConsumerWidget {
             return Center(child: Text(strings.billNotFound));
           }
           final invoice = detail.invoice;
-          final locked = invoice.invoiceOrderStatus == 'cancelled' ||
+          final locked =
+              invoice.invoiceOrderStatus == 'cancelled' ||
               invoice.invoiceOrderStatus == 'refunded';
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
@@ -116,12 +118,16 @@ class EditInvoicePage extends ConsumerWidget {
                 children: [
                   Text(
                     strings.items,
-                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 16,
+                    ),
                   ),
                   const Spacer(),
                   if (!locked)
                     TextButton.icon(
-                      onPressed: () => editInvoicePageAddProduct(context, ref, invoiceId),
+                      onPressed: () =>
+                          editInvoicePageAddProduct(context, ref, invoiceId),
                       icon: const Icon(Icons.add_rounded),
                       label: Text(strings.addProduct),
                     ),
@@ -150,21 +156,13 @@ class EditInvoicePage extends ConsumerWidget {
                             children: [
                               IconButton(
                                 icon: const Icon(Icons.edit_note_rounded),
-                                onPressed: () => editLine(
-                                  context,
-                                  ref,
-                                  invoiceId,
-                                  item,
-                                ),
+                                onPressed: () =>
+                                    editLine(context, ref, invoiceId, item),
                               ),
                               IconButton(
                                 icon: const Icon(Icons.delete_outline),
-                                onPressed: () => deleteLine(
-                                  context,
-                                  ref,
-                                  invoiceId,
-                                  item,
-                                ),
+                                onPressed: () =>
+                                    deleteLine(context, ref, invoiceId, item),
                               ),
                             ],
                           ),
@@ -178,7 +176,9 @@ class EditInvoicePage extends ConsumerWidget {
                     final result = await printInvoiceById(ref, invoiceId);
                     if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(result.message ?? strings.printed)),
+                      SnackBar(
+                        content: Text(result.message ?? strings.printed),
+                      ),
                     );
                     context.pop();
                   },
@@ -199,8 +199,9 @@ Future<void> editLine(
 ) async {
   final strings = AppStrings.of(ref);
   final qtyCtrl = TextEditingController(text: '${item.productQuantity}');
-  final priceCtrl =
-      TextEditingController(text: item.productPrice.toStringAsFixed(2));
+  final priceCtrl = TextEditingController(
+    text: amountInputText(item.productPrice),
+  );
   final ok = await showDialog<bool>(
     context: context,
     builder: (context) => AlertDialog(
@@ -209,12 +210,14 @@ Future<void> editLine(
         mainAxisSize: MainAxisSize.min,
         children: [
           AppTextField(
+            required: true,
             controller: qtyCtrl,
             label: strings.productQuantity,
             keyboardType: TextInputType.number,
           ),
           const SizedBox(height: 12),
           AppTextField(
+            required: true,
             controller: priceCtrl,
             label: strings.unitPrice,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -243,7 +246,9 @@ Future<void> editLine(
   qtyCtrl.dispose();
   priceCtrl.dispose();
   try {
-    await ref.read(appDatabaseProvider).updateInvoiceItemQuantity(
+    await ref
+        .read(appDatabaseProvider)
+        .updateInvoiceItemQuantity(
           invoiceItemId: item.invoiceItemId,
           quantity: qty,
           productPrice: price,
@@ -270,8 +275,9 @@ Future<void> deleteLine(
         .deleteInvoiceItemAndRecompute(item.invoiceItemId);
     if (network != null && network.isNotEmpty) {
       try {
-        final ok = await InvoiceSyncApi(ref.read(apiClientProvider))
-            .deleteInvoiceProduct(invoiceProductNetworkStatus: network);
+        final ok = await InvoiceSyncApi(
+          ref.read(apiClientProvider),
+        ).deleteInvoiceProduct(invoiceProductNetworkStatus: network);
         if (ok) {
           await ref
               .read(appDatabaseProvider)
@@ -301,13 +307,15 @@ Future<void> editInvoicePageAddProduct(
   int invoiceId,
 ) async {
   final strings = AppStrings.of(ref);
-  final products =
-      await ref.read(appDatabaseProvider).watchActiveProducts().first;
+  final products = await ref
+      .read(appDatabaseProvider)
+      .watchActiveProducts()
+      .first;
   if (!context.mounted) return;
   if (products.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(strings.noProductsCatalog)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(strings.noProductsCatalog)));
     return;
   }
   Product? selected = products.first;
@@ -321,6 +329,7 @@ Future<void> editInvoicePageAddProduct(
           mainAxisSize: MainAxisSize.min,
           children: [
             AppDropdownFormField<Product>(
+              required: true,
               label: strings.product,
               items: products,
               itemLabel: (p) => p.productName,
@@ -330,6 +339,7 @@ Future<void> editInvoicePageAddProduct(
             ),
             const SizedBox(height: 12),
             AppTextField(
+              required: true,
               controller: qtyCtrl,
               label: strings.productQuantity,
               keyboardType: TextInputType.number,
@@ -387,7 +397,9 @@ Future<void> editInvoicePageAddProduct(
   }
 
   try {
-    await ref.read(appDatabaseProvider).addInvoiceItemLine(
+    await ref
+        .read(appDatabaseProvider)
+        .addInvoiceItemLine(
           invoiceId: invoiceId,
           productId: selected!.productId,
           productName: selected!.productName,
@@ -417,14 +429,18 @@ Future<void> editHeader(
   final strings = AppStrings.of(ref);
   final nameCtrl = TextEditingController(text: invoice.customerName ?? '');
   final mobileCtrl = TextEditingController(text: invoice.customerMobile ?? '');
-  final discountCtrl =
-      TextEditingController(text: invoice.discount.toStringAsFixed(2));
-  final packingCtrl =
-      TextEditingController(text: invoice.packingCharge.toStringAsFixed(2));
-  final cashCtrl =
-      TextEditingController(text: invoice.cashAmount.toStringAsFixed(2));
-  final upiCtrl =
-      TextEditingController(text: invoice.upiAmount.toStringAsFixed(2));
+  final discountCtrl = TextEditingController(
+    text: amountInputText(invoice.discount),
+  );
+  final packingCtrl = TextEditingController(
+    text: amountInputText(invoice.packingCharge),
+  );
+  final cashCtrl = TextEditingController(
+    text: amountInputText(invoice.cashAmount),
+  );
+  final upiCtrl = TextEditingController(
+    text: amountInputText(invoice.upiAmount),
+  );
   var paymentMode = invoice.paymentMode;
   var discountType = invoice.discountType;
   var packingType = invoice.packingChargeType;
@@ -438,7 +454,10 @@ Future<void> editHeader(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              AppTextField(controller: nameCtrl, label: strings.customerNameField),
+              AppTextField(
+                controller: nameCtrl,
+                label: strings.customerNameField,
+              ),
               const SizedBox(height: 12),
               AppTextField(
                 controller: mobileCtrl,
@@ -458,8 +477,9 @@ Future<void> editHeader(
               AppTextField(
                 controller: discountCtrl,
                 label: strings.discountLabel,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
               ),
               const SizedBox(height: 12),
               StringDropdownField(
@@ -474,8 +494,9 @@ Future<void> editHeader(
               AppTextField(
                 controller: packingCtrl,
                 label: strings.packingLabel,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
               ),
               const SizedBox(height: 12),
               StringDropdownField(
@@ -490,15 +511,17 @@ Future<void> editHeader(
               AppTextField(
                 controller: cashCtrl,
                 label: strings.cash,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
               ),
               const SizedBox(height: 12),
               AppTextField(
                 controller: upiCtrl,
                 label: strings.upi,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
               ),
             ],
           ),
@@ -518,7 +541,9 @@ Future<void> editHeader(
   );
   if (ok != true) return;
   try {
-    await ref.read(appDatabaseProvider).updateInvoiceHeader(
+    await ref
+        .read(appDatabaseProvider)
+        .updateInvoiceHeader(
           invoiceId: invoice.invoiceId,
           customerName: nameCtrl.text.trim(),
           customerMobile: mobileCtrl.text.trim(),

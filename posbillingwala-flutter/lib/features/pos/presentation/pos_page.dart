@@ -29,9 +29,9 @@ Future<void> sendKotTicket(BuildContext context, WidgetRef ref) async {
   try {
     if (!ref.read(permissionControllerProvider).allows('kot.print')) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppStrings.of(ref).moduleLocked)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(AppStrings.of(ref).moduleLocked)));
       return;
     }
     final ticket = await ref.read(kotControllerProvider.notifier).createKot();
@@ -45,7 +45,9 @@ Future<void> sendKotTicket(BuildContext context, WidgetRef ref) async {
       for (var i = 0; i < copies; i++) {
         last = await PrintJobDispatcher(ref).printKotRouted(ticket);
       }
-      await ref.read(kotControllerProvider.notifier).markPrinted(ticket.kot.kotId);
+      await ref
+          .read(kotControllerProvider.notifier)
+          .markPrinted(ticket.kot.kotId);
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -74,6 +76,7 @@ class PosPage extends ConsumerStatefulWidget {
   });
 
   final bool resetSessionOnOpen;
+  /* Kept for route compatibility (`?cart=1`); cart sheet removed — qty on product cards. */
   final bool openCartOnStart;
 
   @override
@@ -83,7 +86,6 @@ class PosPage extends ConsumerStatefulWidget {
 class PosPageState extends ConsumerState<PosPage> {
   final posPageSearchController = TextEditingController();
   bool posPageShowCombos = false;
-  bool openedCartOnStart = false;
 
   @override
   void initState() {
@@ -121,19 +123,6 @@ class PosPageState extends ConsumerState<PosPage> {
     final isFastBilling = session.invoiceType == 'fast_billing';
     final strings = AppStrings.of(ref);
 
-    if (widget.openCartOnStart &&
-        !openedCartOnStart &&
-        !cartSummary.isEmpty) {
-      openedCartOnStart = true;
-      /* Persistent cart (web / tablet) is already on screen — skip the phone sheet. */
-      if (!persistentCart) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          openCartSheet(context, session);
-        });
-      }
-    }
-
     return Scaffold(
       backgroundColor: const Color(0xFFF3F6FB),
       appBar: AppBar(
@@ -151,10 +140,10 @@ class PosPageState extends ConsumerState<PosPage> {
               isFastBilling
                   ? strings.fastBilling
                   : session.invoiceType == 'take_away'
-                      ? strings.takeAway
-                      : session.invoiceType == 'table_wise'
-                          ? strings.dineIn
-                          : session.title,
+                  ? strings.takeAway
+                  : session.invoiceType == 'table_wise'
+                  ? strings.dineIn
+                  : session.title,
               style: TextStyle(
                 color: isFastBilling ? AppColors.navy : Colors.white,
                 fontWeight: FontWeight.w800,
@@ -164,18 +153,16 @@ class PosPageState extends ConsumerState<PosPage> {
               isFastBilling
                   ? strings.productMenu
                   : session.invoiceType == 'take_away'
-                      ? (session.customerName?.trim().isNotEmpty == true
-                          ? session.customerName!
-                          : strings.addProducts)
-                      : session.tableNumber != null
-                          ? '${strings.tableNo} ${session.tableNumber}'
-                          : (session.customerName ?? ''),
+                  ? (session.customerName?.trim().isNotEmpty == true
+                        ? session.customerName!
+                        : strings.addProducts)
+                  : session.tableNumber != null
+                  ? '${strings.tableNo} ${session.tableNumber}'
+                  : (session.customerName ?? ''),
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w400,
-                color: isFastBilling
-                    ? AppColors.textSecondary
-                    : Colors.white70,
+                color: isFastBilling ? AppColors.textSecondary : Colors.white70,
               ),
             ),
           ],
@@ -312,12 +299,20 @@ class PosPageState extends ConsumerState<PosPage> {
                     summary: cartSummary,
                     currency: currency,
                     paymentRoute: session.paymentRoute,
-                    onTap: cartSummary.isEmpty
-                        ? () {}
-                        : () => openCartSheet(context, session),
-                    onPay: cartSummary.isEmpty
-                        ? null
-                        : () => context.push(session.paymentRoute),
+                    actionLabel: strings.proceedToPayment,
+                    onTap: () {
+                      if (cartSummary.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Cart is empty — add products first',
+                            ),
+                          ),
+                        );
+                        return;
+                      }
+                      context.push(session.paymentRoute);
+                    },
                     accentFooter: isFastBilling,
                   ),
               ],
@@ -325,7 +320,7 @@ class PosPageState extends ConsumerState<PosPage> {
           },
         ),
       ),
-      );
+    );
   }
 
   Future<void> confirmClearCart(BuildContext context, WidgetRef ref) async {
@@ -344,22 +339,11 @@ class PosPageState extends ConsumerState<PosPage> {
       await ref.read(posCartControllerProvider.notifier).clear();
     }
   }
-
-  Future<void> openCartSheet(BuildContext context, BillingSession session) async {
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (context) => FractionallySizedBox(
-        heightFactor: 0.82,
-        child: CartSheetBody(session: session),
-      ),
-    );
-  }
 }
 
 class CatalogPane extends ConsumerWidget {
-  const CatalogPane({super.key, 
+  const CatalogPane({
+    super.key,
     required this.session,
     required this.categoriesAsync,
     required this.productsAsync,
@@ -391,302 +375,317 @@ class CatalogPane extends ConsumerWidget {
       builder: (context, _) {
         final query = searchController.text.trim().toLowerCase();
         return Column(
-      children: [
-        if (session.tableNumber != null || session.customerName != null)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                session.tableNumber != null
-                    ? 'Table ${session.tableNumber}'
-                    : 'Customer: ${session.customerName}',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+          children: [
+            if (session.tableNumber != null || session.customerName != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    session.tableNumber != null
+                        ? 'Table ${session.tableNumber}'
+                        : 'Customer: ${session.customerName}',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       color: AppColors.primary,
                       fontWeight: FontWeight.w700,
                     ),
-              ),
-            ),
-          ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
-          child: TextField(
-            controller: searchController,
-            autofocus: AppPlatform.useDesktopShell,
-            textInputAction: TextInputAction.search,
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: Colors.white,
-              hintText: 'search product by name, product code',
-              hintStyle: TextStyle(
-                color: AppColors.textSecondary.withValues(alpha: 0.85),
-                fontSize: 14,
-              ),
-              prefixIcon: const Padding(
-                padding: EdgeInsets.all(12),
-                child: AppSvg(
-                  AppAssets.svgSearch,
-                  width: 20,
-                  height: 20,
-                  color: AppColors.textSecondary,
+                  ),
                 ),
               ),
-              suffixIcon: query.isNotEmpty
-                  ? IconButton(
-                      onPressed: searchController.clear,
-                      icon: const AppSvg(
-                        AppAssets.svgClose,
-                        width: 18,
-                        height: 18,
-                        color: AppColors.textSecondary,
-                      ),
-                    )
-                  : null,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(28),
-                borderSide: BorderSide(color: AppColors.border),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(28),
-                borderSide: BorderSide(color: AppColors.border),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(28),
-                borderSide: const BorderSide(color: AppColors.primary),
-              ),
-              contentPadding: const EdgeInsets.symmetric(vertical: 12),
-              isDense: true,
-            ),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            children: [
-              Expanded(
-                child: CatalogTab(
-                  label: 'Products',
-                  icon: Icons.shopping_bag_outlined,
-                  selected: !showCombos,
-                  onTap: () => onToggleCombos(false),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: CatalogTab(
-                  label: 'Combos',
-                  icon: Icons.card_giftcard_outlined,
-                  selected: showCombos,
-                  onTap: () => onToggleCombos(true),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 10),
-        if (!showCombos)
-          SizedBox(
-            height: 40,
-            child: categoriesAsync.when(
-              data: (categories) {
-                if (categories.isEmpty) {
-                  return Center(
-                    child: Text(AppStrings.of(ref).noCategoriesFound),
-                  );
-                }
-                return ListView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: CategoryChip(
-                        label: 'All',
-                        selected: selectedCategoryId == null,
-                        onSelected: () {
-                          ref
-                              .read(posSelectedCategoryIdProvider.notifier)
-                              .select(null);
-                          ref
-                              .read(posSelectedSubcategoryIdProvider.notifier)
-                              .select(null);
-                        },
-                      ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
+              child: TextField(
+                controller: searchController,
+                autofocus: AppPlatform.useDesktopShell,
+                textInputAction: TextInputAction.search,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Colors.white,
+                  hintText: 'search product by name, product code',
+                  hintStyle: TextStyle(
+                    color: AppColors.textSecondary.withValues(alpha: 0.85),
+                    fontSize: 14,
+                  ),
+                  prefixIcon: const Padding(
+                    padding: EdgeInsets.all(12),
+                    child: AppSvg(
+                      AppAssets.svgSearch,
+                      width: 20,
+                      height: 20,
+                      color: AppColors.textSecondary,
                     ),
-                    ...categories.map(
-                      (category) => Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: CategoryChip(
-                          label: category.categoryName,
-                          selected:
-                              selectedCategoryId == category.categoryId,
-                          onSelected: () => ref
-                              .read(posSelectedCategoryIdProvider.notifier)
-                              .select(category.categoryId),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('$e')),
-            ),
-          ),
-        if (!showCombos && selectedCategoryId != null)
-          SizedBox(
-            height: 40,
-            child: subsAsync.when(
-              data: (subs) {
-                if (subs.isEmpty) return const SizedBox.shrink();
-                return ListView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: CategoryChip(
-                        label: 'All',
-                        selected: selectedSubcategoryId == null,
-                        onSelected: () => ref
-                            .read(posSelectedSubcategoryIdProvider.notifier)
-                            .select(null),
-                      ),
-                    ),
-                    ...subs.map(
-                      (sub) => Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: CategoryChip(
-                          label: sub.subcategoryName,
-                          selected:
-                              selectedSubcategoryId == sub.subcategoryId,
-                          onSelected: () => ref
-                              .read(posSelectedSubcategoryIdProvider.notifier)
-                              .select(sub.subcategoryId),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
-              loading: () => const SizedBox.shrink(),
-              error: (_, _) => const SizedBox.shrink(),
-            ),
-          ),
-        Expanded(
-          child: showCombos
-              ? combosAsync.when(
-                  data: (combos) {
-                    final filtered = query.isEmpty
-                        ? combos
-                        : combos
-                            .where(
-                              (c) =>
-                                  c.comboName.toLowerCase().contains(query) ||
-                                  (c.comboCode ?? '')
-                                      .toLowerCase()
-                                      .contains(query),
-                            )
-                            .toList();
-                    if (filtered.isEmpty) {
-                      return Center(child: Text(AppStrings.of(ref).noCombosFound));
-                    }
-                    return ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                      addAutomaticKeepAlives: false,
-                      itemCount: filtered.length,
-                      separatorBuilder: (_, _) => const SizedBox(height: 8),
-                      itemBuilder: (context, index) {
-                        final combo = filtered[index];
-                        final price = combo.comboWithGstPrice > 0
-                            ? combo.comboWithGstPrice
-                            : combo.comboPrice;
-                        return AppCard(
-            padding: EdgeInsets.zero,
-            child: ListTile(
-                            title: Text(
-                              combo.comboName,
-                              style: const TextStyle(fontWeight: FontWeight.w700),
-                            ),
-                            subtitle: Text(currency.format(price)),
-                            trailing: IconButton.filled(
-                              onPressed: () => ref
-                                  .read(posCartControllerProvider.notifier)
-                                  .addCombo(combo),
-                              icon: const Icon(Icons.add),
-                            ),
+                  ),
+                  suffixIcon: query.isNotEmpty
+                      ? IconButton(
+                          onPressed: searchController.clear,
+                          icon: const AppSvg(
+                            AppAssets.svgClose,
+                            width: 18,
+                            height: 18,
+                            color: AppColors.textSecondary,
                           ),
-                        );
-                      },
-                    );
-                  },
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Center(child: Text('$e')),
-                )
-              : productsAsync.when(
-                  data: (products) {
-                    final filtered = query.isEmpty
-                        ? products
-                        : products
-                            .where(
-                              (p) =>
-                                  p.productName.toLowerCase().contains(query) ||
-                                  (p.productCode ?? '')
-                                      .toLowerCase()
-                                      .contains(query),
-                            )
-                            .toList();
-                    if (filtered.isEmpty) {
-                      return EmptyCatalog(
-                        hasCategoryFilter: selectedCategoryId != null,
+                        )
+                      : null,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(28),
+                    borderSide: BorderSide(color: AppColors.border),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(28),
+                    borderSide: BorderSide(color: AppColors.border),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(28),
+                    borderSide: const BorderSide(color: AppColors.primary),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                  isDense: true,
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: CatalogTab(
+                      label: 'Products',
+                      icon: Icons.shopping_bag_outlined,
+                      selected: !showCombos,
+                      onTap: () => onToggleCombos(false),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: CatalogTab(
+                      label: 'Combos',
+                      icon: Icons.card_giftcard_outlined,
+                      selected: showCombos,
+                      onTap: () => onToggleCombos(true),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+            if (!showCombos)
+              SizedBox(
+                height: 40,
+                child: categoriesAsync.when(
+                  data: (categories) {
+                    if (categories.isEmpty) {
+                      return Center(
+                        child: Text(AppStrings.of(ref).noCategoriesFound),
                       );
                     }
-                    return LayoutBuilder(
-                      builder: (context, constraints) {
-                        final widthClass =
-                            AppBreakpoints.ofWidth(constraints.maxWidth);
-                        final crossAxisCount =
-                            AppBreakpoints.productColumnsFor(widthClass);
-                        final aspect = widthClass == AppWidthClass.compact
-                            ? 1.75
-                            : widthClass == AppWidthClass.medium
-                                ? 1.65
-                                : 1.55;
-                        return GridView.builder(
-                          padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
-                          addAutomaticKeepAlives: false,
-                          gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: crossAxisCount,
-                            mainAxisSpacing: 10,
-                            crossAxisSpacing: 10,
-                            childAspectRatio: aspect,
+                    return ListView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: CategoryChip(
+                            label: 'All',
+                            selected: selectedCategoryId == null,
+                            onSelected: () {
+                              ref
+                                  .read(posSelectedCategoryIdProvider.notifier)
+                                  .select(null);
+                              ref
+                                  .read(
+                                    posSelectedSubcategoryIdProvider.notifier,
+                                  )
+                                  .select(null);
+                            },
                           ),
-                          itemCount: filtered.length,
-                          itemBuilder: (context, index) => ProductCard(
-                            key: ValueKey(filtered[index].productId),
-                            product: filtered[index],
-                            currency: currency,
+                        ),
+                        ...categories.map(
+                          (category) => Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: CategoryChip(
+                              label: category.categoryName,
+                              selected:
+                                  selectedCategoryId == category.categoryId,
+                              onSelected: () => ref
+                                  .read(posSelectedCategoryIdProvider.notifier)
+                                  .select(category.categoryId),
+                            ),
                           ),
-                        );
-                      },
+                        ),
+                      ],
                     );
                   },
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
                   error: (e, _) => Center(child: Text('$e')),
                 ),
-        ),
-      ],
-    );
+              ),
+            if (!showCombos && selectedCategoryId != null)
+              SizedBox(
+                height: 40,
+                child: subsAsync.when(
+                  data: (subs) {
+                    if (subs.isEmpty) return const SizedBox.shrink();
+                    return ListView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: CategoryChip(
+                            label: 'All',
+                            selected: selectedSubcategoryId == null,
+                            onSelected: () => ref
+                                .read(posSelectedSubcategoryIdProvider.notifier)
+                                .select(null),
+                          ),
+                        ),
+                        ...subs.map(
+                          (sub) => Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: CategoryChip(
+                              label: sub.subcategoryName,
+                              selected:
+                                  selectedSubcategoryId == sub.subcategoryId,
+                              onSelected: () => ref
+                                  .read(
+                                    posSelectedSubcategoryIdProvider.notifier,
+                                  )
+                                  .select(sub.subcategoryId),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                  loading: () => const SizedBox.shrink(),
+                  error: (_, _) => const SizedBox.shrink(),
+                ),
+              ),
+            Expanded(
+              child: showCombos
+                  ? combosAsync.when(
+                      data: (combos) {
+                        final filtered = query.isEmpty
+                            ? combos
+                            : combos
+                                  .where(
+                                    (c) =>
+                                        c.comboName.toLowerCase().contains(
+                                          query,
+                                        ) ||
+                                        (c.comboCode ?? '')
+                                            .toLowerCase()
+                                            .contains(query),
+                                  )
+                                  .toList();
+                        if (filtered.isEmpty) {
+                          return Center(
+                            child: Text(AppStrings.of(ref).noCombosFound),
+                          );
+                        }
+                        return ListView.separated(
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                          addAutomaticKeepAlives: false,
+                          itemCount: filtered.length,
+                          separatorBuilder: (_, _) => const SizedBox(height: 8),
+                          itemBuilder: (context, index) {
+                            final combo = filtered[index];
+                            final price = combo.comboWithGstPrice > 0
+                                ? combo.comboWithGstPrice
+                                : combo.comboPrice;
+                            return AppCard(
+                              padding: EdgeInsets.zero,
+                              child: ListTile(
+                                title: Text(
+                                  combo.comboName,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                subtitle: Text(currency.format(price)),
+                                trailing: IconButton.filled(
+                                  onPressed: () => ref
+                                      .read(posCartControllerProvider.notifier)
+                                      .addCombo(combo),
+                                  icon: const Icon(Icons.add),
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
+                      error: (e, _) => Center(child: Text('$e')),
+                    )
+                  : productsAsync.when(
+                      data: (products) {
+                        final filtered = query.isEmpty
+                            ? products
+                            : products
+                                  .where(
+                                    (p) =>
+                                        p.productName.toLowerCase().contains(
+                                          query,
+                                        ) ||
+                                        (p.productCode ?? '')
+                                            .toLowerCase()
+                                            .contains(query),
+                                  )
+                                  .toList();
+                        if (filtered.isEmpty) {
+                          return EmptyCatalog(
+                            hasCategoryFilter: selectedCategoryId != null,
+                          );
+                        }
+                        return LayoutBuilder(
+                          builder: (context, constraints) {
+                            final widthClass = AppBreakpoints.ofWidth(
+                              constraints.maxWidth,
+                            );
+                            final crossAxisCount =
+                                AppBreakpoints.productColumnsFor(widthClass);
+                            final aspect = widthClass == AppWidthClass.compact
+                                ? 1.72
+                                : widthClass == AppWidthClass.medium
+                                ? 1.78
+                                : 1.85;
+                            return GridView.builder(
+                              padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
+                              addAutomaticKeepAlives: false,
+                              gridDelegate:
+                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: crossAxisCount,
+                                    mainAxisSpacing: 10,
+                                    crossAxisSpacing: 10,
+                                    childAspectRatio: aspect,
+                                  ),
+                              itemCount: filtered.length,
+                              itemBuilder: (context, index) => ProductCard(
+                                key: ValueKey(filtered[index].productId),
+                                product: filtered[index],
+                                currency: currency,
+                              ),
+                            );
+                          },
+                        );
+                      },
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
+                      error: (e, _) => Center(child: Text('$e')),
+                    ),
+            ),
+          ],
+        );
       },
     );
   }
 }
 
 class CatalogTab extends StatelessWidget {
-  const CatalogTab({super.key, 
+  const CatalogTab({
+    super.key,
     required this.label,
     required this.icon,
     required this.selected,
@@ -742,7 +741,8 @@ class CatalogTab extends StatelessWidget {
 }
 
 class CategoryChip extends StatelessWidget {
-  const CategoryChip({super.key, 
+  const CategoryChip({
+    super.key,
     required this.label,
     required this.selected,
     required this.onSelected,
@@ -794,7 +794,9 @@ class EmptyCatalog extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final strings = AppStrings.of(ref);
     return AppEmptyState(
-      title: hasCategoryFilter ? strings.noProductsCategory : strings.noProductsYet,
+      title: hasCategoryFilter
+          ? strings.noProductsCategory
+          : strings.noProductsYet,
       message: hasCategoryFilter
           ? strings.noProductsCategory
           : strings.noProductsYet,
@@ -817,82 +819,92 @@ class ProductCard extends ConsumerWidget {
     final priceLabel = unit.isEmpty
         ? '₹ ${product.productPrice.toStringAsFixed(1)}'
         : '₹ ${product.productPrice.toStringAsFixed(1)}/$unit';
+    final showImage = hasProductImage(product.productImage);
 
     return RepaintBoundary(
       child: Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(14),
-      elevation: 0,
-      child: InkWell(
+        color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        onTap: () => addProductWithPortionPicker(context, ref, product),
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(8, 8, 6, 8),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: AppColors.primary.withValues(alpha: 0.12),
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.navy.withValues(alpha: 0.04),
-                blurRadius: 10,
-                offset: const Offset(0, 3),
+        elevation: 0,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () => addProductWithPortionPicker(context, ref, product),
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: AppColors.primary.withValues(alpha: 0.12),
+                width: 1,
               ),
-            ],
-          ),
-          child: Row(
-            children: [
-              if (hasProductImage(product.productImage)) ...[
-                ProductImageThumb(
-                  key: ValueKey('img-${product.productId}'),
-                  value: product.productImage,
-                  size: 44,
-                  radius: 10,
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.navy.withValues(alpha: 0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
                 ),
-                const SizedBox(width: 8),
               ],
-              Expanded(
-                child: Column(
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Flexible(
-                      child: Text(
-                        product.productName,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 13,
-                          color: AppColors.navy,
-                          height: 1.15,
-                        ),
+                    if (showImage) ...[
+                      ProductImageThumb(
+                        key: ValueKey('img-${product.productId}'),
+                        value: product.productImage,
+                        size: 48,
+                        radius: 10,
+                        showPlaceholder: false,
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      priceLabel,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12,
-                        color: AppColors.textSecondary,
+                      const SizedBox(width: 8),
+                    ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            product.productName,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 13,
+                              color: AppColors.navy,
+                              height: 1.15,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            priceLabel,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(width: 4),
-              ProductQtyButton(product: product),
-            ],
+                const SizedBox(height: 8),
+                GestureDetector(
+                  onTap: () {},
+                  behavior: HitTestBehavior.opaque,
+                  child: ProductQtyButton(product: product),
+                ),
+              ],
+            ),
           ),
         ),
       ),
-    ),
     );
   }
 }
@@ -917,7 +929,9 @@ class ProductQtyButton extends ConsumerWidget {
     );
 
     List<CartItem> productLines() {
-      return ref.read(cartItemsProvider).maybeWhen(
+      return ref
+          .read(cartItemsProvider)
+          .maybeWhen(
             data: (items) => items
                 .where((i) => i.productId == product.productId)
                 .toList(growable: false),
@@ -941,62 +955,65 @@ class ProductQtyButton extends ConsumerWidget {
     }
 
     if (qtyInCart <= 0) {
-      return Material(
-        color: AppColors.primary,
-        shape: const CircleBorder(),
-        child: InkWell(
-          customBorder: const CircleBorder(),
-          onTap: addOrIncrement,
-          child: const SizedBox(
-            width: 32,
-            height: 32,
-            child: Icon(Icons.add, color: Colors.white, size: 20),
+      return SizedBox(
+        width: double.infinity,
+        height: 34,
+        child: Material(
+          color: AppColors.primary,
+          borderRadius: BorderRadius.circular(10),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(10),
+            onTap: addOrIncrement,
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.add, color: Colors.white, size: 18),
+                SizedBox(width: 4),
+                Text(
+                  'Add',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       );
     }
 
     return Container(
-      height: 32,
-      padding: const EdgeInsets.symmetric(horizontal: 2),
+      width: double.infinity,
+      height: 34,
+      padding: const EdgeInsets.symmetric(horizontal: 4),
       decoration: BoxDecoration(
         color: AppColors.primaryLight,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          _qtyIconButton(
-            icon: Icons.remove,
-            onTap: removeOrDecrement,
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 2),
+          _qtyIconButton(icon: Icons.remove, onTap: removeOrDecrement),
+          Expanded(
             child: Text(
-              ProductUnits.formatQty(
-                qtyInCart,
-                unit: product.productUnit,
-              ),
+              ProductUnits.formatQty(qtyInCart, unit: product.productUnit),
+              textAlign: TextAlign.center,
               style: const TextStyle(
-                color: AppColors.primary,
+                color: AppColors.navy,
                 fontWeight: FontWeight.w800,
                 fontSize: 13,
               ),
             ),
           ),
-          _qtyIconButton(
-            icon: Icons.add,
-            onTap: addOrIncrement,
-          ),
+          _qtyIconButton(icon: Icons.add, onTap: addOrIncrement),
         ],
       ),
     );
   }
 
-  Widget _qtyIconButton({
-    required IconData icon,
-    required VoidCallback onTap,
-  }) {
+  Widget _qtyIconButton({required IconData icon, required VoidCallback onTap}) {
     return Material(
       color: Colors.transparent,
       shape: const CircleBorder(),
@@ -1004,8 +1021,8 @@ class ProductQtyButton extends ConsumerWidget {
         customBorder: const CircleBorder(),
         onTap: onTap,
         child: SizedBox(
-          width: 26,
-          height: 26,
+          width: 28,
+          height: 28,
           child: Icon(icon, size: 16, color: AppColors.primary),
         ),
       ),
@@ -1014,7 +1031,8 @@ class ProductQtyButton extends ConsumerWidget {
 }
 
 class CartPane extends ConsumerWidget {
-  const CartPane({super.key, 
+  const CartPane({
+    super.key,
     required this.session,
     required this.cartAsync,
     required this.currency,
@@ -1030,7 +1048,9 @@ class CartPane extends ConsumerWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border(left: BorderSide(color: Colors.black.withValues(alpha: 0.08))),
+        border: Border(
+          left: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
+        ),
       ),
       child: Column(
         children: [
@@ -1040,9 +1060,9 @@ class CartPane extends ConsumerWidget {
               alignment: Alignment.centerLeft,
               child: Text(
                 'Current Bill',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
               ),
             ),
           ),
@@ -1056,8 +1076,8 @@ class CartPane extends ConsumerWidget {
                   child: Text(
                     'Product Name',
                     style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
                 const SizedBox(
@@ -1090,10 +1110,8 @@ class CartPane extends ConsumerWidget {
                   padding: const EdgeInsets.all(16),
                   itemCount: items.length,
                   separatorBuilder: (_, _) => const SizedBox(height: 10),
-                  itemBuilder: (context, index) => CartItemTile(
-                    item: items[index],
-                    currency: currency,
-                  ),
+                  itemBuilder: (context, index) =>
+                      CartItemTile(item: items[index], currency: currency),
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
@@ -1113,20 +1131,6 @@ class CartPane extends ConsumerWidget {
   }
 }
 
-class CartSheetBody extends ConsumerWidget {
-  const CartSheetBody({super.key, required this.session});
-
-  final BillingSession session;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return CartPane(
-      session: session,
-      cartAsync: ref.watch(cartItemsProvider),
-      currency: MoneyFormat.inrRs,
-    );
-  }
-}
 
 class EmptyCart extends ConsumerWidget {
   const EmptyCart({super.key});
@@ -1249,10 +1253,7 @@ class CartItemTile extends ConsumerWidget {
 }
 
 class QtyButton extends StatelessWidget {
-  const QtyButton({super.key, 
-    required this.onTap,
-    required this.isAdd,
-  });
+  const QtyButton({super.key, required this.onTap, required this.isAdd});
 
   final VoidCallback onTap;
   final bool isAdd;
@@ -1308,7 +1309,9 @@ class BillSummary extends ConsumerWidget {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        border: Border(top: BorderSide(color: Colors.black.withValues(alpha: 0.08))),
+        border: Border(
+          top: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
+        ),
       ),
       child: Column(
         children: [
@@ -1317,9 +1320,9 @@ class BillSummary extends ConsumerWidget {
               Text(
                 '${ProductUnits.formatQty(summary.totalQuantity)} ${summary.totalQuantity == 1 ? 'item' : 'items'}',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textSecondary,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const Spacer(),
               Column(
@@ -1328,12 +1331,15 @@ class BillSummary extends ConsumerWidget {
                   Text(
                     'Payable Amount',
                     style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                   Text(
                     currency.format(summary.grandTotal),
-                    style: AppTypography.amount(color: AppColors.primary, size: 20),
+                    style: AppTypography.amount(
+                      color: AppColors.primary,
+                      size: 20,
+                    ),
                   ),
                 ],
               ),
@@ -1368,11 +1374,13 @@ class BillSummary extends ConsumerWidget {
 }
 
 class CartFooter extends StatelessWidget {
-  const CartFooter({super.key, 
+  const CartFooter({
+    super.key,
     required this.summary,
     required this.currency,
     required this.paymentRoute,
     required this.onTap,
+    this.actionLabel = 'Proceed to Payment',
     this.onPay,
     this.accentFooter = false,
   });
@@ -1381,6 +1389,7 @@ class CartFooter extends StatelessWidget {
   final NumberFormat currency;
   final String paymentRoute;
   final VoidCallback onTap;
+  final String actionLabel;
   final VoidCallback? onPay;
   final bool accentFooter;
 
@@ -1400,7 +1409,7 @@ class CartFooter extends StatelessWidget {
           child: Row(
             children: [
               InkWell(
-                onTap: summary.isEmpty ? null : onTap,
+                onTap: onTap,
                 borderRadius: BorderRadius.circular(14),
                 child: Stack(
                   clipBehavior: Clip.none,
@@ -1475,7 +1484,7 @@ class CartFooter extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(10),
-                  onTap: onPay ?? (summary.isEmpty ? null : onTap),
+                  onTap: onTap,
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 14,
@@ -1485,7 +1494,7 @@ class CartFooter extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          'View Cart',
+                          actionLabel,
                           style: TextStyle(
                             color: accentFooter
                                 ? AppColors.primary
@@ -1495,7 +1504,7 @@ class CartFooter extends StatelessWidget {
                         ),
                         const SizedBox(width: 6),
                         Icon(
-                          Icons.arrow_forward,
+                          Icons.receipt_long_rounded,
                           size: 18,
                           color: accentFooter
                               ? AppColors.primary
@@ -1515,7 +1524,8 @@ class CartFooter extends StatelessWidget {
 }
 
 class DineInFooter extends StatelessWidget {
-  const DineInFooter({super.key, 
+  const DineInFooter({
+    super.key,
     required this.summary,
     required this.currency,
     required this.unprintedCount,
@@ -1555,9 +1565,9 @@ class DineInFooter extends StatelessWidget {
                   Text(
                     currency.format(summary.grandTotal),
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.primary,
-                        ),
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.primary,
+                    ),
                   ),
                 ],
               ),
@@ -1585,10 +1595,7 @@ class DineInFooter extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: AppButton(
-                      label: 'PAY',
-                      onPressed: onPay,
-                    ),
+                    child: AppButton(label: 'PAY', onPressed: onPay),
                   ),
                 ],
               ),

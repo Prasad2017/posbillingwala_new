@@ -70,8 +70,9 @@ class CloudInvoiceDto {
     return CloudInvoiceDto(
       invoiceNumber: number,
       /* Older cloud rows may omit network status — fall back so they still import. */
-      invoiceNetworkStatus:
-          networkRaw.isNotEmpty ? networkRaw : (number.isEmpty ? '' : 'inv_$number'),
+      invoiceNetworkStatus: networkRaw.isNotEmpty
+          ? networkRaw
+          : (number.isEmpty ? '' : 'inv_$number'),
       invoiceDate: date,
       invoiceType: parseString(json['invoiceType'])?.trim().isNotEmpty == true
           ? parseString(json['invoiceType'])!.trim()
@@ -94,8 +95,8 @@ class CloudInvoiceDto {
       diningSessionId: parseInt(json['diningSessionId']),
       invoiceOrderStatus:
           parseString(json['invoiceOrderStatus'])?.trim().isNotEmpty == true
-              ? parseString(json['invoiceOrderStatus'])!.trim()
-              : 'completed',
+          ? parseString(json['invoiceOrderStatus'])!.trim()
+          : 'completed',
       organizationId: emptyToNull(parseString(json['organizationId'])),
       branchId: emptyToNull(parseString(json['branchId'])),
       deviceId: emptyToNull(parseString(json['deviceId'])),
@@ -106,32 +107,32 @@ class CloudInvoiceDto {
   }
 
   Map<String, dynamic> toJson() => {
-        'invoiceNumber': invoiceNumber,
-        'invoiceNetworkStatus': invoiceNetworkStatus,
-        'invoiceDate': invoiceDate.toIso8601String(),
-        'invoiceType': invoiceType,
-        'subTotal': subTotal,
-        'totalGSTAmount': totalGstAmount,
-        'discount': discount,
-        'discountType': discountType,
-        'packingCharge': packingCharge,
-        'packingChargeType': packingChargeType,
-        'totalAmount': totalAmount,
-        'paymentMode': paymentMode,
-        'cashAmount': cashAmount,
-        'upiAmount': upiAmount,
-        'noOfTable': noOfTable,
-        'customerName': customerName,
-        'customerMobile': customerMobile,
-        'customerEmail': customerEmail,
-        'customerAddress': customerAddress,
-        'diningSessionId': diningSessionId,
-        'invoiceOrderStatus': invoiceOrderStatus,
-        if (organizationId != null) 'organizationId': organizationId,
-        if (branchId != null) 'branchId': branchId,
-        if (deviceId != null) 'deviceId': deviceId,
-        if (userId != null) 'userId': userId,
-      };
+    'invoiceNumber': invoiceNumber,
+    'invoiceNetworkStatus': invoiceNetworkStatus,
+    'invoiceDate': invoiceDate.toIso8601String(),
+    'invoiceType': invoiceType,
+    'subTotal': subTotal,
+    'totalGSTAmount': totalGstAmount,
+    'discount': discount,
+    'discountType': discountType,
+    'packingCharge': packingCharge,
+    'packingChargeType': packingChargeType,
+    'totalAmount': totalAmount,
+    'paymentMode': paymentMode,
+    'cashAmount': cashAmount,
+    'upiAmount': upiAmount,
+    'noOfTable': noOfTable,
+    'customerName': customerName,
+    'customerMobile': customerMobile,
+    'customerEmail': customerEmail,
+    'customerAddress': customerAddress,
+    'diningSessionId': diningSessionId,
+    'invoiceOrderStatus': invoiceOrderStatus,
+    if (organizationId != null) 'organizationId': organizationId,
+    if (branchId != null) 'branchId': branchId,
+    if (deviceId != null) 'deviceId': deviceId,
+    if (userId != null) 'userId': userId,
+  };
 
   InvoicesCompanion toCompanion() {
     return InvoicesCompanion.insert(
@@ -204,8 +205,8 @@ class CloudInvoiceItemDto {
 
   factory CloudInvoiceItemDto.fromJson(Map<String, dynamic> json) {
     /* PHP misnames invoiceProductStatus — it is the line network UUID. */
-    final network = parseString(json['invoiceProductStatus'])?.trim().isNotEmpty ==
-            true
+    final network =
+        parseString(json['invoiceProductStatus'])?.trim().isNotEmpty == true
         ? parseString(json['invoiceProductStatus'])!.trim()
         : (parseString(json['invoiceProductNetworkStatus'])?.trim() ?? '');
 
@@ -226,17 +227,17 @@ class CloudInvoiceItemDto {
   }
 
   Map<String, dynamic> toJson() => {
-        'invoiceNumber': invoiceNumber,
-        'productName': productName,
-        'invoiceProductStatus': invoiceItemNetworkStatus,
-        'productPrice': productPrice,
-        'productQuantity': productQuantity,
-        'productCGST': productCgst,
-        'productSGST': productSgst,
-        'productUnit': productUnit,
-        'productStatus': productStatus,
-        'invoiceItemType': invoiceItemType,
-      };
+    'invoiceNumber': invoiceNumber,
+    'productName': productName,
+    'invoiceProductStatus': invoiceItemNetworkStatus,
+    'productPrice': productPrice,
+    'productQuantity': productQuantity,
+    'productCGST': productCgst,
+    'productSGST': productSgst,
+    'productUnit': productUnit,
+    'productStatus': productStatus,
+    'invoiceItemType': invoiceItemType,
+  };
 
   InvoiceItemsCompanion toCompanion() {
     return InvoiceItemsCompanion.insert(
@@ -292,26 +293,31 @@ class CloudInvoiceComboItemDto {
   factory CloudInvoiceComboItemDto.fromJson(Map<String, dynamic> json) {
     return CloudInvoiceComboItemDto(
       invoiceNumber: parseString(json['invoiceNumber'])?.trim() ?? '',
-      invoiceProductNetworkStatus:
-          parseString(json['invoiceProductNetworkStatus'])?.trim(),
+      invoiceProductNetworkStatus: parseString(
+        json['invoiceProductNetworkStatus'],
+      )?.trim(),
       comboId: parseInt(json['comboId']),
       comboNetworkStatus: parseString(json['comboNetworkStatus'])?.trim(),
       productId: parseInt(json['productId']),
-      productName: parseString(json['productName'])?.trim() ??
+      productName:
+          parseString(json['productName'])?.trim() ??
           parseString(json['productNameSnapshot'])?.trim(),
       portionId: parseInt(json['portionId']),
-      portionName: parseString(json['portionName'])?.trim() ??
+      portionName:
+          parseString(json['portionName'])?.trim() ??
           parseString(json['portionNameSnapshot'])?.trim(),
-      quantity: parseInt(json['comboItemQuantity']) ??
+      quantity:
+          parseInt(json['comboItemQuantity']) ??
           parseInt(json['quantity']) ??
           1,
       sortOrder: parseInt(json['sortOrder']) ?? 0,
-      invoiceComboItemNetworkStatus:
-          parseString(json['invoiceComboItemNetworkStatus'])?.trim(),
+      invoiceComboItemNetworkStatus: parseString(
+        json['invoiceComboItemNetworkStatus'],
+      )?.trim(),
       invoiceComboItemStatus:
           parseString(json['invoiceComboItemStatus'])?.trim().isNotEmpty == true
-              ? parseString(json['invoiceComboItemStatus'])!.trim()
-              : '1',
+          ? parseString(json['invoiceComboItemStatus'])!.trim()
+          : '1',
     );
   }
 

@@ -26,9 +26,9 @@ class AboutPage extends StatelessWidget {
   Future<void> openExternal(BuildContext context, Uri uri) async {
     final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!ok && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open link')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Could not open link')));
     }
   }
 
@@ -103,52 +103,53 @@ class AboutPage extends StatelessWidget {
       body: ResponsiveScrollShell(
         dashboard: true,
         child: ListView(
-        padding: EdgeInsets.fromLTRB(
+          padding: EdgeInsets.fromLTRB(
             AppBreakpoints.pagePaddingFor(context.widthClass),
             16,
             AppBreakpoints.pagePaddingFor(context.widthClass),
-            28),
-        children: [
-          HeroCard(tagline: aboutPageTagline),
-          const SizedBox(height: 22),
-          const SectionTitle('Get in touch'),
-          const SizedBox(height: 12),
-          AppCard(
-            accentColor: AppColors.primary,
-            padding: EdgeInsets.zero,
-            child: Column(
-              children: [
-                ContactTile(
-                  iconAsset: AppAssets.svgAboutWeb,
-                  label: 'Website',
-                  value: AppConstants.websiteDisplay,
-                  onTap: () => openWebsite(context),
-                ),
-                const Divider(height: 1, indent: 72, endIndent: 16),
-                ContactTile(
-                  iconAsset: AppAssets.svgAboutEmail,
-                  label: 'Email',
-                  value: AppConstants.supportEmail,
-                  onTap: () => openEmail(context),
-                ),
-                const Divider(height: 1, indent: 72, endIndent: 16),
-                ContactTile(
-                  iconAsset: AppAssets.svgAboutPhone,
-                  label: 'Phone',
-                  value: phone,
-                  onTap: () => openPhone(context),
-                ),
-              ],
-            ),
+            28,
           ),
-          const SizedBox(height: 14),
-          const DisclaimerCard(text: disclaimer),
-          const SizedBox(height: 14),
-          DeveloperCard(phone: phone, onCall: () => openPhone(context)),
-          const SizedBox(height: 14),
-          RateUsCard(onRate: () => rateUs(context)),
-        ],
-      ),
+          children: [
+            HeroCard(tagline: aboutPageTagline),
+            const SizedBox(height: 22),
+            const SectionTitle('Get in touch'),
+            const SizedBox(height: 12),
+            AppCard(
+              accentColor: AppColors.primary,
+              padding: EdgeInsets.zero,
+              child: Column(
+                children: [
+                  ContactTile(
+                    iconAsset: AppAssets.svgAboutWeb,
+                    label: 'Website',
+                    value: AppConstants.websiteDisplay,
+                    onTap: () => openWebsite(context),
+                  ),
+                  const Divider(height: 1, indent: 72, endIndent: 16),
+                  ContactTile(
+                    iconAsset: AppAssets.svgAboutEmail,
+                    label: 'Email',
+                    value: AppConstants.supportEmail,
+                    onTap: () => openEmail(context),
+                  ),
+                  const Divider(height: 1, indent: 72, endIndent: 16),
+                  ContactTile(
+                    iconAsset: AppAssets.svgAboutPhone,
+                    label: 'Phone',
+                    value: phone,
+                    onTap: () => openPhone(context),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            const DisclaimerCard(text: disclaimer),
+            const SizedBox(height: 14),
+            DeveloperCard(phone: phone, onCall: () => openPhone(context)),
+            const SizedBox(height: 14),
+            RateUsCard(onRate: () => rateUs(context)),
+          ],
+        ),
       ),
     );
   }
@@ -370,7 +371,8 @@ class DiamondDivider extends StatelessWidget {
 }
 
 class ContactTile extends StatelessWidget {
-  const ContactTile({super.key, 
+  const ContactTile({
+    super.key,
     required this.iconAsset,
     required this.label,
     required this.value,

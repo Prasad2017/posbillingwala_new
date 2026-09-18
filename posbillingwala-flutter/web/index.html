@@ -1,77 +1,82 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <base href="$FLUTTER_BASE_HREF">
+    <base href="$FLUTTER_BASE_HREF">
 
-  <meta charset="UTF-8">
-  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="POS Billingwala — Flutter POS for Android, iOS, and Web">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+    <meta content="POS Billingwala — Flutter POS for Android, iOS, and Web" name="description">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
 
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="POS Billingwala">
-  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+    <meta content="yes" name="mobile-web-app-capable">
+    <meta content="black" name="apple-mobile-web-app-status-bar-style">
+    <meta content="POS Billingwala" name="apple-mobile-web-app-title">
+    <link href="icons/Icon-192.png" rel="apple-touch-icon">
 
-  <link rel="icon" type="image/png" href="favicon.png"/>
+    <link href="favicon.png" rel="icon" type="image/png"/>
 
-  <title>POS Billingwala</title>
-  <link rel="manifest" href="manifest.json">
-  <style>
-    html, body {
-      margin: 0;
-      height: 100%;
-      background: #0756C9;
-      font-family: system-ui, -apple-system, Segoe UI, sans-serif;
-    }
-    #startup {
-      position: fixed;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      color: #fff;
-      z-index: 9999;
-      background: #0756C9;
-    }
-    #startup .mark {
-      font-size: 28px;
-      font-weight: 800;
-      letter-spacing: -0.4px;
-    }
-    #startup .bar {
-      margin-top: 22px;
-      width: 160px;
-      height: 4px;
-      border-radius: 4px;
-      background: rgba(255,255,255,.28);
-      overflow: hidden;
-    }
-    #startup .bar > span {
-      display: block;
-      height: 100%;
-      width: 40%;
-      background: #fff;
-      animation: load 1s ease-in-out infinite;
-    }
-    @keyframes load {
-      0% { transform: translateX(-120%); }
-      100% { transform: translateX(350%); }
-    }
-  </style>
+    <title>POS Billingwala</title>
+    <link href="manifest.json" rel="manifest">
+    <!-- Devanagari glyphs for receipt preview / share (user-entered Marathi/Hindi). -->
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;700&family=Noto+Sans:wght@400;500;700&display=swap"
+          rel="stylesheet">
+    <style>
+        html, body {
+          margin: 0;
+          height: 100%;
+          background: #0756C9;
+          font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+        }
+        #startup {
+          position: fixed;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-direction: column;
+          color: #fff;
+          z-index: 9999;
+          background: #0756C9;
+        }
+        #startup .mark {
+          font-size: 28px;
+          font-weight: 800;
+          letter-spacing: -0.4px;
+        }
+        #startup .bar {
+          margin-top: 22px;
+          width: 160px;
+          height: 4px;
+          border-radius: 4px;
+          background: rgba(255,255,255,.28);
+          overflow: hidden;
+        }
+        #startup .bar > span {
+          display: block;
+          height: 100%;
+          width: 40%;
+          background: #fff;
+          animation: load 1s ease-in-out infinite;
+        }
+        @keyframes load {
+          0% { transform: translateX(-120%); }
+          100% { transform: translateX(350%); }
+        }
+    </style>
 </head>
 <body>
-  <div id="startup">
+<div id="startup">
     <div class="mark">Billingwala</div>
     <div class="bar"><span></span></div>
-  </div>
-  <script>
+</div>
+<script>
     window.addEventListener('flutter-first-frame', function () {
       var el = document.getElementById('startup');
       if (el) el.remove();
     });
-  </script>
-  <script src="flutter_bootstrap.js" async></script>
+</script>
+<script async src="flutter_bootstrap.js"></script>
 </body>
 </html>
