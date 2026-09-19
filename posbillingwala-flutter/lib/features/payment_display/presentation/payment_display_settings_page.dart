@@ -154,43 +154,16 @@ class PaymentDisplaySettingsPage extends ConsumerWidget {
                         icon: Icons.qr_code_2_rounded,
                         onPressed: () => manager.showPairingQr(),
                       ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: AppButton(
-                              label: strings.paymentDisplayReconnect,
-                              variant: AppButtonVariant.outlined,
-                              onPressed: () => manager.reconnect(),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: AppButton(
-                              label: strings.paymentDisplayDisconnect,
-                              variant: AppButtonVariant.outlined,
-                              onPressed: () async {
-                                await manager.disconnectDisplays();
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      TextButton(
-                        onPressed: () async {
-                          if (state.serverRunning) {
-                            await manager.stopServer();
-                          } else {
-                            await manager.startServer();
-                          }
-                        },
-                        child: Text(
-                          state.serverRunning
-                              ? strings.paymentDisplayStopServer
-                              : strings.paymentDisplayStartServer,
+                      if (state.isConnected) ...[
+                        const SizedBox(height: 8),
+                        AppButton(
+                          label: strings.paymentDisplayDisconnect,
+                          variant: AppButtonVariant.outlined,
+                          onPressed: () async {
+                            await manager.disconnectDisplays();
+                          },
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ),

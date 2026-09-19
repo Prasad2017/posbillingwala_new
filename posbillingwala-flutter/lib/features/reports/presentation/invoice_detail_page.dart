@@ -29,7 +29,6 @@ class InvoiceDetailPage extends ConsumerStatefulWidget {
 }
 
 class InvoiceDetailPageState extends ConsumerState<InvoiceDetailPage> {
-  BillDetailAction? expandedAction;
   var summaryExpanded = true;
   var itemsExpanded = true;
 
@@ -357,13 +356,6 @@ class InvoiceDetailPageState extends ConsumerState<InvoiceDetailPage> {
                       if (!cancelled && !refunded) ...[
                         const SizedBox(height: 12),
                         BillDetailActionRow(
-                          expanded: expandedAction,
-                          onExpand: (action) {
-                            setState(() {
-                              expandedAction =
-                                  expandedAction == action ? null : action;
-                            });
-                          },
                           onRun: (action) => runAction(action, invoice),
                           strings: strings,
                         ),
@@ -472,18 +464,14 @@ class InvoiceDetailPageState extends ConsumerState<InvoiceDetailPage> {
   }
 }
 
-/* Icons in one row — tap expands that action into a full labelled button. */
+/* One row: Show QR | Edit Customer | Refund Bill — no duplicate button below. */
 class BillDetailActionRow extends StatelessWidget {
   const BillDetailActionRow({
     super.key,
-    required this.expanded,
-    required this.onExpand,
     required this.onRun,
     required this.strings,
   });
 
-  final BillDetailAction? expanded;
-  final ValueChanged<BillDetailAction> onExpand;
   final ValueChanged<BillDetailAction> onRun;
   final AppStrings strings;
 
@@ -507,84 +495,54 @@ class BillDetailActionRow extends StatelessWidget {
       ),
     ];
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Row(
       children: [
-        Row(
-          children: [
-            for (var i = 0; i < actions.length; i++) ...[
-              if (i > 0) const SizedBox(width: 8),
-              Expanded(
-                flex: expanded == actions[i].id ? 3 : 1,
-                child: AnimatedSize(
-                  duration: const Duration(milliseconds: 200),
-                  curve: Curves.easeOutCubic,
-                  child: Material(
-                    color: expanded == actions[i].id
-                        ? AppColors.primary
-                        : Colors.white,
+        for (var i = 0; i < actions.length; i++) ...[
+          if (i > 0) const SizedBox(width: 8),
+          Expanded(
+            child: Material(
+              color: i == 0 ? AppColors.primary : Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () => onRun(actions[i].id),
+                child: Container(
+                  height: 48,
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(12),
-                      onTap: () {
-                        if (expanded == actions[i].id) {
-                          onRun(actions[i].id);
-                        } else {
-                          onExpand(actions[i].id);
-                        }
-                      },
-                      child: Container(
-                        height: 48,
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: AppColors.primary.withValues(
-                              alpha: expanded == actions[i].id ? 0 : 0.35,
-                            ),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              actions[i].icon,
-                              size: 22,
-                              color: expanded == actions[i].id
-                                  ? Colors.white
-                                  : AppColors.primary,
-                            ),
-                            if (expanded == actions[i].id) ...[
-                              const SizedBox(width: 8),
-                              Flexible(
-                                child: Text(
-                                  actions[i].label,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
+                    border: Border.all(
+                      color: AppColors.primary.withValues(
+                        alpha: i == 0 ? 0 : 0.35,
                       ),
                     ),
                   ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        actions[i].icon,
+                        size: 18,
+                        color: i == 0 ? Colors.white : AppColors.primary,
+                      ),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          actions[i].label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: i == 0 ? Colors.white : AppColors.primary,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ],
-          ],
-        ),
-        if (expanded != null) ...[
-          const SizedBox(height: 8),
-          AppButton(
-            label: actions.firstWhere((a) => a.id == expanded).label,
-            icon: actions.firstWhere((a) => a.id == expanded).icon,
-            onPressed: () => onRun(expanded!),
+            ),
           ),
         ],
       ],

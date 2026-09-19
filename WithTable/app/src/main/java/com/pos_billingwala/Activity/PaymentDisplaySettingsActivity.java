@@ -33,6 +33,7 @@ public class PaymentDisplaySettingsActivity extends AppCompatActivity
     private ImageView pairingQrImage;
     private SwitchCompat autoSwitch;
     private View pairingCard;
+    private MaterialButton disconnectButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,22 +62,12 @@ public class PaymentDisplaySettingsActivity extends AppCompatActivity
                 manager.setAutoDisplayEnabled(checked));
 
         MaterialButton showPairing = findViewById(R.id.showPairingButton);
-        MaterialButton reconnect = findViewById(R.id.reconnectButton);
-        MaterialButton disconnect = findViewById(R.id.disconnectButton);
-        MaterialButton startStop = findViewById(R.id.startStopButton);
+        disconnectButton = findViewById(R.id.disconnectButton);
         MaterialButton copyUrl = findViewById(R.id.copyUrlButton);
 
         showPairing.setOnClickListener(v -> manager.showPairingQr());
-        reconnect.setOnClickListener(v -> manager.reconnect());
-        disconnect.setOnClickListener(v -> manager.disconnectDisplays());
-        startStop.setOnClickListener(v -> {
-            if (manager.isServerRunning()) {
-                manager.stopServer();
-            } else {
-                manager.startServer(true);
-            }
-            refreshUi();
-        });
+        disconnectButton.setOnClickListener(v -> manager.disconnectDisplays());
+        disconnectButton.setVisibility(View.GONE);
         copyUrl.setOnClickListener(v -> {
             String url = manager.getPairingUrl();
             if (url == null || url.isEmpty()) {
@@ -150,10 +141,7 @@ public class PaymentDisplaySettingsActivity extends AppCompatActivity
             pairingCard.setVisibility(View.GONE);
         }
 
-        MaterialButton startStop = findViewById(R.id.startStopButton);
-        startStop.setText(manager.isServerRunning()
-                ? R.string.payment_display_stop_server
-                : R.string.payment_display_start_server);
+        disconnectButton.setVisibility(manager.isConnected() ? View.VISIBLE : View.GONE);
 
         if (manager.getErrorMessage() != null) {
             Toast.makeText(this, manager.getErrorMessage(), Toast.LENGTH_SHORT).show();
