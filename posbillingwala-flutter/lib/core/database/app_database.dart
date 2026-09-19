@@ -2073,6 +2073,7 @@ WHERE cart_id = 0;
     String? discountType,
     double? packingCharge,
     String? packingChargeType,
+    bool clearCustomerWhenNull = false,
   }) async {
     final invoice = await getInvoiceById(invoiceId);
     if (invoice == null) {
@@ -2097,10 +2098,18 @@ WHERE cart_id = 0;
 
     await (update(invoices)..where((t) => t.invoiceId.equals(invoiceId))).write(
       InvoicesCompanion(
-        customerName: Value(customerName ?? invoice.customerName),
-        customerMobile: Value(customerMobile ?? invoice.customerMobile),
-        customerEmail: Value(customerEmail ?? invoice.customerEmail),
-        customerAddress: Value(customerAddress ?? invoice.customerAddress),
+        customerName: clearCustomerWhenNull
+            ? Value(customerName)
+            : Value(customerName ?? invoice.customerName),
+        customerMobile: clearCustomerWhenNull
+            ? Value(customerMobile)
+            : Value(customerMobile ?? invoice.customerMobile),
+        customerEmail: clearCustomerWhenNull
+            ? Value(customerEmail)
+            : Value(customerEmail ?? invoice.customerEmail),
+        customerAddress: clearCustomerWhenNull
+            ? Value(customerAddress)
+            : Value(customerAddress ?? invoice.customerAddress),
         paymentMode: Value(paymentMode ?? invoice.paymentMode),
         cashAmount: Value(cashAmount ?? invoice.cashAmount),
         upiAmount: Value(upiAmount ?? invoice.upiAmount),
@@ -4096,6 +4105,22 @@ WHERE $where
     return (select(
       invoiceItems,
     )..where((t) => t.invoiceNumber.equals(invoiceNumber))).get();
+  }
+
+  Stream<List<InvoiceItem>> watchInvoiceItems(String invoiceNumber) {
+    return (select(invoiceItems)
+          ..where((t) => t.invoiceNumber.equals(invoiceNumber))
+          ..orderBy([(t) => OrderingTerm.asc(t.invoiceItemId)]))
+        .watch();
+  }
+
+  Stream<List<InvoiceItem>> watchInvoiceItemsByInvoiceId(int invoiceId) async* {
+    final invoice = await getInvoiceById(invoiceId);
+    if (invoice == null) {
+      yield const [];
+      return;
+    }
+    yield* watchInvoiceItems(invoice.invoiceNumber);
   }
 
   /* Upserts cloud invoices as already-synced so they are not re-uploaded. */

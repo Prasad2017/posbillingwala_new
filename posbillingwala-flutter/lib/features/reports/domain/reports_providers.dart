@@ -566,3 +566,11 @@ final invoiceDetailProvider =
       final items = await db.getInvoiceItems(invoice.invoiceNumber);
       return (invoice: invoice, items: items);
     });
+
+/* Live invoice lines for Add Product qty UI (no staff filter — already on bill). */
+final invoiceItemsEditProvider =
+    StreamProvider.family<List<InvoiceItem>, int>((ref, invoiceId) {
+      return ref
+          .watch(appDatabaseProvider)
+          .watchInvoiceItemsByInvoiceId(invoiceId);
+    });

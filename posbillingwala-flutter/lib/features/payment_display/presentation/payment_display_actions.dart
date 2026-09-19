@@ -37,25 +37,17 @@ Future<void> requestShowInvoicePaymentQr(
   }
 
   if (confirmAlreadyPaid) {
-    final go = await showDialog<bool>(
+    final go = await showAppConfirmBottomSheet(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(strings.paymentDisplayShowQr),
-        content: Text(strings.paymentDisplayAlreadyPaidConfirm),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(strings.cancel),
-          ),
-          AppButton(
-            label: strings.paymentDisplayShowQr,
-            onPressed: () => Navigator.pop(ctx, true),
-            expanded: false,
-          ),
-        ],
-      ),
+      title: strings.paymentDisplayShowQr,
+      message:
+          '${strings.paymentDisplayAlreadyPaidConfirm}\n\n'
+          '${invoice.invoiceNumber} · ₹${invoice.totalAmount.toStringAsFixed(2)}',
+      confirmLabel: strings.paymentDisplayShowQr,
+      cancelLabel: strings.cancel,
+      icon: Icons.qr_code_2_rounded,
     );
-    if (go != true || !context.mounted) return;
+    if (!go || !context.mounted) return;
   }
 
   final result = await ref
@@ -63,10 +55,10 @@ Future<void> requestShowInvoicePaymentQr(
       .showInvoiceOnPaymentDisplay(invoice);
 
   if (!context.mounted) return;
-  await _handleShowResult(context, ref, result, strings);
+  await handleShowPaymentDisplayResult(context, ref, result, strings);
 }
 
-Future<void> _handleShowResult(
+Future<void> handleShowPaymentDisplayResult(
   BuildContext context,
   WidgetRef ref,
   ShowPaymentDisplayResult result,
@@ -79,48 +71,28 @@ Future<void> _handleShowResult(
       );
       return;
     case ShowPaymentDisplayResultCode.displayNotConnected:
-      final action = await showDialog<String>(
+      final connect = await showAppConfirmBottomSheet(
         context: context,
-        builder: (ctx) => AlertDialog(
-          title: Text(strings.paymentDisplayTitle),
-          content: Text(strings.paymentDisplayNotConnected),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, 'cancel'),
-              child: Text(strings.cancel),
-            ),
-            AppButton(
-              label: strings.paymentDisplayConnect,
-              onPressed: () => Navigator.pop(ctx, 'connect'),
-              expanded: false,
-            ),
-          ],
-        ),
+        title: strings.paymentDisplayTitle,
+        message: strings.paymentDisplayNotConnected,
+        confirmLabel: strings.paymentDisplayConnect,
+        cancelLabel: strings.cancel,
+        icon: Icons.cast_connected_rounded,
       );
-      if (action == 'connect' && context.mounted) {
+      if (connect && context.mounted) {
         context.push('/settings/payment-display');
       }
       return;
     case ShowPaymentDisplayResultCode.upiNotConfigured:
-      final action = await showDialog<String>(
+      final open = await showAppConfirmBottomSheet(
         context: context,
-        builder: (ctx) => AlertDialog(
-          title: Text(strings.paymentDisplayTitle),
-          content: Text(strings.paymentDisplayUpiNotConfigured),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, 'cancel'),
-              child: Text(strings.cancel),
-            ),
-            AppButton(
-              label: strings.paymentDisplayOpenPaymentSettings,
-              onPressed: () => Navigator.pop(ctx, 'settings'),
-              expanded: false,
-            ),
-          ],
-        ),
+        title: strings.paymentDisplayTitle,
+        message: strings.paymentDisplayUpiNotConfigured,
+        confirmLabel: strings.paymentDisplayOpenPaymentSettings,
+        cancelLabel: strings.cancel,
+        icon: Icons.account_balance_wallet_rounded,
       );
-      if (action == 'settings' && context.mounted) {
+      if (open && context.mounted) {
         context.push('/settings/company');
       }
       return;

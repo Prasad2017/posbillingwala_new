@@ -9,16 +9,15 @@ enum PaymentMode {
   final String label;
 
   static PaymentMode fromLabel(String? value) {
-    switch (value) {
-      case 'UPI':
-      case 'Online':
-        return PaymentMode.upi;
-      case 'Cash+UPI':
-        return PaymentMode.cashPlusUpi;
-      case 'Cash':
-      default:
-        return PaymentMode.cash;
+    final v = (value ?? '').trim().toLowerCase();
+    if ((v.contains('cash') && v.contains('upi')) ||
+        v.contains('mixed') ||
+        v.contains('split') ||
+        v.contains('+')) {
+      return PaymentMode.cashPlusUpi;
     }
+    if (v.contains('upi') || v == 'online') return PaymentMode.upi;
+    return PaymentMode.cash;
   }
 }
 

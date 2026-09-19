@@ -16,7 +16,7 @@ import 'package:pos_billingwala_v2/features/pos/presentation/pos_page.dart';
 import 'package:pos_billingwala_v2/features/reports/domain/reports_providers.dart';
 import 'package:pos_billingwala_v2/language/app_strings.dart';
 
-/* Fast-billing style catalog to append products onto a saved invoice. */
+/* Fast-billing style catalog to append / adjust products on a saved invoice. */
 class InvoiceAddProductsPage extends ConsumerStatefulWidget {
   const InvoiceAddProductsPage({super.key, required this.invoiceId});
 
@@ -46,24 +46,9 @@ class InvoiceAddProductsPageState extends ConsumerState<InvoiceAddProductsPage> 
     super.dispose();
   }
 
-  Future<void> onProductTap(Product product) async {
-    final added = await addInvoiceProductWithPortionPicker(
-      context,
-      ref,
-      invoiceId: widget.invoiceId,
-      product: product,
-    );
-    if (!added || !mounted) return;
-    ref.invalidate(invoiceDetailProvider(widget.invoiceId));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(AppStrings.of(ref).itemAddedPending)),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final strings = AppStrings.of(ref);
-    final currency = NumberFormat.currency(locale: 'en_IN', symbol: '₹');
     final categoriesAsync = ref.watch(categoriesProvider);
     final db = ref.watch(appDatabaseProvider);
     final widthClass = context.widthClass;
@@ -200,10 +185,9 @@ class InvoiceAddProductsPageState extends ConsumerState<InvoiceAddProductsPage> 
                   itemCount: filtered.length,
                   itemBuilder: (context, index) {
                     final product = filtered[index];
-                    return InvoiceProductTile(
+                    return InvoiceProductCard(
+                      invoiceId: widget.invoiceId,
                       product: product,
-                      currency: currency,
-                      onTap: () => onProductTap(product),
                     );
                   },
                 );
@@ -216,101 +200,342 @@ class InvoiceAddProductsPageState extends ConsumerState<InvoiceAddProductsPage> 
   }
 }
 
-class InvoiceProductTile extends StatelessWidget {
-  const InvoiceProductTile({
+/* Same layout as fast-billing [ProductCard] with invoice qty controls. */
+class InvoiceProductCard extends ConsumerWidget {
+  const InvoiceProductCard({
     super.key,
+    required this.invoiceId,
     required this.product,
-    required this.currency,
-    required this.onTap,
   });
 
+  final int invoiceId;
   final Product product;
-  final NumberFormat currency;
-  final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final unit = (product.productUnit?.trim().isNotEmpty ?? false)
         ? product.productUnit!.trim()
         : '';
     final priceLabel = unit.isEmpty
-        ? currency.format(product.productPrice)
-        : '${currency.format(product.productPrice)}/$unit';
+        ? '₹ ${product.productPrice.toStringAsFixed(1)}'
+        : '₹ ${product.productPrice.toStringAsFixed(1)}/$unit';
     final showImage = hasProductImage(product.productImage);
 
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
+    return RepaintBoundary(
+      child: Material(
+        color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: AppColors.primary.withValues(alpha: 0.12),
-            ),
+        elevation: 0,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () => InvoiceProductQtyControls.addOrIncrement(
+            context,
+            ref,
+            invoiceId: invoiceId,
+            product: product,
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (showImage) ...[
-                    ProductImageThumb(
-                      value: product.productImage,
-                      size: 48,
-                      radius: 10,
-                      showPlaceholder: false,
-                    ),
-                    const SizedBox(width: 8),
-                  ],
-                  Expanded(
-                    child: Text(
-                      product.productName,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 13,
-                        color: AppColors.navy,
-                        height: 1.15,
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: AppColors.primary.withValues(alpha: 0.12),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.navy.withValues(alpha: 0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (showImage) ...[
+                      ProductImageThumb(
+                        key: ValueKey('img-${product.productId}'),
+                        value: product.productImage,
+                        size: 48,
+                        radius: 10,
+                        showPlaceholder: false,
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            product.productName,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 13,
+                              color: AppColors.navy,
+                              height: 1.15,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            priceLabel,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                ],
-              ),
-              const Spacer(),
-              Text(
-                priceLabel,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 13,
-                  color: AppColors.primary,
+                  ],
                 ),
-              ),
-              const SizedBox(height: 6),
-              SizedBox(
-                height: 34,
-                child: FilledButton(
-                  onPressed: onTap,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    padding: EdgeInsets.zero,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  child: const Text(
-                    'Add',
-                    style: TextStyle(fontWeight: FontWeight.w800),
+                const SizedBox(height: 8),
+                GestureDetector(
+                  onTap: () {},
+                  behavior: HitTestBehavior.opaque,
+                  child: InvoiceProductQtyControls(
+                    invoiceId: invoiceId,
+                    product: product,
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class InvoiceProductQtyControls extends ConsumerWidget {
+  const InvoiceProductQtyControls({
+    super.key,
+    required this.invoiceId,
+    required this.product,
+  });
+
+  final int invoiceId;
+  final Product product;
+
+  /* Match by productId, then code, then name — covers cloud / legacy lines. */
+  static List<InvoiceItem> linesForProduct(
+    List<InvoiceItem> items,
+    Product product,
+  ) {
+    final byId = items
+        .where(
+          (i) => i.productId != null && i.productId == product.productId,
+        )
+        .toList(growable: false);
+    if (byId.isNotEmpty) return byId;
+
+    final code = product.productCode?.trim().toLowerCase() ?? '';
+    if (code.isNotEmpty) {
+      final byCode = items
+          .where(
+            (i) => (i.productCode?.trim().toLowerCase() ?? '') == code,
+          )
+          .toList(growable: false);
+      if (byCode.isNotEmpty) return byCode;
+    }
+
+    final name = product.productName.trim().toLowerCase();
+    if (name.isEmpty) return const [];
+    return items
+        .where((i) => i.productName.trim().toLowerCase() == name)
+        .toList(growable: false);
+  }
+
+  static double qtyForProduct(List<InvoiceItem> items, Product product) {
+    return linesForProduct(items, product)
+        .fold<double>(0, (sum, i) => sum + i.productQuantity);
+  }
+
+  static Future<void> addOrIncrement(
+    BuildContext context,
+    WidgetRef ref, {
+    required int invoiceId,
+    required Product product,
+  }) async {
+    final items =
+        ref.read(invoiceItemsEditProvider(invoiceId)).asData?.value ??
+        const <InvoiceItem>[];
+    final lines = linesForProduct(items, product);
+    if (lines.isEmpty) {
+      final added = await addInvoiceProductWithPortionPicker(
+        context,
+        ref,
+        invoiceId: invoiceId,
+        product: product,
+      );
+      if (!added || !context.mounted) return;
+      ref.invalidate(invoiceDetailProvider(invoiceId));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppStrings.of(ref).itemAddedPending)),
+      );
+      return;
+    }
+    final step = ProductUnits.stepFor(product.productUnit);
+    final next = double.parse(
+      (lines.first.productQuantity + step).toStringAsFixed(3),
+    );
+    try {
+      await ref.read(appDatabaseProvider).updateInvoiceItemQuantity(
+            invoiceItemId: lines.first.invoiceItemId,
+            quantity: next,
+          );
+      ref.invalidate(invoiceDetailProvider(invoiceId));
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    }
+  }
+
+  static Future<void> removeOrDecrement(
+    BuildContext context,
+    WidgetRef ref, {
+    required int invoiceId,
+    required Product product,
+  }) async {
+    final items =
+        ref.read(invoiceItemsEditProvider(invoiceId)).asData?.value ??
+        const <InvoiceItem>[];
+    final lines = linesForProduct(items, product);
+    if (lines.isEmpty) return;
+    final step = ProductUnits.stepFor(product.productUnit);
+    final line = lines.first;
+    final next = double.parse(
+      (line.productQuantity - step).toStringAsFixed(3),
+    );
+    try {
+      final db = ref.read(appDatabaseProvider);
+      if (next <= 0) {
+        await db.deleteInvoiceItemAndRecompute(line.invoiceItemId);
+      } else {
+        await db.updateInvoiceItemQuantity(
+          invoiceItemId: line.invoiceItemId,
+          quantity: next,
+        );
+      }
+      ref.invalidate(invoiceDetailProvider(invoiceId));
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final itemsAsync = ref.watch(invoiceItemsEditProvider(invoiceId));
+    final qty = itemsAsync.maybeWhen(
+      data: (items) => qtyForProduct(items, product),
+      orElse: () => 0.0,
+    );
+
+    if (qty <= 0) {
+      return SizedBox(
+        width: double.infinity,
+        height: 34,
+        child: Material(
+          color: AppColors.primary,
+          borderRadius: BorderRadius.circular(10),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(10),
+            onTap: () => addOrIncrement(
+              context,
+              ref,
+              invoiceId: invoiceId,
+              product: product,
+            ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.add, color: Colors.white, size: 18),
+                SizedBox(width: 4),
+                Text(
+                  'Add',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      height: 34,
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      decoration: BoxDecoration(
+        color: AppColors.primaryLight,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        children: [
+          qtyIconButton(
+            icon: Icons.remove,
+            onTap: () => removeOrDecrement(
+              context,
+              ref,
+              invoiceId: invoiceId,
+              product: product,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              ProductUnits.formatQty(qty, unit: product.productUnit),
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: AppColors.navy,
+                fontWeight: FontWeight.w800,
+                fontSize: 13,
+              ),
+            ),
+          ),
+          qtyIconButton(
+            icon: Icons.add,
+            onTap: () => addOrIncrement(
+              context,
+              ref,
+              invoiceId: invoiceId,
+              product: product,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget qtyIconButton({
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: SizedBox(
+          width: 28,
+          height: 28,
+          child: Icon(icon, size: 16, color: AppColors.primary),
         ),
       ),
     );
