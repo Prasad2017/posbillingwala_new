@@ -25,6 +25,7 @@ dependencies:
   sqlite3_flutter_libs: ^0.6.0+eol
   path_provider: ^2.1.6
   qr_flutter: ^4.1.0
+  qr: ^3.0.2
   share_plus: ^13.3.0
   print_bluetooth_thermal: ^1.2.4
   permission_handler: ^13.0.2
@@ -58,6 +59,9 @@ flutter:
     - assets/images/svg/
     - assets/font/
     - assets/locale/
+    - assets/payment_display/
+    - assets/payment_display/css/
+    - assets/payment_display/js/
     - assets/license_signing_public.pem
   fonts:
     - family: Poppins

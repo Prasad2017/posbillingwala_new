@@ -2220,6 +2220,13 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
 
                 persistedInvoiceNumber = reservedInvoiceNumber;
 
+                // Payment display: never block save/print.
+                try {
+                    com.pos_billingwala.PaymentDisplay.PaymentDisplayService.tryAutoShowAfterBill(
+                            activity, reservedInvoiceNumber, totalAmt);
+                } catch (Exception ignored) {
+                }
+
                 // Share Invoice is only via overflow menu — never auto-open after print.
                 final boolean shouldShare = shareAfterSave;
                 shareAfterSave = false;

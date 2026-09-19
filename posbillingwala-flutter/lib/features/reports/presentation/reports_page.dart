@@ -5,7 +5,9 @@ import 'package:intl/intl.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
+import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
+import 'package:pos_billingwala_v2/features/payment_display/presentation/payment_display_actions.dart';
 import 'package:pos_billingwala_v2/features/reports/domain/report_export.dart';
 import 'package:pos_billingwala_v2/features/reports/domain/reports_providers.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/report_period_controls.dart';
@@ -24,6 +26,7 @@ class ReportsPage extends ConsumerWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       items: [
         for (final entry in const [
+          (ReportPeriodKind.all, 'All Records'),
           (ReportPeriodKind.today, 'Day wise'),
           (ReportPeriodKind.month, 'Month Wise'),
           (ReportPeriodKind.year, 'Year Wise'),
@@ -105,11 +108,7 @@ class ReportsPage extends ConsumerWidget {
             Align(
               alignment: Alignment.centerLeft,
               child: ReportPeriodPill(
-                label:
-                    period.kind == ReportPeriodKind.today &&
-                        period.label == 'Today'
-                    ? 'All Records'
-                    : reportPeriodDisplayLabel(period),
+                label: reportPeriodDisplayLabel(period),
                 onTap: () => showPeriodMenu(context, ref),
               ),
             ),
@@ -210,7 +209,7 @@ class ReportsPage extends ConsumerWidget {
                           ),
                         );
                       }
-                      final rows = filtered.take(40).toList();
+                      final rows = filtered;
                       return Column(
                         children: [
                           for (var i = 0; i < rows.length; i++) ...[
@@ -227,6 +226,17 @@ class ReportsPage extends ConsumerWidget {
                               onTap: () => context.push(
                                 '/reports/invoice/${rows[i].invoiceId}',
                               ),
+                              onShowQr:
+                                  AppPlatform.isWeb ||
+                                      rows[i].invoiceOrderStatus ==
+                                          'cancelled' ||
+                                      rows[i].invoiceOrderStatus == 'refunded'
+                                  ? null
+                                  : () => requestShowInvoicePaymentQr(
+                                      context,
+                                      ref,
+                                      rows[i],
+                                    ),
                             ),
                           ],
                         ],

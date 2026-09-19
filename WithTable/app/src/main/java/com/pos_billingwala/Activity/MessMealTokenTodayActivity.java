@@ -152,9 +152,9 @@ public class MessMealTokenTodayActivity extends BaseActivity {
             holder.btnCancel.setEnabled(canRetry);
             holder.btnRetry.setOnClickListener(v -> {
                 POSBillingWalaDatabase db = new POSBillingWalaDatabase(MessMealTokenTodayActivity.this);
-                String mobile = item.memberMobile != null && !item.memberMobile.trim().isEmpty()
+                String retryMobile = item.memberMobile != null && !item.memberMobile.trim().isEmpty()
                         ? item.memberMobile.trim() : item.registrationNo;
-                db.upsertMessMealTokenQueue(item.tokenId, item.tokenNumber, mobile,
+                db.upsertMessMealTokenQueue(item.tokenId, item.tokenNumber, retryMobile,
                         item.mealSession, item.date, item.memberName, item.createdAt, "PRINT_PENDING");
                 MessMealTokenPrintWorker.kick(MessMealTokenTodayActivity.this);
                 Toast.makeText(MessMealTokenTodayActivity.this, R.string.ui_retry_print, Toast.LENGTH_SHORT).show();

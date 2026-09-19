@@ -420,6 +420,55 @@ class AppStrings {
 
   String get paymentUpdated => tr('app_payment_updated');
 
+  String get paymentDisplayTitle => tr('app_payment_display_title');
+  String get paymentDisplayStatus => tr('app_payment_display_status');
+  String get paymentDisplayDevice => tr('app_payment_display_device');
+  String get paymentDisplayLocalUrl => tr('app_payment_display_local_url');
+  String get paymentDisplayConnect => tr('app_payment_display_connect');
+  String get paymentDisplayShowPairingQr =>
+      tr('app_payment_display_show_pairing_qr');
+  String get paymentDisplayReconnect => tr('app_payment_display_reconnect');
+  String get paymentDisplayDisconnect => tr('app_payment_display_disconnect');
+  String get paymentDisplayStartServer =>
+      tr('app_payment_display_start_server');
+  String get paymentDisplayStopServer => tr('app_payment_display_stop_server');
+  String get paymentDisplayAutoNewBills =>
+      tr('app_payment_display_auto_new_bills');
+  String get paymentDisplayAutoNewBillsHint =>
+      tr('app_payment_display_auto_new_bills_hint');
+  String get paymentDisplayQrDuration => tr('app_payment_display_qr_duration');
+  String get paymentDisplayMinutes => tr('app_payment_display_minutes');
+  String get paymentDisplayUpiSettings =>
+      tr('app_payment_display_upi_settings');
+  String get paymentDisplayPairHint => tr('app_payment_display_pair_hint');
+  String get paymentDisplayCopyUrl => tr('app_payment_display_copy_url');
+  String get paymentDisplayUrlCopied => tr('app_payment_display_url_copied');
+  String get paymentDisplayConnected => tr('app_payment_display_connected');
+  String get paymentDisplayWaitingPair =>
+      tr('app_payment_display_waiting_pair');
+  String get paymentDisplayStarting => tr('app_payment_display_starting');
+  String get paymentDisplayStopped => tr('app_payment_display_stopped');
+  String get paymentDisplayError => tr('app_payment_display_error');
+  String get paymentDisplayNotConnected =>
+      tr('app_payment_display_not_connected');
+  String get paymentDisplayUpiNotConfigured =>
+      tr('app_payment_display_upi_not_configured');
+  String get paymentDisplayOpenPaymentSettings =>
+      tr('app_payment_display_open_payment_settings');
+  String get paymentDisplayInvalidAmount =>
+      tr('app_payment_display_invalid_amount');
+  String get paymentDisplayInvoiceInvalid =>
+      tr('app_payment_display_invoice_invalid');
+  String get paymentDisplayShowQr => tr('app_payment_display_show_qr');
+  String get paymentDisplayQrSent => tr('app_payment_display_qr_sent');
+  String get paymentDisplayAlreadyPaidConfirm =>
+      tr('app_payment_display_already_paid_confirm');
+  String get paymentDisplayAndroidOnly =>
+      tr('app_payment_display_android_only');
+  String get paymentDisplayKeepAppOpenHint =>
+      tr('app_payment_display_keep_app_open_hint');
+  String get paymentDisplaySubtitle => tr('app_payment_display_subtitle');
+
   String get pendingSync => tr('app_pending_sync');
 
   String get pleaseWait => tr('app_please_wait');

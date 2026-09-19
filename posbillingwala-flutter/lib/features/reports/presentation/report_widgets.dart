@@ -580,6 +580,7 @@ class ReportInvoiceRow extends StatelessWidget {
     required this.invoice,
     required this.currency,
     required this.onTap,
+    this.onShowQr,
     this.showPaymentTag = false,
     this.denseDate = false,
   });
@@ -588,6 +589,7 @@ class ReportInvoiceRow extends StatelessWidget {
   final Invoice invoice;
   final NumberFormat currency;
   final VoidCallback onTap;
+  final VoidCallback? onShowQr;
   final bool showPaymentTag;
   final bool denseDate;
 
@@ -693,6 +695,15 @@ class ReportInvoiceRow extends StatelessWidget {
                   ],
                 ],
               ),
+              if (onShowQr != null) ...[
+                const SizedBox(width: 4),
+                IconButton(
+                  tooltip: 'Show QR',
+                  onPressed: onShowQr,
+                  icon: const Icon(Icons.qr_code_2_rounded),
+                  color: AppColors.primary,
+                ),
+              ],
             ],
           ),
         ),
@@ -746,6 +757,8 @@ List<ReportSlice> paymentSlices(SalesSummary summary, List<Invoice> invoices) {
 
 String reportPeriodDisplayLabel(ReportPeriod period) {
   switch (period.kind) {
+    case ReportPeriodKind.all:
+      return 'All Records';
     case ReportPeriodKind.today:
       return 'Today';
     case ReportPeriodKind.month:

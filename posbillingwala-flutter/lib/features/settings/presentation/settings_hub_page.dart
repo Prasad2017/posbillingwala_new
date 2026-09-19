@@ -11,6 +11,7 @@ import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/licence_display.dart';
+import 'package:pos_billingwala_v2/features/reports/domain/reports_providers.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/report_pin_gate.dart';
 import 'package:pos_billingwala_v2/features/settings/domain/in_app_update_service.dart';
 import 'package:pos_billingwala_v2/features/staff/domain/permission_controller.dart';
@@ -254,8 +255,10 @@ class SettingsHubPage extends ConsumerWidget {
           color: AppColors.purple,
           title: strings.invoiceDetails,
           subtitle: 'Bill format, reprints & invoice list.',
-          onTap: () =>
-              pushReportsUnlocked(context, ref, route: '/reports/invoices'),
+          onTap: () {
+            ref.read(reportPeriodProvider.notifier).useAll();
+            context.push('/reports/invoices');
+          },
         ),
       if (perms.allows('report.view'))
         SettingsItem(
@@ -329,6 +332,14 @@ class SettingsHubPage extends ConsumerWidget {
           title: strings.businessHours,
           subtitle: 'Opening and closing times',
           onTap: () => context.push('/settings/business-hours'),
+        ),
+      if (perms.allows('settings.view') && !AppPlatform.isWeb)
+        SettingsItem(
+          icon: Icons.qr_code_2_rounded,
+          color: AppColors.primary,
+          title: strings.paymentDisplayTitle,
+          subtitle: strings.paymentDisplaySubtitle,
+          onTap: () => context.push('/settings/payment-display'),
         ),
       if (perms.allows('inventory.view'))
         SettingsItem(

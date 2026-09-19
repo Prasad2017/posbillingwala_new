@@ -11,9 +11,8 @@ import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 import 'package:pos_billingwala_v2/core/utils/money_format.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
-import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
+import 'package:pos_billingwala_v2/features/payment_display/presentation/payment_display_actions.dart';
 import 'package:pos_billingwala_v2/features/reports/domain/reports_providers.dart';
-import 'package:pos_billingwala_v2/features/sync/data/invoice_sync_api.dart';
 import 'package:pos_billingwala_v2/features/sync/domain/sync_providers.dart';
 import 'package:pos_billingwala_v2/language/app_strings.dart';
 
@@ -47,15 +46,10 @@ class InvoiceDetailPage extends ConsumerWidget {
                 );
                 return;
               }
-              await context.push('/reports/invoice/$invoiceId/edit');
+              await editInvoiceHeader(context, ref, detail.invoice);
               ref.invalidate(invoiceDetailProvider(invoiceId));
             },
             icon: const Icon(Icons.edit_outlined),
-          ),
-          IconButton(
-            tooltip: strings.printShare,
-            onPressed: () => context.push('/print/bill/$invoiceId'),
-            icon: const Icon(Icons.print_rounded),
           ),
           IconButton(
             tooltip: strings.duplicatePrint,
@@ -123,35 +117,24 @@ class InvoiceDetailPage extends ConsumerWidget {
                               style: Theme.of(context).textTheme.labelLarge,
                             ),
                             const SizedBox(height: 8),
-                            Wrap(
-                              spacing: 8,
-                              children: [
-                                Chip(
-                                  label: Text(
-                                    pending
-                                        ? strings.pendingSync
-                                        : strings.synced,
-                                  ),
-                                  backgroundColor: pending
-                                      ? AppColors.warning.withValues(alpha: 0.2)
-                                      : AppColors.success.withValues(
-                                          alpha: 0.2,
-                                        ),
-                                ),
-                                if (cancelled)
-                                  Chip(
-                                    label: Text(strings.voided),
-                                    backgroundColor: AppColors.danger
-                                        .withValues(alpha: 0.2),
-                                  ),
-                                if (refunded)
-                                  Chip(
-                                    label: Text(strings.refunded),
-                                    backgroundColor: AppColors.warning
-                                        .withValues(alpha: 0.2),
-                                  ),
-                              ],
-                            ),
+                            if (cancelled || refunded)
+                              Wrap(
+                                spacing: 8,
+                                children: [
+                                  if (cancelled)
+                                    Chip(
+                                      label: Text(strings.voided),
+                                      backgroundColor: AppColors.danger
+                                          .withValues(alpha: 0.2),
+                                    ),
+                                  if (refunded)
+                                    Chip(
+                                      label: Text(strings.refunded),
+                                      backgroundColor: AppColors.warning
+                                          .withValues(alpha: 0.2),
+                                    ),
+                                ],
+                              ),
                             if (invoice.customerName != null) ...[
                               const SizedBox(height: 8),
                               Text(
@@ -207,6 +190,18 @@ class InvoiceDetailPage extends ConsumerWidget {
                         ),
                       ),
                       if (!cancelled && !refunded) ...[
+                        const SizedBox(height: 8),
+                        AppButton(
+                          label: strings.paymentDisplayShowQr,
+                          icon: Icons.qr_code_2_rounded,
+                          variant: AppButtonVariant.outlined,
+                          expanded: false,
+                          onPressed: () => requestShowInvoicePaymentQr(
+                            context,
+                            ref,
+                            invoice,
+                          ),
+                        ),
                         const SizedBox(height: 8),
                         AppButton(
                           label: strings.editCustomerPayment,
@@ -355,11 +350,14 @@ class InvoiceDetailPage extends ConsumerWidget {
                           const Spacer(),
                           if (!cancelled && !refunded)
                             TextButton.icon(
-                              onPressed: () => addInvoiceProduct(
-                                context,
-                                ref,
-                                invoice.invoiceId,
-                              ),
+                              onPressed: () async {
+                                await context.push(
+                                  '/reports/invoice/$invoiceId/add-products',
+                                );
+                                ref.invalidate(
+                                  invoiceDetailProvider(invoiceId),
+                                );
+                              },
                               icon: const Icon(Icons.add_rounded),
                               label: Text(strings.add),
                             ),
@@ -380,175 +378,14 @@ class InvoiceDetailPage extends ConsumerWidget {
                               '${currency.format(item.productPrice)} × ${item.productQuantity}'
                               '${item.invoiceItemType == 'combo' ? ' · ${strings.combo}' : ''}',
                             ),
-                            trailing: (!cancelled && !refunded)
-                                ? Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      IconButton(
-                                        tooltip: strings.editLine,
-                                        icon: const Icon(
-                                          Icons.edit_note_rounded,
-                                        ),
-                                        onPressed: () async {
-                                          final qtyCtrl = TextEditingController(
-                                            text: '${item.productQuantity}',
-                                          );
-                                          final priceCtrl =
-                                              TextEditingController(
-                                                text: item.productPrice
-                                                    .toStringAsFixed(2),
-                                              );
-                                          final ok = await showDialog<bool>(
-                                            context: context,
-                                            builder: (context) => AlertDialog(
-                                              title: Text(strings.editItem),
-                                              content: Column(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  AppTextField(
-                                                    required: true,
-                                                    controller: qtyCtrl,
-                                                    label:
-                                                        strings.productQuantity,
-                                                    keyboardType:
-                                                        TextInputType.number,
-                                                  ),
-                                                  const SizedBox(height: 12),
-                                                  AppTextField(
-                                                    required: true,
-                                                    controller: priceCtrl,
-                                                    label: strings.unitPrice,
-                                                    keyboardType:
-                                                        const TextInputType.numberWithOptions(
-                                                          decimal: true,
-                                                        ),
-                                                  ),
-                                                ],
-                                              ),
-                                              actions: [
-                                                TextButton(
-                                                  onPressed: () =>
-                                                      Navigator.pop(
-                                                        context,
-                                                        false,
-                                                      ),
-                                                  child: Text(strings.cancel),
-                                                ),
-                                                AppButton(
-                                                  label: strings.save,
-                                                  onPressed: () =>
-                                                      Navigator.pop(
-                                                        context,
-                                                        true,
-                                                      ),
-                                                ),
-                                              ],
-                                            ),
-                                          );
-                                          if (ok != true) {
-                                            qtyCtrl.dispose();
-                                            priceCtrl.dispose();
-                                            return;
-                                          }
-                                          final qty =
-                                              double.tryParse(
-                                                qtyCtrl.text.trim(),
-                                              ) ??
-                                              0;
-                                          final price = double.tryParse(
-                                            priceCtrl.text.trim(),
-                                          );
-                                          qtyCtrl.dispose();
-                                          priceCtrl.dispose();
-                                          try {
-                                            await ref
-                                                .read(appDatabaseProvider)
-                                                .updateInvoiceItemQuantity(
-                                                  invoiceItemId:
-                                                      item.invoiceItemId,
-                                                  quantity: qty,
-                                                  productPrice: price,
-                                                );
-                                            ref.invalidate(
-                                              invoiceDetailProvider(invoiceId),
-                                            );
-                                          } catch (e) {
-                                            if (!context.mounted) return;
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
-                                              SnackBar(content: Text('$e')),
-                                            );
-                                          }
-                                        },
-                                      ),
-                                      IconButton(
-                                        tooltip: strings.deleteLine,
-                                        icon: const Icon(Icons.delete_outline),
-                                        onPressed: () async {
-                                          final network = item
-                                              .invoiceItemNetworkStatus
-                                              ?.trim();
-                                          try {
-                                            await ref
-                                                .read(appDatabaseProvider)
-                                                .deleteInvoiceItemAndRecompute(
-                                                  item.invoiceItemId,
-                                                );
-                                            if (network != null &&
-                                                network.isNotEmpty) {
-                                              try {
-                                                final ok =
-                                                    await InvoiceSyncApi(
-                                                      ref.read(
-                                                        apiClientProvider,
-                                                      ),
-                                                    ).deleteInvoiceProduct(
-                                                      invoiceProductNetworkStatus:
-                                                          network,
-                                                    );
-                                                if (ok) {
-                                                  await ref
-                                                      .read(appDatabaseProvider)
-                                                      .removeInvoiceProductDeleteByNetworkStatus(
-                                                        network,
-                                                      );
-                                                }
-                                              } catch (_) {}
-                                            }
-                                            ref.invalidate(
-                                              invoiceDetailProvider(invoiceId),
-                                            );
-                                            if (!context.mounted) return;
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
-                                              SnackBar(
-                                                content: Text(
-                                                  strings.lineRemoved,
-                                                ),
-                                              ),
-                                            );
-                                          } catch (e) {
-                                            if (!context.mounted) return;
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
-                                              SnackBar(content: Text('$e')),
-                                            );
-                                          }
-                                        },
-                                      ),
-                                    ],
-                                  )
-                                : Text(
-                                    currency.format(
-                                      item.productPrice * item.productQuantity,
-                                    ),
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  ),
+                            trailing: Text(
+                              currency.format(
+                                item.productPrice * item.productQuantity,
+                              ),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -571,97 +408,6 @@ class InvoiceDetailPage extends ConsumerWidget {
       'table_wise' => strings.dineIn,
       _ => strings.posLabel,
     };
-  }
-}
-
-Future<void> addInvoiceProduct(
-  BuildContext context,
-  WidgetRef ref,
-  int invoiceId,
-) async {
-  final strings = AppStrings.of(ref);
-  final products = await ref
-      .read(appDatabaseProvider)
-      .watchActiveProducts()
-      .first;
-  if (!context.mounted) return;
-  if (products.isEmpty) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(strings.noProductsCatalog)));
-    return;
-  }
-  Product? selected = products.first;
-  final qtyCtrl = TextEditingController(text: '1');
-  final ok = await showDialog<bool>(
-    context: context,
-    builder: (context) => StatefulBuilder(
-      builder: (context, setLocal) => AlertDialog(
-        title: Text(strings.addProduct),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AppDropdownFormField<Product>(
-              required: true,
-              label: strings.product,
-              items: products,
-              itemLabel: (p) => p.productName,
-              value: selected,
-              enableSearch: true,
-              onChanged: (v) => setLocal(() => selected = v),
-            ),
-            const SizedBox(height: 12),
-            AppTextField(
-              required: true,
-              controller: qtyCtrl,
-              label: strings.productQuantity,
-              keyboardType: TextInputType.number,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(strings.cancel),
-          ),
-          AppButton(
-            label: strings.add,
-            onPressed: () => Navigator.pop(context, true),
-          ),
-        ],
-      ),
-    ),
-  );
-  if (ok != true || selected == null) {
-    qtyCtrl.dispose();
-    return;
-  }
-  final qty = double.tryParse(qtyCtrl.text.trim()) ?? 1;
-  qtyCtrl.dispose();
-  try {
-    await ref
-        .read(appDatabaseProvider)
-        .addInvoiceItemLine(
-          invoiceId: invoiceId,
-          productId: selected!.productId,
-          productName: selected!.productName,
-          productPrice: selected!.productPrice,
-          quantity: qty <= 0 ? 1 : qty,
-          productCode: selected!.productCode,
-          categoryName: selected!.categoryName,
-          cgst: selected!.productCgst,
-          sgst: selected!.productSgst,
-        );
-    ref.invalidate(invoiceDetailProvider(invoiceId));
-    if (context.mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(strings.itemAddedPending)));
-    }
-  } catch (e) {
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
-    }
   }
 }
 

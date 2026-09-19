@@ -37,6 +37,8 @@ void onReportPeriodSelected(
   ReportPeriod current,
 ) {
   switch (kind) {
+    case ReportPeriodKind.all:
+      ref.read(reportPeriodProvider.notifier).useAll();
     case ReportPeriodKind.today:
       ref.read(reportPeriodProvider.notifier).useToday();
     case ReportPeriodKind.month:

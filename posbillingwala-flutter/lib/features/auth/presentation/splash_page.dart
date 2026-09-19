@@ -15,8 +15,7 @@ import 'package:pos_billingwala_v2/features/auth/presentation/web_auth_shell.dar
 import 'package:pos_billingwala_v2/features/settings/domain/in_app_update_service.dart';
 import 'package:pos_billingwala_v2/language/app_strings.dart';
 
-/* Matches `docs/layout/activity_splash_screen.xml`: */
-/* full-bleed splash branding + bottom indeterminate progress only. */
+/* Matches WithTable splash: full-bleed branding + circular loader above footer. */
 class SplashPage extends ConsumerStatefulWidget {
   const SplashPage({super.key});
 
@@ -139,11 +138,11 @@ class SplashPageState extends ConsumerState<SplashPage> {
             const SizedBox(height: 16),
             FilledButton(onPressed: retryWebOnline, child: const Text('Retry')),
           ] else
-            const ClipRRect(
-              borderRadius: BorderRadius.all(Radius.circular(4)),
-              child: LinearProgressIndicator(
-                minHeight: 4,
-                backgroundColor: Color(0x14000000),
+            const SizedBox(
+              width: 36,
+              height: 36,
+              child: CircularProgressIndicator(
+                strokeWidth: 3,
                 color: AppColors.primary,
               ),
             ),
@@ -186,7 +185,8 @@ class SplashPageState extends ConsumerState<SplashPage> {
             child: Align(
               alignment: Alignment.bottomCenter,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(32, 0, 32, 28),
+                /* Matches WithTable splash: circular loader above footer tagline. */
+                padding: const EdgeInsets.fromLTRB(32, 0, 32, 150),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -212,14 +212,13 @@ class SplashPageState extends ConsumerState<SplashPage> {
                         onPressed: retryWebOnline,
                         child: const Text('Retry'),
                       ),
-                      const SizedBox(height: 12),
                     ] else
-                      const ClipRRect(
-                        borderRadius: BorderRadius.all(Radius.circular(4)),
-                        child: LinearProgressIndicator(
-                          minHeight: 4,
-                          backgroundColor: Color(0x22000000),
-                          color: AppColors.navy,
+                      const SizedBox(
+                        width: 42,
+                        height: 42,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 3.2,
+                          color: Colors.white,
                         ),
                       ),
                   ],

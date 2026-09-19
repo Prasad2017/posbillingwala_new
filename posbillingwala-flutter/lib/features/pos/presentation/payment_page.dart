@@ -20,6 +20,7 @@ import 'package:pos_billingwala_v2/features/staff/domain/permission_controller.d
 import 'package:pos_billingwala_v2/features/pos/presentation/bill_summary_card.dart';
 import 'package:pos_billingwala_v2/features/pos/presentation/payment_mode_sheet.dart';
 import 'package:pos_billingwala_v2/features/pos/presentation/portion_picker.dart';
+import 'package:pos_billingwala_v2/features/payment_display/domain/payment_display_service.dart';
 import 'package:pos_billingwala_v2/features/print/domain/bluetooth_printer_hub.dart';
 import 'package:pos_billingwala_v2/features/print/domain/esc_pos_transport_hub.dart';
 import 'package:pos_billingwala_v2/features/print/domain/print_providers.dart';
@@ -380,6 +381,9 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
       );
     }
 
+    /* Payment display must never block save/print. */
+    unawaited(tryAutoShowPaymentDisplayAfterBill(ref, result));
+
     final online = await isDeviceOnline();
     var retryAutoSync = !online;
     if (AppPlatform.requiresNetwork || online) {
@@ -425,53 +429,8 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
     }
 
     if (!mounted) return;
-    await showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: Text(strings.billSaved),
-        content: Text(
-          'Invoice: ${result.invoiceNumber}\n'
-          'Payment: ${result.paymentMode}\n'
-          'Amount: ${paymentPageCurrency.format(result.totalAmount)}'
-          '${session.tableNumber != null ? '\nTable: ${session.tableNumber}' : ''}'
-          '${session.customerName != null ? '\nCustomer: ${session.customerName}' : ''}',
-        ),
-        actions: [
-          if (!requirePrintSuccess)
-            TextButton(
-              onPressed: () async {
-                final printResult = await printInvoiceById(
-                  ref,
-                  result.invoiceId,
-                );
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(printResult.message ?? 'Print done')),
-                );
-              },
-              child: Text(strings.printShare),
-            ),
-          AppButton(
-            label: strings.addProducts,
-            onPressed: () {
-              Navigator.of(context).pop();
-              ref.read(paymentCheckoutControllerProvider.notifier).reset();
-              context.go(session.billingRoute);
-            },
-            expanded: false,
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              ref.read(paymentCheckoutControllerProvider.notifier).reset();
-              context.go('/');
-            },
-            child: Text(strings.home),
-          ),
-        ],
-      ),
-    );
+    ref.read(paymentCheckoutControllerProvider.notifier).reset();
+    context.go('/');
   }
 
   @override

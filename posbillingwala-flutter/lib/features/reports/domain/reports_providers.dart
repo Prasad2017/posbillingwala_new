@@ -16,9 +16,11 @@ int? resolvedStaffFilter(Ref ref) {
       .watch(dataScopeProvider)
       .maybeWhen(data: (scope) => scope.staffId, orElse: () => null);
 }
-enum ReportPeriodKind { today, month, day, year }
+enum ReportPeriodKind { all, today, month, day, year }
 
 class ReportPeriod {
+  const ReportPeriod.all() : kind = ReportPeriodKind.all, day = null;
+
   const ReportPeriod.today() : kind = ReportPeriodKind.today, day = null;
 
   const ReportPeriod.month([DateTime? monthAnchor])
@@ -41,6 +43,9 @@ class ReportPeriod {
   (DateTime start, DateTime end) get range {
     final now = DateTime.now();
     switch (kind) {
+      case ReportPeriodKind.all:
+        /* Wide window for API + local range queries. */
+        return (DateTime(2020, 1, 1), DateTime(now.year + 1, 1, 1));
       case ReportPeriodKind.today:
         final start = DateTime(now.year, now.month, now.day);
         return (start, start.add(const Duration(days: 1)));
@@ -64,6 +69,8 @@ class ReportPeriod {
 
   String get label {
     switch (kind) {
+      case ReportPeriodKind.all:
+        return 'All Records';
       case ReportPeriodKind.today:
         return 'Today';
       case ReportPeriodKind.month:
@@ -209,6 +216,8 @@ class ReportPeriodController extends Notifier<ReportPeriod> {
   @override
   ReportPeriod build() => const ReportPeriod.today();
 
+  void useAll() => state = const ReportPeriod.all();
+
   void useToday() => state = const ReportPeriod.today();
 
   void useMonth([DateTime? monthAnchor]) =>
@@ -240,6 +249,11 @@ final periodInvoicesProvider = StreamProvider<List<Invoice>>((ref) {
         createdByStaffId: staffId,
       ),
     );
+  }
+  if (period.kind == ReportPeriodKind.all) {
+    return ref
+        .watch(appDatabaseProvider)
+        .watchAllBillableInvoices(createdByStaffId: staffId);
   }
   return ref
       .watch(appDatabaseProvider)

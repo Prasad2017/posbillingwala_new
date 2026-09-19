@@ -7,12 +7,11 @@ import 'package:intl/intl.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/network/online_guard.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
-import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
-import 'package:pos_billingwala_v2/features/pos/domain/billing_session.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/payment_checkout_controller.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/payment_mode.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/pos_providers.dart';
 import 'package:pos_billingwala_v2/features/pos/presentation/payment_mode_sheet.dart';
+import 'package:pos_billingwala_v2/features/payment_display/domain/payment_display_service.dart';
 import 'package:pos_billingwala_v2/features/print/domain/print_providers.dart';
 import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
 import 'package:pos_billingwala_v2/features/staff/domain/permission_controller.dart';
@@ -79,7 +78,6 @@ Future<void> startInlineCheckout(
   await completeInlineCheckout(
     context,
     ref,
-    currency: currency,
     printAfterSave: printAfterSave,
     preferShare: preferShare,
   );
@@ -88,18 +86,18 @@ Future<void> startInlineCheckout(
 Future<void> completeInlineCheckout(
   BuildContext context,
   WidgetRef ref, {
-  required NumberFormat currency,
   bool printAfterSave = true,
   bool preferShare = false,
 }) async {
-  final strings = AppStrings.of(ref);
   final summary = ref.read(cartSummaryProvider);
   final result = await ref
       .read(paymentCheckoutControllerProvider.notifier)
       .completePayment(subtotal: summary.subtotal, taxTotal: summary.taxTotal);
   if (!context.mounted || result == null) return;
 
-  final session = ref.read(billingSessionProvider);
+  /* Payment display must never block save/print. */
+  unawaited(tryAutoShowPaymentDisplayAfterBill(ref, result));
+
   final online = await isDeviceOnline();
   var retryAutoSync = !online;
   if (AppPlatform.requiresNetwork || online) {
@@ -145,51 +143,6 @@ Future<void> completeInlineCheckout(
   }
 
   final autoPrint = ref.read(printerSettingsProvider).autoShareOnSave;
-  if (!context.mounted) return;
-  await showDialog<void>(
-    context: context,
-    barrierDismissible: false,
-    builder: (dialogContext) => AlertDialog(
-      title: Text(strings.billSaved),
-      content: Text(
-        'Invoice: ${result.invoiceNumber}\n'
-        'Payment: ${result.paymentMode}\n'
-        'Amount: ${currency.format(result.totalAmount)}'
-        '${session.tableNumber != null ? '\nTable: ${session.tableNumber}' : ''}'
-        '${session.customerName != null ? '\nCustomer: ${session.customerName}' : ''}',
-      ),
-      actions: [
-        TextButton(
-          onPressed: () async {
-            final printResult = await printInvoiceById(ref, result.invoiceId);
-            if (!dialogContext.mounted) return;
-            ScaffoldMessenger.of(dialogContext).showSnackBar(
-              SnackBar(content: Text(printResult.message ?? 'Print done')),
-            );
-          },
-          child: Text(strings.printShare),
-        ),
-        AppButton(
-          label: strings.addProducts,
-          onPressed: () {
-            Navigator.of(dialogContext).pop();
-            ref.read(paymentCheckoutControllerProvider.notifier).reset();
-            context.go(session.billingRoute);
-          },
-          expanded: false,
-        ),
-        TextButton(
-          onPressed: () {
-            Navigator.of(dialogContext).pop();
-            ref.read(paymentCheckoutControllerProvider.notifier).reset();
-            context.go('/');
-          },
-          child: Text(strings.home),
-        ),
-      ],
-    ),
-  );
-
   if (autoPrint && printAfterSave && !preferShare && context.mounted) {
     final printResult = await printInvoiceById(ref, result.invoiceId);
     if (!context.mounted) return;
@@ -207,4 +160,8 @@ Future<void> completeInlineCheckout(
       SnackBar(content: Text(printResult.message ?? 'Share done')),
     );
   }
+
+  if (!context.mounted) return;
+  ref.read(paymentCheckoutControllerProvider.notifier).reset();
+  context.go('/');
 }

@@ -49,6 +49,7 @@ import 'package:pos_billingwala_v2/features/print/presentation/test_invoice_prev
 import 'package:pos_billingwala_v2/features/reports/domain/reports_providers.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/edit_invoice_page.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/expense_report_page.dart';
+import 'package:pos_billingwala_v2/features/reports/presentation/invoice_add_products_page.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/invoice_detail_page.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/mess_member_report_page.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/mess_payment_report_page.dart';
@@ -61,6 +62,7 @@ import 'package:pos_billingwala_v2/features/reports/presentation/sales_list_page
 import 'package:pos_billingwala_v2/features/reports/presentation/sales_overview_page.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/staff_wise_report_page.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/table_list_report_page.dart';
+import 'package:pos_billingwala_v2/features/payment_display/presentation/payment_display_settings_page.dart';
 import 'package:pos_billingwala_v2/features/settings/presentation/about_page.dart';
 import 'package:pos_billingwala_v2/features/settings/presentation/business_hours_page.dart';
 import 'package:pos_billingwala_v2/features/settings/presentation/change_pin_page.dart';
@@ -493,6 +495,14 @@ final routerProvider = Provider<GoRouter>((ref) {
             },
           ),
           GoRoute(
+            path: '/reports/invoice/:invoiceId/add-products',
+            name: 'invoice-add-products',
+            builder: (context, state) {
+              final invoiceId = int.parse(state.pathParameters['invoiceId']!);
+              return InvoiceAddProductsPage(invoiceId: invoiceId);
+            },
+          ),
+          GoRoute(
             path: '/reports/invoice/:invoiceId/edit',
             name: 'invoice-edit',
             builder: (context, state) {
@@ -557,6 +567,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/settings/business-hours',
             name: 'settings-business-hours',
             builder: (context, state) => const BusinessHoursPage(),
+          ),
+          GoRoute(
+            path: '/settings/payment-display',
+            name: 'settings-payment-display',
+            builder: (context, state) => const PaymentDisplaySettingsPage(),
           ),
           GoRoute(
             path: '/settings/about',

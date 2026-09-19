@@ -16,7 +16,7 @@ import 'package:pos_billingwala_v2/features/print/presentation/printer_device_pi
 import 'package:pos_billingwala_v2/features/print/presentation/woosim_ticket.dart';
 import 'package:pos_billingwala_v2/language/app_strings.dart';
 
-/* Matches Android test invoice: 2-Inch + 3-Inch layout previews + Connect / Test Print. */
+/* Invoice/KOT preview + Connect / Test Print — uses selected paper size only. */
 class TestInvoicePreviewPage extends ConsumerStatefulWidget {
   const TestInvoicePreviewPage({super.key, required this.channel});
 
@@ -194,12 +194,8 @@ class TestInvoicePreviewPageState
           children: [
             Text(
               connected
-                  ? (isKot
-                        ? 'Printer ready — compare 2″ and 3″ KOT layouts below.'
-                        : 'Printer ready — compare 2″ and 3″ bill layouts below.')
-                  : (isKot
-                        ? 'Preview shows 2-Inch and 3-Inch KOT. Connect to Test Print.'
-                        : 'Preview shows 2-Inch and 3-Inch invoice. Connect to Test Print.'),
+                  ? 'Printer ready — preview and test print use ${activePaper.dbValue}.'
+                  : 'Connect a printer, then test print using ${activePaper.dbValue}.',
               style: Theme.of(
                 context,
               ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
@@ -208,13 +204,13 @@ class TestInvoicePreviewPageState
             Text(
               isKot
                   ? [
-                      'Active ${settings.kotPaperSize.dbValue}',
+                      'Paper ${settings.kotPaperSize.dbValue}',
                       if (settings.kotPrefix.trim().isNotEmpty)
                         'Prefix ${settings.kotPrefix.trim()}',
                       'Copies ${settings.kotCopies}',
                     ].join(' · ')
                   : [
-                      'Active ${settings.paperSize.dbValue}',
+                      'Paper ${settings.paperSize.dbValue}',
                       if (settings.customerUse)
                         'Customer ON'
                       else
@@ -239,52 +235,29 @@ class TestInvoicePreviewPageState
               ),
             ),
             const SizedBox(height: 16),
-            if (isKot) ...[
+            if (isKot)
               PaperSizePreviewCard(
-                title:
-                    '${strings.paper2Inch}${activePaper == PrinterPaperSize.inch2 ? ' · Active' : ''}',
-                text: service.kotPreviewText(
-                  paperSize: PrinterPaperSize.inch2,
-                ),
-                paperSize: PrinterPaperSize.inch2,
-              ),
-              PaperSizePreviewCard(
-                title:
-                    '${strings.paper3Inch}${activePaper == PrinterPaperSize.inch3 ? ' · Active' : ''}',
-                text: service.kotPreviewText(
-                  paperSize: PrinterPaperSize.inch3,
-                ),
-                paperSize: PrinterPaperSize.inch3,
-              ),
-            ] else ...[
+                title: activePaper == PrinterPaperSize.inch3
+                    ? strings.paper3Inch
+                    : strings.paper2Inch,
+                text: service.kotPreviewText(paperSize: activePaper),
+                paperSize: activePaper,
+              )
+            else
               PreviewCard(
-                title:
-                    '${strings.paper2Inch}${activePaper == PrinterPaperSize.inch2 ? ' · Active' : ''}',
+                title: activePaper == PrinterPaperSize.inch3
+                    ? strings.paper3Inch
+                    : strings.paper2Inch,
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: WoosimTicket(
                     ticket: ticket!,
-                    widthMm: 48,
+                    widthMm: activePaper == PrinterPaperSize.inch3 ? 72 : 48,
                     showLogo: settings.logoUse,
                     logoPath: profile.logoLocalPath,
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
-              PreviewCard(
-                title:
-                    '${strings.paper3Inch}${activePaper == PrinterPaperSize.inch3 ? ' · Active' : ''}',
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: WoosimTicket(
-                    ticket: ticket,
-                    widthMm: 72,
-                    showLogo: settings.logoUse,
-                    logoPath: profile.logoLocalPath,
-                  ),
-                ),
-              ),
-            ],
           ],
         ),
       ),

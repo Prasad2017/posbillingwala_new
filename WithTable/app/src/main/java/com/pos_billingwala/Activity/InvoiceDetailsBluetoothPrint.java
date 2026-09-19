@@ -267,6 +267,7 @@ public class InvoiceDetailsBluetoothPrint extends BaseActivity implements View.O
 
 
         binding.backToInvoice.setOnClickListener(this);
+        binding.showQrInvoiceCardView.setOnClickListener(this);
         binding.printInvoiceCardView.setOnClickListener(this);
         binding.shareInvoiceCardView.setOnClickListener(this);
         binding.editInvoiceButton.setOnClickListener(this);
@@ -282,6 +283,8 @@ public class InvoiceDetailsBluetoothPrint extends BaseActivity implements View.O
         int id = view.getId();
         if (id == R.id.backToInvoice) {
             finish();
+        } else if (id == R.id.showQrInvoiceCardView) {
+            showPaymentQr();
         } else if (id == R.id.printInvoiceCardView) {
             printBill();
         } else if (id == R.id.shareInvoiceCardView) {
@@ -292,6 +295,15 @@ public class InvoiceDetailsBluetoothPrint extends BaseActivity implements View.O
             confirmRefund();
         }
 
+    }
+
+    private void showPaymentQr() {
+        if (invoiceResponseList == null || invoiceResponseList.isEmpty()) {
+            Toast.makeText(activity, getString(R.string.payment_display_invoice_invalid), Toast.LENGTH_SHORT).show();
+            return;
+        }
+        com.pos_billingwala.PaymentDisplay.PaymentDisplayService.requestShowInvoiceQr(
+                activity, invoiceResponseList.get(0));
     }
 
     private void openEditInvoice() {
@@ -832,11 +844,13 @@ public class InvoiceDetailsBluetoothPrint extends BaseActivity implements View.O
 
             binding.printInvoiceCardView.setVisibility(View.VISIBLE);
             binding.shareInvoiceCardView.setVisibility(View.VISIBLE);
+            binding.showQrInvoiceCardView.setVisibility(View.VISIBLE);
             invoiceNestedScrollView.setVisibility(View.VISIBLE);
 
         } else {
             binding.printInvoiceCardView.setVisibility(View.GONE);
             binding.shareInvoiceCardView.setVisibility(View.GONE);
+            binding.showQrInvoiceCardView.setVisibility(View.GONE);
             invoiceNestedScrollView.setVisibility(View.GONE);
         }
 

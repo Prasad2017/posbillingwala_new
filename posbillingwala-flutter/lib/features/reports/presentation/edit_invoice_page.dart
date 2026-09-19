@@ -126,8 +126,12 @@ class EditInvoicePage extends ConsumerWidget {
                   const Spacer(),
                   if (!locked)
                     TextButton.icon(
-                      onPressed: () =>
-                          editInvoicePageAddProduct(context, ref, invoiceId),
+                      onPressed: () async {
+                        await context.push(
+                          '/reports/invoice/$invoiceId/add-products',
+                        );
+                        ref.invalidate(invoiceDetailProvider(invoiceId));
+                      },
                       icon: const Icon(Icons.add_rounded),
                       label: Text(strings.addProduct),
                     ),
@@ -145,27 +149,12 @@ class EditInvoicePage extends ConsumerWidget {
                       '${currency.format(item.productPrice)} × ${item.productQuantity}'
                       '${item.portionName == null || item.portionName!.isEmpty ? '' : ' · ${item.portionName}'}',
                     ),
-                    trailing: locked
-                        ? Text(
-                            currency.format(
-                              item.productPrice * item.productQuantity,
-                            ),
-                          )
-                        : Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.edit_note_rounded),
-                                onPressed: () =>
-                                    editLine(context, ref, invoiceId, item),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.delete_outline),
-                                onPressed: () =>
-                                    deleteLine(context, ref, invoiceId, item),
-                              ),
-                            ],
-                          ),
+                    trailing: Text(
+                      currency.format(
+                        item.productPrice * item.productQuantity,
+                      ),
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
                   ),
                 ),
               const SizedBox(height: 16),

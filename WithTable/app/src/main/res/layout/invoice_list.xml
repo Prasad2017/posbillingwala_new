@@ -22,10 +22,31 @@
                 android:id="@+id/invoiceNumber"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_toStartOf="@+id/invoiceCardView"
+                android:layout_toStartOf="@+id/showQrCardView"
                 android:textColor="@color/colorPrimary"
                 android:textSize="14sp"
                 android:textStyle="bold" />
+
+            <com.pos_billingwala.Extra.PosCardView
+                android:id="@+id/showQrCardView"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_centerVertical="true"
+                android:layout_marginEnd="6dp"
+                android:layout_toStartOf="@+id/invoiceCardView"
+                app:cardCornerRadius="5dp"
+                app:cardUseCompatPadding="true">
+
+                <ImageView
+                    android:id="@+id/showQr"
+                    android:layout_width="20dp"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center"
+                    android:contentDescription="@string/payment_display_show_qr"
+                    android:padding="3dp"
+                    android:src="@drawable/ic_qr_code"
+                    app:tint="@color/white" />
+            </com.pos_billingwala.Extra.PosCardView>
 
             <com.pos_billingwala.Extra.PosCardView
                 android:id="@+id/invoiceCardView"

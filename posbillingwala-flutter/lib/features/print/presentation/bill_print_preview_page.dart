@@ -11,8 +11,7 @@ import 'package:pos_billingwala_v2/features/print/domain/shop_receipt_profile.da
 import 'package:pos_billingwala_v2/features/print/presentation/woosim_ticket.dart';
 import 'package:pos_billingwala_v2/language/app_strings.dart';
 
-/* WithTable `BluetoothPrint` / `DuplicateBluetoothPrint` / `InvoiceDetailsBluetoothPrint`: */
-/* live 2" + 3" receipt, print, and bitmap share of the on-screen ticket. */
+/* Invoice / duplicate bill preview + print — layout matches selected paper size. */
 class BillPrintPreviewPage extends ConsumerStatefulWidget {
   const BillPrintPreviewPage({
     super.key,
@@ -29,8 +28,7 @@ class BillPrintPreviewPage extends ConsumerStatefulWidget {
 }
 
 class BillPrintPreviewPageState extends ConsumerState<BillPrintPreviewPage> {
-  final ticket48Key = GlobalKey();
-  final ticket72Key = GlobalKey();
+  final ticketKey = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
@@ -54,6 +52,7 @@ class BillPrintPreviewPageState extends ConsumerState<BillPrintPreviewPage> {
         final invoice = data.$1;
         final items = data.$2;
         final service = ref.watch(printServiceProvider);
+        final settings = ref.watch(printerSettingsProvider);
         final shop = ref.watch(shopReceiptProfileProvider);
         final shopName = shop.companyName.isNotEmpty
             ? shop.companyName
@@ -64,9 +63,9 @@ class BillPrintPreviewPageState extends ConsumerState<BillPrintPreviewPage> {
           shopName: shopName,
           duplicate: widget.duplicate,
         );
-        final use3Inch =
-            ref.watch(printerSettingsProvider).paperSize ==
-            PrinterPaperSize.inch3;
+        final is3Inch = settings.paperSize == PrinterPaperSize.inch3;
+        final paperTitle = is3Inch ? strings.paper3Inch : strings.paper2Inch;
+        final widthMm = is3Inch ? 72.0 : 48.0;
 
         return Scaffold(
           backgroundColor: const Color(0xFFF3F6FB),
@@ -81,31 +80,25 @@ class BillPrintPreviewPageState extends ConsumerState<BillPrintPreviewPage> {
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
             children: [
               Text(
-                'Product / customer names print as entered (English, Marathi, Hindi, …). '
-                'Android, iOS & web use the same receipt bitmap code.',
+                'Showing ${settings.paperSize.dbValue} layout from Printer Details. '
+                'Print uses the same paper size.',
                 style: Theme.of(
                   context,
                 ).textTheme.bodySmall?.copyWith(color: Colors.black54),
               ),
               const SizedBox(height: 12),
               PreviewCard(
-                title: strings.paper2Inch,
+                title: paperTitle,
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: RepaintBoundary(
-                    key: ticket48Key,
-                    child: WoosimTicket(ticket: ticket, widthMm: 48),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              PreviewCard(
-                title: strings.paper3Inch,
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: RepaintBoundary(
-                    key: ticket72Key,
-                    child: WoosimTicket(ticket: ticket, widthMm: 72),
+                    key: ticketKey,
+                    child: WoosimTicket(
+                      ticket: ticket,
+                      widthMm: widthMm,
+                      showLogo: settings.logoUse,
+                      logoPath: shop.logoLocalPath,
+                    ),
                   ),
                 ),
               ),
@@ -133,7 +126,7 @@ class BillPrintPreviewPageState extends ConsumerState<BillPrintPreviewPage> {
                 onPressed: () async {
                   try {
                     await shareTicketWidgetAsImage(
-                      boundaryKey: use3Inch ? ticket72Key : ticket48Key,
+                      boundaryKey: ticketKey,
                       label: widget.duplicate ? 'Duplicate bill' : 'Invoice',
                     );
                     if (!context.mounted) return;

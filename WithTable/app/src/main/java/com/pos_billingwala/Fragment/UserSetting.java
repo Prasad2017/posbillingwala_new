@@ -43,6 +43,7 @@ import com.google.android.play.core.install.model.UpdateAvailability;
 import com.pos_billingwala.Activity.CompanyPrinterSetting;
 import com.pos_billingwala.Activity.LoginMPin;
 import com.pos_billingwala.Activity.MainActivity;
+import com.pos_billingwala.Activity.PaymentDisplaySettingsActivity;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.AppLanguage;
 import com.pos_billingwala.Extra.BottomSheetUi;
@@ -144,6 +145,8 @@ public class UserSetting extends Fragment implements View.OnClickListener {
                 R.color.colorPrimary, getString(R.string.business_hours), getString(R.string.business_hours_hint));
         setupRow(binding.printerDetailLayout, R.drawable.ic_print, R.drawable.bg_quick_action_green,
                 R.color.green_600, getString(R.string.setting_printer_details), getString(R.string.setting_hint_printer));
+        setupRow(binding.paymentDisplayLayout, R.drawable.ic_qr_code, R.drawable.bg_quick_action_blue,
+                R.color.colorPrimary, getString(R.string.payment_display_title), getString(R.string.payment_display_subtitle));
         setupRow(binding.inventoryManagementLayout, R.drawable.ic_report_product, R.drawable.bg_quick_action_orange,
                 R.color.statusTrial, getString(R.string.setting_inventory), getString(R.string.setting_hint_inventory));
         setupRow(binding.expenseManagementLayout, R.drawable.ic_report_expense, R.drawable.bg_quick_action_purple,
@@ -172,7 +175,7 @@ public class UserSetting extends Fragment implements View.OnClickListener {
 
         showGroupDividers(binding.invoiceDetailsLayout, binding.reportLayout, binding.masterDataLayout);
         showGroupDividers(binding.shopDetailLayout, binding.businessHoursLayout, binding.printerDetailLayout,
-                binding.inventoryManagementLayout, binding.expenseManagementLayout);
+                binding.paymentDisplayLayout, binding.inventoryManagementLayout, binding.expenseManagementLayout);
         showGroupDividers(binding.supportLayout, binding.aboutLayout, binding.fetchDataLayout,
                 binding.updateAppLayout, binding.synchronizeLayout);
         showGroupDividers(binding.appPinLayout, binding.languageLayout, binding.rateUsLayout,
@@ -188,6 +191,8 @@ public class UserSetting extends Fragment implements View.OnClickListener {
         binding.businessHoursLayout.getRoot().setOnClickListener(v -> showBusinessHoursDialog());
         binding.printerDetailLayout.getRoot().setOnClickListener(v ->
                 startActivity(new Intent(activity, CompanyPrinterSetting.class)));
+        binding.paymentDisplayLayout.getRoot().setOnClickListener(v ->
+                startActivity(new Intent(activity, PaymentDisplaySettingsActivity.class)));
         binding.inventoryManagementLayout.getRoot().setOnClickListener(v ->
                 ((MainActivity) activity).loadFragment(new Inventory(), true));
         binding.expenseManagementLayout.getRoot().setOnClickListener(v ->

@@ -109,5 +109,8 @@ dependencies {
     implementation 'com.journeyapps:zxing-android-embedded:4.3.0'
     // Charts for sales dashboard
     implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
+    // Local LAN payment display (browser QR) — no internet
+    implementation 'org.nanohttpd:nanohttpd:2.3.1'
+    implementation 'org.nanohttpd:nanohttpd-websocket:2.3.1'
 
 }

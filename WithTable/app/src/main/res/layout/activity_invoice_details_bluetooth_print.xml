@@ -30,6 +30,27 @@
 
 
             <com.pos_billingwala.Extra.PosCardView
+                android:id="@+id/showQrInvoiceCardView"
+                android:layout_width="45dp"
+                android:layout_height="45dp"
+                android:layout_centerInParent="true"
+                android:layout_marginTop="7dp"
+                android:layout_marginEnd="10dp"
+                android:layout_marginBottom="7dp"
+                android:layout_toStartOf="@+id/printInvoiceCardView"
+                app:cardCornerRadius="10dp">
+
+                <ImageView
+                    android:id="@+id/showQrInvoice"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_gravity="center"
+                    android:contentDescription="@string/payment_display_show_qr"
+                    android:src="@drawable/ic_qr_code" />
+
+            </com.pos_billingwala.Extra.PosCardView>
+
+            <com.pos_billingwala.Extra.PosCardView
                 android:id="@+id/printInvoiceCardView"
                 android:layout_width="45dp"
                 android:layout_height="45dp"

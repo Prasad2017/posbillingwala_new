@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#0B1F3A" />
+  <title>Payment Display</title>
+  <link rel="stylesheet" href="/display/assets/css/display.css" />
+</head>
+<body>
+  <main id="app" class="screen waiting">
+    <section id="waitingView" class="panel">
+      <div class="brand-mark" aria-hidden="true"></div>
+      <h1 id="waitingShop" class="shop-name">Payment Display</h1>
+      <p class="waiting-title">Waiting for next bill</p>
+      <p id="connStatus" class="conn-status">Connecting…</p>
+    </section>
+
+    <section id="billView" class="panel hidden">
+      <div class="brand-mark" aria-hidden="true"></div>
+      <h1 id="shopName" class="shop-name"></h1>
+      <p id="billNumber" class="bill-number"></p>
+      <p id="amount" class="amount"></p>
+      <div class="qr-wrap" aria-label="UPI payment QR">
+        <div id="qrSvg" class="qr"></div>
+      </div>
+      <p class="scan-hint">Scan &amp; Pay</p>
+      <p id="expiresIn" class="expires"></p>
+    </section>
+  </main>
+  <script src="/display/assets/js/display.js"></script>
+</body>
+</html>

@@ -132,6 +132,18 @@ public class InvoiceAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             }
         });
 
+        boolean canShowQr = !invoiceResponse.isRefunded()
+                && !"cancelled".equalsIgnoreCase(invoiceResponse.getInvoiceOrderStatus());
+        holder.binding.showQrCardView.setVisibility(canShowQr ? View.VISIBLE : View.GONE);
+        holder.binding.showQrCardView.setOnClickListener(canShowQr
+                ? v -> {
+                    if (context instanceof android.app.Activity) {
+                        com.pos_billingwala.PaymentDisplay.PaymentDisplayService.requestShowInvoiceQr(
+                                (android.app.Activity) context, invoiceResponse);
+                    }
+                }
+                : null);
+
         RowDividerUi.bindLastItem(holder.binding.rowDivider, position, getItemCount());
     }
 

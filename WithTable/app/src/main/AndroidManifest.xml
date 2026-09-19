@@ -107,6 +107,10 @@
             android:configChanges="keyboardHidden|fontScale|density"
             android:exported="false" />
         <activity
+            android:name=".Activity.PaymentDisplaySettingsActivity"
+            android:configChanges="keyboardHidden|fontScale|density"
+            android:exported="false" />
+        <activity
             android:name=".Activity.EditInvoice"
             android:configChanges="keyboardHidden|fontScale|density"
             android:exported="false"
