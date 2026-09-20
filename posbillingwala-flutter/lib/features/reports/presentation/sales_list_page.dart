@@ -73,17 +73,16 @@ class SalesListPage extends ConsumerWidget {
   }
 
   Future<void> pickPeriod(BuildContext context, WidgetRef ref) async {
-    final period = ref.read(reportPeriodProvider);
-    final selected = await showModalBottomSheet<ReportPeriodKind>(
+    final selected = await showModalBottomSheet<String>(
       context: context,
       builder: (ctx) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             for (final e in const [
-              (ReportPeriodKind.today, 'Today'),
-              (ReportPeriodKind.month, 'This month'),
-              (ReportPeriodKind.day, 'Pick a day'),
+              ('day', 'Day wise'),
+              ('month', 'Month wise'),
+              ('year', 'Year wise'),
             ])
               ListTile(
                 title: Text(e.$2),
@@ -94,19 +93,7 @@ class SalesListPage extends ConsumerWidget {
       ),
     );
     if (selected == null || !context.mounted) return;
-    if (selected == ReportPeriodKind.day) {
-      final picked = await showDatePicker(
-        context: context,
-        initialDate: DateTime.now(),
-        firstDate: DateTime(DateTime.now().year - 2),
-        lastDate: DateTime.now(),
-      );
-      if (picked != null) {
-        ref.read(reportPeriodProvider.notifier).useDay(picked);
-      }
-      return;
-    }
-    onReportPeriodSelected(ref, selected, period);
+    await applyReportPeriodFilterChoice(context, ref, selected);
   }
 }
 

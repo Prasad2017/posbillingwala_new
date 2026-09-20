@@ -16,18 +16,17 @@ class ReportsPage extends ConsumerWidget {
   const ReportsPage({super.key});
 
   Future<void> showPeriodMenu(BuildContext context, WidgetRef ref) async {
-    final period = ref.read(reportPeriodProvider);
-    final selected = await showMenu<ReportPeriodKind>(
+    final selected = await showMenu<String>(
       context: context,
       position: const RelativeRect.fromLTRB(1000, 80, 16, 0),
       color: AppColors.primary,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       items: [
         for (final entry in const [
-          (ReportPeriodKind.all, 'All Records'),
-          (ReportPeriodKind.today, 'Day wise'),
-          (ReportPeriodKind.month, 'Month Wise'),
-          (ReportPeriodKind.year, 'Year Wise'),
+          ('all', 'All Records'),
+          ('day', 'Day wise'),
+          ('month', 'Month Wise'),
+          ('year', 'Year Wise'),
         ])
           PopupMenuItem(
             value: entry.$1,
@@ -51,13 +50,12 @@ class ReportsPage extends ConsumerWidget {
           ),
       ],
     );
-    if (selected == null) return;
-    if (selected == ReportPeriodKind.month) {
-      if (!context.mounted) return;
-      await pickReportMonth(context, ref);
+    if (selected == null || !context.mounted) return;
+    if (selected == 'all') {
+      ref.read(reportPeriodProvider.notifier).useAll();
       return;
     }
-    onReportPeriodSelected(ref, selected, period);
+    await applyReportPeriodFilterChoice(context, ref, selected);
   }
 
   @override
@@ -119,26 +117,10 @@ class ReportsPage extends ConsumerWidget {
                       ])
                         Padding(
                           padding: const EdgeInsets.only(right: 8),
-                          child: FilterChip(
-                            label: Text(entry.$2),
+                          child: ReportFilterChip(
+                            label: entry.$2,
                             selected: paymentFilter == entry.$1,
                             showCheckmark: true,
-                            checkmarkColor: Colors.white,
-                            selectedColor: AppColors.primary,
-                            backgroundColor: AppColors.primary.withValues(
-                              alpha: 0.08,
-                            ),
-                            side: BorderSide(
-                              color: paymentFilter == entry.$1
-                                  ? AppColors.primary
-                                  : AppColors.border,
-                            ),
-                            labelStyle: TextStyle(
-                              color: paymentFilter == entry.$1
-                                  ? Colors.white
-                                  : AppColors.navy,
-                              fontWeight: FontWeight.w700,
-                            ),
                             onSelected: (_) => ref
                                 .read(reportPaymentFilterProvider.notifier)
                                 .select(entry.$1),

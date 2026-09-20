@@ -89,6 +89,58 @@ class ReportPeriodPill extends StatelessWidget {
   }
 }
 
+/* Report filter tab — selected text always white on primary. */
+class ReportFilterChip extends StatelessWidget {
+  const ReportFilterChip({
+    super.key,
+    required this.label,
+    required this.selected,
+    required this.onSelected,
+    this.showCheckmark = false,
+  });
+
+  final String label;
+  final bool selected;
+  final ValueChanged<bool> onSelected;
+  final bool showCheckmark;
+
+  @override
+  Widget build(BuildContext context) {
+    return FilterChip(
+      label: Text(
+        label,
+        style: TextStyle(
+          fontFamily: AppFonts.family,
+          color: selected ? Colors.white : AppColors.navy,
+          fontWeight: FontWeight.w700,
+          fontSize: 13,
+        ),
+      ),
+      selected: selected,
+      showCheckmark: showCheckmark,
+      checkmarkColor: Colors.white,
+      selectedColor: AppColors.primary,
+      backgroundColor: AppColors.primarySoft,
+      side: BorderSide(
+        color: selected ? AppColors.primary : AppColors.border,
+      ),
+      /* M3 can override labelStyle — force contrast colors. */
+      labelStyle: TextStyle(
+        fontFamily: AppFonts.family,
+        color: selected ? Colors.white : AppColors.navy,
+        fontWeight: FontWeight.w700,
+      ),
+      color: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) {
+          return AppColors.primary;
+        }
+        return AppColors.primarySoft;
+      }),
+      onSelected: onSelected,
+    );
+  }
+}
+
 /* White card shell matching Masters / Settings list cards. */
 class ReportSurfaceCard extends StatelessWidget {
   const ReportSurfaceCard({

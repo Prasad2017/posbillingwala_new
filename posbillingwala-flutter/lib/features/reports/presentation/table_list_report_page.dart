@@ -43,7 +43,6 @@ class TableListReportPageState extends ConsumerState<TableListReportPage> {
   }
 
   Future<void> onFilterPressed() async {
-    final period = ref.read(reportPeriodProvider);
     final selected = await showMenu<String>(
       context: context,
       position: const RelativeRect.fromLTRB(1000, 80, 16, 0),
@@ -101,15 +100,7 @@ class TableListReportPageState extends ConsumerState<TableListReportPage> {
       ],
     );
     if (!mounted || selected == null) return;
-    if (selected == 'month') {
-      await pickReportMonth(context, ref);
-      return;
-    }
-    onReportPeriodSelected(
-      ref,
-      selected == 'year' ? ReportPeriodKind.year : ReportPeriodKind.today,
-      period,
-    );
+    await applyReportPeriodFilterChoice(context, ref, selected);
   }
 
   @override

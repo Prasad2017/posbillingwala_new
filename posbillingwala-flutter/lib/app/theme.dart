@@ -172,9 +172,13 @@ class AppTheme {
         backgroundColor: AppColors.primaryLight,
         selectedColor: AppColors.primary,
         secondarySelectedColor: AppColors.primary,
-        labelStyle: AppTypography.bodySmall().copyWith(
-          fontWeight: FontWeight.w600,
-        ),
+        checkmarkColor: Colors.white,
+        labelStyle: AppTypography.bodySmall(
+          color: AppColors.navy,
+        ).copyWith(fontWeight: FontWeight.w600),
+        secondaryLabelStyle: AppTypography.bodySmall(
+          color: Colors.white,
+        ).copyWith(fontWeight: FontWeight.w700),
         side: BorderSide.none,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),

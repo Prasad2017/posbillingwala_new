@@ -24,8 +24,7 @@ class SalesDashboardPage extends ConsumerWidget {
   }
 
   Future<void> pickPeriod(BuildContext context, WidgetRef ref) async {
-    final period = ref.read(reportPeriodProvider);
-    final selected = await showModalBottomSheet<ReportPeriodKind>(
+    final selected = await showModalBottomSheet<String>(
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
@@ -45,14 +44,9 @@ class SalesDashboardPage extends ConsumerWidget {
               ),
             ),
             for (final entry in const [
-              (ReportPeriodKind.today, 'Today', Icons.today_rounded),
-              (ReportPeriodKind.month, 'This Month', Icons.calendar_view_month),
-              (ReportPeriodKind.day, 'Pick a Day', Icons.event_rounded),
-              (
-                ReportPeriodKind.year,
-                'This Year',
-                Icons.calendar_today_rounded,
-              ),
+              ('day', 'Day wise', Icons.calendar_today_rounded),
+              ('month', 'Month wise', Icons.calendar_view_month),
+              ('year', 'Year wise', Icons.calendar_month_rounded),
             ])
               ListTile(
                 leading: Icon(entry.$3, color: AppColors.primary),
@@ -64,24 +58,7 @@ class SalesDashboardPage extends ConsumerWidget {
       ),
     );
     if (selected == null || !context.mounted) return;
-    if (selected == ReportPeriodKind.day) {
-      final now = DateTime.now();
-      final picked = await showDatePicker(
-        context: context,
-        initialDate: period.day ?? now,
-        firstDate: DateTime(now.year - 2),
-        lastDate: now,
-      );
-      if (picked != null) {
-        ref.read(reportPeriodProvider.notifier).useDay(picked);
-      }
-      return;
-    }
-    if (selected == ReportPeriodKind.month) {
-      await pickReportMonth(context, ref);
-      return;
-    }
-    onReportPeriodSelected(ref, selected, period);
+    await applyReportPeriodFilterChoice(context, ref, selected);
   }
 
   @override

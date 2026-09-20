@@ -132,8 +132,8 @@ class ProductWiseReportPageState extends ConsumerState<ProductWiseReportPage> {
                   ])
                     Padding(
                       padding: const EdgeInsets.only(right: 8),
-                      child: FilterChip(
-                        label: Text(entry.$2),
+                      child: ReportFilterChip(
+                        label: entry.$2,
                         selected: productWiseReportPageLeastSold == entry.$1,
                         onSelected: (_) {
                           setState(
@@ -150,8 +150,8 @@ class ProductWiseReportPageState extends ConsumerState<ProductWiseReportPage> {
                   ])
                     Padding(
                       padding: const EdgeInsets.only(right: 8),
-                      child: FilterChip(
-                        label: Text(entry.$2),
+                      child: ReportFilterChip(
+                        label: entry.$2,
                         selected: typeFilter == entry.$1,
                         onSelected: (_) {
                           setState(() => typeFilter = entry.$1);

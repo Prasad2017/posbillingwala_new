@@ -1,33 +1,160 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
+import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
+import 'package:pos_billingwala_v2/features/auth/domain/license_validator.dart';
 import 'package:pos_billingwala_v2/features/reports/domain/reports_providers.dart';
 import 'package:pos_billingwala_v2/language/app_strings.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-Future<void> pickReportMonth(BuildContext context, WidgetRef ref) async {
-  final period = ref.read(reportPeriodProvider);
+Widget _themedPickerShell(BuildContext context, Widget child) {
+  return Theme(
+    data: Theme.of(context).copyWith(
+      colorScheme: Theme.of(context).colorScheme.copyWith(
+        primary: AppColors.primary,
+        onPrimary: Colors.white,
+        secondary: AppColors.primary,
+      ),
+    ),
+    child: child,
+  );
+}
+
+/* Registration → today bounds for report day/month/year pickers. */
+class ReportPickerBounds {
+  const ReportPickerBounds({required this.first, required this.last});
+
+  final DateTime first;
+  final DateTime last;
+
+  DateTime get firstDay => DateTime(first.year, first.month, first.day);
+  DateTime get lastDay => DateTime(last.year, last.month, last.day);
+  DateTime get firstMonth => DateTime(first.year, first.month);
+  DateTime get lastMonth => DateTime(last.year, last.month);
+  int get firstYear => first.year;
+  int get lastYear => last.year;
+
+  DateTime clampDay(DateTime value) {
+    final d = DateTime(value.year, value.month, value.day);
+    if (d.isBefore(firstDay)) return firstDay;
+    if (d.isAfter(lastDay)) return lastDay;
+    return d;
+  }
+
+  DateTime clampMonth(DateTime value) {
+    final m = DateTime(value.year, value.month);
+    if (m.isBefore(firstMonth)) return firstMonth;
+    if (m.isAfter(lastMonth)) return lastMonth;
+    return m;
+  }
+
+  DateTime clampYear(DateTime value) {
+    final y = value.year;
+    if (y < firstYear) return DateTime(firstYear);
+    if (y > lastYear) return DateTime(lastYear);
+    return DateTime(y);
+  }
+}
+
+Future<ReportPickerBounds> loadReportPickerBounds() async {
   final now = DateTime.now();
-  final initial = period.kind == ReportPeriodKind.month && period.day != null
-      ? period.day!
-      : now;
+  final last = DateTime(now.year, now.month, now.day);
+  var first = last;
+
+  final prefs = await SharedPreferences.getInstance();
+  final issuedRaw = prefs.getString('issuedAt')?.trim() ?? '';
+  var issuedSec = int.tryParse(issuedRaw) ?? 0;
+
+  /* Fallback: signed licence payload issuedAt (unix seconds). */
+  if (issuedSec <= 0) {
+    try {
+      final payload = await LicenseValidator.verifyAndParse(prefs);
+      if (payload != null && payload.issuedAt > 0) {
+        issuedSec = payload.issuedAt;
+      }
+    } catch (_) {
+      /* keep fallback below */
+    }
+  }
+
+  if (issuedSec > 0) {
+    final issued = DateTime.fromMillisecondsSinceEpoch(issuedSec * 1000);
+    first = DateTime(issued.year, issued.month, issued.day);
+  }
+
+  if (first.isAfter(last)) {
+    first = last;
+  }
+  return ReportPickerBounds(first: first, last: last);
+}
+
+/* Day wise → full calendar date picker. */
+Future<void> pickReportDay(BuildContext context, WidgetRef ref) async {
+  final period = ref.read(reportPeriodProvider);
+  final bounds = await loadReportPickerBounds();
+  if (!context.mounted) return;
+  final initial = bounds.clampDay(
+    period.kind == ReportPeriodKind.day && period.day != null
+        ? period.day!
+        : bounds.lastDay,
+  );
   final picked = await showDatePicker(
     context: context,
-    builder: (context, child) => Theme(
-      data: Theme.of(context).copyWith(
-        colorScheme: Theme.of(context).colorScheme.copyWith(
-          primary: AppColors.primary,
-          secondary: AppColors.red,
-        ),
-      ),
-      child: child!,
+    builder: (context, child) => _themedPickerShell(context, child!),
+    initialDate: initial,
+    firstDate: bounds.firstDay,
+    lastDate: bounds.lastDay,
+    helpText: 'Select day',
+  );
+  if (picked != null) {
+    ref.read(reportPeriodProvider.notifier).useDay(picked);
+  }
+}
+
+/* Month wise → month + year only (no day). */
+Future<void> pickReportMonth(BuildContext context, WidgetRef ref) async {
+  final period = ref.read(reportPeriodProvider);
+  final bounds = await loadReportPickerBounds();
+  if (!context.mounted) return;
+  final initial = bounds.clampMonth(
+    period.kind == ReportPeriodKind.month && period.day != null
+        ? period.day!
+        : bounds.lastMonth,
+  );
+  final picked = await showDialog<DateTime>(
+    context: context,
+    builder: (context) => _MonthOnlyPickerDialog(
+      initial: initial,
+      first: bounds.firstMonth,
+      last: bounds.lastMonth,
     ),
-    initialDate: DateTime(initial.year, initial.month, 1),
-    firstDate: DateTime(now.year - 3, 1, 1),
-    lastDate: DateTime(now.year, now.month, 1),
-    helpText: 'Pick any day in the month',
   );
   if (picked != null) {
     ref.read(reportPeriodProvider.notifier).useMonth(picked);
+  }
+}
+
+/* Year wise → year only. */
+Future<void> pickReportYear(BuildContext context, WidgetRef ref) async {
+  final period = ref.read(reportPeriodProvider);
+  final bounds = await loadReportPickerBounds();
+  if (!context.mounted) return;
+  final initial = bounds.clampYear(
+    period.kind == ReportPeriodKind.year && period.day != null
+        ? period.day!
+        : DateTime(bounds.lastYear),
+  );
+  final picked = await showDialog<DateTime>(
+    context: context,
+    builder: (context) => _YearOnlyPickerDialog(
+      initial: initial,
+      firstYear: bounds.firstYear,
+      lastYear: bounds.lastYear,
+    ),
+  );
+  if (picked != null) {
+    ref.read(reportPeriodProvider.notifier).useYear(picked);
   }
 }
 
@@ -53,6 +180,22 @@ void onReportPeriodSelected(
   }
 }
 
+/* Applies day/month/year filter selection with the right picker. */
+Future<void> applyReportPeriodFilterChoice(
+  BuildContext context,
+  WidgetRef ref,
+  String selected,
+) async {
+  switch (selected) {
+    case 'day':
+      await pickReportDay(context, ref);
+    case 'month':
+      await pickReportMonth(context, ref);
+    case 'year':
+      await pickReportYear(context, ref);
+  }
+}
+
 const List<ButtonSegment<ReportPeriodKind>> kReportPeriodSegments = [
   ButtonSegment(value: ReportPeriodKind.today, label: Text('Today')),
   ButtonSegment(value: ReportPeriodKind.month, label: Text('Month')),
@@ -67,7 +210,6 @@ Future<void> showReportPeriodFilterMenu(
   List<PopupMenuEntry<String>> extraItems = const [],
   Future<void> Function(String value)? onExtra,
 }) async {
-  final period = ref.read(reportPeriodProvider);
   final selected = await showMenu<String>(
     context: context,
     position: const RelativeRect.fromLTRB(1000, 80, 16, 0),
@@ -79,7 +221,7 @@ Future<void> showReportPeriodFilterMenu(
         child: Row(
           children: [
             const Icon(
-              Icons.calendar_month_rounded,
+              Icons.calendar_today_rounded,
               color: Colors.white,
               size: 18,
             ),
@@ -99,7 +241,7 @@ Future<void> showReportPeriodFilterMenu(
         child: Row(
           children: [
             const Icon(
-              Icons.calendar_month_rounded,
+              Icons.calendar_view_month_rounded,
               color: Colors.white,
               size: 18,
             ),
@@ -138,33 +280,180 @@ Future<void> showReportPeriodFilterMenu(
     ],
   );
   if (!context.mounted || selected == null) return;
-  if (onExtra != null &&
-      selected != 'day' &&
-      selected != 'month' &&
-      selected != 'year') {
+  if (selected == 'day' || selected == 'month' || selected == 'year') {
+    await applyReportPeriodFilterChoice(context, ref, selected);
+    return;
+  }
+  if (onExtra != null) {
     await onExtra(selected);
-    return;
   }
-  if (selected == 'month') {
-    await pickReportMonth(context, ref);
-    return;
+}
+
+class _MonthOnlyPickerDialog extends StatefulWidget {
+  const _MonthOnlyPickerDialog({
+    required this.initial,
+    required this.first,
+    required this.last,
+  });
+
+  final DateTime initial;
+  final DateTime first;
+  final DateTime last;
+
+  @override
+  State<_MonthOnlyPickerDialog> createState() => _MonthOnlyPickerDialogState();
+}
+
+class _MonthOnlyPickerDialogState extends State<_MonthOnlyPickerDialog> {
+  late int year;
+
+  @override
+  void initState() {
+    super.initState();
+    year = widget.initial.year;
   }
-  if (selected == 'day') {
-    final now = DateTime.now();
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: period.day ?? now,
-      firstDate: DateTime(now.year - 2),
-      lastDate: now,
+
+  bool _monthEnabled(int month) {
+    final candidate = DateTime(year, month);
+    final first = DateTime(widget.first.year, widget.first.month);
+    final last = DateTime(widget.last.year, widget.last.month);
+    return !candidate.isBefore(first) && !candidate.isAfter(last);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final months = DateFormat().dateSymbols.SHORTMONTHS;
+    return AlertDialog(
+      title: const Text('Select month'),
+      content: SizedBox(
+        width: 320,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                IconButton(
+                  tooltip: 'Previous year',
+                  onPressed: year <= widget.first.year
+                      ? null
+                      : () => setState(() => year--),
+                  icon: const Icon(Icons.chevron_left_rounded),
+                ),
+                Expanded(
+                  child: Text(
+                    '$year',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontFamily: AppFonts.family,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 18,
+                      color: AppColors.navy,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Next year',
+                  onPressed: year >= widget.last.year
+                      ? null
+                      : () => setState(() => year++),
+                  icon: const Icon(Icons.chevron_right_rounded),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            GridView.builder(
+              shrinkWrap: true,
+              itemCount: 12,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                mainAxisSpacing: 8,
+                crossAxisSpacing: 8,
+                childAspectRatio: 2.2,
+              ),
+              itemBuilder: (context, index) {
+                final month = index + 1;
+                final enabled = _monthEnabled(month);
+                final selected =
+                    year == widget.initial.year &&
+                    month == widget.initial.month;
+                return Material(
+                  color: selected
+                      ? AppColors.primary
+                      : enabled
+                      ? AppColors.primarySoft
+                      : AppColors.border.withValues(alpha: 0.35),
+                  borderRadius: BorderRadius.circular(10),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(10),
+                    onTap: !enabled
+                        ? null
+                        : () => Navigator.pop(
+                            context,
+                            DateTime(year, month, 1),
+                          ),
+                    child: Center(
+                      child: Text(
+                        months[index],
+                        style: TextStyle(
+                          fontFamily: AppFonts.family,
+                          fontWeight: FontWeight.w700,
+                          color: !enabled
+                              ? AppColors.textSecondary
+                              : selected
+                              ? Colors.white
+                              : AppColors.navy,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+      ],
     );
-    if (picked != null) {
-      ref.read(reportPeriodProvider.notifier).useDay(picked);
-    }
-    return;
   }
-  onReportPeriodSelected(
-    ref,
-    selected == 'year' ? ReportPeriodKind.year : ReportPeriodKind.today,
-    period,
-  );
+}
+
+class _YearOnlyPickerDialog extends StatelessWidget {
+  const _YearOnlyPickerDialog({
+    required this.initial,
+    required this.firstYear,
+    required this.lastYear,
+  });
+
+  final DateTime initial;
+  final int firstYear;
+  final int lastYear;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Select year'),
+      content: SizedBox(
+        width: 300,
+        height: 300,
+        child: YearPicker(
+          firstDate: DateTime(firstYear),
+          lastDate: DateTime(lastYear),
+          selectedDate: initial,
+          onChanged: (date) => Navigator.pop(context, DateTime(date.year)),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+      ],
+    );
+  }
 }

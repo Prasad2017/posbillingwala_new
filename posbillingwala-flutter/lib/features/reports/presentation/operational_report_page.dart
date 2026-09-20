@@ -53,7 +53,6 @@ class OperationalReportPageState extends ConsumerState<OperationalReportPage> {
   }
 
   Future<void> onFilterPressed() async {
-    final period = ref.read(reportPeriodProvider);
     final selected = await showMenu<String>(
       context: context,
       position: const RelativeRect.fromLTRB(1000, 80, 16, 0),
@@ -132,15 +131,7 @@ class OperationalReportPageState extends ConsumerState<OperationalReportPage> {
       context.push('/reports/table-list');
       return;
     }
-    if (selected == 'month') {
-      await pickReportMonth(context, ref);
-      return;
-    }
-    onReportPeriodSelected(
-      ref,
-      selected == 'year' ? ReportPeriodKind.year : ReportPeriodKind.today,
-      period,
-    );
+    await applyReportPeriodFilterChoice(context, ref, selected);
   }
 
   @override
@@ -225,8 +216,8 @@ class OperationalReportPageState extends ConsumerState<OperationalReportPage> {
                     ])
                       Padding(
                         padding: const EdgeInsets.only(right: 8),
-                        child: FilterChip(
-                          label: Text(entry.$2),
+                        child: ReportFilterChip(
+                          label: entry.$2,
                           selected: typeFilter == entry.$1,
                           onSelected: (_) => ref
                               .read(reportInvoiceTypeFilterProvider.notifier)
@@ -255,8 +246,8 @@ class OperationalReportPageState extends ConsumerState<OperationalReportPage> {
                     ])
                       Padding(
                         padding: const EdgeInsets.only(right: 8),
-                        child: FilterChip(
-                          label: Text(entry.$2),
+                        child: ReportFilterChip(
+                          label: entry.$2,
                           selected: paymentFilter == entry.$1,
                           onSelected: (_) => ref
                               .read(reportPaymentFilterProvider.notifier)
