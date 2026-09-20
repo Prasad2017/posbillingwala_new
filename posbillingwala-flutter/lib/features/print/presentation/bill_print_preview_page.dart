@@ -38,6 +38,7 @@ class BillPrintPreviewPageState extends ConsumerState<BillPrintPreviewPage> {
       builder: (context, snap) {
         if (!snap.hasData && snap.connectionState != ConnectionState.done) {
           return Scaffold(
+            backgroundColor: Colors.transparent,
             appBar: AppBar(title: Text(strings.invoicePreview)),
             body: const Center(child: CircularProgressIndicator()),
           );
@@ -45,6 +46,7 @@ class BillPrintPreviewPageState extends ConsumerState<BillPrintPreviewPage> {
         final data = snap.data;
         if (data == null) {
           return Scaffold(
+            backgroundColor: Colors.transparent,
             appBar: AppBar(title: Text(strings.invoicePreview)),
             body: Center(child: Text(strings.invoiceNotFound)),
           );
@@ -64,11 +66,10 @@ class BillPrintPreviewPageState extends ConsumerState<BillPrintPreviewPage> {
           duplicate: widget.duplicate,
         );
         final is3Inch = settings.paperSize == PrinterPaperSize.inch3;
-        final paperTitle = is3Inch ? strings.paper3Inch : strings.paper2Inch;
         final widthMm = is3Inch ? 72.0 : 48.0;
 
         return Scaffold(
-          backgroundColor: const Color(0xFFF3F6FB),
+          backgroundColor: Colors.transparent,
           appBar: AppBar(
             title: Text(
               widget.duplicate
@@ -76,88 +77,87 @@ class BillPrintPreviewPageState extends ConsumerState<BillPrintPreviewPage> {
                   : strings.invoicePreview,
             ),
           ),
-          body: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+          body: Column(
             children: [
-              Text(
-                'Showing ${settings.paperSize.dbValue} layout from Printer Details. '
-                'Print uses the same paper size.',
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(color: Colors.black54),
-              ),
-              const SizedBox(height: 12),
-              PreviewCard(
-                title: paperTitle,
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: RepaintBoundary(
-                    key: ticketKey,
-                    child: WoosimTicket(
-                      ticket: ticket,
-                      widthMm: widthMm,
-                      showLogo: settings.logoUse,
-                      logoPath: shop.logoLocalPath,
+              Expanded(
+                child: Center(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                    child: Center(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: RepaintBoundary(
+                          key: ticketKey,
+                          child: WoosimTicket(
+                            ticket: ticket,
+                            widthMm: widthMm,
+                            showLogo: settings.logoUse,
+                            logoPath: shop.logoLocalPath,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
-              AppButton(
-                label: strings.print,
-                icon: Icons.print_rounded,
-                onPressed: () async {
-                  final result = await printInvoiceById(
-                    ref,
-                    widget.invoiceId,
-                    duplicate: widget.duplicate,
-                  );
-                  if (!context.mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(result.message ?? strings.printed)),
-                  );
-                },
-              ),
-              const SizedBox(height: 10),
-              AppButton(
-                label: strings.shareBillImage,
-                icon: Icons.share_rounded,
-                variant: AppButtonVariant.outlined,
-                onPressed: () async {
-                  try {
-                    await shareTicketWidgetAsImage(
-                      boundaryKey: ticketKey,
-                      label: widget.duplicate ? 'Duplicate bill' : 'Invoice',
-                    );
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text(strings.shared)));
-                  } catch (e) {
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text('$e')));
-                  }
-                },
-              ),
-              const SizedBox(height: 10),
-              AppButton(
-                label: strings.shareBillText,
-                icon: Icons.notes_rounded,
-                variant: AppButtonVariant.outlined,
-                onPressed: () async {
-                  final result = await printInvoiceById(
-                    ref,
-                    widget.invoiceId,
-                    duplicate: widget.duplicate,
-                    preferShare: true,
-                  );
-                  if (!context.mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(result.message ?? strings.shared)),
-                  );
-                },
+              SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: AppButton(
+                          label: 'Share Bill',
+                          icon: Icons.share_rounded,
+                          variant: AppButtonVariant.outlined,
+                          onPressed: () async {
+                            try {
+                              await shareTicketWidgetAsImage(
+                                boundaryKey: ticketKey,
+                                label: widget.duplicate
+                                    ? 'Duplicate bill'
+                                    : 'Invoice',
+                              );
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(strings.shared)),
+                              );
+                            } catch (e) {
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.of(
+                                context,
+                              ).showSnackBar(SnackBar(content: Text('$e')));
+                            }
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: AppButton(
+                          label: 'Print Bill',
+                          icon: Icons.print_rounded,
+                          onPressed: () async {
+                            final result = await printInvoiceById(
+                              ref,
+                              widget.invoiceId,
+                              duplicate: widget.duplicate,
+                            );
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(result.message ?? strings.printed),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),

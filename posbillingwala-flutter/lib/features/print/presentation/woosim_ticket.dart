@@ -80,8 +80,8 @@ class WoosimTicket extends StatelessWidget {
                   ticket.shopLines[i],
                   textAlign: TextAlign.center,
                   style: pop(
-                    size: shopSize,
-                    /* Only shop name (first header line) is bold. */
+                    /* Shop name larger; address / phone / GST = Bill No size. */
+                    size: i == 0 ? shopSize : bodySize,
                     weight: i == 0 ? FontWeight.w700 : FontWeight.w500,
                   ),
                 ),
@@ -201,7 +201,8 @@ class WoosimTicket extends StatelessWidget {
                 child: Text(
                   line,
                   textAlign: TextAlign.center,
-                  style: pop(size: 13, weight: FontWeight.w600),
+                  /* Powered by / website — same size as Bill No. */
+                  style: pop(size: bodySize, weight: FontWeight.w500),
                 ),
               ),
           ],
