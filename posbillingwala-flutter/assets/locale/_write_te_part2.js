@@ -25,7 +25,7 @@ module.exports = {
   "ui_all": "అన్నీ",
   "ui_all_records": "అన్ని రికార్డులు",
   "ui_alternet_mobile_number": "ప్రత్యామ్నాయ మొబైల్ నంబర్",
-  "ui_amount": "AMOUNT",
+  "ui_amount": "మొత్తం",
   "ui_amount_breakdown": "మొత్తం విభజన",
   "ui_amount_collected_optional": "వసూలైన మొత్తం (ఐచ్ఛికం)",
   "ui_auto_print_kot": "ఆటో ప్రింట్ KOT",
