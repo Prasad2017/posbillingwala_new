@@ -3,10 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
+import 'package:pos_billingwala_v2/core/network/online_guard.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
+import 'package:pos_billingwala_v2/features/staff/data/staff_offline_queue.dart';
 import 'package:pos_billingwala_v2/features/staff/domain/permission_controller.dart';
 import 'package:pos_billingwala_v2/features/staff/domain/staff_user.dart';
-import 'package:pos_billingwala_v2/features/sync/domain/cloud_screen_cache.dart';
 
 class StaffListPage extends ConsumerStatefulWidget {
   const StaffListPage({super.key});
@@ -34,23 +35,51 @@ class StaffListPageState extends ConsumerState<StaffListPage> {
       error = null;
     });
     try {
-      final cached = await CloudScreenCache.loadMapList(CloudScreenCache.staff);
+      final cached = await StaffOfflineQueue.loadStaffCache();
       if (cached.isNotEmpty && mounted) {
         setState(() {
-          users = cached.map(StaffUser.fromJson).toList();
+          users = cached;
           loading = false;
         });
       }
+      if (!await isDeviceOnline()) {
+        if (mounted) setState(() => loading = false);
+        return;
+      }
       final list = await ref.read(staffApiProvider).list(session.licenceUserId);
+      /* Keep pending local-only users until sync creates them. */
+      final pendingLocal = cached
+          .where((e) => e.id.startsWith('staff_local_'))
+          .toList();
+      final merged = [
+        ...list,
+        ...pendingLocal.where(
+          (local) => list.every((s) => s.mobileNumber != local.mobileNumber),
+        ),
+      ];
+      if (!await StaffOfflineQueue.hasPendingOps()) {
+        await StaffOfflineQueue.saveStaffCache(merged);
+      } else {
+        final byId = {for (final u in merged) u.id: u};
+        for (final local in cached) {
+          if (local.id.startsWith('staff_local_')) {
+            byId[local.id] = local;
+          }
+        }
+        await StaffOfflineQueue.saveStaffCache(byId.values.toList());
+      }
+      final painted = await StaffOfflineQueue.loadStaffCache();
       if (!mounted) return;
       setState(() {
-        users = list;
+        users = painted;
         loading = false;
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        error = e.toString().replaceFirst('Exception: ', '');
+        if (users.isEmpty) {
+          error = e.toString().replaceFirst('Exception: ', '');
+        }
         loading = false;
       });
     }

@@ -1,13 +1,13 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:pos_billingwala_v2/core/constants/api_constants.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
-import 'package:pos_billingwala_v2/core/network/api_response.dart';
+import 'package:pos_billingwala_v2/core/network/online_guard.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
+import 'package:pos_billingwala_v2/features/staff/data/staff_offline_queue.dart';
+import 'package:pos_billingwala_v2/features/staff/domain/permission_controller.dart';
 import 'package:pos_billingwala_v2/features/sync/domain/cloud_screen_cache.dart';
 
 class SalaryRow {
@@ -32,6 +32,39 @@ class SalaryRow {
   final String note;
 
   bool get isPaid => paymentStatus.toUpperCase() == 'PAID';
+
+  SalaryRow copyWith({
+    String? staffId,
+    String? staffName,
+    String? role,
+    double? monthlySalary,
+    String? paymentStatus,
+    double? paidAmount,
+    String? paidOn,
+    String? note,
+  }) {
+    return SalaryRow(
+      staffId: staffId ?? this.staffId,
+      staffName: staffName ?? this.staffName,
+      role: role ?? this.role,
+      monthlySalary: monthlySalary ?? this.monthlySalary,
+      paymentStatus: paymentStatus ?? this.paymentStatus,
+      paidAmount: paidAmount ?? this.paidAmount,
+      paidOn: paidOn ?? this.paidOn,
+      note: note ?? this.note,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'staffId': staffId,
+    'staffName': staffName,
+    'role': role,
+    'monthlySalary': monthlySalary,
+    'paymentStatus': paymentStatus,
+    'paidAmount': paidAmount,
+    'paidOn': paidOn,
+    'note': note,
+  };
 
   factory SalaryRow.fromJson(Map<String, dynamic> json) {
     double m(Object? v) => double.tryParse(v?.toString() ?? '') ?? 0;
@@ -94,35 +127,30 @@ class SalaryPageState extends ConsumerState<SalaryPage> {
           busy = false;
         });
       }
-      final client = ref.read(apiClientProvider);
-      final response = await client.dio.post<dynamic>(
-        ApiEndpoints.getSalaryList,
-        data: {'userId': userId, 'salaryMonth': monthKey},
-        options: Options(contentType: Headers.formUrlEncodedContentType),
-      );
-      final data = asJsonMap(response.data);
-      if (!isApiSuccess(data)) {
-        throw Exception(data['message']?.toString() ?? 'Unable to load salary');
+      if (!await isDeviceOnline()) {
+        if (mounted) setState(() => busy = false);
+        return;
       }
-      final list = <SalaryRow>[];
-      final raw = data['salaryResponse'];
-      if (raw is List) {
-        for (final item in raw) {
-          if (item is Map) {
-            list.add(SalaryRow.fromJson(Map<String, dynamic>.from(item)));
-          }
-        }
-      }
+      final raw = await ref.read(staffApiProvider).listSalaryRaw(
+            userId,
+            monthKey,
+          );
+      final list = raw.map(SalaryRow.fromJson).toList();
+      await CloudScreenCache.saveJson(CloudScreenCache.salary, raw);
+      if (!mounted) return;
       setState(() {
         rows = list;
-        totalDue = double.tryParse(data['totalDue']?.toString() ?? '') ?? 0;
-        totalPaid = double.tryParse(data['totalPaid']?.toString() ?? '') ?? 0;
+        totalDue = list.fold(0, (s, r) => s + r.monthlySalary);
+        totalPaid = list.fold(0, (s, r) => s + r.paidAmount);
         busy = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         busy = false;
-        error = e.toString().replaceFirst('Exception: ', '');
+        if (rows.isEmpty) {
+          error = e.toString().replaceFirst('Exception: ', '');
+        }
       });
     }
   }
@@ -174,27 +202,40 @@ class SalaryPageState extends ConsumerState<SalaryPage> {
     if (userId == null) return;
     setState(() => busy = true);
     try {
-      final client = ref.read(apiClientProvider);
-      final response = await client.dio.post<dynamic>(
-        ApiEndpoints.updateStaffSalary,
-        data: {
-          'userId': userId,
-          'staffId': row.staffId,
-          'monthlySalary': amount.toStringAsFixed(2),
-        },
-        options: Options(contentType: Headers.formUrlEncodedContentType),
+      final result = await StaffOfflineQueue.setSalary(
+        api: ref.read(staffApiProvider),
+        userId: userId,
+        staffId: row.staffId,
+        monthlySalary: amount,
       );
-      final data = asJsonMap(response.data);
-      if (!isApiSuccess(data)) {
-        throw Exception(data['message']?.toString() ?? 'Save failed');
+      await upsertLocalSalaryRow(
+        row.copyWith(monthlySalary: amount),
+      );
+      if (!mounted) return;
+      if (result.pending) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result.message)),
+        );
       }
       await load();
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         busy = false;
         error = e.toString().replaceFirst('Exception: ', '');
       });
     }
+  }
+
+  Future<void> upsertLocalSalaryRow(SalaryRow row) async {
+    setState(() {
+      rows = [
+        for (final r in rows)
+          if (r.staffId == row.staffId) row else r,
+      ];
+      totalDue = rows.fold(0, (s, r) => s + r.monthlySalary);
+      totalPaid = rows.fold(0, (s, r) => s + r.paidAmount);
+    });
   }
 
   Future<void> markPaid(SalaryRow row) async {
@@ -211,24 +252,31 @@ class SalaryPageState extends ConsumerState<SalaryPage> {
     if (!confirm) return;
     setState(() => busy = true);
     try {
-      final client = ref.read(apiClientProvider);
-      final response = await client.dio.post<dynamic>(
-        ApiEndpoints.saveSalaryPayment,
-        data: {
-          'userId': userId,
-          'staffId': row.staffId,
-          'salaryMonth': monthKey,
-          'amount': row.monthlySalary.toStringAsFixed(2),
-          'paidOn': DateFormat('yyyy-MM-dd').format(DateTime.now()),
-        },
-        options: Options(contentType: Headers.formUrlEncodedContentType),
+      final paidOn = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      final result = await StaffOfflineQueue.paySalary(
+        api: ref.read(staffApiProvider),
+        userId: userId,
+        staffId: row.staffId,
+        salaryMonth: monthKey,
+        amount: row.monthlySalary,
+        paidOn: paidOn,
       );
-      final data = asJsonMap(response.data);
-      if (!isApiSuccess(data)) {
-        throw Exception(data['message']?.toString() ?? 'Payment failed');
+      await upsertLocalSalaryRow(
+        row.copyWith(
+          paymentStatus: 'PAID',
+          paidAmount: row.monthlySalary,
+          paidOn: paidOn,
+        ),
+      );
+      if (!mounted) return;
+      if (result.pending) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result.message)),
+        );
       }
       await load();
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         busy = false;
         error = e.toString().replaceFirst('Exception: ', '');

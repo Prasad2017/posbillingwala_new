@@ -50,7 +50,7 @@ class SyncPageState extends ConsumerState<SyncPage> {
     if (started) return;
     started = true;
 
-    if (!await ensureOnline()) {
+    if (!await ensureOnline(force: true)) {
       ref
           .read(syncProgressProvider.notifier)
           .setBlocked(

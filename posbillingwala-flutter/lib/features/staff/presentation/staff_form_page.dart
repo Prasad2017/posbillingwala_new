@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
+import 'package:pos_billingwala_v2/features/staff/data/staff_offline_queue.dart';
 import 'package:pos_billingwala_v2/features/staff/domain/permission_catalog.dart';
 import 'package:pos_billingwala_v2/features/staff/domain/permission_controller.dart';
 
@@ -102,32 +103,37 @@ class StaffFormPageState extends ConsumerState<StaffFormPage> {
     }
     setState(() => loading = true);
     try {
+      final api = ref.read(staffApiProvider);
+      final StaffOfflineSaveResult result;
       if (isEdit) {
-        await ref
-            .read(staffApiProvider)
-            .update(
-              userId: session.licenceUserId,
-              id: widget.staffId!,
-              name: name.text.trim(),
-              mobileNumber: mobile.text.trim(),
-              address: address.text.trim(),
-              overrides: overrides,
-            );
+        result = await StaffOfflineQueue.update(
+          api: api,
+          userId: session.licenceUserId,
+          id: widget.staffId!,
+          name: name.text.trim(),
+          mobileNumber: mobile.text.trim(),
+          address: address.text.trim(),
+          overrides: overrides,
+        );
       } else {
-        await ref
-            .read(staffApiProvider)
-            .create(
-              userId: session.licenceUserId,
-              name: name.text.trim(),
-              mobileNumber: mobile.text.trim(),
-              role: role,
-              pin: pin.text.trim(),
-              confirmPin: confirmPin.text.trim(),
-              address: address.text.trim(),
-              overrides: overrides,
-            );
+        result = await StaffOfflineQueue.create(
+          api: api,
+          userId: session.licenceUserId,
+          name: name.text.trim(),
+          mobileNumber: mobile.text.trim(),
+          role: role,
+          pin: pin.text.trim(),
+          confirmPin: confirmPin.text.trim(),
+          address: address.text.trim(),
+          overrides: overrides,
+        );
       }
       if (!mounted) return;
+      if (result.pending) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result.message)),
+        );
+      }
       Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;

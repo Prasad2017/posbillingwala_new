@@ -137,6 +137,39 @@ class MessMealSessionDto {
       sortOrder: parseString(json['sortOrder']) ?? '0',
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'sessionId': sessionId,
+    'sessionName': sessionName,
+    'startTime': startTime,
+    'endTime': endTime,
+    'tokenPrefix': tokenPrefix,
+    'isActive': isActive,
+    'menuNotes': menuNotes,
+    'sortOrder': sortOrder,
+  };
+
+  MessMealSessionDto copyWith({
+    String? sessionId,
+    String? sessionName,
+    String? startTime,
+    String? endTime,
+    String? tokenPrefix,
+    String? isActive,
+    String? menuNotes,
+    String? sortOrder,
+  }) {
+    return MessMealSessionDto(
+      sessionId: sessionId ?? this.sessionId,
+      sessionName: sessionName ?? this.sessionName,
+      startTime: startTime ?? this.startTime,
+      endTime: endTime ?? this.endTime,
+      tokenPrefix: tokenPrefix ?? this.tokenPrefix,
+      isActive: isActive ?? this.isActive,
+      menuNotes: menuNotes ?? this.menuNotes,
+      sortOrder: sortOrder ?? this.sortOrder,
+    );
+  }
 }
 
 class MessMealTokenDto {

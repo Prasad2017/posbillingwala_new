@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
+import 'package:pos_billingwala_v2/core/network/online_guard.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
+import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/company/data/company_api.dart';
@@ -12,6 +16,7 @@ import 'package:pos_billingwala_v2/features/print/domain/bluetooth_printer_hub.d
 import 'package:pos_billingwala_v2/features/print/domain/esc_pos_transport_hub.dart';
 import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
 import 'package:pos_billingwala_v2/features/print/presentation/printer_device_picker_page.dart';
+import 'package:pos_billingwala_v2/features/sync/domain/connectivity_sync_listener.dart';
 import 'package:pos_billingwala_v2/language/app_strings.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
@@ -353,6 +358,11 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
   Future<void> loadPrinterCloud() async {
     final userId = ref.read(authControllerProvider).session?.userId;
     if (userId == null || userId.isEmpty) return;
+    /* Keep unsynced local edits (Payment QR, terms, etc.). */
+    if (await ref.read(printerSettingsProvider.notifier).isPendingUpload()) {
+      return;
+    }
+    if (!await isDeviceOnline()) return;
     setState(() => companyBusy = true);
     try {
       final api = CompanyApi(ref.read(apiClientProvider));
@@ -412,7 +422,9 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
               : current.invoicePrefix,
           kotPrefix: p.kotPrefix.isNotEmpty ? p.kotPrefix : current.kotPrefix,
         );
-        await ref.read(printerSettingsProvider.notifier).update(updated);
+        await ref
+            .read(printerSettingsProvider.notifier)
+            .update(updated, fromCloud: true);
         await ref
             .read(appDatabaseProvider)
             .upsertLocalCompanyPrinterSettings(p);
@@ -446,9 +458,16 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
       ).showSnackBar(const SnackBar(content: Text('Please login first')));
       return;
     }
+    if (AppPlatform.requiresNetwork && !await ensureOnline()) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text(kOnlineRequiredMessage)));
+      return;
+    }
     setState(() => companyBusy = true);
     try {
-      final api = CompanyApi(ref.read(apiClientProvider));
+      /* Always persist locally first (offline-first). */
       await settingsPageSave(showSnack: false);
       final settings = ref.read(printerSettingsProvider);
       final printerDto = CompanyPrinterSettingDto(
@@ -483,13 +502,51 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
       await ref
           .read(appDatabaseProvider)
           .upsertLocalCompanyPrinterSettings(printerDto);
-      await api.insertCompanyPrinterSetting(
-        userId: userId,
-        setting: printerDto,
-      );
+
+      var ok = false;
+      if (await isDeviceOnline()) {
+        try {
+          ok = await CompanyApi(
+            ref.read(apiClientProvider),
+          ).insertCompanyPrinterSetting(
+            userId: userId,
+            setting: printerDto,
+          );
+        } catch (_) {
+          ok = false;
+        }
+      }
+
+      if (AppPlatform.requiresNetwork && !ok) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text(kWebApiSaveFailedMessage)),
+        );
+        return;
+      }
+
+      if (ok) {
+        await ref
+            .read(printerSettingsProvider.notifier)
+            .setPendingUpload(false);
+      } else if (AppPlatform.supportsOfflineSync) {
+        await ref.read(printerSettingsProvider.notifier).setPendingUpload(true);
+        unawaited(
+          ref
+              .read(connectivitySyncListenerProvider)
+              .syncNow(force: true, reason: 'printer-settings'),
+        );
+      }
+
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Printer settings saved')),
+        SnackBar(
+          content: Text(
+            ok
+                ? 'Printer settings saved'
+                : 'Printer settings saved',
+          ),
+        ),
       );
     } catch (e) {
       if (!mounted) return;

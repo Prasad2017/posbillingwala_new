@@ -115,6 +115,8 @@ class SyncProgressState {
     SyncTableStep(id: 'expenses', label: 'Expenses'),
     SyncTableStep(id: 'mess_shop_payer', label: 'Mess shop payer'),
     SyncTableStep(id: 'meal_sessions', label: 'Meal sessions'),
+    SyncTableStep(id: 'staff', label: 'Staff users'),
+    SyncTableStep(id: 'salary', label: 'Salary'),
     SyncTableStep(id: 'store_printers', label: 'Store printers'),
     SyncTableStep(id: 'printer_routes', label: 'Printer routes'),
   ];

@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:pos_billingwala_v2/core/logging/app_logger.dart';
 import 'package:pos_billingwala_v2/core/constants/api_constants.dart';
 import 'package:pos_billingwala_v2/core/network/api_response.dart';
 import 'package:pos_billingwala_v2/features/auth/data/device_identity_service.dart';
@@ -17,6 +18,7 @@ import 'package:pos_billingwala_v2/features/print/domain/print_job_dispatcher.da
 import 'package:pos_billingwala_v2/features/print/domain/shop_receipt_profile.dart';
 import 'package:pos_billingwala_v2/features/reports/domain/reports_providers.dart';
 import 'package:pos_billingwala_v2/features/staff/data/staff_api.dart';
+import 'package:pos_billingwala_v2/features/staff/data/staff_offline_queue.dart';
 import 'package:pos_billingwala_v2/features/staff/domain/permission_catalog.dart';
 import 'package:pos_billingwala_v2/features/support/data/support_api.dart';
 import 'package:pos_billingwala_v2/features/sync/domain/cloud_screen_cache.dart';
@@ -73,51 +75,66 @@ abstract final class CloudScreenPrefetch {
     }
 
     try {
-      final members = await staffApi.list(userId);
-      await saveList(
-        CloudScreenCache.staff,
-        members
-            .map(
-              (e) => {
-                'id': e.id,
-                'name': e.name,
-                'mobileNumber': e.mobileNumber,
-                'role': e.role,
-                'roleLabel': e.roleLabel,
-                'address': e.address,
-                'profileImage': e.profileImage,
-                'status': e.status,
-                'monthlySalary': e.monthlySalary,
-                'lastLoginAt': e.lastLoginAt,
-                'effectivePermissions': e.effectivePermissions,
-                'permissionOverrides': e.permissionOverrides,
-              },
-            )
-            .toList(),
-      );
-      markStep('staff', true);
+      if (await StaffOfflineQueue.hasPendingOps()) {
+        final cached = await CloudScreenCache.loadMapList(CloudScreenCache.staff);
+        counts[CloudScreenCache.staff] = cached.length;
+        markStep('staff', true);
+        AppLogger.info('Sync↓ staff skip (pending upload)');
+      } else {
+        final members = await staffApi.list(userId);
+        await saveList(
+          CloudScreenCache.staff,
+          members
+              .map(
+                (e) => {
+                  'id': e.id,
+                  'name': e.name,
+                  'mobileNumber': e.mobileNumber,
+                  'role': e.role,
+                  'roleLabel': e.roleLabel,
+                  'address': e.address,
+                  'profileImage': e.profileImage,
+                  'status': e.status,
+                  'monthlySalary': e.monthlySalary,
+                  'lastLoginAt': e.lastLoginAt,
+                  'effectivePermissions': e.effectivePermissions,
+                  'permissionOverrides': e.permissionOverrides,
+                },
+              )
+              .toList(),
+        );
+        markStep('staff', true);
+      }
     } catch (_) {
       counts[CloudScreenCache.staff] = 0;
       markStep('staff', false);
     }
 
     try {
-      final monthKey = DateFormat('yyyy-MM').format(DateTime.now());
-      final response = await client.dio.post<dynamic>(
-        ApiEndpoints.getSalaryList,
-        data: {'userId': userId, 'salaryMonth': monthKey},
-        options: Options(contentType: Headers.formUrlEncodedContentType),
-      );
-      final data = asJsonMap(response.data);
-      final raw = data['salaryResponse'];
-      final rows = raw is List
-          ? raw
-                .whereType<Map>()
-                .map((e) => Map<String, dynamic>.from(e))
-                .toList()
-          : <Map<String, dynamic>>[];
-      await saveList(CloudScreenCache.salary, rows);
-      markStep('salary', true);
+      if (await StaffOfflineQueue.hasPendingOps()) {
+        final cached = await CloudScreenCache.loadMapList(
+          CloudScreenCache.salary,
+        );
+        counts[CloudScreenCache.salary] = cached.length;
+        markStep('salary', true);
+      } else {
+        final monthKey = DateFormat('yyyy-MM').format(DateTime.now());
+        final response = await client.dio.post<dynamic>(
+          ApiEndpoints.getSalaryList,
+          data: {'userId': userId, 'salaryMonth': monthKey},
+          options: Options(contentType: Headers.formUrlEncodedContentType),
+        );
+        final data = asJsonMap(response.data);
+        final raw = data['salaryResponse'];
+        final rows = raw is List
+            ? raw
+                  .whereType<Map>()
+                  .map((e) => Map<String, dynamic>.from(e))
+                  .toList()
+            : <Map<String, dynamic>>[];
+        await saveList(CloudScreenCache.salary, rows);
+        markStep('salary', true);
+      }
     } catch (_) {
       counts[CloudScreenCache.salary] = 0;
       markStep('salary', false);
@@ -142,25 +159,33 @@ abstract final class CloudScreenPrefetch {
     }
 
     try {
-      final sessions = await messApi.fetchMealSessions(userId);
-      await saveList(
-        CloudScreenCache.mealSessions,
-        sessions
-            .map(
-              (e) => {
-                'sessionId': e.sessionId,
-                'sessionName': e.sessionName,
-                'startTime': e.startTime,
-                'endTime': e.endTime,
-                'tokenPrefix': e.tokenPrefix,
-                'isActive': e.isActive,
-                'menuNotes': e.menuNotes,
-                'sortOrder': e.sortOrder,
-              },
-            )
-            .toList(),
-      );
-      markStep('meal_sessions', true);
+      if (await StaffOfflineQueue.isMealSessionsPending()) {
+        final cached = await CloudScreenCache.loadMapList(
+          CloudScreenCache.mealSessions,
+        );
+        counts[CloudScreenCache.mealSessions] = cached.length;
+        markStep('meal_sessions', true);
+      } else {
+        final sessions = await messApi.fetchMealSessions(userId);
+        await saveList(
+          CloudScreenCache.mealSessions,
+          sessions
+              .map(
+                (e) => {
+                  'sessionId': e.sessionId,
+                  'sessionName': e.sessionName,
+                  'startTime': e.startTime,
+                  'endTime': e.endTime,
+                  'tokenPrefix': e.tokenPrefix,
+                  'isActive': e.isActive,
+                  'menuNotes': e.menuNotes,
+                  'sortOrder': e.sortOrder,
+                },
+              )
+              .toList(),
+        );
+        markStep('meal_sessions', true);
+      }
     } catch (_) {
       final cached = await CloudScreenCache.loadMapList(
         CloudScreenCache.mealSessions,

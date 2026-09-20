@@ -1,5 +1,9 @@
 package com.posbillingwala.pos_billingwala_v2
 
+import android.content.Context
+import android.content.res.Configuration
+import android.os.Build
+import android.util.DisplayMetrics
 import android.view.WindowManager
 import com.posbillingwala.pos_billingwala_v2.print.WoosimPrintPlugin
 import io.flutter.embedding.android.FlutterActivity
@@ -7,6 +11,29 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
+    /* Keep POS UI fixed regardless of system Display size / Text size. */
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(fixedDisplayContext(newBase))
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        applyFixedDisplay(newConfig)
+        super.onConfigurationChanged(newConfig)
+    }
+
+    private fun fixedDisplayContext(base: Context): Context {
+        val config = Configuration(base.resources.configuration)
+        applyFixedDisplay(config)
+        return base.createConfigurationContext(config)
+    }
+
+    private fun applyFixedDisplay(config: Configuration) {
+        config.fontScale = 1.0f
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            config.densityDpi = DisplayMetrics.DENSITY_DEVICE_STABLE
+        }
+    }
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         WoosimPrintPlugin.register(flutterEngine, this)

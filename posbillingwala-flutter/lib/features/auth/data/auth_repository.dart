@@ -1,3 +1,4 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:pos_billingwala_v2/features/auth/data/auth_api.dart';
 import 'package:pos_billingwala_v2/features/auth/data/device_identity_service.dart';
 import 'package:pos_billingwala_v2/features/auth/data/session_store.dart';
@@ -151,6 +152,52 @@ class AuthRepository {
       throw AuthException('Enter your 4-digit PB-PIN');
     }
 
+    final localPin = (stored.appPin ?? '').trim();
+    final canUnlockLocally = localPin.length == 4 && localPin == pin;
+
+    /* Offline unlock: verify stored PB-PIN so POS stays usable without internet. */
+    final online = await _isOnline();
+    if (!online) {
+      if (!canUnlockLocally) {
+        throw AuthException(
+          localPin.isEmpty
+              ? 'Internet required for first PB-PIN unlock on this device.'
+              : 'Invalid PB-PIN',
+        );
+      }
+      await assertSignedLicense(
+        deviceId: device.deviceId,
+        licenceKey: stored.licenceKey,
+      );
+      return stored;
+    }
+
+    try {
+      return await _loginWithMpinOnline(
+        stored: stored,
+        pin: pin,
+        device: device,
+        onDeviceConflict: onDeviceConflict,
+      );
+    } catch (e) {
+      /* Network/API failure: fall back to local PIN so billing is not blocked. */
+      if (canUnlockLocally && _looksLikeNetworkFailure(e)) {
+        await assertSignedLicense(
+          deviceId: device.deviceId,
+          licenceKey: stored.licenceKey,
+        );
+        return stored;
+      }
+      rethrow;
+    }
+  }
+
+  Future<UserSession> _loginWithMpinOnline({
+    required UserSession stored,
+    required String pin,
+    required DeviceIdentity device,
+    Future<DeviceConflictAction> Function(String message)? onDeviceConflict,
+  }) async {
     Future<LoginResponse> attempt() {
       return api.loginMpin(
         mpin: pin,
@@ -218,6 +265,36 @@ class AuthRepository {
       licenceKey: session.licenceKey,
     );
     return session;
+  }
+
+  Future<bool> _isOnline() async {
+    try {
+      // Ignore import cycle — use connectivity via dynamic check in controller instead.
+      // Repository stays free of Flutter UI; online check from connectivity_plus.
+      final results =
+          await Connectivity().checkConnectivity();
+      return results.any(
+        (r) =>
+            r == ConnectivityResult.mobile ||
+            r == ConnectivityResult.wifi ||
+            r == ConnectivityResult.ethernet ||
+            r == ConnectivityResult.vpn ||
+            r == ConnectivityResult.other,
+      );
+    } catch (_) {
+      return false;
+    }
+  }
+
+  bool _looksLikeNetworkFailure(Object e) {
+    final msg = e.toString().toLowerCase();
+    return msg.contains('socket') ||
+        msg.contains('network') ||
+        msg.contains('connection') ||
+        msg.contains('timeout') ||
+        msg.contains('failed host') ||
+        msg.contains('handshake') ||
+        msg.contains('dioexception');
   }
 
   Future<void> assertSignedLicense({

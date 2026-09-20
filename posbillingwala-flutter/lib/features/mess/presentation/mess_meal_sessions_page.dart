@@ -5,10 +5,12 @@ import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/network/online_guard.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/theme/app_typography.dart';
+import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/mess/data/mess_api.dart';
 import 'package:pos_billingwala_v2/features/mess/domain/mess_dtos.dart';
+import 'package:pos_billingwala_v2/features/staff/data/staff_offline_queue.dart';
 import 'package:pos_billingwala_v2/features/sync/domain/cloud_screen_cache.dart';
 import 'package:pos_billingwala_v2/language/app_strings.dart';
 
@@ -62,12 +64,19 @@ class MessMealSessionsPageState extends ConsumerState<MessMealSessionsPage> {
       setState(() => messMealSessionsPageSessions = const AsyncLoading());
     }
     if (!await isDeviceOnline()) return;
+    if (await StaffOfflineQueue.isMealSessionsPending()) return;
     final result = await AsyncValue.guard(() async {
       return MessApi(ref.read(apiClientProvider)).fetchMealSessions(userId);
     });
     if (!mounted) return;
     /* Keep cache if cloud fetch fails. */
     if (result.hasError && messMealSessionsPageSessions.hasValue) return;
+    if (result.hasValue) {
+      await CloudScreenCache.saveJson(
+        CloudScreenCache.mealSessions,
+        result.value!.map((e) => e.toJson()).toList(),
+      );
+    }
     setState(() => messMealSessionsPageSessions = result);
   }
 
@@ -171,26 +180,87 @@ class MessMealSessionsPageState extends ConsumerState<MessMealSessionsPage> {
     if (userId == null) return;
     setState(() => saving = true);
     try {
-      final success = await MessApi(ref.read(apiClientProvider))
-          .saveMealSession(
-            userId: userId,
-            sessionId: session.sessionId.isEmpty ||
-                    int.tryParse(session.sessionId) == null
-                ? ''
-                : session.sessionId,
-            sessionName: nameCtrl.text.trim(),
-            startTime: start,
-            endTime: end,
-            tokenPrefix: prefixCtrl.text.trim(),
-            isActive: active ? '1' : '0',
-            menuNotes: session.menuNotes,
-            sortOrder: session.sortOrder,
-          );
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(success ? 'Session saved' : 'Save failed')),
+      final sessionName = nameCtrl.text.trim();
+      final tokenPrefix = prefixCtrl.text.trim();
+      final isActive = active ? '1' : '0';
+      var sessionId = session.sessionId;
+      if (sessionId.isEmpty || int.tryParse(sessionId) == null) {
+        if (sessionId.isEmpty) {
+          sessionId = 'sess_${DateTime.now().millisecondsSinceEpoch}';
+        }
+      }
+
+      final updated = session.copyWith(
+        sessionId: sessionId,
+        sessionName: sessionName,
+        startTime: start,
+        endTime: end,
+        tokenPrefix: tokenPrefix,
+        isActive: isActive,
       );
-      if (success) await load();
+
+      final current =
+          messMealSessionsPageSessions.asData?.value.toList() ??
+          <MessMealSessionDto>[];
+      final idx = current.indexWhere((e) => e.sessionId == session.sessionId);
+      if (idx >= 0) {
+        current[idx] = updated;
+      } else if (session.sessionId.isEmpty) {
+        current.add(updated);
+      } else {
+        final byId = current.indexWhere((e) => e.sessionId == sessionId);
+        if (byId >= 0) {
+          current[byId] = updated;
+        } else {
+          current.add(updated);
+        }
+      }
+
+      await CloudScreenCache.saveJson(
+        CloudScreenCache.mealSessions,
+        current.map((e) => e.toJson()).toList(),
+      );
+      if (mounted) {
+        setState(() => messMealSessionsPageSessions = AsyncData(current));
+      }
+
+      final online = await isDeviceOnline();
+      var synced = false;
+      if (online) {
+        synced = await MessApi(ref.read(apiClientProvider)).saveMealSession(
+          userId: userId,
+          sessionId: int.tryParse(sessionId) != null ? sessionId : '',
+          sessionName: sessionName,
+          startTime: start,
+          endTime: end,
+          tokenPrefix: tokenPrefix,
+          isActive: isActive,
+          menuNotes: session.menuNotes,
+          sortOrder: session.sortOrder,
+        );
+      }
+
+      if (!mounted) return;
+      if (synced) {
+        await StaffOfflineQueue.setMealSessionsPending(false);
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Session saved')),
+        );
+        await load();
+      } else if (AppPlatform.requiresNetwork) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text(kWebApiSaveFailedMessage)),
+        );
+      } else {
+        await StaffOfflineQueue.setMealSessionsPending(true);
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Session saved'),
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => saving = false);
     }

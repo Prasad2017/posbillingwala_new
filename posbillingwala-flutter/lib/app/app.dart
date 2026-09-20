@@ -44,14 +44,24 @@ class PosBillingwalaApp extends ConsumerWidget {
       ],
       routerConfig: router,
       builder: (context, child) {
-        return AnnotatedRegion<SystemUiOverlayStyle>(
-          value: AppTheme.lightSystemUi,
-          child: ColoredBox(
-            color: AppColors.primary,
-            child: SafeArea(
-              child: ColoredBox(
-                color: Colors.white,
-                child: InAppUpdateHost(child: child ?? const SizedBox.shrink()),
+        /* Ignore system Display size / Text size — POS layout stays fixed. */
+        final mq = MediaQuery.of(context);
+        return MediaQuery(
+          data: mq.copyWith(
+            textScaler: TextScaler.noScaling,
+            boldText: false,
+          ),
+          child: AnnotatedRegion<SystemUiOverlayStyle>(
+            value: AppTheme.lightSystemUi,
+            child: ColoredBox(
+              color: AppColors.primary,
+              child: SafeArea(
+                child: ColoredBox(
+                  color: Colors.white,
+                  child: InAppUpdateHost(
+                    child: child ?? const SizedBox.shrink(),
+                  ),
+                ),
               ),
             ),
           ),

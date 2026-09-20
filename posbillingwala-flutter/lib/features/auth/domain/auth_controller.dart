@@ -161,7 +161,8 @@ class AuthController extends Notifier<AuthState> {
   Future<bool> loginWithMpin(String mpin) async {
     state = state.copyWith(busy: true, clearError: true);
     try {
-      if (!await ensureOnline()) {
+      /* Web must be online. Android unlocks offline via stored PB-PIN. */
+      if (AppPlatform.requiresNetwork && !await ensureOnline()) {
         state = state.copyWith(
           busy: false,
           errorMessage: kOnlineRequiredMessage,
@@ -179,9 +180,11 @@ class AuthController extends Notifier<AuthState> {
       await bindBranchScope(session);
       await bindErrorReportSession(session);
       state = AuthState(status: AuthStatus.authenticated, session: session);
-      FcmService(
-        apiClient: ref.read(apiClientProvider),
-      ).registerForUser(session.userId);
+      if (session.authToken != null && session.authToken!.isNotEmpty) {
+        FcmService(
+          apiClient: ref.read(apiClientProvider),
+        ).registerForUser(session.userId);
+      }
       return true;
     } on AuthException catch (e) {
       state = state.copyWith(

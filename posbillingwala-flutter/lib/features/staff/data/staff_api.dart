@@ -189,4 +189,57 @@ class StaffApi {
       data['message']?.toString() ?? 'Unable to load permissions',
     );
   }
+
+  Future<void> updateSalary({
+    required String userId,
+    required String staffId,
+    required double monthlySalary,
+  }) async {
+    final data = await post(ApiEndpoints.updateStaffSalary, {
+      'userId': userId,
+      'staffId': staffId,
+      'monthlySalary': monthlySalary.toStringAsFixed(2),
+    });
+    if (!isApiSuccess(data)) {
+      throw Exception(data['message']?.toString() ?? 'Unable to save salary');
+    }
+  }
+
+  Future<void> saveSalaryPayment({
+    required String userId,
+    required String staffId,
+    required String salaryMonth,
+    required double amount,
+    required String paidOn,
+  }) async {
+    final data = await post(ApiEndpoints.saveSalaryPayment, {
+      'userId': userId,
+      'staffId': staffId,
+      'salaryMonth': salaryMonth,
+      'amount': amount.toStringAsFixed(2),
+      'paidOn': paidOn,
+    });
+    if (!isApiSuccess(data)) {
+      throw Exception(data['message']?.toString() ?? 'Unable to save payment');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> listSalaryRaw(
+    String userId,
+    String salaryMonth,
+  ) async {
+    final data = await post(ApiEndpoints.getSalaryList, {
+      'userId': userId,
+      'salaryMonth': salaryMonth,
+    });
+    if (!isApiSuccess(data)) {
+      throw Exception(data['message']?.toString() ?? 'Unable to load salary');
+    }
+    final raw = data['salaryResponse'];
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Map>()
+        .map((e) => Map<String, dynamic>.from(e))
+        .toList();
+  }
 }

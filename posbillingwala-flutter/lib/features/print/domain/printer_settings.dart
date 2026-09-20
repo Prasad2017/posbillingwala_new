@@ -268,6 +268,17 @@ class PrinterSettingsStore {
   static const kotAutoKey = 'printer_kot_auto';
   static const kotPreviewKey = 'printer_kot_preview';
   static const kotCopiesKey = 'printer_kot_copies';
+  static const pendingUploadKey = 'printer_pending_upload';
+
+  Future<bool> isPendingUpload() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(pendingUploadKey) ?? false;
+  }
+
+  Future<void> setPendingUpload(bool pending) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(pendingUploadKey, pending);
+  }
 
   Future<PrinterSettings> load() async {
     final prefs = await SharedPreferences.getInstance();
@@ -393,8 +404,20 @@ class PrinterSettingsController extends Notifier<PrinterSettings> {
     state = await store.load();
   }
 
-  Future<void> update(PrinterSettings settings) async {
+  Future<bool> isPendingUpload() => store.isPendingUpload();
+
+  Future<void> setPendingUpload(bool pending) =>
+      store.setPendingUpload(pending);
+
+  /* Local edits: [fromCloud] false marks pending so sync won't overwrite. */
+  Future<void> update(
+    PrinterSettings settings, {
+    bool fromCloud = false,
+  }) async {
     await store.save(settings);
     state = settings;
+    if (!fromCloud) {
+      await store.setPendingUpload(true);
+    }
   }
 }

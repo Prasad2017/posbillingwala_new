@@ -33,6 +33,52 @@ class StaffUser {
 
   bool allows(String key) => (effectivePermissions[key] ?? 0) == 1;
 
+  StaffUser copyWith({
+    String? id,
+    String? name,
+    String? mobileNumber,
+    String? role,
+    String? roleLabel,
+    String? address,
+    String? profileImage,
+    String? status,
+    double? monthlySalary,
+    String? lastLoginAt,
+    Map<String, int>? effectivePermissions,
+    Map<String, String>? permissionOverrides,
+  }) {
+    return StaffUser(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      mobileNumber: mobileNumber ?? this.mobileNumber,
+      role: role ?? this.role,
+      roleLabel: roleLabel ?? this.roleLabel,
+      address: address ?? this.address,
+      profileImage: profileImage ?? this.profileImage,
+      status: status ?? this.status,
+      monthlySalary: monthlySalary ?? this.monthlySalary,
+      lastLoginAt: lastLoginAt ?? this.lastLoginAt,
+      effectivePermissions:
+          effectivePermissions ?? this.effectivePermissions,
+      permissionOverrides: permissionOverrides ?? this.permissionOverrides,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'mobileNumber': mobileNumber,
+    'role': role,
+    'roleLabel': roleLabel,
+    'address': address,
+    'profileImage': profileImage,
+    'status': status,
+    'monthlySalary': monthlySalary,
+    'lastLoginAt': lastLoginAt,
+    'effectivePermissions': effectivePermissions,
+    'permissionOverrides': permissionOverrides,
+  };
+
   factory StaffUser.fromJson(Map<String, dynamic> json) {
     String s(Object? v) => v?.toString() ?? '';
     final effective = <String, int>{};

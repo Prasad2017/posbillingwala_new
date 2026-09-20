@@ -342,6 +342,8 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
       const screenUploadIds = [
         'mess_shop_payer',
         'meal_sessions',
+        'staff',
+        'salary',
         'store_printers',
         'printer_routes',
       ];
@@ -749,45 +751,53 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
     }
 
     if (printers.isNotEmpty) {
-      final p = printers.first;
-      await db.upsertLocalCompanyPrinterSettings(p);
-      final current = ref.read(printerSettingsProvider);
-      await ref
+      final pendingPrinter = await ref
           .read(printerSettingsProvider.notifier)
-          .update(
-            current.copyWith(
-              billBluetoothAddress: p.bluetoothAddress.isNotEmpty
-                  ? p.bluetoothAddress
-                  : current.billBluetoothAddress,
-              kotBluetoothAddress: p.bluetoothKotAddress.isNotEmpty
-                  ? p.bluetoothKotAddress
-                  : current.kotBluetoothAddress,
-              feedLines: int.tryParse(p.printerFeedLines) ?? current.feedLines,
-              kotFeedLines:
-                  int.tryParse(p.kotPrinterFeedLines) ?? current.kotFeedLines,
-              invoiceTitle: p.invoiceTitle.isNotEmpty
-                  ? p.invoiceTitle
-                  : current.invoiceTitle,
-              invoiceTerms: p.invoiceTermsCondition.isNotEmpty
-                  ? p.invoiceTermsCondition
-                  : current.invoiceTerms,
-              invoicePrefix: p.invoicePrefix.isNotEmpty
-                  ? p.invoicePrefix
-                  : current.invoicePrefix,
-              kotPrefix: p.kotPrefix.isNotEmpty
-                  ? p.kotPrefix
-                  : current.kotPrefix,
-              customerUse: printerFlagOn(p.customerUse),
-              paymentUse: printerFlagOn(p.paymentUse),
-              duplicateBillUse: printerFlagOn(p.duplicateBillUse),
-              logoUse: printerFlagOn(p.logoUse),
-              kotEnable: p.kotEnable != '0' && p.kotEnable != 'off',
-              productQuantityUpdate: printerFlagOn(p.productQuantityUpdate),
-              kotAutoPrint: p.kotAutoPrint == '1' || p.kotAutoPrint == 'on',
-              kotPreview: p.kotPreview != '0' && p.kotPreview != 'off',
-              kotCopies: int.tryParse(p.kotCopies) ?? current.kotCopies,
-            ),
-          );
+          .isPendingUpload();
+      if (pendingPrinter) {
+        /* Keep local printer edits until they successfully upload. */
+      } else {
+        final p = printers.first;
+        await db.upsertLocalCompanyPrinterSettings(p);
+        final current = ref.read(printerSettingsProvider);
+        await ref
+            .read(printerSettingsProvider.notifier)
+            .update(
+              current.copyWith(
+                billBluetoothAddress: p.bluetoothAddress.isNotEmpty
+                    ? p.bluetoothAddress
+                    : current.billBluetoothAddress,
+                kotBluetoothAddress: p.bluetoothKotAddress.isNotEmpty
+                    ? p.bluetoothKotAddress
+                    : current.kotBluetoothAddress,
+                feedLines: int.tryParse(p.printerFeedLines) ?? current.feedLines,
+                kotFeedLines:
+                    int.tryParse(p.kotPrinterFeedLines) ?? current.kotFeedLines,
+                invoiceTitle: p.invoiceTitle.isNotEmpty
+                    ? p.invoiceTitle
+                    : current.invoiceTitle,
+                invoiceTerms: p.invoiceTermsCondition.isNotEmpty
+                    ? p.invoiceTermsCondition
+                    : current.invoiceTerms,
+                invoicePrefix: p.invoicePrefix.isNotEmpty
+                    ? p.invoicePrefix
+                    : current.invoicePrefix,
+                kotPrefix: p.kotPrefix.isNotEmpty
+                    ? p.kotPrefix
+                    : current.kotPrefix,
+                customerUse: printerFlagOn(p.customerUse),
+                paymentUse: printerFlagOn(p.paymentUse),
+                duplicateBillUse: printerFlagOn(p.duplicateBillUse),
+                logoUse: printerFlagOn(p.logoUse),
+                kotEnable: p.kotEnable != '0' && p.kotEnable != 'off',
+                productQuantityUpdate: printerFlagOn(p.productQuantityUpdate),
+                kotAutoPrint: p.kotAutoPrint == '1' || p.kotAutoPrint == 'on',
+                kotPreview: p.kotPreview != '0' && p.kotPreview != 'off',
+                kotCopies: int.tryParse(p.kotCopies) ?? current.kotCopies,
+              ),
+              fromCloud: true,
+            );
+      }
     }
     return true;
   }
@@ -965,6 +975,11 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
         kotUsbName: settings.kotUsbName,
       ),
     );
+    if (printerOk) {
+      await ref
+          .read(printerSettingsProvider.notifier)
+          .setPendingUpload(false);
+    }
     return companyOk || printerOk;
   }
 }

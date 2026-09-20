@@ -119,7 +119,7 @@ class SettingsHubPage extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
   ) async {
-    if (!await ensureOnline()) {
+    if (!await ensureOnline(force: true)) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(
         context,

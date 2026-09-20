@@ -4,8 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
+import 'package:pos_billingwala_v2/core/network/online_guard.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
+import 'package:pos_billingwala_v2/features/staff/data/staff_offline_queue.dart';
 import 'package:pos_billingwala_v2/features/staff/domain/permission_catalog.dart';
 import 'package:pos_billingwala_v2/features/staff/domain/permission_controller.dart';
 import 'package:pos_billingwala_v2/features/staff/domain/staff_user.dart';
@@ -33,14 +35,29 @@ class StaffDetailPageState extends ConsumerState<StaffDetailPage> {
   Future<void> load() async {
     final session = ref.read(authControllerProvider).session;
     if (session == null) return;
+    final cached = await StaffOfflineQueue.getStaffFromCache(widget.staffId);
+    if (cached != null && mounted) {
+      setState(() {
+        user = cached;
+        error = null;
+      });
+    }
+    if (!await isDeviceOnline()) {
+      if (cached == null && mounted) {
+        setState(() => error = 'User not found offline');
+      }
+      return;
+    }
     try {
       final loaded = await ref
           .read(staffApiProvider)
           .get(session.licenceUserId, widget.staffId);
+      await StaffOfflineQueue.upsertStaffCache(loaded);
       if (!mounted) return;
       setState(() => user = loaded);
     } catch (e) {
       if (!mounted) return;
+      if (user != null) return;
       setState(() => error = e.toString().replaceFirst('Exception: ', ''));
     }
   }
@@ -89,18 +106,21 @@ class StaffDetailPageState extends ConsumerState<StaffDetailPage> {
     final session = ref.read(authControllerProvider).session;
     if (session == null) return;
     try {
-      await ref
-          .read(staffApiProvider)
-          .resetPin(
-            userId: session.licenceUserId,
-            id: widget.staffId,
-            pin: pin.text.trim(),
-            confirmPin: confirm.text.trim(),
-          );
+      final result = await StaffOfflineQueue.resetPin(
+        api: ref.read(staffApiProvider),
+        userId: session.licenceUserId,
+        id: widget.staffId,
+        pin: pin.text.trim(),
+        confirmPin: confirm.text.trim(),
+      );
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('PIN reset')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            result.synced ? 'PIN reset' : result.message,
+          ),
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -112,22 +132,34 @@ class StaffDetailPageState extends ConsumerState<StaffDetailPage> {
   Future<void> resetRoleDefaults(StaffUser user) async {
     final session = ref.read(authControllerProvider).session;
     if (session == null) return;
-    await ref
-        .read(staffApiProvider)
-        .update(
-          userId: session.licenceUserId,
-          id: widget.staffId,
-          name: user.name,
-          mobileNumber: user.mobileNumber,
-          address: user.address,
-          status: user.status,
-          overrides: const {},
-        );
-    await load();
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Permissions reset to role defaults')),
-    );
+    try {
+      final result = await StaffOfflineQueue.update(
+        api: ref.read(staffApiProvider),
+        userId: session.licenceUserId,
+        id: widget.staffId,
+        name: user.name,
+        mobileNumber: user.mobileNumber,
+        address: user.address,
+        status: user.status,
+        overrides: const {},
+      );
+      await load();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            result.synced
+                ? 'Permissions reset to role defaults'
+                : result.message,
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    }
   }
 
   Future<void> changeRole() async {
@@ -147,19 +179,50 @@ class StaffDetailPageState extends ConsumerState<StaffDetailPage> {
     if (next == null) return;
     final session = ref.read(authControllerProvider).session;
     if (session == null) return;
-    await ref
-        .read(staffApiProvider)
-        .changeRole(session.licenceUserId, widget.staffId, next);
-    await load();
+    try {
+      final result = await StaffOfflineQueue.changeRole(
+        api: ref.read(staffApiProvider),
+        userId: session.licenceUserId,
+        id: widget.staffId,
+        role: next,
+      );
+      await load();
+      if (!mounted) return;
+      if (result.pending) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result.message)),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    }
   }
 
   Future<void> deactivateUser() async {
     final session = ref.read(authControllerProvider).session;
     if (session == null) return;
-    await ref
-        .read(staffApiProvider)
-        .deactivate(session.licenceUserId, widget.staffId);
-    if (mounted) Navigator.pop(context);
+    try {
+      final result = await StaffOfflineQueue.deactivate(
+        api: ref.read(staffApiProvider),
+        userId: session.licenceUserId,
+        id: widget.staffId,
+      );
+      if (!mounted) return;
+      if (result.pending) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result.message)),
+        );
+      }
+      Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    }
   }
 
   @override

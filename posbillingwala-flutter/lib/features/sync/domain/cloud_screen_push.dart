@@ -5,6 +5,8 @@ import 'package:pos_billingwala_v2/features/mess/data/mess_api.dart';
 import 'package:pos_billingwala_v2/features/mess/domain/mess_payer_mode.dart';
 import 'package:pos_billingwala_v2/features/print/domain/print_job_dispatcher.dart';
 import 'package:pos_billingwala_v2/features/print/domain/store_printer.dart';
+import 'package:pos_billingwala_v2/features/staff/data/staff_api.dart';
+import 'package:pos_billingwala_v2/features/staff/data/staff_offline_queue.dart';
 import 'package:pos_billingwala_v2/features/sync/domain/cloud_screen_cache.dart';
 
 /* Result of pushing API-only / prefs screen state during Sync to Server. */
@@ -142,6 +144,35 @@ abstract final class CloudScreenPush {
         } else {
           stepOk['meal_sessions'] = true;
           AppLogger.info('Sync↑ meal_sessions OK saved=$saved');
+          /* Refresh cache so sess_* placeholders become server ids. */
+          try {
+            final cloud = await messApi.fetchMealSessions(userId);
+            if (cloud.isNotEmpty) {
+              await CloudScreenCache.saveJson(
+                CloudScreenCache.mealSessions,
+                cloud
+                    .map(
+                      (e) => {
+                        'sessionId': e.sessionId,
+                        'sessionName': e.sessionName,
+                        'startTime': e.startTime,
+                        'endTime': e.endTime,
+                        'tokenPrefix': e.tokenPrefix,
+                        'isActive': e.isActive,
+                        'menuNotes': e.menuNotes,
+                        'sortOrder': e.sortOrder,
+                      },
+                    )
+                    .toList(),
+              );
+            }
+            await StaffOfflineQueue.setMealSessionsPending(false);
+          } catch (e) {
+            AppLogger.warning('Sync↑ meal_sessions refresh skip: $e');
+            if (saved > 0) {
+              await StaffOfflineQueue.setMealSessionsPending(false);
+            }
+          }
         }
       }
     } catch (e) {
@@ -149,6 +180,32 @@ abstract final class CloudScreenPush {
       counts[CloudScreenCache.mealSessions] = 0;
       stepOk['meal_sessions'] = false;
       AppLogger.error('Sync↑ meal_sessions exception', e);
+    }
+
+    try {
+      final staffApi = StaffApi(client);
+      final flush = await StaffOfflineQueue.flush(staffApi, userId);
+      counts[CloudScreenCache.staff] = flush.saved;
+      if (flush.failed > 0) {
+        failed += flush.failed;
+        stepOk['staff'] = false;
+        AppLogger.warning(
+          'Sync↑ staff FAIL saved=${flush.saved} failed=${flush.failed}',
+        );
+      } else {
+        stepOk['staff'] = true;
+        AppLogger.info('Sync↑ staff OK saved=${flush.saved}');
+      }
+      /* Salary ops are in the same queue; surface a salary step for progress. */
+      counts[CloudScreenCache.salary] = flush.saved > 0 ? flush.saved : 0;
+      stepOk['salary'] = flush.failed == 0;
+    } catch (e) {
+      failed++;
+      counts[CloudScreenCache.staff] = 0;
+      counts[CloudScreenCache.salary] = 0;
+      stepOk['staff'] = false;
+      stepOk['salary'] = false;
+      AppLogger.error('Sync↑ staff/salary exception', e);
     }
 
     try {
