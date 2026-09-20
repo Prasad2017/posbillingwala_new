@@ -185,9 +185,7 @@ class AppStrings {
 
   String get dayWise => tr('ui_day_wise');
 
-  String get deleteAllInvoice => tr(
-    'ui_delete_all_invoice_αñ╕αñ░αÑìαñ╡_αñ¼αñ▓αÑç_αñ╣αñƒαñ╡',
-  ).replaceAll('\n', ' ');
+  String get deleteAllInvoice => tr('ui_delete_all_bills');
 
   String get deleteAllInvoicesHint => tr('ui_delete_all_invoices_hint');
 

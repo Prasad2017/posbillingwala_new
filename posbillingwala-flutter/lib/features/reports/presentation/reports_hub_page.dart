@@ -246,7 +246,6 @@ class ReportsHubPage extends ConsumerWidget {
                   color: AppColors.red,
                   title: strings.deleteAllInvoice,
                   subtitle: strings.deleteAllInvoicesHint,
-                  titleSecondary: '(सर्व बिले हटवा)',
                   onTap: () => reportsHubPageClearAllInvoices(context, ref),
                 ),
               ],
@@ -265,14 +264,12 @@ class ReportItem {
     required this.title,
     required this.subtitle,
     required this.onTap,
-    this.titleSecondary,
   });
 
   final IconData icon;
   final Color color;
   final String title;
   final String subtitle;
-  final String? titleSecondary;
   final VoidCallback onTap;
 }
 
@@ -342,18 +339,6 @@ class ReportRowTile extends StatelessWidget {
                         height: 1.2,
                       ),
                     ),
-                    if (item.titleSecondary != null) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        item.titleSecondary!,
-                        style: TextStyle(
-                          fontFamily: AppFonts.family,
-                          color: AppColors.navy.withValues(alpha: .55),
-                          fontWeight: FontWeight.w600,
-                          fontSize: 12.5,
-                        ),
-                      ),
-                    ],
                     const SizedBox(height: 3),
                     Text(
                       item.subtitle,

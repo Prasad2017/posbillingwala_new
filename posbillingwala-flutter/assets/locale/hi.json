@@ -492,8 +492,7 @@
   "ui_day_wise_top_sale_out_product": "Day wise Top Sale out Product",
   "ui_deactivate_qr": "Deactivate QR",
   "ui_delete": "हटाएँ",
-  "ui_delete_all_invoice_αñ╕αñ░αÑìαñ╡_αñ¼αñ▓αÑç_αñ╣αñƒαñ╡": "Delete All Invoice\n(αñ╕αñ░αÑìαñ╡ αñ¼αñ┐αñ▓αÑç αñ╣αñƒαñ╡αñ╛)",
-  "ui_delete_all_invoices_hint": "Remove all local invoice records after cloud sync",
+  "ui_delete_all_invoices_hint": "क्लाउड सिंक के बाद सभी स्थानीय बिल हटाएं",
   "ui_designed_by_pos_billingwala": "designed by Billingwala",
   "ui_disable_combo": "Disable",
   "ui_disconnect": "डिस्कनेक्ट करें",
@@ -866,5 +865,6 @@
   "app_payment_display_already_paid_confirm": "यह बिल पहले से पेड है। क्या आप पेमेंट QR फिर से दिखाना चाहते हैं?",
   "app_payment_display_android_only": "पेमेंट डिस्प्ले Android POS ऐप पर लोकल Wi-Fi / हॉटस्पॉट से काम करता है।",
   "app_payment_display_keep_app_open_hint": "पेमेंट डिस्प्ले के दौरान POS ऐप खुला रखें। दूसरी डिवाइस पर केवल Chrome चाहिए — कोई ऐप इंस्टॉल नहीं।",
-  "app_payment_display_subtitle": "ग्राहक पेमेंट के लिए ऑफ़लाइन ब्राउज़र QR"
+  "app_payment_display_subtitle": "ग्राहक पेमेंट के लिए ऑफ़लाइन ब्राउज़र QR",
+  "ui_delete_all_bills": "सभी बिल हटाएं"
 }
