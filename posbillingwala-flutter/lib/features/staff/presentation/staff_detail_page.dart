@@ -234,7 +234,7 @@ class StaffDetailPageState extends ConsumerState<StaffDetailPage> {
         : posAllPermissionKeys().where(user.allows).toList(growable: false);
 
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(title: const Text('User details')),
       body: user == null
           ? Center(

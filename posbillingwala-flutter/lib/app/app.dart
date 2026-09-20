@@ -7,6 +7,7 @@ import 'package:pos_billingwala_v2/app/theme.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/constants/app_constants.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
+import 'package:pos_billingwala_v2/core/widgets/aurora_background.dart';
 import 'package:pos_billingwala_v2/features/settings/presentation/in_app_update_host.dart';
 import 'package:pos_billingwala_v2/features/sync/domain/catalog_bootstrap_listener.dart';
 import 'package:pos_billingwala_v2/features/sync/domain/connectivity_sync_listener.dart';
@@ -47,11 +48,11 @@ class PosBillingwalaApp extends ConsumerWidget {
       ],
       routerConfig: router,
       builder: (context, child) {
-        /* Ignore system Display size / Text size — POS layout stays fixed. */
+        /* Lock text size at 0.9 — ignore system Display / Text size. */
         final mq = MediaQuery.of(context);
         return MediaQuery(
           data: mq.copyWith(
-            textScaler: TextScaler.noScaling,
+            textScaler: const TextScaler.linear(0.9),
             boldText: false,
           ),
           child: AnnotatedRegion<SystemUiOverlayStyle>(
@@ -59,8 +60,7 @@ class PosBillingwalaApp extends ConsumerWidget {
             child: ColoredBox(
               color: AppColors.primary,
               child: SafeArea(
-                child: ColoredBox(
-                  color: Colors.white,
+                child: AuroraBackground(
                   child: InAppUpdateHost(
                     child: child ?? const SizedBox.shrink(),
                   ),

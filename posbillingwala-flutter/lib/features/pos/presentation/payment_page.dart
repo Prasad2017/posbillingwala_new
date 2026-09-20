@@ -467,7 +467,7 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,

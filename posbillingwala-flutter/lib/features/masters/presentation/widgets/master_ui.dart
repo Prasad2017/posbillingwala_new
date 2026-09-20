@@ -3,9 +3,9 @@ import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 
-/* Shared Master Data list/form chrome matching the reference screens. */
+/* Shared Master Data list/form chrome — glass over aurora. */
 abstract final class MasterUi {
-  static const bg = Color(0xFFF3F7FC);
+  static const bg = Colors.transparent;
   static const cardRadius = 14.0;
   static const fieldRadius = 10.0;
 }
@@ -27,7 +27,7 @@ class MasterSectionLabel extends StatelessWidget {
               fontFamily: AppFonts.family,
               fontSize: 11,
               letterSpacing: 0.9,
-              color: AppColors.textSecondary.withValues(alpha: .9),
+        color: AppColors.textSecondary,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -51,27 +51,12 @@ class MasterCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Keep fill on Material so ListTile ink is not covered by a colored DecoratedBox.
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(MasterUi.cardRadius),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.navy.withValues(alpha: .04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(MasterUi.cardRadius),
-          side: BorderSide(color: AppColors.border.withValues(alpha: .8)),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Padding(padding: padding, child: child),
-      ),
+    return AppCard(
+      padding: padding,
+      radius: MasterUi.cardRadius,
+      enableBlur: false,
+      color: AppColors.glassSolid,
+      child: SizedBox(width: double.infinity, child: child),
     );
   }
 }

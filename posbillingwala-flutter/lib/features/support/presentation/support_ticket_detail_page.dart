@@ -160,7 +160,7 @@ class SupportTicketDetailPageState
     final statusColor = ticketStatusColor(details?.status ?? '');
 
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text('Ticket Details'),
         actions: [

@@ -238,7 +238,7 @@ class HomePageState extends ConsumerState<HomePage> {
 
     if (AppPlatform.useDesktopShell) {
       return Scaffold(
-        backgroundColor: const Color(0xFFF7F9FC),
+        backgroundColor: Colors.transparent,
         body: CustomScrollView(
           slivers: [
             SliverToBoxAdapter(
@@ -259,7 +259,7 @@ class HomePageState extends ConsumerState<HomePage> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC),
+      backgroundColor: Colors.transparent,
       body: RefreshIndicator(
         onRefresh: () async {
           if (AppPlatform.autoCloudRefresh) {
@@ -966,7 +966,7 @@ class HeaderIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
+      color: AppColors.glassSolid,
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: onTap,
@@ -1049,7 +1049,7 @@ class GrowthDecoBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.glassSolid,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(

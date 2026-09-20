@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
+import 'package:pos_billingwala_v2/core/theme/app_typography.dart';
 import 'package:pos_billingwala_v2/core/widgets/three_dots_loader.dart';
 
 enum AppButtonVariant { primary, danger, outlined }
 
+/* Solid action buttons — never glass; high-contrast labels. */
 class AppButton extends StatelessWidget {
   const AppButton({
     super.key,
@@ -42,6 +44,11 @@ class AppButton extends StatelessWidget {
                   label,
                   textAlign: TextAlign.center,
                   overflow: TextOverflow.ellipsis,
+                  style: AppTypography.button(
+                    color: variant == AppButtonVariant.outlined
+                        ? AppColors.primary
+                        : Colors.white,
+                  ),
                 ),
               ),
             ],
@@ -53,8 +60,12 @@ class AppButton extends StatelessWidget {
         onPressed: onTap,
         style: FilledButton.styleFrom(
           backgroundColor: AppColors.primary,
-          elevation: 0,
-          padding: const EdgeInsets.symmetric(vertical: 15),
+          foregroundColor: Colors.white,
+          disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.45),
+          disabledForegroundColor: Colors.white.withValues(alpha: 0.9),
+          elevation: 2,
+          shadowColor: AppColors.primaryDark.withValues(alpha: 0.35),
+          padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 18),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
@@ -65,8 +76,12 @@ class AppButton extends StatelessWidget {
         onPressed: onTap,
         style: FilledButton.styleFrom(
           backgroundColor: AppColors.red,
-          elevation: 0,
-          padding: const EdgeInsets.symmetric(vertical: 15),
+          foregroundColor: Colors.white,
+          disabledBackgroundColor: AppColors.red.withValues(alpha: 0.45),
+          disabledForegroundColor: Colors.white.withValues(alpha: 0.9),
+          elevation: 2,
+          shadowColor: AppColors.red.withValues(alpha: 0.3),
+          padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 18),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
@@ -77,7 +92,12 @@ class AppButton extends StatelessWidget {
         onPressed: onTap,
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.primary,
-          side: const BorderSide(color: Color(0xFFBFD5F5)),
+          backgroundColor: AppColors.glassSolid,
+          side: const BorderSide(color: AppColors.primary, width: 1.6),
+          padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 18),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
         ),
         child: child,
       ),

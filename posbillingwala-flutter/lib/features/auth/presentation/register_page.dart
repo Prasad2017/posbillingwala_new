@@ -219,7 +219,7 @@ class RegisterPageState extends ConsumerState<RegisterPage> {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text(''),
         leading: IconButton(

@@ -128,7 +128,7 @@ class WebAppShell extends ConsumerWidget {
         .maybeWhen(data: (value) => value, orElse: () => true);
 
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: Colors.transparent,
       appBar: wide
           ? null
           : AppBar(

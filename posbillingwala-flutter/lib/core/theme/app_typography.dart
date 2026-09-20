@@ -38,18 +38,18 @@ abstract final class AppTypography {
     fontFamily: appTypographyFamily,
     fontFamilyFallback: AppFonts.indicFallbacks,
     fontSize: 15,
-    fontWeight: FontWeight.w400,
+    fontWeight: FontWeight.w500,
     height: 1.45,
-    color: color ?? AppColors.navy.withValues(alpha: .82),
+    color: color ?? AppColors.textPrimary,
   );
 
   static TextStyle bodySmall({Color? color}) => TextStyle(
     fontFamily: appTypographyFamily,
     fontFamilyFallback: AppFonts.indicFallbacks,
     fontSize: 13,
-    fontWeight: FontWeight.w400,
+    fontWeight: FontWeight.w500,
     height: 1.4,
-    color: color ?? AppColors.navy.withValues(alpha: .65),
+    color: color ?? AppColors.textSecondary,
   );
 
   static TextStyle button({Color? color}) => TextStyle(
@@ -96,17 +96,17 @@ abstract final class AppTypography {
     fontFamily: appTypographyFamily,
     fontFamilyFallback: AppFonts.indicFallbacks,
     fontSize: 13,
-    fontWeight: FontWeight.w600,
+    fontWeight: FontWeight.w700,
     height: 1.3,
-    color: color ?? AppColors.navy.withValues(alpha: .72),
+    color: color ?? AppColors.textPrimary,
   );
 
   static TextStyle caption({Color? color}) => TextStyle(
     fontFamily: appTypographyFamily,
     fontFamilyFallback: AppFonts.indicFallbacks,
     fontSize: 12,
-    fontWeight: FontWeight.w400,
+    fontWeight: FontWeight.w500,
     height: 1.35,
-    color: color ?? AppColors.navy.withValues(alpha: .55),
+    color: color ?? AppColors.textSecondary,
   );
 }

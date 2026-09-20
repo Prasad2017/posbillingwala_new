@@ -238,7 +238,7 @@ class MpinPageState extends ConsumerState<MpinPage> {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: Colors.transparent,
       body: Stack(
         fit: StackFit.expand,
         children: [

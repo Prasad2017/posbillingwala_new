@@ -755,7 +755,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
     final kotPicked = kotStatusLine(settings);
 
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,

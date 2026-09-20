@@ -61,7 +61,7 @@ class MastersHubPage extends ConsumerWidget {
     ];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F7FC),
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: Text(strings.masterData),
         leading: IconButton(
@@ -105,7 +105,7 @@ class MastersHubPage extends ConsumerWidget {
                     ),
                     itemBuilder: (context, index) {
                       return Material(
-                        color: Colors.white,
+                        color: AppColors.glassSolid,
                         borderRadius: BorderRadius.circular(18),
                         child: InkWell(
                           onTap: items[index].onTap,
@@ -117,14 +117,15 @@ class MastersHubPage extends ConsumerWidget {
                   )
                 : Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.glassFill,
                       borderRadius: BorderRadius.circular(18),
                       border: Border.all(
-                        color: AppColors.border.withValues(alpha: .75),
+                        color: AppColors.glassBorder,
+                        width: 1.2,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.navy.withValues(alpha: .05),
+                          color: AppColors.navy.withValues(alpha: .06),
                           blurRadius: 16,
                           offset: const Offset(0, 6),
                         ),

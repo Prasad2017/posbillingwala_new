@@ -81,7 +81,7 @@ class SettingsHubPage extends ConsumerWidget {
     final selected = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.glassSolid,
       showDragHandle: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
@@ -554,7 +554,7 @@ class SettingsHubPage extends ConsumerWidget {
     ];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F7FC),
+      backgroundColor: Colors.transparent,
       body: Column(
         children: [
           SettingsHeader(
@@ -934,9 +934,9 @@ class SettingsSectionCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.glassFill,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppColors.border.withValues(alpha: .65)),
+        border: Border.all(color: AppColors.glassBorder, width: 1.2),
         boxShadow: [
           BoxShadow(
             color: AppColors.navy.withValues(alpha: .06),

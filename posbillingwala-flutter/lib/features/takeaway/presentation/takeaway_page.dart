@@ -102,7 +102,7 @@ class TakeawayPageState extends ConsumerState<TakeawayPage> {
     final currency = NumberFormat.currency(locale: 'en_IN', symbol: '₹ ');
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

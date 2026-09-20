@@ -109,7 +109,7 @@ class BluetoothDevicePickerPageState extends State<BluetoothDevicePickerPage> {
             : 'Select KOT printer');
 
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: Text(title),
         actions: [

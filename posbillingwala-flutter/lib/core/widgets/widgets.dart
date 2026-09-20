@@ -11,6 +11,7 @@ export 'app_states.dart';
 export 'app_svg.dart';
 export 'app_switch_tile.dart';
 export 'app_text_field.dart';
+export 'aurora_background.dart';
 export 'brand_logo.dart';
 export 'donut_chart.dart';
 export 'dropdown/app_dropdown_form_field.dart';

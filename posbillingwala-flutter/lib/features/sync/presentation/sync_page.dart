@@ -85,7 +85,7 @@ class SyncPageState extends ConsumerState<SyncPage> {
     return PopScope(
       canPop: canLeave,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF3F7FC),
+        backgroundColor: Colors.transparent,
         appBar: AppBar(
           title: Text(
             syncPageTitle,

@@ -132,7 +132,9 @@ class AppFeatureBanner extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     subtitle!,
-                    style: AppTypography.bodySmall(color: Colors.white70),
+                    style: AppTypography.bodySmall(
+                      color: Colors.white.withValues(alpha: 0.95),
+                    ),
                   ),
                 ],
               ],

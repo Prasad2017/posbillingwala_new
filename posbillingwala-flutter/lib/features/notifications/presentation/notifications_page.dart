@@ -36,7 +36,7 @@ class NotificationsPageState extends ConsumerState<NotificationsPage> {
     final time = DateFormat('dd MMM, hh:mm a');
 
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text('Notifications'),
         actions: [

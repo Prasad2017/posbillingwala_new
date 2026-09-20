@@ -21,7 +21,7 @@ class FetchResultPage extends ConsumerWidget {
     final pad = AppBreakpoints.pagePaddingFor(context.widthClass);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F7FC),
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text(
           'Local data saved',

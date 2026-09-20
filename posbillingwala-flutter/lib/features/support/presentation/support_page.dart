@@ -33,7 +33,7 @@ class SupportPageState extends ConsumerState<SupportPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text('Help & Support'),
         actions: [

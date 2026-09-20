@@ -80,7 +80,7 @@ class ShareAppPage extends StatelessWidget {
     final topInset = MediaQuery.paddingOf(context).top;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F7FC),
+      backgroundColor: Colors.transparent,
       body: Column(
         children: [
           ShareHeader(topInset: topInset, onBack: () => context.pop()),

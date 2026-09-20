@@ -55,7 +55,7 @@ class InvoiceAddProductsPageState extends ConsumerState<InvoiceAddProductsPage> 
     final cols = widthClass == AppWidthClass.compact ? 2 : 3;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC),
+      backgroundColor: Colors.transparent,
       appBar: AppBar(title: Text(strings.addProduct)),
       body: Column(
         children: [

@@ -112,7 +112,7 @@ class StaffLoginPageState extends ConsumerState<StaffLoginPage> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: ListView(padding: const EdgeInsets.all(24), children: children),
       ),

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
 import 'package:pos_billingwala_v2/core/theme/app_typography.dart';
+import 'package:pos_billingwala_v2/core/theme/billingwala_theme.dart';
 
 class AppTheme {
   AppTheme._();
@@ -12,7 +13,7 @@ class AppTheme {
     statusBarColor: AppColors.primary,
     statusBarIconBrightness: Brightness.light,
     statusBarBrightness: Brightness.dark,
-    systemNavigationBarColor: Colors.white,
+    systemNavigationBarColor: AppColors.auroraTop,
     systemNavigationBarIconBrightness: Brightness.dark,
     systemNavigationBarDividerColor: Colors.transparent,
   );
@@ -23,7 +24,9 @@ class AppTheme {
       primary: AppColors.primary,
       secondary: AppColors.orange,
       error: AppColors.red,
-      surface: Colors.white,
+      surface: AppColors.glassSolid,
+      onSurface: AppColors.textPrimary,
+      onSurfaceVariant: AppColors.textSecondary,
       brightness: Brightness.light,
     );
 
@@ -31,12 +34,13 @@ class AppTheme {
       useMaterial3: true,
       colorScheme: scheme,
       fontFamily: AppFonts.family,
-      scaffoldBackgroundColor: AppColors.surface,
+      scaffoldBackgroundColor: Colors.transparent,
       splashFactory: InkSparkle.splashFactory,
       dividerColor: AppColors.border,
+      extensions: const [BillingwalaTheme.light],
     );
 
-    /* Friendlier Material text scale — larger body, softer titles. */
+    /* Friendlier Material text scale — larger body, high-contrast titles. */
     final textTheme = base.textTheme
         .copyWith(
           displayLarge: AppTypography.screenTitle(),
@@ -57,8 +61,8 @@ class AppTheme {
         )
         .apply(
           fontFamily: AppFonts.family,
-          bodyColor: AppColors.navy,
-          displayColor: AppColors.navy,
+          bodyColor: AppColors.textPrimary,
+          displayColor: AppColors.textPrimary,
         );
 
     return base.copyWith(
@@ -74,23 +78,25 @@ class AppTheme {
         systemOverlayStyle: lightSystemUi,
         titleTextStyle: AppTypography.sectionTitle(
           color: Colors.white,
-        ).copyWith(fontSize: 20, fontWeight: FontWeight.w600),
+        ).copyWith(fontSize: 20, fontWeight: FontWeight.w700),
         toolbarTextStyle: AppTypography.body(color: Colors.white),
       ),
       cardTheme: CardThemeData(
         elevation: 0,
-        color: AppColors.card,
+        color: AppColors.glassFill,
         surfaceTintColor: Colors.transparent,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(22),
-          side: BorderSide(color: AppColors.border),
+          side: const BorderSide(color: AppColors.glassBorder, width: 1.2),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
+          elevation: 2,
+          shadowColor: AppColors.primaryDark.withValues(alpha: 0.35),
           minimumSize: const Size(0, 52),
           padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
           textStyle: AppTypography.button(),
@@ -102,8 +108,9 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.primary,
+          backgroundColor: AppColors.glassSolid,
           minimumSize: const Size(0, 50),
-          side: const BorderSide(color: Color(0xFFBFD5F5)),
+          side: const BorderSide(color: AppColors.primary, width: 1.6),
           textStyle: AppTypography.button(color: AppColors.primary),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
@@ -114,7 +121,7 @@ class AppTheme {
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primary,
           textStyle: AppTypography.body().copyWith(
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w700,
             color: AppColors.primary,
           ),
         ),
@@ -129,44 +136,45 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppColors.glassSolid,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 18,
           vertical: 16,
         ),
         labelStyle: AppTypography.body().copyWith(
           fontSize: 14,
-          fontWeight: FontWeight.w500,
-          color: AppColors.navy.withValues(alpha: .7),
+          fontWeight: FontWeight.w600,
+          color: AppColors.textSecondary,
         ),
         floatingLabelStyle: AppTypography.bodySmall().copyWith(
           fontSize: 14,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w700,
           color: AppColors.primary,
         ),
         hintStyle: AppTypography.body().copyWith(
-          color: const Color(0xFF9AA7B9),
-          fontWeight: FontWeight.w400,
+          color: AppColors.textSecondary.withValues(alpha: 0.75),
+          fontWeight: FontWeight.w500,
         ),
         helperStyle: AppTypography.caption(),
         errorStyle: AppTypography.caption(color: AppColors.red),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Color(0xFFDCE6F5)),
+          borderSide: const BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Color(0xFFDCE6F5)),
+          borderSide: const BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: AppColors.primary, width: 1.6),
+          borderSide: const BorderSide(color: AppColors.primary, width: 1.8),
         ),
       ),
       listTileTheme: ListTileThemeData(
         titleTextStyle: AppTypography.cardTitle(),
         subtitleTextStyle: AppTypography.bodySmall(),
         leadingAndTrailingTextStyle: AppTypography.bodySmall(),
+        iconColor: AppColors.textPrimary,
       ),
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.primaryLight,
@@ -175,7 +183,7 @@ class AppTheme {
         checkmarkColor: Colors.white,
         labelStyle: AppTypography.bodySmall(
           color: AppColors.navy,
-        ).copyWith(fontWeight: FontWeight.w600),
+        ).copyWith(fontWeight: FontWeight.w700),
         secondaryLabelStyle: AppTypography.bodySmall(
           color: Colors.white,
         ).copyWith(fontWeight: FontWeight.w700),
@@ -184,19 +192,21 @@ class AppTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
+        backgroundColor: AppColors.navy,
         contentTextStyle: AppTypography.body(color: Colors.white),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
       dialogTheme: DialogThemeData(
-        backgroundColor: Colors.white,
-        elevation: 7,
+        backgroundColor: AppColors.glassSolid,
+        elevation: 10,
+        shadowColor: AppColors.navy.withValues(alpha: 0.18),
         surfaceTintColor: Colors.transparent,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         titleTextStyle: AppTypography.sectionTitle(),
         contentTextStyle: AppTypography.body(),
       ),
       bottomSheetTheme: const BottomSheetThemeData(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.glassSolid,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
@@ -204,9 +214,11 @@ class AppTheme {
       ),
       tabBarTheme: TabBarThemeData(
         labelStyle: AppTypography.cardTitle(color: AppColors.primary),
-        unselectedLabelStyle: AppTypography.body(),
+        unselectedLabelStyle: AppTypography.body(
+          color: AppColors.textSecondary,
+        ),
         labelColor: AppColors.primary,
-        unselectedLabelColor: AppColors.navy.withValues(alpha: .55),
+        unselectedLabelColor: AppColors.textSecondary,
       ),
     );
   }

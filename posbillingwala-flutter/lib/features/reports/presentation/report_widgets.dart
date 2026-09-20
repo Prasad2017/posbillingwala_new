@@ -7,9 +7,9 @@ import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/features/reports/domain/reports_providers.dart';
 
-const pageBg = Color(0xFFF3F7FC);
+const pageBg = Color(0x00000000);
 
-Color get reportPageBg => pageBg;
+Color get reportPageBg => Colors.transparent;
 
 /* Uppercase section label used on hub and detail screens. */
 class ReportSectionLabel extends StatelessWidget {
@@ -25,7 +25,7 @@ class ReportSectionLabel extends StatelessWidget {
         fontFamily: AppFonts.family,
         fontSize: 11,
         letterSpacing: 1.0,
-        color: AppColors.textSecondary.withValues(alpha: .85),
+        color: AppColors.textSecondary,
         fontWeight: FontWeight.w600,
       ),
     );
@@ -49,7 +49,7 @@ class ReportPeriodPill extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.glassSolid,
             borderRadius: BorderRadius.circular(999),
             border: Border.all(color: AppColors.primary.withValues(alpha: .35)),
             boxShadow: [
@@ -141,7 +141,7 @@ class ReportFilterChip extends StatelessWidget {
   }
 }
 
-/* White card shell matching Masters / Settings list cards. */
+/* Glass card shell matching Masters / Settings list cards. */
 class ReportSurfaceCard extends StatelessWidget {
   const ReportSurfaceCard({
     super.key,
@@ -160,14 +160,14 @@ class ReportSurfaceCard extends StatelessWidget {
       margin: margin,
       padding: padding,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.glassFill,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.border.withValues(alpha: .75)),
+        border: Border.all(color: AppColors.glassBorder, width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: AppColors.navy.withValues(alpha: .05),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
+            color: AppColors.navy.withValues(alpha: .06),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -239,14 +239,14 @@ class ReportKpiCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.glassSolid,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border.withValues(alpha: .8)),
+        border: Border.all(color: AppColors.glassBorder, width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: AppColors.navy.withValues(alpha: .04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: AppColors.navy.withValues(alpha: .06),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
           ),
         ],
       ),

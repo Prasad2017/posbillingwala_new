@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/widgets/app_button.dart';
 import 'package:pos_billingwala_v2/core/widgets/widget_strings.dart';
 import 'package:pos_billingwala_v2/core/widgets/widget_theme.dart';
@@ -12,7 +13,7 @@ Future<T?> showAppBottomSheet<T>({
   return showModalBottomSheet<T>(
     context: context,
     isScrollControlled: true,
-    backgroundColor: Colors.white,
+    backgroundColor: AppColors.glassSolid,
     showDragHandle: true,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(28)),

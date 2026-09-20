@@ -124,7 +124,7 @@ class PosPageState extends ConsumerState<PosPage> {
     final strings = AppStrings.of(ref);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F6FB),
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         backgroundColor: isFastBilling ? Colors.white : AppColors.primary,
         foregroundColor: isFastBilling ? AppColors.navy : Colors.white,
@@ -646,26 +646,29 @@ class CatalogPane extends ConsumerWidget {
                             );
                             final crossAxisCount =
                                 AppBreakpoints.productColumnsFor(widthClass);
-                            final aspect = widthClass == AppWidthClass.compact
-                                ? 1.72
+                            final mainExtent = widthClass == AppWidthClass.compact
+                                ? 86.0
                                 : widthClass == AppWidthClass.medium
-                                ? 1.78
-                                : 1.85;
+                                ? 88.0
+                                : 90.0;
                             return GridView.builder(
-                              padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
+                              padding: const EdgeInsets.fromLTRB(8, 6, 8, 16),
                               addAutomaticKeepAlives: false,
                               gridDelegate:
                                   SliverGridDelegateWithFixedCrossAxisCount(
                                     crossAxisCount: crossAxisCount,
-                                    mainAxisSpacing: 10,
-                                    crossAxisSpacing: 10,
-                                    childAspectRatio: aspect,
+                                    mainAxisSpacing: 6,
+                                    crossAxisSpacing: 6,
+                                    mainAxisExtent: mainExtent,
                                   ),
                               itemCount: filtered.length,
-                              itemBuilder: (context, index) => ProductCard(
-                                key: ValueKey(filtered[index].productId),
-                                product: filtered[index],
-                                currency: currency,
+                              itemBuilder: (context, index) => Align(
+                                alignment: Alignment.topCenter,
+                                child: ProductCard(
+                                  key: ValueKey(filtered[index].productId),
+                                  product: filtered[index],
+                                  currency: currency,
+                                ),
                               ),
                             );
                           },
@@ -830,7 +833,8 @@ class ProductCard extends ConsumerWidget {
           borderRadius: BorderRadius.circular(14),
           onTap: () => addProductWithPortionPicker(context, ref, product),
           child: Container(
-            padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(14),
@@ -857,7 +861,7 @@ class ProductCard extends ConsumerWidget {
                       ProductImageThumb(
                         key: ValueKey('img-${product.productId}'),
                         value: product.productImage,
-                        size: 48,
+                        size: 36,
                         radius: 10,
                         showPlaceholder: false,
                       ),
@@ -866,10 +870,11 @@ class ProductCard extends ConsumerWidget {
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
                             product.productName,
-                            maxLines: 2,
+                            maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               fontWeight: FontWeight.w800,
@@ -878,7 +883,7 @@ class ProductCard extends ConsumerWidget {
                               height: 1.15,
                             ),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 2),
                           Text(
                             priceLabel,
                             maxLines: 1,
@@ -887,6 +892,7 @@ class ProductCard extends ConsumerWidget {
                               fontWeight: FontWeight.w700,
                               fontSize: 12,
                               color: AppColors.textPrimary,
+                              height: 1.1,
                             ),
                           ),
                         ],
@@ -894,7 +900,7 @@ class ProductCard extends ConsumerWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 GestureDetector(
                   onTap: () {},
                   behavior: HitTestBehavior.opaque,
@@ -957,7 +963,7 @@ class ProductQtyButton extends ConsumerWidget {
     if (qtyInCart <= 0) {
       return SizedBox(
         width: double.infinity,
-        height: 34,
+        height: 32,
         child: Material(
           color: AppColors.primary,
           borderRadius: BorderRadius.circular(10),
@@ -986,7 +992,7 @@ class ProductQtyButton extends ConsumerWidget {
 
     return Container(
       width: double.infinity,
-      height: 34,
+      height: 32,
       padding: const EdgeInsets.symmetric(horizontal: 4),
       decoration: BoxDecoration(
         color: AppColors.primaryLight,

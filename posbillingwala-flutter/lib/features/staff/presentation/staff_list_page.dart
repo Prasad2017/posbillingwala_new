@@ -91,7 +91,7 @@ class StaffListPageState extends ConsumerState<StaffListPage> {
         .watch(permissionControllerProvider)
         .allows('user.create');
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(title: const Text('Users')),
       floatingActionButton: canCreate
           ? FloatingActionButton(

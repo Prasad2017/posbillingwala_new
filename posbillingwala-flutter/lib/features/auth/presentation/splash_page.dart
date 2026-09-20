@@ -164,7 +164,7 @@ class SplashPageState extends ConsumerState<SplashPage> {
 
   Widget mobileSplash() {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.transparent,
       body: Stack(
         fit: StackFit.expand,
         children: [

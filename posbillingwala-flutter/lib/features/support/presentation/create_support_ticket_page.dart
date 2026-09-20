@@ -122,7 +122,7 @@ class CreateSupportTicketPageState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text('Create Support Ticket'),
         actions: [

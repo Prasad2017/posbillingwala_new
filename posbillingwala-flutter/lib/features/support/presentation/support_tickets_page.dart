@@ -97,7 +97,7 @@ class SupportTicketsPageState extends ConsumerState<SupportTicketsPage> {
   Widget build(BuildContext context) {
     final visible = visibleTickets;
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text('My Support Tickets'),
         actions: [
