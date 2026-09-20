@@ -11,9 +11,8 @@ abstract final class AppConfig {
   static const bool allowScreenshot = true;
 
   /* true = force logging on; false = force off.
-   * Omit both and logging follows debug/release (see getter below).
-   * Or use `--dart-define=ENABLE_LOGGING=true|false`. */
-  static const bool? enableLoggingOverride = true;
+   * Or use `--dart-define=ENABLE_LOGGING=true|false` to override at build time. */
+  static const bool enableLoggingOverride = true;
 
   /* Console + Documents/Pos Billingwala/Logs.
    * Full SQL/API bodies jank the POS — keep off in release unless needed. */
@@ -22,9 +21,7 @@ abstract final class AppConfig {
     if (hasDartDefine) {
       return bool.fromEnvironment('ENABLE_LOGGING');
     }
-    final override = enableLoggingOverride;
-    if (override != null) return override;
-    return kDebugMode;
+    return enableLoggingOverride;
   }
 
   /* true when logging is on in debug: pretty-print API bodies + every SQL. */

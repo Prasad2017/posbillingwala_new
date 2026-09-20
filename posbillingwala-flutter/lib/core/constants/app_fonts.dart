@@ -7,9 +7,14 @@ import 'package:flutter/painting.dart';
 abstract final class AppFonts {
   static const family = 'Poppins';
 
-  /* System / platform fonts that cover Indic + common scripts. */
-  static const printFallbacks = <String>[
+  /* System / platform fonts that cover Indic + common scripts for UI + print. */
+  static const indicFallbacks = <String>[
     'Noto Sans Devanagari',
+    'Noto Sans Telugu',
+    'Noto Sans Tamil',
+    'Noto Sans Gujarati',
+    'Noto Sans Kannada',
+    'Noto Sans Bengali',
     'Noto Sans',
     'Roboto',
     'Helvetica',
@@ -17,6 +22,8 @@ abstract final class AppFonts {
     'Arial',
     'sans-serif',
   ];
+
+  static const printFallbacks = indicFallbacks;
 
   /* Same style for thermal raster, invoice preview, and share PNG. */
   static TextStyle printBody({

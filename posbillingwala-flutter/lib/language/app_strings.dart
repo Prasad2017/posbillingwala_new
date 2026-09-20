@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pos_billingwala_v2/language/app_languages.dart';
 import 'package:pos_billingwala_v2/language/locale_catalog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-// Persisted app language (en / hi / mr). Applies without restart.
+// Persisted app language. Applies without restart.
 class AppLocaleController extends Notifier<Locale> {
   static const prefsKey = 'appLanguage';
 
@@ -16,24 +17,13 @@ class AppLocaleController extends Notifier<Locale> {
 
   Future<void> hydrate() async {
     final prefs = await SharedPreferences.getInstance();
-    state = fromCode(prefs.getString(prefsKey));
+    state = AppLanguages.localeFromCode(prefs.getString(prefsKey));
   }
 
   Future<void> setLanguage(String code) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(prefsKey, code);
-    state = fromCode(code);
-  }
-
-  Locale fromCode(String? code) {
-    switch (code) {
-      case 'hi':
-        return const Locale('hi');
-      case 'mr':
-        return const Locale('mr');
-      default:
-        return const Locale('en');
-    }
+    state = AppLanguages.localeFromCode(code);
   }
 }
 
@@ -41,7 +31,7 @@ final appLocaleProvider = NotifierProvider<AppLocaleController, Locale>(
   AppLocaleController.new,
 );
 
-// Lightweight EN/HI/MR strings loaded from assets/locale JSON files.
+// Lightweight UI strings loaded from assets/locale JSON files.
 class AppStrings {
   AppStrings(this.locale);
 

@@ -1,8 +1,9 @@
 import 'dart:convert';
 
 import 'package:flutter/services.dart';
+import 'package:pos_billingwala_v2/language/app_languages.dart';
 
-// Loads common EN/HI/MR strings from assets/locale JSON files.
+// Loads app UI strings from assets/locale JSON files.
 class LocaleCatalog {
   LocaleCatalog._();
 
@@ -20,8 +21,8 @@ class LocaleCatalog {
   /* Remaining locales after the first frame. */
   static Future<void> loadRemaining() async {
     await Future.wait([
-      if (!_byLang.containsKey('hi')) _loadLang('hi'),
-      if (!_byLang.containsKey('mr')) _loadLang('mr'),
+      for (final code in AppLanguages.supportedCodes)
+        if (code != 'en' && !_byLang.containsKey(code)) _loadLang(code),
     ]);
     _loaded = true;
   }
@@ -33,26 +34,31 @@ class LocaleCatalog {
   }
 
   static Future<void> _loadLang(String lang) async {
-    final raw = await rootBundle.loadString('assets/locale/$lang.json');
-    final decoded = jsonDecode(raw);
-    if (decoded is! Map) {
-      _byLang[lang] = {};
-      return;
-    }
-    final map = <String, String>{};
-    decoded.forEach((key, value) {
-      if (key is String && value != null) {
-        map[key] = value.toString();
+    try {
+      final raw = await rootBundle.loadString('assets/locale/$lang.json');
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map) {
+        _byLang[lang] = {};
+        return;
       }
-    });
-    _byLang[lang] = map;
+      final map = <String, String>{};
+      decoded.forEach((key, value) {
+        if (key is String && value != null) {
+          map[key] = value.toString();
+        }
+      });
+      _byLang[lang] = map;
+    } catch (_) {
+      /* Missing/corrupt locale falls back to English via [get]. */
+      _byLang[lang] = {};
+    }
   }
 
   static String get(String lang, String key) {
     final primary = _byLang[lang];
     if (primary != null) {
       final hit = primary[key];
-      if (hit != null) return hit;
+      if (hit != null && hit.isNotEmpty) return hit;
     }
     final en = _byLang['en'];
     if (en != null) {

@@ -8,6 +8,7 @@ abstract final class AppTypography {
 
   static TextStyle screenTitle({Color? color}) => TextStyle(
     fontFamily: appTypographyFamily,
+    fontFamilyFallback: AppFonts.indicFallbacks,
     fontSize: 24,
     fontWeight: FontWeight.w700,
     height: 1.3,
@@ -17,6 +18,7 @@ abstract final class AppTypography {
 
   static TextStyle sectionTitle({Color? color}) => TextStyle(
     fontFamily: appTypographyFamily,
+    fontFamilyFallback: AppFonts.indicFallbacks,
     fontSize: 18,
     fontWeight: FontWeight.w600,
     height: 1.35,
@@ -25,6 +27,7 @@ abstract final class AppTypography {
 
   static TextStyle cardTitle({Color? color}) => TextStyle(
     fontFamily: appTypographyFamily,
+    fontFamilyFallback: AppFonts.indicFallbacks,
     fontSize: 16,
     fontWeight: FontWeight.w600,
     height: 1.35,
@@ -33,6 +36,7 @@ abstract final class AppTypography {
 
   static TextStyle body({Color? color}) => TextStyle(
     fontFamily: appTypographyFamily,
+    fontFamilyFallback: AppFonts.indicFallbacks,
     fontSize: 15,
     fontWeight: FontWeight.w400,
     height: 1.45,
@@ -41,6 +45,7 @@ abstract final class AppTypography {
 
   static TextStyle bodySmall({Color? color}) => TextStyle(
     fontFamily: appTypographyFamily,
+    fontFamilyFallback: AppFonts.indicFallbacks,
     fontSize: 13,
     fontWeight: FontWeight.w400,
     height: 1.4,
@@ -49,6 +54,7 @@ abstract final class AppTypography {
 
   static TextStyle button({Color? color}) => TextStyle(
     fontFamily: appTypographyFamily,
+    fontFamilyFallback: AppFonts.indicFallbacks,
     fontSize: 16,
     fontWeight: FontWeight.w600,
     height: 1.25,
@@ -58,6 +64,7 @@ abstract final class AppTypography {
 
   static TextStyle amount({Color? color, double size = 22}) => TextStyle(
     fontFamily: appTypographyFamily,
+    fontFamilyFallback: AppFonts.indicFallbacks,
     fontSize: size,
     fontWeight: FontWeight.w700,
     height: 1.2,
@@ -67,6 +74,7 @@ abstract final class AppTypography {
 
   static TextStyle invoiceTotal({Color? color}) => TextStyle(
     fontFamily: appTypographyFamily,
+    fontFamilyFallback: AppFonts.indicFallbacks,
     fontSize: 26,
     fontWeight: FontWeight.w700,
     height: 1.2,
@@ -76,6 +84,7 @@ abstract final class AppTypography {
 
   static TextStyle statusLabel({Color? color}) => TextStyle(
     fontFamily: appTypographyFamily,
+    fontFamilyFallback: AppFonts.indicFallbacks,
     fontSize: 12,
     fontWeight: FontWeight.w600,
     height: 1.25,
@@ -85,6 +94,7 @@ abstract final class AppTypography {
 
   static TextStyle tableHeader({Color? color}) => TextStyle(
     fontFamily: appTypographyFamily,
+    fontFamilyFallback: AppFonts.indicFallbacks,
     fontSize: 13,
     fontWeight: FontWeight.w600,
     height: 1.3,
@@ -93,6 +103,7 @@ abstract final class AppTypography {
 
   static TextStyle caption({Color? color}) => TextStyle(
     fontFamily: appTypographyFamily,
+    fontFamilyFallback: AppFonts.indicFallbacks,
     fontSize: 12,
     fontWeight: FontWeight.w400,
     height: 1.35,

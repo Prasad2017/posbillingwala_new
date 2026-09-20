@@ -18,6 +18,7 @@ import 'package:pos_billingwala_v2/features/staff/domain/permission_controller.d
 import 'package:pos_billingwala_v2/features/support/presentation/support_widgets.dart';
 import 'package:pos_billingwala_v2/features/sync/domain/full_sync_controller.dart';
 import 'package:pos_billingwala_v2/features/sync/domain/sync_progress.dart';
+import 'package:pos_billingwala_v2/language/app_languages.dart';
 import 'package:pos_billingwala_v2/language/app_strings.dart';
 
 /* Settings hub — card groups matching the Settings reference UI. */
@@ -77,34 +78,110 @@ class SettingsHubPage extends ConsumerWidget {
 
   Future<void> pickLanguage(BuildContext context, WidgetRef ref) async {
     final current = ref.read(appLocaleProvider).languageCode;
-
-    final selected = await showDialog<String>(
+    final selected = await showModalBottomSheet<String>(
       context: context,
-      builder: (context) => SimpleDialog(
-        title: Text(AppStrings.of(ref).language),
-        children: [
-          for (final option in const [
-            ('en', 'English'),
-            ('hi', 'हिन्दी'),
-            ('mr', 'मराठी'),
-          ])
-            SimpleDialogOption(
-              onPressed: () => Navigator.pop(context, option.$1),
-              child: Row(
-                children: [
-                  Icon(
-                    current == option.$1
-                        ? Icons.radio_button_checked
-                        : Icons.radio_button_off,
-                    color: AppColors.navy,
-                  ),
-                  const SizedBox(width: 12),
-                  Text(option.$2),
-                ],
-              ),
-            ),
-        ],
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      showDragHandle: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
+      builder: (ctx) {
+        final maxH = MediaQuery.sizeOf(ctx).height * 0.72;
+        return SafeArea(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: maxH),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 4, 24, 12),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: .10),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: const Icon(
+                          Icons.language_rounded,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          AppStrings.of(ref).language,
+                          style: const TextStyle(
+                            fontFamily: AppFonts.family,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.navy,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Flexible(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 20),
+                    itemCount: AppLanguages.options.length,
+                    separatorBuilder: (_, _) => Divider(
+                      height: 1,
+                      color: AppColors.border.withValues(alpha: .7),
+                    ),
+                    itemBuilder: (context, index) {
+                      final option = AppLanguages.options[index];
+                      final selectedLang = current == option.code;
+                      return ListTile(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        leading: Icon(
+                          selectedLang
+                              ? Icons.radio_button_checked
+                              : Icons.radio_button_off,
+                          color: selectedLang
+                              ? AppColors.primary
+                              : AppColors.navy.withValues(alpha: .45),
+                        ),
+                        title: Text(
+                          option.nativeLabel,
+                          style: TextStyle(
+                            fontFamily: AppFonts.family,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.navy,
+                          ),
+                        ),
+                        subtitle: option.label == option.nativeLabel
+                            ? null
+                            : Text(
+                                option.label,
+                                style: TextStyle(
+                                  fontFamily: AppFonts.family,
+                                  color: AppColors.navy.withValues(alpha: .55),
+                                ),
+                              ),
+                        trailing: selectedLang
+                            ? const Icon(
+                                Icons.check_rounded,
+                                color: AppColors.primary,
+                              )
+                            : null,
+                        onTap: () => Navigator.pop(ctx, option.code),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
     if (selected == null || selected == current) return;
 

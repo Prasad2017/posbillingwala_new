@@ -11,6 +11,7 @@ import 'package:pos_billingwala_v2/features/settings/presentation/in_app_update_
 import 'package:pos_billingwala_v2/features/sync/domain/catalog_bootstrap_listener.dart';
 import 'package:pos_billingwala_v2/features/sync/domain/connectivity_sync_listener.dart';
 import 'package:pos_billingwala_v2/features/sync/domain/web_cloud_refresh_listener.dart';
+import 'package:pos_billingwala_v2/language/app_languages.dart';
 import 'package:pos_billingwala_v2/language/app_strings.dart';
 
 class PosBillingwalaApp extends ConsumerWidget {
@@ -36,7 +37,9 @@ class PosBillingwalaApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       locale: locale,
-      supportedLocales: const [Locale('en'), Locale('hi'), Locale('mr')],
+      supportedLocales: [
+        for (final code in AppLanguages.supportedCodes) Locale(code),
+      ],
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,

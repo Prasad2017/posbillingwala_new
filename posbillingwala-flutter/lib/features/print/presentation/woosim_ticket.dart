@@ -73,13 +73,17 @@ class WoosimTicket extends StatelessWidget {
                   ),
                 ),
               ),
-            for (final line in ticket.shopLines)
+            for (var i = 0; i < ticket.shopLines.length; i++)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                 child: Text(
-                  line,
+                  ticket.shopLines[i],
                   textAlign: TextAlign.center,
-                  style: pop(size: shopSize, weight: FontWeight.w700),
+                  style: pop(
+                    size: shopSize,
+                    /* Only shop name (first header line) is bold. */
+                    weight: i == 0 ? FontWeight.w700 : FontWeight.w500,
+                  ),
                 ),
               ),
             for (final line in ticket.metaLines)

@@ -211,7 +211,7 @@ abstract final class StaffOfflineQueue {
       'mobileNumber': mobileNumber,
       'address': address,
       'status': status,
-      if (overrides case final o?) 'overrides': o,
+      'overrides': ?overrides,
     });
 
     if (!await isDeviceOnline()) {
