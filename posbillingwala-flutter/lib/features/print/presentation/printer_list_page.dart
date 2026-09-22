@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
+import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/print/domain/print_job_dispatcher.dart';
 import 'package:pos_billingwala_v2/features/print/domain/store_printer.dart';
@@ -63,6 +65,7 @@ class PrinterListPageState extends ConsumerState<PrinterListPage> {
     final canManage = ref
         .watch(permissionControllerProvider)
         .allows('printer.manage');
+    final pad = AppBreakpoints.pagePaddingFor(context.widthClass);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Extra printers'),
@@ -92,34 +95,44 @@ class PrinterListPageState extends ConsumerState<PrinterListPage> {
           ? Center(child: Text(error!))
           : RefreshIndicator(
               onRefresh: load,
-              child: ListView.builder(
-                itemCount: printers.isEmpty ? 1 : printers.length,
-                itemBuilder: (context, index) {
-                  if (printers.isEmpty) {
-                    return const Padding(
-                      padding: EdgeInsets.all(24),
-                      child: Text(
-                        'No extra printers yet. Tap + to add a kitchen or packing printer.',
-                        textAlign: TextAlign.center,
-                      ),
-                    );
-                  }
-                  final printer = printers[index];
-                  return ListTile(
-                    title: Text(printer.printerName),
-                    subtitle: Text(
-                      '${printer.connectionLabel} · ${printer.paperSizeLabel} · ${printer.purpose} · ${printer.area}',
-                    ),
-                    trailing: printer.enabled ? null : const Text('Off'),
-                    onTap: () async {
-                      await context.push(
-                        '/settings/printers/edit',
-                        extra: printer,
+              child: ResponsiveScrollShell(
+                dashboard: true,
+                child: ListView.builder(
+                  padding: EdgeInsets.fromLTRB(pad, 8, pad, 88),
+                  itemCount: printers.isEmpty ? 1 : printers.length,
+                  itemBuilder: (context, index) {
+                    if (printers.isEmpty) {
+                      return Padding(
+                        padding: EdgeInsets.all(pad + 8),
+                        child: const Text(
+                          'No extra printers yet. Tap + to add a kitchen or packing printer.',
+                          textAlign: TextAlign.center,
+                        ),
                       );
-                      await load();
-                    },
-                  );
-                },
+                    }
+                    final printer = printers[index];
+                    return ListTile(
+                      title: Text(
+                        printer.printerName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      subtitle: Text(
+                        '${printer.connectionLabel} · ${printer.paperSizeLabel} · ${printer.purpose} · ${printer.area}',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      trailing: printer.enabled ? null : const Text('Off'),
+                      onTap: () async {
+                        await context.push(
+                          '/settings/printers/edit',
+                          extra: printer,
+                        );
+                        await load();
+                      },
+                    );
+                  },
+                ),
               ),
             ),
     );

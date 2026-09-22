@@ -35,6 +35,11 @@ class KotPreviewPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final hPad = AppBreakpoints.pagePaddingFor(context.widthClass);
+    final vPad = context.isShortHeight
+        ? AppBreakpoints.densePaddingFor(context.heightClass)
+        : hPad;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(ticket.kot.kotNumber),
@@ -53,24 +58,23 @@ class KotPreviewPage extends ConsumerWidget {
         ],
       ),
       body: ResponsiveScrollShell(
-        dashboard: true,
+        maxWidth: AppBreakpoints.contentMaxWidthFor(AppWidthClass.compact),
+        dashboard: false,
         child: ListView(
-          padding: EdgeInsets.all(
-            AppBreakpoints.pagePaddingFor(context.widthClass) + 4,
-          ),
+          padding: EdgeInsets.fromLTRB(hPad, vPad, hPad, vPad + 12),
           children: [
             AppCard(
               accentColor: AppColors.orange,
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.all(context.isShortHeight ? 14 : 20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const AppModuleIcon(
+                  AppModuleIcon(
                     icon: Icons.restaurant_menu_rounded,
                     color: AppColors.orange,
-                    size: 58,
+                    size: context.isShortHeight ? 44 : 58,
                   ),
-                  const SizedBox(height: 10),
+                  SizedBox(height: context.isShortHeight ? 6 : 10),
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
@@ -99,7 +103,7 @@ class KotPreviewPage extends ConsumerWidget {
                       fontWeight: FontWeight.w800,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: context.isShortHeight ? 10 : 16),
                   MetaRow(label: 'Table', value: 'T${ticket.kot.tableNumber}'),
                   MetaRow(label: 'Round', value: '${ticket.roundNumber}'),
                   MetaRow(label: 'Kitchen', value: ticket.kot.kitchenName),
@@ -109,10 +113,12 @@ class KotPreviewPage extends ConsumerWidget {
                       'dd-MM-yyyy HH:mm',
                     ).format(ticket.kot.createdAt),
                   ),
-                  const Divider(height: 28),
+                  Divider(height: context.isShortHeight ? 20 : 28),
                   ...ticket.items.map(
                     (item) => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      padding: EdgeInsets.symmetric(
+                        vertical: context.isShortHeight ? 4 : 8,
+                      ),
                       child: Row(
                         children: [
                           Expanded(
@@ -134,7 +140,7 @@ class KotPreviewPage extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  const Divider(height: 28),
+                  Divider(height: context.isShortHeight ? 20 : 28),
                   Text(
                     'Set a KOT/Bill printer MAC in Settings for Bluetooth ESC/POS. '
                     'Otherwise Print/Share sends the ticket text.',

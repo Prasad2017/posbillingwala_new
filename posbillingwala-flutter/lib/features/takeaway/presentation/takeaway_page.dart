@@ -26,41 +26,53 @@ class TakeawayPageState extends ConsumerState<TakeawayPage> {
     final phoneCtrl = TextEditingController(text: phone ?? '');
     final ok = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Row(
-          children: [
-            const AppSvg(AppAssets.svgTakeaway, width: 28, height: 28),
-            const SizedBox(width: 10),
-            Text(AppStrings.of(ref).newParcel),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AppTextField(
-              controller: nameCtrl,
-              label: 'Customer name (optional)',
-            ),
-            const SizedBox(height: 12),
-            AppTextField(
-              controller: phoneCtrl,
-              label: 'Mobile number (optional)',
-              keyboardType: TextInputType.phone,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+      builder: (context) {
+        final maxW = MediaQuery.sizeOf(context).width;
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
           ),
-          AppButton(
-            label: 'Start order',
-            onPressed: () => Navigator.pop(context, true),
+          insetPadding: EdgeInsets.symmetric(
+            horizontal: maxW < 400 ? 16 : 40,
+            vertical: 24,
           ),
-        ],
-      ),
+          title: Row(
+            children: [
+              const AppSvg(AppAssets.svgTakeaway, width: 28, height: 28),
+              const SizedBox(width: 10),
+              Flexible(child: Text(AppStrings.of(ref).newParcel)),
+            ],
+          ),
+          content: SizedBox(
+            width: maxW < 600 ? double.maxFinite : 420,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AppTextField(
+                  controller: nameCtrl,
+                  label: 'Customer name (optional)',
+                ),
+                const SizedBox(height: 12),
+                AppTextField(
+                  controller: phoneCtrl,
+                  label: 'Mobile number (optional)',
+                  keyboardType: TextInputType.phone,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            AppButton(
+              label: 'Start order',
+              onPressed: () => Navigator.pop(context, true),
+            ),
+          ],
+        );
+      },
     );
     final customerName = nameCtrl.text;
     final customerPhone = phoneCtrl.text;
@@ -100,6 +112,7 @@ class TakeawayPageState extends ConsumerState<TakeawayPage> {
   Widget build(BuildContext context) {
     final parcels = ref.watch(openTakeawayParcelsProvider);
     final currency = NumberFormat.currency(locale: 'en_IN', symbol: '₹ ');
+    final useCards = context.isCompactWidth;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -141,11 +154,18 @@ class TakeawayPageState extends ConsumerState<TakeawayPage> {
               dashboard: true,
               child: Column(
                 children: [
-                  const ParcelTableHeader(),
-                  const Divider(height: 1, thickness: 1, color: Colors.black87),
+                  if (!useCards) ...[
+                    const ParcelTableHeader(),
+                    const Divider(
+                      height: 1,
+                      thickness: 1,
+                      color: Colors.black87,
+                    ),
+                  ],
                   Expanded(
                     child: ListView.separated(
                       padding: EdgeInsets.only(
+                        top: useCards ? 8 : 0,
                         bottom: 88,
                         left: AppBreakpoints.pagePaddingFor(context.widthClass),
                         right: AppBreakpoints.pagePaddingFor(
@@ -153,9 +173,20 @@ class TakeawayPageState extends ConsumerState<TakeawayPage> {
                         ),
                       ),
                       itemCount: parcels.length,
-                      separatorBuilder: (_, _) => const Divider(height: 1),
+                      separatorBuilder: (_, _) => useCards
+                          ? const SizedBox(height: 8)
+                          : const Divider(height: 1),
                       itemBuilder: (context, index) {
                         final parcel = parcels[index];
+                        if (useCards) {
+                          return ParcelCard(
+                            index: index + 1,
+                            parcelNumber: parcel.parcelNumber,
+                            billAmount: currency.format(parcel.billAmount),
+                            onAddProducts: () => openParcelBilling(parcel),
+                            onOpenCart: () => openParcelCart(parcel),
+                          );
+                        }
                         return ParcelTableRow(
                           index: index + 1,
                           parcelNumber: parcel.parcelNumber,
@@ -285,6 +316,85 @@ class ParcelTableRow extends StatelessWidget {
             tooltip: 'View cart',
             onPressed: onOpenCart,
             icon: const Icon(Icons.print_outlined, color: AppColors.primary),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/* Compact mobile presentation — same actions as the table row. */
+class ParcelCard extends StatelessWidget {
+  const ParcelCard({
+    super.key,
+    required this.index,
+    required this.parcelNumber,
+    required this.billAmount,
+    required this.onAddProducts,
+    required this.onOpenCart,
+  });
+
+  final int index;
+  final String parcelNumber;
+  final String billAmount;
+  final VoidCallback onAddProducts;
+  final VoidCallback onOpenCart;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                '#$index',
+                style: TextStyle(
+                  fontFamily: AppFonts.family,
+                  fontSize: 13,
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                billAmount,
+                style: const TextStyle(
+                  fontFamily: AppFonts.family,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            parcelNumber,
+            style: const TextStyle(
+              fontFamily: AppFonts.family,
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: onAddProducts,
+                  icon: const Icon(Icons.add_shopping_cart_outlined, size: 18),
+                  label: const Text('Add products'),
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton.filledTonal(
+                tooltip: 'View cart',
+                onPressed: onOpenCart,
+                icon: const Icon(Icons.print_outlined),
+              ),
+            ],
           ),
         ],
       ),

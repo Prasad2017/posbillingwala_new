@@ -77,15 +77,18 @@ class AddExpensePageState extends ConsumerState<AddExpensePage> {
       ),
       body: Form(
         key: formKey,
-        child: ResponsiveScrollShell(
-          dashboard: true,
-          child: ListView(
-            padding: EdgeInsets.fromLTRB(
-              AppBreakpoints.pagePaddingFor(context.widthClass),
-              20,
-              AppBreakpoints.pagePaddingFor(context.widthClass),
-              24,
-            ),
+        child: ResponsivePageBody(
+          dashboard: false,
+          padding: EdgeInsets.fromLTRB(
+            AppBreakpoints.pagePaddingFor(context.widthClass),
+            context.isShortHeight
+                ? AppBreakpoints.densePaddingFor(context.heightClass)
+                : 20,
+            AppBreakpoints.pagePaddingFor(context.widthClass),
+            24,
+          ),
+          child: ResponsiveFormColumns(
+            maxColumns: 2,
             children: [
               AppTextField(
                 required: true,
@@ -93,7 +96,6 @@ class AddExpensePageState extends ConsumerState<AddExpensePage> {
                 label: 'Expenses Name',
                 textCapitalization: TextCapitalization.sentences,
               ),
-              const SizedBox(height: 16),
               AppTextField(
                 required: true,
                 controller: amountCtrl,

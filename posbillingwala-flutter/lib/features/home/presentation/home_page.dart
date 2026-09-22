@@ -405,7 +405,6 @@ class HomeDashboardBody extends ConsumerWidget {
     final allowCatalog = perms.allows('product.view');
     final allowReports = perms.allows('report.view');
     final widthClass = context.widthClass;
-    final billingCols = AppBreakpoints.moduleColumnsFor(widthClass);
     final billingTiles = <Widget>[
       BillingTile(
         title: strings.fastBilling,
@@ -659,17 +658,32 @@ class HomeDashboardBody extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 12),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: billingTiles.length,
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: billingCols.clamp(2, 4),
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio: widthClass == AppWidthClass.compact ? 1.5 : 1.7,
-          ),
-          itemBuilder: (context, index) => billingTiles[index],
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final billingCols = AppBreakpoints.columnsForWidth(
+              constraints.maxWidth,
+              minItemWidth: AppBreakpoints.minModuleTileWidth,
+              minColumns: 2,
+              maxColumns: 4,
+              spacing: 12,
+            );
+            return GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: billingTiles.length,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: billingCols,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                childAspectRatio: context.isShortHeight
+                    ? 1.85
+                    : widthClass == AppWidthClass.compact
+                    ? 1.5
+                    : 1.7,
+              ),
+              itemBuilder: (context, index) => billingTiles[index],
+            );
+          },
         ),
         if (!AppPlatform.useDesktopShell) ...[
           const SizedBox(height: 20),

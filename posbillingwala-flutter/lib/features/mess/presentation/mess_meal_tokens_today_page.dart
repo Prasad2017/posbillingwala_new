@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/network/online_guard.dart';
+import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/auth/data/device_identity_service.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
@@ -124,9 +125,18 @@ class MessMealTokensTodayPageState
     if (userId == null) return;
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) {
+        final screenW = MediaQuery.sizeOf(context).width;
+        return AlertDialog(
+        insetPadding: EdgeInsets.symmetric(
+          horizontal: screenW < 360 ? 12 : 24,
+          vertical: 24,
+        ),
         title: Text(AppStrings.of(ref).cancelToken),
-        content: Text('Cancel ${token.tokenNumber}?'),
+        content: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: screenW - 48),
+          child: Text('Cancel ${token.tokenNumber}?'),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -137,7 +147,8 @@ class MessMealTokensTodayPageState
             onPressed: () => Navigator.pop(context, true),
           ),
         ],
-      ),
+      );
+      },
     );
     if (confirm != true) return;
     setState(() => busy = true);
@@ -182,8 +193,11 @@ class MessMealTokensTodayPageState
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               if (countsText.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.all(12),
+                ResponsiveContent(
+                  dashboard: true,
+                  padding: EdgeInsets.all(
+                    AppBreakpoints.pagePaddingFor(context.widthClass),
+                  ),
                   child: Text(
                     countsText,
                     style: Theme.of(context).textTheme.bodyMedium,
@@ -192,8 +206,12 @@ class MessMealTokensTodayPageState
               Expanded(
                 child: data.tokens.isEmpty
                     ? Center(child: Text(AppStrings.of(ref).noQrTokensToday))
-                    : ListView.separated(
-                        padding: const EdgeInsets.all(16),
+                    : ResponsiveScrollShell(
+                        dashboard: true,
+                        child: ListView.separated(
+                        padding: EdgeInsets.all(
+                          AppBreakpoints.pagePaddingFor(context.widthClass),
+                        ),
                         itemCount: data.tokens.length,
                         separatorBuilder: (_, _) => const SizedBox(height: 8),
                         itemBuilder: (context, i) {
@@ -214,6 +232,8 @@ class MessMealTokensTodayPageState
                                 t.tokenNumber.isEmpty
                                     ? t.tokenId
                                     : t.tokenNumber,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w800,
                                 ),
@@ -228,9 +248,11 @@ class MessMealTokensTodayPageState
                                   if (t.mealSession.isNotEmpty) t.mealSession,
                                   if (t.printStatus.isNotEmpty) t.printStatus,
                                 ].join(' · '),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
                               ),
                               trailing: Wrap(
-                                spacing: 4,
+                                spacing: 0,
                                 children: [
                                   IconButton(
                                     tooltip: 'Print',
@@ -254,6 +276,7 @@ class MessMealTokensTodayPageState
                             ),
                           );
                         },
+                      ),
                       ),
               ),
             ],

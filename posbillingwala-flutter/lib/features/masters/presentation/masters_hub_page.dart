@@ -74,7 +74,9 @@ class MastersHubPage extends ConsumerWidget {
         child: ListView(
           padding: EdgeInsets.fromLTRB(
             AppBreakpoints.pagePaddingFor(context.widthClass),
-            18,
+            context.isShortHeight
+                ? AppBreakpoints.densePaddingFor(context.heightClass)
+                : 18,
             AppBreakpoints.pagePaddingFor(context.widthClass),
             32,
           ),
@@ -90,32 +92,13 @@ class MastersHubPage extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 12),
-            context.widthClass.index >= AppWidthClass.expanded.index
-                ? GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: items.length,
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: AppBreakpoints.cardColumnsFor(
-                        context.widthClass,
-                      ),
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      childAspectRatio: 3.2,
-                    ),
-                    itemBuilder: (context, index) {
-                      return Material(
-                        color: AppColors.glassSolid,
-                        borderRadius: BorderRadius.circular(18),
-                        child: InkWell(
-                          onTap: items[index].onTap,
-                          borderRadius: BorderRadius.circular(18),
-                          child: MasterRowTile(item: items[index]),
-                        ),
-                      );
-                    },
-                  )
-                : Container(
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final cols = AppBreakpoints.cardColumnsForWidth(
+                  constraints.maxWidth,
+                );
+                if (cols <= 1) {
+                  return Container(
                     decoration: BoxDecoration(
                       color: AppColors.glassFill,
                       borderRadius: BorderRadius.circular(18),
@@ -147,7 +130,32 @@ class MastersHubPage extends ConsumerWidget {
                         ],
                       ],
                     ),
+                  );
+                }
+                return GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: items.length,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: cols,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: 3.2,
                   ),
+                  itemBuilder: (context, index) {
+                    return Material(
+                      color: AppColors.glassSolid,
+                      borderRadius: BorderRadius.circular(18),
+                      child: InkWell(
+                        onTap: items[index].onTap,
+                        borderRadius: BorderRadius.circular(18),
+                        child: MasterRowTile(item: items[index]),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
           ],
         ),
       ),

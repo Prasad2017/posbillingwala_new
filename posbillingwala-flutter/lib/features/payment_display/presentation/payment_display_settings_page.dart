@@ -37,7 +37,8 @@ class PaymentDisplaySettingsPage extends ConsumerWidget {
                 ),
               ),
             )
-          : ListView(
+          : ResponsiveScrollShell(
+              child: ListView(
               padding: EdgeInsets.all(padding),
               children: [
                 AppCard(
@@ -239,6 +240,7 @@ class PaymentDisplaySettingsPage extends ConsumerWidget {
                 ),
               ],
             ),
+          ),
     );
   }
 

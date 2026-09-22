@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
+import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/inventory/domain/inventory_providers.dart';
 import 'package:pos_billingwala_v2/features/masters/domain/masters_providers.dart';
@@ -100,8 +101,15 @@ class AddInventoryPageState extends ConsumerState<AddInventoryPage> {
       appBar: AppBar(
         title: Text(isWaste ? 'Waste / Spoilage' : 'Purchase / Stock In'),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+      body: ResponsiveScrollShell(
+        dashboard: false,
+        child: ListView(
+        padding: EdgeInsets.fromLTRB(
+          AppBreakpoints.pagePaddingFor(context.widthClass),
+          16,
+          AppBreakpoints.pagePaddingFor(context.widthClass),
+          32,
+        ),
         children: [
           MasterCard(
             child: Column(
@@ -144,30 +152,44 @@ class AddInventoryPageState extends ConsumerState<AddInventoryPage> {
                   ),
                 ],
                 const SizedBox(height: 12),
-                AppTextField(
-                  required: true,
-                  controller: qtyCtrl,
-                  label: isWaste ? 'Waste quantity' : 'Purchase quantity',
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-                  ],
-                ),
-                if (!isWaste) ...[
-                  const SizedBox(height: 12),
+                if (isWaste)
                   AppTextField(
-                    controller: costCtrl,
-                    label: 'Unit cost (optional)',
+                    required: true,
+                    controller: qtyCtrl,
+                    label: 'Waste quantity',
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
                     ),
                     inputFormatters: [
                       FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                     ],
+                  )
+                else
+                  ResponsiveFormColumns(
+                    children: [
+                      AppTextField(
+                        required: true,
+                        controller: qtyCtrl,
+                        label: 'Purchase quantity',
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                        ],
+                      ),
+                      AppTextField(
+                        controller: costCtrl,
+                        label: 'Unit cost (optional)',
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                        ],
+                      ),
+                    ],
                   ),
-                ],
                 const SizedBox(height: 12),
                 AppTextField(
                   controller: noteCtrl,
@@ -186,6 +208,7 @@ class AddInventoryPageState extends ConsumerState<AddInventoryPage> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

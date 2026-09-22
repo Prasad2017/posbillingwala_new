@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/staff/data/staff_offline_queue.dart';
@@ -164,21 +165,27 @@ class StaffFormPageState extends ConsumerState<StaffFormPage> {
   @override
   Widget build(BuildContext context) {
     final modules = posPermissionCatalog.entries.toList();
+    final pad = AppBreakpoints.pagePaddingFor(context.widthClass);
     return Scaffold(
       appBar: AppBar(title: Text(isEdit ? 'Edit User' : 'Add User')),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+      body: ResponsiveScrollShell(
+        dashboard: false,
+        child: ListView(
+        padding: EdgeInsets.fromLTRB(pad, 16, pad, 28),
         children: [
-          AppTextField(required: true, controller: name, label: 'Name'),
-          _fieldGap,
-          AppTextField(
-            required: true,
-            controller: mobile,
-            label: 'Mobile Number',
-            keyboardType: TextInputType.phone,
-            maxLength: 10,
-            showCounter: false,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          ResponsiveFormColumns(
+            children: [
+              AppTextField(required: true, controller: name, label: 'Name'),
+              AppTextField(
+                required: true,
+                controller: mobile,
+                label: 'Mobile Number',
+                keyboardType: TextInputType.phone,
+                maxLength: 10,
+                showCounter: false,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              ),
+            ],
           ),
           _fieldGap,
           AppTextField(controller: address, label: 'Address'),
@@ -202,26 +209,29 @@ class StaffFormPageState extends ConsumerState<StaffFormPage> {
           ),
           if (!isEdit) ...[
             _fieldGap,
-            AppTextField(
-              required: true,
-              controller: pin,
-              label: 'App Login PIN',
-              obscureText: true,
-              keyboardType: TextInputType.number,
-              maxLength: 6,
-              showCounter: false,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            ),
-            _fieldGap,
-            AppTextField(
-              required: true,
-              controller: confirmPin,
-              label: 'Confirm PIN',
-              obscureText: true,
-              keyboardType: TextInputType.number,
-              maxLength: 6,
-              showCounter: false,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            ResponsiveFormColumns(
+              children: [
+                AppTextField(
+                  required: true,
+                  controller: pin,
+                  label: 'App Login PIN',
+                  obscureText: true,
+                  keyboardType: TextInputType.number,
+                  maxLength: 6,
+                  showCounter: false,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                ),
+                AppTextField(
+                  required: true,
+                  controller: confirmPin,
+                  label: 'Confirm PIN',
+                  obscureText: true,
+                  keyboardType: TextInputType.number,
+                  maxLength: 6,
+                  showCounter: false,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                ),
+              ],
             ),
           ],
           const SizedBox(height: 22),
@@ -288,6 +298,7 @@ class StaffFormPageState extends ConsumerState<StaffFormPage> {
             onPressed: loading ? null : save,
           ),
         ],
+      ),
       ),
     );
   }

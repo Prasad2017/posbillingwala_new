@@ -52,7 +52,7 @@ class InvoiceAddProductsPageState extends ConsumerState<InvoiceAddProductsPage> 
     final categoriesAsync = ref.watch(categoriesProvider);
     final db = ref.watch(appDatabaseProvider);
     final widthClass = context.widthClass;
-    final cols = widthClass == AppWidthClass.compact ? 2 : 3;
+    final pad = AppBreakpoints.pagePaddingFor(widthClass);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -60,7 +60,7 @@ class InvoiceAddProductsPageState extends ConsumerState<InvoiceAddProductsPage> 
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            padding: EdgeInsets.fromLTRB(pad, 12, pad, 8),
             child: TextField(
               controller: searchController,
               textInputAction: TextInputAction.search,
@@ -105,12 +105,12 @@ class InvoiceAddProductsPageState extends ConsumerState<InvoiceAddProductsPage> 
             ),
           ),
           SizedBox(
-            height: 40,
+            height: context.isShortHeight ? 36 : 40,
             child: categoriesAsync.when(
               data: (categories) {
                 return ListView(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  padding: EdgeInsets.symmetric(horizontal: pad - 4),
                   children: [
                     Padding(
                       padding: const EdgeInsets.only(right: 8),
@@ -169,25 +169,29 @@ class InvoiceAddProductsPageState extends ConsumerState<InvoiceAddProductsPage> 
                     iconAsset: AppAssets.svgFood,
                   );
                 }
-                return GridView.builder(
-                  padding: EdgeInsets.fromLTRB(
-                    AppBreakpoints.pagePaddingFor(widthClass),
-                    4,
-                    AppBreakpoints.pagePaddingFor(widthClass),
-                    24,
-                  ),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: cols,
-                    crossAxisSpacing: 10,
-                    mainAxisSpacing: 10,
-                    childAspectRatio: 1.15,
-                  ),
-                  itemCount: filtered.length,
-                  itemBuilder: (context, index) {
-                    final product = filtered[index];
-                    return InvoiceProductCard(
-                      invoiceId: widget.invoiceId,
-                      product: product,
+                return LayoutBuilder(
+                  builder: (context, constraints) {
+                    final cols = AppBreakpoints.productColumnsForWidth(
+                      constraints.maxWidth - pad * 2,
+                    );
+                    return GridView.builder(
+                      padding: EdgeInsets.fromLTRB(pad, 4, pad, 24),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: cols,
+                        crossAxisSpacing: 10,
+                        mainAxisSpacing: 10,
+                        childAspectRatio: context.isShortHeight
+                            ? 1.25
+                            : (cols >= 4 ? 1.05 : 1.15),
+                      ),
+                      itemCount: filtered.length,
+                      itemBuilder: (context, index) {
+                        final product = filtered[index];
+                        return InvoiceProductCard(
+                          invoiceId: widget.invoiceId,
+                          product: product,
+                        );
+                      },
                     );
                   },
                 );

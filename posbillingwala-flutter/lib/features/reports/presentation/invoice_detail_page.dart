@@ -139,10 +139,15 @@ class InvoiceDetailPageState extends ConsumerState<InvoiceDetailPage> {
                 final refunded = invoice.invoiceOrderStatus == 'refunded';
 
                 return ResponsiveScrollShell(
-                  dashboard: true,
+                  dashboard: false,
                   child: ListView(
-                    padding: EdgeInsets.all(
+                    padding: EdgeInsets.fromLTRB(
                       AppBreakpoints.pagePaddingFor(context.widthClass),
+                      context.isShortHeight
+                          ? AppBreakpoints.densePaddingFor(context.heightClass)
+                          : AppBreakpoints.pagePaddingFor(context.widthClass),
+                      AppBreakpoints.pagePaddingFor(context.widthClass),
+                      AppBreakpoints.pagePaddingFor(context.widthClass) + 8,
                     ),
                     children: [
                       AppCard(
@@ -204,12 +209,18 @@ class InvoiceDetailPageState extends ConsumerState<InvoiceDetailPage> {
                                         ],
                                       ),
                                     ),
-                                    Text(
-                                      currency.format(invoice.totalAmount),
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w800,
-                                        fontSize: 16,
-                                        color: AppColors.primary,
+                                    const SizedBox(width: 8),
+                                    Flexible(
+                                      child: Text(
+                                        currency.format(invoice.totalAmount),
+                                        textAlign: TextAlign.right,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 16,
+                                          color: AppColors.primary,
+                                        ),
                                       ),
                                     ),
                                     Icon(
@@ -495,55 +506,71 @@ class BillDetailActionRow extends StatelessWidget {
       ),
     ];
 
+    Widget actionChip(int i, {required bool expanded}) {
+      final chip = Material(
+        color: i == 0 ? AppColors.primary : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => onRun(actions[i].id),
+          child: Container(
+            height: 48,
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppColors.primary.withValues(
+                  alpha: i == 0 ? 0 : 0.35,
+                ),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  actions[i].icon,
+                  size: 18,
+                  color: i == 0 ? Colors.white : AppColors.primary,
+                ),
+                const SizedBox(width: 4),
+                Flexible(
+                  child: Text(
+                    actions[i].label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: i == 0 ? Colors.white : AppColors.primary,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      if (expanded) return Expanded(child: chip);
+      return chip;
+    }
+
+    if (context.isCompactWidth) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (var i = 0; i < actions.length; i++) ...[
+            if (i > 0) const SizedBox(height: 8),
+            actionChip(i, expanded: false),
+          ],
+        ],
+      );
+    }
+
     return Row(
       children: [
         for (var i = 0; i < actions.length; i++) ...[
           if (i > 0) const SizedBox(width: 8),
-          Expanded(
-            child: Material(
-              color: i == 0 ? AppColors.primary : Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(12),
-                onTap: () => onRun(actions[i].id),
-                child: Container(
-                  height: 48,
-                  padding: const EdgeInsets.symmetric(horizontal: 6),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: AppColors.primary.withValues(
-                        alpha: i == 0 ? 0 : 0.35,
-                      ),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        actions[i].icon,
-                        size: 18,
-                        color: i == 0 ? Colors.white : AppColors.primary,
-                      ),
-                      const SizedBox(width: 4),
-                      Flexible(
-                        child: Text(
-                          actions[i].label,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: i == 0 ? Colors.white : AppColors.primary,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
+          actionChip(i, expanded: true),
         ],
       ],
     );

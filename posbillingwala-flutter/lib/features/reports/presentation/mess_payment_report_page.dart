@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
+import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
 import 'package:pos_billingwala_v2/features/mess/domain/mess_providers.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/report_widgets.dart';
 import 'package:pos_billingwala_v2/language/app_strings.dart';
@@ -49,32 +50,35 @@ class MessPaymentReportPageState extends ConsumerState<MessPaymentReportPage> {
               ? const Center(child: CircularProgressIndicator())
               : rows.isEmpty
               ? Center(child: Text(AppStrings.of(ref).noPaymentsYet))
-              : ListView.separated(
-                  padding: EdgeInsets.fromLTRB(
-                    AppBreakpoints.pagePaddingFor(context.widthClass),
-                    12,
-                    AppBreakpoints.pagePaddingFor(context.widthClass),
-                    28,
+              : ResponsiveScrollShell(
+                  dashboard: true,
+                  child: ListView.separated(
+                    padding: EdgeInsets.fromLTRB(
+                      AppBreakpoints.pagePaddingFor(context.widthClass),
+                      12,
+                      AppBreakpoints.pagePaddingFor(context.widthClass),
+                      28,
+                    ),
+                    itemCount: rows.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 8),
+                    itemBuilder: (context, i) {
+                      final p = rows[i];
+                      return ReportSurfaceCard(
+                        padding: const EdgeInsets.all(12),
+                        child: ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(p.memberName),
+                          subtitle: Text(
+                            '${p.paymentDate} · ${p.messTotalDays} days',
+                          ),
+                          trailing: Text(
+                            currency.format(p.paymentPaidAmount),
+                            style: const TextStyle(fontWeight: FontWeight.w800),
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                  itemCount: rows.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 8),
-                  itemBuilder: (context, i) {
-                    final p = rows[i];
-                    return ReportSurfaceCard(
-                      padding: const EdgeInsets.all(12),
-                      child: ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: Text(p.memberName),
-                        subtitle: Text(
-                          '${p.paymentDate} · ${p.messTotalDays} days',
-                        ),
-                        trailing: Text(
-                          currency.format(p.paymentPaidAmount),
-                          style: const TextStyle(fontWeight: FontWeight.w800),
-                        ),
-                      ),
-                    );
-                  },
                 ),
         );
       },

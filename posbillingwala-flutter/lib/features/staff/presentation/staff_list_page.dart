@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
 import 'package:pos_billingwala_v2/core/network/online_guard.dart';
+import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
+import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/staff/data/staff_offline_queue.dart';
 import 'package:pos_billingwala_v2/features/staff/domain/permission_controller.dart';
@@ -110,8 +112,15 @@ class StaffListPageState extends ConsumerState<StaffListPage> {
           ? const Center(child: Text('No users yet'))
           : RefreshIndicator(
               onRefresh: load,
-              child: ListView.separated(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
+              child: ResponsiveScrollShell(
+                dashboard: true,
+                child: ListView.separated(
+                padding: EdgeInsets.fromLTRB(
+                  AppBreakpoints.pagePaddingFor(context.widthClass),
+                  16,
+                  AppBreakpoints.pagePaddingFor(context.widthClass),
+                  88,
+                ),
                 itemCount: users.length,
                 separatorBuilder: (_, _) => const SizedBox(height: 10),
                 itemBuilder: (context, index) {
@@ -187,7 +196,8 @@ class StaffListPageState extends ConsumerState<StaffListPage> {
                               ),
                             ),
                             const SizedBox(width: 8),
-                            Container(
+                            Flexible(
+                              child: Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 8,
                                 vertical: 4,
@@ -206,6 +216,8 @@ class StaffListPageState extends ConsumerState<StaffListPage> {
                               ),
                               child: Text(
                                 user.status.toUpperCase(),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   fontFamily: AppFonts.family,
                                   fontSize: 11,
@@ -216,12 +228,14 @@ class StaffListPageState extends ConsumerState<StaffListPage> {
                                 ),
                               ),
                             ),
+                            ),
                           ],
                         ),
                       ),
                     ),
                   );
                 },
+              ),
               ),
             ),
     );

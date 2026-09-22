@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
+import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/auth/data/device_identity_service.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
@@ -181,8 +182,10 @@ class PrinterFormPageState extends ConsumerState<PrinterFormPage> {
       appBar: AppBar(
         title: Text(widget.existing == null ? 'Add printer' : 'Edit printer'),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
+      body: ResponsiveScrollShell(
+        dashboard: false,
+        child: ListView(
+        padding: EdgeInsets.all(AppBreakpoints.pagePaddingFor(context.widthClass)),
         children: [
           AppTextField(
             required: true,
@@ -240,38 +243,43 @@ class PrinterFormPageState extends ConsumerState<PrinterFormPage> {
                         ? 'Tap to scan USB / OTG printers'
                         : 'Tap to pick a paired Bluetooth printer')
                   : selectedLabel,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
             trailing: const Icon(Icons.chevron_right_rounded),
             onTap: pickDevice,
           ),
           const SizedBox(height: 8),
-          AppDropdownFormField<String>(
-            label: 'Purpose',
-            items: const ['KOT', 'BILL', 'PACKING', 'LABEL', 'REPORT'],
-            itemLabel: (v) => switch (v) {
-              'BILL' => 'Bill',
-              'PACKING' => 'Packing',
-              'LABEL' => 'Label',
-              'REPORT' => 'Report',
-              _ => v,
-            },
-            value: purpose,
-            onChanged: (v) => setState(() => purpose = v ?? purpose),
-          ),
-          const SizedBox(height: 8),
-          AppDropdownFormField<String>(
-            label: 'Area',
-            items: const ['KITCHEN', 'BAR', 'COUNTER', 'PACKING', 'TAKEAWAY'],
-            itemLabel: (v) => switch (v) {
-              'KITCHEN' => 'Kitchen',
-              'BAR' => 'Bar',
-              'COUNTER' => 'Counter',
-              'PACKING' => 'Packing',
-              'TAKEAWAY' => 'Takeaway',
-              _ => v,
-            },
-            value: area,
-            onChanged: (v) => setState(() => area = v ?? area),
+          ResponsiveFormColumns(
+            children: [
+              AppDropdownFormField<String>(
+                label: 'Purpose',
+                items: const ['KOT', 'BILL', 'PACKING', 'LABEL', 'REPORT'],
+                itemLabel: (v) => switch (v) {
+                  'BILL' => 'Bill',
+                  'PACKING' => 'Packing',
+                  'LABEL' => 'Label',
+                  'REPORT' => 'Report',
+                  _ => v,
+                },
+                value: purpose,
+                onChanged: (v) => setState(() => purpose = v ?? purpose),
+              ),
+              AppDropdownFormField<String>(
+                label: 'Area',
+                items: const ['KITCHEN', 'BAR', 'COUNTER', 'PACKING', 'TAKEAWAY'],
+                itemLabel: (v) => switch (v) {
+                  'KITCHEN' => 'Kitchen',
+                  'BAR' => 'Bar',
+                  'COUNTER' => 'Counter',
+                  'PACKING' => 'Packing',
+                  'TAKEAWAY' => 'Takeaway',
+                  _ => v,
+                },
+                value: area,
+                onChanged: (v) => setState(() => area = v ?? area),
+              ),
+            ],
           ),
           AppSwitchTile(
             title: 'This device is the print host',
@@ -291,6 +299,7 @@ class PrinterFormPageState extends ConsumerState<PrinterFormPage> {
             onPressed: saving ? null : save,
           ),
         ],
+      ),
       ),
     );
   }

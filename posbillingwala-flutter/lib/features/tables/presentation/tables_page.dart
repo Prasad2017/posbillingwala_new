@@ -118,7 +118,6 @@ class TablesPageState extends ConsumerState<TablesPage> {
                       final widthClass = AppBreakpoints.ofWidth(
                         constraints.maxWidth,
                       );
-                      final cols = AppBreakpoints.tableColumnsFor(widthClass);
                       final useXy = filtered.any(
                         (t) =>
                             (t.table.positionX ?? 0) != 0 ||
@@ -143,23 +142,35 @@ class TablesPageState extends ConsumerState<TablesPage> {
                           if (x > maxX) maxX = x;
                           if (y > maxY) maxY = y;
                         }
-                        final canvasW = constraints.maxWidth < 720
-                            ? 720.0
+                        /* Compact: fit viewport; wider: keep roomy floor for positions. */
+                        final minCanvasW = widthClass == AppWidthClass.compact
+                            ? constraints.maxWidth
+                            : 720.0;
+                        final minCanvasH = context.isShortHeight
+                            ? constraints.maxHeight
+                            : 520.0;
+                        final canvasW = constraints.maxWidth < minCanvasW
+                            ? minCanvasW
                             : constraints.maxWidth;
-                        final canvasH = constraints.maxHeight < 520
-                            ? 520.0
+                        final canvasH = constraints.maxHeight < minCanvasH
+                            ? minCanvasH
                             : constraints.maxHeight;
-                        const cardW = 148.0;
+                        final cardW = widthClass == AppWidthClass.compact
+                            ? 120.0
+                            : 148.0;
                         double left(double? v) {
                           final n = v ?? 0;
-                          final span = canvasW - cardW;
+                          final span = (canvasW - cardW).clamp(1.0, canvasW);
                           if (maxX <= 1.5) return n.clamp(0.0, 1.0) * span;
                           return (n / maxX).clamp(0.0, 1.0) * span;
                         }
 
                         double top(double? v) {
                           final n = v ?? 0;
-                          final span = canvasH - 140;
+                          final span = (canvasH - (cardW * 0.95)).clamp(
+                            1.0,
+                            canvasH,
+                          );
                           if (maxY <= 1.5) return n.clamp(0.0, 1.0) * span;
                           return (n / maxY).clamp(0.0, 1.0) * span;
                         }
@@ -188,6 +199,9 @@ class TablesPageState extends ConsumerState<TablesPage> {
 
                       final pad = AppBreakpoints.pagePaddingFor(widthClass);
                       final gap = 12.0;
+                      final cols = AppBreakpoints.tableColumnsForWidth(
+                        constraints.maxWidth - (pad * 2),
+                      );
                       final cardWidth =
                           (constraints.maxWidth -
                               (pad * 2) -

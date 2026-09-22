@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:pos_billingwala_v2/core/constants/app_assets.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
+import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/theme/app_typography.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/language/app_strings.dart';
@@ -172,8 +173,12 @@ class MessTokenScanPageState extends ConsumerState<MessTokenScanPage> {
 
     return Scaffold(
       appBar: AppBar(title: Text(AppStrings.of(ref).scanMessToken)),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
+      body: ResponsiveContent(
+        dashboard: false,
+        child: Padding(
+        padding: EdgeInsets.symmetric(
+          vertical: context.isShortHeight ? 12 : 24,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -182,10 +187,10 @@ class MessTokenScanPageState extends ConsumerState<MessTokenScanPage> {
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 15),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: context.isShortHeight ? 12 : 24),
             AppButton(label: 'Start QR scanner', onPressed: startScanner),
             if (resultText != null) ...[
-              const SizedBox(height: 24),
+              SizedBox(height: context.isShortHeight ? 12 : 24),
               Text(
                 resultText!,
                 textAlign: TextAlign.center,
@@ -197,6 +202,7 @@ class MessTokenScanPageState extends ConsumerState<MessTokenScanPage> {
             ],
           ],
         ),
+      ),
       ),
     );
   }
@@ -217,10 +223,11 @@ class ScannerOverlay extends StatelessWidget {
 class CornerFramePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
+    final frameScale = size.height < AppBreakpoints.shortHeightMax ? 0.55 : 0.72;
     final cut = Rect.fromCenter(
       center: Offset(size.width / 2, size.height * 0.42),
-      width: size.width * 0.72,
-      height: size.width * 0.72,
+      width: size.width * frameScale,
+      height: size.width * frameScale,
     );
     final overlay = Paint()..color = Colors.black.withValues(alpha: 0.45);
     final path = Path()

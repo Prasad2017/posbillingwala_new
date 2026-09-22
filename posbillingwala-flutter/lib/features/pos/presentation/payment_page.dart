@@ -582,11 +582,7 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
         child: Center(
           child: ConstrainedBox(
             constraints: BoxConstraints(
-              maxWidth: AppBreakpoints.contentMaxWidthFor(
-                context.widthClass.index >= AppWidthClass.expanded.index
-                    ? AppWidthClass.expanded
-                    : context.widthClass,
-              ),
+              maxWidth: AppBreakpoints.contentMaxWidthFor(context.widthClass),
             ),
             child: Column(
               children: [
@@ -594,7 +590,7 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
                   child: ListView(
                     padding: EdgeInsets.fromLTRB(
                       AppBreakpoints.pagePaddingFor(context.widthClass),
-                      12,
+                      context.isShortHeight ? 6 : 12,
                       AppBreakpoints.pagePaddingFor(context.widthClass),
                       24,
                     ),
@@ -611,35 +607,38 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
                                 ),
                               ),
                               const SizedBox(height: 12),
-                              AppTextField(
-                                controller: customerNameController,
-                                label: strings.customerName,
-                                textCapitalization: TextCapitalization.words,
-                                onChanged: (_) => persistCustomer(),
-                              ),
-                              const SizedBox(height: 12),
-                              AppTextField(
-                                controller: customerPhoneController,
-                                label: strings.customerMobile,
-                                keyboardType: TextInputType.phone,
-                                onChanged: (_) => persistCustomer(),
-                              ),
-                              const SizedBox(height: 12),
-                              AppTextField(
-                                controller: customerEmailController,
-                                label: strings.customerEmail,
-                                keyboardType: TextInputType.emailAddress,
-                                onChanged: (_) => persistCustomer(),
-                              ),
-                              const SizedBox(height: 12),
-                              AppTextField(
-                                controller: customerAddressController,
-                                label: strings.customerAddress,
-                                textCapitalization:
-                                    TextCapitalization.sentences,
-                                maxLines: 2,
-                                minLines: 2,
-                                onChanged: (_) => persistCustomer(),
+                              ResponsiveFormColumns(
+                                maxColumns: 2,
+                                children: [
+                                  AppTextField(
+                                    controller: customerNameController,
+                                    label: strings.customerName,
+                                    textCapitalization:
+                                        TextCapitalization.words,
+                                    onChanged: (_) => persistCustomer(),
+                                  ),
+                                  AppTextField(
+                                    controller: customerPhoneController,
+                                    label: strings.customerMobile,
+                                    keyboardType: TextInputType.phone,
+                                    onChanged: (_) => persistCustomer(),
+                                  ),
+                                  AppTextField(
+                                    controller: customerEmailController,
+                                    label: strings.customerEmail,
+                                    keyboardType: TextInputType.emailAddress,
+                                    onChanged: (_) => persistCustomer(),
+                                  ),
+                                  AppTextField(
+                                    controller: customerAddressController,
+                                    label: strings.customerAddress,
+                                    textCapitalization:
+                                        TextCapitalization.sentences,
+                                    maxLines: 2,
+                                    minLines: 2,
+                                    onChanged: (_) => persistCustomer(),
+                                  ),
+                                ],
                               ),
                             ],
                           ),

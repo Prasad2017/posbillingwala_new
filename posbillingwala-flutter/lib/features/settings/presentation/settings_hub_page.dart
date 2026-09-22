@@ -576,7 +576,9 @@ class SettingsHubPage extends ConsumerWidget {
               child: ListView(
                 padding: EdgeInsets.fromLTRB(
                   AppBreakpoints.pagePaddingFor(context.widthClass),
-                  18,
+                  context.isShortHeight
+                      ? AppBreakpoints.densePaddingFor(context.heightClass)
+                      : 18,
                   AppBreakpoints.pagePaddingFor(context.widthClass),
                   28,
                 ),
@@ -585,6 +587,7 @@ class SettingsHubPage extends ConsumerWidget {
                     ResponsiveSplit(
                       breakpoint: AppWidthClass.large,
                       primary: Column(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           SettingsSectionCard(
                             accent: AppColors.purple,
@@ -606,6 +609,7 @@ class SettingsHubPage extends ConsumerWidget {
                         ],
                       ),
                       secondary: Column(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           SettingsSectionCard(
                             accent: AppColors.primary,
@@ -821,10 +825,11 @@ class SettingsHeader extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            const Padding(
-              padding: EdgeInsets.only(top: 4),
-              child: HeaderDecoration(),
-            ),
+            if (!context.isCompactWidth)
+              const Padding(
+                padding: EdgeInsets.only(top: 4),
+                child: HeaderDecoration(),
+              ),
           ],
         ),
       ),
@@ -1021,6 +1026,8 @@ class SettingsSectionCard extends StatelessWidget {
                       ),
                       child: Text(
                         '${items.length} Options',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontFamily: AppFonts.family,
                           color: badgeFg,

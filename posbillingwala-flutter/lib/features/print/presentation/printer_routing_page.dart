@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/print/domain/print_job_dispatcher.dart';
@@ -95,39 +96,43 @@ class PrinterRoutingPageState extends ConsumerState<PrinterRoutingPage> {
       return id;
     }
 
+    final pad = AppBreakpoints.pagePaddingFor(context.widthClass);
     return Scaffold(
       appBar: AppBar(title: const Text('Printer routing')),
       body: loading
           ? const Center(child: CircularProgressIndicator())
-          : ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                AppDropdownFormField<String>(
-                  label: 'Food → Kitchen printer',
-                  items: routeIds,
-                  itemLabel: labelFor,
-                  value: kitchenId,
-                  onChanged: (v) => setState(() => kitchenId = v ?? ''),
-                ),
-                const SizedBox(height: 12),
-                AppDropdownFormField<String>(
-                  label: 'Beverage → Bar printer',
-                  items: routeIds,
-                  itemLabel: labelFor,
-                  value: barId,
-                  onChanged: (v) => setState(() => barId = v ?? ''),
-                ),
-                const SizedBox(height: 12),
-                AppDropdownFormField<String>(
-                  label: 'Bills → Counter printer',
-                  items: routeIds,
-                  itemLabel: labelFor,
-                  value: billId,
-                  onChanged: (v) => setState(() => billId = v ?? ''),
-                ),
-                const SizedBox(height: 16),
-                AppButton(label: 'Save routing', onPressed: save),
-              ],
+          : ResponsiveScrollShell(
+              dashboard: false,
+              child: ListView(
+                padding: EdgeInsets.all(pad),
+                children: [
+                  AppDropdownFormField<String>(
+                    label: 'Food → Kitchen printer',
+                    items: routeIds,
+                    itemLabel: labelFor,
+                    value: kitchenId,
+                    onChanged: (v) => setState(() => kitchenId = v ?? ''),
+                  ),
+                  const SizedBox(height: 12),
+                  AppDropdownFormField<String>(
+                    label: 'Beverage → Bar printer',
+                    items: routeIds,
+                    itemLabel: labelFor,
+                    value: barId,
+                    onChanged: (v) => setState(() => barId = v ?? ''),
+                  ),
+                  const SizedBox(height: 12),
+                  AppDropdownFormField<String>(
+                    label: 'Bills → Counter printer',
+                    items: routeIds,
+                    itemLabel: labelFor,
+                    value: billId,
+                    onChanged: (v) => setState(() => billId = v ?? ''),
+                  ),
+                  const SizedBox(height: 16),
+                  AppButton(label: 'Save routing', onPressed: save),
+                ],
+              ),
             ),
     );
   }

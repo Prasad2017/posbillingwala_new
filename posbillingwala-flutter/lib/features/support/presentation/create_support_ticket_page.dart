@@ -138,36 +138,43 @@ class CreateSupportTicketPageState
           ),
         ],
       ),
-      body: ResponsiveScrollShell(
-        dashboard: true,
-        child: ListView(
-          padding: EdgeInsets.fromLTRB(
-            AppBreakpoints.pagePaddingFor(context.widthClass),
-            16,
-            AppBreakpoints.pagePaddingFor(context.widthClass),
-            28,
-          ),
+      body: ResponsivePageBody(
+        dashboard: false,
+        padding: EdgeInsets.fromLTRB(
+          AppBreakpoints.pagePaddingFor(context.widthClass),
+          context.isShortHeight
+              ? AppBreakpoints.densePaddingFor(context.heightClass)
+              : 16,
+          AppBreakpoints.pagePaddingFor(context.widthClass),
+          28,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             SupportOnlineBanner(online: createSupportTicketPageOnline),
             const SizedBox(height: 16),
-            StringDropdownField(
-              label: 'Category',
-              value: createSupportTicketPageCategory,
-              enableSearch: false,
-              options: categories,
-              onChanged: (v) {
-                if (v != null) {
-                  setState(() => createSupportTicketPageCategory = v);
-                }
-              },
-            ),
-            const SizedBox(height: 14),
-            AppTextField(
-              required: true,
-              controller: createSupportTicketPageSubject,
-              label: 'Subject',
-              hint: 'Enter subject',
-              prefixIcon: Icons.edit_outlined,
+            ResponsiveFormColumns(
+              maxColumns: 2,
+              children: [
+                StringDropdownField(
+                  label: 'Category',
+                  value: createSupportTicketPageCategory,
+                  enableSearch: false,
+                  options: categories,
+                  onChanged: (v) {
+                    if (v != null) {
+                      setState(() => createSupportTicketPageCategory = v);
+                    }
+                  },
+                ),
+                AppTextField(
+                  required: true,
+                  controller: createSupportTicketPageSubject,
+                  label: 'Subject',
+                  hint: 'Enter subject',
+                  prefixIcon: Icons.edit_outlined,
+                ),
+              ],
             ),
             const SizedBox(height: 14),
             AppTextField(

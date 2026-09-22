@@ -6,6 +6,7 @@ import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
 import 'package:pos_billingwala_v2/core/network/online_guard.dart';
+import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 import 'package:pos_billingwala_v2/core/utils/money_format.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
@@ -79,8 +80,11 @@ class EditInvoicePage extends ConsumerWidget {
           final locked =
               invoice.invoiceOrderStatus == 'cancelled' ||
               invoice.invoiceOrderStatus == 'refunded';
-          return ListView(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+          final pad = AppBreakpoints.pagePaddingFor(context.widthClass);
+          return ResponsiveScrollShell(
+            dashboard: true,
+            child: ListView(
+            padding: EdgeInsets.fromLTRB(pad, 12, pad, 32),
             children: [
               AppCard(
                 padding: const EdgeInsets.all(14),
@@ -173,6 +177,7 @@ class EditInvoicePage extends ConsumerWidget {
                   },
                 ),
             ],
+          ),
           );
         },
       ),
@@ -193,9 +198,17 @@ Future<void> editLine(
   );
   final ok = await showDialog<bool>(
     context: context,
-    builder: (context) => AlertDialog(
+    builder: (context) {
+      final screenW = MediaQuery.sizeOf(context).width;
+      return AlertDialog(
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: screenW < 360 ? 12 : 24,
+        vertical: 24,
+      ),
       title: Text(strings.editItem),
-      content: Column(
+      content: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: screenW - 48),
+        child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           AppTextField(
@@ -213,6 +226,7 @@ Future<void> editLine(
           ),
         ],
       ),
+      ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context, false),
@@ -223,7 +237,8 @@ Future<void> editLine(
           onPressed: () => Navigator.pop(context, true),
         ),
       ],
-    ),
+    );
+    },
   );
   if (ok != true) {
     qtyCtrl.dispose();
@@ -312,9 +327,17 @@ Future<void> editInvoicePageAddProduct(
   final ok = await showDialog<bool>(
     context: context,
     builder: (context) => StatefulBuilder(
-      builder: (context, setLocal) => AlertDialog(
+      builder: (context, setLocal) {
+        final screenW = MediaQuery.sizeOf(context).width;
+        return AlertDialog(
+        insetPadding: EdgeInsets.symmetric(
+          horizontal: screenW < 360 ? 12 : 24,
+          vertical: 24,
+        ),
         title: Text(strings.addProduct),
-        content: Column(
+        content: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: screenW - 48),
+          child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             AppDropdownFormField<Product>(
@@ -335,6 +358,7 @@ Future<void> editInvoicePageAddProduct(
             ),
           ],
         ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -345,7 +369,8 @@ Future<void> editInvoicePageAddProduct(
             onPressed: () => Navigator.pop(context, true),
           ),
         ],
-      ),
+      );
+      },
     ),
   );
   if (ok != true || selected == null) {
@@ -437,55 +462,72 @@ Future<void> editHeader(
   final ok = await showDialog<bool>(
     context: context,
     builder: (context) => StatefulBuilder(
-      builder: (context, setLocal) => AlertDialog(
+      builder: (context, setLocal) {
+        final screenW = MediaQuery.sizeOf(context).width;
+        return AlertDialog(
+        insetPadding: EdgeInsets.symmetric(
+          horizontal: screenW < 360 ? 12 : 24,
+          vertical: 24,
+        ),
         title: Text(strings.billHeader),
-        content: SingleChildScrollView(
+        content: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: screenW - 48),
+          child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              AppTextField(
-                controller: nameCtrl,
-                label: strings.customerNameField,
+              ResponsiveFormColumns(
+                children: [
+                  AppTextField(
+                    controller: nameCtrl,
+                    label: strings.customerNameField,
+                  ),
+                  AppTextField(
+                    controller: mobileCtrl,
+                    label: strings.customerMobile,
+                    keyboardType: TextInputType.phone,
+                  ),
+                ],
               ),
               const SizedBox(height: 12),
-              AppTextField(
-                controller: mobileCtrl,
-                label: strings.customerMobile,
-                keyboardType: TextInputType.phone,
+              ResponsiveFormColumns(
+                children: [
+                  StringDropdownField(
+                    label: strings.discountType,
+                    value: discountType,
+                    options: const ['Amount', 'Percent'],
+                    onChanged: (v) {
+                      if (v != null) setLocal(() => discountType = v);
+                    },
+                  ),
+                  AppTextField(
+                    controller: discountCtrl,
+                    label: strings.discountLabel,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 12),
-              StringDropdownField(
-                label: strings.discountType,
-                value: discountType,
-                options: const ['Amount', 'Percent'],
-                onChanged: (v) {
-                  if (v != null) setLocal(() => discountType = v);
-                },
-              ),
-              const SizedBox(height: 12),
-              AppTextField(
-                controller: discountCtrl,
-                label: strings.discountLabel,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-              ),
-              const SizedBox(height: 12),
-              StringDropdownField(
-                label: strings.packingType,
-                value: packingType,
-                options: const ['Amount', 'Percent'],
-                onChanged: (v) {
-                  if (v != null) setLocal(() => packingType = v);
-                },
-              ),
-              const SizedBox(height: 12),
-              AppTextField(
-                controller: packingCtrl,
-                label: strings.packingLabel,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
+              ResponsiveFormColumns(
+                children: [
+                  StringDropdownField(
+                    label: strings.packingType,
+                    value: packingType,
+                    options: const ['Amount', 'Percent'],
+                    onChanged: (v) {
+                      if (v != null) setLocal(() => packingType = v);
+                    },
+                  ),
+                  AppTextField(
+                    controller: packingCtrl,
+                    label: strings.packingLabel,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 12),
               StringDropdownField(
@@ -497,23 +539,27 @@ Future<void> editHeader(
                 },
               ),
               const SizedBox(height: 12),
-              AppTextField(
-                controller: cashCtrl,
-                label: strings.cash,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-              ),
-              const SizedBox(height: 12),
-              AppTextField(
-                controller: upiCtrl,
-                label: strings.upi,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
+              ResponsiveFormColumns(
+                children: [
+                  AppTextField(
+                    controller: cashCtrl,
+                    label: strings.cash,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                  ),
+                  AppTextField(
+                    controller: upiCtrl,
+                    label: strings.upi,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
+        ),
         ),
         actions: [
           TextButton(
@@ -525,7 +571,8 @@ Future<void> editHeader(
             onPressed: () => Navigator.pop(context, true),
           ),
         ],
-      ),
+      );
+      },
     ),
   );
   if (ok != true) return;

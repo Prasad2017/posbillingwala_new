@@ -93,6 +93,8 @@ class ExpenseListBody extends ConsumerWidget {
       decimalDigits: 2,
     );
     final dateFmt = DateFormat('yyyy-MM-dd');
+    final useCards = context.isCompactWidth;
+    final hPad = AppBreakpoints.pagePaddingFor(context.widthClass);
 
     return expensesAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -102,52 +104,164 @@ class ExpenseListBody extends ConsumerWidget {
           dashboard: true,
           child: ListView(
             padding: EdgeInsets.fromLTRB(
-              AppBreakpoints.pagePaddingFor(context.widthClass),
-              14,
-              AppBreakpoints.pagePaddingFor(context.widthClass),
+              hPad,
+              context.isShortHeight
+                  ? AppBreakpoints.densePaddingFor(context.heightClass)
+                  : 14,
+              hPad,
               28,
             ),
             children: [
-              MasterCard(
-                padding: EdgeInsets.zero,
-                child: rows.isEmpty
-                    ? const MasterEmptyState(
-                        title: 'No expenses yet',
-                        subtitle: 'Tap Add Expense to record a shop cost.',
-                      )
-                    : Column(
-                        children: [
-                          const ExpenseTableHeader(),
-                          const Divider(height: 1, thickness: 1),
-                          for (var i = 0; i < rows.length; i++) ...[
-                            if (i > 0)
-                              Divider(
-                                height: 1,
-                                thickness: 1,
-                                color: AppColors.border.withValues(alpha: .7),
-                              ),
-                            ExpenseTableRow(
-                              index: i + 1,
-                              row: rows[i],
-                              dateFmt: dateFmt,
-                              currency: currency,
-                            ),
-                          ],
+              if (rows.isEmpty)
+                const MasterCard(
+                  padding: EdgeInsets.zero,
+                  child: MasterEmptyState(
+                    title: 'No expenses yet',
+                    subtitle: 'Tap Add Expense to record a shop cost.',
+                  ),
+                )
+              else if (useCards) ...[
+                for (var i = 0; i < rows.length; i++) ...[
+                  if (i > 0) const SizedBox(height: 8),
+                  ExpenseListCard(
+                    index: i + 1,
+                    row: rows[i],
+                    dateFmt: dateFmt,
+                    currency: currency,
+                  ),
+                ],
+                const SizedBox(height: 12),
+                MasterCard(
+                  padding: const EdgeInsets.fromLTRB(12, 16, 12, 16),
+                  child: ExpenseTotalRow(
+                    totalLabel: totalCurrency.format(total),
+                  ),
+                ),
+              ] else
+                MasterCard(
+                  padding: EdgeInsets.zero,
+                  child: Column(
+                    children: [
+                      const ExpenseTableHeader(),
+                      const Divider(height: 1, thickness: 1),
+                      for (var i = 0; i < rows.length; i++) ...[
+                        if (i > 0)
                           Divider(
                             height: 1,
                             thickness: 1,
-                            color: AppColors.border.withValues(alpha: .9),
+                            color: AppColors.border.withValues(alpha: .7),
                           ),
-                          ExpenseTotalRow(
-                            totalLabel: totalCurrency.format(total),
-                          ),
-                        ],
+                        ExpenseTableRow(
+                          index: i + 1,
+                          row: rows[i],
+                          dateFmt: dateFmt,
+                          currency: currency,
+                        ),
+                      ],
+                      Divider(
+                        height: 1,
+                        thickness: 1,
+                        color: AppColors.border.withValues(alpha: .9),
                       ),
-              ),
+                      ExpenseTotalRow(
+                        totalLabel: totalCurrency.format(total),
+                      ),
+                    ],
+                  ),
+                ),
             ],
           ),
         );
       },
+    );
+  }
+}
+
+class ExpenseListCard extends StatelessWidget {
+  const ExpenseListCard({
+    super.key,
+    required this.index,
+    required this.row,
+    required this.dateFmt,
+    required this.currency,
+  });
+
+  final int index;
+  final ShopExpense row;
+  final DateFormat dateFmt;
+  final NumberFormat currency;
+
+  @override
+  Widget build(BuildContext context) {
+    final name = row.expensesName.trim().isEmpty
+        ? 'Expense'
+        : row.expensesName.trim();
+
+    return MasterCard(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: .10),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              '$index',
+              style: const TextStyle(
+                fontFamily: AppFonts.family,
+                fontWeight: FontWeight.w700,
+                color: AppColors.primary,
+                fontSize: 13,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontFamily: AppFonts.family,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.navy,
+                    height: 1.25,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  dateFmt.format(row.expensesDate),
+                  style: TextStyle(
+                    fontFamily: AppFonts.family,
+                    fontSize: 12,
+                    color: AppColors.navy.withValues(alpha: .55),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            currency.format(row.expensesAmount),
+            style: const TextStyle(
+              fontFamily: AppFonts.family,
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+              color: AppColors.primary,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -287,7 +401,9 @@ class ExpenseTotalRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 16, 12, 16),
+      padding: context.isCompactWidth
+          ? EdgeInsets.zero
+          : const EdgeInsets.fromLTRB(12, 16, 12, 16),
       child: Row(
         children: [
           const Expanded(

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
 import 'package:pos_billingwala_v2/core/network/online_guard.dart';
+import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/staff/data/staff_offline_queue.dart';
@@ -67,9 +68,17 @@ class StaffDetailPageState extends ConsumerState<StaffDetailPage> {
     final confirm = TextEditingController();
     final ok = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) {
+        final screenW = MediaQuery.sizeOf(context).width;
+        return AlertDialog(
+        insetPadding: EdgeInsets.symmetric(
+          horizontal: screenW < 360 ? 12 : 24,
+          vertical: 24,
+        ),
         title: const Text('Reset PIN'),
-        content: Column(
+        content: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: screenW - 48),
+          child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             AppTextField(
@@ -90,6 +99,7 @@ class StaffDetailPageState extends ConsumerState<StaffDetailPage> {
             ),
           ],
         ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -100,7 +110,8 @@ class StaffDetailPageState extends ConsumerState<StaffDetailPage> {
             child: const Text('Reset'),
           ),
         ],
-      ),
+      );
+      },
     );
     if (ok != true || !mounted) return;
     final session = ref.read(authControllerProvider).session;
@@ -242,8 +253,15 @@ class StaffDetailPageState extends ConsumerState<StaffDetailPage> {
                   ? const CircularProgressIndicator()
                   : Text(error!),
             )
-          : ListView(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+          : ResponsiveScrollShell(
+              dashboard: true,
+              child: ListView(
+              padding: EdgeInsets.fromLTRB(
+                AppBreakpoints.pagePaddingFor(context.widthClass),
+                16,
+                AppBreakpoints.pagePaddingFor(context.widthClass),
+                28,
+              ),
               children: [
                 _DetailCard(
                   child: Column(
@@ -470,12 +488,18 @@ class StaffDetailPageState extends ConsumerState<StaffDetailPage> {
                               ),
                             );
                           }
-                          final cols = constraints.maxWidth >= 420 ? 3 : 2;
+                          final cols = AppBreakpoints.columnsForWidth(
+                            constraints.maxWidth,
+                            minItemWidth: 140,
+                            minColumns: 2,
+                            maxColumns: 3,
+                            spacing: 10,
+                          );
                           return GridView.count(
                             crossAxisCount: cols,
                             mainAxisSpacing: 10,
                             crossAxisSpacing: 10,
-                            childAspectRatio: cols == 3 ? 2.4 : 2.2,
+                            childAspectRatio: cols >= 3 ? 2.4 : 2.2,
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
                             children: actions,
@@ -487,6 +511,7 @@ class StaffDetailPageState extends ConsumerState<StaffDetailPage> {
                 ),
               ],
             ),
+          ),
     );
   }
 }

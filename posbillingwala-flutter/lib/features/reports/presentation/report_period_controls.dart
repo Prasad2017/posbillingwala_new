@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
+import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/license_validator.dart';
 import 'package:pos_billingwala_v2/features/reports/domain/reports_providers.dart';
 import 'package:pos_billingwala_v2/language/app_strings.dart';
@@ -323,10 +324,15 @@ class _MonthOnlyPickerDialogState extends State<_MonthOnlyPickerDialog> {
   @override
   Widget build(BuildContext context) {
     final months = DateFormat().dateSymbols.SHORTMONTHS;
+    final screenW = MediaQuery.sizeOf(context).width;
     return AlertDialog(
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: screenW < 360 ? 12 : 24,
+        vertical: 24,
+      ),
       title: const Text('Select month'),
-      content: SizedBox(
-        width: 320,
+      content: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: (screenW - 48).clamp(240.0, 360.0)),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -361,52 +367,63 @@ class _MonthOnlyPickerDialogState extends State<_MonthOnlyPickerDialog> {
               ],
             ),
             const SizedBox(height: 8),
-            GridView.builder(
-              shrinkWrap: true,
-              itemCount: 12,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                mainAxisSpacing: 8,
-                crossAxisSpacing: 8,
-                childAspectRatio: 2.2,
-              ),
-              itemBuilder: (context, index) {
-                final month = index + 1;
-                final enabled = _monthEnabled(month);
-                final selected =
-                    year == widget.initial.year &&
-                    month == widget.initial.month;
-                return Material(
-                  color: selected
-                      ? AppColors.primary
-                      : enabled
-                      ? AppColors.primarySoft
-                      : AppColors.border.withValues(alpha: 0.35),
-                  borderRadius: BorderRadius.circular(10),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(10),
-                    onTap: !enabled
-                        ? null
-                        : () => Navigator.pop(
-                            context,
-                            DateTime(year, month, 1),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final cols = AppBreakpoints.columnsForWidth(
+                  constraints.maxWidth,
+                  minItemWidth: 72,
+                  minColumns: 2,
+                  maxColumns: 4,
+                  spacing: 8,
+                );
+                return GridView.builder(
+                  shrinkWrap: true,
+                  itemCount: 12,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: cols,
+                    mainAxisSpacing: 8,
+                    crossAxisSpacing: 8,
+                    childAspectRatio: cols >= 4 ? 2.0 : 2.2,
+                  ),
+                  itemBuilder: (context, index) {
+                    final month = index + 1;
+                    final enabled = _monthEnabled(month);
+                    final selected =
+                        year == widget.initial.year &&
+                        month == widget.initial.month;
+                    return Material(
+                      color: selected
+                          ? AppColors.primary
+                          : enabled
+                          ? AppColors.primarySoft
+                          : AppColors.border.withValues(alpha: 0.35),
+                      borderRadius: BorderRadius.circular(10),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(10),
+                        onTap: !enabled
+                            ? null
+                            : () => Navigator.pop(
+                                context,
+                                DateTime(year, month, 1),
+                              ),
+                        child: Center(
+                          child: Text(
+                            months[index],
+                            style: TextStyle(
+                              fontFamily: AppFonts.family,
+                              fontWeight: FontWeight.w700,
+                              color: !enabled
+                                  ? AppColors.textSecondary
+                                  : selected
+                                  ? Colors.white
+                                  : AppColors.navy,
+                            ),
                           ),
-                    child: Center(
-                      child: Text(
-                        months[index],
-                        style: TextStyle(
-                          fontFamily: AppFonts.family,
-                          fontWeight: FontWeight.w700,
-                          color: !enabled
-                              ? AppColors.textSecondary
-                              : selected
-                              ? Colors.white
-                              : AppColors.navy,
                         ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
                 );
               },
             ),
@@ -436,10 +453,15 @@ class _YearOnlyPickerDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenW = MediaQuery.sizeOf(context).width;
     return AlertDialog(
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: screenW < 360 ? 12 : 24,
+        vertical: 24,
+      ),
       title: const Text('Select year'),
       content: SizedBox(
-        width: 300,
+        width: (screenW - 48).clamp(240.0, 300.0),
         height: 300,
         child: YearPicker(
           firstDate: DateTime(firstYear),

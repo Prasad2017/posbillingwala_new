@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
+import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/utils/money_format.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/masters/domain/masters_providers.dart';
@@ -141,19 +142,29 @@ class ComboFormPageState extends ConsumerState<ComboFormPage> {
     return Scaffold(
       backgroundColor: MasterUi.bg,
       appBar: AppBar(title: Text(isEdit ? 'Update Combo' : 'Add Combo')),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+      body: ResponsiveScrollShell(
+        dashboard: false,
+        child: ListView(
+        padding: EdgeInsets.fromLTRB(
+          AppBreakpoints.pagePaddingFor(context.widthClass),
+          12,
+          AppBreakpoints.pagePaddingFor(context.widthClass),
+          32,
+        ),
         children: [
-          AppTextField(
-            controller: comboFormPageCode,
-            label: 'Combo code',
-            textCapitalization: TextCapitalization.characters,
-          ),
-          const SizedBox(height: 12),
-          AppTextField(
-            required: true,
-            controller: comboFormPageName,
-            label: 'Combo name',
+          ResponsiveFormColumns(
+            children: [
+              AppTextField(
+                controller: comboFormPageCode,
+                label: 'Combo code',
+                textCapitalization: TextCapitalization.characters,
+              ),
+              AppTextField(
+                required: true,
+                controller: comboFormPageName,
+                label: 'Combo name',
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           AppTextField(
@@ -163,25 +174,20 @@ class ComboFormPageState extends ConsumerState<ComboFormPage> {
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
           ),
           const SizedBox(height: 12),
-          Row(
+          ResponsiveFormColumns(
             children: [
-              Expanded(
-                child: AppTextField(
-                  controller: cgst,
-                  label: 'CGST',
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
+              AppTextField(
+                controller: cgst,
+                label: 'CGST',
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
                 ),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: AppTextField(
-                  controller: sgst,
-                  label: 'SGST',
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
+              AppTextField(
+                controller: sgst,
+                label: 'SGST',
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
                 ),
               ),
             ],
@@ -225,7 +231,11 @@ class ComboFormPageState extends ConsumerState<ComboFormPage> {
             return CheckboxListTile(
               dense: true,
               value: qty > 0,
-              title: Text(p.productName),
+              title: Text(
+                p.productName,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
               subtitle: qty > 0 ? Text('Qty: $qty') : null,
               onChanged: (checked) => setState(() {
                 if (checked == true) {
@@ -265,6 +275,7 @@ class ComboFormPageState extends ConsumerState<ComboFormPage> {
             onPressed: busy ? null : save,
           ),
         ],
+      ),
       ),
     );
   }

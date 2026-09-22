@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/permissions/app_permission_service.dart';
+import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/print/domain/bluetooth_printer_hub.dart';
 import 'package:pos_billingwala_v2/features/print/domain/esc_pos_transport_hub.dart';
@@ -284,10 +285,17 @@ class PrinterDevicePickerPageState extends State<PrinterDevicePickerPage>
           ),
         ],
       ),
-      body: Column(
+      body: ResponsiveScrollShell(
+        dashboard: true,
+        child: Column(
         children: [
           Container(
-            margin: const EdgeInsets.fromLTRB(16, 10, 16, 4),
+            margin: EdgeInsets.fromLTRB(
+              AppBreakpoints.pagePaddingFor(context.widthClass),
+              10,
+              AppBreakpoints.pagePaddingFor(context.widthClass),
+              4,
+            ),
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: AppColors.primary.withValues(alpha: .08),
@@ -326,6 +334,7 @@ class PrinterDevicePickerPageState extends State<PrinterDevicePickerPage>
                   ),
           ),
         ],
+      ),
       ),
     );
   }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
+import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/mess/domain/mess_providers.dart';
 import 'package:pos_billingwala_v2/features/mess/presentation/mess_page.dart';
 import 'package:pos_billingwala_v2/features/mess/presentation/mess_token_qr_page.dart';
@@ -130,7 +131,10 @@ class MessMembersPageState extends ConsumerState<MessMembersPage> {
           ),
         ],
       ),
-      body: MembersTab(onEditMember: editMember),
+      body: ResponsiveScrollShell(
+        dashboard: true,
+        child: MembersTab(onEditMember: editMember),
+      ),
     );
   }
 }

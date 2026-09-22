@@ -258,21 +258,30 @@ class PosPageState extends ConsumerState<PosPage> {
               currency: currency,
             );
             if (showSideCart) {
-              return Row(
-                children: [
-                  Expanded(flex: 3, child: catalog),
-                  SizedBox(
-                    width: AppBreakpoints.posSideCartWidth(context.widthClass),
-                    child: cart,
-                  ),
-                ],
+              return LayoutBuilder(
+                builder: (context, constraints) {
+                  final cartW = AppBreakpoints.posSideCartWidth(
+                    context.widthClass,
+                    height: context.heightClass,
+                    availableWidth: constraints.maxWidth,
+                  );
+                  return Row(
+                    children: [
+                      Expanded(flex: 3, child: catalog),
+                      SizedBox(width: cartW, child: cart),
+                    ],
+                  );
+                },
               );
             }
             if (persistentCart) {
+              /* Short height: give catalog more room; tall: balanced split. */
+              final catalogFlex = context.isShortHeight ? 12 : 11;
+              final cartFlex = context.isShortHeight ? 8 : 9;
               return Column(
                 children: [
-                  Expanded(flex: 11, child: catalog),
-                  Expanded(flex: 9, child: cart),
+                  Expanded(flex: catalogFlex, child: catalog),
+                  Expanded(flex: cartFlex, child: cart),
                 ],
               );
             }
@@ -374,11 +383,13 @@ class CatalogPane extends ConsumerWidget {
       listenable: searchController,
       builder: (context, _) {
         final query = searchController.text.trim().toLowerCase();
+        final dense = context.isShortHeight;
+        final vPad = dense ? 4.0 : 10.0;
         return Column(
           children: [
             if (session.tableNumber != null || session.customerName != null)
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                padding: EdgeInsets.fromLTRB(16, dense ? 4 : 10, 16, 0),
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
@@ -393,7 +404,7 @@ class CatalogPane extends ConsumerWidget {
                 ),
               ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
+              padding: EdgeInsets.fromLTRB(16, vPad, 16, dense ? 4 : 8),
               child: TextField(
                 controller: searchController,
                 autofocus: AppPlatform.useDesktopShell,
@@ -470,7 +481,7 @@ class CatalogPane extends ConsumerWidget {
             const SizedBox(height: 10),
             if (!showCombos)
               SizedBox(
-                height: 40,
+                height: dense ? 34 : 40,
                 child: categoriesAsync.when(
                   data: (categories) {
                     if (categories.isEmpty) {
@@ -584,33 +595,97 @@ class CatalogPane extends ConsumerWidget {
                             child: Text(AppStrings.of(ref).noCombosFound),
                           );
                         }
-                        return ListView.separated(
-                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                          addAutomaticKeepAlives: false,
-                          itemCount: filtered.length,
-                          separatorBuilder: (_, _) => const SizedBox(height: 8),
-                          itemBuilder: (context, index) {
-                            final combo = filtered[index];
-                            final price = combo.comboWithGstPrice > 0
-                                ? combo.comboWithGstPrice
-                                : combo.comboPrice;
-                            return AppCard(
-                              padding: EdgeInsets.zero,
-                              child: ListTile(
-                                title: Text(
-                                  combo.comboName,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w700,
+                        return LayoutBuilder(
+                          builder: (context, constraints) {
+                            final cols = AppBreakpoints.columnsForWidth(
+                              constraints.maxWidth,
+                              minItemWidth: AppBreakpoints.minComboCardWidth,
+                              minColumns: 1,
+                              maxColumns: 3,
+                              spacing: 8,
+                            );
+                            if (cols <= 1) {
+                              return ListView.separated(
+                                padding: const EdgeInsets.fromLTRB(
+                                  16,
+                                  8,
+                                  16,
+                                  24,
+                                ),
+                                addAutomaticKeepAlives: false,
+                                itemCount: filtered.length,
+                                separatorBuilder: (_, _) =>
+                                    const SizedBox(height: 8),
+                                itemBuilder: (context, index) {
+                                  final combo = filtered[index];
+                                  final price = combo.comboWithGstPrice > 0
+                                      ? combo.comboWithGstPrice
+                                      : combo.comboPrice;
+                                  return AppCard(
+                                    padding: EdgeInsets.zero,
+                                    child: ListTile(
+                                      title: Text(
+                                        combo.comboName,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      subtitle: Text(currency.format(price)),
+                                      trailing: IconButton.filled(
+                                        onPressed: () => ref
+                                            .read(
+                                              posCartControllerProvider
+                                                  .notifier,
+                                            )
+                                            .addCombo(combo),
+                                        icon: const Icon(Icons.add),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
+                            }
+                            return GridView.builder(
+                              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                              addAutomaticKeepAlives: false,
+                              gridDelegate:
+                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: cols,
+                                    mainAxisSpacing: 8,
+                                    crossAxisSpacing: 8,
+                                    mainAxisExtent: context.isShortHeight
+                                        ? 72
+                                        : 80,
                                   ),
-                                ),
-                                subtitle: Text(currency.format(price)),
-                                trailing: IconButton.filled(
-                                  onPressed: () => ref
-                                      .read(posCartControllerProvider.notifier)
-                                      .addCombo(combo),
-                                  icon: const Icon(Icons.add),
-                                ),
-                              ),
+                              itemCount: filtered.length,
+                              itemBuilder: (context, index) {
+                                final combo = filtered[index];
+                                final price = combo.comboWithGstPrice > 0
+                                    ? combo.comboWithGstPrice
+                                    : combo.comboPrice;
+                                return AppCard(
+                                  padding: EdgeInsets.zero,
+                                  child: ListTile(
+                                    title: Text(
+                                      combo.comboName,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    subtitle: Text(currency.format(price)),
+                                    trailing: IconButton.filled(
+                                      onPressed: () => ref
+                                          .read(
+                                            posCartControllerProvider.notifier,
+                                          )
+                                          .addCombo(combo),
+                                      icon: const Icon(Icons.add),
+                                    ),
+                                  ),
+                                );
+                              },
                             );
                           },
                         );
@@ -645,12 +720,14 @@ class CatalogPane extends ConsumerWidget {
                               constraints.maxWidth,
                             );
                             final crossAxisCount =
-                                AppBreakpoints.productColumnsFor(widthClass);
-                            final mainExtent = widthClass == AppWidthClass.compact
-                                ? 86.0
-                                : widthClass == AppWidthClass.medium
-                                ? 88.0
-                                : 90.0;
+                                AppBreakpoints.productColumnsForWidth(
+                              constraints.maxWidth,
+                            );
+                            final mainExtent =
+                                AppBreakpoints.productCardExtentFor(
+                              widthClass,
+                              height: context.heightClass,
+                            );
                             return GridView.builder(
                               padding: const EdgeInsets.fromLTRB(8, 6, 8, 16),
                               addAutomaticKeepAlives: false,
@@ -1073,38 +1150,50 @@ class CartPane extends ConsumerWidget {
             ),
           ),
           const Divider(height: 1),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 24,
-                  child: Text(
-                    'Product Name',
-                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final narrow = constraints.maxWidth < 320;
+              return Padding(
+                padding: EdgeInsets.fromLTRB(narrow ? 10 : 16, 8, narrow ? 10 : 16, 0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 24,
+                      child: Text(
+                        'Product Name',
+                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
-                  ),
+                    SizedBox(
+                      width: narrow ? 72 : 88,
+                      child: const Text(
+                        'Qty',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                    if (!narrow)
+                      const Expanded(
+                        flex: 8,
+                        child: Text(
+                          'Unit Price',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    SizedBox(width: narrow ? 28 : 32),
+                  ],
                 ),
-                const SizedBox(
-                  width: 88,
-                  child: Text(
-                    'Qty',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
-                  ),
-                ),
-                const Expanded(
-                  flex: 8,
-                  child: Text(
-                    'Unit Price',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
-                  ),
-                ),
-                const SizedBox(width: 32),
-              ],
-            ),
+              );
+            },
           ),
           Expanded(
             child: cartAsync.when(
@@ -1160,100 +1249,123 @@ class CartItemTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(
-            flex: 24,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.productName,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 14),
-                ),
-                if (item.quantity > item.printedQuantity)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 2),
-                    child: AppStatusBadge(
-                      label:
-                          'KOT +${ProductUnits.formatQty(item.quantity - item.printedQuantity, unit: item.productUnit)}',
-                      color: AppColors.warning,
-                    ),
-                  ),
-              ],
-            ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final narrow = constraints.maxWidth < 320;
+        return Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: narrow ? 4 : 8,
+            vertical: 4,
           ),
-          SizedBox(
-            width: 88,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                QtyButton(
-                  isAdd: false,
-                  onTap: () => ref
-                      .read(posCartControllerProvider.notifier)
-                      .decrement(item),
-                ),
-                InkWell(
-                  onTap: () => editCartLineDialog(context, ref, item),
-                  child: SizedBox(
-                    width: 28,
-                    height: 32,
-                    child: Center(
-                      child: Text(
-                        ProductUnits.formatQty(
-                          item.quantity,
-                          unit: item.productUnit,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                flex: 24,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.productName,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: narrow ? 13 : 14),
+                    ),
+                    if (item.quantity > item.printedQuantity)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: AppStatusBadge(
+                          label:
+                              'KOT +${ProductUnits.formatQty(item.quantity - item.printedQuantity, unit: item.productUnit)}',
+                          color: AppColors.warning,
                         ),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
+                      ),
+                    if (narrow)
+                      InkWell(
+                        onTap: () => editCartLineDialog(context, ref, item),
+                        child: Text(
+                          currency.format(item.unitPrice),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              SizedBox(
+                width: narrow ? 72 : 88,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    QtyButton(
+                      isAdd: false,
+                      onTap: () => ref
+                          .read(posCartControllerProvider.notifier)
+                          .decrement(item),
+                    ),
+                    InkWell(
+                      onTap: () => editCartLineDialog(context, ref, item),
+                      child: SizedBox(
+                        width: narrow ? 22 : 28,
+                        height: 32,
+                        child: Center(
+                          child: Text(
+                            ProductUnits.formatQty(
+                              item.quantity,
+                              unit: item.productUnit,
+                            ),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: narrow ? 12 : 14,
+                            ),
+                          ),
                         ),
                       ),
                     ),
+                    QtyButton(
+                      isAdd: true,
+                      onTap: () => ref
+                          .read(posCartControllerProvider.notifier)
+                          .increment(item),
+                    ),
+                  ],
+                ),
+              ),
+              if (!narrow)
+                Expanded(
+                  flex: 8,
+                  child: InkWell(
+                    onTap: () => editCartLineDialog(context, ref, item),
+                    child: Text(
+                      currency.format(item.unitPrice),
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      style: const TextStyle(fontSize: 13),
+                    ),
                   ),
                 ),
-                QtyButton(
-                  isAdd: true,
-                  onTap: () => ref
-                      .read(posCartControllerProvider.notifier)
-                      .increment(item),
+              IconButton(
+                tooltip: 'Remove item',
+                padding: EdgeInsets.zero,
+                constraints: BoxConstraints(
+                  minWidth: narrow ? 28 : 32,
+                  minHeight: 32,
                 ),
-              ],
-            ),
-          ),
-          Expanded(
-            flex: 8,
-            child: InkWell(
-              onTap: () => editCartLineDialog(context, ref, item),
-              child: Text(
-                currency.format(item.unitPrice),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                style: const TextStyle(fontSize: 13),
+                onPressed: () =>
+                    ref.read(posCartControllerProvider.notifier).remove(item),
+                icon: const AppSvg(
+                  AppAssets.svgDelete,
+                  width: 20,
+                  height: 20,
+                  color: AppColors.danger,
+                ),
               ),
-            ),
+            ],
           ),
-          IconButton(
-            tooltip: 'Remove item',
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-            onPressed: () =>
-                ref.read(posCartControllerProvider.notifier).remove(item),
-            icon: const AppSvg(
-              AppAssets.svgDelete,
-              width: 20,
-              height: 20,
-              color: AppColors.danger,
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

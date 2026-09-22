@@ -122,7 +122,9 @@ class SupportTicketsPageState extends ConsumerState<SupportTicketsPage> {
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: EdgeInsets.fromLTRB(
                     AppBreakpoints.pagePaddingFor(context.widthClass),
-                    16,
+                    context.isShortHeight
+                        ? AppBreakpoints.densePaddingFor(context.heightClass)
+                        : 16,
                     AppBreakpoints.pagePaddingFor(context.widthClass),
                     24,
                   ),
@@ -149,6 +151,7 @@ class SupportTicketsPageState extends ConsumerState<SupportTicketsPage> {
                             ),
                           ),
                         ),
+                        const SizedBox(width: 8),
                         PopupMenuButton<String>(
                           initialValue: statusFilter,
                           onSelected: (v) => setState(() => statusFilter = v),
@@ -177,6 +180,7 @@ class SupportTicketsPageState extends ConsumerState<SupportTicketsPage> {
                                   statusFilter == 'All Status'
                                       ? 'Select Item'
                                       : statusFilter,
+                                  overflow: TextOverflow.ellipsis,
                                   style: AppTypography.bodySmall(
                                     color: AppColors.navy,
                                   ),

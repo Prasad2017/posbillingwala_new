@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
+import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/print/domain/print_providers.dart';
@@ -82,9 +83,20 @@ class BillPrintPreviewPageState extends ConsumerState<BillPrintPreviewPage> {
               Expanded(
                 child: Center(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                    padding: EdgeInsets.fromLTRB(
+                      AppBreakpoints.pagePaddingFor(context.widthClass),
+                      context.isShortHeight ? 6 : 12,
+                      AppBreakpoints.pagePaddingFor(context.widthClass),
+                      12,
+                    ),
                     child: Center(
-                      child: DecoratedBox(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth: AppBreakpoints.contentMaxWidthFor(
+                            AppWidthClass.compact,
+                          ),
+                        ),
+                        child: DecoratedBox(
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(4),
@@ -99,6 +111,7 @@ class BillPrintPreviewPageState extends ConsumerState<BillPrintPreviewPage> {
                           ),
                         ),
                       ),
+                      ),
                     ),
                   ),
                 ),
@@ -106,8 +119,63 @@ class BillPrintPreviewPageState extends ConsumerState<BillPrintPreviewPage> {
               SafeArea(
                 top: false,
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                  child: Row(
+                  padding: EdgeInsets.fromLTRB(
+                    AppBreakpoints.pagePaddingFor(context.widthClass),
+                    8,
+                    AppBreakpoints.pagePaddingFor(context.widthClass),
+                    12,
+                  ),
+                  child: context.isCompactWidth
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            AppButton(
+                              label: 'Share Bill',
+                              icon: Icons.share_rounded,
+                              variant: AppButtonVariant.outlined,
+                              onPressed: () async {
+                                try {
+                                  await shareTicketWidgetAsImage(
+                                    boundaryKey: ticketKey,
+                                    label: widget.duplicate
+                                        ? 'Duplicate bill'
+                                        : 'Invoice',
+                                  );
+                                  if (!context.mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text(strings.shared)),
+                                  );
+                                } catch (e) {
+                                  if (!context.mounted) return;
+                                  ScaffoldMessenger.of(
+                                    context,
+                                  ).showSnackBar(SnackBar(content: Text('$e')));
+                                }
+                              },
+                            ),
+                            const SizedBox(height: 8),
+                            AppButton(
+                              label: 'Print Bill',
+                              icon: Icons.print_rounded,
+                              onPressed: () async {
+                                final result = await printInvoiceById(
+                                  ref,
+                                  widget.invoiceId,
+                                  duplicate: widget.duplicate,
+                                );
+                                if (!context.mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      result.message ?? strings.printed,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                        )
+                      : Row(
                     children: [
                       Expanded(
                         child: AppButton(

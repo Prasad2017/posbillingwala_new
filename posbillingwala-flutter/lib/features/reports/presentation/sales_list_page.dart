@@ -10,6 +10,7 @@ import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/features/reports/domain/reports_providers.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/report_period_controls.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/report_widgets.dart';
+import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
 import 'package:pos_billingwala_v2/language/app_strings.dart';
 
 /* WithTable `SalesList` — bills plus product lines for the selected period. */
@@ -31,10 +32,17 @@ class SalesListPage extends ConsumerWidget {
           onPressed: () => context.pop(),
         ),
       ),
-      body: Column(
+      body: ResponsiveScrollShell(
+        dashboard: true,
+        child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            padding: EdgeInsets.fromLTRB(
+              AppBreakpoints.pagePaddingFor(context.widthClass),
+              context.isShortHeight ? 6 : 12,
+              AppBreakpoints.pagePaddingFor(context.widthClass),
+              8,
+            ),
             child: Align(
               alignment: Alignment.centerLeft,
               child: ReportPeriodPill(
@@ -68,6 +76,7 @@ class SalesListPage extends ConsumerWidget {
                   ),
           ),
         ],
+      ),
       ),
     );
   }

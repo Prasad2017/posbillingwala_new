@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
+import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
 import 'package:pos_billingwala_v2/features/payment_display/presentation/payment_display_actions.dart';
 import 'package:pos_billingwala_v2/features/reports/domain/report_export.dart';
 import 'package:pos_billingwala_v2/features/reports/domain/reports_providers.dart';
@@ -89,10 +90,12 @@ class ReportsPage extends ConsumerWidget {
           ),
         ],
       ),
-      body: Column(
+      body: ResponsiveScrollShell(
+        dashboard: true,
+        child: Column(
         children: [
           Padding(
-            padding: EdgeInsets.fromLTRB(pad, 12, pad, 0),
+            padding: EdgeInsets.fromLTRB(pad, context.isShortHeight ? 6 : 12, pad, 0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -187,6 +190,7 @@ class ReportsPage extends ConsumerWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

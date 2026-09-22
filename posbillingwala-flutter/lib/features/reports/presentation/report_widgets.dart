@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
+import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/features/reports/domain/reports_providers.dart';
 
 const pageBg = Color(0x00000000);
@@ -189,7 +190,7 @@ class ReportKpiData {
   final double? changePercent;
 }
 
-/* 2×2 KPI grid with blue top accent (screenshot style). */
+/* Responsive KPI grid — columns from available width (not fixed 2×2). */
 class ReportKpiGrid extends StatelessWidget {
   const ReportKpiGrid({super.key, required this.items});
 
@@ -197,25 +198,39 @@ class ReportKpiGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final rows = <List<ReportKpiData>>[];
-    for (var i = 0; i < items.length; i += 2) {
-      rows.add(items.sublist(i, math.min(i + 2, items.length)));
-    }
-    return Column(
-      children: [
-        for (var r = 0; r < rows.length; r++) ...[
-          if (r > 0) const SizedBox(height: 10),
-          Row(
-            children: [
-              for (var c = 0; c < rows[r].length; c++) ...[
-                if (c > 0) const SizedBox(width: 10),
-                Expanded(child: ReportKpiCard(data: rows[r][c])),
-              ],
-              if (rows[r].length == 1) const Expanded(child: SizedBox()),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cols = AppBreakpoints.columnsForWidth(
+          constraints.maxWidth,
+          minItemWidth: AppBreakpoints.minKpiCardWidth,
+          minColumns: 2,
+          maxColumns: 4,
+          spacing: 10,
+        );
+        final rows = <List<ReportKpiData>>[];
+        for (var i = 0; i < items.length; i += cols) {
+          rows.add(items.sublist(i, math.min(i + cols, items.length)));
+        }
+        return Column(
+          children: [
+            for (var r = 0; r < rows.length; r++) ...[
+              if (r > 0) const SizedBox(height: 10),
+              Row(
+                children: [
+                  for (var c = 0; c < rows[r].length; c++) ...[
+                    if (c > 0) const SizedBox(width: 10),
+                    Expanded(child: ReportKpiCard(data: rows[r][c])),
+                  ],
+                  for (var p = rows[r].length; p < cols; p++) ...[
+                    const SizedBox(width: 10),
+                    const Expanded(child: SizedBox()),
+                  ],
+                ],
+              ),
             ],
-          ),
-        ],
-      ],
+          ],
+        );
+      },
     );
   }
 }

@@ -204,7 +204,11 @@ class SupportTicketDetailPageState
                             controller: scrollController,
                             padding: EdgeInsets.fromLTRB(
                               AppBreakpoints.pagePaddingFor(context.widthClass),
-                              16,
+                              context.isShortHeight
+                                  ? AppBreakpoints.densePaddingFor(
+                                      context.heightClass,
+                                    )
+                                  : 16,
                               AppBreakpoints.pagePaddingFor(context.widthClass),
                               16,
                             ),
@@ -334,12 +338,13 @@ class SupportTicketDetailPageState
                               const SizedBox(height: 18),
                               Row(
                                 children: [
-                                  Text(
-                                    'Conversation',
-                                    style: AppTypography.sectionTitle()
-                                        .copyWith(fontSize: 16),
+                                  Expanded(
+                                    child: Text(
+                                      'Conversation',
+                                      style: AppTypography.sectionTitle()
+                                          .copyWith(fontSize: 16),
+                                    ),
                                   ),
-                                  const Spacer(),
                                   InkWell(
                                     onTap: () => setState(
                                       () => oldestFirst = !oldestFirst,
@@ -351,6 +356,7 @@ class SupportTicketDetailPageState
                                         vertical: 4,
                                       ),
                                       child: Row(
+                                        mainAxisSize: MainAxisSize.min,
                                         children: [
                                           Text(
                                             oldestFirst
@@ -398,83 +404,102 @@ class SupportTicketDetailPageState
                 ),
                 SafeArea(
                   top: false,
-                  child: Container(
-                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      border: Border(top: BorderSide(color: AppColors.border)),
-                    ),
-                    child: closed
-                        ? Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: AppColors.surface,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.lock_outline_rounded,
-                                      size: 18,
-                                      color: AppColors.textSecondary,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        'Reply is disabled. This ticket is closed. Open a new ticket if you need more help.',
-                                        style: AppTypography.bodySmall(),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              AppButton(
-                                label: 'Open New Ticket',
-                                icon: Icons.add_rounded,
-                                variant: AppButtonVariant.outlined,
-                                onPressed: () =>
-                                    context.push('/support/create'),
-                              ),
-                            ],
-                          )
-                        : Column(
-                            children: [
-                              AppTextField(
-                                controller: replyController,
-                                enabled: !sending,
-                                minLines: 1,
-                                maxLines: 4,
-                                hint: 'Type a reply…',
-                                textCapitalization:
-                                    TextCapitalization.sentences,
-                                onSubmitted: (_) => sendReply(),
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: AppBreakpoints.contentMaxWidthFor(
+                          context.widthClass,
+                        ),
+                      ),
+                      child: Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.fromLTRB(
+                          AppBreakpoints.pagePaddingFor(context.widthClass),
+                          10,
+                          AppBreakpoints.pagePaddingFor(context.widthClass),
+                          12,
+                        ),
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          border: Border(
+                            top: BorderSide(color: AppColors.border),
+                          ),
+                        ),
+                        child: closed
+                            ? Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
-                                  Expanded(
-                                    child: AppButton(
-                                      label: 'Refresh',
-                                      variant: AppButtonVariant.outlined,
-                                      onPressed: loading ? null : reload,
+                                  Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.surface,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.lock_outline_rounded,
+                                          size: 18,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            'Reply is disabled. This ticket is closed. Open a new ticket if you need more help.',
+                                            style: AppTypography.bodySmall(),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: AppButton(
-                                      label: 'Send',
-                                      isLoading: sending,
-                                      onPressed: sending ? null : sendReply,
-                                    ),
+                                  const SizedBox(height: 10),
+                                  AppButton(
+                                    label: 'Open New Ticket',
+                                    icon: Icons.add_rounded,
+                                    variant: AppButtonVariant.outlined,
+                                    onPressed: () =>
+                                        context.push('/support/create'),
+                                  ),
+                                ],
+                              )
+                            : Column(
+                                children: [
+                                  AppTextField(
+                                    controller: replyController,
+                                    enabled: !sending,
+                                    minLines: 1,
+                                    maxLines: 4,
+                                    hint: 'Type a reply…',
+                                    textCapitalization:
+                                        TextCapitalization.sentences,
+                                    onSubmitted: (_) => sendReply(),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: AppButton(
+                                          label: 'Refresh',
+                                          variant: AppButtonVariant.outlined,
+                                          onPressed: loading ? null : reload,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: AppButton(
+                                          label: 'Send',
+                                          isLoading: sending,
+                                          onPressed:
+                                              sending ? null : sendReply,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
-                            ],
-                          ),
+                      ),
+                    ),
                   ),
                 ),
               ],

@@ -81,68 +81,78 @@ class MessPageState extends ConsumerState<MessPage> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
-            child: Column(
-              children: [
-                /* All menu cards first (2×2). */
-                Row(
-                  children: [
-                    Expanded(
-                      child: MessMenuCard(
-                        label: 'Member List',
-                        color: AppColors.primary,
-                        svgPath: AppAssets.svgPerson,
-                        onTap: () => context.push('/mess/members'),
-                      ),
-                    ),
-                    Expanded(
-                      child: MessMenuCard(
-                        label: 'QR Management',
-                        color: AppColors.purple,
-                        svgPath: AppAssets.svgQr,
-                        onTap: () => context.push('/mess/qr'),
-                      ),
-                    ),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: MessMenuCard(
-                        label: "Today's Mess Tokens",
-                        color: AppColors.orange,
-                        svgPath: AppAssets.svgReceipt,
-                        onTap: () => context.push('/mess/meal-tokens-today'),
-                      ),
-                    ),
-                    Expanded(
-                      child: MessMenuCard(
-                        label: 'Meal Sessions',
-                        color: AppColors.teal,
-                        svgPath: AppAssets.svgClock,
-                        onTap: () => context.push('/mess/meal-sessions'),
-                      ),
-                    ),
-                  ],
-                ),
-                /* Institute pays below cards. */
-                SwitchListTile.adaptive(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 4),
-                  title: Text(AppStrings.of(ref).institutePays),
-                  subtitle: const Text(
-                    'When on, mess coupons bill the institute (server setting)',
+            padding: EdgeInsets.fromLTRB(
+              12,
+              context.isShortHeight ? 4 : 8,
+              12,
+              4,
+            ),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final cols = AppBreakpoints.messMenuColumnsForWidth(
+                  constraints.maxWidth,
+                );
+                final menus = <Widget>[
+                  MessMenuCard(
+                    label: 'Member List',
+                    color: AppColors.primary,
+                    svgPath: AppAssets.svgPerson,
+                    onTap: () => context.push('/mess/members'),
                   ),
-                  value:
-                      ref.watch(messInstitutePayProvider).asData?.value ??
-                      false,
-                  onChanged: (v) async {
-                    await ref
-                        .read(messControllerProvider.notifier)
-                        .setShopPayerMode(v);
-                    ref.invalidate(messInstitutePayProvider);
-                  },
-                ),
-              ],
+                  MessMenuCard(
+                    label: 'QR Management',
+                    color: AppColors.purple,
+                    svgPath: AppAssets.svgQr,
+                    onTap: () => context.push('/mess/qr'),
+                  ),
+                  MessMenuCard(
+                    label: "Today's Mess Tokens",
+                    color: AppColors.orange,
+                    svgPath: AppAssets.svgReceipt,
+                    onTap: () => context.push('/mess/meal-tokens-today'),
+                  ),
+                  MessMenuCard(
+                    label: 'Meal Sessions',
+                    color: AppColors.teal,
+                    svgPath: AppAssets.svgClock,
+                    onTap: () => context.push('/mess/meal-sessions'),
+                  ),
+                ];
+                final gap = 8.0;
+                final itemW =
+                    (constraints.maxWidth - gap * (cols - 1)) / cols;
+                return Column(
+                  children: [
+                    Wrap(
+                      spacing: gap,
+                      runSpacing: gap,
+                      children: [
+                        for (final m in menus)
+                          SizedBox(width: itemW, child: m),
+                      ],
+                    ),
+                    SwitchListTile.adaptive(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+                      dense: context.isShortHeight,
+                      title: Text(AppStrings.of(ref).institutePays),
+                      subtitle: context.isShortHeight
+                          ? null
+                          : const Text(
+                              'When on, mess coupons bill the institute (server setting)',
+                            ),
+                      value:
+                          ref.watch(messInstitutePayProvider).asData?.value ??
+                          false,
+                      onChanged: (v) async {
+                        await ref
+                            .read(messControllerProvider.notifier)
+                            .setShopPayerMode(v);
+                        ref.invalidate(messInstitutePayProvider);
+                      },
+                    ),
+                  ],
+                );
+              },
             ),
           ),
           const Divider(height: 1),
@@ -319,38 +329,51 @@ Future<MessMemberFormResult?> showMemberFormDialog(
       builder: (context, setLocal) {
         final isStudent = memberType == 'student';
         final isWorking = memberType == 'working' || memberType == 'staff';
+        final screenW = MediaQuery.sizeOf(context).width;
         return AlertDialog(
+          insetPadding: EdgeInsets.symmetric(
+            horizontal: screenW < 360 ? 12 : 24,
+            vertical: 24,
+          ),
           title: Text(title),
-          content: SingleChildScrollView(
+          content: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: screenW - 48),
+            child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                AppTextField(
-                  required: true,
-                  controller: nameCtrl,
-                  label: 'Member name',
+                ResponsiveFormColumns(
+                  children: [
+                    AppTextField(
+                      required: true,
+                      controller: nameCtrl,
+                      label: 'Member name',
+                    ),
+                    AppTextField(
+                      required: true,
+                      controller: mobileCtrl,
+                      label: 'Mobile',
+                      keyboardType: TextInputType.phone,
+                      maxLength: 10,
+                      showCounter: false,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 12),
-                AppTextField(
-                  required: true,
-                  controller: mobileCtrl,
-                  label: 'Mobile',
-                  keyboardType: TextInputType.phone,
-                  maxLength: 10,
-                  showCounter: false,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                ),
-                const SizedBox(height: 12),
-                AppTextField(
-                  controller: altCtrl,
-                  label: 'Alternate mobile',
-                  keyboardType: TextInputType.phone,
-                ),
-                const SizedBox(height: 12),
-                AppTextField(
-                  controller: addressCtrl,
-                  label: 'Address',
-                  maxLines: 2,
+                ResponsiveFormColumns(
+                  children: [
+                    AppTextField(
+                      controller: altCtrl,
+                      label: 'Alternate mobile',
+                      keyboardType: TextInputType.phone,
+                    ),
+                    AppTextField(
+                      controller: addressCtrl,
+                      label: 'Address',
+                      maxLines: 2,
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 12),
                 AppDropdownFormField<String>(
@@ -363,11 +386,13 @@ Future<MessMemberFormResult?> showMemberFormDialog(
                 ),
                 if (isStudent) ...[
                   const SizedBox(height: 12),
-                  AppTextField(controller: rollCtrl, label: 'Roll no'),
-                  const SizedBox(height: 12),
-                  AppTextField(controller: collegeCtrl, label: 'College'),
-                  const SizedBox(height: 12),
-                  AppTextField(controller: yearCtrl, label: 'Student year'),
+                  ResponsiveFormColumns(
+                    children: [
+                      AppTextField(controller: rollCtrl, label: 'Roll no'),
+                      AppTextField(controller: collegeCtrl, label: 'College'),
+                      AppTextField(controller: yearCtrl, label: 'Student year'),
+                    ],
+                  ),
                 ],
                 if (isWorking) ...[
                   const SizedBox(height: 12),
@@ -383,26 +408,30 @@ Future<MessMemberFormResult?> showMemberFormDialog(
                     onChanged: (v) => setLocal(() => messDays = v ?? '30'),
                   ),
                   const SizedBox(height: 12),
-                  AppTextField(
-                    required: true,
-                    controller: messAmtCtrl,
-                    label: 'Total amount',
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  AppTextField(
-                    required: true,
-                    controller: paidAmtCtrl,
-                    label: 'Paid amount',
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
+                  ResponsiveFormColumns(
+                    children: [
+                      AppTextField(
+                        required: true,
+                        controller: messAmtCtrl,
+                        label: 'Total amount',
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                      ),
+                      AppTextField(
+                        required: true,
+                        controller: paidAmtCtrl,
+                        label: 'Paid amount',
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ],
             ),
+          ),
           ),
           actions: [
             AppButton(
@@ -566,7 +595,12 @@ class MembersTabState extends ConsumerState<MembersTab> {
         return Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              padding: EdgeInsets.fromLTRB(
+                AppBreakpoints.pagePaddingFor(context.widthClass),
+                12,
+                AppBreakpoints.pagePaddingFor(context.widthClass),
+                8,
+              ),
               child: AppTextField(
                 controller: messPageSearch,
                 label: 'Search member',
@@ -583,11 +617,17 @@ class MembersTabState extends ConsumerState<MembersTab> {
                       ),
                     )
                   : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                      padding: EdgeInsets.fromLTRB(
+                        AppBreakpoints.pagePaddingFor(context.widthClass),
+                        0,
+                        AppBreakpoints.pagePaddingFor(context.widthClass),
+                        24,
+                      ),
                       itemCount: filtered.length,
                       separatorBuilder: (_, _) => const SizedBox(height: 8),
                       itemBuilder: (context, index) {
                         final member = filtered[index];
+                        final compact = context.isCompactWidth;
                         return AppCard(
                           padding: EdgeInsets.zero,
                           child: ListTile(
@@ -603,6 +643,8 @@ class MembersTabState extends ConsumerState<MembersTab> {
                             ),
                             title: Text(
                               member.memberName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 fontWeight: FontWeight.w700,
                               ),
@@ -616,45 +658,95 @@ class MembersTabState extends ConsumerState<MembersTab> {
                                   member.memberMobileNumber!,
                                 member.memberType,
                               ].join(' • '),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  tooltip: 'Payments',
-                                  onPressed: () => context.push(
-                                    '/mess/payments',
-                                    extra: member,
-                                  ),
-                                  icon: const Icon(Icons.payments_outlined),
-                                ),
-                                IconButton(
-                                  tooltip: 'Edit',
-                                  onPressed: () => widget.onEditMember(member),
-                                  icon: const Icon(Icons.edit_outlined),
-                                ),
-                                IconButton(
-                                  tooltip: 'Paper coupon',
-                                  onPressed: () {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute<void>(
-                                        builder: (_) =>
-                                            MessCouponPage(member: member),
+                            trailing: compact
+                                ? PopupMenuButton<String>(
+                                    onSelected: (value) {
+                                      switch (value) {
+                                        case 'payments':
+                                          context.push(
+                                            '/mess/payments',
+                                            extra: member,
+                                          );
+                                        case 'edit':
+                                          widget.onEditMember(member);
+                                        case 'coupon':
+                                          Navigator.of(context).push(
+                                            MaterialPageRoute<void>(
+                                              builder: (_) => MessCouponPage(
+                                                member: member,
+                                              ),
+                                            ),
+                                          );
+                                        case 'token':
+                                          issueToken(context, ref, member);
+                                      }
+                                    },
+                                    itemBuilder: (_) => const [
+                                      PopupMenuItem(
+                                        value: 'payments',
+                                        child: Text('Payments'),
                                       ),
-                                    );
-                                  },
-                                  icon: const Icon(
-                                    Icons.confirmation_number_outlined,
+                                      PopupMenuItem(
+                                        value: 'edit',
+                                        child: Text('Edit'),
+                                      ),
+                                      PopupMenuItem(
+                                        value: 'coupon',
+                                        child: Text('Paper coupon'),
+                                      ),
+                                      PopupMenuItem(
+                                        value: 'token',
+                                        child: Text('Issue token'),
+                                      ),
+                                    ],
+                                  )
+                                : Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        tooltip: 'Payments',
+                                        onPressed: () => context.push(
+                                          '/mess/payments',
+                                          extra: member,
+                                        ),
+                                        icon: const Icon(
+                                          Icons.payments_outlined,
+                                        ),
+                                      ),
+                                      IconButton(
+                                        tooltip: 'Edit',
+                                        onPressed: () =>
+                                            widget.onEditMember(member),
+                                        icon: const Icon(Icons.edit_outlined),
+                                      ),
+                                      IconButton(
+                                        tooltip: 'Paper coupon',
+                                        onPressed: () {
+                                          Navigator.of(context).push(
+                                            MaterialPageRoute<void>(
+                                              builder: (_) => MessCouponPage(
+                                                member: member,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                        icon: const Icon(
+                                          Icons.confirmation_number_outlined,
+                                        ),
+                                      ),
+                                      IconButton(
+                                        tooltip: 'Issue token',
+                                        onPressed: () =>
+                                            issueToken(context, ref, member),
+                                        icon: const Icon(
+                                          Icons.qr_code_2_rounded,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ),
-                                IconButton(
-                                  tooltip: 'Issue token',
-                                  onPressed: () =>
-                                      issueToken(context, ref, member),
-                                  icon: const Icon(Icons.qr_code_2_rounded),
-                                ),
-                              ],
-                            ),
                             onLongPress: () => widget.onEditMember(member),
                             onTap: () => issueToken(context, ref, member),
                           ),

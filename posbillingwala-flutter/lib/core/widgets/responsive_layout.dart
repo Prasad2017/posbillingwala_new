@@ -137,9 +137,11 @@ class ResponsiveGrid extends StatelessWidget {
     this.mainAxisSpacing = 12,
     this.crossAxisSpacing = 12,
     this.childAspectRatio = 1,
+    this.mainAxisExtent,
     this.shrinkWrap = true,
     this.physics = const NeverScrollableScrollPhysics(),
     this.padding,
+    this.minItemWidth,
   });
 
   final int itemCount;
@@ -148,25 +150,97 @@ class ResponsiveGrid extends StatelessWidget {
   final double mainAxisSpacing;
   final double crossAxisSpacing;
   final double childAspectRatio;
+  final double? mainAxisExtent;
   final bool shrinkWrap;
   final ScrollPhysics? physics;
   final EdgeInsetsGeometry? padding;
 
+  /* When set, columns are derived from available width instead of [columnsFor]. */
+  final double? minItemWidth;
+
   @override
   Widget build(BuildContext context) {
-    final cols = columnsFor(context.widthClass).clamp(1, 12);
-    return GridView.builder(
-      shrinkWrap: shrinkWrap,
-      physics: physics,
-      padding: padding,
-      itemCount: itemCount,
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: cols,
-        mainAxisSpacing: mainAxisSpacing,
-        crossAxisSpacing: crossAxisSpacing,
-        childAspectRatio: childAspectRatio,
-      ),
-      itemBuilder: itemBuilder,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cols = minItemWidth != null
+            ? AppBreakpoints.columnsForWidth(
+                constraints.maxWidth,
+                minItemWidth: minItemWidth!,
+                minColumns: 1,
+                maxColumns: 8,
+                spacing: crossAxisSpacing,
+              )
+            : columnsFor(context.widthClass).clamp(1, 12);
+        return GridView.builder(
+          shrinkWrap: shrinkWrap,
+          physics: physics,
+          padding: padding,
+          itemCount: itemCount,
+          gridDelegate: mainAxisExtent != null
+              ? SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: cols,
+                  mainAxisSpacing: mainAxisSpacing,
+                  crossAxisSpacing: crossAxisSpacing,
+                  mainAxisExtent: mainAxisExtent,
+                )
+              : SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: cols,
+                  mainAxisSpacing: mainAxisSpacing,
+                  crossAxisSpacing: crossAxisSpacing,
+                  childAspectRatio: childAspectRatio,
+                ),
+          itemBuilder: itemBuilder,
+        );
+      },
+    );
+  }
+}
+
+/* Wraps form fields into 1–N columns based on width without changing field widgets. */
+class ResponsiveFormColumns extends StatelessWidget {
+  const ResponsiveFormColumns({
+    super.key,
+    required this.children,
+    this.maxColumns = 2,
+    this.spacing = 12,
+    this.runSpacing = 12,
+  });
+
+  final List<Widget> children;
+  final int maxColumns;
+  final double spacing;
+  final double runSpacing;
+
+  @override
+  Widget build(BuildContext context) {
+    final cols = AppBreakpoints.formColumnsFor(
+      context.widthClass,
+      maxColumns: maxColumns,
+    );
+    if (cols <= 1 || children.length <= 1) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (var i = 0; i < children.length; i++) ...[
+            if (i > 0) SizedBox(height: runSpacing),
+            children[i],
+          ],
+        ],
+      );
+    }
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final itemWidth =
+            (constraints.maxWidth - spacing * (cols - 1)) / cols;
+        return Wrap(
+          spacing: spacing,
+          runSpacing: runSpacing,
+          children: [
+            for (final child in children)
+              SizedBox(width: itemWidth, child: child),
+          ],
+        );
+      },
     );
   }
 }

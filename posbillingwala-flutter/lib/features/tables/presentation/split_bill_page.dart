@@ -98,131 +98,146 @@ class SplitBillPageState extends ConsumerState<SplitBillPage> {
   Widget build(BuildContext context) {
     final cartAsync = ref.watch(allCartItemsProvider);
     final currency = NumberFormat.currency(locale: 'en_IN', symbol: '₹');
+    final hPad = AppBreakpoints.pagePaddingFor(context.widthClass);
+    final topPad = context.isShortHeight
+        ? AppBreakpoints.densePaddingFor(context.heightClass)
+        : 12.0;
 
     return Scaffold(
       appBar: AppBar(title: Text('Split Bill • T${widget.tableNumber}')),
-      body: Column(
-        children: [
-          Expanded(
-            child: cartAsync.when(
-              data: (all) {
-                final items = all
-                    .where((e) => e.cartScope == widget.tableNumber)
-                    .toList();
-                final total = cartTotal(items);
-                return Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                      child: AppCard(
-                        accentColor: AppColors.primary,
-                        color: AppColors.primaryLight,
-                        padding: EdgeInsets.zero,
-                        child: ListTile(
-                          leading: const AppModuleIcon(
-                            svgPath: AppAssets.svgBill,
-                            color: AppColors.primary,
-                            size: 48,
-                          ),
-                          title: const Text(
-                            'Bill total',
-                            style: TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                          trailing: Text(
-                            currency.format(total),
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.primary,
-                            ),
-                          ),
+      body: cartAsync.when(
+        data: (all) {
+          final items = all
+              .where((e) => e.cartScope == widget.tableNumber)
+              .toList();
+          final total = cartTotal(items);
+          return ResponsiveScrollShell(
+            dashboard: true,
+            child: Column(
+              children: [
+                Padding(
+                  padding: EdgeInsets.fromLTRB(hPad, topPad, hPad, 0),
+                  child: AppCard(
+                    accentColor: AppColors.primary,
+                    color: AppColors.primaryLight,
+                    padding: EdgeInsets.zero,
+                    child: ListTile(
+                      leading: const AppModuleIcon(
+                        svgPath: AppAssets.svgBill,
+                        color: AppColors.primary,
+                        size: 48,
+                      ),
+                      title: const Text(
+                        'Bill total',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      trailing: Text(
+                        currency.format(total),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.primary,
                         ),
                       ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: SegmentedButton<int>(
-                        segments: const [
-                          ButtonSegment(value: 0, label: Text('Equal')),
-                          ButtonSegment(value: 1, label: Text('By item')),
-                          ButtonSegment(value: 2, label: Text('By amount')),
-                        ],
-                        selected: {tab},
-                        onSelectionChanged: (v) =>
-                            setState(() => tab = v.first),
-                      ),
-                    ),
-                    Expanded(
-                      child: switch (tab) {
-                        1 => byItem(items, currency),
-                        2 => byAmount(total, currency),
-                        _ => splitBillPageEqual(total, currency),
-                      },
-                    ),
-                  ],
-                );
-              },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('$e')),
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(hPad, 12, hPad, 8),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minWidth: constraints.maxWidth,
+                          ),
+                          child: SegmentedButton<int>(
+                            segments: const [
+                              ButtonSegment(
+                                value: 0,
+                                label: Text('Equal'),
+                              ),
+                              ButtonSegment(
+                                value: 1,
+                                label: Text('By item'),
+                              ),
+                              ButtonSegment(
+                                value: 2,
+                                label: Text('By amount'),
+                              ),
+                            ],
+                            selected: {tab},
+                            onSelectionChanged: (v) =>
+                                setState(() => tab = v.first),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                Expanded(
+                  child: switch (tab) {
+                    1 => byItem(items, currency),
+                    2 => byAmount(total, currency),
+                    _ => splitBillPageEqual(total, currency),
+                  },
+                ),
+              ],
             ),
-          ),
-        ],
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('$e')),
       ),
     );
   }
 
   Widget splitBillPageEqual(double total, NumberFormat currency) {
     final shares = equalShares(total, equalParts);
-    return ResponsiveScrollShell(
-      dashboard: true,
-      child: ListView(
-        padding: EdgeInsets.fromLTRB(
-          AppBreakpoints.pagePaddingFor(context.widthClass),
-          0,
-          AppBreakpoints.pagePaddingFor(context.widthClass),
-          24,
+    final hPad = AppBreakpoints.pagePaddingFor(context.widthClass);
+    return ListView(
+      padding: EdgeInsets.fromLTRB(hPad, 0, hPad, 24),
+      children: [
+        Row(
+          children: [
+            const Flexible(child: Text('Number of shares')),
+            IconButton(
+              onPressed: equalParts <= 2
+                  ? null
+                  : () => setState(() => equalParts--),
+              icon: const Icon(Icons.remove_circle_outline),
+            ),
+            Text(
+              '$equalParts',
+              style: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+            IconButton(
+              onPressed: equalParts >= 20
+                  ? null
+                  : () => setState(() => equalParts++),
+              icon: const Icon(Icons.add_circle_outline),
+            ),
+          ],
         ),
-        children: [
-          Row(
-            children: [
-              const Text('Number of shares'),
-              const Spacer(),
-              IconButton(
-                onPressed: equalParts <= 2
-                    ? null
-                    : () => setState(() => equalParts--),
-                icon: const Icon(Icons.remove_circle_outline),
-              ),
-              Text(
-                '$equalParts',
-                style: const TextStyle(fontWeight: FontWeight.w800),
-              ),
-              IconButton(
-                onPressed: equalParts >= 20
-                    ? null
-                    : () => setState(() => equalParts++),
-                icon: const Icon(Icons.add_circle_outline),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          ...shares.asMap().entries.map(
-            (e) => ListTile(
-              leading: CircleAvatar(child: Text('${e.key + 1}')),
-              title: Text('Share ${e.key + 1}'),
-              trailing: Text(
-                currency.format(e.value),
-                style: const TextStyle(fontWeight: FontWeight.w700),
-              ),
+        const SizedBox(height: 8),
+        ...shares.asMap().entries.map(
+          (e) => ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: CircleAvatar(child: Text('${e.key + 1}')),
+            title: Text('Share ${e.key + 1}'),
+            trailing: Text(
+              currency.format(e.value),
+              style: const TextStyle(fontWeight: FontWeight.w700),
             ),
           ),
-          const SizedBox(height: 16),
-          AppButton(
-            label: 'Record equal shares',
-            isLoading: busy || total <= 0,
-            onPressed: () => recordShares(shares),
-          ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 16),
+        AppButton(
+          label: 'Record equal shares',
+          isLoading: busy || total <= 0,
+          onPressed: () => recordShares(shares),
+        ),
+      ],
     );
   }
 
@@ -245,16 +260,18 @@ class SplitBillPageState extends ConsumerState<SplitBillPage> {
     final total = cartTotal(items);
     final bill1 = sumSelected();
     final bill2 = double.parse((total - bill1).toStringAsFixed(2));
+    final hPad = AppBreakpoints.pagePaddingFor(context.widthClass);
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+      padding: EdgeInsets.fromLTRB(hPad, 0, hPad, 24),
       children: [
-        const Text('Select items for Bill 1 (rest â†’ Bill 2)'),
+        const Text('Select items for Bill 1 (rest → Bill 2)'),
         const SizedBox(height: 8),
         ...items.asMap().entries.map((e) {
           final it = e.value;
           final line = it.unitPrice * it.quantity * (1 + it.gstPercent / 100);
           return CheckboxListTile(
+            contentPadding: EdgeInsets.zero,
             value: splitBillPageSelected.contains(e.key),
             title: Text(it.productName),
             subtitle: Text('Qty ${it.quantity}'),
@@ -270,10 +287,12 @@ class SplitBillPageState extends ConsumerState<SplitBillPage> {
         }),
         const Divider(),
         ListTile(
+          contentPadding: EdgeInsets.zero,
           title: const Text('Bill 1'),
           trailing: Text(currency.format(bill1)),
         ),
         ListTile(
+          contentPadding: EdgeInsets.zero,
           title: const Text('Bill 2'),
           trailing: Text(currency.format(bill2)),
         ),
@@ -294,8 +313,9 @@ class SplitBillPageState extends ConsumerState<SplitBillPage> {
   }
 
   Widget byAmount(double total, NumberFormat currency) {
+    final hPad = AppBreakpoints.pagePaddingFor(context.widthClass);
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+      padding: EdgeInsets.fromLTRB(hPad, 0, hPad, 24),
       children: [
         Text(
           'Enter share amounts separated by commas (must sum to ${currency.format(total)})',

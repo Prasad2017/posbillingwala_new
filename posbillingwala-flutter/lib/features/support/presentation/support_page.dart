@@ -57,7 +57,9 @@ class SupportPageState extends ConsumerState<SupportPage> {
             physics: const AlwaysScrollableScrollPhysics(),
             padding: EdgeInsets.fromLTRB(
               AppBreakpoints.pagePaddingFor(context.widthClass),
-              16,
+              context.isShortHeight
+                  ? AppBreakpoints.densePaddingFor(context.heightClass)
+                  : 16,
               AppBreakpoints.pagePaddingFor(context.widthClass),
               24,
             ),
