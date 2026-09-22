@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="52dp"
+    android:background="?attr/selectableItemBackground"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="10dp"
+    android:paddingEnd="12dp">
+
+    <FrameLayout
+        android:id="@+id/optionIconContainer"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:background="@drawable/bg_dropdown_leading_icon"
+        android:visibility="gone"
+        tools:visibility="visible">
+
+        <ImageView
+            android:id="@+id/optionIcon"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_gravity="center"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_layers"
+            app:tint="@color/colorPrimary" />
+
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/optionLabel"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="0dp"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:fontFamily="@font/poppinsregular"
+        android:maxLines="1"
+        android:textColor="@color/colorTextPrimary"
+        android:textSize="15sp"
+        tools:text="Cash" />
+
+    <ImageView
+        android:id="@+id/optionCheck"
+        android:layout_width="22dp"
+        android:layout_height="22dp"
+        android:contentDescription="@null"
+        android:src="@drawable/ic_check"
+        android:visibility="gone"
+        tools:visibility="visible" />
+
+</LinearLayout>

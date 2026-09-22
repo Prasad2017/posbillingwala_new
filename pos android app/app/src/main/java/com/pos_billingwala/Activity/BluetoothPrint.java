@@ -1,0 +1,2531 @@
+package com.pos_billingwala.Activity;
+
+import com.pos_billingwala.Extra.PopupUi;
+import static com.pos_billingwala.Utils.RequestCodes.directory_path;
+
+import android.Manifest;
+import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.app.ProgressDialog;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Matrix;
+import android.graphics.drawable.Drawable;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.StrictMode;
+import android.text.Html;
+import android.util.Base64;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.PopupWindow;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.activity.OnBackPressedCallback;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.FileProvider;
+import androidx.core.widget.NestedScrollView;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.textfield.TextInputEditText;
+import com.pos_billingwala.Extra.SearchableDropdownView;
+import com.karumi.dexter.Dexter;
+import com.karumi.dexter.MultiplePermissionsReport;
+import com.karumi.dexter.PermissionToken;
+import com.karumi.dexter.listener.PermissionRequest;
+import com.karumi.dexter.listener.multi.MultiplePermissionsListener;
+import com.pos_billingwala.Adapter.CartAdapter;
+import com.pos_billingwala.Adapter.ThreePrintAdapter;
+import com.pos_billingwala.Adapter.TwoKOTPrintAdapter;
+import com.pos_billingwala.Adapter.TwoPrintAdapter;
+import com.pos_billingwala.BuildConfig;
+import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.AppExecutors;
+import com.pos_billingwala.Extra.BottomSheetUi;
+import com.pos_billingwala.Extra.PaymentSettlementHelper;
+import com.pos_billingwala.Extra.PaymentSettlementBinder;
+import com.pos_billingwala.Extra.PaymentUpiQrHelper;
+import com.pos_billingwala.Extra.ReportCursorHelper;
+import com.pos_billingwala.Extra.ShopHeaderBuilder;
+import com.pos_billingwala.Extra.TabletFormUi;
+import com.pos_billingwala.Extra.Observability;
+import com.pos_billingwala.Extra.LicenceExpiredUi;
+import com.pos_billingwala.Extra.LicenseSession;
+import com.google.firebase.perf.metrics.Trace;
+import com.pos_billingwala.Fragment.CreatePos;
+import com.pos_billingwala.Model.CompanyResponse;
+import com.pos_billingwala.Model.InventoryResponse;
+import com.pos_billingwala.Model.PrinterSettingResponse;
+import com.pos_billingwala.Extra.CartItemType;
+import com.pos_billingwala.Model.ComboItemResponse;
+import com.pos_billingwala.Model.ProductCartResponse;
+import com.pos_billingwala.Print.BluetoothPrinterChannel;
+import com.pos_billingwala.Print.BluetoothPrintService;
+import com.pos_billingwala.Print.DeviceListActivity;
+import com.pos_billingwala.Print.KOTWoosimPrnMng;
+import com.pos_billingwala.Print.PrinterConnectionHelper;
+import com.pos_billingwala.Print.PrintImage;
+import com.pos_billingwala.Print.PrintImage.dither;
+import com.pos_billingwala.Print.WoosimPrnMng;
+import com.pos_billingwala.R;
+import com.pos_billingwala.databinding.ActivityBluetoothPrintBinding;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.net.URLConnection;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import com.pos_billingwala.Extra.EmptyListUi;
+
+
+@SuppressLint({"Range", "SetTextI18n, NewApi, StaticFieldLeak"})
+public class BluetoothPrint extends BaseActivity implements View.OnClickListener {
+
+    public static TextView kotPrint, twoKOTShopName, twoKOTInvoiceDetails;
+    public static ImageView twoKOTCompanyLogo;
+    public static TextView twoShopName, twoShopDetails, twoInvoiceDetails, twoShopPrintStatus, twoSubTotal, twoShopCGST, twoCGST, twoShopSGST, twoSGST, twoDiscount, twoPacking, twoTotalAmount, twoInvoiceTermsCondition;
+    public static ImageView twoCompanyLogo, twoQRLogo;
+    public static TextView threeKOTShopName, threeKOTInvoiceDetails;
+    public static ImageView threeKOTCompanyLogo;
+    public static TextView threeShopName, threeShopDetails, threeInvoiceDetails, threeShopPrintStatus, threeSubTotal, threeShopCGST, threeCGST, threeShopSGST, threeSGST, threeDiscount, threePacking, threeTotalAmount, threeInvoiceTermsCondition;
+    public static ImageView threeCompanyLogo, threeQRLogo;
+    public static LinearLayout twoShopCGSTLayout, twoShopSGSTLayout, twoDiscountLayout, twoPackingLayout;
+    public static RecyclerView twoRecyclerView;
+    public static NestedScrollView twoNestedScrollView;
+    public static RecyclerView twoKOTRecyclerView;
+    public static NestedScrollView twoKOTNestedScrollView;
+
+    public static LinearLayout threeShopCGSTLayout, threeShopSGSTLayout, threeDiscountLayout, threePackingLayout;
+    public static RecyclerView threeRecyclerView;
+    public static NestedScrollView threeNestedScrollView;
+    public static RecyclerView threeKOTRecyclerView;
+    public static NestedScrollView threeKOTNestedScrollView;
+
+    public static String invoiceRunningStatus, tableNumber, cartOrderStatus;
+    /** Active KOT being printed/previewed (delta items only). */
+    public static String activeKotId;
+    public static String activeKotNumber;
+    public static List<ProductCartResponse> kotPrintItems = new ArrayList<>();
+    private boolean kotMode;
+    private boolean autoKotPrint;
+    /** Once set, print retry must not create another invoice. */
+    private String persistedInvoiceNumber;
+    private boolean printRetryOnly;
+    public static RadioButton cashButton, onlineButton;
+    public static Activity activity;
+    public static RecyclerView cartRecyclerView;
+    public static List<ProductCartResponse> productCartResponseList = new ArrayList<>();
+    public static List<InventoryResponse> inventoryResponseList = new ArrayList<>();
+    public static List<CompanyResponse> companyResponseList = new ArrayList<>();
+    public static List<PrinterSettingResponse> printerSettingResponseList = new ArrayList<>();
+    public static POSBillingWalaDatabase posBillingWalaDatabase;
+    public static CartAdapter cartAdapter;
+    /** Drops stale cart DB reloads when several getCartProductList() calls overlap. */
+    private static int cartLoadRequestId = 0;
+    public static TextView totalPayableAmountTxt, subTotalTxt, discountTxt, packingTxt, totalAmountTxt;
+    public static RelativeLayout cartLayout;
+    public static View noDataFound;
+    public static TextView clearCartButton;
+    public static String inr, paymentMode = "", invoiceNumber, invoiceDate, discountType = "Percentage", packingChargeType = "Percentage";
+    public static String[] discountTypeList;
+    ProgressDialog progressDialog;
+    View view;
+    PopupWindow mypopupWindow;
+    ActivityBluetoothPrintBinding binding;
+    private final ExecutorService invoiceSaveExecutor = Executors.newSingleThreadExecutor();
+    /** Resize + dither + BT write â€” keep off UI to avoid ANR on large bills. */
+    private final ExecutorService printBitmapExecutor = Executors.newSingleThreadExecutor();
+    private volatile boolean invoiceSaveInProgress = false;
+    /** Prevents double Print while waiting for Bluetooth off the UI thread. */
+    private volatile boolean printerEnsureInFlight = false;
+    /** Cash/UPI split amounts confirmed on the pre-checkout settlement sheet. */
+    private String pendingSplitCash;
+    private String pendingSplitUpi;
+    /**
+     * True only when the user chose Share from the overflow menu.
+     * Print success must NOT open the system share sheet automatically.
+     */
+    private boolean shareAfterSave;
+    //********************* Bluetooth Printer Start ************************//
+    int PERMISSION_ALL = 1;
+    String[] PERMISSIONS;
+    String bluetoothAddress;
+    int REQUEST_ENABLE_BT = 4, REQUEST_CONNECT_DEVICE = 6;
+    int REQUEST_KOT_ENABLE_BT = 8, REQUEST_KOT_CONNECT_DEVICE = 10;
+
+
+    /**
+     * Reload cart from DB (initial open / clear / discount). Uses AppExecutors â€” not WorkManager â€”
+     * so qty taps never stack workers or show a loading flash.
+     */
+    public static void getCartProductList() {
+        if (activity == null || posBillingWalaDatabase == null) {
+            return;
+        }
+        final String table = tableNumber;
+        final String orderStatus = cartOrderStatus;
+        final int requestId = ++cartLoadRequestId;
+        AppExecutors.get().db().execute(() -> {
+            List<ProductCartResponse> loaded;
+            try {
+                loaded = posBillingWalaDatabase.getCartProductList(table, orderStatus);
+            } catch (Exception e) {
+                Log.e("BluetoothPrint", "getCartProductList db failed", e);
+                loaded = new ArrayList<>();
+            }
+            final List<ProductCartResponse> result = loaded != null ? loaded : new ArrayList<>();
+            AppExecutors.get().main(() -> {
+                if (requestId != cartLoadRequestId || activity == null) {
+                    return;
+                }
+                try {
+                    productCartResponseList.clear();
+                    productCartResponseList.addAll(result);
+                    applyCartListToUi(true);
+                    if (activity instanceof BluetoothPrint) {
+                        ((BluetoothPrint) activity).onCartLoadedForKotFlow();
+                    }
+                } catch (Exception e) {
+                    Log.e("BluetoothPrint", "getCartProductList failed", e);
+                    Toast.makeText(activity, activity.getString(R.string.toast_print_failed), Toast.LENGTH_SHORT).show();
+                }
+            });
+        });
+    }
+
+    /**
+     * After +/- / open-price / delete already updated the in-memory list + DB.
+     * Refresh totals and print previews only â€” no DB reload, no loading UI.
+     */
+    public static void refreshCartUiAfterLocalEdit() {
+        if (activity == null) {
+            return;
+        }
+        try {
+            applyCartListToUi(false);
+        } catch (Exception e) {
+            Log.e("BluetoothPrint", "refreshCartUiAfterLocalEdit failed", e);
+        }
+    }
+
+    private static void applyCartListToUi(boolean rebindCartAdapter) {
+        float totalPerProductAmount = 0f, discountAmount = 0f, packingAmount = 0f, totalCGST = 0f, totalSGST = 0f,
+                totalGST = 0f, totalPerProductGST = 0f, subTotalAmt = 0f, totalShopGST = 0f;
+        float shopCGST = 0f, shopSGST = 0f, totalAmt = 0f;
+
+        if (!productCartResponseList.isEmpty()) {
+            if (rebindCartAdapter || cartAdapter == null || cartRecyclerView.getAdapter() != cartAdapter) {
+                cartAdapter = new CartAdapter(activity, productCartResponseList);
+                cartRecyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
+                cartRecyclerView.setAdapter(cartAdapter);
+            }
+            // Local +/- / price edits already notified the cart row â€” do not rebind the whole list.
+
+            // Print preview lists only needed on full reload / before print â€” not on every qty tap.
+            if (rebindCartAdapter) {
+                TwoPrintAdapter twoPrintAdapter = new TwoPrintAdapter(activity, productCartResponseList);
+                twoRecyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
+                twoRecyclerView.setAdapter(twoPrintAdapter);
+
+                ThreePrintAdapter threePrintAdapter = new ThreePrintAdapter(activity, productCartResponseList);
+                threeRecyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
+                threeRecyclerView.setAdapter(threePrintAdapter);
+
+                List<ProductCartResponse> kotLines = resolveKotPreviewLines();
+                TwoKOTPrintAdapter twoKOTPrintAdapter = new TwoKOTPrintAdapter(activity, kotLines);
+                twoKOTRecyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
+                twoKOTRecyclerView.setAdapter(twoKOTPrintAdapter);
+                threeKOTRecyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
+                threeKOTRecyclerView.setAdapter(twoKOTPrintAdapter);
+            } else {
+                if (twoRecyclerView.getAdapter() != null) {
+                    twoRecyclerView.getAdapter().notifyDataSetChanged();
+                }
+                if (threeRecyclerView.getAdapter() != null) {
+                    threeRecyclerView.getAdapter().notifyDataSetChanged();
+                }
+                if (twoKOTRecyclerView.getAdapter() != null) {
+                    twoKOTRecyclerView.getAdapter().notifyDataSetChanged();
+                }
+                if (threeKOTRecyclerView.getAdapter() != null) {
+                    threeKOTRecyclerView.getAdapter().notifyDataSetChanged();
+                }
+            }
+
+            String rawDiscount = productCartResponseList.get(0).getCartDiscount();
+            for (ProductCartResponse productCartResponse : productCartResponseList) {
+                discountAmount = Float.parseFloat(rawDiscount);
+                discountType = productCartResponse.getCartDiscountType();
+                packingAmount = ReportCursorHelper.parseAmount(productCartResponseList.get(0).getCartPackingCharge());
+                packingChargeType = productCartResponse.getCartPackingChargeType();
+
+                float productPrice = Float.parseFloat(productCartResponse.getResolvedLinePrice());
+                float productQuantity = Float.parseFloat(productCartResponse.getProductQuantity());
+                if (!CreatePos.companyResponseList.isEmpty()) {
+                    if (CreatePos.companyResponseList.get(0).getGstStatus() != null) {
+                        if (CreatePos.companyResponseList.get(0).getGstStatus().equalsIgnoreCase("On")) {
+                            if (productCartResponse.getProductCGST() != null
+                                    && !productCartResponse.getProductCGST().equalsIgnoreCase("")) {
+                                totalCGST += Float.parseFloat(productCartResponse.getProductCGST());
+                            }
+                            if (productCartResponse.getProductSGST() != null
+                                    && !productCartResponse.getProductSGST().equalsIgnoreCase("")) {
+                                totalSGST += Float.parseFloat(productCartResponse.getProductSGST());
+                            }
+                            totalPerProductGST = (productPrice * ((totalCGST + totalSGST) / 100));
+                            totalGST += (productPrice * ((totalCGST + totalSGST) / 100)) * productQuantity;
+                            totalPerProductAmount = totalPerProductAmount
+                                    + ((productPrice + totalPerProductGST) * productQuantity);
+                        } else {
+                            totalPerProductAmount = totalPerProductAmount + (productPrice * productQuantity);
+                        }
+                    } else {
+                        totalPerProductAmount = totalPerProductAmount + (productPrice * productQuantity);
+                    }
+                } else {
+                    totalPerProductAmount = totalPerProductAmount + (productPrice * productQuantity);
+                }
+            }
+
+            subTotalAmt = totalPerProductAmount + totalGST;
+
+            if (!companyResponseList.isEmpty() && companyResponseList.get(0).getGstStatus() != null) {
+                if (companyResponseList.get(0).getGstStatus().equalsIgnoreCase("On")) {
+                    if (companyResponseList.get(0).getShopCGST() != null
+                            && !companyResponseList.get(0).getShopCGST().trim().equalsIgnoreCase("")) {
+                        shopCGST = subTotalAmt
+                                * (Float.parseFloat(companyResponseList.get(0).getShopCGST().trim()) / 100);
+                        twoShopCGST.setText("CGST@" + companyResponseList.get(0).getShopCGST() + "%");
+                        twoCGST.setText(inr + String.format(Locale.US, "%.2f", shopCGST));
+                        twoShopCGSTLayout.setVisibility(View.VISIBLE);
+                        threeShopCGST.setText("CGST@" + companyResponseList.get(0).getShopCGST() + "%");
+                        threeCGST.setText(inr + String.format(Locale.US, "%.2f", shopCGST));
+                        threeShopCGSTLayout.setVisibility(View.VISIBLE);
+                    } else {
+                        twoShopCGSTLayout.setVisibility(View.GONE);
+                        threeShopCGSTLayout.setVisibility(View.GONE);
+                    }
+                    if (companyResponseList.get(0).getShopSGST() != null
+                            && !companyResponseList.get(0).getShopSGST().trim().equalsIgnoreCase("")) {
+                        shopSGST = subTotalAmt
+                                * (Float.parseFloat(companyResponseList.get(0).getShopSGST().trim()) / 100);
+                        twoShopSGST.setText("SGST@" + companyResponseList.get(0).getShopSGST() + "%");
+                        twoSGST.setText(inr + String.format(Locale.US, "%.2f", shopSGST));
+                        twoShopSGSTLayout.setVisibility(View.VISIBLE);
+                        threeShopSGST.setText("SGST@" + companyResponseList.get(0).getShopSGST() + "%");
+                        threeSGST.setText(inr + String.format(Locale.US, "%.2f", shopSGST));
+                        threeShopSGSTLayout.setVisibility(View.VISIBLE);
+                    } else {
+                        twoShopSGSTLayout.setVisibility(View.GONE);
+                        threeShopSGSTLayout.setVisibility(View.GONE);
+                    }
+                } else {
+                    twoShopCGSTLayout.setVisibility(View.GONE);
+                    threeShopCGSTLayout.setVisibility(View.GONE);
+                    twoShopSGSTLayout.setVisibility(View.GONE);
+                    threeShopSGSTLayout.setVisibility(View.GONE);
+                }
+            } else {
+                twoShopCGSTLayout.setVisibility(View.GONE);
+                threeShopCGSTLayout.setVisibility(View.GONE);
+                twoShopSGSTLayout.setVisibility(View.GONE);
+                threeShopSGSTLayout.setVisibility(View.GONE);
+            }
+
+            totalShopGST = shopCGST + shopSGST;
+
+            subTotalTxt.setText(inr + String.format(Locale.US, "%.2f", subTotalAmt));
+            twoSubTotal.setText(inr + String.format(Locale.US, "%.2f", subTotalAmt));
+            threeSubTotal.setText(inr + String.format(Locale.US, "%.2f", subTotalAmt));
+
+            if (discountType != null) {
+                if (!discountType.equalsIgnoreCase("Amount")) {
+                    discountAmount = subTotalAmt / (100 / discountAmount);
+                }
+                twoDiscountLayout.setVisibility(View.VISIBLE);
+                threeDiscountLayout.setVisibility(View.VISIBLE);
+            } else {
+                discountAmount = subTotalAmt / (100 / discountAmount);
+                twoDiscountLayout.setVisibility(View.GONE);
+                threeDiscountLayout.setVisibility(View.GONE);
+            }
+
+            twoDiscount.setText(inr + String.format(Locale.US, "%.2f", discountAmount));
+            threeDiscount.setText(inr + String.format(Locale.US, "%.2f", discountAmount));
+            if (discountType != null && discountType.equalsIgnoreCase("Amount")) {
+                discountTxt.setText(inr + String.format(Locale.US, "%.2f", discountAmount));
+            } else {
+                discountTxt.setText(rawDiscount + "%");
+            }
+
+            packingAmount = ReportCursorHelper.packingRupees(
+                    productCartResponseList.get(0).getCartPackingCharge(),
+                    packingChargeType,
+                    String.valueOf(subTotalAmt));
+            if (packingAmount > 0f) {
+                if (twoPackingLayout != null) {
+                    twoPackingLayout.setVisibility(View.VISIBLE);
+                }
+                if (threePackingLayout != null) {
+                    threePackingLayout.setVisibility(View.VISIBLE);
+                }
+            } else {
+                if (twoPackingLayout != null) {
+                    twoPackingLayout.setVisibility(View.GONE);
+                }
+                if (threePackingLayout != null) {
+                    threePackingLayout.setVisibility(View.GONE);
+                }
+            }
+            if (twoPacking != null) {
+                twoPacking.setText(inr + String.format(Locale.US, "%.2f", packingAmount));
+            }
+            if (threePacking != null) {
+                threePacking.setText(inr + String.format(Locale.US, "%.2f", packingAmount));
+            }
+            if (packingTxt != null) {
+                packingTxt.setText(inr + String.format(Locale.US, "%.2f", packingAmount));
+            }
+
+            if (!companyResponseList.isEmpty()
+                    && companyResponseList.get(0).getGstStatus() != null
+                    && companyResponseList.get(0).getGstStatus().equalsIgnoreCase("on")) {
+                totalAmt = (subTotalAmt - discountAmount) + packingAmount + totalShopGST;
+            } else {
+                totalAmt = subTotalAmt - discountAmount + packingAmount;
+            }
+
+            float totalAmount = (float) Math.ceil(totalAmt);
+            if (totalAmountTxt != null) {
+                totalAmountTxt.setText(inr + String.format(Locale.US, "%.2f", totalAmount));
+            }
+            totalPayableAmountTxt.setText(inr + String.format(Locale.US, "%.2f", totalAmount));
+            twoTotalAmount.setText(inr + String.format(Locale.US, "%.2f", totalAmount));
+            threeTotalAmount.setText(inr + String.format(Locale.US, "%.2f", totalAmount));
+            applyPaymentQr(totalAmount);
+
+            cartLayout.setVisibility(View.VISIBLE);
+            EmptyListUi.bind(noDataFound, true, R.string.empty_sub_products);
+            if (clearCartButton != null) {
+                clearCartButton.setVisibility(View.VISIBLE);
+            }
+        } else {
+            applyPaymentQr(0);
+            cartLayout.setVisibility(View.GONE);
+            EmptyListUi.bind(noDataFound, false, R.string.empty_sub_products);
+            if (clearCartButton != null) {
+                clearCartButton.setVisibility(View.GONE);
+            }
+        }
+    }
+
+    public static void createFolder() {
+
+        File myDirectory = new File(directory_path);
+        if (!myDirectory.exists()) {
+            myDirectory.mkdirs();
+        }
+
+    }
+
+    public static boolean hasPermissions(Context context, String... permissions) {
+        // Get current android os version.
+        int currentAndroidVersion = Build.VERSION.SDK_INT;
+        // Build.VERSION_CODES.M's value is 23.
+        if (currentAndroidVersion >= Build.VERSION_CODES.M) {
+            if (context != null && permissions != null) {
+                for (String permission : permissions) {
+                    if (ActivityCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
+                        createFolder();
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+    @SuppressLint("Range")
+    public static String getInvoiceNumber() {
+
+        Date c = Calendar.getInstance().getTime();
+        System.out.println("Current time => " + c);
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+        SimpleDateFormat todayDF = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        SimpleDateFormat invoiceNumberDateFormat = new SimpleDateFormat("dd-MM", Locale.getDefault());
+        invoiceDate = df.format(c);
+        String todayDate = todayDF.format(c);
+        String invoiceNumberDate = invoiceNumberDateFormat.format(c);
+
+        String companyPrefix;
+        int invoiceId = 0;
+        if (printerSettingResponseList != null && !printerSettingResponseList.isEmpty()) {
+            companyPrefix = printerSettingResponseList.get(0).getInvoicePrefix() + "/";
+
+            if (printerSettingResponseList.get(0).getInvoiceTermsCondition() != null) {
+                twoInvoiceTermsCondition.setText(printerSettingResponseList.get(0).getInvoiceTermsCondition());
+                threeInvoiceTermsCondition.setText(printerSettingResponseList.get(0).getInvoiceTermsCondition());
+            } else {
+                twoInvoiceTermsCondition.setVisibility(View.GONE);
+                threeInvoiceTermsCondition.setVisibility(View.GONE);
+            }
+
+        } else {
+            companyPrefix = "";
+        }
+
+        SQLiteDatabase database = posBillingWalaDatabase.getReadableDatabase();
+        Cursor cursor = database.rawQuery("SELECT COUNT(invoiceId) as invoiceId FROM " + POSBillingWalaDatabase.INVOICE_TABLE + " WHERE invoiceDate LIKE '%" + todayDate + "%'", null);
+        while (cursor.moveToNext()) {
+            invoiceId = Integer.parseInt(cursor.getString(cursor.getColumnIndex("invoiceId")));
+        }
+        database.close();
+
+        int lastInvoiceId = invoiceId + 1;
+        if (lastInvoiceId < 1) {
+            lastInvoiceId = 1;
+        }
+        invoiceNumber = companyPrefix + invoiceNumberDate + "/"
+                + String.format(Locale.US, "%05d", lastInvoiceId);
+
+        return invoiceNumber;
+    }
+
+    /**
+     * Reserve one invoice number for this checkout and reuse it for print / KOT / PDF / save.
+     * Never regenerate mid-checkout (avoids printed number differing from saved number).
+     */
+    @NonNull
+    public static String resolveInvoiceNumber() {
+        if (invoiceNumber == null || invoiceNumber.trim().isEmpty()) {
+            return getInvoiceNumber();
+        }
+        return invoiceNumber;
+    }
+
+    @NonNull
+    public static String getBillDetails(String customerName, String customerMobile, String customerAddress) {
+        String billNo = resolveInvoiceNumber();
+        String billDetails;
+        if (cartOrderStatus != null && cartOrderStatus.equalsIgnoreCase("table_wise")) {
+            billDetails = "<b>Bill No:</b> " + billNo + "<br/><b>Date:</b> " + safeText(invoiceDate)
+                    + "<br/><b>Table No:</b> " + safeText(tableNumber);
+        } else {
+            billDetails = "<b>Bill No:</b> " + billNo + "<br/><b>Date:</b> " + safeText(invoiceDate);
+        }
+        if (printerSettingResponseList != null && !printerSettingResponseList.isEmpty()) {
+            String customerUse = printerSettingResponseList.get(0).getCustomerUse();
+            if (customerUse != null && customerUse.equalsIgnoreCase("on")) {
+                billDetails = billDetails + "<br/><b>Customer Name:</b> " + (customerName != null ? customerName : "NA")
+                        + "<br/><b>Customer Mobile:</b> " + (customerMobile != null ? customerMobile : "NA")
+                        + "<br/><b>Customer Address:</b> " + (customerAddress != null ? customerAddress : "NA");
+            }
+        }
+        return String.valueOf(Html.fromHtml(billDetails));
+    }
+
+    private static String safeText(String value) {
+        return value != null ? value : "";
+    }
+
+    public void automaticSavePDF(String customerName, String customerMobile, String customerAddress, String invoiceNumber) {
+
+        String[] separated = invoiceNumber != null ? invoiceNumber.split("/") : new String[0];
+        try {
+            invoiceNumber = separated.length > 2 ? separated[2] : separated[1];
+            invoiceNumber = "SalesInvoice_" + invoiceNumber;
+        } catch (Exception e) {
+            e.printStackTrace();
+            invoiceNumber = "SalesInvoice_" + System.currentTimeMillis();
+        }
+
+        createPdf(customerName, customerMobile, customerAddress, invoiceNumber);
+
+    }
+
+    public void createPdf(String customerName, String customerMobile, String customerAddress, String invoiceNumber) {
+        if (isFinishing() || isDestroyed()) {
+            return;
+        }
+
+        StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
+        StrictMode.setVmPolicy(builder.build());
+
+        try {
+            String BillDetails = getBillDetails(customerName, customerMobile, customerAddress);
+            if (twoInvoiceDetails != null) {
+                twoInvoiceDetails.setText(BillDetails);
+            }
+            if (twoShopPrintStatus != null) {
+                twoShopPrintStatus.setText("**** Original Copy ****");
+            }
+            if (threeShopPrintStatus != null) {
+                threeShopPrintStatus.setText("**** Original Copy ****");
+            }
+            if (twoNestedScrollView == null) {
+                Toast.makeText(this, getString(R.string.toast_print_layout_failed_saving_bill), Toast.LENGTH_SHORT).show();
+                finishAfterInvoiceSaved();
+                return;
+            }
+            Bitmap bitmap = convertLayout(twoNestedScrollView, 48);
+            if (bitmap != null) {
+                final String fileName = invoiceNumber;
+                printBitmapExecutor.execute(() -> {
+                    Bitmap resized = null;
+                    try {
+                        resized = getResizedBitmap(bitmap, 48);
+                        // getResizedBitmap may recycle the source when it creates a new bitmap
+                        if (resized != bitmap && bitmap != null && !bitmap.isRecycled()) {
+                            bitmap.recycle();
+                        }
+                        final Bitmap toSave = resized;
+                        runOnUiThread(() -> saveImageToMediaStore(toSave, fileName));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        Observability.logNonFatal(e, "share_invoice_bitmap");
+                        recycleBitmapQuietly(resized);
+                        if (resized != bitmap) {
+                            recycleBitmapQuietly(bitmap);
+                        }
+                        runOnUiThread(() -> {
+                            if (!isFinishing() && !isDestroyed()) {
+                                Toast.makeText(BluetoothPrint.this,
+                                        getString(R.string.toast_failed_to_save_invoice_please_try_again),
+                                        Toast.LENGTH_SHORT).show();
+                                finishAfterInvoiceSaved();
+                            }
+                        });
+                    }
+                });
+            } else {
+                Toast.makeText(this, getString(R.string.toast_print_layout_failed_saving_bill), Toast.LENGTH_SHORT).show();
+                finishAfterInvoiceSaved();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            Observability.logNonFatal(e, "share_invoice_create_pdf");
+            finishAfterInvoiceSaved();
+        }
+    }
+
+    private void saveImageToMediaStore(Bitmap bitmap, String invoiceNumber) {
+        if (isFinishing() || isDestroyed()) {
+            recycleBitmapQuietly(bitmap);
+            return;
+        }
+        try {
+            File dir = new File(directory_path);
+            if (!dir.exists() && !dir.mkdirs()) {
+                Toast.makeText(this, getString(R.string.toast_failed_to_save_invoice_please_try_again),
+                        Toast.LENGTH_SHORT).show();
+                finishAfterInvoiceSaved();
+                return;
+            }
+            File file = new File(dir, invoiceNumber + ".png");
+            FileOutputStream outputStream = new FileOutputStream(file);
+            try {
+                if (bitmap != null) {
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
+                }
+                outputStream.flush();
+            } finally {
+                try {
+                    outputStream.close();
+                } catch (IOException ignored) {
+                }
+            }
+            openGeneratedPDF(invoiceNumber);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Observability.logNonFatal(e, "share_invoice_save_file");
+            Toast.makeText(this, getString(R.string.toast_failed_to_save_invoice_please_try_again),
+                    Toast.LENGTH_SHORT).show();
+            finishAfterInvoiceSaved();
+        } finally {
+            recycleBitmapQuietly(bitmap);
+        }
+    }
+
+    private static void recycleBitmapQuietly(Bitmap bitmap) {
+        if (bitmap != null && !bitmap.isRecycled()) {
+            try {
+                bitmap.recycle();
+            } catch (Exception ignored) {
+            }
+        }
+    }
+
+    public void openGeneratedPDF(String invoiceNumber) {
+        if (isFinishing() || isDestroyed()) {
+            return;
+        }
+        try {
+            File file = new File(directory_path + "/" + invoiceNumber + ".png");
+            if (!file.exists()) {
+                Toast.makeText(this, getString(R.string.toast_failed_to_save_invoice_please_try_again),
+                        Toast.LENGTH_SHORT).show();
+                finishAfterInvoiceSaved();
+                return;
+            }
+            Intent intentShareFile = new Intent(Intent.ACTION_SEND);
+            Uri uri = FileProvider.getUriForFile(BluetoothPrint.this, BuildConfig.APPLICATION_ID + ".provider", file);
+            intentShareFile.setType(URLConnection.guessContentTypeFromName(file.getName()));
+            intentShareFile.putExtra(Intent.EXTRA_STREAM, uri);
+            intentShareFile.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            List<ResolveInfo> resInfoList = getPackageManager().queryIntentActivities(intentShareFile, PackageManager.MATCH_DEFAULT_ONLY);
+            for (ResolveInfo resolveInfo : resInfoList) {
+                String packageName = resolveInfo.activityInfo.packageName;
+                grantUriPermission(packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            }
+            startActivity(Intent.createChooser(intentShareFile, "Share Invoice"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            Observability.logNonFatal(e, "share_invoice_open_chooser");
+            Toast.makeText(this, getString(R.string.toast_failed_to_save_invoice_please_try_again),
+                    Toast.LENGTH_SHORT).show();
+        } finally {
+            // Share chooser is open (or failed) — return to billing without forcing Back.
+            if (!isFinishing() && !isDestroyed()) {
+                finishAfterInvoiceSaved();
+            }
+        }
+    }
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        binding = ActivityBluetoothPrintBinding.inflate(getLayoutInflater());
+        View view = binding.getRoot(); //Root xml or viewGroup will be a part of converted view over here
+        setContentView(view); //view is set by view binding
+
+        activity = BluetoothPrint.this;
+        posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
+        // Fresh checkout session â€” do not reuse a previous bill's reserved number
+        invoiceNumber = "";
+        paymentMode = "";
+
+        initViews();
+
+        try {
+
+            Intent intent = getIntent();
+            if (intent != null) {
+                invoiceRunningStatus = intent.getStringExtra("invoiceRunningStatus");
+                tableNumber = intent.getStringExtra("tableNumber");
+                cartOrderStatus = intent.getStringExtra("cartOrderStatus");
+                kotMode = intent.getBooleanExtra("kotMode", false);
+                autoKotPrint = intent.getBooleanExtra("autoKotPrint", false);
+                activeKotId = intent.getStringExtra("kotId");
+                activeKotNumber = intent.getStringExtra("kotNumber");
+                if (cartOrderStatus != null && cartOrderStatus.equalsIgnoreCase("table_wise")) {
+                    boolean kotOn = com.pos_billingwala.Extra.DineInTableHelper.isKotEnabled(posBillingWalaDatabase);
+                    kotPrint.setVisibility(kotOn ? View.VISIBLE : View.GONE);
+                } else {
+                    kotPrint.setVisibility(View.GONE);
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        //Add runtime permissions
+        PERMISSIONS = new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.ACCESS_COARSE_LOCATION};
+        if (!hasPermissions(this, PERMISSIONS)) {
+            ActivityCompat.requestPermissions(this, PERMISSIONS, PERMISSION_ALL);
+        }
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                onCallBack();
+            }
+        });
+    }
+
+    public void initViews() {
+
+        inr = MainActivity.currencyName + " ";
+
+
+        binding.kotPrint.setOnClickListener(this);
+        binding.menuIcon.setOnClickListener(this);
+        binding.clearCart.setOnClickListener(this);
+        binding.printInvoiceCardView.setOnClickListener(this);
+        if (binding.backButton != null) {
+            binding.backButton.setOnClickListener(this);
+        }
+        if (binding.backCardView != null) {
+            binding.backCardView.setOnClickListener(this);
+        }
+
+        cashButton = findViewById(R.id.cash);
+        onlineButton = findViewById(R.id.online);
+        kotPrint = findViewById(R.id.kotPrint);
+
+        cartRecyclerView = findViewById(R.id.cartRecyclerView);
+        totalPayableAmountTxt = findViewById(R.id.payableAmount);
+        subTotalTxt = findViewById(R.id.subTotal);
+        discountTxt = findViewById(R.id.discount);
+        packingTxt = findViewById(R.id.packing);
+        totalAmountTxt = findViewById(R.id.totalProductAmount);
+        noDataFound = findViewById(R.id.noDataFound);
+        cartLayout = findViewById(R.id.cartLayout);
+        clearCartButton = findViewById(R.id.clearCart);
+        //***************** 2 Inch Printer Start ******************//
+        twoCompanyLogo = findViewById(R.id.twoCompanyLogo);
+        twoKOTCompanyLogo = findViewById(R.id.twoKOTCompanyLogo);
+        twoQRLogo = findViewById(R.id.twoQRLogo);
+        twoKOTShopName = findViewById(R.id.twoKOTShopName);
+        twoShopName = findViewById(R.id.twoShopName);
+        twoShopDetails = findViewById(R.id.twoShopDetails);
+        twoKOTInvoiceDetails = findViewById(R.id.twoKOTInvoiceDetails);
+        twoInvoiceDetails = findViewById(R.id.twoInvoiceDetails);
+        twoShopPrintStatus = findViewById(R.id.twoShopPrintStatus);
+        twoSubTotal = findViewById(R.id.twoSubTotal);
+        twoShopCGST = findViewById(R.id.twoShopCGST);
+        twoCGST = findViewById(R.id.twoCGST);
+        twoShopSGST = findViewById(R.id.twoShopSGST);
+        twoSGST = findViewById(R.id.twoSGST);
+        twoDiscount = findViewById(R.id.twoDiscount);
+        twoPacking = findViewById(R.id.twoPacking);
+        twoTotalAmount = findViewById(R.id.twoTotalAmount);
+        twoShopCGSTLayout = findViewById(R.id.twoShopCGSTLayout);
+        twoShopSGSTLayout = findViewById(R.id.twoShopSGSTLayout);
+        twoDiscountLayout = findViewById(R.id.twoDiscountLayout);
+        twoPackingLayout = findViewById(R.id.twoPackingLayout);
+        twoRecyclerView = findViewById(R.id.twoRecyclerView);
+        twoKOTRecyclerView = findViewById(R.id.twoKOTRecyclerView);
+        twoNestedScrollView = findViewById(R.id.twoNestedScrollView);
+        twoKOTNestedScrollView = findViewById(R.id.twoKOTNestedScrollView);
+        twoInvoiceTermsCondition = findViewById(R.id.twoInvoiceTermsCondition);
+        //***************** 2 Inch Printer End ******************//
+
+        //***************** 3 Inch Printer Start ******************//
+        threeCompanyLogo = findViewById(R.id.threeCompanyLogo);
+        threeKOTCompanyLogo = findViewById(R.id.threeKOTCompanyLogo);
+        threeQRLogo = findViewById(R.id.threeQRLogo);
+        threeShopName = findViewById(R.id.threeShopName);
+        threeKOTShopName = findViewById(R.id.threeKOTShopName);
+        threeShopDetails = findViewById(R.id.threeShopDetails);
+        threeKOTInvoiceDetails = findViewById(R.id.threeKOTInvoiceDetails);
+        threeInvoiceDetails = findViewById(R.id.threeInvoiceDetails);
+        threeShopPrintStatus = findViewById(R.id.threeShopPrintStatus);
+        threeSubTotal = findViewById(R.id.threeSubTotal);
+        threeShopCGST = findViewById(R.id.threeShopCGST);
+        threeCGST = findViewById(R.id.threeCGST);
+        threeShopSGST = findViewById(R.id.threeShopSGST);
+        threeSGST = findViewById(R.id.threeSGST);
+        threeDiscount = findViewById(R.id.threeDiscount);
+        threePacking = findViewById(R.id.threePacking);
+        threeTotalAmount = findViewById(R.id.threeTotalAmount);
+        threeShopCGSTLayout = findViewById(R.id.threeShopCGSTLayout);
+        threeShopSGSTLayout = findViewById(R.id.threeShopSGSTLayout);
+        threeDiscountLayout = findViewById(R.id.threeDiscountLayout);
+        threePackingLayout = findViewById(R.id.threePackingLayout);
+        threeKOTRecyclerView = findViewById(R.id.threeKOTRecyclerView);
+        threeRecyclerView = findViewById(R.id.threeRecyclerView);
+        threeNestedScrollView = findViewById(R.id.threeNestedScrollView);
+        threeKOTNestedScrollView = findViewById(R.id.threeKOTNestedScrollView);
+        threeInvoiceTermsCondition = findViewById(R.id.threeInvoiceTermsCondition);
+        //***************** 3 Inch Printer End ******************//
+
+        discountTxt.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                View content = LayoutInflater.from(activity).inflate(R.layout.update_discount_dialog, null);
+                BottomSheetDialog sheet = BottomSheetUi.showContent(activity, content, false);
+
+                TextInputEditText discountPercentageTxt = content.findViewById(R.id.discountPercentage);
+                TextView addDiscountPercentageTxt = content.findViewById(R.id.addDiscountPercentage);
+                TextView dismissDiscountPercentageTxt = content.findViewById(R.id.dismissDiscountPercentage);
+                SearchableDropdownView discountTypeSpinner = content.findViewById(R.id.discountTypeSpinner);
+
+                discountTypeList = getResources().getStringArray(R.array.discount_type);
+                try {
+                    discountTypeSpinner.setItems(discountTypeList);
+                    if (discountType != null) {
+                        for (int i = 0; i < discountTypeList.length; i++) {
+                            if (discountType.equals(discountTypeList[i])) {
+                                discountTypeSpinner.setSelectedIndex(i);
+                                break;
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                discountTypeSpinner.setOnItemSelectedListener((position, label) ->
+                        discountType = discountTypeList[position]);
+
+                discountPercentageTxt.setText(productCartResponseList.get(0).getCartDiscount());
+
+                dismissDiscountPercentageTxt.setOnClickListener(view -> sheet.dismiss());
+
+                addDiscountPercentageTxt.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if (!discountPercentageTxt.getText().toString().isEmpty()) {
+                            //Calculation Part
+                            discountTxt.setText(discountPercentageTxt.getText().toString() + "%");
+                            float discountAmount = Float.parseFloat(discountPercentageTxt.getText().toString());
+                            float subTotalAmt = 0f;
+                            float shopCGST = 0f, shopSGST = 0f;
+                            if (companyResponseList.get(0).getShopCGST() != null) {
+                                shopCGST = subTotalAmt * (Float.parseFloat(companyResponseList.get(0).getShopCGST().trim()) / 100);
+                            }
+
+                            if (companyResponseList.get(0).getShopSGST() != null) {
+                                if (!companyResponseList.get(0).getShopSGST().trim().equalsIgnoreCase("")) {
+                                    shopSGST = subTotalAmt * (Float.parseFloat(companyResponseList.get(0).getShopSGST().trim()) / 100);
+                                }
+                            }
+
+                            float totalShopGST = shopCGST + shopSGST;
+
+                            float totalAmt = 0f;
+                            if (companyResponseList.get(0).getGstStatus().equalsIgnoreCase("on")) {
+                                if (discountType.equalsIgnoreCase("Percentage")) {
+                                    totalAmt = subTotalAmt - (subTotalAmt / (100 / discountAmount)) + totalShopGST;
+                                } else {
+                                    totalAmt = subTotalAmt - discountAmount + totalShopGST;
+                                }
+                            } else {
+                                if (discountType.equalsIgnoreCase("Percentage")) {
+                                    totalAmt = subTotalAmt - (subTotalAmt / (100 / discountAmount));
+                                } else {
+                                    totalAmt = subTotalAmt - discountAmount;
+                                }
+                            }
+
+                            String format = String.format(Locale.US, "%.2f", totalAmt);
+                            if (totalAmountTxt != null) {
+                                totalAmountTxt.setText("Total Amount\n" + inr + format);
+                            }
+                            totalPayableAmountTxt.setText(inr + format);
+                            if (!productCartResponseList.isEmpty()) {
+                                for (ProductCartResponse productCartResponse : productCartResponseList) {
+                                    posBillingWalaDatabase.updateCartDiscount(productCartResponse.getCartId(), discountPercentageTxt.getText().toString(), discountType);
+                                }
+                            }
+
+                            getCartProductList();
+                            sheet.dismiss();
+                        } else {
+                            Toast.makeText(activity, getString(R.string.toast_please_add_discount_percentage), Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+
+            }
+        });
+
+        if (packingTxt != null) {
+            packingTxt.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (productCartResponseList == null || productCartResponseList.isEmpty()) {
+                        return;
+                    }
+                    View content = LayoutInflater.from(activity).inflate(R.layout.update_packing_dialog, null);
+                    BottomSheetDialog sheet = BottomSheetUi.showContent(activity, content, false);
+
+                    TextInputEditText packingChargeInput = content.findViewById(R.id.packingCharge);
+                    TextView addPacking = content.findViewById(R.id.addPackingCharge);
+                    TextView dismissPacking = content.findViewById(R.id.dismissPackingCharge);
+                    SearchableDropdownView packingTypeSpinner = content.findViewById(R.id.packingTypeSpinner);
+
+                    String[] packingTypeList = getResources().getStringArray(R.array.discount_type);
+                    try {
+                        packingTypeSpinner.setItems(packingTypeList);
+                        if (packingChargeType != null) {
+                            for (int i = 0; i < packingTypeList.length; i++) {
+                                if (packingChargeType.equals(packingTypeList[i])) {
+                                    packingTypeSpinner.setSelectedIndex(i);
+                                    break;
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                    packingTypeSpinner.setOnItemSelectedListener((position, label) ->
+                            packingChargeType = packingTypeList[position]);
+
+                    packingChargeInput.setText(productCartResponseList.get(0).getCartPackingCharge());
+                    dismissPacking.setOnClickListener(view -> sheet.dismiss());
+                    addPacking.setOnClickListener(view -> {
+                        String value = packingChargeInput.getText() != null
+                                ? packingChargeInput.getText().toString().trim() : "";
+                        if (value.isEmpty()) {
+                            Toast.makeText(activity, getString(R.string.toast_please_add_packing_charge),
+                                    Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        packingTxt.setText(inr + value);
+                        for (ProductCartResponse productCartResponse : productCartResponseList) {
+                            posBillingWalaDatabase.updateCartPackingCharge(
+                                    productCartResponse.getCartId(), value, packingChargeType);
+                        }
+                        getCartProductList();
+                        sheet.dismiss();
+                    });
+                }
+            });
+        }
+
+        /*try {
+            if (paymentMode.equalsIgnoreCase("Cash")) {
+                cashButton.setChecked(true);
+                onlineButton.setChecked(false);
+            } else if (paymentMode.equalsIgnoreCase("UPI")) {
+                onlineButton.setChecked(true);
+                cashButton.setChecked(false);
+            } else {
+                cashButton.setChecked(false);
+                onlineButton.setChecked(false);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            cashButton.setChecked(false);
+            onlineButton.setChecked(false);
+        }*/
+        binding.paymentGroup.setOnCheckedChangeListener((group, checkedId) -> {
+            if (checkedId == R.id.splitCashUpi) {
+                paymentMode = PaymentSettlementHelper.MODE_SPLIT;
+            } else if (checkedId == R.id.online) {
+                paymentMode = PaymentSettlementHelper.MODE_UPI;
+            } else if (checkedId == R.id.cash) {
+                paymentMode = PaymentSettlementHelper.MODE_CASH;
+            } else {
+                paymentMode = "";
+            }
+        });
+
+        TabletFormUi.applyCartPaymentSplit(activity, cartLayout,
+                findViewById(R.id.linearLayout),
+                findViewById(R.id.paymentDetailLayout));
+
+    }
+
+    @Override
+    public void onClick(View view) {
+        int id = view.getId();
+        if (id == R.id.menuIcon) {
+            setPopUpWindow();
+        } else if (id == R.id.backButton || id == R.id.backCardView) {
+            onCallBack();
+        } else if (id == R.id.clearCart) {
+            confirmClearCart();
+        } else if (id == R.id.kotPrint) {
+            startKotPrintFlow(false);
+        } else if (id == R.id.printInvoiceCardView) {
+            runAfterPaymentReady(this::startBillPrint);
+        }
+    }
+
+    private static List<ProductCartResponse> resolveKotPreviewLines() {
+        if (kotPrintItems != null && !kotPrintItems.isEmpty()) {
+            return kotPrintItems;
+        }
+        if (posBillingWalaDatabase != null
+                && tableNumber != null
+                && cartOrderStatus != null
+                && cartOrderStatus.equalsIgnoreCase("table_wise")) {
+            List<ProductCartResponse> unprinted =
+                    posBillingWalaDatabase.getUnprintedCartProductList(tableNumber, cartOrderStatus);
+            if (unprinted != null && !unprinted.isEmpty()) {
+                return unprinted;
+            }
+        }
+        return productCartResponseList != null ? productCartResponseList : new ArrayList<>();
+    }
+
+    private void onCartLoadedForKotFlow() {
+        if (!kotMode && !autoKotPrint) {
+            return;
+        }
+        if (cartOrderStatus == null || !cartOrderStatus.equalsIgnoreCase("table_wise")) {
+            return;
+        }
+        if (!com.pos_billingwala.Extra.DineInTableHelper.isKotEnabled(posBillingWalaDatabase)) {
+            return;
+        }
+        prepareKotDocument(false);
+        if (autoKotPrint) {
+            AppExecutors.get().postMainDelayed(() -> startKotPrintFlow(true), 400L);
+        }
+    }
+
+    /**
+     * Ensures a KOT document exists for currently unprinted items (or loads existing by id).
+     * Binds delta lines into the KOT preview adapters.
+     */
+    private boolean prepareKotDocument(boolean showEmptyToast) {
+        if (activeKotId != null && !activeKotId.trim().isEmpty()) {
+            com.pos_billingwala.Model.KotResponse existing = posBillingWalaDatabase.getKotById(activeKotId);
+            if (existing != null) {
+                activeKotNumber = existing.getKotNumber();
+                kotPrintItems.clear();
+                kotPrintItems.addAll(com.pos_billingwala.Extra.DineInKotHelper.loadKotLines(
+                        posBillingWalaDatabase, existing));
+                rebindKotAdapters();
+                return !kotPrintItems.isEmpty();
+            }
+        }
+        List<ProductCartResponse> unprinted =
+                posBillingWalaDatabase.getUnprintedCartProductList(tableNumber, cartOrderStatus);
+        if (unprinted == null || unprinted.isEmpty()) {
+            com.pos_billingwala.Model.KotResponse retry =
+                    posBillingWalaDatabase.getLatestRetryableKotForTable(tableNumber);
+            if (retry != null) {
+                activeKotId = retry.getKotId();
+                activeKotNumber = retry.getKotNumber();
+                kotPrintItems.clear();
+                kotPrintItems.addAll(com.pos_billingwala.Extra.DineInKotHelper.loadKotLines(
+                        posBillingWalaDatabase, retry));
+                rebindKotAdapters();
+                return !kotPrintItems.isEmpty();
+            }
+            if (showEmptyToast) {
+                Toast.makeText(activity, "No new items for KOT", Toast.LENGTH_SHORT).show();
+            }
+            return false;
+        }
+        com.pos_billingwala.Model.KotResponse kot =
+                com.pos_billingwala.Extra.DineInKotHelper.createKotForTable(posBillingWalaDatabase, tableNumber);
+        if (kot == null) {
+            if (showEmptyToast) {
+                Toast.makeText(activity, "Unable to create KOT", Toast.LENGTH_SHORT).show();
+            }
+            return false;
+        }
+        activeKotId = kot.getKotId();
+        activeKotNumber = kot.getKotNumber();
+        kotPrintItems.clear();
+        kotPrintItems.addAll(com.pos_billingwala.Extra.DineInKotHelper.loadKotLines(posBillingWalaDatabase, kot));
+        rebindKotAdapters();
+        return true;
+    }
+
+    private void rebindKotAdapters() {
+        if (twoKOTRecyclerView == null) {
+            return;
+        }
+        List<ProductCartResponse> lines = resolveKotPreviewLines();
+        TwoKOTPrintAdapter adapter = new TwoKOTPrintAdapter(activity, lines);
+        twoKOTRecyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
+        twoKOTRecyclerView.setAdapter(adapter);
+        if (threeKOTRecyclerView != null) {
+            threeKOTRecyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
+            threeKOTRecyclerView.setAdapter(adapter);
+        }
+        refreshKotHeaderPreview();
+    }
+
+    private void startKotPrintFlow(boolean fromAuto) {
+        if (printerEnsureInFlight) {
+            return;
+        }
+        if (!com.pos_billingwala.Extra.DineInTableHelper.isKotEnabled(posBillingWalaDatabase)) {
+            Toast.makeText(activity, "KOT is disabled in settings", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (cartOrderStatus != null && cartOrderStatus.equalsIgnoreCase("table_wise")) {
+            if (!prepareKotDocument(true)) {
+                return;
+            }
+        } else {
+            kotPrintItems.clear();
+            if (productCartResponseList != null) {
+                kotPrintItems.addAll(productCartResponseList);
+            }
+            if (kotPrintItems.isEmpty()) {
+                Toast.makeText(activity, getString(R.string.toast_cart_is_empty), Toast.LENGTH_SHORT).show();
+                return;
+            }
+        }
+        if (printerSettingResponseList == null || printerSettingResponseList.isEmpty()) {
+            Toast.makeText(activity, getString(R.string.toast_please_select_printer_from_setting), Toast.LENGTH_SHORT).show();
+            return;
+        }
+        String kotAddress = printerSettingResponseList.get(0).getBluetoothKOTAddress();
+        printerEnsureInFlight = true;
+        PrinterConnectionHelper.ensureKotPrinterAsync(activity,
+                kotAddress != null ? kotAddress : "",
+                () -> {
+                    printerEnsureInFlight = false;
+                    runKotPrintAfterPrinterReady();
+                },
+                () -> {
+                    printerEnsureInFlight = false;
+                    if (activeKotId != null) {
+                        posBillingWalaDatabase.updateKotPrintStatus(activeKotId,
+                                com.pos_billingwala.Model.KotResponse.PRINT_FAILED);
+                    }
+                    if (fromAuto) {
+                        Toast.makeText(activity, getString(R.string.toast_printer_not_connected_select),
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    private void runKotPrintAfterPrinterReady() {
+        if (isFinishing() || printerSettingResponseList == null || printerSettingResponseList.isEmpty()) {
+            return;
+        }
+        progressDialog = new ProgressDialog(activity);
+        progressDialog.setMessage(getString(R.string.toast_printing_in_progress));
+
+        if (activeKotId != null) {
+            posBillingWalaDatabase.updateKotPrintStatus(activeKotId,
+                    com.pos_billingwala.Model.KotResponse.PRINT_PRINTING);
+        }
+
+        String kotSize = printerSettingResponseList.get(0).getKOTPrinterName();
+        if (kotSize == null || kotSize.trim().isEmpty()) {
+            kotSize = printerSettingResponseList.get(0).getPrinterName();
+        }
+        int copies = com.pos_billingwala.Extra.DineInKotHelper.kotCopies(posBillingWalaDatabase);
+        // Print requested copies sequentially via the same bitmap path
+        if (kotSize != null && kotSize.equalsIgnoreCase("3-Inch")) {
+            printKOT3InchBill(false);
+        } else {
+            printKOT2InchBill(false);
+        }
+        // Extra copies (best-effort; first print already started async)
+        if (copies > 1) {
+            final String sizeFinal = kotSize;
+            for (int i = 1; i < copies; i++) {
+                AppExecutors.get().postMainDelayed(() -> {
+                    if (sizeFinal != null && sizeFinal.equalsIgnoreCase("3-Inch")) {
+                        printKOT3InchBill(false);
+                    } else {
+                        printKOT2InchBill(false);
+                    }
+                }, i * 1200L);
+            }
+        }
+    }
+
+    public void printKOT2InchBill(boolean printStatus) {
+
+        showDialog();
+        try {
+            String BillDetails = buildKotHeaderHtml();
+            twoKOTInvoiceDetails.setText(Html.fromHtml(BillDetails));
+            Bitmap bitmap = convertLayout(twoKOTNestedScrollView, 48);
+            if (bitmap != null) {
+                printKOTImage(bitmap, 48);
+            } else {
+                markKotPrintResult(false);
+                hideDialog();
+            }
+        } catch (Exception e) {
+            Toast.makeText(activity, getString(R.string.toast_kot_print_failed), Toast.LENGTH_SHORT).show();
+            e.printStackTrace();
+            markKotPrintResult(false);
+            hideDialog();
+        }
+    }
+
+    public void printKOT3InchBill(boolean printStatus) {
+
+        showDialog();
+        try {
+            String BillDetails = buildKotHeaderHtml();
+            threeKOTInvoiceDetails.setText(Html.fromHtml(BillDetails));
+
+            Bitmap bitmap = convertLayout(threeKOTNestedScrollView, 72);
+            if (bitmap != null) {
+                printKOTImage(bitmap, 72);
+            } else {
+                markKotPrintResult(false);
+                hideDialog();
+            }
+        } catch (Exception e) {
+            Toast.makeText(activity, getString(R.string.toast_kot_print_failed), Toast.LENGTH_SHORT).show();
+            e.printStackTrace();
+            markKotPrintResult(false);
+            hideDialog();
+        }
+    }
+
+    private String buildKotHeaderHtml() {
+        String kotLabel = activeKotNumber != null && !activeKotNumber.trim().isEmpty()
+                ? activeKotNumber
+                : (invoiceNumber != null && !invoiceNumber.isEmpty() ? resolveInvoiceNumber() : "-");
+        String dateTime = resolveKotDateTime();
+        StringBuilder sb = new StringBuilder();
+        sb.append("<b>KOT:</b> ").append(kotLabel)
+                .append("<br/><b>Date:</b> ").append(dateTime);
+        if (cartOrderStatus != null && cartOrderStatus.equalsIgnoreCase("table_wise")) {
+            sb.append("<br/><b>Table:</b> T").append(tableNumber != null ? tableNumber : "");
+            com.pos_billingwala.Model.DiningSessionResponse session =
+                    posBillingWalaDatabase.getOpenDiningSessionForTable(tableNumber);
+            if (session != null && session.getGuestCount() != null
+                    && !session.getGuestCount().isEmpty()
+                    && !"0".equals(session.getGuestCount())) {
+                sb.append("<br/><b>Guests:</b> ").append(session.getGuestCount());
+            }
+        }
+        return sb.toString();
+    }
+
+    /** Always show a printable date/time on KOT (does not depend on bill invoiceDate). */
+    private String resolveKotDateTime() {
+        SimpleDateFormat display =
+                new SimpleDateFormat("dd-MM-yyyy hh:mm a", Locale.getDefault());
+        if (activeKotId != null && !activeKotId.trim().isEmpty() && posBillingWalaDatabase != null) {
+            com.pos_billingwala.Model.KotResponse kot = posBillingWalaDatabase.getKotById(activeKotId);
+            if (kot != null && kot.getCreatedAt() != null && !kot.getCreatedAt().trim().isEmpty()) {
+                String raw = kot.getCreatedAt().trim();
+                try {
+                    long ms = Long.parseLong(raw);
+                    if (ms > 0L) {
+                        return display.format(new Date(ms));
+                    }
+                } catch (Exception ignored) {
+                }
+                // Already a human-readable timestamp
+                if (raw.contains("-") || raw.contains("/")) {
+                    return raw;
+                }
+            }
+        }
+        if (invoiceDate != null && !invoiceDate.trim().isEmpty()) {
+            return invoiceDate.trim();
+        }
+        return display.format(Calendar.getInstance().getTime());
+    }
+
+    private void refreshKotHeaderPreview() {
+        if (twoKOTInvoiceDetails == null && threeKOTInvoiceDetails == null) {
+            return;
+        }
+        CharSequence html = Html.fromHtml(buildKotHeaderHtml());
+        if (twoKOTInvoiceDetails != null) {
+            twoKOTInvoiceDetails.setText(html);
+        }
+        if (threeKOTInvoiceDetails != null) {
+            threeKOTInvoiceDetails.setText(html);
+        }
+    }
+
+    private void markKotPrintResult(boolean success) {
+        if (activeKotId == null || activeKotId.trim().isEmpty()) {
+            return;
+        }
+        posBillingWalaDatabase.updateKotPrintStatus(activeKotId,
+                success ? com.pos_billingwala.Model.KotResponse.PRINT_PRINTED
+                        : com.pos_billingwala.Model.KotResponse.PRINT_FAILED);
+    }
+
+    protected void printKOTImage(Bitmap image, int effectivePrintWidth) {
+        final String layoutFailedMsg = getString(R.string.toast_print_layout_failed);
+        final String notConnectedMsg = getString(R.string.toast_printer_not_connected_select);
+        final String printErrorMsg = getString(R.string.print_error);
+        printBitmapExecutor.execute(() -> {
+            boolean printOk = false;
+            String toastMsg = null;
+            try {
+                if (image == null) {
+                    toastMsg = layoutFailedMsg;
+                } else {
+                    PrintImage printImage = new PrintImage(getResizedBitmap(image, effectivePrintWidth));
+                    printImage.PrepareImage(dither.floyd_steinberg, 128);
+                    byte[] data = printImage.getPrintImageData();
+                    printOk = PrinterConnectionHelper.safeWriteKot(activity, data);
+                    if (!printOk) {
+                        toastMsg = notConnectedMsg;
+                    } else if (printerSettingResponseList != null && !printerSettingResponseList.isEmpty()) {
+                        KOTCheckAndFeedPaper(printerSettingResponseList.get(0).getKotPrinterFeedLines());
+                    }
+                }
+            } catch (Exception e) {
+                toastMsg = printErrorMsg;
+                e.printStackTrace();
+            } finally {
+                final boolean ok = printOk;
+                final String msg = toastMsg;
+                runOnUiThread(() -> {
+                    markKotPrintResult(ok);
+                    if (msg != null) {
+                        Toast.makeText(activity, msg, Toast.LENGTH_SHORT).show();
+                    } else if (ok && activeKotNumber != null) {
+                        Toast.makeText(activity, activeKotNumber + " printed", Toast.LENGTH_SHORT).show();
+                    }
+                    hideDialog();
+                });
+            }
+        });
+    }
+
+    private void runAfterPaymentReady(Runnable action) {
+        if (!requirePaymentModeSelected()) {
+            return;
+        }
+        if (!PaymentSettlementHelper.isSplit(paymentMode)) {
+            pendingSplitCash = null;
+            pendingSplitUpi = null;
+            action.run();
+            return;
+        }
+        float total = parseDisplayedNumber(totalPayableAmountTxt);
+        showSplitSettlementBeforeCheckout(total, action);
+    }
+
+    private void showSplitSettlementBeforeCheckout(float totalAmt, Runnable onConfirmed) {
+        View content = LayoutInflater.from(activity).inflate(R.layout.set_payment_mode_dialog, null);
+        BottomSheetDialog sheet = BottomSheetUi.showContent(activity, content, false);
+
+        PaymentSettlementBinder.bind(content, totalAmt, MainActivity.currencyName, paymentMode,
+                new PaymentSettlementBinder.Callback() {
+                    @Override
+                    public void onConfirmed(String mode, String cashAmount, String upiAmount) {
+                        pendingSplitCash = cashAmount;
+                        pendingSplitUpi = upiAmount;
+                        sheet.dismiss();
+                        onConfirmed.run();
+                    }
+
+                    @Override
+                    public void onDismissed() {
+                        sheet.dismiss();
+                        Toast.makeText(activity, getString(R.string.toast_payment_cancelled),
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    private void startBillPrint() {
+        if (printerEnsureInFlight) {
+            return;
+        }
+        if (printerSettingResponseList == null || printerSettingResponseList.isEmpty()) {
+            Toast.makeText(activity, getString(R.string.toast_please_select_printer_from_setting), Toast.LENGTH_SHORT).show();
+            return;
+        }
+        String billAddress = printerSettingResponseList.get(0).getBluetoothAddress();
+        printerEnsureInFlight = true;
+        // Wait for BT off the UI thread â€” never block before BottomSheet / ProgressDialog.
+        PrinterConnectionHelper.ensureBillPrinterAsync(activity,
+                billAddress != null ? billAddress : "",
+                () -> {
+                    printerEnsureInFlight = false;
+                    runBillPrintAfterPrinterReady();
+                },
+                () -> printerEnsureInFlight = false);
+    }
+
+    private void runBillPrintAfterPrinterReady() {
+        if (isFinishing() || printerSettingResponseList == null || printerSettingResponseList.isEmpty()) {
+            return;
+        }
+        if (printerSettingResponseList.get(0).getCustomerUse() != null) {
+            if (printerSettingResponseList.get(0).getCustomerUse().equalsIgnoreCase("on")) {
+                View customerContent = LayoutInflater.from(activity).inflate(R.layout.update_customer_dialog, null);
+                BottomSheetDialog customerSheet = BottomSheetUi.showContent(activity, customerContent, false);
+
+                TextView dismissCustomerTxt = customerContent.findViewById(R.id.dismissCustomer);
+                TextView addCustomerTxt = customerContent.findViewById(R.id.addCustomer);
+                TextInputEditText customerNameTxt = customerContent.findViewById(R.id.customerName);
+                TextInputEditText customerMobileTxt = customerContent.findViewById(R.id.customerMobile);
+                TextInputEditText customerAddressTxt = customerContent.findViewById(R.id.customerAddress);
+
+                dismissCustomerTxt.setOnClickListener(v -> customerSheet.dismiss());
+                addCustomerTxt.setOnClickListener(v -> {
+                    if (!customerNameTxt.getText().toString().isEmpty()) {
+
+                        String customerName = customerNameTxt.getText().toString();
+                        String customerMobile = customerMobileTxt.getText().toString();
+                        String customerAddress = customerAddressTxt.getText().toString();
+
+                        customerSheet.dismiss();
+
+                        invoiceNumber = resolveInvoiceNumber();
+
+                        progressDialog = new ProgressDialog(activity);
+                        progressDialog.setMessage(getString(R.string.toast_printing_in_progress));
+
+                        if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("2-Inch")) {
+                            print2InchBill(customerName, customerMobile, customerAddress);
+                        } else if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("3-Inch")) {
+                            print3InchBill(customerName, customerMobile, customerAddress);
+                        }
+
+                    } else {
+                        Toast.makeText(activity, getString(R.string.toast_please_fill_customer_name), Toast.LENGTH_SHORT).show();
+                    }
+                });
+
+            } else {
+                resolveInvoiceNumber();
+                if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("2-Inch")) {
+                    print2InchBill("", "", "");
+                } else if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("3-Inch")) {
+                    print3InchBill("", "", "");
+                }
+            }
+        } else {
+            resolveInvoiceNumber();
+            if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("2-Inch")) {
+                print2InchBill("", "", "");
+            } else if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("3-Inch")) {
+                print3InchBill("", "", "");
+            }
+        }
+    }
+
+    private boolean requirePaymentModeSelected() {
+        int checkedId = binding.paymentGroup != null ? binding.paymentGroup.getCheckedRadioButtonId() : -1;
+        if (checkedId != -1 && paymentMode != null && !paymentMode.trim().isEmpty()) {
+            return true;
+        }
+        Toast.makeText(activity, getString(R.string.toast_please_select_payment_mode), Toast.LENGTH_SHORT).show();
+        return false;
+    }
+
+    private void shareInvoice() {
+        runAfterPaymentReady(() -> shareInvoiceAfterPaymentReady());
+    }
+
+    private void shareInvoiceAfterPaymentReady() {
+        View customerContent = LayoutInflater.from(activity).inflate(R.layout.update_customer_dialog, null);
+        BottomSheetDialog customerSheet = BottomSheetUi.showContent(activity, customerContent, false);
+
+        TextView dismissCustomerTxt = customerContent.findViewById(R.id.dismissCustomer);
+        TextView addCustomerTxt = customerContent.findViewById(R.id.addCustomer);
+        TextInputEditText customerNameTxt = customerContent.findViewById(R.id.customerName);
+        TextInputEditText customerMobileTxt = customerContent.findViewById(R.id.customerMobile);
+        TextInputEditText customerAddressTxt = customerContent.findViewById(R.id.customerAddress);
+
+        dismissCustomerTxt.setOnClickListener(v -> customerSheet.dismiss());
+
+        addCustomerTxt.setOnClickListener(v -> {
+            if (!customerNameTxt.getText().toString().isEmpty()) {
+                if (!customerMobileTxt.getText().toString().isEmpty()) {
+                    if (!customerAddressTxt.getText().toString().isEmpty()) {
+                        String customerName = customerNameTxt.getText().toString();
+                        String customerMobile = customerMobileTxt.getText().toString();
+                        String customerAddress = customerAddressTxt.getText().toString();
+                        customerSheet.dismiss();
+                        invoiceNumber = resolveInvoiceNumber();
+                        shareAfterSave = true;
+                        saveInvoice(customerName, customerMobile, customerAddress, 1);
+                    } else {
+                        Toast.makeText(activity, getString(R.string.toast_please_fill_customer_address), Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    Toast.makeText(activity, getString(R.string.toast_please_fill_customer_mobile), Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                Toast.makeText(activity, getString(R.string.toast_please_fill_customer_name), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    public void print2InchBill(String customerName, String customerMobile, String customerAddress) {
+
+        showDialog();
+        try {
+            String BillDetails = getBillDetails(customerName, customerMobile, customerAddress);
+            twoInvoiceDetails.setText(BillDetails);
+            twoShopPrintStatus.setText("**** Original Copy ****");
+
+            Bitmap bitmap = convertLayout(twoNestedScrollView, 48);
+            if (bitmap != null) {
+                printImage(bitmap, 48, customerName, customerMobile, customerAddress);
+            } else {
+                Toast.makeText(activity, getString(R.string.toast_print_layout_failed_saving_bill), Toast.LENGTH_SHORT).show();
+                saveInvoice(customerName, customerMobile, customerAddress, 0);
+                hideDialog();
+            }
+        } catch (Exception e) {
+            Toast.makeText(activity, getString(R.string.toast_print_failed_saving_bill), Toast.LENGTH_SHORT).show();
+            e.printStackTrace();
+            saveInvoice(customerName, customerMobile, customerAddress, 0);
+            hideDialog();
+        }
+    }
+
+    public void print3InchBill(String customerName, String customerMobile, String customerAddress) {
+
+        showDialog();
+        try {
+            String BillDetails = getBillDetails(customerName, customerMobile, customerAddress);
+            threeInvoiceDetails.setText(BillDetails);
+            threeShopPrintStatus.setText("**** Original Copy ****");
+
+            Bitmap bitmap = convertLayout(threeNestedScrollView, 72);
+            if (bitmap != null) {
+                printImage(bitmap, 72, customerName, customerMobile, customerAddress);
+            } else {
+                Toast.makeText(activity, getString(R.string.toast_print_layout_failed_saving_bill), Toast.LENGTH_SHORT).show();
+                saveInvoice(customerName, customerMobile, customerAddress, 0);
+                hideDialog();
+            }
+        } catch (Exception e) {
+            Toast.makeText(activity, getString(R.string.toast_print_failed_saving_bill), Toast.LENGTH_SHORT).show();
+            e.printStackTrace();
+            saveInvoice(customerName, customerMobile, customerAddress, 0);
+            hideDialog();
+        }
+    }
+
+    /**
+     * Resize/dither/BT write off UI, then always save the bill.
+     * Layout capture ({@link #convertLayout}) stays on the UI thread.
+     */
+    protected void printImage(Bitmap image, int effectivePrintWidth, String customerName, String customerMobile, String customerAddress) {
+        final String layoutFailedMsg = getString(R.string.toast_print_layout_failed);
+        final String notConnectedMsg = getString(R.string.toast_printer_not_connected_select);
+        final String printErrorMsg = getString(R.string.print_error);
+        final boolean retryOnly = printRetryOnly && persistedInvoiceNumber != null && !persistedInvoiceNumber.isEmpty();
+        printBitmapExecutor.execute(() -> {
+            boolean printOk = false;
+            String toastMsg = null;
+            try {
+                if (image == null) {
+                    toastMsg = layoutFailedMsg;
+                } else {
+                    PrintImage printImage = new PrintImage(getResizedBitmap(image, effectivePrintWidth));
+                    printImage.PrepareImage(dither.floyd_steinberg, 128);
+                    byte[] data = printImage.getPrintImageData();
+                    printOk = PrinterConnectionHelper.safeWriteBill(activity, data);
+                    if (!printOk) {
+                        toastMsg = notConnectedMsg;
+                    } else if (printerSettingResponseList != null && !printerSettingResponseList.isEmpty()) {
+                        checkAndFeedPaper(printerSettingResponseList.get(0).getPrinterFeedLines());
+                    }
+                }
+            } catch (Exception e) {
+                toastMsg = printErrorMsg;
+                Observability.recordUserAction("User tapped \"Print Bill\"");
+                Observability.logNonFatal(e, "bluetooth_print");
+                e.printStackTrace();
+            } finally {
+                final boolean ok = printOk;
+                final String msg = toastMsg;
+                runOnUiThread(() -> {
+                    if (msg != null) {
+                        Toast.makeText(activity, msg, Toast.LENGTH_LONG).show();
+                    }
+                    if (retryOnly) {
+                        posBillingWalaDatabase.updateInvoiceBillPrintStatus(persistedInvoiceNumber,
+                                ok ? com.pos_billingwala.Extra.DineInSettlementHelper.PRINT_PRINTED
+                                        : com.pos_billingwala.Extra.DineInSettlementHelper.PRINT_FAILED);
+                        printRetryOnly = false;
+                        hideDialog();
+                        if (!ok) {
+                            showBillPrintRetrySheet();
+                        } else {
+                            Toast.makeText(activity, "Bill printed", Toast.LENGTH_SHORT).show();
+                            finish();
+                        }
+                        return;
+                    }
+                    if (!ok) {
+                        Log.w("BluetoothPrint", "Invoice save triggered without successful print");
+                    }
+                    try {
+                        // Save bill even when print fails â€” payment and print are separate.
+                        saveInvoiceAfterPrintAttempt(customerName, customerMobile, customerAddress, ok);
+                    } catch (Exception e) {
+                        Toast.makeText(activity, getString(R.string.toast_failed_to_save_invoice_after_print), Toast.LENGTH_LONG).show();
+                        e.printStackTrace();
+                        hideDialog();
+                    }
+                });
+            }
+        });
+    }
+
+    private void saveInvoiceAfterPrintAttempt(String customerName, String customerMobile,
+                                              String customerAddress, boolean printOk) {
+        // Reuse existing save path; printStatus UI flag 0/1; billPrintStatus set after save.
+        pendingBillPrintOk = printOk;
+        saveInvoice(customerName, customerMobile, customerAddress, printOk ? 1 : 0);
+    }
+
+    private Boolean pendingBillPrintOk;
+
+    private void showBillPrintRetrySheet() {
+        BottomSheetUi.showAction(activity,
+                "Print Failed",
+                "Payment is saved. Retry printing the same bill?\nInvoice: "
+                        + (persistedInvoiceNumber != null ? persistedInvoiceNumber : ""),
+                "Retry Print",
+                "Done",
+                0,
+                false,
+                () -> {
+                    printRetryOnly = true;
+                    startBillPrint();
+                },
+                () -> {
+                    if (!isFinishing()) {
+                        finish();
+                    }
+                });
+    }
+
+    public Bitmap convertLayout(NestedScrollView nestedScrollView, int effectivePrintWidth) {
+        try {
+            // Measure and layout the nestedScrollView
+            nestedScrollView.measure(
+                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+            );
+            nestedScrollView.layout(0, 0, nestedScrollView.getMeasuredWidth(), nestedScrollView.getMeasuredHeight());
+
+            if (nestedScrollView.getWidth() <= 0 || nestedScrollView.getHeight() <= 0) {
+                return null;
+            }
+
+            nestedScrollView.setDrawingCacheEnabled(true);
+            nestedScrollView.buildDrawingCache();
+
+            Bitmap bitmap = Bitmap.createBitmap(nestedScrollView.getWidth(), nestedScrollView.getHeight(), Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(bitmap);
+            Drawable background = nestedScrollView.getBackground();
+            if (background != null) {
+                background.draw(canvas);
+            } else {
+                canvas.drawColor(Color.WHITE);
+            }
+            nestedScrollView.draw(canvas);
+            nestedScrollView.buildDrawingCache();
+
+            return bitmap;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public Bitmap getResizedBitmap(Bitmap bm, int effectivePrintWidth) {
+        int newWidth = 248;
+        int newHeight = 297;
+        int reqWidth = Math.round(effectivePrintWidth * 8);
+        int width = bm.getWidth();
+        int height = bm.getHeight();
+        if (width == reqWidth) {
+            return bm;
+        } else if (width < reqWidth && width > 16) {
+            int diff = width % 8;
+            if (diff != 0) {
+                newWidth = width - diff;
+                newHeight = (width - diff) * height / width;
+                float scaleWidth = ((float) newWidth) / width;
+                float scaleHeight = ((float) newHeight) / height;
+                // CREATE A MATRIX FOR THE MANIPULATION
+                Matrix matrix = new Matrix();
+                // RESIZE THE BIT MAP
+                matrix.postScale(scaleWidth, scaleHeight);
+                // "RECREATE" THE NEW BITMAP
+                Bitmap resizedBitmap = Bitmap.createBitmap(bm, 0, 0, width, height, matrix, false);
+                bm.recycle();
+                return resizedBitmap;
+            }
+        } else if (width > 16) {
+            newWidth = reqWidth;
+            newHeight = reqWidth * height / width;
+            float scaleWidth = ((float) newWidth) / width;
+            float scaleHeight = ((float) newHeight) / height;
+            // CREATE A MATRIX FOR THE MANIPULATION
+            Matrix matrix = new Matrix();
+            // RESIZE THE BIT MAP
+            matrix.postScale(scaleWidth, scaleHeight);
+
+            // "RECREATE" THE NEW BITMAP
+            Bitmap resizedBitmap = Bitmap.createBitmap(bm, 0, 0, width, height, matrix, false);
+            bm.recycle();
+            return resizedBitmap;
+        }
+        return bm;
+    }
+
+    public void checkAndFeedPaper(String lines) {
+        try {
+            if (lines == null || lines.trim().isEmpty()) {
+                return;
+            }
+            int count = Integer.parseInt(lines.trim());
+            StringBuilder lineBreaks = new StringBuilder();
+            for (int i = 0; i < count; i++) {
+                lineBreaks.append("\n");
+            }
+            PrinterConnectionHelper.safeWriteBill(activity, lineBreaks.toString().getBytes());
+        } catch (Exception e) {
+            Log.e("BluetoothPrint", "checkAndFeedPaper failed", e);
+        }
+    }
+
+    public void KOTCheckAndFeedPaper(String lines) {
+        try {
+            if (lines == null || lines.trim().isEmpty()) {
+                return;
+            }
+            int count = Integer.parseInt(lines.trim());
+            StringBuilder lineBreaks = new StringBuilder();
+            for (int i = 0; i < count; i++) {
+                lineBreaks.append("\n");
+            }
+            PrinterConnectionHelper.safeWriteKot(activity, lineBreaks.toString().getBytes());
+        } catch (Exception e) {
+            Log.e("BluetoothPrint", "KOTCheckAndFeedPaper failed", e);
+        }
+    }
+
+    public void hideDialog() {
+        if (null != progressDialog && progressDialog.isShowing()) {
+            progressDialog.dismiss();
+        }
+    }
+
+    public void showDialog() {
+        if (null != progressDialog && (!progressDialog.isShowing())) {
+            progressDialog.show();
+        }
+    }
+
+    public void setPopUpWindow() {
+
+        LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        view = inflater.inflate(R.layout.share_dialog, null);
+        mypopupWindow = PopupUi.create(activity, view);
+
+        LinearLayout saveInvoiceLayout = view.findViewById(R.id.saveInvoiceLayout);
+        LinearLayout shareInvoiceLayout = view.findViewById(R.id.shareInvoiceLayout);
+        LinearLayout duplicateInvoicePrintLayout = view.findViewById(R.id.duplicateInvoicePrintLayout);
+
+        // Print is on the bottom bar; Save Invoice + Share live in the overflow menu.
+        duplicateInvoicePrintLayout.setVisibility(View.GONE);
+        saveInvoiceLayout.setVisibility(View.VISIBLE);
+        shareInvoiceLayout.setVisibility(View.VISIBLE);
+
+        saveInvoiceLayout.setOnClickListener(v -> {
+            mypopupWindow.dismiss();
+            onSaveInvoiceClicked();
+        });
+
+        shareInvoiceLayout.setOnClickListener(v -> {
+            mypopupWindow.dismiss();
+            if (productCartResponseList == null || productCartResponseList.isEmpty()) {
+                Toast.makeText(activity, getString(R.string.toast_cart_is_empty), Toast.LENGTH_SHORT).show();
+                return;
+            }
+            shareInvoice();
+        });
+
+        PopupUi.showAsToolbarMenu(mypopupWindow, binding.menuIcon);
+
+    }
+
+    private void onSaveInvoiceClicked() {
+        if (productCartResponseList == null || productCartResponseList.isEmpty()) {
+            Toast.makeText(activity, getString(R.string.toast_cart_is_empty), Toast.LENGTH_SHORT).show();
+            return;
+        }
+        runAfterPaymentReady(() -> {
+            invoiceNumber = resolveInvoiceNumber();
+            saveInvoice("", "", "", 0);
+        });
+    }
+
+    private float parseDisplayedNumber(TextView view) {
+        if (view == null || view.getText() == null) {
+            return 0f;
+        }
+        String raw = view.getText().toString();
+        if (inr != null) {
+            raw = raw.replace(inr, "");
+        }
+        raw = raw.replace("%", "").replace(",", "").trim();
+        if (raw.isEmpty()) {
+            return 0f;
+        }
+        try {
+            return Float.parseFloat(raw);
+        } catch (NumberFormatException e) {
+            return 0f;
+        }
+    }
+
+    private void confirmClearCart() {
+        if (productCartResponseList == null || productCartResponseList.isEmpty()) {
+            Toast.makeText(activity, getString(R.string.toast_cart_is_empty), Toast.LENGTH_SHORT).show();
+            return;
+        }
+        BottomSheetUi.showConfirm(
+                this,
+                getString(R.string.ui_clear_cart_confirm_title),
+                getString(R.string.ui_clear_cart_confirm_message),
+                "YES",
+                "NO",
+                true,
+                this::clearCart);
+    }
+
+    private void clearCart() {
+        final String table = tableNumber;
+        final String orderStatus = cartOrderStatus;
+        if (table == null || orderStatus == null) {
+            Toast.makeText(activity, getString(R.string.toast_cart_is_empty), Toast.LENGTH_SHORT).show();
+            return;
+        }
+        AppExecutors.get().db().execute(() -> {
+            posBillingWalaDatabase.clearCart(table, orderStatus);
+            AppExecutors.get().main(() -> {
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
+                clearCartUiState();
+                Toast.makeText(activity, getString(R.string.toast_cart_cleared), Toast.LENGTH_SHORT).show();
+                finish();
+            });
+        });
+    }
+
+    private void deductComboInventory(ProductCartResponse comboLine, String inventoryDate) {
+        if (comboLine == null) {
+            return;
+        }
+        int comboQty;
+        try {
+            comboQty = (int) Float.parseFloat(comboLine.getProductQuantity());
+        } catch (Exception e) {
+            comboQty = 1;
+        }
+        List<ComboItemResponse> components = posBillingWalaDatabase.getCartComboItems(comboLine.getCartId());
+        if (components == null) {
+            return;
+        }
+        for (ComboItemResponse component : components) {
+            if (component.getProductId() == null || component.getProductId().trim().isEmpty()) {
+                continue;
+            }
+            int componentQty;
+            try {
+                componentQty = (int) Float.parseFloat(component.getComboItemQuantity());
+            } catch (Exception e) {
+                componentQty = 1;
+            }
+            int saleQty = Math.max(1, comboQty) * Math.max(1, componentQty);
+            List<InventoryResponse> inventoryList = posBillingWalaDatabase.getInventoryDetails(component.getProductId());
+            if (inventoryList == null || inventoryList.isEmpty()) {
+                continue;
+            }
+            for (InventoryResponse inventoryResponse : inventoryList) {
+                try {
+                    int oldInventoryQty = Integer.parseInt(inventoryResponse.getProductInventoryQuantity());
+                    int afterSaleInventoryQuantity = Integer.parseInt(inventoryResponse.getAfterSaleInventoryQuantity());
+                    int totalQty = afterSaleInventoryQuantity - saleQty;
+                    posBillingWalaDatabase.addInventory(
+                            component.getProductId(),
+                            String.valueOf(oldInventoryQty),
+                            String.valueOf(totalQty),
+                            String.valueOf(saleQty),
+                            inventoryDate,
+                            0,
+                            getRandomString(10));
+                } catch (Exception ignored) {
+                }
+            }
+        }
+    }
+
+    @SuppressLint("Range")
+    public void saveInvoice(String customerName, String customerMobile, String customerAddress, int printStatus) {
+
+        if (invoiceSaveInProgress) {
+            Toast.makeText(activity, getString(R.string.toast_saving_invoice), Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (persistedInvoiceNumber != null && !persistedInvoiceNumber.trim().isEmpty()) {
+            Toast.makeText(activity, "Bill already settled", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (productCartResponseList == null || productCartResponseList.isEmpty()) {
+            Toast.makeText(activity, getString(R.string.toast_cart_is_empty), Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (!requirePaymentModeSelected()) {
+            return;
+        }
+
+        if (companyResponseList == null || companyResponseList.isEmpty()) {
+            Toast.makeText(activity, getString(R.string.toast_company_details_missing), Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (!LicenseSession.isBillingAllowed(activity, posBillingWalaDatabase)) {
+            String blocked = LicenseSession.billingBlockedMessage(activity, posBillingWalaDatabase);
+            if (LicenceExpiredUi.isExpiredMessage(blocked)) {
+                LicenceExpiredUi.show(activity);
+            } else {
+                LicenceExpiredUi.showInfoDialog(activity, blocked);
+            }
+            return;
+        }
+
+        resolveInvoiceNumber();
+
+        final String reservedInvoiceNumber = invoiceNumber;
+        final String reservedTableNumber = tableNumber;
+        final String reservedCartOrderStatus = cartOrderStatus;
+        final String reservedPaymentMode = paymentMode;
+        final String reservedInvoiceDate = invoiceDate;
+        final String reservedDiscountType = discountType;
+        final String reservedPackingChargeType = packingChargeType;
+        final int reservedPrintStatus = printStatus;
+        final String reservedCustomerName = customerName;
+        final String reservedCustomerMobile = customerMobile;
+        final String reservedCustomerAddress = customerAddress;
+        final String reservedSplitCash = pendingSplitCash;
+        final String reservedSplitUpi = pendingSplitUpi;
+        final List<ProductCartResponse> cartSnapshot = new ArrayList<>(productCartResponseList);
+        final CompanyResponse company = companyResponseList.get(0);
+
+        final float subTotalAmt;
+        final float discountAmtInput;
+        final float packingAmtInput;
+        try {
+            subTotalAmt = parseDisplayedNumber(subTotalTxt);
+            discountAmtInput = parseDisplayedNumber(discountTxt);
+            packingAmtInput = packingTxt != null ? parseDisplayedNumber(packingTxt) : 0f;
+        } catch (Exception e) {
+            Toast.makeText(activity, getString(R.string.toast_invalid_bill_amounts), Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        float shopCGST = 0f, shopSGST = 0f;
+        try {
+            if (company.getShopCGST() != null && !company.getShopCGST().trim().isEmpty()) {
+                shopCGST = subTotalAmt * (Float.parseFloat(company.getShopCGST().trim()) / 100);
+            }
+            if (company.getShopSGST() != null && !company.getShopSGST().trim().isEmpty()) {
+                shopSGST = subTotalAmt * (Float.parseFloat(company.getShopSGST().trim()) / 100);
+            }
+        } catch (Exception e) {
+            // keep GST at 0 if parse fails
+        }
+        final float totalGSTAmount = shopCGST + shopSGST;
+
+        float discountAmount = discountAmtInput;
+        if (reservedDiscountType != null && reservedDiscountType.equalsIgnoreCase("Amount")) {
+            discountAmount = discountAmtInput;
+        } else {
+            if (discountAmtInput != 0f) {
+                discountAmount = subTotalAmt / (100 / discountAmtInput);
+            } else {
+                discountAmount = 0f;
+            }
+        }
+        final float finalDiscountAmount = discountAmount;
+        final float finalDiscountAmtForDb = discountAmtInput;
+
+        float packingAmount = ReportCursorHelper.packingRupees(
+                String.valueOf(packingAmtInput), reservedPackingChargeType, String.valueOf(subTotalAmt));
+        final float finalPackingAmount = packingAmount;
+        final float finalPackingAmtForDb = packingAmtInput;
+
+        final float totalAmt;
+        if (company.getGstStatus() != null && company.getGstStatus().equalsIgnoreCase("on")) {
+            totalAmt = (subTotalAmt - finalDiscountAmount) + finalPackingAmount + totalGSTAmount;
+        } else {
+            totalAmt = subTotalAmt - finalDiscountAmount + finalPackingAmount;
+        }
+
+        final String invoiceType;
+        if (reservedCartOrderStatus != null && reservedCartOrderStatus.equalsIgnoreCase("table_wise")) {
+            invoiceType = "table_wise";
+        } else if (reservedCartOrderStatus != null && reservedCartOrderStatus.equalsIgnoreCase("take_away")) {
+            invoiceType = "take_away";
+        } else {
+            invoiceType = "fast_billing";
+        }
+
+        invoiceSaveInProgress = true;
+
+        invoiceSaveExecutor.execute(() -> {
+            boolean saved = false;
+            boolean needsPaymentMode = false;
+            Exception error = null;
+            Trace saveTrace = Observability.startTrace(Observability.TRACE_SAVE_INVOICE);
+            try {
+                Date c = Calendar.getInstance().getTime();
+                SimpleDateFormat todayDF = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+                String inventoryDate = todayDF.format(c);
+
+                for (ProductCartResponse productCartResponse : cartSnapshot) {
+                    if (CartItemType.isCombo(productCartResponse.getCartItemType())) {
+                        deductComboInventory(productCartResponse, inventoryDate);
+                        continue;
+                    }
+                    List<InventoryResponse> inventoryList =
+                            posBillingWalaDatabase.getInventoryDetails(productCartResponse.getProductId());
+                    if (inventoryList != null && !inventoryList.isEmpty()) {
+                        for (InventoryResponse inventoryResponse : inventoryList) {
+                            int saleInventoryQty = (int) Float.parseFloat(productCartResponse.getProductQuantity());
+                            int oldInventoryQty = Integer.parseInt(inventoryResponse.getProductInventoryQuantity());
+                            int afterSaleInventoryQuantity = Integer.parseInt(inventoryResponse.getAfterSaleInventoryQuantity());
+                            int totalQty = afterSaleInventoryQuantity - saleInventoryQty;
+
+                            posBillingWalaDatabase.addInventory(
+                                    productCartResponse.getProductId(),
+                                    String.valueOf(oldInventoryQty),
+                                    String.valueOf(totalQty),
+                                    String.valueOf(saleInventoryQty),
+                                    inventoryDate,
+                                    0,
+                                    getRandomString(10));
+                        }
+                    }
+                }
+
+                String paymentModeForSave = reservedPaymentMode;
+                if (invoiceType.equalsIgnoreCase("table_wise")
+                        && PaymentSettlementHelper.isSplit(paymentModeForSave)) {
+                    paymentModeForSave = "";
+                }
+
+                boolean invoiceSaved = posBillingWalaDatabase.saveInvoice(
+                        cartSnapshot,
+                        reservedTableNumber,
+                        reservedCustomerName,
+                        reservedCustomerMobile,
+                        reservedCustomerAddress,
+                        reservedInvoiceNumber,
+                        subTotalAmt,
+                        totalGSTAmount,
+                        finalDiscountAmtForDb,
+                        reservedDiscountType,
+                        finalPackingAmtForDb,
+                        reservedPackingChargeType != null ? reservedPackingChargeType : "Percentage",
+                        totalAmt,
+                        paymentModeForSave,
+                        reservedInvoiceDate,
+                        invoiceType,
+                        getRandomString(10),
+                        0);
+                if (!invoiceSaved) {
+                    throw new IllegalStateException("Local invoice save returned false");
+                }
+
+                if (PaymentSettlementHelper.isSplit(paymentModeForSave)
+                        && reservedSplitCash != null && reservedSplitUpi != null) {
+                    posBillingWalaDatabase.updateInvoicePaymentMode(
+                            reservedInvoiceNumber, paymentModeForSave, reservedSplitCash, reservedSplitUpi);
+                }
+
+                boolean printSucceeded = pendingBillPrintOk == null || Boolean.TRUE.equals(pendingBillPrintOk);
+                String billPrintResult = printSucceeded
+                        ? com.pos_billingwala.Extra.DineInSettlementHelper.PRINT_PRINTED
+                        : com.pos_billingwala.Extra.DineInSettlementHelper.PRINT_FAILED;
+                posBillingWalaDatabase.updateInvoiceBillPrintStatus(reservedInvoiceNumber, billPrintResult);
+
+                // Ensure active cart for this table/order is empty after bill save.
+                if (reservedTableNumber != null && reservedCartOrderStatus != null) {
+                    posBillingWalaDatabase.clearCart(reservedTableNumber, reservedCartOrderStatus);
+                }
+                if ("table_wise".equalsIgnoreCase(invoiceType) && reservedTableNumber != null) {
+                    com.pos_billingwala.Model.DiningSessionResponse openSession =
+                            posBillingWalaDatabase.getOpenDiningSessionForTable(reservedTableNumber);
+                    if (openSession != null
+                            && reservedPaymentMode != null
+                            && !reservedPaymentMode.trim().isEmpty()) {
+                        // Settlement closes the table even if print failed.
+                        posBillingWalaDatabase.closeDiningSession(openSession.getSessionId());
+                    }
+                }
+
+                if (!invoiceType.equalsIgnoreCase("table_wise")) {
+                    boolean splitPay = PaymentSettlementHelper.isSplit(reservedPaymentMode);
+                    boolean splitReady = splitPay && reservedSplitCash != null && reservedSplitUpi != null;
+                    needsPaymentMode = !splitReady && (splitPay
+                            || !posBillingWalaDatabase.checkPaymentMode(reservedInvoiceNumber).isEmpty());
+                }
+                saved = true;
+            } catch (Exception e) {
+                error = e;
+                Observability.recordUserAction("User tapped \"Save Bill\"");
+                Observability.logNonFatal(e, "save_invoice_db");
+            } finally {
+                Observability.stopTrace(saveTrace);
+            }
+
+            final boolean saveOk = saved;
+            final boolean showPaymentMode = needsPaymentMode;
+            final Exception saveError = error;
+
+            runOnUiThread(() -> {
+                invoiceSaveInProgress = false;
+                pendingSplitCash = null;
+                pendingSplitUpi = null;
+                final Boolean printOkSnapshot = pendingBillPrintOk;
+                pendingBillPrintOk = null;
+                if (isFinishing()) {
+                    return;
+                }
+                hideDialog();
+                if (!saveOk) {
+                    Toast.makeText(activity, getString(R.string.toast_failed_to_save_invoice_please_try_again),
+                            Toast.LENGTH_LONG).show();
+                    if (saveError != null) {
+                        saveError.printStackTrace();
+                    }
+                    // Payment did not complete â€” keep table open for retry.
+                    if ("table_wise".equalsIgnoreCase(invoiceType) && reservedTableNumber != null) {
+                        com.pos_billingwala.Extra.DineInSettlementHelper.markPaymentPending(
+                                posBillingWalaDatabase, reservedTableNumber);
+                    }
+                    return;
+                }
+
+                persistedInvoiceNumber = reservedInvoiceNumber;
+
+                // Payment display: never block save/print.
+                try {
+                    com.pos_billingwala.PaymentDisplay.PaymentDisplayService.tryAutoShowAfterBill(
+                            activity, reservedInvoiceNumber, totalAmt);
+                } catch (Exception ignored) {
+                }
+
+                // Share Invoice is only via overflow menu — never auto-open after print.
+                final boolean shouldShare = shareAfterSave;
+                shareAfterSave = false;
+
+                if (invoiceType.equalsIgnoreCase("table_wise")) {
+                    if (printOkSnapshot != null && !printOkSnapshot) {
+                        Toast.makeText(activity, "Bill settled — print failed", Toast.LENGTH_LONG).show();
+                        showBillPrintRetrySheet();
+                        return;
+                    }
+                    if (shouldShare) {
+                        automaticSavePDF(reservedCustomerName, reservedCustomerMobile, reservedCustomerAddress, reservedInvoiceNumber);
+                    } else {
+                        Toast.makeText(activity, getString(R.string.toast_invoice_saved), Toast.LENGTH_SHORT).show();
+                        finishAfterInvoiceSaved();
+                    }
+                } else if (showPaymentMode) {
+                    clearCartUiState();
+                    setPaymentMode(reservedCustomerName, reservedCustomerMobile, reservedCustomerAddress, totalAmt, shouldShare);
+                } else {
+                    if (shouldShare) {
+                        automaticSavePDF(reservedCustomerName, reservedCustomerMobile, reservedCustomerAddress, reservedInvoiceNumber);
+                    } else {
+                        Toast.makeText(activity, getString(R.string.toast_invoice_saved), Toast.LENGTH_SHORT).show();
+                        finishAfterInvoiceSaved();
+                    }
+                }
+            });
+        });
+    }
+
+    private void clearCartUiState() {
+        if (productCartResponseList != null) {
+            productCartResponseList.clear();
+        } else {
+            productCartResponseList = new ArrayList<>();
+        }
+        CreatePos.productCartResponseList = new ArrayList<>();
+        if (cartAdapter != null) {
+            cartAdapter.notifyDataSetChanged();
+        }
+        if (cartLayout != null) {
+            cartLayout.setVisibility(View.GONE);
+        }
+        if (noDataFound != null) {
+            EmptyListUi.bind(noDataFound, false, R.string.empty_sub_products);
+        }
+        if (clearCartButton != null) {
+            clearCartButton.setVisibility(View.GONE);
+        }
+    }
+
+    private void finishAfterInvoiceSaved() {
+        clearCartUiState();
+        onCallBack();
+    }
+
+    public String getRandomString(final int sizeOfRandomString) {
+
+        String ALLOWED_CHARACTERS = "0123456789qwertyuiopasdfghjklzxcvbnm";
+
+        final Random random = new Random();
+        final StringBuilder sb = new StringBuilder(sizeOfRandomString);
+        for (int i = 0; i < sizeOfRandomString; ++i)
+            sb.append(ALLOWED_CHARACTERS.charAt(random.nextInt(ALLOWED_CHARACTERS.length())));
+        return sb.toString();
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        requestPermission();
+        getPrinterSettingDetails();
+        getCompanyDetails();
+        getCartProductList();
+    }
+
+    @Override
+    protected void onDestroy() {
+        invoiceSaveExecutor.shutdownNow();
+        printBitmapExecutor.shutdownNow();
+        super.onDestroy();
+    }
+
+    public void getCompanyDetails() {
+
+        companyResponseList = posBillingWalaDatabase.getCompanyDetails();
+
+        if (!companyResponseList.isEmpty()) {
+
+            String primaryShopName = ShopHeaderBuilder.resolveShopName1(companyResponseList.get(0));
+            twoShopName.setText(primaryShopName);
+            threeShopName.setText(primaryShopName);
+            twoKOTShopName.setText(primaryShopName);
+            threeKOTShopName.setText(primaryShopName);
+
+            String shopDetails = ShopHeaderBuilder.buildShopDetailsBlock(companyResponseList.get(0));
+
+            twoShopDetails.setText(shopDetails);
+            threeShopDetails.setText(shopDetails);
+
+            if (companyResponseList.get(0).getCompanyLogo() != null) {
+                String companyLogo = companyResponseList.get(0).getCompanyLogo();
+                // decode base64 string
+                try {
+                    byte[] bytes = Base64.decode(companyLogo, Base64.DEFAULT);
+                    // Initialize bitmap
+                    Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                    twoCompanyLogo.setImageBitmap(bitmap);
+                    threeCompanyLogo.setImageBitmap(bitmap);
+                    twoKOTCompanyLogo.setImageBitmap(bitmap);
+                    threeKOTCompanyLogo.setImageBitmap(bitmap);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    twoCompanyLogo.setVisibility(View.GONE);
+                    threeCompanyLogo.setVisibility(View.GONE);
+                    twoKOTCompanyLogo.setVisibility(View.GONE);
+                    threeKOTCompanyLogo.setVisibility(View.GONE);
+                }
+            }
+
+        }
+    }
+
+    /**
+     * Generates amount-based UPI QR from shop UPI ID when printer toggle paymentUse is on.
+     */
+    public static void applyPaymentQr(float payableAmount) {
+        if (twoQRLogo == null || threeQRLogo == null) {
+            return;
+        }
+        boolean paymentOn = printerSettingResponseList != null
+                && !printerSettingResponseList.isEmpty()
+                && printerSettingResponseList.get(0).getPaymentUse() != null
+                && printerSettingResponseList.get(0).getPaymentUse().equalsIgnoreCase("on");
+
+        String upiId = "";
+        String payeeName = "";
+        if (companyResponseList != null && !companyResponseList.isEmpty()) {
+            upiId = companyResponseList.get(0).getPaymentLogo();
+            payeeName = ShopHeaderBuilder.resolveShopName1(companyResponseList.get(0));
+        }
+        String note = invoiceNumber != null ? invoiceNumber : "";
+        boolean applied = paymentOn
+                && PaymentUpiQrHelper.applyQrToViews(upiId, payeeName, payableAmount, note, twoQRLogo, threeQRLogo);
+        int visibility = applied ? View.VISIBLE : View.GONE;
+        twoQRLogo.setVisibility(visibility);
+        threeQRLogo.setVisibility(visibility);
+    }
+
+    public void getPrinterSettingDetails() {
+        printerSettingResponseList = posBillingWalaDatabase.getPrinterSettingDetails();
+        if (printerSettingResponseList != null && !printerSettingResponseList.isEmpty()) {
+            String bluetoothAddress = printerSettingResponseList.get(0).getBluetoothAddress() != null ? printerSettingResponseList.get(0).getBluetoothAddress() : "";
+            String bluetoothKOTAddress = printerSettingResponseList.get(0).getBluetoothKOTAddress() != null ? printerSettingResponseList.get(0).getBluetoothKOTAddress() : "";
+            PrinterConnectionHelper.autoConnectBillPrinter(activity, bluetoothAddress);
+            PrinterConnectionHelper.autoConnectKotPrinter(activity, bluetoothKOTAddress);
+            //Company Logo
+            if (printerSettingResponseList.get(0).getLogoUse() != null) {
+                if (printerSettingResponseList.get(0).getLogoUse().equalsIgnoreCase("on")) {
+                    twoCompanyLogo.setVisibility(View.VISIBLE);
+                    twoKOTCompanyLogo.setVisibility(View.VISIBLE);
+                    threeCompanyLogo.setVisibility(View.VISIBLE);
+                    threeKOTCompanyLogo.setVisibility(View.VISIBLE);
+                } else {
+                    twoCompanyLogo.setVisibility(View.GONE);
+                    threeCompanyLogo.setVisibility(View.GONE);
+                    twoKOTCompanyLogo.setVisibility(View.GONE);
+                    threeKOTCompanyLogo.setVisibility(View.GONE);
+                }
+            } else {
+                twoCompanyLogo.setVisibility(View.GONE);
+                threeCompanyLogo.setVisibility(View.GONE);
+                twoKOTCompanyLogo.setVisibility(View.GONE);
+                threeKOTCompanyLogo.setVisibility(View.GONE);
+            }
+            // Payment QR visibility is applied with amount in applyPaymentQr()
+            applyPaymentQr(0);
+        } else {
+            twoCompanyLogo.setVisibility(View.GONE);
+            threeCompanyLogo.setVisibility(View.GONE);
+            twoKOTCompanyLogo.setVisibility(View.GONE);
+            threeKOTCompanyLogo.setVisibility(View.GONE);
+            applyPaymentQr(0);
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        try {
+            if (requestCode == REQUEST_ENABLE_BT && resultCode == RESULT_OK) {
+                // BT just enabled â€” reconnect saved printer; list only if none saved
+                String addr = "";
+                if (printerSettingResponseList != null && !printerSettingResponseList.isEmpty()
+                        && printerSettingResponseList.get(0).getBluetoothAddress() != null) {
+                    addr = printerSettingResponseList.get(0).getBluetoothAddress();
+                }
+                WoosimPrnMng.connect(activity, addr, activity);
+            } else if (requestCode == REQUEST_CONNECT_DEVICE) {
+                if (resultCode == RESULT_OK && data != null) {
+                    String bluetoothAddress = data.getStringExtra(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
+                    if (bluetoothAddress != null) {
+                        if (printerSettingResponseList != null && !printerSettingResponseList.isEmpty()) {
+                            printerSettingResponseList.get(0).setBluetoothAddress(bluetoothAddress);
+                        }
+                        PrinterConnectionHelper.onBillDevicePicked(activity, bluetoothAddress);
+                    } else {
+                        PrinterConnectionHelper.cancelPendingDevicePick(true);
+                    }
+                } else {
+                    PrinterConnectionHelper.cancelPendingDevicePick(true);
+                }
+            } else if (requestCode == REQUEST_KOT_ENABLE_BT && resultCode == RESULT_OK) {
+                String kotAddr = "";
+                if (printerSettingResponseList != null && !printerSettingResponseList.isEmpty()
+                        && printerSettingResponseList.get(0).getBluetoothKOTAddress() != null) {
+                    kotAddr = printerSettingResponseList.get(0).getBluetoothKOTAddress();
+                }
+                KOTWoosimPrnMng.connect(activity, kotAddr, activity);
+            } else if (requestCode == REQUEST_KOT_CONNECT_DEVICE) {
+                if (resultCode == RESULT_OK && data != null) {
+                    String bluetoothAddress = data.getStringExtra(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
+                    if (bluetoothAddress != null) {
+                        if (printerSettingResponseList != null && !printerSettingResponseList.isEmpty()) {
+                            printerSettingResponseList.get(0).setBluetoothKOTAddress(bluetoothAddress);
+                        }
+                        PrinterConnectionHelper.onKotDevicePicked(activity, bluetoothAddress);
+                    } else {
+                        PrinterConnectionHelper.cancelPendingDevicePick(false);
+                    }
+                } else {
+                    PrinterConnectionHelper.cancelPendingDevicePick(false);
+                }
+            }
+        } catch (Exception e) {
+            Toast.makeText(activity, getString(R.string.connect_fail), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    public void onCallBack() {
+        paymentMode = "";
+        // Return to the screen that opened print (invoice list, tables, take-away, POS).
+        // Starting a new MainActivity was sending users to Fast Billing.
+        if (!isFinishing()) {
+            finish();
+        }
+    }
+
+    public void requestPermission() {
+
+        Dexter.withContext(activity).withPermissions(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_ADVERTISE, Manifest.permission.BLUETOOTH_CONNECT).withListener(new MultiplePermissionsListener() {
+            @Override
+            public void onPermissionsChecked(MultiplePermissionsReport report) {
+                if (report.areAllPermissionsGranted()) {
+
+                }
+            }
+
+            @Override
+            public void onPermissionRationaleShouldBeShown(List<PermissionRequest> permissions, PermissionToken token) {
+                token.continuePermissionRequest();
+            }
+        }).check();
+
+    }
+
+    public void setPaymentMode(String customerName, String customerMobile, String customerAddress, float totalAmt, boolean shouldShare) {
+        View content = LayoutInflater.from(activity).inflate(R.layout.set_payment_mode_dialog, null);
+        BottomSheetDialog sheet = BottomSheetUi.showContent(activity, content, false);
+
+        PaymentSettlementBinder.bind(content, totalAmt, MainActivity.currencyName, paymentMode,
+                new PaymentSettlementBinder.Callback() {
+                    @Override
+                    public void onConfirmed(String mode, String cashAmount, String upiAmount) {
+                        if (mode == null || mode.isEmpty()) {
+                            Toast.makeText(BluetoothPrint.this,
+                                    getString(R.string.toast_please_select_payment_mode), Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        posBillingWalaDatabase.updateInvoicePaymentMode(invoiceNumber, mode, cashAmount, upiAmount);
+                        sheet.dismiss();
+                        if (shouldShare) {
+                            automaticSavePDF(customerName, customerMobile, customerAddress, invoiceNumber);
+                        } else {
+                            Toast.makeText(activity, getString(R.string.toast_invoice_saved), Toast.LENGTH_SHORT).show();
+                            finishAfterInvoiceSaved();
+                        }
+                    }
+
+                    @Override
+                    public void onDismissed() {
+                        sheet.dismiss();
+                        Toast.makeText(activity, getString(R.string.toast_payment_not_recorded),
+                                Toast.LENGTH_LONG).show();
+                        finishAfterInvoiceSaved();
+                    }
+                });
+    }
+
+
+}

@@ -1,0 +1,14 @@
+.empty-state {
+  text-align: center;
+  padding: 40px 16px;
+  color: var(--gray);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--white);
+}
+
+.empty-state h3 {
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+  color: var(--dark-text);
+}

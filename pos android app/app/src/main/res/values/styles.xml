@@ -1,0 +1,193 @@
+<resources>
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimary</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:windowIsTranslucent">false</item>
+        <item name="android:statusBarColor">@color/colorPrimary</item>
+        <item name="android:navigationBarColor">@android:color/white</item>
+        <item name="windowNoTitle">true</item>
+        <item name="windowActionBar">false</item>
+        <item name="bottomSheetDialogTheme">@style/Theme.Pos.BottomSheetDialog</item>
+        <item name="android:windowSoftInputMode">adjustResize|stateHidden</item>
+
+    </style>
+
+    <!-- Non-floating so the sheet resizes above the IME instead of sitting under it. -->
+    <style name="Theme.Pos.BottomSheetDialog" parent="ThemeOverlay.MaterialComponents.BottomSheetDialog">
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:windowSoftInputMode">adjustResize</item>
+        <item name="enableEdgeToEdge">true</item>
+    </style>
+
+    <style name="CustomDropDownTilStyle" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColorHint">@color/light_black</item>
+        <item name="fontFamily">@font/poppinsregular</item>
+        <item name="android:textSize">15sp</item>
+        <item name="overlapAnchor">true</item>
+        <item name="hintTextColor">@color/colorAccent</item>
+        <item name="boxStrokeColor">@color/colorAccent</item>
+        <item name="colorControlNormal">@color/colorAccent</item>
+        <item name="colorControlActivated">@color/colorAccent</item>
+        <item name="colorControlHighlight">@color/colorAccent</item>
+        <item name="boxCornerRadiusBottomEnd">3dp</item>
+        <item name="boxCornerRadiusBottomStart">3dp</item>
+        <item name="boxCornerRadiusTopEnd">3dp</item>
+        <item name="boxCornerRadiusTopStart">3dp</item>
+    </style>
+
+    <style name="RatingBar" parent="Theme.AppCompat">
+        <item name="colorControlNormal">@color/light_black</item>
+        <item name="colorControlActivated">#DC9340</item>
+    </style>
+
+    <style name="spinnerItemStyle" parent="android:Widget.TextView.SpinnerItem">
+
+    </style>
+
+    <style name="spinnerDropDownItemStyle" parent="android:TextAppearance.Widget.TextView.SpinnerItem">
+
+    </style>
+
+    <style name="MyCardView" parent="CardView">
+        <item name="cardCornerRadius">20dp</item>
+    </style>
+
+    <style name="PosCardView" parent="CardView">
+        <item name="cardElevation">0dp</item>
+    </style>
+
+    <style name="PopupMenuCard" parent="PosCardView">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="cardBackgroundColor">@color/colorPrimary</item>
+        <item name="cardCornerRadius">10dp</item>
+        <item name="cardUseCompatPadding">true</item>
+    </style>
+
+    <style name="PosKpiLabel">
+        <item name="android:fontFamily">@font/poppinsregular</item>
+        <item name="android:textColor">@color/colorTextSecondary</item>
+        <item name="android:textSize">@dimen/text_kpi_label</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:maxLines">1</item>
+    </style>
+
+    <style name="PosKpiValue">
+        <item name="android:fontFamily">@font/poppinsbold</item>
+        <item name="android:textColor">@color/colorTextPrimary</item>
+        <item name="android:textSize">@dimen/text_kpi_value</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:maxLines">1</item>
+    </style>
+
+    <style name="PosKpiTrend">
+        <item name="android:fontFamily">@font/poppinsmedium</item>
+        <item name="android:textColor">@color/statusActive</item>
+        <item name="android:textSize">@dimen/text_kpi_trend</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:maxLines">1</item>
+    </style>
+
+
+    <style name="MonthPickerDialogStyle">
+        <!-- Customize month picker theme here. -->
+        <!-- <item name="monthBgColor">#FFFFFF</item>
+         <item name="monthBgSelectedColor">#FF4081</item>
+         <item name="monthFontColorSelected">#ffffff</item>
+         <item name="monthFontColorNormal">#000000</item>
+         <item name="monthFontColorDisabled">#33000000</item>
+
+         <item name="headerBgColor">#FF4081</item>
+         <item name="headerFontColorSelected">#ffffff</item>
+         <item name="headerFontColorNormal">#85ffffff</item>
+         <item name="headerTitleColor">#ffffff</item>-->
+    </style>
+
+    <style name="ThemeDialog" parent="@style/Theme.AppCompat.DayNight.Dialog.Alert">
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="buttonBarNegativeButtonStyle">@style/NegativeButtonStyle</item>
+        <item name="buttonBarPositiveButtonStyle">@style/PositiveButtonStyle</item>
+    </style>
+
+    <style name="NegativeButtonStyle" parent="Widget.AppCompat.Button.ButtonBar.AlertDialog">
+        <item name="android:textColor">@color/negative_button</item>
+    </style>
+
+    <style name="PositiveButtonStyle" parent="Widget.AppCompat.Button.ButtonBar.AlertDialog">
+        <item name="android:textColor">@color/positive_button</item>
+    </style>
+
+    <!-- Bluetooth device picker shown as a bottom sheet dialog activity -->
+    <style name="Theme.Pos.DeviceListBottomSheet" parent="Theme.MaterialComponents.Light.Dialog">
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:windowAnimationStyle">@style/Animation.MaterialComponents.BottomSheetDialog</item>
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorAccent">@color/colorAccent</item>
+    </style>
+
+    <style name="PosSectionLabel">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:fontFamily">@font/poppinsbold</item>
+        <item name="android:letterSpacing">0.06</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textColor">@color/colorTextSecondary</item>
+        <item name="android:textSize">@dimen/text_caption</item>
+    </style>
+
+    <style name="PosFormTextInput" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColorHint">@color/colorTextHint</item>
+        <item name="hintTextColor">@color/colorTextHint</item>
+        <item name="boxStrokeColor">@color/colorBorder</item>
+        <item name="boxCornerRadiusBottomEnd">@dimen/radius_sm</item>
+        <item name="boxCornerRadiusBottomStart">@dimen/radius_sm</item>
+        <item name="boxCornerRadiusTopEnd">@dimen/radius_sm</item>
+        <item name="boxCornerRadiusTopStart">@dimen/radius_sm</item>
+    </style>
+
+    <style name="PaymentModeRadio">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:layout_gravity">center</item>
+        <item name="android:fontFamily">@font/poppinsregular</item>
+        <item name="android:gravity">center_vertical|start</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:minHeight">40dp</item>
+        <item name="android:paddingStart">4dp</item>
+        <item name="android:paddingEnd">4dp</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textColor">@color/black</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
+    <!-- Vertical RadioGroup (landscape checkout sidebar) — weight only applies horizontally -->
+    <style name="PaymentModeRadioVertical" parent="PaymentModeRadio">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_weight">0</item>
+    </style>
+
+    <style name="PosSwitch" parent="Widget.AppCompat.CompoundButton.Switch">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="switchMinWidth">52dp</item>
+        <item name="android:thumb">@drawable/bg_switch_thumb</item>
+        <item name="track">@drawable/bg_switch_track</item>
+        <item name="android:showText">false</item>
+        <item name="android:switchPadding">2dp</item>
+    </style>
+
+</resources>

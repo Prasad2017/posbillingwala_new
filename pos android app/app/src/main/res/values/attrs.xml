@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="monthPickerDialog">
+        <!-- Header Style -->
+        <attr name="headerTitleColor" format="color" />
+        <attr name="headerBgColor" format="color" />
+        <attr name="headerFontColorSelected" format="color" />
+        <attr name="headerFontColorNormal" format="color" />
+        <!-- Month Picker style -->
+        <attr name="monthBgColor" format="color" />
+        <attr name="monthBgSelectedColor" format="color" />
+        <attr name="monthFontColorSelected" format="color" />
+        <attr name="monthFontColorNormal" format="color" />
+        <attr name="monthFontColorDisabled" format="color" />
+        <attr name="dialogActionButtonColor" format="color" />
+    </declare-styleable>
+
+    <declare-styleable name="SearchableSpinner">
+        <attr name="hintText" format="string" />
+        <attr name="fontFamily" format="string" />
+    </declare-styleable>
+
+    <declare-styleable name="SearchableDropdownView">
+        <attr name="sdd_hint" format="string" />
+        <attr name="sdd_dialog_title" format="string" />
+        <attr name="sdd_show_label" format="boolean" />
+        <attr name="sdd_show_icon" format="boolean" />
+    </declare-styleable>
+
+    <declare-styleable name="PosSwitchRowView">
+        <attr name="psr_label" format="string" />
+        <attr name="psr_checked" format="boolean" />
+    </declare-styleable>
+
+</resources>

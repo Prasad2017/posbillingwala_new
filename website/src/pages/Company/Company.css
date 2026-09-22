@@ -1,0 +1,55 @@
+.company-who h2 {
+  font-size: clamp(1.7rem, 3vw, 2.4rem);
+  margin: 8px 0 14px;
+}
+
+.company-who p {
+  color: var(--gray);
+  max-width: 48ch;
+  font-size: 1.05rem;
+}
+
+.company-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  padding: 28px 20px;
+}
+
+.company-stat {
+  text-align: center;
+}
+
+.company-stat strong {
+  display: block;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  color: var(--primary-blue-dark);
+}
+
+.company-stat span {
+  font-size: 13px;
+  color: var(--gray);
+  font-weight: 600;
+}
+
+.company-model__card {
+  text-align: left;
+}
+
+@media (max-width: 1023px) {
+  .company-stats {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    padding: 20px 14px;
+  }
+}
+
+@media (max-width: 640px) {
+  .company-stats {
+    grid-template-columns: 1fr;
+  }
+}

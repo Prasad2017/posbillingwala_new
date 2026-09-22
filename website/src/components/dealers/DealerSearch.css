@@ -1,0 +1,94 @@
+.dealer-search {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 280px);
+  gap: 12px;
+  margin-bottom: 28px;
+  padding: 14px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(21, 101, 216, 0.08), rgba(124, 58, 237, 0.06));
+  border: 1px solid rgba(147, 197, 253, 0.55);
+  align-items: stretch;
+}
+
+.dealer-search__field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff;
+  border: 1px solid rgba(147, 197, 253, 0.7);
+  border-radius: 999px;
+  padding: 12px 18px;
+  box-shadow: 0 8px 18px rgba(21, 101, 216, 0.08);
+  min-height: 52px;
+}
+
+.dealer-search__field svg {
+  color: #1565d8;
+  flex-shrink: 0;
+}
+
+.dealer-search__field input {
+  border: 0;
+  outline: 0;
+  width: 100%;
+  background: transparent;
+  font: inherit;
+  color: #0f172a;
+}
+
+.dealer-search__select {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-width: 220px;
+}
+
+.dealer-search__select select {
+  width: 100%;
+  height: 100%;
+  min-height: 52px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  border: 1px solid rgba(147, 197, 253, 0.7);
+  border-radius: 999px;
+  padding: 0 52px 0 20px;
+  background: linear-gradient(180deg, #ffffff, #f8fbff);
+  color: #1e3a8a;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(21, 101, 216, 0.08);
+  outline: none;
+}
+
+.dealer-search__select select:focus {
+  border-color: #1565d8;
+  box-shadow: 0 0 0 3px rgba(21, 101, 216, 0.16);
+}
+
+.dealer-search__select-arrow {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  color: #fff;
+  background: linear-gradient(135deg, #1565d8, #7c3aed);
+  box-shadow: 0 6px 14px rgba(21, 101, 216, 0.28);
+}
+
+@media (max-width: 1023px) {
+  .dealer-search {
+    grid-template-columns: 1fr;
+  }
+
+  .dealer-search__select {
+    min-width: 0;
+  }
+}

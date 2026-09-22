@@ -1,0 +1,1520 @@
+package com.pos_billingwala.Fragment;
+
+import com.pos_billingwala.Extra.PopupUi;
+import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.content.ActivityNotFoundException;
+import android.content.Context;
+import android.content.Intent;
+import android.graphics.Typeface;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.speech.RecognizerIntent;
+import android.text.Editable;
+import android.text.Html;
+import android.text.TextWatcher;
+import android.util.Log;
+import android.view.Gravity;
+import android.view.KeyEvent;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.LinearLayout;
+import android.widget.PopupWindow;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.ItemTouchHelper;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.textfield.TextInputEditText;
+import com.pos_billingwala.Activity.BluetoothPrint;
+import com.pos_billingwala.Activity.DuplicateBluetoothPrint;
+import com.pos_billingwala.Activity.MainActivity;
+import com.pos_billingwala.Adapter.CartAdapter;
+import com.pos_billingwala.Adapter.HomeCategoryAdapter;
+import com.pos_billingwala.Adapter.HomeComboAdapter;
+import com.pos_billingwala.Adapter.HomeProductAdapter;
+import com.pos_billingwala.Adapter.HomeSubcategoryAdapter;
+import com.pos_billingwala.Model.ComboResponse;
+import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.AppExecutors;
+import com.pos_billingwala.Extra.BottomSheetUi;
+import com.pos_billingwala.Extra.ListLoader;
+import com.pos_billingwala.Extra.ReportCursorHelper;
+import com.pos_billingwala.Interface.ClickListerInterface;
+import com.pos_billingwala.Model.CompanyResponse;
+import com.pos_billingwala.Model.PrinterSettingResponse;
+import com.pos_billingwala.Model.ProductCartResponse;
+import com.pos_billingwala.Model.ProductCategoryResponse;
+import com.pos_billingwala.Model.ProductPortionResponse;
+import com.pos_billingwala.Model.ProductResponse;
+import com.pos_billingwala.Model.ProductSubcategoryResponse;
+import com.pos_billingwala.R;
+import com.pos_billingwala.databinding.FragmentCreatePosBinding;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+
+
+@SuppressLint({"Range", "SetTextI18n, NonConstantResourceId"})
+public class CreatePos extends Fragment implements ClickListerInterface, View.OnClickListener {
+
+    public static final String CATEGORY_ALL_ID = "ALL";
+
+    public static String tableNumber, cartOrderStatus;
+    public static Activity activity;
+    public static String categoryName;
+    public static String selectedCategoryId;
+    public static String selectedSubcategoryId;
+    public static List<CompanyResponse> companyResponseList = new ArrayList<>();
+    public static List<ProductCategoryResponse> productCategoryResponseList = new ArrayList<>();
+    public static List<ProductResponse> productResponseList = new ArrayList<>();
+    public static List<ProductResponse> searchHomeProductResponseList = new ArrayList<>();
+    public static List<ProductResponse> homeProductResponseList = new ArrayList<>();
+    public static List<ProductCartResponse> productCartResponseList = new ArrayList<>();
+    public static List<PrinterSettingResponse> printerSettingResponseList = new ArrayList<>();
+    public static HomeCategoryAdapter homeCategoryAdapter;
+    public static HomeProductAdapter homeProductAdapter;
+    public static HomeComboAdapter homeComboAdapter;
+    public static FragmentCreatePosBinding binding;
+    private static CreatePos activeInstance;
+    View view;
+    POSBillingWalaDatabase posBillingWalaDatabase;
+    private CartAdapter cartAdapter;
+    PopupWindow mypopupWindow;
+    private final Handler productSearchHandler = new Handler(Looper.getMainLooper());
+    private Runnable pendingProductSearch;
+    private boolean showingCombos = false;
+    private List<ComboResponse> comboResponseList = new ArrayList<>();
+    private int searchRequestId = 0;
+    private int catalogRequestId = 0;
+    private HomeSubcategoryAdapter homeSubcategoryAdapter;
+    private ItemTouchHelper categoryTouchHelper;
+    private ItemTouchHelper subcategoryTouchHelper;
+    /** Prevents double navigation / ignored taps while payment screen is opening. */
+    private boolean paymentScreenOpening = false;
+    private long lastPaymentTapMs = 0L;
+
+    /* When Mic activity close */
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 1) {
+            if (resultCode == Activity.RESULT_OK && null != data) {
+                String yourResult = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS).get(0);
+                binding.productSearch.setText(yourResult.replace(" ", ""));
+                searchHomeProduct(yourResult.replace(" ", ""));
+            }
+        }
+    }
+
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        binding = FragmentCreatePosBinding.inflate(inflater, container, false);
+        view = binding.getRoot(); //Root xml or viewGroup will be a part of converted view over here
+
+
+        activity = getActivity();
+
+
+        posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
+        Bundle bundle = getArguments();
+        if (bundle != null) {
+            tableNumber = bundle.getString("tableNumber");
+            cartOrderStatus = bundle.getString("cartOrderStatus");
+            if (cartOrderStatus.equalsIgnoreCase("table_wise")) {
+                com.pos_billingwala.Extra.DineInTableHelper.openOrGetSession(
+                        posBillingWalaDatabase, tableNumber, 0);
+                String header = com.pos_billingwala.Extra.DineInTableHelper.dineInHeaderForTable(
+                        posBillingWalaDatabase, tableNumber);
+                binding.posHeading.setText(header);
+                boolean additional = bundle.getBoolean("additionalOrder", false);
+                if (additional) {
+                    binding.posSubtitle.setText("ADDITIONAL ORDER");
+                } else {
+                    binding.posSubtitle.setText(getString(R.string.ui_product_menu));
+                }
+                binding.posSubtitle.setVisibility(View.VISIBLE);
+                binding.menuIcon.setVisibility(View.VISIBLE);
+            } else if (cartOrderStatus.equalsIgnoreCase("take_away")) {
+                if (tableNumber == null || tableNumber.trim().isEmpty()) {
+                    tableNumber = posBillingWalaDatabase.nextTakeAwayParcelNumber();
+                }
+                binding.posHeading.setText(getString(R.string.take_away));
+                binding.posSubtitle.setText(getString(R.string.ui_take_away_no) + " " + tableNumber);
+                binding.posSubtitle.setVisibility(View.VISIBLE);
+                binding.menuIcon.setVisibility(View.GONE);
+            } else {
+                binding.posHeading.setText(getString(R.string.fast_billing));
+                binding.posSubtitle.setText(getString(R.string.ui_product_menu));
+                binding.posSubtitle.setVisibility(View.VISIBLE);
+                binding.menuIcon.setVisibility(View.VISIBLE);
+            }
+        }
+
+        view.setFocusableInTouchMode(true);
+        view.requestFocus();
+        view.setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View v, int keyCode, KeyEvent event) {
+
+                if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
+                    Log.i("tag", "onKey Back listener is working!!!");
+                    navigateFromPos();
+                    return true;
+                }
+                return false;
+            }
+        });
+
+
+        binding.productSearch.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                if (pendingProductSearch != null) {
+                    productSearchHandler.removeCallbacks(pendingProductSearch);
+                }
+                final String query = s != null ? s.toString() : "";
+                if (query.isEmpty()) {
+                    selectAllCategory();
+                    return;
+                }
+                // Debounce to avoid a DB hit on every keystroke
+                pendingProductSearch = () -> searchHomeProduct(query);
+                productSearchHandler.postDelayed(pendingProductSearch, 250);
+            }
+        });
+
+
+        binding.voiceSearchProduct.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                /* Call Activity for Voice Input */
+                Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+                intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, "en-US");
+                try {
+                    startActivityForResult(intent, 1);
+                } catch (ActivityNotFoundException a) {
+                    Toast.makeText(activity, getString(R.string.toast_oops_your_device_doesnt_support_speech_t), Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+
+        binding.homeCardView.setOnClickListener(this);
+        binding.backToCategory.setOnClickListener(this);
+        binding.clearCart.setOnClickListener(this);
+        binding.menuIcon.setOnClickListener(this);
+        binding.productsTab.setOnClickListener(this);
+        binding.combosTab.setOnClickListener(this);
+        // Tablet/land: Pay Now owns the tap. Phone: whole footer (or View Cart) opens payment.
+        if (binding.payButton != null) {
+            binding.payButton.setClickable(true);
+            binding.payButton.setFocusable(true);
+            binding.payButton.setOnClickListener(this);
+            binding.cartLayout.setClickable(false);
+            binding.cartLayout.setOnClickListener(null);
+        } else {
+            binding.cartLayout.setOnClickListener(this);
+            if (binding.viewCartButton != null) {
+                binding.viewCartButton.setClickable(true);
+                binding.viewCartButton.setFocusable(true);
+                binding.viewCartButton.setOnClickListener(this);
+            }
+        }
+        if (binding.kotButton != null) {
+            binding.kotButton.setOnClickListener(this);
+        }
+        if (binding.holdButton != null) {
+            binding.holdButton.setOnClickListener(this);
+        }
+        if (binding.payButtonPhone != null) {
+            binding.payButtonPhone.setOnClickListener(this);
+        }
+        setupDineInActionBar();
+        setupTabletCartPanel();
+
+        binding.productRecyclerView.setHasFixedSize(true);
+        binding.productRecyclerView.setItemViewCacheSize(24);
+        binding.categoryRecyclerView.setHasFixedSize(true);
+        binding.categoryRecyclerView.setItemViewCacheSize(12);
+
+        return view;
+
+    }
+
+    private void setupSubcategoryFilter(String categoryId) {
+        if (binding == null) {
+            return;
+        }
+        binding.subcategoryRecyclerView.setVisibility(View.GONE);
+        homeSubcategoryAdapter = null;
+
+        if (categoryId == null || CATEGORY_ALL_ID.equals(categoryId)) {
+            selectedSubcategoryId = null;
+            return;
+        }
+
+        final String catId = categoryId;
+        AppExecutors.get().db().execute(() -> {
+            List<ProductSubcategoryResponse> subcategories =
+                    posBillingWalaDatabase.getProductSubcategoryList(catId);
+            AppExecutors.get().main(() -> {
+                if (!isAdded() || binding == null) {
+                    return;
+                }
+                if (subcategories == null || subcategories.isEmpty()) {
+                    binding.subcategoryRecyclerView.setVisibility(View.GONE);
+                    homeSubcategoryAdapter = null;
+                    selectedSubcategoryId = null;
+                    return;
+                }
+
+                List<ProductSubcategoryResponse> display = new ArrayList<>();
+                ProductSubcategoryResponse all = new ProductSubcategoryResponse();
+                all.setSubcategoryId(HomeSubcategoryAdapter.ALL_ID);
+                all.setSubcategoryName(getString(R.string.ui_all));
+                display.add(all);
+                display.addAll(subcategories);
+
+                selectedSubcategoryId = null;
+                homeSubcategoryAdapter = new HomeSubcategoryAdapter(activity, display, subcategoryId -> {
+                    if (subcategoryId == null || subcategoryId.isEmpty()) {
+                        selectedSubcategoryId = null;
+                    } else {
+                        selectedSubcategoryId = subcategoryId;
+                    }
+                    if (homeSubcategoryAdapter != null) {
+                        homeSubcategoryAdapter.setSelectedSubcategoryId(
+                                selectedSubcategoryId != null ? selectedSubcategoryId : HomeSubcategoryAdapter.ALL_ID);
+                    }
+                    getHomeProductList();
+                });
+                homeSubcategoryAdapter.setSelectedSubcategoryId(HomeSubcategoryAdapter.ALL_ID);
+                binding.subcategoryRecyclerView.setLayoutManager(
+                        new LinearLayoutManager(activity, LinearLayoutManager.HORIZONTAL, false));
+                binding.subcategoryRecyclerView.setAdapter(homeSubcategoryAdapter);
+                attachSubcategoryDragHelper();
+                binding.subcategoryRecyclerView.setVisibility(View.VISIBLE);
+            });
+        });
+    }
+
+    private void clearSubcategoryFilter() {
+        selectedSubcategoryId = null;
+        homeSubcategoryAdapter = null;
+        if (binding != null) {
+            binding.subcategoryRecyclerView.setAdapter(null);
+            binding.subcategoryRecyclerView.setVisibility(View.GONE);
+        }
+    }
+
+    private void attachCategoryDragHelper() {
+        if (binding == null) {
+            return;
+        }
+        if (categoryTouchHelper != null) {
+            categoryTouchHelper.attachToRecyclerView(null);
+        }
+        categoryTouchHelper = new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(
+                ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT, 0) {
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView,
+                                  @NonNull RecyclerView.ViewHolder viewHolder,
+                                  @NonNull RecyclerView.ViewHolder target) {
+                if (homeCategoryAdapter == null) {
+                    return false;
+                }
+                return homeCategoryAdapter.moveItem(viewHolder.getBindingAdapterPosition(),
+                        target.getBindingAdapterPosition());
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+            }
+
+            @Override
+            public boolean isLongPressDragEnabled() {
+                return true;
+            }
+
+            @Override
+            public void clearView(@NonNull RecyclerView recyclerView,
+                                  @NonNull RecyclerView.ViewHolder viewHolder) {
+                super.clearView(recyclerView, viewHolder);
+                persistCategoryOrder();
+            }
+        });
+        categoryTouchHelper.attachToRecyclerView(binding.categoryRecyclerView);
+    }
+
+    private void attachSubcategoryDragHelper() {
+        if (binding == null) {
+            return;
+        }
+        if (subcategoryTouchHelper != null) {
+            subcategoryTouchHelper.attachToRecyclerView(null);
+        }
+        subcategoryTouchHelper = new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(
+                ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT, 0) {
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView,
+                                  @NonNull RecyclerView.ViewHolder viewHolder,
+                                  @NonNull RecyclerView.ViewHolder target) {
+                if (homeSubcategoryAdapter == null) {
+                    return false;
+                }
+                return homeSubcategoryAdapter.moveItem(viewHolder.getBindingAdapterPosition(),
+                        target.getBindingAdapterPosition());
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+            }
+
+            @Override
+            public boolean isLongPressDragEnabled() {
+                return true;
+            }
+
+            @Override
+            public void clearView(@NonNull RecyclerView recyclerView,
+                                  @NonNull RecyclerView.ViewHolder viewHolder) {
+                super.clearView(recyclerView, viewHolder);
+                persistSubcategoryOrder();
+            }
+        });
+        subcategoryTouchHelper.attachToRecyclerView(binding.subcategoryRecyclerView);
+    }
+
+    private void persistCategoryOrder() {
+        if (homeCategoryAdapter == null || posBillingWalaDatabase == null) {
+            return;
+        }
+        List<ProductCategoryResponse> items = homeCategoryAdapter.getItems();
+        if (items == null || items.isEmpty()) {
+            return;
+        }
+        List<String> orderedIds = new ArrayList<>();
+        List<ProductCategoryResponse> syncedList = new ArrayList<>();
+        for (ProductCategoryResponse item : items) {
+            if (item == null || item.getCategoryId() == null) {
+                continue;
+            }
+            if (CATEGORY_ALL_ID.equals(item.getCategoryId())) {
+                continue;
+            }
+            orderedIds.add(item.getCategoryId());
+            syncedList.add(item);
+        }
+        productCategoryResponseList = syncedList;
+        AppExecutors.get().db().execute(() ->
+                posBillingWalaDatabase.updateCategorySortOrders(orderedIds));
+    }
+
+    private void persistSubcategoryOrder() {
+        if (homeSubcategoryAdapter == null || posBillingWalaDatabase == null) {
+            return;
+        }
+        List<ProductSubcategoryResponse> items = homeSubcategoryAdapter.getItems();
+        if (items == null || items.isEmpty()) {
+            return;
+        }
+        List<String> orderedIds = new ArrayList<>();
+        for (ProductSubcategoryResponse item : items) {
+            if (item == null || item.getSubcategoryId() == null) {
+                continue;
+            }
+            if (HomeSubcategoryAdapter.ALL_ID.equals(item.getSubcategoryId())) {
+                continue;
+            }
+            orderedIds.add(item.getSubcategoryId());
+        }
+        AppExecutors.get().db().execute(() ->
+                posBillingWalaDatabase.updateSubcategorySortOrders(orderedIds));
+    }
+
+    private void selectAllCategory() {
+        selectedCategoryId = CATEGORY_ALL_ID;
+        categoryName = null;
+        clearSubcategoryFilter();
+        if (homeCategoryAdapter != null) {
+            homeCategoryAdapter.setSelectedCategoryId(CATEGORY_ALL_ID);
+        }
+        if (binding != null) {
+            binding.categoryRecyclerView.setVisibility(View.VISIBLE);
+        }
+        getHomeProductList();
+    }
+
+    private boolean isAllCategory(String categoryId) {
+        return categoryId == null || CATEGORY_ALL_ID.equals(categoryId);
+    }
+
+    private String resolveCategoryName(String categoryId) {
+        if (isAllCategory(categoryId)) {
+            return null;
+        }
+        if (productCategoryResponseList == null) {
+            return categoryName;
+        }
+        for (ProductCategoryResponse category : productCategoryResponseList) {
+            if (categoryId.equals(category.getCategoryId())) {
+                return category.getCategoryName();
+            }
+        }
+        return categoryName;
+    }
+
+    public void searchHomeProduct(String productName) {
+
+        if (productName == null || productName.trim().isEmpty()) {
+            if (showingCombos) {
+                showComboCatalog();
+            } else {
+                selectAllCategory();
+            }
+            return;
+        }
+
+        final String query = productName.trim();
+        final int requestId = ++searchRequestId;
+        final boolean combos = showingCombos;
+        final String table = tableNumber;
+        final String orderStatus = cartOrderStatus;
+
+        AppExecutors.get().db().execute(() -> {
+            if (combos) {
+                List<ComboResponse> results = posBillingWalaDatabase.searchCombos(query, table, orderStatus);
+                AppExecutors.get().main(() -> {
+                    if (!isAdded() || binding == null || requestId != searchRequestId || !showingCombos) {
+                        return;
+                    }
+                    comboResponseList = results;
+                    bindComboAdapter(comboResponseList);
+                    binding.categoryRecyclerView.setVisibility(View.GONE);
+                    binding.productLinearLayout.setVisibility(View.VISIBLE);
+                });
+                return;
+            }
+
+            List<ProductResponse> results = posBillingWalaDatabase.searchProducts(query, table, orderStatus);
+            AppExecutors.get().main(() -> {
+                if (!isAdded() || binding == null || requestId != searchRequestId || showingCombos) {
+                    return;
+                }
+                searchHomeProductResponseList.clear();
+                searchHomeProductResponseList.addAll(results);
+                homeProductResponseList.clear();
+                homeProductResponseList.addAll(results);
+                bindProductAdapter(searchHomeProductResponseList);
+                binding.categoryRecyclerView.setVisibility(View.GONE);
+                binding.productLinearLayout.setVisibility(View.VISIBLE);
+            });
+        });
+    }
+
+    private void bindProductAdapter(List<ProductResponse> products) {
+        if (homeProductAdapter == null || binding.productRecyclerView.getAdapter() != homeProductAdapter) {
+            homeProductAdapter = new HomeProductAdapter(activity, products, CreatePos.this);
+            binding.productRecyclerView.setAdapter(homeProductAdapter);
+        } else {
+            homeProductAdapter.submitList(products);
+        }
+    }
+
+    private void bindComboAdapter(List<ComboResponse> combos) {
+        homeComboAdapter = new HomeComboAdapter(activity, combos, this::comboClicked);
+        binding.productRecyclerView.setAdapter(homeComboAdapter);
+    }
+
+    @Override
+    public void onClick(View view) {
+        int id = view.getId();
+        if (id == R.id.homeCardView) {
+            navigateFromPos();
+        } else if (id == R.id.backToCategory) {
+            binding.productSearch.setText("");
+            binding.productSearch.clearFocus();
+            selectAllCategory();
+        } else if (id == R.id.payButton || id == R.id.viewCartButton
+                || id == R.id.cartLayout || id == R.id.payButtonPhone) {
+            openPaymentScreen();
+        } else if (id == R.id.kotButton) {
+            onKotClicked();
+        } else if (id == R.id.holdButton) {
+            holdTableBill();
+        } else if (id == R.id.clearCart) {
+            confirmClearCart();
+        } else if (id == R.id.menuIcon) {
+            setPopUpWindow();
+        } else if (id == R.id.productsTab) {
+            showProductCatalog();
+        } else if (id == R.id.combosTab) {
+            showComboCatalog();
+        }
+    }
+
+    private void setupDineInActionBar() {
+        if (binding == null || cartOrderStatus == null
+                || !cartOrderStatus.equalsIgnoreCase("table_wise")) {
+            if (binding != null && binding.dineInActionBar != null) {
+                binding.dineInActionBar.setVisibility(View.GONE);
+            }
+            return;
+        }
+        boolean kotOn = com.pos_billingwala.Extra.DineInTableHelper.isKotEnabled(posBillingWalaDatabase);
+        if (binding.dineInActionBar != null) {
+            binding.dineInActionBar.setVisibility(View.VISIBLE);
+            if (binding.viewCartButton != null) {
+                binding.viewCartButton.setVisibility(View.GONE);
+            }
+            if (binding.kotButton != null) {
+                binding.kotButton.setVisibility(kotOn ? View.VISIBLE : View.GONE);
+            }
+        }
+        if (binding.kotButton != null && binding.dineInActionBar == null) {
+            // Tablet / land layouts
+            binding.kotButton.setVisibility(kotOn ? View.VISIBLE : View.GONE);
+        }
+        if (binding.holdButton != null && binding.dineInActionBar == null) {
+            binding.holdButton.setVisibility(View.VISIBLE);
+        }
+        if (binding.holdButton != null && binding.dineInActionBar != null) {
+            binding.holdButton.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void holdTableBill() {
+        if (tableNumber == null) {
+            navigateFromPos();
+            return;
+        }
+        AppExecutors.get().runDbThenMain(this, () -> {
+            com.pos_billingwala.Extra.DineInTableHelper.openOrGetSession(
+                    posBillingWalaDatabase, tableNumber, 0);
+        }, () -> {
+            Toast.makeText(activity, "Table held — bill saved", Toast.LENGTH_SHORT).show();
+            navigateFromPos();
+        });
+    }
+
+    private void onKotClicked() {
+        if (!com.pos_billingwala.Extra.DineInTableHelper.isKotEnabled(posBillingWalaDatabase)) {
+            Toast.makeText(activity, "KOT is disabled in settings", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        final String table = tableNumber;
+        final java.util.List<com.pos_billingwala.Model.ProductCartResponse>[] unprintedHolder =
+                new java.util.List[]{null};
+        final com.pos_billingwala.Model.KotResponse[] kotHolder =
+                new com.pos_billingwala.Model.KotResponse[]{null};
+        AppExecutors.get().runDbThenMain(this, () -> {
+            unprintedHolder[0] = posBillingWalaDatabase.getUnprintedCartProductList(
+                    table, com.pos_billingwala.Extra.DineInTableHelper.CART_ORDER_TABLE);
+        }, () -> {
+            if (unprintedHolder[0] == null || unprintedHolder[0].isEmpty()) {
+                Toast.makeText(activity, "No new items for KOT", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            boolean preview = com.pos_billingwala.Extra.DineInKotHelper.isPreviewEnabled(posBillingWalaDatabase);
+            boolean autoPrint = com.pos_billingwala.Extra.DineInKotHelper.isAutoPrint(posBillingWalaDatabase);
+            if (!preview && !autoPrint) {
+                AppExecutors.get().runDbThenMain(this, () -> {
+                    kotHolder[0] = com.pos_billingwala.Extra.DineInKotHelper.createKotForTable(
+                            posBillingWalaDatabase, table);
+                }, () -> {
+                    if (kotHolder[0] == null) {
+                        Toast.makeText(activity, "Unable to create KOT", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(activity, kotHolder[0].getKotNumber() + " saved", Toast.LENGTH_SHORT).show();
+                    }
+                });
+                return;
+            }
+            Intent intent = new Intent(activity, BluetoothPrint.class);
+            intent.putExtra("invoiceRunningStatus", "printBill");
+            intent.putExtra("tableNumber", tableNumber);
+            intent.putExtra("cartOrderStatus", cartOrderStatus);
+            intent.putExtra("kotMode", true);
+            intent.putExtra("autoKotPrint", autoPrint);
+            startActivity(intent);
+        });
+    }
+
+    private void openPaymentScreen() {
+        long now = System.currentTimeMillis();
+        if (paymentScreenOpening || now - lastPaymentTapMs < 600L) {
+            return;
+        }
+        lastPaymentTapMs = now;
+
+        // Fast path: cart already visible on screen — open immediately (no DB wait feel).
+        if (productCartResponseList != null && !productCartResponseList.isEmpty()) {
+            launchPaymentScreen();
+            return;
+        }
+
+        paymentScreenOpening = true;
+        setPaymentControlsEnabled(false);
+        final String table = tableNumber;
+        final String orderStatus = cartOrderStatus;
+        AppExecutors.get().runDbThenMain(this, () -> {
+            productCartResponseList = posBillingWalaDatabase.getCartProductList(table, orderStatus);
+        }, () -> {
+            paymentScreenOpening = false;
+            setPaymentControlsEnabled(true);
+            if (productCartResponseList != null && !productCartResponseList.isEmpty()) {
+                launchPaymentScreen();
+            } else {
+                Toast.makeText(activity, getString(R.string.toast_add_product_into_cart), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void launchPaymentScreen() {
+        paymentScreenOpening = true;
+        setPaymentControlsEnabled(false);
+        Intent intent = new Intent(activity, BluetoothPrint.class);
+        intent.putExtra("invoiceRunningStatus", "printBill");
+        intent.putExtra("tableNumber", tableNumber);
+        intent.putExtra("cartOrderStatus", cartOrderStatus);
+        startActivity(intent);
+        // Re-enable when user returns; also clear stuck state after a short delay.
+        AppExecutors.get().postMainDelayed(() -> {
+            paymentScreenOpening = false;
+            setPaymentControlsEnabled(true);
+        }, 800L);
+    }
+
+    private void setPaymentControlsEnabled(boolean enabled) {
+        if (binding == null) {
+            return;
+        }
+        if (binding.payButton != null) {
+            binding.payButton.setEnabled(enabled);
+            binding.payButton.setAlpha(enabled ? 1f : 0.7f);
+        }
+        if (binding.viewCartButton != null) {
+            binding.viewCartButton.setEnabled(enabled);
+            binding.viewCartButton.setAlpha(enabled ? 1f : 0.7f);
+        }
+    }
+
+    private void setupTabletCartPanel() {
+        if (binding.cartRecyclerView == null) {
+            return;
+        }
+        binding.cartRecyclerView.setLayoutManager(new LinearLayoutManager(activity));
+        binding.cartRecyclerView.setHasFixedSize(false);
+        binding.cartRecyclerView.setItemViewCacheSize(12);
+    }
+
+    private void bindTabletCartList() {
+        if (binding == null || binding.cartRecyclerView == null) {
+            return;
+        }
+        boolean empty = productCartResponseList == null || productCartResponseList.isEmpty();
+        if (binding.cartEmptyState != null) {
+            binding.cartEmptyState.setVisibility(empty ? View.VISIBLE : View.GONE);
+        }
+        binding.cartRecyclerView.setVisibility(empty ? View.GONE : View.VISIBLE);
+        if (empty) {
+            cartAdapter = null;
+            binding.cartRecyclerView.setAdapter(null);
+            return;
+        }
+        cartAdapter = new CartAdapter(activity, productCartResponseList);
+        binding.cartRecyclerView.setAdapter(cartAdapter);
+    }
+
+    /** Called from {@link CartAdapter} after inline cart edits on the tablet panel. */
+    public static void refreshCartUiAfterLocalEdit() {
+        if (activeInstance == null || binding == null || binding.cartRecyclerView == null) {
+            return;
+        }
+        activeInstance.getCartCount();
+    }
+
+    private void confirmClearCart() {
+        if (productCartResponseList == null || productCartResponseList.isEmpty()) {
+            Toast.makeText(activity, getString(R.string.toast_cart_is_empty), Toast.LENGTH_SHORT).show();
+            return;
+        }
+        BottomSheetUi.showConfirm(
+                activity,
+                getString(R.string.ui_clear_cart_confirm_title),
+                getString(R.string.ui_clear_cart_confirm_message),
+                "YES",
+                "NO",
+                true,
+                this::clearCart);
+    }
+
+    private void clearCart() {
+        final String table = tableNumber;
+        final String orderStatus = cartOrderStatus;
+        if (table == null || orderStatus == null) {
+            Toast.makeText(activity, getString(R.string.toast_cart_is_empty), Toast.LENGTH_SHORT).show();
+            return;
+        }
+        AppExecutors.get().runDbThenMain(this, () -> {
+            posBillingWalaDatabase.clearCart(table, orderStatus);
+            productCartResponseList = new ArrayList<>();
+        }, () -> {
+            bindCartCountUi();
+            refreshCatalogAfterCart();
+            Toast.makeText(activity, getString(R.string.toast_cart_cleared), Toast.LENGTH_SHORT).show();
+        });
+    }
+
+    public void setPopUpWindow() {
+        if (cartOrderStatus != null && cartOrderStatus.equalsIgnoreCase("table_wise")) {
+            com.pos_billingwala.Extra.DineInOpsUi.showTableActionsMenu(
+                    activity, posBillingWalaDatabase, tableNumber, navigateTo -> {
+                        if (navigateTo == null) {
+                            return;
+                        }
+                        if ("HOLD".equals(navigateTo)) {
+                            navigateFromPos();
+                            return;
+                        }
+                        if (navigateTo.startsWith("PRINT:")) {
+                            openPaymentScreen();
+                            return;
+                        }
+                        // Refresh header / cart after join/move/transfer
+                        if (!navigateTo.equals(tableNumber)) {
+                            tableNumber = navigateTo;
+                            Bundle args = getArguments();
+                            if (args != null) {
+                                args.putString("tableNumber", tableNumber);
+                            }
+                        }
+                        String header = com.pos_billingwala.Extra.DineInTableHelper.dineInHeaderForTable(
+                                posBillingWalaDatabase, tableNumber);
+                        if (binding != null) {
+                            binding.posHeading.setText(header);
+                        }
+                        getCartCount();
+                        refreshCatalogAfterCart();
+                    });
+            return;
+        }
+
+        LayoutInflater inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        view = inflater.inflate(R.layout.share_dialog, null);
+        mypopupWindow = PopupUi.create(activity, view);
+
+        LinearLayout saveInvoiceLayout = view.findViewById(R.id.saveInvoiceLayout);
+        LinearLayout duplicateInvoicePrintLayout = view.findViewById(R.id.duplicateInvoicePrintLayout);
+
+        saveInvoiceLayout.setVisibility(View.GONE);
+
+        duplicateInvoicePrintLayout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                mypopupWindow.dismiss();
+
+                Intent intent = new Intent(activity, DuplicateBluetoothPrint.class);
+                intent.putExtra("invoiceRunningStatus", "printBill");
+                intent.putExtra("cartOrderStatus", "fast_billing");
+                activity.startActivity(intent);
+
+            }
+        });
+
+        PopupUi.showAsToolbarMenu(mypopupWindow, binding.menuIcon);
+
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        activeInstance = this;
+        ((MainActivity) activity).lockUnlockDrawer(1);
+        getCompanyDetails();
+        getPrinterDetails();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        paymentScreenOpening = false;
+        setPaymentControlsEnabled(true);
+        // Refresh cart when returning from Invoice Preview (print/save/clear).
+        if (binding == null || tableNumber == null || cartOrderStatus == null || posBillingWalaDatabase == null) {
+            return;
+        }
+        getCartCount();
+        refreshCatalogAfterCart();
+    }
+
+    public void getPrinterDetails() {
+        AppExecutors.get().runDbThenMain(this, () -> {
+            printerSettingResponseList = posBillingWalaDatabase.getPrinterSettingDetails();
+        }, () -> {
+            // cached for print flow; no UI bind required here
+        });
+    }
+
+    public void getCompanyDetails() {
+        AppExecutors.get().runDbThenMain(this, () -> {
+            companyResponseList = posBillingWalaDatabase.getCompanyDetails();
+        }, () -> {
+            if (companyResponseList != null && !companyResponseList.isEmpty()) {
+                getHomeProductCategoryList();
+                getCartCount();
+            } else {
+                Toast.makeText(activity, getString(R.string.toast_please_fill_shop_details), Toast.LENGTH_SHORT).show();
+                ((MainActivity) activity).loadFragment(new CompanyDetailSetting(), true);
+            }
+        });
+    }
+
+
+    public void getCartCount() {
+        final String table = tableNumber;
+        final String orderStatus = cartOrderStatus;
+        AppExecutors.get().runDbThenMain(this, () -> {
+            productCartResponseList = posBillingWalaDatabase.getCartProductList(table, orderStatus);
+        }, this::bindCartCountUi);
+    }
+
+    private void bindCartCountUi() {
+        if (binding == null) {
+            return;
+        }
+        String discountType = "";
+        String packingChargeType = "";
+        float totalPerProductAmount = 0f, discountAmount = 0f, packingAmount = 0f, totalCGST = 0f, totalSGST = 0f, totalPerProductGST = 0f, totalGST = 0f;
+        if (productCartResponseList == null || productCartResponseList.isEmpty()) {
+            binding.totalAmount.setText(MainActivity.currencyName + " 0.00");
+            binding.clearCart.setVisibility(View.GONE);
+            if (binding.cartBadge != null) {
+                binding.cartBadge.setVisibility(View.GONE);
+            }
+            bindTabletCartList();
+            return;
+        }
+        binding.clearCart.setVisibility(View.VISIBLE);
+        if (binding.cartBadge != null) {
+            binding.cartBadge.setVisibility(View.VISIBLE);
+            binding.cartBadge.setText(String.valueOf(sumCartQuantities()));
+        }
+
+        for (int i = 0; i < productCartResponseList.size(); i++) {
+
+            float productPrice = Float.parseFloat(productCartResponseList.get(i).getProductOldPrice());
+            float productQuantity = Float.parseFloat(productCartResponseList.get(i).getProductQuantity());
+            if (!CreatePos.companyResponseList.isEmpty()) {
+                if (CreatePos.companyResponseList.get(0).getGstStatus() != null) {
+                    if (CreatePos.companyResponseList.get(0).getGstStatus().equalsIgnoreCase("On")) {
+                        if (!productCartResponseList.get(i).getProductCGST().equalsIgnoreCase("")) {
+                            totalCGST += Float.parseFloat(productCartResponseList.get(i).getProductCGST());
+                        }
+                        if (!productCartResponseList.get(i).getProductSGST().equalsIgnoreCase("")) {
+                            totalSGST += Float.parseFloat(productCartResponseList.get(i).getProductSGST());
+                        }
+                        discountAmount = Float.parseFloat(productCartResponseList.get(i).getCartDiscount());
+                        discountType = productCartResponseList.get(0).getCartDiscountType();
+                        packingAmount = ReportCursorHelper.parseAmount(productCartResponseList.get(0).getCartPackingCharge());
+                        packingChargeType = productCartResponseList.get(0).getCartPackingChargeType();
+                        totalPerProductGST = (productPrice * ((totalCGST + totalSGST) / 100));
+                        totalGST += (productPrice * ((totalCGST + totalSGST) / 100)) * productQuantity;
+
+                        totalPerProductAmount = totalPerProductAmount + ((productPrice + totalPerProductGST) * productQuantity);
+                    } else {
+                        totalPerProductAmount = totalPerProductAmount + (productPrice * productQuantity);
+                    }
+                } else {
+                    totalPerProductAmount = totalPerProductAmount + (productPrice * productQuantity);
+                }
+            } else {
+                totalPerProductAmount = totalPerProductAmount + (productPrice * productQuantity);
+            }
+        }
+
+        float subTotalAmt = totalPerProductAmount - totalGST;
+        if (discountType != null) {
+            if (discountType.equalsIgnoreCase("Amount")) {
+                discountAmount = discountAmount;
+            } else if (discountAmount != 0f) {
+                discountAmount = subTotalAmt / (100 / discountAmount);
+            }
+        } else if (discountAmount != 0f) {
+            discountAmount = subTotalAmt / (100 / discountAmount);
+        }
+
+        packingAmount = ReportCursorHelper.packingRupees(
+                productCartResponseList.get(0).getCartPackingCharge(),
+                packingChargeType,
+                String.valueOf(subTotalAmt));
+
+        float shopCGST = 0f, shopSGST = 0f;
+        if (!companyResponseList.isEmpty() && companyResponseList.get(0).getShopCGST() != null) {
+            shopCGST = subTotalAmt * (Float.parseFloat(companyResponseList.get(0).getShopCGST().trim()) / 100);
+        }
+
+        if (!companyResponseList.isEmpty() && companyResponseList.get(0).getShopSGST() != null) {
+            if (!companyResponseList.get(0).getShopSGST().trim().equalsIgnoreCase("")) {
+                shopSGST = subTotalAmt * (Float.parseFloat(companyResponseList.get(0).getShopSGST().trim()) / 100);
+            }
+        }
+        float totalShopGST = shopCGST + shopSGST;
+
+        float totalAmount = totalPerProductAmount - discountAmount + packingAmount + totalShopGST;
+        totalAmount = (float) Math.ceil(totalAmount);
+        binding.totalAmount.setText(MainActivity.currencyName + " "
+                + String.format(Locale.US, "%.2f", totalAmount));
+        bindTabletCartList();
+    }
+
+    public void getHomeProductCategoryList() {
+        final int requestId = ++catalogRequestId;
+        showCatalogLoader();
+        AppExecutors.get().runDbThenMain(this, () -> {
+            productCategoryResponseList = posBillingWalaDatabase.getProductCategoryList();
+        }, () -> {
+            hideCatalogLoader();
+            if (requestId != catalogRequestId || binding == null) {
+                return;
+            }
+            List<ProductCategoryResponse> displayCategories = new ArrayList<>();
+            ProductCategoryResponse allCategory = new ProductCategoryResponse();
+            allCategory.setCategoryId(CATEGORY_ALL_ID);
+            allCategory.setCategoryName(getString(R.string.ui_all));
+            displayCategories.add(allCategory);
+            if (productCategoryResponseList != null) {
+                displayCategories.addAll(productCategoryResponseList);
+            }
+            if (selectedCategoryId == null) {
+                selectedCategoryId = CATEGORY_ALL_ID;
+                categoryName = null;
+            }
+            homeCategoryAdapter = new HomeCategoryAdapter(activity, displayCategories, CreatePos.this);
+            homeCategoryAdapter.setSelectedCategoryId(selectedCategoryId);
+            binding.categoryRecyclerView.setLayoutManager(
+                    new LinearLayoutManager(activity, LinearLayoutManager.HORIZONTAL, false));
+            binding.categoryRecyclerView.setAdapter(CreatePos.homeCategoryAdapter);
+            attachCategoryDragHelper();
+            binding.categoryRecyclerView.setVisibility(View.VISIBLE);
+            if (isAllCategory(selectedCategoryId)) {
+                clearSubcategoryFilter();
+                getHomeProductList();
+            } else if (categoryName != null && !categoryName.isEmpty()) {
+                setupSubcategoryFilter(selectedCategoryId);
+                getHomeProductList();
+            }
+        });
+    }
+
+    @Override
+    public void categoryClicked(String categoryId) {
+        if (isAllCategory(categoryId)) {
+            selectAllCategory();
+            return;
+        }
+        selectedCategoryId = categoryId;
+        selectedSubcategoryId = null;
+        categoryName = resolveCategoryName(categoryId);
+        if (homeCategoryAdapter != null) {
+            homeCategoryAdapter.setSelectedCategoryId(categoryId);
+        }
+        setupSubcategoryFilter(categoryId);
+        getHomeProductList();
+    }
+
+    public void setUpdateQuantity(ProductResponse productResponse, ProductPortionResponse portion,
+                                  ProductCartResponse existingLine) {
+        View content = LayoutInflater.from(activity).inflate(R.layout.update_amount_quantity_dialog, null);
+        BottomSheetDialog sheet = BottomSheetUi.showContent(activity, content, false);
+        sheet.setOnDismissListener(dialog -> getCartCount());
+
+        TextView continueToQuantity = content.findViewById(R.id.continueToQuantity);
+        TextView dismissQuantity = content.findViewById(R.id.dismissQuantity);
+        TextInputEditText amountTxt = content.findViewById(R.id.amount);
+        TextInputEditText quantityTxt = content.findViewById(R.id.quantity);
+        TextView detailsTxt = content.findViewById(R.id.details);
+        if (productResponse.isOpenPrice()) {
+            detailsTxt.setText(getString(R.string.ui_open_price));
+        }
+
+        String defaultPrice = resolveLinePrice(productResponse, portion);
+        if (existingLine != null) {
+            amountTxt.setText(existingLine.getResolvedLinePrice());
+            quantityTxt.setText(existingLine.getProductQuantity());
+        } else {
+            amountTxt.setText(defaultPrice);
+            quantityTxt.setText("1");
+        }
+
+        quantityTxt.setSelection(quantityTxt.getText().toString().length());
+        amountTxt.setSelection(amountTxt.getText().toString().length());
+        if (productResponse.isOpenPrice()) {
+            amountTxt.requestFocus();
+        }
+
+        dismissQuantity.setOnClickListener(v -> sheet.dismiss());
+
+        continueToQuantity.setOnClickListener(v -> {
+            String amountStr = amountTxt.getText() != null ? amountTxt.getText().toString().trim() : "";
+            String qtyStr = quantityTxt.getText() != null ? quantityTxt.getText().toString().trim() : "";
+            if (amountStr.isEmpty()) {
+                amountTxt.setError(getString(R.string.ui_enter_amount));
+                amountTxt.requestFocus();
+                return;
+            }
+            float amount;
+            try {
+                amount = Float.parseFloat(amountStr);
+            } catch (NumberFormatException e) {
+                amount = 0f;
+            }
+            if (amount <= 0) {
+                amountTxt.setError(getString(R.string.ui_enter_amount));
+                amountTxt.requestFocus();
+                return;
+            }
+            if (qtyStr.isEmpty()) {
+                quantityTxt.setError(getString(R.string.ui_enter_quantity));
+                quantityTxt.requestFocus();
+                return;
+            }
+            float totalQuantity;
+            try {
+                totalQuantity = Float.parseFloat(qtyStr);
+            } catch (NumberFormatException e) {
+                totalQuantity = 0f;
+            }
+            if (totalQuantity <= 0) {
+                quantityTxt.setError(getString(R.string.ui_enter_quantity));
+                quantityTxt.requestFocus();
+                return;
+            }
+            String chargedPrice = String.format(Locale.US, "%.2f", amount);
+            if (existingLine != null) {
+                updateCart(existingLine.getCartId(), String.valueOf(totalQuantity), chargedPrice);
+            } else {
+                addToCart(productResponse, chargedPrice, String.valueOf(totalQuantity), portion);
+            }
+            sheet.dismiss();
+        });
+    }
+
+    @Override
+    public void productClicked(ProductResponse productResponse) {
+        final String productId = productResponse.getProductId();
+        AppExecutors.get().db().execute(() -> {
+            boolean hasPortions = posBillingWalaDatabase.hasProductPortions(productId);
+            List<ProductPortionResponse> portions = hasPortions
+                    ? posBillingWalaDatabase.getProductPortionList(productId)
+                    : null;
+            AppExecutors.get().main(() -> {
+                if (!isAdded()) {
+                    return;
+                }
+                if (hasPortions && portions != null && !portions.isEmpty()) {
+                    showPortionDialog(productResponse, portions);
+                } else {
+                    handleProductSelection(productResponse, null);
+                }
+            });
+        });
+    }
+
+    private void showPortionDialog(ProductResponse productResponse, List<ProductPortionResponse> portions) {
+        View dialogView = LayoutInflater.from(activity).inflate(R.layout.dialog_select_portion, null);
+        BottomSheetDialog sheet = BottomSheetUi.showContent(activity, dialogView, false);
+
+        TextView productName = dialogView.findViewById(R.id.productName);
+        LinearLayout portionTabRow = dialogView.findViewById(R.id.portionTabRow);
+        TextView quantityMinus = dialogView.findViewById(R.id.quantityMinus);
+        TextView productQuantity = dialogView.findViewById(R.id.productQuantity);
+        TextView quantityPlus = dialogView.findViewById(R.id.quantityPlus);
+        TextView dismissPortion = dialogView.findViewById(R.id.dismissPortion);
+        TextView addPortionToCart = dialogView.findViewById(R.id.addPortionToCart);
+
+        productName.setText(productResponse.getProductName());
+        final int[] quantity = {1};
+        final int[] selectedIndex = {0};
+        productQuantity.setText(String.valueOf(quantity[0]));
+
+        float density = activity.getResources().getDisplayMetrics().density;
+        int minHeight = (int) (96 * density);
+        int gap = (int) (8 * density);
+        boolean stacked = portions.size() > 3;
+        portionTabRow.setOrientation(stacked ? LinearLayout.VERTICAL : LinearLayout.HORIZONTAL);
+
+        final List<TextView> tabs = new ArrayList<>();
+        final Runnable refreshTabs = () -> {
+            for (int t = 0; t < tabs.size(); t++) {
+                boolean selected = t == selectedIndex[0];
+                tabs.get(t).setBackgroundResource(selected
+                        ? R.drawable.bg_portion_tab_selected
+                        : R.drawable.bg_portion_tab);
+                tabs.get(t).setTextColor(ContextCompat.getColor(activity,
+                        selected ? R.color.white : R.color.colorPrimary));
+            }
+        };
+
+        for (int i = 0; i < portions.size(); i++) {
+            ProductPortionResponse portion = portions.get(i);
+            TextView tab = new TextView(activity);
+            LinearLayout.LayoutParams params = stacked
+                    ? new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, minHeight)
+                    : new LinearLayout.LayoutParams(0, minHeight, 1f);
+            if (stacked && i > 0) {
+                params.topMargin = gap;
+            } else if (!stacked && i > 0) {
+                params.setMarginStart(gap);
+            }
+            tab.setLayoutParams(params);
+            tab.setGravity(Gravity.CENTER);
+            tab.setText(portion.getPortionName() + "\n"
+                    + MainActivity.currencyName + " " + portion.getPortionPrice());
+            tab.setTextSize(18);
+            tab.setTypeface(activity.getResources().getFont(R.font.poppinsmedium), Typeface.BOLD);
+            tab.setPadding(12, 8, 12, 8);
+            final int index = i;
+            tab.setOnClickListener(v -> {
+                selectedIndex[0] = index;
+                refreshTabs.run();
+            });
+            portionTabRow.addView(tab);
+            tabs.add(tab);
+        }
+        refreshTabs.run();
+
+        quantityMinus.setOnClickListener(v -> {
+            if (quantity[0] > 1) {
+                quantity[0]--;
+                productQuantity.setText(String.valueOf(quantity[0]));
+            }
+        });
+        quantityPlus.setOnClickListener(v -> {
+            quantity[0]++;
+            productQuantity.setText(String.valueOf(quantity[0]));
+        });
+
+        dismissPortion.setOnClickListener(v -> sheet.dismiss());
+        addPortionToCart.setOnClickListener(v -> {
+            int index = selectedIndex[0];
+            if (index < 0 || index >= portions.size()) {
+                Toast.makeText(activity, getString(R.string.toast_please_select_portion), Toast.LENGTH_SHORT).show();
+                return;
+            }
+            ProductPortionResponse selectedPortion = portions.get(index);
+            sheet.dismiss();
+            if (productResponse.isOpenPrice()) {
+                handleProductSelection(productResponse, selectedPortion);
+            } else {
+                addSelectedPortionToCart(productResponse, selectedPortion, quantity[0]);
+            }
+        });
+    }
+
+    private void addSelectedPortionToCart(ProductResponse productResponse, ProductPortionResponse portion, int quantity) {
+        final String portionId = portion != null ? portion.getPortionId() : null;
+        final String linePrice = resolveLinePrice(productResponse, portion);
+        final String table = tableNumber;
+        final String orderStatus = cartOrderStatus;
+        AppExecutors.get().runDbThenMain(this, () -> {
+            List<ProductCartResponse> existing = posBillingWalaDatabase.getCartProductDetails(
+                    productResponse.getProductId(), portionId, table, orderStatus);
+            if (existing != null && !existing.isEmpty()) {
+                int currentQty = parseCartQuantity(existing.get(0).getProductQuantity());
+                posBillingWalaDatabase.updateCart(existing.get(0).getCartId(),
+                        String.valueOf(currentQty + quantity), linePrice);
+            } else {
+                String portionName = portion != null ? portion.getPortionName() : null;
+                posBillingWalaDatabase.addToCart(MainActivity.userId, productResponse, linePrice,
+                        String.valueOf(quantity), table, "0", orderStatus, portionId, portionName);
+            }
+        }, () -> {
+            getCartCount();
+            refreshCatalogAfterCart();
+        });
+    }
+
+    private int parseCartQuantity(String value) {
+        try {
+            return Math.max(0, (int) Float.parseFloat(value));
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    private int sumCartQuantities() {
+        if (productCartResponseList == null || productCartResponseList.isEmpty()) {
+            return 0;
+        }
+        int total = 0;
+        for (ProductCartResponse item : productCartResponseList) {
+            total += parseCartQuantity(item.getProductQuantity());
+        }
+        return total;
+    }
+
+    private void handleProductSelection(ProductResponse productResponse, ProductPortionResponse portion) {
+        final String portionId = portion != null ? portion.getPortionId() : null;
+        final String table = tableNumber;
+        final String orderStatus = cartOrderStatus;
+        final ProductCartResponse[] existingLine = new ProductCartResponse[1];
+        AppExecutors.get().runDbThenMain(this, () -> {
+            List<ProductCartResponse> existing = posBillingWalaDatabase.getCartProductDetails(
+                    productResponse.getProductId(), portionId, table, orderStatus);
+            if (existing != null && !existing.isEmpty()) {
+                existingLine[0] = existing.get(0);
+            }
+        }, () -> {
+            // Price bottom sheet only when product Open Price is on (not off/null).
+            if (productResponse.isOpenPrice()) {
+                setUpdateQuantity(productResponse, portion, existingLine[0]);
+                if (binding != null) {
+                    if (!binding.productSearch.getText().toString().isEmpty()) {
+                        searchHomeProduct(binding.productSearch.getText().toString());
+                    } else {
+                        refreshCatalogAfterCart();
+                    }
+                }
+            } else if (existingLine[0] != null) {
+                int quantity = Integer.parseInt(existingLine[0].getProductQuantity());
+                updateCart(existingLine[0].getCartId(), String.valueOf(quantity + 1),
+                        resolveLinePrice(productResponse, portion));
+            } else {
+                addToCart(productResponse, resolveLinePrice(productResponse, portion), "1", portion);
+            }
+        });
+    }
+
+    public void updateCartDetails(ProductResponse productResponse, ProductPortionResponse portion) {
+        String linePrice = resolveLinePrice(productResponse, portion);
+        if (productCartResponseList != null && !productCartResponseList.isEmpty()) {
+            int quantity = Integer.parseInt(productCartResponseList.get(0).getProductQuantity());
+            int totalQuantity = quantity + 1;
+            updateCart(productCartResponseList.get(0).getCartId(), String.valueOf(totalQuantity), linePrice);
+        } else {
+            addToCart(productResponse, linePrice, "1", portion);
+        }
+    }
+
+    private String resolveLinePrice(ProductResponse productResponse, ProductPortionResponse portion) {
+        if (portion != null) {
+            return portion.getPortionPrice();
+        }
+        return productResponse.getProductPrice();
+    }
+
+    public void updateCart(String cartId, String productQuantity, String productPrice) {
+        AppExecutors.get().runDbThenMain(this, () -> {
+            posBillingWalaDatabase.updateCart(cartId, productQuantity, productPrice);
+        }, () -> {
+            getCartCount();
+            refreshCatalogAfterCart();
+        });
+    }
+
+    public void addToCart(ProductResponse productResponse, String productChangePrice, String productQuantity) {
+        addToCart(productResponse, productChangePrice, productQuantity, null);
+    }
+
+    public void addToCart(ProductResponse productResponse, String productChangePrice, String
+            productQuantity, ProductPortionResponse portion) {
+
+        final String portionId = portion != null ? portion.getPortionId() : null;
+        final String portionName = portion != null ? portion.getPortionName() : null;
+        final String table = tableNumber;
+        final String orderStatus = cartOrderStatus;
+        AppExecutors.get().runDbThenMain(this, () -> {
+            posBillingWalaDatabase.addToCart(MainActivity.userId, productResponse, productChangePrice,
+                    productQuantity, table, "0", orderStatus, portionId, portionName);
+        }, () -> {
+            getCartCount();
+            refreshCatalogAfterCart();
+        });
+    }
+
+    private void refreshCatalogAfterCart() {
+        if (binding == null || activity == null) {
+            return;
+        }
+        if (!binding.productSearch.getText().toString().isEmpty()) {
+            searchHomeProduct(binding.productSearch.getText().toString());
+        } else if (showingCombos) {
+            showComboCatalog(false);
+        } else {
+            getHomeProductList(false);
+        }
+    }
+
+    private void showProductCatalog() {
+        showingCombos = false;
+        binding.productsTab.setBackgroundResource(R.drawable.fill_button_rounded_border);
+        binding.productsTab.setTextColor(ContextCompat.getColor(activity, R.color.white));
+        binding.combosTab.setBackgroundResource(R.drawable.button_rounded_border);
+        binding.combosTab.setTextColor(ContextCompat.getColor(activity, R.color.colorPrimary));
+        binding.categoryRecyclerView.setVisibility(View.VISIBLE);
+        if (!binding.productSearch.getText().toString().isEmpty()) {
+            searchHomeProduct(binding.productSearch.getText().toString());
+        } else {
+            getHomeProductList(true);
+        }
+    }
+
+    private void showComboCatalog() {
+        showComboCatalog(true);
+    }
+
+    private void showComboCatalog(boolean showLoader) {
+        showingCombos = true;
+        binding.combosTab.setBackgroundResource(R.drawable.fill_button_rounded_border);
+        binding.combosTab.setTextColor(ContextCompat.getColor(activity, R.color.white));
+        binding.productsTab.setBackgroundResource(R.drawable.button_rounded_border);
+        binding.productsTab.setTextColor(ContextCompat.getColor(activity, R.color.colorPrimary));
+        binding.categoryRecyclerView.setVisibility(View.GONE);
+        clearSubcategoryFilter();
+        final String table = tableNumber;
+        final String orderStatus = cartOrderStatus;
+        final int requestId = ++catalogRequestId;
+        if (showLoader) {
+            showCatalogLoader();
+        }
+        AppExecutors.get().runDbThenMain(this, () -> {
+            comboResponseList = posBillingWalaDatabase.getPosComboList(table, orderStatus);
+        }, () -> {
+            if (showLoader) {
+                hideCatalogLoader();
+            }
+            if (requestId != catalogRequestId || binding == null || !showingCombos) {
+                return;
+            }
+            bindComboAdapter(comboResponseList);
+            binding.productLinearLayout.setVisibility(View.VISIBLE);
+        });
+    }
+
+    public void comboClicked(ComboResponse combo) {
+        if (combo == null) {
+            return;
+        }
+        final String table = tableNumber;
+        final String orderStatus = cartOrderStatus;
+        AppExecutors.get().db().execute(() -> {
+            List<ProductCartResponse> existing = posBillingWalaDatabase.getCartComboDetails(
+                    combo.getComboId(), table, orderStatus);
+            final boolean hasExisting = existing != null && !existing.isEmpty();
+            final String existingCartId = hasExisting ? existing.get(0).getCartId() : null;
+            final int currentQty = hasExisting ? parseCartQuantity(existing.get(0).getProductQuantity()) : 0;
+            if (hasExisting) {
+                posBillingWalaDatabase.updateCart(existingCartId,
+                        String.valueOf(currentQty + 1), combo.getComboPrice());
+            } else {
+                posBillingWalaDatabase.addComboToCart(MainActivity.userId, combo, "1",
+                        table, "0", orderStatus);
+            }
+            AppExecutors.get().main(() -> {
+                if (!isAdded()) {
+                    return;
+                }
+                getCartCount();
+                refreshCatalogAfterCart();
+            });
+        });
+    }
+
+    public void getHomeProductList() {
+        getHomeProductList(true);
+    }
+
+    public void getHomeProductList(boolean showLoader) {
+        if (showingCombos) {
+            showComboCatalog(showLoader);
+            return;
+        }
+        final String catName = categoryName;
+        final String table = tableNumber;
+        final String orderStatus = cartOrderStatus;
+        final String subId = selectedSubcategoryId;
+        final int requestId = ++catalogRequestId;
+        if (showLoader) {
+            showCatalogLoader();
+        }
+        AppExecutors.get().runDbThenMain(this, () -> {
+            productResponseList = posBillingWalaDatabase.getHomeProductList(catName, table, orderStatus, subId);
+        }, () -> {
+            if (showLoader) {
+                hideCatalogLoader();
+            }
+            if (requestId != catalogRequestId || binding == null || showingCombos) {
+                return;
+            }
+            bindProductAdapter(productResponseList);
+            binding.categoryRecyclerView.setVisibility(View.VISIBLE);
+            binding.productLinearLayout.setVisibility(View.VISIBLE);
+        });
+    }
+
+    private void showCatalogLoader() {
+        if (binding != null) {
+            ListLoader.setVisible(binding.catalogProgressBar, true);
+        }
+    }
+
+    private void hideCatalogLoader() {
+        if (binding != null) {
+            ListLoader.setVisible(binding.catalogProgressBar, false);
+        }
+    }
+
+    public void getHomeAllProductList() {
+        if (binding != null && !binding.productSearch.getText().toString().isEmpty()) {
+            searchHomeProduct(binding.productSearch.getText().toString());
+        }
+    }
+
+    @Override
+    public void onStop() {
+        if (activeInstance == this) {
+            activeInstance = null;
+        }
+        super.onStop();
+    }
+
+    @Override
+    public void onDestroyView() {
+        if (pendingProductSearch != null) {
+            productSearchHandler.removeCallbacks(pendingProductSearch);
+        }
+        searchRequestId++;
+        catalogRequestId++;
+        cartAdapter = null;
+        hideCatalogLoader();
+        super.onDestroyView();
+    }
+
+    private void navigateFromPos() {
+        ((MainActivity) activity).navigateBack();
+    }
+
+}

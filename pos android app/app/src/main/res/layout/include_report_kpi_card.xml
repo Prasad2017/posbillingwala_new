@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.pos_billingwala.Extra.PosCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:cardCornerRadius="@dimen/radius_md">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="3dp"
+            android:background="@color/colorPrimary" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="@dimen/spacing_md">
+
+            <TextView
+                android:id="@+id/kpiLabel"
+                style="@style/PosKpiLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Label" />
+
+            <TextView
+                android:id="@+id/kpiValue"
+                style="@style/PosKpiValue"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_xs"
+                android:text="0" />
+
+            <TextView
+                android:id="@+id/kpiTrend"
+                style="@style/PosKpiTrend"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="+0%" />
+        </LinearLayout>
+    </LinearLayout>
+</com.pos_billingwala.Extra.PosCardView>

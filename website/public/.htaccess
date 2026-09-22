@@ -1,0 +1,18 @@
+﻿<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # Proxy website API to PHP (if deployed alongside)
+  RewriteRule ^api/website/(.*)$ api/website-proxy.php?__path=$1 [QSA,L]
+
+  # Auth redirects (preserve existing behavior)
+  RewriteRule ^login$ https://admin.posbillingwala.com/login [R=302,L]
+  RewriteRule ^dealer/login$ https://admin.posbillingwala.com/dealer/login [R=302,L]
+  RewriteRule ^customer/login$ https://admin.posbillingwala.com/customer/login [R=302,L]
+
+  # SPA fallback
+  RewriteRule ^index\.html$ - [L]
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule . /index.html [L]
+</IfModule>

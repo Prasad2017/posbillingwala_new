@@ -1,0 +1,6 @@
+<resources>
+    <!-- Wider horizontal margins on 10"+ tablets -->
+    <dimen name="activity_horizontal_margin">28dp</dimen>
+    <dimen name="spacing_xl">28dp</dimen>
+    <dimen name="spacing_xxl">40dp</dimen>
+</resources>

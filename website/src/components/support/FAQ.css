@@ -1,0 +1,55 @@
+.faq {
+  display: grid;
+  gap: 10px;
+  max-width: 820px;
+  margin-inline: auto;
+}
+
+.faq__item {
+  background: linear-gradient(180deg, #ffffff, #f8fbff);
+  border: 1px solid rgba(147, 197, 253, 0.55);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: 0 8px 18px rgba(21, 101, 216, 0.06);
+}
+
+.faq__item.is-open {
+  border-color: rgba(124, 58, 237, 0.45);
+  box-shadow: 0 14px 28px rgba(124, 58, 237, 0.12);
+  background: linear-gradient(180deg, #f5f3ff, #fff);
+}
+
+.faq__q {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--dark-text);
+}
+
+.faq__q svg {
+  transition: transform var(--dur) var(--ease);
+  color: #7c3aed;
+  flex-shrink: 0;
+}
+
+.faq__item.is-open .faq__q svg {
+  transform: rotate(180deg);
+}
+
+.faq__a {
+  overflow: hidden;
+}
+
+.faq__a p {
+  padding: 0 18px 16px;
+  color: var(--gray);
+  font-size: 15px;
+}

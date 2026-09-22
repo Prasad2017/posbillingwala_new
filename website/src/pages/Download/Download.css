@@ -1,0 +1,215 @@
+.download-panel {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 28px;
+  align-items: stretch;
+}
+
+.download-card {
+  background:
+    linear-gradient(135deg, rgba(21, 101, 216, 0.08), rgba(124, 58, 237, 0.06), rgba(229, 57, 53, 0.04)),
+    #fff;
+  border: 1px solid rgba(147, 197, 253, 0.55);
+  border-radius: 28px;
+  padding: clamp(24px, 4vw, 40px);
+  box-shadow: 0 18px 40px rgba(21, 101, 216, 0.1);
+}
+
+.download-card__title {
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  margin: 8px 0 12px;
+}
+
+.download-card__lead {
+  color: #64748b;
+  max-width: 42ch;
+  margin-bottom: 20px;
+  font-weight: 500;
+  line-height: 1.65;
+}
+
+.download-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.download-feature {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+  padding: 18px 12px;
+  font-weight: 700;
+  font-size: 14px;
+  border: 1px solid transparent;
+}
+
+.download-feature__icon {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.download-feature--amber { background: linear-gradient(180deg, #fffbeb, #fff); border-color: #fde68a; color: #b45309; }
+.download-feature--green { background: linear-gradient(180deg, #f0fdf4, #fff); border-color: #bbf7d0; color: #15803d; }
+.download-feature--cyan { background: linear-gradient(180deg, #ecfeff, #fff); border-color: #a5f3fc; color: #0e7490; }
+.download-feature--orange { background: linear-gradient(180deg, #fff7ed, #fff); border-color: #fed7aa; color: #c2410c; }
+.download-feature--purple { background: linear-gradient(180deg, #f5f3ff, #fff); border-color: #ddd6fe; color: #6d28d9; }
+.download-feature--blue { background: linear-gradient(180deg, #eff6ff, #fff); border-color: #bfdbfe; color: #1d4ed8; }
+
+.download-badge {
+  display: inline-block;
+  transition: transform var(--dur) var(--ease);
+  filter: drop-shadow(0 12px 24px rgba(11, 18, 32, 0.16));
+}
+
+.download-badge:hover {
+  transform: translateY(-3px) scale(1.03);
+}
+
+.download-badge img {
+  height: 64px;
+  width: auto;
+  display: block;
+}
+
+.download-version {
+  margin-top: 14px;
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.download-requirements {
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(147, 197, 253, 0.55);
+}
+
+.download-requirements h3 {
+  font-size: 1rem;
+  margin-bottom: 12px;
+  font-weight: 800;
+  background: linear-gradient(105deg, #0b3a82, #7c3aed);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.download-requirements ul {
+  display: grid;
+  gap: 8px;
+}
+
+.download-requirements li {
+  color: #64748b;
+  font-size: 14px;
+  padding-left: 14px;
+  position: relative;
+  font-weight: 500;
+}
+
+.download-requirements li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1565d8, #e53935);
+}
+
+.download-visual {
+  position: relative;
+  display: grid;
+  place-items: center;
+  border-radius: 28px;
+  padding: 28px 18px 12px;
+  overflow: hidden;
+  border: 1px solid rgba(147, 197, 253, 0.55);
+  background:
+    radial-gradient(circle at 30% 20%, rgba(21, 101, 216, 0.16), transparent 45%),
+    radial-gradient(circle at 80% 80%, rgba(229, 57, 53, 0.12), transparent 40%),
+    linear-gradient(160deg, #eff6ff, #f5f3ff);
+  box-shadow: 0 18px 40px rgba(21, 101, 216, 0.12);
+}
+
+.download-visual__glow {
+  position: absolute;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.35), transparent 70%);
+  filter: blur(8px);
+}
+
+.download-swiper {
+  width: min(100%, 300px);
+  padding-bottom: 40px;
+  position: relative;
+  z-index: 1;
+}
+
+.download-slide--phone {
+  border-radius: 28px;
+  overflow: hidden;
+  border: 8px solid rgba(11, 18, 32, 0.08);
+  box-shadow: 0 22px 44px rgba(15, 23, 42, 0.2);
+  background: #fff;
+}
+
+.download-slide--phone img {
+  width: 100%;
+  display: block;
+  aspect-ratio: 9 / 17;
+  object-fit: cover;
+  object-position: top;
+}
+
+.download-slide--panel {
+  border-radius: 20px;
+  overflow: hidden;
+  background: #fff;
+  padding: 18px;
+  box-shadow: 0 22px 44px rgba(15, 23, 42, 0.16);
+  border: 1px solid rgba(147, 197, 253, 0.45);
+  min-height: 360px;
+  display: grid;
+  place-items: center;
+}
+
+.download-slide--panel img {
+  width: 100%;
+  display: block;
+  object-fit: contain;
+}
+
+.download-swiper .swiper-pagination-bullet-active {
+  background: linear-gradient(135deg, #1565d8, #7c3aed);
+}
+
+@media (max-width: 1023px) {
+  .download-panel {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .download-feature-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .download-badge {
+    display: flex;
+    justify-content: center;
+  }
+
+  .download-panel {
+    padding: 22px 16px;
+    border-radius: 22px;
+  }
+}
