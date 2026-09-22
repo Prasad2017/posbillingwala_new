@@ -1,7 +1,6 @@
 import 'package:intl/intl.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/features/masters/domain/product_units.dart';
-import 'package:pos_billingwala_v2/features/print/domain/esc_pos_encoder.dart';
 import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
 import 'package:pos_billingwala_v2/features/print/domain/receipt_labels.dart';
 import 'package:pos_billingwala_v2/features/print/domain/receipt_rasterizer.dart';
@@ -26,7 +25,7 @@ class ReceiptBuilder {
   final rasterizer = const ReceiptRasterizer();
 
   /* Marker inserted where UPI QR should appear (terms → QR → footer). */
-  static const upiQrMarker = '<<<UPI_QR>>>';
+  static const upiQrMarker = ThermalTicket.upiQrMarker;
 
   String rupee(num value) => '₹${money.format(value)}';
 
@@ -218,25 +217,6 @@ class ReceiptBuilder {
     ).toPlainText(width: settings.charsPerLine);
   }
 
-  /* Latin-1 fallback only. Prefer [billPrintBytes] for Unicode / ₹. */
-  List<int> billEscPos({
-    required Invoice invoice,
-    required List<InvoiceItem> items,
-    String? shopName,
-  }) {
-    final text = billText(
-      invoice: invoice,
-      items: items,
-    ).replaceAll(upiQrMarker, '').replaceAll('₹', 'Rs.');
-    final encoder = EscPosEncoder(charsPerLine: settings.charsPerLine)..init();
-    for (final line in text.split('\n')) {
-      if (line.trim().isEmpty) continue;
-      encoder.text(line);
-    }
-    encoder.feed(settings.feedLines);
-    return encoder.bytes;
-  }
-
   String kotText(KotTicket ticket) {
     final width = settings.charsPerLine;
     final buf = StringBuffer()
@@ -262,43 +242,6 @@ class ReceiptBuilder {
     }
     buf.writeln('-' * width);
     return buf.toString();
-  }
-
-  /* Latin-1 fallback only. Prefer [kotPrintBytes] for Unicode. */
-  List<int> kotEscPos(KotTicket ticket) {
-    final encoder = EscPosEncoder(charsPerLine: settings.charsPerLine)
-      ..init()
-      ..text('KOT', boldStyle: true, center: true)
-      ..text(ticket.kot.kotNumber, boldStyle: true, center: true)
-      ..separator()
-      ..text('Date: ${receiptBuilderDate.format(ticket.kot.createdAt)}')
-      ..text('Table No: ${ticket.kot.tableNumber}')
-      ..text('Round: ${ticket.roundNumber}')
-      ..text(ticket.kot.kitchenName)
-      ..separator();
-    for (final item in ticket.items) {
-      encoder.line(
-        item.productName,
-        'X${qtyLabel(item.productQuantity, unit: item.productUnit)}',
-      );
-    }
-    encoder
-      ..separator()
-      ..feed(settings.kotFeedLines);
-    return encoder.bytes;
-  }
-
-  List<int> testEscPos(String label) {
-    return (EscPosEncoder(charsPerLine: settings.charsPerLine)
-          ..init()
-          ..text('Billingwala', boldStyle: true, center: true)
-          ..text('Test print', center: true)
-          ..separator()
-          ..text(label)
-          ..text(receiptBuilderDate.format(DateTime.now()))
-          ..separator()
-          ..feed(settings.feedLines))
-        .bytes;
   }
 
   String receiptBuilderCenter(String value, int width) {

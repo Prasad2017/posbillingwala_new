@@ -1,12 +1,7 @@
-import 'dart:async';
-import 'dart:typed_data';
-import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
 import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
-import 'package:pos_billingwala_v2/features/print/domain/receipt_rasterizer.dart';
 
 /* On-screen 58mm vs 80mm receipt — same print font stack as thermal raster */
 /* so Marathi / Hindi / English user data looks like the printed bill. */
@@ -16,13 +11,11 @@ class PaperSizePreviewCard extends StatelessWidget {
     required this.title,
     required this.text,
     required this.paperSize,
-    this.imageBytes,
   });
 
   final String title;
   final String text;
   final PrinterPaperSize paperSize;
-  final Uint8List? imageBytes;
 
   bool get is3Inch => paperSize == PrinterPaperSize.inch3;
 
@@ -70,44 +63,18 @@ class PaperSizePreviewCard extends StatelessWidget {
                   ),
                 ],
               ),
-              child: imageBytes != null
-                  ? Image.memory(
-                      imageBytes!,
-                      fit: BoxFit.fitWidth,
-                      gaplessPlayback: true,
-                    )
-                  : SelectableText(
-                      text,
-                      style: AppFonts.printBody(
-                        fontSize: is3Inch ? 11 : 12,
-                        height: 1.28,
-                        weight: FontWeight.w500,
-                      ),
-                    ),
+              child: SelectableText(
+                text,
+                style: AppFonts.printBody(
+                  fontSize: is3Inch ? 11 : 12,
+                  height: 1.28,
+                  weight: FontWeight.w500,
+                ),
+              ),
             ),
           ),
         ],
       ),
     );
-  }
-}
-
-/* Converts [RenderedImage] RGBA into a PNG for on-screen invoice preview. */
-Future<Uint8List?> renderedImageToPng(RenderedImage rendered) async {
-  try {
-    final completer = Completer<ui.Image>();
-    ui.decodeImageFromPixels(
-      rendered.rgba,
-      rendered.width,
-      rendered.height,
-      ui.PixelFormat.rgba8888,
-      completer.complete,
-    );
-    final image = await completer.future;
-    final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
-    image.dispose();
-    return bytes?.buffer.asUint8List();
-  } catch (_) {
-    return null;
   }
 }

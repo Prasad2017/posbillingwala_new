@@ -29,6 +29,8 @@ class ThermalTicket {
   final String terms;
   final String? qrPayload;
 
+  static const upiQrMarker = '<<<UPI_QR>>>';
+
   String toPlainText({required int width}) {
     final buf = StringBuffer();
     for (final line in shopLines) {
@@ -57,7 +59,7 @@ class ThermalTicket {
       buf.writeln(center(terms.trim(), width));
     }
     if (qrPayload != null && qrPayload!.trim().isNotEmpty) {
-      buf.writeln('<<<UPI_QR>>>');
+      buf.writeln(upiQrMarker);
     }
     for (final line in footerLines) {
       buf.writeln(center(line, width));

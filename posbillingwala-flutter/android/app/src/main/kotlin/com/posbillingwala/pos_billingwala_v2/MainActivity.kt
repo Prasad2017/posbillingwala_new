@@ -5,7 +5,6 @@ import android.content.res.Configuration
 import android.os.Build
 import android.util.DisplayMetrics
 import android.view.WindowManager
-import com.posbillingwala.pos_billingwala_v2.print.WoosimPrintPlugin
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -36,7 +35,6 @@ class MainActivity : FlutterActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        WoosimPrintPlugin.register(flutterEngine, this)
         MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
             SCREENSHOT_CHANNEL,

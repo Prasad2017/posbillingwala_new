@@ -9,7 +9,6 @@ import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
 import 'package:pos_billingwala_v2/features/print/domain/receipt_builder.dart';
 import 'package:pos_billingwala_v2/features/print/domain/receipt_image_share.dart';
 import 'package:pos_billingwala_v2/features/print/domain/receipt_labels.dart';
-import 'package:pos_billingwala_v2/features/print/domain/receipt_rasterizer.dart';
 import 'package:pos_billingwala_v2/features/print/domain/sample_receipt_data.dart';
 import 'package:pos_billingwala_v2/features/print/domain/shop_receipt_profile.dart';
 import 'package:pos_billingwala_v2/features/print/domain/thermal_ticket.dart';
@@ -89,63 +88,6 @@ class PrintService {
     );
   }
 
-  String billPreviewText({
-    required Invoice invoice,
-    required List<InvoiceItem> items,
-    String? shopName,
-    bool duplicate = false,
-    PrinterPaperSize? paperSize,
-  }) {
-    final previewSettings = paperSize == null
-        ? settings
-        : settings.copyWith(paperSize: paperSize);
-    return ReceiptBuilder(
-      previewSettings,
-      shopProfile: shopProfile,
-      labels: labels,
-    ).billText(
-      invoice: invoice,
-      items: items,
-      shopName: shopName,
-      duplicate: duplicate,
-    ).replaceAll(ReceiptBuilder.upiQrMarker, '[UPI QR]');
-  }
-
-  /* Full bill preview (logo + UPI QR) matching thermal raster output. */
-  Future<RenderedImage> billPreviewImage({
-    required Invoice invoice,
-    required List<InvoiceItem> items,
-    String? shopName,
-    bool duplicate = false,
-    PrinterPaperSize? paperSize,
-  }) {
-    final previewSettings = paperSize == null
-        ? settings
-        : settings.copyWith(paperSize: paperSize);
-    final builder = ReceiptBuilder(
-      previewSettings,
-      shopProfile: shopProfile,
-      labels: labels,
-    );
-    final upiUri = builder.upiUriFor(invoice);
-    final logoPath = previewSettings.logoUse
-        ? shopProfile.logoLocalPath
-        : null;
-    return builder.rasterizer.render(
-      builder.billText(
-        invoice: invoice,
-        items: items,
-        shopName: shopName,
-        duplicate: duplicate,
-      ),
-      ReceiptRasterizer.widthPxFor(previewSettings.paperSize),
-      qrPayload: upiUri,
-      logoPath: logoPath,
-      qrMarker: upiUri != null ? ReceiptBuilder.upiQrMarker : null,
-      useAssetLogoFallback: false,
-    );
-  }
-
   String kotPreviewText({KotTicket? ticket, PrinterPaperSize? paperSize}) {
     final previewSettings = paperSize == null
         ? settings.copyWith(paperSize: settings.kotPaperSize)
@@ -220,21 +162,6 @@ class PrintService {
       shopName: (shopName?.trim().isNotEmpty ?? false)
           ? shopName
           : SampleReceiptData.demoShopName,
-    );
-  }
-
-  String previewText(PrinterChannelKind channel, {String? shopName}) {
-    if (channel == PrinterChannelKind.kot) {
-      return kotPreviewText();
-    }
-    final sample = SampleReceiptData.sampleBill();
-    return billPreviewText(
-      invoice: sample.invoice,
-      items: sample.items,
-      shopName: (shopName?.trim().isNotEmpty ?? false)
-          ? shopName
-          : SampleReceiptData.demoShopName,
-      paperSize: settings.paperSize,
     );
   }
 
