@@ -6,6 +6,10 @@ abstract final class AppAssets {
   /* —— PNG —— */
   static const appLogo = '$png/app_logo.png';
   static const splashBranding = '$png/splash_branding.png';
+  static const splashScreen = '$png/splash_screen.png';
+  /* Responsive splash art (POS BILLING WALA mockup). */
+  static const splashMobile = '$png/splash_mobile.png';
+  static const splashLandscape = '$png/splash_landscape.png';
   static const yourLogoHere = '$png/your_logo_here.png';
   static const product = '$png/product.png';
   static const stock = '$png/stock.png';

@@ -58,7 +58,7 @@ class KotPreviewPage extends ConsumerWidget {
         ],
       ),
       body: ResponsiveScrollShell(
-        maxWidth: AppBreakpoints.contentMaxWidthFor(AppWidthClass.compact),
+        maxWidth: AppBreakpoints.contentMaxWidthFor(AppWidthClass.mobile),
         dashboard: false,
         child: ListView(
           padding: EdgeInsets.fromLTRB(hPad, vPad, hPad, vPad + 12),

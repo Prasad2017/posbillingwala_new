@@ -1,0 +1,523 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
+import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
+import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
+import 'package:pos_billingwala_v2/features/pos/domain/payment_checkout_controller.dart';
+import 'package:pos_billingwala_v2/features/pos/domain/pos_providers.dart';
+
+double checkoutPayable(CartSummary summary, PaymentCheckoutState checkout) =>
+    checkout.payableTotal(
+      subtotal: summary.subtotal,
+      taxTotal: summary.taxTotal,
+    );
+
+class BillSummaryCard extends StatelessWidget {
+  const BillSummaryCard({
+    super.key,
+    required this.summary,
+    required this.checkout,
+    required this.currency,
+    required this.discountController,
+    required this.packingController,
+    required this.payable,
+    required this.expanded,
+    required this.onToggleExpanded,
+    required this.onDiscountChanged,
+    required this.onPackingChanged,
+    required this.onDiscountTypeChanged,
+  });
+
+  final CartSummary summary;
+  final PaymentCheckoutState checkout;
+  final NumberFormat currency;
+  final TextEditingController discountController;
+  final TextEditingController packingController;
+  final double payable;
+  final bool expanded;
+  final VoidCallback onToggleExpanded;
+  final ValueChanged<String> onDiscountChanged;
+  final ValueChanged<String> onPackingChanged;
+  final ValueChanged<String> onDiscountTypeChanged;
+
+  bool get isPercentDiscount =>
+      checkout.discountType.toLowerCase().startsWith('p');
+
+  @override
+  Widget build(BuildContext context) {
+    final discAmount = checkout.discountValue(summary.subtotal);
+    final short = context.isShortHeight;
+    final headerPad = short
+        ? const EdgeInsets.fromLTRB(14, 8, 10, 8)
+        : const EdgeInsets.fromLTRB(16, 14, 12, 14);
+    final bodyPad = short
+        ? const EdgeInsets.fromLTRB(14, 0, 14, 10)
+        : const EdgeInsets.fromLTRB(16, 0, 16, 14);
+    final rowGap = short ? 8.0 : 12.0;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+        border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.navy.withValues(alpha: 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          InkWell(
+            onTap: onToggleExpanded,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+            child: Padding(
+              padding: headerPad,
+              child: Row(
+                children: [
+                  SummaryIcon(
+                    icon: Icons.description_outlined,
+                    color: AppColors.primary,
+                    dense: short,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Bill Summary',
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w800,
+                        fontSize: short ? 15 : 16,
+                      ),
+                    ),
+                  ),
+                  if (!expanded)
+                    Text(
+                      currency.format(payable),
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w900,
+                        fontSize: short ? 14 : 15,
+                      ),
+                    ),
+                  const SizedBox(width: 4),
+                  AnimatedRotation(
+                    turns: expanded ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 200),
+                    child: Icon(
+                      Icons.keyboard_arrow_up_rounded,
+                      color: AppColors.primary,
+                      size: short ? 22 : 26,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          AnimatedCrossFade(
+            firstChild: const SizedBox(width: double.infinity, height: 0),
+            secondChild: Padding(
+              padding: bodyPad,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SummaryIconRow(
+                    icon: Icons.shopping_cart_outlined,
+                    iconColor: AppColors.primary,
+                    label: 'Subtotal',
+                    dense: short,
+                    trailing: Text(
+                      currency.format(summary.subtotal),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: short ? 13 : 14,
+                        color: AppColors.navy,
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: rowGap),
+                  SummaryIconRow(
+                    icon: Icons.local_offer_outlined,
+                    iconColor: AppColors.danger,
+                    label: 'Discount',
+                    dense: short,
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        DiscountTypeToggle(
+                          isPercent: isPercentDiscount,
+                          enabled: !checkout.busy,
+                          onChanged: onDiscountTypeChanged,
+                        ),
+                        const SizedBox(width: 6),
+                        SizedBox(
+                          width: 84,
+                          child: EditableValueBox(
+                            controller: discountController,
+                            hint: 'Amount',
+                            suffix: isPercentDiscount ? '%' : null,
+                            enabled: !checkout.busy,
+                            onChanged: onDiscountChanged,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (discAmount > 0) ...[
+                    const SizedBox(height: 4),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        '− ${currency.format(discAmount)}',
+                        style: const TextStyle(
+                          color: AppColors.danger,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ],
+                  SizedBox(height: rowGap),
+                  SummaryIconRow(
+                    icon: Icons.inventory_2_outlined,
+                    iconColor: AppColors.green,
+                    label: 'Packing Charges',
+                    dense: short,
+                    trailing: SizedBox(
+                      width: 96,
+                      child: EditableValueBox(
+                        controller: packingController,
+                        hint: 'Amount',
+                        prefix: '₹',
+                        enabled: !checkout.busy,
+                        onChanged: onPackingChanged,
+                      ),
+                    ),
+                  ),
+                  if (summary.hasCgst ||
+                      summary.hasSgst ||
+                      (summary.hasTax &&
+                          !summary.hasCgst &&
+                          !summary.hasSgst)) ...[
+                    Padding(
+                      padding: EdgeInsets.symmetric(vertical: rowGap),
+                      child: const Divider(height: 1, color: AppColors.border),
+                    ),
+                    if (summary.hasCgst) ...[
+                      SummaryIconRow(
+                        icon: Icons.percent_rounded,
+                        iconColor: const Color(0xFF7C3AED),
+                        label: 'CGST',
+                        labelSuffix: 'Half of Subtotal',
+                        dense: short,
+                        trailing: Text(
+                          currency.format(summary.cgstTotal),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: short ? 13 : 14,
+                            color: AppColors.navy,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: rowGap),
+                    ],
+                    if (summary.hasSgst)
+                      SummaryIconRow(
+                        icon: Icons.percent_rounded,
+                        iconColor: const Color(0xFF7C3AED),
+                        label: 'SGST',
+                        labelSuffix: 'Half of Subtotal',
+                        dense: short,
+                        trailing: Text(
+                          currency.format(summary.sgstTotal),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: short ? 13 : 14,
+                            color: AppColors.navy,
+                          ),
+                        ),
+                      ),
+                    if (summary.hasTax && !summary.hasCgst && !summary.hasSgst)
+                      SummaryIconRow(
+                        icon: Icons.percent_rounded,
+                        iconColor: const Color(0xFF7C3AED),
+                        label: 'GST',
+                        dense: short,
+                        trailing: Text(
+                          currency.format(summary.taxTotal),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: short ? 13 : 14,
+                            color: AppColors.navy,
+                          ),
+                        ),
+                      ),
+                  ],
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: rowGap),
+                    child: const Divider(height: 1, color: AppColors.border),
+                  ),
+                  SummaryIconRow(
+                    icon: Icons.payments_outlined,
+                    iconColor: AppColors.primary,
+                    label: 'TOTAL AMOUNT',
+                    dense: short,
+                    labelStyle: TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w900,
+                      fontSize: short ? 13 : 14,
+                    ),
+                    trailing: Text(
+                      currency.format(payable),
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w900,
+                        fontSize: short ? 16 : 18,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            crossFadeState: expanded
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 220),
+            sizeCurve: Curves.easeInOut,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class SummaryIcon extends StatelessWidget {
+  const SummaryIcon({
+    super.key,
+    required this.icon,
+    required this.color,
+    this.dense = false,
+  });
+
+  final IconData icon;
+  final Color color;
+  final bool dense;
+
+  @override
+  Widget build(BuildContext context) {
+    final size = dense ? 28.0 : 34.0;
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        shape: BoxShape.circle,
+      ),
+      child: Icon(icon, size: dense ? 15 : 17, color: color),
+    );
+  }
+}
+
+class SummaryIconRow extends StatelessWidget {
+  const SummaryIconRow({
+    super.key,
+    required this.icon,
+    required this.iconColor,
+    required this.label,
+    required this.trailing,
+    this.labelSuffix,
+    this.labelStyle,
+    this.dense = false,
+  });
+
+  final IconData icon;
+  final Color iconColor;
+  final String label;
+  final String? labelSuffix;
+  final TextStyle? labelStyle;
+  final Widget trailing;
+  final bool dense;
+
+  @override
+  Widget build(BuildContext context) {
+    final style =
+        labelStyle ??
+        TextStyle(
+          fontWeight: FontWeight.w700,
+          fontSize: dense ? 12.5 : 13.5,
+          color: AppColors.navy,
+        );
+    return Row(
+      children: [
+        SummaryIcon(icon: icon, color: iconColor, dense: dense),
+        const SizedBox(width: 8),
+        Expanded(
+          child: labelSuffix == null
+              ? Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: style,
+                )
+              : Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(text: label, style: style),
+                      TextSpan(
+                        text: ' ($labelSuffix)',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w500,
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+        ),
+        const SizedBox(width: 6),
+        trailing,
+      ],
+    );
+  }
+}
+
+class DiscountTypeToggle extends StatelessWidget {
+  const DiscountTypeToggle({
+    super.key,
+    required this.isPercent,
+    required this.onChanged,
+    this.enabled = true,
+  });
+
+  final bool isPercent;
+  final ValueChanged<String> onChanged;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 32,
+      decoration: BoxDecoration(
+        color: AppColors.primarySoft,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _chip(label: '₹', selected: !isPercent, type: 'Amount'),
+          _chip(label: '%', selected: isPercent, type: 'Percent'),
+        ],
+      ),
+    );
+  }
+
+  Widget _chip({
+    required String label,
+    required bool selected,
+    required String type,
+  }) {
+    return InkWell(
+      onTap: enabled ? () => onChanged(type) : null,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        width: 28,
+        height: 32,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: selected ? AppColors.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 12,
+            color: selected ? Colors.white : AppColors.textSecondary,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class EditableValueBox extends StatelessWidget {
+  const EditableValueBox({
+    super.key,
+    required this.controller,
+    required this.onChanged,
+    this.hint,
+    this.prefix,
+    this.suffix,
+    this.enabled = true,
+  });
+
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+  final String? hint;
+  final String? prefix;
+  final String? suffix;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final border = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10),
+      borderSide: const BorderSide(color: AppColors.border),
+    );
+    return SizedBox(
+      height: 36,
+      child: TextField(
+        controller: controller,
+        enabled: enabled,
+        textAlign: TextAlign.right,
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
+        decoration: InputDecoration(
+          isDense: true,
+          filled: true,
+          fillColor: const Color(0xFFF1F5F9),
+          hintText: hint,
+          hintStyle: TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 13,
+            color: AppColors.textSecondary.withValues(alpha: 0.65),
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 10,
+            vertical: 8,
+          ),
+          border: border,
+          enabledBorder: border,
+          disabledBorder: border,
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: AppColors.primary, width: 1.4),
+          ),
+          prefixText: prefix == null ? null : '$prefix ',
+          suffixText: suffix,
+          prefixStyle: const TextStyle(
+            fontWeight: FontWeight.w700,
+            color: AppColors.textSecondary,
+          ),
+          suffixStyle: const TextStyle(
+            fontWeight: FontWeight.w700,
+            color: AppColors.textSecondary,
+          ),
+        ),
+        style: const TextStyle(
+          fontWeight: FontWeight.w700,
+          fontSize: 14,
+          color: AppColors.navy,
+        ),
+        onChanged: onChanged,
+      ),
+    );
+  }
+}

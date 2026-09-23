@@ -13,6 +13,7 @@ class AppButton extends StatelessWidget {
     required this.onPressed,
     this.variant = AppButtonVariant.primary,
     this.icon,
+    this.trailingIcon,
     this.isLoading = false,
     this.expanded = true,
   });
@@ -21,6 +22,7 @@ class AppButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final AppButtonVariant variant;
   final IconData? icon;
+  final IconData? trailingIcon;
   final bool isLoading;
   final bool expanded;
 
@@ -51,6 +53,10 @@ class AppButton extends StatelessWidget {
                   ),
                 ),
               ),
+              if (trailingIcon != null) ...[
+                const SizedBox(width: 8),
+                Icon(trailingIcon, size: 20),
+              ],
             ],
           );
 

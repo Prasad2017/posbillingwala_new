@@ -16,8 +16,10 @@ import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/mess/domain/mess_providers.dart';
 import 'package:pos_billingwala_v2/features/mess/presentation/mess_coupon_page.dart';
+import 'package:pos_billingwala_v2/features/mess/presentation/mess_hub_pane.dart';
 import 'package:pos_billingwala_v2/features/mess/presentation/mess_token_qr_page.dart';
 import 'package:pos_billingwala_v2/features/print/domain/print_providers.dart';
+import 'package:pos_billingwala_v2/features/reports/presentation/report_pin_gate.dart';
 import 'package:pos_billingwala_v2/language/app_strings.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
@@ -30,8 +32,6 @@ class MessPage extends ConsumerStatefulWidget {
 }
 
 class MessPageState extends ConsumerState<MessPage> {
-  final messPageVerifyController = TextEditingController();
-
   @override
   void initState() {
     super.initState();
@@ -40,13 +40,10 @@ class MessPageState extends ConsumerState<MessPage> {
       if (AppPlatform.requiresNetwork) {
         ref.read(messControllerProvider.notifier).syncMembers();
       }
+      ref
+          .read(messControllerProvider.notifier)
+          .recoverPendingMealTokens();
     });
-  }
-
-  @override
-  void dispose() {
-    messPageVerifyController.dispose();
-    super.dispose();
   }
 
   @override
@@ -61,20 +58,29 @@ class MessPageState extends ConsumerState<MessPage> {
       );
     });
 
+    final institutePay =
+        ref.watch(messInstitutePayProvider).asData?.value ?? false;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(AppStrings.of(ref).mess),
         actions: [
-          TextButton.icon(
-            onPressed: () => messPageAddMember(context),
-            icon: const Icon(Icons.person_add_alt_1_rounded, color: Colors.white),
-            label: Text(
-              AppStrings.of(ref).addMember,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
+          IconButton(
+            tooltip: 'Scan Mess Token',
+            onPressed: () => context.push('/mess/scan'),
+            icon: const Icon(Icons.qr_code_scanner_rounded, color: Colors.white),
+          ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert_rounded, color: Colors.white),
+            onSelected: (value) {
+              if (value == 'walk_in') showWalkInDialog(context);
+            },
+            itemBuilder: (_) => const [
+              PopupMenuItem(
+                value: 'walk_in',
+                child: Text('Walk-in Token'),
               ),
-            ),
+            ],
           ),
         ],
       ),
@@ -97,7 +103,7 @@ class MessPageState extends ConsumerState<MessPage> {
                     label: 'Member List',
                     color: AppColors.primary,
                     svgPath: AppAssets.svgPerson,
-                    onTap: () => context.push('/mess/members'),
+                    onTap: () => openMemberList(context),
                   ),
                   MessMenuCard(
                     label: 'QR Management',
@@ -121,48 +127,164 @@ class MessPageState extends ConsumerState<MessPage> {
                 final gap = 8.0;
                 final itemW =
                     (constraints.maxWidth - gap * (cols - 1)) / cols;
-                return Column(
+                return Wrap(
+                  spacing: gap,
+                  runSpacing: gap,
                   children: [
-                    Wrap(
-                      spacing: gap,
-                      runSpacing: gap,
-                      children: [
-                        for (final m in menus)
-                          SizedBox(width: itemW, child: m),
-                      ],
-                    ),
-                    SwitchListTile.adaptive(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 4),
-                      dense: context.isShortHeight,
-                      title: Text(AppStrings.of(ref).institutePays),
-                      subtitle: context.isShortHeight
-                          ? null
-                          : const Text(
-                              'When on, mess coupons bill the institute (server setting)',
-                            ),
-                      value:
-                          ref.watch(messInstitutePayProvider).asData?.value ??
-                          false,
-                      onChanged: (v) async {
-                        await ref
-                            .read(messControllerProvider.notifier)
-                            .setShopPayerMode(v);
-                        ref.invalidate(messInstitutePayProvider);
-                      },
-                    ),
+                    for (final m in menus) SizedBox(width: itemW, child: m),
                   ],
                 );
               },
             ),
           ),
-          const Divider(height: 1),
-          /* Tokens only — Member List / QR Management open from cards. */
-          Expanded(
-            child: TokensTab(verifyController: messPageVerifyController),
+          /* Android messPayerModeCard */
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
+            child: Material(
+              color: Colors.white.withValues(alpha: 0.92),
+              borderRadius: BorderRadius.circular(12),
+              elevation: 1,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 6, 4, 6),
+                child: SwitchListTile.adaptive(
+                  contentPadding: EdgeInsets.zero,
+                  dense: context.isShortHeight,
+                  title: Text(
+                    AppStrings.of(ref).institutePays,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                  subtitle: Text(
+                    institutePay
+                        ? 'Institute Pay: tokens without counter payment'
+                        : 'User Pay: members must pay before tokens',
+                    style: const TextStyle(fontSize: 11),
+                  ),
+                  value: institutePay,
+                  onChanged: (v) async {
+                    await ref
+                        .read(messControllerProvider.notifier)
+                        .setShopPayerMode(v);
+                    ref.invalidate(messInstitutePayProvider);
+                    ref.invalidate(messHubStatsProvider);
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Mess payment mode updated'),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
           ),
+          const MessPaymentAlertBanner(),
+          const SizedBox(height: 4),
+          const Expanded(child: MessHubMembersPane()),
         ],
       ),
     );
+  }
+
+  Future<void> openMemberList(BuildContext context) async {
+    final ok = await showReportPinGate(
+      context,
+      ref,
+      title: 'Member List Password',
+      message: 'Enter PIN to open the mess member list.',
+    );
+    if (!ok || !context.mounted) return;
+    context.push('/mess/members');
+  }
+
+  Future<void> showWalkInDialog(BuildContext context) async {
+    final nameCtrl = TextEditingController();
+    final mobileCtrl = TextEditingController();
+    final amountCtrl = TextEditingController();
+    final ok = await showAppBottomSheet<bool>(
+      context: context,
+      title: 'Walk-in Token',
+      child: Builder(
+        builder: (sheetContext) => Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AppTextField(
+              required: true,
+              controller: nameCtrl,
+              label: 'Name',
+            ),
+            const SizedBox(height: 12),
+            AppTextField(
+              required: true,
+              controller: mobileCtrl,
+              label: 'Mobile',
+              keyboardType: TextInputType.phone,
+              maxLength: 10,
+              showCounter: false,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            ),
+            const SizedBox(height: 12),
+            AppTextField(
+              controller: amountCtrl,
+              label: 'Amount collected (optional)',
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            ),
+            const SizedBox(height: 16),
+            AppButton(
+              label: 'Issue QR Token & Print',
+              onPressed: () {
+                if (nameCtrl.text.trim().isEmpty ||
+                    messTokenDigits(mobileCtrl.text).length != 10) {
+                  ScaffoldMessenger.of(sheetContext).showSnackBar(
+                    const SnackBar(
+                      content: Text('Name and 10-digit mobile are required'),
+                    ),
+                  );
+                  return;
+                }
+                Navigator.pop(sheetContext, true);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+    final name = nameCtrl.text.trim();
+    final mobile = messTokenDigits(mobileCtrl.text);
+    final amount = double.tryParse(amountCtrl.text.trim()) ?? 0;
+    nameCtrl.dispose();
+    mobileCtrl.dispose();
+    amountCtrl.dispose();
+    if (ok != true || !context.mounted) return;
+    try {
+      final result = await ref
+          .read(messControllerProvider.notifier)
+          .issueWalkInToken(
+            name: name,
+            mobile: mobile,
+            amount: amount,
+          );
+      if (!context.mounted) return;
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => MessTokenQrPage(
+            title: 'WALK-IN MESS TOKEN',
+            subtitle: name,
+            memberMobile: mobile,
+            payload: result.payload,
+            tokenCode: result.token.tokenCode,
+            messType: result.token.messType,
+          ),
+        ),
+      );
+      ref.invalidate(messHubStatsProvider);
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    }
   }
 
   Future<void> editMember(BuildContext context, MessMember member) async {
@@ -249,7 +371,7 @@ class MessPageState extends ConsumerState<MessPage> {
             memberName: result.name,
             messAmount: result.messAmount ?? 0,
             paidAmount: result.messPaidAmount ?? 0,
-            messTotalDays: result.messDays ?? '30',
+            messTotalDays: result.messDays ?? 'Two Time',
             paymentDate: month,
             paymentNetworkStatus: network,
           );
@@ -321,7 +443,7 @@ Future<MessMemberFormResult?> showMemberFormDialog(
   if (!types.contains(memberType)) {
     memberType = 'student';
   }
-  var messDays = '30';
+  var messDays = 'Two Time';
 
   final ok = await showDialog<bool>(
     context: context,
@@ -404,8 +526,13 @@ Future<MessMemberFormResult?> showMemberFormDialog(
                     required: true,
                     label: 'Mess Days',
                     value: messDays,
-                    options: const ['15', '30', '45', '60'],
-                    onChanged: (v) => setLocal(() => messDays = v ?? '30'),
+                    options: const ['One Time', 'Two Time'],
+                    onChanged: (v) => setLocal(() => messDays = v ?? 'Two Time'),
+                  ),
+                  const SizedBox(height: 12),
+                  AppTextField(
+                    controller: regCtrl,
+                    label: 'Registration No. (optional)',
                   ),
                   const SizedBox(height: 12),
                   ResponsiveFormColumns(
@@ -413,7 +540,7 @@ Future<MessMemberFormResult?> showMemberFormDialog(
                       AppTextField(
                         required: true,
                         controller: messAmtCtrl,
-                        label: 'Total amount',
+                        label: 'Mess Amount',
                         keyboardType: const TextInputType.numberWithOptions(
                           decimal: true,
                         ),
@@ -421,7 +548,7 @@ Future<MessMemberFormResult?> showMemberFormDialog(
                       AppTextField(
                         required: true,
                         controller: paidAmtCtrl,
-                        label: 'Paid amount',
+                        label: 'Paid Amount',
                         keyboardType: const TextInputType.numberWithOptions(
                           decimal: true,
                         ),
@@ -525,7 +652,7 @@ class MessMenuCard extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(12),
           child: SizedBox(
-            height: 108,
+            height: 96,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [

@@ -585,7 +585,7 @@ class SettingsHubPage extends ConsumerWidget {
                 children: [
                   if (AppBreakpoints.settingsColumnsFor(context.widthClass) > 1)
                     ResponsiveSplit(
-                      breakpoint: AppWidthClass.large,
+                      breakpoint: AppWidthClass.tablet,
                       primary: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [

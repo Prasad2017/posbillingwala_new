@@ -616,7 +616,7 @@ class HomeDashboardBody extends ConsumerWidget {
                 },
               ),
             ];
-            final compact = context.widthClass == AppWidthClass.compact;
+            final compact = context.isMobileWidth;
             if (compact) {
               return Column(
                 children: [
@@ -677,7 +677,7 @@ class HomeDashboardBody extends ConsumerWidget {
                 crossAxisSpacing: 12,
                 childAspectRatio: context.isShortHeight
                     ? 1.85
-                    : widthClass == AppWidthClass.compact
+                    : AppBreakpoints.isMobileClass(widthClass)
                     ? 1.5
                     : 1.7,
               ),

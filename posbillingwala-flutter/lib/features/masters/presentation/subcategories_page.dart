@@ -183,71 +183,82 @@ class SubcategoriesPageState extends ConsumerState<SubcategoriesPage> {
             28,
           ),
           children: [
-            const MasterSectionLabel('Subcategory Detail'),
-            const SizedBox(height: 10),
-            MasterCard(
-              child: Column(
+            ResponsiveMasterSplit(
+              form: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  MasterDropdown<ProductCategory>(
-                    required: true,
-                    value: selected,
-                    items: categories,
-                    hint: 'Select category',
-                    itemLabel: (c) => c.categoryName,
-                    onChanged: (v) => setState(() => selectedCategory = v),
-                  ),
-                  const SizedBox(height: 12),
-                  MasterOutlinedField(
-                    required: true,
-                    controller: subcategoriesPageNameCtrl,
-                    hint: 'Subcategory Name',
-                  ),
-                  const SizedBox(height: 12),
-                  MasterPrimaryButton(
-                    label: 'Add Subcategory',
-                    isLoading: busy,
-                    onPressed: busy ? null : add,
+                  const MasterSectionLabel('Subcategory Detail'),
+                  const SizedBox(height: 10),
+                  MasterCard(
+                    child: Column(
+                      children: [
+                        MasterDropdown<ProductCategory>(
+                          required: true,
+                          value: selected,
+                          items: categories,
+                          hint: 'Select category',
+                          itemLabel: (c) => c.categoryName,
+                          onChanged: (v) => setState(() => selectedCategory = v),
+                        ),
+                        const SizedBox(height: 12),
+                        MasterOutlinedField(
+                          required: true,
+                          controller: subcategoriesPageNameCtrl,
+                          hint: 'Subcategory Name',
+                        ),
+                        const SizedBox(height: 12),
+                        MasterPrimaryButton(
+                          label: 'Add Subcategory',
+                          isLoading: busy,
+                          onPressed: busy ? null : add,
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 20),
-            const MasterSectionLabel('Subcategory List'),
-            const SizedBox(height: 10),
-            MasterCard(
-              padding: EdgeInsets.zero,
-              child: rowsAsync.when(
-                data: (rows) {
-                  if (rows.isEmpty) {
-                    return const MasterEmptyState(
-                      title: 'No data found',
-                      subtitle: 'Add subcategories like Tea / Juice.',
-                    );
-                  }
-                  return Column(
-                    children: [
-                      for (var i = 0; i < rows.length; i++)
-                        MasterListRow(
-                          index: i + 1,
-                          title: rows[i].subcategoryName,
-                          subtitle: categoryNames[rows[i].categoryId],
-                          onEdit: () => edit(rows[i]),
-                          onDelete: () => delete(rows[i]),
-                          showDivider: i < rows.length - 1,
+              list: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const MasterSectionLabel('Subcategory List'),
+                  const SizedBox(height: 10),
+                  MasterCard(
+                    padding: EdgeInsets.zero,
+                    child: rowsAsync.when(
+                      data: (rows) {
+                        if (rows.isEmpty) {
+                          return const MasterEmptyState(
+                            title: 'No data found',
+                            subtitle: 'Add subcategories like Tea / Juice.',
+                          );
+                        }
+                        return Column(
+                          children: [
+                            for (var i = 0; i < rows.length; i++)
+                              MasterListRow(
+                                index: i + 1,
+                                title: rows[i].subcategoryName,
+                                subtitle: categoryNames[rows[i].categoryId],
+                                onEdit: () => edit(rows[i]),
+                                onDelete: () => delete(rows[i]),
+                                showDivider: i < rows.length - 1,
+                              ),
+                          ],
+                        );
+                      },
+                      loading: () => const Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Center(child: CircularProgressIndicator()),
+                      ),
+                      error: (e, _) => Padding(
+                        padding: EdgeInsets.all(
+                          AppBreakpoints.pagePaddingFor(context.widthClass),
                         ),
-                    ],
-                  );
-                },
-                loading: () => const Padding(
-                  padding: EdgeInsets.all(24),
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-                error: (e, _) => Padding(
-                  padding: EdgeInsets.all(
-                    AppBreakpoints.pagePaddingFor(context.widthClass),
+                        child: Text('$e'),
+                      ),
+                    ),
                   ),
-                  child: Text('$e'),
-                ),
+                ],
               ),
             ),
           ],

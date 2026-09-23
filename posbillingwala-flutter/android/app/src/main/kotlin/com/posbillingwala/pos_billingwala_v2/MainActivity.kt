@@ -5,6 +5,7 @@ import android.content.res.Configuration
 import android.os.Build
 import android.util.DisplayMetrics
 import android.view.WindowManager
+import androidx.core.view.WindowCompat
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -13,6 +14,13 @@ class MainActivity : FlutterActivity() {
     /* Keep POS UI fixed regardless of system Display size / Text size. */
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(fixedDisplayContext(newBase))
+    }
+
+    override fun onPostResume() {
+        super.onPostResume()
+        /* Fit system windows so layout stays fixed to OS status/nav insets
+           (no jump when gesture nav briefly hides in landscape). */
+        WindowCompat.setDecorFitsSystemWindows(window, true)
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {

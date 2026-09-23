@@ -141,61 +141,72 @@ class PortionMastersPageState extends ConsumerState<PortionMastersPage> {
             28,
           ),
           children: [
-            const MasterSectionLabel('Portion Master Detail'),
-            const SizedBox(height: 10),
-            MasterCard(
-              child: Column(
+            ResponsiveMasterSplit(
+              form: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  MasterOutlinedField(
-                    required: true,
-                    controller: nameCtrl,
-                    hint: 'Portion Name',
-                  ),
-                  const SizedBox(height: 12),
-                  MasterPrimaryButton(
-                    label: 'Add Portion',
-                    isLoading: busy,
-                    onPressed: busy ? null : add,
+                  const MasterSectionLabel('Portion Master Detail'),
+                  const SizedBox(height: 10),
+                  MasterCard(
+                    child: Column(
+                      children: [
+                        MasterOutlinedField(
+                          required: true,
+                          controller: nameCtrl,
+                          hint: 'Portion Name',
+                        ),
+                        const SizedBox(height: 12),
+                        MasterPrimaryButton(
+                          label: 'Add Portion',
+                          isLoading: busy,
+                          onPressed: busy ? null : add,
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 20),
-            const MasterSectionLabel('Portion Master List'),
-            const SizedBox(height: 10),
-            MasterCard(
-              padding: EdgeInsets.zero,
-              child: list.when(
-                data: (rows) {
-                  if (rows.isEmpty) {
-                    return const MasterEmptyState(
-                      title: 'No data found',
-                      subtitle: 'Add portion sizes like Half / Full.',
-                    );
-                  }
-                  return Column(
-                    children: [
-                      for (var i = 0; i < rows.length; i++)
-                        MasterListRow(
-                          index: i + 1,
-                          title: rows[i].portionName,
-                          onEdit: () => edit(rows[i]),
-                          onDelete: () => delete(rows[i]),
-                          showDivider: i < rows.length - 1,
+              list: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const MasterSectionLabel('Portion Master List'),
+                  const SizedBox(height: 10),
+                  MasterCard(
+                    padding: EdgeInsets.zero,
+                    child: list.when(
+                      data: (rows) {
+                        if (rows.isEmpty) {
+                          return const MasterEmptyState(
+                            title: 'No data found',
+                            subtitle: 'Add portion sizes like Half / Full.',
+                          );
+                        }
+                        return Column(
+                          children: [
+                            for (var i = 0; i < rows.length; i++)
+                              MasterListRow(
+                                index: i + 1,
+                                title: rows[i].portionName,
+                                onEdit: () => edit(rows[i]),
+                                onDelete: () => delete(rows[i]),
+                                showDivider: i < rows.length - 1,
+                              ),
+                          ],
+                        );
+                      },
+                      loading: () => const Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Center(child: CircularProgressIndicator()),
+                      ),
+                      error: (e, _) => Padding(
+                        padding: EdgeInsets.all(
+                          AppBreakpoints.pagePaddingFor(context.widthClass),
                         ),
-                    ],
-                  );
-                },
-                loading: () => const Padding(
-                  padding: EdgeInsets.all(24),
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-                error: (e, _) => Padding(
-                  padding: EdgeInsets.all(
-                    AppBreakpoints.pagePaddingFor(context.widthClass),
+                        child: Text('$e'),
+                      ),
+                    ),
                   ),
-                  child: Text('$e'),
-                ),
+                ],
               ),
             ),
           ],

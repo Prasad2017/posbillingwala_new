@@ -101,7 +101,7 @@ class MessMembersPageState extends ConsumerState<MessMembersPage> {
             memberName: result.name,
             messAmount: result.messAmount ?? 0,
             paidAmount: result.messPaidAmount ?? 0,
-            messTotalDays: result.messDays ?? '30',
+            messTotalDays: result.messDays ?? 'Two Time',
             paymentDate: month,
             paymentNetworkStatus: network,
           );

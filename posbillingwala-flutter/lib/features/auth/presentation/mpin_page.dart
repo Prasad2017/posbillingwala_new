@@ -203,7 +203,7 @@ class MpinPageState extends ConsumerState<MpinPage> {
 
     if (AppPlatform.useDesktopShell) {
       final showInlineLogo =
-          context.widthClass.index < AppWidthClass.expanded.index;
+          context.widthClass.index < AppWidthClass.largeTablet.index;
       return WebAuthShell(
         child: Column(
           children: [

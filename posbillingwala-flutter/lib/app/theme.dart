@@ -8,14 +8,16 @@ import 'package:pos_billingwala_v2/core/theme/billingwala_theme.dart';
 class AppTheme {
   AppTheme._();
 
-  /* Status bar matches AppBar (primary) with light icons. */
+  /* Status bar matches AppBar (primary). Nav bar is solid white so screens
+     sit cleanly above the system navigation area. */
   static const lightSystemUi = SystemUiOverlayStyle(
     statusBarColor: AppColors.primary,
     statusBarIconBrightness: Brightness.light,
     statusBarBrightness: Brightness.dark,
-    systemNavigationBarColor: AppColors.auroraTop,
+    systemNavigationBarColor: Colors.white,
     systemNavigationBarIconBrightness: Brightness.dark,
     systemNavigationBarDividerColor: Colors.transparent,
+    systemNavigationBarContrastEnforced: true,
   );
 
   static ThemeData light() {

@@ -117,25 +117,27 @@ class WebAppShell extends ConsumerWidget {
   final Widget child;
 
   static const railWidth = 248.0;
+  static const _railAnim = Duration(milliseconds: 220);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (!AppPlatform.useDesktopShell) return child;
 
-    final wide = context.widthClass.index >= AppWidthClass.expanded.index;
+    /* Persistent rail from tablet+ (600+); mobile portrait/landscape keep bottom nav. */
+    final showRail = !context.isMobileWidth;
     final online = ref
         .watch(deviceOnlineProvider)
         .maybeWhen(data: (value) => value, orElse: () => true);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: wide
+      appBar: showRail
           ? null
           : AppBar(
               backgroundColor: AppColors.navy,
               title: const Text('Billingwala'),
             ),
-      drawer: wide
+      drawer: showRail
           ? null
           : Drawer(
               child: WebSideNav(location: GoRouterState.of(context).uri.path),
@@ -146,7 +148,13 @@ class WebAppShell extends ConsumerWidget {
           Expanded(
             child: Row(
               children: [
-                if (wide) const SizedBox(width: railWidth, child: WebSideNav()),
+                AnimatedContainer(
+                  duration: _railAnim,
+                  curve: Curves.easeInOutCubic,
+                  width: showRail ? railWidth : 0,
+                  clipBehavior: Clip.hardEdge,
+                  child: const WebSideNav(),
+                ),
                 Expanded(child: child),
               ],
             ),

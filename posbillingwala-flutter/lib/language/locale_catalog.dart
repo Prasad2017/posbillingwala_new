@@ -54,6 +54,18 @@ class LocaleCatalog {
     }
   }
 
+  /* Load a language on demand (e.g. user picks it on the login screen). */
+  static Future<void> ensureLang(String lang) async {
+    final code = lang.trim().toLowerCase();
+    if (code.isEmpty || code == 'en') {
+      await loadEnglish();
+      return;
+    }
+    final existing = _byLang[code];
+    if (existing != null && existing.isNotEmpty) return;
+    await _loadLang(code);
+  }
+
   static String get(String lang, String key) {
     final primary = _byLang[lang];
     if (primary != null) {

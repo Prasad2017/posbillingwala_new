@@ -9,6 +9,11 @@ import 'package:pos_billingwala_v2/language/locale_catalog.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   installFlutterCrashReporting();
+  /* Keep status + nav bars always visible (no immersive hide/show). */
+  await SystemChrome.setEnabledSystemUIMode(
+    SystemUiMode.manual,
+    overlays: SystemUiOverlay.values,
+  );
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Color(0xFF0756C9),
@@ -17,6 +22,7 @@ Future<void> main() async {
       systemNavigationBarColor: Colors.white,
       systemNavigationBarIconBrightness: Brightness.dark,
       systemNavigationBarDividerColor: Colors.transparent,
+      systemNavigationBarContrastEnforced: true,
     ),
   );
   /* English is enough to paint the first frame; HI/MR load after. */

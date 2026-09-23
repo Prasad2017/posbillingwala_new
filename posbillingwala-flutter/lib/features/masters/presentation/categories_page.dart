@@ -128,61 +128,72 @@ class CategoriesPageState extends ConsumerState<CategoriesPage> {
             28,
           ),
           children: [
-            const MasterSectionLabel('Category Detail'),
-            const SizedBox(height: 10),
-            MasterCard(
-              child: Column(
+            ResponsiveMasterSplit(
+              form: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  MasterOutlinedField(
-                    required: true,
-                    controller: nameCtrl,
-                    hint: 'Category Name',
-                  ),
-                  const SizedBox(height: 12),
-                  MasterPrimaryButton(
-                    label: 'Add Category',
-                    isLoading: busy,
-                    onPressed: busy ? null : add,
+                  const MasterSectionLabel('Category Detail'),
+                  const SizedBox(height: 10),
+                  MasterCard(
+                    child: Column(
+                      children: [
+                        MasterOutlinedField(
+                          required: true,
+                          controller: nameCtrl,
+                          hint: 'Category Name',
+                        ),
+                        const SizedBox(height: 12),
+                        MasterPrimaryButton(
+                          label: 'Add Category',
+                          isLoading: busy,
+                          onPressed: busy ? null : add,
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 20),
-            const MasterSectionLabel('Category List'),
-            const SizedBox(height: 10),
-            MasterCard(
-              padding: EdgeInsets.zero,
-              child: rowsAsync.when(
-                data: (rows) {
-                  if (rows.isEmpty) {
-                    return const MasterEmptyState(
-                      title: 'No data found',
-                      subtitle: 'Add your first category.',
-                    );
-                  }
-                  return Column(
-                    children: [
-                      for (var i = 0; i < rows.length; i++)
-                        MasterListRow(
-                          index: i + 1,
-                          title: rows[i].categoryName,
-                          onEdit: () => edit(rows[i]),
-                          onDelete: () => delete(rows[i]),
-                          showDivider: i < rows.length - 1,
+              list: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const MasterSectionLabel('Category List'),
+                  const SizedBox(height: 10),
+                  MasterCard(
+                    padding: EdgeInsets.zero,
+                    child: rowsAsync.when(
+                      data: (rows) {
+                        if (rows.isEmpty) {
+                          return const MasterEmptyState(
+                            title: 'No data found',
+                            subtitle: 'Add your first category.',
+                          );
+                        }
+                        return Column(
+                          children: [
+                            for (var i = 0; i < rows.length; i++)
+                              MasterListRow(
+                                index: i + 1,
+                                title: rows[i].categoryName,
+                                onEdit: () => edit(rows[i]),
+                                onDelete: () => delete(rows[i]),
+                                showDivider: i < rows.length - 1,
+                              ),
+                          ],
+                        );
+                      },
+                      loading: () => const Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Center(child: CircularProgressIndicator()),
+                      ),
+                      error: (e, _) => Padding(
+                        padding: EdgeInsets.all(
+                          AppBreakpoints.pagePaddingFor(context.widthClass),
                         ),
-                    ],
-                  );
-                },
-                loading: () => const Padding(
-                  padding: EdgeInsets.all(24),
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-                error: (e, _) => Padding(
-                  padding: EdgeInsets.all(
-                    AppBreakpoints.pagePaddingFor(context.widthClass),
+                        child: Text('$e'),
+                      ),
+                    ),
                   ),
-                  child: Text('$e'),
-                ),
+                ],
               ),
             ),
           ],

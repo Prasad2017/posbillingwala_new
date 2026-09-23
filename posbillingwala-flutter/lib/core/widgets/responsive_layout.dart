@@ -197,6 +197,7 @@ class ResponsiveGrid extends StatelessWidget {
 }
 
 /* Wraps form fields into 1–N columns based on width without changing field widgets. */
+/* Mirrors Android TabletFormUi.applyTwoColumnFields (wide ≥ 480dp). */
 class ResponsiveFormColumns extends StatelessWidget {
   const ResponsiveFormColumns({
     super.key,
@@ -213,23 +214,24 @@ class ResponsiveFormColumns extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cols = AppBreakpoints.formColumnsFor(
-      context.widthClass,
-      maxColumns: maxColumns,
-    );
-    if (cols <= 1 || children.length <= 1) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          for (var i = 0; i < children.length; i++) ...[
-            if (i > 0) SizedBox(height: runSpacing),
-            children[i],
-          ],
-        ],
-      );
-    }
     return LayoutBuilder(
       builder: (context, constraints) {
+        final cols = AppBreakpoints.formColumnsFor(
+          context.widthClass,
+          maxColumns: maxColumns,
+          availableWidth: constraints.maxWidth,
+        );
+        if (cols <= 1 || children.length <= 1) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (var i = 0; i < children.length; i++) ...[
+                if (i > 0) SizedBox(height: runSpacing),
+                children[i],
+              ],
+            ],
+          );
+        }
         final itemWidth =
             (constraints.maxWidth - spacing * (cols - 1)) / cols;
         return Wrap(
@@ -245,13 +247,14 @@ class ResponsiveFormColumns extends StatelessWidget {
   }
 }
 
-/* Two-column layout on large widths; stacks on compact/medium. */
+/* Two-column layout from tablet up; stacks on mobile portrait. */
 class ResponsiveSplit extends StatelessWidget {
   const ResponsiveSplit({
     super.key,
     required this.primary,
     required this.secondary,
-    this.breakpoint = AppWidthClass.large,
+    this.breakpoint = AppWidthClass.tablet,
+    this.useWideWindow = true,
     this.primaryFlex = 1,
     this.secondaryFlex = 1,
     this.spacing = 16,
@@ -261,6 +264,8 @@ class ResponsiveSplit extends StatelessWidget {
   final Widget primary;
   final Widget secondary;
   final AppWidthClass breakpoint;
+  /* Also split on mobile landscape when width is wide enough. */
+  final bool useWideWindow;
   final int primaryFlex;
   final int secondaryFlex;
   final double spacing;
@@ -268,24 +273,64 @@ class ResponsiveSplit extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final split = context.widthClass.index >= breakpoint.index;
-    if (!split) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          primary,
-          SizedBox(height: spacing),
-          secondary,
-        ],
-      );
-    }
-    return Row(
-      crossAxisAlignment: crossAxisAlignment,
-      children: [
-        Expanded(flex: primaryFlex, child: primary),
-        SizedBox(width: spacing),
-        Expanded(flex: secondaryFlex, child: secondary),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final byClass = context.widthClass.index >= breakpoint.index;
+        final byWide =
+            useWideWindow &&
+            AppBreakpoints.isWideLayoutWidth(
+              constraints.maxWidth,
+              height: MediaQuery.sizeOf(context).height,
+              orientation: context.orientationClass,
+            );
+        final split = byClass || byWide;
+        if (!split) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              primary,
+              SizedBox(height: spacing),
+              secondary,
+            ],
+          );
+        }
+        return Row(
+          crossAxisAlignment: crossAxisAlignment,
+          children: [
+            Expanded(flex: primaryFlex, child: primary),
+            SizedBox(width: spacing),
+            Expanded(flex: secondaryFlex, child: secondary),
+          ],
+        );
+      },
+    );
+  }
+}
+
+/* Form left (38%) + list right (62%) from tablet / wide landscape. */
+class ResponsiveMasterSplit extends StatelessWidget {
+  const ResponsiveMasterSplit({
+    super.key,
+    required this.form,
+    required this.list,
+    this.spacing = 12,
+  });
+
+  final Widget form;
+  final Widget list;
+  final double spacing;
+
+  @override
+  Widget build(BuildContext context) {
+    return ResponsiveSplit(
+      primary: form,
+      secondary: list,
+      breakpoint: AppWidthClass.tablet,
+      useWideWindow: true,
+      primaryFlex: AppBreakpoints.masterFormFlex,
+      secondaryFlex: AppBreakpoints.masterListFlex,
+      spacing: spacing,
+      crossAxisAlignment: CrossAxisAlignment.start,
     );
   }
 }

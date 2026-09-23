@@ -143,7 +143,7 @@ class TablesPageState extends ConsumerState<TablesPage> {
                           if (y > maxY) maxY = y;
                         }
                         /* Compact: fit viewport; wider: keep roomy floor for positions. */
-                        final minCanvasW = widthClass == AppWidthClass.compact
+                        final minCanvasW = AppBreakpoints.isMobileClass(widthClass)
                             ? constraints.maxWidth
                             : 720.0;
                         final minCanvasH = context.isShortHeight
@@ -155,7 +155,7 @@ class TablesPageState extends ConsumerState<TablesPage> {
                         final canvasH = constraints.maxHeight < minCanvasH
                             ? minCanvasH
                             : constraints.maxHeight;
-                        final cardW = widthClass == AppWidthClass.compact
+                        final cardW = AppBreakpoints.isMobileClass(widthClass)
                             ? 120.0
                             : 148.0;
                         double left(double? v) {

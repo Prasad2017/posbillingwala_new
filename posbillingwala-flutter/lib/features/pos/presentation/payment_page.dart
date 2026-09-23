@@ -55,6 +55,11 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
     super.initState();
     paymentPageCurrency = NumberFormat.currency(locale: 'en_IN', symbol: '₹ ');
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      /* Landscape / short viewports: start collapsed so Print bar fits. */
+      if (context.isShortHeight) {
+        setState(() => billSummaryExpanded = false);
+      }
       final session = ref.read(billingSessionProvider);
       customerNameController.text = session.customerName ?? '';
       customerPhoneController.text = session.customerPhone ?? '';
@@ -466,435 +471,579 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
       );
     }
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 8),
-          child: Center(
-            child: Material(
-              color: Colors.white.withValues(alpha: 0.2),
-              shape: const CircleBorder(),
-              child: InkWell(
-                customBorder: const CircleBorder(),
-                onTap: () {
-                  if (context.canPop()) {
-                    context.pop();
-                  } else {
-                    context.go(session.billingRoute);
-                  }
-                },
-                child: const SizedBox(
-                  width: 40,
-                  height: 40,
-                  child: Icon(Icons.arrow_back_rounded, color: Colors.white),
-                ),
-              ),
-            ),
-          ),
-        ),
-        titleSpacing: 8,
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Payment',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w800,
-                fontSize: 20,
-              ),
-            ),
-            Text(
-              'Review your order',
-              style: TextStyle(
-                color: Color(0xFFB8D4FF),
-                fontWeight: FontWeight.w500,
-                fontSize: 12.5,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          if (checkout.result == null) ...[
-            Padding(
-              padding: const EdgeInsets.only(right: 4),
-              child: TextButton.icon(
-                onPressed: confirmClearCart,
-                icon: const Icon(
-                  Icons.delete_outline_rounded,
-                  color: AppColors.danger,
-                  size: 18,
-                ),
-                label: Text(
-                  strings.clearCart,
-                  style: const TextStyle(
-                    color: AppColors.danger,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                  ),
-                ),
-                style: TextButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: AppColors.danger,
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  visualDensity: VisualDensity.compact,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final contentClass = AppBreakpoints.ofWidth(constraints.maxWidth);
+        final orient = context.orientationClass;
+        final showSideCheckout = AppBreakpoints.isPosSideCart(
+          contentClass,
+          height: context.heightClass,
+          orientation: orient,
+          availableWidth: constraints.maxWidth,
+        );
+        final persistentCheckout = AppBreakpoints.isPosPersistentCart(
+          contentClass,
+          height: context.heightClass,
+          orientation: orient,
+          availableWidth: constraints.maxWidth,
+        );
+        final usePhoneFooter = !showSideCheckout && !persistentCheckout;
+
+        return Scaffold(
+          backgroundColor: Colors.transparent,
+          appBar: AppBar(
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+            elevation: 0,
+            leading: Padding(
+              padding: const EdgeInsets.only(left: 8),
+              child: Center(
+                child: Material(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  shape: const CircleBorder(),
+                  child: InkWell(
+                    customBorder: const CircleBorder(),
+                    onTap: () {
+                      if (context.canPop()) {
+                        context.pop();
+                      } else {
+                        context.go(session.billingRoute);
+                      }
+                    },
+                    child: const SizedBox(
+                      width: 40,
+                      height: 40,
+                      child: Icon(
+                        Icons.arrow_back_rounded,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
                 ),
               ),
             ),
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert_rounded, color: Colors.white),
-              onSelected: (value) async {
-                if (value == 'save') {
-                  await openSaveInvoiceFlow();
-                } else if (value == 'share') {
-                  await openShareInvoiceFlow();
-                }
-              },
-              itemBuilder: (context) => const [
-                PopupMenuItem(value: 'save', child: Text('Save Invoice')),
-                PopupMenuItem(value: 'share', child: Text('Share Invoice')),
+            titleSpacing: 8,
+            title: const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Payment',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 20,
+                  ),
+                ),
+                Text(
+                  'Review your order',
+                  style: TextStyle(
+                    color: Color(0xFFB8D4FF),
+                    fontWeight: FontWeight.w500,
+                    fontSize: 12.5,
+                  ),
+                ),
               ],
             ),
-          ],
-          if (session.tableNumber != null)
-            Padding(
-              padding: const EdgeInsets.only(right: 12),
-              child: Center(
-                child: Text(
-                  'T${session.tableNumber}',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
+            actions: [
+              if (checkout.result == null) ...[
+                Padding(
+                  padding: const EdgeInsets.only(right: 4),
+                  child: TextButton.icon(
+                    onPressed: confirmClearCart,
+                    icon: const Icon(
+                      Icons.delete_outline_rounded,
+                      color: AppColors.danger,
+                      size: 18,
+                    ),
+                    label: Text(
+                      strings.clearCart,
+                      style: const TextStyle(
+                        color: AppColors.danger,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                      ),
+                    ),
+                    style: TextButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: AppColors.danger,
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      visualDensity: VisualDensity.compact,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ),
+                PopupMenuButton<String>(
+                  icon: const Icon(
+                    Icons.more_vert_rounded,
                     color: Colors.white,
                   ),
-                ),
-              ),
-            ),
-        ],
-      ),
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: AppBreakpoints.contentMaxWidthFor(context.widthClass),
-            ),
-            child: Column(
-              children: [
-                Expanded(
-                  child: ListView(
-                    padding: EdgeInsets.fromLTRB(
-                      AppBreakpoints.pagePaddingFor(context.widthClass),
-                      context.isShortHeight ? 6 : 12,
-                      AppBreakpoints.pagePaddingFor(context.widthClass),
-                      24,
+                  onSelected: (value) async {
+                    if (value == 'save') {
+                      await openSaveInvoiceFlow();
+                    } else if (value == 'share') {
+                      await openShareInvoiceFlow();
+                    }
+                  },
+                  itemBuilder: (context) => const [
+                    PopupMenuItem(value: 'save', child: Text('Save Invoice')),
+                    PopupMenuItem(
+                      value: 'share',
+                      child: Text('Share Invoice'),
                     ),
-                    children: [
-                      if (showCustomer) ...[
-                        AppCard(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                strings.customer,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              ResponsiveFormColumns(
-                                maxColumns: 2,
-                                children: [
-                                  AppTextField(
-                                    controller: customerNameController,
-                                    label: strings.customerName,
-                                    textCapitalization:
-                                        TextCapitalization.words,
-                                    onChanged: (_) => persistCustomer(),
-                                  ),
-                                  AppTextField(
-                                    controller: customerPhoneController,
-                                    label: strings.customerMobile,
-                                    keyboardType: TextInputType.phone,
-                                    onChanged: (_) => persistCustomer(),
-                                  ),
-                                  AppTextField(
-                                    controller: customerEmailController,
-                                    label: strings.customerEmail,
-                                    keyboardType: TextInputType.emailAddress,
-                                    onChanged: (_) => persistCustomer(),
-                                  ),
-                                  AppTextField(
-                                    controller: customerAddressController,
-                                    label: strings.customerAddress,
-                                    textCapitalization:
-                                        TextCapitalization.sentences,
-                                    maxLines: 2,
-                                    minLines: 2,
-                                    onChanged: (_) => persistCustomer(),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: AppColors.border),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.navy.withValues(alpha: 0.04),
-                              blurRadius: 10,
-                              offset: const Offset(0, 3),
-                            ),
-                          ],
-                        ),
-                        clipBehavior: Clip.antiAlias,
-                        child: Column(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 11,
-                              ),
-                              color: AppColors.primarySoft,
-                              child: const Row(
-                                children: [
-                                  SizedBox(
-                                    width: 24,
-                                    child: Text(
-                                      '#',
-                                      style: TextStyle(
-                                        color: AppColors.navy,
-                                        fontWeight: FontWeight.w800,
-                                        fontSize: 12.5,
-                                      ),
-                                    ),
-                                  ),
-                                  Expanded(
-                                    flex: 5,
-                                    child: Text(
-                                      'Product Name',
-                                      style: TextStyle(
-                                        color: AppColors.navy,
-                                        fontWeight: FontWeight.w800,
-                                        fontSize: 12.5,
-                                      ),
-                                    ),
-                                  ),
-                                  Expanded(
-                                    flex: 4,
-                                    child: Text(
-                                      'Quantity',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        color: AppColors.navy,
-                                        fontWeight: FontWeight.w800,
-                                        fontSize: 12.5,
-                                      ),
-                                    ),
-                                  ),
-                                  Expanded(
-                                    flex: 3,
-                                    child: Text(
-                                      'Unit Price',
-                                      textAlign: TextAlign.end,
-                                      style: TextStyle(
-                                        color: AppColors.navy,
-                                        fontWeight: FontWeight.w800,
-                                        fontSize: 12.5,
-                                      ),
-                                    ),
-                                  ),
-                                  SizedBox(width: 36),
-                                ],
-                              ),
-                            ),
-                            cartAsync.when(
-                              data: (items) {
-                                if (items.isEmpty) {
-                                  return Padding(
-                                    padding: const EdgeInsets.all(24),
-                                    child: Text(strings.noItems),
-                                  );
-                                }
-                                return Column(
-                                  children: [
-                                    for (var i = 0; i < items.length; i++) ...[
-                                      InvoiceLineRow(
-                                        index: i + 1,
-                                        item: items[i],
-                                        currency: paymentPageCurrency,
-                                      ),
-                                      if (i < items.length - 1)
-                                        const Divider(
-                                          height: 1,
-                                          color: AppColors.border,
-                                        ),
-                                    ],
-                                  ],
-                                );
-                              },
-                              loading: () => const Padding(
-                                padding: EdgeInsets.all(16),
-                                child: CircularProgressIndicator(),
-                              ),
-                              error: (e, _) => ListTile(title: Text('$e')),
-                            ),
-                          ],
-                        ),
+                  ],
+                ),
+              ],
+              if (session.tableNumber != null)
+                Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: Center(
+                    child: Text(
+                      'T${session.tableNumber}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
                       ),
-                    ],
+                    ),
                   ),
                 ),
-                BillSummaryCard(
+            ],
+          ),
+          body: SafeArea(
+            bottom: false,
+            child: Builder(
+              builder: (context) {
+                final invoice = buildInvoicePane(
+                  showCustomer: showCustomer,
+                  strings: strings,
+                  cartAsync: cartAsync,
+                );
+                final checkoutPanel = buildCheckoutPanel(
                   summary: summary,
                   checkout: checkout,
-                  currency: paymentPageCurrency,
-                  discountController: paymentPageDiscountController,
-                  packingController: paymentPagePackingController,
                   payable: payable,
-                  expanded: billSummaryExpanded,
-                  onToggleExpanded: () {
-                    setState(() => billSummaryExpanded = !billSummaryExpanded);
-                  },
-                  onDiscountChanged: (value) {
-                    final d = double.tryParse(value) ?? 0;
-                    final n = ref.read(
-                      paymentCheckoutControllerProvider.notifier,
-                    );
-                    n.setDiscount(
-                      d,
-                      type: checkout.discountType,
-                      subtotal: summary.subtotal,
-                    );
-                    final clamped = ref
-                        .read(paymentCheckoutControllerProvider)
-                        .discount;
-                    if ((clamped - d).abs() > 0.001) {
-                      final text = clamped == clamped.roundToDouble()
-                          ? clamped.toStringAsFixed(0)
-                          : clamped.toStringAsFixed(2);
-                      paymentPageDiscountController.value = TextEditingValue(
-                        text: text,
-                        selection: TextSelection.collapsed(offset: text.length),
-                      );
-                    }
-                    n.selectMode(
-                      checkout.mode,
-                      paymentPagePayable(
-                        summary,
-                        ref.read(paymentCheckoutControllerProvider),
+                  sidePanel: showSideCheckout,
+                );
+
+                if (showSideCheckout) {
+                  return Row(
+                    children: [
+                      Expanded(
+                        flex: AppBreakpoints.posCatalogFlex,
+                        child: invoice,
                       ),
-                    );
-                    syncControllers();
-                  },
-                  onDiscountTypeChanged: (type) {
-                    final d =
-                        double.tryParse(paymentPageDiscountController.text) ??
-                        0;
-                    final n = ref.read(
-                      paymentCheckoutControllerProvider.notifier,
-                    );
-                    n.setDiscount(d, type: type, subtotal: summary.subtotal);
-                    final clamped = ref
-                        .read(paymentCheckoutControllerProvider)
-                        .discount;
-                    if ((clamped - d).abs() > 0.001 &&
-                        paymentPageDiscountController.text.isNotEmpty) {
-                      final text = clamped == clamped.roundToDouble()
-                          ? clamped.toStringAsFixed(0)
-                          : clamped.toStringAsFixed(2);
-                      paymentPageDiscountController.value = TextEditingValue(
-                        text: text,
-                        selection: TextSelection.collapsed(offset: text.length),
-                      );
-                    }
-                    n.selectMode(
-                      checkout.mode,
-                      paymentPagePayable(
-                        summary,
-                        ref.read(paymentCheckoutControllerProvider),
+                      Expanded(
+                        flex: AppBreakpoints.posCartFlex,
+                        child: checkoutPanel,
                       ),
-                    );
-                    syncControllers();
-                    setState(() {});
-                  },
-                  onPackingChanged: (value) {
-                    final p = double.tryParse(value) ?? 0;
-                    final n = ref.read(
-                      paymentCheckoutControllerProvider.notifier,
-                    );
-                    n.setPacking(p, type: 'Amount');
-                    n.selectMode(
-                      checkout.mode,
-                      paymentPagePayable(
-                        summary,
-                        ref.read(paymentCheckoutControllerProvider),
-                      ),
-                    );
-                    syncControllers();
-                  },
+                    ],
+                  );
+                }
+
+                if (persistentCheckout) {
+                  final invoiceFlex = context.isShortHeight ? 12 : 11;
+                  final checkoutFlex = context.isShortHeight ? 8 : 9;
+                  return Column(
+                    children: [
+                      Expanded(flex: invoiceFlex, child: invoice),
+                      Expanded(flex: checkoutFlex, child: checkoutPanel),
+                    ],
+                  );
+                }
+
+                return invoice;
+              },
+            ),
+          ),
+          bottomNavigationBar: usePhoneFooter
+              ? buildPhoneCheckoutBar(
+                  summary: summary,
+                  checkout: checkout,
+                  payable: payable,
+                )
+              : null,
+        );
+      },
+    );
+  }
+
+  Widget buildInvoicePane({
+    required bool showCustomer,
+    required AppStrings strings,
+    required AsyncValue<List<CartItem>> cartAsync,
+  }) {
+    final pad = AppBreakpoints.pagePaddingFor(context.widthClass);
+    return ListView(
+      padding: EdgeInsets.fromLTRB(
+        pad,
+        context.isShortHeight ? 6 : 12,
+        pad,
+        24,
+      ),
+      children: [
+        if (showCustomer) ...[
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  strings.customer,
+                  style: const TextStyle(fontWeight: FontWeight.w800),
                 ),
-                Material(
-                  color: AppColors.primaryBright,
-                  elevation: 12,
-                  child: SafeArea(
-                    top: false,
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-                      child: SizedBox(
-                        width: double.infinity,
-                        height: 54,
-                        child: FilledButton.icon(
-                          onPressed: summary.isEmpty || checkout.busy
-                              ? null
-                              : openPrintBillFlow,
-                          style: FilledButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: AppColors.primary,
-                            disabledBackgroundColor: Colors.white.withValues(
-                              alpha: 0.7,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                          ),
-                          icon: checkout.busy
-                              ? const SizedBox(
-                                  width: 22,
-                                  height: 22,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2.5,
-                                  ),
-                                )
-                              : const Icon(Icons.print_rounded, size: 24),
-                          label: Text(
-                            checkout.busy ? 'Printing…' : 'Print Bill',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ),
-                      ),
+                const SizedBox(height: 12),
+                ResponsiveFormColumns(
+                  maxColumns: 2,
+                  children: [
+                    AppTextField(
+                      controller: customerNameController,
+                      label: strings.customerName,
+                      textCapitalization: TextCapitalization.words,
+                      onChanged: (_) => persistCustomer(),
                     ),
-                  ),
+                    AppTextField(
+                      controller: customerPhoneController,
+                      label: strings.customerMobile,
+                      keyboardType: TextInputType.phone,
+                      onChanged: (_) => persistCustomer(),
+                    ),
+                    AppTextField(
+                      controller: customerEmailController,
+                      label: strings.customerEmail,
+                      keyboardType: TextInputType.emailAddress,
+                      onChanged: (_) => persistCustomer(),
+                    ),
+                    AppTextField(
+                      controller: customerAddressController,
+                      label: strings.customerAddress,
+                      textCapitalization: TextCapitalization.sentences,
+                      maxLines: 2,
+                      minLines: 2,
+                      onChanged: (_) => persistCustomer(),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
+          const SizedBox(height: 12),
+        ],
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final narrow = constraints.maxWidth < 320;
+            return Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.border),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.navy.withValues(alpha: 0.04),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                children: [
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: narrow ? 8 : 10,
+                      vertical: context.isShortHeight ? 8 : 11,
+                    ),
+                    color: AppColors.primarySoft,
+                    child: Row(
+                      children: [
+                        const SizedBox(
+                          width: 24,
+                          child: Text(
+                            '#',
+                            style: TextStyle(
+                              color: AppColors.navy,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 12.5,
+                            ),
+                          ),
+                        ),
+                        const Expanded(
+                          flex: 5,
+                          child: Text(
+                            'Product Name',
+                            style: TextStyle(
+                              color: AppColors.navy,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 12.5,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          flex: narrow ? 3 : 4,
+                          child: const Text(
+                            'Quantity',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: AppColors.navy,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 12.5,
+                            ),
+                          ),
+                        ),
+                        if (!narrow)
+                          const Expanded(
+                            flex: 3,
+                            child: Text(
+                              'Unit Price',
+                              textAlign: TextAlign.end,
+                              style: TextStyle(
+                                color: AppColors.navy,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 12.5,
+                              ),
+                            ),
+                          ),
+                        const SizedBox(width: 36),
+                      ],
+                    ),
+                  ),
+                  cartAsync.when(
+                    data: (items) {
+                      if (items.isEmpty) {
+                        return Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Text(strings.noItems),
+                        );
+                      }
+                      return Column(
+                        children: [
+                          for (var i = 0; i < items.length; i++) ...[
+                            InvoiceLineRow(
+                              index: i + 1,
+                              item: items[i],
+                              currency: paymentPageCurrency,
+                              showUnitPrice: !narrow,
+                            ),
+                            if (i < items.length - 1)
+                              const Divider(
+                                height: 1,
+                                color: AppColors.border,
+                              ),
+                          ],
+                        ],
+                      );
+                    },
+                    loading: () => const Padding(
+                      padding: EdgeInsets.all(16),
+                      child: CircularProgressIndicator(),
+                    ),
+                    error: (e, _) => ListTile(title: Text('$e')),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget buildBillSummaryCard({
+    required CartSummary summary,
+    required PaymentCheckoutState checkout,
+    required double payable,
+  }) {
+    return BillSummaryCard(
+      summary: summary,
+      checkout: checkout,
+      currency: paymentPageCurrency,
+      discountController: paymentPageDiscountController,
+      packingController: paymentPagePackingController,
+      payable: payable,
+      expanded: billSummaryExpanded,
+      onToggleExpanded: () {
+        setState(() => billSummaryExpanded = !billSummaryExpanded);
+      },
+      onDiscountChanged: (value) {
+        final d = double.tryParse(value) ?? 0;
+        final n = ref.read(paymentCheckoutControllerProvider.notifier);
+        n.setDiscount(
+          d,
+          type: checkout.discountType,
+          subtotal: summary.subtotal,
+        );
+        final clamped = ref.read(paymentCheckoutControllerProvider).discount;
+        if ((clamped - d).abs() > 0.001) {
+          final text = clamped == clamped.roundToDouble()
+              ? clamped.toStringAsFixed(0)
+              : clamped.toStringAsFixed(2);
+          paymentPageDiscountController.value = TextEditingValue(
+            text: text,
+            selection: TextSelection.collapsed(offset: text.length),
+          );
+        }
+        n.selectMode(
+          checkout.mode,
+          paymentPagePayable(
+            summary,
+            ref.read(paymentCheckoutControllerProvider),
+          ),
+        );
+        syncControllers();
+      },
+      onDiscountTypeChanged: (type) {
+        final d = double.tryParse(paymentPageDiscountController.text) ?? 0;
+        final n = ref.read(paymentCheckoutControllerProvider.notifier);
+        n.setDiscount(d, type: type, subtotal: summary.subtotal);
+        final clamped = ref.read(paymentCheckoutControllerProvider).discount;
+        if ((clamped - d).abs() > 0.001 &&
+            paymentPageDiscountController.text.isNotEmpty) {
+          final text = clamped == clamped.roundToDouble()
+              ? clamped.toStringAsFixed(0)
+              : clamped.toStringAsFixed(2);
+          paymentPageDiscountController.value = TextEditingValue(
+            text: text,
+            selection: TextSelection.collapsed(offset: text.length),
+          );
+        }
+        n.selectMode(
+          checkout.mode,
+          paymentPagePayable(
+            summary,
+            ref.read(paymentCheckoutControllerProvider),
+          ),
+        );
+        syncControllers();
+        setState(() {});
+      },
+      onPackingChanged: (value) {
+        final p = double.tryParse(value) ?? 0;
+        final n = ref.read(paymentCheckoutControllerProvider.notifier);
+        n.setPacking(p, type: 'Amount');
+        n.selectMode(
+          checkout.mode,
+          paymentPagePayable(
+            summary,
+            ref.read(paymentCheckoutControllerProvider),
+          ),
+        );
+        syncControllers();
+      },
+    );
+  }
+
+  Widget buildPrintBillBar({
+    required CartSummary summary,
+    required PaymentCheckoutState checkout,
+    bool includeSafeArea = true,
+  }) {
+    final bar = Padding(
+      padding: EdgeInsets.fromLTRB(
+        14,
+        context.isShortHeight ? 8 : 12,
+        14,
+        context.isShortHeight ? 8 : 12,
+      ),
+      child: SizedBox(
+        width: double.infinity,
+        height: context.isShortHeight ? 48 : 54,
+        child: FilledButton.icon(
+          onPressed: summary.isEmpty || checkout.busy ? null : openPrintBillFlow,
+          style: FilledButton.styleFrom(
+            backgroundColor: Colors.white,
+            foregroundColor: AppColors.primary,
+            disabledBackgroundColor: Colors.white.withValues(alpha: 0.7),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+          icon: checkout.busy
+              ? const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(strokeWidth: 2.5),
+                )
+              : const Icon(Icons.print_rounded, size: 24),
+          label: Text(
+            checkout.busy ? 'Printing…' : 'Print Bill',
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 16,
+            ),
+          ),
         ),
       ),
+    );
+
+    return Material(
+      color: AppColors.primaryBright,
+      elevation: 12,
+      child: includeSafeArea ? SafeArea(top: false, child: bar) : bar,
+    );
+  }
+
+  /* Tablet / web: summary + Print like POS cart pane (fills column). */
+  Widget buildCheckoutPanel({
+    required CartSummary summary,
+    required PaymentCheckoutState checkout,
+    required double payable,
+    required bool sidePanel,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: sidePanel
+            ? Border(
+                left: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
+              )
+            : Border(
+                top: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
+              ),
+      ),
+      child: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              child: buildBillSummaryCard(
+                summary: summary,
+                checkout: checkout,
+                payable: payable,
+              ),
+            ),
+          ),
+          buildPrintBillBar(
+            summary: summary,
+            checkout: checkout,
+            includeSafeArea: true,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /* Phone portrait: sticky footer like POS CartFooter. */
+  Widget buildPhoneCheckoutBar({
+    required CartSummary summary,
+    required PaymentCheckoutState checkout,
+    required double payable,
+  }) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(context).height *
+                (context.isShortHeight ? 0.42 : 0.5),
+          ),
+          child: SingleChildScrollView(
+            child: buildBillSummaryCard(
+              summary: summary,
+              checkout: checkout,
+              payable: payable,
+            ),
+          ),
+        ),
+        buildPrintBillBar(summary: summary, checkout: checkout),
+      ],
     );
   }
 }
@@ -905,11 +1054,13 @@ class InvoiceLineRow extends ConsumerWidget {
     required this.index,
     required this.item,
     required this.currency,
+    this.showUnitPrice = true,
   });
 
   final int index;
   final CartItem item;
   final NumberFormat currency;
+  final bool showUnitPrice;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -942,7 +1093,7 @@ class InvoiceLineRow extends ConsumerWidget {
             ),
           ),
           Expanded(
-            flex: 4,
+            flex: showUnitPrice ? 4 : 3,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -980,21 +1131,22 @@ class InvoiceLineRow extends ConsumerWidget {
               ],
             ),
           ),
-          Expanded(
-            flex: 3,
-            child: InkWell(
-              onTap: () => editCartLineDialog(context, ref, item),
-              child: Text(
-                currency.format(item.unitPrice),
-                textAlign: TextAlign.end,
-                style: const TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.navy,
+          if (showUnitPrice)
+            Expanded(
+              flex: 3,
+              child: InkWell(
+                onTap: () => editCartLineDialog(context, ref, item),
+                child: Text(
+                  currency.format(item.unitPrice),
+                  textAlign: TextAlign.end,
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.navy,
+                  ),
                 ),
               ),
             ),
-          ),
           IconButton(
             tooltip: 'Remove item',
             visualDensity: VisualDensity.compact,

@@ -44,7 +44,7 @@
 
     <application
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/launcher_icon"
         android:label="Billingwala">
         <activity
             android:name=".MainActivity"

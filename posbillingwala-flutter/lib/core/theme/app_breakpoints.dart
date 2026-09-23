@@ -1,24 +1,43 @@
 import 'package:flutter/widgets.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 
-/* Width classes for phone → tablet → desktop/web (see POS_UPGRADE_PLAN §4.3). */
+/*
+ * Responsive width classes (logical px / dp):
+ *
+ * | Device / Layout     | Width        |
+ * |---------------------|-------------:|
+ * | Small Mobile        |       < 360  |
+ * | Mobile              |   360 – 599  |
+ * | Tablet              |   600 – 899  |
+ * | Large Tablet        |  900 – 1199  |
+ * | Desktop             | 1200 – 1599  |
+ * | Large Desktop / Web |     ≥ 1600  |
+ *
+ * Landscape is an additional axis on Mobile / Tablet / Large Tablet.
+ */
 enum AppWidthClass {
-  /* Phone portrait — typically &lt; 600 */
-  compact,
+  /* < 360 — small Android phones */
+  smallMobile,
 
-  /* Phone landscape / small tablet — ≥ 600 */
-  medium,
+  /* 360–599 — phone */
+  mobile,
 
-  /* Tablet / web POS (side cart) — ≥ 1000 */
-  expanded,
+  /* 600–899 — 7–8" tablet */
+  tablet,
 
-  /* Wide web dashboard — ≥ 1280 */
-  large,
+  /* 900–1199 — 10–12" tablet */
+  largeTablet,
+
+  /* 1200–1599 — laptop / desktop */
+  desktop,
+
+  /* ≥ 1600 — large monitor / web */
+  largeDesktop,
 }
 
-/* Height classes — used with width for landscape / short viewports. */
+/* Height band — used with width for landscape / short viewports. */
 enum AppHeightClass {
-  /* Phone landscape / split-screen — typically &lt; 500 */
+  /* Phone landscape / split-screen — typically < 500 */
   short,
 
   /* Typical phone portrait / small tablet */
@@ -28,18 +47,59 @@ enum AppHeightClass {
   tall,
 }
 
-/* Single source of truth for layout breakpoints — no magic numbers in pages. */
+/* Orientation axis from the responsive tree (Mobile/Tablet/Large Tablet). */
+enum AppOrientationClass {
+  portrait,
+  landscape,
+}
+
+/*
+ * Combined layout slot from the responsive hierarchy:
+ * Mobile → Tablet → Large Tablet → Desktop → Web (laptop/desktop/large monitor).
+ */
+enum AppLayoutSlot {
+  mobilePortrait,
+  mobileLandscape,
+  tabletPortrait,
+  tabletLandscape,
+  largeTabletPortrait,
+  largeTabletLandscape,
+  desktop,
+  webLaptop,
+  webDesktop,
+  webLargeMonitor,
+}
+
+/* Single source of truth for layout breakpoints. */
 abstract final class AppBreakpoints {
-  static const double compactMax = 600;
-  static const double mediumMin = 600;
-  static const double expandedMin = 1000;
-  static const double largeMin = 1280;
+  /* Width thresholds from the product responsive table. */
+  static const double smallMobileMax = 360;
+  static const double mobileMin = 360;
+  static const double mobileMax = 600;
+  static const double tabletMin = 600;
+  static const double tabletMax = 900;
+  static const double largeTabletMin = 900;
+  static const double largeTabletMax = 1200;
+  static const double desktopMin = 1200;
+  static const double desktopMax = 1600;
+  static const double largeDesktopMin = 1600;
+
+  /* Legacy aliases used by older call sites / comments. */
+  static const double compactMax = mobileMax;
+  static const double mediumMin = tabletMin;
+  static const double expandedMin = largeTabletMin;
+  static const double largeMin = desktopMin;
+
+  /* Side cart: tablet+ or mobile landscape with enough width. */
+  static const double sideCartMin = 600;
+
+  /* Two-column forms / splits start at tablet (or mobile landscape wide enough). */
+  static const double wideWindowMin = 600;
 
   static const double shortHeightMax = 500;
   static const double tallHeightMin = 800;
 
-  /* Default min item widths for dynamic column math (screens may override). */
-  static const double minProductCardWidth = 148;
+  static const double minProductCardWidth = 150;
   static const double minTableCardWidth = 140;
   static const double minModuleTileWidth = 150;
   static const double minHubCardWidth = 260;
@@ -47,11 +107,16 @@ abstract final class AppBreakpoints {
   static const double minComboCardWidth = 280;
   static const double minKpiCardWidth = 160;
 
+  static const int gridMinColumns = 2;
+  static const int gridMaxColumns = 6;
+
   static AppWidthClass ofWidth(double width) {
-    if (width >= largeMin) return AppWidthClass.large;
-    if (width >= expandedMin) return AppWidthClass.expanded;
-    if (width >= mediumMin) return AppWidthClass.medium;
-    return AppWidthClass.compact;
+    if (width >= largeDesktopMin) return AppWidthClass.largeDesktop;
+    if (width >= desktopMin) return AppWidthClass.desktop;
+    if (width >= largeTabletMin) return AppWidthClass.largeTablet;
+    if (width >= tabletMin) return AppWidthClass.tablet;
+    if (width >= mobileMin) return AppWidthClass.mobile;
+    return AppWidthClass.smallMobile;
   }
 
   static AppHeightClass ofHeight(double height) {
@@ -59,6 +124,18 @@ abstract final class AppBreakpoints {
     if (height >= tallHeightMin) return AppHeightClass.tall;
     return AppHeightClass.regular;
   }
+
+  static AppOrientationClass orientationOf(BuildContext context) {
+    final size = MediaQuery.sizeOf(context);
+    return size.width > size.height
+        ? AppOrientationClass.landscape
+        : AppOrientationClass.portrait;
+  }
+
+  static AppOrientationClass orientationOfSize(Size size) =>
+      size.width > size.height
+      ? AppOrientationClass.landscape
+      : AppOrientationClass.portrait;
 
   static AppWidthClass of(BuildContext context) =>
       ofWidth(MediaQuery.sizeOf(context).width);
@@ -69,7 +146,88 @@ abstract final class AppBreakpoints {
   static AppWidthClass ofConstraints(BoxConstraints constraints) =>
       ofWidth(constraints.maxWidth);
 
-  /* Columns from available width + per-screen min item width. */
+  /* True for smallMobile or mobile (phone family). */
+  static bool isMobileClass(AppWidthClass w) =>
+      w == AppWidthClass.smallMobile || w == AppWidthClass.mobile;
+
+  /* True for tablet or largeTablet. */
+  static bool isTabletClass(AppWidthClass w) =>
+      w == AppWidthClass.tablet || w == AppWidthClass.largeTablet;
+
+  /* True for desktop or largeDesktop. */
+  static bool isDesktopClass(AppWidthClass w) =>
+      w.index >= AppWidthClass.desktop.index;
+
+  static bool isTablet(BuildContext context) =>
+      isTabletClass(of(context)) ||
+      MediaQuery.sizeOf(context).shortestSide >= tabletMin;
+
+  static bool isLargeTabletDevice(BuildContext context) =>
+      of(context).index >= AppWidthClass.largeTablet.index ||
+      MediaQuery.sizeOf(context).shortestSide >= largeTabletMin;
+
+  /*
+   * Wide multi-column / split layouts:
+   * tablet+ always, or mobile landscape with width ≥ wideWindowMin.
+   */
+  static bool isWideLayout(BuildContext context) {
+    final size = MediaQuery.sizeOf(context);
+    final w = ofWidth(size.width);
+    if (!isMobileClass(w)) return true;
+    return orientationOfSize(size) == AppOrientationClass.landscape &&
+        size.width >= wideWindowMin;
+  }
+
+  static bool isWideLayoutWidth(
+    double width, {
+    double? height,
+    AppOrientationClass? orientation,
+  }) {
+    final w = ofWidth(width);
+    if (!isMobileClass(w)) return true;
+    final land =
+        orientation == AppOrientationClass.landscape ||
+        (height != null && width > height);
+    return land && width >= wideWindowMin;
+  }
+
+  static bool useSideCartPanel(double availableWidth) =>
+      availableWidth >= sideCartMin;
+
+  /* Map width + orientation (+ web) onto the responsive tree slot. */
+  static AppLayoutSlot layoutSlotOf(
+    BuildContext context, {
+    double? availableWidth,
+  }) {
+    final size = MediaQuery.sizeOf(context);
+    final width = availableWidth ?? size.width;
+    final w = ofWidth(width);
+    final orient = orientationOfSize(
+      availableWidth != null ? Size(width, size.height) : size,
+    );
+    final web = AppPlatform.useDesktopShell;
+
+    return switch (w) {
+      AppWidthClass.smallMobile || AppWidthClass.mobile =>
+        orient == AppOrientationClass.landscape
+            ? AppLayoutSlot.mobileLandscape
+            : AppLayoutSlot.mobilePortrait,
+      AppWidthClass.tablet => orient == AppOrientationClass.landscape
+          ? AppLayoutSlot.tabletLandscape
+          : AppLayoutSlot.tabletPortrait,
+      AppWidthClass.largeTablet => orient == AppOrientationClass.landscape
+          ? AppLayoutSlot.largeTabletLandscape
+          : AppLayoutSlot.largeTabletPortrait,
+      AppWidthClass.desktop =>
+        web ? AppLayoutSlot.webLaptop : AppLayoutSlot.desktop,
+      AppWidthClass.largeDesktop => web
+          ? (width >= 1920
+                ? AppLayoutSlot.webLargeMonitor
+                : AppLayoutSlot.webDesktop)
+          : AppLayoutSlot.desktop,
+    };
+  }
+
   static int columnsForWidth(
     double availableWidth, {
     required double minItemWidth,
@@ -82,31 +240,49 @@ abstract final class AppBreakpoints {
     return raw.clamp(minColumns, maxColumns);
   }
 
-  /* POS / Tables / Takeaway: persistent side cart. */
-  /* Web: always-on cart (side-by-side except compact, which stacks). */
-  /* Native: side cart from expanded tablet, OR medium+short (phone landscape). */
+  /*
+   * POS side cart:
+   * - Tablet / Large Tablet / Desktop / Web: always
+   * - Mobile landscape: when available width ≥ sideCartMin
+   * - Mobile portrait: stacked / footer
+   */
   static bool isPosSideCart(
     AppWidthClass w, {
     AppHeightClass height = AppHeightClass.regular,
+    AppOrientationClass orientation = AppOrientationClass.portrait,
+    double? availableWidth,
   }) {
-    if (AppPlatform.useDesktopShell) {
-      return w != AppWidthClass.compact;
+    if (availableWidth != null && availableWidth.isFinite) {
+      final classFromWidth = ofWidth(availableWidth);
+      if (!isMobileClass(classFromWidth)) {
+        return useSideCartPanel(availableWidth);
+      }
+      final land =
+          orientation == AppOrientationClass.landscape ||
+          height == AppHeightClass.short;
+      return land && useSideCartPanel(availableWidth);
     }
-    if (w.index >= AppWidthClass.expanded.index) return true;
-    /* Phone landscape: use width for products + cart instead of stretching portrait. */
-    if (w == AppWidthClass.medium && height == AppHeightClass.short) {
-      return true;
-    }
-    return false;
+    if (!isMobileClass(w)) return true;
+    return orientation == AppOrientationClass.landscape ||
+        height == AppHeightClass.short;
   }
 
   static bool isPosPersistentCart(
     AppWidthClass w, {
     AppHeightClass height = AppHeightClass.regular,
+    AppOrientationClass orientation = AppOrientationClass.portrait,
+    double? availableWidth,
   }) {
-    if (isPosSideCart(w, height: height)) return true;
-    return AppPlatform.useDesktopShell ||
-        w.index >= AppWidthClass.expanded.index;
+    if (isPosSideCart(
+      w,
+      height: height,
+      orientation: orientation,
+      availableWidth: availableWidth,
+    )) {
+      return true;
+    }
+    /* Web mobile: stacked catalog + cart instead of phone footer-only. */
+    return AppPlatform.useDesktopShell;
   }
 
   static double posSideCartWidth(
@@ -115,28 +291,18 @@ abstract final class AppBreakpoints {
     double? availableWidth,
   }) {
     if (availableWidth != null && availableWidth.isFinite) {
-      /* Keep cart usable but never steal more than ~42% on narrow landscape. */
-      final capped = (availableWidth * 0.42).clamp(260.0, 420.0);
-      if (height == AppHeightClass.short &&
-          w.index <= AppWidthClass.medium.index) {
-        return capped.toDouble();
-      }
+      final capped = (availableWidth * 0.40).clamp(260.0, 480.0);
+      return capped.toDouble();
     }
-    if (AppPlatform.useDesktopShell) {
-      return switch (w) {
-        AppWidthClass.compact => 280,
-        AppWidthClass.medium => 320,
-        AppWidthClass.expanded => 360,
-        AppWidthClass.large => 400,
-      };
-    }
-    if (height == AppHeightClass.short && w == AppWidthClass.medium) {
-      return 280;
-    }
-    return w == AppWidthClass.large ? 400 : 360;
+    return switch (w) {
+      AppWidthClass.smallMobile || AppWidthClass.mobile => 280,
+      AppWidthClass.tablet => 320,
+      AppWidthClass.largeTablet => 360,
+      AppWidthClass.desktop => 400,
+      AppWidthClass.largeDesktop => 440,
+    };
   }
 
-  /* Compact vertical rhythm when height is limited (landscape). */
   static double densePaddingFor(AppHeightClass h) => switch (h) {
     AppHeightClass.short => 6,
     AppHeightClass.regular => 10,
@@ -147,60 +313,66 @@ abstract final class AppBreakpoints {
     AppWidthClass w, {
     AppHeightClass height = AppHeightClass.regular,
   }) {
-    if (height == AppHeightClass.short) return 72;
+    if (height == AppHeightClass.short) return 82;
     return switch (w) {
-      AppWidthClass.compact => 86,
-      AppWidthClass.medium => 88,
-      AppWidthClass.expanded || AppWidthClass.large => 90,
+      AppWidthClass.smallMobile || AppWidthClass.mobile => 92,
+      AppWidthClass.tablet => 94,
+      AppWidthClass.largeTablet ||
+      AppWidthClass.desktop ||
+      AppWidthClass.largeDesktop =>
+        96,
     };
   }
 
-  /* Home / hub module grids: 2 → 3 → 4 (prefer [columnsForWidth] when possible). */
   static int moduleColumnsFor(AppWidthClass w) => switch (w) {
-    AppWidthClass.compact => 2,
-    AppWidthClass.medium => 3,
-    AppWidthClass.expanded => 4,
-    AppWidthClass.large => 4,
+    AppWidthClass.smallMobile => 2,
+    AppWidthClass.mobile => 2,
+    AppWidthClass.tablet => 3,
+    AppWidthClass.largeTablet => 4,
+    AppWidthClass.desktop => 4,
+    AppWidthClass.largeDesktop => 5,
   };
 
-  /* POS product catalog: class fallback; prefer width-based columns. */
   static int productColumnsFor(AppWidthClass w) => switch (w) {
-    AppWidthClass.compact => 2,
-    AppWidthClass.medium => 3,
-    AppWidthClass.expanded => 4,
-    AppWidthClass.large => 5,
+    AppWidthClass.smallMobile => 2,
+    AppWidthClass.mobile => 2,
+    AppWidthClass.tablet => 3,
+    AppWidthClass.largeTablet => 4,
+    AppWidthClass.desktop => 5,
+    AppWidthClass.largeDesktop => 6,
   };
 
   static int productColumnsForWidth(double availableWidth) => columnsForWidth(
     availableWidth,
     minItemWidth: minProductCardWidth,
-    minColumns: 2,
-    maxColumns: 6,
+    minColumns: gridMinColumns,
+    maxColumns: gridMaxColumns,
     spacing: 6,
   );
 
-  /* Tables floor grid. */
   static int tableColumnsFor(AppWidthClass w) => switch (w) {
-    AppWidthClass.compact => 2,
-    AppWidthClass.medium => 3,
-    AppWidthClass.expanded => 4,
-    AppWidthClass.large => 5,
+    AppWidthClass.smallMobile => 2,
+    AppWidthClass.mobile => 2,
+    AppWidthClass.tablet => 3,
+    AppWidthClass.largeTablet => 4,
+    AppWidthClass.desktop => 5,
+    AppWidthClass.largeDesktop => 6,
   };
 
   static int tableColumnsForWidth(double availableWidth) => columnsForWidth(
     availableWidth,
     minItemWidth: minTableCardWidth,
-    minColumns: 2,
-    maxColumns: 6,
+    minColumns: gridMinColumns,
+    maxColumns: gridMaxColumns,
     spacing: 12,
   );
 
-  /* Reports / masters card grids: 1 → 2 → 3. */
   static int cardColumnsFor(AppWidthClass w) => switch (w) {
-    AppWidthClass.compact => 1,
-    AppWidthClass.medium => 2,
-    AppWidthClass.expanded => 2,
-    AppWidthClass.large => 3,
+    AppWidthClass.smallMobile || AppWidthClass.mobile => 1,
+    AppWidthClass.tablet => 2,
+    AppWidthClass.largeTablet => 2,
+    AppWidthClass.desktop => 3,
+    AppWidthClass.largeDesktop => 3,
   };
 
   static int cardColumnsForWidth(double availableWidth) => columnsForWidth(
@@ -211,7 +383,6 @@ abstract final class AppBreakpoints {
     spacing: 12,
   );
 
-  /* Mess hub menu tiles. */
   static int messMenuColumnsForWidth(double availableWidth) => columnsForWidth(
     availableWidth,
     minItemWidth: minMessMenuWidth,
@@ -220,44 +391,59 @@ abstract final class AppBreakpoints {
     spacing: 8,
   );
 
-  /* Settings groups: single column until large, then 2. */
   static int settingsColumnsFor(AppWidthClass w) =>
-      w == AppWidthClass.large ? 2 : 1;
+      w.index >= AppWidthClass.tablet.index ? 2 : 1;
 
-  /* Readable content max width by class (auth / settings forms). */
   static double contentMaxWidthFor(AppWidthClass w) => switch (w) {
-    AppWidthClass.compact => 560,
-    AppWidthClass.medium => 720,
-    AppWidthClass.expanded => 960,
-    AppWidthClass.large => 1200,
+    AppWidthClass.smallMobile || AppWidthClass.mobile => 560,
+    AppWidthClass.tablet => 720,
+    AppWidthClass.largeTablet => 900,
+    AppWidthClass.desktop => 1000,
+    AppWidthClass.largeDesktop => 1100,
   };
 
-  /* Hub / dashboard pages can stretch wider than forms. */
   static double dashboardMaxWidthFor(AppWidthClass w) => switch (w) {
-    AppWidthClass.compact => 560,
-    AppWidthClass.medium => 900,
-    AppWidthClass.expanded => 1100,
-    AppWidthClass.large => 1400,
+    AppWidthClass.smallMobile || AppWidthClass.mobile => 560,
+    AppWidthClass.tablet => 900,
+    AppWidthClass.largeTablet => 1100,
+    AppWidthClass.desktop => 1400,
+    AppWidthClass.largeDesktop => 1600,
   };
 
-  /* Horizontal page padding scales up slightly on wide screens. */
   static double pagePaddingFor(AppWidthClass w) => switch (w) {
-    AppWidthClass.compact => 16,
-    AppWidthClass.medium => 20,
-    AppWidthClass.expanded => 24,
-    AppWidthClass.large => 28,
+    AppWidthClass.smallMobile => 12,
+    AppWidthClass.mobile => 16,
+    AppWidthClass.tablet => 20,
+    AppWidthClass.largeTablet => 24,
+    AppWidthClass.desktop => 28,
+    AppWidthClass.largeDesktop => 32,
   };
 
-  /* Form field columns: 1 on phone, 2 on tablet+, optional 3 on large. */
-  static int formColumnsFor(AppWidthClass w, {int maxColumns = 2}) {
-    final cols = switch (w) {
-      AppWidthClass.compact => 1,
-      AppWidthClass.medium => 2,
-      AppWidthClass.expanded => 2,
-      AppWidthClass.large => maxColumns.clamp(2, 3),
-    };
+  static int formColumnsFor(
+    AppWidthClass w, {
+    int maxColumns = 2,
+    double? availableWidth,
+    double? availableHeight,
+  }) {
+    final wide = availableWidth != null
+        ? isWideLayoutWidth(availableWidth, height: availableHeight)
+        : !isMobileClass(w);
+    if (!wide) return 1;
+    final cols = w.index >= AppWidthClass.desktop.index
+        ? maxColumns.clamp(2, 3)
+        : 2;
     return cols.clamp(1, maxColumns);
   }
+
+  /* Master form/list split weights. */
+  static const int masterFormFlex = 38;
+  static const int masterListFlex = 62;
+
+  static const int aboutPrimaryFlex = 42;
+  static const int aboutSecondaryFlex = 58;
+
+  static const int posCatalogFlex = 60;
+  static const int posCartFlex = 40;
 }
 
 extension AppBreakpointsContext on BuildContext {
@@ -265,22 +451,64 @@ extension AppBreakpointsContext on BuildContext {
 
   AppHeightClass get heightClass => AppBreakpoints.heightOf(this);
 
-  bool get isCompactWidth => widthClass == AppWidthClass.compact;
+  AppOrientationClass get orientationClass =>
+      AppBreakpoints.orientationOf(this);
 
-  bool get isMediumWidth => widthClass == AppWidthClass.medium;
+  AppLayoutSlot get layoutSlot => AppBreakpoints.layoutSlotOf(this);
 
-  bool get isExpandedWidth => widthClass.index >= AppWidthClass.expanded.index;
+  /* Phone family (smallMobile + mobile). */
+  bool get isCompactWidth => AppBreakpoints.isMobileClass(widthClass);
 
-  bool get isLargeWidth => widthClass == AppWidthClass.large;
+  bool get isMobileWidth => AppBreakpoints.isMobileClass(widthClass);
+
+  bool get isSmallMobileWidth => widthClass == AppWidthClass.smallMobile;
+
+  bool get isMediumWidth => widthClass == AppWidthClass.tablet;
+
+  bool get isTabletWidth => AppBreakpoints.isTabletClass(widthClass);
+
+  bool get isLargeTabletWidth =>
+      widthClass.index >= AppWidthClass.largeTablet.index;
+
+  /* largeTablet and up — former "expanded". */
+  bool get isExpandedWidth =>
+      widthClass.index >= AppWidthClass.largeTablet.index;
+
+  bool get isDesktopWidth => AppBreakpoints.isDesktopClass(widthClass);
+
+  bool get isLargeWidth => widthClass.index >= AppWidthClass.desktop.index;
+
+  bool get isLargeDesktopWidth => widthClass == AppWidthClass.largeDesktop;
 
   bool get isShortHeight => heightClass == AppHeightClass.short;
 
   bool get isLandscapeLayout =>
-      MediaQuery.sizeOf(this).width > MediaQuery.sizeOf(this).height;
+      orientationClass == AppOrientationClass.landscape;
 
-  bool get showPosSideCart =>
-      AppBreakpoints.isPosSideCart(widthClass, height: heightClass);
+  bool get isPortraitLayout =>
+      orientationClass == AppOrientationClass.portrait;
 
-  bool get showPosPersistentCart =>
-      AppBreakpoints.isPosPersistentCart(widthClass, height: heightClass);
+  bool get isWideLayout => AppBreakpoints.isWideLayout(this);
+
+  bool get isTabletLayout => AppBreakpoints.isTablet(this);
+
+  bool get showPosSideCart {
+    final size = MediaQuery.sizeOf(this);
+    return AppBreakpoints.isPosSideCart(
+      widthClass,
+      height: heightClass,
+      orientation: orientationClass,
+      availableWidth: size.width,
+    );
+  }
+
+  bool get showPosPersistentCart {
+    final size = MediaQuery.sizeOf(this);
+    return AppBreakpoints.isPosPersistentCart(
+      widthClass,
+      height: heightClass,
+      orientation: orientationClass,
+      availableWidth: size.width,
+    );
+  }
 }

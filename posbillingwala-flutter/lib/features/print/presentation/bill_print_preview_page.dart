@@ -93,7 +93,7 @@ class BillPrintPreviewPageState extends ConsumerState<BillPrintPreviewPage> {
                       child: ConstrainedBox(
                         constraints: BoxConstraints(
                           maxWidth: AppBreakpoints.contentMaxWidthFor(
-                            AppWidthClass.compact,
+                            AppWidthClass.mobile,
                           ),
                         ),
                         child: DecoratedBox(

@@ -17,10 +17,13 @@ class AppLocaleController extends Notifier<Locale> {
 
   Future<void> hydrate() async {
     final prefs = await SharedPreferences.getInstance();
-    state = AppLanguages.localeFromCode(prefs.getString(prefsKey));
+    final code = prefs.getString(prefsKey) ?? 'en';
+    await LocaleCatalog.ensureLang(code);
+    state = AppLanguages.localeFromCode(code);
   }
 
   Future<void> setLanguage(String code) async {
+    await LocaleCatalog.ensureLang(code);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(prefsKey, code);
     state = AppLanguages.localeFromCode(code);
@@ -296,6 +299,12 @@ class AppStrings {
 
   String get login => tr('app_login');
 
+  String get loginAsStaff => tr('app_login_as_staff');
+
+  String get licenceLogin => tr('app_licence_login');
+
+  String get licenceLoginHint => tr('app_licence_login_hint');
+
   String get longPressTableHint => tr('app_long_press_table_hint');
 
   String get markBillRequested => tr('app_mark_bill_requested');
@@ -331,6 +340,28 @@ class AppStrings {
   String get nameRequired => tr('app_name_required');
 
   String get mobileRequired => tr('app_mobile_required');
+
+  String get mobileNumber => tr('app_mobile_number');
+
+  String get mobileNumberHint => tr('app_mobile_number_hint');
+
+  String get staffLogin => tr('app_staff_login');
+
+  String get staffLoginHint => tr('app_staff_login_hint');
+
+  String get staffOwnerHint => tr('app_staff_owner_hint');
+
+  String get staffNoLicenceHint => tr('app_staff_no_licence_hint');
+
+  String get appPin => tr('app_app_pin');
+
+  String get staffPinHint => tr('app_staff_pin_hint');
+
+  String get staffPinRequired => tr('app_staff_pin_required');
+
+  String get internetRequiredFooter => tr('app_internet_required_footer');
+
+  String get dataSafeTerms => tr('app_data_safe_terms');
 
   String get tokenPrintNameMobileRequired =>
       tr('app_token_print_name_mobile_required');

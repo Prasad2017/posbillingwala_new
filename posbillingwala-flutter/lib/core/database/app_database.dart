@@ -3954,6 +3954,81 @@ WHERE $where
     return row.read(count) ?? 0;
   }
 
+  /* Android gerMessInvoiceUserWiseList — coupons printed for member on a calendar day. */
+  Future<int> countMessCouponsForMemberOnDay(
+    String memberName,
+    DateTime day,
+  ) async {
+    final start = DateTime(day.year, day.month, day.day);
+    final end = start.add(const Duration(days: 1));
+    final count = countAll();
+    final row =
+        await (selectOnly(messInvoices)
+              ..addColumns([count])
+              ..where(
+                messInvoices.memberName.equals(memberName) &
+                    messInvoices.messInvoiceDate.isBiggerOrEqualValue(start) &
+                    messInvoices.messInvoiceDate.isSmallerThanValue(end),
+              ))
+            .getSingle();
+    return row.read(count) ?? 0;
+  }
+
+  Future<int> countMessTokensForMemberOnDay({
+    required String memberId,
+    required DateTime day,
+  }) async {
+    final start = DateTime(day.year, day.month, day.day);
+    final end = start.add(const Duration(days: 1));
+    final count = countAll();
+    final row =
+        await (selectOnly(messTokens)
+              ..addColumns([count])
+              ..where(
+                messTokens.memberId.equals(memberId) &
+                    messTokens.tokenDate.isBiggerOrEqualValue(start) &
+                    messTokens.tokenDate.isSmallerThanValue(end),
+              ))
+            .getSingle();
+    return row.read(count) ?? 0;
+  }
+
+  Future<int> countMessTokensForMemberMonth({
+    required String memberId,
+    required String yyyyMm,
+  }) async {
+    final parts = yyyyMm.split('-');
+    if (parts.length != 2) return 0;
+    final year = int.tryParse(parts[0]) ?? DateTime.now().year;
+    final month = int.tryParse(parts[1]) ?? DateTime.now().month;
+    final start = DateTime(year, month, 1);
+    final end = DateTime(year, month + 1, 1);
+    final count = countAll();
+    final row =
+        await (selectOnly(messTokens)
+              ..addColumns([count])
+              ..where(
+                messTokens.memberId.equals(memberId) &
+                    messTokens.tokenDate.isBiggerOrEqualValue(start) &
+                    messTokens.tokenDate.isSmallerThanValue(end),
+              ))
+            .getSingle();
+    return row.read(count) ?? 0;
+  }
+
+  Future<MessMemberPayment?> getMessPaymentForMonth({
+    required String memberId,
+    required String yyyyMm,
+  }) {
+    return (select(messMemberPayments)
+          ..where(
+            (t) => t.memberId.equals(memberId) & t.paymentDate.equals(yyyyMm),
+          )
+          ..orderBy([(t) => OrderingTerm.desc(t.createdAt)])
+          ..limit(1))
+        .getSingleOrNull();
+  }
+
   Future<List<MessInvoice>> getPendingMessInvoices({int limit = 100}) {
     return (select(messInvoices)
           ..where((t) => t.messInvoiceStatus.equals('0'))

@@ -42,7 +42,7 @@ class StaffLoginPageState extends ConsumerState<StaffLoginPage> {
     final children = <Widget>[
       if (!AppPlatform.useDesktopShell) const SizedBox(height: 24),
       if (AppPlatform.useDesktopShell &&
-          context.widthClass.index < AppWidthClass.expanded.index) ...[
+          context.widthClass.index < AppWidthClass.largeTablet.index) ...[
         const Center(child: BrandLogo(width: 140)),
         const SizedBox(height: 20),
       ],

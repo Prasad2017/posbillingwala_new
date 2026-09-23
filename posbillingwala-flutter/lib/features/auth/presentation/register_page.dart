@@ -113,10 +113,10 @@ class RegisterPageState extends ConsumerState<RegisterPage> {
       child: Column(
         children: [
           if (!AppPlatform.useDesktopShell ||
-              context.widthClass.index < AppWidthClass.expanded.index)
+              context.widthClass.index < AppWidthClass.largeTablet.index)
             const BrandLogo(width: 180),
           if (!AppPlatform.useDesktopShell ||
-              context.widthClass.index < AppWidthClass.expanded.index)
+              context.widthClass.index < AppWidthClass.largeTablet.index)
             const SizedBox(height: 16),
           Align(
             alignment: AppPlatform.useDesktopShell

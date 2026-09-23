@@ -110,40 +110,50 @@ class AboutPage extends StatelessWidget {
             28,
           ),
           children: [
-            HeroCard(tagline: aboutPageTagline),
-            const SizedBox(height: 22),
-            const SectionTitle('Get in touch'),
-            const SizedBox(height: 12),
-            AppCard(
-              accentColor: AppColors.primary,
-              padding: EdgeInsets.zero,
-              child: Column(
+            /* Android TabletFormUi.applyAboutLayout — 42% brand / 58% contact. */
+            ResponsiveSplit(
+              primaryFlex: AppBreakpoints.aboutPrimaryFlex,
+              secondaryFlex: AppBreakpoints.aboutSecondaryFlex,
+              spacing: 16,
+              primary: HeroCard(tagline: aboutPageTagline),
+              secondary: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  ContactTile(
-                    iconAsset: AppAssets.svgAboutWeb,
-                    label: 'Website',
-                    value: AppConstants.websiteDisplay,
-                    onTap: () => openWebsite(context),
+                  const SectionTitle('Get in touch'),
+                  const SizedBox(height: 12),
+                  AppCard(
+                    accentColor: AppColors.primary,
+                    padding: EdgeInsets.zero,
+                    child: Column(
+                      children: [
+                        ContactTile(
+                          iconAsset: AppAssets.svgAboutWeb,
+                          label: 'Website',
+                          value: AppConstants.websiteDisplay,
+                          onTap: () => openWebsite(context),
+                        ),
+                        const Divider(height: 1, indent: 72, endIndent: 16),
+                        ContactTile(
+                          iconAsset: AppAssets.svgAboutEmail,
+                          label: 'Email',
+                          value: AppConstants.supportEmail,
+                          onTap: () => openEmail(context),
+                        ),
+                        const Divider(height: 1, indent: 72, endIndent: 16),
+                        ContactTile(
+                          iconAsset: AppAssets.svgAboutPhone,
+                          label: 'Phone',
+                          value: phone,
+                          onTap: () => openPhone(context),
+                        ),
+                      ],
+                    ),
                   ),
-                  const Divider(height: 1, indent: 72, endIndent: 16),
-                  ContactTile(
-                    iconAsset: AppAssets.svgAboutEmail,
-                    label: 'Email',
-                    value: AppConstants.supportEmail,
-                    onTap: () => openEmail(context),
-                  ),
-                  const Divider(height: 1, indent: 72, endIndent: 16),
-                  ContactTile(
-                    iconAsset: AppAssets.svgAboutPhone,
-                    label: 'Phone',
-                    value: phone,
-                    onTap: () => openPhone(context),
-                  ),
+                  const SizedBox(height: 14),
+                  const DisclaimerCard(text: disclaimer),
                 ],
               ),
             ),
-            const SizedBox(height: 14),
-            const DisclaimerCard(text: disclaimer),
             const SizedBox(height: 14),
             DeveloperCard(phone: phone, onCall: () => openPhone(context)),
             const SizedBox(height: 14),
