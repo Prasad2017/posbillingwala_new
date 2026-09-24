@@ -51,13 +51,17 @@ read -r -p "Enter choice [0-2]: " choice
 case "$choice" in
   1)
     echo ""
-    log "Starting on Chrome..."
-    exec flutter run -d chrome
+    log "Starting on Chrome (HTTPS API)..."
+    exec flutter run -d chrome \
+      --dart-define=API_BASE_URL=https://posbillingwala.com/androidApp/ \
+      --dart-define=MEDIA_BASE_URL=https://posbillingwala.com/storage/app/
     ;;
   2)
     echo ""
     log "Starting on Android..."
-    exec flutter run -d android
+    exec flutter run -d android \
+      --dart-define=API_BASE_URL=https://posbillingwala.com/androidApp/ \
+      --dart-define=MEDIA_BASE_URL=https://posbillingwala.com/storage/app/
     ;;
   0)
     echo "Cancelled."

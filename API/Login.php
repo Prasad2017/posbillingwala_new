@@ -6,7 +6,7 @@
 	require_once __DIR__ . '/pos_devices.php';
 	mysqli_query($con, 'set names utf8');
 	header('Access-Control-Allow-Origin: *');
-    header('Access-Control-Allow-Headers: Authorization, Content-Type, Accept, X-Requested-With');
+    header('Access-Control-Allow-Headers: Authorization, Content-Type, Accept, X-Requested-With, X-Pos-Staff-Id');
     header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
     header('Content-Type: application/json');
 

@@ -14,7 +14,7 @@ if (php_sapi_name() === 'cli') {
 
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-header('Access-Control-Allow-Headers: Authorization, Content-Type, Accept, X-Requested-With');
+header('Access-Control-Allow-Headers: Authorization, Content-Type, Accept, X-Requested-With, X-Pos-Staff-Id');
 
 if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(204);
