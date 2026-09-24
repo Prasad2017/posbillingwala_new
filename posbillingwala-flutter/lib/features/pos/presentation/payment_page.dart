@@ -435,7 +435,8 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
 
     if (!mounted) return;
     ref.read(paymentCheckoutControllerProvider.notifier).reset();
-    context.go('/');
+    /* Return to Fast Billing / Takeaway / Table billing for the next order. */
+    context.go(session.billingRoute);
   }
 
   @override
