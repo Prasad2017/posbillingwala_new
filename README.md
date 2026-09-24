@@ -10,6 +10,8 @@ Offline-first point-of-sale for restaurants and shops — four Android apps, a s
 | `Owner/` | Shop owner app — invoices, sales, multi-branch view, full catalog CRUD |
 | `Dealer/` | Dealer app — customer & licence registration / renew, catalog setup |
 | `Admin/` | Admin Android app — dealers, customers, licences, catalog, monitoring |
+| `posbillingwala-flutter/` | Flutter POS (Android / iOS) — mobile offline-capable client |
+| `posbillingwala-web/` | **Online-only React web POS** (browser billing; no Flutter web) |
 | `website/` | Marketing site (deploy to domain root) |
 | `admin.posbillingwala.com/` | Laravel web admin + Website CMS API |
 | `API/` | PHP REST API (POS root + `Owner/` / `Dealer/` / `Admin/`) |
@@ -44,7 +46,7 @@ Per-app docs: [WithTable/README.md](WithTable/README.md) · [Owner/README.md](Ow
 |-------|------|
 | Android | Java 17, Activities/Fragments, ViewBinding, SQLite, Retrofit, WorkManager, Firebase |
 | API | PHP REST (`API/db_connection.php`, prepared helpers, auth tokens) |
-| Web | Static marketing site (`website/`) + Laravel 9 admin (`admin.posbillingwala.com/`) |
+| Web | Static marketing site (`website/`) + Laravel 9 admin (`admin.posbillingwala.com/`) + React web POS (`posbillingwala-web/`) |
 | Database | MySQL — shared by all apps and web admin |
 
 ## App versions
@@ -86,6 +88,19 @@ Copy `API/db_local.example.php` → `API/db_local.php` locally. Firebase config 
 | `https://posbillingwala.com/` | Marketing website |
 | `https://posbillingwala.com/login` | Redirects to web admin login |
 | `https://admin.posbillingwala.com/login` | Web admin (Admin / Dealer / Customer) |
+
+## Quick start — React web POS
+
+Online-only browser POS (replaces Flutter web). Uses the same root PHP API.
+
+```bash
+cd posbillingwala-web
+cp .env.example .env
+npm install
+npm run dev
+```
+
+See [posbillingwala-web/README.md](posbillingwala-web/README.md). Deploy the `dist/` static build to e.g. `pos.posbillingwala.com`.
 
 ## Quick start — database
 

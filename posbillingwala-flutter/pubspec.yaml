@@ -51,6 +51,12 @@ dev_dependencies:
   drift_dev: ^2.35.0
   build_runner: ^2.16.1
 
+# unified_esc_pos_printer accepts 0.1.x or 1.x. Pin 0.1.2 (Flutter FFI plugin)
+# so web/Chrome builds skip the 1.x native-assets hook, which crashes the Dart
+# VM on these Windows toolchain (ACCESS_VIOLATION during hook execution).
+dependency_overrides:
+  libserialport_plus: ^1.0.4
+
 flutter:
   uses-material-design: true
   assets:

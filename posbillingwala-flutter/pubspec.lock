@@ -742,7 +742,7 @@ packages:
     source: hosted
     version: "3.0.2"
   libserialport_plus:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
       name: libserialport_plus
       sha256: "90609c55b05668fd33d4aeea22cc795037adc67891b032fba7ff42f93a29e678"

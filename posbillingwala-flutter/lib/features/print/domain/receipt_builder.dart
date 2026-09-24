@@ -24,34 +24,28 @@ class ReceiptBuilder {
   final receiptBuilderDate = DateFormat('yyyy-MM-dd HH:mm:ss');
   final rasterizer = const ReceiptRasterizer();
 
-  /* Marker inserted where UPI QR should appear (terms → QR → footer). */
-  static const upiQrMarker = ThermalTicket.upiQrMarker;
-
   String rupee(num value) => '₹${money.format(value)}';
 
   String qtyLabel(num qty, {String? unit}) =>
       ProductUnits.formatQty(qty.toDouble(), unit: unit);
 
-  /* Unicode-safe thermal bytes (any language + ₹) via bitmap, like Android. */
+  /* Unicode-safe thermal bytes via ticket layout → bitmap (matches preview). */
   Future<List<int>> billPrintBytes({
     required Invoice invoice,
     required List<InvoiceItem> items,
     String? shopName,
     bool duplicate = false,
   }) {
-    final upiUri = upiUriFor(invoice);
     final logoPath = settings.logoUse ? shopProfile.logoLocalPath : null;
-    return rasterizer.encodeText(
-      billText(
+    return rasterizer.encodeTicket(
+      ticket(
         invoice: invoice,
         items: items,
         shopName: shopName,
         duplicate: duplicate,
       ),
       settings: settings,
-      qrPayload: upiUri,
       logoPath: logoPath,
-      qrMarker: upiUri != null ? upiQrMarker : null,
       useAssetLogoFallback: false,
     );
   }

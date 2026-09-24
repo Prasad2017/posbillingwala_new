@@ -153,6 +153,7 @@ class WebAppShell extends ConsumerWidget {
                   curve: Curves.easeInOutCubic,
                   width: showRail ? railWidth : 0,
                   clipBehavior: Clip.hardEdge,
+                  decoration: const BoxDecoration(),
                   child: const WebSideNav(),
                 ),
                 Expanded(child: child),
