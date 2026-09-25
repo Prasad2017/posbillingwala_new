@@ -1024,13 +1024,16 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
         /* Payment mode is collected via dialog on Save / Share / Print — not on this screen. */
         setupBillSummaryExpandCollapse();
 
-        View cartSection = findViewById(R.id.cartProductsCard);
-        if (cartSection == null) {
-            cartSection = findViewById(R.id.linearLayout);
+        // Phone layout uses NestedScrollView (wrap-content product card). Land already splits in XML.
+        if (findViewById(R.id.cartCheckoutScroll) == null) {
+            View cartSection = findViewById(R.id.cartProductsCard);
+            if (cartSection == null) {
+                cartSection = findViewById(R.id.linearLayout);
+            }
+            TabletFormUi.applyCartPaymentSplit(activity, cartLayout,
+                    cartSection,
+                    findViewById(R.id.paymentDetailLayout));
         }
-        TabletFormUi.applyCartPaymentSplit(activity, cartLayout,
-                cartSection,
-                findViewById(R.id.paymentDetailLayout));
 
     }
 
