@@ -67,6 +67,6 @@
     <View
         android:id="@+id/rowDivider"
         android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@color/colorBorder" />
+        android:layout_height="1.5dp"
+        android:background="@drawable/bg_card_divider" />
 </LinearLayout>

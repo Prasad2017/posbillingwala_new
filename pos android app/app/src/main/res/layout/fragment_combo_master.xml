@@ -91,41 +91,28 @@
         android:padding="@dimen/spacing_lg"
         android:visibility="gone">
 
-        <com.pos_billingwala.Extra.PosCardView
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/searchLayout"
+            style="@style/PosSearchInput"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardCornerRadius="@dimen/radius_lg">
+            app:startIconDrawable="@drawable/search"
+            app:startIconTint="@color/colorTextHint">
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/searchLayout"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/searchCombo"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="@dimen/spacing_md"
-                app:boxCornerRadiusBottomEnd="@dimen/radius_sm"
-                app:boxCornerRadiusBottomStart="@dimen/radius_sm"
-                app:boxCornerRadiusTopEnd="@dimen/radius_sm"
-                app:boxCornerRadiusTopStart="@dimen/radius_sm"
-                app:boxStrokeColor="@color/colorBorder"
-                app:hintEnabled="false"
-                app:startIconDrawable="@drawable/search"
-                app:startIconTint="@color/colorTextHint">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/searchCombo"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:fontFamily="@font/poppinsregular"
-                    android:hint="@string/ui_search_combo"
-                    android:imeOptions="actionSearch"
-                    android:inputType="text"
-                    android:paddingStart="@dimen/spacing_lg"
-                    android:paddingEnd="@dimen/spacing_md"
-                    android:singleLine="true"
-                    android:textColor="@color/colorTextPrimary"
-                    android:textSize="@dimen/text_body" />
-            </com.google.android.material.textfield.TextInputLayout>
-        </com.pos_billingwala.Extra.PosCardView>
+                android:fontFamily="@font/poppinsregular"
+                android:hint="@string/ui_search_combo"
+                android:imeOptions="actionSearch"
+                android:inputType="text"
+                android:paddingStart="@dimen/spacing_lg"
+                android:paddingEnd="@dimen/spacing_md"
+                android:singleLine="true"
+                android:textColor="@color/colorTextPrimary"
+                android:textSize="@dimen/text_body" />
+        </com.google.android.material.textfield.TextInputLayout>
 
         <com.pos_billingwala.Extra.PosCardView
             android:layout_width="match_parent"

@@ -491,15 +491,19 @@
 
     <string name="payment_display_title">Payment Display</string>
     <string name="payment_display_subtitle">Offline browser QR for customer payments</string>
+    <string name="payment_display_connection">Connection</string>
+    <string name="payment_display_scan_to_pair">Scan this QR on the display phone</string>
+    <string name="payment_display_how_to_title">How to pair</string>
     <string name="payment_display_show_qr">Show QR</string>
     <string name="payment_display_connect">Connect Display</string>
     <string name="payment_display_show_pairing_qr">Show Pairing QR</string>
+    <string name="payment_display_hide_pairing_qr">Hide Pairing QR</string>
     <string name="payment_display_reconnect">Reconnect</string>
-    <string name="payment_display_disconnect">Disconnect</string>
+    <string name="payment_display_disconnect">Disconnect Display</string>
     <string name="payment_display_start_server">Start Server</string>
     <string name="payment_display_stop_server">Stop Server</string>
     <string name="payment_display_auto_new_bills">Auto Display New Bills</string>
-    <string name="payment_display_copy_url">Copy pairing URL</string>
+    <string name="payment_display_copy_url">Copy Pairing URL</string>
     <string name="payment_display_url_copied">Pairing URL copied</string>
     <string name="payment_display_connected">Connected</string>
     <string name="payment_display_waiting_pair">Waiting for display</string>
@@ -512,11 +516,11 @@
     <string name="payment_display_invoice_invalid">Cannot display QR for this invoice.</string>
     <string name="payment_display_qr_sent">Payment QR sent to display</string>
     <string name="payment_display_already_paid_confirm">This invoice is already marked as paid. Do you want to display the payment QR again?</string>
-    <string name="payment_display_pair_hint">Start the server, show the pairing QR, then open it in Chrome on the second phone (same hotspot / Wi-Fi).</string>
-    <string name="payment_display_keep_app_open_hint">Keep the POS app open while using the payment display. The second device only needs Chrome — no app install.</string>
-    <string name="payment_display_status_fmt">Status: %1$s</string>
-    <string name="payment_display_device_fmt">Display Device: %1$s</string>
+    <string name="payment_display_pair_hint">1. Tap Show Pairing QR\n2. Open Chrome on the second phone (same Wi‑Fi / hotspot)\n3. Scan the QR or paste the pairing URL</string>
+    <string name="payment_display_keep_app_open_hint">Keep this POS app open while the display is in use. The second device only needs Chrome — no app install.</string>
+    <string name="payment_display_status_fmt">%1$s</string>
+    <string name="payment_display_device_fmt">Display device: %1$s</string>
     <string name="payment_display_local_url_fmt">Local URL: %1$s</string>
-    <string name="payment_display_duration_value">QR Duration: %1$d Minutes</string>
+    <string name="payment_display_duration_value">QR duration: %1$d minutes</string>
 
 </resources>

@@ -209,6 +209,8 @@ public class OfflineToNetworkReceiver extends BroadcastReceiver {
                         cursor.getString(cursor.getColumnIndex("stateName")),
                         cursor.getString(cursor.getColumnIndex("gstStatus")),
                         cursor.getString(cursor.getColumnIndex("gstNumber")),
+                        columnOrEmpty(cursor, "shopCGST"),
+                        columnOrEmpty(cursor, "shopSGST"),
                         cursor.getString(cursor.getColumnIndex("panNumber")),
                         cursor.getString(cursor.getColumnIndex("paymentLogo")),
                         cursor.getString(cursor.getColumnIndex("companyFssis")),
@@ -561,7 +563,7 @@ public class OfflineToNetworkReceiver extends BroadcastReceiver {
     public void saveCompanyDetails(String companyId, String companyLogo, String companyName, String cashierName, String companyMobile, String companyAddress,
                                    String shopName1, String shopName2, String addressLine1, String addressLine2, String addressLine3, String phoneNo1, String phoneNo2,
                                    String currencyName, String tableStatus, String noOfTable,
-                                   String countryName, String stateName, String gstStatus, String gstNumber, String panNumber, String paymentLogo, String companyFssis,
+                                   String countryName, String stateName, String gstStatus, String gstNumber, String shopCGST, String shopSGST, String panNumber, String paymentLogo, String companyFssis,
                                    String openingMinutes, String closingMinutes) {
 
         Log.e("currencyName:=", currencyName);
@@ -581,7 +583,7 @@ public class OfflineToNetworkReceiver extends BroadcastReceiver {
         Call<AllApiResponse> call = Api.getClient(context).saveCompanyDetails(MainActivity.userId, companyLogo, companyName, cashierName, companyMobile, companyAddress,
                 shopName1, shopName2, addressLine1, addressLine2, addressLine3, phoneNo1, phoneNo2,
                 currencyName, tableStatus, noOfTable, countryName, stateName,
-                gstStatus, gstNumber, panNumber, paymentLogo, companyFssis,
+                gstStatus, gstNumber, shopCGST, shopSGST, panNumber, paymentLogo, companyFssis,
                 BusinessHours.openingForUpload(context, openingMinutes),
                 BusinessHours.closingForUpload(context, closingMinutes));
         if (executeCall(call)) {

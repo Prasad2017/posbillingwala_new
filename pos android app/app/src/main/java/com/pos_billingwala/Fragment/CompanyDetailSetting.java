@@ -38,6 +38,7 @@ import com.karumi.dexter.MultiplePermissionsReport;
 import com.karumi.dexter.PermissionToken;
 import com.karumi.dexter.listener.PermissionRequest;
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener;
+import com.pos_billingwala.Activity.BluetoothPrint;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ActionButtonUi;
@@ -397,7 +398,8 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
                 ? binding.upiId.getText().toString().trim()
                 : "";
 
-        if (ActionButtonUi.getLabel(binding.saveDetails.getRoot()).toString().equalsIgnoreCase(getString(R.string.ui_save_details))) {
+        List<CompanyResponse> existing = posBillingWalaDatabase.getCompanyDetails();
+        if (existing == null || existing.isEmpty()) {
             posBillingWalaDatabase.addCompanyDetails(companyLogo,
                     binding.shopName1.getText().toString().trim(),
                     binding.shopName2.getText().toString().trim(),
@@ -411,7 +413,8 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
                     binding.shopCGST.getText().toString(), binding.shopSGST.getText().toString(), binding.panNumber.getText().toString(), binding.shopFssai.getText().toString(), 0, paymentLogo);
             Toast.makeText(activity, getString(R.string.toast_company_details_saved), Toast.LENGTH_SHORT).show();
         } else {
-            posBillingWalaDatabase.updateCompanyDetails(companyLogo, companyId,
+            String idToUpdate = existing.get(0).getCompanyId();
+            posBillingWalaDatabase.updateCompanyDetails(companyLogo, idToUpdate,
                     binding.shopName1.getText().toString().trim(),
                     binding.shopName2.getText().toString().trim(),
                     binding.cashierName.getText().toString().trim(),
@@ -498,6 +501,9 @@ public class CompanyDetailSetting extends Fragment implements View.OnClickListen
 
     public void getCompanyDetails() {
         companyResponseList = posBillingWalaDatabase.getCompanyDetails();
+        // Keep billing/print screens in sync with latest saved shop row
+        CreatePos.companyResponseList = companyResponseList;
+        BluetoothPrint.companyResponseList = companyResponseList;
 
         if (!companyResponseList.isEmpty()) {
             CompanyResponse companyResponse = companyResponseList.get(0);

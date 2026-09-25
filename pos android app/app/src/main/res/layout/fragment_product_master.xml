@@ -128,53 +128,31 @@
             android:visibility="gone"
             tools:visibility="visible">
 
-            <com.pos_billingwala.Extra.PosCardView
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/searchLayout"
+                style="@style/PosSearchInput"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="@dimen/radius_lg"
+                app:endIconDrawable="@drawable/ic_mic"
+                app:endIconMode="custom"
+                app:endIconTint="@color/colorPrimary"
+                app:startIconDrawable="@drawable/search"
+                app:startIconTint="@color/colorTextHint">
 
->
-
-                <LinearLayout
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/searchProduct"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="@dimen/spacing_md">
-
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/searchLayout"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textColorHint="@color/colorTextHint"
-                        app:boxCornerRadiusBottomEnd="@dimen/radius_sm"
-                        app:boxCornerRadiusBottomStart="@dimen/radius_sm"
-                        app:boxCornerRadiusTopEnd="@dimen/radius_sm"
-                        app:boxCornerRadiusTopStart="@dimen/radius_sm"
-                        app:boxStrokeColor="@color/colorBorder"
-                        app:endIconDrawable="@drawable/ic_mic"
-                        app:endIconMode="custom"
-                        app:endIconTint="@color/colorPrimary"
-                        app:hintEnabled="false"
-                        app:startIconDrawable="@drawable/search"
-                        app:startIconTint="@color/colorTextHint">
-
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/searchProduct"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:fontFamily="@font/poppinsregular"
-                            android:hint="@string/ui_search_product_by_name_category_or_produ"
-                            android:imeOptions="actionSearch"
-                            android:inputType="text"
-                            android:paddingStart="@dimen/spacing_lg"
-                            android:paddingEnd="@dimen/spacing_md"
-                            android:singleLine="true"
-                            android:textColor="@color/colorTextPrimary"
-                            android:textSize="@dimen/text_body" />
-                    </com.google.android.material.textfield.TextInputLayout>
-                </LinearLayout>
-            </com.pos_billingwala.Extra.PosCardView>
+                    android:fontFamily="@font/poppinsregular"
+                    android:hint="@string/ui_search_product_by_name_category_or_produ"
+                    android:imeOptions="actionSearch"
+                    android:inputType="text"
+                    android:paddingStart="@dimen/spacing_lg"
+                    android:paddingEnd="@dimen/spacing_md"
+                    android:singleLine="true"
+                    android:textColor="@color/colorTextPrimary"
+                    android:textSize="@dimen/text_body" />
+            </com.google.android.material.textfield.TextInputLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"

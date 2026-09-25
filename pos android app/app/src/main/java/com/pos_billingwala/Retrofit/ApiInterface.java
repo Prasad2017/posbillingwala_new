@@ -205,6 +205,8 @@ public interface ApiInterface {
                                             @Field("stateName") String stateName,
                                             @Field("gstStatus") String gstStatus,
                                             @Field("gstNumber") String gstNumber,
+                                            @Field("shopCGST") String shopCGST,
+                                            @Field("shopSGST") String shopSGST,
                                             @Field("panNumber") String panNumber,
                                             @Field("paymentLogo") String paymentLogo,
                                             @Field("companyFssis") String companyFssis,

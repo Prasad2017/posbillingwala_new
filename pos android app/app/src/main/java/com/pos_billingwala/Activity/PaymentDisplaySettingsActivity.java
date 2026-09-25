@@ -33,7 +33,9 @@ public class PaymentDisplaySettingsActivity extends AppCompatActivity
     private ImageView pairingQrImage;
     private SwitchCompat autoSwitch;
     private View pairingCard;
+    private MaterialButton showPairingButton;
     private MaterialButton disconnectButton;
+    private boolean userHidPairingCard;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,11 +63,20 @@ public class PaymentDisplaySettingsActivity extends AppCompatActivity
         autoSwitch.setOnCheckedChangeListener((btn, checked) ->
                 manager.setAutoDisplayEnabled(checked));
 
-        MaterialButton showPairing = findViewById(R.id.showPairingButton);
+        showPairingButton = findViewById(R.id.showPairingButton);
         disconnectButton = findViewById(R.id.disconnectButton);
         MaterialButton copyUrl = findViewById(R.id.copyUrlButton);
 
-        showPairing.setOnClickListener(v -> manager.showPairingQr());
+        showPairingButton.setOnClickListener(v -> {
+            if (pairingCard.getVisibility() == View.VISIBLE) {
+                userHidPairingCard = true;
+                pairingCard.setVisibility(View.GONE);
+                showPairingButton.setText(R.string.payment_display_show_pairing_qr);
+            } else {
+                userHidPairingCard = false;
+                manager.showPairingQr();
+            }
+        });
         disconnectButton.setOnClickListener(v -> manager.disconnectDisplays());
         disconnectButton.setVisibility(View.GONE);
         copyUrl.setOnClickListener(v -> {
@@ -130,15 +141,17 @@ public class PaymentDisplaySettingsActivity extends AppCompatActivity
                 url != null && !url.isEmpty() ? url : "—"));
 
         String pairing = manager.getPairingUrl();
-        if (pairing != null && !pairing.isEmpty()) {
+        if (pairing != null && !pairing.isEmpty() && !userHidPairingCard) {
             pairingCard.setVisibility(View.VISIBLE);
             pairingUrlText.setText(pairing);
             Bitmap qr = MessTokenQrHelper.generateQrBitmap(pairing, 512);
             if (qr != null) {
                 pairingQrImage.setImageBitmap(qr);
             }
+            showPairingButton.setText(R.string.payment_display_hide_pairing_qr);
         } else {
             pairingCard.setVisibility(View.GONE);
+            showPairingButton.setText(R.string.payment_display_show_pairing_qr);
         }
 
         disconnectButton.setVisibility(manager.isConnected() ? View.VISIBLE : View.GONE);

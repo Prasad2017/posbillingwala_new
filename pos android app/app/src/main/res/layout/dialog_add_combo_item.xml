@@ -28,7 +28,7 @@
             android:layout_width="match_parent"
             android:layout_height="40dp"
             android:layout_marginTop="10dp"
-            android:background="@drawable/button_rounded_border"
+            android:background="@drawable/bg_search"
             android:fontFamily="@font/poppinsregular"
             android:hint="@string/ui_search_product_by_name_product_code"
             android:paddingStart="10dp"

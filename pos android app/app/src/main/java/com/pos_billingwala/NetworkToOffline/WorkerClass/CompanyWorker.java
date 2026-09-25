@@ -43,7 +43,9 @@ public class CompanyWorker extends Worker {
 
             if (response.isSuccessful() && response.body() != null) {
                 List<CompanyResponse> companyResponseList = response.body().getCompanyResponseList();
-                if (!companyResponseList.isEmpty()) {
+                if (companyResponseList != null && !companyResponseList.isEmpty()) {
+                    // Replace local rows so UI always reads the synced company (no stale duplicates)
+                    database.clearCompanyDetails();
                     for (CompanyResponse companyResponse : companyResponseList) {
                         database.addCompanyDetails(companyResponse.getCompanyLogo(),
                                 companyResponse.getShopName1() != null && !companyResponse.getShopName1().trim().isEmpty()

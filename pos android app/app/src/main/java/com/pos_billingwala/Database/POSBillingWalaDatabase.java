@@ -3086,6 +3086,33 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         return true;
     }
 
+    /** Keep a single company row — update existing or insert when empty. */
+    public boolean upsertCompanyDetails(String companyLogo, String shopName1, String shopName2, String cashierName, String phoneNo1, String phoneNo2,
+                                        String addressLine1, String addressLine2, String addressLine3, String currencyName, String tableStatus, String noOfTable, String countryName,
+                                        String stateName, String gstStatus, String gstNumber, String shopCGST, String shopSGST, String panNumber, String companyFssis, int companyStatus, String paymentLogo) {
+        List<CompanyResponse> existing = getCompanyDetails();
+        if (existing == null || existing.isEmpty()) {
+            return addCompanyDetails(companyLogo, shopName1, shopName2, cashierName, phoneNo1, phoneNo2,
+                    addressLine1, addressLine2, addressLine3, currencyName, tableStatus, noOfTable, countryName,
+                    stateName, gstStatus, gstNumber, shopCGST, shopSGST, panNumber, companyFssis, companyStatus, paymentLogo);
+        }
+        String id = existing.get(0).getCompanyId();
+        updateCompanyDetails(companyLogo, id, shopName1, shopName2, cashierName, phoneNo1, phoneNo2,
+                addressLine1, addressLine2, addressLine3, currencyName, tableStatus, noOfTable, countryName,
+                stateName, gstStatus, gstNumber, shopCGST, shopSGST, panNumber, companyFssis, companyStatus, paymentLogo);
+        // updateCompanyDetails forces companyStatus=0; re-apply synced status when requested
+        if (companyStatus == 1 && id != null) {
+            updateSynchronizeCompanyDetails(id, 1);
+        }
+        return true;
+    }
+
+    public void clearCompanyDetails() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.delete(COMPANY_TABLE, null, null);
+        db.close();
+    }
+
     private ContentValues putCompanyContentValues(String companyLogo, String shopName1, String shopName2, String cashierName, String phoneNo1, String phoneNo2,
                                                   String addressLine1, String addressLine2, String addressLine3, String currencyName, String tableStatus, String noOfTable, String countryName,
                                                   String stateName, String gstStatus, String gstNumber, String shopCGST, String shopSGST, String panNumber, String companyFssis, int companyStatus, String paymentLogo) {
@@ -4073,7 +4100,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         List<CompanyResponse> companyResponseList = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
 
-        Cursor cursor = db.rawQuery("SELECT * FROM " + COMPANY_TABLE, null);
+        Cursor cursor = db.rawQuery("SELECT * FROM " + COMPANY_TABLE + " ORDER BY companyId DESC", null);
         CompanyResponse companyResponse;
         while (cursor.moveToNext()) {
             companyResponse = new CompanyResponse();
