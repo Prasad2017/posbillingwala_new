@@ -51,15 +51,21 @@ public class NetworkDataFetcher {
     public static final String FETCH_UNIQUE_NAME = "pos_cloud_fetch";
     public static final String FETCH_TAG = "pos_cloud_fetch_tag";
 
+    /** Safety: never leave the loading dialog up forever (large shops / flaky net). */
+    private static final long FETCH_TIMEOUT_MS = 15 * 60 * 1000L;
+
     public static ProgressDialog progressDialog;
     private static final AtomicBoolean observing = new AtomicBoolean(false);
     /** True after the current unique-work chain has been seen as ENQUEUED/RUNNING. */
     private static final AtomicBoolean sawActiveFetch = new AtomicBoolean(false);
+    private static final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private static Runnable timeoutRunnable;
 
     public static void fetchAllData(Context context) {
         showProgress(context);
         enqueueFetchChain(context);
         observeFetchCompletion(context);
+        scheduleTimeout(context);
     }
 
     /**
@@ -81,11 +87,13 @@ public class NetworkDataFetcher {
                 updateProgressMessage("Fetching data from cloud...");
                 enqueueFetchChain(context);
                 observeFetchCompletion(context);
+                scheduleTimeout(context);
             });
         });
     }
 
     private static void showProgress(Context context) {
+        clearTimeout();
         try {
             if (progressDialog != null && progressDialog.isShowing()) {
                 progressDialog.dismiss();
@@ -95,7 +103,20 @@ public class NetworkDataFetcher {
         progressDialog = new ProgressDialog(context);
         progressDialog.setTitle("Loading...");
         progressDialog.setMessage("Fetching data...");
-        progressDialog.setCancelable(false);
+        // Allow cancel so a hung fetch cannot lock the UI permanently.
+        progressDialog.setCancelable(true);
+        progressDialog.setCanceledOnTouchOutside(false);
+        progressDialog.setOnCancelListener(dialog -> {
+            try {
+                WorkManager.getInstance(context).cancelUniqueWork(FETCH_UNIQUE_NAME);
+            } catch (Exception ignored) {
+            }
+            clearTimeout();
+            sawActiveFetch.set(false);
+            observing.set(false);
+            progressDialog = null;
+            Toast.makeText(context, R.string.something_went_wrong, Toast.LENGTH_SHORT).show();
+        });
         progressDialog.show();
     }
 
@@ -105,6 +126,29 @@ public class NetworkDataFetcher {
                 progressDialog.setMessage(message);
             }
         } catch (Exception ignored) {
+        }
+    }
+
+    private static void scheduleTimeout(Context context) {
+        clearTimeout();
+        timeoutRunnable = () -> {
+            if (progressDialog == null || !progressDialog.isShowing()) {
+                return;
+            }
+            try {
+                WorkManager.getInstance(context).cancelUniqueWork(FETCH_UNIQUE_NAME);
+            } catch (Exception ignored) {
+            }
+            dismissProgress();
+            Toast.makeText(context, R.string.something_went_wrong, Toast.LENGTH_LONG).show();
+        };
+        mainHandler.postDelayed(timeoutRunnable, FETCH_TIMEOUT_MS);
+    }
+
+    private static void clearTimeout() {
+        if (timeoutRunnable != null) {
+            mainHandler.removeCallbacks(timeoutRunnable);
+            timeoutRunnable = null;
         }
     }
 
@@ -198,7 +242,8 @@ public class NetworkDataFetcher {
                     anyFailed = true;
                 }
             }
-            updateProgressMessage("Fetching data... (" + finished + "/" + workInfos.size() + ")");
+            updateProgressMessage("Fetching data... (" + finished + "/" + workInfos.size() + ")"
+                    + stepHint(finished, workInfos.size()));
             if (anyRunning) {
                 sawActiveFetch.set(true);
             }
@@ -208,6 +253,7 @@ public class NetworkDataFetcher {
                 observing.set(false);
                 sawActiveFetch.set(false);
                 liveData.removeObservers(owner);
+                clearTimeout();
                 dismissProgress();
                 Toast.makeText(context,
                         anyFailed
@@ -251,6 +297,7 @@ public class NetworkDataFetcher {
                         return;
                     }
                     sawActiveFetch.set(false);
+                    clearTimeout();
                     dismissProgress();
                     Toast.makeText(context,
                             anyFailed
@@ -259,6 +306,7 @@ public class NetworkDataFetcher {
                             Toast.LENGTH_SHORT).show();
                 } catch (Exception e) {
                     e.printStackTrace();
+                    clearTimeout();
                     dismissProgress();
                 }
             }
@@ -267,6 +315,7 @@ public class NetworkDataFetcher {
     }
 
     private static void dismissProgress() {
+        clearTimeout();
         try {
             if (progressDialog != null && progressDialog.isShowing()) {
                 progressDialog.dismiss();
@@ -274,5 +323,19 @@ public class NetworkDataFetcher {
         } catch (Exception ignored) {
         }
         progressDialog = null;
+    }
+
+    /** Human-readable hint for which cloud step is currently running. */
+    private static String stepHint(int finished, int total) {
+        final String[] steps = {
+                "food types", "categories", "subcategories", "products", "portion masters",
+                "portions", "combos", "combo items", "company", "printers", "dining areas",
+                "table types", "tables", "invoices", "invoice products", "invoice combo items",
+                "mess members", "mess invoices", "mess payments", "inventory", "expenses"
+        };
+        if (finished < 0 || finished >= steps.length || finished >= total) {
+            return "";
+        }
+        return " — " + steps[finished];
     }
 }

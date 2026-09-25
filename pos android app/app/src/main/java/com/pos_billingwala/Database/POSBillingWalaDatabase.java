@@ -4023,35 +4023,47 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
     public List<ProductResponse> getProductDetail(String productId) {
 
         List<ProductResponse> productResponseList = new ArrayList<>();
-        SQLiteDatabase db = this.getReadableDatabase();
-
-        Cursor cursor = db.rawQuery("SELECT * FROM product LEFT JOIN product_category ON product_category.categoryName = product.categoryName WHERE product.productId= '" + productId + "'", null);
-        ProductResponse productResponse;
-        while (cursor.moveToNext()) {
-            productResponse = new ProductResponse();
-            productResponse.setProductId(cursor.getString(cursor.getColumnIndex("productId")));
-            productResponse.setCategoryId(cursor.getString(cursor.getColumnIndex("categoryId")));
-            productResponse.setCategoryName(cursor.getString(cursor.getColumnIndex("categoryName")));
-            productResponse.setProductCode(cursor.getString(cursor.getColumnIndex("productCode")));
-            productResponse.setProductName(cursor.getString(cursor.getColumnIndex("productName")));
-            productResponse.setProductPrice(cursor.getString(cursor.getColumnIndex("productPrice")));
-            productResponse.setProductUnit(cursor.getString(cursor.getColumnIndex("productUnit")));
-            productResponse.setProductCGST(cursor.getString(cursor.getColumnIndex("productCGST")));
-            productResponse.setProductSGST(cursor.getString(cursor.getColumnIndex("productSGST")));
-            productResponse.setProductStatus(cursor.getString(cursor.getColumnIndex("productStatus")));
-            int openPriceCol = cursor.getColumnIndex("openPrice");
-            if (openPriceCol >= 0 && !cursor.isNull(openPriceCol)) {
-                productResponse.setOpenPrice(cursor.getString(openPriceCol));
-            } else {
-                productResponse.setOpenPrice("off");
-            }
-            int subcategoryCol = cursor.getColumnIndex("subcategoryId");
-            if (subcategoryCol >= 0 && !cursor.isNull(subcategoryCol)) {
-                productResponse.setSubcategoryId(cursor.getString(subcategoryCol));
-            }
-            productResponseList.add(productResponse);
+        if (productId == null || productId.trim().isEmpty()) {
+            return productResponseList;
         }
-        db.close();
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            // Never db.close() here — SQLiteOpenHelper owns the connection. Closing mid
+            // cloud-fetch batch transactions (e.g. combo items) deadlocks WorkManager.
+            cursor = db.rawQuery(
+                    "SELECT * FROM product LEFT JOIN product_category ON product_category.categoryName = product.categoryName WHERE product.productId = ?",
+                    new String[]{productId});
+            ProductResponse productResponse;
+            while (cursor.moveToNext()) {
+                productResponse = new ProductResponse();
+                productResponse.setProductId(cursor.getString(cursor.getColumnIndex("productId")));
+                productResponse.setCategoryId(cursor.getString(cursor.getColumnIndex("categoryId")));
+                productResponse.setCategoryName(cursor.getString(cursor.getColumnIndex("categoryName")));
+                productResponse.setProductCode(cursor.getString(cursor.getColumnIndex("productCode")));
+                productResponse.setProductName(cursor.getString(cursor.getColumnIndex("productName")));
+                productResponse.setProductPrice(cursor.getString(cursor.getColumnIndex("productPrice")));
+                productResponse.setProductUnit(cursor.getString(cursor.getColumnIndex("productUnit")));
+                productResponse.setProductCGST(cursor.getString(cursor.getColumnIndex("productCGST")));
+                productResponse.setProductSGST(cursor.getString(cursor.getColumnIndex("productSGST")));
+                productResponse.setProductStatus(cursor.getString(cursor.getColumnIndex("productStatus")));
+                int openPriceCol = cursor.getColumnIndex("openPrice");
+                if (openPriceCol >= 0 && !cursor.isNull(openPriceCol)) {
+                    productResponse.setOpenPrice(cursor.getString(openPriceCol));
+                } else {
+                    productResponse.setOpenPrice("off");
+                }
+                int subcategoryCol = cursor.getColumnIndex("subcategoryId");
+                if (subcategoryCol >= 0 && !cursor.isNull(subcategoryCol)) {
+                    productResponse.setSubcategoryId(cursor.getString(subcategoryCol));
+                }
+                productResponseList.add(productResponse);
+            }
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
         return productResponseList;
 
     }
@@ -6774,16 +6786,13 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         }
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = comboContentValues(combo);
-        long id = db.insert(COMBO_TABLE, null, values);
-        db.close();
-        return id;
+        return db.insert(COMBO_TABLE, null, values);
     }
 
     public void updateComboFromResponse(String comboId, ComboResponse combo) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = comboContentValues(combo);
         db.update(COMBO_TABLE, values, "comboId=?", new String[]{comboId});
-        db.close();
     }
 
     private ContentValues comboContentValues(ComboResponse combo) {
@@ -7121,35 +7130,76 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         if (item == null) {
             return;
         }
-        /* Local combo/product/portion PKs are autoincrement — always prefer *NetworkStatus. */
-        String comboId = null;
-        if (item.getComboNetworkStatus() != null && !item.getComboNetworkStatus().trim().isEmpty()) {
-            comboId = getComboIdByNetworkStatus(item.getComboNetworkStatus());
+        SQLiteDatabase db = this.getWritableDatabase();
+        upsertComboItemFromServer(db, item);
+    }
+
+    /** Existence check that does not close the helper-managed connection. */
+    private static boolean rowExists(SQLiteDatabase db, String table, String idColumn, String id) {
+        if (id == null || id.trim().isEmpty()) {
+            return false;
         }
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT 1 FROM " + table + " WHERE " + idColumn + " = ? LIMIT 1",
+                    new String[]{id});
+            return cursor.moveToFirst();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
+    private static String queryIdByNetworkStatus(SQLiteDatabase db, String table, String idColumn,
+                                                 String networkColumn, String networkStatus) {
+        if (networkStatus == null || networkStatus.trim().isEmpty()) {
+            return null;
+        }
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT " + idColumn + " FROM " + table + " WHERE " + networkColumn + " = ? LIMIT 1",
+                    new String[]{networkStatus});
+            if (cursor.moveToFirst()) {
+                return cursor.getString(0);
+            }
+            return null;
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
+    private void upsertComboItemFromServer(SQLiteDatabase db, ComboItemResponse item) {
+        if (item == null || db == null) {
+            return;
+        }
+        /* Local combo/product/portion PKs are autoincrement — always prefer *NetworkStatus. */
+        String comboId = queryIdByNetworkStatus(db, COMBO_TABLE, "comboId",
+                "comboNetworkStatus", item.getComboNetworkStatus());
         if (comboId == null || comboId.trim().isEmpty()) {
             comboId = item.getComboId();
         }
-        String productId = null;
-        if (item.getProductNetworkStatus() != null && !item.getProductNetworkStatus().trim().isEmpty()) {
-            productId = getProductIdByNetworkStatus(item.getProductNetworkStatus());
-        }
+        String productId = queryIdByNetworkStatus(db, PRODUCT_TABLE, "productId",
+                "productNetworkStatus", item.getProductNetworkStatus());
         if (productId == null || productId.trim().isEmpty()) {
             productId = item.getProductId();
         }
-        String portionId = null;
-        if (item.getPortionNetworkStatus() != null && !item.getPortionNetworkStatus().trim().isEmpty()) {
-            portionId = getPortionIdByNetworkStatus(item.getPortionNetworkStatus());
-        }
+        String portionId = queryIdByNetworkStatus(db, PRODUCT_PORTION_TABLE, "portionId",
+                "portionNetworkStatus", item.getPortionNetworkStatus());
         if (portionId == null || portionId.trim().isEmpty()) {
             portionId = item.getPortionId();
         }
-        if (comboId == null || comboId.trim().isEmpty() || getComboDetail(comboId) == null) {
+        if (comboId == null || comboId.trim().isEmpty() || !rowExists(db, COMBO_TABLE, "comboId", comboId)) {
             return;
         }
-        if (productId == null || productId.trim().isEmpty() || getProductDetail(productId).isEmpty()) {
+        if (productId == null || productId.trim().isEmpty()
+                || !rowExists(db, PRODUCT_TABLE, "productId", productId)) {
             return;
         }
-        SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put("comboId", comboId);
         values.put("productId", productId);
@@ -7171,14 +7221,20 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         values.put("comboItemNetworkStatus", item.getComboItemNetworkStatus());
         values.put("comboItemStatus", 1);
         if (item.getComboItemNetworkStatus() != null && !item.getComboItemNetworkStatus().trim().isEmpty()) {
-            Cursor existing = db.rawQuery("SELECT comboItemId FROM " + COMBO_ITEM_TABLE + " WHERE comboItemNetworkStatus = ? LIMIT 1",
-                    new String[]{item.getComboItemNetworkStatus()});
-            if (existing.moveToFirst()) {
-                db.update(COMBO_ITEM_TABLE, values, "comboItemId=?", new String[]{existing.getString(0)});
-                existing.close();
-                return;
+            Cursor existing = null;
+            try {
+                existing = db.rawQuery(
+                        "SELECT comboItemId FROM " + COMBO_ITEM_TABLE + " WHERE comboItemNetworkStatus = ? LIMIT 1",
+                        new String[]{item.getComboItemNetworkStatus()});
+                if (existing.moveToFirst()) {
+                    db.update(COMBO_ITEM_TABLE, values, "comboItemId=?", new String[]{existing.getString(0)});
+                    return;
+                }
+            } finally {
+                if (existing != null) {
+                    existing.close();
+                }
             }
-            existing.close();
         }
         db.insert(COMBO_ITEM_TABLE, null, values);
     }
@@ -7648,6 +7704,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
 
     /**
      * Batch upsert combo components during cloud fetch (one transaction).
+     * Must not call helpers that db.close() the shared connection.
      */
     public void upsertComboItemsBatchFromCloud(List<ComboItemResponse> items) {
         if (items == null || items.isEmpty()) {
@@ -7657,7 +7714,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         db.beginTransaction();
         try {
             for (ComboItemResponse item : items) {
-                upsertComboItemFromServer(item);
+                upsertComboItemFromServer(db, item);
             }
             db.setTransactionSuccessful();
         } finally {

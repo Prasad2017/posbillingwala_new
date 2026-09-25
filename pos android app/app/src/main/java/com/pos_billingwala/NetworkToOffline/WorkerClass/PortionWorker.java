@@ -51,10 +51,10 @@ public class PortionWorker extends Worker {
                 }
                 return Result.success();
             }
-            return Result.retry();
+            return Result.failure();
         } catch (Exception e) {
             Log.e("PortionWorker", "doWork failed", e);
-            return Result.retry();
+            return Result.failure();
         }
     }
 }

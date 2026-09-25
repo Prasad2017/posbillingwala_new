@@ -48,10 +48,10 @@ public class ProductWorker extends Worker {
                 }
                 return Result.success();
             }
-            return Result.retry();
+            return Result.failure();
         } catch (Exception e) {
             Log.e("ProductWorker", "doWork failed", e);
-            return Result.retry();
+            return Result.failure();
         }
     }
 }

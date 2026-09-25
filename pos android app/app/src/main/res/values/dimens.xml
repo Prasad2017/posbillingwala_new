@@ -22,7 +22,7 @@
 
     <dimen name="card_elevation">0dp</dimen>
     <dimen name="card_elevation_raised">0dp</dimen>
-    <dimen name="card_stroke_width">1dp</dimen>
+    <dimen name="card_stroke_width">2dp</dimen>
     <dimen name="switch_stroke_width">1dp</dimen>
     <dimen name="button_height">52dp</dimen>
     <dimen name="input_height">52dp</dimen>

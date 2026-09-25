@@ -72,6 +72,13 @@
         <item name="cardElevation">0dp</item>
     </style>
 
+    <!-- Hide default stroke so colorful bg_kpi_card_* borders show through -->
+    <style name="HomeKpiCard">
+        <item name="strokeWidth">0dp</item>
+    </style>
+
+    <style name="ColorfulKpiCard" parent="HomeKpiCard" />
+
     <style name="PopupMenuCard" parent="PosCardView">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>

@@ -2,6 +2,7 @@ package com.pos_billingwala.Extra;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
+import android.content.res.TypedArray;
 import android.util.AttributeSet;
 
 import androidx.annotation.NonNull;
@@ -14,6 +15,7 @@ import com.pos_billingwala.R;
 /**
  * CardView with a consistent 1dp border. Supports dynamic background colors
  * (e.g. selected category chips) while keeping the border visible.
+ * XML app:strokeWidth / app:strokeColor override the defaults when set.
  */
 public class PosCardView extends MaterialCardView {
 
@@ -30,8 +32,31 @@ public class PosCardView extends MaterialCardView {
 
     public PosCardView(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        strokeWidthPx = getResources().getDimensionPixelSize(R.dimen.card_stroke_width);
-        strokeColor = ContextCompat.getColor(context, R.color.colorBorder);
+        int width = getResources().getDimensionPixelSize(R.dimen.card_stroke_width);
+        int color = ContextCompat.getColor(context, R.color.colorCardStroke);
+
+        if (attrs != null) {
+            TypedArray a = context.obtainStyledAttributes(
+                    attrs, com.google.android.material.R.styleable.MaterialCardView, defStyleAttr, 0);
+            try {
+                if (a.hasValue(com.google.android.material.R.styleable.MaterialCardView_strokeWidth)) {
+                    width = a.getDimensionPixelSize(
+                            com.google.android.material.R.styleable.MaterialCardView_strokeWidth, width);
+                }
+                if (a.hasValue(com.google.android.material.R.styleable.MaterialCardView_strokeColor)) {
+                    ColorStateList csl = a.getColorStateList(
+                            com.google.android.material.R.styleable.MaterialCardView_strokeColor);
+                    if (csl != null) {
+                        color = csl.getDefaultColor();
+                    }
+                }
+            } finally {
+                a.recycle();
+            }
+        }
+
+        strokeWidthPx = width;
+        strokeColor = color;
         applyBorderStyle();
     }
 

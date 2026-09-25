@@ -8,6 +8,7 @@ import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.pos_billingwala.R;
 
@@ -136,9 +137,9 @@ public final class PaymentSettlementBinder {
         continueToReport.setOnClickListener(v -> {
             int selectedId = paymentGroup.getCheckedRadioButtonId();
             if (selectedId == -1) {
-                if (callback != null) {
-                    callback.onConfirmed("", "", "");
-                }
+                Toast.makeText(content.getContext(),
+                        content.getContext().getString(R.string.toast_please_select_payment_mode),
+                        Toast.LENGTH_SHORT).show();
                 return;
             }
             String selectedMode;

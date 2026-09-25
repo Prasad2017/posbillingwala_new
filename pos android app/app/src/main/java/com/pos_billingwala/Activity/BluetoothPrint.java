@@ -141,7 +141,8 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
     /** Once set, print retry must not create another invoice. */
     private String persistedInvoiceNumber;
     private boolean printRetryOnly;
-    public static RadioButton cashButton, onlineButton;
+    public static RadioButton cashButton, onlineButton; // legacy; payment mode is dialog-only now
+    private boolean billSummaryExpanded = true;
     public static Activity activity;
     public static RecyclerView cartRecyclerView;
     public static List<ProductCartResponse> productCartResponseList = new ArrayList<>();
@@ -426,12 +427,19 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
             }
 
             float totalAmount = (float) Math.ceil(totalAmt);
+            String totalFormatted = inr + String.format(Locale.US, "%.2f", totalAmount);
             if (totalAmountTxt != null) {
-                totalAmountTxt.setText(inr + String.format(Locale.US, "%.2f", totalAmount));
+                totalAmountTxt.setText(totalFormatted);
             }
-            totalPayableAmountTxt.setText(inr + String.format(Locale.US, "%.2f", totalAmount));
-            twoTotalAmount.setText(inr + String.format(Locale.US, "%.2f", totalAmount));
-            threeTotalAmount.setText(inr + String.format(Locale.US, "%.2f", totalAmount));
+            totalPayableAmountTxt.setText(totalFormatted);
+            twoTotalAmount.setText(totalFormatted);
+            threeTotalAmount.setText(totalFormatted);
+            if (activity != null) {
+                TextView collapsedTotal = activity.findViewById(R.id.billSummaryCollapsedTotal);
+                if (collapsedTotal != null) {
+                    collapsedTotal.setText(totalFormatted);
+                }
+            }
             applyPaymentQr(totalAmount);
 
             cartLayout.setVisibility(View.VISIBLE);
@@ -795,8 +803,8 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
             binding.backCardView.setOnClickListener(this);
         }
 
-        cashButton = findViewById(R.id.cash);
-        onlineButton = findViewById(R.id.online);
+        cashButton = null;
+        onlineButton = null;
         kotPrint = findViewById(R.id.kotPrint);
 
         cartRecyclerView = findViewById(R.id.cartRecyclerView);
@@ -1013,38 +1021,48 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
             });
         }
 
-        /*try {
-            if (paymentMode.equalsIgnoreCase("Cash")) {
-                cashButton.setChecked(true);
-                onlineButton.setChecked(false);
-            } else if (paymentMode.equalsIgnoreCase("UPI")) {
-                onlineButton.setChecked(true);
-                cashButton.setChecked(false);
-            } else {
-                cashButton.setChecked(false);
-                onlineButton.setChecked(false);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            cashButton.setChecked(false);
-            onlineButton.setChecked(false);
-        }*/
-        binding.paymentGroup.setOnCheckedChangeListener((group, checkedId) -> {
-            if (checkedId == R.id.splitCashUpi) {
-                paymentMode = PaymentSettlementHelper.MODE_SPLIT;
-            } else if (checkedId == R.id.online) {
-                paymentMode = PaymentSettlementHelper.MODE_UPI;
-            } else if (checkedId == R.id.cash) {
-                paymentMode = PaymentSettlementHelper.MODE_CASH;
-            } else {
-                paymentMode = "";
-            }
-        });
+        /* Payment mode is collected via dialog on Save / Share / Print — not on this screen. */
+        setupBillSummaryExpandCollapse();
 
+        View cartSection = findViewById(R.id.cartProductsCard);
+        if (cartSection == null) {
+            cartSection = findViewById(R.id.linearLayout);
+        }
         TabletFormUi.applyCartPaymentSplit(activity, cartLayout,
-                findViewById(R.id.linearLayout),
+                cartSection,
                 findViewById(R.id.paymentDetailLayout));
 
+    }
+
+    private void setupBillSummaryExpandCollapse() {
+        View header = findViewById(R.id.billSummaryHeader);
+        View content = findViewById(R.id.discountLayout);
+        ImageView expandIcon = findViewById(R.id.billSummaryExpandIcon);
+        TextView collapsedTotal = findViewById(R.id.billSummaryCollapsedTotal);
+        if (header == null || content == null) {
+            return;
+        }
+        billSummaryExpanded = true;
+        content.setVisibility(View.VISIBLE);
+        if (collapsedTotal != null) {
+            collapsedTotal.setVisibility(View.GONE);
+        }
+        if (expandIcon != null) {
+            expandIcon.setRotation(180f);
+        }
+        header.setOnClickListener(v -> {
+            billSummaryExpanded = !billSummaryExpanded;
+            content.setVisibility(billSummaryExpanded ? View.VISIBLE : View.GONE);
+            if (collapsedTotal != null) {
+                collapsedTotal.setVisibility(billSummaryExpanded ? View.GONE : View.VISIBLE);
+                if (totalAmountTxt != null && totalAmountTxt.getText() != null) {
+                    collapsedTotal.setText(totalAmountTxt.getText());
+                }
+            }
+            if (expandIcon != null) {
+                expandIcon.animate().rotation(billSummaryExpanded ? 180f : 0f).setDuration(180).start();
+            }
+        });
     }
 
     @Override
@@ -1401,20 +1419,11 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
     }
 
     private void runAfterPaymentReady(Runnable action) {
-        if (!requirePaymentModeSelected()) {
-            return;
-        }
-        if (!PaymentSettlementHelper.isSplit(paymentMode)) {
-            pendingSplitCash = null;
-            pendingSplitUpi = null;
-            action.run();
-            return;
-        }
         float total = parseDisplayedNumber(totalPayableAmountTxt);
-        showSplitSettlementBeforeCheckout(total, action);
+        showPaymentModeBeforeCheckout(total, action);
     }
 
-    private void showSplitSettlementBeforeCheckout(float totalAmt, Runnable onConfirmed) {
+    private void showPaymentModeBeforeCheckout(float totalAmt, Runnable onConfirmed) {
         View content = LayoutInflater.from(activity).inflate(R.layout.set_payment_mode_dialog, null);
         BottomSheetDialog sheet = BottomSheetUi.showContent(activity, content, false);
 
@@ -1422,8 +1431,19 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                 new PaymentSettlementBinder.Callback() {
                     @Override
                     public void onConfirmed(String mode, String cashAmount, String upiAmount) {
-                        pendingSplitCash = cashAmount;
-                        pendingSplitUpi = upiAmount;
+                        if (mode == null || mode.trim().isEmpty()) {
+                            Toast.makeText(activity, getString(R.string.toast_please_select_payment_mode),
+                                    Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        paymentMode = mode;
+                        if (PaymentSettlementHelper.isSplit(mode)) {
+                            pendingSplitCash = cashAmount;
+                            pendingSplitUpi = upiAmount;
+                        } else {
+                            pendingSplitCash = cashAmount;
+                            pendingSplitUpi = upiAmount;
+                        }
                         sheet.dismiss();
                         onConfirmed.run();
                     }
@@ -1517,8 +1537,7 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
     }
 
     private boolean requirePaymentModeSelected() {
-        int checkedId = binding.paymentGroup != null ? binding.paymentGroup.getCheckedRadioButtonId() : -1;
-        if (checkedId != -1 && paymentMode != null && !paymentMode.trim().isEmpty()) {
+        if (paymentMode != null && !paymentMode.trim().isEmpty()) {
             return true;
         }
         Toast.makeText(activity, getString(R.string.toast_please_select_payment_mode), Toast.LENGTH_SHORT).show();

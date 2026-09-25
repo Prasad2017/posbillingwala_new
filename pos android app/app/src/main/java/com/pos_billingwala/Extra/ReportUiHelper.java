@@ -46,10 +46,31 @@ import java.util.Locale;
 
 public final class ReportUiHelper {
 
+    public enum KpiTone {
+        BLUE(R.drawable.bg_kpi_card_blue, R.color.kpiBlue),
+        GREEN(R.drawable.bg_kpi_card_green, R.color.kpiGreen),
+        ORANGE(R.drawable.bg_kpi_card_orange, R.color.kpiOrange),
+        PURPLE(R.drawable.bg_kpi_card_purple, R.color.kpiPurple),
+        RED(R.drawable.bg_kpi_card_red, R.color.kpiRed);
+
+        final int backgroundRes;
+        final int valueColorRes;
+
+        KpiTone(int backgroundRes, int valueColorRes) {
+            this.backgroundRes = backgroundRes;
+            this.valueColorRes = valueColorRes;
+        }
+    }
+
     private ReportUiHelper() {
     }
 
     public static void bindKpi(IncludeReportKpiCardBinding card, String label, String value, String trend) {
+        bindKpi(card, label, value, trend, resolveTone(card));
+    }
+
+    public static void bindKpi(IncludeReportKpiCardBinding card, String label, String value, String trend,
+                               KpiTone tone) {
         if (card == null) {
             return;
         }
@@ -57,8 +78,29 @@ public final class ReportUiHelper {
         card.kpiValue.setText(value != null ? value : "0");
         card.kpiTrend.setText(trend != null ? trend : "");
         boolean down = trend != null && trend.trim().startsWith("-");
-        card.kpiTrend.setTextColor(ContextCompat.getColor(card.getRoot().getContext(),
+        Context ctx = card.getRoot().getContext();
+        card.kpiTrend.setTextColor(ContextCompat.getColor(ctx,
                 down ? R.color.statusExpired : R.color.statusActive));
+
+        KpiTone applied = tone != null ? tone : KpiTone.BLUE;
+        if (card.kpiContent != null) {
+            card.kpiContent.setBackgroundResource(applied.backgroundRes);
+        }
+        card.kpiValue.setTextColor(ContextCompat.getColor(ctx, applied.valueColorRes));
+    }
+
+    private static KpiTone resolveTone(IncludeReportKpiCardBinding card) {
+        int id = card.getRoot().getId();
+        if (id == R.id.kpi2) {
+            return KpiTone.GREEN;
+        }
+        if (id == R.id.kpi3) {
+            return KpiTone.ORANGE;
+        }
+        if (id == R.id.kpi4) {
+            return KpiTone.PURPLE;
+        }
+        return KpiTone.BLUE;
     }
 
     public static String money(String currency, float amount) {

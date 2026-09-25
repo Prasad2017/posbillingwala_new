@@ -1187,14 +1187,6 @@
                     android:textSize="22sp" />
             </LinearLayout>
 
-            <View
-                android:layout_width="1dp"
-                android:layout_height="match_parent"
-                android:layout_marginTop="10dp"
-                android:layout_marginBottom="10dp"
-                android:layout_toStartOf="@+id/printInvoiceCardView"
-                android:background="#33FFFFFF" />
-
             <com.pos_billingwala.Extra.PosCardView
                 android:id="@+id/printInvoiceCardView"
                 android:layout_width="52dp"
@@ -1229,11 +1221,14 @@
             android:paddingBottom="@dimen/spacing_sm">
 
             <com.pos_billingwala.Extra.PosCardView
+                android:id="@+id/cartProductsCard"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_marginEnd="@dimen/spacing_sm"
                 android:layout_weight="0.58"
-                app:cardCornerRadius="@dimen/radius_lg">
+                app:cardCornerRadius="@dimen/radius_lg"
+                app:strokeWidth="2dp"
+                app:strokeColor="@color/colorCardStroke">
 
                 <LinearLayout
                     android:id="@+id/linearLayout"
@@ -1248,7 +1243,7 @@
                         android:gravity="center_vertical"
                         android:minHeight="36dp"
                         android:orientation="horizontal"
-                        android:paddingStart="8dp"
+                        android:paddingStart="12dp"
                         android:paddingEnd="8dp">
 
                         <TextView
@@ -1292,10 +1287,10 @@
                         android:layout_width="match_parent"
                         android:layout_height="0dp"
                         android:layout_weight="1"
+                        android:background="@color/white"
                         android:clipToPadding="false"
                         android:nestedScrollingEnabled="true"
                         android:overScrollMode="ifContentScrolls"
-                        android:paddingBottom="4dp"
                         android:scrollbars="vertical" />
                 </LinearLayout>
             </com.pos_billingwala.Extra.PosCardView>
@@ -1315,10 +1310,11 @@
                     android:orientation="vertical">
 
                     <com.pos_billingwala.Extra.PosCardView
-                        android:id="@+id/paymentModeLayout"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        app:cardCornerRadius="@dimen/radius_lg">
+                        app:cardCornerRadius="@dimen/radius_lg"
+                        app:strokeWidth="2dp"
+                        app:strokeColor="@color/colorCardStroke">
 
                         <LinearLayout
                             android:layout_width="match_parent"
@@ -1326,66 +1322,45 @@
                             android:orientation="vertical"
                             android:padding="@dimen/spacing_md">
 
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:fontFamily="@font/poppinsmedium"
-                                android:text="@string/ui_payment_mode"
-                                android:textColor="@color/colorPrimary"
-                                android:textSize="13sp" />
-
-                            <RadioGroup
-                                android:id="@+id/paymentGroup"
+                            <LinearLayout
+                                android:id="@+id/billSummaryHeader"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
-                                android:orientation="vertical">
+                                android:background="?attr/selectableItemBackground"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal"
+                                android:paddingTop="2dp"
+                                android:paddingBottom="2dp">
 
-                                <RadioButton
-                                    android:id="@+id/cash"
-                                    style="@style/PaymentModeRadioVertical"
-                                    android:background="@drawable/bg_payment_mode_card"
-                                    android:padding="8dp"
-                                    android:text="@string/ui_cash" />
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:fontFamily="@font/poppinsmedium"
+                                    android:text="@string/ui_bill_summary"
+                                    android:textColor="@color/colorPrimary"
+                                    android:textSize="13sp" />
 
-                                <RadioButton
-                                    android:id="@+id/online"
-                                    style="@style/PaymentModeRadioVertical"
-                                    android:layout_marginTop="6dp"
-                                    android:background="@drawable/bg_payment_mode_card"
-                                    android:padding="8dp"
-                                    android:text="@string/ui_upi" />
+                                <TextView
+                                    android:id="@+id/billSummaryCollapsedTotal"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginEnd="8dp"
+                                    android:fontFamily="@font/poppinsbold"
+                                    android:textColor="@color/colorPrimary"
+                                    android:textSize="14sp"
+                                    android:visibility="gone" />
 
-                                <RadioButton
-                                    android:id="@+id/splitCashUpi"
-                                    style="@style/PaymentModeRadioVertical"
-                                    android:layout_marginTop="6dp"
-                                    android:background="@drawable/bg_payment_mode_card"
-                                    android:padding="8dp"
-                                    android:text="@string/ui_cash_plus_upi" />
-                            </RadioGroup>
-                        </LinearLayout>
-                    </com.pos_billingwala.Extra.PosCardView>
-
-                    <com.pos_billingwala.Extra.PosCardView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/spacing_sm"
-                        app:cardCornerRadius="@dimen/radius_lg">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:padding="@dimen/spacing_md">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:fontFamily="@font/poppinsmedium"
-                                android:text="@string/ui_bill_summary"
-                                android:textColor="@color/colorPrimary"
-                                android:textSize="13sp" />
+                                <ImageView
+                                    android:id="@+id/billSummaryExpandIcon"
+                                    android:layout_width="22dp"
+                                    android:layout_height="22dp"
+                                    android:contentDescription="@null"
+                                    android:src="@drawable/ic_dropdown_arrow"
+                                    app:tint="@color/colorPrimary" />
+                            </LinearLayout>
 
                             <LinearLayout
                                 android:id="@+id/discountLayout"

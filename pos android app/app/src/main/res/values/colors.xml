@@ -97,6 +97,13 @@
     <color name="colorBackground">#F7F9FC</color>
     <color name="colorSurface">#FFFFFF</color>
     <color name="colorBorder">#E5E7EB</color>
+    <!-- Default PosCardView / shared card stroke (brand colorful border) -->
+    <color name="colorCardStroke">#4862b7</color>
+    <color name="kpiBlue">#2563EB</color>
+    <color name="kpiGreen">#16A34A</color>
+    <color name="kpiOrange">#F97316</color>
+    <color name="kpiPurple">#7C3AED</color>
+    <color name="kpiRed">#DC2626</color>
     <color name="colorTextPrimary">#1F2937</color>
     <color name="colorTextSecondary">#6B7280</color>
     <color name="colorTextHint">#9CA3AF</color>

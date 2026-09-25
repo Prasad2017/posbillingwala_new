@@ -32,9 +32,10 @@ public class Api {
             final Context appContext = context.getApplicationContext();
 
             HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
-            // Never log request/response bodies in release (licence keys, bills, device ids)
+            // HEADERS only — BODY logging freezes the UI/workers on large invoice/product JSON.
+            // Never log bodies in release (licence keys, bills, device ids).
             logging.setLevel(BuildConfig.DEBUG
-                    ? HttpLoggingInterceptor.Level.BODY
+                    ? HttpLoggingInterceptor.Level.HEADERS
                     : HttpLoggingInterceptor.Level.NONE);
 
             Gson gson = new GsonBuilder()

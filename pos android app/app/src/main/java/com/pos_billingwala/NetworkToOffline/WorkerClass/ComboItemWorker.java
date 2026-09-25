@@ -42,10 +42,10 @@ public class ComboItemWorker extends Worker {
                 }
                 return Result.success();
             }
-            return Result.retry();
+            return Result.failure();
         } catch (Exception e) {
             Log.e("ComboItemWorker", "doWork failed", e);
-            return Result.retry();
+            return Result.failure();
         }
     }
 }

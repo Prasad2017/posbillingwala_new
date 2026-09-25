@@ -74,7 +74,7 @@
                                     android:text="@string/good_morning"
                                     android:textColor="@color/white"
                                     android:textSize="18sp"
-                                    tools:text="Good Night, Shiva 👋" />
+                                    tools:text="Good Night, Shiva ðŸ‘‹" />
 
                                 <androidx.appcompat.widget.AppCompatTextView
                                     android:id="@+id/homeShopName"
@@ -359,6 +359,7 @@
                     android:layout_marginEnd="6dp"
                     android:layout_weight="1"
                     app:cardCornerRadius="@dimen/radius_md"
+                    style="@style/HomeKpiCard"
 >
 
                     <FrameLayout
@@ -422,7 +423,7 @@
                             android:inputType="textPassword"
                             android:maxLines="1"
                             android:text="0"
-                            android:textColor="@color/colorTextPrimary"
+                            android:textColor="@color/kpiGreen"
                             android:textSize="18sp" />
 
                         <TextView
@@ -433,7 +434,7 @@
                             android:fontFamily="@font/poppinsmedium"
                             android:textColor="@color/statusActive"
                             android:textSize="11sp"
-                            tools:text="vs Last Month ↑ 18%" />
+                            tools:text="vs Last Month â†‘ 18%" />
                         </LinearLayout>
 
                         <ImageView
@@ -454,6 +455,7 @@
                     android:layout_marginStart="6dp"
                     android:layout_weight="1"
                     app:cardCornerRadius="@dimen/radius_md"
+                    style="@style/HomeKpiCard"
 >
 
                     <FrameLayout
@@ -517,7 +519,7 @@
                                 android:inputType="textPassword"
                                 android:maxLines="1"
                                 android:text="0"
-                                android:textColor="@color/colorTextPrimary"
+                                android:textColor="@color/kpiBlue"
                                 android:textSize="18sp" />
 
                             <TextView
@@ -528,7 +530,7 @@
                                 android:fontFamily="@font/poppinsmedium"
                                 android:textColor="@color/statusActive"
                                 android:textSize="11sp"
-                                tools:text="vs Yesterday ↑ 12%" />
+                                tools:text="vs Yesterday â†‘ 12%" />
                         </LinearLayout>
 
                         <ImageView
@@ -596,6 +598,7 @@
                     android:layout_marginEnd="4dp"
                     android:layout_weight="1"
                     app:cardCornerRadius="@dimen/radius_md"
+                    style="@style/HomeKpiCard"
 >
 
                     <FrameLayout
@@ -631,7 +634,7 @@
                                 android:layout_marginTop="@dimen/spacing_sm"
                                 android:fontFamily="@font/poppinsbold"
                                 android:text="0"
-                                android:textColor="@color/colorTextPrimary"
+                                android:textColor="@color/kpiBlue"
                                 android:textSize="18sp" />
 
                             <TextView
@@ -670,6 +673,7 @@
                     android:layout_marginEnd="4dp"
                     android:layout_weight="1"
                     app:cardCornerRadius="@dimen/radius_md"
+                    style="@style/HomeKpiCard"
 >
 
                     <FrameLayout
@@ -705,7 +709,7 @@
                                 android:layout_marginTop="@dimen/spacing_sm"
                                 android:fontFamily="@font/poppinsbold"
                                 android:text="0"
-                                android:textColor="@color/colorTextPrimary"
+                                android:textColor="@color/kpiGreen"
                                 android:textSize="18sp" />
 
                             <TextView
@@ -743,6 +747,7 @@
                     android:layout_marginStart="4dp"
                     android:layout_weight="1"
                     app:cardCornerRadius="@dimen/radius_md"
+                    style="@style/HomeKpiCard"
 >
 
                     <FrameLayout
@@ -778,7 +783,7 @@
                                 android:layout_marginTop="@dimen/spacing_sm"
                                 android:fontFamily="@font/poppinsbold"
                                 android:text="0"
-                                android:textColor="@color/colorTextPrimary"
+                                android:textColor="@color/kpiOrange"
                                 android:textSize="18sp" />
 
                             <TextView
@@ -839,6 +844,7 @@
                     android:clickable="true"
                     android:focusable="true"
                     app:cardCornerRadius="@dimen/radius_md"
+                    style="@style/HomeKpiCard"
 
                     app:rippleColor="@color/colorPrimaryLight"
 >
@@ -906,6 +912,7 @@
                     android:clickable="true"
                     android:focusable="true"
                     app:cardCornerRadius="@dimen/radius_md"
+                    style="@style/HomeKpiCard"
 
                     app:rippleColor="@color/colorPrimaryLight"
 >
@@ -982,6 +989,7 @@
                     android:clickable="true"
                     android:focusable="true"
                     app:cardCornerRadius="@dimen/radius_md"
+                    style="@style/HomeKpiCard"
 
                     app:rippleColor="@color/colorPrimaryLight"
 >
@@ -1049,6 +1057,7 @@
                     android:clickable="true"
                     android:focusable="true"
                     app:cardCornerRadius="@dimen/radius_md"
+                    style="@style/HomeKpiCard"
 
                     app:rippleColor="@color/colorPrimaryLight"
 >
