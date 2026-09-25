@@ -81,6 +81,11 @@
             <div><h6>Refund &amp; Renewal Policy</h6><p>Renewal and refund rules for customers</p></div>
             <i class='bx bx-chevron-right hub-chevron'></i>
         </a>
+        <a class="hub-row hub-row--card" href="{{ url('settings/pos-banners') }}">
+            <span class="hub-icon kpi-icon orange"><i class='bx bx-images'></i></span>
+            <div><h6>POS App Banner Upload</h6><p>Home-screen banners for the POS mobile app (one or many)</p></div>
+            <i class='bx bx-chevron-right hub-chevron'></i>
+        </a>
         <a class="hub-row hub-row--card hub-row--wide" href="{{ url('website/contacts') }}">
             <span class="hub-icon kpi-icon orange"><i class='bx bx-envelope'></i></span>
             <div><h6>Contact Enquiries</h6><p>{{ $contactCount }} total · {{ $newContactCount }} new from website form</p></div>
